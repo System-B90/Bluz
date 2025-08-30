@@ -1,0 +1,319 @@
+/* Military-themed schedule editor styles */
+.schedule-layout {
+  background: linear-gradient(135deg, #0e0f10 0%, #000000 100%);
+  min-height: 100vh;
+  direction: rtl;
+}
+
+/* Military period type color schemes */
+.schedule-layout .military-primary {
+  background: linear-gradient(135deg, #000000 0%, #333333 100%);
+  border: 2px solid #000000;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.schedule-layout .military-primary:hover {
+  background: linear-gradient(135deg, #333333 0%, #666666 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+.schedule-layout .military-error {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  border: 2px solid #dc2626;
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+}
+
+.schedule-layout .military-error:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(220, 38, 38, 0.4);
+}
+
+.schedule-layout .military-success {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  border: 2px solid #059669;
+  box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
+}
+
+.schedule-layout .military-success:hover {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(5, 150, 105, 0.4);
+}
+
+.schedule-layout .military-warning {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  border: 2px solid #d97706;
+  box-shadow: 0 4px 8px rgba(217, 119, 6, 0.3);
+}
+
+.schedule-layout .military-warning:hover {
+  background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(217, 119, 6, 0.4);
+}
+
+.schedule-layout .military-info {
+  background: linear-gradient(135deg, #333333 0%, #000000 100%);
+  border: 2px solid #333333;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.schedule-layout .military-info:hover {
+  background: linear-gradient(135deg, #000000 0%, #333333 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.schedule-layout .military-default {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  border: 2px solid #6b7280;
+  box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+}
+
+.schedule-layout .military-default:hover {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(107, 114, 128, 0.4);
+}
+
+/* Week selector styling */
+.schedule-layout .week-selector {
+  background: linear-gradient(135deg, #000000 0%, #333333 100%);
+  border: 2px solid #333333;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.schedule-layout .week-selector:hover {
+  border-color: #000000;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+/* Period card styling */
+.schedule-layout .period-card {
+  background: linear-gradient(135deg, #000000 0%, #333333 100%);
+  border: 2px solid #333333;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+}
+
+.schedule-layout .period-card:hover {
+  border-color: #000000;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+/* Uniform requirement indicator */
+.schedule-layout .uniform-required::after {
+  content: "🎖️";
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  font-size: 16px;
+  background: #333333;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Formation indicator */
+.schedule-layout .formation-indicator::before {
+  content: "🚩";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+/* Dark theme specific overrides for schedule components */
+.schedule-layout .MuiPaper-root {
+  background-color: #000000;
+  color: #f8fafc;
+  border: 1px solid #333333;
+}
+
+.schedule-layout .MuiCard-root {
+  background-color: #000000;
+  color: #f8fafc;
+  border: 1px solid #333333;
+}
+
+.schedule-layout .MuiButton-root {
+  background-color: #000000;
+  color: #f8fafc;
+  border: 1px solid #000000;
+}
+
+.schedule-layout .MuiButton-root:hover {
+  background-color: #333333;
+  border-color: #333333;
+}
+
+.schedule-layout .MuiButton-outlined {
+  background-color: transparent;
+  color: #f8fafc;
+  border-color: #000000;
+}
+
+.schedule-layout .MuiButton-outlined:hover {
+  background-color: #000000;
+  color: #f8fafc;
+}
+
+.schedule-layout .MuiTextField-root {
+  background-color: #000000;
+}
+
+.schedule-layout .MuiTextField-root .MuiInputBase-root {
+  background-color: #000000;
+  color: #f8fafc;
+  border: 1px solid #333333;
+}
+
+.schedule-layout .MuiTextField-root .MuiInputBase-root:hover {
+  border-color: #000000;
+}
+
+.schedule-layout .MuiTextField-root .MuiInputBase-root.Mui-focused {
+  border-color: #000000;
+}
+
+.schedule-layout .MuiFormControl-root {
+  background-color: #000000;
+}
+
+.schedule-layout .MuiInputLabel-root {
+  color: #cbd5e1;
+}
+
+.schedule-layout .MuiInputLabel-root.Mui-focused {
+  color: #000000;
+}
+
+.schedule-layout .MuiSelect-select {
+  color: #f8fafc;
+  text-align: right;
+}
+
+.schedule-layout .MuiMenuItem-root {
+  color: #f8fafc;
+  text-align: right;
+}
+
+.schedule-layout .MuiMenuItem-root:hover {
+  background-color: #333333;
+}
+
+.schedule-layout .MuiChip-root {
+  background-color: #333333;
+  color: #f8fafc;
+  border: 1px solid #333333;
+}
+
+.schedule-layout .MuiChip-label {
+  color: #f8fafc;
+  text-align: right;
+}
+
+.schedule-layout .MuiDialog-paper {
+  background-color: #000000;
+  color: #f8fafc;
+}
+
+.schedule-layout .MuiDialogTitle-root {
+  color: #f8fafc;
+}
+
+.schedule-layout .MuiDialogContent-root {
+  color: #f8fafc;
+}
+
+.schedule-layout .MuiDialogActions-root {
+  color: #f8fafc;
+}
+
+.schedule-layout .MuiSwitch-root .MuiSwitch-switchBase {
+  color: #cbd5e1;
+}
+
+.schedule-layout .MuiSwitch-root .MuiSwitch-switchBase.Mui-checked {
+  color: #000000;
+}
+
+.schedule-layout .MuiSwitch-root .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
+  background-color: #000000;
+}
+
+.schedule-layout .MuiFormControlLabel-root {
+  color: #f8fafc;
+}
+
+.schedule-layout .MuiDivider-root {
+  background-color: #333333;
+}
+
+.schedule-layout .MuiTooltip-tooltip {
+  background-color: #000000;
+  color: #f8fafc;
+  border: 1px solid #333333;
+}
+
+.schedule-layout .MuiIconButton-root {
+  color: #f8fafc;
+}
+
+.schedule-layout .MuiIconButton-root:hover {
+  background-color: #333333;
+}
+
+.schedule-layout .MuiIconButton-root.MuiIconButton-colorError {
+  color: #ef4444;
+}
+
+.schedule-layout .MuiIconButton-root.MuiIconButton-colorError:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Focus states for accessibility */
+.schedule-layout .MuiButton-root:focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+.schedule-layout .MuiTextField-root .MuiInputBase-root:focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+.schedule-layout .MuiIconButton-root:focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+/* Scrollbar styling */
+.schedule-layout ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.schedule-layout ::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+.schedule-layout ::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 4px;
+}
+
+.schedule-layout ::-webkit-scrollbar-thumb:hover {
+  background: #000000;
+}
