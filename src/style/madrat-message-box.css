@@ -1,0 +1,5 @@
+#madrat-message-box,
+#madrat-message-box:focus-visible
+{
+    outline: 0 solid transparent;
+}
