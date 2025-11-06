@@ -26,7 +26,7 @@ import { Period, EVENT_TYPES, DAYS_OF_WEEK, DEFAULT_INSTRUCTORS } from './types'
 
 interface PeriodDialogProps {
   open: boolean;
-  period: Partial<Period> | null;
+  period?: Partial<Period> | null;
   isEdit: boolean;
   selectedDayIndex: number;
   onClose: () => void;
@@ -148,11 +148,11 @@ export default function PeriodDialog({
               multiple
               options={DEFAULT_INSTRUCTORS}
               getOptionLabel={(option) => option.name}
-              value={DEFAULT_INSTRUCTORS.filter(instructor => 
+              value={DEFAULT_INSTRUCTORS.filter(instructor =>
                 period.instructors?.includes(instructor.id)
               )}
               onChange={(_, newValue) => {
-                onPeriodChange({ 
+                onPeriodChange({
                   instructors: newValue.map(instructor => instructor.id)
                 });
               }}

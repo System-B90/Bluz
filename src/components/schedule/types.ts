@@ -26,6 +26,11 @@ export interface Period {
   potentialPA: boolean; // New field for potential F.A. (פוטנציאל פ"א)
 }
 
+export interface Room {
+    id: string;
+    name: string;
+}
+
 export interface DaySchedule {
   day: string;
   periods: Period[];

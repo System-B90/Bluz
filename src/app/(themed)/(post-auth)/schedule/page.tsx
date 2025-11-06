@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -15,11 +15,18 @@ import DeleteDialog from '@/components/schedule/delete-dialog';
 
 // Import types
 import { Period, DaySchedule, WeekSchedule, DAYS_OF_WEEK, ScheduleConfig, DEFAULT_SCHEDULE_CONFIG } from '@/components/schedule/types';
+import Schedule from "@/components/schedule/schedule";
+import {momentLocalizer, SlotInfo} from "react-big-calendar";
+import moment from "moment";
 
 export default function SchedulePage() {
   const [schedules, setSchedules] = useState<WeekSchedule[]>([]);
+  const [periods, setPeriods] = useState<Period[]>([]);
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>(DEFAULT_SCHEDULE_CONFIG);
+  const [selectedPeriod, setSelectedPeriod] = useState<Partial<Period>>();
+  const [openPeriodDialog, setOpenPeriodDialog] = useState<boolean>(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
   const [periodDialog, setPeriodDialog] = useState<{
     open: boolean;
     period: Partial<Period> | null;
@@ -171,6 +178,17 @@ export default function SchedulePage() {
     setSchedules(newSchedules);
     setDeleteDialog({ open: false, period: null, dayIndex: 0, periodIndex: 0 });
   };
+  const handleSlotSelect = (slotInfo: SlotInfo) => {
+      // if (slotInfo.action == "doubleClick") {
+          const newPeriod: Partial<Period> = {
+              startTime: dayjs(slotInfo.start),
+              endTime: dayjs(slotInfo.end),
+          };
+          setSelectedPeriod(newPeriod);
+          setOpenPeriodDialog(true);
+      // }
+  };
+
 
   const addNewWeek = () => {
     const newWeekNumber = Math.max(...schedules.map(s => s.weekNumber)) + 1;
@@ -190,29 +208,20 @@ export default function SchedulePage() {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
       <Box sx={{ p: 3, maxWidth: '100%', direction: 'rtl' }}>
-        {/* Week Selection & Toolbar */}
-        <WeekSelector
-          selectedWeek={selectedWeek}
-          weeks={schedules.map(s => s.weekNumber)}
-          onWeekChange={setSelectedWeek}
-          onAddWeek={addNewWeek}
-          onAddPeriod={() => handleAddPeriod(0)} // Default to first day, can be changed in dialog
-        />
-
-        {/* Schedule Grid */}
-        {currentWeek && (
-          <ScheduleGrid
-            days={currentWeek.days}
-            config={scheduleConfig}
-            onEditPeriod={handleEditPeriod}
-            onDeletePeriod={handleDeletePeriod}
+          <Schedule
+              localizer={momentLocalizer(moment)}
+              defaultView={"week"}
+              events={periods}
+              setEventEditOpen={setOpenPeriodDialog}
+              setSelectedEvent={setSelectedPeriod}
+              onSlotSelect={handleSlotSelect}
+              selectable={true}
           />
-        )}
 
         {/* Period Dialog */}
         <PeriodDialog
           open={periodDialog.open}
-          period={periodDialog.period}
+          period={selectedPeriod}
           isEdit={periodDialog.periodIndex !== undefined}
           selectedDayIndex={periodDialog.dayIndex}
           onClose={() => setPeriodDialog({ open: false, period: null, dayIndex: 0 })}
