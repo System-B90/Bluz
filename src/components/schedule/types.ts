@@ -23,7 +23,7 @@ export interface Period {
   instructors: string[]; // Array of instructor IDs
   notes: string;
   locked: boolean; // New field to indicate if period is locked
-  potentialPA: boolean; // New field for potential F.A. (פוטנציאל פ"א)
+  required: boolean; // New field for potential F.A. (פוטנציאל פ"א)
 }
 
 export interface Room {
