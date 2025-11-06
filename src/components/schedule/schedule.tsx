@@ -20,7 +20,7 @@ export interface ScheduleProps {
     setEventEditOpen: (open: boolean) => void;
     setSelectedEvent: (period: Period) => void;
     onSlotSelect?: (slotInfo: SlotInfo) => void;
-
+    rightToLeft: boolean;
     style?: React.CSSProperties;
 }
 
@@ -32,24 +32,24 @@ export default function Schedule({
     setEventEditOpen,
     setSelectedEvent,
     onSlotSelect,
+    rightToLeft,
     style,
 }: ScheduleProps): any {
     return (
         <div style={style}>
-            <DnDCalendar
+            <Calendar
                 localizer={localizer}
                 events={events}
                 defaultView={defaultView}
                 views={[Views.DAY, Views.WEEK]} // restrict to day/week
                 selectable={selectable}
-                resizable
                 onSelectEvent={setSelectedEvent}
                 onSelectSlot={onSlotSelect}
                 // onDoubleClickEvent={(event: Period)=>{setSelectedEvent(event);setEventEditOpen(true)}}
                 startAccessor="startTime"
                 endAccessor="endTime"
                 style={{ height: "100%" }}
-
+                rtl={rightToLeft}
             />
         </div>
     );
