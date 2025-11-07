@@ -122,7 +122,7 @@ export default function PeriodCard({
           />
         )}
 
-        {period.potentialPA && (
+        {period.required && (
           <Chip
             label="פ״א"
             color="warning"

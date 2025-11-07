@@ -28,22 +28,18 @@ interface PeriodDialogProps {
   open: boolean;
   period?: Partial<Period> | null;
   isEdit: boolean;
-  selectedDayIndex: number;
   onClose: () => void;
   onSave: () => void;
   onPeriodChange: (updates: Partial<Period>) => void;
-  onDayChange: (dayIndex: number) => void;
 }
 
 export default function PeriodDialog({
   open,
   period,
   isEdit,
-  selectedDayIndex,
   onClose,
   onSave,
   onPeriodChange,
-  onDayChange,
 }: PeriodDialogProps) {
   if (!period) return null;
 
@@ -59,25 +55,7 @@ export default function PeriodDialog({
       </DialogTitle>
       <DialogContent>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
-          {/* Day Selection (only show when adding new period) */}
-          {!isEdit && (
-            <Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
-              <FormControl fullWidth>
-                <InputLabel>יום</InputLabel>
-                <Select
-                  value={selectedDayIndex}
-                  label="יום"
-                  onChange={(e) => onDayChange(Number(e.target.value))}
-                >
-                  {DAYS_OF_WEEK.map((day, index) => (
-                    <MenuItem key={index} value={index}>
-                      {day}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
-          )}
+
 
           <Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
             <TextField
@@ -217,8 +195,8 @@ export default function PeriodDialog({
               <FormControlLabel
                 control={
                   <Switch
-                    checked={period.potentialPA || false}
-                    onChange={(e) => onPeriodChange({ potentialPA: e.target.checked })}
+                    checked={period.required || false}
+                    onChange={(e) => onPeriodChange({ required: e.target.checked })}
                     sx={{
                       '& .MuiSwitch-thumb': {
                         position: 'relative',

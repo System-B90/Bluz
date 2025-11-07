@@ -13,8 +13,7 @@ import { Period } from './types';
 
 interface DeleteDialogProps {
   open: boolean;
-  period: Period | null;
-  dayName: string;
+  period?: Partial<Period> | null;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -22,7 +21,6 @@ interface DeleteDialogProps {
 export default function DeleteDialog({
   open,
   period,
-  dayName,
   onClose,
   onConfirm,
 }: DeleteDialogProps) {
@@ -36,7 +34,7 @@ export default function DeleteDialog({
       <DialogTitle>אשר מחיקה</DialogTitle>
       <DialogContent>
         <Typography>
-          האם אתה בטוח שברצונך למחוק את &quot;{period.name}&quot; מ{dayName}?
+          האם אתה בטוח שברצונך למחוק את &quot;{period.name}&quot; מ{}?
         </Typography>
       </DialogContent>
       <DialogActions>

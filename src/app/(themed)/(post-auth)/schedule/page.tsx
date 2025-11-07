@@ -26,7 +26,6 @@ import {
 import Schedule from "@/components/schedule/schedule";
 import {Calendar, momentLocalizer, SlotInfo, stringOrDate, Views} from "react-big-calendar";
 import moment from "moment";
-import PlainCalendarTest from "@/components/schedule/test";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
