@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import {
   Box,
   Dialog,
@@ -22,7 +21,8 @@ import {
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { Check as CheckIcon } from '@mui/icons-material';
 import dayjs from 'dayjs';
-import { Period, EVENT_TYPES, DAYS_OF_WEEK, DEFAULT_INSTRUCTORS } from './types';
+import { EVENT_TYPES, DAYS_OF_WEEK, DEFAULT_INSTRUCTORS } from '../types/types';
+import {Period} from "@/components/schedule/types/event";
 
 interface PeriodDialogProps {
   open: boolean;
@@ -97,7 +97,7 @@ export default function PeriodDialog({
           <Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
             <TimePicker
               label="שעת התחלה"
-              value={period.startTime || dayjs()}
+              value={period?.startTime || dayjs()}
               onChange={(time) => onPeriodChange({ startTime: time || dayjs() })}
               slotProps={{ textField: { fullWidth: true } }}
             />
@@ -106,7 +106,7 @@ export default function PeriodDialog({
           <Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
             <TimePicker
               label="שעת סיום"
-              value={period.endTime || dayjs()}
+              value={period?.endTime || dayjs()}
               onChange={(time) => onPeriodChange({ endTime: time || dayjs() })}
               slotProps={{ textField: { fullWidth: true } }}
             />

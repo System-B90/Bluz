@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,7 +8,8 @@ import {
   Button,
   Typography,
 } from '@mui/material';
-import { Period } from './types';
+
+import {Period} from "@/components/schedule/types/event";
 
 interface DeleteDialogProps {
   open: boolean;

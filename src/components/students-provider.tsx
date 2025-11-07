@@ -1,6 +1,6 @@
 'use client';
 import { MessageHandlerType } from '@/components/session-ws';
-import React, {
+import {
     createContext,
     use,
     useCallback,

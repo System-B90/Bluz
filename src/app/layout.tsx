@@ -13,7 +13,7 @@ export default function RootLayout({
 }>)
 {
     return (
-        <html lang="he" className="dark" data-theme="dark" dir="rtl">
+        <html lang="he" dir="rtl">
             <body
                 className='antialiased w-screen h-screen overflow-hidden' dir="rtl"
             >

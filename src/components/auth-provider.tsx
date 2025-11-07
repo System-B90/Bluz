@@ -1,6 +1,6 @@
 'use client';
 import useSessionWebSocketContext, { MessageHandlerType } from '@/components/session-ws';
-import React, {
+import {
     createContext,
     useCallback,
     useContext,

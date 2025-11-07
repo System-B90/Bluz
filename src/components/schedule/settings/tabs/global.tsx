@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Box, Typography, TextField, Button, List, ListItem } from "@mui/material";
 
 const GlobalSection: React.FC = () => {

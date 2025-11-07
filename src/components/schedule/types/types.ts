@@ -1,54 +1,11 @@
-import { Dayjs } from 'dayjs';
+import {Subject} from "@/components/schedule/types/subject";
+import {Instructor} from "@/components/schedule/types/instructor";
+import {ScheduleConfig} from "@/components/schedule/types/config";
 
-export interface Subject {
-  id: string;
-  name: string;
-  color: string;
-}
-
-export interface Instructor {
-  id: string;
-  name: string;
-  rank?: string; // Optional military rank
-}
-
-export interface Period {
-  id: string;
-  name: string;
-  subject: string; // Subject ID
-  startTime: Dayjs;
-  endTime: Dayjs;
-  type: 'exercise' | 'lecture' | 'other' | 'break'; // Added 'break' type
-  location: string;
-  instructors: string[]; // Array of instructor IDs
-  notes: string;
-  locked: boolean; // New field to indicate if period is locked
-  required: boolean; // New field for potential F.A. (פוטנציאל פ"א)
-}
-
-export interface Room {
-    id: string;
-    name: string;
-}
-
-export interface DaySchedule {
-  day: string;
-  periods: Period[];
-}
-
-export interface WeekSchedule {
-  weekNumber: number;
-  days: DaySchedule[];
-}
-
-export interface ScheduleConfig {
-  startHour: number; // 24-hour format (e.g., 6 for 6:00 AM)
-  endHour: number;   // 24-hour format (e.g., 18 for 6:00 PM)
-}
 
 // New simplified event types
-export const EVENT_TYPES = [
-  { value: 'exercise', label: 'ע"ע', color: 'success' },
+export const EVENT_TYPES: {value: string, label: string, color: string}[] = [
+  { value: "exercise", label: 'ע"ע', color: 'success' },
   { value: 'lecture', label: 'הרצאה', color: 'primary' },
   { value: 'break', label: 'הפסקה', color: 'warning' },
   { value: 'other', label: 'אחר', color: 'default' },
