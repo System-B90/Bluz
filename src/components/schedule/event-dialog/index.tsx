@@ -108,7 +108,7 @@ export default function PeriodDialog({
                             )}
                             renderValue={(value, getTagProps) =>
                                 value.map((option, index) => (
-                                    <Chip key={option.id} label={option.name} {...getTagProps({ index })} />
+                                    <Chip label={option.name} {...getTagProps({ index })} />
                                 ))
                             }
                         />
