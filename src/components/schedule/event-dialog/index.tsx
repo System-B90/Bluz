@@ -21,6 +21,8 @@ import { TimePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import {Period} from "@/components/schedule/types/event";
 import {DEFAULT_INSTRUCTORS, EVENT_TYPES} from "@/components/schedule/types/types";
+import InstructorsField from "@/components/schedule/event-dialog/instructors-field";
+import EventTypeField from "@/components/schedule/event-dialog/event-type-field";
 
 interface PeriodDialogProps {
     open: boolean;
@@ -61,20 +63,7 @@ export default function PeriodDialog({
                             value={period?.subject || ''}
                             onChange={(e) => onPeriodChange({ subject: e.target.value })}
                         />
-                        <FormControl fullWidth>
-                            <InputLabel>Type</InputLabel>
-                            <Select
-                                value={period?.type || "exercise"}
-                                label="Type"
-                                onChange={(e) => onPeriodChange({ type: e.target.value })}
-                            >
-                                {EVENT_TYPES.map((type) => (
-                                    <MenuItem key={type.value} value={type.value}>
-                                        {type.label}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                        <EventTypeField period={period} onPeriodChange={onPeriodChange}/>
                         <TimePicker
                             label="Start Time"
                             value={period?.startTime || dayjs()}
@@ -93,25 +82,7 @@ export default function PeriodDialog({
                             value={period?.location || ''}
                             onChange={(e) => onPeriodChange({ location: e.target.value })}
                         />
-                        <Autocomplete
-                            multiple
-                            options={DEFAULT_INSTRUCTORS}
-                            getOptionLabel={(opt) => opt.name}
-                            value={DEFAULT_INSTRUCTORS.filter((i) =>
-                                period?.instructors?.includes(i.id)
-                            )}
-                            onChange={(_, newValue) =>
-                                onPeriodChange({ instructors: newValue.map((i) => i.id) })
-                            }
-                            renderInput={(params) => (
-                                <TextField {...params} label="Instructors" placeholder="Select instructors" />
-                            )}
-                            renderValue={(value, getTagProps) =>
-                                value.map((option, index) => (
-                                    <Chip label={option.name} {...getTagProps({ index })} />
-                                ))
-                            }
-                        />
+                        <InstructorsField period={period} onPeriodChange={onPeriodChange}/>
                         <TextField
                             label="Notes"
                             fullWidth
