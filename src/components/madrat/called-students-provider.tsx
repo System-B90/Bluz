@@ -8,10 +8,10 @@ import {
     useMemo,
     useState,
 } from 'react';
-import { MessageTypes } from '../session-server/src/common';
+import { MessageTypes } from '../../session-server/src/common';
 import { StudentData, StudentToHadasData, } from '@/api-shared/types';
-import { useAuth } from '@/components/auth-provider';
-import { useStudents } from '@/components/students-provider';
+import { useAuth } from '@/components/auth/auth-provider';
+import { useStudents } from '@/components/madrat/students-provider';
 import { apiGetStudentsCalledToHadas } from '@/api-client/call-to-hadas';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { enqueueSnackbar } from 'notistack';

@@ -7,7 +7,7 @@ import {
     useEffect,
     useState,
 } from 'react';
-import { MessageTypes } from '../session-server/src/common';
+import { MessageTypes } from '../../session-server/src/common';
 import assert from 'assert';
 
 assert(!!process.env.NEXT_PUBLIC_MADRAT_USERNAME, 'NEXT_PUBLIC_MADRAT_USERNAME must be defined in environment!');

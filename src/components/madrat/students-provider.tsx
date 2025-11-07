@@ -9,14 +9,14 @@ import {
     useMemo,
     useState,
 } from 'react';
-import { MessageTypes } from '../session-server/src/common';
+import { MessageTypes } from '../../session-server/src/common';
 import { StudentData } from '@/api-shared/types';
-import { useAuth } from '@/components/auth-provider';
+import { useAuth } from '@/components/auth/auth-provider';
 import { apiGetClasses, apiGetStudents } from '@/api-client/hive';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { enqueueSnackbar } from 'notistack';
 import { Class, ClassTypeEnum, CourseUser } from '@/api-server/hive/types';
-import { Room } from '@/components/side-bar';
+import { Room } from '@/components/madrat/side-bar';
 
 export type StudentsContextState = {
     default: boolean;

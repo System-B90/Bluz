@@ -1,10 +1,10 @@
 import { apiRemoveStudentCallToHadas, apiUpdateStateStudentCallToHadas } from "@/api-client/call-to-hadas";
 import { StudentData } from "@/api-shared/types";
-import CallStudentToHadas from "@/components/call-student-to-hadas";
-import { useCalledStudents } from "@/components/called-students-provider";
+import CallStudentToHadas from "@/components/madrat/call-student-to-hadas";
+import { useCalledStudents } from "@/components/madrat/called-students-provider";
 import { Card, Chip, ChipProps, Divider, List, Tooltip, Typography } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
-import { useStudents } from "@/components/students-provider";
+import { useStudents } from "@/components/madrat/students-provider";
 import { Campaign as CampaignIcon, Done as DoneIcon } from "@mui/icons-material";
 
 export type Room = {

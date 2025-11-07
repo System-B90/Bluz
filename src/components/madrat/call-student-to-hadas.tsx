@@ -5,7 +5,7 @@ import CallMadeIcon from '@mui/icons-material/CallMade';
 import { apiCallStudentToHadas } from "@/api-client/call-to-hadas";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { enqueueSnackbar } from "notistack";
-import { useStudents } from "@/components/students-provider";
+import { useStudents } from "@/components/madrat/students-provider";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import AlarmIcon from "@mui/icons-material/Alarm";

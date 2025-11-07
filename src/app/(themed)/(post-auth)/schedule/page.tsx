@@ -2,6 +2,10 @@
 
 import {useState, useEffect, useCallback} from 'react';
 import {Box} from '@mui/material';
+import {AppBar, Toolbar, IconButton, Typography, Dialog, Button} from '@mui/material';
+import SettingsIcon from '@mui/icons-material/Settings';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
 import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
@@ -9,7 +13,7 @@ import 'dayjs/locale/he';
 
 // Import components
 import PeriodDialog from '@/components/schedule/event-dialog';
-import { useHistoryState } from "@uidotdev/usehooks";
+import {useHistoryState} from "@uidotdev/usehooks";
 
 // Import types
 import {
@@ -19,15 +23,17 @@ import {Calendar, dayjsLocalizer, SlotInfo, stringOrDate, Views} from "react-big
 
 import withDragAndDrop, {EventInteractionArgs} from "react-big-calendar/lib/addons/dragAndDrop";
 
-import { v4 as uuid4 } from 'uuid';
+import {v4 as uuid4} from 'uuid';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import 'react-big-calendar/lib/sass/styles.scss';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
+import '@/style/calendar.css'
+
 import {Period} from "@/components/schedule/types/event";
 import {Room} from "@/components/schedule/types/room";
 import {ScheduleConfig} from "@/components/schedule/types/config";
-// import '@/style/calendar.css'
-// import 'react-big-calendar/lib/sass/styles.scss';
+import {useThemeToggle} from "@/components/theme/theme-context";
 
 
 const DnDCalendar = withDragAndDrop<Period, Room>(Calendar);
@@ -41,7 +47,7 @@ export default function SchedulePage() {
         canUndo,
         canRedo,
     } = useHistoryState<Period[]>([]);
-
+    const toggleTheme = useThemeToggle();
     // const [periods, setPeriods] = useState<Period[]>([]);
     const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>(DEFAULT_SCHEDULE_CONFIG);
     const [selectedPeriod, setSelectedPeriod] = useState<Partial<Period>>();
@@ -87,8 +93,8 @@ export default function SchedulePage() {
     const handlePeriodDrag = (changes: EventInteractionArgs<Period>): void => {
         console.log(changes);
         console.log(selectedPeriod);
-        const updates: Partial<Period> = {startTime: dayjs(changes.start), endTime: dayjs(changes.end) };
-        const newPeriod = { ...changes.event, ...updates };
+        const updates: Partial<Period> = {startTime: dayjs(changes.start), endTime: dayjs(changes.end)};
+        const newPeriod = {...changes.event, ...updates};
         handleSavePeriod(newPeriod);
     }
 
@@ -114,6 +120,26 @@ export default function SchedulePage() {
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
             <Box sx={{p: 3, maxWidth: '100%', direction: 'rtl'}}>
+                <AppBar position="static">
+                    <Toolbar>
+                        <Typography variant="h6" sx={{flexGrow: 1}}>
+                            Schedule
+                        </Typography>
+
+                        <IconButton color="inherit" onClick={() => {
+                        }}>
+                            <FilterListIcon/>
+                        </IconButton>
+
+                        <IconButton color="inherit" onClick={toggleTheme}>
+                            <Brightness4Icon/>
+                        </IconButton>
+
+                        <IconButton color="inherit" onClick={() => {}}>
+                            <SettingsIcon/>
+                        </IconButton>
+                    </Toolbar>
+                </AppBar>
                 <div>
                     <DnDCalendar
                         localizer={dayjsLocalizer(dayjs)}

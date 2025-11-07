@@ -1,8 +1,8 @@
 'use client';
-import { CalledStudentsProvider } from "@/components/called-students-provider";
-import MadratMessageBox from "@/components/madrat-message-box";
-import SideBar from "@/components/side-bar";
-import { StudentsProvider } from "@/components/students-provider";
+import { CalledStudentsProvider } from "@/components/madrat/called-students-provider";
+import MadratMessageBox from "@/components/madrat/madrat-message-box";
+import SideBar from "@/components/madrat/side-bar";
+import { StudentsProvider } from "@/components/madrat/students-provider";
 
 export default function Home()
 {

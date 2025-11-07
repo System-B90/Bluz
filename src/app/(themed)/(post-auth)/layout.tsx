@@ -1,4 +1,4 @@
-import { AuthProvider } from "@/components/auth-provider";
+import { AuthProvider } from "@/components/auth/auth-provider";
 import { headers } from "next/headers";
 
 export default async function PostAuthLayout({

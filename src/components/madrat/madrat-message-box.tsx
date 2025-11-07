@@ -2,7 +2,7 @@
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { apiGetMadratMessage, apiPostMadratMessage } from '@/api-client/madrat';
-import { useAuth } from '@/components/auth-provider';
+import { useAuth } from '@/components/auth/auth-provider';
 import { MessageHandlerType } from '@/components/session-ws';
 import { MessageTypes } from '@/session-server/src/common';
 import '@/style/madrat-message-box.css';
