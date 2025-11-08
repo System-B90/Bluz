@@ -2,6 +2,8 @@ import {Subject} from "@/components/schedule/types/subject";
 import {Instructor} from "@/components/schedule/types/instructor";
 import {ScheduleConfig} from "@/components/schedule/types/config";
 import {Room} from "@/components/schedule/types/room";
+import {Group, GroupType} from "@/components/schedule/types/group";
+import {UserType} from "@/components/schedule/types/user";
 
 
 // New simplified event types
@@ -38,6 +40,20 @@ export const DEFAULT_SUBJECTS: Subject[] = [
   { id: 'meals', name: 'ארוחות', color: '#9E9E9E' },
 ];
 
+export const groupColors: Record<GroupType, string> = {
+    students: '#4caf50',
+    instructors: '#2196f3',
+    helpers: '#ff9800',
+    other: '#9e9e9e',
+};
+
+export const userColors: Record<UserType, string> = {
+    student: '#81c784',
+    instructor: '#64b5f6',
+    helper: '#ffb74d',
+    other: '#e0e0e0',
+};
+
 // Default instructors
 export const DEFAULT_INSTRUCTORS: Instructor[] = [
   { id: 'instructor-1', name: 'סגן דוד כהן', rank: 'סגן' },
@@ -54,3 +70,127 @@ export const DEFAULT_ROOMS: Room[] = [
     {id: "room-3", name: "הוואי"},
     {id: "room-4", name: "הארי פוטר"},
 ];
+
+export const DEFAULT_GROUPS: Group[] = [
+    {
+        id: "course-1",
+        name: "כל הביס",
+        groupType: "students",
+        subGroups: [
+            {
+                id: "course-2",
+                name: "ארטמיס",
+                groupType: "students",
+                members: [
+                    {
+                        id: "hanich-1",
+                        name: "חניך 1",
+                        type: "student",
+                    },
+                    {
+                        id: "hanich-2",
+                        name: "חניך 2",
+                        type: "student",
+                    },
+                    {
+                        id: "hanich-3",
+                        name: "חניך 3",
+                        type: "student",
+                    },
+                    {
+                        id: "hanich-4",
+                        name: "חניך 4",
+                        type: "student",
+                    },
+                ],
+            },
+            {
+                id: "course-3",
+                name: "קורס3",
+                groupType: "students",
+                members: [
+                    {
+                        id: "hanich-1",
+                        name: "חניך 1",
+                        type: "student",
+                    },
+                    {
+                        id: "hanich-2",
+                        name: "חניך 2",
+                        type: "student",
+                    },
+                    {
+                        id: "hanich-3",
+                        name: "חניך 3",
+                        type: "student",
+                    },
+                    {
+                        id: "hanich-4",
+                        name: "חניך 4",
+                        type: "student",
+                    },
+                ],
+            },
+        ]
+    },
+
+    {
+        id: "segel-1",
+        name: "סגל ביס 26",
+        groupType: "instructors",
+        members: [
+            {
+                id: "segel-1",
+                name: "ממחית ביס",
+                type: "instructor",
+            }
+        ],
+        subGroups: [
+            {
+                id: "course-segel-1",
+                name: "סגל ארטמיס",
+                groupType: "instructors",
+                members: [
+                    {
+                        id: "segel-1",
+                        name: "מפקדת 1",
+                        type: "instructor"
+                    },
+                    {
+                        id: "segel-2",
+                        name: "מפקדת 2",
+                        type: "instructor"
+                    },
+                    {
+                        id: "segel-3",
+                        name: "מפקדת 3",
+                        type: "instructor"
+                    },
+                ]
+            },
+            {
+                id: "course-segel-2",
+                name: "סגל קורס3",
+                groupType: "instructors",
+                members: [
+                    {
+                        id: "segel-1",
+                        name: "מפקדת 1",
+                        type: "instructor"
+                    },
+                    {
+                        id: "segel-2",
+                        name: "מפקדת 2",
+                        type: "instructor"
+                    },
+                    {
+                        id: "segel-3",
+                        name: "מפקדת 3",
+                        type: "instructor"
+                    },
+                ]
+            },
+        ]
+    },
+
+]

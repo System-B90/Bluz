@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Box, Typography, TextField, Button, List, ListItem } from "@mui/material";
+import GroupTreeViewer from "@/components/schedule/settings/tabs/global/groups";
+import {DEFAULT_GROUPS, DEFAULT_SUBJECTS} from "@/components/schedule/types/types";
 
 const GlobalSection: React.FC = () => {
     const [rooms, setRooms] = useState<string[]>([]);
@@ -52,6 +54,7 @@ const GlobalSection: React.FC = () => {
             <Typography variant="subtitle1" sx={{ mt: 3 }}>
                 Subjects
             </Typography>
+            <GroupTreeViewer initialGroups={DEFAULT_GROUPS}/>
             <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
                 <TextField
                     label="New Subject"
