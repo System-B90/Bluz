@@ -73,14 +73,14 @@ export default function SchedulePage() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [undo, redo]);
 
-    const handleEditPeriod = (period: Period) => {
+    const handleEditPeriod = (period: Period): void => {
         setSelectedPeriod(period)
         setOpenPeriodDialog(true);
     };
 
 
-    const handleSavePeriod = (period?: Partial<Period>) => {
-        if (!period || period?.name === '') return;
+    const handleSavePeriod = (period: Partial<Period>): void => {
+        if (!period || period.name === '') return;
 
         const newPeriod: Period = {
             id: period.id || uuid4(),
@@ -110,8 +110,9 @@ export default function SchedulePage() {
 
 
     const handleSlotSelect = (slotInfo: SlotInfo): void => {
-        console.log("Selected slot");
-        // if (slotInfo.action == "doubleClick") {
+        if (slotInfo.action === "click") {
+            return;
+        }
         const newPeriod: Partial<Period> = {
             startTime: dayjs(slotInfo.start),
             endTime: dayjs(slotInfo.end),
@@ -119,10 +120,8 @@ export default function SchedulePage() {
         };
         setSelectedPeriod(newPeriod);
         setOpenPeriodDialog(true);
-        // }
     };
 
-    // const currentWeek = schedules.find(w => w.weekNumber === selectedWeek);
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
             <Box sx={{p: 3, maxWidth: '100%', direction: 'rtl'}}>
@@ -153,7 +152,7 @@ export default function SchedulePage() {
                         events={periods}
                         defaultView={"week"}
                         views={[Views.DAY, Views.WEEK, Views.WORK_WEEK]} // restrict to day/week
-                        onView={(view) => setCurrentView(view)}
+                        onView={(view: View): void => setCurrentView(view)}
                         selectable
                         onSelectEvent={setSelectedPeriod}
                         onSelectSlot={handleSlotSelect}
@@ -178,13 +177,13 @@ export default function SchedulePage() {
                 {/* Period Dialog */}
                 <PeriodDialog
                     open={openPeriodDialog}
-                    period={selectedPeriod}
+                    period={selectedPeriod || {}}
                     onClose={() => {
                         setOpenPeriodDialog(false);
                         setSelectedPeriod(undefined)
                     }}
                     onSave={handleSavePeriod}
-                    onPeriodChange={(updates) => setSelectedPeriod({...selectedPeriod, ...updates})}
+                    onPeriodChange={(updates: Partial<Period>) => setSelectedPeriod({...selectedPeriod, ...updates})}
                 />
 
                 <SettingsDialog open={openSettingsDialog} onClose={() => {setOpenSettingsDialog(false);}}/>

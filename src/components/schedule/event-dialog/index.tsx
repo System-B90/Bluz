@@ -17,8 +17,8 @@ import {
     Button,
     Box,
 } from '@mui/material';
-import { TimePicker } from '@mui/x-date-pickers';
-import dayjs, { Dayjs } from 'dayjs';
+import {TimePicker} from '@mui/x-date-pickers';
+import dayjs, {Dayjs} from 'dayjs';
 import {Period} from "@/components/schedule/types/event";
 import {DEFAULT_INSTRUCTORS, EVENT_TYPES} from "@/components/schedule/types/types";
 import InstructorsField from "@/components/schedule/event-dialog/instructors-field";
@@ -29,9 +29,9 @@ import EventTimeField from "@/components/schedule/event-dialog/time-fields";
 
 interface PeriodDialogProps {
     open: boolean;
-    period?: Partial<Period>;
+    period: Partial<Period>;
     onClose: () => void;
-    onSave: (period?: Partial<Period>) => void;
+    onSave: (period: Partial<Period>) => void;
     onPeriodChange: (updates: Partial<Period>) => void;
 }
 
@@ -52,13 +52,13 @@ export default function PeriodDialog({
                 }}
             >
                 <DialogContent>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
+                    <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1}}>
                         <TextField
                             label="Name"
                             fullWidth
                             required
                             value={period?.name || ""}
-                            onChange={(e) => onPeriodChange({ name: e.target.value })}
+                            onChange={(e) => onPeriodChange({name: e.target.value})}
                         />
                         <SubjectField period={period} onPeriodChange={onPeriodChange}/>
                         <EventTypeField period={period} onPeriodChange={onPeriodChange}/>
@@ -71,13 +71,13 @@ export default function PeriodDialog({
                             multiline
                             rows={3}
                             value={period?.notes || ''}
-                            onChange={(e) => onPeriodChange({ notes: e.target.value })}
+                            onChange={(e) => onPeriodChange({notes: e.target.value})}
                         />
                         <FormControlLabel
                             control={
                                 <Switch
                                     checked={period?.locked || false}
-                                    onChange={(e) => onPeriodChange({ locked: e.target.checked })}
+                                    onChange={(e) => onPeriodChange({locked: e.target.checked})}
                                 />
                             }
                             label="Locked"
@@ -86,7 +86,7 @@ export default function PeriodDialog({
                             control={
                                 <Switch
                                     checked={period?.required || false}
-                                    onChange={(e) => onPeriodChange({ required: e.target.checked })}
+                                    onChange={(e) => onPeriodChange({required: e.target.checked})}
                                 />
                             }
                             label="Required"
