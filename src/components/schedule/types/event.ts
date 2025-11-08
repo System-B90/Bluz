@@ -1,4 +1,5 @@
 import {Dayjs} from "dayjs";
+import {Room} from "@/components/schedule/types/room";
 
 export type EventType = 'exercise' | 'lecture' | 'other' | 'break';
 
@@ -9,7 +10,7 @@ export interface Period {
     startTime: Dayjs;
     endTime: Dayjs;
     type: EventType;
-    location: string;
+    room: string; // Room ID
     instructors: string[]; // Array of instructor IDs
     notes: string;
     locked: boolean; // New field to indicate if period is locked

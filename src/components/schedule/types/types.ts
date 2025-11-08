@@ -1,6 +1,7 @@
 import {Subject} from "@/components/schedule/types/subject";
 import {Instructor} from "@/components/schedule/types/instructor";
 import {ScheduleConfig} from "@/components/schedule/types/config";
+import {Room} from "@/components/schedule/types/room";
 
 
 // New simplified event types
@@ -45,4 +46,11 @@ export const DEFAULT_INSTRUCTORS: Instructor[] = [
   { id: 'instructor-4', name: 'סגן רותי גולדברג', rank: 'סגן' },
   { id: 'instructor-5', name: 'סרן יוסי שפירא', rank: 'סרן' },
   { id: 'instructor-6', name: 'סגן דנה רוזן', rank: 'סגן' },
+];
+
+export const DEFAULT_ROOMS: Room[] = [
+    {id: "room-1", name: "לגונה"},
+    {id: "room-2", name: "נוקאאוט"},
+    {id: "room-3", name: "הוואי"},
+    {id: "room-4", name: "הארי פוטר"},
 ];

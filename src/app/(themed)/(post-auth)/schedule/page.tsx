@@ -17,9 +17,10 @@ import {useHistoryState} from "@uidotdev/usehooks";
 
 // Import types
 import {
+    DEFAULT_ROOMS,
     DEFAULT_SCHEDULE_CONFIG
 } from '@/components/schedule/types/types';
-import {Calendar, dayjsLocalizer, SlotInfo, stringOrDate, Views} from "react-big-calendar";
+import {Calendar, dayjsLocalizer, SlotInfo, stringOrDate, View, Views} from "react-big-calendar";
 
 import withDragAndDrop, {EventInteractionArgs} from "react-big-calendar/lib/addons/dragAndDrop";
 
@@ -34,6 +35,7 @@ import {Period} from "@/components/schedule/types/event";
 import {Room} from "@/components/schedule/types/room";
 import {ScheduleConfig} from "@/components/schedule/types/config";
 import {useThemeToggle} from "@/components/theme/theme-context";
+import SettingsDialog from "@/components/schedule/settings/settings-dialog";
 
 
 const DnDCalendar = withDragAndDrop<Period, Room>(Calendar);
@@ -52,6 +54,9 @@ export default function SchedulePage() {
     const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>(DEFAULT_SCHEDULE_CONFIG);
     const [selectedPeriod, setSelectedPeriod] = useState<Partial<Period>>();
     const [openPeriodDialog, setOpenPeriodDialog] = useState<boolean>(false);
+    const [openSettingsDialog, setOpenSettingsDialog] = useState<boolean>(false);
+    const [currentView, setCurrentView] = useState<View>('week');
+
     const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
 
     useEffect(() => {
@@ -79,7 +84,7 @@ export default function SchedulePage() {
             startTime: period.startTime || dayjs(),
             endTime: period.endTime || dayjs(),
             type: period.type || 'exercise',
-            location: period.location || '',
+            room: period.room || "",
             instructors: period.instructors || [],
             notes: period.notes || '',
             locked: period.locked || false,
@@ -93,23 +98,19 @@ export default function SchedulePage() {
     const handlePeriodDrag = (changes: EventInteractionArgs<Period>): void => {
         console.log(changes);
         console.log(selectedPeriod);
-        const updates: Partial<Period> = {startTime: dayjs(changes.start), endTime: dayjs(changes.end)};
+        const updates: Partial<Period> = {startTime: dayjs(changes.start), endTime: dayjs(changes.end), room: changes.resourceId?.toString() || ''};
         const newPeriod = {...changes.event, ...updates};
         handleSavePeriod(newPeriod);
     }
 
 
-    const handleSlotSelect = (slotInfo: {
-        start: stringOrDate;
-        end: stringOrDate;
-        slots: Date[] | string[];
-        action: 'select' | 'click' | 'doubleClick';
-    }): void => {
+    const handleSlotSelect = (slotInfo: SlotInfo): void => {
         console.log("Selected slot");
         // if (slotInfo.action == "doubleClick") {
         const newPeriod: Partial<Period> = {
             startTime: dayjs(slotInfo.start),
             endTime: dayjs(slotInfo.end),
+            room: slotInfo.resourceId?.toString() || '',
         };
         setSelectedPeriod(newPeriod);
         setOpenPeriodDialog(true);
@@ -135,7 +136,7 @@ export default function SchedulePage() {
                             <Brightness4Icon/>
                         </IconButton>
 
-                        <IconButton color="inherit" onClick={() => {}}>
+                        <IconButton color="inherit" onClick={() => setOpenSettingsDialog(true)}>
                             <SettingsIcon/>
                         </IconButton>
                     </Toolbar>
@@ -145,13 +146,20 @@ export default function SchedulePage() {
                         localizer={dayjsLocalizer(dayjs)}
                         events={periods}
                         defaultView={"week"}
-                        views={[Views.DAY, Views.WEEK]} // restrict to day/week
+                        views={[Views.DAY, Views.WEEK, Views.WORK_WEEK]} // restrict to day/week
+                        onView={(view) => setCurrentView(view)}
                         selectable
                         onSelectEvent={setSelectedPeriod}
                         onSelectSlot={handleSlotSelect}
                         onDoubleClickEvent={(event: Period) => {
                             handleEditPeriod(event)
                         }}
+                        {...(currentView === 'day' && {
+                            resources: DEFAULT_ROOMS,
+                            resourceIdAccessor: 'id',
+                            resourceTitleAccessor: 'name',
+                            resourceAccessor: (event: Period) => {event.room}
+                        })}
                         onEventResize={handlePeriodDrag}
                         onEventDrop={handlePeriodDrag}
                         startAccessor={(event) => event.startTime.toDate()}
@@ -173,13 +181,7 @@ export default function SchedulePage() {
                     onPeriodChange={(updates) => setSelectedPeriod({...selectedPeriod, ...updates})}
                 />
 
-                {/* Delete Dialog */}
-                {/*<DeleteDialog*/}
-                {/*  open={openDeleteDialog}*/}
-                {/*  period={selectedPeriod}*/}
-                {/*  onClose={() => {setOpenDeleteDialog(false); setSelectedPeriod(undefined)}}*/}
-                {/*  onConfirm={handleConfirmDelete}*/}
-                {/*/>*/}
+                <SettingsDialog open={openSettingsDialog} onClose={() => {setOpenSettingsDialog(false);}}/>
             </Box>
         </LocalizationProvider>
     );

@@ -79,8 +79,8 @@ export default function PeriodDialog({
                         <TextField
                             label="Location"
                             fullWidth
-                            value={period?.location || ''}
-                            onChange={(e) => onPeriodChange({ location: e.target.value })}
+                            value={period?.room || ''}
+                            onChange={(e) => onPeriodChange({ room: e.target.value })}
                         />
                         <InstructorsField period={period} onPeriodChange={onPeriodChange}/>
                         <TextField
