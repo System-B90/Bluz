@@ -1,5 +1,5 @@
-import {DEFAULT_INSTRUCTORS} from "@/components/schedule/types/types";
-import {Autocomplete, Chip, TextField} from "@mui/material";
+import {DEFAULT_INSTRUCTORS, DEFAULT_ROOMS} from "@/components/schedule/types/types";
+import {Autocomplete, Chip, FormControl, InputLabel, MenuItem, Select, TextField} from "@mui/material";
 import {Period} from "@/components/schedule/types/event";
 
 interface InstructorsFieldProps {
@@ -9,24 +9,20 @@ interface InstructorsFieldProps {
 
 export default function InstructorsField({period, onPeriodChange}: InstructorsFieldProps) {
     return (
-        <Autocomplete
-            multiple
-            options={DEFAULT_INSTRUCTORS}
-            getOptionLabel={(opt) => opt.name}
-            value={DEFAULT_INSTRUCTORS.filter((i) =>
-                period?.instructors?.includes(i.id)
-            )}
-            onChange={(_, newValue) =>
-                onPeriodChange({instructors: newValue.map((i) => i.id)})
-            }
-            renderInput={(params) => (
-                <TextField {...params} label="Instructors" placeholder="Select instructors"/>
-            )}
-            renderValue={(value, getTagProps) =>
-                value.map((option, index) => (
-                    <Chip label={option.name} {...getTagProps({index})} />
-                ))
-            }
-        />
+        <FormControl fullWidth>
+            <InputLabel>Instructors</InputLabel>
+            <Select
+                multiple
+                value={period?.instructors || []}
+                label="Instructors"
+                onChange={(e) => onPeriodChange({instructors: e.target.value as string[]})}
+            >
+                {DEFAULT_INSTRUCTORS.map((instructor) => (
+                    <MenuItem key={instructor.id} value={instructor.id}>
+                        {instructor.name}
+                    </MenuItem>
+                ))}
+            </Select>
+        </FormControl>
     )
 }

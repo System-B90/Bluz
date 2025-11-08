@@ -23,6 +23,9 @@ import {Period} from "@/components/schedule/types/event";
 import {DEFAULT_INSTRUCTORS, EVENT_TYPES} from "@/components/schedule/types/types";
 import InstructorsField from "@/components/schedule/event-dialog/instructors-field";
 import EventTypeField from "@/components/schedule/event-dialog/event-type-field";
+import SubjectField from "@/components/schedule/event-dialog/subject-field";
+import RoomField from "@/components/schedule/event-dialog/room-field";
+import EventTimeField from "@/components/schedule/event-dialog/time-fields";
 
 interface PeriodDialogProps {
     open: boolean;
@@ -57,31 +60,10 @@ export default function PeriodDialog({
                             value={period?.name || ""}
                             onChange={(e) => onPeriodChange({ name: e.target.value })}
                         />
-                        <TextField
-                            label="Subject"
-                            fullWidth
-                            value={period?.subject || ''}
-                            onChange={(e) => onPeriodChange({ subject: e.target.value })}
-                        />
+                        <SubjectField period={period} onPeriodChange={onPeriodChange}/>
                         <EventTypeField period={period} onPeriodChange={onPeriodChange}/>
-                        <TimePicker
-                            label="Start Time"
-                            value={period?.startTime || dayjs()}
-                            onChange={(time) => onPeriodChange({ startTime: time || dayjs() })}
-                            slotProps={{ textField: { fullWidth: true } }}
-                        />
-                        <TimePicker
-                            label="End Time"
-                            value={period?.endTime || dayjs()}
-                            onChange={(time) => onPeriodChange({ endTime: time || dayjs() })}
-                            slotProps={{ textField: { fullWidth: true } }}
-                        />
-                        <TextField
-                            label="Location"
-                            fullWidth
-                            value={period?.room || ''}
-                            onChange={(e) => onPeriodChange({ room: e.target.value })}
-                        />
+                        <EventTimeField period={period} onPeriodChange={onPeriodChange}/>
+                        <RoomField period={period} onPeriodChange={onPeriodChange}/>
                         <InstructorsField period={period} onPeriodChange={onPeriodChange}/>
                         <TextField
                             label="Notes"

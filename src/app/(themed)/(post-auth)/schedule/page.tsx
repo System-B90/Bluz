@@ -36,6 +36,7 @@ import {Room} from "@/components/schedule/types/room";
 import {ScheduleConfig} from "@/components/schedule/types/config";
 import {useThemeToggle} from "@/components/theme/theme-context";
 import SettingsDialog from "@/components/schedule/settings/settings-dialog";
+import {useTheme} from "next-themes";
 
 
 const DnDCalendar = withDragAndDrop<Period, Room>(Calendar);
@@ -49,7 +50,11 @@ export default function SchedulePage() {
         canUndo,
         canRedo,
     } = useHistoryState<Period[]>([]);
-    const toggleTheme = useThemeToggle();
+    const { theme, setTheme } = useTheme();
+
+    const toggleTheme = () => {
+        setTheme(theme === "dark" ? "light" : "dark");
+    };
     // const [periods, setPeriods] = useState<Period[]>([]);
     const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>(DEFAULT_SCHEDULE_CONFIG);
     const [selectedPeriod, setSelectedPeriod] = useState<Partial<Period>>();
@@ -144,6 +149,7 @@ export default function SchedulePage() {
                 <div>
                     <DnDCalendar
                         localizer={dayjsLocalizer(dayjs)}
+                        className="border-border border-rounded-md border-solid border-2 rounded-lg"
                         events={periods}
                         defaultView={"week"}
                         views={[Views.DAY, Views.WEEK, Views.WORK_WEEK]} // restrict to day/week
