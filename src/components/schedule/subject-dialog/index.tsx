@@ -16,26 +16,25 @@ import {
     Chip,
     Box,
 } from '@mui/material';
+import {Subject} from "@/components/schedule/types/subject";
 
 const availableGroups = ['Group A', 'Group B', 'Group C'];
 
-export default function SubjectDialog({ open, onClose, onSave }: {
+interface SubjectDialogProps {
     open: boolean;
+    subject: Partial<Subject>;
     onClose: () => void;
-    onSave: (subject: {
-        name: string;
-        displayName: string;
-        color: string;
-        groups: string[];
-    }) => void;
-}) {
+    onSave: (subject: Subject) => void;
+}
+
+export default function SubjectDialog({ open, subject, onClose, onSave }: SubjectDialogProps) {
     const [name, setName] = useState('');
     const [displayName, setDisplayName] = useState('');
     const [color, setColor] = useState('#1976d2');
     const [groups, setGroups] = useState<string[]>([]);
 
     const handleSave = () => {
-        onSave({ name, displayName, color, groups });
+        onSave({id: "", name, displayName, color, defaultGroupIDs: groups });
         setName('');
         setDisplayName('');
         setColor('#1976d2');
