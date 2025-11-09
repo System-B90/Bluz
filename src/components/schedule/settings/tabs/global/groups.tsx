@@ -10,6 +10,7 @@ import {
     Tooltip,
     Box,
     Stack,
+    Button,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -56,6 +57,9 @@ export default function GroupTreeViewer({initialGroups}: { initialGroups: Group[
                             </Box>
                         ) : null}
                     </AccordionDetails>
+                    <Box>
+                        <Button>Add Subgroup</Button>
+                    </Box>
                 </Accordion>
             </div>
         )
@@ -71,6 +75,7 @@ export default function GroupTreeViewer({initialGroups}: { initialGroups: Group[
                     {initialGroups.map(renderGroup)}
                 </Box>
             </SortableContext>
+            <Button>Add New Group</Button>
         </DndContext>
     );
 }

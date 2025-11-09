@@ -1,4 +1,4 @@
-import {AccordionDetails, Box, Stack, Typography} from "@mui/material";
+import {AccordionDetails, Box, Stack, Typography, Button} from "@mui/material";
 import {User} from "@/components/schedule/types/user";
 import GroupMemberField from "@/components/schedule/settings/tabs/global/group-tree/member-field";
 import React from "react";
@@ -37,6 +37,9 @@ export default function GroupMembersField({group}: GroupMemberFieldProps) {
                     ))}
                 </Stack>
             </SortableContext>
+            <Box>
+                <Button>Add Member</Button>
+            </Box>
         </DndContext>
     )
 }

@@ -31,6 +31,5 @@ export default function GroupField({group, attributes, listeners}: GroupFieldPro
                 />
             </Tooltip>
         </Stack>
-
     )
 }
