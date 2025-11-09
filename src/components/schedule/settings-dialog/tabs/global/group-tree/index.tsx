@@ -21,9 +21,9 @@ import {
 } from '@dnd-kit/core';
 import {User, UserType} from '@/components/schedule/types/user';
 import {Group, GroupType} from '@/components/schedule/types/group';
-import GroupMemberField from "@/components/schedule/settings/tabs/global/group-tree/member-field";
-import GroupMembersField from "@/components/schedule/settings/tabs/global/group-tree/group-members-field";
-import GroupField from "@/components/schedule/settings/tabs/global/group-tree/group-field";
+import GroupMemberField from "@/components/schedule/settings-dialog/tabs/global/group-tree/member-field";
+import GroupMembersField from "@/components/schedule/settings-dialog/tabs/global/group-tree/group-members-field";
+import GroupField from "@/components/schedule/settings-dialog/tabs/global/group-tree/group-field";
 import { CSS } from '@dnd-kit/utilities';
 import {SortableContext, useSortable, verticalListSortingStrategy} from "@dnd-kit/sortable";
 

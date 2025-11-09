@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Typography, TextField, Button, List, ListItem } from "@mui/material";
-import GroupTreeViewer from "@/components/schedule/settings/tabs/global/group-tree";
+import GroupTreeViewer from "@/components/schedule/settings-dialog/tabs/global/group-tree";
 import {DEFAULT_GROUPS, DEFAULT_SUBJECTS} from "@/components/schedule/types/types";
 
 const GlobalSection: React.FC = () => {

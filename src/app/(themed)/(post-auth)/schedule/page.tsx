@@ -35,7 +35,7 @@ import {Period} from "@/components/schedule/types/event";
 import {Room} from "@/components/schedule/types/room";
 import {ScheduleConfig} from "@/components/schedule/types/config";
 import {useThemeToggle} from "@/components/theme/theme-context";
-import SettingsDialog from "@/components/schedule/settings/settings-dialog";
+import Index from "@/components/schedule/settings-dialog";
 import {useTheme} from "next-themes";
 
 
@@ -186,7 +186,7 @@ export default function SchedulePage() {
                     onPeriodChange={(updates: Partial<Period>) => setSelectedPeriod({...selectedPeriod, ...updates})}
                 />
 
-                <SettingsDialog open={openSettingsDialog} onClose={() => {setOpenSettingsDialog(false);}}/>
+                <Index open={openSettingsDialog} onClose={() => {setOpenSettingsDialog(false);}}/>
             </Box>
         </LocalizationProvider>
     );

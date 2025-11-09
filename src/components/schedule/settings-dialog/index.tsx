@@ -17,7 +17,7 @@ interface SettingsDialogProps {
     onClose: () => void;
 }
 
-const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
+const Index: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     const [tab, setTab] = useState(0);
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -48,4 +48,4 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     );
 };
 
-export default SettingsDialog;
+export default Index;

@@ -1,6 +1,6 @@
 import {AccordionDetails, Box, Stack, Typography, Button} from "@mui/material";
 import {User} from "@/components/schedule/types/user";
-import GroupMemberField from "@/components/schedule/settings/tabs/global/group-tree/member-field";
+import GroupMemberField from "@/components/schedule/settings-dialog/tabs/global/group-tree/member-field";
 import React from "react";
 import {Group} from "@/components/schedule/types/group";
 import {SortableContext, verticalListSortingStrategy} from "@dnd-kit/sortable";
