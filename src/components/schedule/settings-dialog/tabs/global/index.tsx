@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Box, Typography, TextField, Button, List, ListItem } from "@mui/material";
 import GroupTreeViewer from "@/components/schedule/settings-dialog/tabs/global/group-tree";
 import {DEFAULT_GROUPS, DEFAULT_SUBJECTS} from "@/components/schedule/types/types";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+
 
 const GlobalSection: React.FC = () => {
     const [rooms, setRooms] = useState<string[]>([]);
@@ -28,6 +30,13 @@ const GlobalSection: React.FC = () => {
             <Typography variant="h6" gutterBottom>
                 Global Settings
             </Typography>
+
+            <Typography variant="subtitle1" sx={{ mt: 2 }}>
+                Weeks
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+                <DatePicker label="Start Date"/>
+            </Box>
 
             {/* Rooms */}
             <Typography variant="subtitle1" sx={{ mt: 2 }}>
