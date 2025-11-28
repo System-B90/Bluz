@@ -36,6 +36,8 @@
     "react-dom": "^19.2.0",
     "rimraf": "^6.1.0",
     "sass": "^1.93.3",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "stylis": "^4.3.6",
     "stylis-plugin-rtl": "^2.1.1",
     "uuid": "^13.0.0",
