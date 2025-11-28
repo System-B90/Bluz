@@ -609,9 +609,18 @@ button.rbc-input::-moz-focus-inner {
     position: absolute;
     pointer-events: none;
 }
+
+.calendar-container {
+    width: 100%;
+    height: 100vh; /* Full viewport height */
+    display: flex;
+    flex-direction: column;
+}
+
 .rbc-calendar {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    flex: 1;
     overflow: hidden;
 }
 .rbc-toolbar button {

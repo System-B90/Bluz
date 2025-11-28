@@ -4,6 +4,6 @@ export interface Subject {
     id: string;
     name: string;
     displayName: string;
-    color: string;
+    color?: string;
     defaultGroupIDs?: string[];
 }

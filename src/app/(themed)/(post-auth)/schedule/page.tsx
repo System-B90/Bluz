@@ -20,7 +20,16 @@ import {
     DEFAULT_ROOMS,
     DEFAULT_SCHEDULE_CONFIG
 } from '@/components/schedule/types/types';
-import {Calendar, dayjsLocalizer, SlotInfo, stringOrDate, View, Views} from "react-big-calendar";
+import {
+    Calendar, Culture,
+    DateLocalizer,
+    DateRange,
+    dayjsLocalizer,
+    SlotInfo,
+    stringOrDate,
+    View,
+    Views
+} from "react-big-calendar";
 
 import withDragAndDrop, {EventInteractionArgs} from "react-big-calendar/lib/addons/dragAndDrop";
 
@@ -50,7 +59,7 @@ export default function SchedulePage() {
         canUndo,
         canRedo,
     } = useHistoryState<Period[]>([]);
-    const { theme, setTheme } = useTheme();
+    const {theme, setTheme} = useTheme();
 
     const toggleTheme = () => {
         setTheme(theme === "dark" ? "light" : "dark");
@@ -73,6 +82,10 @@ export default function SchedulePage() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [undo, redo]);
 
+    // const timeFormat = (range: DateRange, culture?: Culture, localizer?: DateLocalizer) =>{
+    //     return localizer.format(range.start, 'HH:mm', culture)
+    //
+    // };
     const handleEditPeriod = (period: Period): void => {
         setSelectedPeriod(period)
         setOpenPeriodDialog(true);
@@ -91,9 +104,11 @@ export default function SchedulePage() {
             type: period.type || 'exercise',
             room: period.room || "",
             instructors: period.instructors || [],
+            tags: period.tags || [],
             notes: period.notes || '',
             locked: period.locked || false,
             required: period.required || false,
+            hidden: period.hidden || false,
         };
 
         setPeriods([...periods.filter(p => p.id !== newPeriod.id), newPeriod]);
@@ -145,14 +160,19 @@ export default function SchedulePage() {
                         </IconButton>
                     </Toolbar>
                 </AppBar>
-                <div>
+                {/*<div style={{ height: '100vh', overflowY: 'auto' }}>*/}
+                <Box className="calendar-container">
                     <DnDCalendar
+                        min={new Date(2025, 0, 1, 7, 0)}  // 8:00 AM
+                        max={new Date(2025, 0, 1, 22, 0)} // 6:00 PM
+                        step={5}
+                        timeslots={12}
                         localizer={dayjsLocalizer(dayjs)}
                         className="border-border border-rounded-md border-solid border-2 rounded-lg"
                         events={periods}
                         defaultView={"week"}
                         views={[Views.DAY, Views.WEEK, Views.WORK_WEEK]} // restrict to day/week
-                        onView={(view: View): void => setCurrentView(view)}
+                        // onView={(view: View): void => setCurrentView(view)}
                         selectable
                         onSelectEvent={setSelectedPeriod}
                         onSelectSlot={handleSlotSelect}
@@ -170,9 +190,15 @@ export default function SchedulePage() {
                         startAccessor={(event) => event.startTime.toDate()}
                         endAccessor={(event) => event.endTime.toDate()}
                         rtl={true}
-                        style={{height: "100%"}}
+                        formats={{
+                            timeGutterFormat: 'HH:mm',
+                            // eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
+                            //     `${localizer.format(start, 'HH:mm', culture)} – ${localizer.format(end, 'HH:mm', culture)}`,
+                        }}
+                        // style={{height: "100hv"}}
                     />
-                </div>
+                </Box>
+                {/*</div>*/}
 
                 {/* Period Dialog */}
                 <PeriodDialog

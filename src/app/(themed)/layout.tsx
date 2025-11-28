@@ -5,6 +5,7 @@ import { SnackbarProvider } from 'notistack';
 import { CustomThemeProvider } from '@/components/theme/theme-context';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { ThemeSelect } from '@/components/theme/theme-select';
+import CssBaseline from '@mui/material/CssBaseline';
 
 const rtlCache = createCache({
     key: 'muirtl',
@@ -27,6 +28,7 @@ export default function ThemedLayout({ children }: { children: React.ReactNode }
         enableSystem
         disableTransitionOnChange
     >
+        {/*<CssBaseline />*/}
         {children}
     </ThemeProvider>
     );

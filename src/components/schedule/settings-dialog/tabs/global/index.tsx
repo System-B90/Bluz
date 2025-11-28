@@ -3,6 +3,7 @@ import { Box, Typography, TextField, Button, List, ListItem } from "@mui/materia
 import GroupTreeViewer from "@/components/schedule/settings-dialog/tabs/global/group-tree";
 import {DEFAULT_GROUPS, DEFAULT_SUBJECTS} from "@/components/schedule/types/types";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import NumberSpinner from "@/components/base/number-spinner";
 
 
 const GlobalSection: React.FC = () => {
@@ -36,6 +37,7 @@ const GlobalSection: React.FC = () => {
             </Typography>
             <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
                 <DatePicker label="Start Date"/>
+                <NumberSpinner label="Weeks" min={10} max={40} />
             </Box>
 
             {/* Rooms */}

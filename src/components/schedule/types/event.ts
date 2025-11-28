@@ -12,7 +12,9 @@ export interface Period {
     type: EventType;
     room: string; // Room ID
     instructors: string[]; // Array of instructor IDs
+    tags: string[];
     notes: string;
     locked: boolean; // New field to indicate if period is locked
+    hidden: boolean;
     required: boolean; // New field for potential F.A. (פוטנציאל פ"א)
 }
