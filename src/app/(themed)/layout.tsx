@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/theme/theme-provider';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
+
 export default function ThemedLayout({ children }: { children: React.ReactNode; })
 {
     return (
