@@ -9,7 +9,6 @@ import { Box } from '@mui/material';
 import { useHistoryState } from "@uidotdev/usehooks";
 import dayjs from 'dayjs';
 import 'dayjs/locale/he';
-import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from 'react';
 import { v4 as uuid4 } from 'uuid';
 
@@ -21,12 +20,7 @@ export default function SchedulePage()
         undo,
         redo,
     } = useHistoryState<Array<Period>>([]);
-    const { theme, setTheme } = useTheme();
 
-    const toggleTheme = () =>
-    {
-        setTheme(theme === "dark" ? "light" : "dark");
-    };
     const [ selectedPeriod, setSelectedPeriod ] = useState<Partial<Period>>();
     const [ openPeriodDialog, setOpenPeriodDialog ] = useState<boolean>(false);
     const [ openSettingsDialog, setOpenSettingsDialog ] = useState<boolean>(false);
@@ -66,10 +60,15 @@ export default function SchedulePage()
         setOpenPeriodDialog(false);
     }, [ periods, setPeriods, setOpenPeriodDialog ]);
 
+    const handleClosePeriodDialog = useCallback((): void =>
+    {
+        setOpenPeriodDialog(false);
+        setSelectedPeriod(undefined);
+    }, [ setOpenPeriodDialog, setSelectedPeriod ]);
 
     return (
         <Box sx={ { p: 0, maxWidth: '100%', direction: 'rtl' } }>
-            <ScheduleAppBar toggleTheme={ toggleTheme } setOpenSettingsDialog={ setOpenSettingsDialog } />
+            <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
             <Box className="calendar-container">
                 <BluezCalendar handleSavePeriod={ handleSavePeriod } setOpenPeriodDialog={ setOpenPeriodDialog } />
             </Box>
@@ -77,11 +76,7 @@ export default function SchedulePage()
             <PeriodDialog
                 open={ openPeriodDialog }
                 period={ selectedPeriod || {} }
-                onClose={ () =>
-                {
-                    setOpenPeriodDialog(false);
-                    setSelectedPeriod(undefined);
-                } }
+                onClose={ handleClosePeriodDialog }
                 onSave={ handleSavePeriod }
                 onPeriodChange={ (updates: Partial<Period>) => setSelectedPeriod({ ...selectedPeriod, ...updates }) }
             />

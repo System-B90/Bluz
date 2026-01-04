@@ -17,6 +17,7 @@
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.6",
     "@mui/material-nextjs": "^7.3.5",
+    "@mui/stylis-plugin-rtl": "^7.3.6",
     "@mui/x-date-pickers": "^8.17.0",
     "@opentelemetry/api-logs": "^0.208.0",
     "@popperjs/core": "^2.11.8",

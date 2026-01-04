@@ -12,10 +12,10 @@ export default function SubjectField({ period, onPeriodChange }: SubjectFieldPro
 {
     return (
         <FormControl fullWidth>
-            <InputLabel>Subject</InputLabel>
+            <InputLabel>מקצוע</InputLabel>
             <Select
                 value={ period?.subject || "" }
-                label="Subject"
+                label="מקצוע"
                 onChange={ (e) => onPeriodChange({ subject: e.target.value }) }
             >
                 { DEFAULT_SUBJECTS.map((subject) => (

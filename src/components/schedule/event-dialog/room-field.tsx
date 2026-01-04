@@ -12,10 +12,10 @@ export default function RoomField({ period, onPeriodChange }: RoomFieldProps)
 {
     return (
         <FormControl fullWidth>
-            <InputLabel>Room</InputLabel>
+            <InputLabel>כיתה</InputLabel>
             <Select
                 value={ period?.room || "" }
-                label="Room"
+                label="כיתה"
                 onChange={ (e) => onPeriodChange({ room: e.target.value }) }
             >
                 { DEFAULT_ROOMS.map((room) => (

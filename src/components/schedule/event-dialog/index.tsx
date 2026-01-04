@@ -1,23 +1,23 @@
 'use client';
 
+import EventTypeField from "@/components/schedule/event-dialog/event-type-field";
+import InstructorsField from "@/components/schedule/event-dialog/instructors-field";
+import RoomField from "@/components/schedule/event-dialog/room-field";
+import SubjectField from "@/components/schedule/event-dialog/subject-field";
+import EventTimeField from "@/components/schedule/event-dialog/time-fields";
+import { Period } from "@/components/schedule/types/event";
 import
 {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    Switch,
-    FormControlLabel,
-    Button,
     Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControlLabel,
+    Switch,
+    TextField,
 } from '@mui/material';
-import { Period } from "@/components/schedule/types/event";
-import InstructorsField from "@/components/schedule/event-dialog/instructors-field";
-import EventTypeField from "@/components/schedule/event-dialog/event-type-field";
-import SubjectField from "@/components/schedule/event-dialog/subject-field";
-import RoomField from "@/components/schedule/event-dialog/room-field";
-import EventTimeField from "@/components/schedule/event-dialog/time-fields";
 
 interface PeriodDialogProps
 {
@@ -38,7 +38,7 @@ export default function PeriodDialog({
 {
     return (
         <Dialog open={ open } onClose={ onClose } maxWidth="md" fullWidth>
-            <DialogTitle>Edit Period</DialogTitle>
+            <DialogTitle>ערוך מופע</DialogTitle>
             <form
                 onSubmit={ (e) =>
                 {
@@ -49,7 +49,7 @@ export default function PeriodDialog({
                 <DialogContent>
                     <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 } }>
                         <TextField
-                            label="Name"
+                            label="שם"
                             fullWidth
                             required
                             value={ period?.name || "" }
@@ -61,7 +61,7 @@ export default function PeriodDialog({
                         <RoomField period={ period } onPeriodChange={ onPeriodChange } />
                         <InstructorsField period={ period } onPeriodChange={ onPeriodChange } />
                         <TextField
-                            label="Notes"
+                            label="הערות"
                             fullWidth
                             multiline
                             rows={ 3 }
@@ -75,7 +75,7 @@ export default function PeriodDialog({
                                     onChange={ (e) => onPeriodChange({ locked: e.target.checked }) }
                                 />
                             }
-                            label="Locked"
+                            label="נעול"
                         />
                         <FormControlLabel
                             control={
@@ -84,14 +84,14 @@ export default function PeriodDialog({
                                     onChange={ (e) => onPeriodChange({ required: e.target.checked }) }
                                 />
                             }
-                            label="Required"
+                            label="קריטי"
                         />
                     </Box>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={ onClose }>Cancel</Button>
+                    <Button onClick={ onClose }>ביטול</Button>
                     <Button type="submit" variant="contained" disabled={ !period?.name }>
-                        Save
+                        שמור
                     </Button>
                 </DialogActions>
             </form>

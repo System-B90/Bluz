@@ -2,13 +2,18 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { AppBar, AppBarProps, IconButton, Toolbar, Typography } from "@mui/material";
-import { MouseEventHandler } from 'react';
+import { useTheme } from 'next-themes';
 
-export default function ScheduleAppBar({ toggleTheme, setOpenSettingsDialog, ...props }: {
-    toggleTheme: MouseEventHandler<HTMLButtonElement>,
+export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
     setOpenSettingsDialog: (open: boolean) => void,
 } & Exclude<AppBarProps, 'position'>)
 {
+    const { theme, setTheme } = useTheme();
+
+    const toggleTheme = () =>
+    {
+        setTheme(theme === "dark" ? "light" : "dark");
+    };
     return (
         <AppBar position="static" { ...props }>
             <Toolbar>

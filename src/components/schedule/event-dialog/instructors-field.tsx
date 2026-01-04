@@ -12,11 +12,11 @@ export default function InstructorsField({ period, onPeriodChange }: Instructors
 {
     return (
         <FormControl fullWidth>
-            <InputLabel>Instructors</InputLabel>
+            <InputLabel>מדריכים</InputLabel>
             <Select
                 multiple
                 value={ period?.instructors || [] }
-                label="Instructors"
+                label="מדריכים"
                 onChange={ (e) => onPeriodChange({ instructors: e.target.value as string[] }) }
             >
                 { DEFAULT_INSTRUCTORS.map((instructor) => (
