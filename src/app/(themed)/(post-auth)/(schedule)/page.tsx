@@ -149,85 +149,83 @@ export default function SchedulePage()
     };
 
     return (
-        <LocalizationProvider dateAdapter={ AdapterDayjs } adapterLocale="he">
-            <Box sx={ { p: 3, maxWidth: '100%', direction: 'rtl' } }>
-                <AppBar position="static">
-                    <Toolbar>
-                        <Typography variant="h6" sx={ { flexGrow: 1 } }>
-                            Schedule
-                        </Typography>
+        <Box sx={ { p: 3, maxWidth: '100%', direction: 'rtl' } }>
+            <AppBar position="static">
+                <Toolbar>
+                    <Typography variant="h6" sx={ { flexGrow: 1 } }>
+                        Schedule
+                    </Typography>
 
-                        <IconButton color="inherit" onClick={ () =>
-                        {
-                        } }>
-                            <FilterListIcon />
-                        </IconButton>
-
-                        <IconButton color="inherit" onClick={ toggleTheme }>
-                            <Brightness4Icon />
-                        </IconButton>
-
-                        <IconButton color="inherit" onClick={ () => setOpenSettingsDialog(true) }>
-                            <SettingsIcon />
-                        </IconButton>
-                    </Toolbar>
-                </AppBar>
-                {/*<div style={{ height: '100vh', overflowY: 'auto' }}>*/ }
-                <Box className="calendar-container">
-                    <DnDCalendar
-                        min={ new Date(2025, 0, 1, 7, 0) }  // 8:00 AM
-                        max={ new Date(2025, 0, 1, 22, 0) } // 6:00 PM
-                        step={ 5 }
-                        timeslots={ 12 }
-                        localizer={ dayjsLocalizer(dayjs) }
-                        className="border-border border-rounded-md border-solid border-2 rounded-lg"
-                        events={ periods }
-                        defaultView={ "week" }
-                        views={ [ Views.DAY, Views.WEEK, Views.WORK_WEEK ] } // restrict to day/week
-                        // onView={(view: View): void => setCurrentView(view)}
-                        selectable
-                        onSelectEvent={ setSelectedPeriod }
-                        onSelectSlot={ handleSlotSelect }
-                        onDoubleClickEvent={ (event: Period) =>
-                        {
-                            handleEditPeriod(event);
-                        } }
-                        { ...(currentView === 'day' && {
-                            resources: DEFAULT_ROOMS,
-                            resourceIdAccessor: 'id',
-                            resourceTitleAccessor: 'name',
-                            resourceAccessor: (event: Period) => { event.room; }
-                        }) }
-                        onEventResize={ handlePeriodDrag }
-                        onEventDrop={ handlePeriodDrag }
-                        startAccessor={ (event) => event.startTime.toDate() }
-                        endAccessor={ (event) => event.endTime.toDate() }
-                        rtl={ true }
-                        formats={ {
-                            timeGutterFormat: 'HH:mm',
-                            // eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
-                            //     `${localizer.format(start, 'HH:mm', culture)} – ${localizer.format(end, 'HH:mm', culture)}`,
-                        } }
-                    // style={{height: "100hv"}}
-                    />
-                </Box>
-                {/*</div>*/ }
-
-                {/* Period Dialog */ }
-                <PeriodDialog
-                    open={ openPeriodDialog }
-                    period={ selectedPeriod || {} }
-                    onClose={ () =>
+                    <IconButton color="inherit" onClick={ () =>
                     {
-                        setOpenPeriodDialog(false);
-                        setSelectedPeriod(undefined);
-                    } }
-                    onSave={ handleSavePeriod }
-                    onPeriodChange={ (updates: Partial<Period>) => setSelectedPeriod({ ...selectedPeriod, ...updates }) }
-                />
+                    } }>
+                        <FilterListIcon />
+                    </IconButton>
 
-                <Index open={ openSettingsDialog } onClose={ () => { setOpenSettingsDialog(false); } } />
+                    <IconButton color="inherit" onClick={ toggleTheme }>
+                        <Brightness4Icon />
+                    </IconButton>
+
+                    <IconButton color="inherit" onClick={ () => setOpenSettingsDialog(true) }>
+                        <SettingsIcon />
+                    </IconButton>
+                </Toolbar>
+            </AppBar>
+            {/*<div style={{ height: '100vh', overflowY: 'auto' }}>*/ }
+            <Box className="calendar-container">
+                <DnDCalendar
+                    min={ new Date(2025, 0, 1, 7, 0) }  // 8:00 AM
+                    max={ new Date(2025, 0, 1, 22, 0) } // 6:00 PM
+                    step={ 5 }
+                    timeslots={ 12 }
+                    localizer={ dayjsLocalizer(dayjs) }
+                    className="border-border border-rounded-md border-solid border-2 rounded-lg"
+                    events={ periods }
+                    defaultView={ "week" }
+                    views={ [ Views.DAY, Views.WEEK, Views.WORK_WEEK ] } // restrict to day/week
+                    // onView={(view: View): void => setCurrentView(view)}
+                    selectable
+                    onSelectEvent={ setSelectedPeriod }
+                    onSelectSlot={ handleSlotSelect }
+                    onDoubleClickEvent={ (event: Period) =>
+                    {
+                        handleEditPeriod(event);
+                    } }
+                    { ...(currentView === 'day' && {
+                        resources: DEFAULT_ROOMS,
+                        resourceIdAccessor: 'id',
+                        resourceTitleAccessor: 'name',
+                        resourceAccessor: (event: Period) => { event.room; }
+                    }) }
+                    onEventResize={ handlePeriodDrag }
+                    onEventDrop={ handlePeriodDrag }
+                    startAccessor={ (event) => event.startTime.toDate() }
+                    endAccessor={ (event) => event.endTime.toDate() }
+                    rtl={ true }
+                    formats={ {
+                        timeGutterFormat: 'HH:mm',
+                        // eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
+                        //     `${localizer.format(start, 'HH:mm', culture)} – ${localizer.format(end, 'HH:mm', culture)}`,
+                    } }
+                // style={{height: "100hv"}}
+                />
             </Box>
-        </LocalizationProvider>
+            {/*</div>*/ }
+
+            {/* Period Dialog */ }
+            <PeriodDialog
+                open={ openPeriodDialog }
+                period={ selectedPeriod || {} }
+                onClose={ () =>
+                {
+                    setOpenPeriodDialog(false);
+                    setSelectedPeriod(undefined);
+                } }
+                onSave={ handleSavePeriod }
+                onPeriodChange={ (updates: Partial<Period>) => setSelectedPeriod({ ...selectedPeriod, ...updates }) }
+            />
+
+            <Index open={ openSettingsDialog } onClose={ () => { setOpenSettingsDialog(false); } } />
+        </Box>
     );
 }
