@@ -24,7 +24,7 @@ export default function SchedulePage()
     const [ selectedPeriod, setSelectedPeriod ] = useState<Partial<Period>>();
     const [ openPeriodDialog, setOpenPeriodDialog ] = useState<boolean>(false);
     const [ openSettingsDialog, setOpenSettingsDialog ] = useState<boolean>(false);
-
+    console.log('selectedPeriod', selectedPeriod);
     useEffect(() =>
     {
         const handleKeyDown = (e: KeyboardEvent) =>
@@ -38,6 +38,7 @@ export default function SchedulePage()
 
     const handleSavePeriod = useCallback((period: Partial<Period>): void =>
     {
+        console.log('Saving period:', period);
         if (!period || period.name === '') return;
 
         const newPeriod: Period = {
@@ -70,7 +71,7 @@ export default function SchedulePage()
         <Box sx={ { p: 0, maxWidth: '100%', direction: 'rtl' } }>
             <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
             <Box className="calendar-container">
-                <BluezCalendar handleSavePeriod={ handleSavePeriod } setOpenPeriodDialog={ setOpenPeriodDialog } />
+                <BluezCalendar handleSavePeriod={ handleSavePeriod } setOpenPeriodDialog={ setOpenPeriodDialog } setSelectedPeriod={ setSelectedPeriod } periods={ periods } />
             </Box>
 
             <PeriodDialog

@@ -4,7 +4,7 @@ import { Calendar, momentLocalizer } from 'react-big-calendar';
 
 // DO NOT SORT IMPORTS - they are ordered for a reason!
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, SetStateAction, Dispatch } from 'react';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/he';
@@ -47,17 +47,18 @@ const localizer = momentLocalizer(moment);
 export default function BluezCalendar({
     handleSavePeriod,
     setOpenPeriodDialog,
+    setSelectedPeriod,
+    periods,
 }: {
     handleSavePeriod: (period: Period) => void;
     setOpenPeriodDialog: (open: boolean) => void;
+    setSelectedPeriod: Dispatch<SetStateAction<Partial<Period> | undefined>>;
+    periods: Array<Period>;
 })
 {
-    const [ selectedPeriod, setSelectedPeriod ] = useState<Partial<Period>>();
     const [ currentView, setCurrentView ] = useState<View>(Views.WEEK);
 
-    const {
-        state: periods,
-    } = useHistoryState<Array<Period>>([]);
+    console.log('Periods', periods);
 
     const handleEditPeriod = useCallback((period: Period) =>
     {
@@ -67,8 +68,6 @@ export default function BluezCalendar({
 
     const handlePeriodDrag = useCallback((changes: EventInteractionArgs<Period>): void =>
     {
-        console.log(changes);
-        console.log(selectedPeriod);
         const updates: Partial<Period> = { startTime: dayjs(changes.start), endTime: dayjs(changes.end), room: changes.resourceId?.toString() || '' };
         const newPeriod = { ...changes.event, ...updates };
         handleSavePeriod(newPeriod);
@@ -76,6 +75,7 @@ export default function BluezCalendar({
 
     const handleSlotSelect = useCallback((slotInfo: SlotInfo): void =>
     {
+        console.log(slotInfo);
         if (slotInfo.action === "click") { return; }
 
         const newPeriod: Partial<Period> = {
@@ -84,6 +84,7 @@ export default function BluezCalendar({
             room: slotInfo.resourceId?.toString() || '',
         };
 
+        console.log('newPeriod', newPeriod);
         setSelectedPeriod(newPeriod);
         setOpenPeriodDialog(true);
     }, [ setSelectedPeriod, setOpenPeriodDialog ]);

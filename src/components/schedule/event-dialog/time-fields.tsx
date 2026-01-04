@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import { Period } from "@/components/schedule/types/event";
 import { TimePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
+import { useEffect } from "react";
 
 interface EventTimeFieldProps
 {
@@ -12,6 +13,7 @@ interface EventTimeFieldProps
 export default function EventTimeField({ period, onPeriodChange }: EventTimeFieldProps)
 {
     const duration: number = period?.endTime?.diff(period?.startTime) || 0;
+    console.log('EventTimeField duration', period);
     return (
         <Box display="flex" gap={ 2 } alignSelf="center">
             <TimePicker

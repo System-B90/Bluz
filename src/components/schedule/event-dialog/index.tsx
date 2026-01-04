@@ -75,7 +75,7 @@ export default function PeriodDialog({
                                     onChange={ (e) => onPeriodChange({ locked: e.target.checked }) }
                                 />
                             }
-                            label="נעול"
+                            label="מתואם"
                         />
                         <FormControlLabel
                             control={
