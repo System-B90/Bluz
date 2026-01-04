@@ -1,26 +1,28 @@
 'use client';
 
-import {useState, useEffect, useCallback} from 'react';
-import {Box} from '@mui/material';
-import {AppBar, Toolbar, IconButton, Typography, Dialog, Button} from '@mui/material';
+import { useState, useEffect, useCallback } from 'react';
+import { Box } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Typography, Dialog, Button } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
-import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
-import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import 'dayjs/locale/he';
 
 // Import components
 import PeriodDialog from '@/components/schedule/event-dialog';
-import {useHistoryState} from "@uidotdev/usehooks";
+import { useHistoryState } from "@uidotdev/usehooks";
 
 // Import types
-import {
+import
+{
     DEFAULT_ROOMS,
     DEFAULT_SCHEDULE_CONFIG
 } from '@/components/schedule/types/types';
-import {
+import
+{
     Calendar, Culture,
     DateLocalizer,
     DateRange,
@@ -31,26 +33,27 @@ import {
     Views
 } from "react-big-calendar";
 
-import withDragAndDrop, {EventInteractionArgs} from "react-big-calendar/lib/addons/dragAndDrop";
+import withDragAndDrop, { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
-import {v4 as uuid4} from 'uuid';
+import { v4 as uuid4 } from 'uuid';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/sass/styles.scss';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
-import '@/style/calendar.css'
+import '@/style/calendar.css';
 
-import {Period} from "@/components/schedule/types/event";
-import {Room} from "@/components/schedule/types/room";
-import {ScheduleConfig} from "@/components/schedule/types/config";
-import {useThemeToggle} from "@/components/theme/theme-context";
+import { Period } from "@/components/schedule/types/event";
+import { Room } from "@/components/schedule/types/room";
+import { ScheduleConfig } from "@/components/schedule/types/config";
+import { useThemeToggle } from "@/components/theme/theme-context";
 import Index from "@/components/schedule/settings-dialog";
-import {useTheme} from "next-themes";
+import { useTheme } from "next-themes";
 
 
 const DnDCalendar = withDragAndDrop<Period, Room>(Calendar);
 
-export default function SchedulePage() {
+export default function SchedulePage()
+{
     const {
         state: periods,
         set: setPeriods,
@@ -59,40 +62,45 @@ export default function SchedulePage() {
         canUndo,
         canRedo,
     } = useHistoryState<Period[]>([]);
-    const {theme, setTheme} = useTheme();
+    const { theme, setTheme } = useTheme();
 
-    const toggleTheme = () => {
+    const toggleTheme = () =>
+    {
         setTheme(theme === "dark" ? "light" : "dark");
     };
     // const [periods, setPeriods] = useState<Period[]>([]);
-    const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>(DEFAULT_SCHEDULE_CONFIG);
-    const [selectedPeriod, setSelectedPeriod] = useState<Partial<Period>>();
-    const [openPeriodDialog, setOpenPeriodDialog] = useState<boolean>(false);
-    const [openSettingsDialog, setOpenSettingsDialog] = useState<boolean>(false);
-    const [currentView, setCurrentView] = useState<View>('week');
+    const [ scheduleConfig, setScheduleConfig ] = useState<ScheduleConfig>(DEFAULT_SCHEDULE_CONFIG);
+    const [ selectedPeriod, setSelectedPeriod ] = useState<Partial<Period>>();
+    const [ openPeriodDialog, setOpenPeriodDialog ] = useState<boolean>(false);
+    const [ openSettingsDialog, setOpenSettingsDialog ] = useState<boolean>(false);
+    const [ currentView, setCurrentView ] = useState<View>('week');
 
-    const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
+    const [ openDeleteDialog, setOpenDeleteDialog ] = useState<boolean>(false);
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
+    useEffect(() =>
+    {
+        const handleKeyDown = (e: KeyboardEvent) =>
+        {
             if (e.ctrlKey && e.key === 'z') undo();
             if (e.ctrlKey && e.key === 'y') redo();
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [undo, redo]);
+    }, [ undo, redo ]);
 
     // const timeFormat = (range: DateRange, culture?: Culture, localizer?: DateLocalizer) =>{
     //     return localizer.format(range.start, 'HH:mm', culture)
     //
     // };
-    const handleEditPeriod = (period: Period): void => {
-        setSelectedPeriod(period)
+    const handleEditPeriod = (period: Period): void =>
+    {
+        setSelectedPeriod(period);
         setOpenPeriodDialog(true);
     };
 
 
-    const handleSavePeriod = (period: Partial<Period>): void => {
+    const handleSavePeriod = (period: Partial<Period>): void =>
+    {
         if (!period || period.name === '') return;
 
         const newPeriod: Period = {
@@ -111,21 +119,24 @@ export default function SchedulePage() {
             hidden: period.hidden || false,
         };
 
-        setPeriods([...periods.filter(p => p.id !== newPeriod.id), newPeriod]);
+        setPeriods([ ...periods.filter(p => p.id !== newPeriod.id), newPeriod ]);
         setOpenPeriodDialog(false);
     };
 
-    const handlePeriodDrag = (changes: EventInteractionArgs<Period>): void => {
+    const handlePeriodDrag = (changes: EventInteractionArgs<Period>): void =>
+    {
         console.log(changes);
         console.log(selectedPeriod);
-        const updates: Partial<Period> = {startTime: dayjs(changes.start), endTime: dayjs(changes.end), room: changes.resourceId?.toString() || ''};
-        const newPeriod = {...changes.event, ...updates};
+        const updates: Partial<Period> = { startTime: dayjs(changes.start), endTime: dayjs(changes.end), room: changes.resourceId?.toString() || '' };
+        const newPeriod = { ...changes.event, ...updates };
         handleSavePeriod(newPeriod);
-    }
+    };
 
 
-    const handleSlotSelect = (slotInfo: SlotInfo): void => {
-        if (slotInfo.action === "click") {
+    const handleSlotSelect = (slotInfo: SlotInfo): void =>
+    {
+        if (slotInfo.action === "click")
+        {
             return;
         }
         const newPeriod: Partial<Period> = {
@@ -138,81 +149,84 @@ export default function SchedulePage() {
     };
 
     return (
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
-            <Box sx={{p: 3, maxWidth: '100%', direction: 'rtl'}}>
+        <LocalizationProvider dateAdapter={ AdapterDayjs } adapterLocale="he">
+            <Box sx={ { p: 3, maxWidth: '100%', direction: 'rtl' } }>
                 <AppBar position="static">
                     <Toolbar>
-                        <Typography variant="h6" sx={{flexGrow: 1}}>
+                        <Typography variant="h6" sx={ { flexGrow: 1 } }>
                             Schedule
                         </Typography>
 
-                        <IconButton color="inherit" onClick={() => {
-                        }}>
-                            <FilterListIcon/>
+                        <IconButton color="inherit" onClick={ () =>
+                        {
+                        } }>
+                            <FilterListIcon />
                         </IconButton>
 
-                        <IconButton color="inherit" onClick={toggleTheme}>
-                            <Brightness4Icon/>
+                        <IconButton color="inherit" onClick={ toggleTheme }>
+                            <Brightness4Icon />
                         </IconButton>
 
-                        <IconButton color="inherit" onClick={() => setOpenSettingsDialog(true)}>
-                            <SettingsIcon/>
+                        <IconButton color="inherit" onClick={ () => setOpenSettingsDialog(true) }>
+                            <SettingsIcon />
                         </IconButton>
                     </Toolbar>
                 </AppBar>
-                {/*<div style={{ height: '100vh', overflowY: 'auto' }}>*/}
+                {/*<div style={{ height: '100vh', overflowY: 'auto' }}>*/ }
                 <Box className="calendar-container">
                     <DnDCalendar
-                        min={new Date(2025, 0, 1, 7, 0)}  // 8:00 AM
-                        max={new Date(2025, 0, 1, 22, 0)} // 6:00 PM
-                        step={5}
-                        timeslots={12}
-                        localizer={dayjsLocalizer(dayjs)}
+                        min={ new Date(2025, 0, 1, 7, 0) }  // 8:00 AM
+                        max={ new Date(2025, 0, 1, 22, 0) } // 6:00 PM
+                        step={ 5 }
+                        timeslots={ 12 }
+                        localizer={ dayjsLocalizer(dayjs) }
                         className="border-border border-rounded-md border-solid border-2 rounded-lg"
-                        events={periods}
-                        defaultView={"week"}
-                        views={[Views.DAY, Views.WEEK, Views.WORK_WEEK]} // restrict to day/week
+                        events={ periods }
+                        defaultView={ "week" }
+                        views={ [ Views.DAY, Views.WEEK, Views.WORK_WEEK ] } // restrict to day/week
                         // onView={(view: View): void => setCurrentView(view)}
                         selectable
-                        onSelectEvent={setSelectedPeriod}
-                        onSelectSlot={handleSlotSelect}
-                        onDoubleClickEvent={(event: Period) => {
-                            handleEditPeriod(event)
-                        }}
-                        {...(currentView === 'day' && {
+                        onSelectEvent={ setSelectedPeriod }
+                        onSelectSlot={ handleSlotSelect }
+                        onDoubleClickEvent={ (event: Period) =>
+                        {
+                            handleEditPeriod(event);
+                        } }
+                        { ...(currentView === 'day' && {
                             resources: DEFAULT_ROOMS,
                             resourceIdAccessor: 'id',
                             resourceTitleAccessor: 'name',
-                            resourceAccessor: (event: Period) => {event.room}
-                        })}
-                        onEventResize={handlePeriodDrag}
-                        onEventDrop={handlePeriodDrag}
-                        startAccessor={(event) => event.startTime.toDate()}
-                        endAccessor={(event) => event.endTime.toDate()}
-                        rtl={true}
-                        formats={{
+                            resourceAccessor: (event: Period) => { event.room; }
+                        }) }
+                        onEventResize={ handlePeriodDrag }
+                        onEventDrop={ handlePeriodDrag }
+                        startAccessor={ (event) => event.startTime.toDate() }
+                        endAccessor={ (event) => event.endTime.toDate() }
+                        rtl={ true }
+                        formats={ {
                             timeGutterFormat: 'HH:mm',
                             // eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
                             //     `${localizer.format(start, 'HH:mm', culture)} – ${localizer.format(end, 'HH:mm', culture)}`,
-                        }}
-                        // style={{height: "100hv"}}
+                        } }
+                    // style={{height: "100hv"}}
                     />
                 </Box>
-                {/*</div>*/}
+                {/*</div>*/ }
 
-                {/* Period Dialog */}
+                {/* Period Dialog */ }
                 <PeriodDialog
-                    open={openPeriodDialog}
-                    period={selectedPeriod || {}}
-                    onClose={() => {
+                    open={ openPeriodDialog }
+                    period={ selectedPeriod || {} }
+                    onClose={ () =>
+                    {
                         setOpenPeriodDialog(false);
-                        setSelectedPeriod(undefined)
-                    }}
-                    onSave={handleSavePeriod}
-                    onPeriodChange={(updates: Partial<Period>) => setSelectedPeriod({...selectedPeriod, ...updates})}
+                        setSelectedPeriod(undefined);
+                    } }
+                    onSave={ handleSavePeriod }
+                    onPeriodChange={ (updates: Partial<Period>) => setSelectedPeriod({ ...selectedPeriod, ...updates }) }
                 />
 
-                <Index open={openSettingsDialog} onClose={() => {setOpenSettingsDialog(false);}}/>
+                <Index open={ openSettingsDialog } onClose={ () => { setOpenSettingsDialog(false); } } />
             </Box>
         </LocalizationProvider>
     );
