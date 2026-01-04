@@ -4,14 +4,12 @@ import { Calendar, momentLocalizer } from 'react-big-calendar';
 
 // DO NOT SORT IMPORTS - they are ordered for a reason!
 
-import { useState, useEffect, useCallback } from 'react';
-import { Box } from '@mui/material';
+import { useState, useCallback } from 'react';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/he';
 
 // Import components
-import PeriodDialog from '@/components/schedule/event-dialog';
 import { useHistoryState } from "@uidotdev/usehooks";
 
 // Import types
@@ -21,7 +19,6 @@ import
 } from '@/components/schedule/types/types';
 import
 {
-    dayjsLocalizer,
     SlotInfo,
     View,
     Views
@@ -29,7 +26,6 @@ import
 
 import withDragAndDrop, { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
-import { v4 as uuid4 } from 'uuid';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/sass/styles.scss';
@@ -38,9 +34,7 @@ import '@/style/calendar.css';
 
 import { Period } from "@/components/schedule/types/event";
 import { Room } from "@/components/schedule/types/room";
-import Index from "@/components/schedule/settings-dialog";
-import { useTheme } from "next-themes";
-import ScheduleAppBar from '@/components/app-bar';
+import CALENDAR_MESSAGES from '@/components/calendar-messages';
 
 
 const DnDCalendar = withDragAndDrop<Period, Room>(Calendar);
@@ -61,8 +55,6 @@ export default function BluezCalendar({
     const [ selectedPeriod, setSelectedPeriod ] = useState<Partial<Period>>();
     const [ currentView, setCurrentView ] = useState<View>(Views.WEEK);
 
-    const [ openDeleteDialog, setOpenDeleteDialog ] = useState<boolean>(false);
-
     const {
         state: periods,
     } = useHistoryState<Array<Period>>([]);
@@ -73,29 +65,28 @@ export default function BluezCalendar({
         setOpenPeriodDialog(true);
     }, [ setSelectedPeriod, setOpenPeriodDialog ]);
 
-    const handlePeriodDrag = (changes: EventInteractionArgs<Period>): void =>
+    const handlePeriodDrag = useCallback((changes: EventInteractionArgs<Period>): void =>
     {
         console.log(changes);
         console.log(selectedPeriod);
         const updates: Partial<Period> = { startTime: dayjs(changes.start), endTime: dayjs(changes.end), room: changes.resourceId?.toString() || '' };
         const newPeriod = { ...changes.event, ...updates };
         handleSavePeriod(newPeriod);
-    };
+    }, [ handleSavePeriod ]);
 
-    const handleSlotSelect = (slotInfo: SlotInfo): void =>
+    const handleSlotSelect = useCallback((slotInfo: SlotInfo): void =>
     {
-        if (slotInfo.action === "click")
-        {
-            return;
-        }
+        if (slotInfo.action === "click") { return; }
+
         const newPeriod: Partial<Period> = {
             startTime: dayjs(slotInfo.start),
             endTime: dayjs(slotInfo.end),
             room: slotInfo.resourceId?.toString() || '',
         };
+
         setSelectedPeriod(newPeriod);
         setOpenPeriodDialog(true);
-    };
+    }, [ setSelectedPeriod, setOpenPeriodDialog ]);
 
     return (
         <DnDCalendar
@@ -104,25 +95,27 @@ export default function BluezCalendar({
             step={ 5 }
             timeslots={ 12 }
             // localizer={ dayjsLocalizer(dayjs) }
+
             localizer={ localizer }
+            messages={ CALENDAR_MESSAGES }
+
             className="border-border border-rounded-md border-solid border-2 rounded-lg"
             events={ periods }
             defaultView={ "week" }
             views={ [ Views.DAY, Views.WEEK, Views.WORK_WEEK ] } // restrict to day/week
-            // onView={(view: View): void => setCurrentView(view)}
+            onView={ setCurrentView }
             selectable
             onSelectEvent={ setSelectedPeriod }
             onSelectSlot={ handleSlotSelect }
-            onDoubleClickEvent={ (event: Period) =>
-            {
-                handleEditPeriod(event);
-            } }
+            onDoubleClickEvent={ handleEditPeriod }
+
             { ...(currentView === 'day' && {
                 resources: DEFAULT_ROOMS,
                 resourceIdAccessor: 'id',
                 resourceTitleAccessor: 'name',
                 resourceAccessor: (event: Period) => { event.room; }
             }) }
+
             onEventResize={ handlePeriodDrag }
             onEventDrop={ handlePeriodDrag }
             startAccessor={ (event) => event.startTime.toDate() }

@@ -1,7 +1,5 @@
 'use client';
 
-import createCache from '@emotion/cache';
-import rtlPlugin from 'stylis-plugin-rtl';
 import { SnackbarProvider } from 'notistack';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { LocalizationProvider } from '@mui/x-date-pickers';

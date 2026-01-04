@@ -1,47 +1,17 @@
 'use client';
 
-// DO NOT SORT IMPORTS - they are ordered for a reason!
-
-import { useState, useEffect, useCallback } from 'react';
-import { Box } from '@mui/material';
-
-import dayjs from 'dayjs';
-import 'dayjs/locale/he';
-
-// Import components
-import PeriodDialog from '@/components/schedule/event-dialog';
-import { useHistoryState } from "@uidotdev/usehooks";
-
-// Import types
-import
-{
-    DEFAULT_ROOMS
-} from '@/components/schedule/types/types';
-import
-{
-    Calendar,
-    dayjsLocalizer,
-    SlotInfo,
-    View,
-    Views
-} from "react-big-calendar";
-
-import withDragAndDrop, { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
-
-import { v4 as uuid4 } from 'uuid';
-
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import 'react-big-calendar/lib/sass/styles.scss';
-import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
-import '@/style/calendar.css';
-
-import { Period } from "@/components/schedule/types/event";
-import { Room } from "@/components/schedule/types/room";
-import Index from "@/components/schedule/settings-dialog";
-import { useTheme } from "next-themes";
 import ScheduleAppBar from '@/components/app-bar';
 import BluezCalendar from '@/components/schedule/calendar';
-
+import PeriodDialog from '@/components/schedule/event-dialog';
+import Index from "@/components/schedule/settings-dialog";
+import { Period } from "@/components/schedule/types/event";
+import { Box } from '@mui/material';
+import { useHistoryState } from "@uidotdev/usehooks";
+import dayjs from 'dayjs';
+import 'dayjs/locale/he';
+import { useTheme } from "next-themes";
+import { useCallback, useEffect, useState } from 'react';
+import { v4 as uuid4 } from 'uuid';
 
 export default function SchedulePage()
 {
@@ -100,13 +70,10 @@ export default function SchedulePage()
     return (
         <Box sx={ { p: 0, maxWidth: '100%', direction: 'rtl' } }>
             <ScheduleAppBar toggleTheme={ toggleTheme } setOpenSettingsDialog={ setOpenSettingsDialog } />
-            {/*<div style={{ height: '100vh', overflowY: 'auto' }}>*/ }
             <Box className="calendar-container">
                 <BluezCalendar handleSavePeriod={ handleSavePeriod } setOpenPeriodDialog={ setOpenPeriodDialog } />
             </Box>
-            {/*</div>*/ }
 
-            {/* Period Dialog */ }
             <PeriodDialog
                 open={ openPeriodDialog }
                 period={ selectedPeriod || {} }
