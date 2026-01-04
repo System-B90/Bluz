@@ -1,28 +1,30 @@
-import {DEFAULT_INSTRUCTORS, DEFAULT_ROOMS} from "@/components/schedule/types/types";
-import {Autocomplete, Chip, FormControl, InputLabel, MenuItem, Select, TextField} from "@mui/material";
-import {Period} from "@/components/schedule/types/event";
+import { DEFAULT_INSTRUCTORS } from "@/components/schedule/types/types";
+import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { Period } from "@/components/schedule/types/event";
 
-interface InstructorsFieldProps {
+interface InstructorsFieldProps
+{
     period?: Partial<Period>;
     onPeriodChange: (updates: Partial<Period>) => void;
 }
 
-export default function InstructorsField({period, onPeriodChange}: InstructorsFieldProps) {
+export default function InstructorsField({ period, onPeriodChange }: InstructorsFieldProps)
+{
     return (
         <FormControl fullWidth>
             <InputLabel>Instructors</InputLabel>
             <Select
                 multiple
-                value={period?.instructors || []}
+                value={ period?.instructors || [] }
                 label="Instructors"
-                onChange={(e) => onPeriodChange({instructors: e.target.value as string[]})}
+                onChange={ (e) => onPeriodChange({ instructors: e.target.value as string[] }) }
             >
-                {DEFAULT_INSTRUCTORS.map((instructor) => (
-                    <MenuItem key={instructor.id} value={instructor.id}>
-                        {instructor.name}
+                { DEFAULT_INSTRUCTORS.map((instructor) => (
+                    <MenuItem key={ instructor.id } value={ instructor.id }>
+                        { instructor.name }
                     </MenuItem>
-                ))}
+                )) }
             </Select>
         </FormControl>
-    )
+    );
 }

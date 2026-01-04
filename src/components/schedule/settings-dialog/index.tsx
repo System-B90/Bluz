@@ -1,5 +1,6 @@
 import { useState } from "react";
-import {
+import
+{
     Dialog,
     DialogTitle,
     DialogContent,
@@ -12,34 +13,37 @@ import {
 import PersonalSection from "./tabs/account";
 import GlobalSection from "./tabs/global";
 
-interface SettingsDialogProps {
+interface SettingsDialogProps
+{
     open: boolean;
     onClose: () => void;
 }
 
-const Index: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
-    const [tab, setTab] = useState(0);
+export default function SettingsDialog({ open, onClose }: SettingsDialogProps) 
+{
+    const [ tab, setTab ] = useState(0);
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) =>
+    {
         setTab(newValue);
     };
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <Dialog open={ open } onClose={ onClose } maxWidth="md" fullWidth>
             <DialogTitle>Settings</DialogTitle>
             <DialogContent>
-                <Tabs value={tab} onChange={handleTabChange} sx={{ mb: 2 }}>
+                <Tabs value={ tab } onChange={ handleTabChange } sx={ { mb: 2 } }>
                     <Tab label="Personal" />
                     <Tab label="Global" />
                 </Tabs>
 
                 <Box>
-                    {tab === 0 && <PersonalSection />}
-                    {tab === 1 && <GlobalSection />}
+                    { tab === 0 && <PersonalSection /> }
+                    { tab === 1 && <GlobalSection /> }
                 </Box>
 
-                <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-                    <Button variant="outlined" onClick={onClose}>
+                <Box sx={ { mt: 3, display: "flex", justifyContent: "flex-end" } }>
+                    <Button variant="outlined" onClick={ onClose }>
                         Close
                     </Button>
                 </Box>
@@ -47,5 +51,3 @@ const Index: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
         </Dialog>
     );
 };
-
-export default Index;

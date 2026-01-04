@@ -1,16 +1,17 @@
-import {AccordionDetails, Box, Stack, Typography, Button} from "@mui/material";
-import {User} from "@/components/schedule/types/user";
+import { Box, Stack, Button } from "@mui/material";
+import { User } from "@/components/schedule/types/user";
 import GroupMemberField from "@/components/schedule/settings-dialog/tabs/global/group-tree/member-field";
-import React from "react";
-import {Group} from "@/components/schedule/types/group";
-import {SortableContext, verticalListSortingStrategy} from "@dnd-kit/sortable";
-import {DndContext} from "@dnd-kit/core";
+import { Group } from "@/components/schedule/types/group";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { DndContext } from "@dnd-kit/core";
 
-interface GroupMemberFieldProps {
+interface GroupMemberFieldProps
+{
     group: Group;
 }
 
-export default function GroupMembersField({group}: GroupMemberFieldProps) {
+export default function GroupMembersField({ group }: GroupMemberFieldProps)
+{
     return (
         // <div>
         //     {group.members?.length ? (
@@ -28,18 +29,18 @@ export default function GroupMembersField({group}: GroupMemberFieldProps) {
         // </div>
         <DndContext>
             <SortableContext
-                items={group.members?.map((user: User): string => user.id) || []}
-                strategy={verticalListSortingStrategy}
+                items={ group.members?.map((user: User): string => user.id) || [] }
+                strategy={ verticalListSortingStrategy }
             >
-                <Stack spacing={1}>
-                    {group.members?.map((user: User) => (
-                        <GroupMemberField user={user}/>
-                    ))}
+                <Stack spacing={ 1 }>
+                    { group.members?.map((user: User) => (
+                        <GroupMemberField user={ user } key={ user.id } />
+                    )) }
                 </Stack>
             </SortableContext>
             <Box>
                 <Button>Add Member</Button>
             </Box>
         </DndContext>
-    )
+    );
 }

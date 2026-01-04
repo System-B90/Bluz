@@ -1,9 +1,9 @@
-import {Dayjs} from "dayjs";
-import {Room} from "@/components/schedule/types/room";
+import { Dayjs } from "dayjs";
 
 export type EventType = 'exercise' | 'lecture' | 'other' | 'break';
 
-export interface Period {
+export interface Period
+{
     id: string;
     name: string;
     subject: string; // Subject ID

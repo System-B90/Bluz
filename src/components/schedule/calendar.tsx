@@ -90,20 +90,24 @@ export default function BluezCalendar({
 
     return (
         <DnDCalendar
+            className="border-border border-rounded-md border-solid border-2 rounded-lg"
+
             min={ new Date(2025, 0, 1, 7, 0) }  // 8:00 AM
             max={ new Date(2025, 0, 1, 22, 0) } // 6:00 PM
             step={ 5 }
             timeslots={ 12 }
-            // localizer={ dayjsLocalizer(dayjs) }
 
+            rtl={ true }
+            // localizer={ dayjsLocalizer(dayjs) }
             localizer={ localizer }
             messages={ CALENDAR_MESSAGES }
 
-            className="border-border border-rounded-md border-solid border-2 rounded-lg"
             events={ periods }
+
             defaultView={ "week" }
             views={ [ Views.DAY, Views.WEEK, Views.WORK_WEEK ] } // restrict to day/week
             onView={ setCurrentView }
+
             selectable
             onSelectEvent={ setSelectedPeriod }
             onSelectSlot={ handleSlotSelect }
@@ -113,19 +117,14 @@ export default function BluezCalendar({
                 resources: DEFAULT_ROOMS,
                 resourceIdAccessor: 'id',
                 resourceTitleAccessor: 'name',
-                resourceAccessor: (event: Period) => { event.room; }
+                resourceAccessor: (event: Period) => event.room
             }) }
 
             onEventResize={ handlePeriodDrag }
             onEventDrop={ handlePeriodDrag }
             startAccessor={ (event) => event.startTime.toDate() }
             endAccessor={ (event) => event.endTime.toDate() }
-            rtl={ true }
-            formats={ {
-                timeGutterFormat: 'HH:mm',
-                // eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
-                //     `${localizer.format(start, 'HH:mm', culture)} – ${localizer.format(end, 'HH:mm', culture)}`,
-            } }
+            formats={ { timeGutterFormat: 'HH:mm' } }
         />
     );
 }

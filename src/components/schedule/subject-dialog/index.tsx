@@ -1,40 +1,44 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    Button,
-    MenuItem,
-    Select,
-    InputLabel,
-    FormControl,
-    OutlinedInput,
-    Chip,
+import { Subject } from "@/components/schedule/types/subject";
+import
+{
     Box,
+    Button,
+    Chip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    OutlinedInput,
+    Select,
+    TextField,
 } from '@mui/material';
-import {Subject} from "@/components/schedule/types/subject";
+import { useState } from 'react';
 
-const availableGroups = ['Group A', 'Group B', 'Group C'];
+const availableGroups = [ 'Group A', 'Group B', 'Group C' ];
 
-interface SubjectDialogProps {
+interface SubjectDialogProps
+{
     open: boolean;
     subject: Partial<Subject>;
     onClose: () => void;
     onSave: (subject: Subject) => void;
 }
 
-export default function SubjectDialog({ open, subject, onClose, onSave }: SubjectDialogProps) {
-    const [name, setName] = useState('');
-    const [displayName, setDisplayName] = useState('');
-    const [color, setColor] = useState('#1976d2');
-    const [groups, setGroups] = useState<string[]>([]);
+export default function SubjectDialog({ open, subject, onClose, onSave }: SubjectDialogProps)
+{
+    const [ name, setName ] = useState('');
+    const [ displayName, setDisplayName ] = useState('');
+    const [ color, setColor ] = useState('#1976d2');
+    const [ groups, setGroups ] = useState<string[]>([]);
 
-    const handleSave = () => {
-        onSave({id: "", name, displayName, color, defaultGroupIDs: groups });
+    const handleSave = () =>
+    {
+        onSave({ id: "", name, displayName, color, defaultGroupIDs: groups });
         setName('');
         setDisplayName('');
         setColor('#1976d2');
@@ -43,57 +47,57 @@ export default function SubjectDialog({ open, subject, onClose, onSave }: Subjec
     };
 
     return (
-        <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+        <Dialog open={ open } onClose={ onClose } fullWidth maxWidth="sm">
             <DialogTitle>Define New Subject</DialogTitle>
-            <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <DialogContent sx={ { display: 'flex', flexDirection: 'column', gap: 2, mt: 1 } }>
                 <TextField
                     label="Name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={ name }
+                    onChange={ (e) => setName(e.target.value) }
                     fullWidth
                 />
                 <TextField
                     label="Display Name"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
+                    value={ displayName }
+                    onChange={ (e) => setDisplayName(e.target.value) }
                     fullWidth
                 />
-                <Box display="flex" alignItems="center" gap={2}>
+                <Box display="flex" alignItems="center" gap={ 2 }>
                     <TextField
                         label="Color"
                         type="color"
-                        value={color}
-                        onChange={(e) => setColor(e.target.value)}
-                        sx={{ width: 120 }}
+                        value={ color }
+                        onChange={ (e) => setColor(e.target.value) }
+                        sx={ { width: 120 } }
                     />
-                    <Box sx={{ fontWeight: 500 }}>{color}</Box>
+                    <Box sx={ { fontWeight: 500 } }>{ color }</Box>
                 </Box>
                 <FormControl fullWidth>
                     <InputLabel>Assigned Groups</InputLabel>
                     <Select
                         multiple
-                        value={groups}
-                        onChange={(e) => setGroups(e.target.value as string[])}
-                        input={<OutlinedInput label="Assigned Groups" />}
-                        renderValue={(selected) => (
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                {selected.map((value) => (
-                                    <Chip key={value} label={value} />
-                                ))}
+                        value={ groups }
+                        onChange={ (e) => setGroups(e.target.value as string[]) }
+                        input={ <OutlinedInput label="Assigned Groups" /> }
+                        renderValue={ (selected) => (
+                            <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
+                                { selected.map((value) => (
+                                    <Chip key={ value } label={ value } />
+                                )) }
                             </Box>
-                        )}
+                        ) }
                     >
-                        {availableGroups.map((group) => (
-                            <MenuItem key={group} value={group}>
-                                {group}
+                        { availableGroups.map((group) => (
+                            <MenuItem key={ group } value={ group }>
+                                { group }
                             </MenuItem>
-                        ))}
+                        )) }
                     </Select>
                 </FormControl>
             </DialogContent>
             <DialogActions>
-                <Button onClick={onClose}>Cancel</Button>
-                <Button onClick={handleSave} variant="contained">Save</Button>
+                <Button onClick={ onClose }>Cancel</Button>
+                <Button onClick={ handleSave } variant="contained">Save</Button>
             </DialogActions>
         </Dialog>
     );

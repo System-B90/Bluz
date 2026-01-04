@@ -3,7 +3,7 @@
 import ScheduleAppBar from '@/components/app-bar';
 import BluezCalendar from '@/components/schedule/calendar';
 import PeriodDialog from '@/components/schedule/event-dialog';
-import Index from "@/components/schedule/settings-dialog";
+import SettingsDialog from "@/components/schedule/settings-dialog";
 import { Period } from "@/components/schedule/types/event";
 import { Box } from '@mui/material';
 import { useHistoryState } from "@uidotdev/usehooks";
@@ -86,7 +86,7 @@ export default function SchedulePage()
                 onPeriodChange={ (updates: Partial<Period>) => setSelectedPeriod({ ...selectedPeriod, ...updates }) }
             />
 
-            <Index open={ openSettingsDialog } onClose={ () => { setOpenSettingsDialog(false); } } />
+            <SettingsDialog open={ openSettingsDialog } onClose={ () => { setOpenSettingsDialog(false); } } />
         </Box>
     );
 }
