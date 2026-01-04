@@ -1,3 +1,4 @@
+import { HiveSubjectsProvider } from '@/components/base/hive-subjects-provider';
 import React from 'react';
 
 export default async function ScheduleLayout({
@@ -7,9 +8,11 @@ export default async function ScheduleLayout({
 }>)
 {
     return (
-        <div className="schedule-layout">
-            { children }
-        </div>
+        <HiveSubjectsProvider>
+            <div className="schedule-layout">
+                { children }
+            </div>
+        </HiveSubjectsProvider>
     );
 }
 

@@ -35,6 +35,7 @@ import '@/style/calendar.css';
 import { Period } from "@/components/schedule/types/event";
 import { Room } from "@/components/schedule/types/room";
 import CALENDAR_MESSAGES from '@/components/calendar-messages';
+import BluezEventComponent from '@/components/schedule/event-component';
 
 
 const DnDCalendar = withDragAndDrop<Period, Room>(Calendar);
@@ -126,6 +127,7 @@ export default function BluezCalendar({
             startAccessor={ (event) => event.startTime.toDate() }
             endAccessor={ (event) => event.endTime.toDate() }
             formats={ { timeGutterFormat: 'HH:mm' } }
+            components={ { event: BluezEventComponent } }
         />
     );
 }

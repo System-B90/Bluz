@@ -1,17 +1,19 @@
 'use client';
 
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-} from '@mui/material';
+import
+  {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    Typography,
+  } from '@mui/material';
 
-import {Period} from "@/components/schedule/types/event";
+import { Period } from "@/components/schedule/types/event";
 
-interface DeleteDialogProps {
+interface DeleteDialogProps
+{
   open: boolean;
   period?: Partial<Period> | null;
   onClose: () => void;
@@ -23,26 +25,27 @@ export default function DeleteDialog({
   period,
   onClose,
   onConfirm,
-}: DeleteDialogProps) {
+}: DeleteDialogProps)
+{
   if (!period) return null;
 
   return (
     <Dialog
-      open={open}
-      onClose={onClose}
+      open={ open }
+      onClose={ onClose }
     >
       <DialogTitle>אשר מחיקה</DialogTitle>
       <DialogContent>
         <Typography>
-          האם אתה בטוח שברצונך למחוק את &quot;{period.name}&quot; מ{}?
+          האם אתה בטוח שברצונך למחוק את &quot;{ period.name }&quot; מ{ }?
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>
+        <Button onClick={ onClose }>
           ביטול
         </Button>
         <Button
-          onClick={onConfirm}
+          onClick={ onConfirm }
           color="error"
           variant="contained"
         >

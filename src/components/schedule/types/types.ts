@@ -25,19 +25,9 @@ export const DEFAULT_SCHEDULE_CONFIG: ScheduleConfig = {
 };
 
 // Default subjects with colors
-export const DEFAULT_SUBJECTS: Subject[] = [
-    { id: 'math', name: 'מתמטיקה', color: '#2196F3' },
-    { id: 'physics', name: 'פיזיקה', color: '#4CAF50' },
-    { id: 'chemistry', name: 'כימיה', color: '#FF9800' },
-    { id: 'biology', name: 'ביולוגיה', color: '#9C27B0' },
-    { id: 'history', name: 'היסטוריה', color: '#795548' },
-    { id: 'geography', name: 'גיאוגרפיה', color: '#607D8B' },
-    { id: 'literature', name: 'ספרות', color: '#E91E63' },
-    { id: 'english', name: 'אנגלית', color: '#00BCD4' },
-    { id: 'hebrew', name: 'עברית', color: '#8BC34A' },
-    { id: 'sports', name: 'ספורט', color: '#FF5722' },
-    { id: 'formation', name: 'מסדר', color: '#FFC107' },
-    { id: 'meals', name: 'ארוחות', color: '#9E9E9E' },
+export const DEFAULT_SUBJECTS: Array<Subject> = [
+    { 'id': '1', 'name': 'דיזיין', 'displayName': 'ד', 'color': '#f44336' },
+    { 'id': '2', 'name': 'מחקר', 'displayName': 'ח', 'color': '#e91e63' },
 ];
 
 export const groupColors: Record<GroupType, string> = {
