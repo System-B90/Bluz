@@ -9,10 +9,11 @@ import CssBaseline from '@mui/material/CssBaseline';
 
 const rtlCache = createCache({
     key: 'muirtl',
-    stylisPlugins: [rtlPlugin],
+    stylisPlugins: [ rtlPlugin ],
 });
 
-export default function ThemedLayout({ children }: { children: React.ReactNode }) {
+export default function ThemedLayout({ children }: { children: React.ReactNode; })
+{
     return (
         // <CustomThemeProvider>
         //     <CacheProvider value={rtlCache}>
@@ -22,15 +23,15 @@ export default function ThemedLayout({ children }: { children: React.ReactNode }
         //     </CacheProvider>
         // </CustomThemeProvider>
 
-    <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-    >
-        {/*<CssBaseline />*/}
-        {children}
-    </ThemeProvider>
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+        >
+            {/*<CssBaseline />*/ }
+            { children }
+        </ThemeProvider>
     );
 }
 
