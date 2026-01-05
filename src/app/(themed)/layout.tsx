@@ -1,13 +1,14 @@
 'use client';
 
 import { SnackbarProvider } from 'notistack';
-import { ThemeProvider } from '@/components/theme/theme-provider';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { CacheProvider } from '@emotion/react';
 import rtlPlugin from '@mui/stylis-plugin-rtl';
 import { prefixer } from 'stylis';
 import createCache from '@emotion/cache';
+import { BluezThemeProvider } from '@/components/theme/theme-provider';
+import { CssBaseline } from '@mui/material';
 
 const cacheRtl = createCache({
     key: 'muirtl',
@@ -19,20 +20,19 @@ export default function ThemedLayout({ children }: { children: React.ReactNode; 
 {
     return (
         <CacheProvider value={ cacheRtl }>
-            <ThemeProvider
+            <BluezThemeProvider
                 attribute="class"
                 defaultTheme="system"
                 enableSystem
                 disableTransitionOnChange
             >
                 <LocalizationProvider dateAdapter={ AdapterDayjs } adapterLocale="he">
-
-                    {/*<CssBaseline />*/ }
+                    <CssBaseline />
                     <SnackbarProvider anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }>
                         { children }
                     </SnackbarProvider>
                 </LocalizationProvider>
-            </ThemeProvider>
+            </BluezThemeProvider>
         </CacheProvider>
     );
 }

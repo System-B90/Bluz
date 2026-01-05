@@ -1,7 +1,7 @@
 'use client';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { apiGetSubjects } from '@/api-client/hive';
-import { Subject } from '@/components/schedule/types/subject';
+import { Subject, SubjectLike } from '@/components/schedule/types/subject';
 import { enqueueSnackbar } from 'notistack';
 import
 {
@@ -17,13 +17,13 @@ import
 export type HiveSubjectsContextState = {
     default: boolean;
     subjects: Array<Subject>;
-    getSubject: (id: string) => Subject | undefined;
+    getSubject: (id: SubjectLike) => Subject | undefined;
 };
 
 const HiveSubjectsContext = createContext<HiveSubjectsContextState | undefined>({
     default: true,
     subjects: [],
-    getSubject: (_id: string) => undefined,
+    getSubject: (_id: SubjectLike) => undefined,
 });
 
 export const HiveSubjectsProvider = ({ children }: { children: React.ReactNode; }) =>
@@ -31,7 +31,7 @@ export const HiveSubjectsProvider = ({ children }: { children: React.ReactNode; 
     const [ subjectLookup, setSubjectLookup ] = useState<Record<string, Subject>>({});
 
     const subjects = useMemo(() => Object.values(subjectLookup), [ subjectLookup ]);
-    const getSubject = useCallback((id: string) => subjectLookup[ id ], [ subjectLookup ]);
+    const getSubject = useCallback((id: SubjectLike) => id instanceof Object ? id : subjectLookup[ id as number ], [ subjectLookup ]);
 
     const loadSubjects = useCallback(() =>
     {

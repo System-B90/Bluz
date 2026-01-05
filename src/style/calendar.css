@@ -228,9 +228,10 @@ button.rbc-input::-moz-focus-inner
     color: hsl(var(--primary-foreground));
     padding: 3px;
     border-radius: var(--radius);
-    outline: 1px solid hsl(var(--background));
+    outline: 3px solid hsl(var(--background));
     cursor: pointer;
     transition: outline 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+    outline-width: 0;
 }
 
 .rbc-slot-selecting .rbc-event
@@ -242,7 +243,14 @@ button.rbc-input::-moz-focus-inner
 .rbc-event.rbc-selected
 {
     background-color: hsl(var(--primary));
-    outline: 2px solid rgba(117, 117, 241, 0.687);
+    outline: 3px solid rgba(117, 117, 241, 0.687);
+}
+
+.rbc-day-slot.rbc-event,
+.rbc-event,
+.rbc-event:focus
+{
+    padding: 0;
 }
 
 .rbc-event-label

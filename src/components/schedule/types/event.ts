@@ -4,15 +4,16 @@ export type EventType = 'exercise' | 'lecture' | 'other' | 'break';
 
 export interface Period
 {
-    id: string;
+    id: number;
     name: string;
-    subject: string; // Subject ID
+    subject: number; // Subject ID
     startTime: Dayjs;
     endTime: Dayjs;
     type: EventType;
-    room: string; // Room ID
-    instructors: string[]; // Array of instructor IDs
-    tags: string[];
+    room: number; // Room ID
+    instructors: number[]; // Array of instructor IDs
+    lecturer?: 'איש חוץ' | number; // Main lecturer ID
+    tags: number[];
     notes: string;
     locked: boolean; // New field to indicate if period is locked
     hidden: boolean;

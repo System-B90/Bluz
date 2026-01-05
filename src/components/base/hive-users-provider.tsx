@@ -16,14 +16,16 @@ import
 
 export type HiveUsersContextState = {
     default: boolean;
-    users: Record<string, CourseUser>;
+    users: Record<number, CourseUser>;
     instructors: Array<CourseUser>;
+    getInstructor: (id: number) => CourseUser | undefined;
 };
 
 const HiveUsersContext = createContext<HiveUsersContextState>({
     default: true,
     users: {},
     instructors: [],
+    getInstructor: () => undefined,
 });
 
 export const HiveUsersProvider = ({ children }: { children: React.ReactNode; }) =>
@@ -31,12 +33,18 @@ export const HiveUsersProvider = ({ children }: { children: React.ReactNode; }) 
     const [ users, setUsers ] = useState<Record<string, CourseUser>>({});
 
     const instructors = useMemo(() => Object.values(users).filter((user) => user.clearance >= Clearance.Segel), [ users ]);
+    const getInstructor = useCallback((id: number): CourseUser | undefined =>
+    {
+        const user = users[ id ];
+        return user?.clearance >= Clearance.Segel ? user : undefined;
+    }, [ users ]);
+
 
     const loadUsers = useCallback(() =>
     {
         getHiveUsers().then((fetchedUsers) =>
         {
-            const usersMap: Record<string, CourseUser> = {};
+            const usersMap: Record<number, CourseUser> = {};
             fetchedUsers.forEach((user) =>
             {
                 usersMap[ user.id ] = user;
@@ -55,6 +63,7 @@ export const HiveUsersProvider = ({ children }: { children: React.ReactNode; }) 
             default: false,
             users,
             instructors,
+            getInstructor,
         } }>
             { children }
         </HiveUsersContext.Provider>

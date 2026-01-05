@@ -29,7 +29,7 @@ export async function GET(
                 username: "bis-michaelks",
                 first_name: "מיכאל",
                 last_name: "שטיינברג",
-                display_name: "מיגל שטיינברג",
+                display_name: "מיכאל שטיינברג",
                 clearance: ClearanceEnum.NUMBER_3, // Segel
                 gender: GenderEnum.Male,
                 mentees: [],

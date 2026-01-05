@@ -7,3 +7,5 @@ export interface Subject
     color?: string;
     defaultGroupIDs?: string[];
 }
+
+export type SubjectLike = Subject | string | number;

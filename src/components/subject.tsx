@@ -1,13 +1,19 @@
 import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
+import { SubjectLike } from "@/components/schedule/types/subject";
 import { Typography, TypographyProps } from "@mui/material";
+import Link from "next/link";
 import { useMemo } from "react";
 
-export default function Subject({ subjectId, ...props }: { subjectId: string; } & TypographyProps)
+export default function SubjectComponent({ subjectId, ...props }: { subjectId: SubjectLike; } & TypographyProps)
 {
-    const { subjects } = useHiveSubjects();
-    const subject = useMemo(() => subjects[ subjectId ], [ subjects, subjectId ]);
+    const { subjects, getSubject } = useHiveSubjects();
+    const subject = useMemo(() => getSubject(subjectId), [ subjects, subjectId ]);
 
+
+    // TODO: link to subject page on Hive
     return (
-        <Typography { ...props }>{ subject?.name || subjectId }</Typography>
+        <Link href={ `/${subject?.id}` } className="hover:underline">
+            <Typography { ...props }>{ subject?.name }</Typography>
+        </Link>
     );
 }

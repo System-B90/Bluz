@@ -37,7 +37,7 @@ const DnDCalendar = withDragAndDrop<Period, Room>(Calendar);
 // Set the default locale to Hebrew
 moment.locale('he');
 
-const localizer = momentLocalizer(moment);
+export const localizer = momentLocalizer(moment);
 
 export default function BluezCalendar({
     handleSavePeriod,
@@ -77,7 +77,7 @@ export default function BluezCalendar({
         const newPeriod: Partial<Period> = {
             startTime: dayjs(slotInfo.start),
             endTime: dayjs(slotInfo.end),
-            room: slotInfo.resourceId?.toString() || '',
+            room: parseInt(slotInfo.resourceId?.toString() || '0', 10),
         };
 
         console.log('newPeriod', newPeriod);
