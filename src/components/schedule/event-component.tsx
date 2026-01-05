@@ -229,7 +229,6 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
                     <Box display="flex" alignItems="center" gap={ 1 }>
                         { omitRoomName || <RoomComponent
                             roomIds={ period.rooms }
-                            size="smaller"
                         /> }
                         { omitDuration || <PeriodDurationLabel period={ period } size="smaller" /> }
                     </Box>

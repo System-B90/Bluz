@@ -46,12 +46,12 @@ export async function GET(
             },
             {
                 id: 5,
-                username: "bis-yonatanr",
-                first_name: "יונתן",
-                last_name: "רונן",
-                display_name: "יונתן רונן",
+                username: "bis-mayag",
+                first_name: "מאיה",
+                last_name: "גבע",
+                display_name: "מאיה גבע",
                 clearance: ClearanceEnum.NUMBER_3, // Segel
-                gender: GenderEnum.Male,
+                gender: GenderEnum.Female,
                 mentees: [],
             },
         ];
