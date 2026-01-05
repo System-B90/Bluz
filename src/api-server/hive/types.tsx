@@ -51,12 +51,6 @@ export const ClearanceEnum = {
     NUMBER_5: 5,
 } as const;
 
-/**
- * * `Room` - Room
- * `Student Group` - Studentgroup
- */
-export type ClassTypeEnum = (typeof ClassTypeEnum)[ keyof typeof ClassTypeEnum ];
-
 export const ClassTypeEnum = {
     Room: "Room",
     Student_Group: "Student Group",

@@ -75,6 +75,11 @@ export default function SchedulePage()
         setSelectedPeriod(undefined);
     }, [ setOpenPeriodDialog, setSelectedPeriod ]);
 
+    const onPeriodChange = useCallback((updates: Partial<Period>): void =>
+    {
+        setSelectedPeriod(selectedPeriod => selectedPeriod ? { ...selectedPeriod, ...updates } : updates);
+    }, [ setSelectedPeriod ]);
+
     return (
         <Box sx={ { p: 0, maxWidth: '100%' } }>
             <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
@@ -87,7 +92,7 @@ export default function SchedulePage()
                 period={ selectedPeriod || {} }
                 onClose={ handleClosePeriodDialog }
                 onSave={ handleSavePeriod }
-                onPeriodChange={ (updates: Partial<Period>) => setSelectedPeriod({ ...selectedPeriod, ...updates }) }
+                onPeriodChange={ onPeriodChange }
             />
 
             <SettingsDialog open={ openSettingsDialog } onClose={ () => { setOpenSettingsDialog(false); } } />

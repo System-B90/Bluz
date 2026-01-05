@@ -1,7 +1,7 @@
 'use client';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { apiGetRooms } from '@/api-client/hive';
-import { Room } from '@/components/schedule/types/room';
+import { Room, RoomLike } from '@/components/schedule/types/room';
 import { enqueueSnackbar } from 'notistack';
 import
 {
@@ -17,13 +17,13 @@ import
 export type HiveRoomsContextState = {
     default: boolean;
     rooms: Array<Room>;
-    getRoom: (id: string) => Room | undefined;
+    getRoom: (id: RoomLike) => Room | undefined;
 };
 
 const HiveRoomsContext = createContext<HiveRoomsContextState | undefined>({
     default: true,
     rooms: [],
-    getRoom: (_id: string) => undefined
+    getRoom: (_id: RoomLike) => undefined
 });
 
 export const HiveRoomsProvider = ({ children }: { children: React.ReactNode; }) =>
@@ -32,7 +32,11 @@ export const HiveRoomsProvider = ({ children }: { children: React.ReactNode; }) 
 
     const rooms = useMemo(() => Object.values(roomLookup), [ roomLookup ]);
 
-    const getRoom = useCallback((id: string) => roomLookup[ id ], [ roomLookup ]);
+    const getRoom = useCallback((id: RoomLike) =>
+    {
+        const roomId = id instanceof Object ? id.id : id as number;
+        return roomLookup[ roomId ];
+    }, [ roomLookup ]);
 
     const loadRooms = useCallback(() =>
     {
