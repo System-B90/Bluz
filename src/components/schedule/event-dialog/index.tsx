@@ -29,6 +29,7 @@ interface PeriodDialogProps
     onClose: () => void;
     onSave: (period: Partial<Period>) => void;
     onPeriodChange: Dispatch<SetStateAction<Partial<Period>>>;
+    onDelete: (periodId: Period[ 'id' ]) => void;
 }
 
 export default function PeriodDialog({
@@ -36,6 +37,7 @@ export default function PeriodDialog({
     period,
     onClose,
     onSave,
+    onDelete,
     onPeriodChange,
 }: PeriodDialogProps)
 {
@@ -141,6 +143,7 @@ export default function PeriodDialog({
                 </DialogContent>
 
                 <DialogActions>
+                    <Button onClick={ () => onDelete(period.id as string) } color='error' disabled={ !period?.id }>מחק</Button>
                     <Button onClick={ onClose }>ביטול</Button>
                     <Button
                         type="submit"

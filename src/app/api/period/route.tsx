@@ -47,3 +47,19 @@ export async function POST(
         return catchHandler(request, e);
     };
 }
+
+export async function DELETE(
+    request: NextRequest
+)
+{
+    try
+    {
+        const periodId: Period[ 'id' ] = await request.json();
+        if (!periodId) { throw new ClientApiError('No periodId provided!'); }
+        return ApiSuccess(await DbPeriod.del(periodId));
+    }
+    catch (e)
+    {
+        return catchHandler(request, e);
+    };
+}

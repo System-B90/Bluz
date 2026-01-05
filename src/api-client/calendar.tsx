@@ -74,3 +74,11 @@ export async function apiSavePeriod(period: Period): Promise<Period>
         body: JSON.stringify(period),
     }).then(dateFixup);
 }
+
+export async function apiDeletePeriod(periodId: Period[ 'id' ]): Promise<void>
+{
+    return safeApiFetcher('/api/period', {
+        method: 'DELETE',
+        body: JSON.stringify(periodId),
+    });
+}

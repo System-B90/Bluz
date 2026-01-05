@@ -57,9 +57,19 @@ async function setDbPeriod(period: Partial<Period>, options?: FindOptions)
     }
 }
 
+async function deleteDbPeriod(periodId: Period[ 'id' ], options?: FindOptions)
+{
+    if (!periodId) { throw new ClientApiError('Period id is missing!'); }
+
+    const data = await databaseController.periods.deleteOne({ '_id': new ObjectId(periodId) });
+    if (data.deletedCount === 0) { throw new ClientApiError('Failed to delete period!'); }
+    SendServerRequestToSessionServer(MessageTypes.PERIOD_ADDED_OR_REMOVED, { action: 'removed', periodId } as PeriodAddedOrRemovedMessage);
+}
+
 export namespace DbPeriod
 {
     export const get = getDbPeriod;
-    export const set = setDbPeriod;
     export const getInRange = getDbPeriodsInRange;
+    export const set = setDbPeriod;
+    export const del = deleteDbPeriod;
 }

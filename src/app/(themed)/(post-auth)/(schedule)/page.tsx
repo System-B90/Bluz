@@ -1,7 +1,7 @@
 'use client';
 
-import { apiSavePeriod } from '@/api-client/calendar';
-import { enqueueApiErrorSnackbar } from '@/api-client/common';
+import { apiDeletePeriod, apiSavePeriod } from '@/api-client/calendar';
+import { enqueueApiErrorSnackbar, safeApiFetcher } from '@/api-client/common';
 import ScheduleAppBar from '@/components/app-bar';
 import BluezCalendar from '@/components/schedule/calendar';
 import { useCalendar } from '@/components/schedule/calendar-provider';
@@ -105,6 +105,16 @@ export default function SchedulePage()
         });
     }, [ setSelectedPeriod ]);
 
+    const onPeriodDelete = useCallback((periodId: Period[ 'id' ]) =>
+    {
+        apiDeletePeriod(periodId)
+            .then(() => enqueueSnackbar('המופע נמחק בהצלחה.', { variant: 'success' }))
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'מחיקת המופע נכשלה!', error));
+
+        setOpenPeriodDialog(false);
+        setSelectedPeriod(undefined);
+    }, [ setOpenPeriodDialog, setSelectedPeriod ]);
+
     return (
         <Box sx={ { p: 0, maxWidth: '100%' } }>
             <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
@@ -118,6 +128,7 @@ export default function SchedulePage()
                 onClose={ handleClosePeriodDialog }
                 onSave={ handleSavePeriod }
                 onPeriodChange={ onPeriodChange }
+                onDelete={ onPeriodDelete }
             />
 
             <SettingsDialog open={ openSettingsDialog } onClose={ () => { setOpenSettingsDialog(false); } } />
