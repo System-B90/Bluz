@@ -1,5 +1,5 @@
 import { safeApiFetcher } from "@/api-client/common";
-import { Class, CourseUser } from "@/api-server/hive/types";
+import { Class, ClassTypeEnum, CourseUser } from "@/api-server/hive/types";
 import { Subject } from "@/components/schedule/types/subject";
 
 export async function apiGetStudents()
@@ -17,3 +17,12 @@ export async function apiGetSubjects()
     return (await safeApiFetcher('/api/hive/subjects')) as Array<Subject>;
 }
 
+export async function apiGetRooms()
+{
+    return ((await safeApiFetcher('/api/hive/rooms')) as Array<Class>).filter((r) => r.type === ClassTypeEnum.Room);
+}
+
+export async function getHiveUsers()
+{
+    return (await safeApiFetcher('/api/hive/users')) as Array<CourseUser>;
+}

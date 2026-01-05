@@ -1,6 +1,6 @@
-import { DEFAULT_ROOMS } from "@/components/schedule/types/types";
-import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { useHiveRooms } from "@/components/base/hive-rooms-provider";
 import { Period } from "@/components/schedule/types/event";
+import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
 interface RoomFieldProps
 {
@@ -10,6 +10,14 @@ interface RoomFieldProps
 
 export default function RoomField({ period, onPeriodChange }: RoomFieldProps)
 {
+    const { rooms } = useHiveRooms();
+
+    const roomMenuItems = Object.values(rooms).map((room) => (
+        <MenuItem key={ room.id } value={ room.id }>
+            { room.name }
+        </MenuItem>
+    ));
+
     return (
         <FormControl fullWidth>
             <InputLabel>כיתה</InputLabel>
@@ -18,11 +26,7 @@ export default function RoomField({ period, onPeriodChange }: RoomFieldProps)
                 label="כיתה"
                 onChange={ (e) => onPeriodChange({ room: e.target.value }) }
             >
-                { DEFAULT_ROOMS.map((room) => (
-                    <MenuItem key={ room.id } value={ room.id }>
-                        { room.name }
-                    </MenuItem>
-                )) }
+                { roomMenuItems }
             </Select>
         </FormControl>
     );

@@ -1,33 +1,37 @@
 'use client';
-import useSessionWebSocketContext, { MessageHandlerType } from '@/components/session-ws';
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
+import { apiGetSubjects } from '@/api-client/hive';
+import { Subject } from '@/components/schedule/types/subject';
+import { enqueueSnackbar } from 'notistack';
 import
 {
     createContext,
     useCallback,
     useContext,
     useEffect,
+    useMemo,
     useState,
 } from 'react';
-import assert from 'assert';
-import { Subject } from '@/components/schedule/types/subject';
-import { enqueueApiErrorSnackbar, safeApiFetcher } from '@/api-client/common';
-import { apiGetSubjects } from '@/api-client/hive';
-import { enqueueSnackbar } from 'notistack';
 
 
 export type HiveSubjectsContextState = {
     default: boolean;
-    subjects: Record<string, Subject>;
+    subjects: Array<Subject>;
+    getSubject: (id: string) => Subject | undefined;
 };
 
 const HiveSubjectsContext = createContext<HiveSubjectsContextState | undefined>({
     default: true,
-    subjects: {},
+    subjects: [],
+    getSubject: (_id: string) => undefined,
 });
 
 export const HiveSubjectsProvider = ({ children }: { children: React.ReactNode; }) =>
 {
-    const [ subjects, setSubjects ] = useState<Record<string, Subject>>({});
+    const [ subjectLookup, setSubjectLookup ] = useState<Record<string, Subject>>({});
+
+    const subjects = useMemo(() => Object.values(subjectLookup), [ subjectLookup ]);
+    const getSubject = useCallback((id: string) => subjectLookup[ id ], [ subjectLookup ]);
 
     const loadSubjects = useCallback(() =>
     {
@@ -38,9 +42,9 @@ export const HiveSubjectsProvider = ({ children }: { children: React.ReactNode; 
             {
                 subjectsMap[ subject.id ] = subject;
             });
-            setSubjects(subjectsMap);
+            setSubjectLookup(subjectsMap);
         }).catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת מקצועות נכשלה.', error));
-    }, [ setSubjects ]);
+    }, [ setSubjectLookup ]);
 
     useEffect(() =>
     {
@@ -51,6 +55,7 @@ export const HiveSubjectsProvider = ({ children }: { children: React.ReactNode; 
         <HiveSubjectsContext.Provider value={ {
             default: false,
             subjects,
+            getSubject,
 
         } }>
             { children }

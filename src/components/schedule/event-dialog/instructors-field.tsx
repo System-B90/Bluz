@@ -1,6 +1,6 @@
-import { DEFAULT_INSTRUCTORS } from "@/components/schedule/types/types";
-import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { useHiveUsers } from "@/components/base/hive-users-provider";
 import { Period } from "@/components/schedule/types/event";
+import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
 interface InstructorsFieldProps
 {
@@ -10,6 +10,14 @@ interface InstructorsFieldProps
 
 export default function InstructorsField({ period, onPeriodChange }: InstructorsFieldProps)
 {
+    const { instructors } = useHiveUsers();
+
+    const instructorMenuItems = instructors.map((instructor) => (
+        <MenuItem key={ instructor.id } value={ instructor.id }>
+            { instructor.display_name }
+        </MenuItem>
+    ));
+
     return (
         <FormControl fullWidth>
             <InputLabel>מדריכים</InputLabel>
@@ -19,11 +27,7 @@ export default function InstructorsField({ period, onPeriodChange }: Instructors
                 label="מדריכים"
                 onChange={ (e) => onPeriodChange({ instructors: e.target.value as string[] }) }
             >
-                { DEFAULT_INSTRUCTORS.map((instructor) => (
-                    <MenuItem key={ instructor.id } value={ instructor.id }>
-                        { instructor.name }
-                    </MenuItem>
-                )) }
+                { instructorMenuItems }
             </Select>
         </FormControl>
     );

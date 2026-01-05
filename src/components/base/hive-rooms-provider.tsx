@@ -1,0 +1,76 @@
+'use client';
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
+import { apiGetRooms } from '@/api-client/hive';
+import { Room } from '@/components/schedule/types/room';
+import { enqueueSnackbar } from 'notistack';
+import
+{
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+} from 'react';
+
+
+export type HiveRoomsContextState = {
+    default: boolean;
+    rooms: Array<Room>;
+    getRoom: (id: string) => Room | undefined;
+};
+
+const HiveRoomsContext = createContext<HiveRoomsContextState | undefined>({
+    default: true,
+    rooms: [],
+    getRoom: (_id: string) => undefined
+});
+
+export const HiveRoomsProvider = ({ children }: { children: React.ReactNode; }) =>
+{
+    const [ roomLookup, setRoomLookup ] = useState<Record<string, Room>>({});
+
+    const rooms = useMemo(() => Object.values(roomLookup), [ roomLookup ]);
+
+    const getRoom = useCallback((id: string) => roomLookup[ id ], [ roomLookup ]);
+
+    const loadRooms = useCallback(() =>
+    {
+        apiGetRooms().then((fetchedRooms) =>
+        {
+            const roomsMap: Record<string, Room> = {};
+            fetchedRooms.forEach((room) =>
+            {
+                roomsMap[ room.id ] = room as unknown as Room; // TODO: Fix type casting
+            });
+            setRoomLookup(roomsMap);
+        }).catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת חדרים נכשלה.', error));
+    }, [ setRoomLookup ]);
+
+    useEffect(() =>
+    {
+        loadRooms();
+    }, [ loadRooms ]);
+
+    return (
+        <HiveRoomsContext.Provider value={ {
+            default: false,
+            rooms,
+            getRoom,
+        } }>
+            { children }
+        </HiveRoomsContext.Provider>
+    );
+};
+
+export const useHiveRooms = () =>
+{
+    const context = useContext(HiveRoomsContext);
+
+    if (context === undefined || context.default)
+    {
+        throw new Error('useHiveRooms must be used within an HiveRoomsProvider');
+    }
+
+    return context;
+};

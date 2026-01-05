@@ -1,6 +1,6 @@
-import { DEFAULT_SUBJECTS } from "@/components/schedule/types/types";
-import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { Period } from "@/components/schedule/types/event";
+import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
 interface SubjectFieldProps
 {
@@ -10,6 +10,14 @@ interface SubjectFieldProps
 
 export default function SubjectField({ period, onPeriodChange }: SubjectFieldProps)
 {
+    const { subjects } = useHiveSubjects();
+
+    const subjectMenuItems = subjects.map((subject) => (
+        <MenuItem key={ subject.id } value={ subject.id }>
+            { subject.name }
+        </MenuItem>
+    ));
+
     return (
         <FormControl fullWidth>
             <InputLabel>מקצוע</InputLabel>
@@ -18,11 +26,7 @@ export default function SubjectField({ period, onPeriodChange }: SubjectFieldPro
                 label="מקצוע"
                 onChange={ (e) => onPeriodChange({ subject: e.target.value }) }
             >
-                { DEFAULT_SUBJECTS.map((subject) => (
-                    <MenuItem key={ subject.id } value={ subject.id }>
-                        { subject.name }
-                    </MenuItem>
-                )) }
+                { subjectMenuItems }
             </Select>
         </FormControl>
     );

@@ -2,6 +2,7 @@
 
 import ScheduleAppBar from '@/components/app-bar';
 import BluezCalendar from '@/components/schedule/calendar';
+import { useCalendar } from '@/components/schedule/calendar-provider';
 import PeriodDialog from '@/components/schedule/event-dialog';
 import SettingsDialog from "@/components/schedule/settings-dialog";
 import { Period } from "@/components/schedule/types/event";
@@ -14,12 +15,13 @@ import { v4 as uuid4 } from 'uuid';
 
 export default function SchedulePage()
 {
+    const { periods: serverPeriods } = useCalendar();
     const {
         state: periods,
         set: setPeriods,
         undo,
         redo,
-    } = useHistoryState<Array<Period>>([]);
+    } = useHistoryState<Array<Period>>(serverPeriods);
 
     const [ selectedPeriod, setSelectedPeriod ] = useState<Partial<Period>>();
     const [ openPeriodDialog, setOpenPeriodDialog ] = useState<boolean>(false);
@@ -35,6 +37,12 @@ export default function SchedulePage()
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [ undo, redo ]);
+
+    useEffect(() =>
+    {
+        setPeriods(serverPeriods);
+    }, [ serverPeriods, setPeriods ]);
+
 
     const handleSavePeriod = useCallback((period: Partial<Period>): void =>
     {

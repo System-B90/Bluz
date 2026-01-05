@@ -240,7 +240,8 @@ button.rbc-input::-moz-focus-inner
 
 .rbc-event.rbc-selected
 {
-    background-color: hsla(var(--primary), 0.9);
+    background-color: revert;
+    outline: 1px solid hsl(var(--background));
 }
 
 .rbc-event-label

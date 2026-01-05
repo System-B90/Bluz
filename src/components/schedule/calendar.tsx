@@ -9,14 +9,7 @@ import { useState, useCallback, SetStateAction, Dispatch } from 'react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/he';
 
-// Import components
-import { useHistoryState } from "@uidotdev/usehooks";
-
 // Import types
-import
-{
-    DEFAULT_ROOMS
-} from '@/components/schedule/types/types';
 import
 {
     SlotInfo,
@@ -36,6 +29,7 @@ import { Period } from "@/components/schedule/types/event";
 import { Room } from "@/components/schedule/types/room";
 import CALENDAR_MESSAGES from '@/components/calendar-messages';
 import BluezEventComponent from '@/components/schedule/event-component';
+import { useHiveRooms } from '@/components/base/hive-rooms-provider';
 
 
 const DnDCalendar = withDragAndDrop<Period, Room>(Calendar);
@@ -58,6 +52,7 @@ export default function BluezCalendar({
 })
 {
     const [ currentView, setCurrentView ] = useState<View>(Views.WEEK);
+    const { rooms } = useHiveRooms();
 
     console.log('Periods', periods);
 
@@ -116,7 +111,7 @@ export default function BluezCalendar({
             onDoubleClickEvent={ handleEditPeriod }
 
             { ...(currentView === 'day' && {
-                resources: DEFAULT_ROOMS,
+                resources: rooms,
                 resourceIdAccessor: 'id',
                 resourceTitleAccessor: 'name',
                 resourceAccessor: (event: Period) => event.room
