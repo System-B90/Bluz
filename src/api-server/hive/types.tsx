@@ -51,10 +51,11 @@ export const ClearanceEnum = {
     NUMBER_5: 5,
 } as const;
 
-export const ClassTypeEnum = {
-    Room: "Room",
-    Student_Group: "Student Group",
-} as const;
+export enum ClassTypeEnum
+{
+    Room = "Room",
+    Student_Group = "Student Group",
+};
 
 
 /**
