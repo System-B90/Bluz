@@ -7,9 +7,9 @@ import { Period } from "@/components/schedule/types/event";
 import { MessageTypes } from "@/settings";
 import { FindOptions, ObjectId, WithId } from "mongodb";
 
-async function getDbPeriod(periodId: string, options?: FindOptions<Period>)
+async function getDbPeriod(periodId: string, options?: FindOptions)
 {
-    const data = await databaseController.periods.findOne({ '_id': new ObjectId(periodId) }, options);
+    const data: WithId<Period> | null = await databaseController.periods.findOne({ '_id': new ObjectId(periodId) }, options);
     if (data)
     {
         data.id = data._id.toHexString();
@@ -17,13 +17,13 @@ async function getDbPeriod(periodId: string, options?: FindOptions<Period>)
     return data;
 }
 
-async function getDbPeriodsInRange(startDate: Date, endDate: Date, options?: FindOptions<Period>)
+async function getDbPeriodsInRange(startDate: Date, endDate: Date, options?: FindOptions)
 {
     const data = await databaseController.periods.find({ startTime: { '$gte': startDate }, endTime: { '$lte': endDate } }, options);
     return data.map((p: WithId<Period>) => { p.id = p._id.toHexString(); return p; }).toArray();
 }
 
-async function setDbPeriod(period: Partial<Period>, options?: FindOptions<Period>)
+async function setDbPeriod(period: Partial<Period>, options?: FindOptions)
 {
     if (!period.id && !period.name) { throw new ClientApiError('Period name or id is missing!'); }
 
@@ -31,7 +31,7 @@ async function setDbPeriod(period: Partial<Period>, options?: FindOptions<Period
 
     if (period.id === undefined)
     {
-        const data = await databaseController.periods.insertOne(period, options);
+        const data = await databaseController.periods.insertOne(period as Period, options);
         if (data.insertedId === null) { throw new ClientApiError('Failed to insert period!'); }
         period.id = data.insertedId.toHexString();
         SendServerRequestToSessionServer(MessageTypes.PERIOD_ADDED_OR_REMOVED, { action: 'added', newData: period, periodId: period.id } as PeriodAddedOrRemovedMessage);

@@ -25,7 +25,7 @@ export default function InstructorsField({ period, onPeriodChange }: Instructors
                 multiple
                 value={ period?.instructors || [] }
                 label="מדריכים"
-                onChange={ (e) => onPeriodChange({ instructors: e.target.value as string[] }) }
+                onChange={ (e) => onPeriodChange({ instructors: e.target.value as number[] }) }
             >
                 { instructorMenuItems }
             </Select>

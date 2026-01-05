@@ -16,6 +16,7 @@ import { useTheme } from '@mui/material/styles';
 import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { EventProps } from "react-big-calendar";
 import WarningIcon from '@mui/icons-material/Warning';
+import { Dayjs } from "dayjs";
 export function RoomComponent({ roomId, occupancy, ...props }: { roomId: RoomLike; occupancy?: number; } & ChipProps)
 {
     const { getRoom } = useHiveRooms();
@@ -74,8 +75,8 @@ export function PeriodTypeIcon({ period, ...props }: { period: Period; } & SvgIc
 
 function PeriodDurationLabel({ period, ...props }: { period: Period; } & ChipProps)
 {
-    const start = moment(period.startTime.toDate());
-    const end = moment(period.endTime.toDate());
+    const start = moment((period.startTime as Dayjs).toDate());
+    const end = moment((period.endTime as Dayjs).toDate());
 
     const durationMinutes = useMemo(
         () => Math.max(0, end.diff(start, "minutes")),
