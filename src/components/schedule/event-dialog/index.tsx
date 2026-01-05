@@ -67,6 +67,12 @@ export default function PeriodDialog({
         onPeriodChange({ required: e.target.checked });
     }, [ onPeriodChange ]);
 
+    const handlePersonalTalkChange = useCallback((e: ChangeEvent<HTMLInputElement>) =>
+    {
+        onPeriodChange({ personalTalk: e.target.checked });
+    }, [ onPeriodChange ]);
+
+
     return (
         <Dialog open={ open } onClose={ onClose } maxWidth="md" fullWidth>
             <DialogTitle>ערוך מופע</DialogTitle>
@@ -136,6 +142,16 @@ export default function PeriodDialog({
                                 <Switch
                                     checked={ period?.required || false }
                                     onChange={ handleRequiredChange }
+                                />
+                            }
+                        />
+
+                        <FormControlLabel
+                            label='חלון פ"א'
+                            control={
+                                <Switch
+                                    checked={ period?.personalTalk || false }
+                                    onChange={ handlePersonalTalkChange }
                                 />
                             }
                         />

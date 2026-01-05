@@ -65,6 +65,7 @@ export default function SchedulePage()
             locked: period.locked || false,
             required: period.required || false,
             hidden: period.hidden || false,
+            personalTalk: period.personalTalk || false,
         } as Period;
 
         if (newPeriod.id)

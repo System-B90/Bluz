@@ -15,7 +15,8 @@ export interface Period
     lecturer?: 'איש חוץ' | number; // Main lecturer ID
     tags: number[];
     notes: string;
-    locked: boolean; // New field to indicate if period is locked
+    locked: boolean;
     hidden: boolean;
-    required: boolean; // New field for potential F.A. (פוטנציאל פ"א)
+    required: boolean;
+    personalTalk: boolean;
 }

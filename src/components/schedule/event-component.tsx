@@ -4,18 +4,20 @@ import { useHiveUsers } from "@/components/base/hive-users-provider";
 import { Period } from "@/components/schedule/types/event";
 import { Room, RoomLike } from "@/components/schedule/types/room";
 import SubjectComponent from "@/components/subject";
+import ChatIcon from '@mui/icons-material/Chat';
 import EmojiFoodBeverageIcon from '@mui/icons-material/EmojiFoodBeverage';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SchoolIcon from '@mui/icons-material/School';
+import WarningIcon from '@mui/icons-material/Warning';
 import { Box, BoxProps, Chip, ChipProps, Stack, SvgIconProps, Tooltip, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { alpha, useTheme } from "@mui/material/styles";
+import { Dayjs } from "dayjs";
 import moment from "moment";
-import { useTheme } from '@mui/material/styles';
 import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { EventProps } from "react-big-calendar";
-import WarningIcon from '@mui/icons-material/Warning';
-import { Dayjs } from "dayjs";
+import LockIcon from '@mui/icons-material/Lock';
+import FmdBadIcon from '@mui/icons-material/FmdBad';
 
 function SingleRoomComponent({ room, occupancy, ...props }: { room: Room; occupancy?: number; } & ChipProps)
 {
@@ -130,6 +132,17 @@ const EVENT_HEIGHT_VARIANTS = {
     WIDENED: 400,
     NARROW: 200,
 };
+
+function EventStatusIcons({ period, ...props }: { period: Period; } & BoxProps)
+{
+    return (
+        <Box { ...props }>
+            { period.locked && <Tooltip title="מתואם"><LockIcon /></Tooltip> }
+            { period.required && <Tooltip title="קריטי"><FmdBadIcon /></Tooltip> }
+            { period.personalTalk && <Tooltip title='חלון פ"א'><ChatIcon /></Tooltip> }
+        </Box>
+    );
+}
 
 export default function BluezEventComponent({ event: period }: EventProps<Period>)
 {
@@ -283,6 +296,8 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
                     { period.notes }
                 </Typography>
             ) }
+
+            <EventStatusIcons sx={ { bottom: 0, position: 'absolute', margin: 1 } } period={ period } />
         </Box>
     );
 }

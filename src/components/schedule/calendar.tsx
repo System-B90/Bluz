@@ -67,6 +67,7 @@ export default function BluezCalendar({
 
     const handlePeriodDrag = useCallback((changes: EventInteractionArgs<Period>): void =>
     {
+        if (changes.event.locked) { return; }
         const updates: Partial<Period> = {
             startTime: dayjs(changes.start),
             endTime: dayjs(changes.end),
@@ -214,6 +215,8 @@ export default function BluezCalendar({
             formats={ { timeGutterFormat: 'HH:mm' } }
             components={ { event: BluezEventComponent } }
             onNavigate={ onNavigateHandler }
+            resizableAccessor={ (e) => !e.locked }
+            draggableAccessor={ (e) => !e.locked }
         // onRangeChange={ onRangeChangeHandler }
 
         />
