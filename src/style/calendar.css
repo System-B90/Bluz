@@ -224,15 +224,20 @@ button.rbc-input::-moz-focus-inner
 .rbc-event,
 .rbc-slot-selection
 {
+    box-shadow: 2px 2px 2px hsl(var(--primary) / 0.3);
     background-color: hsl(var(--primary));
     color: hsl(var(--primary-foreground));
     padding: 3px;
     border-radius: var(--radius);
-    outline: 3px solid hsl(var(--background));
-    cursor: pointer;
-    transition: outline 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+
+    outline-style: solid;
+    outline-color: hsl(var(--background));
     outline-width: 0;
+
+    cursor: pointer;
+    transition: outline-width 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
+
 
 .rbc-slot-selecting .rbc-event
 {

@@ -72,7 +72,6 @@ export function PeriodTypeIcon({ period, ...props }: { period: Period; } & SvgIc
     );
 }
 
-
 function PeriodDurationLabel({ period, ...props }: { period: Period; } & ChipProps)
 {
     const start = moment((period.startTime as Dayjs).toDate());

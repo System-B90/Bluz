@@ -32,6 +32,7 @@ import { useCalendar } from '@/components/schedule/calendar-provider';
 import BluezEventComponent from '@/components/schedule/event-component';
 import { Period } from "@/components/schedule/types/event";
 import { Room } from "@/components/schedule/types/room";
+import CustomWorkWeek from '@/components/schedule/custom-work-week';
 
 const DnDCalendar = withDragAndDrop<Period, Room>(Calendar);
 
@@ -191,7 +192,7 @@ export default function BluezCalendar({
             events={ periods }
 
             defaultView={ "week" }
-            views={ [ Views.DAY, Views.WEEK, Views.WORK_WEEK ] } // restrict to day/week
+            views={ { day: true, week: true, work_week: CustomWorkWeek } } // restrict to day/week
             onView={ setCurrentView }
 
             selectable
