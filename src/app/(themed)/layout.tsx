@@ -9,6 +9,7 @@ import { prefixer } from 'stylis';
 import createCache from '@emotion/cache';
 import { BluezThemeProvider } from '@/components/theme/theme-provider';
 import { CssBaseline } from '@mui/material';
+import { AuthProvider } from '@/components/auth/auth-provider';
 
 const cacheRtl = createCache({
     key: 'muirtl',
@@ -19,16 +20,18 @@ const cacheRtl = createCache({
 export default function ThemedLayout({ children }: { children: React.ReactNode; })
 {
     return (
-        <CacheProvider value={ cacheRtl }>
-            <BluezThemeProvider>
-                <LocalizationProvider dateAdapter={ AdapterDayjs } adapterLocale="he">
-                    <CssBaseline />
-                    <SnackbarProvider anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }>
-                        { children }
-                    </SnackbarProvider>
-                </LocalizationProvider>
-            </BluezThemeProvider>
-        </CacheProvider>
+        <AuthProvider username={ 'michaelks' }>
+            <CacheProvider value={ cacheRtl }>
+                <BluezThemeProvider>
+                    <LocalizationProvider dateAdapter={ AdapterDayjs } adapterLocale="he">
+                        <CssBaseline />
+                        <SnackbarProvider anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }>
+                            { children }
+                        </SnackbarProvider>
+                    </LocalizationProvider>
+                </BluezThemeProvider>
+            </CacheProvider>
+        </AuthProvider>
     );
 }
 

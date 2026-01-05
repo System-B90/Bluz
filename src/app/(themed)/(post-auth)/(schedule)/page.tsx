@@ -1,5 +1,7 @@
 'use client';
 
+import { apiSavePeriod } from '@/api-client/calendar';
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import ScheduleAppBar from '@/components/app-bar';
 import BluezCalendar from '@/components/schedule/calendar';
 import { useCalendar } from '@/components/schedule/calendar-provider';
@@ -10,6 +12,7 @@ import { Box } from '@mui/material';
 import { useHistoryState } from "@uidotdev/usehooks";
 import dayjs from 'dayjs';
 import 'dayjs/locale/he';
+import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useState } from 'react';
 import { v4 as uuid4 } from 'uuid';
 
@@ -46,11 +49,10 @@ export default function SchedulePage()
 
     const handleSavePeriod = useCallback((period: Partial<Period>): void =>
     {
-        console.log('Saving period:', period);
         if (!period || period.name === '') { return; }
 
         const newPeriod: Period = {
-            id: period.id || uuid4(),
+            id: period.id,
             name: period.name || '',
             subject: parseInt(period.subject?.toString() || '0', 10),
             startTime: period.startTime || dayjs(),
@@ -63,10 +65,22 @@ export default function SchedulePage()
             locked: period.locked || false,
             required: period.required || false,
             hidden: period.hidden || false,
-        };
+        } as Period;
 
-        setPeriods([ ...periods.filter(p => p.id !== newPeriod.id), newPeriod ]);
+        if (newPeriod.id)
+        {
+            setPeriods([ ...periods.filter(pp => pp.id !== newPeriod.id), newPeriod ]);
+        }
+
         setOpenPeriodDialog(false);
+
+        apiSavePeriod(newPeriod)
+            .then((p) =>
+            {
+                enqueueSnackbar(`המופע "${p.name}" נשמר בהצלחה!`, { variant: 'success' });
+                setPeriods([ ...periods.filter(pp => pp.id !== newPeriod.id), p ]);
+            })
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת המופע נכשלה!', error));
     }, [ periods, setPeriods, setOpenPeriodDialog ]);
 
     const handleClosePeriodDialog = useCallback((): void =>

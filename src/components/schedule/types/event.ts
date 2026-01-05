@@ -4,11 +4,11 @@ export type EventType = 'exercise' | 'lecture' | 'other' | 'break';
 
 export interface Period
 {
-    id: number;
+    id: string;
     name: string;
     subject: number; // Subject ID
-    startTime: Dayjs;
-    endTime: Dayjs;
+    startTime: Dayjs | Date;
+    endTime: Dayjs | Date;
     type: EventType;
     room: number; // Room ID
     instructors: number[]; // Array of instructor IDs

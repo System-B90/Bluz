@@ -14,7 +14,6 @@ assert(WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY || (typeof window !== 'undefined
 export enum MessageTypes 
 {
     REGISTER_SESSION = 'register-session',
-    MADRAT_TEXT_UPDATE = 'madrat-text-update', // Madrat altered the message text
-    SHUFFLE_MOVE = 'shuffle-move', // Shuffles moved between classrooms
-    STUDENTS_TO_HADAS_UPDATE = 'students-to-hadas-update', // A student was called to the Hadas or arrived at the Hadas
+    PERIOD_DATA_UPDATE = 'pdu',
+    PERIOD_ADDED_OR_REMOVED = 'par',
 };
