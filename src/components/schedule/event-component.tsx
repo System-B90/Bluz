@@ -15,8 +15,8 @@ import moment from "moment";
 import { useTheme } from '@mui/material/styles';
 import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { EventProps } from "react-big-calendar";
-
-export function RoomComponent({ roomId, occupancy, ...props }: { roomId: RoomLike; occupancy?: number; } & TypographyProps)
+import WarningIcon from '@mui/icons-material/Warning';
+export function RoomComponent({ roomId, occupancy, ...props }: { roomId: RoomLike; occupancy?: number; } & ChipProps)
 {
     const { getRoom } = useHiveRooms();
     const room = useMemo(() => getRoom(roomId), [ roomId, getRoom ]);
@@ -26,7 +26,7 @@ export function RoomComponent({ roomId, occupancy, ...props }: { roomId: RoomLik
 
     return (
         <Tooltip title={ overcrowded ? `עומס יתר: ${occupancy}/${roomCapacity}` : '' }>
-            <Typography color={ overcrowded ? 'error' : '' } { ...props }>{ room?.name }</Typography>
+            <Chip { ...props } label={ room?.name } sx={ { color: 'inherit' } } icon={ overcrowded ? <WarningIcon fontSize='small' color="warning" /> : undefined } />
         </Tooltip>
     );
 }
@@ -72,7 +72,7 @@ export function PeriodTypeIcon({ period, ...props }: { period: Period; } & SvgIc
 }
 
 
-function PeriodDurationLabel({ period }: { period: Period; })
+function PeriodDurationLabel({ period, ...props }: { period: Period; } & ChipProps)
 {
     const start = moment(period.startTime.toDate());
     const end = moment(period.endTime.toDate());
@@ -91,7 +91,7 @@ function PeriodDurationLabel({ period }: { period: Period; })
                 : `${minutes} ד׳`;
 
     return (
-        <Chip label={ durationLabel } size="small" sx={ { color: 'inherit' } } />
+        <Chip label={ durationLabel } size="small" sx={ { color: 'inherit' } } { ...props } />
     );
 }
 
@@ -150,10 +150,11 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
     const isWide = size.width > EVENT_HEIGHT_VARIANTS.WIDENED;
     const isNarrow = size.width < EVENT_HEIGHT_VARIANTS.NARROW;
 
-    const omitRoomName = isSmall || isTiny || isSmaller;
-    const isOnline = isWide && isTiny;
-    const omitDuration = !isOnline && isSmaller && !isWide;
-    const omitPeriodIcon = !isOnline && isSmaller && !isWide;
+    const omitRoomName = (isSmall || isTiny || isSmaller) && !isWide;
+    const isOneline = !isNarrow && isTiny;
+    const isTower = isNarrow && !isSmall;
+    const omitDuration = !isOneline && (isSmaller && isNarrow);
+    const omitPeriodIcon = !isOneline && isSmaller && isNarrow;
     const omitNotes = isSmall || isTiny || isSmaller;
     const omitSubjectName = (isSmaller && !isWide) || isNarrow;
 
@@ -172,9 +173,9 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
                 height: '100%',
             } }
         >
-            { isOnline &&
+            { isOneline &&
                 <Stack direction={ "row" }
-                    alignItems="flex-start"
+                    alignItems="center"
                     justifyContent={ "space-between" }
                     spacing={ 1 }>
                     <Box display="flex" alignItems="center" minWidth={ 0 } gap={ 0 }>
@@ -199,21 +200,26 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
                                 key={ instructor }
                                 instructor={ instructor }
                                 period={ period }
-                                size={ isOnline ? 'smaller' : (isTiny ? "smallest" : (isSmaller ? 'smaller' : 'small')) }
+                                size={ isOneline ? 'smaller' : (isTiny ? "smallest" : (isSmaller ? 'smaller' : 'small')) }
                             />
                         )) }
                     </Stack>
-                    { omitDuration || <PeriodDurationLabel period={ period } /> }
+                    <Box display="flex" alignItems="center" gap={ 1 }>
+                        { omitRoomName || <RoomComponent
+                            roomId={ period.room }
+                            size="smaller"
+                        /> }
+                        { omitDuration || <PeriodDurationLabel period={ period } size="smaller" /> }
+                    </Box>
 
                 </Stack> || <Stack
-                    direction={ ((omitDuration && isWide && isSmaller) || (omitDuration && isTiny)) ? "row" : "column" }
+                    direction={ isTower ? 'column' : ((omitDuration && isWide && isSmaller) || (omitDuration && isTiny)) ? "row" : "column" }
                     alignItems="flex-start"
                     justifyContent={ isWide ? "space-between" : "flex-start" }
                     spacing={ 1 }
                 >
-
                     <Stack
-                        direction="row"
+                        direction={ isTower ? 'column' : "row" }
                         alignItems="center"
                         justifyContent="space-between"
                         spacing={ 1 }
@@ -223,7 +229,7 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
                         <Box display="flex" alignItems="center" minWidth={ 0 } gap={ 0 }>
                             { omitPeriodIcon || <PeriodTypeIcon period={ period } fontSize="small" /> }
 
-                            <Box display="flex" alignItems="baseline" minWidth={ 0 } gap={ 1 }>
+                            <Box display="flex" alignItems="baseline" minWidth={ 0 } gap={ 1 } flexDirection={ isTower ? 'column' : 'row' }>
                                 <Typography
                                     variant="subtitle2"
                                     noWrap
@@ -232,31 +238,29 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
                                     { period.name }
                                 </Typography>
 
-                                { omitSubjectName || <SubjectComponent fontSize={ '0.8rem' } subjectId={ period.subject } /> }
+                                { (!omitSubjectName && isSmall) && <SubjectComponent fontSize={ '0.8rem' } subjectId={ period.subject } /> }
                             </Box>
                         </Box>
 
-                        { omitDuration || <PeriodDurationLabel period={ period } /> }
+                        <Box display="flex" alignItems="center" gap={ 1 } flexDirection={ isTower ? 'column' : 'row' }>
+                            { omitRoomName || <RoomComponent
+                                roomId={ period.room }
+                            /> }
+                            { omitDuration || <PeriodDurationLabel period={ period } /> }
+                        </Box>
                     </Stack>
 
-                    { (omitRoomName) || <Stack spacing={ 0.25 } flexShrink={ 0 }>
-                        { omitRoomName || <RoomComponent
-                            occupancy={ 2 }
-                            roomId={ period.room }
-                        /> }
-                    </Stack> }
+                    { (!omitSubjectName && !isSmall) && <SubjectComponent fontSize={ '0.8rem' } subjectId={ period.subject } /> }
 
-                    <Stack direction="row" spacing={ 0.5 } alignItems="flex-start">
-                        <Stack direction="row" display={ 'flex' } flexWrap="wrap" alignItems={ 'center' } justifyContent={ 'flex-start' } spacing={ (isSmall || isTiny) ? 1 : 2 }>
-                            { period.instructors.map((instructor) => (
-                                <InstructorChip
-                                    key={ instructor }
-                                    instructor={ instructor }
-                                    period={ period }
-                                    size={ isTiny ? "smallest" : (isSmaller ? 'smaller' : 'small') }
-                                />
-                            )) }
-                        </Stack>
+                    <Stack direction={ isTower ? 'column' : "row" } gap={ (isSmall || isTiny) ? 1 : 2 } sx={ { marginTop: isSmaller ? '0 !important' : undefined } }>
+                        { period.instructors.map((instructor) => (
+                            <InstructorChip
+                                key={ instructor }
+                                instructor={ instructor }
+                                period={ period }
+                                size={ isTiny ? "smallest" : (isSmaller ? 'smaller' : 'small') }
+                            />
+                        )) }
                     </Stack>
                 </Stack> }
 

@@ -885,6 +885,8 @@ button.rbc-input::-moz-focus-inner
     border-bottom: 1px solid hsl(var(--border));
 }
 
+.rbc-time-view-resources .rbc-time-gutter,
+.rbc-time-view-resources .rbc-time-header-gutter,
 .rbc-time-gutter
 {
     background-color: hsl(var(--card));

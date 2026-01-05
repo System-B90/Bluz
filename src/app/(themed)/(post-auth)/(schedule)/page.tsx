@@ -47,16 +47,16 @@ export default function SchedulePage()
     const handleSavePeriod = useCallback((period: Partial<Period>): void =>
     {
         console.log('Saving period:', period);
-        if (!period || period.name === '') return;
+        if (!period || period.name === '') { return; }
 
         const newPeriod: Period = {
             id: period.id || uuid4(),
             name: period.name || '',
-            subject: period.subject || '',
+            subject: parseInt(period.subject?.toString() || '0', 10),
             startTime: period.startTime || dayjs(),
             endTime: period.endTime || dayjs(),
             type: period.type || 'exercise',
-            room: period.room || "",
+            room: parseInt(period.room?.toString() || '0', 10),
             instructors: period.instructors || [],
             tags: period.tags || [],
             notes: period.notes || '',

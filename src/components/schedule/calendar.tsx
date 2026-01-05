@@ -64,7 +64,16 @@ export default function BluezCalendar({
 
     const handlePeriodDrag = useCallback((changes: EventInteractionArgs<Period>): void =>
     {
-        const updates: Partial<Period> = { startTime: dayjs(changes.start), endTime: dayjs(changes.end), room: changes.resourceId?.toString() || '' };
+        const updates: Partial<Period> = {
+            startTime: dayjs(changes.start),
+            endTime: dayjs(changes.end),
+        };
+
+        if (changes.resourceId !== undefined && changes.resourceId !== null)
+        {
+            updates.room = parseInt(changes.resourceId.toString(), 10);
+        }
+
         const newPeriod = { ...changes.event, ...updates };
         handleSavePeriod(newPeriod);
     }, [ handleSavePeriod ]);
@@ -77,8 +86,12 @@ export default function BluezCalendar({
         const newPeriod: Partial<Period> = {
             startTime: dayjs(slotInfo.start),
             endTime: dayjs(slotInfo.end),
-            room: parseInt(slotInfo.resourceId?.toString() || '0', 10),
         };
+
+        if (slotInfo.resourceId !== undefined && slotInfo.resourceId !== null)
+        {
+            newPeriod.room = parseInt(slotInfo.resourceId.toString() || '0', 10);
+        }
 
         console.log('newPeriod', newPeriod);
         setSelectedPeriod(newPeriod);
