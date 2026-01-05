@@ -10,7 +10,7 @@ export interface Period
     startTime: Dayjs | Date;
     endTime: Dayjs | Date;
     type: EventType;
-    room: number; // Room ID
+    rooms: Array<number>; // Room IDs
     instructors: number[]; // Array of instructor IDs
     lecturer?: 'איש חוץ' | number; // Main lecturer ID
     tags: number[];

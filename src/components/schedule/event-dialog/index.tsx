@@ -9,10 +9,11 @@ import
     DialogContent,
     DialogTitle,
     FormControlLabel,
+    FormGroup,
     Switch,
     TextField,
 } from '@mui/material';
-import { ChangeEvent, FormEvent, useCallback } from "react";
+import { ChangeEvent, Dispatch, FormEvent, SetStateAction, useCallback } from "react";
 
 import EventTypeField from "@/components/schedule/event-dialog/event-type-field";
 import InstructorsField from "@/components/schedule/event-dialog/instructors-field";
@@ -27,7 +28,7 @@ interface PeriodDialogProps
     period: Partial<Period>;
     onClose: () => void;
     onSave: (period: Partial<Period>) => void;
-    onPeriodChange: (updates: Partial<Period>) => void;
+    onPeriodChange: Dispatch<SetStateAction<Partial<Period>>>;
 }
 
 export default function PeriodDialog({
@@ -38,7 +39,6 @@ export default function PeriodDialog({
     onPeriodChange,
 }: PeriodDialogProps)
 {
-
     const submitHandler = useCallback((e: FormEvent<HTMLFormElement>) =>
     {
         e.preventDefault();
@@ -72,30 +72,38 @@ export default function PeriodDialog({
             <form onSubmit={ submitHandler }>
                 <DialogContent>
                     <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 } }>
-                        <TextField
-                            label="שם"
-                            fullWidth
-                            required
-                            value={ period?.name || "" }
-                            onChange={ handleNameChange }
-                        />
-
-                        <SubjectField
-                            period={ period }
-                            onPeriodChange={ onPeriodChange }
-                        />
-                        <EventTypeField
-                            period={ period }
-                            onPeriodChange={ onPeriodChange }
-                        />
-                        <EventTimeField
-                            period={ period }
-                            onPeriodChange={ onPeriodChange }
-                        />
-                        <RoomField
-                            period={ period }
-                            onPeriodChange={ onPeriodChange }
-                        />
+                        <Box gap={ 2 } display={ 'flex' } width={ '100%' }>
+                            <TextField
+                                label="שם"
+                                fullWidth
+                                required
+                                value={ period?.name || "" }
+                                onChange={ handleNameChange }
+                                sx={ { flexGrow: 1 } }
+                            />
+                            <EventTimeField
+                                sx={ { flexShrink: 1 } }
+                                period={ period }
+                                onPeriodChange={ onPeriodChange }
+                            />
+                        </Box>
+                        <Box display={ 'flex' } width={ '100%' } gap={ 2 } justifyContent={ 'flex-start' }>
+                            <EventTypeField
+                                period={ period }
+                                onPeriodChange={ onPeriodChange }
+                                sx={ { width: '12.5%' } }
+                            />
+                            <SubjectField
+                                period={ period }
+                                onPeriodChange={ onPeriodChange }
+                                sx={ { width: '35%' } }
+                            />
+                            <RoomField
+                                period={ period }
+                                onPeriodChange={ onPeriodChange }
+                                sx={ { flexGrow: 1 } }
+                            />
+                        </Box>
                         <InstructorsField
                             period={ period }
                             onPeriodChange={ onPeriodChange }

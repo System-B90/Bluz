@@ -1,27 +1,24 @@
 import { useHiveRooms } from "@/components/base/hive-rooms-provider";
 import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { useHiveUsers } from "@/components/base/hive-users-provider";
-import { localizer } from "@/components/schedule/calendar";
 import { Period } from "@/components/schedule/types/event";
-import { RoomLike } from "@/components/schedule/types/room";
+import { Room, RoomLike } from "@/components/schedule/types/room";
 import SubjectComponent from "@/components/subject";
 import EmojiFoodBeverageIcon from '@mui/icons-material/EmojiFoodBeverage';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SchoolIcon from '@mui/icons-material/School';
-import { Box, Chip, ChipProps, Stack, SvgIconProps, Tooltip, Typography, TypographyProps } from "@mui/material";
-import { alpha, getContrastRatio } from "@mui/material/styles";
+import { Box, BoxProps, Chip, ChipProps, Stack, SvgIconProps, Tooltip, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import moment from "moment";
 import { useTheme } from '@mui/material/styles';
 import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { EventProps } from "react-big-calendar";
 import WarningIcon from '@mui/icons-material/Warning';
 import { Dayjs } from "dayjs";
-export function RoomComponent({ roomId, occupancy, ...props }: { roomId: RoomLike; occupancy?: number; } & ChipProps)
-{
-    const { getRoom } = useHiveRooms();
-    const room = useMemo(() => getRoom(roomId), [ roomId, getRoom ]);
 
+function SingleRoomComponent({ room, occupancy, ...props }: { room: Room; occupancy?: number; } & ChipProps)
+{
     const roomCapacity = room?.users.length ?? -1;
     const overcrowded = occupancy !== undefined && roomCapacity >= 0 && occupancy > roomCapacity;
 
@@ -29,6 +26,18 @@ export function RoomComponent({ roomId, occupancy, ...props }: { roomId: RoomLik
         <Tooltip title={ overcrowded ? `עומס יתר: ${occupancy}/${roomCapacity}` : '' }>
             <Chip { ...props } label={ room?.name } sx={ { color: 'inherit' } } icon={ overcrowded ? <WarningIcon fontSize='small' color="warning" /> : undefined } />
         </Tooltip>
+    );
+}
+
+export function RoomComponent({ roomIds, occupancy, ...props }: { roomIds: Array<RoomLike>; occupancy?: number; } & BoxProps)
+{
+    const { getRoom } = useHiveRooms();
+    const rooms = useMemo(() => roomIds.map(getRoom).filter((v) => !!v), [ roomIds, getRoom ]);
+
+    return (
+        <Box display={ 'flex' } gap={ 1 } { ...props }>
+            { rooms.map((room) => <SingleRoomComponent key={ room.id } room={ room } occupancy={ occupancy } />) }
+        </Box>
     );
 }
 
@@ -175,7 +184,7 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
         >
             { isOneline &&
                 <Stack direction={ "row" }
-                    alignItems="center"
+                    alignItems="flex-start"
                     justifyContent={ "space-between" }
                     spacing={ 1 }>
                     <Box display="flex" alignItems="center" minWidth={ 0 } gap={ 0 }>
@@ -206,7 +215,7 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
                     </Stack>
                     <Box display="flex" alignItems="center" gap={ 1 }>
                         { omitRoomName || <RoomComponent
-                            roomId={ period.room }
+                            roomIds={ period.rooms }
                             size="smaller"
                         /> }
                         { omitDuration || <PeriodDurationLabel period={ period } size="smaller" /> }
@@ -220,7 +229,7 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
                 >
                     <Stack
                         direction={ isTower ? 'column' : "row" }
-                        alignItems="center"
+                        alignItems="flex-start"
                         justifyContent="space-between"
                         spacing={ 1 }
                         mb={ isSmall ? 0 : 0.5 }
@@ -242,11 +251,11 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
                             </Box>
                         </Box>
 
-                        <Box display="flex" alignItems="center" gap={ 1 } flexDirection={ isTower ? 'column' : 'row' }>
-                            { omitRoomName || <RoomComponent
-                                roomId={ period.room }
-                            /> }
+                        <Box display="flex" alignItems="flex-end" gap={ 1 } flexDirection={ 'column' }>
                             { omitDuration || <PeriodDurationLabel period={ period } /> }
+                            { omitRoomName || <RoomComponent
+                                roomIds={ period.rooms }
+                            /> }
                         </Box>
                     </Stack>
 

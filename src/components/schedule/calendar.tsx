@@ -72,9 +72,9 @@ export default function BluezCalendar({
             endTime: dayjs(changes.end),
         };
 
-        if (changes.resourceId !== undefined && changes.resourceId !== null)
+        if (changes.resourceId !== undefined && changes.resourceId !== null && changes.event.rooms.length <= 1)
         {
-            updates.room = parseInt(changes.resourceId.toString(), 10);
+            updates.rooms = [ parseInt(changes.resourceId.toString(), 10) ];
         }
 
         const newPeriod = { ...changes.event, ...updates };
@@ -93,7 +93,7 @@ export default function BluezCalendar({
 
         if (slotInfo.resourceId !== undefined && slotInfo.resourceId !== null)
         {
-            newPeriod.room = parseInt(slotInfo.resourceId.toString() || '0', 10);
+            newPeriod.rooms = [ parseInt(slotInfo.resourceId.toString() || '0', 10) ];
         }
 
         console.log('newPeriod', newPeriod);
@@ -204,7 +204,7 @@ export default function BluezCalendar({
                 resources: rooms,
                 resourceIdAccessor: 'id',
                 resourceTitleAccessor: 'name',
-                resourceAccessor: (event: Period) => event.room
+                resourceAccessor: (event: Period) => event.rooms
             }) }
 
             onEventResize={ handlePeriodDrag }

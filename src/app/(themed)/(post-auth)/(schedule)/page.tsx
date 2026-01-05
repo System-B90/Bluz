@@ -13,7 +13,7 @@ import { useHistoryState } from "@uidotdev/usehooks";
 import dayjs from 'dayjs';
 import 'dayjs/locale/he';
 import { enqueueSnackbar } from 'notistack';
-import { useCallback, useEffect, useState } from 'react';
+import { SetStateAction, useCallback, useEffect, useState } from 'react';
 import { v4 as uuid4 } from 'uuid';
 
 export default function SchedulePage()
@@ -58,7 +58,7 @@ export default function SchedulePage()
             startTime: period.startTime || dayjs(),
             endTime: period.endTime || dayjs(),
             type: period.type || 'exercise',
-            room: parseInt(period.room?.toString() || '0', 10),
+            rooms: period.rooms?.map((v) => typeof v === 'string' ? parseInt(v) : v) || [],
             instructors: period.instructors || [],
             tags: period.tags || [],
             notes: period.notes || '',
@@ -89,9 +89,20 @@ export default function SchedulePage()
         setSelectedPeriod(undefined);
     }, [ setOpenPeriodDialog, setSelectedPeriod ]);
 
-    const onPeriodChange = useCallback((updates: Partial<Period>): void =>
+    const onPeriodChange = useCallback((action: SetStateAction<Partial<Period>>) =>
     {
-        setSelectedPeriod(selectedPeriod => selectedPeriod ? { ...selectedPeriod, ...updates } : updates);
+        setSelectedPeriod((prev) =>
+        {
+            // 1. Resolve the value. If 'action' is a function, call it with the previous state.
+            // We fallback to {} if prev is null/undefined to ensure the function receives an object.
+            const updates = typeof action === 'function'
+                ? (action as (prev: Partial<Period>) => Partial<Period>)(prev || {})
+                : action;
+
+            // 2. Apply the merge logic you had originally
+            // (If state exists, merge updates; otherwise, just use updates)
+            return prev ? { ...prev, ...updates } : (updates as Period);
+        });
     }, [ setSelectedPeriod ]);
 
     return (

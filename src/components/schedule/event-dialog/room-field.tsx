@@ -1,32 +1,65 @@
 import { useHiveRooms } from "@/components/base/hive-rooms-provider";
 import { Period } from "@/components/schedule/types/event";
-import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
+import { Dispatch, SetStateAction, useCallback } from "react";
 
 interface RoomFieldProps
 {
     period?: Partial<Period>;
-    onPeriodChange: (updates: Partial<Period>) => void;
+    onPeriodChange: Dispatch<SetStateAction<Partial<Period>>>;
 }
 
-export default function RoomField({ period, onPeriodChange }: RoomFieldProps)
+export default function RoomField({ period, onPeriodChange, ...props }: RoomFieldProps & FormControlProps)
 {
-    const { rooms } = useHiveRooms();
+    const { rooms, getRoom } = useHiveRooms();
 
-    const roomMenuItems = Object.values(rooms).map((room) => (
-        <MenuItem key={ room.id } value={ room.id }>
-            { room.name }
-        </MenuItem>
-    ));
+    // Ensure value is always an array for the Select component
+    const selectedRoomIds = Array.isArray(period?.rooms) ? period.rooms : [];
+
+    const handleChange = useCallback((event: SelectChangeEvent<typeof selectedRoomIds>) =>
+    {
+        const {
+            target: { value },
+        } = event;
+
+        // On autofill we get a stringified value.
+        const newRooms = (typeof value === 'string' ? value.split(',') : value).map((v) => typeof v === 'string' ? parseInt(v) : v);
+
+        onPeriodChange({ rooms: newRooms });
+    }, [ onPeriodChange ]);
+
+    const handleDelete = useCallback((roomIdToDelete: number) =>
+    {
+        onPeriodChange(p => { return { 'rooms': p.rooms?.filter((id) => id !== roomIdToDelete) ?? [] }; });
+    }, [ onPeriodChange ]);
 
     return (
-        <FormControl fullWidth>
-            <InputLabel>כיתה</InputLabel>
+        <FormControl fullWidth={ false } { ...props }>
+            <InputLabel>כיתות</InputLabel>
             <Select
-                value={ period?.room || "" }
-                label="כיתה"
-                onChange={ (e) => onPeriodChange({ room: e.target.value }) }
+                label="כיתות"
+                multiple
+                value={ selectedRoomIds }
+                onChange={ handleChange }
+                renderValue={ (selected: Array<number>) => (
+                    <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
+                        { selected.map((value) => (
+                            <Chip
+                                key={ value }
+                                label={ getRoom(value)?.name || value }
+                                size="small" // Optional: makes them fit better
+                                onDelete={ () => handleDelete(value) }
+                                onMouseDown={ (event) => event.stopPropagation() }
+                            />
+                        )) }
+                    </Box>
+                ) }
             >
-                { roomMenuItems }
+                { Object.values(rooms).map((room) => (
+                    <MenuItem key={ room.id } value={ room.id }>
+                        { room.name }
+                    </MenuItem>
+                )) }
             </Select>
         </FormControl>
     );
