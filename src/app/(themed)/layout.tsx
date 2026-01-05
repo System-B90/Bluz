@@ -20,12 +20,7 @@ export default function ThemedLayout({ children }: { children: React.ReactNode; 
 {
     return (
         <CacheProvider value={ cacheRtl }>
-            <BluezThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-            >
+            <BluezThemeProvider>
                 <LocalizationProvider dateAdapter={ AdapterDayjs } adapterLocale="he">
                     <CssBaseline />
                     <SnackbarProvider anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }>

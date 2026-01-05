@@ -1,19 +1,21 @@
+import { useTheme } from '@/components/theme/theme-provider';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { AppBar, AppBarProps, IconButton, Toolbar, Typography } from "@mui/material";
-import { useTheme } from 'next-themes';
+import { useCallback } from 'react';
 
 export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
     setOpenSettingsDialog: (open: boolean) => void,
 } & Exclude<AppBarProps, 'position'>)
 {
-    const { theme, setTheme } = useTheme();
+    const { setTheme } = useTheme();
 
-    const toggleTheme = () =>
+    const toggleTheme = useCallback(() =>
     {
-        setTheme(theme === "dark" ? "light" : "dark");
-    };
+        setTheme(t => t === "dark" ? "light" : "dark");
+    }, [ setTheme ]);
+
     return (
         <AppBar position="static" { ...props }>
             <Toolbar>
