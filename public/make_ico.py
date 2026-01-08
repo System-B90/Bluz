@@ -41,9 +41,57 @@ def create_responsive_ico(
         raise RuntimeError(f"Failed to create ICO: {e}")
 
 
+def rename_images_by_resolution(
+    directory: str | Path,
+    suffix_format: str = "{width}x{height}",
+    extensions: Tuple[str, ...] = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp"),
+) -> None:
+    """
+    Renames images in a directory based on their resolution.
+
+    Example:
+        image.png -> 1920x1080.png
+        image2.png -> 1920x1080_1.png
+
+    Args:
+        directory (str): Path to the directory containing images
+        suffix_format (str): Format for resolution naming
+        extensions (tuple): Image extensions to process
+    """
+    directory = Path(directory)
+
+    if not directory.is_dir():
+        raise ValueError(f"{directory} is not a valid directory")
+
+    for image_path in directory.iterdir():
+        if image_path.suffix.lower() not in extensions:
+            continue
+
+        try:
+            with Image.open(image_path) as img:
+                width, height = img.size
+        except Exception as e:
+            print(f"Skipping {image_path.name}: {e}")
+            continue
+
+        base_name = (
+            f"{image_path.stem}_{suffix_format.format(width=width, height=height)}"
+        )
+        new_path = directory / f"{base_name}{image_path.suffix.lower()}"
+
+        counter = 1
+        while new_path.exists():
+            new_path = directory / f"{base_name}_{counter}{image_path.suffix.lower()}"
+            counter += 1
+
+        image_path.rename(new_path)
+        print(f"{image_path.name} → {new_path.name}")
+
+
 if __name__ == "__main__":
-    create_responsive_ico(
-        Path("./public/Bluez@3x.png"),
-        Path("./public/favicon.ico"),
-        sizes=(16, 32, 48, 64, 128, 256),
-    )
+    # create_responsive_ico(
+    #     Path("./public/Bluez@3x.png"),
+    #     Path("./public/favicon.ico"),
+    #     sizes=(16, 32, 48, 64, 128, 256),
+    # )
+    rename_images_by_resolution("./public")
