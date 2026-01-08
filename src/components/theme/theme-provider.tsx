@@ -53,13 +53,66 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
     // - If server/hydrating (not mounted): Force 'light' to match server HTML.
     // - If mounted: Use 'resolvedTheme' (which converts 'system' -> 'dark'/'light').
     const paletteMode = mounted ? (resolvedTheme as 'light' | 'dark') : 'light';
-
     const muiTheme = useMemo(
         () =>
             createTheme({
+                typography: {
+                    fontFamily: [ '"Assistant"', 'sans-serif' ].join(','),
+                    // Optional: Adjust specific weights if needed
+                    h1: { fontWeight: 700 },
+                    h2: { fontWeight: 700 },
+                    h3: { fontWeight: 600 },
+                    button: { fontWeight: 600 },
+                },
                 palette: {
-                    // Ensure strict casting (resolvedTheme can be undefined briefly)
                     mode: paletteMode || 'light',
+                    ...(paletteMode === 'light'
+                        ? {
+                            // LIGHT MODE
+                            primary: {
+                                main: '#67C8DD', // The specific Turquoise provided
+                                light: '#9BF0FF',
+                                dark: '#3397AB',
+                                contrastText: '#002633', // Dark text for readability on bright turquoise
+                            },
+                            secondary: {
+                                main: '#1A3C59', // "Academic" Deep Navy (School/Bis vibe)
+                                light: '#466685',
+                                dark: '#001730',
+                                contrastText: '#ffffff',
+                            },
+                            background: {
+                                default: '#F4FAFC', // Very subtle turquoise tint to reduce glare
+                                paper: '#FFFFFF',
+                            },
+                            text: {
+                                primary: '#0D2336', // Soft black (deep blue-gray)
+                                secondary: '#587389',
+                            },
+                        }
+                        : {
+                            // DARK MODE
+                            primary: {
+                                main: '#67C8DD', // Keep brand color
+                                light: '#9BF0FF',
+                                dark: '#3397AB',
+                                contrastText: '#001E29',
+                            },
+                            secondary: {
+                                main: '#4FB0C6', // Lighter variation of secondary for dark contrast
+                                light: '#83E2F9',
+                                dark: '#0F8096',
+                                contrastText: '#000000',
+                            },
+                            background: {
+                                default: '#071624', // Deep Midnight Blue (not pure black)
+                                paper: '#0C2237', // Slightly lighter midnight for cards
+                            },
+                            text: {
+                                primary: '#EBF7FA', // Off-white with slight cyan tint
+                                secondary: '#8DA6B5',
+                            },
+                        }),
                 },
                 components: {
                     MuiChip: {
@@ -86,11 +139,27 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
                             },
                         ],
                     },
+                    // Optional: Round corners slightly to match the "Fluid/Musical" feel of the icon
+                    MuiButton: {
+                        styleOverrides: {
+                            root: {
+                                borderRadius: 8,
+                                textTransform: 'none', // Modern look
+                                fontWeight: 600,
+                            },
+                        },
+                    },
+                    MuiPaper: {
+                        styleOverrides: {
+                            rounded: {
+                                borderRadius: 12, // Softer edges for calendar items
+                            },
+                        },
+                    },
                 },
             }),
         [ paletteMode ]
     );
-
     // 3. Memoize the context value
     // We map next-themes values to your context shape.
     const contextValue = useMemo(() => ({

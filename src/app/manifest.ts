@@ -3,13 +3,15 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest
 {
     return {
-        name: 'Bis Helpi',
-        short_name: 'BisLli',
-        description: 'Madrat & Mevuzarim dashboard',
+        name: 'Bluez',
+        short_name: 'Bluez',
+        description: 'לו"ז לכל בי"ס',
         start_url: '/',
-        display: 'standalone',
-        background_color: '#000',
-        theme_color: '#000',
+        display: 'fullscreen',
+        background_color: '#09090b',
+        theme_color: '#67C8DD',
+        lang: 'he',
+        dir: 'rtl',
         icons: [
             {
                 src: '/favicon.ico',

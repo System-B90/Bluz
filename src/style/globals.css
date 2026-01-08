@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./schedule-editor.css";
 
+
 :root {
   --background: #0f0f23;
   --foreground: #ffffff;
@@ -30,7 +31,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Assistant';
   direction: rtl;
   text-align: right;
 }
