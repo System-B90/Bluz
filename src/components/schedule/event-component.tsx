@@ -149,22 +149,11 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
     const theme = useTheme();
     const { getSubject } = useHiveSubjects();
 
-    // 2. Performance: Direct lookup is usually faster than useMemo for simple objects.
-    // Only keep useMemo if getSubject does heavy computation.
     const subject = getSubject(period.subject);
     const bgColor = subject?.color || theme.palette.common.black;
 
-    // 3. Theme-aware Contrast: Use MUI's built-in contrast text generator
-    // or your utility, but memoize the result if calculating manually.
     const textColor = theme.palette.getContrastText(bgColor);
 
-    // 4. Performance: Replaced useElementSize with prop-based logic or CSS classes.
-    // If you MUST know the size, pass the height from the parent (Calendar engine usually knows the height).
-    // Assuming 'height' is passed via props or context in a real calendar lib, 
-    // otherwise, we use CSS classes for hiding elements to avoid JS resize observers on every item.
-    // *For this example, I will assume the parent passes 'height' or we use CSS.*
-
-    // Fallback: If strict JS control is needed, keep useElementSize but be wary of performance.
     const { ref, size } = useElementSize<HTMLDivElement>();
     const isSmall = size.height < EVENT_HEIGHT_VARIANTS.SMALL;
     const isSmaller = size.height < EVENT_HEIGHT_VARIANTS.SMALLER;
