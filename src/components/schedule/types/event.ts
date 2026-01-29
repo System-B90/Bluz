@@ -1,18 +1,25 @@
 import { Dayjs } from "dayjs";
 
-export type EventType = 'exercise' | 'lecture' | 'other' | 'break';
+export enum EventType
+{
+    EXERCISE = 'exercise',
+    LECTURE = 'lecture',
+    OTHER = 'other',
+    BREAK = 'break'
+}
 
 export interface Period
 {
     id: string;
     name: string;
     subject: number; // Subject ID
+    hiveModule: number; // Module ID
     startTime: Dayjs | Date;
     endTime: Dayjs | Date;
     type: EventType;
     rooms: Array<number>; // Room IDs
     instructors: number[]; // Array of instructor IDs
-    lecturer?: 'איש חוץ' | number; // Main lecturer ID
+    lecturers?: Array<'איש חוץ' | number>;
     tags: number[];
     notes: string;
     locked: boolean;

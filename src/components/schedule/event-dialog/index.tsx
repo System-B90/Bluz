@@ -21,6 +21,7 @@ import RoomField from "@/components/schedule/event-dialog/room-field";
 import SubjectField from "@/components/schedule/event-dialog/subject-field";
 import EventTimeField from "@/components/schedule/event-dialog/time-fields";
 import { Period } from "@/components/schedule/types/event";
+import ModuleField from '@/components/schedule/event-dialog/module-field';
 
 interface PeriodDialogProps
 {
@@ -104,7 +105,12 @@ export default function PeriodDialog({
                             <SubjectField
                                 period={ period }
                                 onPeriodChange={ onPeriodChange }
-                                sx={ { width: '35%' } }
+                                sx={ { width: '25%' } }
+                            />
+                            <ModuleField
+                                period={ period }
+                                onPeriodChange={ onPeriodChange }
+                                sx={ { width: '20%' } }
                             />
                             <RoomField
                                 period={ period }

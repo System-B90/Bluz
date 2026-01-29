@@ -1,5 +1,6 @@
 import { safeApiFetcher } from "@/api-client/common";
 import { Class, ClassTypeEnum, CourseUser } from "@/api-server/hive/types";
+import { Module } from "@/components/schedule/types/module";
 import { Subject } from "@/components/schedule/types/subject";
 
 export async function apiGetStudents()
@@ -25,4 +26,13 @@ export async function apiGetRooms()
 export async function getHiveUsers()
 {
     return (await safeApiFetcher('/api/hive/users')) as Array<CourseUser>;
+}
+export async function apiGetModules()
+{
+    return (await safeApiFetcher('/api/hive/modules')) as Array<Module>;
+}
+
+export function getHiveBaseUrl()
+{
+    return process.env.NEXT_PUBLIC_HIVE_API_URL || 'https://hive.org';
 }

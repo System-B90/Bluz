@@ -1,19 +1,34 @@
+import { getHiveBaseUrl } from "@/api-client/hive";
+import { useHiveModules } from "@/components/base/hive-modules-provider";
 import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
+import { ModuleLike } from "@/components/schedule/types/module";
 import { SubjectLike } from "@/components/schedule/types/subject";
 import { Typography, TypographyProps } from "@mui/material";
 import Link from "next/link";
 import { useMemo } from "react";
 
+
+
 export default function SubjectComponent({ subjectId, ...props }: { subjectId: SubjectLike; } & TypographyProps)
 {
-    const { subjects, getSubject } = useHiveSubjects();
-    const subject = useMemo(() => getSubject(subjectId), [ subjects, subjectId ]);
+    const { getSubject } = useHiveSubjects();
+    const subject = useMemo(() => getSubject(subjectId), [ subjectId ]);
 
-
-    // TODO: link to subject page on Hive
     return (
-        <Link href={ `/${subject?.id}` } className="hover:underline">
+        <Link href={ `${getHiveBaseUrl()}/course/${subject?.id}` } className="hover:underline">
             <Typography { ...props }>{ subject?.name }</Typography>
+        </Link>
+    );
+}
+
+export function ModuleComponent({ moduleId, ...props }: { moduleId: ModuleLike; } & TypographyProps)
+{
+    const { getModule } = useHiveModules();
+    const module = useMemo(() => getModule(moduleId), [ moduleId ]);
+
+    return (
+        <Link href={ `${getHiveBaseUrl()}/course/${module?.parent_subject}/${module?.id}` } className="hover:underline">
+            <Typography { ...props }>{ module?.name }</Typography>
         </Link>
     );
 }

@@ -1,5 +1,6 @@
 import { Class, CourseUser } from "@/api-server/hive/types";
 import { HiveError } from "@/api-shared/errors";
+import { Module } from "@/components/schedule/types/module";
 import { Subject } from "@/components/schedule/types/subject";
 
 class HiveClient
@@ -135,6 +136,11 @@ class HiveClient
     async getSubjects(): Promise<Array<Subject>>
     {
         return this._get<Array<Subject>>(this.buildUrl('/api/core/course/subjects/'));
+    }
+
+    async getModules(): Promise<Array<Module>>
+    {
+        return this._get<Array<Module>>(this.buildUrl('/api/core/course/modules/'));
     }
 }
 

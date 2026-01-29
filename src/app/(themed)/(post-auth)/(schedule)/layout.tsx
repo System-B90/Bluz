@@ -1,3 +1,4 @@
+import { HiveModulesProvider } from '@/components/base/hive-modules-provider';
 import { HiveRoomsProvider } from '@/components/base/hive-rooms-provider';
 import { HiveSubjectsProvider } from '@/components/base/hive-subjects-provider';
 import { HiveUsersProvider } from '@/components/base/hive-users-provider';
@@ -13,13 +14,15 @@ export default async function ScheduleLayout({
     return (
         <HiveUsersProvider>
             <HiveSubjectsProvider>
-                <HiveRoomsProvider>
-                    <CalendarProvider>
-                        <div className="schedule-layout">
-                            { children }
-                        </div>
-                    </CalendarProvider>
-                </HiveRoomsProvider>
+                <HiveModulesProvider>
+                    <HiveRoomsProvider>
+                        <CalendarProvider>
+                            <div className="schedule-layout">
+                                { children }
+                            </div>
+                        </CalendarProvider>
+                    </HiveRoomsProvider>
+                </HiveModulesProvider>
             </HiveSubjectsProvider>
         </HiveUsersProvider>
     );

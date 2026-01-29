@@ -3,14 +3,14 @@ import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { useHiveUsers } from "@/components/base/hive-users-provider";
 import { Period } from "@/components/schedule/types/event";
 import { Room, RoomLike } from "@/components/schedule/types/room";
-import SubjectComponent from "@/components/subject";
+import SubjectComponent, { ModuleComponent } from "@/components/subject";
 import ChatIcon from '@mui/icons-material/Chat';
 import EmojiFoodBeverageIcon from '@mui/icons-material/EmojiFoodBeverage';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SchoolIcon from '@mui/icons-material/School';
 import WarningIcon from '@mui/icons-material/Warning';
-import { Box, BoxProps, Chip, ChipProps, Stack, SvgIconProps, Tooltip, Typography } from "@mui/material";
+import { Box, BoxProps, Chip, ChipProps, Link, Stack, SvgIconProps, Tooltip, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { Dayjs } from "dayjs";
 import moment from "moment";
@@ -18,6 +18,8 @@ import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { EventProps } from "react-big-calendar";
 import LockIcon from '@mui/icons-material/Lock';
 import FmdBadIcon from '@mui/icons-material/FmdBad';
+import { getHiveBaseUrl } from "@/api-client/hive";
+import assert from "assert";
 
 function SingleRoomComponent({ room, occupancy, ...props }: { room: Room; occupancy?: number; } & ChipProps)
 {
@@ -26,7 +28,7 @@ function SingleRoomComponent({ room, occupancy, ...props }: { room: Room; occupa
 
     return (
         <Tooltip title={ overcrowded ? `עומס יתר: ${occupancy}/${roomCapacity}` : '' }>
-            <Chip { ...props } label={ room?.name } sx={ { color: 'inherit' } } icon={ overcrowded ? <WarningIcon fontSize='small' color="warning" /> : undefined } />
+            <Link underline="hover" href={ `${getHiveBaseUrl()}/mentor/classes?id=${room?.id}` }><Chip  { ...props } label={ room?.name } sx={ { color: 'inherit' } } icon={ overcrowded ? <WarningIcon fontSize='small' color="warning" /> : undefined } /></Link>
         </Tooltip>
     );
 }
@@ -37,9 +39,12 @@ export function RoomComponent({ roomIds, occupancy, ...props }: { roomIds: Array
     const rooms = useMemo(() => roomIds.map(getRoom).filter((v) => !!v), [ roomIds, getRoom ]);
 
     return (
-        <Box display={ 'flex' } gap={ 1 } { ...props }>
-            { rooms.map((room) => <SingleRoomComponent key={ room.id } room={ room } occupancy={ occupancy } />) }
-        </Box>
+        <Box display="flex" flexDirection={ 'column' } alignItems="flex-start" gap={ 0.2 } { ...props } width={ '100%' } padding={ 0 } pb={ 0.5 } borderBottom={ 2 }>
+            <Typography variant="caption" fontWeight={ 600 } noWrap>{ roomIds.length === 1 ? 'חדר' : 'חדרים' }</Typography>
+            < Box display={ 'flex' } gap={ 1 } flexWrap="wrap">
+                { rooms.map((room) => <SingleRoomComponent key={ room.id } room={ room } occupancy={ occupancy } />) }
+            </Box>
+        </Box >
     );
 }
 
@@ -102,22 +107,28 @@ function PeriodDurationLabel({ period, ...props }: { period: Period; } & ChipPro
                 : `${minutes} ד׳`;
 
     return (
-        <Chip label={ durationLabel } size="small" sx={ { color: 'inherit' } } { ...props } />
+        <Tooltip title={ `${start.format('HH:mm')} - ${end.format('HH:mm')}` } >
+            <Chip label={ durationLabel } size="small" sx={ { color: 'inherit' } } { ...props } />
+        </Tooltip>
     );
 }
 
-function InstructorChip({ instructor: instructorId, period, size, ...props }: { instructor: number; period: Period; } & ChipProps)
+function PersonChip({ instructorId, personData, period, size, ...props }: { instructorId?: number; personData?: any; period: Period; } & ChipProps)
 {
     const { getInstructor } = useHiveUsers();
-    const instructor = useMemo(() => getInstructor(instructorId), [ instructorId, getInstructor ]);
+    const instructor = useMemo(() => instructorId ? getInstructor(instructorId) : personData, [ instructorId, getInstructor, personData ]);
 
-    const isLecturer = period.type === 'lecture' && instructor?.id === period.lecturer;
+    assert(!((instructorId !== undefined) && (personData !== undefined)), 'Either instructorId or personData, not both must be supplied!');
+
+    const isLecturer = period.type === 'lecture' && period.lecturers?.includes(instructorId ?? personData);
+    console.log('Is lecturer:', instructorId, isLecturer);
+    /** TODO: Link component to mattermost chat with the mentor */
 
     return (
         <Chip
             sx={ { order: isLecturer ? 1 : 2, color: isLecturer ? '' : 'inherit' } }
-            key={ instructorId }
-            label={ instructor?.display_name || instructorId }
+            key={ instructorId ?? personData ?? 'unknown' }
+            label={ instructor?.display_name ?? personData ?? instructorId }
             color={ isLecturer ? "primary" : "default" }
             size={ size || "small" }
             { ...props }
@@ -226,15 +237,17 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
                     direction={ isTower ? 'column' : ((omitDuration && isWide && isSmaller) || (omitDuration && isTiny)) ? "row" : "column" }
                     alignItems="flex-start"
                     justifyContent={ isWide ? "space-between" : "flex-start" }
-                    spacing={ 1 }
+                    spacing={ 0.5 }
                 >
                     <Stack
                         direction={ isTower ? 'column' : "row" }
                         alignItems="flex-start"
                         justifyContent="space-between"
-                        spacing={ 1 }
+                        // spacing={ 1 }
                         mb={ isSmall ? 0 : 0.5 }
                         width={ '100%' }
+                        borderBottom={ 2 }
+                        pb={ 0.5 }
                     >
                         <Box display="flex" alignItems="center" minWidth={ 0 } gap={ 0 }>
                             { omitPeriodIcon || <PeriodTypeIcon period={ period } fontSize="small" /> }
@@ -254,24 +267,45 @@ export default function BluezEventComponent({ event: period }: EventProps<Period
 
                         <Box display="flex" alignItems="flex-end" gap={ 1 } flexDirection={ 'column' }>
                             { omitDuration || <PeriodDurationLabel period={ period } /> }
-                            { omitRoomName || <RoomComponent
-                                roomIds={ period.rooms }
-                            /> }
+
                         </Box>
                     </Stack>
+                    { omitRoomName || <RoomComponent
+                        roomIds={ period.rooms }
+                    /> }
 
-                    { (!omitSubjectName && !isSmall) && <SubjectComponent fontSize={ '0.8rem' } subjectId={ period.subject } /> }
 
-                    <Stack direction={ isTower ? 'column' : "row" } gap={ (isSmall || isTiny) ? 1 : 2 } sx={ { marginTop: isSmaller ? '0 !important' : undefined } }>
-                        { period.instructors.map((instructor) => (
-                            <InstructorChip
-                                key={ instructor }
-                                instructor={ instructor }
-                                period={ period }
-                                size={ isTiny ? "smallest" : (isSmaller ? 'smaller' : 'small') }
-                            />
-                        )) }
-                    </Stack>
+                    { (!omitSubjectName && !isSmall) &&
+                        <Box borderBottom={ 2 } paddingBottom={ 0.2 } marginBottom={ 0 } width={ isNarrow ? '' : '100%' } hidden={ period.type === 'break' } display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' }>
+                            <SubjectComponent fontSize={ '0.8rem' } fontWeight={ 500 } subjectId={ period.subject } />
+                            <Box sx={ { width: '0.3rem' } } />
+                            <Typography fontSize={ '0.8rem' } fontWeight={ 300 } >/</Typography>
+                            <Box sx={ { width: '0.3rem' } } />
+                            <ModuleComponent fontSize={ '0.8rem' } fontWeight={ 400 } moduleId={ period.hiveModule } />
+                        </Box>
+                    }
+
+                    <Box width={ '100%' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
+                        <Typography variant="caption" fontWeight={ 600 } noWrap paddingBottom={ 0 } marginTop={ 0 }>{ period.instructors.length === 1 ? 'מבוזר' : 'מבוזרים' }</Typography>
+                        <Stack display={ 'flex' } direction={ isTower ? 'column' : "row" } gap={ (isSmall || isTiny) ? 0.3 : 1 } flexWrap={ 'wrap' } sx={ { marginTop: isSmaller ? '0 !important' : undefined } } pb={ 0.5 } borderBottom={ 2 }>
+                            {
+                                period.lecturers?.includes('איש חוץ') && <PersonChip
+                                    key={ 'איש חוץ' }
+                                    personData={ 'איש חוץ' }
+                                    period={ period }
+                                    size={ isTiny ? "smallest" : (isSmaller ? 'smaller' : 'small') }
+                                />
+                            }
+                            { period.instructors.map((instructor) => (
+                                <PersonChip
+                                    key={ instructor }
+                                    instructorId={ instructor }
+                                    period={ period }
+                                    size={ isTiny ? "smallest" : (isSmaller ? 'smaller' : 'small') }
+                                />
+                            )) }
+                        </Stack>
+                    </Box>
                 </Stack> }
 
             { (omitNotes || !period.notes) || (

@@ -29,7 +29,7 @@ export default function SchedulePage()
     const [ selectedPeriod, setSelectedPeriod ] = useState<Partial<Period>>();
     const [ openPeriodDialog, setOpenPeriodDialog ] = useState<boolean>(false);
     const [ openSettingsDialog, setOpenSettingsDialog ] = useState<boolean>(false);
-    console.log('selectedPeriod', selectedPeriod);
+
     useEffect(() =>
     {
         const handleKeyDown = (e: KeyboardEvent) =>
@@ -54,12 +54,14 @@ export default function SchedulePage()
         const newPeriod: Period = {
             id: period.id,
             name: period.name || '',
-            subject: parseInt(period.subject?.toString() || '0', 10),
+            subject: period.subject ?? 0,
+            hiveModule: period.hiveModule ?? 0,
             startTime: period.startTime || dayjs(),
             endTime: period.endTime || dayjs(),
             type: period.type || 'exercise',
             rooms: period.rooms?.map((v) => typeof v === 'string' ? parseInt(v) : v) || [],
             instructors: period.instructors || [],
+            lecturers: period.lecturers || [],
             tags: period.tags || [],
             notes: period.notes || '',
             locked: period.locked || false,

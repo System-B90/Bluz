@@ -1,4 +1,3 @@
-from typing import Literal
 from random import shuffle, randint
 import httpx
 from pyhive import HiveClient
@@ -141,15 +140,36 @@ MOCK_PROGRAMS: list[ProgramData] = [
 
 
 @dataclass
+class ModuleData:
+    name: str
+
+
+@dataclass
 class SubjectData:
     name: str
     symbol: str
+    modules: list[ModuleData] | None = None
 
 
 MOCK_SUBJECTS: list[SubjectData] = [
     SubjectData(name="סעמק", symbol="ס"),
-    SubjectData(name="עד מתי", symbol="ע"),
-    SubjectData(name="עבודות רסר", symbol="ר"),
+    SubjectData(
+        name="עד מתי",
+        symbol="ע",
+        modules=[
+            ModuleData(name="התחפשנות חוד"),
+            ModuleData(name="שנץ"),
+        ],
+    ),
+    SubjectData(
+        name="עבודות רסר",
+        symbol="ר",
+        modules=[
+            ModuleData(name="טאטוא עלים"),
+            ModuleData(name="ניקוי שירותים"),
+            ModuleData(name="שטיפת רצפות"),
+        ],
+    ),
     SubjectData(name="פרויקטים", symbol="פ"),
 ]
 
@@ -252,18 +272,38 @@ def create_programs(client: HiveClient):
     )
 
     for program in tqdm.tqdm(MOCK_PROGRAMS, desc="Creating Programs", unit="program"):
-        client.create_program(name=program.name, checker=checker1)
+        try:
+            client.create_program(name=program.name, checker=checker1)
+        except Exception as ex:
+            print(ex)
 
 
 def create_subjects(client: HiveClient):
     programs = list(client.get_programs())
     for subject in tqdm.tqdm(MOCK_SUBJECTS, desc="Creating Subjects", unit="subject"):
-        client.create_subject(
-            name=subject.name,
-            symbol=subject.symbol,
-            color="#1F1229",
-            program=programs[randint(0, len(programs) - 1)],
-        )
+        try:
+            s = client.create_subject(
+                name=subject.name,
+                symbol=subject.symbol,
+                color="#1F1229",
+                program=programs[randint(0, len(programs) - 1)],
+            )
+            if not subject.modules:
+                continue
+            for index, module in tqdm.tqdm(
+                enumerate(subject.modules, start=1),
+                desc="  Creating Modules for {}".format(subject.name),
+                total=len(subject.modules),
+                unit="module",
+            ):
+                try:
+                    client.create_module(
+                        name=module.name, order=index, parent_subject=s
+                    )
+                except Exception as ex:
+                    print(ex)
+        except Exception as ex:
+            print(ex)
 
 
 def create_classes(client: HiveClient):
@@ -272,12 +312,15 @@ def create_classes(client: HiveClient):
 
     for class_ in tqdm.tqdm(MOCK_CLASSES, desc="Creating Classes", unit="class"):
         shuffle(students)
-        client.create_class(
-            program=programs[randint(0, len(programs) - 1)],
-            name=class_.name,
-            type_=ClassTypeEnum.ROOM,
-            users=students[: randint(0, len(students))],
-        )
+        try:
+            client.create_class(
+                program=programs[randint(0, len(programs) - 1)],
+                name=class_.name,
+                type_=ClassTypeEnum.ROOM,
+                users=students[: randint(0, len(students))],
+            )
+        except Exception as ex:
+            print(ex)
 
 
 def main():
@@ -287,14 +330,18 @@ def main():
     ) as client:
         clean_existing_data(client)
 
-        client.create_user(
-            "api",
-            "Password1",
-            clearance=ClearanceEnum.SEGEL,
-            gender=GenderEnum.MALE,
-            first_name="Api",
-            last_name="Account",
-        )
+        try:
+            client.create_user(
+                "api",
+                "Password1",
+                clearance=ClearanceEnum.SEGEL,
+                gender=GenderEnum.MALE,
+                first_name="Api",
+                last_name="Account",
+            )
+        except:
+            pass
+
         create_segel(client)
 
         create_programs(client)
