@@ -1,18 +1,11 @@
 import { getHiveClient } from "@/api-server/hive/client";
+import { Clearance } from "@/api-server/hive/types";
 
 export async function getHiveStudents()
 {
-    const username = process.env.HIVE_USERNAME;
-    const password = process.env.HIVE_PASSWORD;
-
-    if (!username || !password)
-    {
-        throw new Error("HIVE_USERNAME and HIVE_PASSWORD must be defined in environment variables.");
-    }
-
-    const hiveClient = await getHiveClient(username, password);
+    const hiveClient = await getHiveClient();
     const students = await hiveClient.getUsers({
-        clearance__in: [ 1 ],
+        clearance__in: [ Clearance.Hanich, ],
     });
     return students;
 }

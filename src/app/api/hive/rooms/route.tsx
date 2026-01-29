@@ -1,4 +1,5 @@
 import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { getHiveClient } from "@/api-server/hive/client";
 import { Class, ClassTypeEnum } from "@/api-server/hive/types";
 import { NextRequest } from "next/server";
 
@@ -8,27 +9,8 @@ export async function GET(
 {
     try
     {
-        const rooms: Class[] = [
-            {
-                id: 1,
-                name: "לאגונה",
-                display_name: "לאגונה",
-                program: 1,
-                program__name: "אפולו",
-                type: ClassTypeEnum.Room,
-                users: [],
-            },
-            {
-                id: 2,
-                name: "נוקאוט",
-                display_name: "נוקאוט",
-                program: 2,
-                program__name: "מבצר",
-                type: ClassTypeEnum.Room,
-                users: [],
-            },
-        ];
-
+        const hiveClient = await getHiveClient();
+        const rooms: Class[] = (await hiveClient.getClasses()).filter(c => c.type === ClassTypeEnum.Room);
         return ApiSuccess(rooms);
     }
     catch (e)

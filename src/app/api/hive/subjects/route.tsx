@@ -1,4 +1,5 @@
 import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { getHiveClient } from "@/api-server/hive/client";
 import { Subject } from "@/components/schedule/types/subject";
 import { NextRequest } from "next/server";
 
@@ -8,27 +9,8 @@ export async function GET(
 {
     try
     {
-        const subjects: Subject[] = [
-            {
-                id: "1",
-                name: "מערכות הפעלה",
-                color: "#FF5733",
-                displayName: 'ס'
-            },
-            {
-                id: "2",
-                name: "מחקר",
-                color: "#33FF57",
-                displayName: 'ח'
-            },
-            {
-                id: "3",
-                name: "פייתון",
-                color: "#3357FF",
-                displayName: 'נ'
-            },
-        ];
-
+        const hiveClient = await getHiveClient();
+        const subjects: Subject[] = await hiveClient.getSubjects();
         return ApiSuccess(subjects);
     }
     catch (e)

@@ -62,3 +62,12 @@ export class ApiNotImplementedError extends ClientApiError
         this.name = 'ApiNotImplementedError';
     }
 };
+
+export class HiveError extends ClientApiError
+{
+    constructor(message?: string)
+    {
+        super(message);
+        this.name = 'HiveError';
+    }
+};
