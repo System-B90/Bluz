@@ -8,6 +8,8 @@ export enum EventType
     BREAK = 'break'
 }
 
+export type PersonId = number | 'איש חוץ';
+
 export interface Period
 {
     id: string;
@@ -19,11 +21,31 @@ export interface Period
     type: EventType;
     rooms: Array<number>; // Room IDs
     instructors: number[]; // Array of instructor IDs
-    lecturers?: Array<'איש חוץ' | number>;
+    lecturers?: Array<PersonId>;
     tags: number[];
     notes: string;
     locked: boolean;
     hidden: boolean;
     required: boolean;
     personalTalk: boolean;
+}
+
+
+
+export function periodTypeToHebrew(type: Period[ 'type' ]): string
+{
+    const LOOKUP: Record<Period[ 'type' ], string> = {
+        'exercise': 'ע"ע',
+        'lecture': 'הרצאה',
+        'other': 'אחר',
+        'break': 'הפסקה',
+    };
+    return LOOKUP[ type ] ?? type;
+}
+
+export function getPresentInstructors(period: Period): Array<number>;
+export function getPresentInstructors(period: Period, includeOutsiders: boolean = false): Array<PersonId>
+{
+    const reduced = new Set<PersonId>([ ...period.instructors, ...period.lecturers?.filter((v) => (typeof v === 'number' || includeOutsiders)) ?? [] ]);
+    return Array.from(reduced);
 }

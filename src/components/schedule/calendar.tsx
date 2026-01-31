@@ -29,7 +29,7 @@ import '@/style/calendar.css';
 import { useHiveRooms } from '@/components/base/hive-rooms-provider';
 import CALENDAR_MESSAGES from '@/components/calendar-messages';
 import { useCalendar } from '@/components/schedule/calendar-provider';
-import BluezEventComponent from '@/components/schedule/event-component';
+import BluezEventComponent from '@/components/schedule/event-component/base';
 import { Period } from "@/components/schedule/types/event";
 import { Room } from "@/components/schedule/types/room";
 import CustomWorkWeek from '@/components/schedule/custom-work-week';

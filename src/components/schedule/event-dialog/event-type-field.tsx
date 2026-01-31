@@ -1,8 +1,8 @@
 import { FormControl, FormControlProps, InputLabel, MenuItem, Select } from "@mui/material";
 import { EVENT_TYPES } from "@/components/schedule/types/types";
-import { Period } from "@/components/schedule/types/event";
+import { EventType, Period } from "@/components/schedule/types/event";
 
-interface EventTypeFieldProps
+export interface EventTypeFieldProps
 {
     period?: Partial<Period>;
     onPeriodChange: (period: Partial<Period>) => void;
@@ -14,7 +14,7 @@ export default function EventTypeField({ period, onPeriodChange, ...props }: Eve
         <FormControl fullWidth={ false } { ...props }>
             <InputLabel>סוג</InputLabel>
             <Select
-                value={ period?.type || "exercise" }
+                value={ period?.type ?? EventType.EXERCISE }
                 label="סוג"
                 onChange={ (e) => onPeriodChange({ type: e.target.value }) }
             >

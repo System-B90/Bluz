@@ -38,7 +38,6 @@ export function BluezThemeProvider({ children, ...props }: ThemeProviderProps & 
     );
 }
 
-// Inner component no longer needs props passed to it
 function InnerThemeProvider({ children }: { children: ReactNode; })
 {
     const { theme, setTheme, resolvedTheme } = nextUseTheme();
@@ -122,9 +121,20 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
                                 style: {
                                     height: 16,
                                     fontSize: 10,
-                                    padding: '0 8px',
+                                    padding: '0 2px',
+                                    paddingLeft: '2px',
+                                    paddingRight: '2px',
                                     borderRadius: 12,
-                                    '& .MuiChip-icon': { fontSize: 10 },
+                                    // TARGET THE INTERNAL LABEL HERE
+                                    '& .MuiChip-label': {
+                                        paddingLeft: 4,  // Reduced from default 12px
+                                        paddingRight: 4, // Reduced from default 12px
+                                    },
+                                    '& .MuiChip-icon': {
+                                        fontSize: 10,
+                                        marginLeft: 2, // Optional: fine-tune icon spacing
+                                        marginRight: -2
+                                    },
                                 },
                             },
                             {
@@ -132,8 +142,13 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
                                 style: {
                                     height: 12,
                                     fontSize: 8,
-                                    padding: '0 4px',
+                                    padding: '0 2px',
                                     borderRadius: 12,
+                                    // TARGET THE INTERNAL LABEL HERE
+                                    '& .MuiChip-label': {
+                                        paddingLeft: 2,
+                                        paddingRight: 2,
+                                    },
                                     '& .MuiChip-icon': { fontSize: 8 },
                                 },
                             },
