@@ -2,6 +2,7 @@ import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import RoomComponent from "@/components/schedule/event-component/room";
 import { EventStatusIcons, PeriodDurationLabel, PeriodTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
 import LargeEventComponent from "@/components/schedule/event-component/variants/large-event";
+import MediumNarrowEventComponent from "@/components/schedule/event-component/variants/medium-narrow-event";
 import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
 import TinyNarrowEventComponent from "@/components/schedule/event-component/variants/tiny-narrow-event";
 import { Period } from "@/components/schedule/types/event";
@@ -20,6 +21,7 @@ const EVENT_HEIGHT_VARIANTS = {
     TINY: 70,
     SMALLER: 60,
     SMALL: 80,
+    Medium: 150,
     WIDENED: 400,
     NARROW: 200,
 };
@@ -41,6 +43,7 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
     const isTiny = size.height < EVENT_HEIGHT_VARIANTS.TINY;
     const isWide = size.width > EVENT_HEIGHT_VARIANTS.WIDENED;
     const isNarrow = size.width < EVENT_HEIGHT_VARIANTS.NARROW;
+    const isTall = size.height > EVENT_HEIGHT_VARIANTS.Medium;
 
     const omitRoomName = (isSmall || isTiny || isSmaller) && !isWide;
     const isOneline = !isNarrow && isTiny;
@@ -58,7 +61,11 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
     } else if (isTiny)
     {
         eventComponent = <TinyEventComponent event={ period } { ...props } />;
-    } else
+    } else if (isNarrow && !isTall)
+    {
+        eventComponent = <MediumNarrowEventComponent containerSize={ size } event={ period } { ...props } />;
+    }
+    else
     {
         eventComponent = <LargeEventComponent event={ period } { ...props } />;
     }
