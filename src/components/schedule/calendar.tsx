@@ -57,8 +57,6 @@ export default function BluezCalendar({
     const { rooms } = useHiveRooms();
     const { setStartDate, setEndDate } = useCalendar();
 
-    console.log('Periods', periods);
-
     const handleEditPeriod = useCallback((period: Period) =>
     {
         setSelectedPeriod(period);
@@ -178,8 +176,6 @@ export default function BluezCalendar({
 
     return (
         <DnDCalendar
-            className="border-border border-rounded-md border-solid border-2 rounded-lg"
-
             min={ new Date(2025, 0, 1, 7, 0) }  // 8:00 AM
             max={ new Date(2025, 0, 1, 22, 0) } // 6:00 PM
             step={ 5 }
@@ -217,8 +213,10 @@ export default function BluezCalendar({
             onNavigate={ onNavigateHandler }
             resizableAccessor={ (e) => !e.locked }
             draggableAccessor={ (e) => !e.locked }
-        // onRangeChange={ onRangeChangeHandler }
+            // onRangeChange={ onRangeChangeHandler }
 
+            showMultiDayTimes={ false }
+            allDayMaxRows={ 0 }
         />
     );
 }

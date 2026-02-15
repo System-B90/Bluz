@@ -5,7 +5,7 @@ const CALENDAR_MESSAGES: Messages<Period> = {
     date: 'תאריך',
     time: 'זמן',
     event: 'מופע',
-    allDay: 'כל היום',
+    allDay: '',
     week: 'שבוע',
     work_week: 'שבוע עבודה',
     day: 'יום',

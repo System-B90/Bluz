@@ -717,9 +717,7 @@ button.rbc-input::-moz-focus-inner
 
 .rbc-time-view .rbc-allday-cell
 {
-    box-sizing: content-box;
-    width: 100%;
-    position: relative;
+    display: none;
 }
 
 .rbc-time-view .rbc-allday-events
