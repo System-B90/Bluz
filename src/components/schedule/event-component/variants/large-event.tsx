@@ -2,7 +2,7 @@ import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { InstructorsList } from "@/components/schedule/event-component/person";
 import RoomComponent from "@/components/schedule/event-component/room";
 import { EventStatusIcons, PeriodDurationLabel, PeriodTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
-import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
+import ShortEventComponent from "@/components/schedule/event-component/variants/short-event";
 import { getPresentInstructors, Period } from "@/components/schedule/types/event";
 import SubjectComponent, { ModuleComponent } from "@/components/subject";
 import { Box, Stack, Typography } from "@mui/material";
@@ -12,11 +12,6 @@ import { EventProps } from "react-big-calendar";
 
 export default function LargeEventComponent({ event: period, ...props }: EventProps<Period>)
 {
-    const theme = useTheme();
-    const { getSubject } = useHiveSubjects();
-
-    const subject = getSubject(period.subject);
-
     return (
         <Box>
             <Stack
@@ -89,7 +84,7 @@ export default function LargeEventComponent({ event: period, ...props }: EventPr
                 </Typography>
             ) }
 
-            <EventStatusIcons sx={ { bottom: 0, position: 'absolute', margin: 1 } } period={ period } />
+            <EventStatusIcons sx={ { bottom: 0, right: 0, position: 'absolute', margin: 1 } } period={ period } size={ '1.5rem' } />
         </Box>
     );
 }

@@ -12,9 +12,7 @@ function SingleRoomComponent({ room, occupancy, size, ...props }: { room: Room; 
 
     return (
         <Tooltip title={ overcrowded ? `עומס יתר: ${occupancy}/${roomCapacity}` : '' }>
-            <Link underline="hover" href={ `${getHiveBaseUrl()}/mentor/classes?id=${room?.id}` } color={ 'textPrimary' } >
-                <Chip size={ size ?? 'small' } { ...props } label={ room?.name } sx={ { color: 'inherit' } } icon={ overcrowded ? <WarningIcon fontSize='small' color="warning" /> : undefined } />
-            </Link>
+            <Chip size={ size ?? 'small' } { ...props } label={ <Link underline="hover" href={ `${getHiveBaseUrl()}/mentor/classes?id=${room?.id}` } color={ 'textPrimary' }> { room?.name }</Link> } sx={ { color: 'inherit' } } icon={ overcrowded ? <WarningIcon fontSize='small' color="warning" /> : undefined } />
         </Tooltip>
     );
 }

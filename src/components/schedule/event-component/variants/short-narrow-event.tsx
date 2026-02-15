@@ -8,7 +8,7 @@ import { Box, Tooltip, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
 
 
-export default function TinyNarrowEventComponent({ event: period, containerSize }: { containerSize: ContainerSize; } & EventProps<Period>)
+export default function ShortNarrowEventComponent({ event: period, containerSize }: { containerSize: ContainerSize; } & EventProps<Period>)
 {
     const isTooShort = containerSize.height < 40;
     const showStacked = containerSize.height > 60;

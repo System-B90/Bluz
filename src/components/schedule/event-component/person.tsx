@@ -1,7 +1,7 @@
 import { useHiveUsers } from "@/components/base/hive-users-provider";
 import { EventType, getPresentInstructors, Period } from "@/components/schedule/types/event";
 import WarningIcon from '@mui/icons-material/Warning';
-import { Box, BoxProps, Chip, ChipProps, Stack, Typography } from "@mui/material";
+import { Box, BoxProps, Chip, ChipProps, Link, Stack, Typography } from "@mui/material";
 import assert from "assert";
 import { useMemo } from "react";
 
@@ -20,7 +20,11 @@ export function PersonChip({ instructorId, personData, period, size, ...props }:
         <Chip
             sx={ { order: isLecturer ? 1 : 2, color: isLecturer ? '' : 'inherit' } }
             key={ instructorId ?? personData ?? 'unknown' }
-            label={ instructor?.display_name ?? personData ?? instructorId }
+            label={
+                <Link underline="hover" href={ `a` } color={ 'textPrimary' } >
+                    { instructor?.display_name ?? personData ?? instructorId }
+                </Link>
+            }
             color={ isLecturer ? "primary" : "default" }
             size={ size || "small" }
             { ...props }

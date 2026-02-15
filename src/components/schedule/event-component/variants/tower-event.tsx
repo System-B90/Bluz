@@ -2,7 +2,7 @@ import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { PersonChip } from "@/components/schedule/event-component/person";
 import RoomComponent from "@/components/schedule/event-component/room";
 import { EventStatusIcons, PeriodDurationLabel, PeriodTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
-import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
+import ShortEventComponent from "@/components/schedule/event-component/variants/short-event";
 import { Period } from "@/components/schedule/types/event";
 import SubjectComponent, { ModuleComponent } from "@/components/subject";
 import { Box, Stack, Typography } from "@mui/material";
@@ -60,7 +60,7 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
                 height: '100%',
             } }
         >
-            { isTiny && <TinyEventComponent event={ period } { ...props } /> ||
+            { isTiny && <ShortEventComponent event={ period } { ...props } /> ||
                 isOneline &&
                 <Stack direction={ "row" }
                     alignItems="flex-start"
@@ -185,7 +185,7 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
                 </Typography>
             ) }
 
-            <EventStatusIcons sx={ { bottom: 0, position: 'absolute', margin: 1 } } period={ period } />
+            <EventStatusIcons sx={ { bottom: 0, position: 'absolute', margin: 1 } } period={ period } size={ '5rem' } />
         </Box>
     );
 }

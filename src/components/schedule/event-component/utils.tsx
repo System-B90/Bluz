@@ -60,18 +60,18 @@ export function PeriodDurationLabel({ period, ...props }: { period: Period; } & 
 
     return (
         <Tooltip title={ `${start.format('HH:mm')} - ${end.format('HH:mm')}` } >
-            <Chip label={ durationLabel } size="small" sx={ { color: 'inherit' } } { ...props } />
+            <Chip label={ durationLabel } size={ props.size || "small" } sx={ { color: 'inherit' } } { ...props } />
         </Tooltip>
     );
 }
 
-export function EventStatusIcons({ period, ...props }: { period: Period; } & BoxProps)
+export function EventStatusIcons({ period, size, ...props }: { period: Period; size: BoxProps[ 'fontSize' ]; } & BoxProps)
 {
     return (
-        <Box { ...props }>
-            { period.locked && <Tooltip title="מתואם"><LockIcon /></Tooltip> }
-            { period.required && <Tooltip title="קריטי"><FmdBadIcon /></Tooltip> }
-            { period.personalTalk && <Tooltip title='חלון פ"א'><ChatIcon /></Tooltip> }
+        <Box fontSize={ size } display={ props.display ?? 'flex' } flexDirection={ props.flexDirection ?? 'row' } { ...props }>
+            { period.locked && <Tooltip title="מתואם"><LockIcon fontSize={ 'inherit' } /></Tooltip> }
+            { period.required && <Tooltip title="קריטי"><FmdBadIcon fontSize={ 'inherit' } /></Tooltip> }
+            { period.personalTalk && <Tooltip title='חלון פ"א'><ChatIcon fontSize={ 'inherit' } /></Tooltip> }
         </Box>
     );
 }

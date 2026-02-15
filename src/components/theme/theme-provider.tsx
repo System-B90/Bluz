@@ -120,7 +120,7 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
                                 props: { size: 'smaller' },
                                 style: {
                                     height: 16,
-                                    fontSize: 10,
+                                    fontSize: 12,
                                     padding: '0 2px',
                                     paddingLeft: '2px',
                                     paddingRight: '2px',

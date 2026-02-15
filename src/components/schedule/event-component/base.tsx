@@ -2,12 +2,13 @@ import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import RoomComponent from "@/components/schedule/event-component/room";
 import { EventStatusIcons, PeriodDurationLabel, PeriodTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
 import LargeEventComponent from "@/components/schedule/event-component/variants/large-event";
+import MediumEventComponent from "@/components/schedule/event-component/variants/medium-event";
 import MediumNarrowEventComponent from "@/components/schedule/event-component/variants/medium-narrow-event";
-import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
-import TinyNarrowEventComponent from "@/components/schedule/event-component/variants/tiny-narrow-event";
+import ShortEventComponent from "@/components/schedule/event-component/variants/short-event";
+import ShortNarrowEventComponent from "@/components/schedule/event-component/variants/short-narrow-event";
 import { Period } from "@/components/schedule/types/event";
 import SubjectComponent, { ModuleComponent } from "@/components/subject";
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Stack, Tooltip, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { EventProps } from "react-big-calendar";
 
@@ -17,13 +18,11 @@ export interface ContainerSize
     height: number;
 }
 
-const EVENT_HEIGHT_VARIANTS = {
-    TINY: 70,
-    SMALLER: 60,
-    SMALL: 80,
-    Medium: 150,
-    WIDENED: 400,
-    NARROW: 200,
+const EVENT_SIZE_VARIANTS_THRESHOLDS = {
+    H_TINY: 50, // Up to _px height is considered "short"
+    H_MEDIUM: 150, // Up to _px height is considered "medium", above that is "tall"
+    W_WIDE: 400,
+    W_NARROW: 200,
 };
 
 
@@ -38,36 +37,35 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
     const textColor = theme.palette.getContrastText(bgColor);
 
     const { ref, size } = useElementSize<HTMLDivElement>();
-    const isSmall = size.height < EVENT_HEIGHT_VARIANTS.SMALL;
-    const isSmaller = size.height < EVENT_HEIGHT_VARIANTS.SMALLER;
-    const isTiny = size.height < EVENT_HEIGHT_VARIANTS.TINY;
-    const isWide = size.width > EVENT_HEIGHT_VARIANTS.WIDENED;
-    const isNarrow = size.width < EVENT_HEIGHT_VARIANTS.NARROW;
-    const isTall = size.height > EVENT_HEIGHT_VARIANTS.Medium;
-
-    const omitRoomName = (isSmall || isTiny || isSmaller) && !isWide;
-    const isOneline = !isNarrow && isTiny;
-    const isTower = isNarrow && !isSmall;
-    const omitDuration = !isOneline && (isSmaller && isNarrow);
-    const omitPeriodIcon = !isOneline && isSmaller && isNarrow;
-    const omitNotes = isSmall || isTiny || isSmaller;
-    const omitSubjectName = (isSmaller && !isWide) || isNarrow;
+    const isShort = size.height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_TINY;
+    const isWide = size.width > EVENT_SIZE_VARIANTS_THRESHOLDS.W_WIDE;
+    const isNarrow = size.width < EVENT_SIZE_VARIANTS_THRESHOLDS.W_NARROW;
+    const isTall = size.height > EVENT_SIZE_VARIANTS_THRESHOLDS.H_MEDIUM;
 
     let eventComponent = null;
 
-    if (isTiny && isNarrow)
+    if (isShort && isNarrow)
     {
-        eventComponent = <TinyNarrowEventComponent event={ period } containerSize={ size } { ...props } />;
-    } else if (isTiny)
+        console.log('Rendering Short & Narrow Event Component');
+        eventComponent = <Tooltip title={ 'Short & Narrow' }><ShortNarrowEventComponent event={ period } containerSize={ size } { ...props } /></Tooltip>;
+    } else if (isShort)
     {
-        eventComponent = <TinyEventComponent event={ period } { ...props } />;
+        console.log('Rendering Short Event Component');
+        eventComponent = <Tooltip title={ 'Short' }><ShortEventComponent event={ period } { ...props } /></Tooltip>;
     } else if (isNarrow && !isTall)
     {
-        eventComponent = <MediumNarrowEventComponent containerSize={ size } event={ period } { ...props } />;
+        console.log('Rendering Medium & Narrow Event Component');
+        eventComponent = <Tooltip title={ 'Medium & Narrow' }><MediumNarrowEventComponent containerSize={ size } event={ period } { ...props } /></Tooltip>;
+    }
+    else if (!isTall)
+    {
+        console.log('Rendering Medium Event Component');
+        eventComponent = <Tooltip title={ 'Medium' }><MediumEventComponent containerSize={ size } event={ period } { ...props } /></Tooltip>;
     }
     else
     {
-        eventComponent = <LargeEventComponent event={ period } { ...props } />;
+        console.log('Rendering Large Event Component');
+        eventComponent = <Tooltip title={ 'Large' }><LargeEventComponent event={ period } { ...props } /></Tooltip>;
     }
 
     return (
