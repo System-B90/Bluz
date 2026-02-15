@@ -25,6 +25,7 @@ export default function manifest(): MetadataRoute.Manifest
                 src: '/Bluez_192x192.png',
                 sizes: '192x192',
                 type: 'image/png',
+                // @ts-expect-error - False positive
                 purpose: 'any maskable', // "maskable" allows Android to crop it safely into a circle/squircle
             },
             // Standard PWA Icon (Large)
@@ -32,6 +33,7 @@ export default function manifest(): MetadataRoute.Manifest
                 src: '/Bluez_512x512.png',
                 sizes: '512x512',
                 type: 'image/png',
+                // @ts-expect-error - False positive
                 purpose: 'any maskable',
             },
             // Main Vector Icon
