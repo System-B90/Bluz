@@ -119,11 +119,9 @@ export default function SchedulePage()
     }, [ setOpenPeriodDialog, setSelectedPeriod ]);
 
     return (
-        <Box sx={ { p: 0, maxWidth: '100%' } }>
+        <Box sx={ { p: 0 } } width={ '100vw' } height={ '100vh' } display={ 'flex' } flexDirection={ 'column' }>
             <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
-            <Box className="calendar-container">
-                <BluezCalendar handleSavePeriod={ handleSavePeriod } setOpenPeriodDialog={ setOpenPeriodDialog } setSelectedPeriod={ setSelectedPeriod } periods={ periods } />
-            </Box>
+            <BluezCalendar handleSavePeriod={ handleSavePeriod } setOpenPeriodDialog={ setOpenPeriodDialog } setSelectedPeriod={ setSelectedPeriod } periods={ periods } />
 
             <PeriodDialog
                 open={ openPeriodDialog }

@@ -40,7 +40,7 @@ export function PeriodTypeIcon({ period, ...props }: { period: Period; } & SvgIc
     );
 }
 
-export function PeriodDurationLabel({ period, ...props }: { period: Period; } & ChipProps)
+export function PeriodDurationLabel({ period, sx, size, ...props }: { period: Period; } & ChipProps)
 {
     const start = moment((period.startTime as Dayjs).toDate());
     const end = moment((period.endTime as Dayjs).toDate());
@@ -60,18 +60,29 @@ export function PeriodDurationLabel({ period, ...props }: { period: Period; } & 
 
     return (
         <Tooltip title={ `${start.format('HH:mm')} - ${end.format('HH:mm')}` } >
-            <Chip label={ durationLabel } size={ props.size || "small" } sx={ { color: 'inherit' } } { ...props } />
+            <Chip label={ durationLabel } size={ size || "small" } sx={ { ...sx, color: 'inherit' } } { ...props } />
         </Tooltip>
     );
 }
 
 export function EventStatusIcons({ period, size, ...props }: { period: Period; size: BoxProps[ 'fontSize' ]; } & BoxProps)
 {
+    const tooltipPlacement = props.flexDirection === 'column' ? 'left' : 'top';
     return (
-        <Box fontSize={ size } display={ props.display ?? 'flex' } flexDirection={ props.flexDirection ?? 'row' } { ...props }>
-            { period.locked && <Tooltip title="מתואם"><LockIcon fontSize={ 'inherit' } /></Tooltip> }
-            { period.required && <Tooltip title="קריטי"><FmdBadIcon fontSize={ 'inherit' } /></Tooltip> }
-            { period.personalTalk && <Tooltip title='חלון פ"א'><ChatIcon fontSize={ 'inherit' } /></Tooltip> }
+        <Box
+            position={ 'relative' }
+            maxHeight={ '100%' }
+            overflow={ 'hidden' }
+            fontSize={ size }
+            display={ props.display ?? 'flex' }
+            flexDirection={ props.flexDirection ?? 'row' }
+            flexWrap={ 'wrap' }
+            sx={ { ...props.sx, direction: 'rtl' } }
+            { ...props }
+        >
+            { period.locked && <Tooltip title="מתואם" placement={ tooltipPlacement }><LockIcon fontSize={ 'inherit' } /></Tooltip> }
+            { period.required && <Tooltip title="קריטי" placement={ tooltipPlacement }><FmdBadIcon fontSize={ 'inherit' } /></Tooltip> }
+            { period.personalTalk && <Tooltip title='חלון פ"א' placement={ tooltipPlacement }><ChatIcon fontSize={ 'inherit' } /></Tooltip> }
         </Box>
     );
 }

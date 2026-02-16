@@ -17,7 +17,7 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
     }, [ setTheme ]);
 
     return (
-        <AppBar enableColorOnDark={ false } position="static" className='py-0' { ...props }>
+        <AppBar enableColorOnDark={ false } position="relative" className='py-0' { ...props }>
             <Toolbar variant="dense">
                 <Typography variant="h6" sx={ { flexGrow: 1 } }>
                     בלוז

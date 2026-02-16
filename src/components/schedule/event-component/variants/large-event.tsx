@@ -2,7 +2,7 @@ import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { InstructorsList } from "@/components/schedule/event-component/person";
 import RoomComponent from "@/components/schedule/event-component/room";
 import { EventStatusIcons, PeriodDurationLabel, PeriodTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
-import ShortEventComponent from "@/components/schedule/event-component/variants/short-event";
+import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
 import { getPresentInstructors, Period } from "@/components/schedule/types/event";
 import SubjectComponent, { ModuleComponent } from "@/components/subject";
 import { Box, Stack, Typography } from "@mui/material";
@@ -13,7 +13,7 @@ import { EventProps } from "react-big-calendar";
 export default function LargeEventComponent({ event: period, ...props }: EventProps<Period>)
 {
     return (
-        <Box>
+        <Box padding={ 0.3 }>
             <Stack
                 direction={ "column" }
                 alignItems="flex-start"
@@ -27,10 +27,10 @@ export default function LargeEventComponent({ event: period, ...props }: EventPr
                     mb={ 0.5 }
                     width={ '100%' }
                     borderBottom={ 2 }
-                    pb={ 0.5 }
+                    paddingBottom={ 0.5 }
                 >
                     <Box display="flex" alignItems="center" minWidth={ 0 } gap={ 0 }>
-                        <PeriodTypeIcon period={ period } fontSize="small" />
+                        <PeriodTypeIcon period={ period } fontSize="inherit" />
 
                         <Box display="flex" alignItems="baseline" minWidth={ 0 } gap={ 1 } flexDirection={ 'row' }>
                             <Typography
@@ -53,7 +53,7 @@ export default function LargeEventComponent({ event: period, ...props }: EventPr
                     roomIds={ period.rooms }
                     width={ '100%' }
                     borderBottom={ 2 }
-                    pb={ 0.5 }
+                    paddingBottom={ 0.5 }
                 />
 
 
@@ -69,7 +69,7 @@ export default function LargeEventComponent({ event: period, ...props }: EventPr
                 <Box width={ '100%' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
                     <InstructorsList period={ period } width={ '100%' }
                         borderBottom={ 2 }
-                        pb={ 0.5 } />
+                        paddingBottom={ 0.5 } />
                 </Box>
             </Stack>
 

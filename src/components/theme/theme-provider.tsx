@@ -122,8 +122,6 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
                                     height: 16,
                                     fontSize: 12,
                                     padding: '0 2px',
-                                    paddingLeft: '2px',
-                                    paddingRight: '2px',
                                     borderRadius: 12,
                                     // TARGET THE INTERNAL LABEL HERE
                                     '& .MuiChip-label': {
@@ -142,12 +140,12 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
                                 style: {
                                     height: 12,
                                     fontSize: 8,
-                                    padding: '0 2px',
+                                    padding: '0 1px',
                                     borderRadius: 12,
                                     // TARGET THE INTERNAL LABEL HERE
                                     '& .MuiChip-label': {
-                                        paddingLeft: 2,
-                                        paddingRight: 2,
+                                        paddingLeft: 1,
+                                        paddingRight: 1,
                                     },
                                     '& .MuiChip-icon': { fontSize: 8 },
                                 },

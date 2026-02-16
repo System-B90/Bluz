@@ -1,15 +1,15 @@
 import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
-import RoomComponent from "@/components/schedule/event-component/room";
-import { EventStatusIcons, PeriodDurationLabel, PeriodTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
+import { useElementSize } from "@/components/schedule/event-component/utils";
 import LargeEventComponent from "@/components/schedule/event-component/variants/large-event";
 import MediumEventComponent from "@/components/schedule/event-component/variants/medium-event";
-import MediumNarrowEventComponent from "@/components/schedule/event-component/variants/medium-narrow-event";
 import ShortEventComponent from "@/components/schedule/event-component/variants/short-event";
 import ShortNarrowEventComponent from "@/components/schedule/event-component/variants/short-narrow-event";
+import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
+import TinyNarrowEventComponent from "@/components/schedule/event-component/variants/tiny-narrow-event";
 import { Period } from "@/components/schedule/types/event";
-import SubjectComponent, { ModuleComponent } from "@/components/subject";
-import { Box, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Tooltip } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
+import { useEffect, useState } from "react";
 import { EventProps } from "react-big-calendar";
 
 export interface ContainerSize
@@ -19,17 +19,28 @@ export interface ContainerSize
 }
 
 const EVENT_SIZE_VARIANTS_THRESHOLDS = {
-    H_TINY: 50, // Up to _px height is considered "short"
-    H_MEDIUM: 150, // Up to _px height is considered "medium", above that is "tall"
+    H_TINY: 35, // Up to _px height is considered "tiny"
+    H_SHORT: 110, // Up to _px height is considered "short"
+    H_MEDIUM: 190, // Up to _px height is considered "medium", above that is "tall"
     W_WIDE: 400,
     W_NARROW: 200,
 };
 
+type Variant =
+    | 'tiny-narrow'
+    | 'tiny-wide'
+    | 'short-narrow'
+    | 'short-wide'
+    | 'medium-narrow'
+    | 'medium-wide'
+    | 'large-narrow'
+    | 'large-wide';
 
 export default function BluezEventComponent({ event: period, ...props }: EventProps<Period>)
 {
     const theme = useTheme();
     const { getSubject } = useHiveSubjects();
+    const [ variant, setVariant ] = useState<Variant>('short-wide');
 
     const subject = getSubject(period.subject);
     const bgColor = subject?.color || theme.palette.common.black;
@@ -37,35 +48,48 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
     const textColor = theme.palette.getContrastText(bgColor);
 
     const { ref, size } = useElementSize<HTMLDivElement>();
-    const isShort = size.height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_TINY;
-    const isWide = size.width > EVENT_SIZE_VARIANTS_THRESHOLDS.W_WIDE;
-    const isNarrow = size.width < EVENT_SIZE_VARIANTS_THRESHOLDS.W_NARROW;
-    const isTall = size.height > EVENT_SIZE_VARIANTS_THRESHOLDS.H_MEDIUM;
 
+    useEffect(() =>
+    {
+        const { width, height } = size;
+
+        const isNarrow = width < EVENT_SIZE_VARIANTS_THRESHOLDS.W_NARROW;
+
+        let heightVariant: 'tiny' | 'short' | 'medium' | 'large';
+        const widthVariant = isNarrow ? 'narrow' : 'wide';
+
+        if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_TINY) { heightVariant = 'tiny'; }
+        else if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_SHORT) { heightVariant = 'short'; }
+        else if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_MEDIUM) { heightVariant = 'medium'; }
+        else { heightVariant = 'large'; }
+
+        setVariant(`${heightVariant}-${widthVariant}` as Variant);
+
+    }, [ size ]);
     let eventComponent = null;
 
-    if (isShort && isNarrow)
+    switch (variant)
     {
-        console.log('Rendering Short & Narrow Event Component');
-        eventComponent = <Tooltip title={ 'Short & Narrow' }><ShortNarrowEventComponent event={ period } containerSize={ size } { ...props } /></Tooltip>;
-    } else if (isShort)
-    {
-        console.log('Rendering Short Event Component');
-        eventComponent = <Tooltip title={ 'Short' }><ShortEventComponent event={ period } { ...props } /></Tooltip>;
-    } else if (isNarrow && !isTall)
-    {
-        console.log('Rendering Medium & Narrow Event Component');
-        eventComponent = <Tooltip title={ 'Medium & Narrow' }><MediumNarrowEventComponent containerSize={ size } event={ period } { ...props } /></Tooltip>;
-    }
-    else if (!isTall)
-    {
-        console.log('Rendering Medium Event Component');
-        eventComponent = <Tooltip title={ 'Medium' }><MediumEventComponent containerSize={ size } event={ period } { ...props } /></Tooltip>;
-    }
-    else
-    {
-        console.log('Rendering Large Event Component');
-        eventComponent = <Tooltip title={ 'Large' }><LargeEventComponent event={ period } { ...props } /></Tooltip>;
+        case "tiny-narrow":
+            eventComponent = <Tooltip title={ 'Tiny & Narrow' }><TinyNarrowEventComponent event={ period } containerSize={ size } { ...props } /></Tooltip>;
+            break;
+        case "tiny-wide":
+            eventComponent = <Tooltip title={ 'Tiny' }><TinyEventComponent event={ period } { ...props } /></Tooltip>;
+            break;
+        case "short-narrow":
+            eventComponent = <Tooltip title={ 'Short & Narrow' }><ShortNarrowEventComponent containerSize={ size } event={ period } { ...props } /></Tooltip>;
+            break;
+        case "short-wide":
+            eventComponent = <Tooltip title={ 'Short' }><ShortEventComponent containerSize={ size } event={ period } { ...props } /></Tooltip>;
+            break;
+        case "medium-wide":
+            eventComponent = <Tooltip title={ 'Medium' }><MediumEventComponent event={ period } { ...props } /></Tooltip>;
+            break;
+        case "large-wide":
+            eventComponent = <Tooltip title={ 'Large' }><LargeEventComponent event={ period } { ...props } /></Tooltip>;
+            break;
+        default:
+            window.alert(`Unimplemented variant: ${variant}`);
     }
 
     return (
@@ -73,7 +97,7 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
             ref={ ref }
             sx={ {
                 textAlign: 'left',
-                p: 0.5,
+                p: 0.2,
                 bgcolor: bgColor,
                 color: textColor,
                 transition: theme.transitions.create([ 'background-color', 'transform' ]),
@@ -81,6 +105,7 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
                     bgcolor: alpha(bgColor, 0.9),
                 },
                 height: '100%',
+                boxSizing: 'border-box',
             } }
         >
             { eventComponent }

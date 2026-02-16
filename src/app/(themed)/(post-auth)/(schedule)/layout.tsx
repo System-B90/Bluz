@@ -17,9 +17,7 @@ export default async function ScheduleLayout({
                 <HiveModulesProvider>
                     <HiveRoomsProvider>
                         <CalendarProvider>
-                            <div className="schedule-layout">
-                                { children }
-                            </div>
+                            { children }
                         </CalendarProvider>
                     </HiveRoomsProvider>
                 </HiveModulesProvider>

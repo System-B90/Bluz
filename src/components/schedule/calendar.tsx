@@ -176,6 +176,8 @@ export default function BluezCalendar({
 
     return (
         <DnDCalendar
+            className='relative grow'
+            style={ { height: 'unset' } }
             min={ new Date(2025, 0, 1, 7, 0) }  // 8:00 AM
             max={ new Date(2025, 0, 1, 22, 0) } // 6:00 PM
             step={ 5 }

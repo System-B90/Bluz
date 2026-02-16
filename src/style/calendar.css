@@ -27,7 +27,6 @@ button.rbc-input::-moz-focus-inner
 .rbc-calendar
 {
     box-sizing: border-box;
-    height: max-content;
     display: -webkit-flex;
     display: -ms-flexbox;
     display: flex;
@@ -37,6 +36,11 @@ button.rbc-input::-moz-focus-inner
     -webkit-align-items: stretch;
     -ms-flex-align: stretch;
     align-items: stretch;
+
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    overflow: hidden;
+    height: unset;
 }
 
 .rbc-calendar *,
@@ -236,6 +240,8 @@ button.rbc-input::-moz-focus-inner
 
     cursor: pointer;
     transition: outline-width 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+    /* transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1); */
+    overflow: hidden;
 }
 
 
@@ -830,23 +836,6 @@ button.rbc-input::-moz-focus-inner
     z-index: 10;
     position: absolute;
     pointer-events: none;
-}
-
-.calendar-container
-{
-    width: 100%;
-    height: 100vh;
-    /* Full viewport height */
-    display: flex;
-    flex-direction: column;
-}
-
-.rbc-calendar
-{
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    flex: 1;
-    overflow: hidden;
 }
 
 .rbc-toolbar button

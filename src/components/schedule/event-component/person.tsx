@@ -21,7 +21,7 @@ export function PersonChip({ instructorId, personData, period, size, ...props }:
             sx={ { order: isLecturer ? 1 : 2, color: isLecturer ? '' : 'inherit' } }
             key={ instructorId ?? personData ?? 'unknown' }
             label={
-                <Link underline="hover" href={ `a` } color={ 'textPrimary' } >
+                <Link underline="hover" href={ `a` } color={ 'inherit' } >
                     { instructor?.display_name ?? personData ?? instructorId }
                 </Link>
             }
@@ -44,7 +44,7 @@ export function InstructorsList({ period, chipSize, showCaption = true, ...props
                     </Box> :
                     <>
                         { showCaption && <Typography variant="caption" fontWeight={ 600 } noWrap paddingBottom={ 0 } marginTop={ 0 }>{ period.instructors.length === 1 ? 'מבוזר' : 'מבוזרים' }</Typography> }
-                        <Stack display={ 'flex' } direction={ "row" } gap={ 0.3 } flexWrap={ 'wrap' } sx={ { marginTop: '0 !important' } }>
+                        <Stack display={ 'flex' } direction={ (props.flexDirection === 'column') ? "column" : "row" } gap={ 0.3 } flexWrap={ 'wrap' } sx={ { marginTop: '0 !important' } }>
                             {
                                 (period.type === EventType.LECTURE && period.lecturers?.includes('איש חוץ')) && <PersonChip
                                     key={ 'איש חוץ' }
