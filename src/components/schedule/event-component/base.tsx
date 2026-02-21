@@ -2,11 +2,12 @@ import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { useElementSize } from "@/components/schedule/event-component/utils";
 import LargeEventComponent from "@/components/schedule/event-component/variants/large-event";
 import MediumEventComponent from "@/components/schedule/event-component/variants/medium-event";
+import PrayerEventComponent from "@/components/schedule/event-component/variants/prayer-event";
 import ShortEventComponent from "@/components/schedule/event-component/variants/short-event";
 import ShortNarrowEventComponent from "@/components/schedule/event-component/variants/short-narrow-event";
 import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
 import TinyNarrowEventComponent from "@/components/schedule/event-component/variants/tiny-narrow-event";
-import { Period } from "@/components/schedule/types/event";
+import { Period, PrayerEvent } from "@/components/schedule/types/event";
 import { Box, Tooltip } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { useEffect, useState } from "react";
@@ -27,6 +28,7 @@ const EVENT_SIZE_VARIANTS_THRESHOLDS = {
 };
 
 type Variant =
+    | 'prayer'
     | 'tiny-narrow'
     | 'tiny-wide'
     | 'short-narrow'
@@ -58,6 +60,7 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
         let heightVariant: 'tiny' | 'short' | 'medium' | 'large';
         const widthVariant = isNarrow ? 'narrow' : 'wide';
 
+        if (period.type === 'prayer') { setVariant('prayer'); return; }
         if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_TINY) { heightVariant = 'tiny'; }
         else if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_SHORT) { heightVariant = 'short'; }
         else if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_MEDIUM) { heightVariant = 'medium'; }
@@ -70,6 +73,9 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
 
     switch (variant)
     {
+        case "prayer":
+            eventComponent = <Tooltip title={ 'תפילה' }><PrayerEventComponent event={ period as PrayerEvent } { ...props } /></Tooltip>;
+            break;
         case "tiny-narrow":
             eventComponent = <Tooltip title={ 'Tiny & Narrow' }><TinyNarrowEventComponent event={ period } containerSize={ size } { ...props } /></Tooltip>;
             break;
@@ -96,10 +102,11 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
         <Box
             ref={ ref }
             sx={ {
+                background: period.type === 'prayer' ? 'linear-gradient(225deg,rgba(92, 221, 247, 1) 0%, rgba(255, 255, 255, 1) 52%)' : null,
                 textAlign: 'left',
                 p: 0.2,
-                bgcolor: bgColor,
-                color: textColor,
+                bgcolor: period.type === 'prayer' ? null : bgColor,
+                color: period.type === 'prayer' ? 'black' : textColor,
                 transition: theme.transitions.create([ 'background-color', 'transform' ]),
                 '&:hover': {
                     bgcolor: alpha(bgColor, 0.9),

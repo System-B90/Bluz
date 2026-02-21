@@ -1,6 +1,5 @@
 import { FormControl, FormControlProps, InputLabel, MenuItem, Select } from "@mui/material";
-import { EVENT_TYPES } from "@/components/schedule/types/types";
-import { EventType, Period } from "@/components/schedule/types/event";
+import { EventType, Period, periodTypeToHebrew } from "@/components/schedule/types/event";
 
 export interface EventTypeFieldProps
 {
@@ -10,6 +9,7 @@ export interface EventTypeFieldProps
 
 export default function EventTypeField({ period, onPeriodChange, ...props }: EventTypeFieldProps & FormControlProps)
 {
+    const eventTypes = Object.values(EventType);
     return (
         <FormControl fullWidth={ false } { ...props }>
             <InputLabel>סוג</InputLabel>
@@ -18,9 +18,9 @@ export default function EventTypeField({ period, onPeriodChange, ...props }: Eve
                 label="סוג"
                 onChange={ (e) => onPeriodChange({ type: e.target.value }) }
             >
-                { EVENT_TYPES.map((type) => (
-                    <MenuItem key={ type.value } value={ type.value }>
-                        { type.label }
+                { eventTypes.map((type) => (
+                    <MenuItem key={ type } value={ type }>
+                        { periodTypeToHebrew(type) }
                     </MenuItem>
                 )) }
             </Select>

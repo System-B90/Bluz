@@ -35,9 +35,9 @@ async function setDbSetting(name: SettingName, setting: Partial<Setting>, option
 async function initDbSettings()
 {
     await setDbSetting(PRAYER_TIMES_SETTING_KEY, {
-        'arvit': new Date(2024, 0, 1, 18, 0, 0, 0),
-        'mincha': new Date(2024, 0, 1, 12, 0, 0, 0),
-        'shacharit': new Date(2024, 0, 1, 6, 0, 0, 0)
+        'arvit': new Date(1970, 0, 1, 18, 0, 0, 0),
+        'mincha': new Date(1970, 0, 1, 12, 0, 0, 0),
+        'shacharit': new Date(1970, 0, 1, 6, 0, 0, 0)
     } as Setting, { upsert: true });
 }
 

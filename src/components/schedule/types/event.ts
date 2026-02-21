@@ -4,8 +4,17 @@ export enum EventType
 {
     EXERCISE = 'exercise',
     LECTURE = 'lecture',
+    BREAK = 'break',
+    PRAYER = 'prayer',
     OTHER = 'other',
-    BREAK = 'break'
+}
+export function eventHasSubject(type: EventType): boolean
+{
+    return type === EventType.EXERCISE || type === EventType.LECTURE;
+}
+export function eventHasRoom(type: EventType): boolean
+{
+    return type !== EventType.PRAYER;
 }
 
 export type PersonId = number | 'איש חוץ';
@@ -30,6 +39,27 @@ export interface Period
     personalTalk: boolean;
 }
 
+export enum PrayerType
+{
+    SHACHARIT = 'shacharit',
+    MINCHA = 'mincha',
+    ARVIT = 'arvit',
+}
+export function prayerTypeToHebrew(prayerType: PrayerType): string
+{
+    const LOOKUP: Record<PrayerType, string> = {
+        'shacharit': 'שחרית',
+        'mincha': 'מנחה',
+        'arvit': 'ערבית',
+    };
+    return LOOKUP[ prayerType ] ?? prayerType;
+}
+
+export interface PrayerEvent extends Period
+{
+    type: EventType.PRAYER;
+    prayerType: PrayerType;
+}
 
 
 export function periodTypeToHebrew(type: Period[ 'type' ]): string
@@ -39,6 +69,7 @@ export function periodTypeToHebrew(type: Period[ 'type' ]): string
         'lecture': 'הרצאה',
         'other': 'אחר',
         'break': 'הפסקה',
+        'prayer': 'תפילה',
     };
     return LOOKUP[ type ] ?? type;
 }

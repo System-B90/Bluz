@@ -1,5 +1,5 @@
 import { useHiveModules } from "@/components/base/hive-modules-provider";
-import { Period } from "@/components/schedule/types/event";
+import { eventHasSubject, Period } from "@/components/schedule/types/event";
 import { FormControl, FormControlProps, InputLabel, MenuItem, Select } from "@mui/material";
 import { useMemo } from "react";
 
@@ -21,7 +21,7 @@ export default function ModuleField({ period, onPeriodChange, ...props }: Module
     ));
 
     return (
-        <FormControl fullWidth={ false } disabled={ period?.type === 'break' || modules.length === 0 } { ...props }>
+        <FormControl fullWidth={ false } disabled={ (period?.type ? !eventHasSubject(period?.type) : false) || modules.length === 0 } { ...props }>
             <InputLabel>מערך</InputLabel>
             <Select
                 value={ period?.hiveModule || "" }

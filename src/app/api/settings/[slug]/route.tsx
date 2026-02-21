@@ -2,6 +2,9 @@ export const dynamic = "force-dynamic";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { DbSettings } from "@/api-server/db-settings";
+import { updatePrayerEvents } from "@/api-server/prayer";
+import { inplaceDateFixup } from "@/api-shared/date-fixer";
+import { PrayerSettings } from "@/api-shared/types/settings/prayer";
 import { Setting, SettingName } from "@/api-shared/types/settings/settings";
 import { NextRequest } from "next/server";
 
@@ -33,7 +36,17 @@ export async function POST(
     {
         const { slug } = await params;
         const value: Partial<Setting> = await request.json();
-        await DbSettings.set(slug as SettingName, value);
+
+        if (slug === 'prayerTimes')
+        {
+            inplaceDateFixup(value, 'shacharit');
+            inplaceDateFixup(value, 'mincha');
+            inplaceDateFixup(value, 'arvit');
+            await DbSettings.set(slug as SettingName, value);
+
+            await updatePrayerEvents({ startDate: new Date(Date.now()), newConfig: value as PrayerSettings });
+        }
+
         return ApiSuccess();
     }
     catch (e)

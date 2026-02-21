@@ -1,5 +1,5 @@
 import { useHiveRooms } from "@/components/base/hive-rooms-provider";
-import { Period } from "@/components/schedule/types/event";
+import { eventHasRoom, Period } from "@/components/schedule/types/event";
 import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import { Dispatch, SetStateAction, useCallback } from "react";
 
@@ -34,7 +34,7 @@ export default function RoomField({ period, onPeriodChange, ...props }: RoomFiel
     }, [ onPeriodChange ]);
 
     return (
-        <FormControl fullWidth={ false } { ...props }>
+        <FormControl fullWidth={ false } { ...props } disabled={ period?.type ? !eventHasRoom(period.type) : false }>
             <InputLabel>כיתות</InputLabel>
             <Select
                 label="כיתות"

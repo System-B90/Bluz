@@ -5,7 +5,7 @@ import { ClientApiError } from "@/api-shared/errors";
 import { PeriodAddedOrRemovedMessage, PeriodDataUpdateMessage } from "@/api-shared/types";
 import { Period } from "@/components/schedule/types/event";
 import { MessageTypes } from "@/settings";
-import { FindOptions, ObjectId, WithId } from "mongodb";
+import { Filter, FindOptions, ObjectId, WithId } from "mongodb";
 
 async function getDbPeriod(periodId: string, options?: FindOptions)
 {
@@ -17,9 +17,9 @@ async function getDbPeriod(periodId: string, options?: FindOptions)
     return data;
 }
 
-async function getDbPeriodsInRange(startDate: Date, endDate: Date, options?: FindOptions)
+async function getDbPeriodsInRange(startDate: Date, endDate: Date, options?: FindOptions, filter?: Filter<Period>)
 {
-    const data = await databaseController.periods.find({ startTime: { '$gte': startDate }, endTime: { '$lte': endDate } }, options);
+    const data = databaseController.periods.find({ startTime: { '$gte': startDate }, endTime: { '$lte': endDate }, ...filter }, options);
     return data.map((p: WithId<Period>) => { p.id = p._id.toHexString(); return p; }).toArray();
 }
 

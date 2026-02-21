@@ -4,7 +4,7 @@ import { Calendar, CalendarProps, DateRange, momentLocalizer, NavigateAction } f
 
 // DO NOT SORT IMPORTS - they are ordered for a reason!
 
-import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/he';
@@ -33,6 +33,7 @@ import BluezEventComponent from '@/components/schedule/event-component/base';
 import { Period } from "@/components/schedule/types/event";
 import { Room } from "@/components/schedule/types/room";
 import CustomWorkWeek from '@/components/schedule/custom-work-week';
+import { useSettings } from '@/components/base/settings-provider';
 
 const DnDCalendar = withDragAndDrop<Period, Room>(Calendar);
 
@@ -82,7 +83,6 @@ export default function BluezCalendar({
 
     const handleSlotSelect = useCallback((slotInfo: SlotInfo): void =>
     {
-        console.log(slotInfo);
         if (slotInfo.action === "click") { return; }
 
         const newPeriod: Partial<Period> = {
@@ -95,7 +95,6 @@ export default function BluezCalendar({
             newPeriod.rooms = [ parseInt(slotInfo.resourceId.toString() || '0', 10) ];
         }
 
-        console.log('newPeriod', newPeriod);
         setSelectedPeriod(newPeriod);
         setOpenPeriodDialog(true);
     }, [ setSelectedPeriod, setOpenPeriodDialog ]);

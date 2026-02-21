@@ -10,6 +10,7 @@ import { Box, BoxProps, Chip, ChipProps, SvgIconProps, Tooltip } from "@mui/mate
 import { Dayjs } from "dayjs";
 import moment from "moment";
 import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
+import SynagogueIcon from '@mui/icons-material/Synagogue';
 
 export function PeriodTypeIcon({ period, ...props }: { period: Period; } & SvgIconProps)
 {
@@ -27,6 +28,9 @@ export function PeriodTypeIcon({ period, ...props }: { period: Period; } & SvgIc
             break;
         case "break":
             icon = <EmojiFoodBeverageIcon { ...props } />;
+            break;
+        case "prayer":
+            icon = <SynagogueIcon { ...props } />;
             break;
         default:
             break;

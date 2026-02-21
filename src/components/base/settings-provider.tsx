@@ -1,6 +1,6 @@
 'use client';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { apiGetPrayerSettings, apiSetPrayerSettings } from '@/api-client/settings';
+import { apiGetPrayerSettings, apiSetPrayerSettings } from '@/api-client/prayer';
 import { inplaceDateFixup } from '@/api-shared/date-fixer';
 import { PrayerSettings } from '@/api-shared/types/settings/prayer';
 import { enqueueSnackbar } from 'notistack';
