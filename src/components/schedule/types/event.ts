@@ -45,6 +45,7 @@ export enum PrayerType
     MINCHA = 'mincha',
     ARVIT = 'arvit',
 }
+
 export function prayerTypeToHebrew(prayerType: PrayerType): string
 {
     const LOOKUP: Record<PrayerType, string> = {

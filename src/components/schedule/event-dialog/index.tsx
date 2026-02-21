@@ -20,8 +20,10 @@ import InstructorsField from "@/components/schedule/event-dialog/instructors-fie
 import RoomField from "@/components/schedule/event-dialog/room-field";
 import SubjectField from "@/components/schedule/event-dialog/subject-field";
 import EventTimeField from "@/components/schedule/event-dialog/time-fields";
-import { Period } from "@/components/schedule/types/event";
+import { Period, PrayerEvent } from "@/components/schedule/types/event";
 import ModuleField from '@/components/schedule/event-dialog/module-field';
+import PrayerEventComponent from '@/components/schedule/event-component/variants/prayer-event';
+import PrayerTypeField from '@/components/schedule/event-dialog/prayer-type';
 
 interface PeriodDialogProps
 {
@@ -102,16 +104,23 @@ export default function PeriodDialog({
                                 onPeriodChange={ onPeriodChange }
                                 sx={ { width: '12.5%' } }
                             />
-                            <SubjectField
-                                period={ period }
-                                onPeriodChange={ onPeriodChange }
-                                sx={ { width: '25%' } }
-                            />
-                            <ModuleField
-                                period={ period }
-                                onPeriodChange={ onPeriodChange }
-                                sx={ { width: '20%' } }
-                            />
+                            { period?.type === 'prayer' &&
+                                <PrayerTypeField
+                                    period={ period as PrayerEvent }
+                                    onPeriodChange={ onPeriodChange }
+                                    sx={ { width: '25%' } }
+                                /> || <>
+                                    <SubjectField
+                                        period={ period }
+                                        onPeriodChange={ onPeriodChange }
+                                        sx={ { width: '25%' } }
+                                    />
+                                    <ModuleField
+                                        period={ period }
+                                        onPeriodChange={ onPeriodChange }
+                                        sx={ { width: '20%' } }
+                                    />
+                                </> }
                             <RoomField
                                 period={ period }
                                 onPeriodChange={ onPeriodChange }
