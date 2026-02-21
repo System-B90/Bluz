@@ -10,7 +10,7 @@ import
     Button,
 } from "@mui/material";
 
-import PersonalSection from "./tabs/account";
+import PersonalSection from "./tabs/personal";
 import GlobalSection from "./tabs/global";
 
 interface SettingsDialogProps

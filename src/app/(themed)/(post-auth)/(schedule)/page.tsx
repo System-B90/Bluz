@@ -6,7 +6,7 @@ import ScheduleAppBar from '@/components/app-bar';
 import BluezCalendar from '@/components/schedule/calendar';
 import { useCalendar } from '@/components/schedule/calendar-provider';
 import PeriodDialog from '@/components/schedule/event-dialog';
-import SettingsDialog from "@/components/schedule/settings-dialog";
+import SettingsDialog from "@/components/settings-dialog";
 import { Period } from "@/components/schedule/types/event";
 import { Box } from '@mui/material';
 import { useHistoryState } from "@uidotdev/usehooks";

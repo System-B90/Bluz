@@ -1,6 +1,6 @@
 import { Box, Stack, Button } from "@mui/material";
 import { User } from "@/components/schedule/types/user";
-import GroupMemberField from "@/components/schedule/settings-dialog/tabs/global/group-tree/member-field";
+import GroupMemberField from "@/components/settings-dialog/tabs/global/group-tree/member-field";
 import { Group } from "@/components/schedule/types/group";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { DndContext } from "@dnd-kit/core";

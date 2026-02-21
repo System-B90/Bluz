@@ -12,13 +12,6 @@ const GlobalSection: React.FC = () =>
                 Global Settings
             </Typography>
 
-            <Typography variant="subtitle1" sx={ { mt: 2 } }>
-                Weeks
-            </Typography>
-            <Box sx={ { display: "flex", gap: 1, mb: 2 } }>
-                <DatePicker label="Start Date" />
-                <NumberSpinner label="Weeks" min={ 10 } max={ 40 } />
-            </Box>
         </Box>
     );
 };
