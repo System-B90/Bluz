@@ -11,7 +11,7 @@ import
     OutlinedInput,
 } from "@mui/material";
 
-const PersonalSection: React.FC = () =>
+export default function PersonalSettings()
 {
     const [ groups, setGroups ] = useState<string[]>([]);
     const [ instructors, setInstructors ] = useState<string[]>([]);
@@ -75,5 +75,3 @@ const PersonalSection: React.FC = () =>
         </Box>
     );
 };
-
-export default PersonalSection;

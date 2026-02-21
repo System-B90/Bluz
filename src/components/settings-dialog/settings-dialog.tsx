@@ -10,8 +10,8 @@ import
     Button,
 } from "@mui/material";
 
-import PersonalSection from "./tabs/personal";
-import GlobalSection from "./tabs/global";
+import PersonalSection from "./tabs/personal-settings";
+import GlobalSection from "./tabs/global/global-settings";
 
 interface SettingsDialogProps
 {
@@ -30,11 +30,11 @@ export default function SettingsDialog({ open, onClose }: SettingsDialogProps)
 
     return (
         <Dialog open={ open } onClose={ onClose } maxWidth="md" fullWidth>
-            <DialogTitle>Settings</DialogTitle>
+            <DialogTitle>הגדרות</DialogTitle>
             <DialogContent>
                 <Tabs value={ tab } onChange={ handleTabChange } sx={ { mb: 2 } }>
-                    <Tab label="Personal" />
-                    <Tab label="Global" />
+                    <Tab label="אישי" />
+                    <Tab label="כללי" />
                 </Tabs>
 
                 <Box>
@@ -44,7 +44,7 @@ export default function SettingsDialog({ open, onClose }: SettingsDialogProps)
 
                 <Box sx={ { mt: 3, display: "flex", justifyContent: "flex-end" } }>
                     <Button variant="outlined" onClick={ onClose }>
-                        Close
+                        סגירה
                     </Button>
                 </Box>
             </DialogContent>

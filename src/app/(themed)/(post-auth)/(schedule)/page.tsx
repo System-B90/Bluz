@@ -1,12 +1,12 @@
 'use client';
 
 import { apiDeletePeriod, apiSavePeriod } from '@/api-client/calendar';
-import { enqueueApiErrorSnackbar, safeApiFetcher } from '@/api-client/common';
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import ScheduleAppBar from '@/components/app-bar';
 import BluezCalendar from '@/components/schedule/calendar';
 import { useCalendar } from '@/components/schedule/calendar-provider';
 import PeriodDialog from '@/components/schedule/event-dialog';
-import SettingsDialog from "@/components/settings-dialog";
+import SettingsDialog from "@/components/settings-dialog/settings-dialog";
 import { Period } from "@/components/schedule/types/event";
 import { Box } from '@mui/material';
 import { useHistoryState } from "@uidotdev/usehooks";
@@ -14,7 +14,6 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/he';
 import { enqueueSnackbar } from 'notistack';
 import { SetStateAction, useCallback, useEffect, useState } from 'react';
-import { v4 as uuid4 } from 'uuid';
 
 export default function SchedulePage()
 {
