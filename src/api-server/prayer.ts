@@ -1,30 +1,29 @@
 import { DbPeriod } from "@/api-server/period";
-import { inplaceDateFixup } from "@/api-shared/date-fixer";
+import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
+import { PeriodDataUpdateMessage } from "@/api-shared/types";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
 import { EventType, Period, PrayerEvent, PrayerType, prayerTypeToHebrew } from "@/components/schedule/types/event";
+import { MessageTypes } from "@/settings";
 
-async function updatePrayerEvent({ prayerEvent, newConfig }: { prayerEvent: Period, newConfig: PrayerSettings; })
+async function updatePrayerEvent({ day, prayerEvent, newConfig }: { day: Date, prayerEvent: Period, newConfig: PrayerSettings; })
 {
-    const updatedEvent: Partial<PrayerEvent> = { ...prayerEvent } as PrayerEvent;
-    switch (updatedEvent.prayerType)
-    {
-        case 'shacharit':
-            updatedEvent.startTime = newConfig.shacharit;
-            updatedEvent.endTime = new Date((newConfig.shacharit as Date).getTime() + 20 * 60 * 1000); // Add 20min
-            break;
-        case 'mincha':
-            updatedEvent.startTime = newConfig.mincha;
-            updatedEvent.endTime = new Date((newConfig.mincha as Date).getTime() + 20 * 60 * 1000); // Add 20min
-            break;
-        case 'arvit':
-            updatedEvent.startTime = newConfig.arvit;
-            updatedEvent.endTime = new Date((newConfig.arvit as Date).getTime() + 20 * 60 * 1000); // Add 20min
-            break;
-    }
+    const updatedEvent: PrayerEvent = { ...prayerEvent } as PrayerEvent;
+
+    const startTime = new Date(
+        day.getFullYear(),
+        day.getMonth(),
+        day.getDate(),
+        (newConfig[ updatedEvent.prayerType ] as Date).getHours(),
+        (newConfig[ updatedEvent.prayerType ] as Date).getMinutes(),
+        (newConfig[ updatedEvent.prayerType ] as Date).getSeconds()
+    );
+    const endTime = new Date(startTime.getTime() + 20 * 60 * 1000); // Add 20min
+
+    updatedEvent.startTime = startTime;
+    updatedEvent.endTime = endTime;
 
     await DbPeriod.set(updatedEvent);
 }
-
 
 async function updatePrayerEventsInDay({ day, newConfig }: { day: Date, newConfig: PrayerSettings; })
 {
@@ -72,19 +71,19 @@ async function updatePrayerEventsInDay({ day, newConfig }: { day: Date, newConfi
 
         for (const prayer of prayersToCreate)
         {
-            await DbPeriod.set(prayer);
+            prayer.id = (await DbPeriod.set(prayer)).id;
         }
     }
-    await Promise.all(prayerEvents.map(async (prayerEvent) => await updatePrayerEvent({ prayerEvent, newConfig })));
+    await Promise.all(prayerEvents.map(async (prayerEvent) => await updatePrayerEvent({ day, prayerEvent, newConfig })));
+    SendServerRequestToSessionServer(MessageTypes.PERIOD_DATA_UPDATE, { periods: prayerEvents.reduce((acc, event) => ({ ...acc, [ event.id ]: event }), {}) } as PeriodDataUpdateMessage);
 }
 
 export async function updatePrayerEvents({ startDate, newConfig }: { startDate: Date, newConfig: PrayerSettings; })
 {
     startDate.setHours(0, 0, 0, 0);
-
-    for (let i = 0; i < 7; i++)
+    Promise.all(Array.from({ length: 7 }, async (_, i) =>
     {
         const day = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
         await updatePrayerEventsInDay({ day, newConfig });
-    }
+    },));
 }

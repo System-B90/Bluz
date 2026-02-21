@@ -1,9 +1,9 @@
 import { Period } from "@/components/schedule/types/event";
 import dayjs from "dayjs";
 
-export function dateFixup(period: Partial<Period>): Partial<Period>;
-export function dateFixup(period: Period): Period;
-export function dateFixup(period: Partial<Period>): Partial<Period>
+export function periodDateFixup(period: Partial<Period>): Partial<Period>;
+export function periodDateFixup(period: Period): Period;
+export function periodDateFixup(period: Partial<Period>): Partial<Period>
 {
     if (typeof window === 'undefined')
     {

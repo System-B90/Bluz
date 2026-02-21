@@ -1,7 +1,7 @@
 'use client';
 import { apiGetPeriods } from '@/api-client/calendar';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { dateFixup } from '@/api-shared/calendar';
+import { periodDateFixup } from '@/api-shared/calendar';
 import { PeriodAddedOrRemovedMessage, PeriodDataUpdateMessage } from '@/api-shared/types';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Period } from '@/components/schedule/types/event';
@@ -60,7 +60,7 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
         switch (messageType)
         {
             case MessageTypes.PERIOD_DATA_UPDATE:
-                setPeriods(ps => ps.map((p) => p.id in (data as PeriodDataUpdateMessage).periods ? { ...p, ...dateFixup((data as PeriodDataUpdateMessage).periods[ p.id ]) } : p));
+                setPeriods(ps => ps.map((p) => p.id in (data as PeriodDataUpdateMessage).periods ? { ...p, ...periodDateFixup((data as PeriodDataUpdateMessage).periods[ p.id ]) } : p));
                 break;
             case MessageTypes.PERIOD_ADDED_OR_REMOVED:
                 const periodAddedOrRemovedMessage = (data as PeriodAddedOrRemovedMessage);
@@ -70,7 +70,7 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
                 }
                 else if (periodAddedOrRemovedMessage.action === 'added')
                 {
-                    setPeriods(ps => [ ...ps, dateFixup(periodAddedOrRemovedMessage.newData) as Period ]);
+                    setPeriods(ps => [ ...ps, periodDateFixup(periodAddedOrRemovedMessage.newData) as Period ]);
                 }
                 break;
         };

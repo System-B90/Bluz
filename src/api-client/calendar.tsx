@@ -1,5 +1,5 @@
 import { safeApiFetcher } from "@/api-client/common";
-import { dateFixup } from "@/api-shared/calendar";
+import { periodDateFixup } from "@/api-shared/calendar";
 import { Period } from "@/components/schedule/types/event";
 import dayjs, { Dayjs } from "dayjs";
 
@@ -64,7 +64,7 @@ export async function apiGetPeriods({ startDate, endDate }: { startDate?: Date; 
         headers: {
             'Content-Type': 'application/json',
         },
-    }) as Promise<Array<Period>>).then((ps) => ps.map(dateFixup));
+    }) as Promise<Array<Period>>).then((ps) => ps.map(periodDateFixup));
 }
 
 export async function apiSavePeriod(period: Period): Promise<Period>
@@ -72,7 +72,7 @@ export async function apiSavePeriod(period: Period): Promise<Period>
     return safeApiFetcher('/api/period', {
         method: 'POST',
         body: JSON.stringify(period),
-    }).then(dateFixup);
+    }).then(periodDateFixup);
 }
 
 export async function apiDeletePeriod(periodId: Period[ 'id' ]): Promise<void>
