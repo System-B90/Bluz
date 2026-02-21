@@ -16,4 +16,6 @@ export enum MessageTypes
     REGISTER_SESSION = 'register-session',
     PERIOD_DATA_UPDATE = 'pdu',
     PERIOD_ADDED_OR_REMOVED = 'par',
+
+    SETTINGS_UPDATE = 'su',
 };

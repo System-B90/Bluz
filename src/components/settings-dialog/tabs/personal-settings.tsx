@@ -22,7 +22,7 @@ export default function PersonalSettings()
     return (
         <Box>
             <Typography variant="h6" gutterBottom>
-                Personal Settings
+                הגדרות אישיות
             </Typography>
 
             {/* Groups Selection */ }
