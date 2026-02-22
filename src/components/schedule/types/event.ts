@@ -1,3 +1,4 @@
+import { CourseId } from "@/api-shared/types/course";
 import { Dayjs } from "dayjs";
 
 export enum EventType
@@ -28,6 +29,7 @@ export interface Event
     startTime: Dayjs | Date;
     endTime: Dayjs | Date;
     type: EventType;
+    courses: Array<CourseId>;
     rooms: Array<number>; // Room IDs
     instructors: number[]; // Array of instructor IDs
     lecturers?: Array<PersonId>;

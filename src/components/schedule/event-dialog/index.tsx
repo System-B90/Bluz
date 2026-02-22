@@ -22,6 +22,7 @@ import EventTimeField from "@/components/schedule/event-dialog/time-fields";
 import { Event, PrayerEvent } from "@/components/schedule/types/event";
 import ModuleField from '@/components/schedule/event-dialog/module-field';
 import PrayerTypeField from '@/components/schedule/event-dialog/prayer-type';
+import CourseField from '@/components/schedule/event-dialog/course-field';
 
 interface EventDialogProps
 {
@@ -119,6 +120,11 @@ export default function EventDialog({
                                         sx={ { width: '20%' } }
                                     />
                                 </> }
+                            <CourseField
+                                event={ event }
+                                onEventChange={ onEventChange }
+                                sx={ { flexGrow: 1 } }
+                            />
                             <RoomField
                                 event={ event }
                                 onEventChange={ onEventChange }

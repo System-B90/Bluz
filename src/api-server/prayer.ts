@@ -57,6 +57,7 @@ async function updatePrayerEventsInDay({ day, newConfig }: { day: Date, newConfi
                 prayerType: prayerType as PrayerEvent[ 'prayerType' ],
                 subject: 0,
                 hiveModule: 0,
+                courses: [],
                 rooms: [],
                 instructors: [],
                 lecturers: [],

@@ -18,4 +18,5 @@ export enum MessageTypes
     EVENT_ADDED_OR_REMOVED = 'par',
 
     SETTINGS_UPDATE = 'su',
+    COURSES_UPDATE = 'cu',
 };

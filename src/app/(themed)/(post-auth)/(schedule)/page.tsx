@@ -58,6 +58,7 @@ export default function SchedulePage()
             startTime: event.startTime || dayjs(),
             endTime: event.endTime || dayjs(),
             type: event.type || 'exercise',
+            courses: event.courses || [],
             rooms: event.rooms?.map((v) => typeof v === 'string' ? parseInt(v) : v) || [],
             instructors: event.instructors || [],
             lecturers: event.lecturers || [],

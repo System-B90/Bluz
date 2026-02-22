@@ -1,4 +1,5 @@
 'use client';
+import { CourseId } from '@/api-shared/types/course';
 import { Event } from '@/components/schedule/types/event';
 import
 {
@@ -14,6 +15,8 @@ export type CalendarFiltersContextState = {
     default: boolean;
     filteredInstructors: number[];
     setFilteredInstructors: Dispatch<SetStateAction<Array<number>>>;
+    filteredCourses: CourseId[];
+    setFilteredCourses: Dispatch<SetStateAction<Array<CourseId>>>;
 
     isEventFilteredOut: (event: Event) => boolean;
 };
@@ -22,6 +25,8 @@ const CalendarFiltersContext = createContext<CalendarFiltersContextState | undef
     default: true,
     filteredInstructors: [],
     setFilteredInstructors: () => { },
+    filteredCourses: [],
+    setFilteredCourses: () => { },
 
     isEventFilteredOut: () => false,
 });
@@ -29,10 +34,11 @@ const CalendarFiltersContext = createContext<CalendarFiltersContextState | undef
 export const CalendarFiltersProvider = ({ children }: { children: React.ReactNode; }) =>
 {
     const [ filteredInstructors, setFilteredInstructors ] = useState<Array<number>>([]);
+    const [ filteredCourses, setFilteredCourses ] = useState<Array<CourseId>>([]);
 
     const isEventFilteredOut = useCallback((event: Event) =>
     {
-        if (filteredInstructors.length === 0) { return false; }
+        if (filteredInstructors.length === 0 && filteredCourses.length === 0) { return false; }
 
         return !event.instructors.some(instructorId => filteredInstructors.includes(instructorId));
     }, [ filteredInstructors ]);
@@ -42,6 +48,8 @@ export const CalendarFiltersProvider = ({ children }: { children: React.ReactNod
             default: false,
             filteredInstructors,
             setFilteredInstructors,
+            filteredCourses,
+            setFilteredCourses,
 
             isEventFilteredOut
         } }>

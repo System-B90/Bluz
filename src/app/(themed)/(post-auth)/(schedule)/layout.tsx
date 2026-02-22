@@ -1,3 +1,4 @@
+import { CoursesProvider } from '@/components/base/courses-provider';
 import { HiveModulesProvider } from '@/components/base/hive-modules-provider';
 import { HiveRoomsProvider } from '@/components/base/hive-rooms-provider';
 import { HiveSubjectsProvider } from '@/components/base/hive-subjects-provider';
@@ -18,9 +19,11 @@ export default async function ScheduleLayout({
                 <HiveModulesProvider>
                     <HiveRoomsProvider>
                         <SettingsProvider>
-                            <CalendarProvider>
-                                { children }
-                            </CalendarProvider>
+                            <CoursesProvider>
+                                <CalendarProvider>
+                                    { children }
+                                </CalendarProvider>
+                            </CoursesProvider>
                         </SettingsProvider>
                     </HiveRoomsProvider>
                 </HiveModulesProvider>

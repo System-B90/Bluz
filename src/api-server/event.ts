@@ -7,14 +7,14 @@ import { Event } from "@/components/schedule/types/event";
 import { MessageTypes } from "@/settings";
 import { Filter, FindOptions, ObjectId, WithId } from "mongodb";
 
-function fixId<T extends Partial<Event>>(event: T & WithId<Event>): Partial<Event> & { id: string; }
+export function fixId<T extends Partial<K>, K extends { id: string; }>(item: T & WithId<K>): T & { id: string; }
 {
-    if (event._id)
+    if (item._id)
     {
-        event.id = event._id.toHexString();
-        delete (event as Partial<WithId<Event>>)._id;
+        item.id = item._id.toHexString();
+        delete (item as Partial<WithId<K>>)._id;
     }
-    return event as T & { id: string; };
+    return item as T & { id: string; };
 }
 
 async function getDbEvent(eventId: string, options?: FindOptions)

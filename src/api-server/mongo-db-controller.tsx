@@ -1,3 +1,4 @@
+import { Course } from "@/api-shared/types/course";
 import { Setting } from "@/api-shared/types/settings/settings";
 import { Event } from "@/components/schedule/types/event";
 import { Collection, Db, MongoClient } from "mongodb";
@@ -9,6 +10,7 @@ class DatabaseController
     private bluezDb!: Db;
     private _events!: Collection<Event>;
     private _settings!: Collection<Setting>;
+    private _courses!: Collection<Course>;
 
     constructor()
     {
@@ -16,6 +18,7 @@ class DatabaseController
         this.bluezDb = this.mongoClient.db('bluez');
         this._events = this.bluezDb.collection('events');
         this._settings = this.bluezDb.collection('settings');
+        this._courses = this.bluezDb.collection('courses');
 
     }
 
@@ -26,6 +29,10 @@ class DatabaseController
     public get settings(): Collection<Setting>
     {
         return this._settings;
+    }
+    public get courses(): Collection<Course>
+    {
+        return this._courses;
     }
 }
 

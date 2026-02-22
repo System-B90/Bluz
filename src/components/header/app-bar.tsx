@@ -1,3 +1,4 @@
+import FilterCourses from '@/components/header/filter-courses';
 import FilterInstructors from '@/components/header/filter-instructor';
 import LoggedInUser from '@/components/header/logged-in-user';
 import { useTheme } from '@/components/theme/theme-provider';
@@ -28,8 +29,21 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
 
                     <LoggedInUser />
 
-                    <Box display={ 'flex' } flex={ 1 } justifyContent={ 'center' } alignItems={ 'center' } boxSizing={ 'border-box' }>
+                    <Box
+                        display={ 'flex' }
+                        flex={ 1 }
+                        justifyContent={ 'center' }
+                        alignItems={ 'center' }
+                        boxSizing={ 'border-box' }
+                        paddingBlockStart={ 1 }
+                        paddingBlockEnd={ 1 }
+                    >
                         <FilterInstructors
+                            minWidth={ 200 }
+                            width={ 'auto' }
+                            boxSizing={ 'border-box' }
+                        />
+                        <FilterCourses
                             minWidth={ 200 }
                             width={ 'auto' }
                             boxSizing={ 'border-box' }
