@@ -169,6 +169,13 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
                             },
                         },
                     },
+                    MuiAppBar: {
+                        styleOverrides: {
+                            colorDefault: {
+                                backgroundColor: paletteMode === 'light' ? 'rgba(173,226,238,0.29)' : undefined,
+                            }
+                        }
+                    }
                 },
             }),
         [ paletteMode ]

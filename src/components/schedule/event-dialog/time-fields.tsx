@@ -2,7 +2,7 @@ import { Box, BoxProps } from "@mui/material";
 import { Event } from "@/components/schedule/types/event";
 import { TimePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 interface EventTimeFieldProps
 {
@@ -12,8 +12,8 @@ interface EventTimeFieldProps
 
 export default function EventTimeField({ event, onEventChange, ...props }: EventTimeFieldProps & BoxProps)
 {
-    const duration: number = (event?.endTime as Dayjs)?.diff(event?.startTime) || 0;
-    console.log('EventTimeField duration', event);
+    const duration: number = useMemo(() => (event?.endTime as Dayjs)?.diff(event?.startTime) || 0, [ event?.startTime, event?.endTime ]);
+
     return (
         <Box display="flex" gap={ 2 } alignSelf="center" { ...props }>
             <TimePicker
