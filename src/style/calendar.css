@@ -244,6 +244,10 @@ button.rbc-input::-moz-focus-inner
     overflow: hidden;
 }
 
+.rbc-event:has(.rbc-event-content > [data-filtered-out="true"])
+{
+    opacity: 0.2;
+}
 
 .rbc-slot-selecting .rbc-event
 {

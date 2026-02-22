@@ -21,7 +21,8 @@ export interface WebSocketSessionMessage
 export type AuthContextState = {
     default: boolean;
     username: string | null;
-    canEdit: boolean;
+    displayName: string | null;
+    isAdmin: boolean;
     addMessageHandler: (handler: MessageHandlerType) => () => void;
     sendMessage: (data: WebSocketSessionMessage) => void;
 };
@@ -29,15 +30,18 @@ export type AuthContextState = {
 const AuthContext = createContext<AuthContextState | undefined>({
     default: true,
     username: null,
-    canEdit: false,
+    displayName: null,
+    isAdmin: false,
     addMessageHandler: (_handler: MessageHandlerType) => () => { },
     sendMessage: (_data) => { },
 });
 
 export const AuthProvider = ({ children, username }: { children: React.ReactNode; username: string | null; }) =>
 {
-    const [ canEdit, setCanEdit ] = useState<boolean>(true);
+    const [ isAdmin, setIsAdmin ] = useState<boolean>(true);
     const { ws, addMessageHandler } = useSessionWebSocketContext();
+
+    const displayName = 'מיכאל';
 
     const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, data: any) =>
     {
@@ -70,14 +74,15 @@ export const AuthProvider = ({ children, username }: { children: React.ReactNode
 
     useEffect(() =>
     {
-        setCanEdit(username === process.env.NEXT_PUBLIC_MADRAT_USERNAME);
-    }, [ username, setCanEdit ]);
+        setIsAdmin(username === process.env.NEXT_PUBLIC_MADRAT_USERNAME);
+    }, [ username, setIsAdmin ]);
 
     return (
         <AuthContext.Provider value={ {
             default: false,
             username,
-            canEdit,
+            displayName,
+            isAdmin,
             addMessageHandler, sendMessage,
 
         } }>

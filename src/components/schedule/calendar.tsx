@@ -41,7 +41,7 @@ moment.locale('he');
 
 export const localizer = momentLocalizer(moment);
 
-export default function BluezCalendar({
+export default function BluzCalendar({
     handleSaveEvent,
     setOpenEventDialog,
     setSelectedEvent,

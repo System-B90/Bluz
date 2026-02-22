@@ -4,6 +4,7 @@ import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { eventDateFixup } from '@/api-shared/calendar';
 import { EventAddedOrRemovedMessage, EventDataUpdateMessage } from '@/api-shared/types';
 import { useAuth } from '@/components/auth/auth-provider';
+import { CalendarFiltersProvider } from '@/components/base/calendar-filter-provider';
 import { Event } from '@/components/schedule/types/event';
 import { MessageHandlerType } from '@/components/session-ws';
 import { MessageTypes } from '@/settings';
@@ -84,15 +85,18 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
     }, [ addMessageHandler, onWebSocketMessage ]);
 
     return (
-        <CalendarContext.Provider value={ {
-            default: false,
-            events: events,
-            setStartDate,
-            setEndDate,
+        <CalendarFiltersProvider>
+            <CalendarContext.Provider value={ {
+                default: false,
+                events: events,
+                setStartDate,
+                setEndDate,
 
-        } }>
-            { children }
-        </CalendarContext.Provider>
+            } }>
+                { children }
+            </CalendarContext.Provider>
+        </CalendarFiltersProvider>
+
     );
 };
 

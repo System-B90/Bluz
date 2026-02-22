@@ -2,8 +2,8 @@
 
 import { apiDeleteEvent, apiSaveEvent } from '@/api-client/calendar';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import ScheduleAppBar from '@/components/app-bar';
-import BluezCalendar from '@/components/schedule/calendar';
+import ScheduleAppBar from '@/components/header/app-bar';
+import BluzCalendar from '@/components/schedule/calendar';
 import { useCalendar } from '@/components/schedule/calendar-provider';
 import EventDialog from '@/components/schedule/event-dialog';
 import SettingsDialog from "@/components/settings-dialog/settings-dialog";
@@ -120,7 +120,7 @@ export default function SchedulePage()
     return (
         <Box sx={ { p: 0 } } width={ '100vw' } height={ '100vh' } display={ 'flex' } flexDirection={ 'column' }>
             <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
-            <BluezCalendar handleSaveEvent={ handleSaveEvent } setOpenEventDialog={ setOpenEventDialog } setSelectedEvent={ setSelectedEvent } events={ events } />
+            <BluzCalendar handleSaveEvent={ handleSaveEvent } setOpenEventDialog={ setOpenEventDialog } setSelectedEvent={ setSelectedEvent } events={ events } />
 
             <EventDialog
                 open={ openEventDialog }

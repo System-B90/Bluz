@@ -1,3 +1,4 @@
+import { useCalendarFilters } from "@/components/base/calendar-filter-provider";
 import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { useElementSize } from "@/components/schedule/event-component/utils";
 import LargeEventComponent from "@/components/schedule/event-component/variants/large-event";
@@ -10,7 +11,7 @@ import TinyNarrowEventComponent from "@/components/schedule/event-component/vari
 import { Event, PrayerEvent } from "@/components/schedule/types/event";
 import { Box, Tooltip } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EventProps } from "react-big-calendar";
 
 export interface ContainerSize
@@ -42,6 +43,7 @@ export default function BluezEventComponent({ event: event, ...props }: EventPro
 {
     const theme = useTheme();
     const { getSubject } = useHiveSubjects();
+    const { isEventFilteredOut } = useCalendarFilters();
     const [ variant, setVariant ] = useState<Variant>('short-wide');
 
     const subject = getSubject(event.subject);
@@ -69,6 +71,9 @@ export default function BluezEventComponent({ event: event, ...props }: EventPro
         setVariant(`${heightVariant}-${widthVariant}` as Variant);
 
     }, [ size ]);
+
+    const isFilteredOut = useMemo(() => isEventFilteredOut(event), [ event, isEventFilteredOut ]);
+
     let eventComponent = null;
 
     switch (variant)
@@ -114,6 +119,7 @@ export default function BluezEventComponent({ event: event, ...props }: EventPro
                 height: '100%',
                 boxSizing: 'border-box',
             } }
+            data-filtered-out={ isFilteredOut }
         >
             { eventComponent }
         </Box>
