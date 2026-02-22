@@ -1,6 +1,6 @@
 import { ContainerSize } from "@/components/schedule/event-component/base";
-import { InstructorsList } from "@/components/schedule/event-component/person";
-import RoomComponent from "@/components/schedule/event-component/room";
+import { InstructorsList } from "@/components/schedule/event-component/parts/person";
+import RoomComponent from "@/components/schedule/event-component/parts/room";
 import { EventStatusIcons, EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
 import { Event } from "@/components/schedule/types/event";
 import SubjectComponent, { ModuleComponent } from "@/components/subject";

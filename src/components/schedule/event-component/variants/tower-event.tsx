@@ -1,6 +1,6 @@
 import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
-import { PersonChip } from "@/components/schedule/event-component/person";
-import RoomComponent from "@/components/schedule/event-component/room";
+import { PersonChip } from "@/components/schedule/event-component/parts/person";
+import RoomComponent from "@/components/schedule/event-component/parts/room";
 import { EventStatusIcons, EventDurationLabel, EventTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
 import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
 import { Event } from "@/components/schedule/types/event";
