@@ -13,7 +13,7 @@ export default function Filters({ ...props }: BoxProps)
 
     const handleShowPA = useCallback(() =>
     {
-        setShowPAsFor(v => v === null ? 367 : null);
+        setShowPAsFor(v => v === null ? 365 : null);
     }, [ setShowPAsFor ]);
 
     return (

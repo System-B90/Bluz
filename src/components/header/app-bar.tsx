@@ -40,7 +40,7 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
                 <Box display={ 'flex' } alignItems={ 'center' } justifyContent={ 'flex-end' } alignContent={ 'center' }>
                     <FilterIcon filtersVisible={ filtersVisible } setFiltersVisible={ setFiltersVisible } />
 
-                    <InstructorToolsIcon />
+                    {/* <InstructorToolsIcon /> */ }
 
                     <ThemeSelectorIcon />
 

@@ -61,7 +61,9 @@ export const CalendarFiltersProvider = ({ children }: { children: React.ReactNod
         // Quick no filter exit check
         if (filteredInstructors.length === 0 && filteredCourses.length === 0 && showPAsFor === null) { return 1; }
 
-        const hasMatchingCourse = filteredCourses.length === 0 || event.courses.length === 0 || event.courses.some(courseId => filteredCourses.includes(courseId));
+        const hasMatchingCourse = event.courses.some(courseId => filteredCourses.includes(courseId));
+        const noCourse = filteredCourses.length === 0 || event.courses.length === 0;
+
         if (showPAsFor === null)
         {
             const hasMatchingInstructor = [ ...event.instructors, ...event.lecturers?.filter((v) => typeof v === 'number') ?? [] ].some(instructorId => filteredInstructors.includes(instructorId));
@@ -71,7 +73,7 @@ export const CalendarFiltersProvider = ({ children }: { children: React.ReactNod
 
         // showPAsFor !== null
 
-        if (!hasMatchingCourse) { return 0; }
+        if (!hasMatchingCourse && !noCourse) { return 0; }
         let paState: PotentialPA = event.personalTalk ? PotentialPA.YesRecommended : (event.required ? PotentialPA.No : PotentialPA.YesNotRecommended);
         if (paState === PotentialPA.YesRecommended)
         {
@@ -87,7 +89,7 @@ export const CalendarFiltersProvider = ({ children }: { children: React.ReactNod
             case PotentialPA.YesRecommended:
                 return 1;
             case PotentialPA.YesNotRecommended:
-                return 0.4;
+                return 0.6;
             case PotentialPA.No:
                 return 0.1;
             case PotentialPA.NoRecommendedButBusy:
