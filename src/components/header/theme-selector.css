@@ -1,0 +1,193 @@
+/* Base Slider Track */
+.theme-slider
+{
+    position: relative;
+    width: 68px;
+    height: 34px;
+    border-radius: 34px;
+    border: none;
+    cursor: pointer;
+    overflow: hidden;
+    transition: background-color 0.4s ease;
+    padding: 0;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.theme-slider.light
+{
+    background-color: #87CEEB;
+    /* Sky blue */
+}
+
+.theme-slider.dark
+{
+    background-color: #1a202c;
+    /* Night sky */
+}
+
+/* Background Layers */
+.slider-bg
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.4s ease;
+}
+
+/* --- Starry Night Elements --- */
+.theme-slider.light .starry-bg
+{
+    opacity: 0;
+}
+
+.theme-slider.dark .starry-bg
+{
+    opacity: 1;
+}
+
+.star
+{
+    position: absolute;
+    background-color: white;
+    border-radius: 50%;
+}
+
+.star-1
+{
+    top: 6px;
+    left: 14px;
+    width: 2px;
+    height: 2px;
+}
+
+.star-2
+{
+    top: 16px;
+    left: 8px;
+    width: 3px;
+    height: 3px;
+    box-shadow: 0 0 3px white;
+}
+
+.star-3
+{
+    top: 24px;
+    left: 20px;
+    width: 2px;
+    height: 2px;
+}
+
+/* --- Sunny Day Elements --- */
+.theme-slider.dark .sunny-bg
+{
+    opacity: 0;
+}
+
+.theme-slider.light .sunny-bg
+{
+    opacity: 1;
+}
+
+.cloud
+{
+    position: absolute;
+    background-color: white;
+    border-radius: 10px;
+    opacity: 0.9;
+}
+
+.cloud-1
+{
+    top: 8px;
+    right: 10px;
+    width: 20px;
+    height: 6px;
+}
+
+.cloud-1::before
+{
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 4px;
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+}
+
+.cloud-2
+{
+    top: 22px;
+    right: 22px;
+    width: 14px;
+    height: 4px;
+}
+
+/* --- Slider Head (The Knob) --- */
+.slider-head
+{
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.5s ease;
+    z-index: 10;
+}
+
+.theme-slider.light .slider-head
+{
+    background-color: #fbbf24;
+    transform: translateX(0);
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
+}
+
+.theme-slider.dark .slider-head
+{
+    background-color: #f8fafc;
+    transform: translateX(34px);
+    box-shadow: 0 0 10px rgba(248, 250, 252, 0.5);
+}
+
+/* --- Icon Transitions --- */
+.icon
+{
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* Fade and rotate out the sun when dark */
+.theme-slider.dark .sun-icon
+{
+    opacity: 0;
+    transform: rotate(-90deg);
+}
+
+.theme-slider.light .sun-icon
+{
+    opacity: 1;
+    transform: rotate(0deg);
+}
+
+/* Fade and rotate in the moon when dark */
+.theme-slider.dark .moon-icon
+{
+    opacity: 1;
+    transform: rotate(0deg);
+}
+
+.theme-slider.light .moon-icon
+{
+    opacity: 0;
+    transform: rotate(90deg);
+}

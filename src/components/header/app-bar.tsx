@@ -3,23 +3,16 @@ import FilterIcon from '@/components/header/filter-icon';
 import Filters from '@/components/header/filters';
 import InstructorToolsIcon from '@/components/header/instructor-tools-icon';
 import LoggedInUser from '@/components/header/logged-in-user';
-import { useTheme } from '@/components/theme/theme-provider';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
+import ThemeSelectorIcon from '@/components/header/theme-selector';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { AppBar, AppBarProps, Box, IconButton, Toolbar, Tooltip, Typography } from "@mui/material";
-import { useCallback, useState } from 'react';
+import { AppBar, AppBarProps, Box, IconButton, Toolbar, Typography } from "@mui/material";
+import { useState } from 'react';
 
 export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
     setOpenSettingsDialog: (open: boolean) => void,
 } & Exclude<AppBarProps, 'position'>)
 {
-    const { setTheme } = useTheme();
     const [ filteresVisible, setFiltersVisible ] = useState<boolean>(true);
-
-    const toggleTheme = useCallback(() =>
-    {
-        setTheme(t => t === "dark" ? "light" : "dark");
-    }, [ setTheme ]);
 
     return (
         <AppBar enableColorOnDark={ false } position="relative" className='flex justify-center py-0 h-14' color='default' { ...props }>
@@ -44,14 +37,12 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
                 </Box>
 
 
-                <Box>
+                <Box display={ 'flex' } alignItems={ 'center' } justifyContent={ 'flex-end' } alignContent={ 'center' }>
                     <FilterIcon filtersVisible={ filteresVisible } setFiltersVisible={ setFiltersVisible } />
 
                     <InstructorToolsIcon />
 
-                    <IconButton color="inherit" onClick={ toggleTheme }>
-                        <Brightness4Icon />
-                    </IconButton>
+                    <ThemeSelectorIcon />
 
                     <IconButton color="inherit" onClick={ () => setOpenSettingsDialog(true) }>
                         <SettingsIcon />
