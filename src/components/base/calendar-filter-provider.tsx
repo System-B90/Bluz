@@ -1,7 +1,7 @@
 'use client';
 import { PotentialPA } from '@/api-shared/types';
 import { CourseId } from '@/api-shared/types/course';
-import { Event } from '@/components/schedule/types/event';
+import { Event, EventType } from '@/components/schedule/types/event';
 import
 {
     createContext,
@@ -20,6 +20,8 @@ export type CalendarFiltersContextState = {
     setFilteredCourses: Dispatch<SetStateAction<Array<CourseId>>>;
     showPAsFor: number | null;
     setShowPAsFor: Dispatch<SetStateAction<number | null>>;
+    hidePrayers: boolean;
+    setHidePrayers: Dispatch<SetStateAction<boolean>>;
 
     eventFilteredOpacity: (event: Event) => number;
 };
@@ -31,7 +33,9 @@ const CalendarFiltersContext = createContext<CalendarFiltersContextState | undef
     filteredCourses: [],
     setFilteredCourses: () => { },
     showPAsFor: null,
-    setShowPAsFor: () => null,
+    setShowPAsFor: () => { },
+    hidePrayers: false,
+    setHidePrayers: () => { },
 
     eventFilteredOpacity: () => 1,
 });
@@ -44,12 +48,15 @@ export function isInstructorBusy(instructor: number, event: Event): boolean
 
 export const CalendarFiltersProvider = ({ children }: { children: React.ReactNode; }) =>
 {
+    const [ hidePrayers, setHidePrayers ] = useState<boolean>(false);
     const [ showPAsFor, setShowPAsFor ] = useState<number | null>(null /** ID of instructor */); // פ"א
     const [ filteredInstructors, setFilteredInstructors ] = useState<Array<number>>([]);
     const [ filteredCourses, setFilteredCourses ] = useState<Array<CourseId>>([]);
 
     const eventFilteredOpacity = useCallback((event: Event): number =>
     {
+        // Desirec behaviour is that if hidePrayers is on, prayers should simply not exist on the calendar
+        if (event.type === EventType.PRAYER && hidePrayers) { return 0; }
 
         // Quick no filter exit check
         if (filteredInstructors.length === 0 && filteredCourses.length === 0 && showPAsFor === null) { return 1; }
@@ -88,7 +95,7 @@ export const CalendarFiltersProvider = ({ children }: { children: React.ReactNod
         }
 
         return 1;
-    }, [ filteredInstructors, filteredCourses, showPAsFor ]);
+    }, [ filteredInstructors, filteredCourses, showPAsFor, hidePrayers ]);
 
     return (
         <CalendarFiltersContext.Provider value={ {
@@ -99,6 +106,9 @@ export const CalendarFiltersProvider = ({ children }: { children: React.ReactNod
             setFilteredCourses,
             showPAsFor,
             setShowPAsFor,
+
+            hidePrayers,
+            setHidePrayers,
 
             eventFilteredOpacity
         } }>

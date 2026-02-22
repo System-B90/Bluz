@@ -12,7 +12,7 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
     setOpenSettingsDialog: (open: boolean) => void,
 } & Exclude<AppBarProps, 'position'>)
 {
-    const [ filteresVisible, setFiltersVisible ] = useState<boolean>(true);
+    const [ filtersVisible, setFiltersVisible ] = useState<boolean>(true);
 
     return (
         <AppBar enableColorOnDark={ false } position="relative" className='flex justify-center py-0 h-14' color='default' { ...props }>
@@ -24,7 +24,7 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
 
                     <LoggedInUser />
 
-                    { filteresVisible && <Filters
+                    { filtersVisible && <Filters
                         display={ 'flex' }
                         flex={ 1 }
                         justifyContent={ 'center' }
@@ -38,7 +38,7 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
 
 
                 <Box display={ 'flex' } alignItems={ 'center' } justifyContent={ 'flex-end' } alignContent={ 'center' }>
-                    <FilterIcon filtersVisible={ filteresVisible } setFiltersVisible={ setFiltersVisible } />
+                    <FilterIcon filtersVisible={ filtersVisible } setFiltersVisible={ setFiltersVisible } />
 
                     <InstructorToolsIcon />
 

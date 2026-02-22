@@ -7,8 +7,8 @@ import { useCalendarFilters } from '@/components/base/calendar-filter-provider';
 
 export default function FilterIcon({ filtersVisible, setFiltersVisible }: { filtersVisible: boolean, setFiltersVisible: Dispatch<SetStateAction<boolean>>; })
 {
-    const { showPAsFor, filteredCourses, filteredInstructors } = useCalendarFilters();
-    const hasAnyFilter = useMemo(() => filteredCourses.length !== 0 || filteredInstructors.length !== 0 || showPAsFor !== null, [ filteredCourses, filteredInstructors, showPAsFor ]);
+    const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } = useCalendarFilters();
+    const hasAnyFilter = useMemo(() => hidePrayers || filteredCourses.length !== 0 || filteredInstructors.length !== 0 || showPAsFor !== null, [ filteredCourses, filteredInstructors, showPAsFor, hidePrayers ]);
     return (
         <Tooltip title={ `${filtersVisible ? 'Hide' : 'Show'} Filters` } placement='bottom'>
             <IconButton className='relative' color={ filtersVisible ? 'primary' : 'inherit' } onClick={ () => { setFiltersVisible(v => !v); } }>

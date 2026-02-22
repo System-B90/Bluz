@@ -29,7 +29,7 @@ export function BluezThemeProvider({ children, ...props }: ThemeProviderProps & 
             attribute="class"
             defaultTheme="system"
             enableSystem
-            disableTransitionOnChange
+            disableTransitionOnChange={ false }
         >
             <InnerThemeProvider>
                 { children }
