@@ -18,3 +18,11 @@ interface EventAddedMessage
 }
 
 export type EventAddedOrRemovedMessage = EventRemovedMessage | EventAddedMessage;
+
+export enum PotentialPA
+{
+    YesRecommended,
+    YesNotRecommended,
+    No,
+    NoRecommendedButBusy,
+};

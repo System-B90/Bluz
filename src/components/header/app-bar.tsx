@@ -1,6 +1,7 @@
 'use client';
 import FilterIcon from '@/components/header/filter-icon';
 import Filters from '@/components/header/filters';
+import InstructorToolsIcon from '@/components/header/instructor-tools-icon';
 import LoggedInUser from '@/components/header/logged-in-user';
 import { useTheme } from '@/components/theme/theme-provider';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
@@ -45,6 +46,8 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
 
                 <Box>
                     <FilterIcon filtersVisible={ filteresVisible } setFiltersVisible={ setFiltersVisible } />
+
+                    <InstructorToolsIcon />
 
                     <IconButton color="inherit" onClick={ toggleTheme }>
                         <Brightness4Icon />

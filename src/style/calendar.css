@@ -244,9 +244,39 @@ button.rbc-input::-moz-focus-inner
     overflow: hidden;
 }
 
-.rbc-event:has(.rbc-event-content > [data-filtered-out="true"])
+.rbc-event:has(.rbc-event-content > [data-filtered-out="1"])
+{
+    opacity: 1;
+}
+
+.rbc-event:has(.rbc-event-content > [data-filtered-out="0.6"])
+{
+    opacity: 0.6;
+}
+
+.rbc-event:has(.rbc-event-content > [data-filtered-out="0.4"])
+{
+    opacity: 0.4;
+}
+
+.rbc-event:has(.rbc-event-content > [data-filtered-out="0.3"])
+{
+    opacity: 0.3;
+}
+
+.rbc-event:has(.rbc-event-content > [data-filtered-out="0.2"])
 {
     opacity: 0.2;
+}
+
+.rbc-event:has(.rbc-event-content > [data-filtered-out="0.1"])
+{
+    opacity: 0.1;
+}
+
+.rbc-event:has(.rbc-event-content > [data-filtered-out="0"])
+{
+    opacity: 0;
 }
 
 .rbc-slot-selecting .rbc-event

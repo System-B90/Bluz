@@ -45,7 +45,7 @@ export default function BluezEventComponent({ event: event, ...props }: EventPro
 {
     const theme = useTheme();
     const { getSubject } = useHiveSubjects();
-    const { isEventFilteredOut } = useCalendarFilters();
+    const { eventFilteredOpacity } = useCalendarFilters();
     const [ variant, setVariant ] = useState<Variant>('short-wide');
 
     const subject = getSubject(event.subject);
@@ -74,7 +74,7 @@ export default function BluezEventComponent({ event: event, ...props }: EventPro
 
     }, [ size ]);
 
-    const isFilteredOut = useMemo(() => isEventFilteredOut(event), [ event, isEventFilteredOut ]);
+    const filterOpactiy = useMemo(() => eventFilteredOpacity(event), [ event, eventFilteredOpacity ]);
 
     let eventComponent = null;
 
@@ -127,7 +127,7 @@ export default function BluezEventComponent({ event: event, ...props }: EventPro
                 height: '100%',
                 boxSizing: 'border-box',
             } }
-            data-filtered-out={ isFilteredOut }
+            data-filtered-out={ filterOpactiy }
         >
             { eventComponent }
         </Box>
