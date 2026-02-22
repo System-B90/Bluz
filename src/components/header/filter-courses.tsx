@@ -49,6 +49,7 @@ export default function FilterCourses({ ...props }: BoxProps)
                                         onDelete={ () => handleDelete(id) }
                                         // Prevent menu from opening when deleting
                                         onMouseDown={ (e) => e.stopPropagation() }
+                                        sx={ { bgcolor: course?.color } }
                                     />
                                 );
                             }) }
@@ -56,7 +57,7 @@ export default function FilterCourses({ ...props }: BoxProps)
                     ) }
                 >
                     { courses.map((course) => (
-                        <MenuItem key={ course.id } value={ course.id }>
+                        <MenuItem key={ course.id } value={ course.id } sx={ { textDecorationColor: course.color, textDecorationLine: 'underline' } }>
                             { course.name }
                         </MenuItem>
                     )) }

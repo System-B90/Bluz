@@ -12,3 +12,5 @@ export function getKeysOfObject<T extends object>(obj: T): Keys<T>[]
 {
     return Object.keys(obj) as Keys<T>[];
 }
+
+export type Color = string;

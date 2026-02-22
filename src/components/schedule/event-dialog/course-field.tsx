@@ -58,7 +58,7 @@ export default function CourseField({ event, onEventChange, ...props }: CourseFi
                 ) }
             >
                 { courses.map((course) => (
-                    <MenuItem key={ course.id } value={ course.id }>
+                    <MenuItem key={ course.id } value={ course.id } color={ course.color ?? undefined }>
                         { course.name }
                     </MenuItem>
                 )) }

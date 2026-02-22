@@ -38,10 +38,14 @@ export const CalendarFiltersProvider = ({ children }: { children: React.ReactNod
 
     const isEventFilteredOut = useCallback((event: Event) =>
     {
+        // Quick no filter exit check
         if (filteredInstructors.length === 0 && filteredCourses.length === 0) { return false; }
 
-        return !event.instructors.some(instructorId => filteredInstructors.includes(instructorId));
-    }, [ filteredInstructors ]);
+        const hasMatchingInstructor = event.instructors.some(instructorId => filteredInstructors.includes(instructorId));
+        const hasMatchingCourse = event.courses.some(courseId => filteredCourses.includes(courseId));
+
+        return !(hasMatchingInstructor || hasMatchingCourse);
+    }, [ filteredInstructors, filteredCourses ]);
 
     return (
         <CalendarFiltersContext.Provider value={ {

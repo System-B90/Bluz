@@ -20,7 +20,7 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
     }, [ setTheme ]);
 
     return (
-        <AppBar enableColorOnDark={ false } position="relative" className='py-0' { ...props }>
+        <AppBar enableColorOnDark={ false } position="relative" className='py-0 max-h-14' { ...props }>
             <Toolbar variant="dense">
                 <Box sx={ { flexGrow: 1 } } display="flex" alignItems="center" flexDirection={ 'row' } gap={ 1 }>
                     <Typography variant="h6" >
@@ -37,6 +37,7 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
                         boxSizing={ 'border-box' }
                         paddingBlockStart={ 1 }
                         paddingBlockEnd={ 1 }
+                        gap={ 1 }
                     >
                         <FilterInstructors
                             minWidth={ 200 }
