@@ -4,7 +4,7 @@ import { HiveRoomsProvider } from '@/components/base/hive-rooms-provider';
 import { HiveSubjectsProvider } from '@/components/base/hive-subjects-provider';
 import { HiveUsersProvider } from '@/components/base/hive-users-provider';
 import { SettingsProvider } from '@/components/base/settings-provider';
-import { CalendarProvider } from '@/components/schedule/calendar-provider';
+import { CalendarProvider } from '@/components/schedule/calendar/calendar-provider';
 import React from 'react';
 
 export default async function ScheduleLayout({

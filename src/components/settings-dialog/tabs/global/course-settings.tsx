@@ -1,11 +1,11 @@
 // Lot's of Gemini code in this file, quality may be inconsistent. Please review carefully.
 import { Course } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/courses-provider";
-import { Box, Button, ButtonGroup, Chip, ColorObject, InputBase, Tooltip, Typography } from "@mui/material";
+import { Box, Button, ButtonGroup, Chip, InputBase, Tooltip, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Color } from "@/api-shared/common";
-import { MuiColorInput, MuiColorInputColors, MuiColorInputProps, MuiColorInputValue } from 'mui-color-input';
+import { MuiColorInput, MuiColorInputColors, MuiColorInputProps } from 'mui-color-input';
 
 function CourseItem({
     course,
@@ -125,7 +125,7 @@ function CourseItem({
                         <InputBase
                             value={ title }
                             onChange={ (e) => setTitle(e.target.value) }
-                            onBlur={ commitChange }
+                            onBlur={ commitTitleChange }
                             onKeyDown={ handleKeyDown }
                             autoFocus
                             sx={ {

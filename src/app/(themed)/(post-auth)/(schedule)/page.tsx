@@ -3,8 +3,8 @@
 import { apiDeleteEvent, apiSaveEvent } from '@/api-client/calendar';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import ScheduleAppBar from '@/components/header/app-bar';
-import BluzCalendar from '@/components/schedule/calendar';
-import { useCalendar } from '@/components/schedule/calendar-provider';
+import BluzCalendar from '@/components/schedule/calendar/calendar';
+import { useCalendar } from '@/components/schedule/calendar/calendar-provider';
 import EventDialog from '@/components/schedule/event-dialog';
 import SettingsDialog from "@/components/settings-dialog/settings-dialog";
 import { Event } from "@/components/schedule/types/event";
