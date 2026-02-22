@@ -2,6 +2,7 @@ import { useCalendarFilters } from "@/components/base/calendar-filter-provider";
 import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { useElementSize } from "@/components/schedule/event-component/utils";
 import LargeEventComponent from "@/components/schedule/event-component/variants/large-event";
+import LargeNarrowEventComponent from "@/components/schedule/event-component/variants/large-narrow-event";
 import MediumEventComponent from "@/components/schedule/event-component/variants/medium-event";
 import PrayerEventComponent from "@/components/schedule/event-component/variants/prayer-event";
 import ShortEventComponent from "@/components/schedule/event-component/variants/short-event";
@@ -98,6 +99,9 @@ export default function BluezEventComponent({ event: event, ...props }: EventPro
             break;
         case "large-wide":
             eventComponent = <Tooltip title={ 'Large' }><LargeEventComponent event={ event } { ...props } /></Tooltip>;
+            break;
+        case "large-narrow":
+            eventComponent = <Tooltip title={ 'Large & Narrow' }><LargeNarrowEventComponent event={ event } { ...props } /></Tooltip>;
             break;
         default:
             window.alert(`Unimplemented variant: ${variant}`);

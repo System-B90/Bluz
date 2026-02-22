@@ -3,8 +3,8 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest
 {
     return {
-        name: 'Bluez',
-        short_name: 'Bluez',
+        name: 'בלוז',
+        short_name: 'בלוז',
         description: 'לו"ז לכל בי"ס',
         start_url: '/',
         display: 'fullscreen',
