@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
-import { DbPeriod } from "@/api-server/period";
+import { DbEvent } from "@/api-server/event";
 import { ClientApiError } from "@/api-shared/errors";
-import { Period } from "@/components/schedule/types/event";
+import { Event } from "@/components/schedule/types/event";
 import { NextRequest } from "next/server";
 
 export async function GET(
@@ -19,11 +19,11 @@ export async function GET(
         if (!id && !(rawStartDate && rawEndDate)) { throw new ClientApiError('No id provided!'); }
         if (id)
         {
-            return ApiSuccess(await DbPeriod.get(id));
+            return ApiSuccess(await DbEvent.get(id));
         }
         else if (rawStartDate && rawEndDate)
         {
-            return ApiSuccess(await DbPeriod.getInRange(new Date(rawStartDate), new Date(rawEndDate)));
+            return ApiSuccess(await DbEvent.getInRange(new Date(rawStartDate), new Date(rawEndDate)));
         }
     }
     catch (e)
@@ -38,9 +38,9 @@ export async function POST(
 {
     try
     {
-        const period: Partial<Period> = await request.json();
-        if (!period) { throw new ClientApiError('No data provided!'); }
-        return ApiSuccess(await DbPeriod.set(period));
+        const event: Partial<Event> = await request.json();
+        if (!event) { throw new ClientApiError('No data provided!'); }
+        return ApiSuccess(await DbEvent.set(event));
     }
     catch (e)
     {
@@ -54,9 +54,9 @@ export async function DELETE(
 {
     try
     {
-        const periodId: Period[ 'id' ] = await request.json();
-        if (!periodId) { throw new ClientApiError('No periodId provided!'); }
-        return ApiSuccess(await DbPeriod.del(periodId));
+        const eventId: Event[ 'id' ] = await request.json();
+        if (!eventId) { throw new ClientApiError('No eventId provided!'); }
+        return ApiSuccess(await DbEvent.del(eventId));
     }
     catch (e)
     {

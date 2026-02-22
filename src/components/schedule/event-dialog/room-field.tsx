@@ -1,20 +1,20 @@
 import { useHiveRooms } from "@/components/base/hive-rooms-provider";
-import { eventHasRoom, Period } from "@/components/schedule/types/event";
+import { eventHasRoom, Event } from "@/components/schedule/types/event";
 import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import { Dispatch, SetStateAction, useCallback } from "react";
 
 interface RoomFieldProps
 {
-    period?: Partial<Period>;
-    onPeriodChange: Dispatch<SetStateAction<Partial<Period>>>;
+    event?: Partial<Event>;
+    onEventChange: Dispatch<SetStateAction<Partial<Event>>>;
 }
 
-export default function RoomField({ period, onPeriodChange, ...props }: RoomFieldProps & FormControlProps)
+export default function RoomField({ event, onEventChange, ...props }: RoomFieldProps & FormControlProps)
 {
     const { rooms, getRoom } = useHiveRooms();
 
     // Ensure value is always an array for the Select component
-    const selectedRoomIds = Array.isArray(period?.rooms) ? period.rooms : [];
+    const selectedRoomIds = Array.isArray(event?.rooms) ? event.rooms : [];
 
     const handleChange = useCallback((event: SelectChangeEvent<typeof selectedRoomIds>) =>
     {
@@ -25,16 +25,16 @@ export default function RoomField({ period, onPeriodChange, ...props }: RoomFiel
         // On autofill we get a stringified value.
         const newRooms = (typeof value === 'string' ? value.split(',') : value).map((v) => typeof v === 'string' ? parseInt(v) : v);
 
-        onPeriodChange({ rooms: newRooms });
-    }, [ onPeriodChange ]);
+        onEventChange({ rooms: newRooms });
+    }, [ onEventChange ]);
 
     const handleDelete = useCallback((roomIdToDelete: number) =>
     {
-        onPeriodChange(p => { return { 'rooms': p.rooms?.filter((id) => id !== roomIdToDelete) ?? [] }; });
-    }, [ onPeriodChange ]);
+        onEventChange(p => { return { 'rooms': p.rooms?.filter((id) => id !== roomIdToDelete) ?? [] }; });
+    }, [ onEventChange ]);
 
     return (
-        <FormControl fullWidth={ false } { ...props } disabled={ period?.type ? !eventHasRoom(period.type) : false }>
+        <FormControl fullWidth={ false } { ...props } disabled={ event?.type ? !eventHasRoom(event.type) : false }>
             <InputLabel>כיתות</InputLabel>
             <Select
                 label="כיתות"

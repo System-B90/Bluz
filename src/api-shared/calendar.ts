@@ -1,19 +1,19 @@
-import { Period } from "@/components/schedule/types/event";
+import { Event } from "@/components/schedule/types/event";
 import dayjs from "dayjs";
 
-export function periodDateFixup(period: Partial<Period>): Partial<Period>;
-export function periodDateFixup(period: Period): Period;
-export function periodDateFixup(period: Partial<Period>): Partial<Period>
+export function eventDateFixup(event: Partial<Event>): Partial<Event>;
+export function eventDateFixup(event: Event): Event;
+export function eventDateFixup(event: Partial<Event>): Partial<Event>
 {
     if (typeof window === 'undefined')
     {
-        period.endTime = new Date(period.endTime as unknown as string);
-        period.startTime = new Date(period.startTime as unknown as string);
+        event.endTime = new Date(event.endTime as unknown as string);
+        event.startTime = new Date(event.startTime as unknown as string);
     }
     else
     {
-        period.endTime = dayjs(period.endTime);
-        period.startTime = dayjs(period.startTime);
+        event.endTime = dayjs(event.endTime);
+        event.startTime = dayjs(event.startTime);
     }
-    return period;
+    return event;
 }

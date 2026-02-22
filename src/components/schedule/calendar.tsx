@@ -4,7 +4,7 @@ import { Calendar, CalendarProps, DateRange, momentLocalizer, NavigateAction } f
 
 // DO NOT SORT IMPORTS - they are ordered for a reason!
 
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/he';
@@ -30,12 +30,11 @@ import { useHiveRooms } from '@/components/base/hive-rooms-provider';
 import CALENDAR_MESSAGES from '@/components/calendar-messages';
 import { useCalendar } from '@/components/schedule/calendar-provider';
 import BluezEventComponent from '@/components/schedule/event-component/base';
-import { Period } from "@/components/schedule/types/event";
+import { Event } from "@/components/schedule/types/event";
 import { Room } from "@/components/schedule/types/room";
 import CustomWorkWeek from '@/components/schedule/custom-work-week';
-import { useSettings } from '@/components/base/settings-provider';
 
-const DnDCalendar = withDragAndDrop<Period, Room>(Calendar);
+const DnDCalendar = withDragAndDrop<Event, Room>(Calendar);
 
 // Set the default locale to Hebrew
 moment.locale('he');
@@ -43,31 +42,31 @@ moment.locale('he');
 export const localizer = momentLocalizer(moment);
 
 export default function BluezCalendar({
-    handleSavePeriod,
-    setOpenPeriodDialog,
-    setSelectedPeriod,
-    periods,
+    handleSaveEvent,
+    setOpenEventDialog,
+    setSelectedEvent,
+    events,
 }: {
-    handleSavePeriod: (period: Period) => void;
-    setOpenPeriodDialog: (open: boolean) => void;
-    setSelectedPeriod: Dispatch<SetStateAction<Partial<Period> | undefined>>;
-    periods: Array<Period>;
+    handleSaveEvent: (event: Event) => void;
+    setOpenEventDialog: (open: boolean) => void;
+    setSelectedEvent: Dispatch<SetStateAction<Partial<Event> | undefined>>;
+    events: Array<Event>;
 })
 {
     const [ currentView, setCurrentView ] = useState<View>(Views.WEEK);
     const { rooms } = useHiveRooms();
     const { setStartDate, setEndDate } = useCalendar();
 
-    const handleEditPeriod = useCallback((period: Period) =>
+    const handleEditEvent = useCallback((event: Event) =>
     {
-        setSelectedPeriod(period);
-        setOpenPeriodDialog(true);
-    }, [ setSelectedPeriod, setOpenPeriodDialog ]);
+        setSelectedEvent(event);
+        setOpenEventDialog(true);
+    }, [ setSelectedEvent, setOpenEventDialog ]);
 
-    const handlePeriodDrag = useCallback((changes: EventInteractionArgs<Period>): void =>
+    const handleEventDrag = useCallback((changes: EventInteractionArgs<Event>): void =>
     {
         if (changes.event.locked) { return; }
-        const updates: Partial<Period> = {
+        const updates: Partial<Event> = {
             startTime: dayjs(changes.start),
             endTime: dayjs(changes.end),
         };
@@ -77,27 +76,27 @@ export default function BluezCalendar({
             updates.rooms = [ parseInt(changes.resourceId.toString(), 10) ];
         }
 
-        const newPeriod = { ...changes.event, ...updates };
-        handleSavePeriod(newPeriod);
-    }, [ handleSavePeriod ]);
+        const newEvent = { ...changes.event, ...updates };
+        handleSaveEvent(newEvent);
+    }, [ handleSaveEvent ]);
 
     const handleSlotSelect = useCallback((slotInfo: SlotInfo): void =>
     {
         if (slotInfo.action === "click") { return; }
 
-        const newPeriod: Partial<Period> = {
+        const newEvent: Partial<Event> = {
             startTime: dayjs(slotInfo.start),
             endTime: dayjs(slotInfo.end),
         };
 
         if (slotInfo.resourceId !== undefined && slotInfo.resourceId !== null)
         {
-            newPeriod.rooms = [ parseInt(slotInfo.resourceId.toString() || '0', 10) ];
+            newEvent.rooms = [ parseInt(slotInfo.resourceId.toString() || '0', 10) ];
         }
 
-        setSelectedPeriod(newPeriod);
-        setOpenPeriodDialog(true);
-    }, [ setSelectedPeriod, setOpenPeriodDialog ]);
+        setSelectedEvent(newEvent);
+        setOpenEventDialog(true);
+    }, [ setSelectedEvent, setOpenEventDialog ]);
 
     const getRangeForView = useCallback((newDate: Date, view: string): DateRange =>
     {
@@ -187,26 +186,26 @@ export default function BluezCalendar({
             localizer={ localizer }
             messages={ CALENDAR_MESSAGES }
 
-            events={ periods }
+            events={ events }
 
             defaultView={ "week" }
             views={ { day: true, week: true, work_week: CustomWorkWeek } } // restrict to day/week
             onView={ setCurrentView }
 
             selectable
-            onSelectEvent={ setSelectedPeriod }
+            onSelectEvent={ setSelectedEvent }
             onSelectSlot={ handleSlotSelect }
-            onDoubleClickEvent={ handleEditPeriod }
+            onDoubleClickEvent={ handleEditEvent }
 
             { ...(currentView === 'day' && {
                 resources: rooms,
                 resourceIdAccessor: 'id',
                 resourceTitleAccessor: 'name',
-                resourceAccessor: (event: Period) => event.rooms
+                resourceAccessor: (event: Event) => event.rooms
             }) }
 
-            onEventResize={ handlePeriodDrag }
-            onEventDrop={ handlePeriodDrag }
+            onEventResize={ handleEventDrag }
+            onEventDrop={ handleEventDrag }
             startAccessor={ (event) => (event.startTime as Dayjs).toDate() }
             endAccessor={ (event) => (event.endTime as Dayjs).toDate() }
             formats={ { timeGutterFormat: 'HH:mm' } }

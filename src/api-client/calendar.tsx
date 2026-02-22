@@ -1,9 +1,8 @@
 import { safeApiFetcher } from "@/api-client/common";
-import { periodDateFixup } from "@/api-shared/calendar";
-import { Period } from "@/components/schedule/types/event";
-import dayjs, { Dayjs } from "dayjs";
+import { eventDateFixup } from "@/api-shared/calendar";
+import { Event } from "@/components/schedule/types/event";
 
-export async function apiGetPeriods({ startDate, endDate }: { startDate?: Date; endDate?: Date; }): Promise<Array<Period>>
+export async function apiGetEvents({ startDate, endDate }: { startDate?: Date; endDate?: Date; }): Promise<Array<Event>>
 {
     console.log(`startDate: ${startDate}, endDate: ${endDate}`);
     // return [
@@ -56,7 +55,7 @@ export async function apiGetPeriods({ startDate, endDate }: { startDate?: Date; 
     //     },
     // ];
 
-    const endpoint = new URL('/api/period', window.location.origin);
+    const endpoint = new URL('/api/event', window.location.origin);
     endpoint.searchParams.set('sd', startDate?.toISOString() ?? '');
     endpoint.searchParams.set('ed', endDate?.toISOString() ?? '');
     return (safeApiFetcher(endpoint.toString(), {
@@ -64,21 +63,21 @@ export async function apiGetPeriods({ startDate, endDate }: { startDate?: Date; 
         headers: {
             'Content-Type': 'application/json',
         },
-    }) as Promise<Array<Period>>).then((ps) => ps.map(periodDateFixup));
+    }) as Promise<Array<Event>>).then((ps) => ps.map(eventDateFixup));
 }
 
-export async function apiSavePeriod(period: Period): Promise<Period>
+export async function apiSaveEvent(event: Event): Promise<Event>
 {
-    return safeApiFetcher('/api/period', {
+    return safeApiFetcher('/api/event', {
         method: 'POST',
-        body: JSON.stringify(period),
-    }).then(periodDateFixup);
+        body: JSON.stringify(event),
+    }).then(eventDateFixup);
 }
 
-export async function apiDeletePeriod(periodId: Period[ 'id' ]): Promise<void>
+export async function apiDeleteEvent(eventId: Event[ 'id' ]): Promise<void>
 {
-    return safeApiFetcher('/api/period', {
+    return safeApiFetcher('/api/event', {
         method: 'DELETE',
-        body: JSON.stringify(periodId),
+        body: JSON.stringify(eventId),
     });
 }

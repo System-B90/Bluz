@@ -1,14 +1,14 @@
 import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
-import { eventHasSubject, Period } from "@/components/schedule/types/event";
+import { eventHasSubject, Event } from "@/components/schedule/types/event";
 import { FormControl, FormControlProps, InputLabel, MenuItem, Select } from "@mui/material";
 
 interface SubjectFieldProps
 {
-    period?: Partial<Period>;
-    onPeriodChange: (updates: Partial<Period>) => void;
+    event?: Partial<Event>;
+    onEventChange: (updates: Partial<Event>) => void;
 }
 
-export default function SubjectField({ period, onPeriodChange, ...props }: SubjectFieldProps & FormControlProps)
+export default function SubjectField({ event, onEventChange, ...props }: SubjectFieldProps & FormControlProps)
 {
     const { subjects } = useHiveSubjects();
 
@@ -19,12 +19,12 @@ export default function SubjectField({ period, onPeriodChange, ...props }: Subje
     ));
 
     return (
-        <FormControl fullWidth={ false } disabled={ period?.type ? !eventHasSubject(period?.type) : false } { ...props }>
+        <FormControl fullWidth={ false } disabled={ event?.type ? !eventHasSubject(event?.type) : false } { ...props }>
             <InputLabel>מקצוע</InputLabel>
             <Select
-                value={ period?.subject || "" }
+                value={ event?.subject || "" }
                 label="מקצוע"
-                onChange={ (e) => onPeriodChange({ subject: e.target.value }) }
+                onChange={ (e) => onEventChange({ subject: e.target.value }) }
             >
                 { subjectMenuItems }
             </Select>

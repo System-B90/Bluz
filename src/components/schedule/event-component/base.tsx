@@ -7,7 +7,7 @@ import ShortEventComponent from "@/components/schedule/event-component/variants/
 import ShortNarrowEventComponent from "@/components/schedule/event-component/variants/short-narrow-event";
 import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
 import TinyNarrowEventComponent from "@/components/schedule/event-component/variants/tiny-narrow-event";
-import { Period, PrayerEvent } from "@/components/schedule/types/event";
+import { Event, PrayerEvent } from "@/components/schedule/types/event";
 import { Box, Tooltip } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { useEffect, useState } from "react";
@@ -38,13 +38,13 @@ type Variant =
     | 'large-narrow'
     | 'large-wide';
 
-export default function BluezEventComponent({ event: period, ...props }: EventProps<Period>)
+export default function BluezEventComponent({ event: event, ...props }: EventProps<Event>)
 {
     const theme = useTheme();
     const { getSubject } = useHiveSubjects();
     const [ variant, setVariant ] = useState<Variant>('short-wide');
 
-    const subject = getSubject(period.subject);
+    const subject = getSubject(event.subject);
     const bgColor = subject?.color || theme.palette.common.black;
 
     const textColor = theme.palette.getContrastText(bgColor);
@@ -60,7 +60,7 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
         let heightVariant: 'tiny' | 'short' | 'medium' | 'large';
         const widthVariant = isNarrow ? 'narrow' : 'wide';
 
-        if (period.type === 'prayer') { setVariant('prayer'); return; }
+        if (event.type === 'prayer') { setVariant('prayer'); return; }
         if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_TINY) { heightVariant = 'tiny'; }
         else if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_SHORT) { heightVariant = 'short'; }
         else if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_MEDIUM) { heightVariant = 'medium'; }
@@ -74,25 +74,25 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
     switch (variant)
     {
         case "prayer":
-            eventComponent = <Tooltip title={ 'תפילה' }><PrayerEventComponent event={ period as PrayerEvent } { ...props } /></Tooltip>;
+            eventComponent = <Tooltip title={ 'תפילה' }><PrayerEventComponent event={ event as PrayerEvent } { ...props } /></Tooltip>;
             break;
         case "tiny-narrow":
-            eventComponent = <Tooltip title={ 'Tiny & Narrow' }><TinyNarrowEventComponent event={ period } containerSize={ size } { ...props } /></Tooltip>;
+            eventComponent = <Tooltip title={ 'Tiny & Narrow' }><TinyNarrowEventComponent event={ event } containerSize={ size } { ...props } /></Tooltip>;
             break;
         case "tiny-wide":
-            eventComponent = <Tooltip title={ 'Tiny' }><TinyEventComponent event={ period } { ...props } /></Tooltip>;
+            eventComponent = <Tooltip title={ 'Tiny' }><TinyEventComponent event={ event } { ...props } /></Tooltip>;
             break;
         case "short-narrow":
-            eventComponent = <Tooltip title={ 'Short & Narrow' }><ShortNarrowEventComponent containerSize={ size } event={ period } { ...props } /></Tooltip>;
+            eventComponent = <Tooltip title={ 'Short & Narrow' }><ShortNarrowEventComponent containerSize={ size } event={ event } { ...props } /></Tooltip>;
             break;
         case "short-wide":
-            eventComponent = <Tooltip title={ 'Short' }><ShortEventComponent containerSize={ size } event={ period } { ...props } /></Tooltip>;
+            eventComponent = <Tooltip title={ 'Short' }><ShortEventComponent containerSize={ size } event={ event } { ...props } /></Tooltip>;
             break;
         case "medium-wide":
-            eventComponent = <Tooltip title={ 'Medium' }><MediumEventComponent event={ period } { ...props } /></Tooltip>;
+            eventComponent = <Tooltip title={ 'Medium' }><MediumEventComponent event={ event } { ...props } /></Tooltip>;
             break;
         case "large-wide":
-            eventComponent = <Tooltip title={ 'Large' }><LargeEventComponent event={ period } { ...props } /></Tooltip>;
+            eventComponent = <Tooltip title={ 'Large' }><LargeEventComponent event={ event } { ...props } /></Tooltip>;
             break;
         default:
             window.alert(`Unimplemented variant: ${variant}`);
@@ -102,11 +102,11 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
         <Box
             ref={ ref }
             sx={ {
-                background: period.type === 'prayer' ? 'linear-gradient(225deg,rgba(92, 221, 247, 1) 0%, rgba(255, 255, 255, 1) 52%)' : null,
+                background: event.type === 'prayer' ? 'linear-gradient(225deg,rgba(92, 221, 247, 1) 0%, rgba(255, 255, 255, 1) 52%)' : null,
                 textAlign: 'left',
                 p: 0.2,
-                bgcolor: period.type === 'prayer' ? null : bgColor,
-                color: period.type === 'prayer' ? 'black' : textColor,
+                bgcolor: event.type === 'prayer' ? null : bgColor,
+                color: event.type === 'prayer' ? 'black' : textColor,
                 transition: theme.transitions.create([ 'background-color', 'transform' ]),
                 '&:hover': {
                     bgcolor: alpha(bgColor, 0.9),

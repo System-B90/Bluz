@@ -9,7 +9,6 @@ import
     DialogContent,
     DialogTitle,
     FormControlLabel,
-    FormGroup,
     Switch,
     TextField,
 } from '@mui/material';
@@ -20,60 +19,59 @@ import InstructorsField from "@/components/schedule/event-dialog/instructors-fie
 import RoomField from "@/components/schedule/event-dialog/room-field";
 import SubjectField from "@/components/schedule/event-dialog/subject-field";
 import EventTimeField from "@/components/schedule/event-dialog/time-fields";
-import { Period, PrayerEvent } from "@/components/schedule/types/event";
+import { Event, PrayerEvent } from "@/components/schedule/types/event";
 import ModuleField from '@/components/schedule/event-dialog/module-field';
-import PrayerEventComponent from '@/components/schedule/event-component/variants/prayer-event';
 import PrayerTypeField from '@/components/schedule/event-dialog/prayer-type';
 
-interface PeriodDialogProps
+interface EventDialogProps
 {
     open: boolean;
-    period: Partial<Period>;
+    event: Partial<Event>;
     onClose: () => void;
-    onSave: (period: Partial<Period>) => void;
-    onPeriodChange: Dispatch<SetStateAction<Partial<Period>>>;
-    onDelete: (periodId: Period[ 'id' ]) => void;
+    onSave: (event: Partial<Event>) => void;
+    onEventChange: Dispatch<SetStateAction<Partial<Event>>>;
+    onDelete: (eventId: Event[ 'id' ]) => void;
 }
 
-export default function PeriodDialog({
+export default function EventDialog({
     open,
-    period,
+    event,
     onClose,
     onSave,
     onDelete,
-    onPeriodChange,
-}: PeriodDialogProps)
+    onEventChange,
+}: EventDialogProps)
 {
     const submitHandler = useCallback((e: FormEvent<HTMLFormElement>) =>
     {
         e.preventDefault();
-        onSave(period);
-    }, [ onSave, period ]);
+        onSave(event);
+    }, [ onSave, event ]);
 
     const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) =>
     {
-        onPeriodChange({ name: e.target.value });
-    }, [ onPeriodChange ]);
+        onEventChange({ name: e.target.value });
+    }, [ onEventChange ]);
 
     const handleNotesChange = useCallback((e: ChangeEvent<HTMLInputElement>) =>
     {
-        onPeriodChange({ notes: e.target.value });
-    }, [ onPeriodChange ]);
+        onEventChange({ notes: e.target.value });
+    }, [ onEventChange ]);
 
     const handleLockedChange = useCallback((e: ChangeEvent<HTMLInputElement>) =>
     {
-        onPeriodChange({ locked: e.target.checked });
-    }, [ onPeriodChange ]);
+        onEventChange({ locked: e.target.checked });
+    }, [ onEventChange ]);
 
     const handleRequiredChange = useCallback((e: ChangeEvent<HTMLInputElement>) =>
     {
-        onPeriodChange({ required: e.target.checked });
-    }, [ onPeriodChange ]);
+        onEventChange({ required: e.target.checked });
+    }, [ onEventChange ]);
 
     const handlePersonalTalkChange = useCallback((e: ChangeEvent<HTMLInputElement>) =>
     {
-        onPeriodChange({ personalTalk: e.target.checked });
-    }, [ onPeriodChange ]);
+        onEventChange({ personalTalk: e.target.checked });
+    }, [ onEventChange ]);
 
 
     return (
@@ -88,48 +86,48 @@ export default function PeriodDialog({
                                 label="שם"
                                 fullWidth
                                 required
-                                value={ period?.name || "" }
+                                value={ event?.name || "" }
                                 onChange={ handleNameChange }
                                 sx={ { flexGrow: 1 } }
                             />
                             <EventTimeField
                                 sx={ { flexShrink: 1 } }
-                                period={ period }
-                                onPeriodChange={ onPeriodChange }
+                                event={ event }
+                                onEventChange={ onEventChange }
                             />
                         </Box>
                         <Box display={ 'flex' } width={ '100%' } gap={ 2 } justifyContent={ 'flex-start' }>
                             <EventTypeField
-                                period={ period }
-                                onPeriodChange={ onPeriodChange }
+                                event={ event }
+                                onEventChange={ onEventChange }
                                 sx={ { width: '12.5%' } }
                             />
-                            { period?.type === 'prayer' &&
+                            { event?.type === 'prayer' &&
                                 <PrayerTypeField
-                                    period={ period as PrayerEvent }
-                                    onPeriodChange={ onPeriodChange }
+                                    event={ event as PrayerEvent }
+                                    onEventChange={ onEventChange }
                                     sx={ { width: '25%' } }
                                 /> || <>
                                     <SubjectField
-                                        period={ period }
-                                        onPeriodChange={ onPeriodChange }
+                                        event={ event }
+                                        onEventChange={ onEventChange }
                                         sx={ { width: '25%' } }
                                     />
                                     <ModuleField
-                                        period={ period }
-                                        onPeriodChange={ onPeriodChange }
+                                        event={ event }
+                                        onEventChange={ onEventChange }
                                         sx={ { width: '20%' } }
                                     />
                                 </> }
                             <RoomField
-                                period={ period }
-                                onPeriodChange={ onPeriodChange }
+                                event={ event }
+                                onEventChange={ onEventChange }
                                 sx={ { flexGrow: 1 } }
                             />
                         </Box>
                         <InstructorsField
-                            period={ period }
-                            onPeriodChange={ onPeriodChange }
+                            event={ event }
+                            onEventChange={ onEventChange }
                         />
 
                         <TextField
@@ -137,7 +135,7 @@ export default function PeriodDialog({
                             fullWidth
                             multiline
                             rows={ 3 }
-                            value={ period?.notes || "" }
+                            value={ event?.notes || "" }
                             onChange={ handleNotesChange }
                         />
 
@@ -145,7 +143,7 @@ export default function PeriodDialog({
                             label="מתואם"
                             control={
                                 <Switch
-                                    checked={ period?.locked || false }
+                                    checked={ event?.locked || false }
                                     onChange={ handleLockedChange }
                                 />
                             }
@@ -155,7 +153,7 @@ export default function PeriodDialog({
                             label="קריטי"
                             control={
                                 <Switch
-                                    checked={ period?.required || false }
+                                    checked={ event?.required || false }
                                     onChange={ handleRequiredChange }
                                 />
                             }
@@ -165,7 +163,7 @@ export default function PeriodDialog({
                             label='חלון פ"א'
                             control={
                                 <Switch
-                                    checked={ period?.personalTalk || false }
+                                    checked={ event?.personalTalk || false }
                                     onChange={ handlePersonalTalkChange }
                                 />
                             }
@@ -174,12 +172,12 @@ export default function PeriodDialog({
                 </DialogContent>
 
                 <DialogActions>
-                    <Button onClick={ () => onDelete(period.id as string) } color='error' disabled={ !period?.id }>מחק</Button>
+                    <Button onClick={ () => onDelete(event.id as string) } color='error' disabled={ !event?.id }>מחק</Button>
                     <Button onClick={ onClose }>ביטול</Button>
                     <Button
                         type="submit"
                         variant="contained"
-                        disabled={ !period?.name }
+                        disabled={ !event?.name }
                     >
                         שמור
                     </Button>

@@ -19,7 +19,7 @@ export function eventHasRoom(type: EventType): boolean
 
 export type PersonId = number | 'איש חוץ';
 
-export interface Period
+export interface Event
 {
     id: string;
     name: string;
@@ -56,16 +56,16 @@ export function prayerTypeToHebrew(prayerType: PrayerType): string
     return LOOKUP[ prayerType ] ?? prayerType;
 }
 
-export interface PrayerEvent extends Period
+export interface PrayerEvent extends Event
 {
     type: EventType.PRAYER;
     prayerType: PrayerType;
 }
 
 
-export function periodTypeToHebrew(type: Period[ 'type' ]): string
+export function eventTypeToHebrew(type: Event[ 'type' ]): string
 {
-    const LOOKUP: Record<Period[ 'type' ], string> = {
+    const LOOKUP: Record<Event[ 'type' ], string> = {
         'exercise': 'ע"ע',
         'lecture': 'הרצאה',
         'other': 'אחר',
@@ -75,9 +75,9 @@ export function periodTypeToHebrew(type: Period[ 'type' ]): string
     return LOOKUP[ type ] ?? type;
 }
 
-export function getPresentInstructors(period: Period): Array<number>;
-export function getPresentInstructors(period: Period, includeOutsiders: boolean = false): Array<PersonId>
+export function getPresentInstructors(event: Event): Array<number>;
+export function getPresentInstructors(event: Event, includeOutsiders: boolean = false): Array<PersonId>
 {
-    const reduced = new Set<PersonId>([ ...period.instructors, ...period.lecturers?.filter((v) => (typeof v === 'number' || includeOutsiders)) ?? [] ]);
+    const reduced = new Set<PersonId>([ ...event.instructors, ...event.lecturers?.filter((v) => (typeof v === 'number' || includeOutsiders)) ?? [] ]);
     return Array.from(reduced);
 }

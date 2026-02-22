@@ -10,24 +10,24 @@ import
     Typography,
   } from '@mui/material';
 
-import { Period } from "@/components/schedule/types/event";
+import { Event } from "@/components/schedule/types/event";
 
 interface DeleteDialogProps
 {
   open: boolean;
-  period?: Partial<Period> | null;
+  event?: Partial<Event> | null;
   onClose: () => void;
   onConfirm: () => void;
 }
 
 export default function DeleteDialog({
   open,
-  period,
+  event,
   onClose,
   onConfirm,
 }: DeleteDialogProps)
 {
-  if (!period) return null;
+  if (!event) return null;
 
   return (
     <Dialog
@@ -37,7 +37,7 @@ export default function DeleteDialog({
       <DialogTitle>אשר מחיקה</DialogTitle>
       <DialogContent>
         <Typography>
-          האם אתה בטוח שברצונך למחוק את &quot;{ period.name }&quot; מ{ }?
+          האם אתה בטוח שברצונך למחוק את &quot;{ event.name }&quot; מ{ }?
         </Typography>
       </DialogContent>
       <DialogActions>

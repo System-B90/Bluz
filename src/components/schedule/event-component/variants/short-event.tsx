@@ -1,14 +1,14 @@
 import { ContainerSize } from "@/components/schedule/event-component/base";
 import { InstructorsList } from "@/components/schedule/event-component/person";
 import RoomComponent from "@/components/schedule/event-component/room";
-import { EventStatusIcons, PeriodDurationLabel, PeriodTypeIcon } from "@/components/schedule/event-component/utils";
-import { Period } from "@/components/schedule/types/event";
+import { EventStatusIcons, EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
+import { Event } from "@/components/schedule/types/event";
 import SubjectComponent, { ModuleComponent } from "@/components/subject";
 import { Box, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
 
 
-export default function ShortEventComponent({ event: period, containerSize }: { containerSize: ContainerSize; } & EventProps<Period>)
+export default function ShortEventComponent({ event: event, containerSize }: { containerSize: ContainerSize; } & EventProps<Event>)
 {
     return (
         <Box
@@ -29,22 +29,22 @@ export default function ShortEventComponent({ event: period, containerSize }: { 
             >
                 <Box marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } display={ 'flex' } flexDirection={ 'row' } alignItems={ 'center' } gap={ 0 }>
                     <Box display={ 'flex' } flexGrow={ 1 } alignItems={ 'baseline' }>
-                        <PeriodTypeIcon period={ period } fontSize="inherit" />
+                        <EventTypeIcon event={ event } fontSize="inherit" />
                         <Typography
                             variant="subtitle2"
                             noWrap
                             sx={ { ml: 0.5, fontWeight: 'bold' } }
                         >
-                            { period.name }
+                            { event.name }
                         </Typography>
                     </Box>
                     <Box sx={ { width: '0.3rem' } } />
-                    <Box textOverflow={ 'ellipsis' } hidden={ period.type === 'break' } display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' }>
-                        <SubjectComponent fontSize={ '0.8rem' } fontWeight={ 500 } subjectId={ period.subject } />
+                    <Box textOverflow={ 'ellipsis' } hidden={ event.type === 'break' } display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' }>
+                        <SubjectComponent fontSize={ '0.8rem' } fontWeight={ 500 } subjectId={ event.subject } />
                         <Box sx={ { width: '0.2rem' } } />
-                        { period.hiveModule ? <><Typography fontSize={ '0.8rem' } fontWeight={ 400 } >/</Typography>
+                        { event.hiveModule ? <><Typography fontSize={ '0.8rem' } fontWeight={ 400 } >/</Typography>
                             <Box sx={ { width: '0.2rem' } } />
-                            <ModuleComponent fontSize={ '0.8rem' } fontWeight={ 400 } moduleId={ period.hiveModule } /></> : undefined }
+                            <ModuleComponent fontSize={ '0.8rem' } fontWeight={ 400 } moduleId={ event.hiveModule } /></> : undefined }
                     </Box>
                 </Box>
                 <Box
@@ -56,8 +56,8 @@ export default function ShortEventComponent({ event: period, containerSize }: { 
                     overflow={ 'hidden' }
                     height={ '100%' }
                 >
-                    <InstructorsList period={ period } chipSize="smaller" showCaption={ false } />
-                    <RoomComponent roomIds={ period.rooms } showCaption={ false } chipSize="smaller" />
+                    <InstructorsList event={ event } chipSize="smaller" showCaption={ false } />
+                    <RoomComponent roomIds={ event.rooms } showCaption={ false } chipSize="smaller" />
                 </Box>
             </Box>
 
@@ -72,8 +72,8 @@ export default function ShortEventComponent({ event: period, containerSize }: { 
                 height={ '100%' }
                 gap={ 0.2 }
             >
-                <PeriodDurationLabel period={ period } size="smaller" />
-                <EventStatusIcons flexGrow={ 1 } period={ period } size={ '1rem' } flexDirection={ 'column' } justifyContent={ 'flex-end' } />
+                <EventDurationLabel event={ event } size="smaller" />
+                <EventStatusIcons flexGrow={ 1 } event={ event } size={ '1rem' } flexDirection={ 'column' } justifyContent={ 'flex-end' } />
             </Box>
         </Box>
     );

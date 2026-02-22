@@ -14,8 +14,8 @@ assert(WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY || (typeof window !== 'undefined
 export enum MessageTypes 
 {
     REGISTER_SESSION = 'register-session',
-    PERIOD_DATA_UPDATE = 'pdu',
-    PERIOD_ADDED_OR_REMOVED = 'par',
+    EVENT_DATA_UPDATE = 'pdu',
+    EVENT_ADDED_OR_REMOVED = 'par',
 
     SETTINGS_UPDATE = 'su',
 };

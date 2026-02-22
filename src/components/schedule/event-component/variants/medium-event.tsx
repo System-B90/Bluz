@@ -1,16 +1,16 @@
 import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { InstructorsList } from "@/components/schedule/event-component/person";
 import RoomComponent from "@/components/schedule/event-component/room";
-import { EventStatusIcons, PeriodDurationLabel, PeriodTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
+import { EventStatusIcons, EventDurationLabel, EventTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
 import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
-import { getPresentInstructors, Period } from "@/components/schedule/types/event";
+import { getPresentInstructors, Event } from "@/components/schedule/types/event";
 import SubjectComponent, { ModuleComponent } from "@/components/subject";
 import { Box, Stack, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { EventProps } from "react-big-calendar";
 
 
-export default function MediumEventComponent({ event: period, ...props }: EventProps<Period>)
+export default function MediumEventComponent({ event: event, ...props }: EventProps<Event>)
 {
     return (
         <Box padding={ 0.3 }>
@@ -30,20 +30,20 @@ export default function MediumEventComponent({ event: period, ...props }: EventP
                     paddingBottom={ 0.5 }
                 >
                     <Box display="flex" alignItems="center" minWidth={ 0 } gap={ 0 }>
-                        <PeriodTypeIcon period={ period } fontSize="inherit" />
+                        <EventTypeIcon event={ event } fontSize="inherit" />
                         <Box display="flex" alignItems="baseline" minWidth={ 0 } gap={ 1 } flexDirection={ 'row' }>
                             <Typography
                                 variant="subtitle2"
                                 noWrap
                                 sx={ { ml: 0.5, fontWeight: 'bold' } }
                             >
-                                { period.name }
+                                { event.name }
                             </Typography>
                         </Box>
                     </Box>
 
                     <Box display="flex" alignItems="flex-end" gap={ 1 } flexDirection={ 'column' }>
-                        <PeriodDurationLabel period={ period } />
+                        <EventDurationLabel event={ event } />
 
                     </Box>
                 </Stack>
@@ -51,29 +51,29 @@ export default function MediumEventComponent({ event: period, ...props }: EventP
                 <Box display={ 'flex' } flexDirection={ 'row' } width={ '100%' } alignItems={ 'stretch' } borderBottom={ 1 } paddingBottom={ 0.5 }>
                     <Box flexGrow={ 1 } flexBasis={ 0.5 }>
                         <Box width={ '100%' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
-                            <InstructorsList period={ period } width={ '100%' } showCaption={ false } />
+                            <InstructorsList event={ event } width={ '100%' } showCaption={ false } />
                         </Box>
 
-                        <Box marginBottom={ 0 } width={ '100%' } hidden={ period.type === 'break' } display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' }>
-                            <SubjectComponent fontSize={ '0.8rem' } fontWeight={ 500 } subjectId={ period.subject } />
+                        <Box marginBottom={ 0 } width={ '100%' } hidden={ event.type === 'break' } display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' }>
+                            <SubjectComponent fontSize={ '0.8rem' } fontWeight={ 500 } subjectId={ event.subject } />
                             <Box sx={ { width: '0.3rem' } } />
-                            { period.hiveModule ? <><Typography fontSize={ '0.8rem' } fontWeight={ 300 } >/</Typography>
+                            { event.hiveModule ? <><Typography fontSize={ '0.8rem' } fontWeight={ 300 } >/</Typography>
                                 <Box sx={ { width: '0.3rem' } } />
-                                <ModuleComponent fontSize={ '0.8rem' } fontWeight={ 400 } moduleId={ period.hiveModule } /></> : undefined }
+                                <ModuleComponent fontSize={ '0.8rem' } fontWeight={ 400 } moduleId={ event.hiveModule } /></> : undefined }
                         </Box>
                     </Box>
 
                     <RoomComponent
                         flexGrow={ 0 }
                         flexBasis={ 0.5 }
-                        roomIds={ period.rooms }
+                        roomIds={ event.rooms }
                         width={ '100%' }
                         showCaption={ false }
                     />
                 </Box>
             </Stack>
 
-            <EventStatusIcons sx={ { bottom: 0, right: 0, position: 'absolute', margin: 0.4 } } period={ period } size={ '1.4rem' } />
+            <EventStatusIcons sx={ { bottom: 0, right: 0, position: 'absolute', margin: 0.4 } } event={ event } size={ '1.4rem' } />
         </Box>
     );
 }

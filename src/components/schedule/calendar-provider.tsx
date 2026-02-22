@@ -1,10 +1,10 @@
 'use client';
-import { apiGetPeriods } from '@/api-client/calendar';
+import { apiGetEvents } from '@/api-client/calendar';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { periodDateFixup } from '@/api-shared/calendar';
-import { PeriodAddedOrRemovedMessage, PeriodDataUpdateMessage } from '@/api-shared/types';
+import { eventDateFixup } from '@/api-shared/calendar';
+import { EventAddedOrRemovedMessage, EventDataUpdateMessage } from '@/api-shared/types';
 import { useAuth } from '@/components/auth/auth-provider';
-import { Period } from '@/components/schedule/types/event';
+import { Event } from '@/components/schedule/types/event';
 import { MessageHandlerType } from '@/components/session-ws';
 import { MessageTypes } from '@/settings';
 import { enqueueSnackbar } from 'notistack';
@@ -22,14 +22,14 @@ import
 
 export type CalendarContextState = {
     default: boolean;
-    periods: Array<Period>;
+    events: Array<Event>;
     setStartDate: Dispatch<SetStateAction<Date | undefined>>;
     setEndDate: Dispatch<SetStateAction<Date | undefined>>;
 };
 
 const CalendarContext = createContext<CalendarContextState | undefined>({
     default: true,
-    periods: [],
+    events: [],
     setStartDate: () => { },
     setEndDate: () => { },
 });
@@ -38,43 +38,43 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
 {
     const [ startDate, setStartDate ] = useState<Date>();
     const [ endDate, setEndDate ] = useState<Date>();
-    const [ periods, setPeriods ] = useState<Array<Period>>([]);
+    const [ events, setEvents ] = useState<Array<Event>>([]);
 
     const { addMessageHandler } = useAuth();
 
-    const loadPeriods = useCallback((s: Date | undefined, e: Date | undefined) =>
+    const loadEvents = useCallback((s: Date | undefined, e: Date | undefined) =>
     {
         if (!s || !e) { return; }
-        apiGetPeriods({ startDate: s, endDate: e })
-            .then(setPeriods)
+        apiGetEvents({ startDate: s, endDate: e })
+            .then(setEvents)
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת לו\"ז נכשלה.', error));
-    }, [ setPeriods ]);
+    }, [ setEvents ]);
 
     useEffect(() =>
     {
-        loadPeriods(startDate, endDate);
-    }, [ startDate, endDate, loadPeriods ]);
+        loadEvents(startDate, endDate);
+    }, [ startDate, endDate, loadEvents ]);
 
     const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, data: any) =>
     {
         switch (messageType)
         {
-            case MessageTypes.PERIOD_DATA_UPDATE:
-                setPeriods(ps => ps.map((p) => p.id in (data as PeriodDataUpdateMessage).periods ? { ...p, ...periodDateFixup((data as PeriodDataUpdateMessage).periods[ p.id ]) } : p));
+            case MessageTypes.EVENT_DATA_UPDATE:
+                setEvents(ps => ps.map((p) => p.id in (data as EventDataUpdateMessage).events ? { ...p, ...eventDateFixup((data as EventDataUpdateMessage).events[ p.id ]) } : p));
                 break;
-            case MessageTypes.PERIOD_ADDED_OR_REMOVED:
-                const periodAddedOrRemovedMessage = (data as PeriodAddedOrRemovedMessage);
-                if (periodAddedOrRemovedMessage.action === 'removed')
+            case MessageTypes.EVENT_ADDED_OR_REMOVED:
+                const eventAddedOrRemovedMessage = (data as EventAddedOrRemovedMessage);
+                if (eventAddedOrRemovedMessage.action === 'removed')
                 {
-                    setPeriods(ps => ps.filter(p => p.id !== periodAddedOrRemovedMessage.periodId));
+                    setEvents(ps => ps.filter(p => p.id !== eventAddedOrRemovedMessage.eventId));
                 }
-                else if (periodAddedOrRemovedMessage.action === 'added')
+                else if (eventAddedOrRemovedMessage.action === 'added')
                 {
-                    setPeriods(ps => [ ...ps, periodDateFixup(periodAddedOrRemovedMessage.newData) as Period ]);
+                    setEvents(ps => [ ...ps, eventDateFixup(eventAddedOrRemovedMessage.newData) as Event ]);
                 }
                 break;
         };
-    }, [ setPeriods ]);
+    }, [ setEvents ]);
 
     useEffect(() =>
     {
@@ -86,7 +86,7 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
     return (
         <CalendarContext.Provider value={ {
             default: false,
-            periods,
+            events: events,
             setStartDate,
             setEndDate,
 

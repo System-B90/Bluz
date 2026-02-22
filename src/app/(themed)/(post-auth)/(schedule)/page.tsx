@@ -1,13 +1,13 @@
 'use client';
 
-import { apiDeletePeriod, apiSavePeriod } from '@/api-client/calendar';
+import { apiDeleteEvent, apiSaveEvent } from '@/api-client/calendar';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import ScheduleAppBar from '@/components/app-bar';
 import BluezCalendar from '@/components/schedule/calendar';
 import { useCalendar } from '@/components/schedule/calendar-provider';
-import PeriodDialog from '@/components/schedule/event-dialog';
+import EventDialog from '@/components/schedule/event-dialog';
 import SettingsDialog from "@/components/settings-dialog/settings-dialog";
-import { Period } from "@/components/schedule/types/event";
+import { Event } from "@/components/schedule/types/event";
 import { Box } from '@mui/material';
 import { useHistoryState } from "@uidotdev/usehooks";
 import dayjs from 'dayjs';
@@ -17,16 +17,16 @@ import { SetStateAction, useCallback, useEffect, useState } from 'react';
 
 export default function SchedulePage()
 {
-    const { periods: serverPeriods } = useCalendar();
+    const { events: serverEvents } = useCalendar();
     const {
-        state: periods,
-        set: setPeriods,
+        state: events,
+        set: setEvents,
         undo,
         redo,
-    } = useHistoryState<Array<Period>>(serverPeriods);
+    } = useHistoryState<Array<Event>>(serverEvents);
 
-    const [ selectedPeriod, setSelectedPeriod ] = useState<Partial<Period>>();
-    const [ openPeriodDialog, setOpenPeriodDialog ] = useState<boolean>(false);
+    const [ selectedEvent, setSelectedEvent ] = useState<Partial<Event>>();
+    const [ openEventDialog, setOpenEventDialog ] = useState<boolean>(false);
     const [ openSettingsDialog, setOpenSettingsDialog ] = useState<boolean>(false);
 
     useEffect(() =>
@@ -42,93 +42,93 @@ export default function SchedulePage()
 
     useEffect(() =>
     {
-        setPeriods(serverPeriods);
-    }, [ serverPeriods, setPeriods ]);
+        setEvents(serverEvents);
+    }, [ serverEvents, setEvents ]);
 
 
-    const handleSavePeriod = useCallback((period: Partial<Period>): void =>
+    const handleSaveEvent = useCallback((event: Partial<Event>): void =>
     {
-        if (!period || period.name === '') { return; }
+        if (!event || event.name === '') { return; }
 
-        const newPeriod: Period = {
-            id: period.id,
-            name: period.name || '',
-            subject: period.subject ?? 0,
-            hiveModule: period.hiveModule ?? 0,
-            startTime: period.startTime || dayjs(),
-            endTime: period.endTime || dayjs(),
-            type: period.type || 'exercise',
-            rooms: period.rooms?.map((v) => typeof v === 'string' ? parseInt(v) : v) || [],
-            instructors: period.instructors || [],
-            lecturers: period.lecturers || [],
-            tags: period.tags || [],
-            notes: period.notes || '',
-            locked: period.locked || false,
-            required: period.required || false,
-            hidden: period.hidden || false,
-            personalTalk: period.personalTalk || false,
-        } as Period;
+        const newEvent: Event = {
+            id: event.id,
+            name: event.name || '',
+            subject: event.subject ?? 0,
+            hiveModule: event.hiveModule ?? 0,
+            startTime: event.startTime || dayjs(),
+            endTime: event.endTime || dayjs(),
+            type: event.type || 'exercise',
+            rooms: event.rooms?.map((v) => typeof v === 'string' ? parseInt(v) : v) || [],
+            instructors: event.instructors || [],
+            lecturers: event.lecturers || [],
+            tags: event.tags || [],
+            notes: event.notes || '',
+            locked: event.locked || false,
+            required: event.required || false,
+            hidden: event.hidden || false,
+            personalTalk: event.personalTalk || false,
+        } as Event;
 
-        if (newPeriod.id)
+        if (newEvent.id)
         {
-            setPeriods([ ...periods.filter(pp => pp.id !== newPeriod.id), newPeriod ]);
+            setEvents([ ...events.filter(pp => pp.id !== newEvent.id), newEvent ]);
         }
 
-        setOpenPeriodDialog(false);
+        setOpenEventDialog(false);
 
-        apiSavePeriod(newPeriod)
+        apiSaveEvent(newEvent)
             .then((p) =>
             {
                 enqueueSnackbar(`המופע "${p.name}" נשמר בהצלחה!`, { variant: 'success' });
-                setPeriods([ ...periods.filter(pp => pp.id !== newPeriod.id), p ]);
+                setEvents([ ...events.filter(pp => pp.id !== newEvent.id), p ]);
             })
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת המופע נכשלה!', error));
-    }, [ periods, setPeriods, setOpenPeriodDialog ]);
+    }, [ events, setEvents, setOpenEventDialog ]);
 
-    const handleClosePeriodDialog = useCallback((): void =>
+    const handleCloseEventDialog = useCallback((): void =>
     {
-        setOpenPeriodDialog(false);
-        setSelectedPeriod(undefined);
-    }, [ setOpenPeriodDialog, setSelectedPeriod ]);
+        setOpenEventDialog(false);
+        setSelectedEvent(undefined);
+    }, [ setOpenEventDialog, setSelectedEvent ]);
 
-    const onPeriodChange = useCallback((action: SetStateAction<Partial<Period>>) =>
+    const onEventChange = useCallback((action: SetStateAction<Partial<Event>>) =>
     {
-        setSelectedPeriod((prev) =>
+        setSelectedEvent((prev) =>
         {
             // 1. Resolve the value. If 'action' is a function, call it with the previous state.
             // We fallback to {} if prev is null/undefined to ensure the function receives an object.
             const updates = typeof action === 'function'
-                ? (action as (prev: Partial<Period>) => Partial<Period>)(prev || {})
+                ? (action as (prev: Partial<Event>) => Partial<Event>)(prev || {})
                 : action;
 
             // 2. Apply the merge logic you had originally
             // (If state exists, merge updates; otherwise, just use updates)
-            return prev ? { ...prev, ...updates } : (updates as Period);
+            return prev ? { ...prev, ...updates } : (updates as Event);
         });
-    }, [ setSelectedPeriod ]);
+    }, [ setSelectedEvent ]);
 
-    const onPeriodDelete = useCallback((periodId: Period[ 'id' ]) =>
+    const onEventDelete = useCallback((eventId: Event[ 'id' ]) =>
     {
-        apiDeletePeriod(periodId)
+        apiDeleteEvent(eventId)
             .then(() => enqueueSnackbar('המופע נמחק בהצלחה.', { variant: 'success' }))
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'מחיקת המופע נכשלה!', error));
 
-        setOpenPeriodDialog(false);
-        setSelectedPeriod(undefined);
-    }, [ setOpenPeriodDialog, setSelectedPeriod ]);
+        setOpenEventDialog(false);
+        setSelectedEvent(undefined);
+    }, [ setOpenEventDialog, setSelectedEvent ]);
 
     return (
         <Box sx={ { p: 0 } } width={ '100vw' } height={ '100vh' } display={ 'flex' } flexDirection={ 'column' }>
             <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
-            <BluezCalendar handleSavePeriod={ handleSavePeriod } setOpenPeriodDialog={ setOpenPeriodDialog } setSelectedPeriod={ setSelectedPeriod } periods={ periods } />
+            <BluezCalendar handleSaveEvent={ handleSaveEvent } setOpenEventDialog={ setOpenEventDialog } setSelectedEvent={ setSelectedEvent } events={ events } />
 
-            <PeriodDialog
-                open={ openPeriodDialog }
-                period={ selectedPeriod || {} }
-                onClose={ handleClosePeriodDialog }
-                onSave={ handleSavePeriod }
-                onPeriodChange={ onPeriodChange }
-                onDelete={ onPeriodDelete }
+            <EventDialog
+                open={ openEventDialog }
+                event={ selectedEvent || {} }
+                onClose={ handleCloseEventDialog }
+                onSave={ handleSaveEvent }
+                onEventChange={ onEventChange }
+                onDelete={ onEventDelete }
             />
 
             <SettingsDialog open={ openSettingsDialog } onClose={ () => { setOpenSettingsDialog(false); } } />

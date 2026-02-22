@@ -1,10 +1,10 @@
-import { EventStatusIcons, PeriodDurationLabel, PeriodTypeIcon } from "@/components/schedule/event-component/utils";
+import { EventStatusIcons, EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
 import { PrayerEvent } from "@/components/schedule/types/event";
 import { Box, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
 
 
-export default function PrayerEventComponent({ event: period }: EventProps<PrayerEvent>)
+export default function PrayerEventComponent({ event: event }: EventProps<PrayerEvent>)
 {
     return (
         <Box
@@ -13,7 +13,7 @@ export default function PrayerEventComponent({ event: period }: EventProps<Praye
             alignItems={ 'center' }
             height={ '100%' }
         >
-            <PeriodTypeIcon period={ period } fontSize="inherit" />
+            <EventTypeIcon event={ event } fontSize="inherit" />
             <Box flexGrow={ 1 } display={ 'flex' } justifyContent={ 'space-around' } alignItems={ 'center' }>
 
                 <Box marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
@@ -22,7 +22,7 @@ export default function PrayerEventComponent({ event: period }: EventProps<Praye
                         noWrap
                         sx={ { ml: 0.5, fontWeight: 'bold' } }
                     >
-                        { period.name }
+                        { event.name }
                     </Typography>
                 </Box>
             </Box>
@@ -39,8 +39,8 @@ export default function PrayerEventComponent({ event: period }: EventProps<Praye
                 alignContent={ 'space-between' }
                 height={ '100%' }
             >
-                <PeriodDurationLabel period={ period } size="smaller" sx={ { direction: 'ltr' } } />
-                <EventStatusIcons flexGrow={ 1 } period={ period } size={ '0.7rem' } flexDirection={ 'column' } />
+                <EventDurationLabel event={ event } size="smaller" sx={ { direction: 'ltr' } } />
+                <EventStatusIcons flexGrow={ 1 } event={ event } size={ '0.7rem' } flexDirection={ 'column' } />
             </Box>
         </Box>
     );

@@ -1,11 +1,11 @@
-import { DbPeriod } from "@/api-server/period";
+import { DbEvent } from "@/api-server/event";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
-import { PeriodDataUpdateMessage } from "@/api-shared/types";
+import { EventDataUpdateMessage } from "@/api-shared/types";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
-import { EventType, Period, PrayerEvent, PrayerType, prayerTypeToHebrew } from "@/components/schedule/types/event";
+import { EventType, Event, PrayerEvent, PrayerType, prayerTypeToHebrew } from "@/components/schedule/types/event";
 import { MessageTypes } from "@/settings";
 
-async function updatePrayerEvent({ day, prayerEvent, newConfig }: { day: Date, prayerEvent: Period, newConfig: PrayerSettings; })
+async function updatePrayerEvent({ day, prayerEvent, newConfig }: { day: Date, prayerEvent: Event, newConfig: PrayerSettings; })
 {
     const updatedEvent: PrayerEvent = { ...prayerEvent } as PrayerEvent;
 
@@ -22,13 +22,13 @@ async function updatePrayerEvent({ day, prayerEvent, newConfig }: { day: Date, p
     updatedEvent.startTime = startTime;
     updatedEvent.endTime = endTime;
 
-    await DbPeriod.set(updatedEvent);
+    await DbEvent.set(updatedEvent);
 }
 
 async function updatePrayerEventsInDay({ day, newConfig }: { day: Date, newConfig: PrayerSettings; })
 {
     const endOfDay = new Date(day.getTime() + 24 * 60 * 60 * 1000 - 1);
-    const prayerEvents: Array<PrayerEvent> = await DbPeriod.getInRange(day, endOfDay, undefined, { type: EventType.PRAYER } as any) as unknown as Array<PrayerEvent>;
+    const prayerEvents: Array<PrayerEvent> = await DbEvent.getInRange(day, endOfDay, undefined, { type: EventType.PRAYER } as any) as unknown as Array<PrayerEvent>;
 
     if (prayerEvents.length > 3)
     {
@@ -71,11 +71,11 @@ async function updatePrayerEventsInDay({ day, newConfig }: { day: Date, newConfi
 
         for (const prayer of prayersToCreate)
         {
-            prayer.id = (await DbPeriod.set(prayer)).id;
+            prayer.id = (await DbEvent.set(prayer)).id;
         }
     }
     await Promise.all(prayerEvents.map(async (prayerEvent) => await updatePrayerEvent({ day, prayerEvent, newConfig })));
-    SendServerRequestToSessionServer(MessageTypes.PERIOD_DATA_UPDATE, { periods: prayerEvents.reduce((acc, event) => ({ ...acc, [ event.id ]: event }), {}) } as PeriodDataUpdateMessage);
+    SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, { events: prayerEvents.reduce((acc, event) => ({ ...acc, [ event.id ]: event }), {}) } as EventDataUpdateMessage);
 }
 
 export async function updatePrayerEvents({ startDate, newConfig }: { startDate: Date, newConfig: PrayerSettings; })

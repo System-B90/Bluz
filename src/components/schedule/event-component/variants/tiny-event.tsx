@@ -1,12 +1,12 @@
 import { InstructorsList } from "@/components/schedule/event-component/person";
 import RoomComponent from "@/components/schedule/event-component/room";
-import { EventStatusIcons, PeriodDurationLabel } from "@/components/schedule/event-component/utils";
-import { Period } from "@/components/schedule/types/event";
+import { EventStatusIcons, EventDurationLabel } from "@/components/schedule/event-component/utils";
+import { Event } from "@/components/schedule/types/event";
 import { Box, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
 
 
-export default function TinyEventComponent({ event: period }: EventProps<Period>)
+export default function TinyEventComponent({ event: event }: EventProps<Event>)
 {
     return (
         <Box
@@ -22,7 +22,7 @@ export default function TinyEventComponent({ event: period }: EventProps<Period>
                         noWrap
                         sx={ { ml: 0.5, fontWeight: 'bold' } }
                     >
-                        { period.name }
+                        { event.name }
                     </Typography>
                 </Box>
 
@@ -37,11 +37,11 @@ export default function TinyEventComponent({ event: period }: EventProps<Period>
                     gap={ 0.1 }
                     alignItems={ 'stretch' }
                 >
-                    <InstructorsList period={ period } chipSize="smallest" showCaption={ false } display={ 'flex' } flexDirection={ 'column' } />
+                    <InstructorsList event={ event } chipSize="smallest" showCaption={ false } display={ 'flex' } flexDirection={ 'column' } />
                     <Box sx={ { width: '0.3rem' } } display={ 'flex' } alignItems={ 'center' } justifyContent={ 'center' } alignContent={ 'center' }>
                         <Box sx={ { height: '90%', width: '1px', backgroundColor: 'divider' } } />
                     </Box>
-                    <RoomComponent roomIds={ period.rooms } showCaption={ false } chipSize="smallest" display={ 'flex' } flexDirection={ 'column' } />
+                    <RoomComponent roomIds={ event.rooms } showCaption={ false } chipSize="smallest" display={ 'flex' } flexDirection={ 'column' } />
                 </Box>
             </Box>
 
@@ -57,8 +57,8 @@ export default function TinyEventComponent({ event: period }: EventProps<Period>
                 alignContent={ 'space-between' }
                 height={ '100%' }
             >
-                <PeriodDurationLabel period={ period } size="smallest" sx={ { direction: 'ltr' } } />
-                <EventStatusIcons flexGrow={ 1 } period={ period } size={ '0.7rem' } flexDirection={ 'column' } />
+                <EventDurationLabel event={ event } size="smallest" sx={ { direction: 'ltr' } } />
+                <EventStatusIcons flexGrow={ 1 } event={ event } size={ '0.7rem' } flexDirection={ 'column' } />
             </Box>
         </Box>
     );

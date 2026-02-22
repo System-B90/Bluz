@@ -1,5 +1,5 @@
 import { Setting } from "@/api-shared/types/settings/settings";
-import { Period } from "@/components/schedule/types/event";
+import { Event } from "@/components/schedule/types/event";
 import { Collection, Db, MongoClient } from "mongodb";
 const MONGO_CONNECTION_STRING = process.env.MONGO_CONNECTION_STRING ?? 'mongodb://127.0.0.1:27017/';
 
@@ -7,21 +7,21 @@ class DatabaseController
 {
     private mongoClient!: MongoClient;
     private bluezDb!: Db;
-    private _periods!: Collection<Period>;
+    private _events!: Collection<Event>;
     private _settings!: Collection<Setting>;
 
     constructor()
     {
         this.mongoClient = new MongoClient(MONGO_CONNECTION_STRING);
         this.bluezDb = this.mongoClient.db('bluez');
-        this._periods = this.bluezDb.collection('periods');
+        this._events = this.bluezDb.collection('events');
         this._settings = this.bluezDb.collection('settings');
 
     }
 
-    public get periods(): Collection<Period>
+    public get events(): Collection<Event>
     {
-        return this._periods;
+        return this._events;
     }
     public get settings(): Collection<Setting>
     {

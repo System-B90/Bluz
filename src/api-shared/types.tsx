@@ -1,20 +1,20 @@
-import { Period } from "@/components/schedule/types/event";
+import { Event } from "@/components/schedule/types/event";
 
-export interface PeriodDataUpdateMessage
+export interface EventDataUpdateMessage
 {
-    periods: Record<string, Period>;
+    events: Record<string, Event>;
 }
-interface PeriodRemovedMessage
+interface EventRemovedMessage
 {
     action: 'removed';
-    periodId: string;
+    eventId: string;
 }
 
-interface PeriodAddedMessage
+interface EventAddedMessage
 {
     action: 'added';
-    periodId: string;
-    newData: Period;
+    eventId: string;
+    newData: Event;
 }
 
-export type PeriodAddedOrRemovedMessage = PeriodRemovedMessage | PeriodAddedMessage;
+export type EventAddedOrRemovedMessage = EventRemovedMessage | EventAddedMessage;

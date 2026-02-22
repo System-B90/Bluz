@@ -1,13 +1,13 @@
 import { ContainerSize } from "@/components/schedule/event-component/base";
 import { InstructorsList } from "@/components/schedule/event-component/person";
 import RoomComponent from "@/components/schedule/event-component/room";
-import { PeriodDurationLabel, PeriodTypeIcon } from "@/components/schedule/event-component/utils";
-import { Period } from "@/components/schedule/types/event";
+import { EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
+import { Event } from "@/components/schedule/types/event";
 import { Box, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
 
 
-export default function ShortNarrowEventComponent({ event: period, containerSize }: { containerSize: ContainerSize; } & EventProps<Period>)
+export default function ShortNarrowEventComponent({ event: event, containerSize }: { containerSize: ContainerSize; } & EventProps<Event>)
 {
     return (
         <Box
@@ -16,15 +16,15 @@ export default function ShortNarrowEventComponent({ event: period, containerSize
             flexDirection={ 'column' }
         >
             <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'center' } justifyContent={ 'space-between' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
-                {/* <PeriodTypeIcon period={ period } /> */ }
+                {/* <EventTypeIcon event={ event } /> */ }
                 <Typography
                     variant="subtitle2"
                     noWrap
                     sx={ { ml: 0.5, fontWeight: 'bold' } }
                 >
-                    { period.name }
+                    { event.name }
                 </Typography>
-                <PeriodDurationLabel period={ period } size="smaller" />
+                <EventDurationLabel event={ event } size="smaller" />
             </Box>
 
             <Box
@@ -38,8 +38,8 @@ export default function ShortNarrowEventComponent({ event: period, containerSize
                 justifyContent={ 'flex-start' }
                 gap={ 0.5 }
             >
-                <InstructorsList period={ period } chipSize="smaller" showCaption={ false } paddingBottom={ 0.5 } borderBottom={ 2 } />
-                <RoomComponent roomIds={ period.rooms } showCaption={ false } chipSize="smaller" paddingBottom={ 0.5 } borderBottom={ 2 } />
+                <InstructorsList event={ event } chipSize="smaller" showCaption={ false } paddingBottom={ 0.5 } borderBottom={ 2 } />
+                <RoomComponent roomIds={ event.rooms } showCaption={ false } chipSize="smaller" paddingBottom={ 0.5 } borderBottom={ 2 } />
             </Box>
         </Box>
     );

@@ -1,9 +1,9 @@
 import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { PersonChip } from "@/components/schedule/event-component/person";
 import RoomComponent from "@/components/schedule/event-component/room";
-import { EventStatusIcons, PeriodDurationLabel, PeriodTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
+import { EventStatusIcons, EventDurationLabel, EventTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
 import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
-import { Period } from "@/components/schedule/types/event";
+import { Event } from "@/components/schedule/types/event";
 import SubjectComponent, { ModuleComponent } from "@/components/subject";
 import { Box, Stack, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
@@ -19,12 +19,12 @@ const EVENT_HEIGHT_VARIANTS = {
 };
 
 
-export default function BluezEventComponent({ event: period, ...props }: EventProps<Period>)
+export default function BluezEventComponent({ event: event, ...props }: EventProps<Event>)
 {
     const theme = useTheme();
     const { getSubject } = useHiveSubjects();
 
-    const subject = getSubject(period.subject);
+    const subject = getSubject(event.subject);
     const bgColor = subject?.color || theme.palette.common.black;
 
     const textColor = theme.palette.getContrastText(bgColor);
@@ -40,7 +40,7 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
     const isOneline = !isNarrow && isTiny;
     const isTower = isNarrow && !isSmall;
     const omitDuration = !isOneline && (isSmaller && isNarrow);
-    const omitPeriodIcon = !isOneline && isSmaller && isNarrow;
+    const omitEventIcon = !isOneline && isSmaller && isNarrow;
     const omitNotes = isSmall || isTiny || isSmaller;
     const omitSubjectName = (isSmaller && !isWide) || isNarrow;
 
@@ -60,14 +60,14 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
                 height: '100%',
             } }
         >
-            { isTiny && <TinyEventComponent event={ period } { ...props } /> ||
+            { isTiny && <TinyEventComponent event={ event } { ...props } /> ||
                 isOneline &&
                 <Stack direction={ "row" }
                     alignItems="flex-start"
                     justifyContent={ "space-between" }
                     spacing={ 1 }>
                     <Box display="flex" alignItems="center" minWidth={ 0 } gap={ 0 }>
-                        { omitPeriodIcon || <PeriodTypeIcon period={ period } fontSize="small" /> }
+                        { omitEventIcon || <EventTypeIcon event={ event } fontSize="small" /> }
 
                         <Box display="flex" alignItems="baseline" minWidth={ 0 } gap={ 1 }>
                             <Typography
@@ -75,28 +75,28 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
                                 noWrap
                                 sx={ { ml: 0.5, fontWeight: 'bold' } }
                             >
-                                { period.name }
+                                { event.name }
                             </Typography>
-                            { omitSubjectName || <SubjectComponent fontSize={ '0.8rem' } subjectId={ period.subject } /> }
+                            { omitSubjectName || <SubjectComponent fontSize={ '0.8rem' } subjectId={ event.subject } /> }
 
                         </Box>
                     </Box>
 
                     <Stack direction="row" display={ 'flex' } flexWrap="wrap" alignItems={ 'center' } justifyContent={ 'flex-start' } spacing={ (isSmall || isTiny) ? 1 : 2 }>
-                        { period.instructors.map((instructor) => (
+                        { event.instructors.map((instructor) => (
                             <PersonChip
                                 key={ instructor }
                                 instructorId={ instructor }
-                                period={ period }
+                                event={ event }
                                 size={ isOneline ? 'smaller' : (isTiny ? "smallest" : (isSmaller ? 'smaller' : 'small')) }
                             />
                         )) }
                     </Stack>
                     <Box display="flex" alignItems="center" gap={ 1 }>
                         { omitRoomName || <RoomComponent
-                            roomIds={ period.rooms }
+                            roomIds={ event.rooms }
                         /> }
-                        { omitDuration || <PeriodDurationLabel period={ period } size="smaller" /> }
+                        { omitDuration || <EventDurationLabel event={ event } size="smaller" /> }
                     </Box>
 
                 </Stack> || <Stack
@@ -116,7 +116,7 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
                         pb={ 0.5 }
                     >
                         <Box display="flex" alignItems="center" minWidth={ 0 } gap={ 0 }>
-                            { omitPeriodIcon || <PeriodTypeIcon period={ period } fontSize="small" /> }
+                            { omitEventIcon || <EventTypeIcon event={ event } fontSize="small" /> }
 
                             <Box display="flex" alignItems="baseline" minWidth={ 0 } gap={ 1 } flexDirection={ isTower ? 'column' : 'row' }>
                                 <Typography
@@ -124,49 +124,49 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
                                     noWrap
                                     sx={ { ml: 0.5, fontWeight: 'bold' } }
                                 >
-                                    { period.name }
+                                    { event.name }
                                 </Typography>
 
-                                { (!omitSubjectName && isSmall) && <SubjectComponent fontSize={ '0.8rem' } subjectId={ period.subject } /> }
+                                { (!omitSubjectName && isSmall) && <SubjectComponent fontSize={ '0.8rem' } subjectId={ event.subject } /> }
                             </Box>
                         </Box>
 
                         <Box display="flex" alignItems="flex-end" gap={ 1 } flexDirection={ 'column' }>
-                            { omitDuration || <PeriodDurationLabel period={ period } /> }
+                            { omitDuration || <EventDurationLabel event={ event } /> }
 
                         </Box>
                     </Stack>
                     { omitRoomName || <RoomComponent
-                        roomIds={ period.rooms }
+                        roomIds={ event.rooms }
                     /> }
 
 
                     { (!omitSubjectName && !isSmall) &&
-                        <Box borderBottom={ 2 } paddingBottom={ 0.2 } marginBottom={ 0 } width={ isNarrow ? '' : '100%' } hidden={ period.type === 'break' } display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' }>
-                            <SubjectComponent fontSize={ '0.8rem' } fontWeight={ 500 } subjectId={ period.subject } />
+                        <Box borderBottom={ 2 } paddingBottom={ 0.2 } marginBottom={ 0 } width={ isNarrow ? '' : '100%' } hidden={ event.type === 'break' } display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' }>
+                            <SubjectComponent fontSize={ '0.8rem' } fontWeight={ 500 } subjectId={ event.subject } />
                             <Box sx={ { width: '0.3rem' } } />
                             <Typography fontSize={ '0.8rem' } fontWeight={ 300 } >/</Typography>
                             <Box sx={ { width: '0.3rem' } } />
-                            <ModuleComponent fontSize={ '0.8rem' } fontWeight={ 400 } moduleId={ period.hiveModule } />
+                            <ModuleComponent fontSize={ '0.8rem' } fontWeight={ 400 } moduleId={ event.hiveModule } />
                         </Box>
                     }
 
                     <Box width={ '100%' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
-                        <Typography variant="caption" fontWeight={ 600 } noWrap paddingBottom={ 0 } marginTop={ 0 }>{ period.instructors.length === 1 ? 'מבוזר' : 'מבוזרים' }</Typography>
+                        <Typography variant="caption" fontWeight={ 600 } noWrap paddingBottom={ 0 } marginTop={ 0 }>{ event.instructors.length === 1 ? 'מבוזר' : 'מבוזרים' }</Typography>
                         <Stack display={ 'flex' } direction={ isTower ? 'column' : "row" } gap={ (isSmall || isTiny) ? 0.3 : 1 } flexWrap={ 'wrap' } sx={ { marginTop: isSmaller ? '0 !important' : undefined } } pb={ 0.5 } borderBottom={ 2 }>
                             {
-                                period.lecturers?.includes('איש חוץ') && <PersonChip
+                                event.lecturers?.includes('איש חוץ') && <PersonChip
                                     key={ 'איש חוץ' }
                                     personData={ 'איש חוץ' }
-                                    period={ period }
+                                    event={ event }
                                     size={ isTiny ? "smallest" : (isSmaller ? 'smaller' : 'small') }
                                 />
                             }
-                            { period.instructors.map((instructor) => (
+                            { event.instructors.map((instructor) => (
                                 <PersonChip
                                     key={ instructor }
                                     instructorId={ instructor }
-                                    period={ period }
+                                    event={ event }
                                     size={ isTiny ? "smallest" : (isSmaller ? 'smaller' : 'small') }
                                 />
                             )) }
@@ -174,18 +174,18 @@ export default function BluezEventComponent({ event: period, ...props }: EventPr
                     </Box>
                 </Stack> }
 
-            { (omitNotes || !period.notes) || (
+            { (omitNotes || !event.notes) || (
                 <Typography
                     variant="caption"
                     display="block"
                     noWrap
                     sx={ { mt: 0.5, opacity: 0.8 } }
                 >
-                    { period.notes }
+                    { event.notes }
                 </Typography>
             ) }
 
-            <EventStatusIcons sx={ { bottom: 0, position: 'absolute', margin: 1 } } period={ period } size={ '5rem' } />
+            <EventStatusIcons sx={ { bottom: 0, position: 'absolute', margin: 1 } } event={ event } size={ '5rem' } />
         </Box>
     );
 }

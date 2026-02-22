@@ -1,32 +1,32 @@
 import { Box, BoxProps } from "@mui/material";
-import { Period } from "@/components/schedule/types/event";
+import { Event } from "@/components/schedule/types/event";
 import { TimePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
 import { useEffect } from "react";
 
 interface EventTimeFieldProps
 {
-    period?: Partial<Period>;
-    onPeriodChange: (updates: Partial<Period>) => void;
+    event?: Partial<Event>;
+    onEventChange: (updates: Partial<Event>) => void;
 }
 
-export default function EventTimeField({ period, onPeriodChange, ...props }: EventTimeFieldProps & BoxProps)
+export default function EventTimeField({ event, onEventChange, ...props }: EventTimeFieldProps & BoxProps)
 {
-    const duration: number = (period?.endTime as Dayjs)?.diff(period?.startTime) || 0;
-    console.log('EventTimeField duration', period);
+    const duration: number = (event?.endTime as Dayjs)?.diff(event?.startTime) || 0;
+    console.log('EventTimeField duration', event);
     return (
         <Box display="flex" gap={ 2 } alignSelf="center" { ...props }>
             <TimePicker
                 label="שעת התחלה"
-                value={ (period?.startTime as Dayjs) || dayjs() }
-                onChange={ (time) => onPeriodChange({ startTime: time || dayjs(), endTime: time?.add(duration) }) }
+                value={ (event?.startTime as Dayjs) || dayjs() }
+                onChange={ (time) => onEventChange({ startTime: time || dayjs(), endTime: time?.add(duration) }) }
                 slotProps={ { textField: { fullWidth: true } } }
                 sx={ { width: '7rem' } }
             />
             <TimePicker
                 label="שעת סיום"
-                value={ (period?.endTime as Dayjs) || dayjs() }
-                onChange={ (time) => onPeriodChange({ endTime: time || dayjs() }) }
+                value={ (event?.endTime as Dayjs) || dayjs() }
+                onChange={ (time) => onEventChange({ endTime: time || dayjs() }) }
                 slotProps={ { textField: { fullWidth: true } } }
                 sx={ { width: '7rem' } }
             />

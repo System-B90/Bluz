@@ -1,4 +1,4 @@
-import { Period, periodTypeToHebrew } from "@/components/schedule/types/event";
+import { Event, eventTypeToHebrew } from "@/components/schedule/types/event";
 import ChatIcon from '@mui/icons-material/Chat';
 import EmojiFoodBeverageIcon from '@mui/icons-material/EmojiFoodBeverage';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
@@ -12,10 +12,10 @@ import moment from "moment";
 import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import SynagogueIcon from '@mui/icons-material/Synagogue';
 
-export function PeriodTypeIcon({ period, ...props }: { period: Period; } & SvgIconProps)
+export function EventTypeIcon({ event, ...props }: { event: Event; } & SvgIconProps)
 {
     let icon: ReactNode = undefined;
-    switch (period.type)
+    switch (event.type)
     {
         case "exercise":
             icon = <FitnessCenterIcon { ...props } />;
@@ -37,17 +37,17 @@ export function PeriodTypeIcon({ period, ...props }: { period: Period; } & SvgIc
     }
     return (
         <Box>
-            { icon && <Tooltip title={ periodTypeToHebrew(period.type) }>
+            { icon && <Tooltip title={ eventTypeToHebrew(event.type) }>
                 { icon }
             </Tooltip> }
         </Box>
     );
 }
 
-export function PeriodDurationLabel({ period, sx, size, ...props }: { period: Period; } & ChipProps)
+export function EventDurationLabel({ event, sx, size, ...props }: { event: Event; } & ChipProps)
 {
-    const start = moment((period.startTime as Dayjs).toDate());
-    const end = moment((period.endTime as Dayjs).toDate());
+    const start = moment((event.startTime as Dayjs).toDate());
+    const end = moment((event.endTime as Dayjs).toDate());
 
     const durationMinutes = useMemo(
         () => Math.max(0, end.diff(start, "minutes")),
@@ -69,7 +69,7 @@ export function PeriodDurationLabel({ period, sx, size, ...props }: { period: Pe
     );
 }
 
-export function EventStatusIcons({ period, size, ...props }: { period: Period; size: BoxProps[ 'fontSize' ]; } & BoxProps)
+export function EventStatusIcons({ event, size, ...props }: { event: Event; size: BoxProps[ 'fontSize' ]; } & BoxProps)
 {
     const tooltipPlacement = props.flexDirection === 'column' ? 'left' : 'top';
     return (
@@ -84,9 +84,9 @@ export function EventStatusIcons({ period, size, ...props }: { period: Period; s
             sx={ { ...props.sx, direction: 'rtl' } }
             { ...props }
         >
-            { period.locked && <Tooltip title="מתואם" placement={ tooltipPlacement }><LockIcon fontSize={ 'inherit' } /></Tooltip> }
-            { period.required && <Tooltip title="קריטי" placement={ tooltipPlacement }><FmdBadIcon fontSize={ 'inherit' } /></Tooltip> }
-            { period.personalTalk && <Tooltip title='חלון פ"א' placement={ tooltipPlacement }><ChatIcon fontSize={ 'inherit' } /></Tooltip> }
+            { event.locked && <Tooltip title="מתואם" placement={ tooltipPlacement }><LockIcon fontSize={ 'inherit' } /></Tooltip> }
+            { event.required && <Tooltip title="קריטי" placement={ tooltipPlacement }><FmdBadIcon fontSize={ 'inherit' } /></Tooltip> }
+            { event.personalTalk && <Tooltip title='חלון פ"א' placement={ tooltipPlacement }><ChatIcon fontSize={ 'inherit' } /></Tooltip> }
         </Box>
     );
 }

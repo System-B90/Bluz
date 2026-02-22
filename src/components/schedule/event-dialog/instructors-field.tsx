@@ -1,20 +1,20 @@
 import { useHiveUsers } from "@/components/base/hive-users-provider";
-import { EventType, Period } from "@/components/schedule/types/event";
+import { EventType, Event } from "@/components/schedule/types/event";
 import { Box, Chip, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import React, { Dispatch, SetStateAction, useMemo } from "react";
 
 interface InstructorsFieldProps
 {
-    period?: Partial<Period>;
-    onPeriodChange: Dispatch<SetStateAction<Partial<Period>>>;
+    event?: Partial<Event>;
+    onEventChange: Dispatch<SetStateAction<Partial<Event>>>;
 }
 
-function LecturerSelectionField({ period, onPeriodChange, ...props }: InstructorsFieldProps & React.HTMLAttributes<HTMLDivElement>)
+function LecturerSelectionField({ event, onEventChange, ...props }: InstructorsFieldProps & React.HTMLAttributes<HTMLDivElement>)
 {
     const { instructors, getInstructor } = useHiveUsers();
 
     // Ensure selectedIds is always an array to prevent crashes
-    const selectedIds = period?.lecturers || [];
+    const selectedIds = event?.lecturers || [];
 
     const handleChange = (event: SelectChangeEvent<typeof selectedIds>) =>
     {
@@ -26,7 +26,7 @@ function LecturerSelectionField({ period, onPeriodChange, ...props }: Instructor
             : value;
 
         // Use functional update pattern for SetStateAction
-        onPeriodChange((prev) => ({
+        onEventChange((prev) => ({
             ...prev,
             lecturers: newIds
         }));
@@ -34,7 +34,7 @@ function LecturerSelectionField({ period, onPeriodChange, ...props }: Instructor
 
     const handleDelete = (idToDelete: number | string) =>
     {
-        onPeriodChange((prev) => ({
+        onEventChange((prev) => ({
             ...prev,
             lecturers: (prev?.lecturers || []).filter((id) => id !== idToDelete)
         }));
@@ -81,14 +81,14 @@ function LecturerSelectionField({ period, onPeriodChange, ...props }: Instructor
     );
 }
 
-export default function InstructorsField({ period, onPeriodChange }: InstructorsFieldProps)
+export default function InstructorsField({ event, onEventChange }: InstructorsFieldProps)
 {
     const { instructors, getInstructor } = useHiveUsers();
 
-    const isLecture = useMemo(() => period?.type === EventType.LECTURE, [ period?.type ]);
+    const isLecture = useMemo(() => event?.type === EventType.LECTURE, [ event?.type ]);
 
     // Ensure selectedIds is always an array to prevent crashes
-    const selectedIds = period?.instructors || [];
+    const selectedIds = event?.instructors || [];
 
     const handleChange = (event: SelectChangeEvent<typeof selectedIds>) =>
     {
@@ -100,7 +100,7 @@ export default function InstructorsField({ period, onPeriodChange }: Instructors
             : value;
 
         // Use functional update pattern for SetStateAction
-        onPeriodChange((prev) => ({
+        onEventChange((prev) => ({
             ...prev,
             instructors: newIds as number[]
         }));
@@ -108,7 +108,7 @@ export default function InstructorsField({ period, onPeriodChange }: Instructors
 
     const handleDelete = (idToDelete: number) =>
     {
-        onPeriodChange((prev) => ({
+        onEventChange((prev) => ({
             ...prev,
             instructors: (prev?.instructors || []).filter((id) => id !== idToDelete)
         }));
@@ -153,7 +153,7 @@ export default function InstructorsField({ period, onPeriodChange }: Instructors
                 </FormControl>
             </Box>
             { isLecture &&
-                <LecturerSelectionField period={ period } onPeriodChange={ onPeriodChange } className="w-[30%]" />
+                <LecturerSelectionField event={ event } onEventChange={ onEventChange } className="w-[30%]" />
             }
         </Box>
     );
