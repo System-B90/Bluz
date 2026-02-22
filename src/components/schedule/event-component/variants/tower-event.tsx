@@ -4,7 +4,7 @@ import RoomComponent from "@/components/schedule/event-component/parts/room";
 import { EventStatusIcons, EventDurationLabel, EventTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
 import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
 import { Event } from "@/components/schedule/types/event";
-import SubjectComponent, { ModuleComponent } from "@/components/subject";
+import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
 import { Box, Stack, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { EventProps } from "react-big-calendar";

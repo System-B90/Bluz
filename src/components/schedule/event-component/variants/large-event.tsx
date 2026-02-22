@@ -1,13 +1,11 @@
-import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { InstructorsList } from "@/components/schedule/event-component/parts/person";
 import RoomComponent from "@/components/schedule/event-component/parts/room";
-import { EventStatusIcons, EventDurationLabel, EventTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
-import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
-import { getPresentInstructors, Event } from "@/components/schedule/types/event";
-import SubjectComponent, { ModuleComponent } from "@/components/subject";
+import { EventStatusIcons, EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
+import { Event } from "@/components/schedule/types/event";
+import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
 import { Box, Stack, Typography } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
 import { EventProps } from "react-big-calendar";
+import CourseComponent from "@/components/schedule/event-component/parts/course";
 
 
 export default function LargeEventComponent({ event: event, ...props }: EventProps<Event>)
@@ -49,6 +47,12 @@ export default function LargeEventComponent({ event: event, ...props }: EventPro
                     </Box>
                 </Stack>
 
+                <CourseComponent
+                    courseIds={ event.courses }
+                    width={ '100%' }
+                    borderBottom={ 2 }
+                    paddingBottom={ 0.5 }
+                />
                 <RoomComponent
                     roomIds={ event.rooms }
                     width={ '100%' }

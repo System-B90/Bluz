@@ -3,9 +3,10 @@ import { InstructorsList } from "@/components/schedule/event-component/parts/per
 import RoomComponent from "@/components/schedule/event-component/parts/room";
 import { EventStatusIcons, EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
 import { Event } from "@/components/schedule/types/event";
-import SubjectComponent, { ModuleComponent } from "@/components/subject";
+import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
 import { Box, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
+import CourseComponent from "@/components/schedule/event-component/parts/course";
 
 
 export default function ShortEventComponent({ event: event, containerSize }: { containerSize: ContainerSize; } & EventProps<Event>)
@@ -57,6 +58,10 @@ export default function ShortEventComponent({ event: event, containerSize }: { c
                     height={ '100%' }
                 >
                     <InstructorsList event={ event } chipSize="smaller" showCaption={ false } />
+                    <CourseComponent
+                        courseIds={ event.courses }
+                        showCaption={ false } chipSize="smaller"
+                    />
                     <RoomComponent roomIds={ event.rooms } showCaption={ false } chipSize="smaller" />
                 </Box>
             </Box>

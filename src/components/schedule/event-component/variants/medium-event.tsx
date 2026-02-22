@@ -4,10 +4,11 @@ import RoomComponent from "@/components/schedule/event-component/parts/room";
 import { EventStatusIcons, EventDurationLabel, EventTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
 import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
 import { getPresentInstructors, Event } from "@/components/schedule/types/event";
-import SubjectComponent, { ModuleComponent } from "@/components/subject";
+import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
 import { Box, Stack, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { EventProps } from "react-big-calendar";
+import CourseComponent from "@/components/schedule/event-component/parts/course";
 
 
 export default function MediumEventComponent({ event: event, ...props }: EventProps<Event>)
@@ -63,6 +64,13 @@ export default function MediumEventComponent({ event: event, ...props }: EventPr
                         </Box>
                     </Box>
 
+                    <CourseComponent
+                        flexGrow={ 0 }
+                        flexBasis={ 0.5 }
+                        courseIds={ event.courses }
+                        width={ '100%' }
+                        showCaption={ false }
+                    />
                     <RoomComponent
                         flexGrow={ 0 }
                         flexBasis={ 0.5 }

@@ -3,7 +3,7 @@ import { InstructorsList } from "@/components/schedule/event-component/parts/per
 import RoomComponent from "@/components/schedule/event-component/parts/room";
 import { EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
 import { Event } from "@/components/schedule/types/event";
-import SubjectComponent, { ModuleComponent } from "@/components/subject";
+import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
 
