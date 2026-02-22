@@ -76,7 +76,7 @@ export default function EventDialog({
 
 
     return (
-        <Dialog open={ open } onClose={ onClose } maxWidth="md" fullWidth>
+        <Dialog open={ open } onClose={ onClose } maxWidth="lg" fullWidth>
             <DialogTitle>ערוך מופע</DialogTitle>
 
             <form onSubmit={ submitHandler }>
@@ -112,25 +112,31 @@ export default function EventDialog({
                                     <SubjectField
                                         event={ event }
                                         onEventChange={ onEventChange }
-                                        sx={ { width: '25%' } }
+                                        sx={ { width: '18%' } }
                                     />
                                     <ModuleField
                                         event={ event }
                                         onEventChange={ onEventChange }
-                                        sx={ { width: '20%' } }
+                                        sx={ { width: '17%' } }
                                     />
                                 </> }
-                            <CourseField
-                                event={ event }
-                                onEventChange={ onEventChange }
-                                sx={ { flexGrow: 1 } }
-                            />
-                            <RoomField
-                                event={ event }
-                                onEventChange={ onEventChange }
-                                sx={ { flexGrow: 1 } }
-                            />
+                            <Box
+                                gap={ 'inherit' }
+                                display={ 'flex' }
+                                flexGrow={ 1 }>
+                                <CourseField
+                                    event={ event }
+                                    onEventChange={ onEventChange }
+                                    fullWidth
+                                />
+                                <RoomField
+                                    event={ event }
+                                    onEventChange={ onEventChange }
+                                    fullWidth
+                                />
+                            </Box>
                         </Box>
+
                         <InstructorsField
                             event={ event }
                             onEventChange={ onEventChange }
