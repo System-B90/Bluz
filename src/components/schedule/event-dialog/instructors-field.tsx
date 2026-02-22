@@ -69,7 +69,7 @@ function LecturerSelectionField({ event, onEventChange, ...props }: InstructorsF
                         </Box>
                     ) }
                 >
-                    <MenuItem key={ 'outside-lecturer' } value={ 'איש חוץ' }>איש חוץ</MenuItem>
+                    <MenuItem key={ 'outside-lecturer' } value={ 'איש חוץ' } sx={ { borderBottomWidth: '0.2rem', borderBottomStyle: 'solid', borderBottomColor: 'hsl(var(--border))' } }>איש חוץ</MenuItem>
                     { instructors.map((instructor) => (
                         <MenuItem key={ instructor.id } value={ instructor.id }>
                             { instructor.display_name }
