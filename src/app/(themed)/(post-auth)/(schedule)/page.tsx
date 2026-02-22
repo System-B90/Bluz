@@ -121,7 +121,7 @@ export default function SchedulePage()
     return (
         <Box sx={ { p: 0 } } width={ '100vw' } height={ '100vh' } display={ 'flex' } flexDirection={ 'column' }>
             <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
-            <BluzCalendar handleSaveEvent={ handleSaveEvent } setOpenEventDialog={ setOpenEventDialog } setSelectedEvent={ setSelectedEvent } events={ events } />
+            <BluzCalendar handleSaveEvent={ handleSaveEvent } handleDeleteEvent={ onEventDelete } setOpenEventDialog={ setOpenEventDialog } setSelectedEvent={ setSelectedEvent } events={ events } />
 
             <EventDialog
                 open={ openEventDialog }

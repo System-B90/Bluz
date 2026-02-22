@@ -4,6 +4,7 @@ import { useElementSize } from "@/components/schedule/event-component/utils";
 import LargeEventComponent from "@/components/schedule/event-component/variants/large-event";
 import LargeNarrowEventComponent from "@/components/schedule/event-component/variants/large-narrow-event";
 import MediumEventComponent from "@/components/schedule/event-component/variants/medium-event";
+import MediumNarrowEventComponent from "@/components/schedule/event-component/variants/medium-narrow-event";
 import PrayerEventComponent from "@/components/schedule/event-component/variants/prayer-event";
 import ShortEventComponent from "@/components/schedule/event-component/variants/short-event";
 import ShortNarrowEventComponent from "@/components/schedule/event-component/variants/short-narrow-event";
@@ -96,6 +97,9 @@ export default function BluezEventComponent({ event: event, ...props }: EventPro
             break;
         case "medium-wide":
             eventComponent = <Tooltip title={ 'Medium' }><MediumEventComponent event={ event } { ...props } /></Tooltip>;
+            break;
+        case "medium-narrow":
+            eventComponent = <Tooltip title={ 'Medium & Narrow' }><MediumNarrowEventComponent event={ event } { ...props } /></Tooltip>;
             break;
         case "large-wide":
             eventComponent = <Tooltip title={ 'Large' }><LargeEventComponent event={ event } { ...props } /></Tooltip>;

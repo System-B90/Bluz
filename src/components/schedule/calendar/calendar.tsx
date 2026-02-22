@@ -45,11 +45,13 @@ export const localizer = momentLocalizer(moment);
 
 export default function BluzCalendar({
     handleSaveEvent,
+    handleDeleteEvent,
     setOpenEventDialog,
     setSelectedEvent,
     events,
 }: {
     handleSaveEvent: (event: Event) => void;
+    handleDeleteEvent: (eventId: Event['id']) => void;
     setOpenEventDialog: (open: boolean) => void;
     setSelectedEvent: Dispatch<SetStateAction<Partial<Event> | undefined>>;
     events: Array<Event>;
@@ -156,76 +158,90 @@ export default function BluzCalendar({
         copyPasteData.current = { activeEvent, copiedEvent, selectedSlotInfo };
     }, [ activeEvent, copiedEvent, selectedSlotInfo ]);
 
+    const handleKeyDown = useCallback((e: KeyboardEvent) =>
+    {
+
+        console.log(e);
+
+        if ([ 'INPUT', 'TEXTAREA' ].includes((e.target as HTMLElement).tagName)) { return; }
+
+
+        const { activeEvent, copiedEvent, selectedSlotInfo } = copyPasteData.current;
+
+        if (e.key === 'Delete')
+        {
+            if (!activeEvent?.id)
+            {
+                return;
+            }
+            handleDeleteEvent(activeEvent.id);
+            return;
+        }
+
+        // Pull the freshest data from the ref
+        const isCmdOrCtrl = e.ctrlKey || e.metaKey;
+
+        // COPY (Ctrl+C)
+        if (isCmdOrCtrl && e.key === 'c' && activeEvent)
+        {
+            setCopiedEvent(activeEvent);
+        }
+
+        // PASTE (Ctrl+V)
+        if (isCmdOrCtrl && e.key === 'v' && copiedEvent)
+        {
+            e.preventDefault();
+
+            const originalStart = dayjs(copiedEvent.startTime);
+            const originalEnd = dayjs(copiedEvent.endTime);
+            const durationMinutes = originalEnd.diff(originalStart, 'minute');
+
+            let newStart: dayjs.Dayjs;
+            let newEnd: dayjs.Dayjs;
+            let newRooms = copiedEvent.rooms;
+
+            if (selectedSlotInfo)
+            {
+                newStart = dayjs(selectedSlotInfo.start);
+                newEnd = newStart.add(durationMinutes, 'minute');
+
+                if (selectedSlotInfo.resourceId !== undefined && selectedSlotInfo.resourceId !== null)
+                {
+                    newRooms = [ parseInt(selectedSlotInfo.resourceId.toString(), 10) ];
+                }
+            } else
+            {
+                newStart = originalStart.add(30, 'minute');
+                newEnd = originalEnd.add(30, 'minute');
+            }
+
+            const { id, ...restCopied } = copiedEvent as any;
+
+            const newEvent = {
+                ...restCopied,
+                startTime: newStart.toDate(), // Make sure these are strictly Date objects
+                endTime: newEnd.toDate(),
+                rooms: newRooms,
+            } as Event;
+
+            handleSaveEvent(newEvent);
+
+            // Update state to focus on the newly pasted event
+            setActiveEvent(newEvent);
+            setSelectedSlotInfo(null);
+        }
+    }, [ handleSaveEvent ]);
+
     useEffect(() =>
     {
-        const handleKeyDown = (e: KeyboardEvent) =>
-        {
-            // Pull the freshest data from the ref
-            const { activeEvent, copiedEvent, selectedSlotInfo } = copyPasteData.current;
-
-            if ([ 'INPUT', 'TEXTAREA' ].includes((e.target as HTMLElement).tagName)) return;
-
-            const isCmdOrCtrl = e.ctrlKey || e.metaKey;
-
-            // COPY (Ctrl+C)
-            if (isCmdOrCtrl && e.key === 'c' && activeEvent)
-            {
-                setCopiedEvent(activeEvent);
-            }
-
-            // PASTE (Ctrl+V)
-            if (isCmdOrCtrl && e.key === 'v' && copiedEvent)
-            {
-                e.preventDefault();
-
-                const originalStart = dayjs(copiedEvent.startTime);
-                const originalEnd = dayjs(copiedEvent.endTime);
-                const durationMinutes = originalEnd.diff(originalStart, 'minute');
-
-                let newStart: dayjs.Dayjs;
-                let newEnd: dayjs.Dayjs;
-                let newRooms = copiedEvent.rooms;
-
-                if (selectedSlotInfo)
-                {
-                    newStart = dayjs(selectedSlotInfo.start);
-                    newEnd = newStart.add(durationMinutes, 'minute');
-
-                    if (selectedSlotInfo.resourceId !== undefined && selectedSlotInfo.resourceId !== null)
-                    {
-                        newRooms = [ parseInt(selectedSlotInfo.resourceId.toString(), 10) ];
-                    }
-                } else
-                {
-                    newStart = originalStart.add(30, 'minute');
-                    newEnd = originalEnd.add(30, 'minute');
-                }
-
-                const { id, ...restCopied } = copiedEvent as any;
-
-                const newEvent = {
-                    ...restCopied,
-                    startTime: newStart.toDate(), // Make sure these are strictly Date objects
-                    endTime: newEnd.toDate(),
-                    rooms: newRooms,
-                } as Event;
-
-                handleSaveEvent(newEvent);
-
-                // Update state to focus on the newly pasted event
-                setActiveEvent(newEvent);
-                setSelectedSlotInfo(null);
-            }
-        };
-
         window.addEventListener('keydown', handleKeyDown);
 
         return () =>
         {
             window.removeEventListener('keydown', handleKeyDown);
         };
-        // We only depend on handleSaveEvent (assuming it is wrapped in useCallback in the parent)
-    }, [ handleSaveEvent ]);
+    }, [ handleKeyDown ]);
+
     return (
         <DnDCalendar
             className='relative grow'
