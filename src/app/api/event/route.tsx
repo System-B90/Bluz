@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { DbEvent } from "@/api-server/event";
 import { ClientApiError } from "@/api-shared/errors";
-import { Event } from "@/components/schedule/types/event";
+import { Event, EventId } from "@/components/schedule/types/event";
 import { NextRequest } from "next/server";
 
 export async function GET(
@@ -13,13 +13,22 @@ export async function GET(
     try
     {
         const id = request.nextUrl.searchParams.get('id');
+        const ids = request.nextUrl.searchParams.get('ids');
         const rawStartDate = request.nextUrl.searchParams.get('sd');
         const rawEndDate = request.nextUrl.searchParams.get('ed');
 
-        if (!id && !(rawStartDate && rawEndDate)) { throw new ClientApiError('No id provided!'); }
+        if (!id && (ids === null) && !(rawStartDate && rawEndDate)) { throw new ClientApiError('No id provided!'); }
         if (id)
         {
             return ApiSuccess(await DbEvent.get(id));
+        }
+        else if (ids !== null)
+        {
+            const parsedIds = ids.split(',').filter((v) => v.length === 24);
+            const eventArray = await DbEvent.getMultiple(parsedIds);
+            const eventRecord = eventArray.reduce((prev, ev) => ({ ...prev, [ ev.id ]: ev }), {} as Record<EventId, Partial<Event>>);
+            return ApiSuccess(eventRecord);
+
         }
         else if (rawStartDate && rawEndDate)
         {
@@ -54,7 +63,7 @@ export async function DELETE(
 {
     try
     {
-        const eventId: Event[ 'id' ] = await request.json();
+        const eventId: EventId = await request.json();
         if (!eventId) { throw new ClientApiError('No eventId provided!'); }
         return ApiSuccess(await DbEvent.del(eventId));
     }

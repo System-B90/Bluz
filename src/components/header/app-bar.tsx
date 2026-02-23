@@ -3,6 +3,7 @@ import FilterIcon from '@/components/header/filter-icon';
 import Filters from '@/components/header/filters';
 import InstructorToolsIcon from '@/components/header/instructor-tools-icon';
 import LoggedInUser from '@/components/header/logged-in-user';
+import OfflineModeIcon from '@/components/header/offline-mode-icon';
 import ThemeSelectorIcon from '@/components/header/theme-selector';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { AppBar, AppBarProps, Box, IconButton, Toolbar, Typography } from "@mui/material";
@@ -34,6 +35,7 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
                         paddingBlockEnd={ 1 }
                         gap={ 1 }
                     /> }
+                    <OfflineModeIcon />
                 </Box>
 
 

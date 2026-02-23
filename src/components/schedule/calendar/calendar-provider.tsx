@@ -5,6 +5,7 @@ import { eventDateFixup } from '@/api-shared/calendar';
 import { EventAddedOrRemovedMessage, EventDataUpdateMessage } from '@/api-shared/types';
 import { useAuth } from '@/components/auth/auth-provider';
 import { CalendarFiltersProvider } from '@/components/base/calendar-filter-provider';
+import { useOffline } from '@/components/base/offline-provider';
 import { Event } from '@/components/schedule/types/event';
 import { MessageHandlerType } from '@/components/session-ws';
 import { MessageTypes } from '@/settings';
@@ -24,6 +25,7 @@ import
 export type CalendarContextState = {
     default: boolean;
     events: Array<Event>;
+    setEvents: Dispatch<SetStateAction<Array<Event>>>;
     setStartDate: Dispatch<SetStateAction<Date | undefined>>;
     setEndDate: Dispatch<SetStateAction<Date | undefined>>;
 };
@@ -31,12 +33,14 @@ export type CalendarContextState = {
 const CalendarContext = createContext<CalendarContextState | undefined>({
     default: true,
     events: [],
+    setEvents: (_events) => { },
     setStartDate: () => { },
     setEndDate: () => { },
 });
 
 export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =>
 {
+    const { offlineMode } = useOffline();
     const [ startDate, setStartDate ] = useState<Date>();
     const [ endDate, setEndDate ] = useState<Date>();
     const [ events, setEvents ] = useState<Array<Event>>([]);
@@ -58,6 +62,7 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
 
     const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, data: any) =>
     {
+        if (offlineMode) { return; }
         switch (messageType)
         {
             case MessageTypes.EVENT_DATA_UPDATE:
@@ -75,7 +80,7 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
                 }
                 break;
         };
-    }, [ setEvents ]);
+    }, [ offlineMode, setEvents ]);
 
     useEffect(() =>
     {
@@ -88,7 +93,8 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
         <CalendarFiltersProvider>
             <CalendarContext.Provider value={ {
                 default: false,
-                events: events,
+                events,
+                setEvents,
                 setStartDate,
                 setEndDate,
 

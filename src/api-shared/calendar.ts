@@ -1,6 +1,7 @@
-import { Event } from "@/components/schedule/types/event";
+import { Event, EventId } from "@/components/schedule/types/event";
 import dayjs from "dayjs";
 
+export function eventDateFixup(event: Partial<Event> & { id: EventId; }): Partial<Event> & { id: EventId; };
 export function eventDateFixup(event: Partial<Event>): Partial<Event>;
 export function eventDateFixup(event: Event): Event;
 export function eventDateFixup(event: Partial<Event>): Partial<Event>

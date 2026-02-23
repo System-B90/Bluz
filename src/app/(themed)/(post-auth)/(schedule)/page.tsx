@@ -7,17 +7,19 @@ import BluzCalendar from '@/components/schedule/calendar/calendar';
 import { useCalendar } from '@/components/schedule/calendar/calendar-provider';
 import EventDialog from '@/components/schedule/event-dialog';
 import SettingsDialog from "@/components/settings-dialog/settings-dialog";
-import { Event } from "@/components/schedule/types/event";
+import { Event, EventId } from "@/components/schedule/types/event";
 import { Box } from '@mui/material';
 import { useHistoryState } from "@uidotdev/usehooks";
 import dayjs from 'dayjs';
 import 'dayjs/locale/he';
 import { enqueueSnackbar } from 'notistack';
 import { SetStateAction, useCallback, useEffect, useState } from 'react';
+import PushOfflineUpdatesDialog from '@/components/schedule/offline-dialogs/push-updates-dialog';
+import { useOffline } from '@/components/base/offline-provider';
 
 export default function SchedulePage()
 {
-    const { events: serverEvents } = useCalendar();
+    const { events: serverEvents, setEvents: setCalendarEvents } = useCalendar();
     const {
         state: events,
         set: setEvents,
@@ -25,9 +27,15 @@ export default function SchedulePage()
         redo,
     } = useHistoryState<Array<Event>>(serverEvents);
 
+    const { offlineMode, captureEventBeforeEdit } = useOffline();
     const [ selectedEvent, setSelectedEvent ] = useState<Partial<Event>>();
     const [ openEventDialog, setOpenEventDialog ] = useState<boolean>(false);
     const [ openSettingsDialog, setOpenSettingsDialog ] = useState<boolean>(false);
+
+    useEffect(() =>
+    {
+        setCalendarEvents(events);
+    }, [ events, setCalendarEvents ]);
 
     useEffect(() =>
     {
@@ -72,19 +80,31 @@ export default function SchedulePage()
 
         if (newEvent.id)
         {
+            if (offlineMode)
+            {
+                // Capture the old version
+                const oldEvent = events.find((ev) => ev.id === newEvent.id);
+                if (oldEvent)
+                {
+                    captureEventBeforeEdit(oldEvent);
+                }
+            }
             setEvents([ ...events.filter(pp => pp.id !== newEvent.id), newEvent ]);
         }
 
         setOpenEventDialog(false);
 
-        apiSaveEvent(newEvent)
-            .then((p) =>
-            {
-                enqueueSnackbar(`המופע "${p.name}" נשמר בהצלחה!`, { variant: 'success' });
-                setEvents([ ...events.filter(pp => pp.id !== newEvent.id), p ]);
-            })
-            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת המופע נכשלה!', error));
-    }, [ events, setEvents, setOpenEventDialog ]);
+        if (!offlineMode)
+        {
+            apiSaveEvent(newEvent)
+                .then((p) =>
+                {
+                    enqueueSnackbar(`המופע "${p.name}" נשמר בהצלחה!`, { variant: 'success' });
+                    setEvents([ ...events.filter(pp => pp.id !== newEvent.id), p ]);
+                })
+                .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת המופע נכשלה!', error));
+        }
+    }, [ offlineMode, events, setEvents, setOpenEventDialog, captureEventBeforeEdit ]);
 
     const handleCloseEventDialog = useCallback((): void =>
     {
@@ -108,15 +128,18 @@ export default function SchedulePage()
         });
     }, [ setSelectedEvent ]);
 
-    const onEventDelete = useCallback((eventId: Event[ 'id' ]) =>
+    const onEventDelete = useCallback((eventId: EventId) =>
     {
-        apiDeleteEvent(eventId)
-            .then(() => enqueueSnackbar('המופע נמחק בהצלחה.', { variant: 'success' }))
-            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'מחיקת המופע נכשלה!', error));
+        if (!offlineMode)
+        {
+            apiDeleteEvent(eventId)
+                .then(() => enqueueSnackbar('המופע נמחק בהצלחה.', { variant: 'success' }))
+                .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'מחיקת המופע נכשלה!', error));
+        }
 
         setOpenEventDialog(false);
         setSelectedEvent(undefined);
-    }, [ setOpenEventDialog, setSelectedEvent ]);
+    }, [ offlineMode, setOpenEventDialog, setSelectedEvent ]);
 
     return (
         <Box sx={ { p: 0 } } width={ '100vw' } height={ '100vh' } display={ 'flex' } flexDirection={ 'column' }>
@@ -131,6 +154,7 @@ export default function SchedulePage()
                 onEventChange={ onEventChange }
                 onDelete={ onEventDelete }
             />
+            <PushOfflineUpdatesDialog />
 
             <SettingsDialog open={ openSettingsDialog } onClose={ () => { setOpenSettingsDialog(false); } } />
         </Box>

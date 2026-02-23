@@ -3,6 +3,7 @@ import { HiveModulesProvider } from '@/components/base/hive-modules-provider';
 import { HiveRoomsProvider } from '@/components/base/hive-rooms-provider';
 import { HiveSubjectsProvider } from '@/components/base/hive-subjects-provider';
 import { HiveUsersProvider } from '@/components/base/hive-users-provider';
+import { OfflineProvider } from '@/components/base/offline-provider';
 import { SettingsProvider } from '@/components/base/settings-provider';
 import { CalendarProvider } from '@/components/schedule/calendar/calendar-provider';
 import React from 'react';
@@ -19,11 +20,13 @@ export default async function ScheduleLayout({
                 <HiveModulesProvider>
                     <HiveRoomsProvider>
                         <SettingsProvider>
-                            <CoursesProvider>
-                                <CalendarProvider>
-                                    { children }
-                                </CalendarProvider>
-                            </CoursesProvider>
+                            <OfflineProvider>
+                                <CoursesProvider>
+                                    <CalendarProvider>
+                                        { children }
+                                    </CalendarProvider>
+                                </CoursesProvider>
+                            </OfflineProvider>
                         </SettingsProvider>
                     </HiveRoomsProvider>
                 </HiveModulesProvider>
@@ -31,4 +34,3 @@ export default async function ScheduleLayout({
         </HiveUsersProvider>
     );
 }
-

@@ -3,7 +3,7 @@ import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils"
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import { EventAddedOrRemovedMessage, EventDataUpdateMessage } from "@/api-shared/types";
-import { Event } from "@/components/schedule/types/event";
+import { Event, EventId } from "@/components/schedule/types/event";
 import { MessageTypes } from "@/settings";
 import { Filter, FindOptions, ObjectId, WithId } from "mongodb";
 
@@ -21,6 +21,14 @@ async function getDbEvent(eventId: string, options?: FindOptions)
 {
     const data: WithId<Event> | null = await databaseController.events.findOne({ '_id': new ObjectId(eventId) }, options);
     if (data) { return eventDateFixup(fixId(data)); }
+    return data;
+}
+
+async function getDbEvents(eventIds: Array<EventId>, options?: FindOptions): Promise<Array<Partial<Event> & { id: EventId; }>>
+{
+    const processedIds = eventIds.map((id) => new ObjectId(id));
+    const cursor = databaseController.events.find({ '_id': { '$in': processedIds } }, options);
+    const data = (await cursor.toArray()).map((ev) => eventDateFixup(fixId(ev)));
     return data;
 }
 
@@ -66,7 +74,7 @@ async function setDbEvent(event: Partial<Event>, options?: FindOptions): Promise
     }
 }
 
-async function deleteDbEvent(eventId: Event[ 'id' ], options?: FindOptions)
+async function deleteDbEvent(eventId: EventId, options?: FindOptions)
 {
     if (!eventId) { throw new ClientApiError('Event id is missing!'); }
 
@@ -78,6 +86,7 @@ async function deleteDbEvent(eventId: Event[ 'id' ], options?: FindOptions)
 export namespace DbEvent
 {
     export const get = getDbEvent;
+    export const getMultiple = getDbEvents;
     export const getInRange = getDbEventsInRange;
     export const set = setDbEvent;
     export const del = deleteDbEvent;

@@ -19,7 +19,7 @@ import InstructorsField from "@/components/schedule/event-dialog/instructors-fie
 import RoomField from "@/components/schedule/event-dialog/room-field";
 import SubjectField from "@/components/schedule/event-dialog/subject-field";
 import EventTimeField from "@/components/schedule/event-dialog/time-fields";
-import { Event, PrayerEvent } from "@/components/schedule/types/event";
+import { Event, EventId, PrayerEvent } from "@/components/schedule/types/event";
 import ModuleField from '@/components/schedule/event-dialog/module-field';
 import PrayerTypeField from '@/components/schedule/event-dialog/prayer-type';
 import CourseField from '@/components/schedule/event-dialog/course-field';
@@ -31,7 +31,7 @@ interface EventDialogProps
     onClose: () => void;
     onSave: (event: Partial<Event>) => void;
     onEventChange: Dispatch<SetStateAction<Partial<Event>>>;
-    onDelete: (eventId: Event[ 'id' ]) => void;
+    onDelete: (eventId: EventId) => void;
 }
 
 export default function EventDialog({

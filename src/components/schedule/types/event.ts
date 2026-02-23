@@ -40,6 +40,7 @@ export interface Event
     required: boolean;
     personalTalk: boolean;
 }
+export type EventId = Event[ 'id' ];
 
 export enum PrayerType
 {
