@@ -1,4 +1,4 @@
-import { getHiveBaseUrl } from "@/api-client/hive";
+import { getHiveBaseUrl } from "@/api-shared/common";
 import { useHiveModules } from "@/components/base/hive-modules-provider";
 import { useHiveSubjects } from "@/components/base/hive-subjects-provider";
 import { ModuleLike } from "@/components/schedule/types/module";

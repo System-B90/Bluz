@@ -1,47 +1,57 @@
 'use client';
 import useSessionWebSocketContext, { MessageHandlerType } from '@/components/session-ws';
+import { useSession, signIn, SessionProvider, SessionContextValue } from 'next-auth/react';
 import
 {
     createContext,
     useCallback,
     useContext,
     useEffect,
-    useState,
 } from 'react';
 import { MessageTypes } from '../../session-server/src/common';
-import assert from 'assert';
-
-assert(!!process.env.NEXT_PUBLIC_MADRAT_USERNAME, 'NEXT_PUBLIC_MADRAT_USERNAME must be defined in environment!');
+import { AuthSessionData } from '@/api-shared/types/sso';
+import { Clearance } from '@/api-server/hive/types';
+import { useRouter } from 'next/navigation';
 
 export interface WebSocketSessionMessage
 {
-    type: MessageTypes,
-    [ key: string ]: any,
+    type: MessageTypes;
+    [ key: string ]: any;
 }
+
 export type AuthContextState = {
     default: boolean;
+    hiveId: number | string | null;
     username: string | null;
     displayName: string | null;
-    isAdmin: boolean;
+    avatarImage: string | null,
+    clearance: Clearance;
+    status: 'loading' | 'authenticated' | 'unauthenticated';
     addMessageHandler: (handler: MessageHandlerType) => () => void;
     sendMessage: (data: WebSocketSessionMessage) => void;
 };
 
-const AuthContext = createContext<AuthContextState | undefined>({
-    default: true,
-    username: null,
-    displayName: null,
-    isAdmin: false,
-    addMessageHandler: (_handler: MessageHandlerType) => () => { },
-    sendMessage: (_data) => { },
-});
+const AuthContext = createContext<AuthContextState | undefined>(undefined);
 
-export const AuthProvider = ({ children, username }: { children: React.ReactNode; username: string | null; }) =>
+const AuthProviderInner = ({ children }: { children: React.ReactNode; }) =>
 {
-    const [ isAdmin, setIsAdmin ] = useState<boolean>(true);
+    const { data: session, status } = useSession() as SessionContextValue<false> & { data: null | AuthSessionData; };
     const { ws, addMessageHandler } = useSessionWebSocketContext();
 
-    const displayName = 'מיכאל';
+    const router = useRouter();
+
+    useEffect(() =>
+    {
+        if (status === 'unauthenticated')
+        {
+            router.push('/login');
+        }
+    }, [ status, router ]);
+
+    // 3. Map Hive session data to your local context
+    const username = session?.user?.username || null;
+    const displayName = session?.user?.display_name || 'Guest';
+    const avatarImage = session?.user?.image ?? null;
 
     const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, data: any) =>
     {
@@ -50,41 +60,39 @@ export const AuthProvider = ({ children, username }: { children: React.ReactNode
 
     useEffect(() =>
     {
-        if (typeof window === 'undefined') { return; }
-
+        if (typeof window === 'undefined' || status !== 'authenticated') { return; }
         return addMessageHandler(onWebSocketMessage);
-    }, [ addMessageHandler, onWebSocketMessage ]);
+    }, [ addMessageHandler, onWebSocketMessage, status ]);
 
     const sendMessage = useCallback((data: WebSocketSessionMessage) =>
     {
-        if (!ws.current) { return; }
+        if (!ws.current || status !== 'authenticated') { return; }
 
         if (ws.current.OPEN !== ws.current.readyState)
         {
-            setTimeout(() =>
-            {
-                sendMessage(data);
-            }, 50);
-        }
-        else
+            setTimeout(() => sendMessage(data), 50);
+        } else
         {
             ws.current.send(JSON.stringify(data));
         }
-    }, [ ws ]);
+    }, [ ws, status ]);
 
-    useEffect(() =>
+    if (status === 'loading' || status === 'unauthenticated')
     {
-        setIsAdmin(username === process.env.NEXT_PUBLIC_MADRAT_USERNAME);
-    }, [ username, setIsAdmin ]);
+        return null; // Or a <LoadingSpinner />
+    }
 
     return (
         <AuthContext.Provider value={ {
             default: false,
+            hiveId: session?.user.id ?? null,
             username,
             displayName,
-            isAdmin,
-            addMessageHandler, sendMessage,
-
+            avatarImage,
+            clearance: session?.user.clearance ?? Clearance.Logged_Out,
+            status,
+            addMessageHandler,
+            sendMessage,
         } }>
             { children }
         </AuthContext.Provider>
@@ -94,11 +102,18 @@ export const AuthProvider = ({ children, username }: { children: React.ReactNode
 export const useAuth = () =>
 {
     const context = useContext(AuthContext);
-
-    if (context === undefined || context.default)
+    if (context === undefined)
     {
         throw new Error('useAuth must be used within an AuthProvider');
     }
-
     return context;
+};
+
+export const AuthProvider = ({ children }: { children: React.ReactNode; }) =>
+{
+    return (
+        <AuthProviderInner>
+            { children }
+        </AuthProviderInner>
+    );
 };

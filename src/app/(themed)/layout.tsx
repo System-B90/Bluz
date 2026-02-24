@@ -11,7 +11,7 @@ import createCache from '@emotion/cache';
 import { useServerInsertedHTML } from 'next/navigation';
 import { BluezThemeProvider } from '@/components/theme/theme-provider';
 import { CssBaseline } from '@mui/material';
-import { AuthProvider } from '@/components/auth/auth-provider';
+import { SessionProvider } from 'next-auth/react';
 
 export default function ThemedLayout({ children }: { children: React.ReactNode; })
 {
@@ -66,17 +66,17 @@ export default function ThemedLayout({ children }: { children: React.ReactNode; 
     });
 
     return (
-        <AuthProvider username={ 'michaelks' }>
-            <CacheProvider value={ cache }>
-                <BluezThemeProvider>
-                    <LocalizationProvider dateAdapter={ AdapterDayjs } adapterLocale="he">
-                        <CssBaseline />
-                        <SnackbarProvider anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }>
+        <CacheProvider value={ cache }>
+            <BluezThemeProvider>
+                <LocalizationProvider dateAdapter={ AdapterDayjs } adapterLocale="he">
+                    <CssBaseline />
+                    <SnackbarProvider anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }>
+                        <SessionProvider>
                             { children }
-                        </SnackbarProvider>
-                    </LocalizationProvider>
-                </BluezThemeProvider>
-            </CacheProvider>
-        </AuthProvider>
+                        </SessionProvider>
+                    </SnackbarProvider>
+                </LocalizationProvider>
+            </BluezThemeProvider>
+        </CacheProvider>
     );
 }

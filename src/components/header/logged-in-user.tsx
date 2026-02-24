@@ -1,9 +1,10 @@
 import { useAuth } from "@/components/auth/auth-provider";
+import HiveAvatar from "@/components/header/hive-avatar-image";
 import { Avatar, Box, Chip, Tooltip, Typography } from "@mui/material";
 
 export default function LoggedInUser()
 {
-    const { displayName, username } = useAuth();
+    const { displayName, username, hiveId } = useAuth();
     return (
         <Tooltip title={
             <Box display="flex" flexDirection="row" alignItems="center" gap={ 0.5 }>
@@ -12,7 +13,7 @@ export default function LoggedInUser()
             </Box>
         } placement="bottom">
             <Chip
-                avatar={ <Avatar>{ displayName?.substring(0, 1) }</Avatar> }
+                avatar={ <HiveAvatar hiveId={ hiveId } alt={ displayName ?? '' } /> }
                 label={ displayName }
                 size="medium"
                 color='secondary'

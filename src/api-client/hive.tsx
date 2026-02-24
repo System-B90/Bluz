@@ -31,8 +31,3 @@ export async function apiGetModules()
 {
     return (await safeApiFetcher('/api/hive/modules')) as Array<Module>;
 }
-
-export function getHiveBaseUrl()
-{
-    return process.env.NEXT_PUBLIC_HIVE_API_URL || 'https://hive.org';
-}

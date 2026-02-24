@@ -1,4 +1,4 @@
-import { getHiveBaseUrl } from "@/api-client/hive";
+import { getHiveBaseUrl } from "@/api-shared/common";
 import { useHiveRooms } from "@/components/base/hive-rooms-provider";
 import { Room, RoomLike } from "@/components/schedule/types/room";
 import WarningIcon from '@mui/icons-material/Warning';

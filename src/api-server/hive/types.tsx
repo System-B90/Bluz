@@ -36,21 +36,6 @@ export const clearanceName = (clearance: Clearance) =>
             return "Admin" as const;
     }
 };
-/**
- * * `1` - Hanich
- * `2` - Checker
- * `3` - Segel
- * `5` - Admin
- */
-export type ClearanceEnum = (typeof ClearanceEnum)[ keyof typeof ClearanceEnum ];
-
-export const ClearanceEnum = {
-    NUMBER_1: 1,
-    NUMBER_2: 2,
-    NUMBER_3: 3,
-    NUMBER_5: 5,
-} as const;
-
 export enum ClassTypeEnum
 {
     Room = "Room",
@@ -106,7 +91,7 @@ export interface CourseUser
      * @minimum -2147483648
      * @maximum 2147483647
      */
-    clearance: ClearanceEnum;
+    clearance: Clearance;
     confirmed?: boolean;
     /** @nullable */
     readonly current_assignment: number | null;

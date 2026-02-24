@@ -14,3 +14,10 @@ export function getKeysOfObject<T extends object>(obj: T): Keys<T>[]
 }
 
 export type Color = string;
+
+
+export function getHiveBaseUrl()
+{
+    return process.env.NEXT_PUBLIC_HIVE_API_URL || 'https://hive.org';
+}
+
