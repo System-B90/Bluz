@@ -67,16 +67,12 @@ const HIVE_PROVIDER: OAuthConfig<HiveSsoProfile> = {
     },
 
     issuer: "https://hive.org/sso/",
-    // wellKnown: "https://hive.org/sso/.well-known/openid-configuration",
-    jwks_endpoint: 'https://hive.org/sso/.well-known/jwks.json',
+    wellKnown: "https://hive.org/sso/.well-known/openid-configuration",
+    // jwks_endpoint: 'https://hive.org/sso/.well-known/jwks.json',
 
     authorization: {
-        url: "https://hive.org/sso/authorize/",
         params: { scope: "openid profile clearance extended_profile api" }
     },
-
-    token: "https://hive.org/sso/token/",
-    userinfo: "https://hive.org/sso/userinfo/",
 
     clientId: process.env.HIVE_CLIENT_ID,
     clientSecret: process.env.HIVE_CLIENT_SECRET,
