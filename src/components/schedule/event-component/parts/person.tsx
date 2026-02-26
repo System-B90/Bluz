@@ -26,7 +26,7 @@ export function PersonChip({ instructorId, personData, event, size, ...props }: 
                 </Link>
             }
             color={ isLecturer ? "primary" : "default" }
-            size={ size || "small" }
+            size={ size ?? "small" }
             { ...props }
         />
     );

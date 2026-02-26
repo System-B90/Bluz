@@ -47,7 +47,7 @@ export default function CourseField({ event, onEventChange, ...props }: CourseFi
                         { selected.map((value) => (
                             <Chip
                                 key={ value }
-                                label={ getCourse(value)?.name || value }
+                                label={ getCourse(value)?.name ?? value }
                                 size="small" // Optional: makes them fit better
                                 onDelete={ () => handleDelete(value) }
                                 onMouseDown={ (event) => event.stopPropagation() }

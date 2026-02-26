@@ -44,7 +44,7 @@ export default function FilterCourses({ ...props }: BoxProps)
                                 return (
                                     <Chip
                                         key={ id }
-                                        label={ course?.name || id }
+                                        label={ course?.name ?? id }
                                         size="small"
                                         onDelete={ () => handleDelete(id) }
                                         // Prevent menu from opening when deleting

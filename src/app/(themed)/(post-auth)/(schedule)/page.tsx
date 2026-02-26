@@ -119,7 +119,7 @@ export default function SchedulePage()
             // 1. Resolve the value. If 'action' is a function, call it with the previous state.
             // We fallback to {} if prev is null/undefined to ensure the function receives an object.
             const updates = typeof action === 'function'
-                ? (action as (prev: Partial<Event>) => Partial<Event>)(prev || {})
+                ? (action as (prev: Partial<Event>) => Partial<Event>)(prev ?? {})
                 : action;
 
             // 2. Apply the merge logic you had originally

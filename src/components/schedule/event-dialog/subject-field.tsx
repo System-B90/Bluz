@@ -22,7 +22,7 @@ export default function SubjectField({ event, onEventChange, ...props }: Subject
         <FormControl fullWidth={ false } disabled={ event?.type ? !eventHasSubject(event?.type) : false } { ...props }>
             <InputLabel>מקצוע</InputLabel>
             <Select
-                value={ event?.subject || "" }
+                value={ event?.subject ?? "" }
                 label="מקצוע"
                 onChange={ (e) => onEventChange({ subject: e.target.value }) }
             >

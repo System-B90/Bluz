@@ -78,7 +78,7 @@ export const CoursesProvider = ({ children }: { children: React.ReactNode; }) =>
     {
         await apiDeleteCourse(courseId)
             .then(() => enqueueSnackbar(`מחיקת מסלול ${courses[ courseId ]?.name || courseId} הסתיימה בהצלחה.`, { variant: 'success' }))
-            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, `מחיקת המסלול ${courses[ courseId ]?.name || courseId} נכשלה!`, error));
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, `מחיקת המסלול ${courses[ courseId ]?.name ?? courseId} נכשלה!`, error));
         loadCourses();
     }, [ setCourses, loadCourses, courses ]);
 

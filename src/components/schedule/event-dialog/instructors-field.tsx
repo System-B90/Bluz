@@ -14,7 +14,7 @@ function LecturerSelectionField({ event, onEventChange, ...props }: InstructorsF
     const { instructors, getInstructor } = useHiveUsers();
 
     // Ensure selectedIds is always an array to prevent crashes
-    const selectedIds = event?.lecturers || [];
+    const selectedIds = event?.lecturers ?? [];
 
     const handleChange = (event: SelectChangeEvent<typeof selectedIds>) =>
     {
@@ -36,7 +36,7 @@ function LecturerSelectionField({ event, onEventChange, ...props }: InstructorsF
     {
         onEventChange((prev) => ({
             ...prev,
-            lecturers: (prev?.lecturers || []).filter((id) => id !== idToDelete)
+            lecturers: (prev?.lecturers ?? []).filter((id) => id !== idToDelete)
         }));
     };
 
@@ -58,7 +58,7 @@ function LecturerSelectionField({ event, onEventChange, ...props }: InstructorsF
                                 return (
                                     <Chip
                                         key={ id }
-                                        label={ lecturer?.display_name || id }
+                                        label={ lecturer?.display_name ?? id }
                                         size="small"
                                         onDelete={ () => handleDelete(id) }
                                         // Prevent menu from opening when deleting
@@ -88,7 +88,7 @@ export default function InstructorsField({ event, onEventChange }: InstructorsFi
     const isLecture = useMemo(() => event?.type === EventType.LECTURE, [ event?.type ]);
 
     // Ensure selectedIds is always an array to prevent crashes
-    const selectedIds = event?.instructors || [];
+    const selectedIds = event?.instructors ?? [];
 
     const handleChange = (event: SelectChangeEvent<typeof selectedIds>) =>
     {
@@ -110,7 +110,7 @@ export default function InstructorsField({ event, onEventChange }: InstructorsFi
     {
         onEventChange((prev) => ({
             ...prev,
-            instructors: (prev?.instructors || []).filter((id) => id !== idToDelete)
+            instructors: (prev?.instructors ?? []).filter((id) => id !== idToDelete)
         }));
     };
 
@@ -133,7 +133,7 @@ export default function InstructorsField({ event, onEventChange }: InstructorsFi
                                     return (
                                         <Chip
                                             key={ id }
-                                            label={ instructor?.display_name || id }
+                                            label={ instructor?.display_name ?? id }
                                             size="small"
                                             onDelete={ () => handleDelete(id) }
                                             // Prevent menu from opening when deleting

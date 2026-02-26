@@ -45,8 +45,8 @@ export default function EventDialog({
 {
 
     // --- OPTIMIZATION: Local state to prevent typing lag ---
-    const [ localName, setLocalName ] = useState(event?.name || "");
-    const [ localNotes, setLocalNotes ] = useState(event?.notes || "");
+    const [ localName, setLocalName ] = useState(event?.name ?? "");
+    const [ localNotes, setLocalNotes ] = useState(event?.notes ?? "");
 
     const nameTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const notesTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,12 +54,12 @@ export default function EventDialog({
     // Sync local state if the event prop changes externally (e.g. opening a different event)
     useEffect(() =>
     {
-        setLocalName(event?.name || "");
+        setLocalName(event?.name ?? "");
     }, [ event?.name ]);
 
     useEffect(() =>
     {
-        setLocalNotes(event?.notes || "");
+        setLocalNotes(event?.notes ?? "");
     }, [ event?.notes ]);
 
     // Cleanup timeouts to prevent memory leaks if the dialog closes while typing

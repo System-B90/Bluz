@@ -64,7 +64,7 @@ export function EventDurationLabel({ event, sx, size, ...props }: { event: Event
 
     return (
         <Tooltip title={ `${start.format('HH:mm')} - ${end.format('HH:mm')}` } >
-            <Chip label={ durationLabel } size={ size || "small" } sx={ { ...sx, color: 'inherit' } } { ...props } />
+            <Chip label={ durationLabel } size={ size ?? "small" } sx={ { ...sx, color: 'inherit' } } { ...props } />
         </Tooltip>
     );
 }

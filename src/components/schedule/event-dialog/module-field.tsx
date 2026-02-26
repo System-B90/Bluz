@@ -24,7 +24,7 @@ export default function ModuleField({ event, onEventChange, ...props }: ModuleFi
         <FormControl fullWidth={ false } disabled={ (event?.type ? !eventHasSubject(event?.type) : false) || modules.length === 0 } { ...props }>
             <InputLabel>מערך</InputLabel>
             <Select
-                value={ event?.hiveModule || "" }
+                value={ event?.hiveModule ?? "" }
                 label="מערך"
                 onChange={ (e) => onEventChange({ hiveModule: e.target.value }) }
             >

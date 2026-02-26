@@ -49,8 +49,8 @@ const AuthProviderInner = ({ children }: { children: React.ReactNode; }) =>
     }, [ status, router ]);
 
     // 3. Map Hive session data to your local context
-    const username = session?.user?.username || null;
-    const displayName = session?.user?.display_name || 'Guest';
+    const username = session?.user?.username ?? null;
+    const displayName = session?.user?.display_name ?? 'Guest';
     const avatarImage = session?.user?.image ?? null;
 
     const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, data: any) =>
