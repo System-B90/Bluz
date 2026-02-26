@@ -64,7 +64,7 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
                     button: { fontWeight: 600 },
                 },
                 palette: {
-                    mode: paletteMode || 'light',
+                    mode: paletteMode ?? 'light',
                     ...(paletteMode === 'light'
                         ? {
                             // LIGHT MODE
@@ -183,7 +183,7 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
     // 3. Memoize the context value
     // We map next-themes values to your context shape.
     const contextValue = useMemo(() => ({
-        theme: (theme as ThemeMode) || 'system',
+        theme: (theme as ThemeMode) ?? 'system',
         setTheme: setTheme as Dispatch<SetStateAction<ThemeMode>>
     }), [ theme, setTheme ]);
 

@@ -29,7 +29,7 @@ export default function GroupMembersField({ group }: GroupMemberFieldProps)
         // </div>
         <DndContext>
             <SortableContext
-                items={ group.members?.map((user: User): string => user.id) || [] }
+                items={ group.members?.map((user: User): string => user.id) ?? [] }
                 strategy={ verticalListSortingStrategy }
             >
                 <Stack spacing={ 1 }>

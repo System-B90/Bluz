@@ -55,7 +55,7 @@ export async function GET(
             status: 200,
             headers: {
                 // Pass along the exact image type (image/jpeg, image/png, etc.) provided by Hive
-                "Content-Type": hiveResponse.headers.get("Content-Type") || "application/octet-stream",
+                "Content-Type": hiveResponse.headers.get("Content-Type") ?? "application/octet-stream",
                 // Cache the image in the browser for 1 hour to reduce load on the Django server
                 "Cache-Control": "private, max-age=3600",
             },

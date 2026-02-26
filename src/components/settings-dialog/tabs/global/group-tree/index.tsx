@@ -63,7 +63,7 @@ export default function GroupTreeViewer({ initialGroups }: { initialGroups: Grou
     return (
         <DndContext>
             <SortableContext
-                items={ initialGroups.map((group: Group): string => group.id) || [] }
+                items={ initialGroups.map((group: Group): string => group.id) ?? [] }
                 strategy={ verticalListSortingStrategy }
             >
                 <Box>

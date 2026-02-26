@@ -84,7 +84,7 @@ const HIVE_PROVIDER: OAuthConfig<HiveSsoProfile> = {
         return {
             id: profile.sub.toString(),
             name: `${profile.given_name} ${profile.family_name}`,
-            email: profile.email || null,
+            email: profile.email ?? null,
             username: profile.username,
             clearance: profile.clearance,
             program: profile.program,

@@ -8,7 +8,6 @@ export const NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING = `${SECURE_CONTEX
 
 export const WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC = 'server';
 export const WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY = process.env.WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY;
-// Currently no assert since this executes on the client for some reason as well
 assert(WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY || (typeof window !== 'undefined'), `WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY must be set in environment variables!`);
 
 export enum MessageTypes 
