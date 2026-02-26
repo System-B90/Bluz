@@ -54,7 +54,7 @@ function DeletedItemPlaceholder()
 
 function EventListEntry({ isItemSelected, handleEntryClick, eventId, localModifiedEvent, serverVersion, capturedVersion, conflicting }: { isItemSelected: boolean, handleEntryClick: (event: React.MouseEvent<HTMLTableRowElement>, entryId: EventId) => void, eventId: EventId, localModifiedEvent: Event | undefined; serverVersion: Event | undefined; capturedVersion: Event | undefined; conflicting: boolean; })
 {
-    console.log(eventId, localModifiedEvent, serverVersion, capturedVersion, conflicting);
+    // console.log(eventId, localModifiedEvent, serverVersion, capturedVersion, conflicting);
     const [ expanded, setExpanded ] = useState<boolean>(false);
     const allKeys: Array<keyof Event> = [ ...new Set([ ...Object.keys(localModifiedEvent ?? {}), ...Object.keys(serverVersion ?? {}), ...Object.keys(capturedVersion ?? {}) ]) ] as Array<keyof Event>;
 
@@ -168,7 +168,7 @@ function EventCollisionsList({ collisionStates }: { collisionStates: CollisionSt
         setSelected(Object.keys(collisionStates).filter((eventId) => !collisionStates[ eventId ].conflicting));
     }, [ collisionStates ]);
 
-    console.log('collisionStates', collisionStates);
+    // console.log('collisionStates', collisionStates);
     const items = Object.keys(collisionStates).map((eventId) => (
         <EventListEntry isItemSelected={ selected.includes(eventId) } key={ eventId } eventId={ eventId } { ...collisionStates[ eventId ] } handleEntryClick={ handleEntryClick } />
     ));
@@ -214,7 +214,7 @@ export default function PushOfflineUpdatesDialog({
     const { pushDialogOpen, getCapturedEvent } = useOffline();
     const { events: localEvents } = useCalendar();
     const [ collisionStates, setCollisionStates ] = useState<CollisionStates>({});
-    console.log('localEvents', localEvents);
+    // console.log('localEvents', localEvents);
 
     const onClose = useCallback(() => { }, []);
     const submitHandler = useCallback((e: FormEvent<HTMLFormElement>) =>
@@ -233,8 +233,8 @@ export default function PushOfflineUpdatesDialog({
             .catch((error) => { enqueueApiErrorSnackbar(enqueueSnackbar, `טעינת המצב העדכני בשרת נכשלה!`, error); return null; });
         if (serverEvents === null) { return {}; }
 
-        console.log('capturedEventsBeforeEdit', capturedEventsBeforeEdit);
-        console.log('serverEvents', serverEvents);
+        // console.log('capturedEventsBeforeEdit', capturedEventsBeforeEdit);
+        // console.log('serverEvents', serverEvents);
 
         capturedEventsBeforeEdit.forEach((capturedEventBeforeEdit) =>
         {

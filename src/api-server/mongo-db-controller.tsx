@@ -1,6 +1,7 @@
 import { Course } from "@/api-shared/types/course";
 import { Setting } from "@/api-shared/types/settings/settings";
 import { Event } from "@/components/schedule/types/event";
+import { CustomRoom } from "@/components/schedule/types/room";
 import { Collection, Db, MongoClient } from "mongodb";
 const MONGO_CONNECTION_STRING = process.env.MONGO_CONNECTION_STRING ?? 'mongodb://127.0.0.1:27017/';
 
@@ -11,6 +12,7 @@ class DatabaseController
     private _events!: Collection<Event>;
     private _settings!: Collection<Setting>;
     private _courses!: Collection<Course>;
+    private _rooms!: Collection<CustomRoom>;
 
     constructor()
     {
@@ -19,6 +21,7 @@ class DatabaseController
         this._events = this.bluezDb.collection('events');
         this._settings = this.bluezDb.collection('settings');
         this._courses = this.bluezDb.collection('courses');
+        this._rooms = this.bluezDb.collection('rooms');
 
     }
 
@@ -33,6 +36,10 @@ class DatabaseController
     public get courses(): Collection<Course>
     {
         return this._courses;
+    }
+    public get rooms(): Collection<CustomRoom>
+    {
+        return this._rooms;
     }
 }
 

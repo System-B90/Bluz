@@ -1,6 +1,7 @@
 import { Class, CourseUser } from "@/api-server/hive/types";
 import { HiveError } from "@/api-shared/errors";
 import { Module } from "@/components/schedule/types/module";
+import { HiveRoom, RoomSource } from "@/components/schedule/types/room";
 import { Subject } from "@/components/schedule/types/subject";
 
 class HiveClient
@@ -130,7 +131,12 @@ class HiveClient
 
     async getClasses(): Promise<Array<Class>>
     {
-        return this._get<Array<Class>>(this.buildUrl('/api/core/management/classes/'));
+        return this._get<Array<Class>>(this.buildUrl('/api/core/management/classes/?type=Student%20Group'));
+    }
+
+    async getRooms(): Promise<Array<HiveRoom>>
+    {
+        return (await this._get<Array<HiveRoom>>(this.buildUrl('/api/core/management/classes/?type=Room'))).map((r) => ({ ...r, source: RoomSource.Hive }));
     }
 
     async getSubjects(): Promise<Array<Subject>>

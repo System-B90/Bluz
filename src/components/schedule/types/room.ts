@@ -1,22 +1,53 @@
 import { Class, ClassTypeEnum } from "@/api-server/hive/types";
 
-export interface Room extends Class
+export enum RoomSource
 {
-    /** @maxLength 100 */
-    name: string;
-    readonly display_name: string;
-    /**
-     * @maxLength 100
-     * @nullable
-     */
-    description?: string | null;
-    /** @maxLength 254 */
-    email?: string;
-    readonly id: number;
-    program: number;
-    readonly program__name: string;
-    type: ClassTypeEnum.Room;
-    users: Array<number>;
+    Custom,
+    Hive,
 }
 
-export type RoomLike = Room | string | number;
+interface BaseRoom  
+{
+    readonly id: number | string;
+    name: string;
+    description?: string | null;
+    source: RoomSource;
+}
+
+export interface HiveRoom extends Class, BaseRoom
+{
+    readonly id: number;
+    readonly display_name: string;
+    type: ClassTypeEnum.Room;
+    source: RoomSource.Hive;
+}
+
+export interface CustomRoom extends BaseRoom  
+{
+    readonly id: string;
+    name: string;
+    description?: string | null;
+    source: RoomSource.Custom;
+}
+export type Room = HiveRoom | CustomRoom;
+export type ResolvableRoom = { id: string; source: RoomSource.Custom; } | { id: number; source: RoomSource.Hive; };
+export type RoomLike = Room | ResolvableRoom;
+export function areRoomsEqual(room1: RoomLike, room2: RoomLike): boolean
+{
+    if (!room1 || !room2) { return false; }
+    if (room1 === room2) { return true; }
+    return room1.id === room1.id && room1.source === room2.source;
+}
+
+export function roomToResolvable<T extends Room>(room: T): Extract<ResolvableRoom, { source: T[ "source" ]; }>
+{
+    return { id: room.id, source: room.source } as Extract<
+        ResolvableRoom,
+        { source: T[ "source" ]; }
+    >;
+}
+
+export function roomToKey(room: RoomLike): string
+{
+    return `${room.source}-${room.id}`;
+}

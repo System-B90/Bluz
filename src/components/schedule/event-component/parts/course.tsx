@@ -1,8 +1,6 @@
-import { getHiveBaseUrl } from "@/api-client/hive";
 import { Course, CourseId } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/courses-provider";
-import WarningIcon from '@mui/icons-material/Warning';
-import { Box, BoxProps, Chip, ChipProps, Link, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, BoxProps, Chip, ChipProps, Stack, Typography } from "@mui/material";
 import { useMemo } from "react";
 
 function SingleCourseComponent({ course, size, ...props }: { course: Course; } & ChipProps)

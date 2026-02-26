@@ -27,12 +27,12 @@ import 'react-big-calendar/lib/sass/styles.scss';
 // Must be after!
 import '@/style/calendar.css';
 
-import { useHiveRooms } from '@/components/base/hive-rooms-provider';
+import { useRooms } from '@/components/base/rooms-provider';
 import CALENDAR_MESSAGES from '@/components/calendar-messages';
 import { useCalendar } from '@/components/schedule/calendar/calendar-provider';
 import BluezEventComponent from '@/components/schedule/event-component/base';
 import { Event } from "@/components/schedule/types/event";
-import { Room } from "@/components/schedule/types/room";
+import { ResolvableRoom, Room } from "@/components/schedule/types/room";
 import CustomWorkWeek from '@/components/schedule/calendar/custom-work-week';
 import { getRangeForView } from '@/components/schedule/calendar/utils';
 
@@ -51,14 +51,14 @@ export default function BluzCalendar({
     events,
 }: {
     handleSaveEvent: (event: Event) => void;
-    handleDeleteEvent: (eventId: Event['id']) => void;
+    handleDeleteEvent: (eventId: Event[ 'id' ]) => void;
     setOpenEventDialog: (open: boolean) => void;
     setSelectedEvent: Dispatch<SetStateAction<Partial<Event> | undefined>>;
     events: Array<Event>;
 })
 {
     const [ currentView, setCurrentView ] = useState<View>(Views.WEEK);
-    const { rooms } = useHiveRooms();
+    const { rooms } = useRooms();
     const { setStartDate, setEndDate } = useCalendar();
 
     // Copy-Paste Tracking States
@@ -92,7 +92,8 @@ export default function BluzCalendar({
 
         if (changes.resourceId !== undefined && changes.resourceId !== null && changes.event.rooms.length <= 1)
         {
-            updates.rooms = [ parseInt(changes.resourceId.toString(), 10) ];
+            const roomId: ResolvableRoom = JSON.parse(changes.resourceId.toString());
+            updates.rooms = [ roomId ];
         }
 
         const newEvent = { ...changes.event, ...updates };
@@ -114,7 +115,8 @@ export default function BluzCalendar({
 
         if (slotInfo.resourceId !== undefined && slotInfo.resourceId !== null)
         {
-            newEvent.rooms = [ parseInt(slotInfo.resourceId.toString() || '0', 10) ];
+            const roomId: ResolvableRoom = JSON.parse(slotInfo.resourceId.toString());
+            newEvent.rooms = (roomId && roomId instanceof Object && typeof roomId.source !== undefined && typeof roomId.id !== undefined) ? [ roomId ] : [];
         }
 
         setSelectedEvent(newEvent);
@@ -161,10 +163,8 @@ export default function BluzCalendar({
     const handleKeyDown = useCallback((e: KeyboardEvent) =>
     {
 
-        console.log(e);
-
+        // console.log(e);
         if ([ 'INPUT', 'TEXTAREA' ].includes((e.target as HTMLElement).tagName)) { return; }
-
 
         const { activeEvent, copiedEvent, selectedSlotInfo } = copyPasteData.current;
 
@@ -207,7 +207,7 @@ export default function BluzCalendar({
 
                 if (selectedSlotInfo.resourceId !== undefined && selectedSlotInfo.resourceId !== null)
                 {
-                    newRooms = [ parseInt(selectedSlotInfo.resourceId.toString(), 10) ];
+                    newRooms = [ JSON.parse(selectedSlotInfo.resourceId.toString()) ];
                 }
             } else
             {

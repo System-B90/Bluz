@@ -1,7 +1,7 @@
 'use client';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { apiGetRooms } from '@/api-client/hive';
-import { Room, RoomLike } from '@/components/schedule/types/room';
+import { apiGetHiveRooms } from '@/api-client/hive';
+import { HiveRoom, RoomLike } from '@/components/schedule/types/room';
 import { enqueueSnackbar } from 'notistack';
 import
 {
@@ -16,8 +16,8 @@ import
 
 export type HiveRoomsContextState = {
     default: boolean;
-    rooms: Array<Room>;
-    getRoom: (id: RoomLike) => Room | undefined;
+    rooms: Array<HiveRoom>;
+    getRoom: (id: RoomLike) => HiveRoom | undefined;
 };
 
 const HiveRoomsContext = createContext<HiveRoomsContextState | undefined>({
@@ -28,7 +28,7 @@ const HiveRoomsContext = createContext<HiveRoomsContextState | undefined>({
 
 export const HiveRoomsProvider = ({ children }: { children: React.ReactNode; }) =>
 {
-    const [ roomLookup, setRoomLookup ] = useState<Record<string, Room>>({});
+    const [ roomLookup, setRoomLookup ] = useState<Record<string, HiveRoom>>({});
 
     const rooms = useMemo(() => Object.values(roomLookup), [ roomLookup ]);
 
@@ -40,15 +40,15 @@ export const HiveRoomsProvider = ({ children }: { children: React.ReactNode; }) 
 
     const loadRooms = useCallback(() =>
     {
-        apiGetRooms().then((fetchedRooms) =>
+        apiGetHiveRooms().then((fetchedRooms) =>
         {
-            const roomsMap: Record<string, Room> = {};
+            const roomsMap: Record<string, HiveRoom> = {};
             fetchedRooms.forEach((room) =>
             {
-                roomsMap[ room.id ] = room as unknown as Room; // TODO: Fix type casting
+                roomsMap[ room.id ] = room;
             });
             setRoomLookup(roomsMap);
-        }).catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת חדרים נכשלה.', error));
+        }).catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת חדרים מההייב נכשלה.', error));
     }, [ setRoomLookup ]);
 
     useEffect(() =>

@@ -1,25 +1,31 @@
 import { getHiveBaseUrl } from "@/api-shared/common";
-import { useHiveRooms } from "@/components/base/hive-rooms-provider";
-import { Room, RoomLike } from "@/components/schedule/types/room";
+import { useRooms } from "@/components/base/rooms-provider";
+import { Room, RoomLike, RoomSource } from "@/components/schedule/types/room";
 import WarningIcon from '@mui/icons-material/Warning';
 import { Box, BoxProps, Chip, ChipProps, Link, Stack, Tooltip, Typography } from "@mui/material";
 import { useMemo } from "react";
 
 function SingleRoomComponent({ room, occupancy, size, ...props }: { room: Room; occupancy?: number; } & ChipProps)
 {
-    const roomCapacity = room?.users.length ?? -1;
+    const roomCapacity = room.source === RoomSource.Hive ? room?.users.length ?? -1 : -1;
     const overcrowded = occupancy !== undefined && roomCapacity >= 0 && occupancy > roomCapacity;
 
     return (
-        <Tooltip title={ overcrowded ? `עומס יתר: ${occupancy}/${roomCapacity}` : '' }>
-            <Chip size={ size ?? 'small' } { ...props } label={ <Link underline="hover" href={ `${getHiveBaseUrl()}/mentor/classes?id=${room?.id}` } color={ 'inherit' }> { room?.name }</Link> } sx={ { color: 'inherit' } } icon={ overcrowded ? <WarningIcon fontSize='small' color="warning" /> : undefined } />
+        <Tooltip title={
+            overcrowded ? `עומס יתר: ${occupancy}/${roomCapacity}` : ''
+        }>
+            <Chip size={ size ?? 'small' } { ...props } label={
+                room.source === RoomSource.Hive ? <Link underline="hover" href={ `${getHiveBaseUrl()}/mentor/classes?id=${room?.id}` } color={ 'inherit' }> { room?.name }</Link> : undefined
+            } sx={ { color: 'inherit' } } icon={
+                overcrowded ? <WarningIcon fontSize='small' color="warning" /> : undefined
+            } />
         </Tooltip>
     );
 }
 
 export function RoomComponent({ roomIds, occupancy, showCaption, chipSize, ...props }: { roomIds: Array<RoomLike>; occupancy?: number; showCaption?: boolean; chipSize?: ChipProps[ 'size' ]; } & BoxProps)
 {
-    const { getRoom } = useHiveRooms();
+    const { getRoom } = useRooms();
     const rooms = useMemo(() => roomIds.map(getRoom).filter((v) => !!v), [ roomIds, getRoom ]);
 
     return (

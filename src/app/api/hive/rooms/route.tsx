@@ -1,6 +1,7 @@
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { getHiveClient } from "@/api-server/hive/client";
 import { Class, ClassTypeEnum } from "@/api-server/hive/types";
+import { HiveRoom } from "@/components/schedule/types/room";
 import { NextRequest } from "next/server";
 
 export async function GET(
@@ -10,7 +11,7 @@ export async function GET(
     try
     {
         const hiveClient = await getHiveClient();
-        const rooms: Class[] = (await hiveClient.getClasses()).filter(c => c.type === ClassTypeEnum.Room);
+        const rooms: Array<HiveRoom> = (await hiveClient.getRooms());
         return ApiSuccess(rooms);
     }
     catch (e)

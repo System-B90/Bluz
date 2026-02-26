@@ -10,7 +10,7 @@ import ShortEventComponent from "@/components/schedule/event-component/variants/
 import ShortNarrowEventComponent from "@/components/schedule/event-component/variants/short-narrow-event";
 import TinyEventComponent from "@/components/schedule/event-component/variants/tiny-event";
 import TinyNarrowEventComponent from "@/components/schedule/event-component/variants/tiny-narrow-event";
-import { Event, PrayerEvent } from "@/components/schedule/types/event";
+import { Event, EventType, PrayerEvent } from "@/components/schedule/types/event";
 import { Box, Tooltip } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { useEffect, useMemo, useState } from "react";
@@ -49,7 +49,7 @@ export default function BluezEventComponent({ event: event, ...props }: EventPro
     const [ variant, setVariant ] = useState<Variant>('short-wide');
 
     const subject = getSubject(event.subject);
-    const bgColor = subject?.color || theme.palette.common.black;
+    const bgColor = (event.type === EventType.PRAYER ? '#e0f9fe' : subject?.color) ?? theme.palette.common.black;
 
     const textColor = theme.palette.getContrastText(bgColor);
 
@@ -115,11 +115,10 @@ export default function BluezEventComponent({ event: event, ...props }: EventPro
         <Box
             ref={ ref }
             sx={ {
-                background: event.type === 'prayer' ? 'linear-gradient(225deg,rgba(92, 221, 247, 1) 0%, rgba(255, 255, 255, 1) 52%)' : null,
                 textAlign: 'left',
                 p: 0.2,
-                bgcolor: event.type === 'prayer' ? null : bgColor,
-                color: event.type === 'prayer' ? 'black' : textColor,
+                bgcolor: bgColor,
+                color: textColor,
                 transition: theme.transitions.create([ 'background-color', 'transform' ]),
                 '&:hover': {
                     bgcolor: alpha(bgColor, 0.9),

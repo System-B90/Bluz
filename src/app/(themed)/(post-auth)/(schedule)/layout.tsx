@@ -1,12 +1,12 @@
 import { CoursesProvider } from '@/components/base/courses-provider';
 import { HiveModulesProvider } from '@/components/base/hive-modules-provider';
-import { HiveRoomsProvider } from '@/components/base/hive-rooms-provider';
 import { HiveSubjectsProvider } from '@/components/base/hive-subjects-provider';
 import { HiveUsersProvider } from '@/components/base/hive-users-provider';
 import { OfflineProvider } from '@/components/base/offline-provider';
 import { SettingsProvider } from '@/components/base/settings-provider';
 import { CalendarProvider } from '@/components/schedule/calendar/calendar-provider';
 import React from 'react';
+import { RoomsProvider } from '@/components/base/rooms-provider';
 
 export default async function ScheduleLayout({
     children,
@@ -18,7 +18,7 @@ export default async function ScheduleLayout({
         <HiveUsersProvider>
             <HiveSubjectsProvider>
                 <HiveModulesProvider>
-                    <HiveRoomsProvider>
+                    <RoomsProvider>
                         <SettingsProvider>
                             <OfflineProvider>
                                 <CoursesProvider>
@@ -28,7 +28,7 @@ export default async function ScheduleLayout({
                                 </CoursesProvider>
                             </OfflineProvider>
                         </SettingsProvider>
-                    </HiveRoomsProvider>
+                    </RoomsProvider>
                 </HiveModulesProvider>
             </HiveSubjectsProvider>
         </HiveUsersProvider>

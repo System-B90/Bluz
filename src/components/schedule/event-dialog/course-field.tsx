@@ -1,6 +1,5 @@
 import { CourseId } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/courses-provider";
-import { useHiveRooms } from "@/components/base/hive-rooms-provider";
 import { eventHasRoom, Event } from "@/components/schedule/types/event";
 import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import { Dispatch, SetStateAction, useCallback } from "react";

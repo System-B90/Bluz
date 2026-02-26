@@ -1,4 +1,5 @@
 import { CourseId } from "@/api-shared/types/course";
+import { ResolvableRoom } from "@/components/schedule/types/room";
 import { Dayjs } from "dayjs";
 
 export enum EventType
@@ -30,7 +31,7 @@ export interface Event
     endTime: Dayjs | Date;
     type: EventType;
     courses: Array<CourseId>;
-    rooms: Array<number>; // Room IDs
+    rooms: Array<ResolvableRoom>;
     instructors: number[]; // Array of instructor IDs
     lecturers?: Array<PersonId>;
     tags: number[];

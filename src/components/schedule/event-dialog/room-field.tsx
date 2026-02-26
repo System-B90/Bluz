@@ -1,5 +1,6 @@
-import { useHiveRooms } from "@/components/base/hive-rooms-provider";
+import { useRooms } from "@/components/base/rooms-provider";
 import { eventHasRoom, Event } from "@/components/schedule/types/event";
+import { areRoomsEqual, ResolvableRoom, roomToKey, roomToResolvable } from "@/components/schedule/types/room";
 import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import { Dispatch, SetStateAction, useCallback } from "react";
 
@@ -11,26 +12,25 @@ interface RoomFieldProps
 
 export default function RoomField({ event, onEventChange, ...props }: RoomFieldProps & FormControlProps)
 {
-    const { rooms, getRoom } = useHiveRooms();
+    const { rooms, getRoom } = useRooms();
 
-    // Ensure value is always an array for the Select component
-    const selectedRoomIds = Array.isArray(event?.rooms) ? event.rooms : [];
+    const encodedSelectedRoomIds = Array.isArray(event?.rooms) ? event.rooms.map((r) => JSON.stringify(r)) : [];
 
-    const handleChange = useCallback((event: SelectChangeEvent<typeof selectedRoomIds>) =>
+    const handleChange = useCallback((event: SelectChangeEvent<typeof encodedSelectedRoomIds>) =>
     {
         const {
             target: { value },
         } = event;
 
         // On autofill we get a stringified value.
-        const newRooms = (typeof value === 'string' ? value.split(',') : value).map((v) => typeof v === 'string' ? parseInt(v) : v);
+        const newRooms = (typeof value === 'string' ? value.split(',') : value).map((v) => typeof v === 'string' ? JSON.parse(v) as ResolvableRoom : v);
 
         onEventChange({ rooms: newRooms });
     }, [ onEventChange ]);
 
-    const handleDelete = useCallback((roomIdToDelete: number) =>
+    const handleDelete = useCallback((roomIdToDelete: ResolvableRoom) =>
     {
-        onEventChange(p => { return { 'rooms': p.rooms?.filter((id) => id !== roomIdToDelete) ?? [] }; });
+        onEventChange(p => { return { 'rooms': p.rooms?.filter((id) => !areRoomsEqual(id, roomIdToDelete)) ?? [] }; });
     }, [ onEventChange ]);
 
     return (
@@ -39,14 +39,14 @@ export default function RoomField({ event, onEventChange, ...props }: RoomFieldP
             <Select
                 label="כיתות"
                 multiple
-                value={ selectedRoomIds }
+                value={ encodedSelectedRoomIds }
                 onChange={ handleChange }
-                renderValue={ (selected: Array<number>) => (
+                renderValue={ (selected: Array<string>) => (
                     <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
-                        { selected.map((value) => (
+                        { selected.map((encodedValue) => JSON.parse(encodedValue) as ResolvableRoom).map((value) => (
                             <Chip
-                                key={ value }
-                                label={ getRoom(value)?.name || value }
+                                key={ roomToKey(value) }
+                                label={ getRoom(value)?.name || value.id }
                                 size="small" // Optional: makes them fit better
                                 onDelete={ () => handleDelete(value) }
                                 onMouseDown={ (event) => event.stopPropagation() }
@@ -56,7 +56,7 @@ export default function RoomField({ event, onEventChange, ...props }: RoomFieldP
                 ) }
             >
                 { Object.values(rooms).map((room) => (
-                    <MenuItem key={ room.id } value={ room.id }>
+                    <MenuItem key={ roomToKey(room) } value={ JSON.stringify(roomToResolvable(room)) }>
                         { room.name }
                     </MenuItem>
                 )) }
