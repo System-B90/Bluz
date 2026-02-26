@@ -11,9 +11,7 @@ export default function OfflineModeIcon({ ...props }: IconButtonProps)
         <Tooltip title={ offlineMode ? 'מצב לוקלי' : 'עבור למצב לוקלי' }>
             <IconButton { ...props } color={ offlineMode ? 'primary' : 'inherit' } onClick={ () => setOfflineMode(v => !v) }>
                 {
-                    offlineMode &&
-                    <WifiTetheringOffIcon color="inherit" /> ||
-                    <WifiTetheringIcon color="inherit" />
+                    offlineMode ? <WifiTetheringOffIcon color="inherit" /> : <WifiTetheringIcon color="inherit" />
                 }
             </IconButton>
         </Tooltip>
