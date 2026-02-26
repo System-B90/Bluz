@@ -30,7 +30,7 @@ import '@/style/calendar.css';
 import { useRooms } from '@/components/base/rooms-provider';
 import CALENDAR_MESSAGES from '@/components/calendar-messages';
 import { useCalendar } from '@/components/schedule/calendar/calendar-provider';
-import BluezEventComponent from '@/components/schedule/event-component/base';
+import BluzEventComponent from '@/components/schedule/event-component/base';
 import { Event } from "@/components/schedule/types/event";
 import { ResolvableRoom, Room } from "@/components/schedule/types/room";
 import CustomWorkWeek from '@/components/schedule/calendar/custom-work-week';
@@ -279,7 +279,7 @@ export default function BluzCalendar({
             startAccessor={ (event) => (event.startTime as Dayjs).toDate() }
             endAccessor={ (event) => (event.endTime as Dayjs).toDate() }
             formats={ { timeGutterFormat: 'HH:mm' } }
-            components={ { event: BluezEventComponent } }
+            components={ { event: BluzEventComponent } }
             onNavigate={ onNavigateHandler }
             resizableAccessor={ (e) => !e.locked }
             draggableAccessor={ (e) => !e.locked }

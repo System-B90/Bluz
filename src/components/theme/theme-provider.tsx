@@ -21,7 +21,7 @@ export type ThemeContextState = {
 
 const ThemeContext = createContext<ThemeContextState | undefined>(undefined);
 
-export function BluezThemeProvider({ children, ...props }: ThemeProviderProps & { children: ReactNode; })
+export function BluzThemeProvider({ children, ...props }: ThemeProviderProps & { children: ReactNode; })
 {
     return (
         <NextThemesProvider
@@ -199,7 +199,7 @@ export const useTheme = () =>
     const context = useContext(ThemeContext);
     if (!context)
     {
-        throw new Error('useTheme must be used within a BluezThemeProvider');
+        throw new Error('useTheme must be used within a BluzThemeProvider');
     }
     return context;
 };

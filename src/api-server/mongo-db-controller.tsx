@@ -8,7 +8,7 @@ const MONGO_CONNECTION_STRING = process.env.MONGO_CONNECTION_STRING ?? 'mongodb:
 class DatabaseController
 {
     private mongoClient!: MongoClient;
-    private bluezDb!: Db;
+    private bluzDb!: Db;
     private _events!: Collection<Event>;
     private _settings!: Collection<Setting>;
     private _courses!: Collection<Course>;
@@ -17,11 +17,11 @@ class DatabaseController
     constructor()
     {
         this.mongoClient = new MongoClient(MONGO_CONNECTION_STRING);
-        this.bluezDb = this.mongoClient.db('bluez');
-        this._events = this.bluezDb.collection('events');
-        this._settings = this.bluezDb.collection('settings');
-        this._courses = this.bluezDb.collection('courses');
-        this._rooms = this.bluezDb.collection('rooms');
+        this.bluzDb = this.mongoClient.db('bluz');
+        this._events = this.bluzDb.collection('events');
+        this._settings = this.bluzDb.collection('settings');
+        this._courses = this.bluzDb.collection('courses');
+        this._rooms = this.bluzDb.collection('rooms');
 
     }
 

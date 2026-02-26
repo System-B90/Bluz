@@ -41,7 +41,7 @@ type Variant =
     | 'large-narrow'
     | 'large-wide';
 
-export default function BluezEventComponent({ event: event, ...props }: EventProps<Event>)
+export default function BluzEventComponent({ event: event, ...props }: EventProps<Event>)
 {
     const theme = useTheme();
     const { getSubject } = useHiveSubjects();

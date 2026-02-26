@@ -9,7 +9,7 @@ import rtlPlugin from '@mui/stylis-plugin-rtl';
 import { prefixer } from 'stylis';
 import createCache from '@emotion/cache';
 import { useServerInsertedHTML } from 'next/navigation';
-import { BluezThemeProvider } from '@/components/theme/theme-provider';
+import { BluzThemeProvider } from '@/components/theme/theme-provider';
 import { CssBaseline } from '@mui/material';
 import { SessionProvider } from 'next-auth/react';
 
@@ -67,7 +67,7 @@ export default function ThemedLayout({ children }: { children: React.ReactNode; 
 
     return (
         <CacheProvider value={ cache }>
-            <BluezThemeProvider>
+            <BluzThemeProvider>
                 <LocalizationProvider dateAdapter={ AdapterDayjs } adapterLocale="he">
                     <CssBaseline />
                     <SnackbarProvider anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }>
@@ -76,7 +76,7 @@ export default function ThemedLayout({ children }: { children: React.ReactNode; 
                         </SessionProvider>
                     </SnackbarProvider>
                 </LocalizationProvider>
-            </BluezThemeProvider>
+            </BluzThemeProvider>
         </CacheProvider>
     );
 }
