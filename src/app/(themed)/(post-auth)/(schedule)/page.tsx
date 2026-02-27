@@ -45,6 +45,12 @@ export default function SchedulePage()
                 e.preventDefault();
                 redo();
             }
+            if (!isInput && e.key === 'Delete' && selectedEvent?.id !== undefined)
+            {
+                e.preventDefault();
+                deleteEvent(selectedEvent.id);
+                setSelectedEvent(undefined);
+            }
         };
 
         window.addEventListener('keydown', handleKeyDown);
