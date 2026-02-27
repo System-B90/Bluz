@@ -1,23 +1,18 @@
 import { CourseId } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/courses-provider";
+import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { eventHasRoom, Event } from "@/components/schedule/types/event";
 import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
-import { Dispatch, SetStateAction, useCallback } from "react";
+import { Dispatch, SetStateAction, useCallback, useState } from "react";
 
-interface CourseFieldProps
-{
-    event?: Partial<Event>;
-    onEventChange: Dispatch<SetStateAction<Partial<Event>>>;
-}
+interface CourseFieldProps extends EventFieldProps { }
 
-export default function CourseField({ event, onEventChange, ...props }: CourseFieldProps & FormControlProps)
+export default function CourseField({ event, onBlurCallback, ...props }: CourseFieldProps & FormControlProps)
 {
     const { courses, getCourse } = useCourses();
+    const [ currentCourseIds, setCurrentCourseIds ] = useState(Array.isArray(event?.courses) ? event.courses : []);
 
-    // Ensure value is always an array for the Select component
-    const selectedCourseIds = Array.isArray(event?.courses) ? event.courses : [];
-
-    const handleChange = useCallback((event: SelectChangeEvent<typeof selectedCourseIds>) =>
+    const handleChange = useCallback((event: SelectChangeEvent<typeof currentCourseIds>) =>
     {
         const {
             target: { value },
@@ -26,13 +21,18 @@ export default function CourseField({ event, onEventChange, ...props }: CourseFi
         // On autofill we get a stringified value.
         const newCourses = (typeof value === 'string' ? value.split(',') : value).filter((id): id is CourseId => typeof id === 'string'); // Type guard to ensure we only have strings
 
-        onEventChange({ courses: newCourses });
-    }, [ onEventChange ]);
+        setCurrentCourseIds(newCourses);
+    }, []);
 
     const handleDelete = useCallback((courseIdToDelete: CourseId) =>
     {
-        onEventChange(p => { return { 'courses': p.courses?.filter((id) => id !== courseIdToDelete) ?? [] }; });
-    }, [ onEventChange ]);
+        setCurrentCourseIds(p => p.filter((id) => id !== courseIdToDelete) ?? []);
+    }, []);
+
+    const onClose = useCallback(() =>
+    {
+        onBlurCallback({ courses: currentCourseIds });
+    }, [ currentCourseIds ]);
 
     return (
         <FormControl fullWidth={ false } { ...props } disabled={ event?.type ? !eventHasRoom(event.type) : false }>
@@ -40,8 +40,9 @@ export default function CourseField({ event, onEventChange, ...props }: CourseFi
             <Select
                 label="מסלולים"
                 multiple
-                value={ selectedCourseIds }
+                value={ currentCourseIds }
                 onChange={ handleChange }
+                onClose={ onClose }
                 renderValue={ (selected: Array<CourseId>) => (
                     <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
                         { selected.map((value) => (

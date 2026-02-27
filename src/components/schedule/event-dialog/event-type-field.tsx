@@ -1,22 +1,37 @@
-import { FormControl, FormControlProps, InputLabel, MenuItem, Select } from "@mui/material";
+import { FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import { EventType, Event, eventTypeToHebrew } from "@/components/schedule/types/event";
+import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
+import { useCallback, useState, useRef } from "react";
 
-export interface EventTypeFieldProps
-{
-    event?: Partial<Event>;
-    onEventChange: (event: Partial<Event>) => void;
-}
+export interface EventTypeFieldProps extends EventFieldProps { }
 
-export default function EventTypeField({ event, onEventChange, ...props }: EventTypeFieldProps & FormControlProps)
+export default function EventTypeField({ event, onBlurCallback, ...props }: EventTypeFieldProps & FormControlProps)
 {
+    const [ currentType, setCurrentType ] = useState<EventType>(event?.type ?? EventType.EXERCISE);
+
+    const latestTypeRef = useRef<EventType>(currentType);
     const eventTypes = Object.values(EventType);
+
+    const onChange = useCallback((ev: SelectChangeEvent<EventType>) =>
+    {
+        const newType = ev.target.value as EventType;
+        setCurrentType(newType);
+        latestTypeRef.current = newType;
+    }, []);
+
+    const onClose = useCallback(() =>
+    {
+        onBlurCallback({ type: latestTypeRef.current });
+    }, [ onBlurCallback ]);
+
     return (
         <FormControl fullWidth={ false } { ...props }>
             <InputLabel>סוג</InputLabel>
             <Select
-                value={ event?.type ?? EventType.EXERCISE }
+                value={ currentType }
                 label="סוג"
-                onChange={ (e) => onEventChange({ type: e.target.value }) }
+                onChange={ onChange }
+                onClose={ onClose }
             >
                 { eventTypes.map((type) => (
                     <MenuItem key={ type } value={ type }>

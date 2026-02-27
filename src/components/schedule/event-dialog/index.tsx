@@ -12,7 +12,7 @@ import
     Switch,
     TextField,
 } from '@mui/material';
-import { ChangeEvent, Dispatch, FormEvent, SetStateAction, useCallback, useState, useEffect, useRef } from "react";
+import { FormEvent, useCallback, useState, useEffect, ChangeEvent } from "react";
 
 import EventTypeField from "@/components/schedule/event-dialog/event-type-field";
 import InstructorsField from "@/components/schedule/event-dialog/instructors-field";
@@ -27,98 +27,67 @@ import CourseField from '@/components/schedule/event-dialog/course-field';
 interface EventDialogProps
 {
     open: boolean;
-    event: Partial<Event>;
+    event: Event;
     onClose: () => void;
-    onSave: (event: Partial<Event>) => void;
-    onEventChange: Dispatch<SetStateAction<Partial<Event>>>;
+    onSave: (event: Event) => void;
     onDelete: (eventId: EventId) => void;
 }
 
 export default function EventDialog({
     open,
-    event,
+    event: inputEvent,
     onClose,
     onSave,
     onDelete,
-    onEventChange,
 }: EventDialogProps)
 {
+    const [ event, setEventRaw ] = useState<Event>({ ...inputEvent });
 
-    // --- OPTIMIZATION: Local state to prevent typing lag ---
-    const [ localName, setLocalName ] = useState(event?.name ?? "");
-    const [ localNotes, setLocalNotes ] = useState(event?.notes ?? "");
-
-    const nameTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const notesTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    // Sync local state if the event prop changes externally (e.g. opening a different event)
+    // Sync state when dialog opens with a new event
     useEffect(() =>
     {
-        setLocalName(event?.name ?? "");
-    }, [ event?.name ]);
-
-    useEffect(() =>
-    {
-        setLocalNotes(event?.notes ?? "");
-    }, [ event?.notes ]);
-
-    // Cleanup timeouts to prevent memory leaks if the dialog closes while typing
-    useEffect(() =>
-    {
-        return () =>
+        if (open)
         {
-            if (nameTimeoutRef.current) clearTimeout(nameTimeoutRef.current);
-            if (notesTimeoutRef.current) clearTimeout(notesTimeoutRef.current);
-        };
-    }, []);
-    // --------------------------------------------------------
+            setEventRaw({ ...inputEvent });
+        }
+    }, [ inputEvent, open ]);
 
     const submitHandler = useCallback((e: FormEvent<HTMLFormElement>) =>
     {
         e.preventDefault();
-        // Guarantee we pass the latest typed values even if the debounce hasn't flushed yet
-        onSave({ ...event, name: localName, notes: localNotes });
-    }, [ onSave, event, localName, localNotes ]);
+        onSave({ ...event });
+    }, [ event, onSave ]);
 
+    const setEvent = useCallback((update: Partial<Event>) =>
+    {
+        setEventRaw((prev) => ({ ...prev, ...update }));
+    }, []);
+
+    // Replaced the ref with standard state-driven controlled input logic
     const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) =>
     {
-        const val = e.target.value;
-        setLocalName(val); // UI updates instantly
+        setEvent({ name: e.target.value });
+    }, [ setEvent ]);
 
-        if (nameTimeoutRef.current) clearTimeout(nameTimeoutRef.current);
-        nameTimeoutRef.current = setTimeout(() =>
-        {
-            onEventChange({ name: val }); // Parent syncs smoothly in the background
-        }, 300);
-    }, [ onEventChange ]);
-
-    const handleNotesChange = useCallback((e: ChangeEvent<HTMLInputElement>) =>
+    const handleNotesChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     {
-        const val = e.target.value;
-        setLocalNotes(val); // UI updates instantly
+        setEvent({ notes: e.target.value });
+    }, [ setEvent ]);
 
-        if (notesTimeoutRef.current) clearTimeout(notesTimeoutRef.current);
-        notesTimeoutRef.current = setTimeout(() =>
-        {
-            onEventChange({ notes: val }); // Parent syncs smoothly in the background
-        }, 300);
-    }, [ onEventChange ]);
-
-    // Switches and isolated non-typing fields can safely remain synchronous
     const handleLockedChange = useCallback((e: ChangeEvent<HTMLInputElement>) =>
     {
-        onEventChange({ locked: e.target.checked });
-    }, [ onEventChange ]);
+        setEvent({ locked: e.target.checked });
+    }, [ setEvent ]);
 
     const handleRequiredChange = useCallback((e: ChangeEvent<HTMLInputElement>) =>
     {
-        onEventChange({ required: e.target.checked });
-    }, [ onEventChange ]);
+        setEvent({ required: e.target.checked });
+    }, [ setEvent ]);
 
     const handlePersonalTalkChange = useCallback((e: ChangeEvent<HTMLInputElement>) =>
     {
-        onEventChange({ personalTalk: e.target.checked });
-    }, [ onEventChange ]);
+        setEvent({ personalTalk: e.target.checked });
+    }, [ setEvent ]);
 
     return (
         <Dialog open={ open } onClose={ onClose } maxWidth="lg" fullWidth>
@@ -132,51 +101,55 @@ export default function EventDialog({
                                 label="שם"
                                 fullWidth
                                 required
-                                value={ localName } // Use local state here
+                                value={ event.name ?? '' } // Prevents controlled/uncontrolled warning
                                 onChange={ handleNameChange }
                                 sx={ { flexGrow: 1 } }
                             />
                             <EventTimeField
                                 sx={ { flexShrink: 1 } }
                                 event={ event }
-                                onEventChange={ onEventChange }
+                                onBlurCallback={ setEvent }
                             />
                         </Box>
+
                         <Box display={ 'flex' } width={ '100%' } gap={ 2 } justifyContent={ 'flex-start' }>
                             <EventTypeField
                                 event={ event }
-                                onEventChange={ onEventChange }
+                                onBlurCallback={ setEvent }
                                 sx={ { width: '12.5%' } }
                             />
-                            { event?.type === 'prayer' &&
+
+                            {/* Standardized JSX Ternary */ }
+                            { event?.type === 'prayer' ? (
                                 <PrayerTypeField
                                     event={ event as PrayerEvent }
-                                    onEventChange={ onEventChange }
+                                    onEventChange={ setEvent }
                                     sx={ { width: '25%' } }
-                                /> || <>
+                                />
+                            ) : (
+                                <>
                                     <SubjectField
                                         event={ event }
-                                        onEventChange={ onEventChange }
+                                        onEventChange={ setEvent }
                                         sx={ { width: '18%' } }
                                     />
                                     <ModuleField
                                         event={ event }
-                                        onEventChange={ onEventChange }
+                                        onEventChange={ setEvent }
                                         sx={ { width: '17%' } }
                                     />
-                                </> }
-                            <Box
-                                gap={ 'inherit' }
-                                display={ 'flex' }
-                                flexGrow={ 1 }>
+                                </>
+                            ) }
+
+                            <Box gap={ 'inherit' } display={ 'flex' } flexGrow={ 1 }>
                                 <CourseField
                                     event={ event }
-                                    onEventChange={ onEventChange }
+                                    onBlurCallback={ setEvent }
                                     fullWidth
                                 />
                                 <RoomField
                                     event={ event }
-                                    onEventChange={ onEventChange }
+                                    onBlurCallback={ setEvent }
                                     fullWidth
                                 />
                             </Box>
@@ -184,7 +157,7 @@ export default function EventDialog({
 
                         <InstructorsField
                             event={ event }
-                            onEventChange={ onEventChange }
+                            onBlurCallback={ setEvent }
                         />
 
                         <TextField
@@ -192,7 +165,7 @@ export default function EventDialog({
                             fullWidth
                             multiline
                             rows={ 3 }
-                            value={ localNotes } // Use local state here
+                            value={ event.notes ?? '' }
                             onChange={ handleNotesChange }
                         />
 
@@ -234,7 +207,8 @@ export default function EventDialog({
                     <Button
                         type="submit"
                         variant="contained"
-                        disabled={ !localName } // Rely on local state validation here
+                        // Fixed logic: Disable if name is empty or undefined
+                        disabled={ !event?.name || event.name.length === 0 }
                     >
                         שמור
                     </Button>
@@ -242,4 +216,4 @@ export default function EventDialog({
             </form>
         </Dialog>
     );
-}
+} 

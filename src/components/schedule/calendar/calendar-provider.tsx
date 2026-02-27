@@ -7,7 +7,7 @@ import { EventAddedOrRemovedMessage, EventDataUpdateMessage } from '@/api-shared
 import { useAuth } from '@/components/auth/auth-provider';
 import { CalendarFiltersProvider } from '@/components/base/calendar-filter-provider';
 import { useOffline } from '@/components/base/offline-provider';
-import { Event, EventId } from '@/components/schedule/types/event';
+import { Event, EventId, EventType } from '@/components/schedule/types/event';
 import { MessageHandlerType } from '@/components/session-ws';
 import { MessageTypes } from '@/settings';
 import { useHistoryState } from '@uidotdev/usehooks';
@@ -95,12 +95,9 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
         switch (messageType)
         {
             case MessageTypes.EVENT_DATA_UPDATE:
-                setEvents(
-                    eventsRef.current.map((p) => p.id in (data as EventDataUpdateMessage<Event>).events
-                        ? { ...p, ...eventDateFixup((data as EventDataUpdateMessage<Event>).events[ p.id ]) }
-                        : p
-                    )
-                );
+                setEvents(eventsRef.current.map((p) => p.id in (data as EventDataUpdateMessage<Event>).events
+                    ? { ...p, ...eventDateFixup((data as EventDataUpdateMessage<Event>).events[ p.id ]) }
+                    : p));
                 break;
             case MessageTypes.EVENT_ADDED_OR_REMOVED:
                 const msg = data as EventAddedOrRemovedMessage<Event>;
@@ -109,7 +106,7 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
                     setEvents(eventsRef.current.filter(p => p.id !== msg.eventId));
                 } else if (msg.action === 'added')
                 {
-                    setEvents([ ...eventsRef.current, eventDateFixup(msg.newData) as Event ]);
+                    setEvents([ ...eventsRef.current.filter((ev) => ev.id !== msg.eventId), eventDateFixup(msg.newData) as Event ]);
                 }
                 break;
         }
@@ -244,3 +241,26 @@ export const useCalendar = () =>
     }
     return context;
 };
+
+export function makeEvent(partial?: Partial<Event>): Event
+{
+    return {
+        id: partial?.id ?? crypto.randomUUID(),
+        name: partial?.name ?? '',
+        subject: partial?.subject ?? 0,
+        hiveModule: partial?.hiveModule ?? 0,
+        startTime: partial?.startTime ?? dayjs(),
+        endTime: partial?.endTime ?? dayjs(),
+        type: partial?.type ?? EventType.EXERCISE,
+        courses: partial?.courses ?? [],
+        rooms: partial?.rooms ?? [],
+        instructors: partial?.instructors ?? [],
+        lecturers: partial?.lecturers ?? [],
+        tags: partial?.tags ?? [],
+        notes: partial?.notes ?? '',
+        locked: partial?.locked ?? false,
+        required: partial?.required ?? false,
+        hidden: partial?.hidden ?? false,
+        personalTalk: partial?.personalTalk ?? false,
+    };
+}

@@ -29,7 +29,7 @@ import '@/style/calendar.css';
 
 import { useRooms } from '@/components/base/rooms-provider';
 import CALENDAR_MESSAGES from '@/components/calendar-messages';
-import { useCalendar } from '@/components/schedule/calendar/calendar-provider';
+import { makeEvent, useCalendar } from '@/components/schedule/calendar/calendar-provider';
 import BluzEventComponent from '@/components/schedule/event-component/base';
 import { Event } from "@/components/schedule/types/event";
 import { ResolvableRoom, Room } from "@/components/schedule/types/room";
@@ -53,7 +53,7 @@ export default function BluzCalendar({
     handleSaveEvent: (event: Event) => void;
     handleDeleteEvent: (eventId: Event[ 'id' ]) => void;
     setOpenEventDialog: (open: boolean) => void;
-    setSelectedEvent: Dispatch<SetStateAction<Partial<Event> | undefined>>;
+    setSelectedEvent: Dispatch<SetStateAction<Event | undefined>>;
     events: Array<Event>;
 })
 {
@@ -62,8 +62,8 @@ export default function BluzCalendar({
     const { setStartDate, setEndDate } = useCalendar();
 
     // Copy-Paste Tracking States
-    const [ activeEvent, setActiveEvent ] = useState<Partial<Event> | null>(null);
-    const [ copiedEvent, setCopiedEvent ] = useState<Partial<Event> | null>(null);
+    const [ activeEvent, setActiveEvent ] = useState<Event | null>(null);
+    const [ copiedEvent, setCopiedEvent ] = useState<Event | null>(null);
     const [ selectedSlotInfo, setSelectedSlotInfo ] = useState<{ start: Date, resourceId?: any; } | null>(null);
 
     // 2. Create a ref to hold the LATEST values silently
@@ -108,7 +108,7 @@ export default function BluzCalendar({
 
         if (slotInfo.action === "click") { return; }
 
-        const newEvent: Partial<Event> = {
+        const newEventPartialData: Partial<Event> = {
             startTime: dayjs(slotInfo.start),
             endTime: dayjs(slotInfo.end),
         };
@@ -116,10 +116,10 @@ export default function BluzCalendar({
         if (slotInfo.resourceId !== undefined && slotInfo.resourceId !== null)
         {
             const roomId: ResolvableRoom = JSON.parse(slotInfo.resourceId.toString());
-            newEvent.rooms = (roomId && roomId instanceof Object && typeof roomId.source !== undefined && typeof roomId.id !== undefined) ? [ roomId ] : [];
+            newEventPartialData.rooms = (roomId && roomId instanceof Object && typeof roomId.source !== undefined && typeof roomId.id !== undefined) ? [ roomId ] : [];
         }
 
-        setSelectedEvent(newEvent);
+        setSelectedEvent(makeEvent(newEventPartialData));
         setOpenEventDialog(true);
     }, [ setSelectedSlotInfo, setActiveEvent, setSelectedEvent, setOpenEventDialog ]);
 

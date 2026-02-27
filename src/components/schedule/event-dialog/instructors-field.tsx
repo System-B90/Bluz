@@ -1,54 +1,50 @@
 import { useHiveUsers } from "@/components/base/hive-users-provider";
-import { EventType, Event } from "@/components/schedule/types/event";
-import { Box, Chip, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
-import React, { Dispatch, SetStateAction, useMemo } from "react";
+import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
+import { EventType } from "@/components/schedule/types/event";
+import { Box, BoxProps, Chip, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
+import { useCallback, useMemo, useState } from "react";
 
-interface InstructorsFieldProps
-{
-    event?: Partial<Event>;
-    onEventChange: Dispatch<SetStateAction<Partial<Event>>>;
-}
+interface InstructorsFieldProps extends EventFieldProps { }
 
-function LecturerSelectionField({ event, onEventChange, ...props }: InstructorsFieldProps & React.HTMLAttributes<HTMLDivElement>)
+function LecturerSelectionField({ event, onBlurCallback, ...props }: InstructorsFieldProps & BoxProps)
 {
     const { instructors, getInstructor } = useHiveUsers();
+    const [ currentLecturers, setCurrentLecturers ] = useState(event?.lecturers ?? []);
 
-    // Ensure selectedIds is always an array to prevent crashes
-    const selectedIds = event?.lecturers ?? [];
-
-    const handleChange = (event: SelectChangeEvent<typeof selectedIds>) =>
+    const handleChange = useCallback((ev: SelectChangeEvent<typeof currentLecturers>) =>
     {
-        const { target: { value } } = event;
+        const { target: { value } } = ev;
 
         // Handle potential string autofill values vs actual arrays
         const newIds = typeof value === 'string'
             ? value.split(',').map((v) => v === 'איש חוץ' ? 'איש חוץ' : Number(v))
             : value;
 
-        // Use functional update pattern for SetStateAction
-        onEventChange((prev) => ({
-            ...prev,
-            lecturers: newIds
-        }));
-    };
+        setCurrentLecturers(newIds);
+    }, []);
 
-    const handleDelete = (idToDelete: number | string) =>
+    const handleDelete = useCallback((idToDelete: number | string) =>
     {
-        onEventChange((prev) => ({
-            ...prev,
-            lecturers: (prev?.lecturers ?? []).filter((id) => id !== idToDelete)
-        }));
-    };
+        setCurrentLecturers((prev) =>
+            (prev ?? []).filter((id) => id !== idToDelete)
+        );
+    }, []);
+
+    const handleBlur = useCallback(() =>
+    {
+        onBlurCallback(({ ...event, lecturers: currentLecturers }));
+    }, [ currentLecturers ]);
 
     return (
-        <Box{ ...props }>
-            <FormControl fullWidth={ true } >
+        <Box { ...props }>
+            <FormControl fullWidth={ true }>
                 <InputLabel>מרצים</InputLabel>
                 <Select
                     multiple
                     label="מרצים"
-                    value={ selectedIds }
+                    value={ currentLecturers }
                     onChange={ handleChange }
+                    onBlur={ handleBlur }
                     renderValue={ (selected) => (
                         <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
                             { selected.map((id) =>
@@ -81,16 +77,14 @@ function LecturerSelectionField({ event, onEventChange, ...props }: InstructorsF
     );
 }
 
-export default function InstructorsField({ event, onEventChange }: InstructorsFieldProps)
+export default function InstructorsField({ event, onBlurCallback }: InstructorsFieldProps)
 {
     const { instructors, getInstructor } = useHiveUsers();
+    const [ currentInstructors, setCurrentInstructors ] = useState(event?.instructors ?? []);
 
     const isLecture = useMemo(() => event?.type === EventType.LECTURE, [ event?.type ]);
 
-    // Ensure selectedIds is always an array to prevent crashes
-    const selectedIds = event?.instructors ?? [];
-
-    const handleChange = (event: SelectChangeEvent<typeof selectedIds>) =>
+    const handleChange = useCallback((event: SelectChangeEvent<typeof currentInstructors>) =>
     {
         const { target: { value } } = event;
 
@@ -100,19 +94,18 @@ export default function InstructorsField({ event, onEventChange }: InstructorsFi
             : value;
 
         // Use functional update pattern for SetStateAction
-        onEventChange((prev) => ({
-            ...prev,
-            instructors: newIds as number[]
-        }));
-    };
+        setCurrentInstructors(newIds);
+    }, []);
 
-    const handleDelete = (idToDelete: number) =>
+    const handleDelete = useCallback((idToDelete: number) =>
     {
-        onEventChange((prev) => ({
-            ...prev,
-            instructors: (prev?.instructors ?? []).filter((id) => id !== idToDelete)
-        }));
-    };
+        setCurrentInstructors((prev) => (prev ?? []).filter((id) => id !== idToDelete));
+    }, []);
+
+    const handleBlur = useCallback(() =>
+    {
+        onBlurCallback(({ ...event, instructors: currentInstructors }));
+    }, [ currentInstructors ]);
 
     return (
         <Box width={ '100%' } display={ 'flex' } gap={ isLecture ? 2 : 0 } >
@@ -122,8 +115,9 @@ export default function InstructorsField({ event, onEventChange }: InstructorsFi
                     <Select
                         multiple
                         label="מבוזרים"
-                        value={ selectedIds }
+                        value={ currentInstructors }
                         onChange={ handleChange }
+                        onBlur={ handleBlur }
                         renderValue={ (selected) => (
                             <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
                                 { selected.map((id) =>
@@ -153,7 +147,7 @@ export default function InstructorsField({ event, onEventChange }: InstructorsFi
                 </FormControl>
             </Box>
             { isLecture &&
-                <LecturerSelectionField event={ event } onEventChange={ onEventChange } className="w-[30%]" />
+                <LecturerSelectionField event={ event } onBlurCallback={ onBlurCallback } className="w-[30%]" />
             }
         </Box>
     );

@@ -2,7 +2,7 @@
 
 import ScheduleAppBar from '@/components/header/app-bar';
 import BluzCalendar from '@/components/schedule/calendar/calendar';
-import { useCalendar } from '@/components/schedule/calendar/calendar-provider';
+import { makeEvent, useCalendar } from '@/components/schedule/calendar/calendar-provider';
 import EventDialog from '@/components/schedule/event-dialog';
 import PushOfflineUpdatesDialog from '@/components/schedule/offline-dialogs/push-updates-dialog';
 import SettingsDialog from "@/components/settings-dialog/settings-dialog";
@@ -22,7 +22,7 @@ export default function SchedulePage()
     } = useCalendar();
 
     // 2. Local UI State (Dialogs & Selected Item)
-    const [ selectedEvent, setSelectedEvent ] = useState<Partial<Event>>();
+    const [ selectedEvent, setSelectedEvent ] = useState<Event>();
     const [ openEventDialog, setOpenEventDialog ] = useState<boolean>(false);
     const [ openSettingsDialog, setOpenSettingsDialog ] = useState<boolean>(false);
 
@@ -81,13 +81,12 @@ export default function SchedulePage()
         setSelectedEvent((prev) =>
         {
             const updates = typeof action === 'function'
-                ? (action as (prev: Partial<Event>) => Partial<Event>)(prev ?? {})
+                ? (action as (prev: Event) => Event)(prev ?? makeEvent())
                 : action;
-            return prev ? { ...prev, ...updates } : (updates as Partial<Event>);
+            return prev ? { ...prev, ...updates } : (updates as Event);
         });
     }, []);
 
-    // 5. Render
     return (
         <Box sx={ { p: 0 } } width="100vw" height="100vh" display="flex" flexDirection="column">
             <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
@@ -102,10 +101,9 @@ export default function SchedulePage()
 
             <EventDialog
                 open={ openEventDialog }
-                event={ selectedEvent || {} }
+                event={ selectedEvent ?? makeEvent() }
                 onClose={ handleCloseEventDialog }
                 onSave={ handleSave }
-                onEventChange={ onEventChange }
                 onDelete={ handleDelete }
             />
 
