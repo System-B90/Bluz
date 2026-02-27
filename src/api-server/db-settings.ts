@@ -5,6 +5,7 @@ import { PRAYER_TIMES_SETTING_KEY } from "@/api-shared/types/settings/prayer";
 import { Setting, SettingName } from "@/api-shared/types/settings/settings";
 import { MessageTypes } from "@/settings";
 import { FindOptions, UpdateOptions, WithId } from "mongodb";
+import logger from "@/logging/pino"
 
 interface DbSetting
 {
@@ -34,14 +35,19 @@ async function setDbSetting(name: SettingName, setting: Partial<Setting>, option
 
 async function initDbSettings()
 {
+    logger.info("Initializing DB Settings from DB");
     const prayerSetting = await getDbSetting(PRAYER_TIMES_SETTING_KEY);
-    if (prayerSetting !== null) return;
+    if (prayerSetting !== null) {
+        logger.debug("DB Settings already initialized");
+        return;
+    }
 
     await setDbSetting(PRAYER_TIMES_SETTING_KEY, {
         'arvit': new Date(1970, 0, 1, 18, 0, 0, 0),
         'mincha': new Date(1970, 0, 1, 12, 0, 0, 0),
         'shacharit': new Date(1970, 0, 1, 6, 0, 0, 0)
     } as Setting, { upsert: true });
+    logger.info("Successfully initialized Settings DB");
 }
 
 

@@ -1,4 +1,4 @@
-import {pino, type Logger} from 'pino'
+import {pino, type Logger} from 'pino';
 
 export const logger: Logger = pino({
     transport: {
@@ -11,3 +11,5 @@ export const logger: Logger = pino({
 
     redact: [], // prevent logging of sensitive data
 });
+
+export default logger;
