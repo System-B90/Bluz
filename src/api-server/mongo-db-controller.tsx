@@ -1,6 +1,6 @@
+import { DbEventDocument } from "@/api-server/db-event";
 import { Course } from "@/api-shared/types/course";
 import { Setting } from "@/api-shared/types/settings/settings";
-import { Event } from "@/components/schedule/types/event";
 import { CustomRoom } from "@/components/schedule/types/room";
 import { Collection, Db, MongoClient } from "mongodb";
 const MONGO_CONNECTION_STRING = process.env.MONGO_CONNECTION_STRING ?? 'mongodb://127.0.0.1:27017/';
@@ -9,7 +9,7 @@ class DatabaseController
 {
     private mongoClient!: MongoClient;
     private bluzDb!: Db;
-    private _events!: Collection<Event>;
+    private _events!: Collection<DbEventDocument>;
     private _settings!: Collection<Setting>;
     private _courses!: Collection<Course>;
     private _rooms!: Collection<CustomRoom>;
@@ -22,10 +22,9 @@ class DatabaseController
         this._settings = this.bluzDb.collection('settings');
         this._courses = this.bluzDb.collection('courses');
         this._rooms = this.bluzDb.collection('rooms');
-
     }
 
-    public get events(): Collection<Event>
+    public get events(): Collection<DbEventDocument>
     {
         return this._events;
     }

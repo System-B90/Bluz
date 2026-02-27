@@ -1,20 +1,36 @@
-import { Event, EventId } from "@/components/schedule/types/event";
+import { DbEventDocument } from "@/api-server/db-event";
+import { Event } from "@/components/schedule/types/event";
 import dayjs from "dayjs";
 
-export function eventDateFixup(event: Partial<Event> & { id: EventId; }): Partial<Event> & { id: EventId; };
-export function eventDateFixup(event: Partial<Event>): Partial<Event>;
-export function eventDateFixup(event: Event): Event;
-export function eventDateFixup(event: Partial<Event>): Partial<Event>
+export function eventDateFixup<T extends Partial<Event | DbEventDocument>>(event: T): T
 {
+    // 1. Create a shallow copy so we don't mutate React state or cached objects
+    const result = { ...event };
+
     if (typeof window === 'undefined')
     {
-        event.endTime = new Date(event.endTime as unknown as string);
-        event.startTime = new Date(event.startTime as unknown as string);
+        // --- SERVER ENVIRONMENT (Target: Native Date) ---
+        if (result.startTime !== undefined)
+        {
+            result.startTime = new Date(result.startTime as any) as any;
+        }
+        if (result.endTime !== undefined)
+        {
+            result.endTime = new Date(result.endTime as any) as any;
+        }
     }
     else
     {
-        event.endTime = dayjs(event.endTime);
-        event.startTime = dayjs(event.startTime);
+        // --- CLIENT ENVIRONMENT (Target: Dayjs) ---
+        if (result.startTime !== undefined)
+        {
+            result.startTime = dayjs(result.startTime) as any;
+        }
+        if (result.endTime !== undefined)
+        {
+            result.endTime = dayjs(result.endTime) as any;
+        }
     }
-    return event;
+
+    return result;
 }

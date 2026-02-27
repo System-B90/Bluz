@@ -17,7 +17,7 @@ console.log( "ESLint FlatCompat initialized with baseDirectory:", compat.baseDir
 // Export the ESLint configuration
 export default [
   // Ignore the .next build folder
-  { ignores: [ ".next/**" ] },
+  { ignores: [ ".next/**", "node_modules/**", "dist/**", "build/**" ] },
 
   // Extend Next.js core rules (classic config converted for Flat)
   ...compat.extends(),

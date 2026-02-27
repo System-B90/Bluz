@@ -32,7 +32,7 @@ export async function apiGetMultipleEvents(eventIds: Array<EventId>): Promise<Re
     return rawData;
 }
 
-export async function apiSaveEvent(event: Event): Promise<Event>
+export async function apiCreateEvent(event: Event): Promise<Event>
 {
     return safeApiFetcher('/api/event', {
         method: 'POST',

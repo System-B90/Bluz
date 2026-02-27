@@ -1,6 +1,6 @@
 'use client';
 
-import { apiDeleteEvent, apiGetEvents, apiSaveEvent } from '@/api-client/calendar';
+import { apiDeleteEvent, apiGetEvents, apiCreateEvent } from '@/api-client/calendar';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { eventDateFixup } from '@/api-shared/calendar';
 import { EventAddedOrRemovedMessage, EventDataUpdateMessage } from '@/api-shared/types';
@@ -10,7 +10,6 @@ import { useOffline } from '@/components/base/offline-provider';
 import { Event, EventId } from '@/components/schedule/types/event';
 import { MessageHandlerType } from '@/components/session-ws';
 import { MessageTypes } from '@/settings';
-import { Box } from '@mui/material';
 import { useHistoryState } from '@uidotdev/usehooks';
 import dayjs from 'dayjs';
 import 'dayjs/locale/he';
@@ -97,14 +96,14 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
         {
             case MessageTypes.EVENT_DATA_UPDATE:
                 setEvents(
-                    eventsRef.current.map((p) => p.id in (data as EventDataUpdateMessage).events
-                        ? { ...p, ...eventDateFixup((data as EventDataUpdateMessage).events[ p.id ]) }
+                    eventsRef.current.map((p) => p.id in (data as EventDataUpdateMessage<Event>).events
+                        ? { ...p, ...eventDateFixup((data as EventDataUpdateMessage<Event>).events[ p.id ]) }
                         : p
                     )
                 );
                 break;
             case MessageTypes.EVENT_ADDED_OR_REMOVED:
-                const msg = data as EventAddedOrRemovedMessage;
+                const msg = data as EventAddedOrRemovedMessage<Event>;
                 if (msg.action === 'removed')
                 {
                     setEvents(eventsRef.current.filter(p => p.id !== msg.eventId));
@@ -129,7 +128,7 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
 
         // Ensure all properties exist (mapping logic moved out of UI)
         const newEvent: Event = {
-            id: eventPartial.id,
+            id: eventPartial.id ?? crypto.randomUUID(),
             name: eventPartial.name ?? '',
             subject: eventPartial.subject ?? 0,
             hiveModule: eventPartial.hiveModule ?? 0,
@@ -164,7 +163,7 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
         // Fire API if online
         if (!offlineMode)
         {
-            apiSaveEvent(newEvent)
+            apiCreateEvent(newEvent)
                 .then((p) =>
                 {
                     enqueueSnackbar(`המופע "${p.name}" נשמר בהצלחה!`, { variant: 'success' });

@@ -1,6 +1,7 @@
 export type UserType = 'student' | 'instructor' | 'helper' | 'other';
 
-export interface User {
+export interface User
+{
     id: string;
     name: string;
     type: UserType;

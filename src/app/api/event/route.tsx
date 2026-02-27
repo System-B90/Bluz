@@ -1,9 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
-import { DbEvent } from "@/api-server/event";
+import { DbEvent, DbEventDocument } from "@/api-server/db-event";
+import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
-import { Event, EventId } from "@/components/schedule/types/event";
+import { EventId } from "@/components/schedule/types/event";
 import { NextRequest } from "next/server";
 
 export async function GET(
@@ -26,7 +27,7 @@ export async function GET(
         {
             const parsedIds = ids.split(',').filter((v) => v.length === 24);
             const eventArray = await DbEvent.getMultiple(parsedIds);
-            const eventRecord = eventArray.reduce((prev, ev) => ({ ...prev, [ ev.id ]: ev }), {} as Record<EventId, Partial<Event>>);
+            const eventRecord = eventArray.reduce((prev, ev) => ({ ...prev, [ ev.id ]: ev }), {} as Record<EventId, Partial<DbEventDocument>>);
             return ApiSuccess(eventRecord);
 
         }
@@ -47,7 +48,7 @@ export async function POST(
 {
     try
     {
-        const event: Partial<Event> = await request.json();
+        const event: DbEventDocument = eventDateFixup(await request.json());
         if (!event) { throw new ClientApiError('No data provided!'); }
         return ApiSuccess(await DbEvent.set(event));
     }

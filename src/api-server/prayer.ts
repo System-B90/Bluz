@@ -1,4 +1,4 @@
-import { DbEvent } from "@/api-server/event";
+import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { EventDataUpdateMessage } from "@/api-shared/types";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
@@ -19,10 +19,10 @@ async function updatePrayerEvent({ day, prayerEvent, newConfig }: { day: Date, p
     );
     const endTime = new Date(startTime.getTime() + 20 * 60 * 1000); // Add 20min
 
-    updatedEvent.startTime = startTime;
-    updatedEvent.endTime = endTime;
+    (updatedEvent.startTime as unknown as Date) = startTime;
+    (updatedEvent.endTime as unknown as Date) = endTime;
 
-    await DbEvent.set(updatedEvent);
+    await DbEvent.set(updatedEvent as unknown as DbEventDocument);
 }
 
 async function updatePrayerEventsInDay({ day, newConfig }: { day: Date, newConfig: PrayerSettings; })
@@ -49,7 +49,7 @@ async function updatePrayerEventsInDay({ day, newConfig }: { day: Date, newConfi
             );
 
             return {
-                id: undefined,
+                id: crypto.randomUUID(),
                 name: prayerTypeToHebrew(prayerType),
                 type: EventType.PRAYER,
                 startTime,
@@ -72,11 +72,11 @@ async function updatePrayerEventsInDay({ day, newConfig }: { day: Date, newConfi
 
         for (const prayer of prayersToCreate)
         {
-            prayer.id = (await DbEvent.set(prayer)).id;
+            prayer.id = (await DbEvent.set(prayer as unknown as DbEventDocument)).id;
         }
     }
     await Promise.all(prayerEvents.map(async (prayerEvent) => await updatePrayerEvent({ day, prayerEvent, newConfig })));
-    SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, { events: prayerEvents.reduce((acc, event) => ({ ...acc, [ event.id ]: event }), {}) } as EventDataUpdateMessage);
+    SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, { events: prayerEvents.reduce((acc, event) => ({ ...acc, [ event.id ]: event }), {}) } as EventDataUpdateMessage<DbEventDocument>);
 }
 
 export async function updatePrayerEvents({ startDate, newConfig }: { startDate: Date, newConfig: PrayerSettings; })

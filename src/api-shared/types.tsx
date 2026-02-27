@@ -1,8 +1,9 @@
+import { DbEventDocument } from "@/api-server/db-event";
 import { Event } from "@/components/schedule/types/event";
 
-export interface EventDataUpdateMessage
+export interface EventDataUpdateMessage<T extends Event | DbEventDocument>
 {
-    events: Record<string, Event>;
+    events: Record<string, T>;
 }
 interface EventRemovedMessage
 {
@@ -10,14 +11,14 @@ interface EventRemovedMessage
     eventId: string;
 }
 
-interface EventAddedMessage
+interface EventAddedMessage<T extends Event | DbEventDocument>
 {
     action: 'added';
     eventId: string;
-    newData: Event;
+    newData: T;
 }
 
-export type EventAddedOrRemovedMessage = EventRemovedMessage | EventAddedMessage;
+export type EventAddedOrRemovedMessage<T extends Event | DbEventDocument> = EventRemovedMessage | EventAddedMessage<T>;
 
 export enum PotentialPA
 {

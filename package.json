@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "npx eslint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@base-ui-components/react": "^1.0.0-beta.6",

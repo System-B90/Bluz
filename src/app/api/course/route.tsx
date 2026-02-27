@@ -59,7 +59,7 @@ export async function PUT(
 {
     try
     {
-        const course: Omit<Course, 'id'> = await request.json();
+        const course: Course = await request.json();
         if (!course) { throw new ClientApiError('No data provided!'); }
         return ApiSuccess(await DbCourses.create(course));
     }

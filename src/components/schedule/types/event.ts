@@ -1,6 +1,7 @@
 import { CourseId } from "@/api-shared/types/course";
 import { ResolvableRoom } from "@/components/schedule/types/room";
 import { Dayjs } from "dayjs";
+import { ObjectId } from "mongodb";
 
 export enum EventType
 {
@@ -27,12 +28,12 @@ export interface Event
     name: string;
     subject: number; // Subject ID
     hiveModule: number; // Module ID
-    startTime: Dayjs | Date;
-    endTime: Dayjs | Date;
+    startTime: Dayjs;
+    endTime: Dayjs;
     type: EventType;
     courses: Array<CourseId>;
     rooms: Array<ResolvableRoom>;
-    instructors: number[]; // Array of instructor IDs
+    instructors: number[];
     lecturers?: Array<PersonId>;
     tags: number[];
     notes: string;
@@ -42,7 +43,6 @@ export interface Event
     personalTalk: boolean;
 }
 export type EventId = Event[ 'id' ];
-
 export enum PrayerType
 {
     SHACHARIT = 'shacharit',
