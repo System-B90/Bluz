@@ -1,162 +1,114 @@
 'use client';
 
-import { apiDeleteEvent, apiSaveEvent } from '@/api-client/calendar';
-import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import ScheduleAppBar from '@/components/header/app-bar';
 import BluzCalendar from '@/components/schedule/calendar/calendar';
 import { useCalendar } from '@/components/schedule/calendar/calendar-provider';
 import EventDialog from '@/components/schedule/event-dialog';
+import PushOfflineUpdatesDialog from '@/components/schedule/offline-dialogs/push-updates-dialog';
 import SettingsDialog from "@/components/settings-dialog/settings-dialog";
 import { Event, EventId } from "@/components/schedule/types/event";
 import { Box } from '@mui/material';
-import { useHistoryState } from "@uidotdev/usehooks";
-import dayjs from 'dayjs';
-import 'dayjs/locale/he';
-import { enqueueSnackbar } from 'notistack';
 import { SetStateAction, useCallback, useEffect, useState } from 'react';
-import PushOfflineUpdatesDialog from '@/components/schedule/offline-dialogs/push-updates-dialog';
-import { useOffline } from '@/components/base/offline-provider';
 
 export default function SchedulePage()
 {
-    const { events: serverEvents, setEvents: setCalendarEvents } = useCalendar();
+    // 1. Consume the domain logic from our unified Provider
     const {
-        state: events,
-        set: setEvents,
+        events,
+        saveEvent,
+        deleteEvent,
         undo,
-        redo,
-    } = useHistoryState<Array<Event>>(serverEvents);
+        redo
+    } = useCalendar();
 
-    const { offlineMode, captureEventBeforeEdit } = useOffline();
+    // 2. Local UI State (Dialogs & Selected Item)
     const [ selectedEvent, setSelectedEvent ] = useState<Partial<Event>>();
     const [ openEventDialog, setOpenEventDialog ] = useState<boolean>(false);
     const [ openSettingsDialog, setOpenSettingsDialog ] = useState<boolean>(false);
 
-    useEffect(() =>
-    {
-        setCalendarEvents(events);
-    }, [ events, setCalendarEvents ]);
-
+    // 3. Global Keyboard Shortcuts
     useEffect(() =>
     {
         const handleKeyDown = (e: KeyboardEvent) =>
         {
-            if (e.ctrlKey && e.key === 'z') { undo(); };
-            if (e.ctrlKey && e.key === 'y') { redo(); };
+            // Guard: Don't trigger undo/redo if the user is typing inside an input/textarea
+            const activeTag = document.activeElement?.tagName.toLowerCase();
+            const isInput = activeTag === 'input' || activeTag === 'textarea';
+
+            if (!isInput && e.ctrlKey && e.key === 'z')
+            {
+                e.preventDefault();
+                undo();
+            }
+            if (!isInput && e.ctrlKey && e.key === 'y')
+            {
+                e.preventDefault();
+                redo();
+            }
         };
+
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [ undo, redo ]);
 
-    useEffect(() =>
-    {
-        setEvents(serverEvents);
-    }, [ serverEvents, setEvents ]);
-
-
-    const handleSaveEvent = useCallback((event: Partial<Event>): void =>
-    {
-        if (!event || event.name === '') { return; }
-
-        const newEvent: Event = {
-            id: event.id,
-            name: event.name ?? '',
-            subject: event.subject ?? 0,
-            hiveModule: event.hiveModule ?? 0,
-            startTime: event.startTime ?? dayjs(),
-            endTime: event.endTime ?? dayjs(),
-            type: event.type ?? 'exercise',
-            courses: event.courses ?? [],
-            rooms: event.rooms ?? [],
-            instructors: event.instructors ?? [],
-            lecturers: event.lecturers ?? [],
-            tags: event.tags ?? [],
-            notes: event.notes ?? '',
-            locked: event.locked ?? false,
-            required: event.required ?? false,
-            hidden: event.hidden ?? false,
-            personalTalk: event.personalTalk ?? false,
-        } as Event;
-
-        if (newEvent.id)
-        {
-            if (offlineMode)
-            {
-                // Capture the old version
-                const oldEvent = events.find((ev) => ev.id === newEvent.id);
-                if (oldEvent)
-                {
-                    captureEventBeforeEdit(oldEvent);
-                }
-            }
-            setEvents([ ...events.filter(pp => pp.id !== newEvent.id), newEvent ]);
-        }
-
-        setOpenEventDialog(false);
-
-        if (!offlineMode)
-        {
-            apiSaveEvent(newEvent)
-                .then((p) =>
-                {
-                    enqueueSnackbar(`המופע "${p.name}" נשמר בהצלחה!`, { variant: 'success' });
-                    setEvents([ ...events.filter(pp => pp.id !== newEvent.id), p ]);
-                })
-                .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת המופע נכשלה!', error));
-        }
-    }, [ offlineMode, events, setEvents, setOpenEventDialog, captureEventBeforeEdit ]);
-
-    const handleCloseEventDialog = useCallback((): void =>
+    // 4. Clean UI Handlers
+    const handleCloseEventDialog = useCallback(() =>
     {
         setOpenEventDialog(false);
         setSelectedEvent(undefined);
-    }, [ setOpenEventDialog, setSelectedEvent ]);
+    }, []);
+
+    const handleSave = useCallback((event: Partial<Event>) =>
+    {
+        saveEvent(event); // Provider handles API, offline, and history tracking
+        handleCloseEventDialog();
+    }, [ saveEvent, handleCloseEventDialog ]);
+
+    const handleDelete = useCallback((eventId: EventId) =>
+    {
+        deleteEvent(eventId); // Provider handles API, offline, and history tracking
+        handleCloseEventDialog();
+    }, [ deleteEvent, handleCloseEventDialog ]);
 
     const onEventChange = useCallback((action: SetStateAction<Partial<Event>>) =>
     {
         setSelectedEvent((prev) =>
         {
-            // 1. Resolve the value. If 'action' is a function, call it with the previous state.
-            // We fallback to {} if prev is null/undefined to ensure the function receives an object.
             const updates = typeof action === 'function'
                 ? (action as (prev: Partial<Event>) => Partial<Event>)(prev ?? {})
                 : action;
-
-            // 2. Apply the merge logic you had originally
-            // (If state exists, merge updates; otherwise, just use updates)
-            return prev ? { ...prev, ...updates } : (updates as Event);
+            return prev ? { ...prev, ...updates } : (updates as Partial<Event>);
         });
-    }, [ setSelectedEvent ]);
+    }, []);
 
-    const onEventDelete = useCallback((eventId: EventId) =>
-    {
-        if (!offlineMode)
-        {
-            apiDeleteEvent(eventId)
-                .then(() => enqueueSnackbar('המופע נמחק בהצלחה.', { variant: 'success' }))
-                .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'מחיקת המופע נכשלה!', error));
-        }
-
-        setOpenEventDialog(false);
-        setSelectedEvent(undefined);
-    }, [ offlineMode, setOpenEventDialog, setSelectedEvent ]);
-
+    // 5. Render
     return (
-        <Box sx={ { p: 0 } } width={ '100vw' } height={ '100vh' } display={ 'flex' } flexDirection={ 'column' }>
+        <Box sx={ { p: 0 } } width="100vw" height="100vh" display="flex" flexDirection="column">
             <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
-            <BluzCalendar handleSaveEvent={ handleSaveEvent } handleDeleteEvent={ onEventDelete } setOpenEventDialog={ setOpenEventDialog } setSelectedEvent={ setSelectedEvent } events={ events } />
+
+            <BluzCalendar
+                events={ events }
+                handleSaveEvent={ handleSave }
+                handleDeleteEvent={ handleDelete }
+                setOpenEventDialog={ setOpenEventDialog }
+                setSelectedEvent={ setSelectedEvent }
+            />
 
             <EventDialog
                 open={ openEventDialog }
                 event={ selectedEvent || {} }
                 onClose={ handleCloseEventDialog }
-                onSave={ handleSaveEvent }
+                onSave={ handleSave }
                 onEventChange={ onEventChange }
-                onDelete={ onEventDelete }
+                onDelete={ handleDelete }
             />
+
             <PushOfflineUpdatesDialog />
 
-            <SettingsDialog open={ openSettingsDialog } onClose={ () => { setOpenSettingsDialog(false); } } />
+            <SettingsDialog
+                open={ openSettingsDialog }
+                onClose={ () => setOpenSettingsDialog(false) }
+            />
         </Box>
     );
 }

@@ -153,7 +153,7 @@ export default function BluzCalendar({
         const range = getRangeForView(today, currentView);
         setStartDate(range.start);
         setEndDate(range.end);
-    }, [ currentView, setStartDate, setEndDate, ]);
+    }, [ currentView, ]);
 
     useEffect(() =>
     {
