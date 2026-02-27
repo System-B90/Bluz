@@ -72,7 +72,7 @@ async function updatePrayerEventsInDay({ day, newConfig }: { day: Date, newConfi
 
         for (const prayer of prayersToCreate)
         {
-            prayer.id = (await DbEvent.set(prayer as unknown as DbEventDocument)).id;
+            prayer.id = (await DbEvent.create(prayer as unknown as DbEventDocument)).id;
         }
     }
     await Promise.all(prayerEvents.map(async (prayerEvent) => await updatePrayerEvent({ day, prayerEvent, newConfig })));

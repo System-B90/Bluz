@@ -1,6 +1,6 @@
 'use client';
 
-import { apiDeleteEvent, apiGetEvents, apiCreateEvent } from '@/api-client/calendar';
+import { apiDeleteEvent, apiGetEvents, apiCreateEvent, apiUpdateEvent } from '@/api-client/calendar';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { eventDateFixup } from '@/api-shared/calendar';
 import { EventAddedOrRemovedMessage, EventDataUpdateMessage } from '@/api-shared/types';
@@ -126,9 +126,11 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
     {
         if (!eventPartial || eventPartial.name === '') return;
 
+        const isNewEvent = typeof eventPartial.id === 'undefined';
+
         // Ensure all properties exist (mapping logic moved out of UI)
         const newEvent: Event = {
-            id: eventPartial.id ?? crypto.randomUUID(),
+            id: isNewEvent ? crypto.randomUUID() : eventPartial.id,
             name: eventPartial.name ?? '',
             subject: eventPartial.subject ?? 0,
             hiveModule: eventPartial.hiveModule ?? 0,
@@ -148,7 +150,7 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
         } as Event;
 
         // Handle Offline Capturing
-        if (newEvent.id && offlineMode)
+        if (!isNewEvent && offlineMode)
         {
             const oldEvent = events.find((ev) => ev.id === newEvent.id);
             if (oldEvent)
@@ -163,18 +165,36 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
         // Fire API if online
         if (!offlineMode)
         {
-            apiCreateEvent(newEvent)
-                .then((p) =>
-                {
-                    enqueueSnackbar(`המופע "${p.name}" נשמר בהצלחה!`, { variant: 'success' });
-                    // Optional: Update state again with the exact server response to guarantee consistency
-                    setEvents([ ...eventsRef.current.filter(pp => pp.id !== p.id), p ]);
-                })
-                .catch((error) =>
-                {
-                    enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת המופע נכשלה!', error);
-                    // If you want true robust optimistic UI, you would trigger an undo() here if the API fails.
-                });
+            if (isNewEvent)
+            {
+                apiCreateEvent(newEvent)
+                    .then((p) =>
+                    {
+                        enqueueSnackbar(`המופע "${p.name}" נוצר בהצלחה!`, { variant: 'success' });
+                        // Optional: Update state again with the exact server response to guarantee consistency
+                        setEvents([ ...eventsRef.current.filter(pp => pp.id !== p.id), p ]);
+                    })
+                    .catch((error) =>
+                    {
+                        enqueueApiErrorSnackbar(enqueueSnackbar, 'יצירת המופע נכשלה!', error);
+                        // If you want true robust optimistic UI, you would trigger an undo() here if the API fails.
+                    });
+            }
+            else
+            {
+                apiUpdateEvent(newEvent)
+                    .then((p) =>
+                    {
+                        enqueueSnackbar(`המופע "${p.name}" נשמר בהצלחה!`, { variant: 'success' });
+                        // Optional: Update state again with the exact server response to guarantee consistency
+                        setEvents([ ...eventsRef.current.filter(pp => pp.id !== p.id), p ]);
+                    })
+                    .catch((error) =>
+                    {
+                        enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת המופע נכשלה!', error);
+                        // If you want true robust optimistic UI, you would trigger an undo() here if the API fails.
+                    });
+            }
         }
     }, [ events, offlineMode, setEvents, captureEventBeforeEdit ]);
 

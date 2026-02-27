@@ -58,6 +58,22 @@ export async function POST(
     };
 }
 
+export async function PUT(
+    request: NextRequest
+)
+{
+    try
+    {
+        const event: DbEventDocument = eventDateFixup(await request.json());
+        if (!event) { throw new ClientApiError('No data provided!'); }
+        return ApiSuccess(await DbEvent.create(event));
+    }
+    catch (e)
+    {
+        return catchHandler(request, e);
+    };
+}
+
 export async function DELETE(
     request: NextRequest
 )

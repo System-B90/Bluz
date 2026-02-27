@@ -54,21 +54,6 @@ async function setDbEvent(eventData: DbEventDocument, options?: FindOptions): Pr
         options
     );
 
-    if (updateResult.matchedCount === 0)
-    {
-        // --- INSERT FLOW (It didn't exist in the DB yet) ---
-        await databaseController.events.insertOne(fixedEvent as any, options);
-
-        SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
-            action: 'added',
-            newData: fixedEvent,
-            eventId: eventId
-        } as EventAddedOrRemovedMessage<DbEventDocument>);
-
-        return fixedEvent as DbEventDocument;
-    }
-
-    // --- UPDATE FLOW (It already existed) ---
     if (updateResult.modifiedCount === 0)
     {
         throw new ClientApiError(`Event ${eventId} data not modified!`);
@@ -77,6 +62,27 @@ async function setDbEvent(eventData: DbEventDocument, options?: FindOptions): Pr
     SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
         events: { [ eventId ]: fixedEvent }
     } as EventDataUpdateMessage<DbEventDocument>);
+
+    return fixedEvent as DbEventDocument;
+}
+
+async function createDbEvent(eventData: DbEventDocument, options?: FindOptions): Promise<DbEventDocument>
+{
+    if (!eventData.id)
+    {
+        throw new ClientApiError('Event id is missing! Client must provide a UUID.');
+    }
+
+    const fixedEvent = eventDateFixup(eventData);
+    const { id: eventId, ...updatePayload } = fixedEvent;
+
+    await databaseController.events.insertOne(fixedEvent as any, options);
+
+    SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
+        action: 'added',
+        newData: fixedEvent,
+        eventId: eventId
+    } as EventAddedOrRemovedMessage<DbEventDocument>);
 
     return fixedEvent as DbEventDocument;
 }
@@ -108,4 +114,5 @@ export namespace DbEvent
     export const getInRange = getDbEventsInRange;
     export const set = setDbEvent;
     export const del = deleteDbEvent;
+    export const create = createDbEvent;
 }

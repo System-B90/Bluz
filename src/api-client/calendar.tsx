@@ -35,6 +35,14 @@ export async function apiGetMultipleEvents(eventIds: Array<EventId>): Promise<Re
 export async function apiCreateEvent(event: Event): Promise<Event>
 {
     return safeApiFetcher('/api/event', {
+        method: 'PUT',
+        body: JSON.stringify(event),
+    }).then(eventDateFixup);
+}
+
+export async function apiUpdateEvent(event: Event): Promise<Event>
+{
+    return safeApiFetcher('/api/event', {
         method: 'POST',
         body: JSON.stringify(event),
     }).then(eventDateFixup);
