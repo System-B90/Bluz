@@ -12,7 +12,7 @@ interface DbSetting
     value: Setting;
 }
 
-async function getDbSetting(name: SettingName, options?: FindOptions)
+async function getDbSetting(name: SettingName, options?: FindOptions): Promise<Setting | null>
 {
     const data: WithId<DbSetting> | null = await databaseController.settings.findOne({ 'key': name }, options);
     return data ? data.value : null;
@@ -34,6 +34,9 @@ async function setDbSetting(name: SettingName, setting: Partial<Setting>, option
 
 async function initDbSettings()
 {
+    const prayerSetting = await getDbSetting(PRAYER_TIMES_SETTING_KEY);
+    if (prayerSetting !== null) return;
+
     await setDbSetting(PRAYER_TIMES_SETTING_KEY, {
         'arvit': new Date(1970, 0, 1, 18, 0, 0, 0),
         'mincha': new Date(1970, 0, 1, 12, 0, 0, 0),
