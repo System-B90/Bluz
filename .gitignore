@@ -2,6 +2,9 @@
 .idea
 # dependencies
 /node_modules
+src/session-server/node_modules
+src/session-server/.next
+src/session-server/dist
 /.pnp
 .pnp.*
 .yarn/*
