@@ -15,8 +15,14 @@ interface DbSetting
 
 async function getDbSetting(name: SettingName, options?: FindOptions): Promise<Setting | null>
 {
+    logger.info("Fetching db setting");
     const data: WithId<DbSetting> | null = await databaseController.settings.findOne({ 'key': name }, options);
-    return data ? data.value : null;
+    if (!data) {
+        logger.info("DB setting not found");
+        return null;
+    }
+    logger.debug("Fetched DB setting successfully");
+    return data.value;
 }
 
 async function setDbSetting(name: SettingName, setting: Partial<Setting>, options?: UpdateOptions)
