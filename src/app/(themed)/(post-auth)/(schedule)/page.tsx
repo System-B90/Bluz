@@ -87,7 +87,7 @@ export default function SchedulePage()
     }, []);
 
     return (
-        <>
+        <Box height={ '100%' } display={ 'flex' } flexDirection={ 'column' }>
             <BluzCalendar
                 events={ events }
                 handleSaveEvent={ handleSave }
@@ -105,6 +105,6 @@ export default function SchedulePage()
             />
 
             <PushOfflineUpdatesDialog />
-        </>
+        </Box>
     );
 }

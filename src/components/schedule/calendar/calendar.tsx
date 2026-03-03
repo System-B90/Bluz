@@ -244,7 +244,7 @@ export default function BluzCalendar({
 
     return (
         <DnDCalendar
-            className='relative grow'
+            className='relative grow h-full'
             style={ { height: 'unset' } }
             min={ new Date(2025, 0, 1, 7, 0) }  // 8:00 AM
             max={ new Date(2025, 0, 1, 22, 0) } // 6:00 PM
