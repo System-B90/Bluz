@@ -24,7 +24,6 @@ export default function SchedulePage()
     // 2. Local UI State (Dialogs & Selected Item)
     const [ selectedEvent, setSelectedEvent ] = useState<Event>();
     const [ openEventDialog, setOpenEventDialog ] = useState<boolean>(false);
-    const [ openSettingsDialog, setOpenSettingsDialog ] = useState<boolean>(false);
 
     // 3. Global Keyboard Shortcuts
     useEffect(() =>
@@ -88,9 +87,7 @@ export default function SchedulePage()
     }, []);
 
     return (
-        <Box sx={ { p: 0 } } width="100vw" height="100vh" display="flex" flexDirection="column">
-            <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
-
+        <>
             <BluzCalendar
                 events={ events }
                 handleSaveEvent={ handleSave }
@@ -108,11 +105,6 @@ export default function SchedulePage()
             />
 
             <PushOfflineUpdatesDialog />
-
-            <SettingsDialog
-                open={ openSettingsDialog }
-                onClose={ () => setOpenSettingsDialog(false) }
-            />
-        </Box>
+        </>
     );
 }

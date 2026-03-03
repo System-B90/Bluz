@@ -1,4 +1,5 @@
 'use client';
+import CurriculumIcon from '@/components/header/curriculum-icon';
 import FilterIcon from '@/components/header/filter-icon';
 import Filters from '@/components/header/filters';
 import InstructorToolsIcon from '@/components/header/instructor-tools-icon';
@@ -8,16 +9,19 @@ import OfflineModeIcon from '@/components/header/offline-mode-icon';
 import ThemeSelectorIcon from '@/components/header/theme-selector';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { AppBar, AppBarProps, Box, Button, IconButton, Toolbar, Typography } from "@mui/material";
+import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
     setOpenSettingsDialog: (open: boolean) => void,
 } & Exclude<AppBarProps, 'position'>)
 {
-    const [ filtersVisible, setFiltersVisible ] = useState<boolean>(true);
+    const pathname = usePathname();
+    const curriculumPage = pathname.includes('/curriculum');
+    const [ filtersVisible, setFiltersVisible ] = useState<boolean>(!curriculumPage);
 
     return (
-        <AppBar enableColorOnDark={ false } position="relative" className='flex justify-center py-0 h-14' color='default' { ...props }>
+        <AppBar enableColorOnDark={ false } position="sticky" className='flex justify-center py-0 h-14' sx={ { ...props.sx, zIndex: (theme) => theme.zIndex.drawer + 1 } } color='default' { ...props }>
             <Toolbar variant="dense">
                 <Box display="flex" alignItems="center" flexDirection={ 'row' } gap={ 1 }>
                     <Button variant='text' color="inherit" startIcon={
@@ -47,9 +51,9 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
                 </Box>
 
                 <Box display={ 'flex' } alignItems={ 'center' } justifyContent={ 'flex-end' } alignContent={ 'center' }>
-                    <OfflineModeIcon />
-
-                    <FilterIcon filtersVisible={ filtersVisible } setFiltersVisible={ setFiltersVisible } />
+                    { !curriculumPage && <FilterIcon filtersVisible={ filtersVisible } setFiltersVisible={ setFiltersVisible } /> }
+                    { !curriculumPage && <OfflineModeIcon /> }
+                    <CurriculumIcon />
 
                     {/* <InstructorToolsIcon /> */ }
 

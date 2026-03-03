@@ -71,3 +71,21 @@ export class HiveError extends ClientApiError
         this.name = 'HiveError';
     }
 };
+
+export class ClientApiWarning extends ClientApiError
+{
+    constructor(message?: string)
+    {
+        super(message);
+        this.name = 'ClientApiWarning';
+    }
+};
+
+export class OperationAborted extends ClientApiWarning
+{
+    constructor(message?: string)
+    {
+        super(message);
+        this.name = 'OperationAborted';
+    }
+};

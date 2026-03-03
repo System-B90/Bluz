@@ -75,6 +75,6 @@ export function catchHandler<T extends NextRequest>(request: T, e: any)
         return ApiErrorMaker(e);
     }
 
-    console.log(e);
+    console.log('catchHandler', e);
     return ApiError(e);
 }

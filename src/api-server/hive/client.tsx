@@ -1,12 +1,33 @@
 import { Class, CourseUser } from "@/api-server/hive/types";
-import { HiveError } from "@/api-shared/errors";
+import { ClientApiError, HiveError } from "@/api-shared/errors";
 import { Module } from "@/components/schedule/types/module";
 import { HiveRoom, RoomSource } from "@/components/schedule/types/room";
 import { Subject } from "@/components/schedule/types/subject";
 
+interface TimeoutError extends Error
+{
+    name: 'TypeError';
+    cause: {
+        name: string;
+        [ key: string ]: unknown;
+    };
+}
+
+export function isTimeoutError(e: unknown): e is TimeoutError
+{
+    return (e instanceof Error)
+        && (e.name === 'TypeError')
+        && ('cause' in e)
+        && (typeof e.cause === 'object')
+        && (e.cause !== null)
+        && ('name' in e.cause)
+        && (typeof (e.cause as Record<string, unknown>).name === 'string');
+}
+
 class HiveClient
 {
     initialized: boolean;
+    _initError: boolean;
     accessToken!: string;
     refreshTokenValue!: string;
     _username!: string;
@@ -20,6 +41,7 @@ class HiveClient
     constructor(username: string, password: string)
     {
         this.initialized = false;
+        this._initError = false;
         this._username = username;
         this._password = password;
     }
@@ -34,6 +56,13 @@ class HiveClient
             body: JSON.stringify({
                 refresh: this.refreshTokenValue
             })
+        }).catch((e) =>
+        {
+            if (isTimeoutError(e))
+            {
+                throw new HiveError(e.cause.name);
+            }
+            throw e;
         });
         if (!response.ok)
         {
@@ -57,6 +86,14 @@ class HiveClient
                 username: this._username,
                 password: this._password
             })
+        }).catch((e: unknown) =>
+        {
+            this._initError = true;
+            if (isTimeoutError(e))
+            {
+                throw new HiveError(e.cause.name);
+            }
+            throw e;
         }).then((response) =>
         {
             if (!response.ok)
@@ -75,7 +112,7 @@ class HiveClient
     async isInitialized(): Promise<void>
     {
         if (this.initialized) return;
-        return new Promise<void>((resolve) =>
+        return new Promise<void>((resolve, reject) =>
         {
             const check = () =>
             {
@@ -84,6 +121,10 @@ class HiveClient
                     resolve();
                 } else
                 {
+                    if (this._initError)
+                    {
+                        reject();
+                    }
                     setTimeout(check, 50);
                 }
             };
@@ -94,13 +135,22 @@ class HiveClient
     async _get<T>(url: string): Promise<T>
     {
         await this.isInitialized();
+
         const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${this.accessToken}`,
                 'Content-Type': 'application/json',
             }
 
+        }).catch((e) =>
+        {
+            if (isTimeoutError(e))
+            {
+                throw new HiveError(e.cause.name);
+            }
+            throw e;
         });
+
         if (response.status === 401)
         {
             // Handle token expiration
@@ -164,7 +214,14 @@ export async function getHiveClient(): Promise<HiveClient>
     }
 
     const newHiveClient = new HiveClient(username, password);
-    await newHiveClient.initialize();
+    try
+    {
+        await newHiveClient.initialize();
+    } catch (e: unknown)
+    {
+        console.error('[FATAL] Failed to initialize HiveClient!', e);
+        throw e;
+    }
 
     _hiveClient = newHiveClient;
     return _hiveClient;

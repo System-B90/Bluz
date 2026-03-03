@@ -1,5 +1,8 @@
+import { BaseDbDocument } from "@/api-server/curriculum/db-curriculum";
+import { DbSyllabusDocument } from "@/api-server/curriculum/db-syallbus";
 import { DbEventDocument } from "@/api-server/db-event";
 import { Course } from "@/api-shared/types/course";
+import { Curriculum, Module, ModuleEvent, Syllabus } from "@/api-shared/types/curriculum";
 import { Setting } from "@/api-shared/types/settings/settings";
 import { CustomRoom } from "@/components/schedule/types/room";
 import { Collection, Db, MongoClient } from "mongodb";
@@ -13,6 +16,10 @@ class DatabaseController
     private _settings!: Collection<Setting>;
     private _courses!: Collection<Course>;
     private _rooms!: Collection<CustomRoom>;
+    private _curriculums!: Collection<Curriculum & BaseDbDocument>;
+    private _syllabuses!: Collection<Syllabus & BaseDbDocument>;
+    private _modules!: Collection<Module & BaseDbDocument>;
+    private _moduleEvents!: Collection<ModuleEvent & BaseDbDocument>;
 
     constructor()
     {
@@ -22,6 +29,10 @@ class DatabaseController
         this._settings = this.bluzDb.collection('settings');
         this._courses = this.bluzDb.collection('courses');
         this._rooms = this.bluzDb.collection('rooms');
+        this._curriculums = this.bluzDb.collection('curriculums');
+        this._syllabuses = this.bluzDb.collection('syllabuses');
+        this._modules = this.bluzDb.collection('modules');
+        this._moduleEvents = this.bluzDb.collection('moduleEvents');
     }
 
     public get events(): Collection<DbEventDocument>
@@ -39,6 +50,22 @@ class DatabaseController
     public get rooms(): Collection<CustomRoom>
     {
         return this._rooms;
+    }
+    public get curriculums()
+    {
+        return this._curriculums;
+    }
+    public get syllabuses()
+    {
+        return this._syllabuses;
+    }
+    public get modules()
+    {
+        return this._modules;
+    }
+    public get moduleEvents()
+    {
+        return this._moduleEvents;
     }
 }
 

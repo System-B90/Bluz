@@ -1,6 +1,6 @@
 import React from "react";
 import { ApiResponseJson } from "@/api-shared/common";
-import { constructErrorFromNetworkMessage, ClientApiError, UserNotLoggedInError, ClientError, ServerNetworkError } from "@/api-shared/errors";
+import { constructErrorFromNetworkMessage, ClientApiError, UserNotLoggedInError, ClientError, ServerNetworkError, OperationAborted as OperationAbortedWarning, ClientApiWarning } from "@/api-shared/errors";
 import { Typography } from "@mui/material";
 import { EnqueueSnackbar, OptionsObject, VariantType } from "notistack";
 const API_LOGIN_REQUIRED_SLEEP_TIMEOUT = 60 * 1000; // 1 Minute
@@ -58,6 +58,13 @@ export async function safeApiFetcher(input: RequestInfo, init?: RequestInit | un
         .catch((e: any) =>
         {
             if (e instanceof ClientApiError) { throw e; }
+            if (e instanceof Error)
+            {
+                if (e.name === 'AbortError')
+                {
+                    throw new OperationAbortedWarning();
+                }
+            }
             throw new ServerNetworkError(JSON.stringify(e));
         });
 }
@@ -89,6 +96,7 @@ export function enqueueSnackbarWithSubtext(
 export function enqueueApiErrorSnackbar(enqueueSnackbar: EnqueueSnackbar | undefined, mainText: string | React.ReactNode, error: any)
 {
     if (error instanceof UserNotLoggedInError) { console.log(error.message); return; }
+    if (error instanceof ClientApiWarning) { return; }
 
     if (!(error instanceof ClientApiError))
     {
@@ -113,3 +121,5 @@ export function enqueueApiErrorSnackbar(enqueueSnackbar: EnqueueSnackbar | undef
         );
     }
 }
+
+export type ClientApiProps = Omit<RequestInit, 'method' | 'body'>;

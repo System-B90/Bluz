@@ -1,19 +1,27 @@
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 
-export function inplaceDateFixup<T>(item: T, fieldName: keyof T)
+export function inplaceDateFixup<T>(item: T, fieldName: keyof T | Array<keyof T>): T
 {
-    const value = item[ fieldName ];
-    if (!value) { return; };
-
-    if (typeof window === 'undefined')
+    if (Array.isArray(fieldName))
     {
-        // SERVER SIDE: Prepare for MongoDB/API
-        // Convert to native Date object or ISO string
-        item[ fieldName ] = new Date(value as any) as any;
-    } else
-    {
-        // CLIENT SIDE: Prepare for UI
-        // Convert to Dayjs object for easy manipulation
-        item[ fieldName ] = dayjs(value as any) as any;
+        fieldName.forEach((k) => inplaceDateFixup(item, k));
     }
+    else
+    {
+        const value = item[ fieldName ];
+        if (!value) { return item; };
+
+        if (typeof window === 'undefined')
+        {
+            // SERVER SIDE: Prepare for MongoDB/API
+            // Convert to native Date object or ISO string
+            item[ fieldName ] = new Date(value as any) as any;
+        } else
+        {
+            // CLIENT SIDE: Prepare for UI
+            // Convert to Dayjs object for easy manipulation
+            item[ fieldName ] = dayjs(value as any) as any;
+        }
+    }
+    return item;
 }
