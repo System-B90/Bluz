@@ -7,6 +7,9 @@ import AddIcon from '@mui/icons-material/Add';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ModulesProvider } from "@/components/curriculum/module-provider";
 import SyllabusCard from "@/app/(themed)/(post-auth)/curriculum/syllabus-card";
+import { calculateMinimumRequiredTimeForCurriculum } from "@/app/(themed)/(post-auth)/curriculum/utils";
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { enqueueSnackbar } from "notistack";
 
 export interface CurriculumViewProps extends BoxProps
 {
@@ -35,6 +38,7 @@ function CreateSyllabusButton({ onClickCallback }: { onClickCallback?: (createdS
 
 function HoursCard({ curriculum }: { curriculum: CurriculumDocument | undefined; })
 {
+    const [ minimumTimeRequired, setMinimumTimeRequired ] = useState<number>();
     const totalWorkingHours = useMemo(() =>
         (curriculum?.weeks ?? []).reduce(
             (total, currentWeek) =>
@@ -44,6 +48,15 @@ function HoursCard({ curriculum }: { curriculum: CurriculumDocument | undefined;
                     0),
             0),
         [ curriculum?.weeks ]);
+
+    useEffect(() =>
+    {
+        if (!curriculum) { return; }
+        calculateMinimumRequiredTimeForCurriculum(curriculum, curriculum.syllabuses).then(setMinimumTimeRequired).catch((error) =>
+        {
+            enqueueApiErrorSnackbar(enqueueSnackbar, `חישוב הזמן המינימלי הדרוש נכשל.`, error);
+        });
+    }, [ curriculum, curriculum?.syllabuses ]);
 
     return (
         <Card sx={ { padding: 2 } }>
@@ -58,6 +71,11 @@ function HoursCard({ curriculum }: { curriculum: CurriculumDocument | undefined;
                     <Typography variant="body2">
                         {/* Assuming there's a field for used hours, fallback to 0 or skeleton */ }
                         שנוצלו: { curriculum ? (curriculum.usedWorkingHours ?? 0) : <Skeleton variant='text' width={ 30 } /> }
+                    </Typography>
+                </Grid>
+                <Grid>
+                    <Typography variant="body2">
+                        מינימום דרוש: { (minimumTimeRequired !== undefined) ? minimumTimeRequired : <Skeleton variant='text' width={ 30 } /> }
                     </Typography>
                 </Grid>
             </Grid>

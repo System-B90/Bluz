@@ -6,7 +6,8 @@ import
     TableBody, Skeleton,
     TableFooter,
     IconButton,
-    Tooltip
+    Tooltip,
+    CircularProgress
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
@@ -15,9 +16,27 @@ import { ModuleProvider, ModulesProvider, useModule, useModules } from "@/compon
 import { useSyllabus } from "@/components/curriculum/syllabus-provider";
 import { BaseDocument } from "@/api-client/curriculum/curriculum";
 import EditIcon from '@mui/icons-material/Edit';
+import { calculateAllocatedTimeForModule, calculateMinimumRequiredTimeForCurriculum, calculateMinimumRequiredTimeForModule } from '@/app/(themed)/(post-auth)/curriculum/utils';
 function ModuleRow()
 {
     const { data: module, setData: setModule, openDialog } = useModule();
+    const [ minimumRequiredTime, setMinimumRequiredTime ] = useState<number>();
+    const [ allocatedTime, setAllocatedTime ] = useState<number>();
+
+    useEffect(() =>
+    {
+        if (!module) { return; }
+        calculateMinimumRequiredTimeForModule(module)
+            .then(setMinimumRequiredTime);
+    }, [ module ]);
+
+    useEffect(() =>
+    {
+        if (!module) { return; }
+        calculateAllocatedTimeForModule(module)
+            .then(setAllocatedTime);
+    }, [ module ]);
+
 
     const editClickHandler = useCallback(() =>
     {
@@ -47,8 +66,8 @@ function ModuleRow()
             <TableCell>
                 <Typography>{ module.title }</Typography>
             </TableCell>
-            <TableCell>{ module.neededTime }</TableCell>
-            <TableCell>{ module.allocatedTime }</TableCell>
+            <TableCell>{ minimumRequiredTime !== undefined ? minimumRequiredTime : <CircularProgress size={ '1rem' } /> }</TableCell>
+            <TableCell>{ allocatedTime !== undefined ? allocatedTime : <CircularProgress size={ '1rem' } /> }</TableCell>
             <TableCell>
                 <IconButton size='small' onClick={ editClickHandler }>
                     <EditIcon fontSize='small' />
