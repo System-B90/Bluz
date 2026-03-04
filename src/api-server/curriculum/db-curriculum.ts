@@ -16,7 +16,8 @@ async function getCurriculum(id: CurriculumId, options?: FindOptions): Promise<D
         throw new ClientApiError('Curriculum ID is required.');
     }
 
-    const document = await databaseController.curriculums.findOne({ id }, options);
+    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
+    const document = await databaseController.curriculums.findOne({ id }, { ...options, projection });
     return document as DbCurriculumDocument | null;
 }
 
@@ -27,13 +28,15 @@ async function getMultipleCurriculums(ids: CurriculumId[], options?: FindOptions
         return [];
     }
 
-    const cursor = databaseController.curriculums.find({ id: { $in: ids } }, options);
+    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
+    const cursor = databaseController.curriculums.find({ id: { $in: ids } }, { ...options, projection });
     return cursor.toArray() as Promise<DbCurriculumDocument[]>;
 }
 
 async function getCurriculumsByFilter(filter: Filter<DbCurriculumDocument>, options?: FindOptions): Promise<DbCurriculumDocument[]>
 {
-    const cursor = databaseController.curriculums.find(filter, options);
+    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
+    const cursor = databaseController.curriculums.find(filter, { ...options, projection });
     return cursor.toArray() as Promise<DbCurriculumDocument[]>;
 }
 
@@ -72,10 +75,11 @@ async function updateCurriculum(id: CurriculumId, updateData: Partial<Omit<DbCur
     delete (updatePayload as any).id;
 
     // findOneAndUpdate with returnDocument: 'after' ensures we get the exact DB state post-update atomically
+    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
     const updatedDocument = await databaseController.curriculums.findOneAndUpdate(
         { id },
         { $set: updatePayload },
-        { returnDocument: 'after', ...options }
+        { returnDocument: 'after', ...options, projection }
     );
 
     if (!updatedDocument)

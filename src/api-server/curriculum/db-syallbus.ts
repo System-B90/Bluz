@@ -15,7 +15,8 @@ async function getSyllabus(id: SyllabusId, options?: FindOptions): Promise<DbSyl
         throw new ClientApiError('Syllabus ID is required.');
     }
 
-    const document = await databaseController.syllabuses.findOne({ id }, options);
+    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
+    const document = await databaseController.syllabuses.findOne({ id }, { ...options, projection });
     return document as DbSyllabusDocument | null;
 }
 
@@ -26,13 +27,15 @@ async function getMultipleSyllabuses(ids: SyllabusId[], options?: FindOptions): 
         return [];
     }
 
-    const cursor = databaseController.syllabuses.find({ id: { $in: ids } }, options);
+    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
+    const cursor = databaseController.syllabuses.find({ id: { $in: ids } }, { ...options, projection });
     return cursor.toArray() as Promise<DbSyllabusDocument[]>;
 }
 
 async function getSyllabusesByFilter(filter: Filter<DbSyllabusDocument>, options?: FindOptions): Promise<DbSyllabusDocument[]>
 {
-    const cursor = databaseController.syllabuses.find(filter, options);
+    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
+    const cursor = databaseController.syllabuses.find(filter, { ...options, projection });
     return cursor.toArray() as Promise<DbSyllabusDocument[]>;
 }
 
@@ -70,11 +73,12 @@ async function updateSyllabus(id: SyllabusId, updateData: Partial<Omit<DbSyllabu
     // Prevent accidental ID overwrites
     delete (updatePayload as any).id;
 
+    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
     // findOneAndUpdate with returnDocument: 'after' ensures we get the exact DB state post-update atomically
     const updatedDocument = await databaseController.syllabuses.findOneAndUpdate(
         { id },
         { $set: updatePayload },
-        { returnDocument: 'after', ...options }
+        { returnDocument: 'after', ...options, projection }
     );
 
     if (!updatedDocument)
@@ -118,7 +122,7 @@ async function listSyllabus(filters?: Filter<DbSyllabusDocument>): Promise<Array
 
 async function addModuleToSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): Promise<void>
 {
-    const updateResult = await databaseController.curriculums.updateOne({ id: syllabusId }, { '$addToSet': { 'modules': moduleId } });
+    const updateResult = await databaseController.syllabuses.updateOne({ id: syllabusId }, { '$addToSet': { 'modules': moduleId } });
     if (updateResult.matchedCount !== 1)
     {
         throw new ClientApiError(`No syllabus by id ${syllabusId}`);
@@ -128,6 +132,7 @@ async function addModuleToSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): 
         throw new ClientApiError(`Failed to add ${moduleId} to ${syllabusId}`);
     }
 }
+
 export const DbSyllabus = {
     get: getSyllabus,
     getMultiple: getMultipleSyllabuses,

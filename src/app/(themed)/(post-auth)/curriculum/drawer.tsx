@@ -172,7 +172,7 @@ export default function CurriculumDrawer({ open, setOpen, setCurrentCurriculum, 
 
     return (
         <Drawer variant='permanent' anchor="left" open={ open } sx={ { ...props.sx, overflowY: 'hidden' } } { ...props }>
-            <List sx={ { paddingX: 2, paddingY: 0, overflowY: 'scroll' } }>
+            <List sx={ { paddingX: 2, paddingY: 0, overflowY: 'auto' } }>
                 <ListSubheader sx={ { paddingY: 1 } }>
                     <Typography variant="h6" align="center">
                         גאנטים

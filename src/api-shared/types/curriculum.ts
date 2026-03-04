@@ -1,11 +1,14 @@
+import { WeekProps } from "react-big-calendar";
+
 export interface BaseCurriculumItem { id: string; }
 export enum ModuleEventType
 {
-    Other,
-    Lecture,
-    Exercise,
-    SelfTeaching,
+    Lecture = 'הרצאה',
+    Exercise = 'ע"ע',
+    SelfTeaching = 'ל"ע',
+    Other = 'אחר',
 }
+
 export interface ModuleEventRequirements
 {
     // TODO: Implement
@@ -34,13 +37,33 @@ export interface Syllabus extends BaseCurriculumItem
     modules: Array<ModuleId>;
 }
 export type SyllabusId = Syllabus[ 'id' ];
+export enum DayName
+{
+    Sunday = 'ראשון',
+    Monday = 'שני',
+    Tuesday = 'שלישי',
+    Wednesday = 'רביעי',
+    Thursday = 'חמישי',
+    Friday = 'שישי',
+    Saturday = 'שבת',
+}
+export interface CurriculumDays
+{
+    day: DayName;
+    totalWorkingHours: number;
+}
+export interface CurriculumWeek
+{
+    number: number;
+    days: Array<CurriculumDays>;
+}
 export interface Curriculum extends BaseCurriculumItem
 {
     title: string;
     description: string;
     syllabuses: Array<SyllabusId>;
     draft: boolean;
-    totalWorkingHours: number;
+    weeks: Array<CurriculumWeek>;
 }
 export type CurriculumId = Curriculum[ 'id' ];
 
@@ -52,7 +75,7 @@ export function makeCurriculum(curriculum?: Partial<Curriculum>): Curriculum
         description: curriculum?.description ?? 'הגאנט של הקורס החדש שלי',
         syllabuses: curriculum?.syllabuses ?? [],
         draft: curriculum?.draft ?? true,
-        totalWorkingHours: curriculum?.totalWorkingHours ?? 0,
+        weeks: curriculum?.weeks ?? [],
     };
 }
 
@@ -74,5 +97,17 @@ export function makeModule(module?: Partial<Module>): Module
         description: module?.description ?? 'המערך החדש שלי',
         hiveIds: module?.hiveIds ?? [],
         events: module?.events ?? [],
+    };
+}
+
+export function makeModuleEvent(moduleEvent?: Partial<ModuleEvent>): ModuleEvent
+{
+    return {
+        id: moduleEvent?.id ?? crypto.randomUUID(),
+        title: moduleEvent?.title ?? 'מופע חדש',
+        allocatedDuration: moduleEvent?.allocatedDuration ?? 0,
+        minimumDuration: moduleEvent?.minimumDuration ?? 0,
+        type: moduleEvent?.type ?? ModuleEventType.Other,
+        requirements: moduleEvent?.requirements ?? [],
     };
 }

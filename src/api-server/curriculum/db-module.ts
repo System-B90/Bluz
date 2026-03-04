@@ -1,7 +1,7 @@
 import { BaseDbDocument } from "@/api-server/curriculum/db-curriculum";
 import databaseController from "@/api-server/mongo-db-controller";
 import { ClientApiError } from "@/api-shared/errors";
-import { Module, ModuleId } from "@/api-shared/types/curriculum";
+import { Module, ModuleEventId, ModuleId } from "@/api-shared/types/curriculum";
 import { Filter, FindOptions, InsertOneOptions, FindOneAndUpdateOptions, DeleteOptions } from "mongodb";
 
 async function getModule(id: ModuleId, options?: FindOptions): Promise<(Module & BaseDbDocument) | null>
@@ -11,7 +11,8 @@ async function getModule(id: ModuleId, options?: FindOptions): Promise<(Module &
         throw new ClientApiError('Module ID is required.');
     }
 
-    const document = await databaseController.modules.findOne({ id }, options);
+    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
+    const document = await databaseController.modules.findOne({ id }, { ...options, projection });
     return document as (Module & BaseDbDocument) | null;
 }
 
@@ -22,13 +23,15 @@ async function getMultipleModules(ids: Array<ModuleId>, options?: FindOptions): 
         return [];
     }
 
-    const cursor = databaseController.modules.find({ id: { $in: ids } }, options);
+    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
+    const cursor = databaseController.modules.find({ id: { $in: ids } }, { ...options, projection });
     return cursor.toArray() as Promise<(Module & BaseDbDocument)[]>;
 }
 
 async function getModulesByFilter(filter: Filter<(Module & BaseDbDocument)>, options?: FindOptions): Promise<Array<Module & BaseDbDocument>>
 {
-    const cursor = databaseController.modules.find(filter, options);
+    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
+    const cursor = databaseController.modules.find(filter, { ...options, projection });
     return cursor.toArray() as Promise<(Module & BaseDbDocument)[]>;
 }
 
@@ -67,10 +70,11 @@ async function updateModule(id: ModuleId, updateData: Partial<Omit<(Module & Bas
     delete (updatePayload as any).id;
 
     // findOneAndUpdate with returnDocument: 'after' ensures we get the exact DB state post-update atomically
+    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
     const updatedDocument = await databaseController.modules.findOneAndUpdate(
         { id },
         { $set: updatePayload },
-        { returnDocument: 'after', ...options }
+        { returnDocument: 'after', ...options, projection }
     );
 
     if (!updatedDocument)
@@ -112,6 +116,19 @@ async function listModule(filters?: Filter<(Module & BaseDbDocument)>): Promise<
     return documents.map(doc => doc.id as ModuleId);
 }
 
+async function addEventToModule(moduleId: ModuleId, moduleEventId: ModuleEventId): Promise<void>
+{
+    const updateResult = await databaseController.modules.updateOne({ id: moduleId }, { '$addToSet': { 'events': moduleEventId } });
+    if (updateResult.matchedCount !== 1)
+    {
+        throw new ClientApiError(`No module by id ${moduleId}`);
+    }
+    if (updateResult.modifiedCount !== 1)
+    {
+        throw new ClientApiError(`Failed to add ${moduleEventId} to ${moduleId}`);
+    }
+}
+
 export const DbModule = {
     get: getModule,
     getMultiple: getMultipleModules,
@@ -120,4 +137,5 @@ export const DbModule = {
     update: updateModule,
     delete: deleteModule,
     list: listModule,
+    addEvent: addEventToModule,
 } as const;

@@ -5,33 +5,12 @@ import { SyllabusProvider, useSyllabus } from "@/components/curriculum/syllabus-
 import { Box, BoxProps, Button, Card, CardContent, Grid, Skeleton, Typography } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ModuleProvider } from "@/components/curriculum/module-provider";
+import { ModulesProvider } from "@/components/curriculum/module-provider";
+import SyllabusCard from "@/app/(themed)/(post-auth)/curriculum/syllabus-card";
 
 export interface CurriculumViewProps extends BoxProps
 {
     curriculumId: CurriculumId | null;
-}
-
-function SyllabusCard({ syllabusId }: { syllabusId: SyllabusId; })
-{
-    const { get: getSyllabus } = useSyllabus();
-    const [ syllabus, setSyllabus ] = useState<Syllabus>();
-
-    useEffect(() =>
-    {
-        getSyllabus(syllabusId).then(setSyllabus);
-    }, [ syllabusId, getSyllabus ]);
-
-    return (
-        <Card >
-            <CardContent>
-                <Typography>{ syllabus ? syllabus.title : <Skeleton variant="text" width="60%" /> }</Typography>
-                { syllabus && <ModuleProvider params={ { syllabusId } }>
-
-                </ModuleProvider> }
-            </CardContent>
-        </Card>
-    );
 }
 
 function CreateSyllabusButton({ onClickCallback }: { onClickCallback?: (createdSyllabus: Syllabus & BaseDocument) => void; })
@@ -51,6 +30,38 @@ function CreateSyllabusButton({ onClickCallback }: { onClickCallback?: (createdS
         >
             סילבוס חדש
         </Button>
+    );
+}
+
+function HoursCard({ curriculum }: { curriculum: CurriculumDocument | undefined; })
+{
+    const totalWorkingHours = useMemo(() =>
+        (curriculum?.weeks ?? []).reduce(
+            (total, currentWeek) =>
+                total + currentWeek.days.reduce(
+                    (weekTotal, currentDay) =>
+                        weekTotal + currentDay.totalWorkingHours,
+                    0),
+            0),
+        [ curriculum?.weeks ]);
+
+    return (
+        <Card sx={ { padding: 2 } }>
+            <Typography variant="subtitle1" gutterBottom>שעות</Typography>
+            <Grid container spacing={ 2 }>
+                <Grid>
+                    <Typography variant="body2">
+                        ס"ך: { curriculum ? totalWorkingHours : <Skeleton variant='text' width={ 30 } /> }
+                    </Typography>
+                </Grid>
+                <Grid>
+                    <Typography variant="body2">
+                        {/* Assuming there's a field for used hours, fallback to 0 or skeleton */ }
+                        שנוצלו: { curriculum ? (curriculum.usedWorkingHours ?? 0) : <Skeleton variant='text' width={ 30 } /> }
+                    </Typography>
+                </Grid>
+            </Grid>
+        </Card>
     );
 }
 
@@ -109,22 +120,7 @@ export default function CurriculumView({ curriculumId, ...props }: CurriculumVie
                     </Box>
                 </Card>
 
-                <Card sx={ { padding: 2 } }>
-                    <Typography variant="subtitle1" gutterBottom>שעות</Typography>
-                    <Grid container spacing={ 2 }>
-                        <Grid>
-                            <Typography variant="body2">
-                                ס"ך: { curriculum ? curriculum.totalWorkingHours : <Skeleton variant='text' width={ 30 } /> }
-                            </Typography>
-                        </Grid>
-                        <Grid>
-                            <Typography variant="body2">
-                                {/* Assuming there's a field for used hours, fallback to 0 or skeleton */ }
-                                שנוצלו: { curriculum ? (curriculum.usedWorkingHours ?? 0) : <Skeleton variant='text' width={ 30 } /> }
-                            </Typography>
-                        </Grid>
-                    </Grid>
-                </Card>
+                <HoursCard curriculum={ curriculum } />
             </Box>
 
             <Box gap={ 2 } flexGrow={ 1 } display={ 'flex' } flexDirection={ 'column' } height={ '100%' }>
@@ -135,7 +131,7 @@ export default function CurriculumView({ curriculumId, ...props }: CurriculumVie
                             <Box display="flex" justifyContent="flex-start" mb={ 1 }>
                                 <CreateSyllabusButton onClickCallback={ fetchCurriculum } />
                             </Box>
-                            <Box gap={ 2 } display={ 'flex' } flexDirection={ 'column' } flexWrap={ 'wrap' } height={ '100%' } sx={ { overflow: 'scroll' } }>
+                            <Box gap={ 2 } display={ 'flex' } flexDirection={ 'column' } flexWrap={ 'wrap' } alignContent={ 'flex-start' } height={ '100%' } sx={ { overflow: 'scroll' } }>
                                 { syllabusCards }
                             </Box>
                         </Box>

@@ -30,7 +30,7 @@ export default function PostAuthLayout({ children }: { children: React.ReactNode
                                         <CalendarProvider>
                                             <Box sx={ { p: 0 } } width="100vw" height="100vh" display="flex" flexDirection="column" bgcolor={ 'Background' } overflow={ 'hidden' }>
                                                 <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
-                                                <Box maxHeight={ `calc(100vh - (var(--spacing) * 14))` }>
+                                                <Box height={ `calc(100vh - (var(--spacing) * 14))` }>
                                                     { children }
                                                 </Box>
                                             </Box>

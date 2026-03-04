@@ -36,7 +36,7 @@ export type ContextValue<T extends BaseCurriculumItem> = BaseState<T> & {
 };
 
 export type ProviderComponentProps<P> = (P extends void ? { params?: never; } : { params: P; }) & { children?: ReactNode; };
-export function buildItemProvider<T extends BaseCurriculumItem, P = void>({
+export function buildItemsProvider<T extends BaseCurriculumItem, P = void>({
     apiList,
     apiGet,
     apiUpdate,

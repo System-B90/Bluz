@@ -1,9 +1,9 @@
 'use client';
 import { apiCreateSyllabus, apiDeleteSyllabus, apiGetSyllabus, apiListSyllabuses, apiUpdateSyllabus } from "@/api-client/curriculum/syllabus";
-import { buildItemProvider } from "@/components/curriculum/base-provider";
+import { buildItemsProvider } from "@/components/curriculum/base-items-provider";
 import { CurriculumId, Syllabus } from "@/api-shared/types/curriculum";
 
-const { provider, use } = buildItemProvider<Syllabus, CurriculumId>({
+const { provider, use } = buildItemsProvider<Syllabus, CurriculumId>({
     apiList: apiListSyllabuses,
     apiGet: apiGetSyllabus,
     apiCreate: apiCreateSyllabus,
