@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, ChangeEventHandler } from 'r
 import
 {
     Card, CardContent, Typography, Button, TextField, Box, ButtonGroup,
-    CardHeader, CardActions, Paper, Table, TableHead, TableRow, TableCell,
+    CardHeader, CardActions, Table, TableHead, TableRow, TableCell,
     TableBody, Skeleton,
     TableFooter,
     IconButton,
@@ -11,12 +11,12 @@ import
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
-import { SyllabusId, Syllabus, ModuleId, Module, makeModule } from "@/api-shared/types/curriculum";
+import { SyllabusId, Syllabus, Module, makeModule } from "@/api-shared/types/curriculum";
 import { ModuleProvider, ModulesProvider, useModule, useModules } from "@/components/curriculum/module-provider";
 import { useSyllabus } from "@/components/curriculum/syllabus-provider";
 import { BaseDocument } from "@/api-client/curriculum/curriculum";
 import EditIcon from '@mui/icons-material/Edit';
-import { calculateAllocatedTimeForModule, calculateMinimumRequiredTimeForCurriculum, calculateMinimumRequiredTimeForModule } from '@/app/(themed)/(post-auth)/curriculum/utils';
+import { calculateAllocatedTimeForModule, calculateMinimumRequiredTimeForModule } from '@/app/(themed)/(post-auth)/curriculum/utils';
 function ModuleRow()
 {
     const { data: module, setData: setModule, openDialog } = useModule();
@@ -138,7 +138,7 @@ function ModulesTable({ syllabus, moduleCreateCallback }: { syllabus: Syllabus; 
     const moduleRows = useMemo(() =>
     {
         return (syllabus.modules ?? []).map((moduleId) => (
-            <ModuleProvider itemId={ moduleId } key={ moduleId }><ModuleRow moduleId={ moduleId } /></ModuleProvider>
+            <ModuleProvider itemId={ moduleId } key={ moduleId }><ModuleRow /></ModuleProvider>
         ));
     }, [ syllabus?.modules ]);
 

@@ -40,6 +40,12 @@ async function getCurriculumsByFilter(filter: Filter<DbCurriculumDocument>, opti
     return cursor.toArray() as Promise<DbCurriculumDocument[]>;
 }
 
+async function countCurriculumsByFilter(filter: Filter<DbCurriculumDocument>, options?: FindOptions): Promise<number>
+{
+    const count = await databaseController.curriculums.countDocuments(filter, { ...options });
+    return count;
+}
+
 async function createCurriculum(data: Omit<DbCurriculumDocument, 'createdAt' | 'updatedAt'>, options?: InsertOneOptions): Promise<DbCurriculumDocument>
 {
     if (!data.id)
@@ -134,13 +140,28 @@ async function addSyllabusToCurriculum(curriculumId: CurriculumId, syllabusId: S
     }
 }
 
+async function removeSyllabusFromCurriculum(curriculumId: CurriculumId, syllabusId: SyllabusId): Promise<void>
+{
+    const updateResult = await databaseController.curriculums.updateOne({ id: curriculumId }, { '$pull': { 'syllabuses': syllabusId } });
+    if (updateResult.matchedCount !== 1)
+    {
+        throw new ClientApiError(`No curriculum by id ${curriculumId}`);
+    }
+    if (updateResult.modifiedCount !== 1)
+    {
+        throw new ClientApiError(`Failed to remove ${syllabusId} from ${curriculumId}`);
+    }
+}
+
 export const DbCurriculum = {
     get: getCurriculum,
     getMultiple: getMultipleCurriculums,
     getByFilter: getCurriculumsByFilter,
+    countByFilter: countCurriculumsByFilter,
     create: createCurriculum,
     update: updateCurriculum,
     delete: deleteCurriculum,
     list: listCurriculum,
     addSyllabus: addSyllabusToCurriculum,
+    removeSyllabus: removeSyllabusFromCurriculum,
 } as const;

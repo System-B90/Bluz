@@ -2,7 +2,7 @@ import { BaseDocument, CurriculumDocument } from "@/api-client/curriculum/curric
 import { Curriculum, CurriculumId, makeSyllabus, Syllabus, SyllabusId } from "@/api-shared/types/curriculum";
 import { useCurriculum } from "@/components/curriculum/curriculum-provider";
 import { SyllabusProvider, useSyllabus } from "@/components/curriculum/syllabus-provider";
-import { Box, BoxProps, Button, Card, CardContent, Grid, Skeleton, Typography } from "@mui/material";
+import { Box, BoxProps, Button, Card, CardContent, Grid, Skeleton, Stack, Typography } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ModulesProvider } from "@/components/curriculum/module-provider";
@@ -61,24 +61,32 @@ function HoursCard({ curriculum }: { curriculum: CurriculumDocument | undefined;
     return (
         <Card sx={ { padding: 2 } }>
             <Typography variant="subtitle1" gutterBottom>שעות</Typography>
-            <Grid container spacing={ 2 }>
-                <Grid>
+            <Stack>
+                <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' } gap={ 1 }>
                     <Typography variant="body2">
-                        ס"ך: { curriculum ? totalWorkingHours : <Skeleton variant='text' width={ 30 } /> }
+                        ס"ך:
                     </Typography>
-                </Grid>
-                <Grid>
                     <Typography variant="body2">
-                        {/* Assuming there's a field for used hours, fallback to 0 or skeleton */ }
-                        שנוצלו: { curriculum ? (curriculum.usedWorkingHours ?? 0) : <Skeleton variant='text' width={ 30 } /> }
+                        { curriculum ? totalWorkingHours : <Skeleton variant='text' width={ 30 } /> }
                     </Typography>
-                </Grid>
-                <Grid>
+                </Box>
+                <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' } gap={ 1 }>
                     <Typography variant="body2">
-                        מינימום דרוש: { (minimumTimeRequired !== undefined) ? minimumTimeRequired : <Skeleton variant='text' width={ 30 } /> }
+                        שנוצלו:
                     </Typography>
-                </Grid>
-            </Grid>
+                    <Typography variant="body2">
+                        { curriculum ? (curriculum.usedWorkingHours ?? 0) : <Skeleton variant='text' width={ 30 } /> }
+                    </Typography>
+                </Box>
+                <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' } gap={ 1 }>
+                    <Typography variant="body2">
+                        מינימום דרוש:
+                    </Typography>
+                    <Typography variant="body2">
+                        { (minimumTimeRequired !== undefined) ? minimumTimeRequired : <Skeleton variant='text' width={ 30 } /> }
+                    </Typography>
+                </Box>
+            </Stack>
         </Card>
     );
 }

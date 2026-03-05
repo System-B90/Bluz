@@ -1,5 +1,6 @@
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { DbModule } from "@/api-server/curriculum/db-module";
+import { DbSyllabus } from "@/api-server/curriculum/db-syallbus";
 import { CurriculumId, ModuleId, SyllabusId } from "@/api-shared/types/curriculum";
 import { NextRequest } from "next/server";
 
@@ -44,9 +45,16 @@ export async function DELETE(request: NextRequest, context: RouteContext)
 {
     try
     {
-        const { moduleSlug } = await context.params;
+        const { syllabusSlug, moduleSlug } = await context.params;
 
-        await DbModule.delete(moduleSlug);
+        await DbSyllabus.removeModule(syllabusSlug, moduleSlug);
+
+        // Check if this module is used in other syllabus
+        if (await DbSyllabus.countByFilter({ id: { '$ne': syllabusSlug }, modules: moduleSlug }) === 0)
+        {
+            // There are no other syllabuses using this module
+            await DbModule.delete(moduleSlug);
+        }
 
         return ApiSuccess();
     } catch (error)

@@ -40,7 +40,7 @@ const DnDCalendar = withDragAndDrop<Event, Room>(Calendar);
 
 // Set the default locale to Hebrew
 moment.locale('he');
-
+export { moment as calendarMoment };
 export const localizer = momentLocalizer(moment);
 
 export default function BluzCalendar({

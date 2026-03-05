@@ -1,6 +1,6 @@
 import { makeModuleEvent, Module, ModuleEvent, ModuleEventId, ModuleEventType, ModuleId } from "@/api-shared/types/curriculum";
 import { ModuleEventProvider, ModuleEventsProvider, useModuleEvent, useModuleEvents } from "@/components/curriculum/module-event-provider";
-import { useModule } from "@/components/curriculum/module-provider";
+import { useModule, useModules } from "@/components/curriculum/module-provider";
 import
 {
     Dialog,
@@ -30,6 +30,8 @@ import { BaseDocument } from "@/api-client/curriculum/curriculum";
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import NumberSpinner from "@/components/base/number-spinner";
+import { calendarMoment, localizer } from "@/components/schedule/calendar/calendar";
+import { apiUpdateModuleEvent } from "@/api-client/curriculum/module-event";
 
 interface ModuleDialogProps extends DialogProps
 {
@@ -37,7 +39,14 @@ interface ModuleDialogProps extends DialogProps
     onSave?: (updated: Module) => void;
 }
 
-function ModuleEventView({ eventId }: { eventId: ModuleEventId; })
+function valueRenderer(value: string): string
+{
+    console.log('Rendering', value);
+
+    return calendarMoment.duration(value, 'minutes').humanize();
+}
+
+function ModuleEventView({ eventId, deleteCallback, copyRef }: { eventId: ModuleEventId; copyRef: RefObject<Record<ModuleEventId, ModuleEvent>>; deleteCallback: (removedModuleEventId: ModuleEventId) => void; })
 {
     const { delete: deleteModuleEvent } = useModuleEvents();
     const { data: moduleEvent, save } = useModuleEvent();
@@ -53,6 +62,12 @@ function ModuleEventView({ eventId }: { eventId: ModuleEventId; })
         setModuleEventMinTime(moduleEvent ? moduleEvent.minimumDuration : 0);
     }, [ moduleEvent ]);
 
+    useEffect(() =>
+    {
+        if (!eventId || moduleEvent === null || moduleEventTitle === undefined || moduleEventType === undefined || moduleEventMinTime === undefined) { return; }
+        copyRef.current[ eventId ] = { ...moduleEvent, title: moduleEventTitle, type: moduleEventType, minimumDuration: moduleEventMinTime };
+    }, [ eventId, copyRef, moduleEvent, moduleEventTitle, moduleEventType, moduleEventMinTime ]);
+
     const handleSaveClick = useCallback(() =>
     {
         if (!moduleEvent) { return; }
@@ -61,8 +76,9 @@ function ModuleEventView({ eventId }: { eventId: ModuleEventId; })
 
     const handleDeleteClick = useCallback(() =>
     {
-        deleteModuleEvent(eventId);
-    }, [ eventId, deleteModuleEvent ]);
+        deleteModuleEvent(eventId)
+            .then(() => deleteCallback(eventId));
+    }, [ eventId, deleteModuleEvent, deleteCallback ]);
 
     return (
         <TableRow>
@@ -85,7 +101,15 @@ function ModuleEventView({ eventId }: { eventId: ModuleEventId; })
             </TableCell>
             <TableCell>
                 <FormControl size="small" fullWidth={ true } disabled={ !moduleEvent } sx={ { margin: 0, padding: 0 } }>
-                    <NumberSpinner size="small" label={ undefined } style={ { margin: 0, padding: 0 } } value={ moduleEventMinTime } onValueChange={ (v) => v ? setModuleEventMinTime(v) : undefined } />
+                    <NumberSpinner
+                        size={ "small" }
+                        step={ 5 }
+                        largeStep={ 45 }
+                        label={ undefined }
+                        style={ { margin: 0, padding: 0 } }
+                        value={ moduleEventMinTime }
+                        onValueChange={ (v) => v ? setModuleEventMinTime(v) : undefined }
+                    />
                 </FormControl>
             </TableCell>
             <TableCell>
@@ -118,7 +142,7 @@ function CreateModuleEventButton({ onClickCallback }: { onClickCallback?: (creat
     );
 }
 
-function ModuleEventsView({ moduleId, eventIds }: { moduleId: ModuleId | undefined; eventIds: RefObject<Array<ModuleEventId>>; })
+function ModuleEventsView({ moduleId, eventIds, eventsRef }: { moduleId: ModuleId | undefined; eventIds: RefObject<Array<ModuleEventId>>; eventsRef: RefObject<Record<ModuleEventId, ModuleEvent>>; })
 {
     const [ localEventIds, setLocalEventIds ] = useState(eventIds.current);
     const moduleEventCreatedCallback = useCallback((newModuleEvent: ModuleEvent & BaseDocument) =>
@@ -130,7 +154,22 @@ function ModuleEventsView({ moduleId, eventIds }: { moduleId: ModuleId | undefin
             return newValues;
         });
     }, []);
-    const eventItems = useMemo(() => localEventIds.map((eventId) => <ModuleEventProvider key={ eventId } itemId={ eventId }><ModuleEventView key={ eventId } eventId={ eventId } /></ModuleEventProvider>), [ localEventIds ]);
+    const moduleEventRemovedCallback = useCallback((removeModuleEventId: ModuleEventId) =>
+    {
+        setLocalEventIds((prev) =>
+        {
+            const newValues = [ ...prev.filter((x) => x !== removeModuleEventId) ];
+            eventIds.current = newValues;
+            return newValues;
+        });
+    }, []);
+    const eventItems = useMemo(() => localEventIds.map(
+        (eventId) => (
+            <ModuleEventProvider key={ eventId } itemId={ eventId }>
+                <ModuleEventView eventId={ eventId } deleteCallback={ moduleEventRemovedCallback } copyRef={ eventsRef } />
+            </ModuleEventProvider>
+        )
+    ), [ localEventIds, eventsRef ]);
 
     return (
         <Box display={ 'flex' } flexWrap={ 'wrap' } alignItems={ 'flex-end' } gap={ 2 } flexGrow={ 1 } maxHeight={ '100%' }>
@@ -172,8 +211,11 @@ export default function ModuleDialog({
     ...props
 }: ModuleDialogProps)
 {
+    const { delete: deleteModule } = useModules();
     const { data: module, setData: setModule, save } = useModule();
     const eventIdsRef = useRef<Array<ModuleEventId>>(module ? module.events : []);
+    const eventsRef = useRef<Record<ModuleEventId, ModuleEvent>>({});
+    const [ isActionLoading, setIsActionLoading ] = useState<boolean>(false);
 
     // Reset local state when dialog opens or module changes
     useEffect(() =>
@@ -194,6 +236,7 @@ export default function ModuleDialog({
 
     const handleSave = useCallback(() =>
     {
+        setIsActionLoading(true);
         if (module)
         {
             setModule((p) => p ? ({ ...p, events: eventIdsRef.current }) : null);
@@ -202,12 +245,32 @@ export default function ModuleDialog({
                 {
                     if (savedModule)
                     {
+                        savedModule?.events.map((eventModuleId) =>
+                        {
+                            const newVal = eventsRef.current[ eventModuleId ];
+                            apiUpdateModuleEvent({ curriculumId: '_', syllabusId: '_', moduleId: savedModule.id }, newVal);
+
+                        });
                         onSave?.(savedModule);
+                        setIsActionLoading(false);
                     }
                 });
         }
         setOpen(false);
-    }, [ module, save, onSave ]);
+    }, [ module, save, onSave, setModule ]);
+
+    const handleDelete = useCallback(() =>
+    {
+        if (!module) { return; }
+        setIsActionLoading(true);
+        deleteModule(module?.id)
+            .then(() =>
+            {
+                setModule(null);
+                setIsActionLoading(false);
+                setOpen(false);
+            });
+    }, [ module, deleteModule ]);
 
     return (
         <Dialog open={ open } onClose={ handleClose } fullWidth maxWidth="xl" { ...props }>
@@ -252,21 +315,26 @@ export default function ModuleDialog({
                     </Stack>
                     <Divider orientation="vertical" flexItem />
                     <Stack spacing={ 2 } mt={ 1 } flexGrow={ 1 }>
-                        <ModuleEventsView moduleId={ module?.id } eventIds={ eventIdsRef } />
+                        <ModuleEventsView moduleId={ module?.id } eventIds={ eventIdsRef } eventsRef={ eventsRef } />
                         <HiveModulesView hiveModules={ module?.hiveIds ?? [] } />
                     </Stack>
                 </Box>
             </DialogContent>
 
             <DialogActions>
-                <Button onClick={ handleClose }>
+                <Button onClick={ handleDelete } disabled={ isActionLoading } color={ 'error' }>
+                    מחיקה
+                </Button>
+
+
+                <Button onClick={ handleClose } disabled={ isActionLoading }>
                     ביטול
                 </Button>
 
                 <Button
                     variant="contained"
                     onClick={ handleSave }
-                    disabled={ !module?.title?.trim() }
+                    disabled={ !module?.title?.trim() || isActionLoading }
                 >
                     שמור
                 </Button>

@@ -39,6 +39,12 @@ async function getSyllabusesByFilter(filter: Filter<DbSyllabusDocument>, options
     return cursor.toArray() as Promise<DbSyllabusDocument[]>;
 }
 
+async function countSyllabusesByFilter(filter: Filter<DbSyllabusDocument>, options?: FindOptions): Promise<number>
+{
+    const count = await databaseController.syllabuses.countDocuments(filter, { ...options });
+    return count;
+}
+
 async function createSyllabus(data: Omit<DbSyllabusDocument, 'createdAt' | 'updatedAt'>, options?: InsertOneOptions): Promise<DbSyllabusDocument>
 {
     if (!data.id)
@@ -133,13 +139,28 @@ async function addModuleToSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): 
     }
 }
 
+async function removeModuleRemoveSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): Promise<void>
+{
+    const updateResult = await databaseController.syllabuses.updateOne({ id: syllabusId }, { '$pull': { 'modules': moduleId } });
+    if (updateResult.matchedCount !== 1)
+    {
+        throw new ClientApiError(`No syllabus by id ${syllabusId}`);
+    }
+    if (updateResult.modifiedCount !== 1)
+    {
+        throw new ClientApiError(`Failed to remove ${moduleId} from ${syllabusId}`);
+    }
+}
+
 export const DbSyllabus = {
     get: getSyllabus,
     getMultiple: getMultipleSyllabuses,
     getByFilter: getSyllabusesByFilter,
+    countByFilter: countSyllabusesByFilter,
     create: createSyllabus,
     update: updateSyllabus,
     delete: deleteSyllabus,
     list: listSyllabus,
     addModule: addModuleToSyllabus,
+    removeModule: removeModuleRemoveSyllabus,
 } as const;

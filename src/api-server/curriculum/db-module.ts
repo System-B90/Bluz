@@ -35,6 +35,12 @@ async function getModulesByFilter(filter: Filter<(Module & BaseDbDocument)>, opt
     return cursor.toArray() as Promise<(Module & BaseDbDocument)[]>;
 }
 
+async function countModulesByFilter(filter: Filter<(Module & BaseDbDocument)>, options?: FindOptions): Promise<number>
+{
+    const count = await databaseController.modules.countDocuments(filter, { ...options });
+    return count;
+}
+
 async function createModule(data: Omit<(Module & BaseDbDocument), 'createdAt' | 'updatedAt'>, options?: InsertOneOptions): Promise<(Module & BaseDbDocument)>
 {
     if (!data.id)
@@ -129,13 +135,28 @@ async function addEventToModule(moduleId: ModuleId, moduleEventId: ModuleEventId
     }
 }
 
+async function removeEventFromModule(moduleId: ModuleId, moduleEventId: ModuleEventId): Promise<void>
+{
+    const updateResult = await databaseController.modules.updateOne({ id: moduleId }, { '$pull': { events: moduleEventId } });
+    if (updateResult.matchedCount !== 1)
+    {
+        throw new ClientApiError(`No module by id ${moduleId}`);
+    }
+    if (updateResult.modifiedCount !== 1)
+    {
+        throw new ClientApiError(`Failed to remove ${moduleEventId} from ${moduleId}`);
+    }
+}
+
 export const DbModule = {
     get: getModule,
     getMultiple: getMultipleModules,
     getByFilter: getModulesByFilter,
+    countByFilter: countModulesByFilter,
     create: createModule,
     update: updateModule,
     delete: deleteModule,
     list: listModule,
     addEvent: addEventToModule,
+    removeEvent: removeEventFromModule,
 } as const;
