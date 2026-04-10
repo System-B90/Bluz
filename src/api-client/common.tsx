@@ -10,7 +10,7 @@ export async function safeFetcher(input: RequestInfo, init?: RequestInit | undef
     return fetch(input, init);
 }
 
-export async function safeApiFetcher(input: RequestInfo, init?: RequestInit | undefined, withCatch?: boolean): Promise<any | false>
+export async function safeApiFetcher<T = unknown>(input: RequestInfo, init?: RequestInit | undefined): Promise<T>
 {
     return safeFetcher(input, init)
         .then((response): Promise<any> =>
@@ -31,28 +31,6 @@ export async function safeApiFetcher(input: RequestInfo, init?: RequestInit | un
                     }
 
                     throw constructErrorFromNetworkMessage(data.error as ClientApiError);
-                })
-                .catch((e: any | ClientApiError) =>
-                {
-                    if (withCatch !== true) { throw e; }
-
-                    if (e instanceof UserNotLoggedInError)
-                    {
-                        console.log(`[UserNotLoggedInError] ${e.status}`);
-                    }
-                    else if (e instanceof ClientApiError)
-                    {
-                        console.log(`[ClientApiError] ${e.status}`);
-                    }
-                    else if (e instanceof ClientError)
-                    {
-                        console.log(`[ClientError] ${e}`);
-                    }
-                    else
-                    {
-                        console.log(`Api json error: ${e}`);
-                    }
-                    return false;
                 });
         })
         .catch((e: any) =>

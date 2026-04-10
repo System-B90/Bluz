@@ -1,13 +1,8 @@
-import { CoursesProvider } from '@/components/base/courses-provider';
-import { HiveModulesProvider } from '@/components/base/hive-modules-provider';
-import { HiveSubjectsProvider } from '@/components/base/hive-subjects-provider';
-import { HiveUsersProvider } from '@/components/base/hive-users-provider';
-import { OfflineProvider } from '@/components/base/offline-provider';
-import { SettingsProvider } from '@/components/base/settings-provider';
-import { CalendarProvider } from '@/components/schedule/calendar/calendar-provider';
 import React from 'react';
-import { RoomsProvider } from '@/components/base/rooms-provider';
-import { CurriculumProvider } from '@/components/curriculum/curriculum-provider';
+import { CurriculumsProvider } from '@/components/gant/providers/curriculum-provider';
+import { SyllabusesProvider } from '@/components/gant/providers/syllabus-provider';
+import { ModulesProvider } from '@/components/gant/providers/module-provider';
+import { ModuleEventsProvider } from '@/components/gant/providers/module-event-provider';
 
 export default async function CurriculumLayout({
     children,
@@ -16,8 +11,14 @@ export default async function CurriculumLayout({
 }>)
 {
     return (
-        <CurriculumProvider>
-            { children }
-        </CurriculumProvider>
+        <CurriculumsProvider>
+            <SyllabusesProvider>
+                <ModulesProvider>
+                    <ModuleEventsProvider>
+                        { children }
+                    </ModuleEventsProvider>
+                </ModulesProvider>
+            </SyllabusesProvider>
+        </CurriculumsProvider>
     );
 }

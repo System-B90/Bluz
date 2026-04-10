@@ -1,7 +1,8 @@
 'use client';
 import { CurriculumId } from "@/api-shared/types/curriculum";
-import CurriculumView from "@/app/(themed)/(post-auth)/curriculum/curriculum-view";
-import CurriculumDrawer from "@/app/(themed)/(post-auth)/curriculum/drawer";
+import CurriculumView from "@/components/gant/curriculum-view";
+import CurriculumDrawer from "@/components/gant/drawer";
+import { CurriculumProvider } from "@/components/gant/providers/curriculum-provider";
 import { Box } from "@mui/material";
 import { useState } from "react";
 
@@ -20,7 +21,9 @@ export default function CurriculumPage()
                 },
             } } open={ drawerOpen } setOpen={ setDrawerOpen } setCurrentCurriculum={ setCurrentCurriculum } />
             <Box sx={ { padding: 2 } } flexGrow={ 1 }>
-                <CurriculumView curriculumId={ currentCurriculum } />
+                { currentCurriculum && <CurriculumProvider itemId={ currentCurriculum }>
+                    <CurriculumView curriculumId={ currentCurriculum } />
+                </CurriculumProvider> }
             </Box>
         </Box >
     );

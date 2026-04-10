@@ -1,131 +1,9 @@
+import { curriculumDbOperationsBuilder } from "@/api-server/curriculum/db-base";
 import databaseController from "@/api-server/mongo-db-controller";
 import { ClientApiError } from "@/api-shared/errors";
-import { Curriculum, CurriculumId, SyllabusId } from "@/api-shared/types/curriculum";
-import { Filter, FindOptions, InsertOneOptions, FindOneAndUpdateOptions, DeleteOptions } from "mongodb";
+import { CurriculumId, SyllabusId } from "@/api-shared/types/curriculum";
 
-export type BaseDbDocument = {
-    createdAt: Date;
-    updatedAt: Date;
-};
-type DbCurriculumDocument = Curriculum & BaseDbDocument;
-
-async function getCurriculum(id: CurriculumId, options?: FindOptions): Promise<DbCurriculumDocument | null>
-{
-    if (!id)
-    {
-        throw new ClientApiError('Curriculum ID is required.');
-    }
-
-    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
-    const document = await databaseController.curriculums.findOne({ id }, { ...options, projection });
-    return document as DbCurriculumDocument | null;
-}
-
-async function getMultipleCurriculums(ids: CurriculumId[], options?: FindOptions): Promise<DbCurriculumDocument[]>
-{
-    if (!ids || ids.length === 0)
-    {
-        return [];
-    }
-
-    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
-    const cursor = databaseController.curriculums.find({ id: { $in: ids } }, { ...options, projection });
-    return cursor.toArray() as Promise<DbCurriculumDocument[]>;
-}
-
-async function getCurriculumsByFilter(filter: Filter<DbCurriculumDocument>, options?: FindOptions): Promise<DbCurriculumDocument[]>
-{
-    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
-    const cursor = databaseController.curriculums.find(filter, { ...options, projection });
-    return cursor.toArray() as Promise<DbCurriculumDocument[]>;
-}
-
-async function countCurriculumsByFilter(filter: Filter<DbCurriculumDocument>, options?: FindOptions): Promise<number>
-{
-    const count = await databaseController.curriculums.countDocuments(filter, { ...options });
-    return count;
-}
-
-async function createCurriculum(data: Omit<DbCurriculumDocument, 'createdAt' | 'updatedAt'>, options?: InsertOneOptions): Promise<DbCurriculumDocument>
-{
-    if (!data.id)
-    {
-        throw new ClientApiError('Curriculum ID is missing! Client must provide a UUID.');
-    }
-
-    const now = new Date();
-    const newDocument: DbCurriculumDocument = {
-        ...data,
-        createdAt: now,
-        updatedAt: now,
-    };
-
-    await databaseController.curriculums.insertOne(newDocument, options);
-
-    return newDocument;
-}
-
-async function updateCurriculum(id: CurriculumId, updateData: Partial<Omit<DbCurriculumDocument, 'id' | 'createdAt'>>, options?: FindOneAndUpdateOptions): Promise<DbCurriculumDocument>
-{
-    if (!id)
-    {
-        throw new ClientApiError('Curriculum ID is required for updates.');
-    }
-
-    const updatePayload = {
-        ...updateData,
-        updatedAt: new Date(),
-    };
-
-    // Prevent accidental ID overwrites
-    delete (updatePayload as any).id;
-
-    // findOneAndUpdate with returnDocument: 'after' ensures we get the exact DB state post-update atomically
-    const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: false };
-    const updatedDocument = await databaseController.curriculums.findOneAndUpdate(
-        { id },
-        { $set: updatePayload },
-        { returnDocument: 'after', ...options, projection }
-    );
-
-    if (!updatedDocument)
-    {
-        throw new ClientApiError(`Curriculum ${id} not found or update failed.`);
-    }
-
-    return updatedDocument as DbCurriculumDocument;
-}
-
-async function deleteCurriculum(id: CurriculumId, options?: DeleteOptions): Promise<void>
-{
-    if (!id)
-    {
-        throw new ClientApiError('Curriculum ID is required for deletion.');
-    }
-
-    const result = await databaseController.curriculums.deleteOne({ id }, options);
-
-    if (result.deletedCount === 0)
-    {
-        throw new ClientApiError(`Failed to delete: Curriculum ${id} not found.`);
-    }
-}
-
-async function listCurriculum(filters?: Filter<DbCurriculumDocument>): Promise<Array<CurriculumId>>
-{
-    const cursor = databaseController.curriculums.find(
-        filters ?? {},
-        {
-            projection: { id: 1, _id: 0 },
-            sort: { updatedAt: -1 } // -1 for descending (newest first), 1 for ascending
-        }
-    );
-
-    const documents = await cursor.toArray();
-
-    // Map over the documents to extract just the IDs and satisfy the return type
-    return documents.map(doc => doc.id as CurriculumId);
-}
+const basicOperations = curriculumDbOperationsBuilder({ dbCollection: databaseController.curriculums, typeName: 'גאנט' });
 
 async function addSyllabusToCurriculum(curriculumId: CurriculumId, syllabusId: SyllabusId): Promise<void>
 {
@@ -154,14 +32,7 @@ async function removeSyllabusFromCurriculum(curriculumId: CurriculumId, syllabus
 }
 
 export const DbCurriculum = {
-    get: getCurriculum,
-    getMultiple: getMultipleCurriculums,
-    getByFilter: getCurriculumsByFilter,
-    countByFilter: countCurriculumsByFilter,
-    create: createCurriculum,
-    update: updateCurriculum,
-    delete: deleteCurriculum,
-    list: listCurriculum,
+    ...basicOperations,
     addSyllabus: addSyllabusToCurriculum,
     removeSyllabus: removeSyllabusFromCurriculum,
 } as const;

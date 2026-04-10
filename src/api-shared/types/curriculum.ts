@@ -1,6 +1,4 @@
-import { WeekProps } from "react-big-calendar";
-
-export interface BaseCurriculumItem { id: string; }
+export interface BaseGantItem { id: string; title: string; }
 export enum ModuleEventType
 {
     Lecture = 'הרצאה',
@@ -13,7 +11,7 @@ export interface ModuleEventRequirements
 {
     // TODO: Implement
 }
-export interface ModuleEvent extends BaseCurriculumItem 
+export interface ModuleEvent extends BaseGantItem 
 {
     title: string;
     type: ModuleEventType;
@@ -22,7 +20,7 @@ export interface ModuleEvent extends BaseCurriculumItem
     requirements: Array<ModuleEventRequirements>;
 }
 export type ModuleEventId = ModuleEvent[ 'id' ];
-export interface Module extends BaseCurriculumItem
+export interface Module extends BaseGantItem
 {
     title: string;
     description: string;
@@ -30,7 +28,7 @@ export interface Module extends BaseCurriculumItem
     hiveIds: Array<number>;
 }
 export type ModuleId = Module[ 'id' ];
-export interface Syllabus extends BaseCurriculumItem
+export interface Syllabus extends BaseGantItem
 {
     title: string;
     hiveIds: Array<number>;
@@ -57,7 +55,7 @@ export interface CurriculumWeek
     number: number;
     days: Array<CurriculumDays>;
 }
-export interface Curriculum extends BaseCurriculumItem
+export interface Curriculum extends BaseGantItem
 {
     title: string;
     description: string;
@@ -67,10 +65,11 @@ export interface Curriculum extends BaseCurriculumItem
 }
 export type CurriculumId = Curriculum[ 'id' ];
 
-export function makeCurriculum(curriculum?: Partial<Curriculum>): Curriculum
+type MakerReturnType<T extends BaseGantItem> = Omit<T, 'id'> & { id: T[ 'id' ] | undefined; };
+export function makeCurriculum(curriculum?: Partial<Curriculum>): MakerReturnType<Curriculum>
 {
     return {
-        id: curriculum?.id ?? crypto.randomUUID(),
+        id: curriculum?.id,
         title: curriculum?.title ?? 'הגאנט שלי',
         description: curriculum?.description ?? 'הגאנט של הקורס החדש שלי',
         syllabuses: curriculum?.syllabuses ?? [],
@@ -79,20 +78,20 @@ export function makeCurriculum(curriculum?: Partial<Curriculum>): Curriculum
     };
 }
 
-export function makeSyllabus(syllabus?: Partial<Syllabus>): Syllabus
+export function makeSyllabus(syllabus?: Partial<Syllabus>): MakerReturnType<Syllabus>
 {
     return {
-        id: syllabus?.id ?? crypto.randomUUID(),
+        id: syllabus?.id,
         title: syllabus?.title ?? 'סילבוס חדש',
         hiveIds: syllabus?.hiveIds ?? [],
         modules: syllabus?.modules ?? [],
     };
 }
 
-export function makeModule(module?: Partial<Module>): Module
+export function makeModule(module?: Partial<Module>): MakerReturnType<Module>
 {
     return {
-        id: module?.id ?? crypto.randomUUID(),
+        id: module?.id,
         title: module?.title ?? 'מערך חדש',
         description: module?.description ?? 'המערך החדש שלי',
         hiveIds: module?.hiveIds ?? [],
@@ -100,13 +99,13 @@ export function makeModule(module?: Partial<Module>): Module
     };
 }
 
-export function makeModuleEvent(moduleEvent?: Partial<ModuleEvent>): ModuleEvent
+export function makeModuleEvent(moduleEvent?: Partial<ModuleEvent>): MakerReturnType<ModuleEvent>
 {
     return {
-        id: moduleEvent?.id ?? crypto.randomUUID(),
+        id: moduleEvent?.id,
         title: moduleEvent?.title ?? 'מופע חדש',
         allocatedDuration: moduleEvent?.allocatedDuration ?? 0,
-        minimumDuration: moduleEvent?.minimumDuration ?? 0,
+        minimumDuration: moduleEvent?.minimumDuration ?? 45,
         type: moduleEvent?.type ?? ModuleEventType.Other,
         requirements: moduleEvent?.requirements ?? [],
     };

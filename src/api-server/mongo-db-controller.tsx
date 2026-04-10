@@ -1,5 +1,4 @@
-import { BaseDbDocument } from "@/api-server/curriculum/db-curriculum";
-import { DbSyllabusDocument } from "@/api-server/curriculum/db-syallbus";
+import { BaseDbDocument } from "@/api-server/curriculum/db-base";
 import { DbEventDocument } from "@/api-server/db-event";
 import { Course } from "@/api-shared/types/course";
 import { Curriculum, Module, ModuleEvent, Syllabus } from "@/api-shared/types/curriculum";

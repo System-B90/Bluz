@@ -18,6 +18,6 @@ export type Color = string;
 
 export function getHiveBaseUrl()
 {
-    return process.env.NEXT_PUBLIC_HIVE_API_URL ?? 'https://hive.org';
+    return process.env.NEXT_PUBLIC_HIVE_URL ?? 'https://hive.org';
 }
 

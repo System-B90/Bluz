@@ -53,7 +53,7 @@ class Env:
     USER_KEYS = EnvKeys(
         required={
             EnvKey(
-                name="NEXT_PUBLIC_HIVE_API_URL",
+                name="NEXT_PUBLIC_HIVE_URL",
                 description="URL for the Hive API",
                 default_value="http://localhost:8000",
                 validator=validate_url,

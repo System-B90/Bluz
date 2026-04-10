@@ -208,7 +208,7 @@ def clean_existing_data(client: HiveClient):
             tqdm.tqdm.write(f"Timeout deleting program {program.name}: {ex}")
 
     for user in tqdm.tqdm(client.get_users(), desc="Deleting Users"):
-        if user.username != "admin":
+        if user.username != "admin" and user.clearance != ClearanceEnum.ADMIN:
             try:
                 client.delete_user(user)
             except httpx.HTTPStatusError as ex:
@@ -324,10 +324,7 @@ def create_classes(client: HiveClient):
 
 
 def main():
-
-    with HiveClient(
-        "admin", "Password1", "https://hive.org/", verify=False, timeout=3
-    ) as client:
+    with HiveClient.from_sso("https://hive.org/", verify=False, timeout=10) as client:
         clean_existing_data(client)
 
         try:
