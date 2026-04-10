@@ -8,7 +8,7 @@ import
     apiListCurriculums,
     apiUpdateCurriculum
 } from "@/api-client/gant/curriculum";
-import { Curriculum, Syllabus } from "@/api-shared/types/curriculum";
+import { Curriculum, Syllabus } from "@/api-shared/types/gant/curriculum";
 import { buildCollectionProvider } from "@/components/gant/providers/base/base-collection-provider";
 import { buildItemProvider } from "@/components/gant/providers/base/base-item-provider";
 import { useCallback, useMemo } from 'react';

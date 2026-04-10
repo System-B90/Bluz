@@ -1,5 +1,5 @@
 import { ClientApiError } from "@/api-shared/errors";
-import { BaseGantItem } from "@/api-shared/types/curriculum";
+import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
 import { Filter, FindOptions, InsertOneOptions, FindOneAndUpdateOptions, DeleteOptions, Collection, OptionalUnlessRequiredId, UpdateFilter } from "mongodb";
 import { v4 as uuidv4 } from 'uuid';
 

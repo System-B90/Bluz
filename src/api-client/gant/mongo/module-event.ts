@@ -1,5 +1,5 @@
 import { BaseDocument, baseDocumentFixup, clientGantApiBuilder } from "@/api-client/gant/base";
-import { ModuleEvent } from "@/api-shared/types/curriculum";
+import { ModuleEvent } from "@/api-shared/types/gant/curriculum";
 
 export type ModuleEventDocument = ModuleEvent & BaseDocument;
 

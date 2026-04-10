@@ -1,5 +1,5 @@
 import { BaseDocument, baseDocumentFixup, clientGantApiBuilder } from "@/api-client/gant/base";
-import { Syllabus } from "@/api-shared/types/curriculum";
+import { Syllabus } from "@/api-shared/types/gant/curriculum";
 
 export type SyllabusDocument = Syllabus & BaseDocument;
 

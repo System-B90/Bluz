@@ -1,4 +1,4 @@
-import { makeModuleEvent, Module, ModuleEvent, ModuleEventId, ModuleEventType, ModuleId } from "@/api-shared/types/curriculum";
+import { makeModuleEvent, Module, ModuleEvent, ModuleEventId, ModuleEventType, ModuleId } from "@/api-shared/types/gant/curriculum";
 import { ModuleEventProvider, ModuleEventsProvider, useModuleEvent, useModuleEvents } from "@/components/gant/providers/module-event-provider";
 import { useModule, useModules } from "@/components/gant/providers/module-provider";
 import

@@ -1,6 +1,6 @@
 'use client';
 import { apiCreateModule, apiDeleteModule, apiGetManyModules, apiGetModule, apiListModules, apiUpdateModule } from "@/api-client/gant/module";
-import { Module } from "@/api-shared/types/curriculum";
+import { Module } from "@/api-shared/types/gant/curriculum";
 import ModuleDialog from "@/components/gant/module-dialog";
 import { buildCollectionProvider } from "@/components/gant/providers/base/base-collection-provider";
 import { buildItemProvider } from "@/components/gant/providers/base/base-item-provider";

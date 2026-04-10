@@ -1,7 +1,7 @@
 import { curriculumDbOperationsBuilder } from "@/api-server/curriculum/db-base";
 import databaseController from "@/api-server/mongo-db-controller";
 import { ClientApiError } from "@/api-shared/errors";
-import { ModuleId, SyllabusId } from "@/api-shared/types/curriculum";
+import { ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 
 const basicOperations = curriculumDbOperationsBuilder({ dbCollection: databaseController.syllabuses, typeName: 'סילבוס' });
 

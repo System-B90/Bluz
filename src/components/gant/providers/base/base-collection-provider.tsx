@@ -1,7 +1,7 @@
 'use client';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { BaseDocument } from '@/api-client/gant/base';
-import { BaseGantItem } from '@/api-shared/types/curriculum';
+import { BaseGantItem } from '@/api-shared/types/gant/curriculum';
 import { ProviderApiList, ProviderApiCreate, ProviderApiGetMany } from '@/components/gant/providers/base/types';
 import { useSnackbar } from 'notistack';
 import

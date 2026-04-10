@@ -9,7 +9,7 @@ import
     apiListSyllabuses,
     apiUpdateSyllabus
 } from "@/api-client/gant/syllabus";
-import { Module, Syllabus } from "@/api-shared/types/curriculum";
+import { Module, Syllabus } from "@/api-shared/types/gant/curriculum";
 import { buildCollectionProvider } from "@/components/gant/providers/base/base-collection-provider";
 import { buildItemProvider } from "@/components/gant/providers/base/base-item-provider";
 

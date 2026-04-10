@@ -17,7 +17,7 @@ import
 import React, { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CurriculumDocument } from "@/api-client/gant/curriculum";
-import { Curriculum, CurriculumId, makeCurriculum } from "@/api-shared/types/curriculum";
+import { Curriculum, CurriculumId, makeCurriculum } from "@/api-shared/types/gant/curriculum";
 import { useCurriculums } from "@/components/gant/providers/curriculum-provider";
 
 export interface CurriculumDrawerProps extends Omit<DrawerProps, 'variant' | 'anchor' | 'open'>

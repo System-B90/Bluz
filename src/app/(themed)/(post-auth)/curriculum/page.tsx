@@ -1,5 +1,5 @@
 'use client';
-import { CurriculumId } from "@/api-shared/types/curriculum";
+import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import CurriculumView from "@/components/gant/curriculum-view";
 import CurriculumDrawer from "@/components/gant/drawer";
 import { CurriculumProvider } from "@/components/gant/providers/curriculum-provider";

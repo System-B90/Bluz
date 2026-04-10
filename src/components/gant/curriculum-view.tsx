@@ -1,7 +1,7 @@
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { BaseDocument } from "@/api-client/gant/base";
 import { CurriculumDocument } from "@/api-client/gant/curriculum";
-import { CurriculumId, Syllabus, makeSyllabus } from "@/api-shared/types/curriculum";
+import { CurriculumId, Syllabus, makeSyllabus } from "@/api-shared/types/gant/curriculum";
 import { useCurriculum, useCurriculums } from "@/components/gant/providers/curriculum-provider";
 import { useSyllabuses } from "@/components/gant/providers/syllabus-provider";
 import SyllabusCard from "@/components/gant/syllabus-card";

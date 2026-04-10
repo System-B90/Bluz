@@ -1,6 +1,6 @@
 'use client';
 import { apiCreateModuleEvent, apiDeleteModuleEvent, apiGetManyModuleEvents, apiGetModuleEvent, apiListModuleEvents, apiUpdateModuleEvent } from "@/api-client/gant/module-event";
-import { ModuleEvent } from "@/api-shared/types/curriculum";
+import { ModuleEvent } from "@/api-shared/types/gant/curriculum";
 import { buildItemProvider } from "@/components/gant/providers/base/base-item-provider";
 import { buildCollectionProvider } from "@/components/gant/providers/base/base-collection-provider";
 import ModuleEventDialog from "@/components/gant/module-event-dialog";

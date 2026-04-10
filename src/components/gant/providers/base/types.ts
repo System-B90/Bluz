@@ -1,6 +1,6 @@
 import { ClientApiProps } from "@/api-client/common";
 import { BaseDocument } from "@/api-client/gant/base";
-import { BaseGantItem } from "@/api-shared/types/curriculum";
+import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
 
 export type ProviderApiGet<T extends BaseGantItem> = (id: T[ 'id' ], options?: ClientApiProps) => Promise<T & BaseDocument>;
 export type ProviderApiList<T extends BaseGantItem> = (options?: ClientApiProps) => Promise<Record<T[ 'id' ], T[ 'title' ]>>;

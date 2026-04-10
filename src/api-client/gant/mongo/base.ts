@@ -1,6 +1,6 @@
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { inplaceDateFixup } from "@/api-shared/date-fixer";
-import { BaseGantItem } from "@/api-shared/types/curriculum";
+import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
 import { ProviderApiCreate, ProviderApiDelete, ProviderApiGet, ProviderApiGetMany, ProviderApiList, ProviderApiUpdate } from "@/components/gant/providers/base/types";
 import { Dayjs } from "dayjs";
 

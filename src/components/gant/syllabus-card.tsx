@@ -1,7 +1,7 @@
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { BaseDocument } from '@/api-client/gant/base';
 import { apiUpdateModule } from '@/api-client/gant/module';
-import { makeModule, makeModuleEvent, Module, ModuleEventType, Syllabus, SyllabusId } from "@/api-shared/types/curriculum";
+import { makeModule, makeModuleEvent, Module, ModuleEventType, Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { useModuleEvents } from '@/components/gant/providers/module-event-provider';
 import { ModuleProvider, ModulesProvider, useModule, useModules } from "@/components/gant/providers/module-provider";
 import { SyllabusProvider, useSyllabus } from "@/components/gant/providers/syllabus-provider";
