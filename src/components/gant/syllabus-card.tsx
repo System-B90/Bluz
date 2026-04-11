@@ -1,3 +1,4 @@
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ModuleEventType, ModuleId, Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { useGantFuncs, useModule, useSyllabus } from '@/components/gant/state/hooks';
 import { useCurriculumProviderActions, useCurriculumState } from '@/components/gant/state/provider';
@@ -87,15 +88,20 @@ function CreateModuleButton({ syllabusId }: { syllabusId: SyllabusId; })
         try
         {
             const newModule = await createModule('מודול חדש', syllabusId, 'המודול החדש שלי');
-
-
-            // Optimize groupings of asynchronous operations
-            const [ createdLecture, createdExercise ] = await Promise.all([
-                createEvent('הרצאת מבוא', newModule.id, ModuleEventType.Lecture, 60),
-                createEvent('ע"ע', newModule.id, ModuleEventType.Exercise, 45)
-            ]);
-
-            console.log('newModule', newModule);
+            try
+            {
+                await Promise.all([
+                    createEvent('הרצאת מבוא', newModule.id, ModuleEventType.Lecture, 60),
+                    createEvent('ע"ע', newModule.id, ModuleEventType.Exercise, 45)
+                ]);
+            } catch (error)
+            {
+                enqueueApiErrorSnackbar(enqueueSnackbar, 'יצירת מופעי ברירת מחדל במודול נכשלה!', error);
+            }
+        }
+        catch (error)
+        {
+            enqueueApiErrorSnackbar(enqueueSnackbar, 'יצירת המודול נכשלה!', error);
         } finally
         {
             setIsCreating(false);
