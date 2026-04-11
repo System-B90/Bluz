@@ -1,3 +1,4 @@
+import { baseDocumentFixup } from "@/api-client/gant/base";
 import { CurriculumDocument } from "@/api-client/gant/curriculum";
 import { ModuleDocument } from "@/api-client/gant/module";
 import { ModuleEventDocument } from "@/api-client/gant/module-event";
@@ -26,21 +27,21 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
     // Traverse Curriculums -> cS (Junction) -> Syllabus
     for (const link of (apiData.cS ?? []))
     {
-        const apiSyllabus = link.syllabus;
+        const apiSyllabus = baseDocumentFixup(link.syllabus);
         curriculumSyllabusIds.push(apiSyllabus.id);
         const syllabusModuleIds: ModuleId[] = [];
 
         // Traverse Syllabus -> sM (Junction) -> Module
         for (const sMLink of (apiSyllabus.sM ?? []))
         {
-            const apiModule = sMLink.module;
+            const apiModule = baseDocumentFixup(sMLink.module);
             syllabusModuleIds.push(apiModule.id);
             const moduleEventIds: ModuleEventId[] = [];
 
             // Traverse Module -> mE (Junction) -> Event
             for (const mELink of (apiModule.mE ?? []))
             {
-                const apiEvent = mELink.event;
+                const apiEvent = baseDocumentFixup(mELink.event);
                 moduleEventIds.push(apiEvent.id);
 
                 store.events[ apiEvent.id ] = { ...apiEvent };

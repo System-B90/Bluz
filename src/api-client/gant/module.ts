@@ -1,10 +1,11 @@
 import { BaseDocument, baseDocumentFixup, clientGantApiBuilder } from "@/api-client/gant/base";
+import { ApiModule } from "@/api-shared/types/gant/api-layer";
 import { CreateModulePayload } from "@/api-shared/types/gant/create-payloads";
 import { Module } from "@/api-shared/types/gant/curriculum";
 
 export type ModuleDocument = Module & BaseDocument;
 
-const moduleApi = clientGantApiBuilder<Module, CreateModulePayload>({ apiBaseUrl: '/api/gant/modules', dateFixup: baseDocumentFixup as any });
+const moduleApi = clientGantApiBuilder<Module, ApiModule, CreateModulePayload>({ apiBaseUrl: '/api/gant/modules', dateFixup: baseDocumentFixup as any });
 const { apiList,
     apiGet,
     apiCreate,

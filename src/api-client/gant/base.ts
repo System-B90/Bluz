@@ -22,16 +22,16 @@ export function baseDocumentFixup<T extends RawBaseDocument | null>(doc: T): T |
     return doc;
 }
 
-export interface ClientGantApiBuilderProps<TEntity extends BaseGantItem, TCreatePayload = Omit<TEntity, 'id'>>
+export interface ClientGantApiBuilderProps<TEntity extends BaseGantItem, ApiT, TCreatePayload = Omit<TEntity, 'id'>>
 {
     apiBaseUrl: string;
     dateFixup: DateFixup<TEntity>;
 }
 
-export interface BasicGantApi<TEntity extends BaseGantItem, TCreatePayload = Omit<TEntity, 'id'>>
+export interface BasicGantApi<TEntity extends BaseGantItem, ApiT, TCreatePayload = Omit<TEntity, 'id'>>
 {
     readonly apiList: (options?: ClientApiProps) => Promise<Record<TEntity[ 'id' ], TEntity[ 'title' ]>>;
-    readonly apiGet: (id: TEntity[ 'id' ], options?: ClientApiProps) => Promise<TEntity & BaseDocument>;
+    readonly apiGet: (id: TEntity[ 'id' ], options?: ClientApiProps) => Promise<ApiT>;
     readonly apiCreate: (payload: TCreatePayload, options?: ClientApiProps) => Promise<TEntity & BaseDocument>;
     readonly apiUpdate: (updates: Partial<TEntity> & { id: TEntity[ 'id' ]; }, options?: ClientApiProps) => Promise<TEntity & BaseDocument>;
     readonly apiDelete: (id: TEntity[ 'id' ], options?: ClientApiProps) => Promise<void>;
@@ -40,11 +40,12 @@ export interface BasicGantApi<TEntity extends BaseGantItem, TCreatePayload = Omi
 
 export function clientGantApiBuilder<
     TEntity extends BaseGantItem,
-    TCreatePayload = Omit<TEntity, 'id'>
+    ApiT,
+    TCreatePayload = Omit<TEntity, 'id'>,
 >({
     apiBaseUrl,
     dateFixup
-}: ClientGantApiBuilderProps<TEntity, TCreatePayload>): BasicGantApi<TEntity, TCreatePayload>
+}: ClientGantApiBuilderProps<TEntity, ApiT, TCreatePayload>): BasicGantApi<TEntity, ApiT, TCreatePayload>
 {
 
     type TDocument = TEntity & BaseDocument;
@@ -57,10 +58,10 @@ export function clientGantApiBuilder<
         return await safeApiFetcher<Record<TEntity[ 'id' ], TEntity[ 'title' ]>>(buildUrl(), options);
     }
 
-    async function apiGet(id: TEntity[ 'id' ], options?: ClientApiProps): Promise<TDocument>
+    async function apiGet(id: TEntity[ 'id' ], options?: ClientApiProps): Promise<ApiT>
     {
         const rawData = await safeApiFetcher(buildUrl(id), options);
-        return dateFixup(rawData);
+        return dateFixup(rawData) as ApiT;
     }
 
     async function apiCreate(payload: TCreatePayload, options?: ClientApiProps): Promise<TDocument>

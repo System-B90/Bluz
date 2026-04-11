@@ -1,5 +1,6 @@
 import { ModuleEvent, Syllabus, Curriculum, Module } from "@/api-shared/types/gant/curriculum";
 
+export type ApiModuleEvent = ModuleEvent;
 export interface ApiModule extends Omit<Module, 'events'>
 {
     events: Array<ModuleEvent>;

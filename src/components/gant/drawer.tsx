@@ -18,6 +18,8 @@ import React, { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRe
 
 import { curriculumApi, CurriculumDocument } from "@/api-client/gant/curriculum";
 import { Curriculum, CurriculumId, makeCurriculum } from "@/api-shared/types/gant/curriculum";
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
+import { useSnackbar } from 'notistack';
 
 export interface CurriculumDrawerProps extends Omit<DrawerProps, 'variant' | 'anchor' | 'open'>
 {
@@ -85,7 +87,7 @@ export default function CurriculumDrawer({
     ...props
 }: CurriculumDrawerProps)
 {
-
+    const { enqueueSnackbar } = useSnackbar();
     const [ curriculumsData, setCurriculumsData ] = useState<Record<CurriculumId, CurriculumDocument>>({} as Record<CurriculumId, CurriculumDocument>);
     const [ isFetchingDetails, setIsFetchingDetails ] = useState<boolean>(true);
     const hasInitializedSelection = useRef(false);
@@ -122,7 +124,7 @@ export default function CurriculumDrawer({
                 }
             } catch (error)
             {
-                console.error("Failed to fetch curriculum details:", error);
+                enqueueApiErrorSnackbar(enqueueSnackbar, `טעינת הגאנט נכשלה!`, error);
             } finally
             {
                 if (isMounted)
@@ -138,7 +140,7 @@ export default function CurriculumDrawer({
         {
             isMounted = false;
         };
-    }, []); // Run on mount
+    }, [ enqueueSnackbar ]); // Run on mount
 
     const sortedIds = useMemo(() =>
     {

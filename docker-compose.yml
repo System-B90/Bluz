@@ -1,6 +1,6 @@
 services:
   ui:
-    image: ghcr.io/system-b15/madash/ui:${MADASH_VERSION:-latest}
+    image: ghcr.io/system-b15/bluz/ui:${BLUZ_VERSION:-latest}
     build:
       context: .
       dockerfile: Dockerfile
@@ -11,10 +11,11 @@ services:
     extra_hosts:
       - "hive.org:host-gateway"
     networks:
-      - madash_net
+      - bluz_net
 
   curriculum-db:
     image: postgres:15-alpine
+    container_name: curriculum-db
     restart: always
     environment:
       POSTGRES_USER: admin
@@ -28,7 +29,7 @@ services:
       - bluz_net
 
   sessions:
-    image: ghcr.io/system-b15/madash/sessions:${MADASH_VERSION:-latest}
+    image: ghcr.io/system-b15/bluz/sessions:${BLUZ_VERSION:-latest}
     build:
       context: session-server
       dockerfile: Dockerfile.websocket
@@ -36,6 +37,22 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    networks:
+      - bluz_net
+
+  proxy:
+    image: ghcr.io/system-b15/bluz/proxy:${BLUZ_VERSION:-latest}
+    container_name: proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - ui
+      - curriculum-db
+      - sessions
     networks:
       - bluz_net
 

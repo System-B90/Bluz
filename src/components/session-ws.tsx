@@ -29,23 +29,8 @@ export default function useSessionWebSocketContext()
     {
         const data = JSON.parse(ev.data);
         const { type, target }: { type: MessageTypes, target: string; } = data;
-
         console.log(`[WS] Message type: ${type}`);
-
-        if (type === MessageTypes.COMBO)
-        {
-            const comboData: MessageTypes[] = data[ COMBO_DATA_KEY ];
-            assert(comboData !== undefined);
-
-            messageHandlers.current.forEach(handler =>
-                comboData.forEach(comboDataMessageType =>
-                    handler(comboDataMessageType, target, data)
-                )
-            );
-        } else
-        {
-            messageHandlers.current.forEach(handler => handler(type, target, data));
-        }
+        messageHandlers.current.forEach(handler => handler(type, target, data));
     }, []);
 
     const registerCurrentSession = useCallback(() =>

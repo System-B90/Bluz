@@ -1,12 +1,19 @@
+import { BaseDocument } from "@/api-client/gant/base";
 import { NormalizedStore, normalizeCurriculumData } from "@/api-client/gant/drizzle-normalize";
 import { ApiCurriculum } from "@/api-shared/types/gant/api-layer";
 import
 {
-    CurriculumId, Curriculum,
-    SyllabusId, Syllabus,
-    ModuleId, Module,
-    ModuleEventId, ModuleEvent
+    BaseGantItem,
+    Curriculum,
+    CurriculumId,
+    Module,
+    ModuleEvent,
+    ModuleEventId,
+    ModuleId,
+    Syllabus,
+    SyllabusId
 } from "@/api-shared/types/gant/curriculum";
+import dayjs from "dayjs";
 
 export type Action =
     | { type: 'SET_DATA'; payload: ApiCurriculum; }
@@ -26,6 +33,11 @@ export type Action =
     | { type: 'REMOVE_SYLLABUS'; payload: { curriculumId: CurriculumId; syllabusId: SyllabusId; }; }
     | { type: 'REMOVE_MODULE'; payload: { syllabusId: SyllabusId; moduleId: ModuleId; }; }
     | { type: 'REMOVE_EVENT'; payload: { moduleId: ModuleId; eventId: ModuleEventId; }; };
+
+function injectDocumentTimes<T extends BaseGantItem>(rawDoc: T): T & BaseDocument
+{
+    return { ...rawDoc, createdAt: dayjs(), updatedAt: dayjs() };
+}
 
 export function curriculumReducer(state: NormalizedStore, action: Action): NormalizedStore
 {
@@ -89,7 +101,7 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
                 ...state,
                 syllabuses: {
                     ...state.syllabuses,
-                    [ action.payload.syllabus.id ]: action.payload.syllabus
+                    [ action.payload.syllabus.id ]: injectDocumentTimes(action.payload.syllabus)
                 },
                 curriculums: {
                     ...state.curriculums,
@@ -108,7 +120,7 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
                 ...state,
                 modules: {
                     ...state.modules,
-                    [ action.payload.module.id ]: action.payload.module
+                    [ action.payload.module.id ]: injectDocumentTimes(action.payload.module)
                 },
                 syllabuses: {
                     ...state.syllabuses,
@@ -127,7 +139,7 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
                 ...state,
                 events: {
                     ...state.events,
-                    [ action.payload.event.id ]: action.payload.event
+                    [ action.payload.event.id ]: injectDocumentTimes(action.payload.event)
                 },
                 modules: {
                     ...state.modules,

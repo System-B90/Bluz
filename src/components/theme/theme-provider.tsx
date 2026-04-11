@@ -1,6 +1,7 @@
 'use client';
 
 import { createFromPalette } from '@/components/theme/create-from-palette';
+import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider as MUIThemeProvider, createTheme } from '@mui/material/styles';
 import type { ThemeProviderProps } from 'next-themes';
 import { ThemeProvider as NextThemesProvider, useTheme as nextUseTheme } from 'next-themes';
@@ -34,6 +35,7 @@ export function BluzThemeProvider({ children, ...props }: ThemeProviderProps & {
             disableTransitionOnChange={ false }
         >
             <InnerThemeProvider>
+                <CssBaseline />
                 { children }
             </InnerThemeProvider>
         </NextThemesProvider>
@@ -47,11 +49,10 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
 
     useEffect(() =>
     {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 
-    const paletteMode = mounted ? (resolvedTheme as 'light' | 'dark') : 'light';
+    const paletteMode = (mounted && resolvedTheme === 'dark') ? 'dark' : 'light';
 
     const muiTheme = useMemo(
         () => createTheme(createFromPalette(paletteMode)),

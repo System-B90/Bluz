@@ -1,10 +1,11 @@
 import { BaseDocument, baseDocumentFixup, clientGantApiBuilder } from "@/api-client/gant/base";
+import { ApiCurriculum } from "@/api-shared/types/gant/api-layer";
 import { CreateCurriculumPayload } from "@/api-shared/types/gant/create-payloads";
 import { Curriculum } from "@/api-shared/types/gant/curriculum";
 
 export type CurriculumDocument = Curriculum & BaseDocument;
 
-const curriculumApi = clientGantApiBuilder<Curriculum, CreateCurriculumPayload>({ apiBaseUrl: '/api/gant/curriculums', dateFixup: baseDocumentFixup as any });
+const curriculumApi = clientGantApiBuilder<Curriculum, ApiCurriculum, CreateCurriculumPayload>({ apiBaseUrl: '/api/gant/curriculums', dateFixup: baseDocumentFixup as any });
 const { apiList,
     apiGet,
     apiCreate,

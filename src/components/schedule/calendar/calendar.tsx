@@ -1,5 +1,6 @@
 'use client';
 import moment from 'moment';
+// @ts-ignore This import is broken
 import 'moment/locale/he'; // Import Hebrew locale
 import { Calendar, CalendarProps, DateRange, momentLocalizer, NavigateAction } from 'react-big-calendar';
 
