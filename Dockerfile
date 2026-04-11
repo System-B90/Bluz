@@ -43,9 +43,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./
 
-USER nextjs
-
-EXPOSE 3000
 
 COPY drizzle ./drizzle
 COPY src/api-server/drizzle-migrate.ts ./migrate.ts
@@ -53,6 +50,10 @@ COPY src/api-server/drizzle-migrate.ts ./migrate.ts
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-ENTRYPOINT ["docker-entrypoint.sh"]
 
+USER nextjs
+
+EXPOSE 3000
+
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "server.js"]
