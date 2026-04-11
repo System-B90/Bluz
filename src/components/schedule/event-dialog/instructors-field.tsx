@@ -33,7 +33,7 @@ function LecturerSelectionField({ event, onBlurCallback, ...props }: Instructors
     const handleBlur = useCallback(() =>
     {
         onBlurCallback(({ ...event, lecturers: currentLecturers }));
-    }, [ currentLecturers ]);
+    }, [ event, currentLecturers, onBlurCallback, ]);
 
     return (
         <Box { ...props }>
@@ -105,7 +105,7 @@ export default function InstructorsField({ event, onBlurCallback }: InstructorsF
     const handleBlur = useCallback(() =>
     {
         onBlurCallback(({ ...event, instructors: currentInstructors }));
-    }, [ currentInstructors ]);
+    }, [ event, currentInstructors, onBlurCallback, ]);
 
     return (
         <Box width={ '100%' } display={ 'flex' } gap={ isLecture ? 2 : 0 } >

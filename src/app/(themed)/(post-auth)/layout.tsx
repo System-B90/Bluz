@@ -1,12 +1,25 @@
-'use client';
+'use server';
+import { authOptions } from "@/api-server/hive/sso";
+import { AuthSessionUser } from "@/api-shared/types/sso";
+import { AuthProvider } from "@/components/auth/auth-provider";
+import { getServerSession } from "next-auth/next";
+import { redirect } from "next/navigation";
 
-import React from 'react';
-import { AuthProvider } from '@/components/auth/auth-provider';
-
-export default function PostAuthLayout({ children }: { children: React.ReactNode; })
+export default async function PostAuthLayout({
+    children,
+}: Readonly<{
+    children: React.ReactNode;
+}>)
 {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user)
+    {
+        redirect("/login");
+    }
+
     return (
-        <AuthProvider>
+        <AuthProvider userData={ session.user as AuthSessionUser }>
             { children }
         </AuthProvider>
     );

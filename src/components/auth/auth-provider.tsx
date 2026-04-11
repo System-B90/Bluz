@@ -1,119 +1,119 @@
 'use client';
-import useSessionWebSocketContext, { MessageHandlerType } from '@/components/session-ws';
-import { useSession, signIn, SessionProvider, SessionContextValue } from 'next-auth/react';
-import
-{
+
+import React, {
     createContext,
     useCallback,
     useContext,
     useEffect,
+    useRef,
+    useMemo
 } from 'react';
-import { MessageTypes } from '../../session-server/src/common';
-import { AuthSessionData } from '@/api-shared/types/sso';
-import { Clearance } from '@/api-server/hive/types';
-import { useRouter } from 'next/navigation';
+import useSessionWebSocketContext, { MessageHandlerType } from '@/components/session-ws';
+import { signOut } from "next-auth/react";
+import { AuthSessionUser } from '@/api-shared/types/sso';
+import { MessageTypes } from '@/settings';
 
 export interface WebSocketSessionMessage
 {
     type: MessageTypes;
-    [ key: string ]: any;
+    [ key: string ]: unknown;
 }
 
 export type AuthContextState = {
-    default: boolean;
-    hiveId: number | string | null;
-    username: string | null;
-    displayName: string | null;
-    avatarImage: string | null,
-    clearance: Clearance;
-    status: 'loading' | 'authenticated' | 'unauthenticated';
+    userData: AuthSessionUser;
+    logout: () => void;
+    canEdit: boolean;
     addMessageHandler: (handler: MessageHandlerType) => () => void;
     sendMessage: (data: WebSocketSessionMessage) => void;
 };
 
 const AuthContext = createContext<AuthContextState | undefined>(undefined);
 
-const AuthProviderInner = ({ children }: { children: React.ReactNode; }) =>
+export const AuthProvider = ({ children, userData }: { children: React.ReactNode; userData: AuthSessionUser; }) =>
 {
-    const { data: session, status } = useSession() as SessionContextValue<false> & { data: null | AuthSessionData; };
     const { ws, addMessageHandler } = useSessionWebSocketContext();
+    const messageQueue = useRef<WebSocketSessionMessage[]>([]);
 
-    const router = useRouter();
+    const canEdit: boolean = !!userData;
 
-    useEffect(() =>
+    const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, data: unknown) =>
     {
-        if (status === 'unauthenticated')
-        {
-            router.push('/login');
-        }
-    }, [ status, router ]);
-
-    // 3. Map Hive session data to your local context
-    const username = session?.user?.username ?? null;
-    const displayName = session?.user?.display_name ?? 'Guest';
-    const avatarImage = session?.user?.image ?? null;
-
-    const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, data: any) =>
-    {
-        console.log(`[onWebSocketMessage] ${messageType} => ${data}`);
+        console.log(`[onWebSocketMessage] ${messageType}`, data);
     }, []);
 
     useEffect(() =>
     {
-        if (typeof window === 'undefined' || status !== 'authenticated') { return; }
         return addMessageHandler(onWebSocketMessage);
-    }, [ addMessageHandler, onWebSocketMessage, status ]);
+    }, [ addMessageHandler, onWebSocketMessage ]);
 
     const sendMessage = useCallback((data: WebSocketSessionMessage) =>
     {
-        if (!ws.current || status !== 'authenticated') { return; }
+        if (!ws?.current) return;
 
-        if (ws.current.OPEN !== ws.current.readyState)
-        {
-            setTimeout(() => sendMessage(data), 50);
-        } else
+        if (ws.current.readyState === WebSocket.OPEN)
         {
             ws.current.send(JSON.stringify(data));
+        } else if (ws.current.readyState === WebSocket.CONNECTING)
+        {
+            messageQueue.current.push(data);
+        } else
+        {
+            console.error('WebSocket is closed. Cannot send message.');
         }
-    }, [ ws, status ]);
+    }, [ ws ]);
 
-    if (status === 'loading' || status === 'unauthenticated')
+    useEffect(() =>
     {
-        return null; // Or a <LoadingSpinner />
-    }
+        if (!ws?.current) return;
+
+        const socketInstance = ws.current;
+
+        const handleSocketOpen = () =>
+        {
+            while (messageQueue.current.length > 0)
+            {
+                const msg = messageQueue.current.shift();
+                if (msg) socketInstance.send(JSON.stringify(msg));
+            }
+        };
+
+        socketInstance.addEventListener('open', handleSocketOpen);
+
+        return () =>
+        {
+            socketInstance.removeEventListener('open', handleSocketOpen);
+        };
+    }, [ ws ]);
+
+    const logout = useCallback(() =>
+    {
+        signOut({ callbackUrl: '/login' });
+    }, []);
+
+
+    const contextValue = useMemo<AuthContextState>(() => ({
+        userData,
+        logout,
+        canEdit,
+        addMessageHandler,
+        sendMessage,
+    }), [ logout, userData, canEdit, addMessageHandler, sendMessage ]);
 
     return (
-        <AuthContext.Provider value={ {
-            default: false,
-            hiveId: session?.user.id ?? null,
-            username,
-            displayName,
-            avatarImage,
-            clearance: session?.user.clearance ?? Clearance.Logged_Out,
-            status,
-            addMessageHandler,
-            sendMessage,
-        } }>
+        <AuthContext.Provider value={ contextValue }>
             { children }
         </AuthContext.Provider>
     );
 };
 
-export const useAuth = () =>
+export const useAuth = (): AuthContextState =>
 {
     const context = useContext(AuthContext);
+
     if (context === undefined)
     {
         throw new Error('useAuth must be used within an AuthProvider');
     }
-    return context;
-};
 
-export const AuthProvider = ({ children }: { children: React.ReactNode; }) =>
-{
-    return (
-        <AuthProviderInner>
-            { children }
-        </AuthProviderInner>
-    );
+    return context;
 };

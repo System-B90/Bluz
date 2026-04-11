@@ -1,6 +1,6 @@
 import React from "react";
 import { ApiResponseJson } from "@/api-shared/common";
-import { constructErrorFromNetworkMessage, ClientApiError, UserNotLoggedInError, ClientError, ServerNetworkError } from "@/api-shared/errors";
+import { constructErrorFromNetworkMessage, ClientApiError, UserNotLoggedInError, ClientError, ServerNetworkError, OperationAborted as OperationAbortedWarning, ClientApiWarning } from "@/api-shared/errors";
 import { Typography } from "@mui/material";
 import { EnqueueSnackbar, OptionsObject, VariantType } from "notistack";
 const API_LOGIN_REQUIRED_SLEEP_TIMEOUT = 60 * 1000; // 1 Minute
@@ -10,7 +10,7 @@ export async function safeFetcher(input: RequestInfo, init?: RequestInit | undef
     return fetch(input, init);
 }
 
-export async function safeApiFetcher(input: RequestInfo, init?: RequestInit | undefined, withCatch?: boolean): Promise<any | false>
+export async function safeApiFetcher<T = unknown>(input: RequestInfo, init?: RequestInit | undefined): Promise<T>
 {
     return safeFetcher(input, init)
         .then((response): Promise<any> =>
@@ -31,33 +31,18 @@ export async function safeApiFetcher(input: RequestInfo, init?: RequestInit | un
                     }
 
                     throw constructErrorFromNetworkMessage(data.error as ClientApiError);
-                })
-                .catch((e: any | ClientApiError) =>
-                {
-                    if (withCatch !== true) { throw e; }
-
-                    if (e instanceof UserNotLoggedInError)
-                    {
-                        console.log(`[UserNotLoggedInError] ${e.status}`);
-                    }
-                    else if (e instanceof ClientApiError)
-                    {
-                        console.log(`[ClientApiError] ${e.status}`);
-                    }
-                    else if (e instanceof ClientError)
-                    {
-                        console.log(`[ClientError] ${e}`);
-                    }
-                    else
-                    {
-                        console.log(`Api json error: ${e}`);
-                    }
-                    return false;
                 });
         })
         .catch((e: any) =>
         {
             if (e instanceof ClientApiError) { throw e; }
+            if (e instanceof Error)
+            {
+                if (e.name === 'AbortError')
+                {
+                    throw new OperationAbortedWarning();
+                }
+            }
             throw new ServerNetworkError(JSON.stringify(e));
         });
 }
@@ -89,6 +74,7 @@ export function enqueueSnackbarWithSubtext(
 export function enqueueApiErrorSnackbar(enqueueSnackbar: EnqueueSnackbar | undefined, mainText: string | React.ReactNode, error: any)
 {
     if (error instanceof UserNotLoggedInError) { console.log(error.message); return; }
+    if (error instanceof ClientApiWarning) { return; }
 
     if (!(error instanceof ClientApiError))
     {
@@ -113,3 +99,5 @@ export function enqueueApiErrorSnackbar(enqueueSnackbar: EnqueueSnackbar | undef
         );
     }
 }
+
+export type ClientApiProps = Omit<RequestInit, 'method' | 'body'>;

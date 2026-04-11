@@ -1,5 +1,8 @@
-import type { Metadata } from "next";
+import { MuiEmotionCacheProvider } from "@/components/theme/mui-emotion-cache-provider";
+import { WebSocketConfigProvider } from "@/components/websocket-config-provider";
+import { WEBSOCKET_PORT_SUFFIX, WEBSOCKET_PROTOCOL } from "@/settings";
 import "@/style/globals.css";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
     title: "Bluz",
@@ -12,12 +15,20 @@ export default function RootLayout({
     children: React.ReactNode;
 }>)
 {
+    const wsHost = process.env.WEBSOCKET_SESSION_SERVER_HOST || "localhost";
+    const wsProtcol = WEBSOCKET_PROTOCOL || "ws";
+    const wsPortSuffix = WEBSOCKET_PORT_SUFFIX || ":28199";
+
     return (
         <html lang="he" dir="rtl" suppressHydrationWarning>
             <body
                 className='antialiased w-screen h-screen overflow-hidden' dir="rtl"
             >
-                { children }
+                <WebSocketConfigProvider host={ wsHost } protocol={ wsProtcol } portSuffix={ wsPortSuffix }>
+                    <MuiEmotionCacheProvider>
+                        { children }
+                    </MuiEmotionCacheProvider>
+                </WebSocketConfigProvider>
             </body>
         </html>
     );

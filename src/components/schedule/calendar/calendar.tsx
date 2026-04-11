@@ -1,5 +1,6 @@
 'use client';
 import moment from 'moment';
+// @ts-ignore This import is broken
 import 'moment/locale/he'; // Import Hebrew locale
 import { Calendar, CalendarProps, DateRange, momentLocalizer, NavigateAction } from 'react-big-calendar';
 
@@ -40,7 +41,7 @@ const DnDCalendar = withDragAndDrop<Event, Room>(Calendar);
 
 // Set the default locale to Hebrew
 moment.locale('he');
-
+export { moment as calendarMoment };
 export const localizer = momentLocalizer(moment);
 
 export default function BluzCalendar({
@@ -153,7 +154,7 @@ export default function BluzCalendar({
         const range = getRangeForView(today, currentView);
         setStartDate(range.start);
         setEndDate(range.end);
-    }, [ currentView, ]);
+    }, [ currentView, setStartDate, setEndDate, ]);
 
     useEffect(() =>
     {
@@ -162,8 +163,6 @@ export default function BluzCalendar({
 
     const handleKeyDown = useCallback((e: KeyboardEvent) =>
     {
-
-        // console.log(e);
         if ([ 'INPUT', 'TEXTAREA' ].includes((e.target as HTMLElement).tagName)) { return; }
 
         const { activeEvent, copiedEvent, selectedSlotInfo } = copyPasteData.current;
@@ -230,7 +229,7 @@ export default function BluzCalendar({
             setActiveEvent(newEvent);
             setSelectedSlotInfo(null);
         }
-    }, [ handleSaveEvent ]);
+    }, [ handleSaveEvent, handleDeleteEvent, ]);
 
     useEffect(() =>
     {
@@ -244,7 +243,7 @@ export default function BluzCalendar({
 
     return (
         <DnDCalendar
-            className='relative grow'
+            className='relative grow h-full'
             style={ { height: 'unset' } }
             min={ new Date(2025, 0, 1, 7, 0) }  // 8:00 AM
             max={ new Date(2025, 0, 1, 22, 0) } // 6:00 PM
