@@ -15,19 +15,38 @@ services:
     depends_on:
       - curriculum-db
       - sessions
+      - mongodb
 
   curriculum-db:
     image: postgres:15-alpine
     container_name: bluz-curriculum-db
     restart: always
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secretpassword
-      POSTGRES_DB: curriculum_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "15432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - bluz_net
+
+  mongodb:
+    image: mongodb/mongodb-community-server:8.0-ubuntu2204
+    container_name: bluz-mongodb
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongodb_data:/data/db
     networks:
       - bluz_net
 
@@ -63,7 +82,9 @@ services:
 
 volumes:
   pgdata:
+  mongodb_data:
 
 networks:
   bluz_net:
     driver: bridge
+    
