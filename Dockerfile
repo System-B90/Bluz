@@ -45,4 +45,5 @@ USER nextjs
 
 EXPOSE 3000
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "server.js"]
