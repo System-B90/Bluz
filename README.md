@@ -21,3 +21,9 @@ pip install typer InquirerPy python-dotenv
 python setup.py
 npm run docker:dev
 ```
+
+### After Updating Nginx/Proxy Settings
+_Updated `nginx.conf`? Run this:_
+```pwsh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up proxy -d
+```
