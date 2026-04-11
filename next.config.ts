@@ -5,7 +5,10 @@ const nextConfig: NextConfig = {
   transpilePackages: [ 'mui-color-input' ],
   serverExternalPackages: [ 'pino', 'pino-pretty' ],
   output: 'standalone',
-  allowedDevOrigins: [ 'bluz.bis' ]
+  allowedDevOrigins: [ 'bluz.bis' ],
+  outputFileTracingIncludes: {
+    "/*": [ "./node_modules/drizzle-orm/**/*", "./node_modules/pg/**/*" ]
+  }
 };
 
 export default nextConfig;

@@ -43,6 +43,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./
 
+RUN npm install drizzle-orm pg tsx
+
 COPY drizzle ./drizzle
 COPY src/api-server/drizzle-migrate.ts ./migrate.ts
 

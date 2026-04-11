@@ -19,5 +19,5 @@
 ```pwsh
 pip install typer InquirerPy python-dotenv
 python setup.py
-docker compose up -d
+npm run docker:dev
 ```
