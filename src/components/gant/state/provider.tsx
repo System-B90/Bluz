@@ -3,7 +3,7 @@
 import { NormalizedStore, normalizeCurriculumData } from '@/api-client/gant/drizzle-normalize';
 import { ApiCurriculum } from '@/api-shared/types/gant/api-layer';
 import { ModuleId, SyllabusId } from '@/api-shared/types/gant/curriculum';
-import ModuleDialog from '@/components/gant/module-dialog';
+import ModuleDialog from '@/components/gant/module-dialog/utils';
 import { Action, curriculumReducer } from '@/components/gant/state/reducer';
 import React, { ReactNode, createContext, useCallback, useContext, useMemo, useReducer, useState } from 'react';
 

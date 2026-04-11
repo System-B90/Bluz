@@ -2,8 +2,7 @@ import { CurriculumDocument } from "@/api-client/gant/curriculum";
 import { ModuleDocument } from "@/api-client/gant/module";
 import { ModuleEventDocument } from "@/api-client/gant/module-event";
 import { SyllabusDocument } from "@/api-client/gant/syllabus";
-import { ApiCurriculum } from "@/api-shared/types/gant/api-layer";
-import { CurriculumId, Curriculum, SyllabusId, Syllabus, ModuleId, ModuleEventId, ModuleEvent, Module } from "@/api-shared/types/gant/curriculum";
+import { CurriculumId, ModuleEventId, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 
 export interface NormalizedStore
 {

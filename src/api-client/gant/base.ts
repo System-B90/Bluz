@@ -3,8 +3,6 @@ import { inplaceDateFixup } from "@/api-shared/date-fixer";
 import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
 import { Dayjs } from "dayjs";
 
-// --- Types ---
-
 export type BaseDocument = {
     createdAt: Dayjs;
     updatedAt: Dayjs;
@@ -15,7 +13,6 @@ export type RawBaseDocument = {
     updatedAt: string;
 };
 
-// dateFixup explicitly returns the entity WITH the document timestamps
 export type DateFixup<TEntity extends BaseGantItem> = (rawItem: unknown) => TEntity & BaseDocument;
 
 export function baseDocumentFixup<T extends RawBaseDocument | null>(doc: T): T | null
@@ -25,7 +22,6 @@ export function baseDocumentFixup<T extends RawBaseDocument | null>(doc: T): T |
     return doc;
 }
 
-// Added TCreatePayload to handle relational IDs (like curriculumId) that aren't on the final entity
 export interface ClientGantApiBuilderProps<TEntity extends BaseGantItem, TCreatePayload = Omit<TEntity, 'id'>>
 {
     apiBaseUrl: string;
@@ -41,8 +37,6 @@ export interface BasicGantApi<TEntity extends BaseGantItem, TCreatePayload = Omi
     readonly apiDelete: (id: TEntity[ 'id' ], options?: ClientApiProps) => Promise<void>;
     readonly apiGetMany: (ids: Array<TEntity[ 'id' ]>, options?: ClientApiProps) => Promise<Record<TEntity[ 'id' ], TEntity & BaseDocument>>;
 }
-
-// --- The Builder ---
 
 export function clientGantApiBuilder<
     TEntity extends BaseGantItem,
