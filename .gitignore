@@ -49,3 +49,4 @@ next-env.d.ts
 *.tar
 .vscode/PythonImportHelper-v2-Completion.json
 .husky
+ssl/

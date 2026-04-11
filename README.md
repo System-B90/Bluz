@@ -3,7 +3,7 @@
 ## Environment Variables
 
 * `NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT` - the port used for the client to communicate with the backend schedule server.
-* `WEBSOCKET_SESSION_SERVER_INTERNAL_PORT` - the port use for internal server communication over websocket. Default value being 8089.
+* `WEBSOCKET_SESSION_SERVER_INTERNAL_PORT` - the port use for internal server communication over websocket. Default value being 8192.
 * `NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST` - the host of the backend server.
 * `WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY` - the auth key for communication with the backend server.
 * `MONGO_CONNECTION_STRING` - the connection string of the mongo instance.
