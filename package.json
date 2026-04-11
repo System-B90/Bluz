@@ -55,6 +55,7 @@
     "stylis-plugin-rtl": "^2.1.1",
     "uuid": "^13.0.0",
     "ws": "^8.18.3",
+    "tsx": "^4.21.0",
     "drizzle-kit": "^0.31.10"
   },
   "devDependencies": {
@@ -74,7 +75,6 @@
     "globals": "^17.0.0",
     "husky": "^9.0.0",
     "tailwindcss": "^4.1.17",
-    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.51.0"
   }

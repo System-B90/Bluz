@@ -2,7 +2,7 @@
 set -e
 
 echo "Applying database migrations..."
-npx tsx ./migrate.ts
+./node_modules/.bin/tsx ./migrate.ts
 
 echo "Starting application..."
 exec "$@"
