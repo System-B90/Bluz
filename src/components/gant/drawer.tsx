@@ -16,9 +16,10 @@ import
 } from "@mui/material";
 import React, { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { CurriculumDocument } from "@/api-client/gant/curriculum";
-import { Curriculum, CurriculumId, makeCurriculum } from "@/api-shared/types/curriculum";
-import { useCurriculums } from "@/components/gant/providers/curriculum-provider";
+import { curriculumApi, CurriculumDocument } from "@/api-client/gant/curriculum";
+import { Curriculum, CurriculumId, makeCurriculum } from "@/api-shared/types/gant/curriculum";
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
+import { useSnackbar } from 'notistack';
 
 export interface CurriculumDrawerProps extends Omit<DrawerProps, 'variant' | 'anchor' | 'open'>
 {
@@ -32,10 +33,11 @@ interface CurriculumEntryProps
 {
     curriculum: Curriculum;
     onClick: () => void;
+    selected: boolean;
 }
 
 // Visual distinction between Draft and Prod handled here
-const CurriculumEntry = React.memo(({ curriculum, onClick }: CurriculumEntryProps) =>
+const CurriculumEntry = React.memo(({ curriculum, onClick, selected }: CurriculumEntryProps) =>
 {
     const isDraft = curriculum?.draft;
 
@@ -47,7 +49,7 @@ const CurriculumEntry = React.memo(({ curriculum, onClick }: CurriculumEntryProp
                     slotProps={ {
                         primary: {
                             sx: {
-                                color: isDraft ? 'text.secondary' : 'text.primary',
+                                color: selected ? 'text.action' : (isDraft ? 'text.secondary' : 'text.primary'),
                                 fontWeight: isDraft ? 'normal' : 'medium',
                                 fontStyle: isDraft ? 'italic' : 'normal'
                             }
@@ -62,12 +64,10 @@ CurriculumEntry.displayName = 'CurriculumEntry';
 
 function CreateNewCurriculum({ disabled }: { disabled?: boolean; }) 
 {
-    const { create: createCurriculum } = useCurriculums();
-
     const clickHandler = useCallback(() =>
     {
-        createCurriculum(makeCurriculum());
-    }, [ createCurriculum ]);
+        curriculumApi.apiCreate(makeCurriculum());
+    }, []);
 
     return (
         <ListItemButton onClick={ clickHandler } sx={ { mt: 1, border: '1px dashed text.secondary', borderRadius: 1 } } disabled={ disabled }>
@@ -79,7 +79,6 @@ function CreateNewCurriculum({ disabled }: { disabled?: boolean; })
     );
 };
 
-
 export default function CurriculumDrawer({
     open,
     setOpen,
@@ -88,61 +87,64 @@ export default function CurriculumDrawer({
     ...props
 }: CurriculumDrawerProps)
 {
-    const { data: curriculums, getMany: getManyCurriculums } = useCurriculums();
-
-    // RESTORED: Strict typing using your specific domain types
+    const { enqueueSnackbar } = useSnackbar();
     const [ curriculumsData, setCurriculumsData ] = useState<Record<CurriculumId, CurriculumDocument>>({} as Record<CurriculumId, CurriculumDocument>);
     const [ isFetchingDetails, setIsFetchingDetails ] = useState<boolean>(true);
-
     const hasInitializedSelection = useRef(false);
 
     useEffect(() =>
     {
-        if (!curriculums)
-        {
-            setIsFetchingDetails(true);
-            return;
-        }
-
         let isMounted = true;
         setIsFetchingDetails(true);
 
-        const keys = Object.keys(curriculums) as CurriculumId[];
-        if (keys.length === 0)
+        const fetchDrawerData = async () =>
         {
-            setIsFetchingDetails(false);
-            return;
-        }
-
-        getManyCurriculums(keys)
-            .then((data) =>
+            try
             {
+                // 1. Fetch the lightweight list of IDs
+                const listData = await curriculumApi.apiList();
+                const keys = Object.keys(listData) as CurriculumId[];
+
+                if (keys.length === 0)
+                {
+                    if (isMounted)
+                    {
+                        setCurriculumsData({} as Record<CurriculumId, CurriculumDocument>);
+                        setIsFetchingDetails(false);
+                    }
+                    return;
+                }
+
+                // 2. Fetch the full documents to get 'draft' and 'updatedAt' for sorting
+                const detailedData = await curriculumApi.apiGetMany(keys);
+
                 if (isMounted)
                 {
-                    setCurriculumsData(data);
+                    setCurriculumsData(detailedData as Record<CurriculumId, CurriculumDocument>);
                 }
-            })
-            .catch((error) =>
+            } catch (error)
             {
-                console.error("Failed to fetch curriculum details:", error);
-            })
-            .finally(() =>
+                enqueueApiErrorSnackbar(enqueueSnackbar, `טעינת הגאנט נכשלה!`, error);
+            } finally
             {
                 if (isMounted)
                 {
                     setIsFetchingDetails(false);
                 }
-            });
+            }
+        };
+
+        fetchDrawerData();
 
         return () =>
         {
             isMounted = false;
         };
-    }, [ curriculums, getManyCurriculums ]);
+    }, [ enqueueSnackbar ]); // Run on mount
 
     const sortedIds = useMemo(() =>
     {
-        // FIXED: Safely cast the string keys back to CurriculumId to maintain strict typing
+        // Safely cast the string keys back to CurriculumId to maintain strict typing
         return (Object.keys(curriculumsData) as CurriculumId[]).sort((a, b) =>
         {
             const dataA = curriculumsData[ a ];
@@ -152,6 +154,7 @@ export default function CurriculumDrawer({
 
             if (dataA.draft === dataB.draft)
             {
+                // Assuming Dayjs objects. If they are raw dates, use dataB.updatedAt.getTime() - dataA.updatedAt.getTime()
                 return dataB.updatedAt.diff(dataA.updatedAt);
             }
             return dataA.draft ? 1 : -1;
@@ -169,9 +172,10 @@ export default function CurriculumDrawer({
 
     const renderedListItems = useMemo(() =>
     {
-        if (isFetchingDetails || !curriculums)
+        if (isFetchingDetails)
         {
-            const skeletonCount = curriculums ? Object.keys(curriculums).length : 3;
+            // Default to 3 skeletons while doing the initial double-fetch
+            const skeletonCount = Object.keys(curriculumsData).length || 3;
 
             return Array.from({ length: skeletonCount }).map((_, index) => (
                 <ListItem key={ `skeleton-${index}` } disablePadding>
@@ -189,13 +193,14 @@ export default function CurriculumDrawer({
 
             return (
                 <CurriculumEntry
-                    key={ id as string } // React keys strictly require strings/numbers
+                    key={ id } // React keys strictly require strings/numbers
                     curriculum={ curriculum }
                     onClick={ () => setCurrentCurriculum(id) }
+                    selected={ currentCurriculum === id }
                 />
             );
         });
-    }, [ curriculums, sortedIds, curriculumsData, isFetchingDetails, setCurrentCurriculum ]);
+    }, [ sortedIds, curriculumsData, isFetchingDetails, currentCurriculum, setCurrentCurriculum ]);
 
     return (
         <Drawer
@@ -206,11 +211,15 @@ export default function CurriculumDrawer({
             { ...props }
         >
             <List sx={ { paddingX: 2, paddingY: 0, overflowY: 'auto' } }>
-                <ListSubheader sx={ { paddingY: 1 } }>
+                <ListSubheader sx={ { paddingY: 1, backgroundColor: 'background.paper' } }>
                     <Typography variant="h6" align="center">
                         גאנטים
                     </Typography>
-                    <CreateNewCurriculum disabled={ isFetchingDetails } />
+                    <CreateNewCurriculum
+                        disabled={ isFetchingDetails }
+                    // You may want to pass a callback here to refetch the drawer data 
+                    // when a new curriculum is created via this component.
+                    />
                 </ListSubheader>
 
                 { renderedListItems }

@@ -41,7 +41,6 @@ export async function GET(
         // 6. Handle non-200 responses from Hive (e.g., user has no avatar)
         if (!hiveResponse.ok)
         {
-            console.log(hiveResponse);
             return new NextResponse(`Failed to fetch avatar: ${hiveResponse.statusText}`, {
                 status: hiveResponse.status
             });

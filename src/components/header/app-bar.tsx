@@ -2,7 +2,6 @@
 import CurriculumIcon from '@/components/header/curriculum-icon';
 import FilterIcon from '@/components/header/filter-icon';
 import Filters from '@/components/header/filters';
-import InstructorToolsIcon from '@/components/header/instructor-tools-icon';
 import LoggedInUser from '@/components/header/logged-in-user';
 import Logo from '@/components/header/logo';
 import OfflineModeIcon from '@/components/header/offline-mode-icon';
@@ -11,7 +10,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { AppBar, AppBarProps, Box, Button, IconButton, Toolbar, Typography } from "@mui/material";
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+
 export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
     setOpenSettingsDialog: (open: boolean) => void,
 } & Exclude<AppBarProps, 'position'>)

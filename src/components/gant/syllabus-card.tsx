@@ -1,21 +1,14 @@
-import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { BaseDocument } from '@/api-client/gant/base';
-import { apiUpdateModule } from '@/api-client/gant/module';
-import { makeModule, makeModuleEvent, Module, ModuleEventType, Syllabus, SyllabusId } from "@/api-shared/types/curriculum";
-import { useModuleEvents } from '@/components/gant/providers/module-event-provider';
-import { ModuleProvider, ModulesProvider, useModule, useModules } from "@/components/gant/providers/module-provider";
-import { SyllabusProvider, useSyllabus } from "@/components/gant/providers/syllabus-provider";
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { ModuleEventType, ModuleId, Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { useGantFuncs, useModule, useSyllabus } from '@/components/gant/state/hooks';
+import { useCurriculumProviderActions, useCurriculumState } from '@/components/gant/state/provider';
 import { calculateAllocatedTimeForModule, calculateMinimumRequiredTimeForModule } from '@/components/gant/utils';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import SaveIcon from '@mui/icons-material/Save';
 import
 {
     Box,
-    Button,
-    ButtonGroup,
     Card,
-    CardActions,
     CardContent,
     CardHeader,
     CircularProgress,
@@ -34,43 +27,20 @@ import
 import { useSnackbar } from 'notistack';
 import { ChangeEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 
-function ModuleRow()
+function ModuleRow({ moduleId, syllabusId }: { moduleId: ModuleId; syllabusId: SyllabusId; })
 {
-    const { data: module, openDialog } = useModule();
-    const [ minimumRequiredTime, setMinimumRequiredTime ] = useState<number>();
-    const [ allocatedTime, setAllocatedTime ] = useState<number>();
-
-    useEffect(() =>
-    {
-        let isMounted = true;
-
-        if (!module) return;
-
-        Promise.all([
-            calculateMinimumRequiredTimeForModule(module),
-            calculateAllocatedTimeForModule(module)
-        ]).then(([ minTime, allocTime ]) =>
-        {
-            if (isMounted)
-            {
-                setMinimumRequiredTime(minTime);
-                setAllocatedTime(allocTime);
-            }
-        });
-
-        return () =>
-        {
-            isMounted = false;
-        };
-    }, [ module ]);
+    const state = useCurriculumState();
+    const { openModuleDialog } = useCurriculumProviderActions();
+    const moduleDoc = useModule(moduleId);
+    const minimumRequiredTime = useMemo(() => moduleDoc ? calculateMinimumRequiredTimeForModule(moduleDoc, state) : 0, [ moduleDoc, state ]);
+    const allocatedTime = useMemo(() => moduleDoc ? calculateAllocatedTimeForModule(moduleDoc, state) : 0, [ moduleDoc, state ]);
 
     const editClickHandler = useCallback(() =>
     {
-        if (!module) return;
-        openDialog();
-    }, [ module, openDialog ]);
+        openModuleDialog(syllabusId, moduleId);
+    }, [ moduleId, syllabusId, openModuleDialog ]);
 
-    if (!module)
+    if (!moduleDoc)
     {
         return (
             <TableRow>
@@ -87,7 +57,7 @@ function ModuleRow()
     return (
         <TableRow hover>
             <TableCell>
-                <Typography variant="body2">{ module.title }</Typography>
+                <Typography variant="body2">{ moduleDoc.title }</Typography>
             </TableCell>
             <TableCell>
                 { minimumRequiredTime !== undefined ? minimumRequiredTime : <CircularProgress size="1rem" /> }
@@ -106,12 +76,10 @@ function ModuleRow()
     );
 }
 
-function CreateModuleButton()
+function CreateModuleButton({ syllabusId }: { syllabusId: SyllabusId; })
 {
     const { enqueueSnackbar } = useSnackbar();
-    const { addModule: addModuleToSyllabus } = useSyllabus();
-    const { create: createModule } = useModules();
-    const { create: createModuleEvent } = useModuleEvents();
+    const { createModule, createEvent } = useGantFuncs();
     const [ isCreating, setIsCreating ] = useState(false);
 
     const clickHandler = useCallback(async () =>
@@ -119,26 +87,26 @@ function CreateModuleButton()
         setIsCreating(true);
         try
         {
-            // Optimize groupings of asynchronous operations
-            const [ newModule, createdLecture, createdExercise ] = await Promise.all([
-                createModule(makeModule()),
-                createModuleEvent(makeModuleEvent({ title: 'הרצאת מבוא', type: ModuleEventType.Lecture, minimumDuration: 60 })),
-                createModuleEvent(makeModuleEvent({ title: 'ע"ע', type: ModuleEventType.Exercise, minimumDuration: 45 }))
-            ]);
-
-            console.log('newModule', newModule);
-            await Promise.all([
-                addModuleToSyllabus(newModule),
-                apiUpdateModule({
-                    ...newModule,
-                    events: [ ...newModule.events, createdLecture.id, createdExercise.id ]
-                }).catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הוספת מופעי ברירת מחדל נכשלה!', error))
-            ]);
+            const newModule = await createModule('מודול חדש', syllabusId, 'המודול החדש שלי');
+            try
+            {
+                await Promise.all([
+                    createEvent('הרצאת מבוא', newModule.id, ModuleEventType.Lecture, 60),
+                    createEvent('ע"ע', newModule.id, ModuleEventType.Exercise, 45)
+                ]);
+            } catch (error)
+            {
+                enqueueApiErrorSnackbar(enqueueSnackbar, 'יצירת מופעי ברירת מחדל במודול נכשלה!', error);
+            }
+        }
+        catch (error)
+        {
+            enqueueApiErrorSnackbar(enqueueSnackbar, 'יצירת המודול נכשלה!', error);
         } finally
         {
             setIsCreating(false);
         }
-    }, [ enqueueSnackbar, createModule, createModuleEvent, addModuleToSyllabus ]);
+    }, [ syllabusId, enqueueSnackbar, createModule, createEvent ]);
 
     return (
         <Tooltip title="מערך חדש" placement="top">
@@ -151,45 +119,11 @@ function CreateModuleButton()
     );
 }
 
-function SyllabusSaveButton()
+function SyllabusName({ syllabusId }: { syllabusId: SyllabusId; })
 {
-    const { commit: commitSyllabus } = useSyllabus();
-    const [ isSaving, setIsSaving ] = useState(false);
-
-    const clickHandler = useCallback(async () =>
-    {
-        setIsSaving(true);
-        try
-        {
-            await commitSyllabus();
-        } finally
-        {
-            setIsSaving(false);
-        }
-    }, [ commitSyllabus ]);
-
-    return (
-        <Button
-            size="small"
-            variant="contained"
-            startIcon={ isSaving ? <CircularProgress size="1rem" color="inherit" /> : <SaveIcon /> }
-            onClick={ clickHandler }
-            disabled={ isSaving }
-        >
-            שמור
-        </Button>
-    );
-}
-
-function SyllabusName()
-{
-    const { data: syllabus, setData } = useSyllabus();
+    const { updateSyllabus } = useGantFuncs();
+    const syllabus = useSyllabus(syllabusId);
     const [ localTitle, setLocalTitle ] = useState(syllabus?.title ?? '');
-
-    useEffect(() =>
-    {
-        setLocalTitle(syllabus?.title ?? '');
-    }, [ syllabus?.title ]);
 
     const onChange: ChangeEventHandler<HTMLInputElement> = useCallback((e) =>
     {
@@ -198,8 +132,8 @@ function SyllabusName()
 
     const onBlur = useCallback(() =>
     {
-        setData((prev) => prev ? ({ ...prev, title: localTitle }) : null);
-    }, [ localTitle, setData ]);
+        updateSyllabus(syllabusId, { title: localTitle });
+    }, [ syllabusId, localTitle, updateSyllabus ]);
 
     return (
         <TextField
@@ -217,18 +151,14 @@ function SyllabusName()
     );
 }
 
-function ModulesTable()
+function ModulesTable({ syllabusId, syllabusModules }: { syllabusId: SyllabusId; syllabusModules: Syllabus[ 'modules' ]; })
 {
-    const { data: syllabus } = useSyllabus();
-
     const moduleRows = useMemo(() =>
     {
-        return (syllabus?.modules ?? []).map((moduleId) => (
-            <ModuleProvider itemId={ moduleId } key={ moduleId }>
-                <ModuleRow />
-            </ModuleProvider>
+        return syllabusModules.map((moduleId) => (
+            <ModuleRow key={ moduleId } moduleId={ moduleId } syllabusId={ syllabusId } />
         ));
-    }, [ syllabus?.modules ]);
+    }, [ syllabusId, syllabusModules ]);
 
     return (
         <Box sx={ { overflowY: 'auto', flexGrow: 1, border: 1, borderColor: 'divider', borderRadius: 1 } }>
@@ -239,7 +169,7 @@ function ModulesTable()
                         <TableCell sx={ { fontWeight: 'bold' } }>זמן רצוי</TableCell>
                         <TableCell sx={ { fontWeight: 'bold' } }>זמן מוקצב</TableCell>
                         <TableCell width="1rem" align="center">
-                            <CreateModuleButton />
+                            <CreateModuleButton syllabusId={ syllabusId } />
                         </TableCell>
                     </TableRow>
                 </TableHead>
@@ -260,34 +190,15 @@ function ModulesTable()
     );
 }
 
-function SyllabusCardInner()
+function SyllabusCardInner({ syllabusId }: { syllabusId: SyllabusId; })
 {
-    const { isLoading, data: syllabus, setData: setSyllabus } = useSyllabus();
-
-    if (isLoading || !syllabus)
-    {
-        return (
-            <CardContent sx={ { display: 'flex', flexDirection: 'column', gap: 2, flex: 1 } }>
-                <Skeleton variant="text" width="60%" height={ 40 } />
-                <Skeleton variant="rectangular" height={ 200 } sx={ { borderRadius: 1 } } />
-                <Box sx={ { display: 'flex', justifyContent: 'flex-start', mt: 'auto' } }>
-                    <Skeleton variant="rectangular" width={ 80 } height={ 32 } sx={ { borderRadius: 1 } } />
-                </Box>
-            </CardContent>
-        );
-    }
-
+    const syllabus = useSyllabus(syllabusId);
     return (
         <>
             <CardContent sx={ { display: 'flex', flexDirection: 'column', paddingY: 1, flex: 1, overflow: 'hidden' } }>
-                <SyllabusName />
-                <ModulesTable />
+                <SyllabusName key={ `${syllabus?.title ?? '-syllabus-title'}` } syllabusId={ syllabusId } />
+                <ModulesTable syllabusModules={ syllabus?.modules ?? [] } syllabusId={ syllabusId } />
             </CardContent>
-            <CardActions sx={ { px: 2, pb: 2 } }>
-                <ButtonGroup>
-                    <SyllabusSaveButton />
-                </ButtonGroup>
-            </CardActions>
         </>
     );
 }
@@ -300,9 +211,7 @@ export default function SyllabusCard({ syllabusId }: { syllabusId: SyllabusId; }
                 title={ <Typography variant="subtitle2" color="textSecondary">סילבוס</Typography> }
                 sx={ { pb: 0, pt: 1.5, px: 2 } }
             />
-            <SyllabusProvider itemId={ syllabusId }>
-                <SyllabusCardInner />
-            </SyllabusProvider>
+            <SyllabusCardInner syllabusId={ syllabusId } />
         </Card>
     );
 }

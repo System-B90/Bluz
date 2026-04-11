@@ -21,18 +21,18 @@ import
     TableSortLabel,
     Typography,
 } from '@mui/material';
-import { FormEvent, Fragment, useCallback, useEffect, useState } from "react";
+import { FormEvent, Fragment, useCallback, useEffect, useMemo, useState } from "react";
 
-import { Event, EventId } from "@/components/schedule/types/event";
-import { useOffline } from '@/components/base/offline-provider';
-import { useCalendar } from '@/components/schedule/calendar/calendar-provider';
 import { apiGetMultipleEvents } from '@/api-client/calendar';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { enqueueSnackbar } from 'notistack';
+import { useOffline } from '@/components/base/offline-provider';
+import { useCalendar } from '@/components/schedule/calendar/calendar-provider';
+import { Event, EventId } from "@/components/schedule/types/event";
 import { areEventsEqual, areValuesEqual } from '@/components/schedule/types/event-utils';
-import assert from 'assert';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import assert from 'assert';
+import { enqueueSnackbar } from 'notistack';
 
 interface PushOfflineUpdatesDialogProps
 {
@@ -129,7 +129,9 @@ function EventListEntry({ isItemSelected, handleEntryClick, eventId, localModifi
 
 function EventCollisionsList({ collisionStates }: { collisionStates: CollisionStates; })
 {
-    const [ selected, setSelected ] = useState<Array<EventId>>([]);
+    const [ selected, setSelected ] = useState<Array<EventId>>(Object.keys(collisionStates)
+        .filter((eventId) => !collisionStates[ eventId ].conflicting)
+    );
     const numSelected = selected.length;
     const rowCount = Object.keys(collisionStates).length;
 
@@ -163,12 +165,6 @@ function EventCollisionsList({ collisionStates }: { collisionStates: CollisionSt
         });
     }, []);
 
-    useEffect(() =>
-    {
-        setSelected(Object.keys(collisionStates).filter((eventId) => !collisionStates[ eventId ].conflicting));
-    }, [ collisionStates ]);
-
-    // console.log('collisionStates', collisionStates);
     const items = Object.keys(collisionStates).map((eventId) => (
         <EventListEntry isItemSelected={ selected.includes(eventId) } key={ eventId } eventId={ eventId } { ...collisionStates[ eventId ] } handleEntryClick={ handleEntryClick } />
     ));
@@ -260,6 +256,10 @@ export default function PushOfflineUpdatesDialog({
         checkEventCollisionStates().then(setCollisionStates);
     }, [ pushDialogOpen, checkEventCollisionStates, setCollisionStates ]);
 
+    const collisionListKey = useMemo(() => Object.values(collisionStates)
+        .map((cs) => `${cs.localModifiedEvent?.id}-${cs.conflicting ? '1' : '0'}`)
+        .join('--'), [ collisionStates ]);
+
     return (
         <Dialog open={ pushDialogOpen } onClose={ onClose } maxWidth="lg" fullWidth>
             <DialogTitle>שמירת שינויים לוקלים</DialogTitle>
@@ -268,7 +268,7 @@ export default function PushOfflineUpdatesDialog({
                 <DialogContent>
                     <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 } }>
                         <Box gap={ 2 } display={ 'flex' } width={ '100%' }>
-                            <EventCollisionsList collisionStates={ collisionStates } />
+                            <EventCollisionsList key={ collisionListKey } collisionStates={ collisionStates } />
                         </Box>
                     </Box>
                 </DialogContent>

@@ -5,7 +5,7 @@ export interface AuthSessionUser
 {
     id: string;
     name: string;
-    email: undefined;
+    email: string | null;
     username: string;
     clearance: Clearance;
     program: number | null;
@@ -18,4 +18,5 @@ export interface AuthSessionData extends Session
 {
     user: AuthSessionUser;
     accessToken: string;
+    refreshToken: string;
 }

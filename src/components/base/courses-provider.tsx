@@ -4,7 +4,7 @@ import { apiAddCourse, apiDeleteCourse, apiGetCourses, apiSetCourse } from '@/ap
 import { Course, CourseId } from '@/api-shared/types/course';
 import { useAuth } from '@/components/auth/auth-provider';
 import { MessageHandlerType } from '@/components/session-ws';
-import { MessageTypes } from '@/session-server/src/common';
+import { MessageTypes } from '@/settings';
 import { enqueueSnackbar } from 'notistack';
 import
 {
@@ -64,7 +64,7 @@ export const CoursesProvider = ({ children }: { children: React.ReactNode; }) =>
             .then(() => enqueueSnackbar(`יצירת מסלול ${course.name} הסתיימה בהצלחה.`, { variant: 'success' }))
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, `יצירת המסלול ${course.name} נכשלה!`, error));
         loadCourses();
-    }, [ setCourses, loadCourses ]);
+    }, [ loadCourses ]);
 
     const updateCourse = useCallback(async (course: Course) =>
     {
@@ -72,7 +72,7 @@ export const CoursesProvider = ({ children }: { children: React.ReactNode; }) =>
             .then(() => enqueueSnackbar(`עדכון מסלול ${course.name} הסתיים בהצלחה.`, { variant: 'success' }))
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, `עדכון המסלול ${course.name} נכשל!`, error));
         loadCourses();
-    }, [ setCourses, loadCourses ]);
+    }, [ loadCourses ]);
 
     const deleteCourse = useCallback(async (courseId: CourseId) =>
     {
@@ -80,7 +80,7 @@ export const CoursesProvider = ({ children }: { children: React.ReactNode; }) =>
             .then(() => enqueueSnackbar(`מחיקת מסלול ${courses[ courseId ]?.name || courseId} הסתיימה בהצלחה.`, { variant: 'success' }))
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, `מחיקת המסלול ${courses[ courseId ]?.name ?? courseId} נכשלה!`, error));
         loadCourses();
-    }, [ setCourses, loadCourses, courses ]);
+    }, [ loadCourses, courses ]);
 
     useEffect(() =>
     {

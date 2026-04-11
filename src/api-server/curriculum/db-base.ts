@@ -1,152 +1,191 @@
+import { postgresDb } from "@/api-server/curriculum";
+import { curriculumSyllabuses, moduleToEvents, syllabusModules } from "@/api-server/curriculum/schema";
 import { ClientApiError } from "@/api-shared/errors";
-import { BaseGantItem } from "@/api-shared/types/curriculum";
-import { Filter, FindOptions, InsertOneOptions, FindOneAndUpdateOptions, DeleteOptions, Collection, OptionalUnlessRequiredId, UpdateFilter } from "mongodb";
-import { v4 as uuidv4 } from 'uuid';
+import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
+import { BasicGantOperations } from "@/app/api/gant/base";
+import { eq, inArray, desc } from "drizzle-orm";
+import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
+export const FOREIGN_KEY_VIOLATION = '23503';
+export const UNIQUE_VIOLATION = '23505';
 export type BaseDbDocument = {
     createdAt: Date;
     updatedAt: Date;
 };
 
-export interface CurriculumDbOperationsBuilderProps<T extends BaseGantItem>
+export interface JunctionConfig
 {
-    dbCollection: Collection<T & BaseDbDocument>;
+    table: PgTableWithColumns<any>;
+    localKey: AnyPgColumn;
+    relationKey: AnyPgColumn;
+    apiKey: string;
+}
+
+export interface DrizzleOperationsBuilderProps<TTable extends PgTableWithColumns<any>>
+{
+    table: TTable;
     typeName: string;
+    junction?: JunctionConfig;
+    parentJunction?: { type: 'curriculum' | 'syllabus' | 'module'; };
 }
 
-export interface BasicGantOperations<T extends BaseGantItem>
-{
-    readonly getItem: (id: T[ "id" ], options?: FindOptions) => Promise<T & BaseDbDocument | null>;
-    readonly getMultipleItems: (ids: Array<T[ "id" ]>, options?: FindOptions) => Promise<Array<T & BaseDbDocument>>;
-    readonly getItemsByFilter: (filter: Filter<T & BaseDbDocument>, options?: FindOptions) => Promise<Array<T & BaseDbDocument>>;
-    readonly countItemsByFilter: (filter: Filter<T & BaseDbDocument>, options?: FindOptions) => Promise<number>;
-    readonly createNewItem: (data: Omit<T & BaseDbDocument, "createdAt" | "updatedAt" | "id">, options?: InsertOneOptions) => Promise<T & BaseDbDocument>;
-    readonly updateItem: (id: T[ "id" ], updateData: Partial<Omit<T & BaseDbDocument, "id" | "createdAt" | "updatedAt">>, options?: FindOneAndUpdateOptions) => Promise<T & BaseDbDocument>;
-    readonly deleteItem: (id: T[ "id" ], options?: DeleteOptions) => Promise<void>;
-    readonly listItems: (filters?: Filter<T & BaseDbDocument>) => Promise<Record<T[ "id" ], T[ "title" ]>>;
-}
-
-export function curriculumDbOperationsBuilder<T extends BaseGantItem>({
-    dbCollection,
+export function drizzleOperationsBuilder<
+    T extends BaseGantItem,
+    TTable extends PgTableWithColumns<any>,
+    TCreatePayload = Omit<T, 'id'>
+>({
+    table,
     typeName,
-}: CurriculumDbOperationsBuilderProps<T>): BasicGantOperations<T>
+    junction,
+    parentJunction,
+}: DrizzleOperationsBuilderProps<TTable>): BasicGantOperations<T, TCreatePayload>
 {
+
     type DbTDocument = T & BaseDbDocument;
+    const cols = table as any;
 
-    async function getItem(id: T[ 'id' ], options?: FindOptions): Promise<DbTDocument | null>
+    async function getItem(id: T[ 'id' ]): Promise<DbTDocument>
     {
-        if (!id)
+        if (!id) throw new ClientApiError(`מזהה ${typeName} חסר`);
+
+        if (junction)
         {
-            throw new ClientApiError(`לא הועבר מזהה ${typeName}`);
-        }
+            const rows = await postgresDb
+                .select({
+                    entity: table,
+                    junction: junction.table,
+                })
+                .from(table as any)
+                .leftJoin(junction.table as any, eq(cols.id, junction.localKey))
+                .where(eq(cols.id, id));
 
-        const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: 0 };
-        return await dbCollection.findOne({ id } as Filter<DbTDocument>, { ...options, projection }) as DbTDocument | null;
-    }
-
-    async function getMultipleItems(ids: Array<T[ 'id' ]>, options?: FindOptions): Promise<DbTDocument[]>
-    {
-        if (!ids || ids.length === 0)
-        {
-            return [];
-        }
-
-        const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: 0 };
-        const cursor = dbCollection.find({ id: { $in: ids } } as Filter<DbTDocument>, { ...options, projection });
-        return await cursor.toArray() as DbTDocument[];
-    }
-
-    async function getItemsByFilter(filter: Filter<DbTDocument>, options?: FindOptions): Promise<DbTDocument[]>
-    {
-        const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: 0 };
-        const cursor = dbCollection.find(filter, { ...options, projection });
-        return await cursor.toArray() as DbTDocument[];
-    }
-
-    async function countItemsByFilter(filter: Filter<DbTDocument>, options?: FindOptions): Promise<number>
-    {
-        return await dbCollection.countDocuments(filter, { ...options });
-    }
-
-    async function createNewItem(data: Omit<DbTDocument, 'createdAt' | 'updatedAt' | 'id'>, options?: InsertOneOptions): Promise<DbTDocument>
-    {
-        if (('id' in data && data.id) || ('_id' in data && data._id))
-        {
-            throw new ClientApiError(`הועבר מזהה ${typeName} בעת יצירה!`);
-        }
-
-        const now = new Date();
-        const newDocument = {
-            ...data,
-            id: uuidv4() as T[ 'id' ],
-            createdAt: now,
-            updatedAt: now,
-        } as DbTDocument;
-
-        await dbCollection.insertOne(newDocument as OptionalUnlessRequiredId<DbTDocument>, options);
-        delete (newDocument as any)._id; // insertOne mutates the document in place
-        return newDocument;
-    }
-
-    async function updateItem(
-        id: T[ 'id' ],
-        updateData: Partial<Omit<DbTDocument, 'id' | 'createdAt' | 'updatedAt'>>,
-        options?: FindOneAndUpdateOptions
-    ): Promise<DbTDocument>
-    {
-        if (!id)
-        {
-            throw new ClientApiError(`מזהה נדרש על מנת לעדכן ${typeName}!`);
-        }
-
-        const { id: _idDrop, createdAt: _createdDrop, ...safeUpdateData } = updateData as Record<string, unknown>;
-
-        const updatePayload = {
-            ...safeUpdateData,
-            updatedAt: new Date(),
-        } as UpdateFilter<DbTDocument>[ '$set' ];
-
-        const projection: FindOptions[ 'projection' ] = { ...options?.projection, _id: 0 };
-
-        const updatedDocument = await dbCollection.findOneAndUpdate(
-            { id } as Filter<DbTDocument>,
-            { $set: updatePayload },
-            { returnDocument: 'after', ...options, projection }
-        );
-
-        if (!updatedDocument)
-        {
-            throw new ClientApiError(`${typeName} עם מזהה ${id} לא קיים!`);
-        }
-
-        return updatedDocument as DbTDocument;
-    }
-
-    async function deleteItem(id: T[ 'id' ], options?: DeleteOptions): Promise<void>
-    {
-        const result = await dbCollection.deleteOne({ id } as Filter<DbTDocument>, options);
-
-        if (result.deletedCount === 0)
-        {
-            throw new ClientApiError(`${typeName} עם מזהה ${id} לא קיים!`);
-        }
-    }
-
-    async function listItems(filters?: Filter<DbTDocument>): Promise<Record<T[ 'id' ], T[ 'title' ]>>
-    {
-        const cursor = dbCollection.find(
-            filters ?? {},
+            if (rows.length === 0)
             {
-                projection: { id: 1, _id: 0, title: 1 },
-                sort: { updatedAt: -1 }
+                throw new ClientApiError(`${typeName} עם מזהה ${id} לא נמצא`);
             }
-        );
 
-        const documents = await cursor.toArray();
+            const baseEntity = rows[ 0 ].entity as Record<string, any>;
+            const relatedIds = rows
+                .map((row) => (row.junction as any)?.[ junction.relationKey.name ])
+                .filter(Boolean);
 
-        return documents.reduce((acc, doc) =>
+            return {
+                ...baseEntity,
+                [ junction.apiKey ]: relatedIds,
+            } as DbTDocument;
+        }
+
+        const [ result ] = await postgresDb
+            .select()
+            .from(table as any)
+            .where(eq(cols.id, id))
+            .limit(1);
+
+        if (!result)
         {
-            acc[ doc.id as T[ 'id' ] ] = doc.title;
+            throw new ClientApiError(`${typeName} עם מזהה ${id} לא נמצא`);
+        }
+
+        return result as DbTDocument;
+    }
+
+    async function getMultipleItems(ids: Array<T[ 'id' ]>): Promise<DbTDocument[]>
+    {
+        if (!ids || ids.length === 0) return [];
+
+        return await postgresDb.select()
+            .from(table as any)
+            .where(inArray(cols.id, ids)) as DbTDocument[];
+    }
+
+    async function createNewItem(data: TCreatePayload): Promise<DbTDocument>
+    {
+        const id = (data as any).id || `gen_${crypto.randomUUID()}`;
+        const now = new Date();
+
+        const { curriculumId, syllabusId, moduleId, ...entityData } = data as any;
+
+        return await postgresDb.transaction(async (tx) =>
+        {
+            const [ newItem ] = await tx.insert(table as any).values({
+                ...entityData,
+                id,
+                createdAt: now,
+                updatedAt: now,
+            }).returning();
+
+            if (curriculumId && parentJunction?.type === 'curriculum')
+            {
+                await tx.insert(curriculumSyllabuses).values({
+                    curriculumId: curriculumId,
+                    syllabusId: id,
+                });
+            } else if (syllabusId && parentJunction?.type === 'syllabus')
+            {
+                await tx.insert(syllabusModules).values({
+                    syllabusId: syllabusId,
+                    moduleId: id,
+                });
+            } else if (moduleId && parentJunction?.type === 'module')
+            {
+                await tx.insert(moduleToEvents).values({
+                    moduleId: moduleId,
+                    eventId: id,
+                });
+            }
+
+            if (junction?.apiKey)
+            {
+                (newItem as any)[ junction.apiKey ] = [];
+            }
+
+            return newItem as DbTDocument;
+        });
+    }
+
+    async function updateItem(id: T[ 'id' ], updateData: Partial<T>): Promise<DbTDocument>
+    {
+        if (!id) throw new ClientApiError(`מזהה נדרש לעדכון ${typeName}`);
+
+        const { id: _id, createdAt: _c, updatedAt: _u, ...safeData } = updateData as any;
+
+        const [ updatedItem ] = await postgresDb.update(table as any)
+            .set({
+                ...safeData,
+                updatedAt: new Date(),
+            })
+            .where(eq(cols.id, id))
+            .returning();
+
+        if (!updatedItem)
+        {
+            throw new ClientApiError(`${typeName} עם מזהה ${id} לא נמצא לעדכון`);
+        }
+
+        return updatedItem as DbTDocument;
+    }
+
+    async function deleteItem(id: T[ 'id' ]): Promise<void>
+    {
+        const result = await postgresDb.delete(table as any).where(eq(cols.id, id)).returning({ deletedId: cols.id });
+        if (result.length === 0)
+        {
+            throw new ClientApiError(`${typeName} עם מזהה ${id} לא נמצא למחיקה`);
+        }
+    }
+
+    async function listItems(): Promise<Record<T[ 'id' ], T[ 'title' ]>>
+    {
+        const results = await postgresDb.select({
+            id: cols.id,
+            title: cols.title
+        })
+            .from(table as any)
+            .orderBy(desc(cols.updatedAt));
+
+        return results.reduce((acc, row) =>
+        {
+            acc[ row.id as T[ 'id' ] ] = row.title;
             return acc;
         }, {} as Record<T[ 'id' ], T[ 'title' ]>);
     }
@@ -154,8 +193,6 @@ export function curriculumDbOperationsBuilder<T extends BaseGantItem>({
     return {
         getItem,
         getMultipleItems,
-        getItemsByFilter,
-        countItemsByFilter,
         createNewItem,
         updateItem,
         deleteItem,

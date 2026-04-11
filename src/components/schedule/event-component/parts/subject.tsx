@@ -12,7 +12,7 @@ import { useMemo } from "react";
 export default function SubjectComponent({ subjectId, ...props }: { subjectId: SubjectLike; } & TypographyProps)
 {
     const { getSubject } = useHiveSubjects();
-    const subject = useMemo(() => getSubject(subjectId), [ subjectId ]);
+    const subject = useMemo(() => getSubject(subjectId), [ subjectId, getSubject, ]);
 
     return (
         <Link href={ `${getHiveBaseUrl()}/course/${subject?.id}` } className="hover:underline">
@@ -24,11 +24,11 @@ export default function SubjectComponent({ subjectId, ...props }: { subjectId: S
 export function ModuleComponent({ moduleId, ...props }: { moduleId: ModuleLike; } & TypographyProps)
 {
     const { getModule } = useHiveModules();
-    const module = useMemo(() => getModule(moduleId), [ moduleId ]);
+    const hiveModule = useMemo(() => getModule(moduleId), [ moduleId, getModule, ]);
 
     return (
-        <Link href={ `${getHiveBaseUrl()}/course/${module?.parent_subject}/${module?.id}` } className="hover:underline">
-            <Typography { ...props }>{ module?.name }</Typography>
+        <Link href={ `${getHiveBaseUrl()}/course/${hiveModule?.parent_subject}/${hiveModule?.id}` } className="hover:underline">
+            <Typography { ...props }>{ hiveModule?.name }</Typography>
         </Link>
     );
 }

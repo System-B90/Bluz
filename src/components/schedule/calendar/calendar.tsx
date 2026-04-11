@@ -1,5 +1,6 @@
 'use client';
 import moment from 'moment';
+// @ts-ignore This import is broken
 import 'moment/locale/he'; // Import Hebrew locale
 import { Calendar, CalendarProps, DateRange, momentLocalizer, NavigateAction } from 'react-big-calendar';
 
@@ -153,7 +154,7 @@ export default function BluzCalendar({
         const range = getRangeForView(today, currentView);
         setStartDate(range.start);
         setEndDate(range.end);
-    }, [ currentView, ]);
+    }, [ currentView, setStartDate, setEndDate, ]);
 
     useEffect(() =>
     {
@@ -162,8 +163,6 @@ export default function BluzCalendar({
 
     const handleKeyDown = useCallback((e: KeyboardEvent) =>
     {
-
-        // console.log(e);
         if ([ 'INPUT', 'TEXTAREA' ].includes((e.target as HTMLElement).tagName)) { return; }
 
         const { activeEvent, copiedEvent, selectedSlotInfo } = copyPasteData.current;
@@ -230,7 +229,7 @@ export default function BluzCalendar({
             setActiveEvent(newEvent);
             setSelectedSlotInfo(null);
         }
-    }, [ handleSaveEvent ]);
+    }, [ handleSaveEvent, handleDeleteEvent, ]);
 
     useEffect(() =>
     {

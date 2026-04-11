@@ -12,7 +12,7 @@ interface ModuleFieldProps
 export default function ModuleField({ event, onEventChange, ...props }: ModuleFieldProps & FormControlProps)
 {
     const { getModulesOfSubject } = useHiveModules();
-    const modules = useMemo(() => event?.subject ? getModulesOfSubject(event?.subject) : [], [ event?.subject ]);
+    const modules = useMemo(() => event?.subject ? getModulesOfSubject(event?.subject) : [], [ event?.subject, getModulesOfSubject, ]);
 
     const moduleMenuItems = modules.map((module) => (
         <MenuItem key={ module.id } value={ module.id }>

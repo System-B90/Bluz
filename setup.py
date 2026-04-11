@@ -1,249 +1,302 @@
-import os
+"""
+Name: setup.py
+Purpose: Interactive CLI script to generate the .env configuration file for Bluz, handle SSL, and register SSO.
+Created: 2026-04-11
+Author: Michael K. Steinberg
+"""
+
+import re
 import secrets
-from dataclasses import dataclass, field
-from typing import Callable, Dict, Optional, Set
-from urllib.parse import urlparse
+import shutil
+import string
+import subprocess
+import sys
+from pathlib import Path
 
-import dotenv
-import cutie
-from tqdm import tqdm
+try:
+    import typer
+    from dotenv import dotenv_values
+    from InquirerPy import inquirer
+except ImportError as e:
+    print(f"Error: Missing required dependency '{e.name}'.", file=sys.stderr)
+    print("Please install the required packages by running:\n", file=sys.stderr)
+    print("    pip install typer InquirerPy python-dotenv\n", file=sys.stderr)
+    sys.exit(1)
 
-GeneratorFunc = Callable[[], str]
+try:
+    from pyhive import HiveClient
+except ImportError:
+    HiveClient = None
+
+app = typer.Typer(help="Bluz interactive environment setup utility.")
 
 
-# --- Built-in Validation Functions ---
-def validate_url(url: str) -> bool:
-    """Validates that a string is a properly formatted URL."""
+def generate_password(length: int = 32) -> str:
+    """
+    Generates a cryptographically secure random password.
+
+    Args:
+        length (int): The required length of the password. Defaults to 32.
+
+    Returns:
+        str: The generated password string containing letters, digits, and punctuation.
+    """
+    alphabet = string.ascii_letters + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def generate_hex_key(bytes_length: int = 32) -> str:
+    """
+    Generates a cryptographically secure random hexadecimal key.
+
+    Args:
+        bytes_length (int): The number of bytes to generate. Defaults to 32.
+
+    Returns:
+        str: The generated hexadecimal key.
+    """
+    return secrets.token_hex(bytes_length)
+
+
+def get_cert_cn(cert_path: Path) -> str:
+    """
+    Extracts the Common Name (CN) from an X.509 certificate using OpenSSL.
+
+    Args:
+        cert_path (Path): Path to the certificate file.
+
+    Returns:
+        str: The extracted Common Name, or an empty string if extraction fails.
+    """
+    if not shutil.which("openssl"):
+        return ""
+
     try:
-        result = urlparse(url)
-        return all([result.scheme, result.netloc])
-    except ValueError:
-        return False
+        result = subprocess.run(
+            ["openssl", "x509", "-noout", "-subject", "-in", str(cert_path)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        match = re.search(r"CN\s*=\s*([^,\n]+)", result.stdout)
+        if match:
+            return match.group(1).strip()
+    except subprocess.CalledProcessError:
+        pass
+
+    return ""
 
 
-def validate_mongodb_uri(uri: str) -> bool:
-    """Validates a basic MongoDB connection string."""
-    return uri.startswith("mongodb://") or uri.startswith("mongodb+srv://")
+def handle_ssl_certs(domain_name: str) -> None:
+    """
+    Manages the creation and validation of SSL certificates for the provided domain.
 
+    Args:
+        domain_name (str): The expected domain name for the certificate CN.
 
-# --- Helper Functions ---
-def generate_crypto_key() -> str:
-    return secrets.token_hex(32)
+    Returns:
+        None
+    """
+    ssl_dir = Path("nginx/ssl")
+    ssl_dir.mkdir(parents=True, exist_ok=True)
 
+    cert_path = ssl_dir / "cert.pem"
+    key_path = ssl_dir / "key.pem"
+    needs_cert = True
 
-@dataclass(frozen=True)
-class EnvKey:
-    name: str
-    description: str = ""
-    default_value: Optional[str] = None
-    required: bool = True
-    is_secret: bool = False
-    auto_generated: Optional[GeneratorFunc] = None
-    validator: Optional[Callable[[str], bool]] = None
-    validator_error_msg: str = "Invalid format."
+    if cert_path.exists() and key_path.exists():
+        existing_cn = get_cert_cn(cert_path)
+        if existing_cn == domain_name:
+            typer.secho(
+                f"Valid certificates found for {domain_name}.", fg=typer.colors.GREEN
+            )
+            needs_cert = False
+        else:
+            typer.secho(
+                f"Warning: Existing certificate CN ('{existing_cn}') does not match expected domain ('{domain_name}').",
+                fg=typer.colors.YELLOW,
+            )
 
+    if needs_cert:
+        generate = inquirer.confirm(
+            message=f"Generate self-signed SSL certificates for {domain_name}?",
+            default=True,
+        ).execute()
 
-@dataclass
-class EnvKeys:
-    required: Set[EnvKey] = field(default_factory=set)
-    optional: Set[EnvKey] = field(default_factory=set)
+        if generate:
+            if not shutil.which("openssl"):
+                typer.secho(
+                    "Error: 'openssl' command not found. Cannot generate certificates.",
+                    fg=typer.colors.RED,
+                )
+                return
 
-
-class Env:
-    USER_KEYS = EnvKeys(
-        required={
-            EnvKey(
-                name="NEXT_PUBLIC_HIVE_URL",
-                description="URL for the Hive API",
-                default_value="http://localhost:8000",
-                validator=validate_url,
-                validator_error_msg="Must be a valid URL (e.g., http://localhost:8000)",
-            ),
-            EnvKey(name="HIVE_USERNAME", description="Your Hive admin username"),
-            EnvKey(
-                name="HIVE_PASSWORD",
-                description="Your Hive admin password",
-                is_secret=True,
-            ),
-            EnvKey(
-                name="MONGO_CONNECTION_STRING",
-                description="MongoDB URI",
-                default_value="mongodb://localhost:27017/bluz",
-                validator=validate_mongodb_uri,
-                validator_error_msg="Must start with mongodb:// or mongodb+srv://",
-            ),
-        },
-        optional={
-            EnvKey(
-                name="NODE_TLS_REJECT_UNAUTHORIZED",
-                description="Reject unauthorized TLS",
-                default_value="0",
-                required=False,
-            ),
-        },
-    )
-
-    SYSTEM_KEYS = EnvKeys(
-        required={
-            EnvKey(
-                name="JWT_SECRET",
-                description="Secret for JWT signing",
-                auto_generated=generate_crypto_key,
-            ),
-            EnvKey(
-                name="SYM_ENC_KEY",
-                description="Symmetric encryption key",
-                auto_generated=generate_crypto_key,
-            ),
-            EnvKey(
-                name="WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY",
-                description="WS Auth Key",
-                auto_generated=generate_crypto_key,
-            ),
-            EnvKey(
-                name="HIVE_CLIENT_ID",
-                description="Internal Hive Client ID",
-                auto_generated=lambda: secrets.token_urlsafe(16),
-            ),
-            EnvKey(
-                name="HIVE_CLIENT_SECRET",
-                description="Internal Hive Client Secret",
-                auto_generated=lambda: secrets.token_urlsafe(32),
-            ),
-            EnvKey(
-                name="NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST",
-                description="WS Host",
-                default_value="ws://localhost:8080",
-                validator=validate_url,
-                validator_error_msg="Must be a valid WebSocket URL (e.g., ws://localhost:8080)",
-            ),
-        }
-    )
-
-    def __init__(self, env_path: str = ".env") -> None:
-        self.env_path = env_path
-        self._values = self._get_existing_env_file_data()
-
-    def _get_existing_env_file_data(self) -> Dict[str, str]:
-        if not os.path.exists(self.env_path):
-            return {}
-        return {
-            k: v
-            for k, v in dotenv.dotenv_values(self.env_path).items()
-            if v is not None
-        }
-
-    def _save_silent(self) -> None:
-        """Writes the configuration to the .env file continuously."""
-        with open(self.env_path, "w") as f:
-            for k, v in self._values.items():
-                f.write(f"{k}={v}\n")
-
-    def process_keys(self) -> None:
-        """Prompts for user keys and auto-generates system keys."""
-        # Calculate tasks purely based on what the user needs to input
-        total_tasks = len(self.USER_KEYS.required) + len(self.USER_KEYS.optional)
-
-        print("\n👤 --- User Configuration ---")
-        with tqdm(
-            total=total_tasks,
-            desc="Input Progress",
-            bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}]",
-        ) as pbar:
-
-            # 1. Handle Required User Keys
-            for key in self.USER_KEYS.required:
-                self._handle_key(key, prompt_user=True)
-                pbar.update(1)
-
-            # 2. Handle Optional User Keys
-            for key in self.USER_KEYS.optional:
-                self._handle_key(key, prompt_user=True)
-                pbar.update(1)
-
-        # 3. Handle System Keys (Outside the progress bar)
-        print("\n🤖 --- Generating System Keys ---")
-        for key in self.SYSTEM_KEYS.required:
-            self._handle_key(key, prompt_user=False)
-
-        for key in self.SYSTEM_KEYS.optional:
-            self._handle_key(key, prompt_user=False)
-
-    def _handle_key(self, key: EnvKey, prompt_user: bool) -> None:
-        existing_value = self._values.get(key.name)
-
-        # Handle System Auto-Generation
-        if key.auto_generated:
-            if not existing_value:
-                print(f"✨ Generating new {key.name}...")
-                self._values[key.name] = key.auto_generated()
-                self._save_silent()
-            else:
-                print(f"✅ [{key.name}] already exists. Retaining current secret.")
-            return
-
-        # Handle User Inputs
-        if prompt_user:
-            fallback = existing_value if existing_value else key.default_value
-            icon = "🔒" if key.is_secret else "🔑"
-
-            prompt_text = f"\n{icon} {key.name} ({key.description})"
-            if fallback:
-                prompt_text += f"\n   [Press Enter to keep: {fallback}]: "
-            else:
-                # Dynamically set wording based on whether the key is required or optional
-                prompt_text += (
-                    "\n   [Required]: "
-                    if key.required
-                    else "\n   [Optional, press Enter to skip]: "
+            typer.echo("Generating certificates...")
+            try:
+                subprocess.run(
+                    [
+                        "openssl",
+                        "req",
+                        "-x509",
+                        "-newkey",
+                        "rsa:4096",
+                        "-keyout",
+                        str(key_path),
+                        "-out",
+                        str(cert_path),
+                        "-sha256",
+                        "-days",
+                        "365",
+                        "-nodes",
+                        "-subj",
+                        f"/CN={domain_name}",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
+                typer.secho(
+                    "Successfully generated self-signed certificates.",
+                    fg=typer.colors.GREEN,
+                )
+            except subprocess.CalledProcessError as e:
+                typer.secho(
+                    f"Failed to generate certificates: {e.stderr.decode()}",
+                    fg=typer.colors.RED,
                 )
 
-            while True:
-                if key.is_secret:
-                    # Extract the first 3 characters so formatting isn't mangled by cutie
-                    print(prompt_text[:3], end="", flush=True)
-                    user_input = cutie.secure_input(prompt_text[3:])
-                else:
-                    user_input = input(prompt_text)
 
-                # Apply fallback if user presses Enter
-                if not user_input and fallback:
-                    user_input = fallback
+@app.command()
+def generate_env() -> None:
+    """
+    Interactively prompts for configuration values, generates secure secrets,
+    registers the SSO service with Hive, validates/generates SSL certs,
+    and writes the variables to a local .env file.
 
-                # Check required constraint
-                if not user_input:
-                    if key.required:
-                        print(
-                            f"⚠️  Error: {key.name} is required. Please provide a value."
-                        )
-                        continue
-                    else:
-                        # If it's optional and they hit Enter with no fallback, just skip saving it
-                        break
+    Args:
+        None
 
-                # Run validation if a validator is attached
-                if user_input and key.validator and not key.validator(user_input):
-                    print(f"❌ Error: {key.validator_error_msg}")
-                    continue
+    Returns:
+        None
+    """
+    typer.echo("Starting Bluz interactive environment setup...")
 
-                self._values[key.name] = user_input
-                self._save_silent()
-                break
+    env_path = Path(".env")
+    existing_env = dotenv_values(env_path) if env_path.exists() else {}
 
-    def finish(self) -> None:
-        print(f"\n💾 Configuration saved to {self.env_path}...")
-        print("🎉 Done! Your Bluz instance is configured.")
+    # Domain & URL setup
+    existing_nextauth_url = existing_env.get("NEXTAUTH_URL", "")
+    default_domain = ""
+    if existing_nextauth_url:
+        default_domain = existing_nextauth_url.replace("https://", "").replace(
+            "http://", ""
+        )
 
+    domain_name = inquirer.text(
+        message="Enter the domain name for Bluz (e.g., bluz.example.com):",
+        default=default_domain,
+    ).execute()
 
-def main() -> None:
-    print("====================================")
-    print("  🚀 Welcome to Bluz Setup 🚀  ")
-    print("====================================")
+    nextauth_url = f"https://{domain_name}"
 
-    env = Env()
-    env.process_keys()
-    env.finish()
+    # Handle SSL Validation and Generation
+    handle_ssl_certs(domain_name)
+
+    # Hive & Auth Setup
+    default_hive_url = existing_env.get("NEXT_PUBLIC_HIVE_URL", "https://hive.org")
+    hive_url = inquirer.text(
+        message="Enter Hive URL (NEXT_PUBLIC_HIVE_URL):", default=default_hive_url
+    ).execute()
+
+    # Preserve or Auto-generate DB Credentials & Cryptographic Secrets
+    ws_port = existing_env.get("NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT", "8192")
+    ws_auth_key = existing_env.get(
+        "WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY"
+    ) or generate_hex_key(32)
+    nextauth_secret = existing_env.get("NEXTAUTH_SECRET") or generate_hex_key(32)
+    jwt_secret = existing_env.get("JWT_SECRET") or generate_hex_key(32)
+    sym_enc_key = existing_env.get("SYM_ENC_KEY") or generate_hex_key(32)
+
+    pg_user = existing_env.get("POSTGRES_USER", "admin")
+    pg_pass = existing_env.get("POSTGRES_PASSWORD") or generate_password()
+    pg_db = existing_env.get("POSTGRES_DB", "curriculum_db")
+    db_url = (
+        existing_env.get("DATABASE_URL")
+        or f"postgres://{pg_user}:{pg_pass}@bluz-curriculum-db:5432/{pg_db}"
+    )
+
+    mongo_user = existing_env.get("MONGO_ROOT_USER", "mongo_admin")
+    mongo_pass = existing_env.get("MONGO_ROOT_PASSWORD") or generate_password()
+    mongo_url = (
+        existing_env.get("MONGO_CONNECTION_STRING")
+        or f"mongodb://{mongo_user}:{mongo_pass}@bluz-mongodb:27017/?authSource=admin"
+    )
+
+    hive_client_id = existing_env.get("HIVE_CLIENT_ID", "")
+    hive_client_secret = existing_env.get("HIVE_CLIENT_SECRET", "")
+
+    register_sso = True
+    if (
+        hive_client_id
+        and hive_client_secret
+        and hive_client_id != "MANUAL_ENTRY_REQUIRED"
+    ):
+        register_sso = inquirer.confirm(
+            message="Existing Hive SSO credentials found. Re-register?", default=False
+        ).execute()
+
+    if register_sso:
+        if HiveClient is None:
+            typer.secho(
+                "Warning: 'pyhive' module not found. Hive SSO registration skipped.",
+                fg=typer.colors.YELLOW,
+            )
+            hive_client_id = "MANUAL_ENTRY_REQUIRED"
+            hive_client_secret = "MANUAL_ENTRY_REQUIRED"
+        else:
+            typer.echo(f"Registering Bluz SSO service with Hive at {hive_url}...")
+            try:
+                client = HiveClient.from_sso(hive_url=hive_url, verify=False)
+                sso_credentials = client.register_sso_service(
+                    service_name="Bluz",
+                    redirect_uris=f"{nextauth_url}/api/auth/callback/hive",
+                )
+                hive_client_id = sso_credentials.get("client_id", "ERROR_FETCHING_ID")
+                hive_client_secret = sso_credentials.get(
+                    "client_secret", "ERROR_FETCHING_SECRET"
+                )
+                typer.secho("Hive SSO registration successful.", fg=typer.colors.GREEN)
+            except Exception as e:
+                typer.secho(f"Failed to register Hive SSO: {e}", fg=typer.colors.RED)
+                hive_client_id = "MANUAL_ENTRY_REQUIRED"
+                hive_client_secret = "MANUAL_ENTRY_REQUIRED"
+
+    env_content: dict[str, str] = {
+        "BLUZ_VERSION": existing_env.get("BLUZ_VERSION", "latest"),
+        "NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT": ws_port,
+        "WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY": ws_auth_key,
+        "NEXT_PUBLIC_HIVE_URL": hive_url,
+        "NODE_TLS_REJECT_UNAUTHORIZED": "0",
+        "NEXTAUTH_URL": nextauth_url,
+        "NEXTAUTH_SECRET": nextauth_secret,
+        "HIVE_CLIENT_ID": hive_client_id,
+        "HIVE_CLIENT_SECRET": hive_client_secret,
+        "MONGO_ROOT_USER": mongo_user,
+        "MONGO_ROOT_PASSWORD": mongo_pass,
+        "MONGO_CONNECTION_STRING": mongo_url,
+        "JWT_SECRET": jwt_secret,
+        "SYM_ENC_KEY": sym_enc_key,
+        "POSTGRES_USER": pg_user,
+        "POSTGRES_PASSWORD": pg_pass,
+        "POSTGRES_DB": pg_db,
+        "DATABASE_URL": db_url,
+    }
+
+    with env_path.open("w", encoding="utf-8") as f:
+        for key, value in env_content.items():
+            f.write(f"{key}={value}\n")
+
+    typer.secho(f"Successfully generated {env_path.resolve()}", fg=typer.colors.GREEN)
 
 
 if __name__ == "__main__":
-    main()
+    app()

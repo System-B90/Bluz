@@ -1,5 +1,5 @@
 import { Clearance, GenderEnum } from "@/api-server/hive/types";
-import { AuthSessionData } from "@/api-shared/session";
+import { AuthSessionData } from "@/api-shared/types/sso";
 import { AuthOptions, CallbacksOptions, Profile } from "next-auth";
 import { OAuthConfig } from "next-auth/providers/index";
 

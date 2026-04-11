@@ -63,15 +63,6 @@ export class ApiNotImplementedError extends ClientApiError
     }
 };
 
-export class HiveError extends ClientApiError
-{
-    constructor(message?: string)
-    {
-        super(message);
-        this.name = 'HiveError';
-    }
-};
-
 export class ClientApiWarning extends ClientApiError
 {
     constructor(message?: string)
@@ -87,5 +78,14 @@ export class OperationAborted extends ClientApiWarning
     {
         super(message);
         this.name = 'OperationAborted';
+    }
+};
+
+export class HiveClientError extends ClientApiError
+{
+    constructor(message?: string)
+    {
+        super(message);
+        this.name = 'HiveClientError';
     }
 };
