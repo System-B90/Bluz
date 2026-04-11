@@ -29,7 +29,7 @@ export default function ModuleEventDialog({
     const handleClose = useCallback(() =>
     {
         setOpen(false);
-    }, []);
+    }, [ setOpen ]);
 
     const handleSave = useCallback(() =>
     {
@@ -44,7 +44,7 @@ export default function ModuleEventDialog({
             });
         }
         setOpen(false);
-    }, [ moduleEvent, save, onSave ]);
+    }, [ moduleEvent, save, onSave, setOpen ]);
 
     return (
         <Dialog open={ open } onClose={ handleClose } fullWidth maxWidth="xl" { ...props }>

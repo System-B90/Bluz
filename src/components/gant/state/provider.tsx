@@ -3,7 +3,7 @@
 import { NormalizedStore, normalizeCurriculumData } from '@/api-client/gant/drizzle-normalize';
 import { ApiCurriculum } from '@/api-shared/types/gant/api-layer';
 import { ModuleId, SyllabusId } from '@/api-shared/types/gant/curriculum';
-import ModuleDialog from '@/components/gant/module-dialog/utils';
+import { ModuleDialog } from '@/components/gant/module-dialog';
 import { Action, curriculumReducer } from '@/components/gant/state/reducer';
 import React, { ReactNode, createContext, useCallback, useContext, useMemo, useReducer, useState } from 'react';
 
@@ -42,6 +42,7 @@ function ModuleDialogManager({ children }: { children: ReactNode; })
         <CurriculumUIProviderInternal openModuleDialog={ openModuleDialog } closeModuleDialog={ closeModuleDialog }>
             { children }
             <ModuleDialog
+                key={ `${currentSyllabusId}-${currentModuleId}` }
                 open={ moduleDialogOpen }
                 setOpen={ setModuleDialogOpen }
                 syllabusId={ currentSyllabusId }

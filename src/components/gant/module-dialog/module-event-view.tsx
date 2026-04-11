@@ -12,29 +12,31 @@ import
     TableRow,
     TextField
 } from "@mui/material";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+
+function ModuleEventTitle({ moduleEvent, handleCommit }: { moduleEvent: ModuleEvent | undefined; handleCommit: (updates: Partial<ModuleEvent>) => void; })
+{
+    const [ localTitle, setLocalTitle ] = useState(moduleEvent?.title ?? '');
+
+    return (
+        <TextField
+            disabled={ !moduleEvent }
+            size="small"
+            fullWidth
+            value={ localTitle }
+            onChange={ (e) => setLocalTitle(e.target.value) }
+            onBlur={ () => handleCommit({ title: localTitle }) }
+        />
+    );
+}
 
 export function ModuleEventView({ moduleId, eventId }: { moduleId: ModuleId; eventId: ModuleEventId; })
 {
     const moduleEvent = useEvent(eventId);
     const { removeEvent, updateEvent } = useGantFuncs();
 
-    // Local state to buffer inputs before committing to global store
-    const [ localTitle, setLocalTitle ] = useState(moduleEvent?.title ?? '');
-    const [ localDuration, setLocalDuration ] = useState(moduleEvent?.minimumDuration ?? 0);
-
-    useEffect(() =>
-    {
-        if (moduleEvent)
-        {
-            setLocalTitle(moduleEvent.title);
-            setLocalDuration(moduleEvent.minimumDuration);
-        }
-    }, [ moduleEvent?.title, moduleEvent?.minimumDuration ]);
-
     const handleCommit = useCallback((updates: Partial<ModuleEvent>) =>
     {
-        // Only trigger update if something actually changed
         updateEvent(eventId, updates);
     }, [ eventId, updateEvent ]);
 
@@ -46,14 +48,7 @@ export function ModuleEventView({ moduleId, eventId }: { moduleId: ModuleId; eve
     return (
         <TableRow>
             <TableCell>
-                <TextField
-                    disabled={ !moduleEvent }
-                    size="small"
-                    fullWidth
-                    value={ localTitle }
-                    onChange={ (e) => setLocalTitle(e.target.value) }
-                    onBlur={ () => handleCommit({ title: localTitle }) }
-                />
+                <ModuleEventTitle key={ `${moduleEvent?.title ?? '-title'}` } moduleEvent={ moduleEvent } handleCommit={ handleCommit } />
             </TableCell>
             <TableCell>
                 <FormControl size="small" fullWidth disabled={ !moduleEvent }>

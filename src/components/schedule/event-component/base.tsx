@@ -13,7 +13,7 @@ import TinyNarrowEventComponent from "@/components/schedule/event-component/vari
 import { Event, EventType, PrayerEvent } from "@/components/schedule/types/event";
 import { Box, Tooltip } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { EventProps } from "react-big-calendar";
 
 export interface ContainerSize
@@ -41,75 +41,84 @@ type Variant =
     | 'large-narrow'
     | 'large-wide';
 
-export default function BluzEventComponent({ event: event, ...props }: EventProps<Event>)
+const getEventVariant = (event: Event, width: number, height: number): Variant =>
+{
+    if (event.type === EventType.PRAYER)
+    {
+        return 'prayer';
+    }
+
+    const isNarrow = width < EVENT_SIZE_VARIANTS_THRESHOLDS.W_NARROW;
+    const widthVariant = isNarrow ? 'narrow' : 'wide';
+
+    let heightVariant: 'tiny' | 'short' | 'medium' | 'large';
+
+    if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_TINY)
+    {
+        heightVariant = 'tiny';
+    } else if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_SHORT)
+    {
+        heightVariant = 'short';
+    } else if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_MEDIUM)
+    {
+        heightVariant = 'medium';
+    } else
+    {
+        heightVariant = 'large';
+    }
+
+    return `${heightVariant}-${widthVariant}` as Variant;
+};
+
+type BluzEventInnerProps = Omit<EventProps<Event>, 'event'> & {
+    variant: Variant;
+    event: Event;
+    size: { width: number; height: number; };
+};
+
+function BluzEventInnerComponent({ variant, event, size, ...props }: BluzEventInnerProps)
+{
+    switch (variant)
+    {
+        case 'prayer':
+            return <Tooltip title="תפילה"><PrayerEventComponent event={ event as PrayerEvent } { ...props } /></Tooltip>;
+        case 'tiny-narrow':
+            return <Tooltip title="Tiny & Narrow"><TinyNarrowEventComponent event={ event } containerSize={ size } { ...props } /></Tooltip>;
+        case 'tiny-wide':
+            return <Tooltip title="Tiny"><TinyEventComponent event={ event } { ...props } /></Tooltip>;
+        case 'short-narrow':
+            return <Tooltip title="Short & Narrow"><ShortNarrowEventComponent containerSize={ size } event={ event } { ...props } /></Tooltip>;
+        case 'short-wide':
+            return <Tooltip title="Short"><ShortEventComponent containerSize={ size } event={ event } { ...props } /></Tooltip>;
+        case 'medium-wide':
+            return <Tooltip title="Medium"><MediumEventComponent event={ event } { ...props } /></Tooltip>;
+        case 'medium-narrow':
+            return <Tooltip title="Medium & Narrow"><MediumNarrowEventComponent event={ event } { ...props } /></Tooltip>;
+        case 'large-wide':
+            return <Tooltip title="Large"><LargeEventComponent event={ event } { ...props } /></Tooltip>;
+        case 'large-narrow':
+            return <Tooltip title="Large & Narrow"><LargeNarrowEventComponent event={ event } { ...props } /></Tooltip>;
+        default:
+            window.alert(`Unimplemented variant: ${variant}`);
+            return null;
+    }
+}
+
+export default function BluzEventComponent({ event, ...props }: EventProps<Event>)
 {
     const theme = useTheme();
     const { getSubject } = useHiveSubjects();
     const { eventFilteredOpacity } = useCalendarFilters();
-    const [ variant, setVariant ] = useState<Variant>('short-wide');
 
     const subject = getSubject(event.subject);
     const bgColor = (event.type === EventType.PRAYER ? '#e0f9fe' : subject?.color) ?? theme.palette.common.black;
-
     const textColor = theme.palette.getContrastText(bgColor);
 
     const { ref, size } = useElementSize<HTMLDivElement>();
 
-    useEffect(() =>
-    {
-        const { width, height } = size;
+    const filterOpacity = useMemo(() => eventFilteredOpacity(event), [ event, eventFilteredOpacity ]);
 
-        const isNarrow = width < EVENT_SIZE_VARIANTS_THRESHOLDS.W_NARROW;
-
-        let heightVariant: 'tiny' | 'short' | 'medium' | 'large';
-        const widthVariant = isNarrow ? 'narrow' : 'wide';
-
-        if (event.type === 'prayer') { setVariant('prayer'); return; }
-        if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_TINY) { heightVariant = 'tiny'; }
-        else if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_SHORT) { heightVariant = 'short'; }
-        else if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_MEDIUM) { heightVariant = 'medium'; }
-        else { heightVariant = 'large'; }
-
-        setVariant(`${heightVariant}-${widthVariant}` as Variant);
-
-    }, [ size ]);
-
-    const filterOpactiy = useMemo(() => eventFilteredOpacity(event), [ event, eventFilteredOpacity ]);
-
-    let eventComponent = null;
-
-    switch (variant)
-    {
-        case "prayer":
-            eventComponent = <Tooltip title={ 'תפילה' }><PrayerEventComponent event={ event as PrayerEvent } { ...props } /></Tooltip>;
-            break;
-        case "tiny-narrow":
-            eventComponent = <Tooltip title={ 'Tiny & Narrow' }><TinyNarrowEventComponent event={ event } containerSize={ size } { ...props } /></Tooltip>;
-            break;
-        case "tiny-wide":
-            eventComponent = <Tooltip title={ 'Tiny' }><TinyEventComponent event={ event } { ...props } /></Tooltip>;
-            break;
-        case "short-narrow":
-            eventComponent = <Tooltip title={ 'Short & Narrow' }><ShortNarrowEventComponent containerSize={ size } event={ event } { ...props } /></Tooltip>;
-            break;
-        case "short-wide":
-            eventComponent = <Tooltip title={ 'Short' }><ShortEventComponent containerSize={ size } event={ event } { ...props } /></Tooltip>;
-            break;
-        case "medium-wide":
-            eventComponent = <Tooltip title={ 'Medium' }><MediumEventComponent event={ event } { ...props } /></Tooltip>;
-            break;
-        case "medium-narrow":
-            eventComponent = <Tooltip title={ 'Medium & Narrow' }><MediumNarrowEventComponent event={ event } { ...props } /></Tooltip>;
-            break;
-        case "large-wide":
-            eventComponent = <Tooltip title={ 'Large' }><LargeEventComponent event={ event } { ...props } /></Tooltip>;
-            break;
-        case "large-narrow":
-            eventComponent = <Tooltip title={ 'Large & Narrow' }><LargeNarrowEventComponent event={ event } { ...props } /></Tooltip>;
-            break;
-        default:
-            window.alert(`Unimplemented variant: ${variant}`);
-    }
+    const variant = getEventVariant(event, size.width, size.height);
 
     return (
         <Box
@@ -126,9 +135,15 @@ export default function BluzEventComponent({ event: event, ...props }: EventProp
                 height: '100%',
                 boxSizing: 'border-box',
             } }
-            data-filtered-out={ filterOpactiy }
+            data-filtered-out={ filterOpacity }
         >
-            { eventComponent }
+            <BluzEventInnerComponent
+                key={ `${size.width}-${size.height}` }
+                variant={ variant }
+                event={ event }
+                size={ size }
+                { ...props }
+            />
         </Box>
     );
 }

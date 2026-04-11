@@ -54,7 +54,7 @@ export default function SchedulePage()
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [ undo, redo ]);
+    }, [ undo, redo, deleteEvent, selectedEvent, ]);
 
     // 4. Clean UI Handlers
     const handleCloseEventDialog = useCallback(() =>

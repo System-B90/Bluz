@@ -32,7 +32,7 @@ export default function CourseField({ event, onBlurCallback, ...props }: CourseF
     const onClose = useCallback(() =>
     {
         onBlurCallback({ courses: currentCourseIds });
-    }, [ currentCourseIds ]);
+    }, [ currentCourseIds, onBlurCallback ]);
 
     return (
         <FormControl fullWidth={ false } { ...props } disabled={ event?.type ? !eventHasRoom(event.type) : false }>

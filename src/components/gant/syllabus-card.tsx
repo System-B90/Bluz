@@ -31,16 +31,16 @@ function ModuleRow({ moduleId, syllabusId }: { moduleId: ModuleId; syllabusId: S
 {
     const state = useCurriculumState();
     const { openModuleDialog } = useCurriculumProviderActions();
-    const module = useModule(moduleId);
-    const minimumRequiredTime = useMemo(() => module ? calculateMinimumRequiredTimeForModule(module, state) : 0, [ module, state ]);
-    const allocatedTime = useMemo(() => module ? calculateAllocatedTimeForModule(module, state) : 0, [ module, state ]);
+    const moduleDoc = useModule(moduleId);
+    const minimumRequiredTime = useMemo(() => moduleDoc ? calculateMinimumRequiredTimeForModule(moduleDoc, state) : 0, [ moduleDoc, state ]);
+    const allocatedTime = useMemo(() => moduleDoc ? calculateAllocatedTimeForModule(moduleDoc, state) : 0, [ moduleDoc, state ]);
 
     const editClickHandler = useCallback(() =>
     {
         openModuleDialog(syllabusId, moduleId);
     }, [ moduleId, syllabusId, openModuleDialog ]);
 
-    if (!module)
+    if (!moduleDoc)
     {
         return (
             <TableRow>
@@ -57,7 +57,7 @@ function ModuleRow({ moduleId, syllabusId }: { moduleId: ModuleId; syllabusId: S
     return (
         <TableRow hover>
             <TableCell>
-                <Typography variant="body2">{ module.title }</Typography>
+                <Typography variant="body2">{ moduleDoc.title }</Typography>
             </TableCell>
             <TableCell>
                 { minimumRequiredTime !== undefined ? minimumRequiredTime : <CircularProgress size="1rem" /> }
@@ -106,7 +106,7 @@ function CreateModuleButton({ syllabusId }: { syllabusId: SyllabusId; })
         {
             setIsCreating(false);
         }
-    }, [ enqueueSnackbar, createModule, createEvent ]);
+    }, [ syllabusId, enqueueSnackbar, createModule, createEvent ]);
 
     return (
         <Tooltip title="מערך חדש" placement="top">
@@ -125,11 +125,6 @@ function SyllabusName({ syllabusId }: { syllabusId: SyllabusId; })
     const syllabus = useSyllabus(syllabusId);
     const [ localTitle, setLocalTitle ] = useState(syllabus?.title ?? '');
 
-    useEffect(() =>
-    {
-        setLocalTitle(syllabus?.title ?? '');
-    }, [ syllabus?.title ]);
-
     const onChange: ChangeEventHandler<HTMLInputElement> = useCallback((e) =>
     {
         setLocalTitle(e.target.value);
@@ -138,7 +133,7 @@ function SyllabusName({ syllabusId }: { syllabusId: SyllabusId; })
     const onBlur = useCallback(() =>
     {
         updateSyllabus(syllabusId, { title: localTitle });
-    }, [ localTitle, updateSyllabus ]);
+    }, [ syllabusId, localTitle, updateSyllabus ]);
 
     return (
         <TextField
@@ -163,7 +158,7 @@ function ModulesTable({ syllabusId, syllabusModules }: { syllabusId: SyllabusId;
         return syllabusModules.map((moduleId) => (
             <ModuleRow key={ moduleId } moduleId={ moduleId } syllabusId={ syllabusId } />
         ));
-    }, [ syllabusModules ]);
+    }, [ syllabusId, syllabusModules ]);
 
     return (
         <Box sx={ { overflowY: 'auto', flexGrow: 1, border: 1, borderColor: 'divider', borderRadius: 1 } }>
@@ -201,7 +196,7 @@ function SyllabusCardInner({ syllabusId }: { syllabusId: SyllabusId; })
     return (
         <>
             <CardContent sx={ { display: 'flex', flexDirection: 'column', paddingY: 1, flex: 1, overflow: 'hidden' } }>
-                <SyllabusName syllabusId={ syllabusId } />
+                <SyllabusName key={ `${syllabus?.title ?? '-syllabus-title'}` } syllabusId={ syllabusId } />
                 <ModulesTable syllabusModules={ syllabus?.modules ?? [] } syllabusId={ syllabusId } />
             </CardContent>
         </>

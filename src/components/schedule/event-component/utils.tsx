@@ -51,7 +51,7 @@ export function EventDurationLabel({ event, sx, size, ...props }: { event: Event
 
     const durationMinutes = useMemo(
         () => Math.max(0, end.diff(start, "minutes")),
-        [ start.valueOf(), end.valueOf() ]
+        [ start, end ]
     );
 
     const hours = Math.floor(durationMinutes / 60);

@@ -1,37 +1,24 @@
-import { Box, Button, ButtonGroup, Typography } from "@mui/material";
-import { TimePicker } from "@mui/x-date-pickers";
-import WbTwilightIcon from '@mui/icons-material/WbTwilight'; // Corrected spelling from WbTwighlight
-import WbSunnyIcon from '@mui/icons-material/WbSunny';
+import { useSettings } from '@/components/base/settings-provider';
 import BedtimeIcon from '@mui/icons-material/Bedtime';
-import { useSettings } from "@/components/base/settings-provider";
-import dayjs, { Dayjs } from "dayjs";
-import { useCallback, useState, useEffect } from "react";
+import WbSunnyIcon from '@mui/icons-material/WbSunny';
+import WbTwilightIcon from '@mui/icons-material/WbTwilight';
+import { Box, Button, ButtonGroup, Typography } from '@mui/material';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import dayjs, { Dayjs } from 'dayjs';
+import { useCallback, useState } from 'react';
 
 export default function PrayerSettings()
 {
     const { prayerTimes, updatePrayerTimes } = useSettings();
 
-    // Initialize local state with context values or defaults
-    const [ localTimes, setLocalTimes ] = useState({
+    const getInitialTimes = useCallback(() => ({
         shacharit: prayerTimes?.shacharit ? dayjs(prayerTimes.shacharit) : dayjs().hour(6).minute(0),
         mincha: prayerTimes?.mincha ? dayjs(prayerTimes.mincha) : dayjs().hour(12).minute(0),
         arvit: prayerTimes?.arvit ? dayjs(prayerTimes.arvit) : dayjs().hour(18).minute(0),
-    });
+    }), [ prayerTimes ]);
 
-    // Update local form state if the external settings change
-    useEffect(() =>
-    {
-        if (prayerTimes)
-        {
-            setLocalTimes({
-                shacharit: prayerTimes.shacharit ? dayjs(prayerTimes.shacharit) : dayjs().hour(6).minute(0),
-                mincha: prayerTimes.mincha ? dayjs(prayerTimes.mincha) : dayjs().hour(12).minute(0),
-                arvit: prayerTimes.arvit ? dayjs(prayerTimes.arvit) : dayjs().hour(18).minute(0),
-            });
-        }
-    }, [ prayerTimes ]);
+    const [ localTimes, setLocalTimes ] = useState(getInitialTimes);
 
-    // Handle individual time picker changes
     const handleTimeChange = useCallback((key: keyof typeof localTimes, newValue: Dayjs | null) =>
     {
         setLocalTimes((prev) => ({
@@ -40,21 +27,15 @@ export default function PrayerSettings()
         }));
     }, []);
 
-    // Save changes to the provider
     const handleSave = useCallback(() =>
     {
         updatePrayerTimes(localTimes);
     }, [ localTimes, updatePrayerTimes ]);
 
-    // Revert changes back to what is currently saved in the provider
     const handleRestore = useCallback(() =>
     {
-        setLocalTimes({
-            shacharit: prayerTimes?.shacharit ? dayjs(prayerTimes.shacharit) : dayjs().hour(6).minute(0),
-            mincha: prayerTimes?.mincha ? dayjs(prayerTimes.mincha) : dayjs().hour(12).minute(0),
-            arvit: prayerTimes?.arvit ? dayjs(prayerTimes.arvit) : dayjs().hour(18).minute(0),
-        });
-    }, [ prayerTimes ]);
+        setLocalTimes(getInitialTimes());
+    }, [ getInitialTimes ]);
 
     return (
         <Box border={ 'solid 0.15rem rgba(0,0,0,0.2)' } padding={ '0.5rem' } borderRadius={ 3 } gap={ 1 } display={ 'flex' } flexDirection={ 'column' }>

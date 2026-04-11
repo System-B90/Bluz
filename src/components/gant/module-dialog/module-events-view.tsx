@@ -34,7 +34,7 @@ export function ModuleEventsView({ moduleId, eventIds }: { moduleId: ModuleId; e
 {
     const eventItems = useMemo(() => eventIds.map(
         (eventId) => (<ModuleEventView key={ eventId } moduleId={ moduleId } eventId={ eventId } />)
-    ), [ eventIds ]);
+    ), [ moduleId, eventIds ]);
 
     return (
         <Box display={ 'flex' } flexWrap={ 'wrap' } alignItems={ 'flex-end' } gap={ 2 } flexGrow={ 1 } maxHeight={ '100%' }>
@@ -43,7 +43,7 @@ export function ModuleEventsView({ moduleId, eventIds }: { moduleId: ModuleId; e
                     <TableRow>
                         <TableCell><Typography variant="h6">שם</Typography></TableCell>
                         <TableCell><Typography variant="h6">סוג</Typography></TableCell>
-                        <TableCell><Typography variant="h6">זמן מינימלי (דק')</Typography></TableCell>
+                        <TableCell><Typography variant="h6">זמן מינימלי (דק&apos;)</Typography></TableCell>
                         <TableCell>
                             <CreateModuleEventButton moduleId={ moduleId } />
                         </TableCell>

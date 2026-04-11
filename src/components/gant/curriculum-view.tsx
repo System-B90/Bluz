@@ -1,14 +1,12 @@
-import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { CurriculumDocument } from '@/api-client/gant/curriculum';
-import { CurriculumId, makeSyllabus } from '@/api-shared/types/gant/curriculum';
+import { CurriculumId } from '@/api-shared/types/gant/curriculum';
 import { useCurriculum, useGantFuncs } from '@/components/gant/state/hooks';
 import { useCurriculumState } from '@/components/gant/state/provider';
 import SyllabusCard from '@/components/gant/syllabus-card';
-import { calculateAllocatedTimeForCurriculum, calculateMinimumRequiredTimeForCurriculum } from '@/components/gant/utils';
+import { calculateAllocatedTimeForCurriculum } from '@/components/gant/utils';
 import AddIcon from '@mui/icons-material/Add';
-import { BoxProps, Button, Card, Typography, Stack, Box, Skeleton, CircularProgress } from '@mui/material';
-import { enqueueSnackbar } from 'notistack';
-import { useCallback, useState, useMemo, useEffect } from 'react';
+import { Box, BoxProps, Button, Card, CircularProgress, Skeleton, Stack, Typography } from '@mui/material';
+import { useCallback, useMemo } from 'react';
 
 export interface CurriculumViewProps extends BoxProps
 {
@@ -22,7 +20,7 @@ function CreateSyllabusButton({ curriculumId }: { curriculumId: CurriculumId; })
     const clickHandler = useCallback(() =>
     {
         createSyllabus('סילבוס חדש', curriculumId);
-    }, [ createSyllabus ]);
+    }, [ curriculumId, createSyllabus ]);
 
     return (
         <Button
@@ -41,8 +39,7 @@ function HoursCard({ curriculum }: { curriculum: CurriculumDocument | undefined;
 
     const totalWorkingHours = useMemo(() =>
     {
-        if (!curriculum?.weeks) return 0;
-        return curriculum.weeks.reduce(
+        return (curriculum?.weeks ?? []).reduce(
             (total, currentWeek) =>
                 total + currentWeek.days.reduce((weekTotal, currentDay) => weekTotal + currentDay.totalWorkingHours, 0),
             0
@@ -60,10 +57,10 @@ function HoursCard({ curriculum }: { curriculum: CurriculumDocument | undefined;
 
             return sylTotal + (syllabus.modules ?? []).reduce((modTotal, moduleId) =>
             {
-                const module = state.modules[ moduleId ];
-                if (!module) return modTotal;
+                const moduleDoc = state.modules[ moduleId ];
+                if (!moduleDoc) return modTotal;
 
-                return modTotal + (module.events ?? []).reduce((evtTotal, eventId) =>
+                return modTotal + (moduleDoc.events ?? []).reduce((evtTotal, eventId) =>
                 {
                     const event = state.events[ eventId ];
                     if (!event) return evtTotal;
@@ -72,7 +69,7 @@ function HoursCard({ curriculum }: { curriculum: CurriculumDocument | undefined;
                 }, 0);
             }, 0);
         }, 0);
-    }, [ curriculum?.syllabuses, state ]);
+    }, [ curriculum, state ]);
 
     const usedWorkingHours = useMemo(() => curriculum ? calculateAllocatedTimeForCurriculum(curriculum, state) : 0, [ curriculum, state ]);
 
@@ -125,7 +122,7 @@ function HoursCard({ curriculum }: { curriculum: CurriculumDocument | undefined;
                 </Box>
                 <Stack spacing={ 0.5 }>
                     <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
-                        <Typography variant="body2" color="text.secondary">ס"ך:</Typography>
+                        <Typography variant="body2" color="text.secondary">ס&quot;ך:</Typography>
                         <Typography variant="body2" fontWeight="bold">{ totalWorkingHours }</Typography>
                     </Box>
                     <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>

@@ -7,7 +7,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { Color } from "@/api-shared/common";
 import { MuiColorInput, MuiColorInputColors, MuiColorInputProps } from 'mui-color-input';
 
-function CourseItem({
+export function CourseItem({
     course,
     onUpdate,
     onDelete
@@ -21,16 +21,6 @@ function CourseItem({
     const [ color, setColor ] = useState<Color | null>(course.color);
     const [ isEditing, setIsEditing ] = useState<boolean>(false);
 
-    useEffect(() =>
-    {
-        setTitle(course.name);
-    }, [ course.name ]);
-
-    useEffect(() =>
-    {
-        setColor(course.color);
-    }, [ course.color ]);
-
     const commitTitleChange = useCallback(() =>
     {
         setIsEditing(false);
@@ -39,20 +29,19 @@ function CourseItem({
             onUpdate(course.id, { newName: title.trim() });
         } else
         {
-            setTitle(course.name); // Revert if empty or unchanged
+            setTitle(course.name);
         }
-    }, [ title, course.name, course.id, onUpdate, setTitle ]);
+    }, [ title, course.name, course.id, onUpdate ]);
 
     const commitColorChange = useCallback((newColor: Color) =>
     {
         if (newColor !== course.color)
         {
             onUpdate(course.id, { newColor });
-        } else
-        {
-            setColor(course.color);
         }
-    }, [ course.color, course.id, onUpdate, setColor ]);
+        // No need to manually reset state here; if the update fails or changes, 
+        // the parent will eventually trigger a remount if the key changes.
+    }, [ course.color, course.id, onUpdate ]);
 
     const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) =>
     {
@@ -62,15 +51,16 @@ function CourseItem({
         } else if (event.key === 'Escape')
         {
             setIsEditing(false);
-            setTitle(course.name); // Revert to original
+            setTitle(course.name);
         }
     }, [ commitTitleChange, course.name ]);
 
     const handleColorChange: MuiColorInputProps[ 'onChange' ] = useCallback((_value: string, colors: MuiColorInputColors) =>
     {
-        setColor(colors.hex);
-        commitColorChange(colors.hex);
-    }, [ setColor, commitColorChange ]);
+        const hex = colors.hex as Color;
+        setColor(hex);
+        commitColorChange(hex);
+    }, [ commitColorChange ]);
 
     return (
         <Chip
@@ -78,7 +68,7 @@ function CourseItem({
             onDelete={ () => onDelete(course.id) }
             deleteIcon={ <Tooltip title="מחק מסלול"><DeleteIcon /></Tooltip> }
             label={
-                <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'center' } justifyContent={ 'center' } alignContent={ 'center' }>
+                <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'center' } gap={ 0.5 }>
                     <MuiColorInput
                         size={ 'small' }
                         dir="ltr"
@@ -88,38 +78,9 @@ function CourseItem({
                         isAlphaHidden
                         fullWidth={ false }
                         sx={ {
-                            p: 0.3, m: 0, width: '0.8rem', height: '0.8rem', overflow: 'visible',
-                            '& .MuiInputBase-root': {
-                                padding: 0,
-                                margin: 0,
-                                maxHeight: '0.6rem',
-                                maxWidth: '0.6rem',
-                                '& .MuiInputAdornment-root': {
-                                    margin: 0,
-                                    padding: 0,
-                                    width: '0.6rem',
-                                    '& .MuiInputBase-input': {
-                                        padding: 0,
-                                        margin: 0,
-                                    }
-                                },
-                                '& .MuiButtonBase-root': {
-                                    padding: 0,
-                                    margin: 0,
-                                    width: '0.5rem',
-                                    height: '100%',
-                                },
-                                '& .MuiInputBase-input': {
-                                    padding: 0,
-                                    margin: 0,
-                                },
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    padding: 0,
-                                    margin: 0,
-                                },
-                            }
+                            p: 0, m: 0, width: '1rem', height: '1rem',
+                            '& .MuiInputBase-root': { padding: 0, '& .MuiOutlinedInput-notchedOutline': { border: 'none' } }
                         } }
-                        variant='outlined'
                     />
                     { isEditing ? (
                         <InputBase
@@ -128,22 +89,17 @@ function CourseItem({
                             onBlur={ commitTitleChange }
                             onKeyDown={ handleKeyDown }
                             autoFocus
-                            sx={ {
-                                fontSize: 'inherit',
-                                width: `${Math.max(title.length, 5)}ch`,
-                                '& input': { padding: 0 }
-                            } }
+                            sx={ { fontSize: 'inherit', width: `${Math.max(title.length, 5)}ch` } }
                         />
                     ) : (
                         <Typography
                             onDoubleClick={ () => setIsEditing(true) }
-                            sx={ { cursor: 'pointer' } }
+                            sx={ { cursor: 'pointer', userSelect: 'none' } }
                         >
                             { title }
                         </Typography>
                     ) }
                 </Box>
-
             }
         />
     );
@@ -215,7 +171,7 @@ export default function CourseSettings()
 
     const courseItems = localCourses.map(course => (
         <CourseItem
-            key={ course.id }
+            key={ `${course.id}-${course.color}-${course.name}` }
             course={ course }
             onUpdate={ handleUpdateCourse }
             onDelete={ handleDeleteCourse }

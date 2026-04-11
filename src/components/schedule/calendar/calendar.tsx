@@ -153,7 +153,7 @@ export default function BluzCalendar({
         const range = getRangeForView(today, currentView);
         setStartDate(range.start);
         setEndDate(range.end);
-    }, [ currentView, ]);
+    }, [ currentView, setStartDate, setEndDate, ]);
 
     useEffect(() =>
     {
@@ -162,8 +162,6 @@ export default function BluzCalendar({
 
     const handleKeyDown = useCallback((e: KeyboardEvent) =>
     {
-
-        // console.log(e);
         if ([ 'INPUT', 'TEXTAREA' ].includes((e.target as HTMLElement).tagName)) { return; }
 
         const { activeEvent, copiedEvent, selectedSlotInfo } = copyPasteData.current;
@@ -230,7 +228,7 @@ export default function BluzCalendar({
             setActiveEvent(newEvent);
             setSelectedSlotInfo(null);
         }
-    }, [ handleSaveEvent ]);
+    }, [ handleSaveEvent, handleDeleteEvent, ]);
 
     useEffect(() =>
     {

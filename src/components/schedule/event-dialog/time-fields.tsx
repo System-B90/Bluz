@@ -30,7 +30,7 @@ export default function EventTimeField({ event, onBlurCallback, ...props }: Even
         {
             setEndTime(time);
         }
-    }, [ duration ]);
+    }, [ setEndTime, ]);
 
     useEffect(() =>
     {

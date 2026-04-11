@@ -26,7 +26,7 @@ export interface ModuleDialogProps extends DialogProps
     syllabusId: SyllabusId | null;
 }
 
-export default function ModuleDialog({
+export function ModuleDialog({
     open,
     setOpen,
     onSave,
@@ -37,23 +37,13 @@ export default function ModuleDialog({
 {
     const { closeModuleDialog } = useCurriculumProviderActions();
     const { removeModule, updateModule } = useGantFuncs();
-    const module = useModule(moduleId ?? '');
+    const moduleDoc = useModule(moduleId ?? '');
 
     const [ isActionLoading, setIsActionLoading ] = useState<boolean>(false);
 
     // Local State Buffers
-    const [ localTitle, setLocalTitle ] = useState(module?.title ?? "");
-    const [ localDescription, setLocalDescription ] = useState(module?.description ?? "");
-
-    // Sync local state when the global module data changes (initial load or external updates)
-    useEffect(() =>
-    {
-        if (module)
-        {
-            setLocalTitle(module.title);
-            setLocalDescription(module.description);
-        }
-    }, [ module?.title, module?.description ]);
+    const [ localTitle, setLocalTitle ] = useState(moduleDoc?.title ?? "");
+    const [ localDescription, setLocalDescription ] = useState(moduleDoc?.description ?? "");
 
     const handleClose = useCallback(() =>
     {
@@ -118,8 +108,8 @@ export default function ModuleDialog({
                     <Divider orientation="vertical" flexItem />
 
                     <Stack spacing={ 2 } mt={ 1 } flexGrow={ 1 }>
-                        <ModuleEventsView moduleId={ moduleId } eventIds={ module?.events ?? [] } />
-                        <HiveModulesView hiveModules={ module?.hiveIds ?? [] } />
+                        <ModuleEventsView moduleId={ moduleId } eventIds={ moduleDoc?.events ?? [] } />
+                        <HiveModulesView hiveModules={ moduleDoc?.hiveIds ?? [] } />
                     </Stack>
                 </Box>
             </DialogContent>

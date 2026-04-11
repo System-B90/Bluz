@@ -35,10 +35,10 @@ function calculateSumForSyllabus(syllabus: Syllabus, state: NormalizedStore, mod
 {
     return (syllabus.modules ?? []).reduce((modTotal, moduleId) =>
     {
-        const module = state.modules[ moduleId ];
-        if (!module) return modTotal;
+        const moduleDoc = state.modules[ moduleId ];
+        if (!moduleDoc) return modTotal;
 
-        return modTotal + moduleCallbackFunc(module, state);
+        return modTotal + moduleCallbackFunc(moduleDoc, state);
     }, 0);
 }
 

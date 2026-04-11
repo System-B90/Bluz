@@ -20,45 +20,45 @@ import GroupField from "@/components/settings-dialog/tabs/global/group-tree/grou
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
+function GroupItem({ group }: { group: Group; })
+{
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: group.id });
 
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        marginBottom: '8px',
+    };
+
+    return (
+        <div ref={ setNodeRef } style={ style }>
+            <Accordion sx={ { mb: 1 } }>
+                <AccordionSummary expandIcon={ <ExpandMoreIcon /> }>
+                    <GroupField group={ group } attributes={ attributes } listeners={ listeners } />
+                </AccordionSummary>
+                <AccordionDetails>
+                    <GroupMembersField group={ group } />
+
+                    { group.subGroups?.length ? (
+                        <Box mt={ 2 }>
+                            <Typography variant="body2" fontWeight={ 500 }>Subgroups:</Typography>
+                            <Box mt={ 1 }>
+                                { group.subGroups.map((g) => <GroupItem group={ g } key={ g.id } />) }
+                            </Box>
+                        </Box>
+                    ) : null }
+                </AccordionDetails>
+                <Box>
+                    <Button>Add Subgroup</Button>
+                </Box>
+            </Accordion>
+        </div>
+    );
+}
 
 export default function GroupTreeViewer({ initialGroups }: { initialGroups: Group[]; })
 {
-    function renderGroup(group: Group)
-    {
-        const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: group.id });
-
-        const style = {
-            transform: CSS.Transform.toString(transform),
-            transition,
-            marginBottom: '8px',
-        };
-
-        return (
-            <div ref={ setNodeRef } style={ style }>
-                <Accordion sx={ { mb: 1 } }>
-                    <AccordionSummary expandIcon={ <ExpandMoreIcon /> }>
-                        <GroupField group={ group } attributes={ attributes } listeners={ listeners } />
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <GroupMembersField group={ group } />
-
-                        { group.subGroups?.length ? (
-                            <Box mt={ 2 }>
-                                <Typography variant="body2" fontWeight={ 500 }>Subgroups:</Typography>
-                                <Box mt={ 1 }>
-                                    { group.subGroups.map(renderGroup) }
-                                </Box>
-                            </Box>
-                        ) : null }
-                    </AccordionDetails>
-                    <Box>
-                        <Button>Add Subgroup</Button>
-                    </Box>
-                </Accordion>
-            </div>
-        );
-    }
+    const items = initialGroups.map((g) => <GroupItem group={ g } key={ g.id } />);
 
     return (
         <DndContext>
@@ -67,7 +67,7 @@ export default function GroupTreeViewer({ initialGroups }: { initialGroups: Grou
                 strategy={ verticalListSortingStrategy }
             >
                 <Box>
-                    { initialGroups.map(renderGroup) }
+                    { items }
                 </Box>
             </SortableContext>
             <Button>Add New Group</Button>
