@@ -3,6 +3,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+COPY drizzle.config.ts ./
 RUN npm ci --ignore-scripts
 
 FROM node:22-alpine AS builder
@@ -40,10 +41,18 @@ RUN mkdir .next && chown nextjs:nodejs .next
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./
 
 USER nextjs
 
 EXPOSE 3000
 
+COPY drizzle ./drizzle
+COPY src/api-server/drizzle-migrate.ts ./migrate.ts
+
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 ENTRYPOINT ["docker-entrypoint.sh"]
+
 CMD ["node", "server.js"]
