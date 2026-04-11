@@ -1,5 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { WEBSOCKET_SESSION_SERVER_PORT, MessageTypes, WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY, WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC, COMBO_DATA_KEY } from '../src/session-common';
+import { WEBSOCKET_SESSION_SERVER_PORT, MessageTypes, WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY, WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC } from './session-common';
 import assert from 'assert';
 
 const GC_INTERVAL_MS = 3600 * 1000; // One hour

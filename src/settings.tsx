@@ -1,4 +1,4 @@
-export * from "@/session-common";
+export * from "../session-server/session-common";
 
 const SECONDS_IN_AN_HOUR = 3600;
 const HOURS_IN_A_DAY = 24;

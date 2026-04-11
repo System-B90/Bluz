@@ -1,4 +1,5 @@
 node_modules
+session-server/node_modules
 .next
 .git
 dist
