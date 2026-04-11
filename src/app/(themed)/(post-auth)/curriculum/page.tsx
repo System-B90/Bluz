@@ -75,7 +75,7 @@ export default function CurriculumPage()
 
                 {/* 1. Empty State */ }
                 { !currentCurriculum && (
-                    <Typography color="textSecondary">Select a curriculum from the drawer to begin.</Typography>
+                    <Typography color="textSecondary">בחרו גאנט כדי להתחיל לעבוד</Typography>
                 ) }
 
                 {/* 2. Loading State */ }
@@ -86,11 +86,6 @@ export default function CurriculumPage()
 
                 {/* 4. Ready State */ }
                 { currentCurriculum && !isLoading && initialData && (
-                    /* CRITICAL: The 'key' prop is required here. 
-                       It forces React to completely unmount and remount the CurriculumProvider 
-                       when the user switches curriculums, ensuring the useReducer initializes 
-                       with the NEW data instead of holding onto the old curriculum's state. 
-                    */
                     <CurriculumProvider key={ currentCurriculum } initialData={ initialData }>
                         <CurriculumView curriculumId={ currentCurriculum } />
                     </CurriculumProvider>

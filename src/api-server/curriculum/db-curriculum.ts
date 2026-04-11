@@ -1,5 +1,5 @@
 import { postgresDb } from "@/api-server/curriculum";
-import { drizzleOperationsBuilder } from "@/api-server/curriculum/db-base"; // Your new Drizzle builder
+import { drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } from "@/api-server/curriculum/db-base"; // Your new Drizzle builder
 import { curriculums, curriculumSyllabuses } from "@/api-server/curriculum/schema";
 import { ClientApiError } from "@/api-shared/errors";
 import { CreateCurriculumPayload } from "@/api-shared/types/gant/create-payloads";
@@ -77,13 +77,13 @@ async function addSyllabusToCurriculum(curriculumId: CurriculumId, syllabusId: S
     {
         // Postgres will throw specific errors for constraint violations.
         // e.g., Code '23505' is a Unique Violation (the syllabus is already linked to this curriculum).
-        if (error.code === '23505')
+        if (error.code === UNIQUE_VIOLATION)
         {
             // Depending on your UI, you might just want to return void here instead of throwing
             throw new ClientApiError(`הסילבוס כבר משויך לגאנט זה`);
         }
         // Code '23503' is a Foreign Key Violation (the curriculum or syllabus doesn't exist).
-        if (error.code === '23503')
+        if (error.code === FOREIGN_KEY_VIOLATION)
         {
             throw new ClientApiError(`גאנט או סילבוס לא קיימים במערכת`);
         }

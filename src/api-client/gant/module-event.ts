@@ -1,4 +1,4 @@
-import { BaseDocument, baseDocumentFixup, clientGantApiBuilder } from "@/api-client/gant/base";
+import { BaseDocument, clientGantApiBuilder, baseDocumentFixup } from "@/api-client/gant/base";
 import { CreateModuleEventPayload } from "@/api-shared/types/gant/create-payloads";
 import { ModuleEvent } from "@/api-shared/types/gant/curriculum";
 

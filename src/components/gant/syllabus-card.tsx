@@ -1,18 +1,13 @@
-import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { apiUpdateModule } from '@/api-client/gant/module';
-import { makeModule, makeModuleEvent, Module, ModuleEventType, ModuleId, Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useCurriculumActions, useModule, useSyllabus } from '@/components/gant/state/hooks';
+import { ModuleEventType, ModuleId, Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { useGantFuncs, useModule, useSyllabus } from '@/components/gant/state/hooks';
+import { useCurriculumProviderActions, useCurriculumState } from '@/components/gant/state/provider';
 import { calculateAllocatedTimeForModule, calculateMinimumRequiredTimeForModule } from '@/components/gant/utils';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import SaveIcon from '@mui/icons-material/Save';
 import
 {
     Box,
-    Button,
-    ButtonGroup,
     Card,
-    CardActions,
     CardContent,
     CardHeader,
     CircularProgress,
@@ -31,39 +26,18 @@ import
 import { useSnackbar } from 'notistack';
 import { ChangeEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 
-function ModuleRow({ moduleId }: { moduleId: ModuleId; })
+function ModuleRow({ moduleId, syllabusId }: { moduleId: ModuleId; syllabusId: SyllabusId; })
 {
+    const state = useCurriculumState();
+    const { openModuleDialog } = useCurriculumProviderActions();
     const module = useModule(moduleId);
-    const [ minimumRequiredTime, setMinimumRequiredTime ] = useState<number>();
-    const [ allocatedTime, setAllocatedTime ] = useState<number>();
-
-    useEffect(() =>
-    {
-        let isMounted = true;
-
-        Promise.all([
-            calculateMinimumRequiredTimeForModule(module),
-            calculateAllocatedTimeForModule(module)
-        ]).then(([ minTime, allocTime ]) =>
-        {
-            if (isMounted)
-            {
-                setMinimumRequiredTime(minTime);
-                setAllocatedTime(allocTime);
-            }
-        });
-
-        return () =>
-        {
-            isMounted = false;
-        };
-    }, [ module ]);
+    const minimumRequiredTime = useMemo(() => module ? calculateMinimumRequiredTimeForModule(module, state) : 0, [ module, state ]);
+    const allocatedTime = useMemo(() => module ? calculateAllocatedTimeForModule(module, state) : 0, [ module, state ]);
 
     const editClickHandler = useCallback(() =>
     {
-        if (!module) return;
-        openDialog();
-    }, [ module, openDialog ]);
+        openModuleDialog(syllabusId, moduleId);
+    }, [ moduleId, syllabusId, openModuleDialog ]);
 
     if (!module)
     {
@@ -104,7 +78,7 @@ function ModuleRow({ moduleId }: { moduleId: ModuleId; })
 function CreateModuleButton({ syllabusId }: { syllabusId: SyllabusId; })
 {
     const { enqueueSnackbar } = useSnackbar();
-    const { createModule, createEvent } = useCurriculumActions();
+    const { createModule, createEvent } = useGantFuncs();
     const [ isCreating, setIsCreating ] = useState(false);
 
     const clickHandler = useCallback(async () =>
@@ -141,7 +115,7 @@ function CreateModuleButton({ syllabusId }: { syllabusId: SyllabusId; })
 
 function SyllabusName({ syllabusId }: { syllabusId: SyllabusId; })
 {
-    const { updateSyllabus } = useCurriculumActions();
+    const { updateSyllabus } = useGantFuncs();
     const syllabus = useSyllabus(syllabusId);
     const [ localTitle, setLocalTitle ] = useState(syllabus?.title ?? '');
 
@@ -181,7 +155,7 @@ function ModulesTable({ syllabusId, syllabusModules }: { syllabusId: SyllabusId;
     const moduleRows = useMemo(() =>
     {
         return syllabusModules.map((moduleId) => (
-            <ModuleRow key={ moduleId } moduleId={ moduleId } />
+            <ModuleRow key={ moduleId } moduleId={ moduleId } syllabusId={ syllabusId } />
         ));
     }, [ syllabusModules ]);
 
@@ -218,12 +192,11 @@ function ModulesTable({ syllabusId, syllabusModules }: { syllabusId: SyllabusId;
 function SyllabusCardInner({ syllabusId }: { syllabusId: SyllabusId; })
 {
     const syllabus = useSyllabus(syllabusId);
-    console.log('syllabus', syllabus);
     return (
         <>
             <CardContent sx={ { display: 'flex', flexDirection: 'column', paddingY: 1, flex: 1, overflow: 'hidden' } }>
                 <SyllabusName syllabusId={ syllabusId } />
-                <ModulesTable syllabusModules={ syllabus.modules } syllabusId={ syllabusId } />
+                <ModulesTable syllabusModules={ syllabus?.modules ?? [] } syllabusId={ syllabusId } />
             </CardContent>
         </>
     );

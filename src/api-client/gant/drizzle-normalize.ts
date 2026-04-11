@@ -1,12 +1,16 @@
+import { CurriculumDocument } from "@/api-client/gant/curriculum";
+import { ModuleDocument } from "@/api-client/gant/module";
+import { ModuleEventDocument } from "@/api-client/gant/module-event";
+import { SyllabusDocument } from "@/api-client/gant/syllabus";
 import { ApiCurriculum } from "@/api-shared/types/gant/api-layer";
 import { CurriculumId, Curriculum, SyllabusId, Syllabus, ModuleId, ModuleEventId, ModuleEvent, Module } from "@/api-shared/types/gant/curriculum";
 
 export interface NormalizedStore
 {
-    curriculums: Record<CurriculumId, Curriculum>;
-    syllabuses: Record<SyllabusId, Syllabus>;
-    modules: Record<ModuleId, Module>;
-    events: Record<ModuleEventId, ModuleEvent>;
+    curriculums: Record<CurriculumId, CurriculumDocument>;
+    syllabuses: Record<SyllabusId, SyllabusDocument>;
+    modules: Record<ModuleId, ModuleDocument>;
+    events: Record<ModuleEventId, ModuleEventDocument>;
 }
 
 export function normalizeCurriculumData(apiData: any): NormalizedStore
@@ -47,6 +51,8 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
                 id: apiModule.id,
                 title: apiModule.title,
                 description: apiModule.description,
+                updatedAt: apiModule.updatedAt,
+                createdAt: apiModule.createdAt,
                 hiveIds: [ ...(apiModule.hiveIds ?? []) ],
                 events: moduleEventIds,
             };
@@ -55,6 +61,8 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
         store.syllabuses[ apiSyllabus.id ] = {
             id: apiSyllabus.id,
             title: apiSyllabus.title,
+            updatedAt: apiSyllabus.updatedAt,
+            createdAt: apiSyllabus.createdAt,
             hiveIds: [ ...(apiSyllabus.hiveIds ?? []) ],
             modules: syllabusModuleIds,
         };
@@ -65,9 +73,13 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
         title: apiData.title,
         description: apiData.description,
         draft: apiData.draft,
+        updatedAt: apiData.updatedAt,
+        createdAt: apiData.createdAt,
         weeks: [ ...(apiData.weeks ?? []) ],
         syllabuses: curriculumSyllabusIds,
     };
 
+
+    console.log(store);
     return store;
 }

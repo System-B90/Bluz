@@ -1,45 +1,76 @@
-import { curriculumApi, moduleApi, syllabusApi } from "@/api-client/gant/api";
+import { curriculumApi, moduleApi, moduleEventApi, syllabusApi } from "@/api-client/gant/api";
+import { CurriculumDocument } from "@/api-client/gant/curriculum";
+import { ModuleDocument } from "@/api-client/gant/module";
+import { ModuleEventDocument } from "@/api-client/gant/module-event";
+import { SyllabusDocument } from "@/api-client/gant/syllabus";
 import { CurriculumId, SyllabusId, ModuleId, ModuleEventId, ModuleEvent, ModuleEventType, Module, Curriculum, Syllabus } from "@/api-shared/types/gant/curriculum";
-import { useCurriculumStore } from "@/components/gant/state/provider";
-
-export function useCurriculum(id: CurriculumId)
+import { useCurriculumState, useCurriculumProviderActions } from "@/components/gant/state/provider";
+export function useCurriculum(curriculumId: null): undefined;
+export function useCurriculum(curriculumId: CurriculumId): CurriculumDocument | undefined;
+export function useCurriculum(curriculumId: CurriculumId | null): CurriculumDocument | undefined
 {
-    const { state } = useCurriculumStore();
-    return state.curriculums[ id ];
-}
+    const state = useCurriculumState();
 
-export function useSyllabus(id: SyllabusId)
-{
-    const { state } = useCurriculumStore();
-    return state.syllabuses[ id ];
-}
-
-export function useModule(id: ModuleId)
-{
-    const { state } = useCurriculumStore();
-    return state.modules[ id ];
-}
-
-export function useEvent(id: ModuleEventId)
-{
-    const { state, dispatch } = useCurriculumStore();
-
-    const event = state.events[ id ];
-
-    const updateEvent = (updates: Partial<ModuleEvent>) =>
+    if (curriculumId === null)
     {
-        dispatch({ type: 'UPDATE_EVENT', payload: { id, updates } });
-    };
+        return undefined;
+    }
 
-    return { event, updateEvent };
+    return state.curriculums[ curriculumId ];
 }
-export function useCurriculumActions()
-{
-    const { dispatch } = useCurriculumStore();
 
-    // ==========================================
-    // CURRICULUMS
-    // ==========================================
+
+export function useSyllabus(syllabusId: null): undefined;
+export function useSyllabus(syllabusId: SyllabusId): SyllabusDocument | undefined;
+export function useSyllabus(syllabusId: SyllabusId | null): SyllabusDocument | undefined
+{
+    const state = useCurriculumState();
+
+    if (syllabusId === null)
+    {
+        return undefined;
+    }
+
+    return state.syllabuses[ syllabusId ];
+}
+
+
+export function useModule(moduleId: null): undefined;
+export function useModule(moduleId: ModuleId): ModuleDocument | undefined;
+export function useModule(moduleId: ModuleId | null): ModuleDocument | undefined
+{
+    const state = useCurriculumState();
+
+    if (moduleId === null)
+    {
+        return undefined;
+    }
+
+    return state.modules[ moduleId ];
+}
+
+
+export function useEvent(eventId: null): undefined;
+export function useEvent(eventId: ModuleEventId): ModuleEventDocument | undefined;
+export function useEvent(eventId: ModuleEventId | null): ModuleEventDocument | undefined
+{
+    const state = useCurriculumState();
+
+    if (eventId === null)
+    {
+        return undefined;
+    }
+
+    return state.events[ eventId ];
+}
+
+/**
+ * Provides action functions to Create, Delete, & Update gant items.
+ * @returns Destructable object with all gant actions.
+ */
+export function useGantFuncs()
+{
+    const { dispatch } = useCurriculumProviderActions();
 
     const updateCurriculum = async (id: CurriculumId, updates: Partial<Curriculum>) =>
     {
@@ -53,11 +84,6 @@ export function useCurriculumActions()
             throw error;
         }
     };
-
-
-    // ==========================================
-    // SYLLABUSES
-    // ==========================================
 
     const createSyllabus = async (title: string, curriculumId: CurriculumId, hiveIds: number[] = []) =>
     {
@@ -90,8 +116,6 @@ export function useCurriculumActions()
     {
         try
         {
-            // Depending on your API, this might delete the syllabus entirely, 
-            // or just remove the link in the curriculumSyllabuses table.
             await syllabusApi.apiDelete(syllabusId);
             dispatch({ type: 'REMOVE_SYLLABUS', payload: { curriculumId, syllabusId } });
         } catch (error)
@@ -100,11 +124,6 @@ export function useCurriculumActions()
             throw error;
         }
     };
-
-
-    // ==========================================
-    // MODULES
-    // ==========================================
 
     const createModule = async (title: string, syllabusId: SyllabusId, description: string = '', hiveIds: number[] = []) =>
     {
@@ -145,11 +164,6 @@ export function useCurriculumActions()
             throw error;
         }
     };
-
-
-    // ==========================================
-    // EVENTS
-    // ==========================================
 
     const createEvent = async (
         title: string,
@@ -204,7 +218,6 @@ export function useCurriculumActions()
         }
     };
 
-    // Return the dictionary of functions to the component
     return {
         updateCurriculum,
         createSyllabus,
@@ -216,5 +229,5 @@ export function useCurriculumActions()
         createEvent,
         updateEvent,
         removeEvent,
-    };
+    } as const;
 }

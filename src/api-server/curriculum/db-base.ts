@@ -1,10 +1,13 @@
 import { postgresDb } from "@/api-server/curriculum";
+import { curriculumSyllabuses, moduleToEvents, syllabusModules } from "@/api-server/curriculum/schema";
 import { ClientApiError } from "@/api-shared/errors";
 import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
 import { BasicGantOperations } from "@/app/api/gant/base";
 import { eq, inArray, desc } from "drizzle-orm";
 import { PgTable, AnyPgColumn } from "drizzle-orm/pg-core";
 
+export const FOREIGN_KEY_VIOLATION = '23503';
+export const UNIQUE_VIOLATION = '23505';
 export type BaseDbDocument = {
     createdAt: Date;
     updatedAt: Date;
@@ -25,7 +28,8 @@ export interface DrizzleOperationsBuilderProps<TTable extends PgTable>
 {
     table: TTable;
     typeName: string;
-    junction?: JunctionConfig; // Optional: only needed if the entity has a M2M array
+    junction?: JunctionConfig;
+    parentJunction?: { type: 'curriculum' | 'syllabus' | 'module'; };
 }
 
 export function drizzleOperationsBuilder<
@@ -36,6 +40,7 @@ export function drizzleOperationsBuilder<
     table,
     typeName,
     junction,
+    parentJunction,
 }: DrizzleOperationsBuilderProps<TTable>): BasicGantOperations<T, TCreatePayload>
 {
 
@@ -103,18 +108,57 @@ export function drizzleOperationsBuilder<
 
     async function createNewItem(data: TCreatePayload): Promise<DbTDocument>
     {
-        const { curriculumId, syllabusId, moduleId, ...entityData } = data as any;
-        const now = new Date();
         const id = (data as any).id || `gen_${crypto.randomUUID()}`;
+        const now = new Date();
 
-        const [ newItem ] = await postgresDb.insert(table).values({
-            ...entityData,
-            id,
-            createdAt: now,
-            updatedAt: now,
-        }).returning();
+        // 1. Extract Parent IDs and Base Data
+        // We pull these out so they don't get sent to the base table insert
+        const { curriculumId, syllabusId, moduleId, ...entityData } = data as any;
 
-        return newItem as DbTDocument;
+        return await postgresDb.transaction(async (tx) =>
+        {
+            // 2. Insert the Base Entity
+            const [ newItem ] = await tx.insert(table).values({
+                ...entityData,
+                id,
+                createdAt: now,
+                updatedAt: now,
+            }).returning();
+
+            // 3. Handle Parent Linking (Relational Glue)
+            // If we are creating a Syllabus under a Curriculum
+            if (curriculumId && parentJunction?.type === 'curriculum')
+            {
+                await tx.insert(curriculumSyllabuses).values({
+                    curriculumId: curriculumId,
+                    syllabusId: id,
+                });
+            }
+            // If we are creating a Module under a Syllabus
+            else if (syllabusId && parentJunction?.type === 'syllabus')
+            {
+                await tx.insert(syllabusModules).values({
+                    syllabusId: syllabusId,
+                    moduleId: id,
+                });
+            }
+            // If we are creating an Event under a Module
+            else if (moduleId && parentJunction?.type === 'module')
+            {
+                await tx.insert(moduleToEvents).values({
+                    moduleId: moduleId,
+                    eventId: id,
+                });
+            }
+
+            // 4. Return with "Extended" fields (initialize empty arrays)
+            if (junction?.apiKey)
+            {
+                (newItem as any)[ junction.apiKey ] = [];
+            }
+
+            return newItem as DbTDocument;
+        });
     }
 
     async function updateItem(id: T[ 'id' ], updateData: Partial<T>): Promise<DbTDocument>

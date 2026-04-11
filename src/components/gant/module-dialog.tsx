@@ -1,42 +1,40 @@
-import { makeModuleEvent, Module, ModuleEvent, ModuleEventId, ModuleEventType, ModuleId } from "@/api-shared/types/gant/curriculum";
-import { ModuleEventProvider, ModuleEventsProvider, useModuleEvent, useModuleEvents } from "@/components/gant/providers/module-event-provider";
-import { useModule, useModules } from "@/components/gant/providers/module-provider";
+import { Module, ModuleEvent, ModuleEventId, ModuleEventType, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import NumberSpinner from "@/components/base/number-spinner";
+import { useEvent, useGantFuncs, useModule } from "@/components/gant/state/hooks";
+import { useCurriculumProviderActions } from "@/components/gant/state/provider";
+import { calendarMoment } from "@/components/schedule/calendar/calendar";
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import
 {
+    Box,
+    Button,
     Dialog,
     DialogActions,
     DialogContent,
     DialogProps,
     DialogTitle,
-    Button,
-    TextField,
-    Stack,
-    Box,
     Divider,
-    Typography,
-    TableRow,
-    TableCell,
-    Table,
-    TableHead,
-    TableBody,
-    IconButton,
     FormControl,
+    IconButton,
+    MenuItem,
     Select,
-    MenuItem
+    Stack,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    TextField,
+    Typography
 } from "@mui/material";
-import { Dispatch, RefObject, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import AddIcon from '@mui/icons-material/Add';
-import { BaseDocument } from "@/api-client/gant/curriculum";
-import DeleteIcon from '@mui/icons-material/Delete';
-import SaveIcon from '@mui/icons-material/Save';
-import NumberSpinner from "@/components/base/number-spinner";
-import { calendarMoment, localizer } from "@/components/schedule/calendar/calendar";
-import { apiUpdateModuleEvent } from "@/api-client/gant/module-event";
-
+import { Dispatch, SetStateAction, useCallback, useMemo, useState } from "react";
 interface ModuleDialogProps extends DialogProps
 {
     setOpen: Dispatch<SetStateAction<boolean>>;
     onSave?: (updated: Module) => void;
+    moduleId: ModuleId | null;
+    syllabusId: SyllabusId | null;
 }
 
 function valueRenderer(value: string): string
@@ -46,50 +44,31 @@ function valueRenderer(value: string): string
     return calendarMoment.duration(value, 'minutes').humanize();
 }
 
-function ModuleEventView({ eventId, deleteCallback, copyRef }: { eventId: ModuleEventId; copyRef: RefObject<Record<ModuleEventId, ModuleEvent>>; deleteCallback: (removedModuleEventId: ModuleEventId) => void; })
+function ModuleEventView({ moduleId, eventId }: { moduleId: ModuleId; eventId: ModuleEventId; })
 {
-    const { delete: deleteModuleEvent } = useModuleEvents();
-    const { data: moduleEvent, commit: save } = useModuleEvent();
-
-    const [ moduleEventTitle, setModuleEventTitle ] = useState('');
-    const [ moduleEventType, setModuleEventType ] = useState(ModuleEventType.Other);
-    const [ moduleEventMinTime, setModuleEventMinTime ] = useState(0);
-
-    useEffect(() =>
-    {
-        setModuleEventTitle(moduleEvent ? moduleEvent.title : '');
-        setModuleEventType(moduleEvent ? moduleEvent.type : ModuleEventType.Other);
-        setModuleEventMinTime(moduleEvent ? moduleEvent.minimumDuration : 0);
-    }, [ moduleEvent ]);
-
-    useEffect(() =>
-    {
-        if (!eventId || moduleEvent === null || moduleEventTitle === undefined || moduleEventType === undefined || moduleEventMinTime === undefined) { return; }
-        copyRef.current[ eventId ] = { ...moduleEvent, title: moduleEventTitle, type: moduleEventType, minimumDuration: moduleEventMinTime };
-    }, [ eventId, copyRef, moduleEvent, moduleEventTitle, moduleEventType, moduleEventMinTime ]);
-
-    const handleSaveClick = useCallback(() =>
-    {
-        if (!moduleEvent) { return; }
-        save({ ...moduleEvent, title: moduleEventTitle, type: moduleEventType, minimumDuration: moduleEventMinTime });
-    }, [ moduleEvent, moduleEventTitle, moduleEventType, moduleEventMinTime, save ]);
+    const moduleEvent = useEvent(eventId);
+    const { removeEvent, updateEvent } = useGantFuncs();
 
     const handleDeleteClick = useCallback(() =>
     {
-        deleteModuleEvent(eventId)
-            .then(() => deleteCallback(eventId));
-    }, [ eventId, deleteModuleEvent, deleteCallback ]);
+        removeEvent(moduleId, eventId);
+    }, [ eventId, moduleId, removeEvent ]);
+
+    const updateHandler = useCallback((updates: Partial<ModuleEvent>) =>
+    {
+        updateEvent(eventId, updates);
+    }, [ eventId, updateEvent ]);
 
     return (
         <TableRow>
             <TableCell>
-                <TextField disabled={ !moduleEvent } size="small" fullWidth={ true } value={ moduleEventTitle } onChange={ (e) => setModuleEventTitle(e.target.value) } />
+                <TextField disabled={ !moduleEvent } size="small" fullWidth={ true } value={ moduleEvent?.title ?? '' } onChange={ (e) => updateHandler({ title: e.target.value }) } />
             </TableCell>
             <TableCell>
                 <FormControl size="small" fullWidth={ true } disabled={ !moduleEvent }>
                     <Select
-                        value={ moduleEventType }
-                        onChange={ (e) => setModuleEventType(e.target.value) }
+                        value={ moduleEvent?.type ?? ModuleEventType.Other }
+                        onChange={ (e) => updateHandler({ type: e.target.value }) }
                     >
                         { (Object.values(ModuleEventType) as Array<ModuleEventType>).map((eventType: ModuleEventType) => (
                             <MenuItem key={ eventType } value={ eventType }>
@@ -107,96 +86,65 @@ function ModuleEventView({ eventId, deleteCallback, copyRef }: { eventId: Module
                         largeStep={ 45 }
                         label={ undefined }
                         style={ { margin: 0, padding: 0 } }
-                        value={ moduleEventMinTime }
-                        onValueChange={ (v) => v ? setModuleEventMinTime(v) : undefined }
+                        value={ moduleEvent?.minimumDuration ?? 0 }
+                        onValueChange={ (v) => v ? updateHandler({ minimumDuration: v }) : undefined }
                     />
                 </FormControl>
             </TableCell>
             <TableCell>
-                <IconButton size="small" onClick={ handleSaveClick }>
-                    <SaveIcon fontSize="small" />
-                </IconButton>
-            </TableCell>
-            <TableCell>
                 <IconButton size="small" onClick={ handleDeleteClick }>
-                    <DeleteIcon fontSize="small" />
+                    <DeleteIcon fontSize="small" color="error" />
                 </IconButton>
             </TableCell>
         </TableRow >
     );
 }
 
-function CreateModuleEventButton({ onClickCallback }: { onClickCallback?: (createdModuleEvent: ModuleEvent & BaseDocument) => void; })
+function CreateModuleEventButton({ moduleId }: { moduleId: ModuleId; })
 {
-    const { create } = useModuleEvents();
+    const { createEvent } = useGantFuncs();
     const clickHandler = useCallback(() =>
     {
-        create(makeModuleEvent())
-            .then((newModuleEvent) => onClickCallback?.(newModuleEvent));
-    }, [ create, onClickCallback ]);
+        createEvent('מופע חדש', moduleId);
+    }, [ moduleId, createEvent ]);
 
     return (
         <IconButton size="small" onClick={ clickHandler }>
-            <AddIcon fontSize="small" />
+            <AddIcon fontSize="small" color='action' />
         </IconButton>
     );
 }
 
-function ModuleEventsView({ moduleId, eventIds, eventsRef }: { moduleId: ModuleId | undefined; eventIds: RefObject<Array<ModuleEventId>>; eventsRef: RefObject<Record<ModuleEventId, ModuleEvent>>; })
+function ModuleEventsView({ moduleId, eventIds }: { moduleId: ModuleId; eventIds: Array<ModuleEventId>; })
 {
-    const [ localEventIds, setLocalEventIds ] = useState(eventIds.current);
-    const moduleEventCreatedCallback = useCallback((newModuleEvent: ModuleEvent & BaseDocument) =>
-    {
-        setLocalEventIds((prev) =>
-        {
-            const newValues = [ ...prev, newModuleEvent.id ];
-            eventIds.current = newValues;
-            return newValues;
-        });
-    }, []);
-    const moduleEventRemovedCallback = useCallback((removeModuleEventId: ModuleEventId) =>
-    {
-        setLocalEventIds((prev) =>
-        {
-            const newValues = [ ...prev.filter((x) => x !== removeModuleEventId) ];
-            eventIds.current = newValues;
-            return newValues;
-        });
-    }, []);
-    const eventItems = useMemo(() => localEventIds.map(
-        (eventId) => (
-            <ModuleEventProvider key={ eventId } itemId={ eventId }>
-                <ModuleEventView eventId={ eventId } deleteCallback={ moduleEventRemovedCallback } copyRef={ eventsRef } />
-            </ModuleEventProvider>
-        )
-    ), [ localEventIds, eventsRef ]);
+    const eventItems = useMemo(() => eventIds.map(
+        (eventId) => (<ModuleEventView key={ eventId } moduleId={ moduleId } eventId={ eventId } />)
+    ), [ eventIds ]);
 
     return (
         <Box display={ 'flex' } flexWrap={ 'wrap' } alignItems={ 'flex-end' } gap={ 2 } flexGrow={ 1 } maxHeight={ '100%' }>
-            { moduleId && <ModuleEventsProvider params={ { moduleId } }>
-                <Table size="small" stickyHeader={ true } sx={ { flexGrow: 1 } }>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell><Typography variant="h6">שם</Typography></TableCell>
-                            <TableCell><Typography variant="h6">סוג</Typography></TableCell>
-                            <TableCell><Typography variant="h6">זמן מינימלי (דק')</Typography></TableCell>
-                            <TableCell></TableCell>
-                            <TableCell>
-                                <CreateModuleEventButton onClickCallback={ moduleEventCreatedCallback } />
-                            </TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        { eventItems }
-                    </TableBody>
-                </Table>
-            </ModuleEventsProvider> }
+            <Table size="small" stickyHeader={ true } sx={ { flexGrow: 1 } }>
+                <TableHead>
+                    <TableRow>
+                        <TableCell><Typography variant="h6">שם</Typography></TableCell>
+                        <TableCell><Typography variant="h6">סוג</Typography></TableCell>
+                        <TableCell><Typography variant="h6">זמן מינימלי (דק')</Typography></TableCell>
+                        <TableCell>
+                            <CreateModuleEventButton moduleId={ moduleId } />
+                        </TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    { eventItems }
+                </TableBody>
+            </Table>
         </Box>
     );
 }
 
 function HiveModulesView({ hiveModules }: { hiveModules: Array<number>; })
 {
+    // TODO: Implement.
     return (
         <Box>
 
@@ -208,69 +156,41 @@ export default function ModuleDialog({
     open,
     setOpen,
     onSave,
+    syllabusId,
+    moduleId,
     ...props
 }: ModuleDialogProps)
 {
-    const { delete: deleteModule } = useModules();
-    const { data: module, setData: setModule, commit: save } = useModule();
-    const eventIdsRef = useRef<Array<ModuleEventId>>(module ? module.events : []);
-    const eventsRef = useRef<Record<ModuleEventId, ModuleEvent>>({});
+    const { closeModuleDialog } = useCurriculumProviderActions();
+    const { removeModule, updateModule } = useGantFuncs();
+    const module = useModule(moduleId ?? '');
     const [ isActionLoading, setIsActionLoading ] = useState<boolean>(false);
-
-    // Reset local state when dialog opens or module changes
-    useEffect(() =>
-    {
-        if (open)
-        {
-            if (module)
-            {
-                eventIdsRef.current = module.events;
-            }
-        }
-    }, [ open, module ]);
 
     const handleClose = useCallback(() =>
     {
         setOpen(false);
     }, []);
 
-    const handleSave = useCallback(() =>
-    {
-        setIsActionLoading(true);
-        if (module)
-        {
-            setModule((p) => p ? ({ ...p, events: eventIdsRef.current }) : null);
-            save({ ...module, events: eventIdsRef.current })
-                .then((savedModule) =>
-                {
-                    if (savedModule)
-                    {
-                        savedModule?.events.map((eventModuleId) =>
-                        {
-                            const newVal = eventsRef.current[ eventModuleId ];
-                            apiUpdateModuleEvent({ curriculumId: '_', syllabusId: '_', moduleId: savedModule.id }, newVal);
-
-                        });
-                        onSave?.(savedModule);
-                        setIsActionLoading(false);
-                    }
-                });
-        }
-        setOpen(false);
-    }, [ module, save, onSave, setModule ]);
-
     const handleDelete = useCallback(() =>
     {
-        if (!module) { return; }
+        if (syllabusId === null || moduleId === null) { return; }
         setIsActionLoading(true);
-        deleteModule(module?.id)
+        removeModule(syllabusId, moduleId)
             .then(() =>
             {
-                setModule(null);
+                closeModuleDialog();
                 setIsActionLoading(false);
                 setOpen(false);
             });
-    }, [ module, deleteModule ]);
+    }, [ syllabusId, moduleId, removeModule, closeModuleDialog, setOpen, ]);
+
+    const updateHandler = useCallback((updates: Partial<Module>) =>
+    {
+        if (syllabusId === null || moduleId === null) { return; }
+        updateModule(moduleId, updates);
+    }, [ moduleId, updateModule ]);
+
+    if (syllabusId === null || moduleId === null) { return; }
 
     return (
         <Dialog open={ open } onClose={ handleClose } fullWidth maxWidth="xl" { ...props }>
@@ -283,11 +203,7 @@ export default function ModuleDialog({
                             label="כותרת"
                             fullWidth
                             value={ module?.title ?? "" }
-                            onChange={ (e) =>
-                                setModule(prev =>
-                                    prev ? { ...prev, title: e.target.value } : prev
-                                )
-                            }
+                            onChange={ (e) => updateHandler({ title: e.target.value }) }
                         />
 
                         <TextField
@@ -306,16 +222,12 @@ export default function ModuleDialog({
                             multiline
                             minRows={ 3 }
                             value={ module?.description ?? "" }
-                            onChange={ (e) =>
-                                setModule(prev =>
-                                    prev ? { ...prev, description: e.target.value } : prev
-                                )
-                            }
+                            onChange={ (e) => updateHandler({ description: e.target.value }) }
                         />
                     </Stack>
                     <Divider orientation="vertical" flexItem />
                     <Stack spacing={ 2 } mt={ 1 } flexGrow={ 1 }>
-                        <ModuleEventsView moduleId={ module?.id } eventIds={ eventIdsRef } eventsRef={ eventsRef } />
+                        <ModuleEventsView moduleId={ moduleId } eventIds={ module?.events ?? [] } />
                         <HiveModulesView hiveModules={ module?.hiveIds ?? [] } />
                     </Stack>
                 </Box>
@@ -327,16 +239,8 @@ export default function ModuleDialog({
                 </Button>
 
 
-                <Button onClick={ handleClose } disabled={ isActionLoading }>
-                    ביטול
-                </Button>
-
-                <Button
-                    variant="contained"
-                    onClick={ handleSave }
-                    disabled={ !module?.title?.trim() || isActionLoading }
-                >
-                    שמור
+                <Button onClick={ handleClose } disabled={ isActionLoading } color='primary' variant='contained'>
+                    סגירה
                 </Button>
             </DialogActions>
         </Dialog>

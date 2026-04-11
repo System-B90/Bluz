@@ -14,6 +14,9 @@ const basicOperations = drizzleOperationsBuilder<
 >({
     table: moduleEvents,
     typeName: 'מופע',
+    parentJunction: {
+        type: 'module'
+    },
 });
 
 export const DbModuleEvent = {

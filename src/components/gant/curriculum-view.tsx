@@ -1,11 +1,12 @@
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { CurriculumDocument } from '@/api-client/gant/curriculum';
 import { CurriculumId, makeSyllabus } from '@/api-shared/types/gant/curriculum';
-import { useCurriculum, useCurriculumActions } from '@/components/gant/state/hooks';
+import { useCurriculum, useGantFuncs } from '@/components/gant/state/hooks';
+import { useCurriculumState } from '@/components/gant/state/provider';
 import SyllabusCard from '@/components/gant/syllabus-card';
-import { calculateMinimumRequiredTimeForCurriculum } from '@/components/gant/utils';
+import { calculateAllocatedTimeForCurriculum, calculateMinimumRequiredTimeForCurriculum } from '@/components/gant/utils';
 import AddIcon from '@mui/icons-material/Add';
-import { BoxProps, Button, Card, Typography, Stack, Box, Skeleton } from '@mui/material';
+import { BoxProps, Button, Card, Typography, Stack, Box, Skeleton, CircularProgress } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useCallback, useState, useMemo, useEffect } from 'react';
 
@@ -16,7 +17,7 @@ export interface CurriculumViewProps extends BoxProps
 
 function CreateSyllabusButton({ curriculumId }: { curriculumId: CurriculumId; })
 {
-    const { createSyllabus } = useCurriculumActions();
+    const { createSyllabus } = useGantFuncs();
 
     const clickHandler = useCallback(() =>
     {
@@ -34,57 +35,109 @@ function CreateSyllabusButton({ curriculumId }: { curriculumId: CurriculumId; })
     );
 }
 
-function HoursCard({ curriculum }: { curriculum: CurriculumDocument | null; })
+function HoursCard({ curriculum }: { curriculum: CurriculumDocument | undefined; }) 
 {
-    const [ minimumTimeRequired, setMinimumTimeRequired ] = useState<number>();
-    const totalWorkingHours = useMemo(() =>
-        (curriculum?.weeks ?? []).reduce(
-            (total, currentWeek) =>
-                total + currentWeek.days.reduce(
-                    (weekTotal, currentDay) =>
-                        weekTotal + currentDay.totalWorkingHours,
-                    0),
-            0),
-        [ curriculum?.weeks ]);
+    const state = useCurriculumState();
 
-    useEffect(() =>
+    const totalWorkingHours = useMemo(() =>
     {
-        if (!curriculum) { return; }
-        calculateMinimumRequiredTimeForCurriculum(curriculum, curriculum.syllabuses).then(setMinimumTimeRequired).catch((error) =>
+        if (!curriculum?.weeks) return 0;
+        return curriculum.weeks.reduce(
+            (total, currentWeek) =>
+                total + currentWeek.days.reduce((weekTotal, currentDay) => weekTotal + currentDay.totalWorkingHours, 0),
+            0
+        );
+    }, [ curriculum?.weeks ]);
+
+    const minimumTimeRequired = useMemo(() =>
+    {
+        if (!curriculum?.syllabuses || !state) return 0;
+
+        return curriculum.syllabuses.reduce((sylTotal, syllabusId) =>
         {
-            enqueueApiErrorSnackbar(enqueueSnackbar, `חישוב הזמן המינימלי הדרוש נכשל.`, error);
-        });
-    }, [ curriculum, curriculum?.syllabuses ]);
+            const syllabus = state.syllabuses[ syllabusId ];
+            if (!syllabus) return sylTotal;
+
+            return sylTotal + (syllabus.modules ?? []).reduce((modTotal, moduleId) =>
+            {
+                const module = state.modules[ moduleId ];
+                if (!module) return modTotal;
+
+                return modTotal + (module.events ?? []).reduce((evtTotal, eventId) =>
+                {
+                    const event = state.events[ eventId ];
+                    if (!event) return evtTotal;
+
+                    return evtTotal + (event.minimumDuration ?? 0);
+                }, 0);
+            }, 0);
+        }, 0);
+    }, [ curriculum?.syllabuses, state ]);
+
+    const usedWorkingHours = useMemo(() => curriculum ? calculateAllocatedTimeForCurriculum(curriculum, state) : 0, [ curriculum, state ]);
+
+    const progressPercentage = totalWorkingHours > 0
+        ? Math.min((usedWorkingHours / totalWorkingHours) * 100, 100)
+        : 0;
+
+    if (!curriculum) 
+    {
+        return (
+            <Card sx={ { padding: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 150 } }>
+                <CircularProgress />
+            </Card>
+        );
+    }
 
     return (
         <Card sx={ { padding: 2 } }>
             <Typography variant="subtitle1" gutterBottom>שעות</Typography>
-            <Stack>
-                <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' } gap={ 1 }>
-                    <Typography variant="body2">
-                        ס"ך:
-                    </Typography>
-                    <Typography variant="body2">
-                        { curriculum ? totalWorkingHours : <Skeleton variant='text' width={ 30 } /> }
-                    </Typography>
+            <Box display="flex" flexDirection="row" alignItems="center" gap={ 3 }>
+                <Box position="relative" display="inline-flex">
+                    <CircularProgress
+                        variant="determinate"
+                        value={ 100 }
+                        sx={ { color: 'grey.200' } }
+                        size={ 60 }
+                    />
+                    <CircularProgress
+                        variant="determinate"
+                        value={ progressPercentage }
+                        size={ 60 }
+                        sx={ { position: 'absolute', left: 0 } }
+                    />
+                    <Box
+                        sx={ {
+                            top: 0,
+                            left: 0,
+                            bottom: 0,
+                            right: 0,
+                            position: 'absolute',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        } }
+                    >
+                        <Typography variant="caption" component="div" color="text.secondary">
+                            { `${Math.round(progressPercentage)}%` }
+                        </Typography>
+                    </Box>
                 </Box>
-                <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' } gap={ 1 }>
-                    <Typography variant="body2">
-                        שנוצלו:
-                    </Typography>
-                    <Typography variant="body2">
-                        { curriculum ? (curriculum.usedWorkingHours ?? 0) : <Skeleton variant='text' width={ 30 } /> }
-                    </Typography>
-                </Box>
-                <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' } gap={ 1 }>
-                    <Typography variant="body2">
-                        מינימום דרוש:
-                    </Typography>
-                    <Typography variant="body2">
-                        { (minimumTimeRequired !== undefined) ? minimumTimeRequired : <Skeleton variant='text' width={ 30 } /> }
-                    </Typography>
-                </Box>
-            </Stack>
+                <Stack spacing={ 0.5 }>
+                    <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
+                        <Typography variant="body2" color="text.secondary">ס"ך:</Typography>
+                        <Typography variant="body2" fontWeight="bold">{ totalWorkingHours }</Typography>
+                    </Box>
+                    <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
+                        <Typography variant="body2" color="text.secondary">שנוצלו:</Typography>
+                        <Typography variant="body2" fontWeight="bold">{ usedWorkingHours }</Typography>
+                    </Box>
+                    <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
+                        <Typography variant="body2" color="text.secondary">מינימום דרוש:</Typography>
+                        <Typography variant="body2" fontWeight="bold">{ minimumTimeRequired }</Typography>
+                    </Box>
+                </Stack>
+            </Box>
         </Card>
     );
 }
