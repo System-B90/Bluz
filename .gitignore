@@ -5,6 +5,9 @@
 src/session-server/node_modules
 src/session-server/.next
 src/session-server/dist
+/session-server/node_modules
+/session-server/dist
+/session-server/.next
 /.pnp
 .pnp.*
 .yarn/*
@@ -45,3 +48,4 @@ next-env.d.ts
 
 *.tar
 .vscode/PythonImportHelper-v2-Completion.json
+.husky

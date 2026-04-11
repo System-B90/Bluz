@@ -1,6 +1,6 @@
 import assert from "assert";
 import { createContext, useCallback, useContext, useEffect, useRef } from "react";
-import { COMBO_DATA_KEY, MessageTypes } from "../../session-server/session-common";
+import { COMBO_DATA_KEY, MessageTypes } from "../session-common";
 import { useWebSocketConfig } from "@/components/websocket-config-provider";
 
 export type MessageHandlerType = (messageType: MessageTypes, messageTarget: string, data: any) => void;

@@ -4,7 +4,6 @@ import { apiAddCourse, apiDeleteCourse, apiGetCourses, apiSetCourse } from '@/ap
 import { Course, CourseId } from '@/api-shared/types/course';
 import { useAuth } from '@/components/auth/auth-provider';
 import { MessageHandlerType } from '@/components/session-ws';
-import { MessageTypes } from '@/session-server/src/common';
 import { enqueueSnackbar } from 'notistack';
 import
 {

@@ -1,5 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { WEBSOCKET_SESSION_SERVER_INTERNAL_PORT, MessageTypes, WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY, WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC } from './common';
+import { WEBSOCKET_SESSION_SERVER_PORT, MessageTypes, WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY, WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC, COMBO_DATA_KEY } from '../src/session-common';
+import assert from 'assert';
 
 const GC_INTERVAL_MS = 3600 * 1000; // One hour
 
@@ -10,16 +11,19 @@ interface ConnectedSession
     abandonedMark?: boolean;
 }
 
+type ConnectedSyncObjectSession = ConnectedSession;
+
 const connectedSessions: Array<ConnectedSession> = [];
+const registeredSyncObjectConnections: { [ x: string ]: Array<ConnectedSyncObjectSession>; } = {};
 
 function updateSessionLastContact<T extends ConnectedSession>(session: T)
 {
     session.abandonedMark = false;
 }
 
-console.log(`WEBSOCKET_SESSION_SERVER_INTERNAL_PORT: ${WEBSOCKET_SESSION_SERVER_INTERNAL_PORT}`);
+console.log(`WEBSOCKET_SESSION_SERVER_PORT: ${WEBSOCKET_SESSION_SERVER_PORT}`);
 const wss = new WebSocketServer({
-    port: WEBSOCKET_SESSION_SERVER_INTERNAL_PORT,
+    port: 28199, // WEBSOCKET_SESSION_SERVER_PORT,
     perMessageDeflate: {
         zlibDeflateOptions: {
             // See zlib defaults.
@@ -43,28 +47,73 @@ const wss = new WebSocketServer({
 
 function registerSession(ws: WebSocket, initiatorKey: string) 
 {
+    assert(typeof initiatorKey === 'string', `initiatorKey must be of type string, not ${typeof initiatorKey}`);
     connectedSessions.push({ ws, initiatorKey });
 };
 
+function registerSyncObjectConnection(ws: WebSocket, syncObjectId: string) 
+{
+    assert(typeof syncObjectId === 'string', `syncObjectId must be of type string, not ${typeof syncObjectId}`);
+    if (!registeredSyncObjectConnections[ syncObjectId ])
+    {
+        registeredSyncObjectConnections[ syncObjectId ] = [];
+    }
+    registeredSyncObjectConnections[ syncObjectId ].push({ ws, initiatorKey: syncObjectId });
+};
 
-const buildMessage = (messageType: MessageTypes, data?: { [ x: string ]: any; }) =>
+const buildMessage = (messageType: MessageTypes, target?: string, data?: { [ x: string ]: any; }) =>
 {
     const result: any = {
         'type': messageType,
-        'data': data,
+        target,
+        data,
     };
 
     return JSON.stringify(result);
 };
 
-const dispatchMessageToEveryone = (messageType: MessageTypes, data?: { [ x: string ]: any; }) =>
+const dispatchMessageToEveryone = (messageType: MessageTypes, targets?: Array<string> | string, data?: { [ x: string ]: any; }) =>
 {
     connectedSessions.forEach(session =>
     {
+        if (session.initiatorKey === undefined) { return; }
         console.log(`Sending ${messageType} to user ${session.initiatorKey}`);
-        session.ws.send(buildMessage(messageType, data));
+        session.ws.send(buildMessage(messageType, undefined, data));
         updateSessionLastContact(session);
     });
+
+    if (typeof targets === 'string')
+    {
+        dispatchToSyncObjectListeners(messageType, targets, data);
+    }
+    else
+    {
+        console.log('targets', targets);
+        targets?.map((target) =>
+        {
+            dispatchToSyncObjectListeners(messageType, target, data);
+        });
+    }
+};
+
+const dispatchToSyncObjectListeners = (messageType: MessageTypes, syncObjectId: string, data?: { [ x: string ]: any; }) =>
+{
+    if (!registeredSyncObjectConnections[ syncObjectId ])
+    {
+        console.log(`Dispatch was requested on an object with no listeners!`);
+        return;
+    }
+    const message = buildMessage(messageType, syncObjectId, data);
+    registeredSyncObjectConnections[ syncObjectId ].map(
+        (session: ConnectedSyncObjectSession) =>
+        {
+            const { ws: listenerWS, initiatorKey } = session;
+            assert(typeof initiatorKey !== 'undefined', `initiatorKey must be defined!`);
+            assert(initiatorKey === syncObjectId, `ID confusion on sync object!`);
+            console.log(`Sending ${messageType} to sync-sock ${syncObjectId}`);
+            listenerWS.send(message);
+            updateSessionLastContact(session);
+        });
 };
 
 function validateServerMessage(data: { [ x: string ]: any; })
@@ -80,7 +129,7 @@ function handleServerMessage(data: { [ x: string ]: any; })
         validateServerMessage(data);
         console.log(`Server message ${data[ 'type' ]}`);
         delete data[ 'authKey' ];
-        dispatchMessageToEveryone(data[ 'type' ], data[ 'data' ]);
+        dispatchMessageToEveryone(data[ 'type' ], data[ 'targets' ], data[ 'data' ]);
     } catch (e: unknown)
     {
         console.error('Server message error: ', e);
@@ -105,7 +154,12 @@ wss.on('connection', (ws) =>
 
         if (data[ 'type' ] === MessageTypes.REGISTER_SESSION)
         {
-            registerSession(ws, data[ 'userId' ]);
+            registerSession(ws, data[ 'initiatorKey' ]);
+            return;
+        }
+        else if (data[ 'type' ] === MessageTypes.REGISTER_SYNC_PROVIDER)
+        {
+            registerSyncObjectConnection(ws, data[ 'syncObjectId' ]);
             return;
         }
     });
@@ -128,11 +182,39 @@ function abandonedSessionsGC()
     console.log(`[GC] : Beginning Session GC ${gcStartTime}`);
 
 
+    const syncSessionsToRemove: Array<ConnectedSession> = [];
+    for (const syncId in registeredSyncObjectConnections)
+    {
+        registeredSyncObjectConnections[ syncId ].map(
+            (session) => handleAbandonedSession(syncSessionsToRemove, session)
+        );
+    }
+
     const sessionsToRemove: Array<ConnectedSession> = [];
     for (const userId in connectedSessions)
     {
         const session = connectedSessions[ userId ];
         handleAbandonedSession(sessionsToRemove, session);
+    }
+
+
+    // Shallow copy to avoid changing size of the dict midway
+    for (const syncId in { ...registeredSyncObjectConnections })
+    {
+        const filteredSessions = registeredSyncObjectConnections[ syncId ]
+            .filter(
+                (session => (!syncSessionsToRemove.includes(session)))
+            );
+
+        if (0 < filteredSessions.length)
+        {
+            registeredSyncObjectConnections[ syncId ] = filteredSessions;
+        }
+        else
+        {
+            console.log(`[GC] : Removing sync object ${syncId}`);
+            delete registeredSyncObjectConnections[ syncId ];
+        }
     }
 
     // Shallow copy to avoid changing size of the dict midway

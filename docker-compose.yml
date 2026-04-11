@@ -1,5 +1,19 @@
 services:
-  db:
+  ui:
+    image: ghcr.io/system-b15/madash/ui:${MADASH_VERSION:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ui
+    restart: unless-stopped
+    env_file:
+      - .env
+    extra_hosts:
+      - "hive.org:host-gateway"
+    networks:
+      - madash_net
+
+  curriculum-db:
     image: postgres:15-alpine
     restart: always
     environment:
@@ -10,6 +24,24 @@ services:
       - "15432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - bluz_net
+
+  sessions:
+    image: ghcr.io/system-b15/madash/sessions:${MADASH_VERSION:-latest}
+    build:
+      context: session-server
+      dockerfile: Dockerfile.websocket
+    container_name: sessions
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - bluz_net
 
 volumes:
   pgdata:
+
+networks:
+  bluz_net:
+    driver: bridge
