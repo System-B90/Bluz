@@ -1,5 +1,5 @@
 import { ApiSuccess, catchHandler } from "@/api-server/common";
-import { getHiveClient } from "@/api-server/hive/client";
+import createHiveClient from "@/api-server/hive/session-client";
 import { Subject } from "@/components/schedule/types/subject";
 import { NextRequest } from "next/server";
 
@@ -9,7 +9,7 @@ export async function GET(
 {
     try
     {
-        const hiveClient = await getHiveClient();
+        const hiveClient = await createHiveClient();
         const subjects: Subject[] = await hiveClient.getSubjects();
         return ApiSuccess(subjects);
     }

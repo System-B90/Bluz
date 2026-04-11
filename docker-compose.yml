@@ -27,8 +27,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "15432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -43,8 +41,6 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-    ports:
-      - "127.0.0.1:27017:27017"
     volumes:
       - mongodb_data:/data/db
     networks:

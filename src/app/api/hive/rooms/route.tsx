@@ -1,6 +1,5 @@
 import { ApiSuccess, catchHandler } from "@/api-server/common";
-import { getHiveClient } from "@/api-server/hive/client";
-import { Class, ClassTypeEnum } from "@/api-server/hive/types";
+import createHiveClient from "@/api-server/hive/session-client";
 import { HiveRoom } from "@/components/schedule/types/room";
 import { NextRequest } from "next/server";
 
@@ -10,7 +9,7 @@ export async function GET(
 {
     try
     {
-        const hiveClient = await getHiveClient();
+        const hiveClient = await createHiveClient();
         const rooms: Array<HiveRoom> = (await hiveClient.getRooms());
         return ApiSuccess(rooms);
     }

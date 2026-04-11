@@ -41,7 +41,7 @@ def generate_password(length: int = 32) -> str:
     Returns:
         str: The generated password string containing letters, digits, and punctuation.
     """
-    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    alphabet = string.ascii_letters + string.digits
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
@@ -207,12 +207,6 @@ def generate_env() -> None:
         message="Enter Hive URL (NEXT_PUBLIC_HIVE_URL):", default=default_hive_url
     ).execute()
 
-    hive_username = inquirer.text(
-        message="Enter HIVE_USERNAME:", default=existing_env.get("HIVE_USERNAME", "api")
-    ).execute()
-
-    hive_password = inquirer.secret(message="Enter HIVE_PASSWORD:").execute()
-
     # Preserve or Auto-generate DB Credentials & Cryptographic Secrets
     ws_port = existing_env.get("NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT", "8192")
     ws_auth_key = existing_env.get(
@@ -227,14 +221,14 @@ def generate_env() -> None:
     pg_db = existing_env.get("POSTGRES_DB", "curriculum_db")
     db_url = (
         existing_env.get("DATABASE_URL")
-        or f"postgres://{pg_user}:{pg_pass}@localhost:15432/{pg_db}"
+        or f"postgres://{pg_user}:{pg_pass}@bluz-curriculum-db:5432/{pg_db}"
     )
 
     mongo_user = existing_env.get("MONGO_ROOT_USER", "mongo_admin")
     mongo_pass = existing_env.get("MONGO_ROOT_PASSWORD") or generate_password()
     mongo_url = (
         existing_env.get("MONGO_CONNECTION_STRING")
-        or f"mongodb://{mongo_user}:{mongo_pass}@127.0.0.1:27017/"
+        or f"mongodb://{mongo_user}:{mongo_pass}@bluz-mongodb:27017/?authSource=admin"
     )
 
     hive_client_id = existing_env.get("HIVE_CLIENT_ID", "")
@@ -280,8 +274,6 @@ def generate_env() -> None:
         "BLUZ_VERSION": existing_env.get("BLUZ_VERSION", "latest"),
         "NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT": ws_port,
         "WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY": ws_auth_key,
-        "HIVE_USERNAME": hive_username,
-        "HIVE_PASSWORD": hive_password,
         "NEXT_PUBLIC_HIVE_URL": hive_url,
         "NODE_TLS_REJECT_UNAUTHORIZED": "0",
         "NEXTAUTH_URL": nextauth_url,
