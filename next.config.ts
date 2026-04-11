@@ -4,7 +4,8 @@ const nextConfig: NextConfig = {
   /* config options here */
   transpilePackages: [ 'mui-color-input' ],
   serverExternalPackages: [ 'pino', 'pino-pretty' ],
-  output: 'standalone'
+  output: 'standalone',
+  allowedDevOrigins: [ 'bluz.bis' ]
 };
 
 export default nextConfig;
