@@ -18,12 +18,6 @@ const MoonIcon = () => (
 export default function ThemeSelectorIcon()
 {
     const { theme, setTheme } = useTheme();
-    const [ mounted, setMounted ] = useState(false);
-
-    useEffect(() =>
-    {
-        setMounted(true);
-    }, []);
 
     const isDark = theme === 'dark';
 
@@ -31,8 +25,6 @@ export default function ThemeSelectorIcon()
     {
         setTheme(isDark ? 'light' : 'dark');
     };
-
-    if (!isDark) { return; }
 
     return (
         <button

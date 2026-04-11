@@ -1,14 +1,19 @@
 services:
   ui:
     build:
-      target: deps
-    command: sh -c "npm install && npm run dev"
+      target: dev
+    command: npm run dev
     environment:
       - NODE_ENV=development
-      # Force Next.js to use polling for hot-reloading across Windows file boundaries
-      - WATCHPACK_POLLING=true
-    volumes:
-      - ./:/app
-      - /app/node_modules
-      - /app/.next
-      
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: package.json
+        - action: rebuild
+          path: package-lock.json

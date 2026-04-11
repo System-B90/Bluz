@@ -3,18 +3,18 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-COPY drizzle.config.ts ./
 RUN npm ci --ignore-scripts
+
+FROM deps AS dev
+COPY . .
 
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-# Define ARGs to satisfy the compiler's assertions
 ARG WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=ci_placeholder
 ARG WEBSOCKET_SESSION_SERVER_HOST=localhost
 ARG WEBSOCKET_SESSION_SERVER_PORT=443
 
-# Map ARGs to ENVs for the 'npm run build' process
 ENV WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY
 ENV WEBSOCKET_SESSION_SERVER_HOST=$WEBSOCKET_SESSION_SERVER_HOST
 ENV WEBSOCKET_SESSION_SERVER_PORT=$WEBSOCKET_SESSION_SERVER_PORT
@@ -23,6 +23,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN npm run build
+RUN npx tsc src/api-server/drizzle-migrate.ts --outDir ./dist-migrate --esModuleInterop
 
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -43,10 +44,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./
 
-RUN npm install drizzle-orm pg tsx
+COPY --from=deps /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+COPY --from=deps /app/node_modules/pg ./node_modules/pg
 
 COPY drizzle ./drizzle
-COPY src/api-server/drizzle-migrate.ts ./migrate.ts
+COPY --from=builder /app/dist-migrate/drizzle-migrate.js ./migrate.js
 
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
