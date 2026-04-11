@@ -1,5 +1,4 @@
-import { ModuleEvent, Syllabus, Curriculum } from "@/api-shared/types/gant/curriculum";
-import Module from "module";
+import { ModuleEvent, Syllabus, Curriculum, Module } from "@/api-shared/types/gant/curriculum";
 
 export interface ApiModule extends Omit<Module, 'events'>
 {

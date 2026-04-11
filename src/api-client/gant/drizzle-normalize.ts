@@ -1,3 +1,6 @@
+import { ApiCurriculum } from "@/api-shared/types/gant/api-layer";
+import { CurriculumId, Curriculum, SyllabusId, Syllabus, ModuleId, ModuleEventId, ModuleEvent, Module } from "@/api-shared/types/gant/curriculum";
+
 export interface NormalizedStore
 {
     curriculums: Record<CurriculumId, Curriculum>;
@@ -6,7 +9,7 @@ export interface NormalizedStore
     events: Record<ModuleEventId, ModuleEvent>;
 }
 
-export function normalizeCurriculumData(apiData: ApiCurriculum): NormalizedStore
+export function normalizeCurriculumData(apiData: any): NormalizedStore
 {
     const store: NormalizedStore = {
         curriculums: {},
@@ -17,54 +20,54 @@ export function normalizeCurriculumData(apiData: ApiCurriculum): NormalizedStore
 
     const curriculumSyllabusIds: SyllabusId[] = [];
 
-    // Traverse the nested structure
-    for (const apiSyllabus of apiData.syllabuses)
+    // Traverse Curriculums -> cS (Junction) -> Syllabus
+    for (const link of (apiData.cS ?? []))
     {
+        const apiSyllabus = link.syllabus;
         curriculumSyllabusIds.push(apiSyllabus.id);
         const syllabusModuleIds: ModuleId[] = [];
 
-        for (const apiModule of apiSyllabus.modules)
+        // Traverse Syllabus -> sM (Junction) -> Module
+        for (const sMLink of (apiSyllabus.sM ?? []))
         {
+            const apiModule = sMLink.module;
             syllabusModuleIds.push(apiModule.id);
             const moduleEventIds: ModuleEventId[] = [];
 
-            for (const apiEvent of apiModule.events)
+            // Traverse Module -> mE (Junction) -> Event
+            for (const mELink of (apiModule.mE ?? []))
             {
+                const apiEvent = mELink.event;
                 moduleEventIds.push(apiEvent.id);
 
-                // 1. Store the flat Event
                 store.events[ apiEvent.id ] = { ...apiEvent };
             }
 
-            // 2. Store the flat Module, swapping the nested events for IDs
             store.modules[ apiModule.id ] = {
                 id: apiModule.id,
                 title: apiModule.title,
                 description: apiModule.description,
-                hiveIds: [ ...apiModule.hiveIds ],
-                events: moduleEventIds, // Now an Array<ModuleEventId>
+                hiveIds: [ ...(apiModule.hiveIds ?? []) ],
+                events: moduleEventIds,
             };
         }
 
-        // 3. Store the flat Syllabus, swapping nested modules for IDs
         store.syllabuses[ apiSyllabus.id ] = {
             id: apiSyllabus.id,
             title: apiSyllabus.title,
-            hiveIds: [ ...apiSyllabus.hiveIds ],
-            modules: syllabusModuleIds, // Now an Array<ModuleId>
+            hiveIds: [ ...(apiSyllabus.hiveIds ?? []) ],
+            modules: syllabusModuleIds,
         };
     }
 
-    // 4. Store the root Curriculum, swapping nested syllabuses for IDs
     store.curriculums[ apiData.id ] = {
         id: apiData.id,
         title: apiData.title,
         description: apiData.description,
         draft: apiData.draft,
-        weeks: [ ...apiData.weeks ], // Weeks/Days are kept embedded per your types
-        syllabuses: curriculumSyllabusIds, // Now an Array<SyllabusId>
+        weeks: [ ...(apiData.weeks ?? []) ],
+        syllabuses: curriculumSyllabusIds,
     };
 
     return store;
 }
-

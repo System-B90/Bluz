@@ -1,33 +1,52 @@
 import { ApiSuccess, catchHandler } from "@/api-server/common";
-import { BasicGantOperations } from "@/api-server/curriculum/db-base";
 import { ClientApiError } from "@/api-shared/errors";
 import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
 import { NextRequest } from "next/server";
 
-export interface BuildGantCollectionRoutesProps<T extends BaseGantItem>
+// --- 1. Updated Database Operations Contract ---
+// We add TCreatePayload so the DB layer knows it expects foreign keys during POST
+export interface BasicGantOperations<TEntity extends BaseGantItem, TCreatePayload = Omit<TEntity, 'id'>>
 {
-    dbSet: BasicGantOperations<T>;
+    listItems: () => Promise<Record<TEntity[ 'id' ], TEntity[ 'title' ]>>;
+    getMultipleItems: (ids: string[]) => Promise<TEntity[]>;
+    getItem: (id: TEntity[ 'id' ]) => Promise<TEntity>;
+    createNewItem: (payload: TCreatePayload) => Promise<TEntity>;
+    updateItem: (id: TEntity[ 'id' ], updates: Partial<TEntity>) => Promise<TEntity>;
+    deleteItem: (id: TEntity[ 'id' ]) => Promise<void>;
 }
-export function buildGantCollectionRoutes<T extends BaseGantItem>({ dbSet }: BuildGantCollectionRoutesProps<T>)
+
+
+// --- 2. Collection Routes Builder (GET list, POST create) ---
+
+export interface BuildGantCollectionRoutesProps<TEntity extends BaseGantItem, TCreatePayload = Omit<TEntity, 'id'>>
 {
+    dbSet: BasicGantOperations<TEntity, TCreatePayload>;
+}
+
+export function buildGantCollectionRoutes<
+    TEntity extends BaseGantItem,
+    TCreatePayload = Omit<TEntity, 'id'>
+>({ dbSet }: BuildGantCollectionRoutesProps<TEntity, TCreatePayload>)
+{
+
     async function GET(request: NextRequest)
     {
         try
         {
             const requestedIds = request.nextUrl.searchParams.get('ids');
-            let items: Record<T[ "id" ], T[ "title" ] | T>;
+            let items: Record<TEntity[ "id" ], TEntity[ "title" ] | TEntity>;
+
             if (requestedIds === null)
             {
                 items = await dbSet.listItems();
-            }
-            else
+            } else
             {
                 const itemArray = await dbSet.getMultipleItems(requestedIds.split(','));
                 items = itemArray.reduce((acc, doc) =>
                 {
-                    acc[ doc.id as T[ 'id' ] ] = doc;
+                    acc[ doc.id as TEntity[ 'id' ] ] = doc;
                     return acc;
-                }, {} as Record<T[ 'id' ], T>);
+                }, {} as Record<TEntity[ 'id' ], TEntity>);
             }
             return ApiSuccess(items);
         } catch (error)
@@ -40,7 +59,10 @@ export function buildGantCollectionRoutes<T extends BaseGantItem>({ dbSet }: Bui
     {
         try
         {
-            const payload = await request.json();
+            // Strongly typed as TCreatePayload, allowing relational IDs to flow into the DB layer
+            const payload = (await request.json()) as TCreatePayload;
+
+            // The DB layer handles extracting the foreign keys and returning the clean TEntity
             const newItem = await dbSet.createNewItem(payload);
             return ApiSuccess(newItem);
         } catch (error)
@@ -49,37 +71,42 @@ export function buildGantCollectionRoutes<T extends BaseGantItem>({ dbSet }: Bui
         }
     }
 
-
     return {
         GET,
         POST,
     } as const;
 }
-export interface BuildGantItemRoutesProps<T extends BaseGantItem>
+
+
+// --- 3. Single Item Routes Builder (GET single, PATCH, DELETE) ---
+
+export interface BuildGantItemRoutesProps<TEntity extends BaseGantItem, TCreatePayload = Omit<TEntity, 'id'>>
 {
-    dbSet: BasicGantOperations<T>;
+    dbSet: BasicGantOperations<TEntity, TCreatePayload>;
 }
 
-// Explicitly extracted for clarity and Next.js 15+ Promise-based params compatibility
 export interface RouteContext
 {
-    params: Promise<{ slug: string; }>;
+    params: Promise<{ id: string; }>;
 }
 
-export function buildGantItemRoutes<T extends BaseGantItem>({ dbSet }: BuildGantItemRoutesProps<T>)
+export function buildGantItemRoutes<
+    TEntity extends BaseGantItem,
+    TCreatePayload = Omit<TEntity, 'id'>
+>({ dbSet }: BuildGantItemRoutesProps<TEntity, TCreatePayload>)
 {
 
     async function GET(request: NextRequest, context: RouteContext)
     {
         try
         {
-            const { slug } = await context.params;
-            if (!slug)
+            const { id } = await context.params;
+            if (!id)
             {
-                throw new ClientApiError('Item identifier (slug) is missing from the request parameters.');
+                throw new ClientApiError('Item identifier (id) is missing from the request parameters.');
             }
 
-            const item = await dbSet.getItem(slug as T[ 'id' ]);
+            const item = await dbSet.getItem(id as TEntity[ 'id' ]);
             return ApiSuccess(item);
         } catch (error)
         {
@@ -91,23 +118,22 @@ export function buildGantItemRoutes<T extends BaseGantItem>({ dbSet }: BuildGant
     {
         try
         {
-            const { slug } = await context.params;
-            if (!slug)
+            const { id } = await context.params;
+            if (!id)
             {
-                throw new ClientApiError('Item identifier (slug) is missing from the request parameters.');
+                throw new ClientApiError('Item identifier (id) is missing from the request parameters.');
             }
 
-            // Safe parsing check to prevent 500s on empty bodies
             const textBody = await request.text();
             if (!textBody)
             {
                 throw new ClientApiError('Payload cannot be empty.');
             }
 
-            // Strongly typing the payload to prevent DB overwrite anomalies
-            const payload = JSON.parse(textBody) as Parameters<typeof dbSet.updateItem>[ 1 ];
+            // Strongly typed to Partial<TEntity> to ensure we only update valid frontend properties
+            const payload = JSON.parse(textBody) as Partial<TEntity>;
 
-            const updatedItem = await dbSet.updateItem(slug as T[ 'id' ], payload);
+            const updatedItem = await dbSet.updateItem(id as TEntity[ 'id' ], payload);
             return ApiSuccess(updatedItem);
         } catch (error)
         {
@@ -119,14 +145,14 @@ export function buildGantItemRoutes<T extends BaseGantItem>({ dbSet }: BuildGant
     {
         try
         {
-            const { slug } = await context.params;
-            if (!slug)
+            const { id } = await context.params;
+            if (!id)
             {
-                throw new ClientApiError('Item identifier (slug) is missing from the request parameters.');
+                throw new ClientApiError('Item identifier (id) is missing from the request parameters.');
             }
 
-            await dbSet.deleteItem(slug as T[ 'id' ]);
-            return ApiSuccess({ deleted: true, id: slug });
+            await dbSet.deleteItem(id as TEntity[ 'id' ]);
+            return ApiSuccess({ deleted: true, id: id });
         } catch (error)
         {
             return catchHandler(request, error);

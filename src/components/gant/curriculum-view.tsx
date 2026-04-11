@@ -1,31 +1,27 @@
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { BaseDocument } from "@/api-client/gant/base";
-import { CurriculumDocument } from "@/api-client/gant/curriculum";
-import { CurriculumId, Syllabus, makeSyllabus } from "@/api-shared/types/gant/curriculum";
-import { useCurriculum, useCurriculums } from "@/components/gant/providers/curriculum-provider";
-import { useSyllabuses } from "@/components/gant/providers/syllabus-provider";
-import SyllabusCard from "@/components/gant/syllabus-card";
-import { calculateMinimumRequiredTimeForCurriculum } from "@/components/gant/utils";
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
+import { CurriculumDocument } from '@/api-client/gant/curriculum';
+import { CurriculumId, makeSyllabus } from '@/api-shared/types/gant/curriculum';
+import { useCurriculum, useCurriculumActions } from '@/components/gant/state/hooks';
+import SyllabusCard from '@/components/gant/syllabus-card';
+import { calculateMinimumRequiredTimeForCurriculum } from '@/components/gant/utils';
 import AddIcon from '@mui/icons-material/Add';
-import { Box, BoxProps, Button, Card, Skeleton, Stack, Typography } from "@mui/material";
-import { enqueueSnackbar } from "notistack";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { BoxProps, Button, Card, Typography, Stack, Box, Skeleton } from '@mui/material';
+import { enqueueSnackbar } from 'notistack';
+import { useCallback, useState, useMemo, useEffect } from 'react';
 
 export interface CurriculumViewProps extends BoxProps
 {
     curriculumId: CurriculumId | null;
 }
 
-function CreateSyllabusButton()
+function CreateSyllabusButton({ curriculumId }: { curriculumId: CurriculumId; })
 {
-    const { create } = useSyllabuses();
-    const { addSyllabus } = useCurriculum();
+    const { createSyllabus } = useCurriculumActions();
 
     const clickHandler = useCallback(() =>
     {
-        create(makeSyllabus())
-            .then((newSyllabus) => addSyllabus(newSyllabus));
-    }, [ create, addSyllabus ]);
+        createSyllabus('סילבוס חדש', curriculumId);
+    }, [ createSyllabus ]);
 
     return (
         <Button
@@ -95,7 +91,7 @@ function HoursCard({ curriculum }: { curriculum: CurriculumDocument | null; })
 
 export default function CurriculumView({ curriculumId, ...props }: CurriculumViewProps)
 {
-    const { isLoading, data: curriculum } = useCurriculum();
+    const curriculum = useCurriculum(curriculumId ?? '');
 
     const syllabusCards = useMemo(() =>
     {
@@ -142,7 +138,7 @@ export default function CurriculumView({ curriculumId, ...props }: CurriculumVie
                 { curriculumId && (
                     <Box display="flex" flexDirection="column" gap={ 1 } width={ '100%' } height={ '100%' }>
                         <Box display="flex" justifyContent="flex-start" mb={ 1 }>
-                            <CreateSyllabusButton />
+                            <CreateSyllabusButton curriculumId={ curriculumId } />
                         </Box>
                         <Box gap={ 2 } display={ 'flex' } flexDirection={ 'column' } flexWrap={ 'wrap' } alignContent={ 'flex-start' } height={ '100%' } sx={ { overflow: 'scroll' } }>
                             { syllabusCards }
