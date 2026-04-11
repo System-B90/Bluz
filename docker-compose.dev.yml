@@ -1,0 +1,18 @@
+services:
+  ui:
+    # Target the 'deps' stage of your existing Dockerfile to skip the production build
+    build:
+      target: deps
+    # Install all dependencies (including devDependencies) and boot the dev server
+    command: sh -c "npm install && npm run dev"
+    environment:
+      - NODE_ENV=development
+      # Force Next.js to use polling for hot-reloading across Windows file boundaries
+      - WATCHPACK_POLLING=true
+    volumes:
+      # Mount your local source code directly into the container for Hot Module Replacement
+      - ./:/app
+      # Anonymous Volumes: These act as a shield, preventing your host's Windows folders 
+      # from overriding the Linux-native folders inside the container.
+      - /app/node_modules
+      - /app/.next
