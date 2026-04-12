@@ -1,16 +1,15 @@
 'use client';
-import PushOfflineUpdatesDialog from '@/components/schedule/offline-dialogs/push-updates-dialog';
 import { Event, EventId } from '@/components/schedule/types/event';
-import { deepCopyEvent } from "../schedule/types/event-utils";
+import { deepCopyEvent } from '@/components/schedule/types/event-utils';
 import
-{
-    createContext,
-    Dispatch,
-    SetStateAction,
-    useCallback,
-    useContext,
-    useState,
-} from 'react';
+    {
+        createContext,
+        Dispatch,
+        SetStateAction,
+        useCallback,
+        useContext,
+        useState,
+    } from 'react';
 
 export type OfflineContextState = {
     default: boolean;

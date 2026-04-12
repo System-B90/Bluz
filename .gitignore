@@ -2,6 +2,7 @@
 .idea
 # dependencies
 /node_modules
+/ui/node_modules
 src/session-server/node_modules
 src/session-server/.next
 src/session-server/dist
@@ -21,10 +22,12 @@ src/session-server/dist
 
 # next.js
 /.next/
-/out/
+/ui/.next/
+/ui/out/
 
 # production
 /build
+/ui/build
 
 # misc
 .DS_Store

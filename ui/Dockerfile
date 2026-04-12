@@ -24,7 +24,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN npm run build
-RUN npx tsc src/api-server/drizzle-migrate.ts --outDir ./dist-migrate --esModuleInterop --skipLibCheck
+RUN npx tsc ui/src/api-server/drizzle-migrate.ts --outDir ./dist-migrate --esModuleInterop --skipLibCheck
 
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -37,13 +37,13 @@ ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/public ./public
+COPY --from=builder /app/ui/public ./ui/public
 
 RUN mkdir .next && chown nextjs:nodejs .next
 
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./
+COPY --from=builder --chown=nextjs:nodejs /app/ui/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/ui/drizzle.config.ts ./
 
 COPY --from=deps /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 COPY --from=deps /app/node_modules/pg ./node_modules/pg
@@ -59,4 +59,4 @@ USER nextjs
 EXPOSE 3000
 
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["node", "server.js"]
+CMD ["node", "ui/server.js"]

@@ -1,6 +1,6 @@
 import { useWebSocketConfig } from "@/components/websocket-config-provider";
+import { MessageTypes } from "@/settings";
 import { createContext, useCallback, useContext, useEffect, useRef } from "react";
-import { MessageTypes } from "../../session-server/session-common";
 
 export type MessageHandlerType = (messageType: MessageTypes, messageTarget: string, data: any) => void;
 const MessageHandlerContext = createContext<MessageHandlerType>(() => { });

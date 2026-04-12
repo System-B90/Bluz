@@ -2,31 +2,31 @@
     "folders": [
         {
             "name": "🖥️ UI",
-            "path": "src"
+            "path": "../src"
         },
         {
             "name": "🌐 UI (Public Assets)",
-            "path": "public"
+            "path": "../public"
         },
         {
             "name": "⚙️ Session Server",
-            "path": "session-server"
+            "path": "../session-server"
         },
         {
             "name": "🛡️ Proxy (Nginx)",
-            "path": "nginx"
+            "path": "../nginx"
         },
         {
             "name": "📜 Scripts & Tools",
-            "path": "scripts"
+            "path": "../scripts"
         },
         {
             "name": "🗄️ Database (Drizzle)",
-            "path": "drizzle"
+            "path": "../drizzle"
         },
         {
             "name": "Root",
-            "path": "."
+            "path": "../."
         },
     ],
     "settings": {

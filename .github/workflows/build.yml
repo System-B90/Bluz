@@ -170,8 +170,8 @@ jobs:
           mkdir -p release-offline/images
 
           # Copy deployment scripts into both bundles
-          cp install.sh docker-compose.yml setup.py requirements.txt release-online/
-          cp install.sh docker-compose.yml setup.py requirements.txt release-offline/
+          cp ./scripts/install.sh docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-online/
+          cp ./scripts/install.sh docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-offline/
 
       - name: Export Offline Images
         run: |
