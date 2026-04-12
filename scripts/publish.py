@@ -1,9 +1,8 @@
 """
-File: publish.py
-Project: Bluz
-Description: Automated release management utility.
-             Calculates semantic versions, updates manifests, and manages Git tags.
-Copyright: (c) 2026 system-b15
+Name: publish.py
+Purpose: Automated release management utility. Calculates semantic versions, updates manifests, and manages Git tags.
+Created: 2026-04-12
+Author: Michael K. Steinberg (Modified by Gemini)
 """
 
 import json
@@ -17,46 +16,68 @@ from typing import List, Optional, Tuple
 import typer
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
+from tqdm import tqdm
 
-# Setup App
 app = typer.Typer(help="Bluz Publishing Utility", add_completion=False)
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-# Constants
 ROOT_PACKAGE = Path("package.json")
 SESSIONS_PACKAGE = Path("session-server/package.json")
 
+STATE = {"verbose": False}
 
-def run_git(cmd: str, check: bool = True) -> Optional[str]:
+
+def run_git(
+    cmd: str, check: bool = True, description: Optional[str] = None
+) -> Optional[str]:
     """
-    Executes a git command and returns the stripped output.
+    Executes a git command with optional verbosity and progress tracking.
 
     Args:
         cmd: The git subcommand and arguments.
         check: Whether to exit the script on command failure.
+        description: Optional text for the tqdm progress bar.
 
     Returns:
         The command output or None.
     """
-    try:
-        result = subprocess.run(
-            f"git {cmd}",
-            shell=True,
-            text=True,
-            check=check,
-            capture_output=True,
-        )
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        logger.error("Git command failed: git %s", cmd)
-        if e.stderr:
-            logger.error(e.stderr.strip())
-        if check:
-            raise typer.Exit(code=1)
-        return None
+    if STATE["verbose"]:
+        typer.secho(f"> git {cmd}", dim=True)
+
+    with tqdm(total=1, desc=description, disable=not description, leave=False) as pbar:
+        try:
+            result = subprocess.run(
+                f"git {cmd}",
+                shell=True,
+                text=True,
+                check=check,
+                capture_output=True,
+            )
+            pbar.update(1)
+            return result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            logger.error("Git command failed: git %s", cmd)
+            if e.stderr:
+                logger.error(e.stderr.strip())
+            if check:
+                raise typer.Exit(code=1)
+            return None
+
+
+def get_remote_url() -> str:
+    """
+    Retrieves the GitHub base URL for the current repository.
+
+    Returns:
+        The web URL for the repository.
+    """
+    remote = run_git("remote get-url origin") or ""
+    match = re.search(r"github\.com[:/](.+?)(?:\.git)?$", remote)
+    if not match:
+        return "https://github.com/unknown/repository"
+    return f"https://github.com/{match.group(1)}"
 
 
 def get_version_info() -> Tuple[int, int, int, Optional[int]]:
@@ -66,14 +87,13 @@ def get_version_info() -> Tuple[int, int, int, Optional[int]]:
     Returns:
         A tuple of (major, minor, patch, rc_index).
     """
-    run_git("fetch --tags origin")
+    run_git("fetch --tags origin", description="Fetching remote tags")
     latest_tag = run_git("tag -l --sort=-v:refname 'v*' | head -n 1", check=False)
 
     if not latest_tag:
         logger.info("No existing tags found. Starting at v0.0.0")
         return 0, 0, 0, None
 
-    # Regex to handle v1.2.3 or v1.2.3-rc.1
     match = re.match(r"^v?(\d+)\.(\d+)\.(\d+)(?:-rc\.?(\d+))?$", latest_tag)
     if not match:
         logger.error("Tag '%s' does not match semver format.", latest_tag)
@@ -117,37 +137,47 @@ def update_manifests(version: str) -> List[Path]:
 
 
 @app.command()
-def main() -> None:
+def main(
+    verbose: bool = typer.Option(
+        False,
+        "-v",
+        "--verbose",
+        help="Print all internal commands in a faded font style.",
+    ),
+    dry: bool = typer.Option(
+        False,
+        "--dry",
+        help="Perform a dry run: execute all local steps but skip pushing and delete the tag afterward.",
+    ),
+) -> None:
     """
     Executes the interactive release and publishing workflow.
     """
-    typer.secho("🚀 Bluz Release Manager", fg=typer.colors.CYAN, bold=True)
+    STATE["verbose"] = verbose
+    typer.secho(
+        "🚀 Bluz Release Manager" + (" [DRY RUN]" if dry else "") + "\n",
+        fg=typer.colors.CYAN,
+        bold=True,
+    )
 
-    # 1. Verify Branch
     current_branch = run_git("rev-parse --abbrev-ref HEAD")
     if current_branch != "dev":
         typer.secho(
-            f"❌ Error: Must be on 'dev' branch. Currently on '{current_branch}'",
+            f"❌ Error: Must be on 'dev' branch. (Current: {current_branch})",
             fg=typer.colors.RED,
         )
         raise typer.Exit(code=1)
 
-    # 2. Verify Clean State
     if run_git("status --porcelain"):
-        typer.secho(
-            "❌ Error: Working directory is not clean. Commit changes first.",
-            fg=typer.colors.RED,
-        )
+        typer.secho("❌ Error: Working directory is not clean.", fg=typer.colors.RED)
         raise typer.Exit(code=1)
 
-    # 3. Get Current Version
     major, minor, patch, rc = get_version_info()
     curr_str = f"{major}.{minor}.{patch}" + (f"-rc.{rc}" if rc is not None else "")
     typer.echo(
         f"Current Version: {typer.style(f'v{curr_str}', fg=typer.colors.YELLOW)}"
     )
 
-    # 4. Interactive Questions using InquirerPy
     bump_type = inquirer.select(
         message="What type of update is this?",
         choices=[
@@ -162,57 +192,48 @@ def main() -> None:
         message="Is this a release candidate?", default=False
     ).execute()
 
-    # 5. Logic: Calculate new version
     if bump_type == "major":
-        major += 1
-        minor, patch = 0, 0
-        rc = None
+        major, minor, patch, rc = major + 1, 0, 0, None
     elif bump_type == "minor":
-        minor += 1
-        patch = 0
-        rc = None
+        minor, patch, rc = minor + 1, 0, None
     else:
-        # Patch logic
-        if rc is not None and not is_rc:
-            # Graduate RC to full release (1.0.0-rc.1 -> 1.0.0)
-            pass
-        elif rc is None:
+        if rc is None:
             patch += 1
 
-    if is_rc:
-        rc = (rc + 1) if rc is not None else 1
-    else:
-        rc = None
-
-    new_version = f"{major}.{minor}.{patch}"
-    if rc is not None:
-        new_version += f"-rc.{rc}"
-
+    rc = (rc + 1 if rc is not None else 1) if is_rc else None
+    new_version = f"{major}.{minor}.{patch}" + (f"-rc.{rc}" if rc is not None else "")
     new_tag = f"v{new_version}"
 
-    # 6. Final Confirmation
     if not inquirer.confirm(message=f"Publish {new_tag}?", default=True).execute():
         typer.echo("Aborted.")
         raise typer.Exit()
 
-    # 7. Execution
     updated_files = update_manifests(new_version)
-
-    # Commit
     run_git(f"add {' '.join(str(p) for p in updated_files)}")
     run_git(f'commit -m "chore: bump version to {new_version}"')
-
-    # Tag
     run_git(f'tag -a {new_tag} -m "Release {new_version}"')
 
-    # Push
-    typer.echo("Pushing to GitHub...")
-    run_git("push origin dev")
-    run_git(f"push origin {new_tag}")
+    if not dry:
+        run_git("push origin dev", description="Pushing dev branch")
+        run_git(f"push origin {new_tag}", description=f"Pushing tag {new_tag}")
+    else:
+        typer.secho(
+            "\n⚠️ Dry run active: Skipping push to remote.", fg=typer.colors.YELLOW
+        )
+        run_git(f"tag -d {new_tag}", description=f"Deleting temporary tag {new_tag}")
 
+    base_url = get_remote_url()
     typer.secho(
-        f"\n🎉 Successfully published {new_tag}", fg=typer.colors.GREEN, bold=True
+        f"\n🎉 Successfully {'simulated' if dry else 'published'} {new_tag}",
+        fg=typer.colors.GREEN,
+        bold=True,
     )
+
+    if not dry:
+        typer.echo(f"\n🔗 {typer.style('GitHub Links:', bold=True)}")
+        typer.echo(f"  Tag:      {base_url}/releases/tag/{new_tag}")
+        typer.echo(f"  Release:  {base_url}/releases/new?tag={new_tag}")
+        typer.echo(f"  Action:   {base_url}/actions/workflows/build.yml")
 
 
 if __name__ == "__main__":
