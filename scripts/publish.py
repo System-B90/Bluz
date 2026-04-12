@@ -214,8 +214,8 @@ def main(
         raise typer.Exit()
 
     updated_files = update_manifests(new_version)
-    run_git(f"add {' '.join(str(p) for p in updated_files)}")
-    run_git(f'commit -m "chore: bump version to {new_version}"')
+    run_git(f"add {' '.join(p.as_posix() for p in updated_files)}")
+    run_git(f'commit --no-verify -m "chore: bump version to {new_version}"')
     run_git(f'tag -a {new_tag} -m "Release {new_version}"')
 
     if not dry:
