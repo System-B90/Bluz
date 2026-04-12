@@ -3,7 +3,7 @@ name: Build Bluz Images
 on:
   push:
     branches: ["**"]
-    tags: ["v*.*.*"]
+    tags: ["v*.*.*", "v*.*.*-rc*", "ci-test"]
   pull_request:
     branches: ["**"]
 
@@ -79,7 +79,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # --- UI IMAGE ---
       - name: Extract metadata for UI Image
         id: meta-ui
         uses: docker/metadata-action@v5
@@ -103,7 +102,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # --- SESSIONS IMAGE ---
       - name: Extract metadata for Sessions Image
         id: meta-sessions
         uses: docker/metadata-action@v5
@@ -125,7 +123,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # --- PROXY IMAGE ---
       - name: Extract metadata for Proxy Image
         id: meta-proxy
         uses: docker/metadata-action@v5

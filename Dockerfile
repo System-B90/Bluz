@@ -23,7 +23,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN npm run build
-RUN npx tsc src/api-server/drizzle-migrate.ts --outDir ./dist-migrate --esModuleInterop
+RUN npx tsc src/api-server/drizzle-migrate.ts --outDir ./dist-migrate --esModuleInterop --skipLibCheck
 
 FROM node:22-alpine AS runner
 WORKDIR /app

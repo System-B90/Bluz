@@ -1,0 +1,222 @@
+"""
+File: publish.py
+Project: Bluz
+Description: Automated release management utility.
+             Calculates semantic versions, updates manifests, and manages Git tags.
+Copyright: (c) 2026 system-b15
+"""
+
+import json
+import logging
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import List, Optional, Tuple
+
+import typer
+from InquirerPy import inquirer
+from InquirerPy.base.control import Choice
+
+# Setup App
+app = typer.Typer(help="Bluz Publishing Utility", add_completion=False)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
+
+# Constants
+ROOT_PACKAGE = Path("package.json")
+SESSIONS_PACKAGE = Path("session-server/package.json")
+
+
+def run_git(cmd: str, check: bool = True) -> Optional[str]:
+    """
+    Executes a git command and returns the stripped output.
+
+    Args:
+        cmd: The git subcommand and arguments.
+        check: Whether to exit the script on command failure.
+
+    Returns:
+        The command output or None.
+    """
+    try:
+        result = subprocess.run(
+            f"git {cmd}",
+            shell=True,
+            text=True,
+            check=check,
+            capture_output=True,
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        logger.error("Git command failed: git %s", cmd)
+        if e.stderr:
+            logger.error(e.stderr.strip())
+        if check:
+            raise typer.Exit(code=1)
+        return None
+
+
+def get_version_info() -> Tuple[int, int, int, Optional[int]]:
+    """
+    Parses the latest git tag into semver components.
+
+    Returns:
+        A tuple of (major, minor, patch, rc_index).
+    """
+    run_git("fetch --tags origin")
+    latest_tag = run_git("tag -l --sort=-v:refname 'v*' | head -n 1", check=False)
+
+    if not latest_tag:
+        logger.info("No existing tags found. Starting at v0.0.0")
+        return 0, 0, 0, None
+
+    # Regex to handle v1.2.3 or v1.2.3-rc.1
+    match = re.match(r"^v?(\d+)\.(\d+)\.(\d+)(?:-rc\.?(\d+))?$", latest_tag)
+    if not match:
+        logger.error("Tag '%s' does not match semver format.", latest_tag)
+        raise typer.Exit(code=1)
+
+    return (
+        int(match.group(1)),
+        int(match.group(2)),
+        int(match.group(3)),
+        int(match.group(4)) if match.group(4) else None,
+    )
+
+
+def update_manifests(version: str) -> List[Path]:
+    """
+    Writes the new version to project package.json files.
+
+    Args:
+        version: The semantic version string.
+
+    Returns:
+        A list of paths that were successfully updated.
+    """
+    updated: List[Path] = []
+    for path in [ROOT_PACKAGE, SESSIONS_PACKAGE]:
+        if not path.exists():
+            logger.warning("File %s not found. Skipping.", path)
+            continue
+
+        with path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        data["version"] = version
+
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+            f.write("\n")
+        updated.append(path)
+
+    return updated
+
+
+@app.command()
+def main() -> None:
+    """
+    Executes the interactive release and publishing workflow.
+    """
+    typer.secho("🚀 Bluz Release Manager", fg=typer.colors.CYAN, bold=True)
+
+    # 1. Verify Branch
+    current_branch = run_git("rev-parse --abbrev-ref HEAD")
+    if current_branch != "dev":
+        typer.secho(
+            f"❌ Error: Must be on 'dev' branch. Currently on '{current_branch}'",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(code=1)
+
+    # 2. Verify Clean State
+    if run_git("status --porcelain"):
+        typer.secho(
+            "❌ Error: Working directory is not clean. Commit changes first.",
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(code=1)
+
+    # 3. Get Current Version
+    major, minor, patch, rc = get_version_info()
+    curr_str = f"{major}.{minor}.{patch}" + (f"-rc.{rc}" if rc is not None else "")
+    typer.echo(
+        f"Current Version: {typer.style(f'v{curr_str}', fg=typer.colors.YELLOW)}"
+    )
+
+    # 4. Interactive Questions using InquirerPy
+    bump_type = inquirer.select(
+        message="What type of update is this?",
+        choices=[
+            Choice("patch", name="Patch (Bug Fixes)"),
+            Choice("minor", name="Minor (New Features)"),
+            Choice("major", name="Major (Breaking API Changes)"),
+        ],
+        default="patch",
+    ).execute()
+
+    is_rc = inquirer.confirm(
+        message="Is this a release candidate?", default=False
+    ).execute()
+
+    # 5. Logic: Calculate new version
+    if bump_type == "major":
+        major += 1
+        minor, patch = 0, 0
+        rc = None
+    elif bump_type == "minor":
+        minor += 1
+        patch = 0
+        rc = None
+    else:
+        # Patch logic
+        if rc is not None and not is_rc:
+            # Graduate RC to full release (1.0.0-rc.1 -> 1.0.0)
+            pass
+        elif rc is None:
+            patch += 1
+
+    if is_rc:
+        rc = (rc + 1) if rc is not None else 1
+    else:
+        rc = None
+
+    new_version = f"{major}.{minor}.{patch}"
+    if rc is not None:
+        new_version += f"-rc.{rc}"
+
+    new_tag = f"v{new_version}"
+
+    # 6. Final Confirmation
+    if not inquirer.confirm(message=f"Publish {new_tag}?", default=True).execute():
+        typer.echo("Aborted.")
+        raise typer.Exit()
+
+    # 7. Execution
+    updated_files = update_manifests(new_version)
+
+    # Commit
+    run_git(f"add {' '.join(str(p) for p in updated_files)}")
+    run_git(f'commit -m "chore: bump version to {new_version}"')
+
+    # Tag
+    run_git(f'tag -a {new_tag} -m "Release {new_version}"')
+
+    # Push
+    typer.echo("Pushing to GitHub...")
+    run_git("push origin dev")
+    run_git(f"push origin {new_tag}")
+
+    typer.secho(
+        f"\n🎉 Successfully published {new_tag}", fg=typer.colors.GREEN, bold=True
+    )
+
+
+if __name__ == "__main__":
+    if not Path(".git").exists():
+        typer.secho("❌ Error: Must run from repository root.", fg=typer.colors.RED)
+        sys.exit(1)
+    app()
