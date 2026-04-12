@@ -58,6 +58,9 @@ def run_git(
             pbar.update(1)
             return result.stdout.strip()
         except subprocess.CalledProcessError as e:
+            # If commit fails because of an empty index, we handle it gracefully in main
+            if "commit" in cmd and "nothing to commit" in (e.stdout + e.stderr).lower():
+                return ""
             logger.error("Git command failed: git %s", cmd)
             if e.stderr:
                 logger.error(e.stderr.strip())
