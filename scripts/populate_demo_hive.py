@@ -1,11 +1,11 @@
-from random import shuffle, randint
-import httpx
-from pyhive import HiveClient
-from pyhive.types import ClearanceEnum, GenderEnum
-from pyhive.src.types.enums.class_type_enum import ClassTypeEnum
 from dataclasses import dataclass
+from random import randint, shuffle
 
+import httpx
 import tqdm
+from pyhive import HiveClient
+from pyhive.src.types.enums.class_type_enum import ClassTypeEnum
+from pyhive.types import ClearanceEnum, GenderEnum
 
 
 @dataclass
@@ -336,7 +336,7 @@ def main():
                 first_name="Api",
                 last_name="Account",
             )
-        except:
+        except Exception:
             pass
 
         create_segel(client)
