@@ -88,11 +88,16 @@ def get_version_info() -> Tuple[int, int, int, Optional[int]]:
         A tuple of (major, minor, patch, rc_index).
     """
     run_git("fetch --tags origin", description="Fetching remote tags")
-    latest_tag = run_git("tag -l --sort=-v:refname 'v*' | head -n 1", check=False)
 
-    if not latest_tag:
+    # Fetch all tags matching v* sorted by version descending
+    tags_output = run_git('tag -l --sort=-v:refname "v*"', check=False)
+
+    if not tags_output:
         logger.info("No existing tags found. Starting at v0.0.0")
         return 0, 0, 0, None
+
+    # Isolate the first line (latest version) from the multi-line output
+    latest_tag = tags_output.splitlines()[0].strip()
 
     match = re.match(r"^v?(\d+)\.(\d+)\.(\d+)(?:-rc\.?(\d+))?$", latest_tag)
     if not match:
