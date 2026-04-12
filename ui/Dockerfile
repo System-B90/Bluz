@@ -39,19 +39,15 @@ RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/ui/public ./ui/public
 
-RUN mkdir .next && chown nextjs:nodejs .next
+RUN mkdir -p ui/.next && chown nextjs:nodejs ui/.next
 
 COPY --from=builder --chown=nextjs:nodejs /app/ui/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/ui/drizzle.config.ts ./
-
-COPY --from=deps /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
-COPY --from=deps /app/node_modules/pg ./node_modules/pg
 
 COPY drizzle ./drizzle
 COPY --from=builder /app/dist-migrate/drizzle-migrate.js ./migrate.js
 
-COPY docker-entrypoint.sh /usr/local/bin/
+COPY ui/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 USER nextjs
@@ -59,4 +55,5 @@ USER nextjs
 EXPOSE 3000
 
 ENTRYPOINT ["docker-entrypoint.sh"]
+# Standalone server generated inside the ui directory structure
 CMD ["node", "ui/server.js"]

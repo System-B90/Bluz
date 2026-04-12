@@ -3,7 +3,7 @@ services:
     image: ghcr.io/system-b15/bluz/ui:${BLUZ_VERSION:-latest}
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ui/Dockerfile
     container_name: bluz-ui
     restart: unless-stopped
     env_file:
