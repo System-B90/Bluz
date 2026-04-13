@@ -1,17 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AuthProvider } from '@/components/auth/auth-provider';
-import { CoursesProvider } from '@/components/base/courses-provider';
-import { HiveModulesProvider } from '@/components/base/hive-modules-provider';
-import { HiveSubjectsProvider } from '@/components/base/hive-subjects-provider';
-import { HiveUsersProvider } from '@/components/base/hive-users-provider';
-import { RoomsProvider } from '@/components/base/rooms-provider';
-import { SettingsProvider } from '@/components/base/settings-provider';
-import ScheduleAppBar from '@/components/header/app-bar';
+import { AuthProvider } from '@/components/auth/AuthProvider';
+import { CoursesProvider } from '@/components/base/CoursesProvider';
+import { HiveModulesProvider } from '@/components/base/HiveModulesProvider';
+import { HiveSubjectsProvider } from '@/components/base/HiveSubjectsProvider';
+import { HiveUsersProvider } from '@/components/base/HiveUsersProvider';
+import { RoomsProvider } from '@/components/base/RoomsProvider';
+import { SettingsProvider } from '@/components/base/SettingsProvider';
+import ScheduleAppBar from '@/components/header/AppBar';
 import { Box } from '@mui/material';
-import SettingsDialog from '@/components/settings-dialog/settings-dialog';
-import { OfflineProvider } from '@/components/base/offline-provider';
+import SettingsDialog from '@/components/settings-dialog/SettingsDialog';
+import { OfflineProvider } from '@/components/base/OfflineProvider';
 import { CalendarProvider } from '@/components/schedule/calendar/calendar-provider';
 
 export default function PostAuthLayout({ children }: { children: React.ReactNode; })

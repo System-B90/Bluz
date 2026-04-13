@@ -15,8 +15,8 @@ import
     DndContext,
 } from '@dnd-kit/core';
 import { Group } from '@/components/schedule/types/group';
-import GroupMembersField from "@/components/settings-dialog/tabs/global/group-tree/group-members-field";
-import GroupField from "@/components/settings-dialog/tabs/global/group-tree/group-field";
+import GroupMembersField from "@/components/settings-dialog/tabs/global/group-tree/GroupMembersField";
+import GroupField from "@/components/settings-dialog/tabs/global/group-tree/GroupField";
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 

@@ -1,6 +1,7 @@
-from PIL import Image
 from pathlib import Path
 from typing import Tuple
+
+from PIL import Image
 
 
 def create_responsive_ico(
@@ -89,9 +90,9 @@ def rename_images_by_resolution(
 
 
 if __name__ == "__main__":
-    # create_responsive_ico(
-    #     Path("./public/Bluez@3x.png"),
-    #     Path("./public/favicon.ico"),
-    #     sizes=(16, 32, 48, 64, 128, 256),
-    # )
-    rename_images_by_resolution("./public")
+    create_responsive_ico(
+        Path("./public/Bluz.png"),
+        Path("./public/favicon.ico"),
+        sizes=(16, 32, 48, 64, 128, 256),
+    )
+    # rename_images_by_resolution("./public")

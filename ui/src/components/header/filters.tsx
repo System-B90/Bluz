@@ -1,6 +1,6 @@
-import { useCalendarFilters } from "@/components/base/calendar-filter-provider";
-import FilterCourses from "@/components/header/filter-courses";
-import FilterInstructors from "@/components/header/filter-instructor";
+import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
+import FilterCourses from "@/components/header/FilterCourses";
+import FilterInstructors from "@/components/header/FilterInstructor";
 import { Box, BoxProps, IconButton, Tooltip } from "@mui/material";
 import ChatIcon from '@mui/icons-material/Chat';
 import { useCallback } from "react";

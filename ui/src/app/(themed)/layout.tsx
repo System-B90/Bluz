@@ -1,6 +1,6 @@
 'use client';
 
-import { BluzThemeProvider } from '@/components/theme/theme-provider';
+import { BluzThemeProvider } from '@/components/theme/ThemeProvider';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { SessionProvider } from 'next-auth/react';

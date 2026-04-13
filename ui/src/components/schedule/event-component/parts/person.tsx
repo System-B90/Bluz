@@ -1,4 +1,4 @@
-import { useHiveUsers } from "@/components/base/hive-users-provider";
+import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { EventType, getPresentInstructors, Event } from "@/components/schedule/types/event";
 import WarningIcon from '@mui/icons-material/Warning';
 import { Box, BoxProps, Chip, ChipProps, Link, Stack, Typography } from "@mui/material";

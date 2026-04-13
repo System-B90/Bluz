@@ -1,5 +1,5 @@
 import { Module, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { ModuleEventsView } from "@/components/gant/module-dialog/module-events-view";
+import { ModuleEventsView } from "@/components/gant/module-dialog/ModuleEventsView";
 import { HiveModulesView } from "@/components/gant/module-dialog/utils";
 import { useGantFuncs, useModule } from "@/components/gant/state/hooks";
 import { useCurriculumProviderActions } from "@/components/gant/state/provider";

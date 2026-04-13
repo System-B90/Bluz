@@ -20,6 +20,9 @@ export default defineConfig([
     },
   },
   {
-    ignores: [ ".next/*", "out/*", "dist/*" ],
-  }
+    ignores: [
+      ".next/*", "out/*", "dist/*",
+      "ui/.next/*", "ui/out/*", "ui/dist/*",
+    ],
+  },
 ]);

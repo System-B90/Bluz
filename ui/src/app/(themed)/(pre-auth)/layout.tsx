@@ -1,5 +1,5 @@
 'use client';
-import ThemeSelectorIcon from "@/components/header/theme-selector";
+import ThemeSelectorIcon from "@/components/header/ThemeSelector";
 import { Box, AppBar, Toolbar, Typography, IconButton } from "@mui/material";
 import { ReactNode } from "react";
 import SettingsIcon from '@mui/icons-material/Settings';

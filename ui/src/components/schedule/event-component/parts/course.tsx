@@ -1,5 +1,5 @@
 import { Course, CourseId } from "@/api-shared/types/course";
-import { useCourses } from "@/components/base/courses-provider";
+import { useCourses } from "@/components/base/CoursesProvider";
 import { Box, BoxProps, Chip, ChipProps, Stack, Typography } from "@mui/material";
 import { useMemo } from "react";
 

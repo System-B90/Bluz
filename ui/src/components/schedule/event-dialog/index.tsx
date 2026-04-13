@@ -1,14 +1,7 @@
 'use client';
 
-import CourseField from '@/components/schedule/event-dialog/course-field';
-import EventTypeField from "@/components/schedule/event-dialog/event-type-field";
-import InstructorsField from "@/components/schedule/event-dialog/instructors-field";
-import ModuleField from '@/components/schedule/event-dialog/module-field';
-import PrayerTypeField from '@/components/schedule/event-dialog/prayer-type';
-import RoomField from "@/components/schedule/event-dialog/room-field";
-import SubjectField from "@/components/schedule/event-dialog/subject-field";
-import EventTimeField from "@/components/schedule/event-dialog/time-fields";
-import { Event, EventId, PrayerEvent } from "@/components/schedule/types/event";
+import InstructorsField from "@/components/schedule/event-dialog/InstructorsField";
+import { Event, EventId } from "@/components/schedule/types/event";
 import
 {
     Box,
@@ -17,11 +10,11 @@ import
     DialogActions,
     DialogContent,
     DialogTitle,
-    FormControlLabel,
-    Switch,
-    TextField,
 } from '@mui/material';
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useState } from "react";
+import { EventClassification } from './EventClassification';
+import { EventPrimaryDetails } from './EventPrimaryDetails';
+import { EventToggles } from './EventToggles';
 
 interface EventDialogProps
 {
@@ -31,113 +24,6 @@ interface EventDialogProps
     onSave: (event: Event) => void;
     onDelete: (eventId: EventId) => void;
 }
-const EventPrimaryDetails = ({ event, onUpdate }: {
-    event: Event,
-    onUpdate: (u: Partial<Event>) => void;
-}) => (
-    <>
-        <Box gap={ 2 } display="flex" width="100%">
-            <TextField
-                label="שם"
-                fullWidth
-                required
-                value={ event.name ?? '' }
-                onChange={ (e) => onUpdate({ name: e.target.value }) }
-                sx={ { flexGrow: 1 } }
-            />
-            <EventTimeField
-                sx={ { flexShrink: 1 } }
-                event={ event }
-                onBlurCallback={ onUpdate }
-            />
-        </Box>
-
-        <TextField
-            label="הערות"
-            fullWidth
-            multiline
-            rows={ 3 }
-            value={ event.notes ?? '' }
-            onChange={ (e) => onUpdate({ notes: e.target.value }) }
-        />
-    </>
-);
-
-const EventClassification = ({ event, onUpdate }: {
-    event: Event,
-    onUpdate: (u: Partial<Event>) => void;
-}) => (
-    <Box display="flex" width="100%" gap={ 2 } justifyContent="flex-start">
-        <EventTypeField
-            event={ event }
-            onBlurCallback={ onUpdate }
-            sx={ { width: '12.5%' } }
-        />
-
-        { event?.type === 'prayer' ? (
-            <PrayerTypeField
-                event={ event as PrayerEvent }
-                onEventChange={ onUpdate }
-                sx={ { width: '25%' } }
-            />
-        ) : (
-            <>
-                <SubjectField
-                    event={ event }
-                    onEventChange={ onUpdate }
-                    sx={ { width: '18%' } }
-                />
-                <ModuleField
-                    event={ event }
-                    onEventChange={ onUpdate }
-                    sx={ { width: '17%' } }
-                />
-            </>
-        ) }
-
-        <Box gap="inherit" display="flex" flexGrow={ 1 }>
-            <CourseField
-                event={ event }
-                onBlurCallback={ onUpdate }
-                fullWidth
-            />
-            <RoomField
-                event={ event }
-                onBlurCallback={ onUpdate }
-                fullWidth
-            />
-        </Box>
-    </Box>
-);
-
-const EventToggles = ({ event, onUpdate }: {
-    event: Event,
-    onUpdate: (u: Partial<Event>) => void;
-}) =>
-{
-    const toggles = [
-        { label: 'מתואם', key: 'locked' },
-        { label: 'קריטי', key: 'required' },
-        { label: 'חלון פ"א', key: 'personalTalk' },
-    ] as const;
-
-    return (
-        <Box display="flex" gap={ 2 }>
-            { toggles.map(({ label, key }) => (
-                <FormControlLabel
-                    key={ key }
-                    label={ label }
-                    control={
-                        <Switch
-                            checked={ !!event[ key ] }
-                            onChange={ (e) => onUpdate({ [ key ]: e.target.checked }) }
-                        />
-                    }
-                />
-            )) }
-        </Box>
-    );
-};
 
 export default function EventDialog({
     open,

@@ -1,4 +1,4 @@
-import { OfflineProvider } from '@/components/base/offline-provider';
+import { OfflineProvider } from '@/components/base/OfflineProvider';
 import { CalendarProvider } from '@/components/schedule/calendar/calendar-provider';
 import React from 'react';
 
