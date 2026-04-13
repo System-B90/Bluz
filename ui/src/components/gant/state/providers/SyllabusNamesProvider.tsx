@@ -40,7 +40,7 @@ export function SyllabusNamesProvider({ children }: { children: React.ReactNode;
         {
             setIsLoading(false);
         }
-    }, []);
+    }, [ enqueueSnackbar ]);
 
     useEffect(() =>
     {
