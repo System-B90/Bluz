@@ -28,7 +28,7 @@ export function useSyllabusActions()
         }, `Failed to update syllabus (ID: ${id}):`);
     }, [ dispatch ]);
 
-    const removeSyllabus = useCallback(async (curriculumId: CurriculumId, syllabusId: SyllabusId) =>
+    const deleteSyllabus = useCallback(async (curriculumId: CurriculumId, syllabusId: SyllabusId) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -47,5 +47,14 @@ export function useSyllabusActions()
         }, `Failed to link syllabus (ID: ${syllabusId}) to curriculum (ID: ${curriculumId}):`);
     }, [ dispatch ]);
 
-    return { createSyllabus, updateSyllabus, removeSyllabus, linkSyllabusToCurriculum } as const;
+    const unlinkSyllabusFromCurriculum = useCallback(async (curriculumId: CurriculumId, syllabusId: SyllabusId) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            await syllabusApi.apiUnlink(syllabusId, curriculumId);
+            dispatch({ type: 'REMOVE_SYLLABUS', payload: { syllabusId, curriculumId } });
+        }, `Failed to unlink syllabus (ID: ${syllabusId}) from curriculum (ID: ${curriculumId}):`);
+    }, [ dispatch ]);
+
+    return { createSyllabus, updateSyllabus, deleteSyllabus, linkSyllabusToCurriculum, unlinkSyllabusFromCurriculum } as const;
 }

@@ -1,6 +1,11 @@
-import { ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { moduleApi } from "@/api-client/gant/module";
+import { moduleEventApi } from "@/api-client/gant/module-event";
+import { CurriculumId, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { useModule } from '@/components/gant/state/hooks';
+import { useModuleActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleActions";
 import { useCurriculumProviderActions, useCurriculumState } from '@/components/gant/state/provider';
+import OpenHandsIcon from "@/components/gant/syllabus-card/OpenHandsIcon";
 import { calculateAllocatedTimeForModule, calculateMinimumRequiredTimeForModule } from '@/components/gant/utils';
 import EditIcon from '@mui/icons-material/Edit';
 import
@@ -9,13 +14,45 @@ import
     IconButton,
     Skeleton,
     TableCell,
+    TableCellProps,
     TableRow,
     Tooltip,
     Typography
 } from '@mui/material';
+import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from 'react';
 
-export function ModuleRow({ moduleId, syllabusId }: { moduleId: ModuleId; syllabusId: SyllabusId; })
+interface AllocatedTimeTableCellProps extends TableCellProps
+{
+    moduleId: ModuleId;
+    curriculumId: CurriculumId;
+    minimumRequiredTime: number;
+    allocatedTime: number | undefined;
+}
+
+function AllocatedTimeTableCell({ moduleId, curriculumId, allocatedTime, minimumRequiredTime, ...props }: AllocatedTimeTableCellProps)
+{
+    const { enqueueSnackbar } = useSnackbar();
+    const { allocateTimeToModule } = useModuleActions();
+    const allocateTimeHandler = useCallback(() =>
+    {
+        allocateTimeToModule(moduleId, curriculumId, minimumRequiredTime)
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הקצאת השעות נכשלה!', error));
+    }, [ moduleId, curriculumId, minimumRequiredTime, allocateTimeToModule, enqueueSnackbar ]);
+
+    return (
+        <TableCell { ...props }>
+            { allocatedTime !== undefined ? allocatedTime : <CircularProgress size="1rem" /> }
+            <Tooltip title='הקצה את כל השעות'>
+                <IconButton size="small" color="primary" onClick={ allocateTimeHandler }>
+                    <OpenHandsIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+        </TableCell>
+    );
+}
+
+export function ModuleRow({ moduleId, syllabusId, curriculumId }: { moduleId: ModuleId; syllabusId: SyllabusId; curriculumId: CurriculumId; })
 {
     const state = useCurriculumState();
     const { openModuleDialog } = useCurriculumProviderActions();
@@ -50,9 +87,7 @@ export function ModuleRow({ moduleId, syllabusId }: { moduleId: ModuleId; syllab
             <TableCell>
                 { minimumRequiredTime !== undefined ? minimumRequiredTime : <CircularProgress size="1rem" /> }
             </TableCell>
-            <TableCell>
-                { allocatedTime !== undefined ? allocatedTime : <CircularProgress size="1rem" /> }
-            </TableCell>
+            <AllocatedTimeTableCell allocatedTime={ allocatedTime } moduleId={ moduleId } curriculumId={ curriculumId } minimumRequiredTime={ minimumRequiredTime } />
             <TableCell>
                 <Tooltip title="ערוך מערך" placement="top">
                     <IconButton size="small" onClick={ editClickHandler } color="primary">

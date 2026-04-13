@@ -1,0 +1,35 @@
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { CurriculumId, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { useSyllabusActions } from "@/components/gant/state/hooks/gant-funcs/UseSyllabusActions";
+import LinkOffIcon from '@mui/icons-material/LinkOff';
+import { CardActions, CardActionsProps, IconButton, Tooltip } from "@mui/material";
+import { useSnackbar } from "notistack";
+import { useCallback } from "react";
+
+export interface SyllabusCardActionsProps extends CardActionsProps
+{
+    curriculumId: CurriculumId;
+    syllabusId: SyllabusId;
+}
+
+export default function SyllabusCardActions({ curriculumId, syllabusId, ...props }: SyllabusCardActionsProps)
+{
+    const { enqueueSnackbar } = useSnackbar();
+    const { unlinkSyllabusFromCurriculum } = useSyllabusActions();
+
+    const deleteHandler = useCallback(() =>
+    {
+        unlinkSyllabusFromCurriculum(curriculumId, syllabusId)
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, `הסרת הסילבוס מהגאנט נכשלה!`, error));
+    }, [ curriculumId, syllabusId, unlinkSyllabusFromCurriculum, enqueueSnackbar ]);
+
+    return (
+        <CardActions { ...props }>
+            <Tooltip title='הסרת הסילבוס מהגאנט'>
+                <IconButton onClick={ deleteHandler } size="small" color="warning">
+                    <LinkOffIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+        </CardActions>
+    );
+}

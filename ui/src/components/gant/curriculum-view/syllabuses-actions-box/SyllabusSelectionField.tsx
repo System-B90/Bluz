@@ -2,10 +2,9 @@ import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CurriculumId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { useCurriculum } from "@/components/gant/state/hooks";
 import { useSyllabusActions } from "@/components/gant/state/hooks/gant-funcs/UseSyllabusActions";
-import { useCurriculumState } from "@/components/gant/state/provider";
 import { useSyllabusNames } from "@/components/gant/state/providers/SyllabusNamesProvider";
-import AddIcon from '@mui/icons-material/Add';
-import { Box, BoxProps, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Tooltip } from "@mui/material";
+import LinkIcon from '@mui/icons-material/Link';
+import { Box, BoxProps, CircularProgress, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
@@ -21,6 +20,8 @@ export default function SyllabusSelectionField({ curriculumId, ...props }: Sylla
     const { linkSyllabusToCurriculum } = useSyllabusActions();
     const { syllabusNames } = useSyllabusNames();
     const [ currentSyllabusId, setCurrentSyllabusId ] = useState<SyllabusId>("");
+    const [ isLinking, setIsLinking ] = useState<boolean>(false);
+
 
     const onChange = useCallback((ev: SelectChangeEvent<SyllabusId>) =>
     {
@@ -30,9 +31,14 @@ export default function SyllabusSelectionField({ curriculumId, ...props }: Sylla
 
     const addClickHandler = useCallback(() =>
     {
+        setIsLinking(true);
         const syllabusId = currentSyllabusId;
         if (!syllabusId) { return; }
-        linkSyllabusToCurriculum(curriculumId, syllabusId).catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הוספת הסילבוס לגאנט נכשלה!', error));
+        linkSyllabusToCurriculum(curriculumId, syllabusId)
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הוספת הסילבוס לגאנט נכשלה!', error))
+            .finally(() => setIsLinking(false));
+
+        setCurrentSyllabusId('');
     }, [ curriculumId, currentSyllabusId, linkSyllabusToCurriculum, enqueueSnackbar ]);
 
     const syllabusMenuItems = useMemo(() => Object.entries(syllabusNames)
@@ -46,18 +52,19 @@ export default function SyllabusSelectionField({ curriculumId, ...props }: Sylla
     return (
         <Box { ...props }>
             <FormControl fullWidth={ true }>
-                <InputLabel>סילבוס קיים</InputLabel>
+                <InputLabel>סילבוסים קיימים</InputLabel>
                 <Select
                     value={ currentSyllabusId }
-                    label="סילבוס קיים"
+                    label="סילבוסים קיימים"
                     onChange={ onChange }
+                    fullWidth
                 >
                     { syllabusMenuItems }
                 </Select>
             </FormControl >
             <Tooltip title='הוספת סילבוס לגאנט'>
                 <IconButton onClick={ addClickHandler } disabled={ currentSyllabusId.length === 0 }>
-                    <AddIcon color={ currentSyllabusId.length > 0 ? 'info' : 'disabled' } />
+                    { isLinking ? <CircularProgress color="inherit" size={ 24 } /> : <LinkIcon color={ currentSyllabusId.length > 0 ? 'info' : 'disabled' } fontSize="medium" /> }
                 </IconButton>
             </Tooltip>
         </Box>

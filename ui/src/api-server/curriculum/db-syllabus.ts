@@ -13,6 +13,7 @@ const basicOperations = drizzleOperationsBuilder<
 >({
     table: syllabuses,
     typeName: 'סילבוס',
+    idPreffix: 's',
     junction: {
         table: syllabusModules,
         localKey: syllabusModules.syllabusId,

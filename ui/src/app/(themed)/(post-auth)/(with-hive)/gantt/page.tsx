@@ -4,21 +4,52 @@ import { curriculumApi } from "@/api-client/gant/curriculum";
 import { ApiCurriculum } from "@/api-shared/types/gant/api-layer"; // Ensure you import this type
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import CurriculumView from "@/components/gant/curriculum-view";
-import CurriculumDrawer from "@/components/gant/drawer";
+import CurriculumFab from "@/components/gant/curriculum-fab";
 import { CurriculumProvider } from "@/components/gant/state/provider";
 import { Box, CircularProgress, Typography } from "@mui/material";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 
 export default function GanttPage()
 {
     const { enqueueSnackbar } = useSnackbar();
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
     const [ drawerOpen, setDrawerOpen ] = useState(true);
-    const [ currentCurriculum, setCurrentCurriculum ] = useState<CurriculumId | null>(null);
+    const [ currentCurriculum, setCurrentCurriculum ] = useState<CurriculumId | null>(() =>
+    {
+        const cidFromUrl = searchParams.get('cid');
+        return cidFromUrl ? cidFromUrl as CurriculumId : null;
+    });
 
     const [ initialData, setInitialData ] = useState<ApiCurriculum | null>(null);
     const [ isLoading, setIsLoading ] = useState(false);
     const [ error, setError ] = useState<string | null>(null);
+
+    useEffect(() =>
+    {
+        const urlCid = searchParams.get('cid');
+        const currentCid = currentCurriculum ?? null;
+
+        if (urlCid === currentCid)
+        {
+            return;
+        }
+
+        const nextParams = new URLSearchParams(searchParams.toString());
+        if (currentCid)
+        {
+            nextParams.set('cid', currentCid);
+        } else
+        {
+            nextParams.delete('cid');
+        }
+
+        const nextSearch = nextParams.toString();
+        router.replace(nextSearch ? `${pathname}?${nextSearch}` : pathname);
+    }, [ currentCurriculum, pathname, router, searchParams ]);
 
     useEffect(() =>
     {
@@ -57,14 +88,13 @@ export default function GanttPage()
     }, [ currentCurriculum, enqueueSnackbar ]);
 
     return (
-        <Box maxHeight={ '100%' } height={ '100%' } display={ 'flex' } flexDirection={ 'row' }>
-            <CurriculumDrawer sx={ {
-                height: '100%',
-                '& .MuiDrawer-paper': {
-                    boxSizing: 'border-box',
-                    position: 'relative',
-                },
-            } } open={ drawerOpen } setOpen={ setDrawerOpen } setCurrentCurriculum={ setCurrentCurriculum } />
+        <Box maxHeight={ '100%' } height={ '100%' } display={ 'flex' } flexDirection={ 'row' } sx={ { position: 'relative' } }>
+            <CurriculumFab
+                open={ drawerOpen }
+                setOpen={ setDrawerOpen }
+                setCurrentCurriculum={ setCurrentCurriculum }
+                currentCurriculum={ currentCurriculum }
+            />
 
             <Box sx={ { padding: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' } } flexGrow={ 1 }>
 

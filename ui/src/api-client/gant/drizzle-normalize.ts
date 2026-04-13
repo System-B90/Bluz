@@ -43,8 +43,7 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
             {
                 const apiEvent = baseDocumentFixup(mELink.event);
                 moduleEventIds.push(apiEvent.id);
-
-                store.events[ apiEvent.id ] = { ...apiEvent };
+                store.events[ apiEvent.id ] = { ...apiEvent, allocatedDuration: apiEvent.cEC[ 0 ]?.allocatedDuration ?? 0 };
             }
 
             store.modules[ apiModule.id ] = {

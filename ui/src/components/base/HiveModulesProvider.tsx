@@ -5,14 +5,14 @@ import { Module, ModuleLike } from '@/components/schedule/types/module';
 import { SubjectLike } from '@/components/schedule/types/subject';
 import { enqueueSnackbar } from 'notistack';
 import
-{
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
-} from 'react';
+    {
+        createContext,
+        useCallback,
+        useContext,
+        useEffect,
+        useMemo,
+        useState,
+    } from 'react';
 
 
 export type HiveModulesContextState = {
@@ -50,7 +50,7 @@ export const HiveModulesProvider = ({ children }: { children: React.ReactNode; }
                 modulesMap[ module.id ] = module;
             });
             setModuleLookup(modulesMap);
-        }).catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת המודולים נכשלה.', error));
+        }).catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת המערךים נכשלה.', error));
     }, [ setModuleLookup ]);
 
     useEffect(() =>

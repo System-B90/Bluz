@@ -1,10 +1,10 @@
 "use client";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { syllabusApi } from "@/api-client/gant/api";
+import { SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { useSnackbar } from "notistack";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-export type SyllabusId = string | number;
 export type SyllabusDictionary = Record<SyllabusId, string>;
 
 export interface SyllabusProviderState

@@ -1,5 +1,6 @@
 import { BaseDocument } from "@/api-client/gant/base";
 import { NormalizedStore, normalizeCurriculumData } from "@/api-client/gant/drizzle-normalize";
+import { AllocateTimeToEventCallback, allocateTimeToModule } from "@/api-shared/gantt/allocate-time";
 import { ApiCurriculum } from "@/api-shared/types/gant/api-layer";
 import
 {
@@ -32,7 +33,10 @@ export type Action =
     // Removes
     | { type: 'REMOVE_SYLLABUS'; payload: { curriculumId: CurriculumId; syllabusId: SyllabusId; }; }
     | { type: 'REMOVE_MODULE'; payload: { syllabusId: SyllabusId; moduleId: ModuleId; }; }
-    | { type: 'REMOVE_EVENT'; payload: { moduleId: ModuleId; eventId: ModuleEventId; }; };
+    | { type: 'REMOVE_EVENT'; payload: { moduleId: ModuleId; eventId: ModuleEventId; }; }
+
+    | { type: 'ALLOCATE_TIME'; payload: { curriculumId: CurriculumId; eventId: ModuleEventId; duration: number; }; }
+    | { type: 'ALLOCATE_TIME_TO_MODULE'; payload: { curriculumId: CurriculumId; moduleId: ModuleId; duration: number; }; };
 
 function injectDocumentTimes<T extends BaseGantItem>(rawDoc: T): T & BaseDocument
 {
@@ -92,6 +96,42 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
                     [ action.payload.id ]: { ...existing, ...action.payload.updates }
                 }
             };
+        }
+
+        case 'ALLOCATE_TIME': {
+            const existing = state.events[ action.payload.eventId ];
+            if (!existing) return state;
+            return {
+                ...state,
+                events: {
+                    ...state.events,
+                    [ action.payload.eventId ]: { ...existing, allocatedDuration: action.payload.duration }
+                }
+            };
+        }
+
+        case 'ALLOCATE_TIME_TO_MODULE': {
+            const moduleDoc = state.modules[ action.payload.moduleId ];
+            if (!moduleDoc) return state;
+
+            const updatedEvents = state.events;
+
+            const updateModuleEvent: AllocateTimeToEventCallback = ({ eventId, duration }) =>
+            {
+                const eventDoc = state.events[ eventId ];
+                if (!eventDoc) return;
+                updatedEvents[ eventId ] = { ...eventDoc, allocatedDuration: duration };
+            };
+
+            allocateTimeToModule({
+                module: moduleDoc,
+                totalDuration: action.payload.duration,
+                curriculumId: action.payload.curriculumId,
+                moduleEvents: state.events,
+                allocateToEventCallback: updateModuleEvent,
+            });
+
+            return { ...state, events: updatedEvents };
         }
 
         case 'ADD_SYLLABUS': {

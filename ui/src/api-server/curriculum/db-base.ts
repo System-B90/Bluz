@@ -27,6 +27,7 @@ export interface DrizzleOperationsBuilderProps<TTable extends PgTableWithColumns
     typeName: string;
     junction?: JunctionConfig;
     parentJunction?: { type: 'curriculum' | 'syllabus' | 'module'; };
+    idPreffix: 'c' | 's' | 'm' | 'e';
 }
 
 export function drizzleOperationsBuilder<
@@ -38,6 +39,7 @@ export function drizzleOperationsBuilder<
     typeName,
     junction,
     parentJunction,
+    idPreffix,
 }: DrizzleOperationsBuilderProps<TTable>): BasicGantOperations<T, TCreatePayload>
 {
 
@@ -100,7 +102,7 @@ export function drizzleOperationsBuilder<
 
     async function createNewItem(data: TCreatePayload): Promise<DbTDocument>
     {
-        const id = (data as any).id || `gen_${crypto.randomUUID()}`;
+        const id = (data as any).id || `${idPreffix}_${crypto.randomUUID()}`;
         const now = new Date();
 
         const { curriculumId, syllabusId, moduleId, ...entityData } = data as any;

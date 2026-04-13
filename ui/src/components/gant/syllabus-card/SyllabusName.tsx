@@ -31,7 +31,6 @@ export function SyllabusName({ syllabusId }: { syllabusId: SyllabusId; })
             required
             type="text"
             fullWidth
-            sx={ { mb: 2 } }
         />
     );
 }

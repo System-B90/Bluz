@@ -4,15 +4,15 @@ import { useEvent } from "@/components/gant/state/hooks";
 import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
 import DeleteIcon from '@mui/icons-material/Delete';
 import
-{
-    FormControl,
-    IconButton,
-    MenuItem,
-    Select,
-    TableCell,
-    TableRow,
-    TextField
-} from "@mui/material";
+    {
+        FormControl,
+        IconButton,
+        MenuItem,
+        Select,
+        TableCell,
+        TableRow,
+        TextField
+    } from "@mui/material";
 import { useCallback, useState } from "react";
 
 function ModuleEventTitle({ moduleEvent, handleCommit }: { moduleEvent: ModuleEvent | undefined; handleCommit: (updates: Partial<ModuleEvent>) => void; })

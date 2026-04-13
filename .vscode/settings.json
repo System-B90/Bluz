@@ -1,12 +1,15 @@
 {
     "editor.codeActionsOnSave": {
-        "source.fixAll": "explicit",
-        "source.organizeImports": "explicit"
+        "source.fixAll": "always",
+        "source.organizeImports": "always"
     },
     // NextJS / React
     "[typescript][typescriptreact]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.suggest.autoImports": true
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "always",
+            "editor.suggest.autoImports": "always",
+        },
     },
     // Python Tooling
     "[python]": {

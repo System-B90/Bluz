@@ -49,11 +49,13 @@ export interface CurriculumDays
 {
     day: DayName;
     totalWorkingHours: number;
+    comment?: string;
 }
 export interface CurriculumWeek
 {
     number: number;
     days: Array<CurriculumDays>;
+    comment?: string;
 }
 export interface Curriculum extends BaseGantItem
 {

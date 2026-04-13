@@ -1,23 +1,85 @@
-import { SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useSyllabus } from '@/components/gant/state/hooks';
-import { Card, CardContent, CardHeader, Typography } from '@mui/material';
-import { ModulesTable } from './ModulesTable';
-import { SyllabusName } from './SyllabusName';
+/**
+ * Name: SyllabusCard.tsx
+ * Purpose: A collapsible card displaying syllabus modules and actions.
+ * Created: 2026-04-14
+ * Author: Michael K. Steinberg
+ */
 
-export default function SyllabusCard({ syllabusId }: { syllabusId: SyllabusId; })
+import { CurriculumId, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { useSyllabus } from '@/components/gant/state/hooks';
+import { ModulesTable } from "@/components/gant/syllabus-card/ModulesTable";
+import SyllabusCardActions from "@/components/gant/syllabus-card/SyllabusCardActions";
+import SyllabusCardHeader from "@/components/gant/syllabus-card/SyllabusCardHeader";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Card, CardContent, CardProps, Collapse, IconButton } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { useState } from 'react';
+
+export interface SyllabusCardProps extends Omit<CardProps, 'sx'>
+{
+    curriculumId: CurriculumId;
+    syllabusId: SyllabusId;
+}
+
+const ExpandMore = styled((props: { expand: boolean; } & any) =>
+{
+    const { expand, ...other } = props;
+    return <IconButton { ...other } />;
+})(({ theme, expand }) => ({
+    transform: !expand ? 'rotate(0deg)' : 'rotate(180deg)',
+    marginLeft: 'auto',
+    transition: theme.transitions.create('transform', {
+        duration: theme.transitions.duration.shortest,
+    }),
+}));
+
+export default function SyllabusCard({ curriculumId, syllabusId, ...props }: SyllabusCardProps)
 {
     const syllabus = useSyllabus(syllabusId);
+    const [ expanded, setExpanded ] = useState<boolean>(true);
+
+    const handleExpandClick = () =>
+    {
+        setExpanded(!expanded);
+    };
 
     return (
-        <Card sx={ { display: 'flex', flexDirection: 'column', width: '30%', minWidth: 350, maxHeight: '90%', overflow: 'hidden' } }>
-            <CardHeader
-                title={ <Typography variant="subtitle2" color="textSecondary">סילבוס</Typography> }
+        <Card
+            sx={ {
+                display: 'flex',
+                flexDirection: 'column',
+                width: '30%',
+                minWidth: 350,
+                maxHeight: expanded ? '90%' : 'fit-content',
+                overflow: 'hidden'
+            } }
+            { ...props }
+        >
+            <SyllabusCardHeader
                 sx={ { pb: 0, pt: 1.5, px: 2 } }
+                syllabusId={ syllabusId }
+                action={
+                    <ExpandMore
+                        expand={ expanded }
+                        onClick={ handleExpandClick }
+                        aria-expanded={ expanded }
+                        aria-label="show more"
+                    >
+                        <ExpandMoreIcon />
+                    </ExpandMore>
+                }
             />
-            <CardContent sx={ { display: 'flex', flexDirection: 'column', paddingY: 1, flex: 1, overflow: 'hidden' } }>
-                <SyllabusName key={ `${syllabus?.title ?? '-syllabus-title'}` } syllabusId={ syllabusId } />
-                <ModulesTable syllabusModules={ syllabus?.modules ?? [] } syllabusId={ syllabusId } />
-            </CardContent>
+
+            <Collapse in={ expanded } timeout="auto" unmountOnExit>
+                <CardContent sx={ { display: 'flex', flexDirection: 'column', paddingY: 1, flex: 1, overflow: 'hidden' } }>
+                    <ModulesTable
+                        syllabusModules={ syllabus?.modules ?? [] }
+                        syllabusId={ syllabusId }
+                        curriculumId={ curriculumId }
+                    />
+                </CardContent>
+                <SyllabusCardActions curriculumId={ curriculumId } syllabusId={ syllabusId } />
+            </Collapse>
         </Card>
     );
 }

@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { moduleEventApi } from "@/api-client/gant/api";
-import { ModuleId, ModuleEventId, ModuleEvent, ModuleEventType } from "@/api-shared/types/gant/curriculum";
+import { ModuleId, ModuleEventId, ModuleEvent, ModuleEventType, CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { useCurriculumProviderActions } from "@/components/gant/state/provider";
 import { withGantErrorHandling } from "@/components/gant/state/hooks/gant-funcs/WithGantErrorHandling";
 
@@ -41,7 +41,7 @@ export function useModuleEventActions()
         }, `Failed to update event (ID: ${id}):`);
     }, [ dispatch ]);
 
-    const removeEvent = useCallback(async (moduleId: ModuleId, eventId: ModuleEventId) =>
+    const deleteEvent = useCallback(async (moduleId: ModuleId, eventId: ModuleEventId) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -60,5 +60,23 @@ export function useModuleEventActions()
         }, `Failed to link event (ID: ${eventId}) to module (ID: ${moduleId}):`);
     }, [ dispatch ]);
 
-    return { createEvent, updateEvent, removeEvent, linkEventToModule } as const;
+    const unlinkEventFromModule = useCallback(async (moduleId: ModuleId, eventId: ModuleEventId) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            await moduleEventApi.apiUnlink(eventId, moduleId);
+            dispatch({ type: 'REMOVE_EVENT', payload: { eventId, moduleId } });
+        }, `Failed to unlink event (ID: ${eventId}) from module (ID: ${moduleId}):`);
+    }, [ dispatch ]);
+
+    const allocateTimeToModuleEvent = useCallback(async (eventId: ModuleEventId, curriculumId: CurriculumId, allocatedDuration: number) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            moduleEventApi.apiSetAllocatedTime(eventId, curriculumId, allocatedDuration);
+            dispatch({ type: 'ALLOCATE_TIME', payload: { eventId, curriculumId, duration: allocatedDuration } });
+        }, `Failed to allocate time to event (ID: ${eventId}):`);
+    }, [ dispatch ]);
+
+    return { createEvent, updateEvent, deleteEvent, linkEventToModule, unlinkEventFromModule, allocateTimeToModuleEvent } as const;
 }

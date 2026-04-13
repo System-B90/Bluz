@@ -5,18 +5,18 @@ import { useModule } from "@/components/gant/state/hooks";
 import { useModuleActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleActions";
 import { useCurriculumProviderActions } from "@/components/gant/state/provider";
 import
-{
-    Box,
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogProps,
-    DialogTitle,
-    Divider,
-    Stack,
-    TextField
-} from "@mui/material";
+    {
+        Box,
+        Button,
+        Dialog,
+        DialogActions,
+        DialogContent,
+        DialogProps,
+        DialogTitle,
+        Divider,
+        Stack,
+        TextField
+    } from "@mui/material";
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
 
 export interface ModuleDialogProps extends DialogProps

@@ -19,21 +19,19 @@ export function CreateModuleButton({ syllabusId }: { syllabusId: SyllabusId; })
         setIsCreating(true);
         try
         {
-            const newModule = await createModule('מודול חדש', syllabusId, 'המודול החדש שלי');
+            const newModule = await createModule('מערך חדש', syllabusId, 'המערך החדש שלי');
             try
             {
-                await Promise.all([
-                    createEvent('הרצאת מבוא', newModule.id, ModuleEventType.Lecture, 60),
-                    createEvent('ע"ע', newModule.id, ModuleEventType.Exercise, 45)
-                ]);
+                await createEvent('הרצאת מבוא', newModule.id, ModuleEventType.Lecture, 60);
+                await createEvent('ע"ע', newModule.id, ModuleEventType.Exercise, 45);
             } catch (error)
             {
-                enqueueApiErrorSnackbar(enqueueSnackbar, 'יצירת מופעי ברירת מחדל במודול נכשלה!', error);
+                enqueueApiErrorSnackbar(enqueueSnackbar, 'יצירת מופעי ברירת מחדל במערך נכשלה!', error);
             }
         }
         catch (error)
         {
-            enqueueApiErrorSnackbar(enqueueSnackbar, 'יצירת המודול נכשלה!', error);
+            enqueueApiErrorSnackbar(enqueueSnackbar, 'יצירת המערך נכשלה!', error);
         } finally
         {
             setIsCreating(false);

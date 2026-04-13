@@ -1,11 +1,12 @@
 import { CurriculumId } from '@/api-shared/types/gant/curriculum';
+import { CurriculumAboutCard } from '@/components/gant/curriculum-view/curriculum-about-card';
+import { SyllabusesActionsBox } from '@/components/gant/curriculum-view/syllabuses-actions-box';
 import { useCurriculum } from '@/components/gant/state/hooks';
 import SyllabusCard from '@/components/gant/syllabus-card';
-import { Box, BoxProps, Card, Skeleton, Typography } from '@mui/material';
+import { Box, BoxProps } from '@mui/material';
 import { useMemo } from 'react';
-import { CreateSyllabusButton } from './syllabuses-actions-box/CreateSyllabusButton';
 import { HoursCard } from './HoursCard';
-import { SyllabusesActionsBox } from '@/components/gant/curriculum-view/syllabuses-actions-box';
+import { WorkTimePanel } from './WorkTimePanel';
 
 export interface CurriculumViewProps extends BoxProps
 {
@@ -19,7 +20,7 @@ export default function CurriculumView({ curriculumId, ...props }: CurriculumVie
     const syllabusCards = useMemo(() =>
     {
         return (curriculum?.syllabuses ?? []).map((syllabusId) => (
-            <SyllabusCard key={ syllabusId } syllabusId={ syllabusId } />
+            <SyllabusCard key={ syllabusId } syllabusId={ syllabusId } curriculumId={ curriculumId ?? '' } />
         ));
     }, [ curriculum?.syllabuses ]);
 
@@ -37,23 +38,11 @@ export default function CurriculumView({ curriculumId, ...props }: CurriculumVie
             { ...props }
         >
             <Box display={ 'flex' } flexGrow={ 0 } flexShrink={ 0 } flexDirection={ 'column' } flexWrap={ 'wrap' } gap={ 2 }>
-                <Card sx={ { padding: 2, maxWidth: '14rem' } }>
-                    <Typography variant="h6" color="primary">
-                        { curriculum ? curriculum.title : <Skeleton variant='text' width="40%" /> }
-                    </Typography>
-                    <Typography variant="body1" color='secondary'>
-                        { curriculum ? curriculum.description : <Skeleton variant='text' width="100%" /> }
-                    </Typography>
-                    <Box display={ 'flex' } flexDirection={ 'row' } color="textSecondary">
-                        <Typography variant="body2" color="textSecondary">
-                            עדכון אחרון:
-                        </Typography>
-                        <Box width={ '0.2rem' } />
-                        { curriculum?.updatedAt ? <Typography color="textSecondary">{ curriculum.updatedAt.format('DD/MM/YYYY') }</Typography> : <Skeleton variant='text' width={ 80 } /> }
-                    </Box>
-                </Card>
+                <CurriculumAboutCard curriculum={ curriculum } curriculumId={ curriculumId } />
 
                 <HoursCard curriculum={ curriculum } />
+
+                <WorkTimePanel curriculumId={ curriculumId } curriculum={ curriculum } />
             </Box>
 
             <Box gap={ 2 } flexGrow={ 1 } display={ 'flex' } flexDirection={ 'column' } height={ '100%' }>

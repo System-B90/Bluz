@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { moduleApi } from "@/api-client/gant/api";
-import { SyllabusId, ModuleId, Module } from "@/api-shared/types/gant/curriculum";
+import { SyllabusId, ModuleId, Module, CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { useCurriculumProviderActions } from "@/components/gant/state/provider";
 import { withGantErrorHandling } from "@/components/gant/state/hooks/gant-funcs/WithGantErrorHandling";
 
@@ -28,7 +28,7 @@ export function useModuleActions()
         }, `Failed to update module (ID: ${id}):`);
     }, [ dispatch ]);
 
-    const removeModule = useCallback(async (syllabusId: SyllabusId, moduleId: ModuleId) =>
+    const deleteModule = useCallback(async (syllabusId: SyllabusId, moduleId: ModuleId) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -47,5 +47,23 @@ export function useModuleActions()
         }, `Failed to link module (ID: ${moduleId}) to syllabus (ID: ${syllabusId}):`);
     }, [ dispatch ]);
 
-    return { createModule, updateModule, removeModule, linkModuleToSyllabus } as const;
+    const unlinkModuleToSyllabus = useCallback(async (syllabusId: SyllabusId, moduleId: ModuleId) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            await moduleApi.apiUnlink(moduleId, syllabusId);
+            dispatch({ type: 'REMOVE_MODULE', payload: { moduleId, syllabusId } });
+        }, `Failed to unlink module (ID: ${moduleId}) from syllabus (ID: ${syllabusId}):`);
+    }, [ dispatch ]);
+
+    const allocateTimeToModule = useCallback(async (moduleId: ModuleId, curriculumId: CurriculumId, allocatedDuration: number) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            moduleApi.apiSetAllocatedTime(moduleId, curriculumId, allocatedDuration);
+            dispatch({ type: 'ALLOCATE_TIME_TO_MODULE', payload: { moduleId, curriculumId, duration: allocatedDuration } });
+        }, `Failed to allocate time to module (ID: ${moduleId}):`);
+    }, [ dispatch ]);
+
+    return { createModule, updateModule, deleteModule, linkModuleToSyllabus, unlinkModuleToSyllabus, allocateTimeToModule } as const;
 }

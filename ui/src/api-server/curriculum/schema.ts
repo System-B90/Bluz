@@ -50,11 +50,22 @@ export const moduleEvents = pgTable('e', {
     title: text('title').notNull(),
     type: moduleEventTypeEnum('type').notNull(),
     minimumDuration: integer('minimum_duration').notNull().default(0),
-    allocatedDuration: integer('allocated_duration').notNull().default(0),
     requirements: jsonb('requirements').$type<any[]>().notNull().default([]),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+/**
+ * Maps specific durations to an event within the context of a curriculum.
+ */
+export const curriculumEventConfigurations = pgTable('cEC', {
+    curriculumId: text('curriculum_id').notNull().references(() => curriculums.id, { onDelete: 'cascade' }),
+    eventId: text('event_id').notNull().references(() => moduleEvents.id, { onDelete: 'cascade' }),
+    allocatedDuration: integer('allocated_duration').notNull().default(0),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+    pk: primaryKey({ columns: [ t.curriculumId, t.eventId ] })
+}));
 
 export const curriculumSyllabuses = pgTable('cS', {
     curriculumId: text('curriculum_id').notNull().references(() => curriculums.id, { onDelete: 'cascade' }),
@@ -79,6 +90,7 @@ export const moduleToEvents = pgTable('mE', {
 
 export const curriculumsRelations = relations(curriculums, ({ many }) => ({
     cS: many(curriculumSyllabuses),
+    cEC: many(curriculumEventConfigurations), // eventConfigs
 }));
 
 export const syllabusesRelations = relations(syllabuses, ({ many }) => ({
@@ -93,7 +105,9 @@ export const modulesRelations = relations(modules, ({ many }) => ({
 
 export const moduleEventsRelations = relations(moduleEvents, ({ many }) => ({
     mE: many(moduleToEvents),
+    cEC: many(curriculumEventConfigurations), // curriculumConfigs
 }));
+
 
 export const curriculumSyllabusesRelations = relations(curriculumSyllabuses, ({ one }) => ({
     curriculum: one(curriculums, {
@@ -124,6 +138,17 @@ export const moduleToEventsRelations = relations(moduleToEvents, ({ one }) => ({
     }),
     event: one(moduleEvents, {
         fields: [ moduleToEvents.eventId ],
+        references: [ moduleEvents.id ],
+    }),
+}));
+
+export const curriculumEventConfigurationsRelations = relations(curriculumEventConfigurations, ({ one }) => ({
+    curriculum: one(curriculums, {
+        fields: [ curriculumEventConfigurations.curriculumId ],
+        references: [ curriculums.id ],
+    }),
+    event: one(moduleEvents, {
+        fields: [ curriculumEventConfigurations.eventId ],
         references: [ moduleEvents.id ],
     }),
 }));

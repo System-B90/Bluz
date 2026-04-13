@@ -1,6 +1,6 @@
-import { Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { CreateModuleButton } from './CreateModuleButton';
-import { ModuleRow } from './ModuleRow';
+import { CurriculumId, Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { CreateModuleButton } from "@/components/gant/syllabus-card/CreateModuleButton";
+import { ModuleRow } from "@/components/gant/syllabus-card/ModuleRow";
 import
 {
     Box,
@@ -14,12 +14,18 @@ import
 } from '@mui/material';
 import { useMemo } from 'react';
 
-export function ModulesTable({ syllabusId, syllabusModules }: { syllabusId: SyllabusId; syllabusModules: Syllabus[ 'modules' ]; })
+export interface ModulesTableProps
+{
+    syllabusId: SyllabusId;
+    curriculumId: CurriculumId;
+    syllabusModules: Syllabus[ 'modules' ];
+}
+export function ModulesTable({ syllabusId, syllabusModules, curriculumId }: ModulesTableProps)
 {
     const moduleRows = useMemo(() =>
     {
         return syllabusModules.map((moduleId) => (
-            <ModuleRow key={ moduleId } moduleId={ moduleId } syllabusId={ syllabusId } />
+            <ModuleRow key={ moduleId } moduleId={ moduleId } syllabusId={ syllabusId } curriculumId={ curriculumId } />
         ));
     }, [ syllabusId, syllabusModules ]);
 
@@ -41,7 +47,7 @@ export function ModulesTable({ syllabusId, syllabusModules }: { syllabusId: Syll
                         <TableRow>
                             <TableCell colSpan={ 4 } align="center">
                                 <Typography variant="caption" color="textSecondary">
-                                    לא נמצאו מערכים. לחץ על הוסף כדי להתחיל.
+                                    לא נמצאו מערכים. לחצו על הוסף כדי להתחיל.
                                 </Typography>
                             </TableCell>
                         </TableRow>

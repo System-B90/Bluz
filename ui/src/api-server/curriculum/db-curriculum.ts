@@ -1,6 +1,6 @@
 import { postgresDb } from "@/api-server/curriculum";
 import { BaseDbDocument, drizzleOperationsBuilder } from "@/api-server/curriculum/db-base"; // Your new Drizzle builder
-import { curriculums, curriculumSyllabuses } from "@/api-server/curriculum/schema";
+import { curriculumEventConfigurations, curriculums, curriculumSyllabuses } from "@/api-server/curriculum/schema";
 import { ClientApiError } from "@/api-shared/errors";
 import { CreateCurriculumPayload } from "@/api-shared/types/gant/create-payloads";
 import { Curriculum, CurriculumId } from "@/api-shared/types/gant/curriculum";
@@ -13,6 +13,7 @@ const basicOperations = drizzleOperationsBuilder<
 >({
     table: curriculums,
     typeName: 'גאנט',
+    idPreffix: 'c',
     junction: {
         table: curriculumSyllabuses,
         localKey: curriculumSyllabuses.curriculumId,
@@ -26,20 +27,23 @@ async function getFullCurriculum(id: CurriculumId): Promise<Curriculum & BaseDbD
     const result = await postgresDb.query.curriculums.findFirst({
         where: eq(curriculums.id, id),
         with: {
-            // Nested Syllabuses
             cS: {
                 with: {
                     syllabus: {
                         with: {
-                            // Nested Modules
                             sM: {
                                 with: {
                                     module: {
                                         with: {
-                                            // Nested Events
                                             mE: {
                                                 with: {
-                                                    event: true
+                                                    event: { // moduleEvents table
+                                                        with: {
+                                                            cEC: { // curriculumEventConfigurations
+                                                                where: (c, { eq }) => eq(c.curriculumId, id)
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -58,10 +62,9 @@ async function getFullCurriculum(id: CurriculumId): Promise<Curriculum & BaseDbD
         throw new ClientApiError(`גאנט עם מזהה ${id} לא נמצא`);
     }
 
-    // Note: You may need a mapper here depending on if your frontend 
-    // expects the raw Drizzle Relational structure or a flattened array.
     return result as unknown as Curriculum & BaseDbDocument;
 }
+
 basicOperations.getItem = getFullCurriculum;
 export const DbCurriculum = {
     ...basicOperations,

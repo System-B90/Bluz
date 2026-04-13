@@ -45,6 +45,9 @@ export interface BasicGantApi<
     readonly apiDelete: (id: TEntity[ 'id' ], options?: ClientApiProps) => Promise<void>;
     readonly apiGetMany: (ids: Array<TEntity[ 'id' ]>, options?: ClientApiProps) => Promise<Record<TEntity[ 'id' ], TEntity & BaseDocument>>;
     readonly apiLink: (itemId: TEntity[ 'id' ], newParentId: BaseGantItem[ 'id' ], options?: ClientApiProps) => Promise<TEntity & BaseDocument>;
+    readonly apiUnlink: (itemId: TEntity[ 'id' ], oldParentId: BaseGantItem[ 'id' ], options?: ClientApiProps) => Promise<void>;
+    readonly apiSetAllocatedTime: (itemId: TEntity[ 'id' ], containerId: BaseGantItem[ 'id' ], allocatedTime: number, options?: ClientApiProps) => Promise<void>;
+    readonly apiGetAllocatedTime: (itemId: TEntity[ 'id' ], containerId: BaseGantItem[ 'id' ], options?: ClientApiProps) => Promise<number>;
 }
 
 export function clientGantApiBuilder<
@@ -129,6 +132,33 @@ export function clientGantApiBuilder<
         return dateFixup(rawData);
     }
 
+    async function apiUnlink(itemId: TEntity[ 'id' ], oldParentId: BaseGantItem[ 'id' ], options?: ClientApiProps): Promise<void>
+    {
+        await safeApiFetcher(buildItemUrl(itemId, 'link'), {
+            ...options,
+            method: 'DELETE',
+            body: JSON.stringify({ oldParentId }),
+        });
+    }
+
+    async function apiSetAllocatedTime(itemId: TEntity[ 'id' ], containerId: BaseGantItem[ 'id' ], allocatedTime: number, options?: ClientApiProps): Promise<void>
+    {
+        await safeApiFetcher<void>(buildItemUrl(itemId, 'allocate-time'), {
+            ...options,
+            method: 'POST',
+            body: JSON.stringify({ containerId, duration: allocatedTime }),
+        });
+    }
+
+    async function apiGetAllocatedTime(itemId: TEntity[ 'id' ], containerId: BaseGantItem[ 'id' ], options?: ClientApiProps): Promise<number>
+    {
+        const baseUrl = `${window.location.origin}${buildItemUrl(itemId, 'allocate-time')}`;
+        const fetchUrl = new URL(baseUrl);
+        fetchUrl.searchParams.set('curriculumId', containerId);
+
+        return await safeApiFetcher<number>(fetchUrl.toString(), options);
+    }
+
     return {
         apiList,
         apiGet,
@@ -137,5 +167,8 @@ export function clientGantApiBuilder<
         apiDelete,
         apiGetMany,
         apiLink,
+        apiUnlink,
+        apiGetAllocatedTime,
+        apiSetAllocatedTime,
     } as const;
 }

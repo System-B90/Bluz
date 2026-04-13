@@ -1,4 +1,4 @@
-import { LogoGraphic } from './LogoGraphic';
+import { LogoGraphic } from "@/components/header/logo/LogoGraphic";
 
 export default function Logo({ width, height }: { width: number | string; height: number | string; })
 {
