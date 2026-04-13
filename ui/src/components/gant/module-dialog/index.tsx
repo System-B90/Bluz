@@ -1,7 +1,8 @@
 import { Module, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { ModuleEventsView } from "@/components/gant/module-dialog/ModuleEventsView";
 import { HiveModulesView } from "@/components/gant/module-dialog/utils";
-import { useGantFuncs, useModule } from "@/components/gant/state/hooks";
+import { useModule } from "@/components/gant/state/hooks";
+import { useModuleActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleActions";
 import { useCurriculumProviderActions } from "@/components/gant/state/provider";
 import
 {
@@ -16,7 +17,7 @@ import
     Stack,
     TextField
 } from "@mui/material";
-import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useState } from "react";
 
 export interface ModuleDialogProps extends DialogProps
 {
@@ -36,7 +37,7 @@ export function ModuleDialog({
 }: ModuleDialogProps)
 {
     const { closeModuleDialog } = useCurriculumProviderActions();
-    const { removeModule, updateModule } = useGantFuncs();
+    const { removeModule, updateModule } = useModuleActions();
     const moduleDoc = useModule(moduleId ?? '');
 
     const [ isActionLoading, setIsActionLoading ] = useState<boolean>(false);

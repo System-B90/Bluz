@@ -22,3 +22,7 @@ services:
     ports: !override
       - "127.0.0.3:80:80"
       - "127.0.0.3:443:443"
+
+  curriculum-db:
+    ports:
+      - "127.0.0.3:5432:5432"

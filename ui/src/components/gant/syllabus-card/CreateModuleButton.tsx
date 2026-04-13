@@ -1,6 +1,7 @@
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ModuleEventType, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useGantFuncs } from '@/components/gant/state/hooks';
+import { useModuleActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleActions";
+import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
 import AddIcon from '@mui/icons-material/Add';
 import { CircularProgress, IconButton, Tooltip } from '@mui/material';
 import { useSnackbar } from 'notistack';
@@ -9,7 +10,8 @@ import { useCallback, useState } from 'react';
 export function CreateModuleButton({ syllabusId }: { syllabusId: SyllabusId; })
 {
     const { enqueueSnackbar } = useSnackbar();
-    const { createModule, createEvent } = useGantFuncs();
+    const { createEvent } = useModuleEventActions();
+    const { createModule } = useModuleActions();
     const [ isCreating, setIsCreating ] = useState(false);
 
     const clickHandler = useCallback(async () =>

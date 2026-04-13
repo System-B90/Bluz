@@ -4,9 +4,10 @@ import
 } from "drizzle-kit";
 
 export default defineConfig({
-  schema: "./src/api-server/curriculum/schema.ts",
+  schema: "./ui/src/api-server/curriculum/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
     url: process.env.DATABASE_URL!,
+    password: process.env.POSTGRES_PASSWORD!,
   },
 });

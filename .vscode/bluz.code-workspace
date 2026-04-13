@@ -2,11 +2,7 @@
     "folders": [
         {
             "name": "🖥️ UI",
-            "path": "../src"
-        },
-        {
-            "name": "🌐 UI (Public Assets)",
-            "path": "../public"
+            "path": "../ui"
         },
         {
             "name": "⚙️ Session Server",

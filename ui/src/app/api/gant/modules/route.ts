@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { DbModule } from "@/api-server/curriculum/db-module";
-import { buildGantCollectionRoutes } from "@/app/api/gant/base";
+import { buildGantCollectionRoutes } from "@/app/api/gant/base-collection";
 
 const { GET, POST } = buildGantCollectionRoutes({ dbSet: DbModule });
 export { GET, POST };

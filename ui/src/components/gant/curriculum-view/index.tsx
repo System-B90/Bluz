@@ -3,8 +3,9 @@ import { useCurriculum } from '@/components/gant/state/hooks';
 import SyllabusCard from '@/components/gant/syllabus-card';
 import { Box, BoxProps, Card, Skeleton, Typography } from '@mui/material';
 import { useMemo } from 'react';
-import { CreateSyllabusButton } from './CreateSyllabusButton';
+import { CreateSyllabusButton } from './syllabuses-actions-box/CreateSyllabusButton';
 import { HoursCard } from './HoursCard';
+import { SyllabusesActionsBox } from '@/components/gant/curriculum-view/syllabuses-actions-box';
 
 export interface CurriculumViewProps extends BoxProps
 {
@@ -56,12 +57,9 @@ export default function CurriculumView({ curriculumId, ...props }: CurriculumVie
             </Box>
 
             <Box gap={ 2 } flexGrow={ 1 } display={ 'flex' } flexDirection={ 'column' } height={ '100%' }>
-                {/* Syllabuses Section */ }
                 { curriculumId && (
                     <Box display="flex" flexDirection="column" gap={ 1 } width={ '100%' } height={ '100%' }>
-                        <Box display="flex" justifyContent="flex-start" mb={ 1 }>
-                            <CreateSyllabusButton curriculumId={ curriculumId } />
-                        </Box>
+                        <SyllabusesActionsBox curriculumId={ curriculumId } mb={ 1 } />
                         <Box gap={ 2 } display={ 'flex' } flexDirection={ 'column' } flexWrap={ 'wrap' } alignContent={ 'flex-start' } height={ '100%' } sx={ { overflow: 'scroll' } }>
                             { syllabusCards }
                         </Box>

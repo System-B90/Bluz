@@ -1,12 +1,12 @@
 import { CurriculumId } from '@/api-shared/types/gant/curriculum';
-import { useGantFuncs } from '@/components/gant/state/hooks';
+import { useSyllabusActions } from '@/components/gant/state/hooks/gant-funcs/UseSyllabusActions';
 import AddIcon from '@mui/icons-material/Add';
 import { Button } from '@mui/material';
 import { useCallback } from 'react';
 
 export function CreateSyllabusButton({ curriculumId }: { curriculumId: CurriculumId; })
 {
-    const { createSyllabus } = useGantFuncs();
+    const { createSyllabus } = useSyllabusActions();
 
     const clickHandler = useCallback(() =>
     {

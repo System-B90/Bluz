@@ -1,6 +1,6 @@
 import { ModuleEventId, ModuleId } from "@/api-shared/types/gant/curriculum";
 import { ModuleEventView } from "@/components/gant/module-dialog/ModuleEventView";
-import { useGantFuncs } from "@/components/gant/state/hooks";
+import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
 import AddIcon from '@mui/icons-material/Add';
 import
 {
@@ -17,7 +17,7 @@ import { useCallback, useMemo } from "react";
 
 function CreateModuleEventButton({ moduleId }: { moduleId: ModuleId; })
 {
-    const { createEvent } = useGantFuncs();
+    const { createEvent } = useModuleEventActions();
     const clickHandler = useCallback(() =>
     {
         createEvent('מופע חדש', moduleId);

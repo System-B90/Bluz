@@ -2,7 +2,7 @@ import { postgresDb } from "@/api-server/curriculum";
 import { curriculumSyllabuses, moduleToEvents, syllabusModules } from "@/api-server/curriculum/schema";
 import { ClientApiError } from "@/api-shared/errors";
 import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
-import { BasicGantOperations } from "@/app/api/gant/base";
+import { BasicGantOperations } from "@/app/api/gant/base-collection";
 import { eq, inArray, desc } from "drizzle-orm";
 import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 

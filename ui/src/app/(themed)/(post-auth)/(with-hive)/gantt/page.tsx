@@ -10,7 +10,7 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 
-export default function CurriculumPage()
+export default function GanttPage()
 {
     const { enqueueSnackbar } = useSnackbar();
     const [ drawerOpen, setDrawerOpen ] = useState(true);

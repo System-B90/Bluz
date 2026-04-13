@@ -1,0 +1,51 @@
+import { useCallback } from "react";
+import { syllabusApi } from "@/api-client/gant/api";
+import { CurriculumId, SyllabusId, Syllabus } from "@/api-shared/types/gant/curriculum";
+import { useCurriculumProviderActions } from "@/components/gant/state/provider";
+import { withGantErrorHandling } from "@/components/gant/state/hooks/gant-funcs/WithGantErrorHandling";
+
+export function useSyllabusActions()
+{
+    const { dispatch } = useCurriculumProviderActions();
+
+    const createSyllabus = useCallback(async (title: string, curriculumId: CurriculumId, hiveIds: number[] = []) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            const newSyllabus = await syllabusApi.apiCreate({ title, curriculumId, hiveIds });
+            dispatch({ type: 'ADD_SYLLABUS', payload: { syllabus: newSyllabus, curriculumId } });
+            return newSyllabus;
+        }, "Failed to create syllabus:");
+    }, [ dispatch ]);
+
+    const updateSyllabus = useCallback(async (id: SyllabusId, updates: Partial<Syllabus>) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            const updatedSyllabus = await syllabusApi.apiUpdate({ id, ...updates });
+            dispatch({ type: 'UPDATE_SYLLABUS', payload: { id, updates: updatedSyllabus } });
+            return updatedSyllabus;
+        }, `Failed to update syllabus (ID: ${id}):`);
+    }, [ dispatch ]);
+
+    const removeSyllabus = useCallback(async (curriculumId: CurriculumId, syllabusId: SyllabusId) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            await syllabusApi.apiDelete(syllabusId);
+            dispatch({ type: 'REMOVE_SYLLABUS', payload: { curriculumId, syllabusId } });
+        }, `Failed to remove syllabus (ID: ${syllabusId}):`);
+    }, [ dispatch ]);
+
+    const linkSyllabusToCurriculum = useCallback(async (curriculumId: CurriculumId, syllabusId: SyllabusId) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            const linkedSyllabus = await syllabusApi.apiLink(syllabusId, curriculumId);
+            dispatch({ type: 'ADD_SYLLABUS', payload: { syllabus: linkedSyllabus, curriculumId } });
+            return linkedSyllabus;
+        }, `Failed to link syllabus (ID: ${syllabusId}) to curriculum (ID: ${curriculumId}):`);
+    }, [ dispatch ]);
+
+    return { createSyllabus, updateSyllabus, removeSyllabus, linkSyllabusToCurriculum } as const;
+}

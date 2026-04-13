@@ -48,7 +48,6 @@ export default function CurriculumDrawer({
         {
             try
             {
-                // 1. Fetch the lightweight list of IDs
                 const listData = await curriculumApi.apiList();
                 const keys = Object.keys(listData) as CurriculumId[];
 

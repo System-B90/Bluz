@@ -1,11 +1,12 @@
 import { SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useGantFuncs, useSyllabus } from '@/components/gant/state/hooks';
+import { useSyllabus } from '@/components/gant/state/hooks';
+import { useSyllabusActions } from "@/components/gant/state/hooks/gant-funcs/UseSyllabusActions";
 import { TextField } from '@mui/material';
 import { ChangeEventHandler, useCallback, useState } from 'react';
 
 export function SyllabusName({ syllabusId }: { syllabusId: SyllabusId; })
 {
-    const { updateSyllabus } = useGantFuncs();
+    const { updateSyllabus } = useSyllabusActions();
     const syllabus = useSyllabus(syllabusId);
     const [ localTitle, setLocalTitle ] = useState(syllabus?.title ?? '');
 

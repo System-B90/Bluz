@@ -1,18 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
-import { AuthProvider } from '@/components/auth/AuthProvider';
 import { CoursesProvider } from '@/components/base/CoursesProvider';
 import { HiveModulesProvider } from '@/components/base/HiveModulesProvider';
 import { HiveSubjectsProvider } from '@/components/base/HiveSubjectsProvider';
 import { HiveUsersProvider } from '@/components/base/HiveUsersProvider';
+import { OfflineProvider } from '@/components/base/OfflineProvider';
 import { RoomsProvider } from '@/components/base/RoomsProvider';
 import { SettingsProvider } from '@/components/base/SettingsProvider';
 import ScheduleAppBar from '@/components/header/AppBar';
-import { Box } from '@mui/material';
-import SettingsDialog from '@/components/settings-dialog/SettingsDialog';
-import { OfflineProvider } from '@/components/base/OfflineProvider';
 import { CalendarProvider } from '@/components/schedule/calendar/calendar-provider';
+import SettingsDialog from '@/components/settings-dialog/SettingsDialog';
+import { Box } from '@mui/material';
+import React, { useState } from 'react';
 
 export default function PostAuthLayout({ children }: { children: React.ReactNode; })
 {

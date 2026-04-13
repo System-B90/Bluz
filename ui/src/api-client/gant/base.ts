@@ -22,13 +22,21 @@ export function baseDocumentFixup<T extends RawBaseDocument | null>(doc: T): T |
     return doc;
 }
 
-export interface ClientGantApiBuilderProps<TEntity extends BaseGantItem, ApiT, TCreatePayload = Omit<TEntity, 'id'>>
+export interface ClientGantApiBuilderProps<
+    TEntity extends BaseGantItem,
+    ApiT,
+    TCreatePayload = Omit<TEntity, 'id'>,
+>
 {
     apiBaseUrl: string;
     dateFixup: DateFixup<TEntity>;
 }
 
-export interface BasicGantApi<TEntity extends BaseGantItem, ApiT, TCreatePayload = Omit<TEntity, 'id'>>
+export interface BasicGantApi<
+    TEntity extends BaseGantItem,
+    ApiT,
+    TCreatePayload = Omit<TEntity, 'id'>,
+>
 {
     readonly apiList: (options?: ClientApiProps) => Promise<Record<TEntity[ 'id' ], TEntity[ 'title' ]>>;
     readonly apiGet: (id: TEntity[ 'id' ], options?: ClientApiProps) => Promise<ApiT>;
@@ -36,6 +44,7 @@ export interface BasicGantApi<TEntity extends BaseGantItem, ApiT, TCreatePayload
     readonly apiUpdate: (updates: Partial<TEntity> & { id: TEntity[ 'id' ]; }, options?: ClientApiProps) => Promise<TEntity & BaseDocument>;
     readonly apiDelete: (id: TEntity[ 'id' ], options?: ClientApiProps) => Promise<void>;
     readonly apiGetMany: (ids: Array<TEntity[ 'id' ]>, options?: ClientApiProps) => Promise<Record<TEntity[ 'id' ], TEntity & BaseDocument>>;
+    readonly apiLink: (itemId: TEntity[ 'id' ], newParentId: BaseGantItem[ 'id' ], options?: ClientApiProps) => Promise<TEntity & BaseDocument>;
 }
 
 export function clientGantApiBuilder<
@@ -47,11 +56,10 @@ export function clientGantApiBuilder<
     dateFixup
 }: ClientGantApiBuilderProps<TEntity, ApiT, TCreatePayload>): BasicGantApi<TEntity, ApiT, TCreatePayload>
 {
-
     type TDocument = TEntity & BaseDocument;
 
-    // Helper to safely construct URLs without double slashes
     const buildUrl = (path: string = "") => `${apiBaseUrl.replace(/\/$/, '')}${path ? `/${path}` : ''}`;
+    const buildItemUrl = (id: TEntity[ 'id' ], path: string = "") => `${apiBaseUrl.replace(/\/$/, '')}/${id}${path ? `/${path}` : ''}`;
 
     async function apiList(options?: ClientApiProps): Promise<Record<TEntity[ 'id' ], TEntity[ 'title' ]>>
     {
@@ -60,7 +68,7 @@ export function clientGantApiBuilder<
 
     async function apiGet(id: TEntity[ 'id' ], options?: ClientApiProps): Promise<ApiT>
     {
-        const rawData = await safeApiFetcher(buildUrl(id), options);
+        const rawData = await safeApiFetcher(buildItemUrl(id), options);
         return dateFixup(rawData) as ApiT;
     }
 
@@ -76,7 +84,6 @@ export function clientGantApiBuilder<
 
     async function apiUpdate(updates: Partial<TEntity> & { id: TEntity[ 'id' ]; }, options?: ClientApiProps): Promise<TDocument>
     {
-        // Destructure to isolate the ID and prevent it from leaking into the PATCH body
         const { id, ...patchPayload } = updates;
 
         const rawData = await safeApiFetcher(buildUrl(id), {
@@ -89,7 +96,7 @@ export function clientGantApiBuilder<
 
     async function apiDelete(id: TEntity[ 'id' ], options?: ClientApiProps): Promise<void>
     {
-        await safeApiFetcher(buildUrl(id), {
+        await safeApiFetcher(buildItemUrl(id), {
             ...options,
             method: 'DELETE',
         });
@@ -112,6 +119,16 @@ export function clientGantApiBuilder<
         }, {} as Record<TEntity[ 'id' ], TDocument>);
     }
 
+    async function apiLink(itemId: TEntity[ 'id' ], newParentId: BaseGantItem[ 'id' ], options?: ClientApiProps): Promise<TDocument>
+    {
+        const rawData = await safeApiFetcher(buildItemUrl(itemId, 'link'), {
+            ...options,
+            method: 'POST',
+            body: JSON.stringify({ newParentId }),
+        });
+        return dateFixup(rawData);
+    }
+
     return {
         apiList,
         apiGet,
@@ -119,5 +136,6 @@ export function clientGantApiBuilder<
         apiUpdate,
         apiDelete,
         apiGetMany,
+        apiLink,
     } as const;
 }

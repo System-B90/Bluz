@@ -1,6 +1,7 @@
 import { ModuleEvent, ModuleEventId, ModuleEventType, ModuleId } from "@/api-shared/types/gant/curriculum";
 import NumberSpinner from "@/components/base/NumberSpinner";
-import { useEvent, useGantFuncs } from "@/components/gant/state/hooks";
+import { useEvent } from "@/components/gant/state/hooks";
+import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
 import DeleteIcon from '@mui/icons-material/Delete';
 import
 {
@@ -33,7 +34,7 @@ function ModuleEventTitle({ moduleEvent, handleCommit }: { moduleEvent: ModuleEv
 export function ModuleEventView({ moduleId, eventId }: { moduleId: ModuleId; eventId: ModuleEventId; })
 {
     const moduleEvent = useEvent(eventId);
-    const { removeEvent, updateEvent } = useGantFuncs();
+    const { removeEvent, updateEvent } = useModuleEventActions();
 
     const handleCommit = useCallback((updates: Partial<ModuleEvent>) =>
     {

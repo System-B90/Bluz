@@ -1,10 +1,10 @@
 import { postgresDb } from "@/api-server/curriculum";
-import { drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } from "@/api-server/curriculum/db-base";
-import { modules, moduleEvents, moduleToEvents } from "@/api-server/curriculum/schema";
+import { BaseDbDocument, drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } from "@/api-server/curriculum/db-base";
+import { modules, moduleToEvents, syllabusModules } from "@/api-server/curriculum/schema";
 import { ClientApiError } from "@/api-shared/errors";
 import { CreateModulePayload } from "@/api-shared/types/gant/create-payloads";
-import { Module, ModuleId, ModuleEventId } from "@/api-shared/types/gant/curriculum";
-import { eq, and } from "drizzle-orm";
+import { Module, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { and, eq } from "drizzle-orm";
 
 const basicOperations = drizzleOperationsBuilder<
     Module,
@@ -24,56 +24,55 @@ const basicOperations = drizzleOperationsBuilder<
     },
 });
 
-/**
- * Associates a specific event with a module in the junction table.
- */
-async function addEventToModule(moduleId: ModuleId, eventId: ModuleEventId): Promise<void>
+
+async function addModuleToSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): Promise<Module & BaseDbDocument>
 {
     try
     {
-        await postgresDb.insert(moduleToEvents).values({
+        await postgresDb.insert(syllabusModules).values({
+            syllabusId: syllabusId,
             moduleId: moduleId,
-            eventId: eventId,
         });
+        return await basicOperations.getItem(moduleId);
     } catch (error: any)
     {
-        // Unique Violation: Event already linked to this module
-        if (error.code === UNIQUE_VIOLATION)
+        const cause = error.cause as { name: string; severity: string; code: string; detail: string; };
+
+        // Unique Violation: Module already linked
+        if (cause?.code === UNIQUE_VIOLATION)
         {
-            throw new ClientApiError(`האירוע כבר משויך למודול זה`);
+            throw new ClientApiError(`המודול כבר משויך לסילבוס זה`);
         }
-        // Foreign Key Violation: Module or Event missing
-        if (error.code === FOREIGN_KEY_VIOLATION)
+        // Foreign Key Violation: Syllabus or Module missing
+        if (cause?.code === FOREIGN_KEY_VIOLATION)
         {
-            throw new ClientApiError(`מודול או אירוע לא קיימים במערכת`);
+            throw new ClientApiError(`סילבוס או מודול לא קיימים במערכת`);
         }
 
-        throw new ClientApiError(`Failed to add event ${eventId} to module ${moduleId}`);
+        throw new ClientApiError(`Failed to add module ${moduleId} to syllabus ${syllabusId}`);
     }
 }
 
-/**
- * Removes the association between a module and an event.
- */
-async function removeEventFromModule(moduleId: ModuleId, eventId: ModuleEventId): Promise<void>
+async function removeModuleFromSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): Promise<void>
 {
-    const result = await postgresDb.delete(moduleToEvents)
+    const result = await postgresDb.delete(syllabusModules)
         .where(
             and(
-                eq(moduleToEvents.moduleId, moduleId),
-                eq(moduleToEvents.eventId, eventId)
+                eq(syllabusModules.syllabusId, syllabusId),
+                eq(syllabusModules.moduleId, moduleId)
             )
         )
-        .returning({ deletedModuleId: moduleToEvents.moduleId });
+        .returning({ deletedSyllabusId: syllabusModules.syllabusId });
 
     if (result.length === 0)
     {
-        throw new ClientApiError(`No mapping found for event ${eventId} in module ${moduleId}`);
+        throw new ClientApiError(`No mapping found for module ${moduleId} in syllabus ${syllabusId}`);
     }
 }
 
+
 export const DbModule = {
     ...basicOperations,
-    addEvent: addEventToModule,
-    removeEvent: removeEventFromModule,
+    linkItem: addModuleToSyllabus,
+    unlinkItem: removeModuleFromSyllabus,
 } as const;
