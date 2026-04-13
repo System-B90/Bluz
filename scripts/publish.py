@@ -27,6 +27,7 @@ ROOT_PACKAGE = Path("package.json")
 SESSIONS_PACKAGE = Path("session-server/package.json")
 
 STATE = {"verbose": False}
+TAG_BASE_BRANCH_NAME = "master"
 
 
 def run_git(
@@ -169,9 +170,9 @@ def main(
     )
 
     current_branch = run_git("rev-parse --abbrev-ref HEAD")
-    if current_branch != "dev":
+    if current_branch != TAG_BASE_BRANCH_NAME:
         typer.secho(
-            f"❌ Error: Must be on 'dev' branch. (Current: {current_branch})",
+            f"❌ Error: Must be on '{TAG_BASE_BRANCH_NAME}' branch. (Current: {current_branch})",
             fg=typer.colors.RED,
         )
         raise typer.Exit(code=1)
@@ -222,7 +223,10 @@ def main(
     run_git(f'tag -a {new_tag} -m "Release {new_version}"')
 
     if not dry:
-        run_git("push origin dev", description="Pushing dev branch")
+        run_git(
+            f"push origin {TAG_BASE_BRANCH_NAME}",
+            description=f"Pushing {TAG_BASE_BRANCH_NAME} branch",
+        )
         run_git(f"push origin {new_tag}", description=f"Pushing tag {new_tag}")
     else:
         typer.secho(
