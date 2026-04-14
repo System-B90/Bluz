@@ -19,14 +19,12 @@ export default function SyllabusesTab({ curriculumId }: { curriculumId: Curricul
     return (
 
         <Box gap={ 2 } flexGrow={ 1 } display={ 'flex' } flexDirection={ 'column' } height={ '100%' }>
-            { curriculumId && (
-                <Box display="flex" flexDirection="column" gap={ 1 } width={ '100%' } height={ '100%' }>
-                    <SyllabusesActionsBox curriculumId={ curriculumId } mb={ 1 } />
-                    <Box gap={ 2 } display={ 'flex' } flexDirection={ 'column' } flexWrap={ 'wrap' } alignContent={ 'flex-start' } height={ '100%' } sx={ { overflowX: 'scroll' } }>
-                        { syllabusCards }
-                    </Box>
+            <Box display="flex" flexDirection="column" gap={ 1 } width={ '100%' } height={ '100%' }>
+                <SyllabusesActionsBox curriculumId={ curriculumId } mb={ 1 } />
+                <Box gap={ 2 } display={ 'flex' } flexDirection={ 'column' } flexWrap={ 'wrap' } alignContent={ 'flex-start' } height={ '100%' } sx={ { overflowX: 'scroll' } }>
+                    { syllabusCards }
                 </Box>
-            ) }
+            </Box>
         </Box>
     );
 }
