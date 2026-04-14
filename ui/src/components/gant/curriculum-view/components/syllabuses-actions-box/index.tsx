@@ -1,6 +1,6 @@
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
-import { CreateSyllabusButton } from "@/components/gant/curriculum-view/syllabuses-actions-box/CreateSyllabusButton";
-import SyllabusSelectionField from "@/components/gant/curriculum-view/syllabuses-actions-box/SyllabusSelectionField";
+import { CreateSyllabusButton } from "@/components/gant/curriculum-view/components/syllabuses-actions-box/CreateSyllabusButton";
+import SyllabusSelectionField from "@/components/gant/curriculum-view/components/syllabuses-actions-box/SyllabusSelectionField";
 import { Box, BoxProps } from "@mui/material";
 
 export interface SyllabusesActionsBoxProps extends Omit<BoxProps, 'display' | 'justifyContent'>

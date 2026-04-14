@@ -5,11 +5,11 @@
  * Author: Michael K. Steinberg
  */
 
-import { OverviewTab } from '@/components/gant/curriculum-view/WorkTimePanel/OverviewTab';
-import { WorkTimePanelProps } from '@/components/gant/curriculum-view/WorkTimePanel/types';
-import { useWorkTimePanelLogic } from '@/components/gant/curriculum-view/WorkTimePanel/useWorkTimePanelLogic';
-import { cloneWeeks, pickNextDay } from '@/components/gant/curriculum-view/WorkTimePanel/utils';
-import { WeekAccordion } from '@/components/gant/curriculum-view/WorkTimePanel/WeekAccordion';
+import { OverviewTab } from '@/components/gant/curriculum-view/components/WorkTimePanel/OverviewTab';
+import { WorkTimePanelProps } from '@/components/gant/curriculum-view/components/WorkTimePanel/types';
+import { useWorkTimePanelLogic } from '@/components/gant/curriculum-view/components/WorkTimePanel/useWorkTimePanelLogic';
+import { cloneWeeks, pickNextDay } from '@/components/gant/curriculum-view/components/WorkTimePanel/utils';
+import { WeekAccordion } from '@/components/gant/curriculum-view/components/WorkTimePanel/WeekAccordion';
 import AddIcon from '@mui/icons-material/Add';
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';

@@ -1,8 +1,8 @@
 import { CurriculumId } from '@/api-shared/types/gant/curriculum';
+import { EditableCurriculumField } from '@/components/gant/curriculum-view/components/curriculum-about-card/EditableCurriculumField';
 import { useCurriculumActions } from '@/components/gant/state/hooks/gant-funcs/UseCurriculumActions';
 import { Typography } from '@mui/material';
 import { useCallback } from 'react';
-import { EditableCurriculumField } from '@/components/gant/curriculum-view/curriculum-about-card/EditableCurriculumField';
 
 export interface CurriculumNameProps
 {

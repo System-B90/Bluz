@@ -1,12 +1,12 @@
 import { CurriculumId } from '@/api-shared/types/gant/curriculum';
-import { CurriculumAboutCard } from '@/components/gant/curriculum-view/curriculum-about-card';
-import { SyllabusesActionsBox } from '@/components/gant/curriculum-view/syllabuses-actions-box';
+import { CurriculumAboutCard } from '@/components/gant/curriculum-view/components/curriculum-about-card';
+import { SyllabusesActionsBox } from '@/components/gant/curriculum-view/components/syllabuses-actions-box';
 import { useCurriculum } from '@/components/gant/state/hooks';
 import SyllabusCard from '@/components/gant/syllabus-card';
 import { Box, BoxProps } from '@mui/material';
 import { useMemo } from 'react';
-import { HoursCard } from './HoursCard';
-import { WorkTimePanel } from './WorkTimePanel';
+import { HoursCard } from './components/HoursCard';
+import { WorkTimePanel } from './components/WorkTimePanel';
 
 export interface CurriculumViewProps extends BoxProps
 {

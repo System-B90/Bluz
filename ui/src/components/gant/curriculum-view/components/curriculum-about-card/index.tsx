@@ -1,8 +1,8 @@
-import { CurriculumId } from '@/api-shared/types/gant/curriculum';
 import { CurriculumDocument } from '@/api-client/gant/curriculum';
+import { CurriculumId } from '@/api-shared/types/gant/curriculum';
+import { CurriculumDescription } from '@/components/gant/curriculum-view/components/curriculum-about-card/CurriculumDescription';
+import { CurriculumName } from '@/components/gant/curriculum-view/components/curriculum-about-card/CurriculumName';
 import { Box, Card, Skeleton, Typography } from '@mui/material';
-import { CurriculumName } from '@/components/gant/curriculum-view/curriculum-about-card/CurriculumName';
-import { CurriculumDescription } from '@/components/gant/curriculum-view/curriculum-about-card/CurriculumDescription';
 
 export interface CurriculumCardProps
 {
