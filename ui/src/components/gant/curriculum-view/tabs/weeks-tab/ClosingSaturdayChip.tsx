@@ -38,7 +38,7 @@ export function ClosingSaturdayChip({
             updatedDays.push({ day: DayName.Saturday, totalWorkingHours: 2 });
         }
         updateWeek(curriculumId, weekIndex, { closingSaturday: isClosing, days: updatedDays });
-    }, [ week, week?.days, curriculumId, weekIndex, closingSaturday, updateWeek ]);
+    }, [ week, curriculumId, weekIndex, closingSaturday, updateWeek ]);
 
     return (
         <Tooltip title={ closingSaturday ? "סוגרים שבת" : "יוצאים הביתה" } arrow>
