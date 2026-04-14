@@ -37,7 +37,7 @@ export function ModuleDialog({
 }: ModuleDialogProps)
 {
     const { closeModuleDialog } = useCurriculumProviderActions();
-    const { removeModule, updateModule } = useModuleActions();
+    const { deleteModule, updateModule } = useModuleActions();
     const moduleDoc = useModule(moduleId ?? '');
 
     const [ isActionLoading, setIsActionLoading ] = useState<boolean>(false);
@@ -62,7 +62,7 @@ export function ModuleDialog({
         if (!syllabusId || !moduleId) return;
 
         setIsActionLoading(true);
-        removeModule(syllabusId, moduleId)
+        deleteModule(syllabusId, moduleId)
             .then(() =>
             {
                 closeModuleDialog();
@@ -70,7 +70,7 @@ export function ModuleDialog({
                 setOpen(false);
             })
             .catch(() => setIsActionLoading(false));
-    }, [ syllabusId, moduleId, removeModule, closeModuleDialog, setOpen ]);
+    }, [ syllabusId, moduleId, deleteModule, closeModuleDialog, setOpen ]);
 
     // Ensure hooks are called before this check
     if (syllabusId === null || moduleId === null) return null;

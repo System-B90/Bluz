@@ -34,7 +34,7 @@ function ModuleEventTitle({ moduleEvent, handleCommit }: { moduleEvent: ModuleEv
 export function ModuleEventView({ moduleId, eventId }: { moduleId: ModuleId; eventId: ModuleEventId; })
 {
     const moduleEvent = useEvent(eventId);
-    const { removeEvent, updateEvent } = useModuleEventActions();
+    const { deleteEvent, updateEvent } = useModuleEventActions();
 
     const handleCommit = useCallback((updates: Partial<ModuleEvent>) =>
     {
@@ -43,8 +43,8 @@ export function ModuleEventView({ moduleId, eventId }: { moduleId: ModuleId; eve
 
     const handleDeleteClick = useCallback(() =>
     {
-        removeEvent(moduleId, eventId);
-    }, [ eventId, moduleId, removeEvent ]);
+        deleteEvent(moduleId, eventId);
+    }, [ eventId, moduleId, deleteEvent ]);
 
     return (
         <TableRow>

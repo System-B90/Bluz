@@ -1,9 +1,9 @@
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { curriculumApi, CurriculumDocument } from '@/api-client/gant/curriculum';
 import { CreateCurriculumPayload } from '@/api-shared/types/gant/create-payloads';
 import { ActionItemButton } from '@/components/gant/curriculum-fab/action-items/ActionItemButton';
 import { CurriculumAwareActionItemProps } from '@/components/gant/curriculum-fab/action-items/ActionItemProps';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useSnackbar } from 'notistack';
 import { useCallback } from 'react';
 
@@ -17,6 +17,7 @@ function copyWeeksForPayload(source: CurriculumDocument): CreateCurriculumPayloa
     return source.weeks.map((week) => ({
         number: week.number,
         comment: week.comment,
+        closingSaturday: week.closingSaturday,
         days: week.days.map((day) => ({
             day: day.day,
             totalWorkingHours: day.totalWorkingHours,
