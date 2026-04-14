@@ -56,6 +56,7 @@ export interface CurriculumWeek
     number: number;
     days: Array<CurriculumDay>;
     comment?: string;
+    closingSaturday: boolean;
 }
 export interface Curriculum extends BaseGantItem
 {

@@ -39,8 +39,6 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
     const day = useCurriculumDay(curriculumId, weekIndex, dayIndex);
     const { updateDay } = useWeekActions();
 
-    // Key-based reset: When curriculumId/weekIndex/dayIndex changes, 
-    // the component re-mounts or the state resets naturally.
     const [ localTime, setLocalTime ] = useState(() => formatToTime(day?.totalWorkingHours ?? 0));
 
     const handleSync = useCallback(() =>
@@ -52,13 +50,13 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
         }
     }, [ localTime, day?.totalWorkingHours, updateDay, curriculumId, weekIndex, dayIndex ]);
 
-    const adjustHours = (amount: number) =>
+    const adjustHours = useCallback((amount: number) =>
     {
         const newHours = Math.max(0, Math.min(24, (day?.totalWorkingHours ?? 0) + amount));
         const formatted = formatToTime(newHours);
         setLocalTime(formatted); // Update local UI immediately
         updateDay(curriculumId, weekIndex, dayIndex, { totalWorkingHours: newHours });
-    };
+    }, [ curriculumId, weekIndex, dayIndex, updateDay, day?.totalWorkingHours ]);
 
     const isSaturday = day?.day === DayName.Saturday;
     const isDisabled = isSaturday && (day?.totalWorkingHours ?? 0) === 0;
@@ -69,7 +67,7 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
             hover:border-slate-200 hover:bg-white hover:shadow-sm
             ${isDisabled ? 'bg-slate-50 opacity-40' : 'bg-slate-100/50'}
         `}>
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between items-center">
                 <Typography variant="caption" className="font-bold text-slate-600 tracking-tight">
                     { day?.day }
                 </Typography>
@@ -105,14 +103,14 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
 
             <TextField
                 fullWidth
-                placeholder="Day notes..."
+                placeholder="הערות..."
                 variant="standard"
                 defaultValue={ day?.comment ?? '' }
                 onBlur={ (e) => updateDay(curriculumId, weekIndex, dayIndex, { comment: e.target.value }) }
                 slotProps={ {
                     input: {
                         disableUnderline: true,
-                        className: "text-[0.7rem] italic text-slate-500 hover:text-slate-800 transition-colors"
+                        className: "text-[0.7rem] text-slate-500 hover:text-slate-800 transition-colors"
                     }
                 } }
             />

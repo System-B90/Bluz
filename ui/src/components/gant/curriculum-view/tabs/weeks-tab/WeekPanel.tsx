@@ -6,6 +6,7 @@
  */
 
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
+import { ClosingSaturdayChip } from "@/components/gant/curriculum-view/tabs/weeks-tab/ClosingSaturdayChip";
 import { useCurriculumWeek } from "@/components/gant/state/hooks/UseCurriculum";
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Box, Chip, Divider, Paper, Stack, Typography } from "@mui/material";
@@ -49,7 +50,7 @@ export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
                 borderRadius: 2
             } }
         >
-            <Box display='flex' flexDirection={ 'row' } justifyContent='space-between' alignItems='center'>
+            <Box display='flex' flexDirection={ 'row' } justifyContent='space-between' alignItems='flex-start'>
                 <Box>
                     <Typography variant="overline" color="text.secondary">שבוע { week?.number }</Typography>
                     { week?.comment && (
@@ -59,18 +60,22 @@ export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
                     ) }
                 </Box>
 
-                <Chip
-                    icon={ <AccessTimeIcon sx={ { fontSize: '0.95rem !important' } } /> }
-                    label={ `${totalHours} שעות` }
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                    sx={ {
-                        fontWeight: 600,
-                        borderRadius: 1.5,
-                        '& .MuiChip-label': { px: 1.1 },
-                    } }
-                />
+
+                <Box display='flex' flexDirection='column' gap={ 1 } alignItems={ 'flex-end' }>
+                    <Chip
+                        icon={ <AccessTimeIcon sx={ { fontSize: '0.95rem !important' } } /> }
+                        label={ `${totalHours.toFixed(2)} שעות` }
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        sx={ {
+                            fontWeight: 600,
+                            borderRadius: 1.5,
+                            '& .MuiChip-label': { px: 1.1 },
+                        } }
+                    />
+                    <ClosingSaturdayChip curriculumId={ curriculumId } weekIndex={ weekIndex } closingSaturday={ week?.closingSaturday ?? false } />
+                </Box>
             </Box>
 
             <Divider />
