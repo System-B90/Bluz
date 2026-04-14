@@ -45,7 +45,7 @@ export enum DayName
     Friday = 'שישי',
     Saturday = 'שבת',
 }
-export interface CurriculumDays
+export interface CurriculumDay
 {
     day: DayName;
     totalWorkingHours: number;
@@ -54,7 +54,7 @@ export interface CurriculumDays
 export interface CurriculumWeek
 {
     number: number;
-    days: Array<CurriculumDays>;
+    days: Array<CurriculumDay>;
     comment?: string;
 }
 export interface Curriculum extends BaseGantItem

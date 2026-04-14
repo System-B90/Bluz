@@ -5,11 +5,11 @@
  * Author: Michael K. Steinberg
  */
 
-import { CurriculumDays, CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
-import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
+import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { useCurriculumWeek } from "@/components/gant/state/hooks/UseCurriculum";
-import { Box, Divider, Paper, Stack, Typography } from "@mui/material";
-import { useCallback, useMemo } from 'react';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { Box, Chip, Divider, Paper, Stack, Typography } from "@mui/material";
+import { useMemo } from 'react';
 import { DayEntry } from "./DayEntry";
 
 interface WeekPanelProps
@@ -21,28 +21,21 @@ interface WeekPanelProps
 export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
 {
     const week = useCurriculumWeek(curriculumId, weekIndex);
-    const { updateWeek } = useWeekActions();
 
     const totalHours = useMemo(() =>
         (week?.days ?? []).reduce((acc, d) => acc + d.totalWorkingHours, 0),
         [ week?.days ]);
 
-    const handleUpdateDay = useCallback((dayName: DayName, field: keyof CurriculumDays, value: string | number) =>
-    {
-        updateWeek(curriculumId, weekIndex, {
-            days: { [ dayName ]: { [ field ]: value } }
-        });
-    }, [ curriculumId, weekIndex, updateWeek ]);
-
     const renderedDays = useMemo(() =>
-        (week?.days ?? []).map((day) => (
+        (week?.days ?? []).map((day, dayIndex) => (
             <DayEntry
-                key={ day.day }
-                day={ day }
-                onUpdate={ handleUpdateDay }
+                key={ dayIndex }
+                curriculumId={ curriculumId }
+                weekIndex={ weekIndex }
+                dayIndex={ dayIndex }
             />
         )),
-        [ week?.days, handleUpdateDay ]);
+        [ curriculumId, weekIndex, week?.days ]);
 
     return (
         <Paper
@@ -56,18 +49,28 @@ export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
                 borderRadius: 2
             } }
         >
-            <Box>
-                <Typography variant="overline" color="text.secondary">Week { week?.number }</Typography>
-                { week?.comment && (
-                    <Typography variant="body2" sx={ { fontWeight: 'bold', mb: 1 } }>
-                        { week.comment }
-                    </Typography>
-                ) }
-            </Box>
+            <Box display='flex' flexDirection={ 'row' } justifyContent='space-between' alignItems='center'>
+                <Box>
+                    <Typography variant="overline" color="text.secondary">שבוע { week?.number }</Typography>
+                    { week?.comment && (
+                        <Typography variant="body2" sx={ { fontWeight: 'bold', mb: 1 } }>
+                            { week.comment }
+                        </Typography>
+                    ) }
+                </Box>
 
-            <Box sx={ { display: 'flex', justifyContent: 'center', my: 1, gap: 1, alignItems: 'baseline' } }>
-                <Typography variant="body2" color="text.secondary">ס&quot;ך:</Typography>
-                <Typography variant="body2" fontWeight="bold">{ totalHours }</Typography>
+                <Chip
+                    icon={ <AccessTimeIcon sx={ { fontSize: '0.95rem !important' } } /> }
+                    label={ `${totalHours} שעות` }
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    sx={ {
+                        fontWeight: 600,
+                        borderRadius: 1.5,
+                        '& .MuiChip-label': { px: 1.1 },
+                    } }
+                />
             </Box>
 
             <Divider />

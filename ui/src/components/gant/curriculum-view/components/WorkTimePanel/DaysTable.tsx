@@ -1,10 +1,10 @@
-import { CurriculumDays } from '@/api-shared/types/gant/curriculum';
-import { KeyboardEvent } from 'react';
+import { CurriculumDay } from '@/api-shared/types/gant/curriculum';
 import { Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { KeyboardEvent } from 'react';
 
 export interface DaysTableProps
 {
-    days: CurriculumDays[];
+    days: CurriculumDay[];
     canEdit: boolean;
     weekIndex: number;
     onHoursChange: (weekIndex: number, dayIndex: number, nextValueRaw: string) => void;

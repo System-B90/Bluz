@@ -1,22 +1,37 @@
 import { curriculumApi } from "@/api-client/gant/api";
-import { CurriculumId, CurriculumWeek } from "@/api-shared/types/gant/curriculum";
+import { CurriculumDay, CurriculumId, CurriculumWeek } from "@/api-shared/types/gant/curriculum";
 import { withGantErrorHandling } from "@/components/gant/state/hooks/gant-funcs/WithGantErrorHandling";
-import { useCurriculumProviderActions } from "@/components/gant/state/provider";
+import { useCurriculumProviderActions, useCurriculumState } from "@/components/gant/state/provider";
 import { useCallback } from "react";
 
 export function useWeekActions()
 {
+    const state = useCurriculumState();
     const { dispatch } = useCurriculumProviderActions();
 
-    const updateWeek = useCallback(async (id: CurriculumId, weekIndex: number, updates: Partial<CurriculumWeek>) =>
+    const updateWeek = useCallback(async (curriculumId: CurriculumId, weekIndex: number, updates: Partial<CurriculumWeek>) =>
     {
         return withGantErrorHandling(async () =>
         {
-            const updatedCurriculum = await curriculumApi.apiUpdate({ id,  });
-            dispatch({ type: 'UPDATE_CURRICULUM', payload: { id, updates: updatedCurriculum } });
+            const data = state.curriculums[ curriculumId ].weeks;
+            data[ weekIndex ] = { ...data[ weekIndex ], ...updates };
+            const updatedCurriculum = await curriculumApi.apiUpdate({ id: curriculumId, weeks: data });
+            dispatch({ type: 'UPDATE_CURRICULUM', payload: { id: curriculumId, updates: updatedCurriculum } });
             return updatedCurriculum;
-        }, `Failed to update curriculum (ID: ${id}):`);
-    }, [ dispatch ]);
+        }, `Failed to update curriculum (ID: ${curriculumId}):`);
+    }, [ state, dispatch ]);
 
-    return { updateWeek } as const;
+    const updateDay = useCallback(async (curriculumId: CurriculumId, weekIndex: number, dayIndex: number, updates: Partial<CurriculumDay>) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            const data = state.curriculums[ curriculumId ].weeks;
+            data[ weekIndex ].days[ dayIndex ] = { ...data[ weekIndex ].days[ dayIndex ], ...updates };
+            dispatch({ type: 'UPDATE_CURRICULUM', payload: { id: curriculumId, updates: { weeks: data } } });
+            const updatedCurriculum = await curriculumApi.apiUpdate({ id: curriculumId, weeks: data });
+            return updatedCurriculum;
+        }, `Failed to update curriculum (ID: ${curriculumId}):`);
+    }, [ state, dispatch ]);
+
+    return { updateWeek, updateDay } as const;
 }
