@@ -5,8 +5,9 @@
  * Author: Michael K. Steinberg
  */
 
-import { CurriculumId } from "@/api-shared/types/gant/curriculum";
+import { CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
 import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
+import { useCurriculumWeek } from "@/components/gant/state/hooks/UseCurriculum";
 import { EventAvailable, EventBusy } from "@mui/icons-material";
 import { Chip, Tooltip } from "@mui/material";
 import { useCallback } from 'react';
@@ -24,12 +25,20 @@ export function ClosingSaturdayChip({
     closingSaturday
 }: ClosingSaturdayChipProps)
 {
+    const week = useCurriculumWeek(curriculumId, weekIndex);
     const { updateWeek } = useWeekActions();
 
     const clickHandler = useCallback(() =>
     {
-        updateWeek(curriculumId, weekIndex, { closingSaturday: !closingSaturday });
-    }, [ curriculumId, weekIndex, closingSaturday, updateWeek ]);
+        if (!week) { return; }
+        const isClosing = !closingSaturday;
+        const updatedDays = [ ...week.days.filter(d => (isClosing ? true : d.day !== DayName.Saturday)) ];
+        if (isClosing)
+        {
+            updatedDays.push({ day: DayName.Saturday, totalWorkingHours: 2 });
+        }
+        updateWeek(curriculumId, weekIndex, { closingSaturday: isClosing, days: updatedDays });
+    }, [ week, week?.days, curriculumId, weekIndex, closingSaturday, updateWeek ]);
 
     return (
         <Tooltip title={ closingSaturday ? "סוגרים שבת" : "יוצאים הביתה" } arrow>

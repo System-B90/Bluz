@@ -26,17 +26,12 @@ export default function WeeksTab({ curriculumId }: { curriculumId: CurriculumId;
         [ curriculum?.weeks, curriculumId ]);
 
     return (
-        <Box
-            sx={ {
-                display: 'flex',
-                gap: 3,
-                overflowX: 'auto',
-                p: 2,
-                minHeight: '500px',
-                alignItems: 'flex-start'
-            } }
-        >
-            { renderedPanels }
+        <Box gap={ 2 } flexGrow={ 1 } display={ 'flex' } flexDirection={ 'column' } height={ '100%' }>
+            <Box display="flex" flexDirection="column" gap={ 1 } width={ '100%' } height={ '100%' }>
+                <Box gap={ 2 } display={ 'flex' } flexDirection={ 'column' } flexWrap={ 'wrap' } alignContent={ 'flex-start' } height={ '100%' } sx={ { overflowX: 'scroll' } }>
+                    { renderedPanels }
+                </Box>
+            </Box>
         </Box>
     );
 }
