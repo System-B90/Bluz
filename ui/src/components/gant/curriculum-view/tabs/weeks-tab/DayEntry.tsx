@@ -1,14 +1,15 @@
 /**
  * Name: DayEntry.tsx
- * Purpose: Condensed editable row with 15m granularity and Tailwind styling.
- * Created: 2026-04-14
+ * Purpose: Time-masked editable row with whole-hour increments and 15m manual granularity.
+ * Created: 2026-04-15
  * Author: Michael K. Steinberg
  */
 
 import { CurriculumDay, CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
 import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gant/state/hooks/UseCurriculum";
-import { InputAdornment, TextField, Typography } from "@mui/material";
+import { Add, Remove } from "@mui/icons-material";
+import { IconButton, InputAdornment, TextField, Typography } from "@mui/material";
 import React, { useCallback } from 'react';
 
 interface DayEntryProps
@@ -23,13 +24,22 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
     const day = useCurriculumDay(curriculumId, weekIndex, dayIndex);
     const { updateDay } = useWeekActions();
 
+    const currentHours = day?.totalWorkingHours ?? 0;
+
     const handleUpdateDay = useCallback((field: keyof CurriculumDay, value: string | number) =>
     {
         updateDay(curriculumId, weekIndex, dayIndex, { [ field ]: value });
     }, [ curriculumId, weekIndex, dayIndex, updateDay ]);
 
+    // Button Logic: Only increments by whole hours
+    const adjustHours = (amount: number) =>
+    {
+        const newValue = Math.max(0, Math.min(24, currentHours + amount));
+        handleUpdateDay('totalWorkingHours', newValue);
+    };
+
     const isSaturday = day?.day === DayName.Saturday;
-    const isDisabled = isSaturday && day?.totalWorkingHours === 0;
+    const isDisabled = isSaturday && currentHours === 0;
 
     return (
         <div className={ `
@@ -37,28 +47,49 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
             ${isDisabled ? 'opacity-40 grayscale' : 'opacity-100 grayscale-0'}
         `}>
             <div className="flex justify-between items-center mb-1">
-                <Typography variant="caption" className="font-semibold uppercase tracking-wider">
+                <Typography variant="caption" className="font-semibold uppercase tracking-wider text-slate-500">
                     { day?.day }
                 </Typography>
 
-                <TextField
-                    variant="standard"
-                    type="number"
-                    size="small"
-                    value={ day?.totalWorkingHours ?? 0 }
-                    onChange={ (e) => handleUpdateDay('totalWorkingHours', parseFloat(e.target.value)) }
-                    slotProps={ {
-                        input: {
-                            endAdornment: <InputAdornment position="end" className="select-none">h</InputAdornment>,
-                            className: "text-[0.75rem] w-[75px]"
-                        },
-                        htmlInput: {
-                            max: 24,
-                            min: 0,
-                            step: 0.25, // Allows 15min granularity (0.25, 0.5, 0.75)
-                        },
-                    } }
-                />
+                <div className="flex items-center gap-1 bg-white/50 rounded-md px-1">
+                    <IconButton size="small" onClick={ () => adjustHours(-1) } className="p-0.5">
+                        <Remove sx={ { fontSize: '0.9rem' } } />
+                    </IconButton>
+
+                    <TextField
+                        variant="standard"
+                        size="small"
+                        value={ currentHours }
+                        onChange={ (e) =>
+                        {
+                            const val = parseFloat(e.target.value);
+                            if (!isNaN(val)) handleUpdateDay('totalWorkingHours', val);
+                        } }
+                        placeholder="0.00"
+                        slotProps={ {
+                            input: {
+                                disableUnderline: true,
+                                endAdornment: <InputAdornment position="end" className="select-none text-[0.6rem]">h</InputAdornment>,
+                                className: "text-[0.75rem] w-[50px] font-mono text-center"
+                            },
+                            htmlInput: {
+                                step: 0.25, // Internal granularity
+                                min: 0,
+                                max: 24,
+                                type: 'number' // Still provides internal validation
+                            }
+                        } }
+                        sx={ {
+                            '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button': {
+                                display: 'none' // Hide default browser arrows for custom ones
+                            }
+                        } }
+                    />
+
+                    <IconButton size="small" onClick={ () => adjustHours(1) } className="p-0.5">
+                        <Add sx={ { fontSize: '0.9rem' } } />
+                    </IconButton>
+                </div>
             </div>
 
             <TextField
