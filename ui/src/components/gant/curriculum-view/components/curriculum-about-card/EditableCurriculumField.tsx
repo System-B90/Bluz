@@ -1,6 +1,6 @@
 import EditIcon from '@mui/icons-material/Edit';
 import { Box, IconButton, Skeleton, TextField, Tooltip } from '@mui/material';
-import { KeyboardEvent, ReactNode, useCallback, useEffect, useState } from 'react';
+import { KeyboardEvent, ReactNode, useCallback, useState } from 'react';
 
 export interface EditableCurriculumFieldProps
 {
@@ -15,8 +15,7 @@ export interface EditableCurriculumFieldProps
     renderDisplay: (value: string) => ReactNode;
 }
 
-export function EditableCurriculumField({
-    value,
+function EditableCurriculumFieldInner({ value,
     canEdit,
     editTooltip,
     skeletonWidth,
@@ -29,11 +28,6 @@ export function EditableCurriculumField({
 {
     const [ localValue, setLocalValue ] = useState(value ?? '');
     const [ isEditing, setIsEditing ] = useState(false);
-
-    useEffect(() =>
-    {
-        setLocalValue(value ?? '');
-    }, [ value ]);
 
     const beginEditHandler = useCallback(() =>
     {
@@ -114,4 +108,9 @@ export function EditableCurriculumField({
             </Tooltip>
         </Box>
     );
+}
+
+export function EditableCurriculumField(props: EditableCurriculumFieldProps)
+{
+    return (<EditableCurriculumFieldInner key={ props.value ?? '-EditableCurriculumFieldInner-null' } { ...props } />);
 }

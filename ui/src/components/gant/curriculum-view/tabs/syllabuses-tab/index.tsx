@@ -14,7 +14,7 @@ export default function SyllabusesTab({ curriculumId }: { curriculumId: Curricul
         return (curriculum?.syllabuses ?? []).map((syllabusId) => (
             <SyllabusCard key={ syllabusId } syllabusId={ syllabusId } curriculumId={ curriculumId ?? '' } />
         ));
-    }, [ curriculum?.syllabuses ]);
+    }, [ curriculum?.syllabuses, curriculumId ]);
 
     return (
 
