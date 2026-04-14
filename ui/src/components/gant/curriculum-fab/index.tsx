@@ -2,16 +2,16 @@ import { CurriculumDocument } from "@/api-client/gant/curriculum";
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import CurriculumListItems from "@/components/gant/curriculum-fab/CurriculumListItems";
 import { fetchDrawerData, sortCurriculumsByDraftAndUpdatedAt } from "@/components/gant/curriculum-fab/utils";
-import
-{
-    Box,
-    Fab,
-    List,
-    ListSubheader,
-    Popover,
-    Typography
-} from "@mui/material";
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import
+    {
+        Box,
+        Fab,
+        List,
+        ListSubheader,
+        Popover,
+        Typography
+    } from "@mui/material";
 import { useSnackbar } from 'notistack';
 import { Dispatch, MouseEvent, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CurriculumActionItems } from './CurriculumActionItems';
@@ -40,7 +40,6 @@ export default function CurriculumFab({
     useEffect(() =>
     {
         let isMounted = true;
-        setIsFetchingDetails(true);
         fetchDrawerData({ isMounted, enqueueSnackbar, setCurriculumsData, setIsFetchingDetails });
         return () => { isMounted = false; };
     }, [ enqueueSnackbar ]);

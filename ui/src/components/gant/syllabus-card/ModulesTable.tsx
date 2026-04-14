@@ -2,16 +2,16 @@ import { CurriculumId, Syllabus, SyllabusId } from "@/api-shared/types/gant/curr
 import { CreateModuleButton } from "@/components/gant/syllabus-card/CreateModuleButton";
 import { ModuleRow } from "@/components/gant/syllabus-card/ModuleRow";
 import
-{
-    Box,
-    Table,
-    TableBody,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableRow,
-    Typography
-} from '@mui/material';
+    {
+        Box,
+        Table,
+        TableBody,
+        TableCell,
+        TableFooter,
+        TableHead,
+        TableRow,
+        Typography
+    } from '@mui/material';
 import { useMemo } from 'react';
 
 export interface ModulesTableProps
@@ -27,7 +27,7 @@ export function ModulesTable({ syllabusId, syllabusModules, curriculumId }: Modu
         return syllabusModules.map((moduleId) => (
             <ModuleRow key={ moduleId } moduleId={ moduleId } syllabusId={ syllabusId } curriculumId={ curriculumId } />
         ));
-    }, [ syllabusId, syllabusModules ]);
+    }, [ syllabusId, syllabusModules, curriculumId ]);
 
     return (
         <Box sx={ { overflowY: 'auto', flexGrow: 1, border: 1, borderColor: 'divider', borderRadius: 1 } }>
