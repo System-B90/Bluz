@@ -1,10 +1,10 @@
 import { CurriculumDocument } from '@/api-client/gant/curriculum';
 import { useCurriculumState } from '@/components/gant/state/provider';
 import
-{
-    calculateAllocatedTimeForCurriculum,
-    calculateMinimumRequiredTimeForCurriculum
-} from '@/components/gant/utils';
+    {
+        calculateAllocatedTimeForCurriculum,
+        calculateMinimumRequiredTimeForCurriculum
+    } from '@/components/gant/utils';
 import { Box, Card, CircularProgress, Stack, Typography, useTheme } from '@mui/material';
 import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge';
 import { useMemo } from 'react';
@@ -62,7 +62,7 @@ export function HoursCard({ curriculum }: { curriculum: CurriculumDocument | und
                 />
                 <Stack spacing={ 0.5 }>
                     <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
-                        <Typography variant="body2" color="text.secondary">ס"ך:</Typography>
+                        <Typography variant="body2" color="text.secondary">ס&quot;ך:</Typography>
                         <Typography variant="body2" fontWeight="bold">{ totalWorkingHours }</Typography>
                     </Box>
                     <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
