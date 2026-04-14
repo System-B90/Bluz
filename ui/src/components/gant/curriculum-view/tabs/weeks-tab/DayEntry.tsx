@@ -1,16 +1,16 @@
 /**
  * Name: DayEntry.tsx
- * Purpose: Time-masked editable row with whole-hour increments and 15m manual granularity.
+ * Purpose: Professional time-masked input with focus-based sync and key-reset.
  * Created: 2026-04-15
  * Author: Michael K. Steinberg
  */
 
-import { CurriculumDay, CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
+import { CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
 import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gant/state/hooks/UseCurriculum";
 import { Add, Remove } from "@mui/icons-material";
-import { IconButton, InputAdornment, TextField, Typography } from "@mui/material";
-import React, { useCallback } from 'react';
+import { IconButton, TextField, Typography } from "@mui/material";
+import React, { useCallback, useState } from 'react';
 
 interface DayEntryProps
 {
@@ -19,91 +19,100 @@ interface DayEntryProps
     dayIndex: number;
 }
 
+const formatToTime = (hours: number): string =>
+{
+    const hh = Math.floor(hours);
+    const mm = Math.round((hours - hh) * 60);
+    return `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}`;
+};
+
+const parseToHours = (timeStr: string): number =>
+{
+    const parts = timeStr.split(':');
+    const hh = parseInt(parts[ 0 ] || '0', 10);
+    const mm = parseInt(parts[ 1 ] || '0', 10);
+    return hh + (mm / 60);
+};
+
 export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEntryProps) =>
 {
     const day = useCurriculumDay(curriculumId, weekIndex, dayIndex);
     const { updateDay } = useWeekActions();
 
-    const currentHours = day?.totalWorkingHours ?? 0;
+    // Key-based reset: When curriculumId/weekIndex/dayIndex changes, 
+    // the component re-mounts or the state resets naturally.
+    const [ localTime, setLocalTime ] = useState(() => formatToTime(day?.totalWorkingHours ?? 0));
 
-    const handleUpdateDay = useCallback((field: keyof CurriculumDay, value: string | number) =>
+    const handleSync = useCallback(() =>
     {
-        updateDay(curriculumId, weekIndex, dayIndex, { [ field ]: value });
-    }, [ curriculumId, weekIndex, dayIndex, updateDay ]);
+        const numericValue = parseToHours(localTime);
+        if (numericValue !== day?.totalWorkingHours)
+        {
+            updateDay(curriculumId, weekIndex, dayIndex, { totalWorkingHours: numericValue });
+        }
+    }, [ localTime, day?.totalWorkingHours, updateDay, curriculumId, weekIndex, dayIndex ]);
 
-    // Button Logic: Only increments by whole hours
     const adjustHours = (amount: number) =>
     {
-        const newValue = Math.max(0, Math.min(24, currentHours + amount));
-        handleUpdateDay('totalWorkingHours', newValue);
+        const newHours = Math.max(0, Math.min(24, (day?.totalWorkingHours ?? 0) + amount));
+        const formatted = formatToTime(newHours);
+        setLocalTime(formatted); // Update local UI immediately
+        updateDay(curriculumId, weekIndex, dayIndex, { totalWorkingHours: newHours });
     };
 
     const isSaturday = day?.day === DayName.Saturday;
-    const isDisabled = isSaturday && currentHours === 0;
+    const isDisabled = isSaturday && (day?.totalWorkingHours ?? 0) === 0;
 
     return (
         <div className={ `
-            p-2 rounded transition-all duration-200 bg-black/5
-            ${isDisabled ? 'opacity-40 grayscale' : 'opacity-100 grayscale-0'}
+            group p-3 rounded-lg border border-transparent transition-all duration-150
+            hover:border-slate-200 hover:bg-white hover:shadow-sm
+            ${isDisabled ? 'bg-slate-50 opacity-40' : 'bg-slate-100/50'}
         `}>
-            <div className="flex justify-between items-center mb-1">
-                <Typography variant="caption" className="font-semibold uppercase tracking-wider text-slate-500">
+            <div className="flex justify-between items-center mb-2">
+                <Typography variant="caption" className="font-bold text-slate-600 tracking-tight">
                     { day?.day }
                 </Typography>
 
-                <div className="flex items-center gap-1 bg-white/50 rounded-md px-1">
-                    <IconButton size="small" onClick={ () => adjustHours(-1) } className="p-0.5">
-                        <Remove sx={ { fontSize: '0.9rem' } } />
+                <div className="flex items-center gap-2 bg-white rounded-md border border-slate-200 px-1 py-0.5 shadow-inner">
+                    <IconButton
+                        size="small"
+                        onClick={ () => adjustHours(-1) }
+                        className="hover:text-red-500 transition-colors"
+                        sx={ { p: 0.25 } }
+                    >
+                        <Remove sx={ { fontSize: '1rem' } } />
                     </IconButton>
 
-                    <TextField
-                        variant="standard"
-                        size="small"
-                        value={ currentHours }
-                        onChange={ (e) =>
-                        {
-                            const val = parseFloat(e.target.value);
-                            if (!isNaN(val)) handleUpdateDay('totalWorkingHours', val);
-                        } }
-                        placeholder="0.00"
-                        slotProps={ {
-                            input: {
-                                disableUnderline: true,
-                                endAdornment: <InputAdornment position="end" className="select-none text-[0.6rem]">h</InputAdornment>,
-                                className: "text-[0.75rem] w-[50px] font-mono text-center"
-                            },
-                            htmlInput: {
-                                step: 0.25, // Internal granularity
-                                min: 0,
-                                max: 24,
-                                type: 'number' // Still provides internal validation
-                            }
-                        } }
-                        sx={ {
-                            '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button': {
-                                display: 'none' // Hide default browser arrows for custom ones
-                            }
-                        } }
+                    <input
+                        className="w-12 text-center font-mono text-xs bg-transparent border-none focus:ring-0 focus:outline-none text-slate-800"
+                        value={ localTime }
+                        onChange={ (e) => setLocalTime(e.target.value) }
+                        onBlur={ handleSync }
+                        placeholder="00:00"
                     />
 
-                    <IconButton size="small" onClick={ () => adjustHours(1) } className="p-0.5">
-                        <Add sx={ { fontSize: '0.9rem' } } />
+                    <IconButton
+                        size="small"
+                        onClick={ () => adjustHours(1) }
+                        className="hover:text-blue-500 transition-colors"
+                        sx={ { p: 0.25 } }
+                    >
+                        <Add sx={ { fontSize: '1rem' } } />
                     </IconButton>
                 </div>
             </div>
 
             <TextField
                 fullWidth
-                placeholder="Add comment..."
+                placeholder="Day notes..."
                 variant="standard"
-                size="small"
-                value={ day?.comment ?? '' }
-                onChange={ (e) => handleUpdateDay('comment', e.target.value) }
-                autoComplete="off"
-                sx={ {
-                    '& .MuiInput-input': {
-                        fontSize: '0.7rem',
-                        paddingY: '2px'
+                defaultValue={ day?.comment ?? '' }
+                onBlur={ (e) => updateDay(curriculumId, weekIndex, dayIndex, { comment: e.target.value }) }
+                slotProps={ {
+                    input: {
+                        disableUnderline: true,
+                        className: "text-[0.7rem] italic text-slate-500 hover:text-slate-800 transition-colors"
                     }
                 } }
             />
