@@ -1,85 +1,42 @@
 /**
  * Name: WeeksTab.tsx
- * Purpose: Renders vertical panels for each week in the curriculum.
+ * Purpose: Container for horizontal scrolling week panels in Bluz.
  * Created: 2026-04-14
  * Author: Michael K. Steinberg
  */
 
-import { CurriculumDays, CurriculumId, CurriculumWeek } from "@/api-shared/types/gant/curriculum";
+import { CurriculumId } from "@/api-shared/types/gant/curriculum";
+import { WeekPanel } from "@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useCurriculum } from "@/components/gant/state/hooks";
-import { Box, Divider, Paper, Stack, Typography } from "@mui/material";
-
-interface WeekPanelProps
-{
-    week: CurriculumWeek;
-}
-
-const WeekPanel = ({ week }: WeekPanelProps) =>
-{
-    return (
-        <Paper
-            elevation={ 2 }
-            sx={ {
-                minWidth: 250,
-                maxHeight: '80vh',
-                overflowY: 'auto',
-                p: 2,
-                bgcolor: 'background.default'
-            } }
-        >
-            <Typography variant="h6" gutterBottom>
-                Week { week.number }
-            </Typography>
-            <Divider sx={ { mb: 2 } } />
-
-            <Stack spacing={ 2 }>
-                { week.days.map((day: CurriculumDays) => (
-                    <Box key={ day.day } sx={ { p: 1, borderBottom: '1px solid', borderColor: 'divider' } }>
-                        <Typography variant="subtitle2" color="primary">
-                            { day.day }
-                        </Typography>
-                        <Typography variant="body2">
-                            Hours: { day.totalWorkingHours }
-                        </Typography>
-                        { day.comment && (
-                            <Typography variant="caption" color="text.secondary">
-                                { day.comment }
-                            </Typography>
-                        ) }
-                    </Box>
-                )) }
-            </Stack>
-
-            { week.comment && (
-                <Box sx={ { mt: 2, pt: 1, borderTop: '1px dashed grey' } }>
-                    <Typography variant="caption" sx={ { fontStyle: 'italic' } }>
-                        Note: { week.comment }
-                    </Typography>
-                </Box>
-            ) }
-        </Paper>
-    );
-};
+import { Box } from "@mui/material";
+import { useMemo } from 'react';
 
 export default function WeeksTab({ curriculumId }: { curriculumId: CurriculumId; })
 {
     const curriculum = useCurriculum(curriculumId ?? '');
-    const weeks: Array<CurriculumWeek> = curriculum?.weeks || [];
+
+    const renderedPanels = useMemo(() =>
+        (curriculum?.weeks || []).map((week, index) => (
+            <WeekPanel
+                key={ week.number }
+                curriculumId={ curriculumId }
+                weekIndex={ index }
+            />
+        )),
+        [ curriculum?.weeks, curriculumId ]);
 
     return (
         <Box
             sx={ {
                 display: 'flex',
-                flexDirection: 'row',
-                gap: 2,
+                gap: 3,
                 overflowX: 'auto',
-                pb: 2,
+                p: 2,
+                minHeight: '500px',
                 alignItems: 'flex-start'
             } }
         >
-            { weeks.map((week) => (
-                <WeekPanel key={ week.number } week={ week } />
-            )) }
+            { renderedPanels }
         </Box>
     );
 }
