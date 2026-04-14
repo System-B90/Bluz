@@ -20,14 +20,39 @@ interface WeekPanelProps
     weekIndex: number;
 }
 
-export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
+export function WeekWorkTimeChip({
+    curriculumId,
+    weekIndex,
+}: {
+    curriculumId: CurriculumId;
+    weekIndex: number;
+})
 {
     const week = useCurriculumWeek(curriculumId, weekIndex);
-    const { updateWeek } = useWeekActions();
 
     const totalHours = useMemo(() =>
         (week?.days ?? []).reduce((acc, d) => acc + d.totalWorkingHours, 0),
         [ week?.days ]);
+
+    return (
+        <Chip
+            icon={ <AccessTimeIcon sx={ { fontSize: '0.95rem !important' } } /> }
+            label={ `${totalHours.toFixed(2)} שעות` }
+            size="small"
+            color="primary"
+            variant="outlined"
+            sx={ {
+                fontWeight: 600,
+                borderRadius: 1.5,
+                '& .MuiChip-label': { px: 1.1 },
+            } }
+        />
+    );
+}
+export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
+{
+    const week = useCurriculumWeek(curriculumId, weekIndex);
+    const { updateWeek } = useWeekActions();
 
     const handleCommentBlur = useCallback((e: React.FocusEvent<HTMLTextAreaElement>) =>
     {
@@ -72,24 +97,16 @@ export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
                         fullWidth
                         defaultValue={ week?.comment ?? '' }
                         onBlur={ handleCommentBlur }
-                        placeholder="הוסף הערת שבוע..."
+                        placeholder="הוסיפו הערת שבוע..."
                         className="text-sm font-bold text-slate-800"
                         sx={ { p: 0, mt: 0.5 } }
                     />
                 </Box>
 
                 <Box display='flex' flexDirection='column' gap={ 1 } alignItems='flex-end' sx={ { minWidth: 'fit-content' } }>
-                    <Chip
-                        icon={ <AccessTimeIcon sx={ { fontSize: '0.95rem !important' } } /> }
-                        label={ `${totalHours.toFixed(2)} שעות` }
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                        sx={ {
-                            fontWeight: 600,
-                            borderRadius: 1.5,
-                            '& .MuiChip-label': { px: 1.1 },
-                        } }
+                    <WeekWorkTimeChip
+                        curriculumId={ curriculumId }
+                        weekIndex={ weekIndex }
                     />
                     <ClosingSaturdayChip
                         curriculumId={ curriculumId }

@@ -1,19 +1,20 @@
 'use client';
 
 import { createFromPalette } from '@/components/theme/CreateFromPalette';
+import { GlobalStyles } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider as MUIThemeProvider, createTheme } from '@mui/material/styles';
 import type { ThemeProviderProps } from 'next-themes';
 import { ThemeProvider as NextThemesProvider, useTheme as nextUseTheme } from 'next-themes';
 import
-{
-    createContext,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
-    type ReactNode
-} from 'react';
+    {
+        createContext,
+        useContext,
+        useEffect,
+        useMemo,
+        useState,
+        type ReactNode
+    } from 'react';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -36,6 +37,30 @@ export function BluzThemeProvider({ children, ...props }: ThemeProviderProps & {
         >
             <InnerThemeProvider>
                 <CssBaseline />
+                <GlobalStyles
+                    styles={ (theme) => ({
+                        '*::-webkit-scrollbar': {
+                            width: '8px',
+                            height: '8px',
+                        },
+                        '*::-webkit-scrollbar-track': {
+                            background: 'transparent',
+                        },
+                        '*::-webkit-scrollbar-thumb': {
+                            backgroundColor: theme.palette.action.disabledBackground,
+                            borderRadius: '8px',
+                        },
+                        '*::-webkit-scrollbar-thumb:hover': {
+                            backgroundColor: theme.palette.primary.main,
+                        },
+                        '*::-webkit-scrollbar-corner': {
+                            backgroundColor: 'transparent',
+                        },
+                        '*::-webkit-scrollbar-button': {
+                            display: 'none',
+                        },
+                    }) }
+                />
                 { children }
             </InnerThemeProvider>
         </NextThemesProvider>

@@ -2,18 +2,18 @@ import { CurriculumDocument } from '@/api-client/gant/curriculum';
 import { CurriculumId } from '@/api-shared/types/gant/curriculum';
 import { CurriculumDescription } from '@/components/gant/curriculum-view/components/curriculum-about-card/CurriculumDescription';
 import { CurriculumName } from '@/components/gant/curriculum-view/components/curriculum-about-card/CurriculumName';
-import { Box, Card, Skeleton, Typography } from '@mui/material';
+import { Box, Card, CardProps, Skeleton, Typography } from '@mui/material';
 
-export interface CurriculumCardProps
+export interface CurriculumCardProps extends Omit<CardProps, 'sx'>
 {
     curriculumId: CurriculumId | null;
     curriculum: CurriculumDocument | undefined;
 }
 
-export function CurriculumAboutCard({ curriculumId, curriculum }: CurriculumCardProps)
+export function CurriculumAboutCard({ curriculumId, curriculum, ...props }: CurriculumCardProps)
 {
     return (
-        <Card sx={ { padding: 2, minWidth: '14rem' } }>
+        <Card sx={ { padding: 2, minWidth: '14rem', flexShrink: 0, } } { ...props }>
             <CurriculumName curriculumId={ curriculumId } title={ curriculum?.title } />
             <CurriculumDescription curriculumId={ curriculumId } description={ curriculum?.description } />
             <Box display={ 'flex' } flexDirection={ 'row' } color="textSecondary">

@@ -36,7 +36,7 @@ export function HoursCard({ curriculum }: { curriculum: CurriculumDocument | und
     }
 
     return (
-        <Card sx={ { padding: 2 } }>
+        <Card sx={ { padding: 2, flexShrink: 0, } }>
             <Typography variant="subtitle1" gutterBottom>שעות</Typography>
             <Box display="flex" flexDirection="row" alignItems="center" gap={ 3 }>
                 <Gauge
@@ -63,15 +63,15 @@ export function HoursCard({ curriculum }: { curriculum: CurriculumDocument | und
                 <Stack spacing={ 0.5 }>
                     <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
                         <Typography variant="body2" color="text.secondary">ס&quot;ך:</Typography>
-                        <Typography variant="body2" fontWeight="bold">{ totalWorkingHours }</Typography>
+                        <Typography variant="body2" fontWeight="bold">{ totalWorkingHours.toFixed(2) }</Typography>
                     </Box>
                     <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
                         <Typography variant="body2" color="text.secondary">שנוצלו:</Typography>
-                        <Typography variant="body2" fontWeight="bold">{ usedWorkingHours }</Typography>
+                        <Typography variant="body2" fontWeight="bold">{ usedWorkingHours.toFixed(2) }</Typography>
                     </Box>
                     <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
                         <Typography variant="body2" color="text.secondary">מינימום דרוש:</Typography>
-                        <Typography variant="body2" fontWeight="bold">{ minimumHoursRequired }</Typography>
+                        <Typography variant="body2" fontWeight="bold">{ minimumHoursRequired.toFixed(2) }</Typography>
                     </Box>
                 </Stack>
             </Box>

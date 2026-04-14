@@ -28,11 +28,20 @@ export default function CurriculumView({ curriculumId, ...props }: CurriculumVie
             justifyContent={ 'flex-start' }
             { ...props }
         >
-            <Box display={ 'flex' } flexGrow={ 0 } flexShrink={ 0 } flexDirection={ 'column' } flexWrap={ 'wrap' } gap={ 2 }>
+            <Box
+                display={ 'flex' }
+                flexGrow={ 1 }
+                flexShrink={ 0 }
+                flexDirection={ 'column' }
+                flexWrap={ 'nowrap' }
+                gap={ 2 }
+                overflow={ 'hidden' }
+                px={ 1 }
+                pb={ 1 }
+                height={ '100%' }
+            >
                 <CurriculumAboutCard curriculum={ curriculum } curriculumId={ curriculumId } />
-
                 <HoursCard curriculum={ curriculum } />
-
                 <WorkTimePanel curriculumId={ curriculumId } curriculum={ curriculum } />
             </Box>
 
