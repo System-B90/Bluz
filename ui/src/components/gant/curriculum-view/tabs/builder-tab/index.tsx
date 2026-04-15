@@ -5,10 +5,10 @@
  * Author: Michael K. Steinberg
  */
 
-import { CurriculumWeek } from "@/api-shared/types/gant/curriculum";
-import { WorkTimeChip } from "@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel";
+import { partitionWeeks } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
+import WeekGroupPanel from "@/components/gant/curriculum-view/tabs/builder-tab/components/WeekGroupPanel";
 import { useCurriculum } from "@/components/gant/state/hooks";
-import { Box, BoxProps, Divider, Typography } from "@mui/material";
+import { Box, BoxProps, Divider } from "@mui/material";
 import React, { useMemo } from "react";
 
 export interface CurriculumViewBuilderTabProps extends BoxProps
@@ -16,84 +16,6 @@ export interface CurriculumViewBuilderTabProps extends BoxProps
     curriculumId: string;
 }
 
-export interface WeekGroupPanelProps extends BoxProps
-{
-    group: CurriculumWeek[];
-    allWeeks: CurriculumWeek[];
-}
-
-export interface GroupHeaderProps extends BoxProps
-{
-    start: number;
-    end: number;
-    totalHours: number;
-}
-
-/**
- * Partitions the weeks into N groups as balanced as possible.
- */
-function partitionWeeks(weeks: CurriculumWeek[], groupCount: number): CurriculumWeek[][]
-{
-    const totalWeeks = weeks.length;
-    if (totalWeeks === 0) return [];
-
-    const baseSize = Math.floor(totalWeeks / groupCount);
-    const remainder = totalWeeks % groupCount;
-
-    let currentIndex = 0;
-    return Array.from({ length: groupCount }, (_, i) =>
-    {
-        const size = baseSize + (i < remainder ? 1 : 0);
-        const group = weeks.slice(currentIndex, currentIndex + size);
-        currentIndex += size;
-        return group;
-    }).filter((group) => group.length > 0);
-}
-
-function calculateTotalWorkingTimeForWeeks(weeks: CurriculumWeek[]): number
-{
-    return weeks.reduce(
-        (total, week) =>
-            total + week.days.reduce((weekTotal, day) => weekTotal + day.totalWorkingHours, 0),
-        0
-    );
-}
-
-function GroupHeader({ start, end, totalHours, ...props }: GroupHeaderProps)
-{
-    return (
-        <Box { ...props } className="flex items-center justify-between mb-4">
-            <Typography variant="h6" fontWeight="bold">
-                שבועות { start } - { end }
-            </Typography>
-            <WorkTimeChip totalHours={ totalHours } />
-        </Box>
-    );
-}
-
-function WeekGroupPanel({ group, allWeeks, ...props }: WeekGroupPanelProps)
-{
-    const startWeek = allWeeks.indexOf(group[ 0 ]) + 1;
-    const endWeek = allWeeks.indexOf(group[ group.length - 1 ]) + 1;
-
-    const totalTime = useMemo(
-        () => calculateTotalWorkingTimeForWeeks(group),
-        [ group ]
-    );
-
-    return (
-        <Box
-            { ...props }
-            className="flex flex-1 flex-col p-4 min-w-75 gap-4"
-        >
-            <GroupHeader start={ startWeek } end={ endWeek } totalHours={ totalTime } />
-            <Divider />
-            <Box className="flex flex-col gap-2">
-                {/** Keep this empty for now */ }
-            </Box>
-        </Box>
-    );
-}
 
 export default function CurriculumViewBuilderTab({
     curriculumId,
