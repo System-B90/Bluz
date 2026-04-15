@@ -8,16 +8,14 @@
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ModuleId } from "@/api-shared/types/gant/curriculum";
 import { CurriculumMappingProvider, useCurriculumMappings } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
-import SyllabusModulesCurriculumViewSidebar from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules";
+import { CurriculumViewBuilderWeeksView } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumViewBuilderWeeksView";
 import { ModuleItem } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
-import { partitionWeeks } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
-import WeekGroupPanel from "@/components/gant/curriculum-view/tabs/builder-tab/components/WeekGroupPanel";
 import { useCurriculum } from "@/components/gant/state/hooks";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, closestCenter, defaultDropAnimationSideEffects, useSensor, useSensors } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { Box, BoxProps, Divider } from "@mui/material";
+import { Box, BoxProps } from "@mui/material";
 import { useSnackbar } from "notistack";
-import React, { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 export interface CurriculumViewBuilderTabProps extends Omit<BoxProps, 'className'>
 {
@@ -33,7 +31,6 @@ function CurriculumViewBuilderTabInner({
     const { enqueueSnackbar } = useSnackbar();
     const { moveModule, createMapping, removeModule } = useCurriculumMappings();
     const weeks = useCurriculum(curriculumId)?.weeks;
-    const groupedWeeks = useMemo(() => partitionWeeks(weeks ?? [], groupCount), [ weeks, groupCount ]);
     const [ activeId, setActiveId ] = useState<ModuleId | null>(null);
     const [ activeWeekIndex, setActiveWeekIndex ] = useState<number>();
     const [ activeDayIndex, setActiveDayIndex ] = useState<number>();
@@ -103,6 +100,12 @@ function CurriculumViewBuilderTabInner({
         }
     }, [ createMapping, moveModule, removeModule, enqueueSnackbar ]);
 
+    const [ selectedWeekGroupIndicies, setSelectedWeekGroup ] = useState<{ start: number; length: number; }>({ start: 0, length: (weeks?.length ?? 0) });
+    const selectedWeekGroup = useMemo(() =>
+    {
+        return weeks?.slice(selectedWeekGroupIndicies.start, selectedWeekGroupIndicies.start + selectedWeekGroupIndicies.length);
+    }, [ selectedWeekGroupIndicies, weeks ]);
+
     return (
         <DndContext
             sensors={ sensors }
@@ -110,25 +113,7 @@ function CurriculumViewBuilderTabInner({
             onDragStart={ handleDragStart }
             onDragEnd={ handleDragEnd }
         >
-            <SyllabusModulesCurriculumViewSidebar curriculumId={ curriculumId } />
-            { groupedWeeks.map((group, index) =>
-            {
-                const isLast = index === groupedWeeks.length - 1;
-                const groupKey = `group-${group[ 0 ]?.number ?? index}`;
-
-                return (
-                    <React.Fragment key={ groupKey }>
-                        <WeekGroupPanel group={ group } allWeeks={ weeks ?? [] } />
-                        { !isLast && (
-                            <Divider
-                                variant="middle"
-                                orientation="vertical"
-                                className="h-4/5 self-center"
-                            />
-                        ) }
-                    </React.Fragment>
-                );
-            }) }
+            <CurriculumViewBuilderWeeksView curriculumId={ curriculumId } weeks={ selectedWeekGroup ?? [] } groupCount={ groupCount } weekIndexStartOffset={ 0 } setSelectedWeekGroup={ setSelectedWeekGroup } />
 
             <DragOverlay dropAnimation={ dropAnimation }>
                 { activeId ? (
@@ -143,6 +128,7 @@ function CurriculumViewBuilderTabInner({
         </DndContext>
     );
 }
+
 export default function CurriculumViewBuilderTab({
     curriculumId,
     groupCount = 3,

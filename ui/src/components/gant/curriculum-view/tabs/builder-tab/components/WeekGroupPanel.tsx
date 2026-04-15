@@ -18,11 +18,13 @@ export interface WeekGroupPanelProps extends BoxProps
 {
     group: Array<CurriculumWeek>;
     allWeeks: Array<CurriculumWeek>;
+    onExpandGroup: () => void;
 }
 
 export default function WeekGroupPanel({
     group,
     allWeeks,
+    onExpandGroup,
     ...props
 }: WeekGroupPanelProps)
 {
@@ -60,7 +62,7 @@ export default function WeekGroupPanel({
         ${isOver ? "bg-blue-50/50 border-dashed border-blue-300 scale-[1.01]" : "bg-transparent"}
       `}
         >
-            <GroupHeader start={ startWeek } end={ endWeek } totalHours={ totalTime } />
+            <GroupHeader start={ startWeek } end={ endWeek } totalHours={ totalTime } onExpandGroup={ onExpandGroup } />
 
             <Divider />
 
