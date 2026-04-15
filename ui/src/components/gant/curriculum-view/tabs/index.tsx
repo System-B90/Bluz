@@ -5,14 +5,19 @@ import WeeksTab from "@/components/gant/curriculum-view/tabs/weeks-tab";
 import KeyboardArrowLeft from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
 import { Box, BoxProps, Tab, Tabs } from "@mui/material";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 
-export interface CurriculumViewTabsProps extends BoxProps
+interface TabProps
+{
+    selectedTabIndex: number;
+    setSelectedTabIndex: Dispatch<SetStateAction<number>>;
+}
+export interface CurriculumViewTabsProps extends BoxProps, TabProps
 {
     curriculumId: CurriculumId | null;
 }
 
-function TabLabels({ selectedTabIndex, setSelectedTabIndex }: { selectedTabIndex: number; setSelectedTabIndex: Dispatch<SetStateAction<number>>; })
+function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps)
 {
     return (
         <Tabs
@@ -42,10 +47,8 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: { selectedTabIndex
     );
 }
 
-export default function CurriculumViewTabs({ curriculumId, ...props }: CurriculumViewTabsProps)
+export default function CurriculumViewTabs({ curriculumId, selectedTabIndex, setSelectedTabIndex, ...props }: CurriculumViewTabsProps)
 {
-    const [ selectedTabIndex, setSelectedTabIndex ] = useState<number>(0);
-
     return (
         <Box { ...props }>
             <TabLabels

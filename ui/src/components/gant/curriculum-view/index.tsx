@@ -1,10 +1,8 @@
 import { CurriculumId } from '@/api-shared/types/gant/curriculum';
-import { CurriculumAboutCard } from '@/components/gant/curriculum-view/components/curriculum-about-card';
+import CurriculumViewSidebar from '@/components/gant/curriculum-view/components/sidebars';
 import CurriculumViewTabs from '@/components/gant/curriculum-view/tabs';
-import { useCurriculum } from '@/components/gant/state/hooks';
 import { Box, BoxProps } from '@mui/material';
-import { HoursCard } from './components/HoursCard';
-import { WorkTimePanel } from './components/WorkTimePanel';
+import { useState } from 'react';
 
 export interface CurriculumViewProps extends BoxProps
 {
@@ -13,7 +11,7 @@ export interface CurriculumViewProps extends BoxProps
 
 export default function CurriculumView({ curriculumId, ...props }: CurriculumViewProps)
 {
-    const curriculum = useCurriculum(curriculumId ?? '');
+    const [ selectedTabIndex, setSelectedTabIndex ] = useState<number>(0);
 
     return (
         <Box
@@ -28,25 +26,12 @@ export default function CurriculumView({ curriculumId, ...props }: CurriculumVie
             justifyContent={ 'flex-start' }
             { ...props }
         >
-            <Box
-                display={ 'flex' }
-                flexGrow={ 1 }
-                flexShrink={ 0 }
-                flexDirection={ 'column' }
-                flexWrap={ 'nowrap' }
-                gap={ 2 }
-                overflow={ 'hidden' }
-                px={ 1 }
-                pb={ 1 }
-                height={ '100%' }
-            >
-                <CurriculumAboutCard curriculum={ curriculum } curriculumId={ curriculumId } />
-                <HoursCard curriculum={ curriculum } />
-                <WorkTimePanel curriculumId={ curriculumId } curriculum={ curriculum } />
-            </Box>
+            <CurriculumViewSidebar selectedTabIndex={ selectedTabIndex } curriculumId={ curriculumId } />
 
             <CurriculumViewTabs
                 curriculumId={ curriculumId }
+                selectedTabIndex={ selectedTabIndex }
+                setSelectedTabIndex={ setSelectedTabIndex }
                 flexGrow={ 1 }
                 height={ '100%' }
                 width={ '100%' }

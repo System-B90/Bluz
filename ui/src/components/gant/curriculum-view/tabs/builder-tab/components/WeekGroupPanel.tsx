@@ -1,6 +1,14 @@
+/**
+ * Name: WeekGroupPanel.tsx
+ * Purpose: A droppable container for modules within a specific week group.
+ * Created: 2026-04-15
+ * Author: Michael K. Steinberg
+ */
+
 import { CurriculumWeek } from "@/api-shared/types/gant/curriculum";
 import GroupHeader from "@/components/gant/curriculum-view/tabs/builder-tab/components/GroupHeader";
 import { calculateTotalWorkingTimeForWeeks } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
+import { useDroppable } from "@dnd-kit/core";
 import { Box, BoxProps, Divider } from "@mui/material";
 import { useMemo } from "react";
 
@@ -10,10 +18,24 @@ export interface WeekGroupPanelProps extends BoxProps
     allWeeks: Array<CurriculumWeek>;
 }
 
-export default function WeekGroupPanel({ group, allWeeks, ...props }: WeekGroupPanelProps)
+export default function WeekGroupPanel({
+    group,
+    allWeeks,
+    ...props
+}: WeekGroupPanelProps)
 {
+    // Unique ID for the drop zone based on the week range
     const startWeek = allWeeks.indexOf(group[ 0 ]) + 1;
     const endWeek = allWeeks.indexOf(group[ group.length - 1 ]) + 1;
+    const dropId = `weeks-${startWeek}-${endWeek}`;
+
+    const { isOver, setNodeRef } = useDroppable({
+        id: dropId,
+        data: {
+            type: "WEEK_GROUP",
+            weeks: group.map((w) => w.number),
+        },
+    });
 
     const totalTime = useMemo(
         () => calculateTotalWorkingTimeForWeeks(group),
@@ -23,12 +45,23 @@ export default function WeekGroupPanel({ group, allWeeks, ...props }: WeekGroupP
     return (
         <Box
             { ...props }
-            className="flex flex-1 flex-col p-4 min-w-75 gap-4"
+            ref={ setNodeRef }
+            className={ `
+        flex flex-1 flex-col p-4 min-w-75 gap-4 transition-all duration-200 border-2 border-transparent
+        ${isOver ? "bg-blue-50/50 border-dashed border-blue-300 scale-[1.01]" : "bg-transparent"}
+      `}
         >
             <GroupHeader start={ startWeek } end={ endWeek } totalHours={ totalTime } />
+
             <Divider />
-            <Box className="flex flex-col gap-2">
-                {/** Keep this empty for now */ }
+
+            <Box
+                className={ `
+          flex flex-col gap-2 grow min-h-25 rounded-lg
+          ${isOver ? "ring-2 ring-blue-100 ring-inset" : ""}
+        `}
+            >
+                {/* Module components will be mapped here once added to the week state */ }
             </Box>
         </Box>
     );

@@ -11,12 +11,11 @@ import { useCurriculum } from "@/components/gant/state/hooks";
 import { Box, BoxProps, Divider } from "@mui/material";
 import React, { useMemo } from "react";
 
-export interface CurriculumViewBuilderTabProps extends BoxProps
+export interface CurriculumViewBuilderTabProps extends Omit<BoxProps, 'className'>
 {
     curriculumId: string;
-    groupCount: number;
+    groupCount?: number;
 }
-
 
 export default function CurriculumViewBuilderTab({
     curriculumId,
@@ -39,7 +38,7 @@ export default function CurriculumViewBuilderTab({
 
                 return (
                     <React.Fragment key={ groupKey }>
-                        <WeekGroupPanel group={ group } allWeeks={ weeks } />
+                        <WeekGroupPanel group={ group } allWeeks={ weeks ?? [] } />
                         { !isLast && (
                             <Divider
                                 variant="middle"
