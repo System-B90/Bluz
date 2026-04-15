@@ -1,15 +1,16 @@
-import
-{
-    pgTable,
-    text,
-    primaryKey,
-    timestamp,
-    boolean,
-    jsonb,
-    integer,
-    pgEnum
-} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import
+    {
+        boolean,
+        integer,
+        jsonb,
+        pgEnum,
+        pgTable,
+        primaryKey,
+        real,
+        text,
+        timestamp
+    } from "drizzle-orm/pg-core";
 
 export const moduleEventTypeEnum = pgEnum('module_event_type', [
     'הרצאה',
@@ -67,6 +68,34 @@ export const curriculumEventConfigurations = pgTable('cEC', {
     pk: primaryKey({ columns: [ t.curriculumId, t.eventId ] })
 }));
 
+/**
+ * Maps modules to specific days within specific weeks.
+ * Supports variable-sized weeks where dayIndex is relative to the weekIndex.
+ */
+export const curriculumModuleDayAssignments = pgTable('cMDA', {
+    curriculumId: text('curriculum_id')
+        .notNull()
+        .references(() => curriculums.id, { onDelete: 'cascade' }),
+    moduleId: text('module_id')
+        .notNull()
+        .references(() => modules.id, { onDelete: 'cascade' }),
+
+    // 0-based index of the week within the curriculum
+    weekIndex: integer('week_index').notNull(),
+
+    // 0-based index of the day within the specific week
+    dayIndex: integer('day_index').notNull(),
+
+    // Internal sort order for multiple modules assigned to the same day
+    sortOrder: real('sort_order').notNull().default(0),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+    // Primary key ensures a module is unique per curriculum/week/day slot
+    pk: primaryKey({ columns: [ t.curriculumId, t.weekIndex, t.dayIndex, t.moduleId ] })
+}));
+
 export const curriculumSyllabuses = pgTable('cS', {
     curriculumId: text('curriculum_id').notNull().references(() => curriculums.id, { onDelete: 'cascade' }),
     syllabusId: text('syllabus_id').notNull().references(() => syllabuses.id, { onDelete: 'cascade' }),
@@ -91,6 +120,7 @@ export const moduleToEvents = pgTable('mE', {
 export const curriculumsRelations = relations(curriculums, ({ many }) => ({
     cS: many(curriculumSyllabuses),
     cEC: many(curriculumEventConfigurations), // eventConfigs
+    cMDA: many(curriculumModuleDayAssignments),
 }));
 
 export const syllabusesRelations = relations(syllabuses, ({ many }) => ({
@@ -150,5 +180,16 @@ export const curriculumEventConfigurationsRelations = relations(curriculumEventC
     event: one(moduleEvents, {
         fields: [ curriculumEventConfigurations.eventId ],
         references: [ moduleEvents.id ],
+    }),
+}));
+
+export const curriculumModuleDayAssignmentsRelations = relations(curriculumModuleDayAssignments, ({ one }) => ({
+    curriculum: one(curriculums, {
+        fields: [ curriculumModuleDayAssignments.curriculumId ],
+        references: [ curriculums.id ],
+    }),
+    module: one(modules, {
+        fields: [ curriculumModuleDayAssignments.moduleId ],
+        references: [ modules.id ],
     }),
 }));

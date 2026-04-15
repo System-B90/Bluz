@@ -15,6 +15,13 @@
       "when": 1776110730135,
       "tag": "0001_colossal_war_machine",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776282135993,
+      "tag": "0002_late_cammi",
+      "breakpoints": true
     }
   ]
 }

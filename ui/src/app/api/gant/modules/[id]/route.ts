@@ -4,4 +4,4 @@ import { DbModule } from "@/api-server/curriculum/db-module";
 import { buildGantItemRoutes } from "@/app/api/gant/base-item";
 
 const { GET, PATCH, DELETE } = buildGantItemRoutes({ dbSet: DbModule });
-export { GET, PATCH, DELETE };
+export { DELETE, GET, PATCH };
