@@ -37,10 +37,7 @@ export default function WeekGroupPanel({
         },
     });
 
-    const totalTime = useMemo(
-        () => calculateTotalWorkingTimeForWeeks(group),
-        [ group ]
-    );
+    const totalTime = useMemo(() => calculateTotalWorkingTimeForWeeks(group), [ group ]);
 
     return (
         <Box
