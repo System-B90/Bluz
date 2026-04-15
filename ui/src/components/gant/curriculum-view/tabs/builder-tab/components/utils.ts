@@ -66,5 +66,5 @@ function hashSyllabusToColorByGoldenRatio(syllabusId: string, themePrimaryColor:
 
 export function hashSyllabusToColor(syllabusId: string, themePrimaryColor: string, opacity: number)
 {
-    return hashSyllabusToColorByHue(syllabusId, themePrimaryColor, opacity);
+    return hashSyllabusToColorByGoldenRatio(syllabusId, themePrimaryColor, opacity);
 }

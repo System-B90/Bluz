@@ -115,7 +115,7 @@ export default function CurriculumFab({
                 onClick={ handleTogglePanel }
                 sx={ {
                     position: 'fixed',
-                    left: 16,
+                    right: 16,
                     bottom: 16,
                     zIndex: (theme) => theme.zIndex.speedDial,
                 } }

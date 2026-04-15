@@ -10,10 +10,11 @@ import { hashSyllabusToColor } from "@/components/gant/curriculum-view/tabs/buil
 import { WorkTimeChip } from "@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useModule } from "@/components/gant/state/hooks";
 import { useCurriculumState } from "@/components/gant/state/provider";
+import { useSyllabusNames } from "@/components/gant/state/providers/SyllabusNamesProvider";
 import { calculateMinimumRequiredTimeForModule } from "@/components/gant/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Paper, PaperProps, Typography, useTheme } from "@mui/material";
+import { Box, Paper, PaperProps, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
 
 export interface ModuleItemProps extends PaperProps
@@ -27,9 +28,11 @@ export function ModuleItem({ moduleId, weekIndex, dayIndex, ...props }: ModuleIt
 {
     const theme = useTheme();
     const state = useCurriculumState();
+    const { syllabusNames } = useSyllabusNames();
     const moduleDoc = useModule(moduleId);
     const syllabusId = useMemo(() => state.moduleToSyllabusLookup[ moduleId ], [ moduleId, state.moduleToSyllabusLookup ]);
     const color = useMemo(() => hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2), [ syllabusId, theme.palette.primary.main ]);
+    const syllabusTitle = useMemo(() => syllabusNames[ syllabusId ], [ syllabusId, syllabusNames ]);
 
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: `module-${moduleId}`,
@@ -64,7 +67,13 @@ export function ModuleItem({ moduleId, weekIndex, dayIndex, ...props }: ModuleIt
             <Typography variant="body2" className="select-none font-medium text-slate-700">
                 { moduleDoc?.title ?? "Unknown Module" }
             </Typography>
-            <WorkTimeChip totalHours={ totalHours } />
+            <Box className="flex flex-row items-center">
+                <Typography variant="body2" className="select-none font-medium text-slate-700">
+                    { syllabusTitle }
+                </Typography>
+                <Box width='0.3rem' />
+                <WorkTimeChip totalHours={ totalHours } />
+            </Box>
         </Paper>
     );
 }

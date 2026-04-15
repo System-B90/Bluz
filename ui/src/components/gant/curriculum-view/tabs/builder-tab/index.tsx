@@ -31,7 +31,7 @@ function CurriculumViewBuilderTabInner({
 }: Pick<CurriculumViewBuilderTabProps, 'curriculumId' | 'groupCount'>)
 {
     const { enqueueSnackbar } = useSnackbar();
-    const { moveModule, createMapping } = useCurriculumMappings();
+    const { moveModule, createMapping, removeModule } = useCurriculumMappings();
     const weeks = useCurriculum(curriculumId)?.weeks;
     const groupedWeeks = useMemo(() => partitionWeeks(weeks ?? [], groupCount), [ weeks, groupCount ]);
     const [ activeId, setActiveId ] = useState<ModuleId | null>(null);
@@ -81,6 +81,13 @@ function CurriculumViewBuilderTabInner({
         const originWeekIndex = (active.data.current as any).weekIndex;
         const originDayIndex = (active.data.current as any).dayIndex;
 
+        if ((over.data.current as any).type === 'SIDEBAR')
+        {
+            removeModule(moduleId, originWeekIndex, originDayIndex)
+                .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הסרת המערך נכשלה!', error));
+            return;
+        }
+
         const weekIndex = (over.data.current as any).weekIndex;
         const dayIndex = (over.data.current as any).dayIndex;
 
@@ -94,7 +101,7 @@ function CurriculumViewBuilderTabInner({
             createMapping(moduleId, weekIndex, dayIndex)
                 .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הזזת המערך נכשלה!', error));
         }
-    }, [ createMapping, moveModule, enqueueSnackbar ]);
+    }, [ createMapping, moveModule, removeModule, enqueueSnackbar ]);
 
     return (
         <DndContext

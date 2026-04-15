@@ -3,17 +3,17 @@ import { NormalizedStore, normalizeCurriculumData } from "@/api-client/gant/driz
 import { AllocateTimeToEventCallback, allocateTimeToModule } from "@/api-shared/gantt/allocate-time";
 import { ApiCurriculum } from "@/api-shared/types/gant/api-layer";
 import
-{
-    BaseGantItem,
-    Curriculum,
-    CurriculumId,
-    Module,
-    ModuleEvent,
-    ModuleEventId,
-    ModuleId,
-    Syllabus,
-    SyllabusId
-} from "@/api-shared/types/gant/curriculum";
+    {
+        BaseGantItem,
+        Curriculum,
+        CurriculumId,
+        Module,
+        ModuleEvent,
+        ModuleEventId,
+        ModuleId,
+        Syllabus,
+        SyllabusId
+    } from "@/api-shared/types/gant/curriculum";
 import dayjs from "dayjs";
 
 export type Action =
@@ -168,7 +168,11 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
                         ...parent,
                         modules: [ ...parent.modules, action.payload.module.id ]
                     }
-                }
+                },
+                moduleToSyllabusLookup: {
+                    ...state.moduleToSyllabusLookup,
+                    [ action.payload.module.id ]: parent.id
+                },
             };
         }
 

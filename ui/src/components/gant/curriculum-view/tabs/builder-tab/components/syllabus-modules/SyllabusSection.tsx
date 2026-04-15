@@ -1,10 +1,11 @@
 import { SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { useCurriculumMappings } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { ModuleItem } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
+import { hashSyllabusToColor } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
 import { useSyllabus } from "@/components/gant/state/hooks";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Box, BoxProps, Stack, Typography } from "@mui/material";
+import { Box, BoxProps, Stack, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
 
 export interface SyllabusSectionProps extends BoxProps
@@ -14,8 +15,10 @@ export interface SyllabusSectionProps extends BoxProps
 
 export function SyllabusSection({ syllabusId, ...props }: SyllabusSectionProps)
 {
+    const theme = useTheme();
     const { state: { mappings } } = useCurriculumMappings();
     const syllabus = useSyllabus(syllabusId);
+    const color = useMemo(() => hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2), [ syllabusId, theme.palette.primary.main ]);
 
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: `syllabus-${syllabusId}`,
@@ -46,11 +49,13 @@ export function SyllabusSection({ syllabusId, ...props }: SyllabusSectionProps)
             { ...listeners }
         >
             {/* Sticky Header: Visible until the entire section scrolls out */ }
-            <Box className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm py-3 mb-2 shadow-sm">
+            <Box className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm py-2 mb-2 shadow-sm" bgcolor={ color }>
                 <Typography
                     variant="overline"
                     className="px-2 font-bold tracking-wider"
-                    color="primary"
+                    fontSize='1rem'
+                    fontWeight={700} 
+                    color='textPrimary'
                 >
                     { syllabus?.title ?? 'Unnamed Syllabus' }
                 </Typography>
