@@ -14,18 +14,18 @@ import React, { useMemo } from "react";
 export interface CurriculumViewBuilderTabProps extends BoxProps
 {
     curriculumId: string;
+    groupCount: number;
 }
 
 
 export default function CurriculumViewBuilderTab({
     curriculumId,
+    groupCount = 3,
     ...props
 }: CurriculumViewBuilderTabProps)
 {
-    const weeks = useCurriculum(curriculumId)?.weeks ?? [];
-    const groupCount = 3;
-
-    const groupedWeeks = useMemo(() => partitionWeeks(weeks, groupCount), [ weeks, groupCount ]);
+    const weeks = useCurriculum(curriculumId)?.weeks;
+    const groupedWeeks = useMemo(() => partitionWeeks(weeks ?? [], groupCount), [ weeks, groupCount ]);
 
     return (
         <Box
