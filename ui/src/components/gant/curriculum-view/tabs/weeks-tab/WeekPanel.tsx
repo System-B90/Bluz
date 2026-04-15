@@ -20,20 +20,11 @@ interface WeekPanelProps
     weekIndex: number;
 }
 
-export function WeekWorkTimeChip({
-    curriculumId,
-    weekIndex,
+export function WorkTimeChip({ totalHours
 }: {
-    curriculumId: CurriculumId;
-    weekIndex: number;
+    totalHours: number;
 })
 {
-    const week = useCurriculumWeek(curriculumId, weekIndex);
-
-    const totalHours = useMemo(() =>
-        (week?.days ?? []).reduce((acc, d) => acc + d.totalWorkingHours, 0),
-        [ week?.days ]);
-
     return (
         <Chip
             icon={ <AccessTimeIcon sx={ { fontSize: '0.95rem !important' } } /> }
@@ -49,6 +40,26 @@ export function WeekWorkTimeChip({
         />
     );
 }
+
+export function WeekWorkTimeChip({
+    curriculumId,
+    weekIndex,
+}: {
+    curriculumId: CurriculumId;
+    weekIndex: number;
+})
+{
+    const week = useCurriculumWeek(curriculumId, weekIndex);
+
+    const totalHours = useMemo(() =>
+        (week?.days ?? []).reduce((acc, d) => acc + d.totalWorkingHours, 0),
+        [ week?.days ]);
+
+    return (
+        <WorkTimeChip totalHours={ totalHours } />
+    );
+}
+
 export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
 {
     const week = useCurriculumWeek(curriculumId, weekIndex);
