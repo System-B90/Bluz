@@ -48,7 +48,7 @@ export default function SyllabusModulesCurriculumViewSidebar({
     return (
         <Box
             { ...props }
-            className="flex flex-col h-full overflow-clip shrink-0 border-r border-slate-200 bg-slate-50/30"
+            className="flex flex-col h-full overflow-x-clip shrink-0 border-r border-slate-200 bg-slate-50/30"
             sx={ { width: 320, ...props.sx } }
         >
             <Box className="grow overflow-y-auto overflow-x-clip scroll-smooth">

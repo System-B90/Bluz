@@ -1,6 +1,6 @@
 /**
  * Name: ModuleItem.tsx
- * Purpose: Draggable module item for the curriculum builder.
+ * Purpose: Draggable module item with placeholder logic for DragOverlay support.
  * Created: 2026-04-15
  * Author: Michael K. Steinberg
  */
@@ -25,10 +25,6 @@ export function ModuleItem({ moduleId, ...props }: ModuleItemProps)
         data: { type: "MODULE", moduleId },
     });
 
-    /**
-     * FIX: Use CSS.Translate.toString for better cross-browser compatibility.
-     * Ensure we merge the transform with any incoming styles.
-     */
     const style = {
         ...props.style,
         transform: CSS.Translate.toString(transform),
@@ -45,11 +41,15 @@ export function ModuleItem({ moduleId, ...props }: ModuleItemProps)
             { ...listeners }
             className={ `
                 p-2 border border-solid border-slate-200 cursor-grab 
-                hover:border-blue-400 hover:bg-blue-50 transition-colors
+                hover:border-blue-400 hover:bg-blue-50 transition-all
                 active:cursor-grabbing touch-none
-                ${isDragging ? "opacity-50" : "opacity-100"}
-                ${isDragging ? "z-200" : "z-10"}
                 ${props.className ?? ""}
+                
+                /* When using DragOverlay, the original item stays in the list.
+                   We hide it visually so only the 'portal' version is seen.
+                   'invisible' or 'opacity-0' preserves the height so the list doesn't jump.
+                */
+                ${isDragging ? "opacity-0 pointer-events-none" : "opacity-100"}
             `}
         >
             <Typography variant="body2" className="select-none font-medium text-slate-700">
