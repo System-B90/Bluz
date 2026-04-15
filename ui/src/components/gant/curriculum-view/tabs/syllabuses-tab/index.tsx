@@ -17,7 +17,6 @@ export default function SyllabusesTab({ curriculumId }: { curriculumId: Curricul
     }, [ curriculum?.syllabuses, curriculumId ]);
 
     return (
-
         <Box gap={ 2 } flexGrow={ 1 } display={ 'flex' } flexDirection={ 'column' } height={ '100%' }>
             <Box display="flex" flexDirection="column" gap={ 1 } width={ '100%' } height={ '100%' }>
                 <SyllabusesActionsBox curriculumId={ curriculumId } mb={ 1 } />

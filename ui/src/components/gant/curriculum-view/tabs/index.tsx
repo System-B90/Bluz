@@ -1,4 +1,5 @@
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
+import CurriculumViewBuilderTab from "@/components/gant/curriculum-view/tabs/builder-tab";
 import SyllabusesTab from "@/components/gant/curriculum-view/tabs/syllabuses-tab";
 import WeeksTab from "@/components/gant/curriculum-view/tabs/weeks-tab";
 import KeyboardArrowLeft from "@mui/icons-material/KeyboardArrowLeft";
@@ -36,6 +37,7 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: { selectedTabIndex
         >
             <Tab label='סילבוסים' />
             <Tab label='שבועות' />
+            <Tab label='בנייה' />
         </Tabs>
     );
 }
@@ -55,6 +57,7 @@ export default function CurriculumViewTabs({ curriculumId, ...props }: Curriculu
                 <Box flexGrow={ 1 } height="80%">
                     { selectedTabIndex === 0 && <SyllabusesTab curriculumId={ curriculumId } /> }
                     { selectedTabIndex === 1 && <WeeksTab curriculumId={ curriculumId } /> }
+                    { selectedTabIndex === 2 && <CurriculumViewBuilderTab curriculumId={ curriculumId } /> }
                 </Box>
             }
         </Box>
