@@ -6,23 +6,34 @@
  */
 
 import { ModuleId } from "@/api-shared/types/gant/curriculum";
+import { hashSyllabusToColor } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
+import { WorkTimeChip } from "@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useModule } from "@/components/gant/state/hooks";
+import { useCurriculumState } from "@/components/gant/state/provider";
+import { calculateMinimumRequiredTimeForModule } from "@/components/gant/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Paper, PaperProps, Typography } from "@mui/material";
+import { Paper, PaperProps, Typography, useTheme } from "@mui/material";
+import { useMemo } from "react";
 
 export interface ModuleItemProps extends PaperProps
 {
     moduleId: ModuleId;
+    weekIndex?: number;
+    dayIndex?: number;
 }
 
-export function ModuleItem({ moduleId, ...props }: ModuleItemProps)
+export function ModuleItem({ moduleId, weekIndex, dayIndex, ...props }: ModuleItemProps)
 {
+    const theme = useTheme();
+    const state = useCurriculumState();
     const moduleDoc = useModule(moduleId);
+    const syllabusId = useMemo(() => state.moduleToSyllabusLookup[ moduleId ], [ moduleId, state.moduleToSyllabusLookup ]);
+    const color = useMemo(() => hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2), [ syllabusId, theme.palette.primary.main ]);
 
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: `module-${moduleId}`,
-        data: { type: "MODULE", moduleId },
+        data: { type: "MODULE", moduleId, weekIndex, dayIndex },
     });
 
     const style = {
@@ -31,30 +42,29 @@ export function ModuleItem({ moduleId, ...props }: ModuleItemProps)
         transition: isDragging ? undefined : "transform 200ms ease",
     };
 
+    const totalHours = useMemo(() => moduleDoc ? calculateMinimumRequiredTimeForModule(moduleDoc, state) / 60 : 0, [ moduleDoc, state ]);
+
     return (
         <Paper
             { ...props }
             ref={ setNodeRef }
             style={ style }
             elevation={ isDragging ? 4 : 0 }
+            sx={ { ...props.sx, backgroundColor: color } }
             { ...attributes }
             { ...listeners }
-            className={ `
+            className={ `flex flex-row justify-between items-center
                 p-2 border border-solid border-slate-200 cursor-grab 
                 hover:border-blue-400 hover:bg-blue-50 transition-all
                 active:cursor-grabbing touch-none
                 ${props.className ?? ""}
-                
-                /* When using DragOverlay, the original item stays in the list.
-                   We hide it visually so only the 'portal' version is seen.
-                   'invisible' or 'opacity-0' preserves the height so the list doesn't jump.
-                */
                 ${isDragging ? "opacity-0 pointer-events-none" : "opacity-100"}
             `}
         >
             <Typography variant="body2" className="select-none font-medium text-slate-700">
                 { moduleDoc?.title ?? "Unknown Module" }
             </Typography>
+            <WorkTimeChip totalHours={ totalHours } />
         </Paper>
     );
 }

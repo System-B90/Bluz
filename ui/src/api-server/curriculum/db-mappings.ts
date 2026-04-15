@@ -1,6 +1,6 @@
 /**
  * Name: curriculumAssignmentService.ts
- * Purpose: Business logic for managing module-to-day assignments within variable-length weeks.
+ * Purpose: Business logic for managing module-to-day mappings within variable-length weeks.
  * Created: 2026-04-15
  * Author: Michael K. Steinberg
  */

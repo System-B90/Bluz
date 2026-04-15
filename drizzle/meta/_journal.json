@@ -22,6 +22,27 @@
       "when": 1776282135993,
       "tag": "0002_late_cammi",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776287629413,
+      "tag": "0003_heavy_selene",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776287737288,
+      "tag": "0004_tense_frightful_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776287768413,
+      "tag": "0005_typical_deathbird",
+      "breakpoints": true
     }
   ]
 }

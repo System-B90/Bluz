@@ -11,6 +11,7 @@ export interface NormalizedStore
     syllabuses: Record<SyllabusId, SyllabusDocument>;
     modules: Record<ModuleId, ModuleDocument>;
     events: Record<ModuleEventId, ModuleEventDocument>;
+    moduleToSyllabusLookup: Record<ModuleId, SyllabusId>;
 }
 
 export function normalizeCurriculumData(apiData: any): NormalizedStore
@@ -19,7 +20,8 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
         curriculums: {},
         syllabuses: {},
         modules: {},
-        events: {}
+        events: {},
+        moduleToSyllabusLookup: {},
     };
 
     const curriculumSyllabusIds: SyllabusId[] = [];
@@ -46,6 +48,7 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
                 store.events[ apiEvent.id ] = { ...apiEvent, allocatedDuration: apiEvent.cEC[ 0 ]?.allocatedDuration ?? 0 };
             }
 
+            store.moduleToSyllabusLookup[ apiModule.id ] = apiSyllabus.id;
             store.modules[ apiModule.id ] = {
                 id: apiModule.id,
                 title: apiModule.title,
@@ -78,7 +81,5 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
         syllabuses: curriculumSyllabusIds,
     };
 
-
-    console.log(store);
     return store;
 }

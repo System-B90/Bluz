@@ -58,7 +58,7 @@ export async function POST(request: NextRequest, context: RouteContext)
             throw new ClientApiError('Missing required fields: moduleId, weekIndex, or dayIndex.');
         }
 
-        const assignment = await createModuleAssignment({
+        const mapping = await createModuleAssignment({
             curriculumId,
             moduleId: body.moduleId,
             weekIndex: body.weekIndex,
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest, context: RouteContext)
             sortOrder: body.sortOrder,
         });
 
-        return ApiSuccess(assignment);
+        return ApiSuccess(mapping);
     } catch (error)
     {
         return catchHandler(request, error);

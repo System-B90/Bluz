@@ -5,10 +5,11 @@
  * Author: Michael K. Steinberg
  */
 
-import React, { createContext, useContext, useReducer, useMemo, useCallback } from 'react';
-import { CurriculumModuleDayMapping } from "@/api-shared/types/gant/mapping";
-import { Curriculum, CurriculumId, ModuleId } from "@/api-shared/types/gant/curriculum";
 import { curriculumModuleDayMappingApi } from '@/api-client/gant/mappings';
+import { BaseDbDocument } from '@/api-server/curriculum/db-base';
+import { CurriculumId, ModuleId } from "@/api-shared/types/gant/curriculum";
+import { CurriculumModuleDayMapping } from "@/api-shared/types/gant/mapping";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react';
 
 /**
  * State Definition
@@ -70,9 +71,10 @@ function mappingReducer(state: MappingState, action: MappingAction): MappingStat
 
 type CurriculumMappingContextType = {
     state: MappingState;
-    refreshMappings: (curriculumId: CurriculumId) => Promise<void>;
-    moveModule: (curriculumId: CurriculumId, moduleId: ModuleId, from: { w: number, d: number; }, to: { w: number, d: number; }) => Promise<void>;
-    removeModule: (curriculumId: CurriculumId, moduleId: ModuleId, weekIndex: number, dayIndex: number) => Promise<void>;
+    refreshMappings: () => Promise<void>;
+    createMapping: (moduleId: ModuleId, weekIndex: number, dayIndex: number) => Promise<void>;
+    moveModule: (moduleId: ModuleId, from: { w: number, d: number; }, to: { w: number, d: number; }) => Promise<void>;
+    removeModule: (moduleId: ModuleId, weekIndex: number, dayIndex: number) => Promise<void>;
 };
 
 /**
@@ -99,7 +101,48 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
         {
             dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch mappings' });
         }
-    }, [ curriculumId ]);
+    }, [ dispatch, curriculumId ]);
+
+    /**
+         * createMapping: Handles assigning a module to a day for the first time.
+         */
+    const createMapping = useCallback(async (
+        moduleId: ModuleId,
+        weekIndex: number,
+        dayIndex: number
+    ) =>
+    {
+        const tempSortOrder = Date.now();
+        const optimisticMapping: CurriculumModuleDayMapping & BaseDbDocument = {
+            curriculumId,
+            moduleId,
+            weekIndex,
+            dayIndex,
+            sortOrder: tempSortOrder,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+
+        // Optimistic UI Update
+        dispatch({ type: 'UPSERT_MAPPING', payload: optimisticMapping });
+
+        try
+        {
+            const result = await curriculumModuleDayMappingApi.apiCreate(curriculumId, {
+                moduleId,
+                weekIndex,
+                dayIndex,
+                sortOrder: tempSortOrder
+            });
+            // Update with the actual data from the server (e.g., if IDs or timestamps were generated)
+            dispatch({ type: 'UPSERT_MAPPING', payload: result });
+        } catch (e)
+        {
+            // Rollback on failure
+            dispatch({ type: 'DELETE_MAPPING', payload: { weekIndex, dayIndex, moduleId } });
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to create mapping' });
+        }
+    }, [ dispatch, curriculumId ]);
 
     const moveModule = useCallback(async (
         moduleId: ModuleId,
@@ -132,7 +175,7 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
             dispatch({ type: 'UPSERT_MAPPING', payload: originalMapping });
             dispatch({ type: 'SET_ERROR', payload: 'Move failed. Changes rolled back.' });
         }
-    }, [ state.mappings, curriculumId ]);
+    }, [ state.mappings, curriculumId, dispatch ]);
 
     const removeModule = useCallback(async (moduleId: ModuleId, weekIndex: number, dayIndex: number) =>
     {
@@ -144,13 +187,15 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
         {
             refreshMappings(); // Re-sync on failure
         }
-    }, [ refreshMappings, curriculumId ]);
+    }, [ refreshMappings, dispatch, curriculumId ]);
 
-    const value = useMemo(() => ({ state, refreshMappings, moveModule, removeModule }), [ state, refreshMappings, moveModule, removeModule ]);
+    useEffect(() => { refreshMappings(); }, [ refreshMappings ]); // Initial load
+
+    const value = useMemo(() => ({ state, refreshMappings, moveModule, removeModule, createMapping }), [ state, refreshMappings, moveModule, removeModule, createMapping ]);
 
     return (
-        <CurriculumMappingContext.Provider value= { value } >
-        { children }
+        <CurriculumMappingContext.Provider value={ value } >
+            { children }
         </CurriculumMappingContext.Provider>
     );
 }

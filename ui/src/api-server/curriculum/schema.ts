@@ -93,7 +93,7 @@ export const curriculumModuleDayAssignments = pgTable('cMDA', {
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => ({
     // Primary key ensures a module is unique per curriculum/week/day slot
-    pk: primaryKey({ columns: [ t.curriculumId, t.weekIndex, t.dayIndex, t.moduleId ] })
+    pk: primaryKey({ columns: [ t.curriculumId, t.moduleId ] })
 }));
 
 export const curriculumSyllabuses = pgTable('cS', {
