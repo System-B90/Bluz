@@ -6,14 +6,14 @@
  */
 
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
-import { baseDocumentFixup } from "@/api-client/gant/base";
+import { baseDocumentFixup, RawBaseDocument } from "@/api-client/gant/base";
 import { CurriculumId, ModuleId } from "@/api-shared/types/gant/curriculum";
 import { CurriculumModuleDayMapping } from "@/api-shared/types/gant/mapping";
 
 /**
  * GET: Retrieves all module mappings for a curriculum.
  */
-export async function apiGetModuleDayMapping(
+async function apiGetModuleDayMapping(
     curriculumId: CurriculumId,
     weekIndex?: number,
     options?: ClientApiProps
@@ -22,16 +22,16 @@ export async function apiGetModuleDayMapping(
     const url = new URL(`/api/gant/curriculums/${curriculumId}/mappings/`, window.location.origin);
     if (weekIndex !== undefined) url.searchParams.append('weekIndex', weekIndex.toString());
 
-    const rawData = await safeApiFetcher(url.toString(), {
+    const rawData: Array<RawBaseDocument> = await safeApiFetcher(url.toString(), {
         ...options,
     });
-    return rawData.map(baseDocumentFixup);
+    return rawData.map(baseDocumentFixup) as unknown as Array<CurriculumModuleDayMapping>;
 }
 
 /**
  * POST: Creates a new module-to-day mapping.
  */
-export async function apiCreateModuleDayMapping(
+async function apiCreateModuleDayMapping(
     curriculumId: CurriculumId,
     payload: { moduleId: ModuleId; weekIndex: number; dayIndex: number; sortOrder?: number; },
     options?: ClientApiProps
@@ -42,13 +42,13 @@ export async function apiCreateModuleDayMapping(
         method: 'POST',
         body: JSON.stringify(payload),
     });
-    return baseDocumentFixup(rawData);
+    return baseDocumentFixup(rawData as RawBaseDocument) as unknown as CurriculumModuleDayMapping;
 }
 
 /**
  * PATCH: Updates an existing mapping or reorders it.
  */
-export async function apiUpdateModuleDayMapping(
+async function apiUpdateModuleDayMapping(
     curriculumId: CurriculumId,
     oldMapping: { moduleId: ModuleId; weekIndex: number; dayIndex: number; },
     newValues: { weekIndex?: number; dayIndex?: number; sortOrder?: number; },
@@ -60,13 +60,13 @@ export async function apiUpdateModuleDayMapping(
         method: 'PATCH',
         body: JSON.stringify({ oldMapping, newValues }),
     });
-    return baseDocumentFixup(rawData);
+    return baseDocumentFixup(rawData as RawBaseDocument) as unknown as CurriculumModuleDayMapping;
 }
 
 /**
  * DELETE: Removes a module-to-day mapping.
  */
-export async function apiDeleteModuleDayMapping(
+async function apiDeleteModuleDayMapping(
     curriculumId: CurriculumId,
     moduleId: ModuleId,
     weekIndex: number,
@@ -80,3 +80,10 @@ export async function apiDeleteModuleDayMapping(
         body: JSON.stringify({ moduleId, weekIndex, dayIndex }),
     });
 }
+
+export const curriculumModuleDayMappingApi = {
+    apiGet: apiGetModuleDayMapping,
+    apiCreate: apiCreateModuleDayMapping,
+    apiUpdate: apiUpdateModuleDayMapping,
+    apiDelete: apiDeleteModuleDayMapping,
+} as const;

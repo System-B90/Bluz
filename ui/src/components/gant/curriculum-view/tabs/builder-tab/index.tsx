@@ -8,6 +8,7 @@
 import { ModuleId } from "@/api-shared/types/gant/curriculum";
 import SyllabusModulesCurriculumViewSidebar from "@/components/gant/curriculum-view/components/sidebars/syllabus-modules";
 import { ModuleItem } from "@/components/gant/curriculum-view/components/sidebars/syllabus-modules/ModuleItem";
+import { CurriculumMappingProvider } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { partitionWeeks } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
 import WeekGroupPanel from "@/components/gant/curriculum-view/tabs/builder-tab/components/WeekGroupPanel";
 import { useCurriculum } from "@/components/gant/state/hooks";
@@ -75,42 +76,44 @@ export default function CurriculumViewBuilderTab({
             { ...props }
             className="flex flex-row grow h-full gap-2"
         >
-            <DndContext
-                sensors={ sensors }
-                collisionDetection={ closestCenter }
-                onDragStart={ handleDragStart }
-                onDragEnd={ handleDragEnd }
-            >
+            <CurriculumMappingProvider curriculumId={ curriculumId }>
+                <DndContext
+                    sensors={ sensors }
+                    collisionDetection={ closestCenter }
+                    onDragStart={ handleDragStart }
+                    onDragEnd={ handleDragEnd }
+                >
 
-                <SyllabusModulesCurriculumViewSidebar curriculumId={ curriculumId } />
-                { groupedWeeks.map((group, index) =>
-                {
-                    const isLast = index === groupedWeeks.length - 1;
-                    const groupKey = `group-${group[ 0 ]?.number ?? index}`;
+                    <SyllabusModulesCurriculumViewSidebar curriculumId={ curriculumId } />
+                    { groupedWeeks.map((group, index) =>
+                    {
+                        const isLast = index === groupedWeeks.length - 1;
+                        const groupKey = `group-${group[ 0 ]?.number ?? index}`;
 
-                    return (
-                        <React.Fragment key={ groupKey }>
-                            <WeekGroupPanel group={ group } allWeeks={ weeks ?? [] } />
-                            { !isLast && (
-                                <Divider
-                                    variant="middle"
-                                    orientation="vertical"
-                                    className="h-4/5 self-center"
-                                />
-                            ) }
-                        </React.Fragment>
-                    );
-                }) }
+                        return (
+                            <React.Fragment key={ groupKey }>
+                                <WeekGroupPanel group={ group } allWeeks={ weeks ?? [] } />
+                                { !isLast && (
+                                    <Divider
+                                        variant="middle"
+                                        orientation="vertical"
+                                        className="h-4/5 self-center"
+                                    />
+                                ) }
+                            </React.Fragment>
+                        );
+                    }) }
 
-                <DragOverlay dropAnimation={ dropAnimation }>
-                    { activeId ? (
-                        <ModuleItem
-                            moduleId={ activeId }
-                            className="w-70 shadow-2xl rotate-3 cursor-grabbing"
-                        />
-                    ) : null }
-                </DragOverlay>
-            </DndContext>
+                    <DragOverlay dropAnimation={ dropAnimation }>
+                        { activeId ? (
+                            <ModuleItem
+                                moduleId={ activeId }
+                                className="w-70 shadow-2xl rotate-3 cursor-grabbing"
+                            />
+                        ) : null }
+                    </DragOverlay>
+                </DndContext>
+            </CurriculumMappingProvider>
         </Box>
     );
 }
