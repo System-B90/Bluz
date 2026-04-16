@@ -1,7 +1,7 @@
 'use client';
 
 import { Box } from '@mui/material';
-import { SetStateAction, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import BluzCalendar from '@/components/schedule/calendar/calendar';
 import { makeEvent, useCalendar } from '@/components/schedule/calendar/calendar-provider';
@@ -73,17 +73,6 @@ export default function SchedulePage()
         deleteEvent(eventId); // Provider handles API, offline, and history tracking
         handleCloseEventDialog();
     }, [ deleteEvent, handleCloseEventDialog ]);
-
-    const onEventChange = useCallback((action: SetStateAction<Partial<Event>>) =>
-    {
-        setSelectedEvent((prev) =>
-        {
-            const updates = typeof action === 'function'
-                ? (action as (prev: Event) => Event)(prev ?? makeEvent())
-                : action;
-            return prev ? { ...prev, ...updates } : (updates as Event);
-        });
-    }, []);
 
     return (
         <Box height={ '100%' } display={ 'flex' } flexDirection={ 'column' }>

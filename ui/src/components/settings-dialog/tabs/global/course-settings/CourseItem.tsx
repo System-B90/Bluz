@@ -78,7 +78,10 @@ export function CourseItem({
                         isAlphaHidden
                         fullWidth={ false }
                         sx={ {
-                            p: 0, m: 0, width: '1rem', height: '1rem',
+                            p: 0,
+m: 0,
+width: '1rem',
+height: '1rem',
                             '& .MuiInputBase-root': { padding: 0, '& .MuiOutlinedInput-notchedOutline': { border: 'none' } }
                         } }
                     />

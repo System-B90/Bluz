@@ -6,6 +6,7 @@ import { Course } from "@/api-shared/types/course";
 import { Curriculum, Module, ModuleEvent, Syllabus } from "@/api-shared/types/gant/curriculum";
 import { Setting } from "@/api-shared/types/settings/settings";
 import { CustomRoom } from "@/components/schedule/types/room";
+
 const MONGO_CONNECTION_STRING = process.env.MONGO_CONNECTION_STRING ?? 'mongodb://127.0.0.1:27017/';
 
 class DatabaseController

@@ -6,7 +6,8 @@ import { Module } from "@/api-shared/types/gant/curriculum";
 export type ModuleDocument = Module & BaseDocument;
 
 const moduleApi = clientGantApiBuilder<Module, ApiModule, CreateModulePayload>({ apiBaseUrl: '/api/gant/modules', dateFixup: baseDocumentFixup as any });
-const { apiList,
+const {
+ apiList,
     apiGet,
     apiCreate,
     apiUpdate,

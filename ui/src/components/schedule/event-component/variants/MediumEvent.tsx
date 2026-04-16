@@ -5,10 +5,10 @@ import CourseComponent from "@/components/schedule/event-component/parts/course"
 import { InstructorsList } from "@/components/schedule/event-component/parts/person";
 import RoomComponent from "@/components/schedule/event-component/parts/room";
 import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
-import { EventStatusIcons, EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
+import { EventDurationLabel, EventStatusIcons, EventTypeIcon } from "@/components/schedule/event-component/utils";
 import { Event } from "@/components/schedule/types/event";
 
-export default function MediumEventComponent({ event: event, ...props }: EventProps<Event>)
+export default function MediumEventComponent({ event: event }: EventProps<Event>)
 {
     return (
         <Box padding={ 0.3 }>

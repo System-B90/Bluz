@@ -17,15 +17,6 @@ export function deepCopyEvent(event: Event): Event
     return cpy;
 }
 
-function toMillis(value: Dayjs | Date): number
-{
-    // Works for both Dayjs and Date
-    // Dayjs has valueOf(), Date has getTime()
-    return typeof (value as any).valueOf === "function"
-        ? (value as any).valueOf()
-        : (value as Date).getTime();
-}
-
 function arraysEqual<T>(a: T[] | undefined, b: T[] | undefined): boolean
 {
     if (a === b) return true;

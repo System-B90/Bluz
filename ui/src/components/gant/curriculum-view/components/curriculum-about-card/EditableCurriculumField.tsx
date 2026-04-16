@@ -15,7 +15,8 @@ export interface EditableCurriculumFieldProps
     renderDisplay: (value: string) => ReactNode;
 }
 
-function EditableCurriculumFieldInner({ value,
+function EditableCurriculumFieldInner({
+ value,
     canEdit,
     editTooltip,
     skeletonWidth,

@@ -7,7 +7,7 @@ import RoomComponent from "@/components/schedule/event-component/parts/room";
 import { EventDurationLabel } from "@/components/schedule/event-component/utils";
 import { Event } from "@/components/schedule/types/event";
 
-export default function ShortNarrowEventComponent({ event: event, containerSize }: { containerSize: ContainerSize; } & EventProps<Event>)
+export default function ShortNarrowEventComponent({ event: event, containerSize: _containerSize }: { containerSize: ContainerSize; } & EventProps<Event>)
 {
     return (
         <Box

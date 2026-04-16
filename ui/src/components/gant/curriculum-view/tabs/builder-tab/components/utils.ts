@@ -30,7 +30,7 @@ export function calculateTotalWorkingTimeForWeeks(weeks: Array<CurriculumWeek>):
     );
 }
 
-function hashSyllabusToColorByHue(syllabusId: string, themePrimaryColor: string, opacity: number): string
+function _hashSyllabusToColorByHue(syllabusId: string, themePrimaryColor: string, opacity: number): string
 {
     // Simple hash of the ID
     let hash = 0;

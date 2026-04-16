@@ -13,6 +13,7 @@ interface TabProps
     selectedTabIndex: number;
     setSelectedTabIndex: Dispatch<SetStateAction<number>>;
 }
+
 export interface CurriculumViewTabsProps extends BoxProps, TabProps
 {
     curriculumId: CurriculumId | null;

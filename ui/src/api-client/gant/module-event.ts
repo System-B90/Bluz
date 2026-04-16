@@ -6,7 +6,8 @@ import { ModuleEvent } from "@/api-shared/types/gant/curriculum";
 export type ModuleEventDocument = ModuleEvent & BaseDocument;
 
 const moduleEventApi = clientGantApiBuilder<ModuleEvent, ApiModuleEvent, CreateModuleEventPayload>({ apiBaseUrl: '/api/gant/events', dateFixup: baseDocumentFixup as any });
-const { apiList,
+const {
+ apiList,
     apiGet,
     apiCreate,
     apiUpdate,

@@ -5,6 +5,7 @@ export interface EventDataUpdateMessage<T extends Event | DbEventDocument>
 {
     events: Record<string, T>;
 }
+
 interface EventRemovedMessage
 {
     action: 'removed';

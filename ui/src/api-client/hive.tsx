@@ -19,7 +19,8 @@ export async function apiGetSubjects()
     return (await safeApiFetcher('/api/hive/subjects')) as Array<Subject>;
 }
 
-async function apiGetHiveRooms()
+// TODO: Is this function actually needed? Rooms are a subtype of class in Hive
+export async function apiGetHiveRooms()
 {
     return ((await safeApiFetcher('/api/hive/rooms')) as Array<HiveRoom>);
 }

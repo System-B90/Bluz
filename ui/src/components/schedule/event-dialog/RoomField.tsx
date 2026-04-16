@@ -6,7 +6,9 @@ import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { eventHasRoom } from "@/components/schedule/types/event";
 import { areRoomsEqual, ResolvableRoom, roomToKey, roomToResolvable } from "@/components/schedule/types/room";
 
-interface RoomFieldProps extends EventFieldProps { };
+interface RoomFieldProps extends EventFieldProps { }
+
+;
 
 export default function RoomField({ event, onBlurCallback, ...props }: RoomFieldProps & FormControlProps)
 {

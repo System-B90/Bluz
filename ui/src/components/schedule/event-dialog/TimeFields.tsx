@@ -6,7 +6,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 
-interface EventTimeFieldProps extends EventFieldProps { };
+interface EventTimeFieldProps extends EventFieldProps { }
+
+;
 
 export default function EventTimeField({ event, onBlurCallback, ...props }: EventTimeFieldProps & BoxProps)
 {

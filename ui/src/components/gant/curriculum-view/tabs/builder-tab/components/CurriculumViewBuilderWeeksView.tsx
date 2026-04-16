@@ -6,6 +6,7 @@ import { CurriculumId, CurriculumWeek } from "@/api-shared/types/gant/curriculum
 import SyllabusModulesCurriculumViewSidebar from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules";
 import { partitionWeeks } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
 import WeekGroupPanel from "@/components/gant/curriculum-view/tabs/builder-tab/components/WeekGroupPanel";
+
 export function CurriculumViewBuilderWeeksView({
     curriculumId,
     weeks,

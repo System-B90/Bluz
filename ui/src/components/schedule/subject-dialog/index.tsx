@@ -1,21 +1,21 @@
 'use client';
 
 import
-{
-    Box,
-    Button,
-    Chip,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    OutlinedInput,
-    Select,
-    TextField,
-} from '@mui/material';
+    {
+        Box,
+        Button,
+        Chip,
+        Dialog,
+        DialogActions,
+        DialogContent,
+        DialogTitle,
+        FormControl,
+        InputLabel,
+        MenuItem,
+        OutlinedInput,
+        Select,
+        TextField,
+    } from '@mui/material';
 import { useState } from 'react';
 
 import { Subject } from "@/components/schedule/types/subject";
@@ -30,7 +30,7 @@ interface SubjectDialogProps
     onSave: (subject: Subject) => void;
 }
 
-export default function SubjectDialog({ open, subject, onClose, onSave }: SubjectDialogProps)
+export default function SubjectDialog({ open, subject: _subject, onClose, onSave }: SubjectDialogProps)
 {
     const [ name, setName ] = useState('');
     const [ displayName, setDisplayName ] = useState('');

@@ -22,8 +22,7 @@ interface WeekPanelProps
     weekIndex: number;
 }
 
-export function WorkTimeChip({ totalHours
-}: {
+export function WorkTimeChip({ totalHours}: {
     totalHours: number;
 })
 {

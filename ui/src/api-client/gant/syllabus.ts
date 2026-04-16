@@ -7,7 +7,8 @@ export type SyllabusDocument = Syllabus & BaseDocument;
 
 const syllabusApi = clientGantApiBuilder<Syllabus, ApiSyllabus, CreateSyllabusPayload>({ apiBaseUrl: '/api/gant/syllabuses', dateFixup: baseDocumentFixup as any });
 
-const { apiList,
+const {
+ apiList,
     apiGet,
     apiCreate,
     apiUpdate,

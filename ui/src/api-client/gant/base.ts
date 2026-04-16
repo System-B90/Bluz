@@ -25,8 +25,8 @@ export function baseDocumentFixup<T extends RawBaseDocument | null>(doc: T): T |
 
 export interface ClientGantApiBuilderProps<
     TEntity extends BaseGantItem,
-    ApiT,
-    TCreatePayload = Omit<TEntity, 'id'>,
+    _ApiT,
+    _TCreatePayload = Omit<TEntity, 'id'>,
 >
 {
     apiBaseUrl: string;
