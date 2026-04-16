@@ -1,7 +1,7 @@
 /**
  * Name: WeekGroupPanel.tsx
- * Purpose: A droppable container with animated expansion and distinct interaction zones.
- * Created: 2026-04-16
+ * Purpose: A droppable container for modules with expansion transitions.
+ * Created: 2026-04-15
  * Author: Michael K. Steinberg
  */
 
@@ -11,8 +11,8 @@ import GroupHeader from "@/components/gant/curriculum-view/tabs/builder-tab/comp
 import { ModuleItem } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { calculateTotalWorkingTimeForWeeks } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
 import { useDroppable } from "@dnd-kit/core";
-import { Box, BoxProps, Collapse, Divider } from "@mui/material";
-import { useMemo, useState } from "react";
+import { Box, BoxProps, Divider } from "@mui/material";
+import { useMemo } from "react";
 
 export interface WeekGroupPanelProps extends BoxProps
 {
@@ -25,10 +25,10 @@ export default function WeekGroupPanel({
     group,
     allWeeks,
     onExpandGroup,
+    sx,
     ...props
 }: WeekGroupPanelProps)
 {
-    const [ isExpanded, setIsExpanded ] = useState(true);
     const { state: { mappings } } = useCurriculumMappings();
 
     const startWeek = allWeeks.indexOf(group[ 0 ]) + 1;
@@ -54,36 +54,26 @@ export default function WeekGroupPanel({
                 <ModuleItem key={ x.moduleId } moduleId={ x.moduleId } weekIndex={ x.weekIndex } dayIndex={ x.dayIndex } />
             )), [ mappings, group, allWeeks ]);
 
-    const handleToggle = (e: React.MouseEvent) =>
-    {
-        e.stopPropagation(); // Prevents triggering the selection logic
-        setIsExpanded(!isExpanded);
-    };
-
     return (
         <Box
             { ...props }
             ref={ setNodeRef }
+            sx={ {
+                ...sx,
+                transition: (theme) => theme.transitions.create([ 'flex', 'opacity', 'min-width' ], {
+                    duration: theme.transitions.duration.standard,
+                }),
+            } }
             className={ `
-                flex flex-col p-4 min-w-85 transition-all duration-300 border-2 rounded-lg
-                ${isOver ? "bg-blue-50/50 border-blue-300 scale-[1.01]" : "bg-white border-transparent shadow-sm hover:border-gray-200"}
+                flex flex-col p-4 gap-4 border-2 border-transparent
+                ${isOver ? "bg-blue-50/50 border-dashed border-blue-300 scale-[1.01]" : "bg-transparent"}
             `}
         >
-            <GroupHeader
-                start={ startWeek }
-                end={ endWeek }
-                totalHours={ totalTime }
-                isExpanded={ isExpanded }
-                onToggleExpand={ handleToggle }
-                onSelectGroup={ onExpandGroup }
-            />
-
-            <Collapse in={ isExpanded } timeout="auto" unmountOnExit>
-                <Divider className="my-2" />
-                <Box className="flex flex-col gap-2 grow min-h-25 py-2">
-                    { moduleItems }
-                </Box>
-            </Collapse>
+            <GroupHeader start={ startWeek } end={ endWeek } totalHours={ totalTime } onExpandGroup={ onExpandGroup } />
+            <Divider />
+            <Box className={ `flex flex-col gap-2 grow min-h-25 rounded-lg ${isOver ? "ring-2 ring-blue-100 ring-inset" : ""}` }>
+                { moduleItems }
+            </Box>
         </Box>
     );
 }
