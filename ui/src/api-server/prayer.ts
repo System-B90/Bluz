@@ -2,7 +2,7 @@ import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { EventDataUpdateMessage } from "@/api-shared/types";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
-import { EventType, Event, PrayerEvent, PrayerType, prayerTypeToHebrew } from "@/components/schedule/types/event";
+import { Event, EventType, PrayerEvent, PrayerType, prayerTypeToHebrew } from "@/components/schedule/types/event";
 import { MessageTypes } from "@/settings";
 
 async function updatePrayerEvent({ day, prayerEvent, newConfig }: { day: Date, prayerEvent: Event, newConfig: PrayerSettings; })
@@ -82,7 +82,7 @@ async function updatePrayerEventsInDay({ day, newConfig }: { day: Date, newConfi
 export async function updatePrayerEvents({ startDate, newConfig }: { startDate: Date, newConfig: PrayerSettings; })
 {
     startDate.setHours(0, 0, 0, 0);
-    Promise.all(Array.from({ length: 7 }, async (_, i) =>
+    await Promise.all(Array.from({ length: 7 }, async (_, i) =>
     {
         const day = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
         await updatePrayerEventsInDay({ day, newConfig });

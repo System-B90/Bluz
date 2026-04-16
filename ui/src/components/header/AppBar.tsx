@@ -4,15 +4,15 @@ import { AppBar, AppBarProps, Box, Button, IconButton, Toolbar, Typography } fro
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
-import CurriculumIcon from '@/components/header/CurriculumIcon';
-import FilterIcon from '@/components/header/FilterIcon';
-import Filters from '@/components/header/filters';
-import LoggedInUser from '@/components/header/LoggedInUser';
-import Logo from '@/components/header/logo';
-import OfflineModeIcon from '@/components/header/OfflineModeIcon';
-import ThemeSelectorIcon from '@/components/header/ThemeSelector';
+import { CurriculumIcon } from '@/components/header/CurriculumIcon';
+import { FilterIcon } from '@/components/header/FilterIcon';
+import { Filters } from '@/components/header/filters';
+import { LoggedInUser } from '@/components/header/LoggedInUser';
+import { Logo } from '@/components/header/logo';
+import { OfflineModeIcon } from '@/components/header/OfflineModeIcon';
+import { ThemeSelectorIcon } from '@/components/header/ThemeSelector';
 
-export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
+export function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
     setOpenSettingsDialog: (open: boolean) => void,
 } & Exclude<AppBarProps, 'position'>)
 {

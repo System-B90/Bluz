@@ -2,7 +2,7 @@ import { FormControl, FormControlProps, InputLabel, MenuItem, Select } from "@mu
 import { useMemo } from "react";
 
 import { useHiveModules } from "@/components/base/HiveModulesProvider";
-import { eventHasSubject, Event } from "@/components/schedule/types/event";
+import { Event, eventHasSubject } from "@/components/schedule/types/event";
 
 interface ModuleFieldProps
 {
@@ -10,7 +10,7 @@ interface ModuleFieldProps
     onEventChange: (updates: Partial<Event>) => void;
 }
 
-export default function ModuleField({ event, onEventChange, ...props }: ModuleFieldProps & FormControlProps)
+export function ModuleField({ event, onEventChange, ...props }: ModuleFieldProps & FormControlProps)
 {
     const { getModulesOfSubject } = useHiveModules();
     const modules = useMemo(() => event?.subject ? getModulesOfSubject(event?.subject) : [], [ event?.subject, getModulesOfSubject, ]);

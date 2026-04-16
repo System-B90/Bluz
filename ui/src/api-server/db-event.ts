@@ -1,6 +1,6 @@
 import { Filter, FindOptions } from "mongodb";
 
-import databaseController from "@/api-server/mongo-db-controller";
+import { databaseController } from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
@@ -17,7 +17,7 @@ export type DbEventDocument = Omit<Event, 'endTime' | 'startTime'> & {
 async function getDbEvent(eventId: EventId, options?: FindOptions): Promise<DbEventDocument | null>
 {
     const data = await databaseController.events.findOne({ id: eventId }, options);
-    return data ? (data as DbEventDocument) : null;
+    return data ? data : null;
 }
 
 async function getDbEvents(eventIds: EventId[], options?: FindOptions): Promise<DbEventDocument[]>
@@ -60,11 +60,11 @@ async function setDbEvent(eventData: DbEventDocument, options?: FindOptions): Pr
         throw new ClientApiError(`Event ${eventId} data not modified!`);
     }
 
-    SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
+    SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, ({
         events: { [ eventId ]: fixedEvent }
-    } as EventDataUpdateMessage<DbEventDocument>);
+    } as EventDataUpdateMessage<DbEventDocument>));
 
-    return fixedEvent as DbEventDocument;
+    return fixedEvent;
 }
 
 async function createDbEvent(eventData: DbEventDocument, options?: FindOptions): Promise<DbEventDocument>

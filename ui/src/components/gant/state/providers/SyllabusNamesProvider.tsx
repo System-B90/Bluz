@@ -45,7 +45,8 @@ export function SyllabusNamesProvider({ children }: { children: React.ReactNode;
 
     useEffect(() =>
     {
-        fetchSyllabuses();
+        // Error handling is in fetchSyllabuses
+        void fetchSyllabuses();
     }, [ fetchSyllabuses ]);
 
     const value = useMemo<SyllabusProviderState>(() => ({

@@ -3,15 +3,15 @@
 import { Box } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 
-import BluzCalendar from '@/components/schedule/calendar/calendar';
-import { makeEvent, useCalendar } from '@/components/schedule/calendar/calendar-provider';
-import EventDialog from '@/components/schedule/event-dialog';
-import PushOfflineUpdatesDialog from '@/components/schedule/offline-dialogs/push-updates-dialog';
+import { BluzCalendar } from '@/components/schedule/calendar/calendar';
+import { useCalendar } from '@/components/schedule/calendar/calendar-provider/CalendarContext';
+import { makeEvent } from '@/components/schedule/calendar/calendar-provider/MakeEvent';
+import { EventDialog } from '@/components/schedule/event-dialog';
+import { PushOfflineUpdatesDialog } from '@/components/schedule/offline-dialogs/push-updates-dialog';
 import { Event, EventId } from "@/components/schedule/types/event";
 
 export default function SchedulePage()
 {
-    // 1. Consume the domain logic from our unified Provider
     const {
         events,
         saveEvent,
@@ -20,11 +20,9 @@ export default function SchedulePage()
         redo
     } = useCalendar();
 
-    // 2. Local UI State (Dialogs & Selected Item)
     const [ selectedEvent, setSelectedEvent ] = useState<Event>();
     const [ openEventDialog, setOpenEventDialog ] = useState<boolean>(false);
 
-    // 3. Global Keyboard Shortcuts
     useEffect(() =>
     {
         const handleKeyDown = (e: KeyboardEvent) =>

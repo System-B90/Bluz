@@ -32,13 +32,13 @@ export async function fetchDrawerData({ isMounted, enqueueSnackbar, setCurriculu
     try
     {
         const listData = await curriculumApi.apiList();
-        const keys = Object.keys(listData) as CurriculumId[];
+        const keys: Array<CurriculumId> = Object.keys(listData);
 
         if (keys.length === 0)
         {
             if (isMounted)
             {
-                setCurriculumsData({} as Record<CurriculumId, CurriculumDocument>);
+                setCurriculumsData(({} as Record<CurriculumId, CurriculumDocument>));
                 setIsFetchingDetails(false);
             }
             return;
@@ -48,7 +48,7 @@ export async function fetchDrawerData({ isMounted, enqueueSnackbar, setCurriculu
 
         if (isMounted)
         {
-            setCurriculumsData(detailedData as Record<CurriculumId, CurriculumDocument>);
+            setCurriculumsData((detailedData as Record<CurriculumId, CurriculumDocument>));
         }
     } catch (error)
     {

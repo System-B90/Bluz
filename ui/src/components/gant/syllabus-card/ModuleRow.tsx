@@ -1,24 +1,24 @@
 import EditIcon from '@mui/icons-material/Edit';
 import
-{
-    CircularProgress,
-    IconButton,
-    Skeleton,
-    TableCell,
-    TableCellProps,
-    TableRow,
-    Tooltip,
-    Typography
-} from '@mui/material';
+    {
+        CircularProgress,
+        IconButton,
+        Skeleton,
+        TableCell,
+        TableCellProps,
+        TableRow,
+        Tooltip,
+        Typography
+    } from '@mui/material';
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CurriculumId, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useModule } from '@/components/gant/state/hooks';
 import { useModuleActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleActions";
+import { useModule } from '@/components/gant/state/hooks/UseModule';
 import { useCurriculumProviderActions, useCurriculumState } from '@/components/gant/state/provider';
-import OpenHandsIcon from "@/components/gant/syllabus-card/OpenHandsIcon";
+import { OpenHandsIcon } from "@/components/gant/syllabus-card/OpenHandsIcon";
 import { calculateAllocatedTimeForModule, calculateMinimumRequiredTimeForModule } from '@/components/gant/utils';
 
 interface AllocatedTimeTableCellProps extends TableCellProps

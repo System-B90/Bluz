@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
 import { moduleApi } from "@/api-client/gant/api";
-import { SyllabusId, ModuleId, Module, CurriculumId } from "@/api-shared/types/gant/curriculum";
+import { CurriculumId, Module, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { withGantErrorHandling } from "@/components/gant/state/hooks/gant-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gant/state/provider";
 
@@ -61,7 +61,7 @@ export function useModuleActions()
     {
         return withGantErrorHandling(async () =>
         {
-            moduleApi.apiSetAllocatedTime(moduleId, curriculumId, allocatedDuration);
+            await moduleApi.apiSetAllocatedTime(moduleId, curriculumId, allocatedDuration);
             dispatch({ type: 'ALLOCATE_TIME_TO_MODULE', payload: { moduleId, curriculumId, duration: allocatedDuration } });
         }, `Failed to allocate time to module (ID: ${moduleId}):`);
     }, [ dispatch ]);

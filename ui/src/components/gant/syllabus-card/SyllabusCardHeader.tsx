@@ -27,7 +27,7 @@ function InternalHeader({ syllabusId }: { syllabusId: SyllabusId; })
     );
 }
 
-export default function SyllabusCardHeader({ syllabusId, ...props }: SyllabusCardHeaderProps)
+export function SyllabusCardHeader({ syllabusId, ...props }: SyllabusCardHeaderProps)
 {
     return (
         <CardHeader

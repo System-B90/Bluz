@@ -1,6 +1,6 @@
 import { Avatar, AvatarProps } from '@mui/material';
 
-export default function HiveAvatar({ hiveId, ...props }: { hiveId: null | number | string; } & AvatarProps)
+export function HiveAvatar({ hiveId, ...props }: { hiveId: null | number | string; } & AvatarProps)
 {
     return (
         <Avatar src={ hiveId ? `/api/hive/users/avatars/${hiveId}/` : undefined } { ...props } />

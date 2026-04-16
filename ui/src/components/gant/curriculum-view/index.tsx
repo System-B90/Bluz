@@ -2,15 +2,15 @@ import { Box, BoxProps } from '@mui/material';
 import { useState } from 'react';
 
 import { CurriculumId } from '@/api-shared/types/gant/curriculum';
-import CurriculumViewSidebar from '@/components/gant/curriculum-view/components/sidebars';
-import CurriculumViewTabs from '@/components/gant/curriculum-view/tabs';
+import { CurriculumViewSidebar } from '@/components/gant/curriculum-view/components/sidebars';
+import { CurriculumViewTabs } from '@/components/gant/curriculum-view/tabs';
 
 export interface CurriculumViewProps extends BoxProps
 {
     curriculumId: CurriculumId | null;
 }
 
-export default function CurriculumView({ curriculumId, ...props }: CurriculumViewProps)
+export function CurriculumView({ curriculumId, ...props }: CurriculumViewProps)
 {
     const [ selectedTabIndex, setSelectedTabIndex ] = useState<number>(0);
 

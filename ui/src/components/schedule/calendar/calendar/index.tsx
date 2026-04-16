@@ -16,17 +16,17 @@ import
 import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
 import { useRooms } from '@/components/base/RoomsProvider';
-import CALENDAR_MESSAGES from '@/components/CalendarMessages';
+import { CALENDAR_MESSAGES } from '@/components/CalendarMessages';
 import { useCalendar } from '@/components/schedule/calendar/calendar-provider/CalendarContext';
 import { makeEvent } from '@/components/schedule/calendar/calendar-provider/MakeEvent';
 import { DnDCalendar, localizer } from '@/components/schedule/calendar/calendar/DndLocalizer';
-import CustomWorkWeek from '@/components/schedule/calendar/CustomWorkWeek';
+import { CustomWorkWeek } from '@/components/schedule/calendar/CustomWorkWeek';
 import { getRangeForView } from '@/components/schedule/calendar/utils';
-import BluzEventComponent from '@/components/schedule/event-component/base';
+import { BluzEventComponent } from '@/components/schedule/event-component/base';
 import { Event } from "@/components/schedule/types/event";
 import { ResolvableRoom } from "@/components/schedule/types/room";
 
-export default function BluzCalendar({
+export function BluzCalendar({
     handleSaveEvent,
     handleDeleteEvent,
     setOpenEventDialog,

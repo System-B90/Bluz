@@ -7,8 +7,10 @@
 
 import { EventAvailable, EventBusy } from "@mui/icons-material";
 import { Chip, Tooltip } from "@mui/material";
+import { useSnackbar } from "notistack";
 import { useCallback } from 'react';
 
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
 import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
 import { useCurriculumWeek } from "@/components/gant/state/hooks/UseCurriculum";
@@ -26,6 +28,7 @@ export function ClosingSaturdayChip({
     closingSaturday
 }: ClosingSaturdayChipProps)
 {
+    const { enqueueSnackbar } = useSnackbar();
     const week = useCurriculumWeek(curriculumId, weekIndex);
     const { updateWeek } = useWeekActions();
 
@@ -38,8 +41,9 @@ export function ClosingSaturdayChip({
         {
             updatedDays.push({ day: DayName.Saturday, totalWorkingHours: 2 });
         }
-        updateWeek(curriculumId, weekIndex, { closingSaturday: isClosing, days: updatedDays });
-    }, [ week, curriculumId, weekIndex, closingSaturday, updateWeek ]);
+        updateWeek(curriculumId, weekIndex, { closingSaturday: isClosing, days: updatedDays })
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת המידע של השבוע נכשלה!', error));
+    }, [ week, curriculumId, weekIndex, closingSaturday, updateWeek, enqueueSnackbar ]);
 
     return (
         <Tooltip arrow title={ closingSaturday ? "סוגרים שבת" : "יוצאים הביתה" }>

@@ -6,7 +6,7 @@ import { HoursCard } from "@/components/gant/curriculum-view/components/HoursCar
 import { WorkTimePanel } from "@/components/gant/curriculum-view/components/WorkTimePanel";
 import { useCurriculum } from "@/components/gant/state/hooks/UseCurriculum";
 
-export default function AboutTimeCurriculumViewSidebar({ curriculumId }: { curriculumId: CurriculumId | null; })
+export function AboutTimeCurriculumViewSidebar({ curriculumId }: { curriculumId: CurriculumId | null; })
 {
     const curriculum = useCurriculum(curriculumId ?? '');
 

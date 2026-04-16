@@ -67,12 +67,12 @@ export function EventCollisionsList({ collisionStates }: { collisionStates: Coll
                                 checked={ rowCount > 0 && numSelected === rowCount }
                                 color="primary"
                                 indeterminate={ numSelected > 0 && numSelected < rowCount }
+                                onChange={ onSelectAllClick }
                                 slotProps={ {
                                     input: {
                                         'aria-label': 'select all',
                                     }
                                 } }
-                                onChange={ onSelectAllClick }
                             />
                         </TableCell>
                     </TableRow>

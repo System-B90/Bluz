@@ -1,12 +1,15 @@
 import { TextField } from '@mui/material';
+import { useSnackbar } from 'notistack';
 import { ChangeEventHandler, useCallback, useState } from 'react';
 
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useSyllabus } from '@/components/gant/state/hooks';
 import { useSyllabusActions } from "@/components/gant/state/hooks/gant-funcs/UseSyllabusActions";
+import { useSyllabus } from '@/components/gant/state/hooks/UseSyllabus';
 
 export function SyllabusName({ syllabusId }: { syllabusId: SyllabusId; })
 {
+    const { enqueueSnackbar } = useSnackbar();
     const { updateSyllabus } = useSyllabusActions();
     const syllabus = useSyllabus(syllabusId);
     const [ localTitle, setLocalTitle ] = useState(syllabus?.title ?? '');
@@ -18,8 +21,9 @@ export function SyllabusName({ syllabusId }: { syllabusId: SyllabusId; })
 
     const onBlur = useCallback(() =>
     {
-        updateSyllabus(syllabusId, { title: localTitle });
-    }, [ syllabusId, localTitle, updateSyllabus ]);
+        updateSyllabus(syllabusId, { title: localTitle })
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת שם הסילבוס נכשלה!', error));
+    }, [ syllabusId, localTitle, updateSyllabus, enqueueSnackbar ]);
 
     return (
         <TextField

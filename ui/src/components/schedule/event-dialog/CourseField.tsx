@@ -8,7 +8,7 @@ import { eventHasRoom } from "@/components/schedule/types/event";
 
 interface CourseFieldProps extends EventFieldProps { }
 
-export default function CourseField({ event, onBlurCallback, ...props }: CourseFieldProps & FormControlProps)
+export function CourseField({ event, onBlurCallback, ...props }: CourseFieldProps & FormControlProps)
 {
     const { courses, getCourse } = useCourses();
     const [ currentCourseIds, setCurrentCourseIds ] = useState(Array.isArray(event?.courses) ? event.courses : []);

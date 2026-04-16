@@ -7,8 +7,10 @@
 
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Box, Chip, Divider, InputBase, Paper, Stack, Typography } from "@mui/material";
+import { useSnackbar } from 'notistack';
 import { useCallback, useMemo } from 'react';
 
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { ClosingSaturdayChip } from "@/components/gant/curriculum-view/tabs/weeks-tab/ClosingSaturdayChip";
 import { DayEntry } from '@/components/gant/curriculum-view/tabs/weeks-tab/DayEntry';
@@ -62,6 +64,7 @@ export function WeekWorkTimeChip({
 
 export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
 {
+    const { enqueueSnackbar } = useSnackbar();
     const week = useCurriculumWeek(curriculumId, weekIndex);
     const { updateWeek } = useWeekActions();
 
@@ -70,9 +73,10 @@ export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
         const newValue = e.target.value;
         if (newValue !== week?.comment)
         {
-            updateWeek(curriculumId, weekIndex, { comment: newValue });
+            updateWeek(curriculumId, weekIndex, { comment: newValue })
+                .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת הערה נכשלה!', error));
         }
-    }, [ curriculumId, weekIndex, week?.comment, updateWeek ]);
+    }, [ curriculumId, weekIndex, week?.comment, updateWeek, enqueueSnackbar ]);
 
     const renderedDays = useMemo(() =>
         (week?.days ?? []).map((day, dayIndex) => (

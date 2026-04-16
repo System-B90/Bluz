@@ -4,7 +4,7 @@ import { IconButton, IconButtonProps, Tooltip } from "@mui/material";
 
 import { useOffline } from "@/components/base/OfflineProvider";
 
-export default function OfflineModeIcon({ ...props }: IconButtonProps)
+export function OfflineModeIcon({ ...props }: IconButtonProps)
 {
     const { offlineMode, setOfflineMode } = useOffline();
 

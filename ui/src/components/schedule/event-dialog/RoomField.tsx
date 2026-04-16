@@ -10,7 +10,7 @@ interface RoomFieldProps extends EventFieldProps { }
 
 ;
 
-export default function RoomField({ event, onBlurCallback, ...props }: RoomFieldProps & FormControlProps)
+export function RoomField({ event, onBlurCallback, ...props }: RoomFieldProps & FormControlProps)
 {
     const { rooms, getRoom } = useRooms();
     const [ encodedSelectedRoomIds, setEncodedSelectedRoomIds ] = useState(Array.isArray(event?.rooms) ? event.rooms.map((r) => JSON.stringify(r)) : []);

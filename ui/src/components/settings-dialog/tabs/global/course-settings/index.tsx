@@ -6,7 +6,7 @@ import { Course } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { CourseItem } from "@/components/settings-dialog/tabs/global/course-settings/CourseItem";
 
-export default function CourseSettings()
+export function CourseSettings()
 {
     const { courses, addCourse, updateCourse, deleteCourse } = useCourses();
     const originalCourses = useRef<Array<Course>>(courses);

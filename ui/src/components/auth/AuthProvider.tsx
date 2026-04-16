@@ -6,12 +6,12 @@ import React, {
     useCallback,
     useContext,
     useEffect,
-    useRef,
-    useMemo
+    useMemo,
+    useRef
 } from 'react';
 
 import { AuthSessionUser } from '@/api-shared/types/sso';
-import useSessionWebSocketContext, { MessageHandlerType } from '@/components/SessionWs';
+import { MessageHandlerType, useSessionWebSocketContext } from '@/components/SessionWs';
 import { MessageTypes } from '@/settings';
 
 export interface WebSocketSessionMessage
@@ -88,7 +88,8 @@ export const AuthProvider = ({ children, userData }: { children: React.ReactNode
 
     const logout = useCallback(() =>
     {
-        signOut({ callbackUrl: '/login' });
+        // No return from this function
+        void signOut({ callbackUrl: '/login' });
     }, []);
 
     const contextValue = useMemo<AuthContextState>(() => ({

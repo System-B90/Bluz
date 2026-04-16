@@ -1,28 +1,32 @@
 import AddIcon from '@mui/icons-material/Add';
 import
-{
-    Box,
-    IconButton,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    Typography
-} from "@mui/material";
+    {
+        Box,
+        IconButton,
+        Table,
+        TableBody,
+        TableCell,
+        TableHead,
+        TableRow,
+        Typography
+    } from "@mui/material";
+import { useSnackbar } from 'notistack';
 import { useCallback, useMemo } from "react";
 
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { ModuleEventId, ModuleId } from "@/api-shared/types/gant/curriculum";
 import { ModuleEventView } from "@/components/gant/module-dialog/ModuleEventView";
 import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
 
 function CreateModuleEventButton({ moduleId }: { moduleId: ModuleId; })
 {
+    const { enqueueSnackbar } = useSnackbar();
     const { createEvent } = useModuleEventActions();
     const clickHandler = useCallback(() =>
     {
-        createEvent('מופע חדש', moduleId);
-    }, [ moduleId, createEvent ]);
+        createEvent('מופע חדש', moduleId)
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'יצירת המופע נכשלה!', error));
+    }, [ moduleId, createEvent, enqueueSnackbar ]);
 
     return (
         <IconButton onClick={ clickHandler } size="small">

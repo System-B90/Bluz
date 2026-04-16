@@ -11,8 +11,10 @@ import
         Stack,
         TextField
     } from "@mui/material";
+import { useSnackbar } from "notistack";
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
 
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { Module, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { ModuleEventsView } from "@/components/gant/module-dialog/ModuleEventsView";
 import { HiveModulesView } from "@/components/gant/module-dialog/utils";
@@ -35,6 +37,7 @@ export function ModuleDialog({
     ...props
 }: ModuleDialogProps)
 {
+    const { enqueueSnackbar } = useSnackbar();
     const { closeModuleDialog } = useCurriculumProviderActions();
     const { deleteModule, updateModule } = useModuleActions();
     const moduleDoc = useModule(moduleId ?? '');
@@ -53,8 +56,9 @@ export function ModuleDialog({
     const handleCommit = useCallback((updates: Partial<Module>) =>
     {
         if (!syllabusId || !moduleId) return;
-        updateModule(moduleId, updates);
-    }, [ moduleId, syllabusId, updateModule ]);
+        updateModule(moduleId, updates)
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת המערך נכשלה!', error));
+    }, [ moduleId, syllabusId, updateModule, enqueueSnackbar ]);
 
     const handleDelete = useCallback(() =>
     {

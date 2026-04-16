@@ -8,7 +8,7 @@ import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { ModuleLike } from "@/components/schedule/types/module";
 import { SubjectLike } from "@/components/schedule/types/subject";
 
-export default function SubjectComponent({ subjectId, ...props }: { subjectId: SubjectLike; } & TypographyProps)
+export function SubjectComponent({ subjectId, ...props }: { subjectId: SubjectLike; } & TypographyProps)
 {
     const { getSubject } = useHiveSubjects();
     const subject = useMemo(() => getSubject(subjectId), [ subjectId, getSubject, ]);

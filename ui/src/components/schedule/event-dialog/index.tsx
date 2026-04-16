@@ -14,7 +14,7 @@ import { FormEvent, useCallback, useState } from "react";
 import { EventClassification } from '@/components/schedule/event-dialog/EventClassification';
 import { EventPrimaryDetails } from '@/components/schedule/event-dialog/EventPrimaryDetails';
 import { EventToggles } from '@/components/schedule/event-dialog/EventToggles';
-import InstructorsField from "@/components/schedule/event-dialog/InstructorsField";
+import { InstructorsField } from "@/components/schedule/event-dialog/InstructorsField";
 import { Event, EventId } from "@/components/schedule/types/event";
 
 interface EventDialogProps
@@ -26,7 +26,7 @@ interface EventDialogProps
     onDelete: (eventId: EventId) => void;
 }
 
-export default function EventDialog({
+export function EventDialog({
     open,
     event: inputEvent,
     onClose,

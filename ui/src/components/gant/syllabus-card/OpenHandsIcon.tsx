@@ -1,6 +1,6 @@
 import { SvgIcon, SvgIconProps } from '@mui/material';
 
-export default function OpenHandsIcon(props: SvgIconProps)
+export function OpenHandsIcon(props: SvgIconProps)
 {
     return (
         <SvgIcon

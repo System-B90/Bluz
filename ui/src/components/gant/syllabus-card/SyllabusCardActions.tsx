@@ -13,7 +13,7 @@ export interface SyllabusCardActionsProps extends CardActionsProps
     syllabusId: SyllabusId;
 }
 
-export default function SyllabusCardActions({ curriculumId, syllabusId, ...props }: SyllabusCardActionsProps)
+export function SyllabusCardActions({ curriculumId, syllabusId, ...props }: SyllabusCardActionsProps)
 {
     const { enqueueSnackbar } = useSnackbar();
     const { unlinkSyllabusFromCurriculum } = useSyllabusActions();

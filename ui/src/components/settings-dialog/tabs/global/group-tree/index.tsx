@@ -1,25 +1,25 @@
 'use client';
 
 import
-{
-    DndContext,
-} from '@dnd-kit/core';
+    {
+        DndContext,
+    } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from '@dnd-kit/utilities';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import
-{
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
-    Typography,
-    Box,
-    Button,
-} from '@mui/material';
+    {
+        Accordion,
+        AccordionDetails,
+        AccordionSummary,
+        Box,
+        Button,
+        Typography,
+    } from '@mui/material';
 
 import { Group } from '@/components/schedule/types/group';
-import GroupField from "@/components/settings-dialog/tabs/global/group-tree/GroupField";
-import GroupMembersField from "@/components/settings-dialog/tabs/global/group-tree/GroupMembersField";
+import { GroupField } from "@/components/settings-dialog/tabs/global/group-tree/GroupField";
+import { GroupMembersField } from "@/components/settings-dialog/tabs/global/group-tree/GroupMembersField";
 
 function GroupItem({ group }: { group: Group; })
 {
@@ -57,7 +57,7 @@ function GroupItem({ group }: { group: Group; })
     );
 }
 
-export default function GroupTreeViewer({ initialGroups }: { initialGroups: Group[]; })
+export function GroupTreeViewer({ initialGroups }: { initialGroups: Group[]; })
 {
     const items = initialGroups.map((g) => <GroupItem group={ g } key={ g.id } />);
 

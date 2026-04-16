@@ -2,8 +2,8 @@
 
 import { Box, Typography } from '@mui/material';
 
-import LoginWithHive from '@/app/(themed)/(pre-auth)/login/login-with-hive-button';
-import Logo from '@/components/header/logo';
+import { LoginWithHive } from '@/app/(themed)/(pre-auth)/login/login-with-hive-button';
+import { Logo } from '@/components/header/logo';
 
 function LoginWidget()
 {

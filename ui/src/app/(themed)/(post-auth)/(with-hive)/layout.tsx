@@ -10,9 +10,9 @@ import { HiveUsersProvider } from '@/components/base/HiveUsersProvider';
 import { OfflineProvider } from '@/components/base/OfflineProvider';
 import { RoomsProvider } from '@/components/base/RoomsProvider';
 import { SettingsProvider } from '@/components/base/SettingsProvider';
-import ScheduleAppBar from '@/components/header/AppBar';
+import { ScheduleAppBar } from '@/components/header/AppBar';
 import { CalendarProvider } from '@/components/schedule/calendar/calendar-provider';
-import SettingsDialog from '@/components/settings-dialog/SettingsDialog';
+import { SettingsDialog } from '@/components/settings-dialog/SettingsDialog';
 
 export default function PostAuthLayout({ children }: { children: React.ReactNode; })
 {

@@ -40,9 +40,9 @@ export function buildGantCollectionRoutes<
                 const itemArray = await dbSet.getMultipleItems(requestedIds.split(','));
                 items = itemArray.reduce((acc, doc) =>
                 {
-                    acc[ doc.id as TEntity[ 'id' ] ] = doc;
+                    acc[ (doc.id as TEntity[ 'id' ]) ] = doc;
                     return acc;
-                }, {} as Record<TEntity[ 'id' ], TEntity>);
+                }, ({} as Record<TEntity[ 'id' ], TEntity>));
             }
             return ApiSuccess(items);
         } catch (error)
@@ -56,7 +56,7 @@ export function buildGantCollectionRoutes<
         try
         {
             // Strongly typed as TCreatePayload, allowing relational IDs to flow into the DB layer
-            const payload = (await request.json()) as TCreatePayload;
+            const payload: TCreatePayload = await request.json();
 
             // The DB layer handles extracting the foreign keys and returning the clean TEntity
             const newItem = await dbSet.createNewItem(payload);

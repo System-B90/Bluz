@@ -30,7 +30,7 @@ interface SubjectDialogProps
     onSave: (subject: Subject) => void;
 }
 
-export default function SubjectDialog({ open, subject: _subject, onClose, onSave }: SubjectDialogProps)
+export function SubjectDialog({ open, subject: _subject, onClose, onSave }: SubjectDialogProps)
 {
     const [ name, setName ] = useState('');
     const [ displayName, setDisplayName ] = useState('');

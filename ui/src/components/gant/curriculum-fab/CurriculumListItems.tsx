@@ -14,7 +14,7 @@ export interface CurriculumListItemsProps
     currentCurriculum?: CurriculumId | null;
 }
 
-export default function CurriculumListItems({ isFetchingDetails, curriculumsData, sortedIds, setCurrentCurriculum, currentCurriculum }: CurriculumListItemsProps)
+export function CurriculumListItems({ isFetchingDetails, curriculumsData, sortedIds, setCurrentCurriculum, currentCurriculum }: CurriculumListItemsProps)
 {
     if (isFetchingDetails)
     {

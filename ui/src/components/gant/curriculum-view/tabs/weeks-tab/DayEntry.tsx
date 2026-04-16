@@ -7,8 +7,10 @@
 
 import { Add, Remove } from "@mui/icons-material";
 import { IconButton, TextField, Typography } from "@mui/material";
+import { useSnackbar } from "notistack";
 import React, { useCallback, useState } from 'react';
 
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
 import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gant/state/hooks/UseCurriculum";
@@ -37,6 +39,7 @@ const parseToHours = (timeStr: string): number =>
 
 export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEntryProps) =>
 {
+    const { enqueueSnackbar } = useSnackbar();
     const day = useCurriculumDay(curriculumId, weekIndex, dayIndex);
     const { updateDay } = useWeekActions();
 
@@ -47,17 +50,19 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
         const numericValue = parseToHours(localTime);
         if (numericValue !== day?.totalWorkingHours)
         {
-            updateDay(curriculumId, weekIndex, dayIndex, { totalWorkingHours: numericValue });
+            updateDay(curriculumId, weekIndex, dayIndex, { totalWorkingHours: numericValue })
+                .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת שעות נכשלה!', error));
         }
-    }, [ localTime, day?.totalWorkingHours, updateDay, curriculumId, weekIndex, dayIndex ]);
+    }, [ localTime, day?.totalWorkingHours, updateDay, curriculumId, weekIndex, dayIndex, enqueueSnackbar ]);
 
     const adjustHours = useCallback((amount: number) =>
     {
         const newHours = Math.max(0, Math.min(24, (day?.totalWorkingHours ?? 0) + amount));
         const formatted = formatToTime(newHours);
         setLocalTime(formatted); // Update local UI immediately
-        updateDay(curriculumId, weekIndex, dayIndex, { totalWorkingHours: newHours });
-    }, [ curriculumId, weekIndex, dayIndex, updateDay, day?.totalWorkingHours ]);
+        updateDay(curriculumId, weekIndex, dayIndex, { totalWorkingHours: newHours })
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת שעות נכשלה!', error));
+    }, [ curriculumId, weekIndex, dayIndex, updateDay, day?.totalWorkingHours, enqueueSnackbar ]);
 
     const isSaturday = day?.day === DayName.Saturday;
     const isDisabled = isSaturday && (day?.totalWorkingHours ?? 0) === 0;

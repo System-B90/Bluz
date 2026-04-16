@@ -2,7 +2,7 @@
 
 import { Box, TextField } from '@mui/material';
 
-import EventTimeField from "@/components/schedule/event-dialog/TimeFields";
+import { EventTimeField } from "@/components/schedule/event-dialog/TimeFields";
 import { Event } from "@/components/schedule/types/event";
 
 export function EventPrimaryDetails({ event, onUpdate }: {

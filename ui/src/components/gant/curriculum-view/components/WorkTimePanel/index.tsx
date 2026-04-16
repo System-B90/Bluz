@@ -12,7 +12,7 @@ import { useCallback, useState } from 'react';
 import { CurriculumWeek } from '@/api-shared/types/gant/curriculum';
 import { OverviewTab } from '@/components/gant/curriculum-view/components/WorkTimePanel/OverviewTab';
 import { WorkTimePanelProps } from '@/components/gant/curriculum-view/components/WorkTimePanel/types';
-import { useWorkTimePanelLogic } from '@/components/gant/curriculum-view/components/WorkTimePanel/useWorkTimePanelLogic';
+import { useWorkTimePanelLogic } from '@/components/gant/curriculum-view/components/WorkTimePanel/UseWorkTimePanelLogic';
 import { cloneWeeks } from '@/components/gant/curriculum-view/components/WorkTimePanel/utils';
 
 export function WorkTimePanel({ curriculumId, curriculum }: WorkTimePanelProps)

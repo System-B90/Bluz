@@ -18,7 +18,7 @@ export async function createHiveClientFromSession(session: AuthSessionData): Pro
     return hiveClient;
 }
 
-export default async function createHiveClient(): Promise<HiveClient>
+export async function createHiveClient(): Promise<HiveClient>
 {
     const session = await getServerSession(authOptions);
     if (!session)

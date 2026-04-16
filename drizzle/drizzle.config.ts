@@ -3,7 +3,7 @@ import
   defineConfig
 } from "drizzle-kit";
 
-export default defineConfig({
+export defineConfig({
   schema: "./ui/src/api-server/curriculum/schema.ts",
   dialect: "postgresql",
   dbCredentials: {

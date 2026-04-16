@@ -12,7 +12,7 @@ interface LoginWithHiveProps extends ButtonProps
     fontWeight?: TypographyProps[ 'fontWeight' ];
 }
 
-export default function LoginWithHive({
+export function LoginWithHive({
     callbackUrl = '/',
     fullWidth = true,
     variant = 'contained',

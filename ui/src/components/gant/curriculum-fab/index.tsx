@@ -14,7 +14,7 @@ import { Dispatch, MouseEvent, SetStateAction, useCallback, useEffect, useMemo, 
 import { CurriculumDocument } from "@/api-client/gant/curriculum";
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { CurriculumActionItems } from '@/components/gant/curriculum-fab/CurriculumActionItems';
-import CurriculumListItems from "@/components/gant/curriculum-fab/CurriculumListItems";
+import { CurriculumListItems } from "@/components/gant/curriculum-fab/CurriculumListItems";
 import { fetchDrawerData, sortCurriculumsByDraftAndUpdatedAt } from "@/components/gant/curriculum-fab/utils";
 
 export interface CurriculumDrawerProps
@@ -27,7 +27,7 @@ export interface CurriculumDrawerProps
 
 const PANEL_WIDTH = 300;
 
-export default function CurriculumFab({
+export function CurriculumFab({
     setCurrentCurriculum,
     currentCurriculum,
 }: CurriculumDrawerProps)
@@ -41,7 +41,7 @@ export default function CurriculumFab({
     useEffect(() =>
     {
         let isMounted = true;
-        fetchDrawerData({ isMounted, enqueueSnackbar, setCurriculumsData, setIsFetchingDetails });
+        void fetchDrawerData({ isMounted, enqueueSnackbar, setCurriculumsData, setIsFetchingDetails });
         return () => { isMounted = false; };
     }, [ enqueueSnackbar ]);
 

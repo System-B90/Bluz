@@ -5,8 +5,10 @@
  * Author: Michael K. Steinberg
  */
 
+import { useSnackbar } from 'notistack';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react';
 
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { curriculumModuleDayMappingApi } from '@/api-client/gant/mappings';
 import { BaseDbDocument } from '@/api-server/curriculum/db-base';
 import { CurriculumId, ModuleId } from "@/api-shared/types/gant/curriculum";
@@ -85,6 +87,7 @@ const CurriculumMappingContext = createContext<CurriculumMappingContextType | un
 
 export function CurriculumMappingProvider({ children, curriculumId }: { children: React.ReactNode; curriculumId: CurriculumId; })
 {
+    const { enqueueSnackbar } = useSnackbar();
     const [ state, dispatch ] = useReducer(mappingReducer, {
         mappings: {},
         isLoading: false,
@@ -186,11 +189,11 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
             await curriculumModuleDayMappingApi.apiDelete(curriculumId, moduleId, weekIndex, dayIndex);
         } catch 
         {
-            refreshMappings(); // Re-sync on failure
+            await refreshMappings(); // Re-sync on failure
         }
     }, [ refreshMappings, dispatch, curriculumId ]);
 
-    useEffect(() => { refreshMappings(); }, [ refreshMappings ]); // Initial load
+    useEffect(() => { refreshMappings().catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת מיפויי מערכים נכשלה!', error)); }, [ enqueueSnackbar, refreshMappings ]); // Initial load
 
     const value = useMemo(() => ({ state, refreshMappings, moveModule, removeModule, createMapping }), [ state, refreshMappings, moveModule, removeModule, createMapping ]);
 

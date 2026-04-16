@@ -8,7 +8,7 @@ import { useCallback, useState } from 'react';
 
 import { useSettings } from '@/components/base/SettingsProvider';
 
-export default function PrayerSettings()
+export function PrayerSettings()
 {
     const { prayerTimes, updatePrayerTimes } = useSettings();
 

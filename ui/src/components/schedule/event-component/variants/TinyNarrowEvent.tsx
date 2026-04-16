@@ -2,13 +2,14 @@ import { Box, Tooltip, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
 
 import { ContainerSize } from "@/components/schedule/event-component/base";
+import { EventDurationLabel } from "@/components/schedule/event-component/EventDurationLabel";
+import { EventTypeIcon } from "@/components/schedule/event-component/EventTypeIcon";
 import { InstructorsList } from "@/components/schedule/event-component/parts/person";
-import RoomComponent from "@/components/schedule/event-component/parts/room";
-import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
-import { EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
+import { RoomComponent } from "@/components/schedule/event-component/parts/room";
+import { ModuleComponent, SubjectComponent } from "@/components/schedule/event-component/parts/subject";
 import { Event } from "@/components/schedule/types/event";
 
-export default function TinyNarrowEventComponent({ event: event, containerSize }: { containerSize: ContainerSize; } & EventProps<Event>)
+export function TinyNarrowEventComponent({ event: event, containerSize }: { containerSize: ContainerSize; } & EventProps<Event>)
 {
     const isTooShort = containerSize.height < 40;
     const showStacked = containerSize.height > 60;

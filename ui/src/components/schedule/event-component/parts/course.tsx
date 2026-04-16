@@ -30,4 +30,3 @@ export function CourseComponent({ courseIds, showCaption, chipSize, ...props }: 
         </Box >
     );
 }
-export default CourseComponent;

@@ -1,14 +1,14 @@
 'use client';
 
 import
-  {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    Typography,
-  } from '@mui/material';
+    {
+        Button,
+        Dialog,
+        DialogActions,
+        DialogContent,
+        DialogTitle,
+        Typography,
+    } from '@mui/material';
 
 import { Event } from "@/components/schedule/types/event";
 
@@ -20,7 +20,7 @@ interface DeleteDialogProps
   onConfirm: () => void;
 }
 
-export default function DeleteDialog({
+export function DeleteDialog({
   open,
   event,
   onClose,

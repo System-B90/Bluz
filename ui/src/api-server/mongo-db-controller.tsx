@@ -71,7 +71,7 @@ class DatabaseController
 }
 
 const databaseController = new DatabaseController();
-export default databaseController;
+export { databaseController };
 
 export type ProjectionMap<T> = {
     [ P in keyof T ]: 1;

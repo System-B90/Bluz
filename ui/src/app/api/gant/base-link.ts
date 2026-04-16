@@ -42,7 +42,7 @@ export function buildGantLinkRoutes<
             }
 
             const { newParentId } = JSON.parse(textBody) as { newParentId: string; };
-            const linkedItem = await dbSet.linkItem(newParentId, id as TEntity[ 'id' ]);
+            const linkedItem = await dbSet.linkItem(newParentId, (id as TEntity[ 'id' ]));
 
             return ApiSuccess(linkedItem);
         } catch (error)
@@ -68,7 +68,7 @@ export function buildGantLinkRoutes<
             }
 
             const { oldParentId } = JSON.parse(textBody) as { oldParentId: string; };
-            await dbSet.unlinkItem(oldParentId, id as TEntity[ 'id' ]);
+            await dbSet.unlinkItem(oldParentId, (id as TEntity[ 'id' ]));
 
             return ApiSuccess({ unlinked: true, id: id });
         } catch (error)

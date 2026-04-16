@@ -118,9 +118,9 @@ export function clientGantApiBuilder<
 
         return Object.entries(rawData).reduce((acc, [ id, item ]) =>
         {
-            acc[ id as TEntity[ 'id' ] ] = dateFixup(item);
+            acc[ (id as TEntity[ 'id' ]) ] = dateFixup(item);
             return acc;
-        }, {} as Record<TEntity[ 'id' ], TDocument>);
+        }, ({} as Record<TEntity[ 'id' ], TDocument>));
     }
 
     async function apiLink(itemId: TEntity[ 'id' ], newParentId: BaseGantItem[ 'id' ], options?: ClientApiProps): Promise<TDocument>

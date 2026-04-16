@@ -7,7 +7,7 @@ import FormControl from '@mui/material/FormControl';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import * as React from 'react';
 
-export default function NumberSpinner({
+export function NumberSpinner({
     id: idProp,
     _label,
     error,

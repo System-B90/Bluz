@@ -1,6 +1,6 @@
 import { FindOptions, UpdateOptions } from "mongodb";
 
-import databaseController from "@/api-server/mongo-db-controller";
+import { databaseController } from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { ClientApiError } from "@/api-shared/errors";
 import { Course } from "@/api-shared/types/course";
@@ -23,13 +23,13 @@ async function setDbCourse(course: Course, options?: UpdateOptions)
     {
         throw new ClientApiError(`Course ${course.id} data not modified!`);
     }
-    SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, { courses: { [ course.id ]: course } } as any);
+    SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, { courses: { [ course.id ]: course } });
 }
 
 async function createDbCourse(course: Course)
 {
-    await databaseController.courses.insertOne(course as Course);
-    SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, { courses: { [ course.id ]: course } } as any);
+    await databaseController.courses.insertOne((course as Course));
+    SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, { courses: { [ course.id ]: course } });
     return course;
 }
 
@@ -40,7 +40,7 @@ async function deleteDbCourse(courseId: Course[ 'id' ])
     {
         throw new ClientApiError(`No course by id ${courseId} found!`);
     }
-    SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, { courses: { [ courseId ]: null } } as any);
+    SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, { courses: { [ courseId ]: null } });
 }
 
 export namespace DbCourses

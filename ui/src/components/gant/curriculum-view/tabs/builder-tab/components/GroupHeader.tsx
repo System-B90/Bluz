@@ -11,7 +11,7 @@ export interface GroupHeaderProps extends Omit<BoxProps, 'onClick'>
     onExpandGroup: () => void;
 }
 
-export default function GroupHeader({ start, end, totalHours, onExpandGroup, ...props }: GroupHeaderProps)
+export function GroupHeader({ start, end, totalHours, onExpandGroup, ...props }: GroupHeaderProps)
 {
     return (
         <Box { ...props } className="flex items-start justify-between mb-0" >

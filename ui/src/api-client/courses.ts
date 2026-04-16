@@ -3,23 +3,23 @@ import { Course, CourseId } from "@/api-shared/types/course";
 
 export async function apiGetCourses(): Promise<Array<Course>>
 {
-    return (await safeApiFetcher('/api/course')) as Array<Course>;
+    return (await safeApiFetcher<Array<Course>>('/api/course'));
 }
 
 export async function apiSetCourse(course: Course): Promise<Course>
 {
-    return (await safeApiFetcher('/api/course', {
+    return (await safeApiFetcher<Course>('/api/course', {
         method: 'POST',
         body: JSON.stringify(course),
-    })) as Course;
+    }));
 }
 
 export async function apiAddCourse(course: Omit<Course, 'id'>): Promise<Course>
 {
-    return (await safeApiFetcher('/api/course', {
+    return (await safeApiFetcher<Course>('/api/course', {
         method: 'PUT',
         body: JSON.stringify(course),
-    })) as Course;
+    }));
 }
 
 export async function apiDeleteCourse(courseId: CourseId): Promise<void>

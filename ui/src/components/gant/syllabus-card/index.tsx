@@ -11,10 +11,10 @@ import { styled } from '@mui/material/styles';
 import { useState } from 'react';
 
 import { CurriculumId, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useSyllabus } from '@/components/gant/state/hooks';
+import { useSyllabus } from '@/components/gant/state/hooks/UseSyllabus';
 import { ModulesTable } from "@/components/gant/syllabus-card/ModulesTable";
-import SyllabusCardActions from "@/components/gant/syllabus-card/SyllabusCardActions";
-import SyllabusCardHeader from "@/components/gant/syllabus-card/SyllabusCardHeader";
+import { SyllabusCardActions } from "@/components/gant/syllabus-card/SyllabusCardActions";
+import { SyllabusCardHeader } from "@/components/gant/syllabus-card/SyllabusCardHeader";
 
 export interface SyllabusCardProps extends Omit<CardProps, 'sx'>
 {
@@ -34,7 +34,7 @@ const ExpandMore = styled((props: { _expand: boolean; } & any) =>
     }),
 }));
 
-export default function SyllabusCard({ curriculumId, syllabusId, ...props }: SyllabusCardProps)
+export function SyllabusCard({ curriculumId, syllabusId, ...props }: SyllabusCardProps)
 {
     const syllabus = useSyllabus(syllabusId);
     const [ expanded, setExpanded ] = useState<boolean>(true);

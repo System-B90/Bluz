@@ -1,4 +1,4 @@
-import createHiveClient from "@/api-server/hive/session-client";
+import { createHiveClient } from "@/api-server/hive/session-client";
 import { Clearance } from "@/api-server/hive/types";
 
 export async function getHiveStudents()

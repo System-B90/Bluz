@@ -7,24 +7,24 @@ export async function apiGetEvents({ startDate, endDate }: { startDate?: Date; e
     const endpoint = new URL('/api/event', window.location.origin);
     endpoint.searchParams.set('sd', startDate?.toISOString() ?? '');
     endpoint.searchParams.set('ed', endDate?.toISOString() ?? '');
-    return (safeApiFetcher(endpoint.toString(), {
+    return (safeApiFetcher<Array<Event>>(endpoint.toString(), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         },
-    }) as Promise<Array<Event>>).then((ps) => ps.map(eventDateFixup));
+    })).then((ps) => ps.map(eventDateFixup));
 }
 
 export async function apiGetMultipleEvents(eventIds: Array<EventId>): Promise<Record<EventId, Event>>
 {
     const endpoint = new URL('/api/event', window.location.origin);
     endpoint.searchParams.set('ids', eventIds.join(','));
-    const rawData = await (safeApiFetcher(endpoint.toString(), {
+    const rawData = await (safeApiFetcher<Record<EventId, Event>>(endpoint.toString(), {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         },
-    }) as Promise<Record<EventId, Event>>);
+    }));
     for (const key of Object.keys(rawData))
     {
         eventDateFixup(rawData[ key ]);

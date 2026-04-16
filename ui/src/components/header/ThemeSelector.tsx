@@ -15,7 +15,7 @@ const MoonIcon = () => (
     </svg>
 );
 
-export default function ThemeSelectorIcon()
+export function ThemeSelectorIcon()
 {
     const { theme, setTheme } = useTheme();
 

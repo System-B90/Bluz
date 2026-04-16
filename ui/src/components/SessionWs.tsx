@@ -6,7 +6,7 @@ import { MessageTypes } from "@/settings";
 export type MessageHandlerType = (messageType: MessageTypes, messageTarget: string, data: any) => void;
 const MessageHandlerContext = createContext<MessageHandlerType>(() => { });
 
-export default function useSessionWebSocketContext()
+export function useSessionWebSocketContext()
 {
     const { connectionString } = useWebSocketConfig();
 

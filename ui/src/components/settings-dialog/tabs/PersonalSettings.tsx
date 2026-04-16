@@ -1,17 +1,17 @@
 import
-{
-    Box,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Typography,
-    Chip,
-    OutlinedInput,
-} from "@mui/material";
+    {
+        Box,
+        Chip,
+        FormControl,
+        InputLabel,
+        MenuItem,
+        OutlinedInput,
+        Select,
+        Typography,
+    } from "@mui/material";
 import { useState } from "react";
 
-export default function PersonalSettings()
+export function PersonalSettings()
 {
     const [ groups, setGroups ] = useState<string[]>([]);
     const [ instructors, setInstructors ] = useState<string[]>([]);

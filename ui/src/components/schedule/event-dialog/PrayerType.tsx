@@ -1,6 +1,6 @@
 import { FormControl, FormControlProps, InputLabel, MenuItem, Select } from "@mui/material";
 
-import { EventType, Event, PrayerEvent, PrayerType, prayerTypeToHebrew } from "@/components/schedule/types/event";
+import { Event, EventType, PrayerEvent, PrayerType, prayerTypeToHebrew } from "@/components/schedule/types/event";
 
 interface PrayerTypeFieldProps
 {
@@ -8,7 +8,7 @@ interface PrayerTypeFieldProps
     onEventChange: (updates: Partial<PrayerEvent>) => void;
 }
 
-export default function PrayerTypeField({ event, onEventChange, ...props }: PrayerTypeFieldProps & FormControlProps)
+export function PrayerTypeField({ event, onEventChange, ...props }: PrayerTypeFieldProps & FormControlProps)
 {
 
     const prayerTypeItems = Object.values(PrayerType).map((prayerType) => (

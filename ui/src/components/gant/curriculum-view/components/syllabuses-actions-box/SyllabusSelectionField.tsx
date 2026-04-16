@@ -14,7 +14,7 @@ export interface SyllabusSelectionFieldProps extends BoxProps
     curriculumId: CurriculumId;
 }
 
-export default function SyllabusSelectionField({ curriculumId, ...props }: SyllabusSelectionFieldProps)
+export function SyllabusSelectionField({ curriculumId, ...props }: SyllabusSelectionFieldProps)
 {
     const { enqueueSnackbar } = useSnackbar();
     const curriculum = useCurriculum(curriculumId);

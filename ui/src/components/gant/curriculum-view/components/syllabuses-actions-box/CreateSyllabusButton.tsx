@@ -1,5 +1,6 @@
 import AddIcon from '@mui/icons-material/Add';
 import { Button } from '@mui/material';
+import { useSnackbar } from 'notistack';
 import { useCallback } from 'react';
 
 import { CurriculumId } from '@/api-shared/types/gant/curriculum';
@@ -7,12 +8,14 @@ import { useSyllabusActions } from '@/components/gant/state/hooks/gant-funcs/Use
 
 export function CreateSyllabusButton({ curriculumId }: { curriculumId: CurriculumId; })
 {
+    const { enqueueSnackbar } = useSnackbar();
     const { createSyllabus } = useSyllabusActions();
 
     const clickHandler = useCallback(() =>
     {
-        createSyllabus('סילבוס חדש', curriculumId);
-    }, [ curriculumId, createSyllabus ]);
+        createSyllabus('סילבוס חדש', curriculumId)
+            .catch((error) => enqueueSnackbar('יצירת הסילבוס נכשלה!', error));
+    }, [ curriculumId, createSyllabus, enqueueSnackbar ]);
 
     return (
         <Button

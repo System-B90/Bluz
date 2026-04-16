@@ -1,12 +1,13 @@
 import { Box, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
 
+import { EventDurationLabel } from "@/components/schedule/event-component/EventDurationLabel";
+import { EventStatusIcons } from "@/components/schedule/event-component/EventStatusIcons";
 import { InstructorsList } from "@/components/schedule/event-component/parts/person";
-import RoomComponent from "@/components/schedule/event-component/parts/room";
-import { EventStatusIcons, EventDurationLabel } from "@/components/schedule/event-component/utils";
+import { RoomComponent } from "@/components/schedule/event-component/parts/room";
 import { Event } from "@/components/schedule/types/event";
 
-export default function TinyEventComponent({ event: event }: EventProps<Event>)
+export function TinyEventComponent({ event: event }: EventProps<Event>)
 {
     return (
         <Box

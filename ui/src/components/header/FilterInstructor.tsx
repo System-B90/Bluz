@@ -3,7 +3,7 @@ import { Box, BoxProps, Chip, FormControl, InputLabel, MenuItem, Select, SelectC
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 
-export default function FilterInstructors({ ...props }: BoxProps)
+export function FilterInstructors({ ...props }: BoxProps)
 {
     const { instructors, getInstructor } = useHiveUsers();
     const { filteredInstructors, setFilteredInstructors } = useCalendarFilters();

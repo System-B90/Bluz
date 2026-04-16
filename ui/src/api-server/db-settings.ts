@@ -1,6 +1,6 @@
 import { FindOptions, UpdateOptions, WithId } from "mongodb";
 
-import databaseController from "@/api-server/mongo-db-controller";
+import { databaseController } from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { ClientApiError } from "@/api-shared/errors";
 import { PRAYER_TIMES_SETTING_KEY } from "@/api-shared/types/settings/prayer";

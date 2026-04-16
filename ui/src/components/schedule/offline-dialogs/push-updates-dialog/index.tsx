@@ -11,7 +11,7 @@ import
         DialogContent,
         DialogTitle,
     } from '@mui/material';
-import { enqueueSnackbar } from 'notistack';
+import { useSnackbar } from 'notistack';
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { apiGetMultipleEvents } from '@/api-client/calendar';
@@ -22,14 +22,14 @@ import { EventCollisionsList } from '@/components/schedule/offline-dialogs/push-
 import { CollisionStates, PushOfflineUpdatesDialogProps } from '@/components/schedule/offline-dialogs/push-updates-dialog/types';
 import { areEventsEqual } from '@/components/schedule/types/EventUtils';
 
-export default function PushOfflineUpdatesDialog({
+export function PushOfflineUpdatesDialog({
 
 }: PushOfflineUpdatesDialogProps)
 {
+    const { enqueueSnackbar } = useSnackbar();
     const { pushDialogOpen, getCapturedEvent } = useOffline();
     const { events: localEvents } = useCalendar();
     const [ collisionStates, setCollisionStates ] = useState<CollisionStates>({});
-    // console.log('localEvents', localEvents);
 
     const onClose = useCallback(() => { }, []);
     const submitHandler = useCallback((e: FormEvent<HTMLFormElement>) =>
@@ -67,13 +67,15 @@ export default function PushOfflineUpdatesDialog({
 
         return states;
 
-    }, [ localEvents, getCapturedEvent ]);
+    }, [ localEvents, getCapturedEvent, enqueueSnackbar ]);
 
     useEffect(() =>
     {
         if (!pushDialogOpen) { return; }
-        checkEventCollisionStates().then(setCollisionStates);
-    }, [ pushDialogOpen, checkEventCollisionStates, setCollisionStates ]);
+        checkEventCollisionStates()
+            .then(setCollisionStates)
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, `טעינת המצב העדכני בשרת נכשלה!`, error));
+    }, [ pushDialogOpen, checkEventCollisionStates, setCollisionStates, enqueueSnackbar ]);
 
     const collisionListKey = useMemo(() => Object.values(collisionStates)
         .map((cs) => `${cs.localModifiedEvent?.id}-${cs.conflicting ? '1' : '0'}`)

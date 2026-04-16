@@ -20,7 +20,7 @@ export interface SidebarProps extends BoxProps
     curriculumId: CurriculumId | null;
 }
 
-export default function SyllabusModulesCurriculumViewSidebar({
+export function SyllabusModulesCurriculumViewSidebar({
     curriculumId,
     ...props
 }: SidebarProps)

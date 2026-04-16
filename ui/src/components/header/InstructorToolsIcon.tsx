@@ -1,8 +1,8 @@
 import AssistantIcon from '@mui/icons-material/Assistant';
-import { Tooltip, IconButton, IconButtonProps, Menu, MenuItem } from '@mui/material';
+import { IconButton, IconButtonProps, Menu, MenuItem, Tooltip } from '@mui/material';
 import { useState } from 'react';
 
-export default function InstructorToolsIcon({ ...props }: Omit<IconButtonProps, 'onClick'>)
+export function InstructorToolsIcon({ ...props }: Omit<IconButtonProps, 'onClick'>)
 {
     const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
 

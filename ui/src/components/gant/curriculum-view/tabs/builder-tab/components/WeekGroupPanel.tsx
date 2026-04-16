@@ -11,7 +11,7 @@ import { useMemo } from "react";
 
 import { CurriculumWeek } from "@/api-shared/types/gant/curriculum";
 import { useCurriculumMappings } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
-import GroupHeader from "@/components/gant/curriculum-view/tabs/builder-tab/components/GroupHeader";
+import { GroupHeader } from "@/components/gant/curriculum-view/tabs/builder-tab/components/GroupHeader";
 import { ModuleItem } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { calculateTotalWorkingTimeForWeeks } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
 
@@ -21,7 +21,7 @@ export interface WeekGroupPanelProps extends BoxProps
     onExpandGroup: () => void;
 }
 
-export default function WeekGroupPanel({
+export function WeekGroupPanel({
     group,
     onExpandGroup,
     flexShrink,

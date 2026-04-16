@@ -1,7 +1,7 @@
 import { FormControl, FormControlProps, InputLabel, MenuItem, Select } from "@mui/material";
 
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
-import { eventHasSubject, Event } from "@/components/schedule/types/event";
+import { Event, eventHasSubject } from "@/components/schedule/types/event";
 
 interface SubjectFieldProps
 {
@@ -9,7 +9,7 @@ interface SubjectFieldProps
     onEventChange: (updates: Partial<Event>) => void;
 }
 
-export default function SubjectField({ event, onEventChange, ...props }: SubjectFieldProps & FormControlProps)
+export function SubjectField({ event, onEventChange, ...props }: SubjectFieldProps & FormControlProps)
 {
     const { subjects } = useHiveSubjects();
 

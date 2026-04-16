@@ -9,10 +9,12 @@ import
         TableRow,
         TextField
     } from "@mui/material";
+import { useSnackbar } from 'notistack';
 import { useCallback, useState } from "react";
 
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { ModuleEvent, ModuleEventId, ModuleEventType, ModuleId } from "@/api-shared/types/gant/curriculum";
-import NumberSpinner from "@/components/base/NumberSpinner";
+import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
 import { useEvent } from '@/components/gant/state/hooks/UseEvent';
 
@@ -34,18 +36,21 @@ function ModuleEventTitle({ moduleEvent, handleCommit }: { moduleEvent: ModuleEv
 
 export function ModuleEventView({ moduleId, eventId }: { moduleId: ModuleId; eventId: ModuleEventId; })
 {
+    const { enqueueSnackbar } = useSnackbar();
     const moduleEvent = useEvent(eventId);
     const { deleteEvent, updateEvent } = useModuleEventActions();
 
     const handleCommit = useCallback((updates: Partial<ModuleEvent>) =>
     {
-        updateEvent(eventId, updates);
-    }, [ eventId, updateEvent ]);
+        updateEvent(eventId, updates)
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'עדכון המופע נכשל!', error));
+    }, [ eventId, updateEvent, enqueueSnackbar ]);
 
     const handleDeleteClick = useCallback(() =>
     {
-        deleteEvent(moduleId, eventId);
-    }, [ eventId, moduleId, deleteEvent ]);
+        deleteEvent(moduleId, eventId)
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'מחיקת המופע נכשלה!', error));
+    }, [ eventId, moduleId, deleteEvent, enqueueSnackbar ]);
 
     return (
         <TableRow>

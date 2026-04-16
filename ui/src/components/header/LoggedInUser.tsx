@@ -1,9 +1,9 @@
 import { Box, Chip, Tooltip, Typography } from "@mui/material";
 
 import { useAuth } from "@/components/auth/AuthProvider";
-import HiveAvatar from "@/components/header/HiveAvatarImage";
+import { HiveAvatar } from "@/components/header/HiveAvatarImage";
 
-export default function LoggedInUser()
+export function LoggedInUser()
 {
     const { userData } = useAuth();
     return (

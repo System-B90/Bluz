@@ -6,15 +6,15 @@ import { EventProps } from "react-big-calendar";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { useElementSize } from "@/components/schedule/event-component/utils";
-import LargeEventComponent from "@/components/schedule/event-component/variants/LargeEvent";
-import LargeNarrowEventComponent from "@/components/schedule/event-component/variants/LargeNarrowEvent";
-import MediumEventComponent from "@/components/schedule/event-component/variants/MediumEvent";
-import MediumNarrowEventComponent from "@/components/schedule/event-component/variants/MediumNarrowEvent";
-import PrayerEventComponent from "@/components/schedule/event-component/variants/PrayerEvent";
-import ShortEventComponent from "@/components/schedule/event-component/variants/ShortEvent";
-import ShortNarrowEventComponent from "@/components/schedule/event-component/variants/ShortNarrowEvent";
-import TinyEventComponent from "@/components/schedule/event-component/variants/TinyEvent";
-import TinyNarrowEventComponent from "@/components/schedule/event-component/variants/TinyNarrowEvent";
+import { LargeEventComponent } from "@/components/schedule/event-component/variants/LargeEvent";
+import { LargeNarrowEventComponent } from "@/components/schedule/event-component/variants/LargeNarrowEvent";
+import { MediumEventComponent } from "@/components/schedule/event-component/variants/MediumEvent";
+import { MediumNarrowEventComponent } from "@/components/schedule/event-component/variants/MediumNarrowEvent";
+import { PrayerEventComponent } from "@/components/schedule/event-component/variants/PrayerEvent";
+import { ShortEventComponent } from "@/components/schedule/event-component/variants/ShortEvent";
+import { ShortNarrowEventComponent } from "@/components/schedule/event-component/variants/ShortNarrowEvent";
+import { TinyEventComponent } from "@/components/schedule/event-component/variants/TinyEvent";
+import { TinyNarrowEventComponent } from "@/components/schedule/event-component/variants/TinyNarrowEvent";
 import { Event, EventType, PrayerEvent } from "@/components/schedule/types/event";
 
 export interface ContainerSize
@@ -105,7 +105,7 @@ function BluzEventInnerComponent({ variant, event, size, ...props }: BluzEventIn
     }
 }
 
-export default function BluzEventComponent({ event, ...props }: EventProps<Event>)
+export function BluzEventComponent({ event, ...props }: EventProps<Event>)
 {
     const theme = useTheme();
     const { getSubject } = useHiveSubjects();

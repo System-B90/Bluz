@@ -1,5 +1,5 @@
-import createHiveClient from "@/api-server/hive/session-client";
-import databaseController from "@/api-server/mongo-db-controller";
+import { createHiveClient } from "@/api-server/hive/session-client";
+import { databaseController } from "@/api-server/mongo-db-controller";
 import { CustomRoom, HiveRoom, Room, RoomSource } from "@/components/schedule/types/room";
 
 export async function getAllRooms(): Promise<Array<Room>>

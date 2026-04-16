@@ -21,4 +21,4 @@ const CALENDAR_MESSAGES: Messages<Event> = {
     showMore: undefined,
 };
 
-export default CALENDAR_MESSAGES;
+export { CALENDAR_MESSAGES };

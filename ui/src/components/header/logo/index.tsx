@@ -1,6 +1,6 @@
 import { LogoGraphic } from "@/components/header/logo/LogoGraphic";
 
-export default function Logo({ width, height }: { width: number | string; height: number | string; })
+export function Logo({ width, height }: { width: number | string; height: number | string; })
 {
     return (
         <svg

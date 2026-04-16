@@ -4,9 +4,9 @@ import { Box, BoxProps, Tab, Tabs } from "@mui/material";
 import { Dispatch, SetStateAction } from "react";
 
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
-import CurriculumViewBuilderTab from "@/components/gant/curriculum-view/tabs/builder-tab";
-import SyllabusesTab from "@/components/gant/curriculum-view/tabs/syllabuses-tab";
-import WeeksTab from "@/components/gant/curriculum-view/tabs/weeks-tab";
+import { CurriculumViewBuilderTab } from "@/components/gant/curriculum-view/tabs/builder-tab";
+import { SyllabusesTab } from "@/components/gant/curriculum-view/tabs/syllabuses-tab";
+import { WeeksTab } from "@/components/gant/curriculum-view/tabs/weeks-tab";
 
 interface TabProps
 {
@@ -49,7 +49,7 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps)
     );
 }
 
-export default function CurriculumViewTabs({ curriculumId, selectedTabIndex, setSelectedTabIndex, ...props }: CurriculumViewTabsProps)
+export function CurriculumViewTabs({ curriculumId, selectedTabIndex, setSelectedTabIndex, ...props }: CurriculumViewTabsProps)
 {
     return (
         <Box { ...props }>

@@ -1,14 +1,16 @@
 import { Box, Stack, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
 
-import CourseComponent from "@/components/schedule/event-component/parts/course";
+import { EventDurationLabel } from "@/components/schedule/event-component/EventDurationLabel";
+import { EventStatusIcons } from "@/components/schedule/event-component/EventStatusIcons";
+import { EventTypeIcon } from "@/components/schedule/event-component/EventTypeIcon";
+import { CourseComponent } from "@/components/schedule/event-component/parts/course";
 import { InstructorsList } from "@/components/schedule/event-component/parts/person";
-import RoomComponent from "@/components/schedule/event-component/parts/room";
-import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
-import { EventDurationLabel, EventStatusIcons, EventTypeIcon } from "@/components/schedule/event-component/utils";
+import { RoomComponent } from "@/components/schedule/event-component/parts/room";
+import { ModuleComponent, SubjectComponent } from "@/components/schedule/event-component/parts/subject";
 import { Event } from "@/components/schedule/types/event";
 
-export default function MediumEventComponent({ event: event }: EventProps<Event>)
+export function MediumEventComponent({ event: event }: EventProps<Event>)
 {
     return (
         <Box padding={ 0.3 }>

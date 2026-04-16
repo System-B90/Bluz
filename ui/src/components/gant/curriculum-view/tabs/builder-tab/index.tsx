@@ -127,7 +127,7 @@ function CurriculumViewBuilderTabInner({
     );
 }
 
-export default function CurriculumViewBuilderTab({
+export function CurriculumViewBuilderTab({
     curriculumId,
     groupCount = 3,
     ...props

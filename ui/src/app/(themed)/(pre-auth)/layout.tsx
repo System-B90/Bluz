@@ -1,9 +1,9 @@
 'use client';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { Box, AppBar, Toolbar, Typography, IconButton } from "@mui/material";
+import { AppBar, Box, IconButton, Toolbar, Typography } from "@mui/material";
 import { ReactNode } from "react";
 
-import ThemeSelectorIcon from "@/components/header/ThemeSelector";
+import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
 
 export default function PreAuthLayout({ children }: { children: ReactNode; })
 {

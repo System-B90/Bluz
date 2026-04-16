@@ -4,7 +4,7 @@ import { CourseId } from "@/api-shared/types/course";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useCourses } from "@/components/base/CoursesProvider";
 
-export default function FilterCourses({ ...props }: BoxProps)
+export function FilterCourses({ ...props }: BoxProps)
 {
     const { courses, getCourse } = useCourses();
     const { filteredCourses, setFilteredCourses } = useCalendarFilters();

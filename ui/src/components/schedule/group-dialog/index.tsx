@@ -27,7 +27,7 @@ interface GroupDialogProps
     onSave: (group: Group) => void;
 }
 
-export default function GroupDialog({ open, group: _group, onClose, onSave: _onSave }: GroupDialogProps)
+export function GroupDialog({ open, group: _group, onClose, onSave: _onSave }: GroupDialogProps)
 {
     const [ name, setName ] = useState('');
     const [ displayName, setDisplayName ] = useState('');

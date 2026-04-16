@@ -1,11 +1,11 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import InfoIcon from '@mui/icons-material/Info';
-import { Tooltip, IconButton } from '@mui/material';
+import { IconButton, Tooltip } from '@mui/material';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 
 import { useCalendarFilters } from '@/components/base/CalendarFilterProvider';
 
-export default function FilterIcon({ filtersVisible, setFiltersVisible }: { filtersVisible: boolean, setFiltersVisible: Dispatch<SetStateAction<boolean>>; })
+export function FilterIcon({ filtersVisible, setFiltersVisible }: { filtersVisible: boolean, setFiltersVisible: Dispatch<SetStateAction<boolean>>; })
 {
     const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } = useCalendarFilters();
     const hasAnyFilter = useMemo(() => hidePrayers || filteredCourses.length !== 0 || filteredInstructors.length !== 0 || showPAsFor !== null, [ filteredCourses, filteredInstructors, showPAsFor, hidePrayers ]);

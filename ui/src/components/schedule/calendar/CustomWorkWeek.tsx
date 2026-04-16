@@ -81,5 +81,4 @@ RawCustomWorkWeek.title = (
     );
 };
 
-const CustomWorkWeek: ((props: any) => ReactNode) & ViewStatic & { range: typeof workWeekRange; title: typeof Week.title; navigate: typeof Week.navigate; } = RawCustomWorkWeek;
-export default CustomWorkWeek;
+export const CustomWorkWeek: ((props: any) => ReactNode) & ViewStatic & { range: typeof workWeekRange; title: typeof Week.title; navigate: typeof Week.navigate; } = RawCustomWorkWeek;

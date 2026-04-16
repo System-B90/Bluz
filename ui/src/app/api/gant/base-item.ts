@@ -31,7 +31,7 @@ export function buildGantItemRoutes<
                 throw new ClientApiError('Item identifier (id) is missing from the request parameters.');
             }
 
-            const item = await dbSet.getItem(id as TEntity[ 'id' ]);
+            const item = await dbSet.getItem((id as TEntity[ 'id' ]));
             return ApiSuccess(item);
         } catch (error)
         {
@@ -58,7 +58,7 @@ export function buildGantItemRoutes<
             // Strongly typed to Partial<TEntity> to ensure we only update valid frontend properties
             const payload = JSON.parse(textBody) as Partial<TEntity>;
 
-            const updatedItem = await dbSet.updateItem(id as TEntity[ 'id' ], payload);
+            const updatedItem = await dbSet.updateItem((id as TEntity[ 'id' ]), payload);
             return ApiSuccess(updatedItem);
         } catch (error)
         {
@@ -76,7 +76,7 @@ export function buildGantItemRoutes<
                 throw new ClientApiError('Item identifier (id) is missing from the request parameters.');
             }
 
-            await dbSet.deleteItem(id as TEntity[ 'id' ]);
+            await dbSet.deleteItem((id as TEntity[ 'id' ]));
             return ApiSuccess({ deleted: true, id: id });
         } catch (error)
         {

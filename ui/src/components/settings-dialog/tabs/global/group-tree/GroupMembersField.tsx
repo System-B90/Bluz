@@ -4,14 +4,14 @@ import { Box, Button, Stack } from "@mui/material";
 
 import { Group } from "@/components/schedule/types/group";
 import { User } from "@/components/schedule/types/user";
-import GroupMemberField from "@/components/settings-dialog/tabs/global/group-tree/MemberField";
+import { GroupMemberField } from "@/components/settings-dialog/tabs/global/group-tree/MemberField";
 
 interface GroupMemberFieldProps
 {
     group: Group;
 }
 
-export default function GroupMembersField({ group }: GroupMemberFieldProps)
+export function GroupMembersField({ group }: GroupMemberFieldProps)
 {
     return (
         // <div>

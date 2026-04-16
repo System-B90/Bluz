@@ -46,4 +46,3 @@ export function RoomComponent({ roomIds, occupancy, showCaption, chipSize, ...pr
         </Box >
     );
 }
-export default RoomComponent;

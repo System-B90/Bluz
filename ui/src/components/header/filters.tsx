@@ -5,10 +5,10 @@ import { Box, BoxProps, IconButton, Tooltip } from "@mui/material";
 import { useCallback } from "react";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
-import FilterCourses from "@/components/header/FilterCourses";
-import FilterInstructors from "@/components/header/FilterInstructor";
+import { FilterCourses } from "@/components/header/FilterCourses";
+import { FilterInstructors } from "@/components/header/FilterInstructor";
 
-export default function Filters({ ...props }: BoxProps)
+export function Filters({ ...props }: BoxProps)
 {
     const { showPAsFor, setShowPAsFor, hidePrayers, setHidePrayers } = useCalendarFilters();
 

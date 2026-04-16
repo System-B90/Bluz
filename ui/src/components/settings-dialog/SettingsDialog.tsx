@@ -10,8 +10,8 @@ import
     } from "@mui/material";
 import { useState } from "react";
 
-import GlobalSettings from "@/components/settings-dialog/tabs/global/GlobalSettings";
-import PersonalSettings from "@/components/settings-dialog/tabs/PersonalSettings";
+import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalSettings";
+import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
 
 interface SettingsDialogProps
 {
@@ -19,7 +19,7 @@ interface SettingsDialogProps
     onClose: () => void;
 }
 
-export default function SettingsDialog({ open, onClose }: SettingsDialogProps) 
+export function SettingsDialog({ open, onClose }: SettingsDialogProps) 
 {
     const [ tab, setTab ] = useState(0);
 

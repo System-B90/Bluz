@@ -234,4 +234,4 @@ function abandonedSessionsGC()
 
 setInterval(abandonedSessionsGC, GC_INTERVAL_MS);
 
-export default wss;
+export wss;

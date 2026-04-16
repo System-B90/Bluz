@@ -13,7 +13,7 @@ interface GroupFieldProps
     listeners?: SyntheticListenerMap;
 }
 
-export default function GroupField({ group, attributes, listeners }: GroupFieldProps)
+export function GroupField({ group, attributes, listeners }: GroupFieldProps)
 {
 
     return (

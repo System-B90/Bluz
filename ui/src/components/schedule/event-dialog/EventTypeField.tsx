@@ -1,12 +1,12 @@
 import { FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { EventType, eventTypeToHebrew } from "@/components/schedule/types/event";
 
 export interface EventTypeFieldProps extends EventFieldProps { }
 
-export default function EventTypeField({ event, onBlurCallback, ...props }: EventTypeFieldProps & FormControlProps)
+export function EventTypeField({ event, onBlurCallback, ...props }: EventTypeFieldProps & FormControlProps)
 {
     const [ currentType, setCurrentType ] = useState<EventType>(event?.type ?? EventType.EXERCISE);
 

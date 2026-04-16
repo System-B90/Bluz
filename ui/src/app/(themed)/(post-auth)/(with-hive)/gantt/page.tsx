@@ -8,8 +8,8 @@ import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { curriculumApi } from "@/api-client/gant/curriculum";
 import { ApiCurriculum } from "@/api-shared/types/gant/api-layer"; // Ensure you import this type
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
-import CurriculumFab from "@/components/gant/curriculum-fab";
-import CurriculumView from "@/components/gant/curriculum-view";
+import { CurriculumFab } from "@/components/gant/curriculum-fab";
+import { CurriculumView } from "@/components/gant/curriculum-view";
 import { CurriculumProvider } from "@/components/gant/state/provider";
 
 export default function GanttPage()
@@ -80,7 +80,8 @@ export default function GanttPage()
             }
         };
 
-        fetchCurriculum();
+        // Error handling internally
+        void fetchCurriculum();
 
         return () =>
         {

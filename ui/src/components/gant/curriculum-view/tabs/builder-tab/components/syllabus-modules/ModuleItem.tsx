@@ -65,11 +65,11 @@ export function ModuleItem({ moduleId, weekIndex, dayIndex, ...props }: ModuleIt
                 ${isDragging ? "opacity-0 pointer-events-none" : "opacity-100"}
             `}
         >
-            <Typography className="select-none font-medium text-slate-700" variant="body2">
+            <Typography className="select-none font-medium" variant="body2">
                 { moduleDoc?.title ?? "Unknown Module" }
             </Typography>
             <Box className="flex flex-row items-center">
-                <Typography className="select-none font-medium text-slate-700" variant="body2">
+                <Typography className="select-none font-medium" variant="body2">
                     { syllabusTitle }
                 </Typography>
                 <Box width='0.3rem' />

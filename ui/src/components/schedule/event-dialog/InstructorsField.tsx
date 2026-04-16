@@ -78,7 +78,7 @@ function LecturerSelectionField({ event, onBlurCallback, ...props }: Instructors
     );
 }
 
-export default function InstructorsField({ event, onBlurCallback }: InstructorsFieldProps)
+export function InstructorsField({ event, onBlurCallback }: InstructorsFieldProps)
 {
     const { instructors, getInstructor } = useHiveUsers();
     const [ currentInstructors, setCurrentInstructors ] = useState(event?.instructors ?? []);

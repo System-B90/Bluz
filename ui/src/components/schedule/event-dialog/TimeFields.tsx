@@ -10,7 +10,7 @@ interface EventTimeFieldProps extends EventFieldProps { }
 
 ;
 
-export default function EventTimeField({ event, onBlurCallback, ...props }: EventTimeFieldProps & BoxProps)
+export function EventTimeField({ event, onBlurCallback, ...props }: EventTimeFieldProps & BoxProps)
 {
     const [ startTime, setStartTime ] = useState(event?.startTime ?? dayjs());
     const [ endTime, setEndTime ] = useState(event?.endTime ?? dayjs());

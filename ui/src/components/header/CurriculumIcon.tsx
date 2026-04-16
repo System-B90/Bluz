@@ -1,19 +1,19 @@
 'use client';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import { Tooltip, IconButton } from '@mui/material';
+import { IconButton, Tooltip } from '@mui/material';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 
-export default function CurriculumIcon()
+export function CurriculumIcon()
 {
     const pathname = usePathname();
-    const curriculumPage = pathname.includes('/curriculum');
+    const curriculumPage = pathname.includes('/gantt');
 
     const router = useRouter();
     const onClick = useCallback(() =>
     {
-        router.push(curriculumPage ? '/' : '/curriculum/');
+        router.push(curriculumPage ? '/' : '/gantt/');
     }, [ curriculumPage, router ]);
 
     return (

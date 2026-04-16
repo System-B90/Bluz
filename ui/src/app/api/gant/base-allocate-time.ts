@@ -50,7 +50,7 @@ export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
             }
 
             const duration = await dbSet.getAllocatedTime(
-                id as ModuleEventId,
+                (id as ModuleEventId),
                 containerId
             );
 
@@ -82,7 +82,7 @@ export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
                 throw new ClientApiError("Invalid payload: containerId and duration (number) are required.");
             }
 
-            await dbSet.setAllocatedTime(id as ModuleEventId, containerId, duration);
+            await dbSet.setAllocatedTime((id as ModuleEventId), containerId, duration);
 
             return ApiSuccess({ success: true });
         } catch (error)
