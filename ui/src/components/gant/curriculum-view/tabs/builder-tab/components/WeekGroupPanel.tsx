@@ -1,9 +1,9 @@
 /**
- * Name: WeekGroupPanel.tsx
- * Purpose: A droppable container for modules with expansion transitions.
- * Created: 2026-04-15
- * Author: Michael K. Steinberg
- */
+* Name: WeekGroupPanel.tsx
+* Purpose: A droppable container for modules within a specific week group.
+* Created: 2026-04-15
+* Author: Michael K. Steinberg
+*/
 
 import { CurriculumWeek } from "@/api-shared/types/gant/curriculum";
 import { useCurriculumMappings } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
@@ -25,7 +25,7 @@ export default function WeekGroupPanel({
     group,
     allWeeks,
     onExpandGroup,
-    sx,
+    flexShrink,
     ...props
 }: WeekGroupPanelProps)
 {
@@ -44,9 +44,7 @@ export default function WeekGroupPanel({
             dayIndex: 0,
         },
     });
-
     const totalTime = useMemo(() => calculateTotalWorkingTimeForWeeks(group), [ group ]);
-
     const moduleItems = useMemo(() =>
         Object.values(mappings)
             .filter((x) => group.includes(allWeeks[ x.weekIndex ]))
@@ -58,17 +56,23 @@ export default function WeekGroupPanel({
         <Box
             { ...props }
             ref={ setNodeRef }
-            sx={ sx } // The parent now controls the transition and flex logic entirely
             className={ `
-                flex flex-col p-4 gap-4 border-2 border-transparent
-                ${isOver ? "bg-blue-50/50 border-dashed border-blue-300 scale-[1.01]" : "bg-transparent"}
+               flex flex-col py-4 ${flexShrink === 1 ? 'px-0' : 'px-4'} min-w-0 gap-4 transition-all duration-200 border-2 border-transparent
+               overflow-hidden
+               ${isOver ? "bg-blue-50/50 border-dashed border-blue-300 scale-[1.01]" : "bg-transparent"}
             `}
         >
             <GroupHeader start={ startWeek } end={ endWeek } totalHours={ totalTime } onExpandGroup={ onExpandGroup } />
             <Divider />
-            <Box className={ `flex flex-col gap-2 grow min-h-25 rounded-lg ${isOver ? "ring-2 ring-blue-100 ring-inset" : ""}` }>
+            <Box
+                className={ `
+                    flex flex-col gap-2 grow min-h-25 rounded-lg
+                    ${isOver ? "ring-2 ring-blue-100 ring-inset" : ""}
+               ` }
+            >
                 { moduleItems }
             </Box>
         </Box>
     );
+
 }
