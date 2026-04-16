@@ -1,7 +1,7 @@
 /**
  * Name: WeekGroupPanel.tsx
- * Purpose: A droppable container for modules with animated expansion.
- * Created: 2026-04-15
+ * Purpose: A droppable container for modules with animated expansion and distinct interaction zones.
+ * Created: 2026-04-16
  * Author: Michael K. Steinberg
  */
 
@@ -18,7 +18,7 @@ export interface WeekGroupPanelProps extends BoxProps
 {
     group: Array<CurriculumWeek>;
     allWeeks: Array<CurriculumWeek>;
-    onExpandGroup: () => void;
+    onExpandGroup: () => void; // This acts as the "Select/Focus" callback
 }
 
 export default function WeekGroupPanel({
@@ -47,12 +47,6 @@ export default function WeekGroupPanel({
 
     const totalTime = useMemo(() => calculateTotalWorkingTimeForWeeks(group), [ group ]);
 
-    const handleToggleExpand = () =>
-    {
-        setIsExpanded(!isExpanded);
-        onExpandGroup(); // Trigger the external callback if needed
-    };
-
     const moduleItems = useMemo(() =>
         Object.values(mappings)
             .filter((x) => group.includes(allWeeks[ x.weekIndex ]))
@@ -60,32 +54,36 @@ export default function WeekGroupPanel({
                 <ModuleItem key={ x.moduleId } moduleId={ x.moduleId } weekIndex={ x.weekIndex } dayIndex={ x.dayIndex } />
             )), [ mappings, group, allWeeks ]);
 
+    const handleToggle = (e: React.MouseEvent) =>
+    {
+        e.stopPropagation();
+        setIsExpanded(!isExpanded);
+    };
+
     return (
         <Box
             { ...props }
             ref={ setNodeRef }
             className={ `
-        flex flex-col p-4 min-w-85 transition-all duration-300 border-2 rounded-xl
-        ${isOver ? "bg-blue-50/50 border-blue-300 scale-[1.01]" : "bg-white border-gray-100 shadow-sm"}
-      `}
+                flex flex-col p-4 min-w-85 transition-all duration-300 border-2 rounded-xl
+                ${isOver ? "bg-blue-50 border-blue-400 scale-[1.02] shadow-lg" : "bg-white border-gray-100 hover:border-gray-300 shadow-sm"}
+            `}
         >
             <GroupHeader
                 start={ startWeek }
                 end={ endWeek }
                 totalHours={ totalTime }
                 isExpanded={ isExpanded }
-                onExpandGroup={ handleToggleExpand }
+                onToggleExpand={ handleToggle }
+                onSelectGroup={ onExpandGroup }
             />
 
-            <Collapse in={ isExpanded } timeout="auto">
-                <Divider className="my-2" />
-                <Box
-                    className={ `
-              flex flex-col gap-2 grow min-h-25 p-2 rounded-lg
-              ${isOver ? "ring-2 ring-blue-100 ring-inset" : ""}
-            `}
-                >
-                    { moduleItems }
+            <Collapse in={ isExpanded } timeout={ 300 } unmountOnExit>
+                <Box className="mt-4">
+                    <Divider className="mb-4" />
+                    <Box className={ `flex flex-col gap-2 min-h-20 rounded-lg` }>
+                        { moduleItems }
+                    </Box>
                 </Box>
             </Collapse>
         </Box>
