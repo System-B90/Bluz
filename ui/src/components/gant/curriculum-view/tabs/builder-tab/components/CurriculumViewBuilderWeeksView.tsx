@@ -24,6 +24,7 @@ export function CurriculumViewBuilderWeeksView({
     const groupedWeeks = useMemo(() => partitionWeeks(weeks, groupCount), [ weeks, groupCount ]);
     const onGroupClick = useCallback((groupIndex: number, start: number, length: number) =>
     {
+        console.log(start, length);
         setAnimationSelectedGroupIndex(groupIndex);
         setTimeout(() =>
         {
@@ -43,7 +44,7 @@ export function CurriculumViewBuilderWeeksView({
                     key={ groupKey }
                     group={ group }
                     allWeeks={ weeks }
-                    onExpandGroup={ () => onGroupClick(index, group[ 0 ].number, group.length) }
+                    onExpandGroup={ () => onGroupClick(index, group[ 0 ].number - 1, group.length) }
                     flexGrow={ animationSelectedGroupIndex === null ? 1 : (animationSelectedGroupIndex === index ? 1 : 0) }
                     flexShrink={ animationSelectedGroupIndex === null ? undefined : (animationSelectedGroupIndex === index ? 0 : 1) }
                     flexBasis={ 0 }

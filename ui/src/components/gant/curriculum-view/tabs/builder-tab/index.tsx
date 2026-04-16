@@ -101,10 +101,7 @@ function CurriculumViewBuilderTabInner({
     }, [ createMapping, moveModule, removeModule, enqueueSnackbar ]);
 
     const [ selectedWeekGroupIndicies, setSelectedWeekGroup ] = useState<{ start: number; length: number; }>({ start: 0, length: (weeks?.length ?? 0) });
-    const selectedWeekGroup = useMemo(() =>
-    {
-        return weeks?.slice(selectedWeekGroupIndicies.start, selectedWeekGroupIndicies.start + selectedWeekGroupIndicies.length);
-    }, [ selectedWeekGroupIndicies, weeks ]);
+    const selectedWeekGroup = useMemo(() => weeks?.slice(selectedWeekGroupIndicies.start, selectedWeekGroupIndicies.start + selectedWeekGroupIndicies.length), [ selectedWeekGroupIndicies, weeks ]);
 
     return (
         <DndContext

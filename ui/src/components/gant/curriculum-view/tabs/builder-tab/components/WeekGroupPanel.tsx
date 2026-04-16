@@ -31,8 +31,8 @@ export default function WeekGroupPanel({
 {
     const { state: { mappings } } = useCurriculumMappings();
 
-    const startWeek = allWeeks.indexOf(group[ 0 ]) + 1;
-    const endWeek = allWeeks.indexOf(group[ group.length - 1 ]) + 1;
+    const startWeek = group[ 0 ].number;
+    const endWeek = group[ group.length - 1 ].number;
     const dropId = `weeks-${startWeek}-${endWeek}`;
 
     const { isOver, setNodeRef } = useDroppable({
