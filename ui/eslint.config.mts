@@ -86,7 +86,7 @@ export default defineConfig([
       ".next/*", "out/*", "dist/*",
       "ui/.next/*", "ui/out/*", "ui/dist/*",
       "node_modules/*",
-      "next-env.d.ts",
+      "ui/next-env.d.ts",
     ],
   },
 ]);

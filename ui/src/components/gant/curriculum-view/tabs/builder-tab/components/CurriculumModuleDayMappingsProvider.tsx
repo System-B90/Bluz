@@ -184,7 +184,7 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
         try
         {
             await curriculumModuleDayMappingApi.apiDelete(curriculumId, moduleId, weekIndex, dayIndex);
-        } catch (_e)
+        } catch 
         {
             refreshMappings(); // Re-sync on failure
         }

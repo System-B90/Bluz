@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 export * from "../../session-server/session-common";
 
 const SECONDS_IN_AN_HOUR = 3600;

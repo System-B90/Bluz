@@ -1,3 +1,4 @@
+/* eslint-disable import/order */
 import { ReactNode } from 'react';
 import
     {
@@ -7,7 +8,7 @@ import
         TitleOptions,
         type ViewStatic,
     } from 'react-big-calendar';
- 
+
 // @ts-expect-error
 import TimeGrid from 'react-big-calendar/lib/TimeGrid';
 // @ts-expect-error

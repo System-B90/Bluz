@@ -12,13 +12,11 @@ export default function NumberSpinner({
     _label,
     error,
     size = 'medium',
-    valueRenderFunction,
     ...other
 }: BaseNumberField.Root.Props & {
     _label?: never;
     size?: 'small' | 'medium';
     error?: boolean;
-    valueRenderFunction?: (value: string) => string;
 })
 {
     let id = React.useId();
