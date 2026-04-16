@@ -31,7 +31,7 @@ export function ModuleItem({ moduleId, weekIndex, dayIndex, ...props }: ModuleIt
     const { syllabusNames } = useSyllabusNames();
     const moduleDoc = useModule(moduleId);
     const syllabusId = useMemo(() => state.moduleToSyllabusLookup[ moduleId ], [ moduleId, state.moduleToSyllabusLookup ]);
-    const color = useMemo(() => hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2), [ syllabusId, theme.palette.primary.main ]);
+    const color = useMemo(() => syllabusId ? hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2) : undefined, [ syllabusId, theme.palette.primary.main ]);
     const syllabusTitle = useMemo(() => syllabusNames[ syllabusId ], [ syllabusId, syllabusNames ]);
 
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
