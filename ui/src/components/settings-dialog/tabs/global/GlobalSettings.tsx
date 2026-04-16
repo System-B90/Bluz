@@ -7,7 +7,7 @@ export default function GlobalSettings()
 {
     return (
         <Box>
-            <Typography variant="h6" gutterBottom>
+            <Typography gutterBottom variant="h6">
                 הגדרות כלליות
             </Typography>
 

@@ -43,7 +43,6 @@ export default function RoomField({ event, onBlurCallback, ...props }: RoomField
             <Select
                 label="כיתות"
                 multiple
-                value={ encodedSelectedRoomIds }
                 onChange={ handleChange }
                 onClose={ onClose }
                 renderValue={ (selected: Array<string>) => (
@@ -52,13 +51,14 @@ export default function RoomField({ event, onBlurCallback, ...props }: RoomField
                             <Chip
                                 key={ roomToKey(value) }
                                 label={ getRoom(value)?.name || value.id }
-                                size="small" // Optional: makes them fit better
                                 onDelete={ () => handleDelete(value) }
                                 onMouseDown={ (event) => event.stopPropagation() }
+                                size="small" // Optional: makes them fit better
                             />
                         )) }
                     </Box>
                 ) }
+                value={ encodedSelectedRoomIds }
             >
                 { Object.values(rooms).map((room) => (
                     <MenuItem key={ roomToKey(room) } value={ JSON.stringify(roomToResolvable(room)) }>

@@ -23,9 +23,7 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps)
 {
     return (
         <Tabs
-            value={ selectedTabIndex }
             onChange={ (_, v) => setSelectedTabIndex(v) }
-            variant='scrollable'
             slots={ {
                 StartScrollButtonIcon: KeyboardArrowLeft,
                 EndScrollButtonIcon: KeyboardArrowRight,
@@ -41,6 +39,8 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps)
                     flexDirection: "row",
                 }
             } }
+            value={ selectedTabIndex }
+            variant='scrollable'
         >
             <Tab label='סילבוסים' />
             <Tab label='שבועות' />

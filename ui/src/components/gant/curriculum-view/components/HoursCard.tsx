@@ -38,15 +38,10 @@ export function HoursCard({ curriculum }: { curriculum: CurriculumDocument | und
 
     return (
         <Card sx={ { padding: 2, flexShrink: 0, } }>
-            <Typography variant="subtitle1" gutterBottom>שעות</Typography>
-            <Box display="flex" flexDirection="row" alignItems="center" gap={ 3 }>
+            <Typography gutterBottom variant="subtitle1">שעות</Typography>
+            <Box alignItems="center" display="flex" flexDirection="row" gap={ 3 }>
                 <Gauge
-                    width={ 80 }
                     height={ 80 }
-                    value={ usedWorkingHours }
-                    valueMin={ 0 }
-                    valueMax={ totalWorkingHours }
-                    text={ totalWorkingHours > 0 ? `${Math.round(100 * usedWorkingHours / totalWorkingHours)}%` : '-' }
                     sx={ {
                         [ `& .${gaugeClasses.valueText}` ]: {
                             fontSize: '1rem',
@@ -60,19 +55,24 @@ export function HoursCard({ curriculum }: { curriculum: CurriculumDocument | und
                             fill: 'grey.200',
                         },
                     } }
+                    text={ totalWorkingHours > 0 ? `${Math.round(100 * usedWorkingHours / totalWorkingHours)}%` : '-' }
+                    value={ usedWorkingHours }
+                    valueMax={ totalWorkingHours }
+                    valueMin={ 0 }
+                    width={ 80 }
                 />
                 <Stack spacing={ 0.5 }>
-                    <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
-                        <Typography variant="body2" color="text.secondary">ס&quot;ך:</Typography>
-                        <Typography variant="body2" fontWeight="bold">{ totalWorkingHours.toFixed(2) }</Typography>
+                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={ 1 }>
+                        <Typography color="text.secondary" variant="body2">ס&quot;ך:</Typography>
+                        <Typography fontWeight="bold" variant="body2">{ totalWorkingHours.toFixed(2) }</Typography>
                     </Box>
-                    <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
-                        <Typography variant="body2" color="text.secondary">שנוצלו:</Typography>
-                        <Typography variant="body2" fontWeight="bold">{ usedWorkingHours.toFixed(2) }</Typography>
+                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={ 1 }>
+                        <Typography color="text.secondary" variant="body2">שנוצלו:</Typography>
+                        <Typography fontWeight="bold" variant="body2">{ usedWorkingHours.toFixed(2) }</Typography>
                     </Box>
-                    <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
-                        <Typography variant="body2" color="text.secondary">מינימום דרוש:</Typography>
-                        <Typography variant="body2" fontWeight="bold">{ minimumHoursRequired.toFixed(2) }</Typography>
+                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={ 1 }>
+                        <Typography color="text.secondary" variant="body2">מינימום דרוש:</Typography>
+                        <Typography fontWeight="bold" variant="body2">{ minimumHoursRequired.toFixed(2) }</Typography>
                     </Box>
                 </Stack>
             </Box>

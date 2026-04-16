@@ -27,7 +27,7 @@ export default function GanttPage()
 
     const [ initialData, setInitialData ] = useState<ApiCurriculum | null>(null);
     const [ isLoading, setIsLoading ] = useState(false);
-    const [ error, setError ] = useState<string | null>(null);
+    const [ error, setError ] = useState<null | string>(null);
 
     useEffect(() =>
     {
@@ -89,28 +89,26 @@ export default function GanttPage()
     }, [ currentCurriculum, enqueueSnackbar ]);
 
     return (
-        <Box maxHeight={ '100%' } height={ '100%' } display={ 'flex' } flexDirection={ 'row' } sx={ { position: 'relative' } }>
+        <Box display={ 'flex' } flexDirection={ 'row' } height={ '100%' } maxHeight={ '100%' } sx={ { position: 'relative' } }>
             <CurriculumFab
-                open={ drawerOpen }
-                setOpen={ setDrawerOpen }
-                setCurrentCurriculum={ setCurrentCurriculum }
                 currentCurriculum={ currentCurriculum }
+                open={ drawerOpen }
+                setCurrentCurriculum={ setCurrentCurriculum }
+                setOpen={ setDrawerOpen }
             />
 
-            <Box sx={ { padding: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' } } flexGrow={ 1 }>
+            <Box flexGrow={ 1 } sx={ { padding: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' } }>
 
                 { !currentCurriculum && (
                     <Typography color="textSecondary">בחרו גאנט כדי להתחיל לעבוד</Typography>
                 ) }
 
-                { isLoading && <CircularProgress /> }
-                { error && <Typography color="error">{ error }</Typography> }
+                { isLoading ? <CircularProgress /> : null }
+                { error ? <Typography color="error">{ error }</Typography> : null }
 
-                { currentCurriculum && !isLoading && initialData && (
-                    <CurriculumProvider key={ currentCurriculum } initialData={ initialData }>
+                { currentCurriculum && !isLoading && initialData ? <CurriculumProvider initialData={ initialData } key={ currentCurriculum }>
                         <CurriculumView curriculumId={ currentCurriculum } />
-                    </CurriculumProvider>
-                ) }
+                    </CurriculumProvider> : null }
             </Box>
         </Box >
     );

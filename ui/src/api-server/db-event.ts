@@ -9,7 +9,7 @@ import { Event, EventId } from "@/components/schedule/types/event";
 import { MessageTypes } from "@/settings";
 
 // No more ObjectId! We only need this if MongoDB still stores Date objects and you use Dayjs
-export type DbEventDocument = Omit<Event, 'startTime' | 'endTime'> & {
+export type DbEventDocument = Omit<Event, 'endTime' | 'startTime'> & {
     startTime: Date;
     endTime: Date;
 };

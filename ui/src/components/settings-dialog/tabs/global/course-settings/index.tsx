@@ -72,26 +72,26 @@ export default function CourseSettings()
 
     const courseItems = localCourses.map(course => (
         <CourseItem
-            key={ `${course.id}-${course.color}-${course.name}` }
             course={ course }
-            onUpdate={ handleUpdateCourse }
+            key={ `${course.id}-${course.color}-${course.name}` }
             onDelete={ handleDeleteCourse }
+            onUpdate={ handleUpdateCourse }
         />
     ));
 
     return (
-        <Box border={ 'solid 0.15rem rgba(0,0,0,0.2)' } padding={ '0.5rem' } borderRadius={ 3 } gap={ 1 } display={ 'flex' } flexDirection={ 'column' } justifyContent={ 'space-between' }>
+        <Box border={ 'solid 0.15rem rgba(0,0,0,0.2)' } borderRadius={ 3 } display={ 'flex' } flexDirection={ 'column' } gap={ 1 } justifyContent={ 'space-between' } padding={ '0.5rem' }>
             <Box>
-                <Typography variant="h6" gutterBottom>מסלולים</Typography>
-                <Box display={ 'flex' } flexDirection={ 'column' } gap={ 1 } alignItems={ 'flex-start' }>
+                <Typography gutterBottom variant="h6">מסלולים</Typography>
+                <Box alignItems={ 'flex-start' } display={ 'flex' } flexDirection={ 'column' } gap={ 1 }>
                     { courseItems }
                 </Box>
             </Box>
-            <Box display={ 'flex' } gap={ 1 } flexDirection={ 'column' } mt={ 2 }>
-                <Button color={ 'secondary' } variant="contained" onClick={ handleCreate }>יצירת מסלול חדש</Button>
+            <Box display={ 'flex' } flexDirection={ 'column' } gap={ 1 } mt={ 2 }>
+                <Button color={ 'secondary' } onClick={ handleCreate } variant="contained">יצירת מסלול חדש</Button>
                 <ButtonGroup fullWidth>
-                    <Button color="primary" variant="contained" onClick={ handleSave }>שמירה</Button>
-                    <Button color={ 'warning' } variant="contained" onClick={ handleRestore }>שחזור</Button>
+                    <Button color="primary" onClick={ handleSave } variant="contained">שמירה</Button>
+                    <Button color={ 'warning' } onClick={ handleRestore } variant="contained">שחזור</Button>
                 </ButtonGroup>
             </Box>
         </Box>

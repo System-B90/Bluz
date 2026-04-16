@@ -6,10 +6,10 @@ export interface AuthSessionUser
 {
     id: string;
     name: string;
-    email: string | null;
+    email: null | string;
     username: string;
     clearance: Clearance;
-    program: number | null;
+    program: null | number;
     gender: GenderEnum;
     display_name: string;
     is_teacher: boolean;

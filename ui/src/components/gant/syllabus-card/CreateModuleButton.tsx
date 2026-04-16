@@ -40,10 +40,10 @@ export function CreateModuleButton({ syllabusId }: { syllabusId: SyllabusId; })
     }, [ syllabusId, enqueueSnackbar, createModule, createEvent ]);
 
     return (
-        <Tooltip title="מערך חדש" placement="top">
+        <Tooltip placement="top" title="מערך חדש">
             <span>
-                <IconButton size="small" color="secondary" onClick={ clickHandler } disabled={ isCreating }>
-                    { isCreating ? <CircularProgress size="1.25rem" color="inherit" /> : <AddIcon fontSize="small" /> }
+                <IconButton color="secondary" disabled={ isCreating } onClick={ clickHandler } size="small">
+                    { isCreating ? <CircularProgress color="inherit" size="1.25rem" /> : <AddIcon fontSize="small" /> }
                 </IconButton>
             </span>
         </Tooltip>

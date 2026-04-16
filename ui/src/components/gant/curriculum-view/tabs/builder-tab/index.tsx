@@ -106,20 +106,20 @@ function CurriculumViewBuilderTabInner({
 
     return (
         <DndContext
-            sensors={ sensors }
             collisionDetection={ closestCenter }
-            onDragStart={ handleDragStart }
             onDragEnd={ handleDragEnd }
+            onDragStart={ handleDragStart }
+            sensors={ sensors }
         >
-            <CurriculumViewBuilderWeeksView curriculumId={ curriculumId } weeks={ selectedWeekGroup ?? [] } groupCount={ groupCount } setSelectedWeekGroup={ setSelectedWeekGroup } />
+            <CurriculumViewBuilderWeeksView curriculumId={ curriculumId } groupCount={ groupCount } setSelectedWeekGroup={ setSelectedWeekGroup } weeks={ selectedWeekGroup ?? [] } />
 
             <DragOverlay dropAnimation={ dropAnimation }>
                 { activeId ? (
                     <ModuleItem
-                        moduleId={ activeId }
                         className="w-70 shadow-2xl rotate-3 cursor-grabbing"
-                        weekIndex={ activeWeekIndex }
                         dayIndex={ activeDayIndex }
+                        moduleId={ activeId }
+                        weekIndex={ activeWeekIndex }
                     />
                 ) : null }
             </DragOverlay>

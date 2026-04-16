@@ -13,19 +13,19 @@ export default function AboutTimeCurriculumViewSidebar({ curriculumId }: { curri
     return (
         <Box
             display={ 'flex' }
+            flexDirection={ 'column' }
             flexGrow={ 1 }
             flexShrink={ 0 }
-            flexDirection={ 'column' }
             flexWrap={ 'nowrap' }
             gap={ 2 }
-            overflow={ 'hidden' }
-            px={ 1 }
-            pb={ 1 }
             height={ '100%' }
+            overflow={ 'hidden' }
+            pb={ 1 }
+            px={ 1 }
         >
             <CurriculumAboutCard curriculum={ curriculum } curriculumId={ curriculumId } />
             <HoursCard curriculum={ curriculum } />
-            <WorkTimePanel curriculumId={ curriculumId } curriculum={ curriculum } />
+            <WorkTimePanel curriculum={ curriculum } curriculumId={ curriculumId } />
         </Box>
     );
 }

@@ -16,28 +16,28 @@ export default function CurriculumView({ curriculumId, ...props }: CurriculumVie
 
     return (
         <Box
-            gap={ 4 }
+            alignItems={ 'flex-start' }
             display={ 'flex' }
             flexDirection={ 'row' }
             flexWrap={ 'nowrap' }
-            width={ '100%' }
+            gap={ 4 }
             height={ '100%' }
-            alignItems={ 'flex-start' }
-            justifyItems={ 'flex-start' }
             justifyContent={ 'flex-start' }
+            justifyItems={ 'flex-start' }
+            width={ '100%' }
             { ...props }
         >
-            <CurriculumViewSidebar selectedTabIndex={ selectedTabIndex } curriculumId={ curriculumId } />
+            <CurriculumViewSidebar curriculumId={ curriculumId } selectedTabIndex={ selectedTabIndex } />
 
             <CurriculumViewTabs
                 curriculumId={ curriculumId }
-                selectedTabIndex={ selectedTabIndex }
-                setSelectedTabIndex={ setSelectedTabIndex }
-                flexGrow={ 1 }
-                height={ '100%' }
-                width={ '100%' }
                 display={ 'flex' }
                 flexDirection={ 'column' }
+                flexGrow={ 1 }
+                height={ '100%' }
+                selectedTabIndex={ selectedTabIndex }
+                setSelectedTabIndex={ setSelectedTabIndex }
+                width={ '100%' }
             />
         </Box>
     );

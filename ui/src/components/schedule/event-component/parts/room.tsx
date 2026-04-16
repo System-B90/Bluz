@@ -15,11 +15,11 @@ function SingleRoomComponent({ room, occupancy, size, ...props }: { room: Room; 
         <Tooltip title={
             overcrowded ? `עומס יתר: ${occupancy}/${roomCapacity}` : ''
         }>
-            <Chip size={ size ?? 'small' } { ...props } label={
-                room.source === RoomSource.Hive ? <Link underline="hover" href={ `${getHiveBaseUrl()}/mentor/classes?id=${room?.id}` } color={ 'inherit' }> { room?.name }</Link> : undefined
-            } sx={ { color: 'inherit' } } icon={
-                overcrowded ? <WarningIcon fontSize='small' color="warning" /> : undefined
-            } />
+            <Chip size={ size ?? 'small' } { ...props } icon={
+                overcrowded ? <WarningIcon color="warning" fontSize='small' /> : undefined
+            } label={
+                room.source === RoomSource.Hive ? <Link color={ 'inherit' } href={ `${getHiveBaseUrl()}/mentor/classes?id=${room?.id}` } underline="hover"> { room?.name }</Link> : undefined
+            } sx={ { color: 'inherit' } } />
         </Tooltip>
     );
 }
@@ -30,16 +30,16 @@ export function RoomComponent({ roomIds, occupancy, showCaption, chipSize, ...pr
     const rooms = useMemo(() => roomIds.map(getRoom).filter((v) => !!v), [ roomIds, getRoom ]);
 
     return (
-        <Box display={ props.display ?? "flex" } flexDirection={ props.flexDirection ?? 'column' } alignItems={ props.alignItems ?? "flex-start" } gap={ 0.2 } { ...props }>
+        <Box alignItems={ props.alignItems ?? "flex-start" } display={ props.display ?? "flex" } flexDirection={ props.flexDirection ?? 'column' } gap={ 0.2 } { ...props }>
             {
-                rooms.length === 0 ? <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'center' }>
-                    <WarningIcon fontSize="inherit" color="error" sx={ { verticalAlign: 'middle', mr: 0.5 } } />
-                    <Typography variant="caption" color='error' fontWeight={ 600 } >אין חדר</Typography>
+                rooms.length === 0 ? <Box alignItems={ 'center' } display={ 'flex' } flexDirection={ 'row' }>
+                    <WarningIcon color="error" fontSize="inherit" sx={ { verticalAlign: 'middle', mr: 0.5 } } />
+                    <Typography color='error' fontWeight={ 600 } variant="caption" >אין חדר</Typography>
                 </Box> :
                     <>
-                        { (showCaption !== false) && <Typography variant="caption" fontWeight={ 600 } noWrap>{ roomIds.length === 1 ? 'חדר' : 'חדרים' }</Typography> }
-                        < Stack display={ 'flex' } flexDirection={ props.flexDirection ?? 'row' } gap={ 0.3 } flexWrap="wrap">
-                            { rooms.map((room) => <SingleRoomComponent key={ room.id } room={ room } occupancy={ occupancy } size={ chipSize } />) }
+                        { (showCaption !== false) && <Typography fontWeight={ 600 } noWrap variant="caption">{ roomIds.length === 1 ? 'חדר' : 'חדרים' }</Typography> }
+                        < Stack display={ 'flex' } flexDirection={ props.flexDirection ?? 'row' } flexWrap="wrap" gap={ 0.3 }>
+                            { rooms.map((room) => <SingleRoomComponent key={ room.id } occupancy={ occupancy } room={ room } size={ chipSize } />) }
                         </Stack>
                     </>
             }

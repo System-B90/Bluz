@@ -80,24 +80,24 @@ export default function PushOfflineUpdatesDialog({
         .join('--'), [ collisionStates ]);
 
     return (
-        <Dialog open={ pushDialogOpen } onClose={ onClose } maxWidth="lg" fullWidth>
+        <Dialog fullWidth maxWidth="lg" onClose={ onClose } open={ pushDialogOpen }>
             <DialogTitle>שמירת שינויים לוקלים</DialogTitle>
 
             <form onSubmit={ submitHandler }>
                 <DialogContent>
                     <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 } }>
-                        <Box gap={ 2 } display={ 'flex' } width={ '100%' }>
-                            <EventCollisionsList key={ collisionListKey } collisionStates={ collisionStates } />
+                        <Box display={ 'flex' } gap={ 2 } width={ '100%' }>
+                            <EventCollisionsList collisionStates={ collisionStates } key={ collisionListKey } />
                         </Box>
                     </Box>
                 </DialogContent>
 
                 <DialogActions>
-                    <Button onClick={ () => { } } color='warning'>שחזר</Button>
-                    <Button onClick={ onClose } color='secondary'>ביטול</Button>
+                    <Button color='warning' onClick={ () => { } }>שחזר</Button>
+                    <Button color='secondary' onClick={ onClose }>ביטול</Button>
                     <Button
-                        type="submit"
                         color='success'
+                        type="submit"
                         variant="contained"
                     >
                         שמור

@@ -46,7 +46,7 @@ export function EventCollisionsList({ collisionStates }: { collisionStates: Coll
     }, []);
 
     const items = Object.keys(collisionStates).map((eventId) => (
-        <EventListEntry isItemSelected={ selected.includes(eventId) } key={ eventId } eventId={ eventId } { ...collisionStates[ eventId ] } handleEntryClick={ handleEntryClick } />
+        <EventListEntry eventId={ eventId } isItemSelected={ selected.includes(eventId) } key={ eventId } { ...collisionStates[ eventId ] } handleEntryClick={ handleEntryClick } />
     ));
 
     return (
@@ -64,13 +64,15 @@ export function EventCollisionsList({ collisionStates }: { collisionStates: Coll
                         </TableCell>
                         <TableCell padding="checkbox">
                             <Checkbox
+                                checked={ rowCount > 0 && numSelected === rowCount }
                                 color="primary"
                                 indeterminate={ numSelected > 0 && numSelected < rowCount }
-                                checked={ rowCount > 0 && numSelected === rowCount }
-                                onChange={ onSelectAllClick }
-                                inputProps={ {
-                                    'aria-label': 'select all',
+                                slotProps={ {
+                                    input: {
+                                        'aria-label': 'select all',
+                                    }
                                 } }
+                                onChange={ onSelectAllClick }
                             />
                         </TableCell>
                     </TableRow>

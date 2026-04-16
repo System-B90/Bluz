@@ -43,7 +43,7 @@ function AllocatedTimeTableCell({ moduleId, curriculumId, allocatedTime, minimum
         <TableCell { ...props }>
             { allocatedTime !== undefined ? allocatedTime : <CircularProgress size="1rem" /> }
             <Tooltip title='הקצה את כל השעות'>
-                <IconButton size="small" color="primary" onClick={ allocateTimeHandler }>
+                <IconButton color="primary" onClick={ allocateTimeHandler } size="small">
                     <OpenHandsIcon fontSize="small" />
                 </IconButton>
             </Tooltip>
@@ -72,7 +72,7 @@ export function ModuleRow({ moduleId, syllabusId, curriculumId }: { moduleId: Mo
                 <TableCell><Skeleton variant="text" width="40px" /></TableCell>
                 <TableCell><Skeleton variant="text" width="40px" /></TableCell>
                 <TableCell>
-                    <Skeleton variant="circular" width={ 24 } height={ 24 } />
+                    <Skeleton height={ 24 } variant="circular" width={ 24 } />
                 </TableCell>
             </TableRow>
         );
@@ -86,10 +86,10 @@ export function ModuleRow({ moduleId, syllabusId, curriculumId }: { moduleId: Mo
             <TableCell>
                 { minimumRequiredTime !== undefined ? minimumRequiredTime : <CircularProgress size="1rem" /> }
             </TableCell>
-            <AllocatedTimeTableCell allocatedTime={ allocatedTime } moduleId={ moduleId } curriculumId={ curriculumId } minimumRequiredTime={ minimumRequiredTime } />
+            <AllocatedTimeTableCell allocatedTime={ allocatedTime } curriculumId={ curriculumId } minimumRequiredTime={ minimumRequiredTime } moduleId={ moduleId } />
             <TableCell>
-                <Tooltip title="ערוך מערך" placement="top">
-                    <IconButton size="small" onClick={ editClickHandler } color="primary">
+                <Tooltip placement="top" title="ערוך מערך">
+                    <IconButton color="primary" onClick={ editClickHandler } size="small">
                         <EditIcon fontSize="small" />
                     </IconButton>
                 </Tooltip>

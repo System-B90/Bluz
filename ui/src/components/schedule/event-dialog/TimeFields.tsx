@@ -40,20 +40,20 @@ export default function EventTimeField({ event, onBlurCallback, ...props }: Even
     }, [ startTime, endTime, onBlurCallback ]);
 
     return (
-        <Box display="flex" gap={ 2 } alignSelf="center" { ...props }>
+        <Box alignSelf="center" display="flex" gap={ 2 } { ...props }>
             <TimePicker
                 label="שעת התחלה"
-                value={ (event?.startTime as Dayjs) ?? dayjs() }
                 onChange={ startTimeChange }
                 slotProps={ { textField: { fullWidth: true } } }
                 sx={ { width: '7rem' } }
+                value={ (event?.startTime as Dayjs) ?? dayjs() }
             />
             <TimePicker
                 label="שעת סיום"
-                value={ (event?.endTime as Dayjs) ?? dayjs() }
                 onChange={ endTimeChange }
                 slotProps={ { textField: { fullWidth: true } } }
                 sx={ { width: '7rem' } }
+                value={ (event?.endTime as Dayjs) ?? dayjs() }
             />
         </Box>
     );

@@ -18,12 +18,12 @@ export default function PrayerTypeField({ event, onEventChange, ...props }: Pray
     ));
 
     return (
-        <FormControl fullWidth={ false } disabled={ event?.type !== EventType.PRAYER } { ...props }>
+        <FormControl disabled={ event?.type !== EventType.PRAYER } fullWidth={ false } { ...props }>
             <InputLabel>תפילת</InputLabel>
             <Select
-                value={ (event as PrayerEvent)?.prayerType || "" }
                 label="תפילת"
                 onChange={ (e) => onEventChange({ prayerType: e.target.value }) }
+                value={ (event as PrayerEvent)?.prayerType || "" }
             >
                 { prayerTypeItems }
             </Select>

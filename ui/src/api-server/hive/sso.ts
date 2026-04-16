@@ -22,15 +22,15 @@ interface HiveSsoProfile extends Profile
     gender: GenderEnum;
     given_name: string;
     family_name: string;
-    picture?: string | null;
-    number: number | null;
+    picture?: null | string;
+    number: null | number;
     clearance: number;
-    program: number | null;
-    program_name: string | null;
+    program: null | number;
+    program_name: null | string;
     is_teacher: boolean;
     username: string;
     display_name: string;
-    mentor: number | null;
+    mentor: null | number;
     email?: string;
     iss: string;
     exp: number;
@@ -47,10 +47,10 @@ interface HiveUser
 {
     id: string;
     name: string;
-    email: string | null;
+    email: null | string;
     username: string;
     clearance: number;
-    program: number | null;
+    program: null | number;
     gender: GenderEnum;
     display_name: string;
     is_teacher: boolean;

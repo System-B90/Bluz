@@ -93,7 +93,7 @@ export interface CourseUser
     clearance: Clearance;
     confirmed?: boolean;
     /** @nullable */
-    readonly current_assignment: number | null;
+    readonly current_assignment: null | number;
     readonly current_assignment_options: readonly number[];
     disable_queue?: boolean;
     disable_user_queue?: boolean;
@@ -108,24 +108,24 @@ export interface CourseUser
     last_name?: string;
     mentees: number[];
     /** @nullable */
-    mentor?: number | null;
+    mentor?: null | number;
     /**
      * @minimum -2147483648
      * @maximum 2147483647
      * @nullable
      */
-    number?: number | null;
+    number?: null | number;
     /** @nullable */
-    override_queue?: number | null;
+    override_queue?: null | number;
     /** @nullable */
-    program?: number | null;
+    program?: null | number;
     /** @nullable */
-    queue?: number | null;
+    queue?: null | number;
     status: StatusEnum;
     readonly status_date: string;
     teacher?: boolean;
     /** @nullable */
-    user_queue?: number | null;
+    user_queue?: null | number;
     /**
      * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
      * @maxLength 150
@@ -140,7 +140,7 @@ export interface Class
      * @maxLength 100
      * @nullable
      */
-    description?: string | null;
+    description?: null | string;
     readonly display_name: string;
     /** @maxLength 254 */
     email?: string;

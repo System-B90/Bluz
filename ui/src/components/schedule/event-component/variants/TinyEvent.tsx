@@ -10,55 +10,55 @@ export default function TinyEventComponent({ event: event }: EventProps<Event>)
 {
     return (
         <Box
-            display={ 'flex' }
-            justifyContent={ 'space-around' }
             alignItems={ 'center' }
+            display={ 'flex' }
             height={ '100%' }
+            justifyContent={ 'space-around' }
         >
-            <Box flexGrow={ 1 } display={ 'flex' } justifyContent={ 'space-around' } alignItems={ 'center' }>
+            <Box alignItems={ 'center' } display={ 'flex' } flexGrow={ 1 } justifyContent={ 'space-around' }>
                 <Box marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
                     <Typography
-                        variant="subtitle2"
                         noWrap
                         sx={ { ml: 0.5, fontWeight: 'bold' } }
+                        variant="subtitle2"
                     >
                         { event.name }
                     </Typography>
                 </Box>
 
                 <Box
+                    alignItems={ 'stretch' }
+                    display={ 'flex' }
+                    flexGrow={ 1 }
+                    flexWrap={ 'wrap' }
+                    gap={ 0.1 }
+                    justifyContent={ 'center' }
                     marginTop={ 0 }
                     paddingTop={ 0 }
                     sx={ { marginTop: '0 !important' } }
-                    flexGrow={ 1 }
-                    display={ 'flex' }
-                    flexWrap={ 'wrap' }
-                    justifyContent={ 'center' }
-                    gap={ 0.1 }
-                    alignItems={ 'stretch' }
                 >
-                    <InstructorsList event={ event } chipSize="smallest" showCaption={ false } display={ 'flex' } flexDirection={ 'column' } />
-                    <Box sx={ { width: '0.3rem' } } display={ 'flex' } alignItems={ 'center' } justifyContent={ 'center' } alignContent={ 'center' }>
+                    <InstructorsList chipSize="smallest" display={ 'flex' } event={ event } flexDirection={ 'column' } showCaption={ false } />
+                    <Box alignContent={ 'center' } alignItems={ 'center' } display={ 'flex' } justifyContent={ 'center' } sx={ { width: '0.3rem' } }>
                         <Box sx={ { height: '90%', width: '1px', backgroundColor: 'divider' } } />
                     </Box>
-                    <RoomComponent roomIds={ event.rooms } showCaption={ false } chipSize="smallest" display={ 'flex' } flexDirection={ 'column' } />
+                    <RoomComponent chipSize="smallest" display={ 'flex' } flexDirection={ 'column' } roomIds={ event.rooms } showCaption={ false } />
                 </Box>
             </Box>
 
             <Box
+                alignContent={ 'space-between' }
+                alignItems={ 'flex-end' }
                 display={ 'flex' }
-                flexWrap={ 'wrap' }
-                sx={ { direction: 'rtl' } }
+                flexDirection={ 'column' }
                 flexGrow={ 0 }
                 flexShrink={ 1 }
-                flexDirection={ 'column' }
-                alignItems={ 'flex-end' }
-                justifyContent={ 'space-between' }
-                alignContent={ 'space-between' }
+                flexWrap={ 'wrap' }
                 height={ '100%' }
+                justifyContent={ 'space-between' }
+                sx={ { direction: 'rtl' } }
             >
                 <EventDurationLabel event={ event } size="smallest" sx={ { direction: 'ltr' } } />
-                <EventStatusIcons flexGrow={ 1 } event={ event } size={ '0.7rem' } flexDirection={ 'column' } />
+                <EventStatusIcons event={ event } flexDirection={ 'column' } flexGrow={ 1 } size={ '0.7rem' } />
             </Box>
         </Box>
     );

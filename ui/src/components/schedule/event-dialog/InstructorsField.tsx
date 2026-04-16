@@ -41,11 +41,10 @@ function LecturerSelectionField({ event, onBlurCallback, ...props }: Instructors
             <FormControl fullWidth={ true }>
                 <InputLabel>מרצים</InputLabel>
                 <Select
-                    multiple
                     label="מרצים"
-                    value={ currentLecturers }
-                    onChange={ handleChange }
+                    multiple
                     onBlur={ handleBlur }
+                    onChange={ handleChange }
                     renderValue={ (selected) => (
                         <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
                             { selected.map((id) =>
@@ -56,17 +55,18 @@ function LecturerSelectionField({ event, onBlurCallback, ...props }: Instructors
                                     <Chip
                                         key={ id }
                                         label={ lecturer?.display_name ?? id }
-                                        size="small"
                                         onDelete={ () => handleDelete(id) }
                                         // Prevent menu from opening when deleting
                                         onMouseDown={ (e) => e.stopPropagation() }
+                                        size="small"
                                     />
                                 );
                             }) }
                         </Box>
                     ) }
+                    value={ currentLecturers }
                 >
-                    <MenuItem key={ 'outside-lecturer' } value={ 'איש חוץ' } sx={ { borderBottomWidth: '0.2rem', borderBottomStyle: 'solid', borderBottomColor: 'hsl(var(--border))' } }>איש חוץ</MenuItem>
+                    <MenuItem key={ 'outside-lecturer' } sx={ { borderBottomWidth: '0.2rem', borderBottomStyle: 'solid', borderBottomColor: 'hsl(var(--border))' } } value={ 'איש חוץ' }>איש חוץ</MenuItem>
                     { instructors.map((instructor) => (
                         <MenuItem key={ instructor.id } value={ instructor.id }>
                             { instructor.display_name }
@@ -109,16 +109,15 @@ export default function InstructorsField({ event, onBlurCallback }: InstructorsF
     }, [ event, currentInstructors, onBlurCallback, ]);
 
     return (
-        <Box width={ '100%' } display={ 'flex' } gap={ isLecture ? 2 : 0 } >
+        <Box display={ 'flex' } gap={ isLecture ? 2 : 0 } width={ '100%' } >
             <Box flexGrow={ 1 }>
                 <FormControl fullWidth={ true } >
                     <InputLabel>מבוזרים</InputLabel>
                     <Select
-                        multiple
                         label="מבוזרים"
-                        value={ currentInstructors }
-                        onChange={ handleChange }
+                        multiple
                         onBlur={ handleBlur }
+                        onChange={ handleChange }
                         renderValue={ (selected) => (
                             <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
                                 { selected.map((id) =>
@@ -129,15 +128,16 @@ export default function InstructorsField({ event, onBlurCallback }: InstructorsF
                                         <Chip
                                             key={ id }
                                             label={ instructor?.display_name ?? id }
-                                            size="small"
                                             onDelete={ () => handleDelete(id) }
                                             // Prevent menu from opening when deleting
                                             onMouseDown={ (e) => e.stopPropagation() }
+                                            size="small"
                                         />
                                     );
                                 }) }
                             </Box>
                         ) }
+                        value={ currentInstructors }
                     >
                         { instructors.map((instructor) => (
                             <MenuItem key={ instructor.id } value={ instructor.id }>
@@ -147,8 +147,7 @@ export default function InstructorsField({ event, onBlurCallback }: InstructorsF
                     </Select>
                 </FormControl>
             </Box>
-            { isLecture &&
-                <LecturerSelectionField event={ event } onBlurCallback={ onBlurCallback } className="w-[30%]" />
+            { isLecture ? <LecturerSelectionField className="w-[30%]" event={ event } onBlurCallback={ onBlurCallback } /> : null
             }
         </Box>
     );

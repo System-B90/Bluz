@@ -32,15 +32,15 @@ const EVENT_SIZE_VARIANTS_THRESHOLDS = {
 };
 
 type Variant =
-    | 'prayer'
-    | 'tiny-narrow'
-    | 'tiny-wide'
-    | 'short-narrow'
-    | 'short-wide'
+    | 'large-narrow'
+    | 'large-wide'
     | 'medium-narrow'
     | 'medium-wide'
-    | 'large-narrow'
-    | 'large-wide';
+    | 'prayer'
+    | 'short-narrow'
+    | 'short-wide'
+    | 'tiny-narrow'
+    | 'tiny-wide';
 
 const getEventVariant = (event: Event, width: number, height: number): Variant =>
 {
@@ -52,7 +52,7 @@ const getEventVariant = (event: Event, width: number, height: number): Variant =
     const isNarrow = width < EVENT_SIZE_VARIANTS_THRESHOLDS.W_NARROW;
     const widthVariant = isNarrow ? 'narrow' : 'wide';
 
-    let heightVariant: 'tiny' | 'short' | 'medium' | 'large';
+    let heightVariant: 'large' | 'medium' | 'short' | 'tiny';
 
     if (height < EVENT_SIZE_VARIANTS_THRESHOLDS.H_TINY)
     {
@@ -84,7 +84,7 @@ function BluzEventInnerComponent({ variant, event, size, ...props }: BluzEventIn
         case 'prayer':
             return <Tooltip title="תפילה"><PrayerEventComponent event={ event as PrayerEvent } { ...props } /></Tooltip>;
         case 'tiny-narrow':
-            return <Tooltip title="Tiny & Narrow"><TinyNarrowEventComponent event={ event } containerSize={ size } { ...props } /></Tooltip>;
+            return <Tooltip title="Tiny & Narrow"><TinyNarrowEventComponent containerSize={ size } event={ event } { ...props } /></Tooltip>;
         case 'tiny-wide':
             return <Tooltip title="Tiny"><TinyEventComponent event={ event } { ...props } /></Tooltip>;
         case 'short-narrow':
@@ -123,6 +123,7 @@ export default function BluzEventComponent({ event, ...props }: EventProps<Event
 
     return (
         <Box
+            data-filtered-out={ filterOpacity }
             ref={ ref }
             sx={ {
                 textAlign: 'left',
@@ -136,13 +137,12 @@ export default function BluzEventComponent({ event, ...props }: EventProps<Event
                 height: '100%',
                 boxSizing: 'border-box',
             } }
-            data-filtered-out={ filterOpacity }
         >
             <BluzEventInnerComponent
-                key={ `${size.width}-${size.height}` }
-                variant={ variant }
                 event={ event }
+                key={ `${size.width}-${size.height}` }
                 size={ size }
+                variant={ variant }
                 { ...props }
             />
         </Box>

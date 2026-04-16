@@ -25,17 +25,17 @@ export function CurriculumName({ curriculumId, title }: CurriculumNameProps)
 
     return (
         <EditableCurriculumField
-            value={ title }
+            allowEmpty={ false }
             canEdit={ Boolean(curriculumId) }
             editTooltip="שינוי שם תכנית"
-            skeletonWidth="40%"
-            allowEmpty={ false }
             onSave={ saveNameHandler }
             renderDisplay={ (value) => (
-                <Typography variant="h6" color="primary">
+                <Typography color="primary" variant="h6">
                     { value }
                 </Typography>
             ) }
+            skeletonWidth="40%"
+            value={ title }
         />
     );
 }

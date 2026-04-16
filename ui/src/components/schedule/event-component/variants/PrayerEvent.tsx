@@ -8,19 +8,19 @@ export default function PrayerEventComponent({ event: event }: EventProps<Prayer
 {
     return (
         <Box
-            display={ 'flex' }
-            justifyContent={ 'space-around' }
             alignItems={ 'center' }
+            display={ 'flex' }
             height={ '100%' }
+            justifyContent={ 'space-around' }
         >
             <EventTypeIcon event={ event } fontSize="inherit" />
-            <Box flexGrow={ 1 } display={ 'flex' } justifyContent={ 'space-around' } alignItems={ 'center' }>
+            <Box alignItems={ 'center' } display={ 'flex' } flexGrow={ 1 } justifyContent={ 'space-around' }>
 
                 <Box marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
                     <Typography
-                        variant="subtitle2"
                         noWrap
                         sx={ { ml: 0.5, fontWeight: 'bold' } }
+                        variant="subtitle2"
                     >
                         { event.name }
                     </Typography>
@@ -28,19 +28,19 @@ export default function PrayerEventComponent({ event: event }: EventProps<Prayer
             </Box>
 
             <Box
+                alignContent={ 'space-between' }
+                alignItems={ 'flex-end' }
                 display={ 'flex' }
-                flexWrap={ 'wrap' }
-                sx={ { direction: 'rtl' } }
+                flexDirection={ 'column' }
                 flexGrow={ 0 }
                 flexShrink={ 1 }
-                flexDirection={ 'column' }
-                alignItems={ 'flex-end' }
-                justifyContent={ 'space-between' }
-                alignContent={ 'space-between' }
+                flexWrap={ 'wrap' }
                 height={ '100%' }
+                justifyContent={ 'space-between' }
+                sx={ { direction: 'rtl' } }
             >
                 <EventDurationLabel event={ event } size="smaller" sx={ { direction: 'ltr' } } />
-                <EventStatusIcons flexGrow={ 1 } event={ event } size={ '0.7rem' } flexDirection={ 'column' } />
+                <EventStatusIcons event={ event } flexDirection={ 'column' } flexGrow={ 1 } size={ '0.7rem' } />
             </Box>
         </Box>
     );

@@ -19,14 +19,14 @@ export function EventToggles({ event, onUpdate }: {
         <Box display="flex" gap={ 2 }>
             { toggles.map(({ label, key }) => (
                 <FormControlLabel
-                    key={ key }
-                    label={ label }
                     control={
                         <Switch
                             checked={ !!event[ key ] }
                             onChange={ (e) => onUpdate({ [ key ]: e.target.checked }) }
                         />
                     }
+                    key={ key }
+                    label={ label }
                 />
             )) }
         </Box>

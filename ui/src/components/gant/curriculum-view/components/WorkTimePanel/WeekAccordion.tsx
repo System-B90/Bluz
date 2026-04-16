@@ -33,10 +33,10 @@ export function WeekAccordion(props: WeekAccordionProps)
                 <Tooltip title="הוספת יום">
                     <span>
                         <IconButton
-                            size="small"
                             color="primary"
                             disabled={ !canEdit || !canAddDay }
                             onClick={ () => void props.onAddDay(weekIndex) }
+                            size="small"
                         >
                             <AddIcon fontSize="small" />
                         </IconButton>
@@ -44,27 +44,27 @@ export function WeekAccordion(props: WeekAccordionProps)
                 </Tooltip>
             </Box>
             <TextField
-                size="small"
-                label="הערת שבוע"
-                placeholder="הוספת הערה לשבוע"
-                value={ week.comment ?? '' }
                 disabled={ !canEdit }
-                onChange={ (event) => props.onWeekCommentChange(weekIndex, event.target.value) }
-                onBlur={ () => void props.onWeekCommentSave(weekIndex) }
-                onKeyDown={ (event: KeyboardEvent<HTMLInputElement>) => props.onWeekCommentKeyDown(event, weekIndex) }
                 fullWidth
+                label="הערת שבוע"
+                onBlur={ () => void props.onWeekCommentSave(weekIndex) }
+                onChange={ (event) => props.onWeekCommentChange(weekIndex, event.target.value) }
+                onKeyDown={ (event: KeyboardEvent<HTMLInputElement>) => props.onWeekCommentKeyDown(event, weekIndex) }
+                placeholder="הוספת הערה לשבוע"
+                size="small"
                 sx={ { mb: 1.5 } }
+                value={ week.comment ?? '' }
             />
             <DaysTable
-                days={ week.days }
                 canEdit={ canEdit }
-                weekIndex={ weekIndex }
-                onHoursChange={ props.onHoursChange }
-                onHoursSave={ props.onHoursSave }
-                onHoursKeyDown={ props.onHoursKeyDown }
+                days={ week.days }
                 onDayCommentChange={ props.onDayCommentChange }
-                onDayCommentSave={ props.onDayCommentSave }
                 onDayCommentKeyDown={ props.onDayCommentKeyDown }
+                onDayCommentSave={ props.onDayCommentSave }
+                onHoursChange={ props.onHoursChange }
+                onHoursKeyDown={ props.onHoursKeyDown }
+                onHoursSave={ props.onHoursSave }
+                weekIndex={ weekIndex }
             />
         </Box>
     );

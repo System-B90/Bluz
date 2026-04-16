@@ -45,38 +45,37 @@ export default function GroupDialog({ open, group: _group, onClose, onSave: _onS
     };
 
     return (
-        <Dialog open={ open } onClose={ onClose } fullWidth maxWidth="sm">
+        <Dialog fullWidth maxWidth="sm" onClose={ onClose } open={ open }>
             <DialogTitle>Define New Subject</DialogTitle>
             <DialogContent sx={ { display: 'flex', flexDirection: 'column', gap: 2, mt: 1 } }>
                 <TextField
-                    label="Name"
-                    value={ name }
-                    onChange={ (e) => setName(e.target.value) }
                     fullWidth
+                    label="Name"
+                    onChange={ (e) => setName(e.target.value) }
+                    value={ name }
                 />
                 <TextField
-                    label="Display Name"
-                    value={ displayName }
-                    onChange={ (e) => setDisplayName(e.target.value) }
                     fullWidth
+                    label="Display Name"
+                    onChange={ (e) => setDisplayName(e.target.value) }
+                    value={ displayName }
                 />
-                <Box display="flex" alignItems="center" gap={ 2 }>
+                <Box alignItems="center" display="flex" gap={ 2 }>
                     <TextField
                         label="Color"
-                        type="color"
-                        value={ color }
                         onChange={ (e) => setColor(e.target.value) }
                         sx={ { width: 120 } }
+                        type="color"
+                        value={ color }
                     />
                     <Box sx={ { fontWeight: 500 } }>{ color }</Box>
                 </Box>
                 <FormControl fullWidth>
                     <InputLabel>Assigned Groups</InputLabel>
                     <Select
-                        multiple
-                        value={ groups }
-                        onChange={ (e) => setGroups(e.target.value as string[]) }
                         input={ <OutlinedInput label="Assigned Groups" /> }
+                        multiple
+                        onChange={ (e) => setGroups(e.target.value as string[]) }
                         renderValue={ (selected) => (
                             <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
                                 { selected.map((value) => (
@@ -84,6 +83,7 @@ export default function GroupDialog({ open, group: _group, onClose, onSave: _onS
                                 )) }
                             </Box>
                         ) }
+                        value={ groups }
                     >
                         {/*{availableGroups.map((group) => (*/ }
                         {/*    <MenuItem key={group} value={group}>*/ }

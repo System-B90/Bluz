@@ -1,4 +1,4 @@
-export type UserType = 'student' | 'instructor' | 'helper' | 'other';
+export type UserType = 'helper' | 'instructor' | 'other' | 'student';
 
 export interface User
 {

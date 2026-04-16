@@ -16,7 +16,7 @@ export function EventClassification({ event, onUpdate }: {
 })
 {
     return (
-        <Box display="flex" width="100%" gap={ 2 } justifyContent="flex-start">
+        <Box display="flex" gap={ 2 } justifyContent="flex-start" width="100%">
             <EventTypeField
                 event={ event }
                 onBlurCallback={ onUpdate }
@@ -44,16 +44,16 @@ export function EventClassification({ event, onUpdate }: {
                 </>
             ) }
 
-            <Box gap="inherit" display="flex" flexGrow={ 1 }>
+            <Box display="flex" flexGrow={ 1 } gap="inherit">
                 <CourseField
                     event={ event }
-                    onBlurCallback={ onUpdate }
                     fullWidth
+                    onBlurCallback={ onUpdate }
                 />
                 <RoomField
                     event={ event }
-                    onBlurCallback={ onUpdate }
                     fullWidth
+                    onBlurCallback={ onUpdate }
                 />
             </Box>
         </Box>

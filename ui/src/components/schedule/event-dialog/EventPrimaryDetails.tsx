@@ -12,29 +12,29 @@ export function EventPrimaryDetails({ event, onUpdate }: {
 {
     return (
         <>
-            <Box gap={ 2 } display="flex" width="100%">
+            <Box display="flex" gap={ 2 } width="100%">
                 <TextField
-                    label="שם"
                     fullWidth
-                    required
-                    value={ event.name ?? '' }
+                    label="שם"
                     onChange={ (e) => onUpdate({ name: e.target.value }) }
+                    required
                     sx={ { flexGrow: 1 } }
+                    value={ event.name ?? '' }
                 />
                 <EventTimeField
-                    sx={ { flexShrink: 1 } }
                     event={ event }
                     onBlurCallback={ onUpdate }
+                    sx={ { flexShrink: 1 } }
                 />
             </Box>
 
             <TextField
-                label="הערות"
                 fullWidth
+                label="הערות"
                 multiline
+                onChange={ (e) => onUpdate({ notes: e.target.value }) }
                 rows={ 3 }
                 value={ event.notes ?? '' }
-                onChange={ (e) => onUpdate({ notes: e.target.value }) }
             />
         </>
     );

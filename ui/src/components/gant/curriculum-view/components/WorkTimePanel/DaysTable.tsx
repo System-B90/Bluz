@@ -45,27 +45,27 @@ export function DaysTable({
                         </TableCell>
                         <TableCell align="right">
                             <TextField
+                                disabled={ !canEdit }
+                                inputProps={ { min: 0, step: 0.5 } }
+                                onBlur={ () => void onHoursSave(weekIndex, dayIndex) }
+                                onChange={ (event) => onHoursChange(weekIndex, dayIndex, event.target.value) }
+                                onKeyDown={ (event: KeyboardEvent<HTMLInputElement>) => onHoursKeyDown(event, weekIndex, dayIndex) }
                                 size="small"
+                                sx={ { width: '8rem' } }
                                 type="number"
                                 value={ day.totalWorkingHours }
-                                disabled={ !canEdit }
-                                onChange={ (event) => onHoursChange(weekIndex, dayIndex, event.target.value) }
-                                onBlur={ () => void onHoursSave(weekIndex, dayIndex) }
-                                onKeyDown={ (event: KeyboardEvent<HTMLInputElement>) => onHoursKeyDown(event, weekIndex, dayIndex) }
-                                inputProps={ { min: 0, step: 0.5 } }
-                                sx={ { width: '8rem' } }
                             />
                         </TableCell>
                         <TableCell>
                             <TextField
+                                disabled={ !canEdit }
+                                fullWidth
+                                onBlur={ () => void onDayCommentSave(weekIndex, dayIndex) }
+                                onChange={ (event) => onDayCommentChange(weekIndex, dayIndex, event.target.value) }
+                                onKeyDown={ (event: KeyboardEvent<HTMLInputElement>) => onDayCommentKeyDown(event, weekIndex, dayIndex) }
+                                placeholder="הערת יום"
                                 size="small"
                                 value={ day.comment ?? '' }
-                                placeholder="הערת יום"
-                                disabled={ !canEdit }
-                                onChange={ (event) => onDayCommentChange(weekIndex, dayIndex, event.target.value) }
-                                onBlur={ () => void onDayCommentSave(weekIndex, dayIndex) }
-                                onKeyDown={ (event: KeyboardEvent<HTMLInputElement>) => onDayCommentKeyDown(event, weekIndex, dayIndex) }
-                                fullWidth
                             />
                         </TableCell>
                     </TableRow>

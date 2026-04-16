@@ -21,7 +21,7 @@ export class ServerNetworkError extends ClientError
 
 export class ClientApiError extends ClientError
 {
-    constructor(message?: string | ClientApiError)
+    constructor(message?: ClientApiError | string)
     {
         super(typeof message === 'string' ? message : message?.message);
         if (typeof message === 'string')

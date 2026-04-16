@@ -22,26 +22,26 @@ export default function Filters({ ...props }: BoxProps)
             { ...props }
         >
             <FilterInstructors
+                boxSizing={ 'border-box' }
                 minWidth={ 200 }
                 width={ 'auto' }
-                boxSizing={ 'border-box' }
             />
             <FilterCourses
+                boxSizing={ 'border-box' }
                 minWidth={ 200 }
                 width={ 'auto' }
-                boxSizing={ 'border-box' }
             />
 
             <Tooltip title={ showPAsFor !== null ? 'מראה חלונות פ"א' : 'גלה חלונות פ"א' }>
-                <IconButton onClick={ handleShowPA } color={ showPAsFor !== null ? 'primary' : 'inherit' }>
+                <IconButton color={ showPAsFor !== null ? 'primary' : 'inherit' } onClick={ handleShowPA }>
                     <ChatIcon />
                 </IconButton>
             </Tooltip>
 
             <Tooltip title={ hidePrayers ? 'הראה תפילות' : 'הסתר תפילות' }>
-                <IconButton className="relative" onClick={ () => setHidePrayers(v => !v) } color="inherit">
+                <IconButton className="relative" color="inherit" onClick={ () => setHidePrayers(v => !v) }>
                     <SynagogueIcon sx={ { opacity: hidePrayers ? 0.7 : 1, padding: hidePrayers ? 0.3 : 0 } } />
-                    <DoNotDisturbAltIcon className="absolute" sx={ { opacity: hidePrayers ? 1 : 0 } } fontSize="large" color="secondary" />
+                    <DoNotDisturbAltIcon className="absolute" color="secondary" fontSize="large" sx={ { opacity: hidePrayers ? 1 : 0 } } />
                 </IconButton>
             </Tooltip>
         </Box>

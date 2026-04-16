@@ -25,7 +25,7 @@ const CurriculumActionsContext = createContext<{
  */
 function ModuleDialogManager({ children }: { children: ReactNode; })
 {
-    const [ currentSyllabusId, setCurrentSyllabusId ] = useState<SyllabusId | null>(null);
+    const [ currentSyllabusId, setCurrentSyllabusId ] = useState<null | SyllabusId>(null);
     const [ currentModuleId, setCurrentModuleId ] = useState<ModuleId | null>(null);
     const [ moduleDialogOpen, setModuleDialogOpen ] = useState<boolean>(false);
 
@@ -40,14 +40,14 @@ function ModuleDialogManager({ children }: { children: ReactNode; })
     const closeModuleDialog: CloseModuleDialog = useCallback(() => setModuleDialogOpen(false), []);
 
     return (
-        <CurriculumUIProviderInternal openModuleDialog={ openModuleDialog } closeModuleDialog={ closeModuleDialog }>
+        <CurriculumUIProviderInternal closeModuleDialog={ closeModuleDialog } openModuleDialog={ openModuleDialog }>
             { children }
             <ModuleDialog
                 key={ `${currentSyllabusId}-${currentModuleId}` }
+                moduleId={ currentModuleId }
                 open={ moduleDialogOpen }
                 setOpen={ setModuleDialogOpen }
                 syllabusId={ currentSyllabusId }
-                moduleId={ currentModuleId }
             />
         </CurriculumUIProviderInternal>
     );

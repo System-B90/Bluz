@@ -24,7 +24,7 @@ export interface ModuleDialogProps extends DialogProps
 {
     setOpen: Dispatch<SetStateAction<boolean>>;
     moduleId: ModuleId | null;
-    syllabusId: SyllabusId | null;
+    syllabusId: null | SyllabusId;
 }
 
 export function ModuleDialog({
@@ -75,40 +75,40 @@ export function ModuleDialog({
     if (syllabusId === null || moduleId === null) return null;
 
     return (
-        <Dialog open={ open } onClose={ handleClose } fullWidth maxWidth="xl" { ...props }>
+        <Dialog fullWidth maxWidth="xl" onClose={ handleClose } open={ open } { ...props }>
             <DialogTitle>עריכת מערך</DialogTitle>
 
             <DialogContent>
-                <Box mt={ 1 } display="flex" flexDirection="row" gap={ 2 } alignItems="flex-start">
+                <Box alignItems="flex-start" display="flex" flexDirection="row" gap={ 2 } mt={ 1 }>
                     <Stack spacing={ 2 } width="30%">
                         <TextField
-                            label="כותרת"
                             fullWidth
-                            value={ localTitle }
-                            onChange={ (e) => setLocalTitle(e.target.value) }
+                            label="כותרת"
                             onBlur={ () => handleCommit({ title: localTitle }) }
+                            onChange={ (e) => setLocalTitle(e.target.value) }
+                            value={ localTitle }
                         />
 
                         <TextField
+                            fullWidth
+                            label="תיאור"
+                            minRows={ 10 } // Increased rows since it's a dialog editor
+                            multiline
+                            onBlur={ () => handleCommit({ description: localDescription }) }
+                            onChange={ (e) => setLocalDescription(e.target.value) }
                             sx={ {
                                 flex: 1,
                                 '& .MuiInputBase-root': { height: '100%', alignItems: 'stretch' },
                                 '& textarea': { height: '100% !important' },
                             } }
-                            label="תיאור"
-                            fullWidth
-                            multiline
-                            minRows={ 10 } // Increased rows since it's a dialog editor
                             value={ localDescription }
-                            onChange={ (e) => setLocalDescription(e.target.value) }
-                            onBlur={ () => handleCommit({ description: localDescription }) }
                         />
                     </Stack>
 
-                    <Divider orientation="vertical" flexItem />
+                    <Divider flexItem orientation="vertical" />
 
-                    <Stack spacing={ 2 } mt={ 1 } flexGrow={ 1 }>
-                        <ModuleEventsView moduleId={ moduleId } eventIds={ moduleDoc?.events ?? [] } />
+                    <Stack flexGrow={ 1 } mt={ 1 } spacing={ 2 }>
+                        <ModuleEventsView eventIds={ moduleDoc?.events ?? [] } moduleId={ moduleId } />
                         <HiveModulesView hiveModules={ moduleDoc?.hiveIds ?? [] } />
                     </Stack>
                 </Box>
@@ -116,17 +116,17 @@ export function ModuleDialog({
 
             <DialogActions>
                 <Button
-                    onClick={ handleDelete }
-                    disabled={ isActionLoading }
                     color="error"
+                    disabled={ isActionLoading }
+                    onClick={ handleDelete }
                 >
                     מחיקה
                 </Button>
 
                 <Button
-                    onClick={ handleClose }
-                    disabled={ isActionLoading }
                     color="primary"
+                    disabled={ isActionLoading }
+                    onClick={ handleClose }
                     variant="contained"
                 >
                     סגירה

@@ -35,14 +35,14 @@ function GroupItem({ group }: { group: Group; })
         <div ref={ setNodeRef } style={ style }>
             <Accordion sx={ { mb: 1 } }>
                 <AccordionSummary expandIcon={ <ExpandMoreIcon /> }>
-                    <GroupField group={ group } attributes={ attributes } listeners={ listeners } />
+                    <GroupField attributes={ attributes } group={ group } listeners={ listeners } />
                 </AccordionSummary>
                 <AccordionDetails>
                     <GroupMembersField group={ group } />
 
                     { group.subGroups?.length ? (
                         <Box mt={ 2 }>
-                            <Typography variant="body2" fontWeight={ 500 }>Subgroups:</Typography>
+                            <Typography fontWeight={ 500 } variant="body2">Subgroups:</Typography>
                             <Box mt={ 1 }>
                                 { group.subGroups.map((g) => <GroupItem group={ g } key={ g.id } />) }
                             </Box>

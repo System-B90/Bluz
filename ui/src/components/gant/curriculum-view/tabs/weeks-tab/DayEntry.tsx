@@ -69,15 +69,15 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
             ${isDisabled ? 'bg-slate-50 opacity-40' : 'bg-slate-100/50'}
         `}>
             <div className="flex justify-between items-center">
-                <Typography variant="caption" className="font-bold text-slate-600 tracking-tight">
+                <Typography className="font-bold text-slate-600 tracking-tight" variant="caption">
                     { day?.day }
                 </Typography>
 
                 <div className="flex items-center gap-2 bg-white rounded-md border border-slate-200 px-1 py-0.5 shadow-inner">
                     <IconButton
-                        size="small"
-                        onClick={ () => adjustHours(-1) }
                         className="hover:text-red-500 transition-colors"
+                        onClick={ () => adjustHours(-1) }
+                        size="small"
                         sx={ { p: 0.25 } }
                     >
                         <Remove sx={ { fontSize: '1rem' } } />
@@ -85,16 +85,16 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
 
                     <input
                         className="w-12 text-center font-mono text-xs bg-transparent border-none focus:ring-0 focus:outline-none text-slate-800"
-                        value={ localTime }
-                        onChange={ (e) => setLocalTime(e.target.value) }
                         onBlur={ handleSync }
+                        onChange={ (e) => setLocalTime(e.target.value) }
                         placeholder="00:00"
+                        value={ localTime }
                     />
 
                     <IconButton
-                        size="small"
-                        onClick={ () => adjustHours(1) }
                         className="hover:text-blue-500 transition-colors"
+                        onClick={ () => adjustHours(1) }
+                        size="small"
                         sx={ { p: 0.25 } }
                     >
                         <Add sx={ { fontSize: '1rem' } } />
@@ -103,17 +103,17 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
             </div>
 
             <TextField
-                fullWidth
-                placeholder="הערות..."
-                variant="standard"
                 defaultValue={ day?.comment ?? '' }
+                fullWidth
                 onBlur={ (e) => updateDay(curriculumId, weekIndex, dayIndex, { comment: e.target.value }) }
+                placeholder="הערות..."
                 slotProps={ {
                     input: {
                         disableUnderline: true,
                         className: "text-[0.7rem] text-slate-500 hover:text-slate-800 transition-colors"
                     }
                 } }
+                variant="standard"
             />
         </div>
     );

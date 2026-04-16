@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import { DbEventDocument } from "@/api-server/db-event";
 import { Event } from "@/components/schedule/types/event";
 
-export function eventDateFixup<T extends Partial<Event | DbEventDocument>>(event: T): T
+export function eventDateFixup<T extends Partial<DbEventDocument | Event>>(event: T): T
 {
     // 1. Create a shallow copy so we don't mutate React state or cached objects
     const result = { ...event };

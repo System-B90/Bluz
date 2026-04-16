@@ -15,7 +15,7 @@ import { Event } from "@/components/schedule/types/event";
 interface DeleteDialogProps
 {
   open: boolean;
-  event?: Partial<Event> | null;
+  event?: null | Partial<Event>;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -31,8 +31,8 @@ export default function DeleteDialog({
 
   return (
     <Dialog
-      open={ open }
       onClose={ onClose }
+      open={ open }
     >
       <DialogTitle>אשר מחיקה</DialogTitle>
       <DialogContent>
@@ -45,8 +45,8 @@ export default function DeleteDialog({
           ביטול
         </Button>
         <Button
-          onClick={ onConfirm }
           color="error"
+          onClick={ onConfirm }
           variant="contained"
         >
           מחק

@@ -8,7 +8,7 @@ declare module '@mui/material/Chip' {
     }
 }
 
-export function createFromPalette(paletteMode: 'light' | 'dark'): ThemeOptions
+export function createFromPalette(paletteMode: 'dark' | 'light'): ThemeOptions
 {
     return {
         typography: {

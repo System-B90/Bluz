@@ -17,8 +17,8 @@ export function CurriculumAboutCard({ curriculumId, curriculum, ...props }: Curr
         <Card sx={ { padding: 2, minWidth: '14rem', flexShrink: 0, } } { ...props }>
             <CurriculumName curriculumId={ curriculumId } title={ curriculum?.title } />
             <CurriculumDescription curriculumId={ curriculumId } description={ curriculum?.description } />
-            <Box display={ 'flex' } flexDirection={ 'row' } color="textSecondary">
-                <Typography variant="body2" color="textSecondary">
+            <Box color="textSecondary" display={ 'flex' } flexDirection={ 'row' }>
+                <Typography color="textSecondary" variant="body2">
                     עדכון אחרון:
                 </Typography>
                 <Box width={ '0.2rem' } />

@@ -27,8 +27,8 @@ export interface DrizzleOperationsBuilderProps<TTable extends PgTableWithColumns
     table: TTable;
     typeName: string;
     junction?: JunctionConfig;
-    parentJunction?: { type: 'curriculum' | 'syllabus' | 'module'; };
-    idPreffix: 'c' | 's' | 'm' | 'e';
+    parentJunction?: { type: 'curriculum' | 'module' | 'syllabus'; };
+    idPreffix: 'c' | 'e' | 'm' | 's';
 }
 
 export function drizzleOperationsBuilder<

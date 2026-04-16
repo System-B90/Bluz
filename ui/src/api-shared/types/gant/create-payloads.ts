@@ -27,7 +27,7 @@ export interface CreateSyllabusPayload extends Omit<Syllabus, 'id' | 'modules'>
  * - Omit 'events': A new module starts with an empty array of events.
  * - Add 'syllabusId': The foreign key to link this module to its parent syllabus.
  */
-export interface CreateModulePayload extends Omit<Module, 'id' | 'events'>
+export interface CreateModulePayload extends Omit<Module, 'events' | 'id'>
 {
     syllabusId: SyllabusId;
 }

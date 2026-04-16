@@ -38,9 +38,9 @@ export function EventTypeIcon({ event, ...props }: { event: Event; } & SvgIconPr
     }
     return (
         <Box>
-            { icon && <Tooltip title={ eventTypeToHebrew(event.type) }>
+            { icon ? <Tooltip title={ eventTypeToHebrew(event.type) }>
                 { icon }
-            </Tooltip> }
+            </Tooltip> : null }
         </Box>
     );
 }
@@ -75,26 +75,26 @@ export function EventStatusIcons({ event, size, ...props }: { event: Event; size
     const tooltipPlacement = props.flexDirection === 'column' ? 'left' : 'top';
     return (
         <Box
-            position={ 'relative' }
-            maxHeight={ '100%' }
-            overflow={ 'hidden' }
-            fontSize={ size }
             display={ props.display ?? 'flex' }
             flexDirection={ props.flexDirection ?? 'row' }
             flexWrap={ 'wrap' }
+            fontSize={ size }
+            maxHeight={ '100%' }
+            overflow={ 'hidden' }
+            position={ 'relative' }
             sx={ { ...props.sx, direction: 'rtl' } }
             { ...props }
         >
-            { event.locked && <Tooltip title="מתואם" placement={ tooltipPlacement }><LockIcon fontSize={ 'inherit' } /></Tooltip> }
-            { event.required && <Tooltip title="קריטי" placement={ tooltipPlacement }><FmdBadIcon fontSize={ 'inherit' } /></Tooltip> }
-            { event.personalTalk && <Tooltip title='חלון פ"א' placement={ tooltipPlacement }><ChatIcon fontSize={ 'inherit' } /></Tooltip> }
+            { event.locked ? <Tooltip placement={ tooltipPlacement } title="מתואם"><LockIcon fontSize={ 'inherit' } /></Tooltip> : null }
+            { event.required ? <Tooltip placement={ tooltipPlacement } title="קריטי"><FmdBadIcon fontSize={ 'inherit' } /></Tooltip> : null }
+            { event.personalTalk ? <Tooltip placement={ tooltipPlacement } title='חלון פ"א'><ChatIcon fontSize={ 'inherit' } /></Tooltip> : null }
         </Box>
     );
 }
 
 export function useElementSize<T extends HTMLElement>()
 {
-    const ref = useRef<T | null>(null);
+    const ref = useRef<null | T>(null);
     const [ size, setSize ] = useState({ width: 0, height: 0 });
 
     useLayoutEffect(() =>

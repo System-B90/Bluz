@@ -21,7 +21,7 @@ export default function GroupMemberField({user}: GroupMemberFieldProps) {
 
     return (
         <Paper ref={setNodeRef} {...attributes} {...listeners} style={style}>
-            <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 1 }}>
+            <Stack alignItems="center" direction="row" spacing={2} sx={{ p: 1 }}>
                 <Box {...listeners} {...attributes} sx={{ cursor: 'grab' }}>
                     <DragIndicatorIcon />
                 </Box>

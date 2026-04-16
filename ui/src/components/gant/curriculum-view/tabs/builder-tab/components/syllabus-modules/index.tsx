@@ -63,8 +63,8 @@ export default function SyllabusModulesCurriculumViewSidebar({
     return (
         <Box
             { ...props }
-            ref={ setNodeRef }
             className="flex flex-col h-full overflow-x-clip shrink-0 border-r border-slate-200"
+            ref={ setNodeRef }
             sx={ {
                 width: 320,
                 backgroundColor: isOver

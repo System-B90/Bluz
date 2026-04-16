@@ -14,7 +14,7 @@ export default function SubjectComponent({ subjectId, ...props }: { subjectId: S
     const subject = useMemo(() => getSubject(subjectId), [ subjectId, getSubject, ]);
 
     return (
-        <Link href={ `${getHiveBaseUrl()}/course/${subject?.id}` } className="hover:underline">
+        <Link className="hover:underline" href={ `${getHiveBaseUrl()}/course/${subject?.id}` }>
             <Typography { ...props }>{ subject?.name }</Typography>
         </Link>
     );
@@ -26,7 +26,7 @@ export function ModuleComponent({ moduleId, ...props }: { moduleId: ModuleLike; 
     const hiveModule = useMemo(() => getModule(moduleId), [ moduleId, getModule, ]);
 
     return (
-        <Link href={ `${getHiveBaseUrl()}/course/${hiveModule?.parent_subject}/${hiveModule?.id}` } className="hover:underline">
+        <Link className="hover:underline" href={ `${getHiveBaseUrl()}/course/${hiveModule?.parent_subject}/${hiveModule?.id}` }>
             <Typography { ...props }>{ hiveModule?.name }</Typography>
         </Link>
     );

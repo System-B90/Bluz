@@ -60,7 +60,7 @@ export default function EventDialog({
     };
 
     return (
-        <Dialog open={ open } onClose={ onClose } maxWidth="lg" fullWidth>
+        <Dialog fullWidth maxWidth="lg" onClose={ onClose } open={ open }>
             <DialogTitle>ערוך מופע</DialogTitle>
 
             <form onSubmit={ handleSubmit }>
@@ -81,17 +81,17 @@ export default function EventDialog({
 
                 <DialogActions>
                     <Button
-                        onClick={ () => onDelete(event.id as string) }
                         color="error"
                         disabled={ !event?.id }
+                        onClick={ () => onDelete(event.id as string) }
                     >
                         מחק
                     </Button>
                     <Button onClick={ onClose }>ביטול</Button>
                     <Button
+                        disabled={ !event?.name?.trim() }
                         type="submit"
                         variant="contained"
-                        disabled={ !event?.name?.trim() }
                     >
                         שמור
                     </Button>

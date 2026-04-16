@@ -25,19 +25,19 @@ export function CurriculumDescription({ curriculumId, description }: CurriculumD
 
     return (
         <EditableCurriculumField
-            value={ description }
+            allowEmpty
             canEdit={ Boolean(curriculumId) }
             editTooltip="שינוי תיאור תכנית"
-            skeletonWidth="100%"
-            multiline
             minRows={ 2 }
-            allowEmpty
+            multiline
             onSave={ saveDescriptionHandler }
             renderDisplay={ (value) => (
-                <Typography variant="body1" color='secondary' sx={ { whiteSpace: 'pre-wrap' } }>
+                <Typography color='secondary' sx={ { whiteSpace: 'pre-wrap' } } variant="body1">
                     { value }
                 </Typography>
             ) }
+            skeletonWidth="100%"
+            value={ description }
         />
     );
 }

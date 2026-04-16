@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, ReactNode, useMemo } from "react";
+import { createContext, ReactNode, useContext, useMemo } from "react";
 
 interface WebSocketConfigContextType
 {
@@ -9,8 +9,6 @@ interface WebSocketConfigContextType
     portSuffix: string;
     connectionString: string;
 }
-
-;
 
 const WebSocketConfigContext = createContext<WebSocketConfigContextType>({ host: "localhost", protocol: 'ws', portSuffix: ':28199', connectionString: 'ws://localhost:8193/' });
 

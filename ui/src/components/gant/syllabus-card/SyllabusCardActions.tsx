@@ -27,7 +27,7 @@ export default function SyllabusCardActions({ curriculumId, syllabusId, ...props
     return (
         <CardActions { ...props }>
             <Tooltip title='הסרת הסילבוס מהגאנט'>
-                <IconButton onClick={ deleteHandler } size="small" color="warning">
+                <IconButton color="warning" onClick={ deleteHandler } size="small">
                     <LinkOffIcon fontSize="small" />
                 </IconButton>
             </Tooltip>

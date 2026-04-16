@@ -64,19 +64,16 @@ export function CourseItem({
 
     return (
         <Chip
-            size="small"
-            onDelete={ () => onDelete(course.id) }
             deleteIcon={ <Tooltip title="מחק מסלול"><DeleteIcon /></Tooltip> }
             label={
-                <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'center' } gap={ 0.5 }>
+                <Box alignItems={ 'center' } display={ 'flex' } flexDirection={ 'row' } gap={ 0.5 }>
                     <MuiColorInput
-                        size={ 'small' }
                         dir="ltr"
-                        value={ color ?? '#e0e0e0' }
-                        onChange={ handleColorChange }
                         format="hex"
-                        isAlphaHidden
                         fullWidth={ false }
+                        isAlphaHidden
+                        onChange={ handleColorChange }
+                        size={ 'small' }
                         sx={ {
                             p: 0,
 m: 0,
@@ -84,15 +81,16 @@ width: '1rem',
 height: '1rem',
                             '& .MuiInputBase-root': { padding: 0, '& .MuiOutlinedInput-notchedOutline': { border: 'none' } }
                         } }
+                        value={ color ?? '#e0e0e0' }
                     />
                     { isEditing ? (
                         <InputBase
-                            value={ title }
-                            onChange={ (e) => setTitle(e.target.value) }
-                            onBlur={ commitTitleChange }
-                            onKeyDown={ handleKeyDown }
                             autoFocus
+                            onBlur={ commitTitleChange }
+                            onChange={ (e) => setTitle(e.target.value) }
+                            onKeyDown={ handleKeyDown }
                             sx={ { fontSize: 'inherit', width: `${Math.max(title.length, 5)}ch` } }
+                            value={ title }
                         />
                     ) : (
                         <Typography
@@ -104,6 +102,8 @@ height: '1rem',
                     ) }
                 </Box>
             }
+            onDelete={ () => onDelete(course.id) }
+            size="small"
         />
     );
 }

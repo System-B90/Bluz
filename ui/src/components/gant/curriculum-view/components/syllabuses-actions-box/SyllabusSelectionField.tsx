@@ -54,16 +54,16 @@ export default function SyllabusSelectionField({ curriculumId, ...props }: Sylla
             <FormControl fullWidth={ true }>
                 <InputLabel>סילבוסים קיימים</InputLabel>
                 <Select
-                    value={ currentSyllabusId }
+                    fullWidth
                     label="סילבוסים קיימים"
                     onChange={ onChange }
-                    fullWidth
+                    value={ currentSyllabusId }
                 >
                     { syllabusMenuItems }
                 </Select>
             </FormControl >
             <Tooltip title='הוספת סילבוס לגאנט'>
-                <IconButton onClick={ addClickHandler } disabled={ currentSyllabusId.length === 0 }>
+                <IconButton disabled={ currentSyllabusId.length === 0 } onClick={ addClickHandler }>
                     { isLinking ? <CircularProgress color="inherit" size={ 24 } /> : <LinkIcon color={ currentSyllabusId.length > 0 ? 'info' : 'disabled' } fontSize="medium" /> }
                 </IconButton>
             </Tooltip>

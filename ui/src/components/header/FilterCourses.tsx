@@ -31,13 +31,11 @@ export default function FilterCourses({ ...props }: BoxProps)
             <FormControl fullWidth={ true } size="small">
                 <InputLabel size="small">סינון לפי מסלולים</InputLabel>
                 <Select
-                    multiple
-                    size="small"
                     label="סינון לפי מסלולים"
-                    value={ filteredCourses }
+                    multiple
                     onChange={ handleChange }
                     renderValue={ (selected) => (
-                        <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } } fontSize={ 'inherit' }>
+                        <Box fontSize={ 'inherit' } sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
                             { selected.map((id) =>
                             {
                                 // Look up course details by ID
@@ -46,19 +44,21 @@ export default function FilterCourses({ ...props }: BoxProps)
                                     <Chip
                                         key={ id }
                                         label={ course?.name ?? id }
-                                        size="small"
                                         onDelete={ () => handleDelete(id) }
                                         // Prevent menu from opening when deleting
                                         onMouseDown={ (e) => e.stopPropagation() }
+                                        size="small"
                                         sx={ { bgcolor: course?.color } }
                                     />
                                 );
                             }) }
                         </Box>
                     ) }
+                    size="small"
+                    value={ filteredCourses }
                 >
                     { courses.map((course) => (
-                        <MenuItem key={ course.id } value={ course.id } sx={ { textDecorationColor: course.color, textDecorationLine: 'underline' } }>
+                        <MenuItem key={ course.id } sx={ { textDecorationColor: course.color, textDecorationLine: 'underline' } } value={ course.id }>
                             { course.name }
                         </MenuItem>
                     )) }

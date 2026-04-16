@@ -22,10 +22,10 @@ export function CourseComponent({ courseIds, showCaption, chipSize, ...props }: 
     const courses = useMemo(() => courseIds.map(getCourse).filter((v) => !!v), [ courseIds, getCourse ]);
 
     return (
-        <Box display={ props.display ?? "flex" } flexDirection={ props.flexDirection ?? 'column' } alignItems={ props.alignItems ?? "flex-start" } gap={ 0.2 } { ...props }>
-            { (showCaption !== false) && <Typography variant="caption" fontWeight={ 600 } noWrap>{ courseIds.length === 1 ? 'מסלול' : 'מסלולים' }</Typography> }
-            < Stack display={ 'flex' } flexDirection={ props.flexDirection ?? 'row' } gap={ 0.3 } flexWrap="wrap">
-                { courses.map((course) => <SingleCourseComponent key={ course.id } course={ course } size={ chipSize } />) }
+        <Box alignItems={ props.alignItems ?? "flex-start" } display={ props.display ?? "flex" } flexDirection={ props.flexDirection ?? 'column' } gap={ 0.2 } { ...props }>
+            { (showCaption !== false) && <Typography fontWeight={ 600 } noWrap variant="caption">{ courseIds.length === 1 ? 'מסלול' : 'מסלולים' }</Typography> }
+            < Stack display={ 'flex' } flexDirection={ props.flexDirection ?? 'row' } flexWrap="wrap" gap={ 0.3 }>
+                { courses.map((course) => <SingleCourseComponent course={ course } key={ course.id } size={ chipSize } />) }
             </Stack>
         </Box >
     );

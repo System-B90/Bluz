@@ -210,26 +210,26 @@ export default function BluzCalendar({
     return (
         <DnDCalendar
             className='relative grow h-full'
-            style={ { height: 'unset' } }
-            min={ new Date(2025, 0, 1, 7, 0) }  // 8:00 AM
-            max={ new Date(2025, 0, 1, 22, 0) } // 6:00 PM
-            step={ 5 }
-            timeslots={ 12 }
-
-            rtl={ true }
+            defaultView={ "week" }
+            events={ events }
             localizer={ localizer }
+            max={ new Date(2025, 0, 1, 22, 0) } // 6:00 PM
             messages={ CALENDAR_MESSAGES }
 
-            events={ events }
-
-            defaultView={ "week" }
-            views={ { day: true, week: true, work_week: CustomWorkWeek } } // restrict to day/week
-            onView={ setCurrentView }
-
-            selectable
-            onSelectEvent={ handleSelectEvent }
-            onSelectSlot={ handleSlotSelect }
+            min={ new Date(2025, 0, 1, 7, 0) }  // 8:00 AM
             onDoubleClickEvent={ handleEditEvent }
+            onSelectEvent={ handleSelectEvent }
+
+            onSelectSlot={ handleSlotSelect }
+
+            onView={ setCurrentView }
+            rtl={ true }
+            selectable
+
+            step={ 5 }
+            style={ { height: 'unset' } }
+            timeslots={ 12 }
+            views={ { day: true, week: true, work_week: CustomWorkWeek } } // restrict to day/week
 
             { ...(currentView === 'day' && {
                 resources: rooms,
@@ -238,18 +238,18 @@ export default function BluzCalendar({
                 resourceAccessor: (event: Event) => event.rooms
             }) }
 
-            onEventResize={ handleEventDrag }
-            onEventDrop={ handleEventDrag }
-            startAccessor={ (event) => (event.startTime as Dayjs).toDate() }
+            allDayMaxRows={ 0 }
+            components={ { event: BluzEventComponent } }
+            draggableAccessor={ (e) => !e.locked }
             endAccessor={ (event) => (event.endTime as Dayjs).toDate() }
             formats={ { timeGutterFormat: 'HH:mm' } }
-            components={ { event: BluzEventComponent } }
+            onEventDrop={ handleEventDrag }
+            onEventResize={ handleEventDrag }
             onNavigate={ onNavigateHandler }
             resizableAccessor={ (e) => !e.locked }
-            draggableAccessor={ (e) => !e.locked }
 
             showMultiDayTimes={ false }
-            allDayMaxRows={ 0 }
+            startAccessor={ (event) => (event.startTime as Dayjs).toDate() }
         />
     );
 }

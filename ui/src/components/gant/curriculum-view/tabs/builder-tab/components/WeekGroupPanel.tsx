@@ -48,20 +48,20 @@ export default function WeekGroupPanel({
         Object.values(mappings)
             .filter((x) => group.some((w) => w.number === x.weekIndex + 1))
             .map((x) => (
-                <ModuleItem key={ x.moduleId } moduleId={ x.moduleId } weekIndex={ x.weekIndex } dayIndex={ x.dayIndex } />
+                <ModuleItem dayIndex={ x.dayIndex } key={ x.moduleId } moduleId={ x.moduleId } weekIndex={ x.weekIndex } />
             )), [ mappings, group ]);
 
     return (
         <Box
             { ...props }
-            ref={ setNodeRef }
             className={ `
                flex flex-col py-4 ${flexShrink === 1 ? 'px-0' : 'px-4'} min-w-0 gap-4 transition-all duration-200 border-2 border-transparent
                overflow-hidden
                ${isOver ? "bg-blue-50/50 border-dashed border-blue-300 scale-[1.01]" : "bg-transparent"}
             `}
+            ref={ setNodeRef }
         >
-            <GroupHeader start={ startWeek } end={ endWeek } totalHours={ totalTime } onExpandGroup={ onExpandGroup } />
+            <GroupHeader end={ endWeek } onExpandGroup={ onExpandGroup } start={ startWeek } totalHours={ totalTime } />
             <Divider />
             <Box
                 className={ `

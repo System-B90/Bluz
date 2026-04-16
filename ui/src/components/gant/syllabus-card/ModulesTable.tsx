@@ -26,7 +26,7 @@ export function ModulesTable({ syllabusId, syllabusModules, curriculumId }: Modu
     const moduleRows = useMemo(() =>
     {
         return syllabusModules.map((moduleId) => (
-            <ModuleRow key={ moduleId } moduleId={ moduleId } syllabusId={ syllabusId } curriculumId={ curriculumId } />
+            <ModuleRow curriculumId={ curriculumId } key={ moduleId } moduleId={ moduleId } syllabusId={ syllabusId } />
         ));
     }, [ syllabusId, syllabusModules, curriculumId ]);
 
@@ -38,7 +38,7 @@ export function ModulesTable({ syllabusId, syllabusModules, curriculumId }: Modu
                         <TableCell sx={ { fontWeight: 'bold' } }>שם המערך</TableCell>
                         <TableCell sx={ { fontWeight: 'bold' } }>זמן רצוי</TableCell>
                         <TableCell sx={ { fontWeight: 'bold' } }>זמן מוקצב</TableCell>
-                        <TableCell width="1rem" align="center">
+                        <TableCell align="center" width="1rem">
                             <CreateModuleButton syllabusId={ syllabusId } />
                         </TableCell>
                     </TableRow>
@@ -46,8 +46,8 @@ export function ModulesTable({ syllabusId, syllabusModules, curriculumId }: Modu
                 <TableBody>
                     { moduleRows.length > 0 ? moduleRows : (
                         <TableRow>
-                            <TableCell colSpan={ 4 } align="center">
-                                <Typography variant="caption" color="textSecondary">
+                            <TableCell align="center" colSpan={ 4 }>
+                                <Typography color="textSecondary" variant="caption">
                                     לא נמצאו מערכים. לחצו על הוסף כדי להתחיל.
                                 </Typography>
                             </TableCell>

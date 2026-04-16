@@ -4,7 +4,7 @@ import { useCurriculumState } from "@/components/gant/state/provider";
 
 export function useSyllabus(syllabusId: null): undefined;
 export function useSyllabus(syllabusId: SyllabusId): SyllabusDocument | undefined;
-export function useSyllabus(syllabusId: SyllabusId | null): SyllabusDocument | undefined
+export function useSyllabus(syllabusId: null | SyllabusId): SyllabusDocument | undefined
 {
     const state = useCurriculumState();
 

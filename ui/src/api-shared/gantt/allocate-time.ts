@@ -2,12 +2,12 @@ import { CurriculumId, Module, ModuleEvent, ModuleEventId } from "@/api-shared/t
 
 type AllocateTimeToEventCallbackSync = (props: { eventId: ModuleEventId, curriculumId: string, duration: number; }) => void;
 type AllocateTimeToEventCallbackAsync = (props: { eventId: ModuleEventId, curriculumId: string, duration: number; }) => Promise<void>;
-export type AllocateTimeToEventCallback = AllocateTimeToEventCallbackSync | AllocateTimeToEventCallbackAsync;
+export type AllocateTimeToEventCallback = AllocateTimeToEventCallbackAsync | AllocateTimeToEventCallbackSync;
 
 export type AllocateTimeToModuleCallbackModuleEvents = Record<ModuleEventId, Pick<ModuleEvent, 'id' | 'minimumDuration'>>;
 
 export type AllocateTimeToModuleProps<T extends AllocateTimeToEventCallback> = {
-    module: Pick<Module, 'id' | 'events'>;
+    module: Pick<Module, 'events' | 'id'>;
     totalDuration: number;
     moduleEvents: AllocateTimeToModuleCallbackModuleEvents;
     curriculumId: CurriculumId;

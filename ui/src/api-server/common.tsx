@@ -8,8 +8,8 @@ import { UserNotLoggedInError, ClientApiError } from "@/api-shared/errors";
 import { CACHE_CONTROL_HTTP_HEADER, IMMUTABLE_CACHE_MAX_TTL } from "@/settings";
 
 export type ApiResponseHeaders = Record<string, string>;
-export type ApiResponseInit = (Omit<ResponseInit, 'status' | 'headers'> & { headers: ApiResponseHeaders; }) | undefined;
-export type ApiCacheControl = 'no-cache' | 'no-store' | 'immutable' | 'must-revalidate' | number;
+export type ApiResponseInit = (Omit<ResponseInit, 'headers' | 'status'> & { headers: ApiResponseHeaders; }) | undefined;
+export type ApiCacheControl = 'immutable' | 'must-revalidate' | 'no-cache' | 'no-store' | number;
 export function ApiResponseMaker(data: any, cacheControl?: ApiCacheControl, init?: ApiResponseInit)
 {
     const additionalHeaders: ApiResponseHeaders = {};

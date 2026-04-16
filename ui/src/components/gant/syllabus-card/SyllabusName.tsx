@@ -23,15 +23,15 @@ export function SyllabusName({ syllabusId }: { syllabusId: SyllabusId; })
 
     return (
         <TextField
-            label="שם הסילבוס"
-            size="small"
-            value={ localTitle }
-            onChange={ onChange }
-            onBlur={ onBlur }
-            variant="standard"
-            required
-            type="text"
             fullWidth
+            label="שם הסילבוס"
+            onBlur={ onBlur }
+            onChange={ onChange }
+            required
+            size="small"
+            type="text"
+            value={ localTitle }
+            variant="standard"
         />
     );
 }

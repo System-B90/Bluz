@@ -14,19 +14,19 @@ export default function TinyNarrowEventComponent({ event: event, containerSize }
     const showStacked = containerSize.height > 60;
     return (
         <Box
-            display={ 'flex' }
-            justifyContent={ 'space-around' }
             alignItems={ 'flex-start' }
+            display={ 'flex' }
             flexDirection={ showStacked ? 'column' : 'row' }
+            justifyContent={ 'space-around' }
         >
-            <Tooltip title={ (showStacked || isTooShort) ? <EventDurationLabel event={ event } /> : undefined } placement="top">
-                <Box display={ 'flex' } flexDirection={ 'column' } alignItems={ 'flex-start' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
-                    <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'center' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
-                        { showStacked && <EventTypeIcon event={ event } /> }
+            <Tooltip placement="top" title={ (showStacked || isTooShort) ? <EventDurationLabel event={ event } /> : undefined }>
+                <Box alignItems={ 'flex-start' } display={ 'flex' } flexDirection={ 'column' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
+                    <Box alignItems={ 'center' } display={ 'flex' } flexDirection={ 'row' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
+                        { showStacked ? <EventTypeIcon event={ event } /> : null }
                         <Typography
-                            variant="subtitle2"
                             noWrap
                             sx={ { ml: 0.5, fontWeight: 'bold' } }
+                            variant="subtitle2"
                         >
                             { event.name }
                         </Typography>
@@ -37,21 +37,21 @@ export default function TinyNarrowEventComponent({ event: event, containerSize }
 
             <Box>
                 <Box
+                    borderBottom={ 2 }
+                    display={ 'flex' }
+                    flexGrow={ 1 }
+                    flexWrap={ 'wrap' }
+                    gap={ 0.2 }
+                    justifyContent={ showStacked ? 'flex-start' : 'center' }
                     marginTop={ 0 }
+                    paddingBottom={ 0.2 }
                     paddingTop={ 0 }
                     sx={ { marginTop: '0 !important' } }
-                    flexGrow={ 1 }
-                    display={ 'flex' }
-                    flexWrap={ 'wrap' }
-                    justifyContent={ showStacked ? 'flex-start' : 'center' }
-                    gap={ 0.2 }
-                    paddingBottom={ 0.2 }
-                    borderBottom={ 2 }
                 >
-                    <InstructorsList event={ event } chipSize="smaller" showCaption={ false } />
-                    <RoomComponent roomIds={ event.rooms } showCaption={ false } chipSize="smaller" />
+                    <InstructorsList chipSize="smaller" event={ event } showCaption={ false } />
+                    <RoomComponent chipSize="smaller" roomIds={ event.rooms } showCaption={ false } />
                 </Box>
-                <Tooltip title={ event.hiveModule ? <ModuleComponent fontSize={ '0.8rem' } fontWeight={ 400 } moduleId={ event.hiveModule } /> : undefined } placement="top">
+                <Tooltip placement="top" title={ event.hiveModule ? <ModuleComponent fontSize={ '0.8rem' } fontWeight={ 400 } moduleId={ event.hiveModule } /> : undefined }>
                     <SubjectComponent fontSize={ '0.8rem' } subjectId={ event.subject } />
                 </Tooltip>
             </Box>

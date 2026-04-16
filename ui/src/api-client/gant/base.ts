@@ -16,7 +16,7 @@ export type RawBaseDocument = {
 
 export type DateFixup<TEntity extends BaseGantItem> = (rawItem: unknown) => TEntity & BaseDocument;
 
-export function baseDocumentFixup<T extends RawBaseDocument | null>(doc: T): T | null
+export function baseDocumentFixup<T extends null | RawBaseDocument>(doc: T): null | T
 {
     if (!doc) return null;
     inplaceDateFixup(doc, [ 'updatedAt', 'createdAt' ]);

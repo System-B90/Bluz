@@ -42,14 +42,8 @@ export function ClosingSaturdayChip({
     }, [ week, curriculumId, weekIndex, closingSaturday, updateWeek ]);
 
     return (
-        <Tooltip title={ closingSaturday ? "סוגרים שבת" : "יוצאים הביתה" } arrow>
+        <Tooltip arrow title={ closingSaturday ? "סוגרים שבת" : "יוצאים הביתה" }>
             <Chip
-                onClick={ clickHandler }
-                icon={ closingSaturday ?
-                    <EventBusy className="text-white" /> :
-                    <EventAvailable className="text-slate-500" />
-                }
-                label={ closingSaturday ? "סוגרים" : "יוצאים" }
                 className={ `
                     transition-all duration-300 ease-in-out cursor-pointer font-bold
                     ${closingSaturday
@@ -57,6 +51,12 @@ export function ClosingSaturdayChip({
                         : "bg-slate-200 text-slate-600 hover:bg-slate-300"
                     }
                 `}
+                icon={ closingSaturday ?
+                    <EventBusy className="text-white" /> :
+                    <EventAvailable className="text-slate-500" />
+                }
+                label={ closingSaturday ? "סוגרים" : "יוצאים" }
+                onClick={ clickHandler }
                 sx={ {
                     height: 28,
                     '& .MuiChip-label': { px: 1.5, fontSize: '0.75rem' },

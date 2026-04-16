@@ -23,11 +23,11 @@ function ModuleEventTitle({ moduleEvent, handleCommit }: { moduleEvent: ModuleEv
     return (
         <TextField
             disabled={ !moduleEvent }
-            size="small"
             fullWidth
-            value={ localTitle }
-            onChange={ (e) => setLocalTitle(e.target.value) }
             onBlur={ () => handleCommit({ title: localTitle }) }
+            onChange={ (e) => setLocalTitle(e.target.value) }
+            size="small"
+            value={ localTitle }
         />
     );
 }
@@ -50,13 +50,13 @@ export function ModuleEventView({ moduleId, eventId }: { moduleId: ModuleId; eve
     return (
         <TableRow>
             <TableCell>
-                <ModuleEventTitle key={ `${moduleEvent?.title ?? '-title'}` } moduleEvent={ moduleEvent } handleCommit={ handleCommit } />
+                <ModuleEventTitle handleCommit={ handleCommit } key={ `${moduleEvent?.title ?? '-title'}` } moduleEvent={ moduleEvent } />
             </TableCell>
             <TableCell>
-                <FormControl size="small" fullWidth disabled={ !moduleEvent }>
+                <FormControl disabled={ !moduleEvent } fullWidth size="small">
                     <Select
-                        value={ moduleEvent?.type ?? ModuleEventType.Other }
                         onChange={ (e) => handleCommit({ type: e.target.value as ModuleEventType }) }
+                        value={ moduleEvent?.type ?? ModuleEventType.Other }
                     >
                         { (Object.values(ModuleEventType) as Array<ModuleEventType>).map((eventType) => (
                             <MenuItem key={ eventType } value={ eventType }>
@@ -67,19 +67,19 @@ export function ModuleEventView({ moduleId, eventId }: { moduleId: ModuleId; eve
                 </FormControl>
             </TableCell>
             <TableCell>
-                <FormControl size="small" fullWidth disabled={ !moduleEvent } sx={ { m: 0, p: 0 } }>
+                <FormControl disabled={ !moduleEvent } fullWidth size="small" sx={ { m: 0, p: 0 } }>
                     <NumberSpinner
+                        largeStep={ 45 }
+                        onValueChange={ (v) => v ? handleCommit({ minimumDuration: v }) : {} }
                         size="small"
                         step={ 5 }
-                        largeStep={ 45 }
                         value={ moduleEvent?.minimumDuration ?? 0 }
-                        onValueChange={ (v) => v ? handleCommit({ minimumDuration: v }) : {} }
                     />
                 </FormControl>
             </TableCell>
             <TableCell>
-                <IconButton size="small" onClick={ handleDeleteClick }>
-                    <DeleteIcon fontSize="small" color="error" />
+                <IconButton onClick={ handleDeleteClick } size="small">
+                    <DeleteIcon color="error" fontSize="small" />
                 </IconButton>
             </TableCell>
         </TableRow>

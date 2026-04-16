@@ -18,26 +18,26 @@ import
     } from "@/api-shared/types/gant/curriculum";
 
 export type Action =
-    | { type: 'SET_DATA'; payload: ApiCurriculum; }
-
-    // Updates
-    | { type: 'UPDATE_CURRICULUM'; payload: { id: CurriculumId; updates: Partial<Curriculum>; }; }
-    | { type: 'UPDATE_SYLLABUS'; payload: { id: SyllabusId; updates: Partial<Syllabus>; }; }
-    | { type: 'UPDATE_MODULE'; payload: { id: ModuleId; updates: Partial<Module>; }; }
-    | { type: 'UPDATE_EVENT'; payload: { id: ModuleEventId; updates: Partial<ModuleEvent>; }; }
-
-    // Adds
-    | { type: 'ADD_SYLLABUS'; payload: { curriculumId: CurriculumId; syllabus: Syllabus; }; }
-    | { type: 'ADD_MODULE'; payload: { syllabusId: SyllabusId; module: Module; }; }
     | { type: 'ADD_EVENT'; payload: { moduleId: ModuleId; event: ModuleEvent; }; }
 
-    // Removes
-    | { type: 'REMOVE_SYLLABUS'; payload: { curriculumId: CurriculumId; syllabusId: SyllabusId; }; }
-    | { type: 'REMOVE_MODULE'; payload: { syllabusId: SyllabusId; moduleId: ModuleId; }; }
-    | { type: 'REMOVE_EVENT'; payload: { moduleId: ModuleId; eventId: ModuleEventId; }; }
-
+    // Updates
+    | { type: 'ADD_MODULE'; payload: { syllabusId: SyllabusId; module: Module; }; }
+    | { type: 'ADD_SYLLABUS'; payload: { curriculumId: CurriculumId; syllabus: Syllabus; }; }
+    | { type: 'ALLOCATE_TIME_TO_MODULE'; payload: { curriculumId: CurriculumId; moduleId: ModuleId; duration: number; }; }
     | { type: 'ALLOCATE_TIME'; payload: { curriculumId: CurriculumId; eventId: ModuleEventId; duration: number; }; }
-    | { type: 'ALLOCATE_TIME_TO_MODULE'; payload: { curriculumId: CurriculumId; moduleId: ModuleId; duration: number; }; };
+
+    // Adds
+    | { type: 'REMOVE_EVENT'; payload: { moduleId: ModuleId; eventId: ModuleEventId; }; }
+    | { type: 'REMOVE_MODULE'; payload: { syllabusId: SyllabusId; moduleId: ModuleId; }; }
+    | { type: 'REMOVE_SYLLABUS'; payload: { curriculumId: CurriculumId; syllabusId: SyllabusId; }; }
+
+    // Removes
+    | { type: 'SET_DATA'; payload: ApiCurriculum; }
+    | { type: 'UPDATE_CURRICULUM'; payload: { id: CurriculumId; updates: Partial<Curriculum>; }; }
+    | { type: 'UPDATE_EVENT'; payload: { id: ModuleEventId; updates: Partial<ModuleEvent>; }; }
+
+    | { type: 'UPDATE_MODULE'; payload: { id: ModuleId; updates: Partial<Module>; }; }
+    | { type: 'UPDATE_SYLLABUS'; payload: { id: SyllabusId; updates: Partial<Syllabus>; }; };
 
 function injectDocumentTimes<T extends BaseGantItem>(rawDoc: T): T & BaseDocument
 {

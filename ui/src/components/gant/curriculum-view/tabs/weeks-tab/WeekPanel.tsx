@@ -27,16 +27,16 @@ export function WorkTimeChip({ totalHours }: {
 {
     return (
         <Chip
+            color="primary"
             icon={ <AccessTimeIcon sx={ { fontSize: '0.95rem !important' } } /> }
             label={ `${totalHours.toFixed(2)} שעות` }
             size="small"
-            color="primary"
-            variant="outlined"
             sx={ {
                 fontWeight: 600,
                 borderRadius: 1.5,
                 '& .MuiChip-label': { px: 1.1 },
             } }
+            variant="outlined"
         />
     );
 }
@@ -77,18 +77,18 @@ export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
     const renderedDays = useMemo(() =>
         (week?.days ?? []).map((day, dayIndex) => (
             <DayEntry
-                key={ dayIndex }
                 curriculumId={ curriculumId }
-                weekIndex={ weekIndex }
                 dayIndex={ dayIndex }
+                key={ dayIndex }
+                weekIndex={ weekIndex }
             />
         )),
         [ curriculumId, weekIndex, week?.days ]);
 
     return (
         <Paper
-            elevation={ 3 }
             className="transition-shadow duration-200 hover:shadow-lg"
+            elevation={ 3 }
             sx={ {
                 minWidth: 300,
                 p: 2,
@@ -99,30 +99,30 @@ export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
                 bgcolor: 'background.paper'
             } }
         >
-            <Box display='flex' flexDirection='row' justifyContent='space-between' alignItems='flex-start' gap={ 1 }>
+            <Box alignItems='flex-start' display='flex' flexDirection='row' gap={ 1 } justifyContent='space-between'>
                 <Box flex={ 1 }>
-                    <Typography variant="overline" className="text-slate-400 font-bold leading-none">
+                    <Typography className="text-slate-400 font-bold leading-none" variant="overline">
                         שבוע { week?.number }
                     </Typography>
                     <InputBase
-                        fullWidth
+                        className="text-sm font-bold text-slate-800"
                         defaultValue={ week?.comment ?? '' }
+                        fullWidth
                         onBlur={ handleCommentBlur }
                         placeholder="הוסיפו הערת שבוע..."
-                        className="text-sm font-bold text-slate-800"
                         sx={ { p: 0, mt: 0.5 } }
                     />
                 </Box>
 
-                <Box display='flex' flexDirection='column' gap={ 1 } alignItems='flex-end' sx={ { minWidth: 'fit-content' } }>
+                <Box alignItems='flex-end' display='flex' flexDirection='column' gap={ 1 } sx={ { minWidth: 'fit-content' } }>
                     <WeekWorkTimeChip
                         curriculumId={ curriculumId }
                         weekIndex={ weekIndex }
                     />
                     <ClosingSaturdayChip
+                        closingSaturday={ week?.closingSaturday ?? false }
                         curriculumId={ curriculumId }
                         weekIndex={ weekIndex }
-                        closingSaturday={ week?.closingSaturday ?? false }
                     />
                 </Box>
             </Box>

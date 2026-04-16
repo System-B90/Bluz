@@ -83,27 +83,27 @@ function EditableCurriculumFieldInner({
     {
         return (
             <TextField
+                autoFocus
+                fullWidth
+                minRows={ minRows }
+                multiline={ multiline }
+                onBlur={ () => void saveHandler() }
+                onChange={ (e) => setLocalValue(e.target.value) }
+                onKeyDown={ keyDownHandler }
                 size="small"
                 value={ localValue }
-                onChange={ (e) => setLocalValue(e.target.value) }
-                onBlur={ () => void saveHandler() }
-                onKeyDown={ keyDownHandler }
-                autoFocus
                 variant="standard"
-                fullWidth
-                multiline={ multiline }
-                minRows={ minRows }
             />
         );
     }
 
     return (
-        <Box display={ 'flex' } alignItems={ multiline ? 'flex-start' : 'center' } gap={ 1 }>
+        <Box alignItems={ multiline ? 'flex-start' : 'center' } display={ 'flex' } gap={ 1 }>
             <Box flexGrow={ 1 }>
                 { renderDisplay(value) }
             </Box>
             <Tooltip title={ editTooltip }>
-                <IconButton size="small" color="primary" onClick={ beginEditHandler }>
+                <IconButton color="primary" onClick={ beginEditHandler } size="small">
                     <EditIcon fontSize="small" />
                 </IconButton>
             </Tooltip>

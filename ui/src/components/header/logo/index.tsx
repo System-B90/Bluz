@@ -4,11 +4,11 @@ export default function Logo({ width, height }: { width: number | string; height
 {
     return (
         <svg
-            xmlns="http://www.w3.org/2000/svg"
             fill="none"
+            height={ height }
             viewBox="0 0 2026 2026"
             width={ width }
-            height={ height }
+            xmlns="http://www.w3.org/2000/svg"
         >
             <LogoGraphic />
         </svg>

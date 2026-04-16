@@ -17,7 +17,7 @@ export default function GroupField({ group, attributes, listeners }: GroupFieldP
 {
 
     return (
-        <Stack direction="row" spacing={ 2 } alignItems="center" sx={ { width: '100%' } }>
+        <Stack alignItems="center" direction="row" spacing={ 2 } sx={ { width: '100%' } }>
             {/* Drag handle */ }
             <Box { ...listeners } { ...attributes } sx={ { cursor: 'grab' } }>
                 <DragIndicatorIcon />

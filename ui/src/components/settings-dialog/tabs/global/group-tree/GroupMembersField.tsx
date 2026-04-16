@@ -35,7 +35,7 @@ export default function GroupMembersField({ group }: GroupMemberFieldProps)
             >
                 <Stack spacing={ 1 }>
                     { group.members?.map((user: User) => (
-                        <GroupMemberField user={ user } key={ user.id } />
+                        <GroupMemberField key={ user.id } user={ user } />
                     )) }
                 </Stack>
             </SortableContext>

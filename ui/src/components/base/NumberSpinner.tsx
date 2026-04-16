@@ -15,7 +15,7 @@ export default function NumberSpinner({
     ...other
 }: BaseNumberField.Root.Props & {
     _label?: never;
-    size?: 'small' | 'medium';
+    size?: 'medium' | 'small';
     error?: boolean;
 })
 {
@@ -29,12 +29,11 @@ export default function NumberSpinner({
             { ...other }
             render={ (props, state) => (
                 <FormControl
-                    size={ size }
-                    ref={ props.ref }
                     disabled={ state.disabled }
-                    required={ state.required }
                     error={ error }
-                    variant="outlined"
+                    ref={ props.ref }
+                    required={ state.required }
+                    size={ size }
                     sx={ {
                         '& .MuiButton-root': {
                             borderColor: 'divider',
@@ -45,6 +44,7 @@ export default function NumberSpinner({
                             },
                         },
                     } }
+                    variant="outlined"
                 >
                     { props.children }
                 </FormControl>
@@ -54,7 +54,6 @@ export default function NumberSpinner({
                 <BaseNumberField.Decrement
                     render={
                         <Button
-                            variant="outlined"
                             aria-label="Decrease"
                             size={ size }
                             sx={ {
@@ -65,6 +64,7 @@ export default function NumberSpinner({
                                     borderRight: '0px',
                                 },
                             } }
+                            variant="outlined"
                         />
                     }
                 >
@@ -76,12 +76,11 @@ export default function NumberSpinner({
                     render={ (props, state) => (
                         <OutlinedInput
                             inputRef={ props.ref }
-                            value={ state.inputValue }
                             onBlur={ props.onBlur }
                             onChange={ props.onChange }
-                            onKeyUp={ props.onKeyUp }
-                            onKeyDown={ props.onKeyDown }
                             onFocus={ props.onFocus }
+                            onKeyDown={ props.onKeyDown }
+                            onKeyUp={ props.onKeyUp }
                             slotProps={ {
                                 input: {
                                     ...props,
@@ -96,6 +95,7 @@ export default function NumberSpinner({
                                 },
                             } }
                             sx={ { pr: 0, borderRadius: 0, flex: 1 } }
+                            value={ state.inputValue }
                         />
                     ) }
                 />
@@ -103,7 +103,6 @@ export default function NumberSpinner({
                 <BaseNumberField.Increment
                     render={
                         <Button
-                            variant="outlined"
                             aria-label="Increase"
                             size={ size }
                             sx={ {
@@ -114,6 +113,7 @@ export default function NumberSpinner({
                                     borderLeft: '0px',
                                 },
                             } }
+                            variant="outlined"
                         />
                     }
                 >

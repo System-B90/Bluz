@@ -6,4 +6,4 @@ export interface Module
     parent_subject: number;
 }
 
-export type ModuleLike = Module | string | number;
+export type ModuleLike = Module | number | string;

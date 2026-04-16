@@ -51,8 +51,8 @@ export async function safeApiFetcher<T = unknown>(input: RequestInfo, init?: Req
 
 export function enqueueSnackbarWithSubtext(
     enqueueSnackbar: EnqueueSnackbar | undefined,
-    mainText: string | React.ReactNode,
-    subText: string | React.ReactNode,
+    mainText: React.ReactNode | string,
+    subText: React.ReactNode | string,
     options?: OptionsObject<VariantType>
 )
 {
@@ -73,7 +73,7 @@ export function enqueueSnackbarWithSubtext(
     }
 }
 
-export function enqueueApiErrorSnackbar(enqueueSnackbar: EnqueueSnackbar | undefined, mainText: string | React.ReactNode, error: any)
+export function enqueueApiErrorSnackbar(enqueueSnackbar: EnqueueSnackbar | undefined, mainText: React.ReactNode | string, error: any)
 {
     if (error instanceof UserNotLoggedInError) { console.log(error.message); return; }
     if (error instanceof ClientApiWarning) { return; }
@@ -93,8 +93,7 @@ export function enqueueApiErrorSnackbar(enqueueSnackbar: EnqueueSnackbar | undef
             <>
                 <Typography fontSize={ 'inherit' } fontWeight={ 500 }>{ error.name }{ error.message ? ': ' : '' }</Typography><Typography fontSize={ 'inherit' } fontWeight={ 400 }>{ error.message }</Typography>
                 {
-                    error.status &&
-                    <Typography fontSize={ 'inherit' } fontWeight={ 400 }>{ error.status }</Typography>
+                    error.status ? <Typography fontSize={ 'inherit' } fontWeight={ 400 }>{ error.status }</Typography> : null
                 }
             </>,
             { variant: 'error' }
@@ -102,4 +101,4 @@ export function enqueueApiErrorSnackbar(enqueueSnackbar: EnqueueSnackbar | undef
     }
 }
 
-export type ClientApiProps = Omit<RequestInit, 'method' | 'body'>;
+export type ClientApiProps = Omit<RequestInit, 'body' | 'method'>;

@@ -22,9 +22,9 @@ export default function CurriculumListItems({ isFetchingDetails, curriculumsData
         const skeletonCount = Object.keys(curriculumsData).length || 3;
 
         return Array.from({ length: skeletonCount }).map((_, index) => (
-            <ListItem key={ `skeleton-${index}` } disablePadding>
+            <ListItem disablePadding key={ `skeleton-${index}` }>
                 <ListItemButton disabled>
-                    <Skeleton variant="text" width="80%" height={ 28 } />
+                    <Skeleton height={ 28 } variant="text" width="80%" />
                 </ListItemButton>
             </ListItem>
         ));
@@ -37,8 +37,8 @@ export default function CurriculumListItems({ isFetchingDetails, curriculumsData
 
         return (
             <CurriculumEntry
-                key={ id }
                 curriculum={ curriculum }
+                key={ id }
                 onClick={ () => setCurrentCurriculum(id) }
                 selected={ currentCurriculum === id }
             />

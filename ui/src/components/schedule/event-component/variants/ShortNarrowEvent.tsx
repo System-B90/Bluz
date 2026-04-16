@@ -12,15 +12,15 @@ export default function ShortNarrowEventComponent({ event: event, containerSize:
     return (
         <Box
             display={ 'flex' }
-            justifyContent={ 'space-around' }
             flexDirection={ 'column' }
+            justifyContent={ 'space-around' }
         >
-            <Box display={ 'flex' } flexDirection={ 'row' } alignItems={ 'center' } justifyContent={ 'space-between' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
+            <Box alignItems={ 'center' } display={ 'flex' } flexDirection={ 'row' } justifyContent={ 'space-between' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
                 {/* <EventTypeIcon event={ event } /> */ }
                 <Typography
-                    variant="subtitle2"
                     noWrap
                     sx={ { ml: 0.5, fontWeight: 'bold' } }
+                    variant="subtitle2"
                 >
                     { event.name }
                 </Typography>
@@ -28,18 +28,18 @@ export default function ShortNarrowEventComponent({ event: event, containerSize:
             </Box>
 
             <Box
+                display={ 'flex' }
+                flexDirection={ 'column' }
+                flexGrow={ 1 }
+                flexWrap={ 'wrap' }
+                gap={ 0.5 }
+                justifyContent={ 'flex-start' }
                 marginTop={ 0 }
                 paddingTop={ 0 }
                 sx={ { marginTop: '0 !important' } }
-                flexGrow={ 1 }
-                display={ 'flex' }
-                flexDirection={ 'column' }
-                flexWrap={ 'wrap' }
-                justifyContent={ 'flex-start' }
-                gap={ 0.5 }
             >
-                <InstructorsList event={ event } chipSize="smaller" showCaption={ false } paddingBottom={ 0.5 } borderBottom={ 2 } />
-                <RoomComponent roomIds={ event.rooms } showCaption={ false } chipSize="smaller" paddingBottom={ 0.5 } borderBottom={ 2 } />
+                <InstructorsList borderBottom={ 2 } chipSize="smaller" event={ event } paddingBottom={ 0.5 } showCaption={ false } />
+                <RoomComponent borderBottom={ 2 } chipSize="smaller" paddingBottom={ 0.5 } roomIds={ event.rooms } showCaption={ false } />
             </Box>
         </Box>
     );

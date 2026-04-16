@@ -13,15 +13,15 @@ export default function SyllabusesTab({ curriculumId }: { curriculumId: Curricul
     const syllabusCards = useMemo(() =>
     {
         return (curriculum?.syllabuses ?? []).map((syllabusId) => (
-            <SyllabusCard key={ syllabusId } syllabusId={ syllabusId } curriculumId={ curriculumId ?? '' } />
+            <SyllabusCard curriculumId={ curriculumId ?? '' } key={ syllabusId } syllabusId={ syllabusId } />
         ));
     }, [ curriculum?.syllabuses, curriculumId ]);
 
     return (
-        <Box gap={ 2 } flexGrow={ 1 } display={ 'flex' } flexDirection={ 'column' } height={ '100%' }>
-            <Box display="flex" flexDirection="column" gap={ 1 } width={ '100%' } height={ '100%' }>
+        <Box display={ 'flex' } flexDirection={ 'column' } flexGrow={ 1 } gap={ 2 } height={ '100%' }>
+            <Box display="flex" flexDirection="column" gap={ 1 } height={ '100%' } width={ '100%' }>
                 <SyllabusesActionsBox curriculumId={ curriculumId } mb={ 1 } />
-                <Box gap={ 2 } display={ 'flex' } flexDirection={ 'column' } flexWrap={ 'wrap' } alignContent={ 'flex-start' } height={ '100%' } sx={ { overflowX: 'scroll' } }>
+                <Box alignContent={ 'flex-start' } display={ 'flex' } flexDirection={ 'column' } flexWrap={ 'wrap' } gap={ 2 } height={ '100%' } sx={ { overflowX: 'scroll' } }>
                     { syllabusCards }
                 </Box>
             </Box>

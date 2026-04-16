@@ -111,8 +111,8 @@ export default function CurriculumFab({
     return (
         <>
             <Fab
-                color="primary"
                 aria-label="גאנטים"
+                color="primary"
                 onClick={ handleTogglePanel }
                 sx={ {
                     position: 'fixed',
@@ -125,11 +125,10 @@ export default function CurriculumFab({
             </Fab>
 
             <Popover
-                open={ isOpen }
                 anchorEl={ anchorEl }
-                onClose={ handleClosePanel }
                 anchorOrigin={ { vertical: 'top', horizontal: 'right' } }
-                transformOrigin={ { vertical: 'bottom', horizontal: 'left' } }
+                onClose={ handleClosePanel }
+                open={ isOpen }
                 slotProps={ {
                     paper: {
                         sx: {
@@ -139,31 +138,32 @@ export default function CurriculumFab({
                         }
                     }
                 } }
+                transformOrigin={ { vertical: 'bottom', horizontal: 'left' } }
             >
                 <Box sx={ { p: 1, pb: 0 } }>
-                    <Typography variant="h6" align="center">
+                    <Typography align="center" variant="h6">
                         גאנטים
                     </Typography>
                     <CurriculumActionItems
                         disabled={ isFetchingDetails }
                         onCreate={ onCreateCallback }
-                        onUpdate={ onUpdateCallback }
                         onDelete={ onDeleteCallback }
+                        onUpdate={ onUpdateCallback }
                         sourceCurriculum={ currentCurriculum ? curriculumsData[ currentCurriculum ] : null }
                     />
                 </Box>
                 <List sx={ { paddingX: 2, paddingY: 1, overflowY: 'auto', maxHeight: 330 } }>
                     <ListSubheader sx={ { paddingY: 0.5, background: 'transparent' } }>
-                        <Typography variant="body2" color="text.secondary" align="center">
+                        <Typography align="center" color="text.secondary" variant="body2">
                             רשימת גאנטים
                         </Typography>
                     </ListSubheader>
                     <CurriculumListItems
-                        isFetchingDetails={ isFetchingDetails }
-                        curriculumsData={ curriculumsData }
-                        sortedIds={ sortedIds }
-                        setCurrentCurriculum={ handleSelectCurriculum }
                         currentCurriculum={ currentCurriculum }
+                        curriculumsData={ curriculumsData }
+                        isFetchingDetails={ isFetchingDetails }
+                        setCurrentCurriculum={ handleSelectCurriculum }
+                        sortedIds={ sortedIds }
                     />
                 </List>
             </Popover>

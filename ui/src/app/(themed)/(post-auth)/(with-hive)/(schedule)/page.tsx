@@ -75,21 +75,21 @@ export default function SchedulePage()
     }, [ deleteEvent, handleCloseEventDialog ]);
 
     return (
-        <Box height={ '100%' } display={ 'flex' } flexDirection={ 'column' }>
+        <Box display={ 'flex' } flexDirection={ 'column' } height={ '100%' }>
             <BluzCalendar
                 events={ events }
-                handleSaveEvent={ handleSave }
                 handleDeleteEvent={ handleDelete }
+                handleSaveEvent={ handleSave }
                 setOpenEventDialog={ setOpenEventDialog }
                 setSelectedEvent={ setSelectedEvent }
             />
 
             <EventDialog
-                open={ openEventDialog }
                 event={ selectedEvent ?? makeEvent() }
                 onClose={ handleCloseEventDialog }
-                onSave={ handleSave }
                 onDelete={ handleDelete }
+                onSave={ handleSave }
+                open={ openEventDialog }
             />
 
             <PushOfflineUpdatesDialog />

@@ -12,15 +12,15 @@ export interface SyllabusesActionsBoxProps extends Omit<BoxProps, 'display' | 'j
 export function SyllabusesActionsBox({ curriculumId, ...props }: SyllabusesActionsBoxProps)
 {
     return (
-        <Box display="flex" justifyContent="flex-start" gap={ 2 } { ...props }>
+        <Box display="flex" gap={ 2 } justifyContent="flex-start" { ...props }>
             <CreateSyllabusButton curriculumId={ curriculumId } />
             <SyllabusSelectionField
+                alignItems={ 'center' }
+                className="w-100"
                 curriculumId={ curriculumId }
                 display='flex'
                 flexDirection='row'
-                alignItems={ 'center' }
                 gap={ 1 }
-                className="w-100"
             />
         </Box>
     );

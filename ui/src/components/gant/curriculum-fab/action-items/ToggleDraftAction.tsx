@@ -35,9 +35,9 @@ export function ToggleDraftAction({ sourceCurriculum, onUpdate, onProcessingChan
 
     return (
         <ActionItemButton
+            color={ sourceCurriculum?.draft ? 'success' : 'warning' }
             onClick={ clickHandler }
             startIcon={ sourceCurriculum?.draft ? <TaskAltIcon fontSize="small" /> : <EditNoteIcon fontSize="small" /> }
-            color={ sourceCurriculum?.draft ? 'success' : 'warning' }
             { ...props }
         >
             { sourceCurriculum?.draft ? 'פיבלוש' : 'החזרה לדראפט' }

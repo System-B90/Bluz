@@ -22,11 +22,11 @@ export default function RootLayout({
     const wsPortSuffix = WEBSOCKET_PORT_SUFFIX || ":28199";
 
     return (
-        <html lang="he" dir="rtl" suppressHydrationWarning>
+        <html dir="rtl" lang="he" suppressHydrationWarning>
             <body
                 className='antialiased w-screen h-screen overflow-hidden' dir="rtl"
             >
-                <WebSocketConfigProvider host={ wsHost } protocol={ wsProtcol } portSuffix={ wsPortSuffix }>
+                <WebSocketConfigProvider host={ wsHost } portSuffix={ wsPortSuffix } protocol={ wsProtcol }>
                     <MuiEmotionCacheProvider>
                         { children }
                     </MuiEmotionCacheProvider>

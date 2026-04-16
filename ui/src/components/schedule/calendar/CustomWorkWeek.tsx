@@ -42,12 +42,12 @@ function RawCustomWorkWeek(props: TimeGridProps & { date: Date, localizer: DateL
     return (
         <TimeGrid
             { ...rest }
-            range={ workWeekRange(date, props) }
-            localizer={ localizer }
-            min={ min }
-            max={ max }
-            scrollToTime={ scrollToTime }
             eventOffset={ 15 }
+            localizer={ localizer }
+            max={ max }
+            min={ min }
+            range={ workWeekRange(date, props) }
+            scrollToTime={ scrollToTime }
         />
     );
 };

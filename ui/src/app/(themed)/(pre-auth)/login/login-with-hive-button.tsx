@@ -34,18 +34,18 @@ export default function LoginWithHive({
 
     return (
         <Button
-            onClick={ clickCallback }
-            variant={ variant }
             fullWidth={ fullWidth }
+            onClick={ clickCallback }
             size={ size }
             startIcon={
                 <Image
-                    src={ `${getHiveBaseUrl()}/static/icon.svg` }
                     alt=""
-                    width={ 24 }
                     height={ 24 }
+                    src={ `${getHiveBaseUrl()}/static/icon.svg` }
+                    width={ 24 }
                 />
             }
+            variant={ variant }
             { ...props }
         >
             <Typography color='textPrimary' fontSize={ fontSize } fontWeight={ fontWeight }>

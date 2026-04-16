@@ -13,9 +13,9 @@ interface DbSetting
     value: Setting;
 }
 
-async function getDbSetting(name: SettingName, options?: FindOptions): Promise<Setting | null>
+async function getDbSetting(name: SettingName, options?: FindOptions): Promise<null | Setting>
 {
-    const data: WithId<DbSetting> | null = await databaseController.settings.findOne({ 'key': name }, options);
+    const data: null | WithId<DbSetting> = await databaseController.settings.findOne({ 'key': name }, options);
     return data ? data.value : null;
 }
 

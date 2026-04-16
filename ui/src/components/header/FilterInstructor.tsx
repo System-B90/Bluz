@@ -30,13 +30,11 @@ export default function FilterInstructors({ ...props }: BoxProps)
             <FormControl fullWidth={ true } size="small">
                 <InputLabel size="small">סינון לפי מדריכים</InputLabel>
                 <Select
-                    multiple
-                    size="small"
                     label="סינון לפי מדריכים"
-                    value={ filteredInstructors }
+                    multiple
                     onChange={ handleChange }
                     renderValue={ (selected) => (
-                        <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } } fontSize={ 'inherit' }>
+                        <Box fontSize={ 'inherit' } sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.5 } }>
                             { selected.map((id) =>
                             {
                                 // Look up instructor details by ID
@@ -45,15 +43,17 @@ export default function FilterInstructors({ ...props }: BoxProps)
                                     <Chip
                                         key={ id }
                                         label={ instructor?.display_name || id }
-                                        size="small"
                                         onDelete={ () => handleDelete(id) }
                                         // Prevent menu from opening when deleting
                                         onMouseDown={ (e) => e.stopPropagation() }
+                                        size="small"
                                     />
                                 );
                             }) }
                         </Box>
                     ) }
+                    size="small"
+                    value={ filteredInstructors }
                 >
                     { instructors.map((instructor) => (
                         <MenuItem key={ instructor.id } value={ instructor.id }>

@@ -44,16 +44,16 @@ export function EventListEntry({ isItemSelected, handleEntryClick, eventId, loca
     return (
         <Fragment>
             <TableRow
-                sx={ { '& > *': { borderBottom: 'unset' } } } hover
-                selected={ isItemSelected }
+                aria-checked={ isItemSelected } hover
+                onClick={ (e) => handleEntryClick(e, eventId) }
                 role='checkbox'
-                aria-checked={ isItemSelected }
-                onClick={ (e) => handleEntryClick(e, eventId) }>
+                selected={ isItemSelected }
+                sx={ { '& > *': { borderBottom: 'unset' } } }>
                 <TableCell>
                     <IconButton
                         aria-label="expand row"
-                        size="small"
                         onClick={ (e) => { e.stopPropagation(); e.preventDefault(); setExpanded((v) => !v); } }
+                        size="small"
                     >
                         { expanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon /> }
                     </IconButton>
@@ -63,19 +63,19 @@ export function EventListEntry({ isItemSelected, handleEntryClick, eventId, loca
                 <TableCell><Typography color={ conflicting ? 'error' : 'inherit' }>{ conflicting ? 'קונפליקט!' : 'אין' }</Typography></TableCell>
                 <TableCell padding="checkbox">
                     <Checkbox
-                        color="primary"
                         checked={ isItemSelected }
+                        color="primary"
                     />
                 </TableCell>
             </TableRow>
             <TableRow>
-                <TableCell style={ { paddingBottom: 0, paddingTop: 0 } } colSpan={ 4 }>
+                <TableCell colSpan={ 4 } style={ { paddingBottom: 0, paddingTop: 0 } }>
                     <Collapse in={ expanded } timeout="auto" unmountOnExit>
                         <Box sx={ { margin: 1 } }>
-                            <Typography variant="h6" gutterBottom component="div">
+                            <Typography component="div" gutterBottom variant="h6">
                                 שינויים
                             </Typography>
-                            <Table size="small" aria-label="purchases">
+                            <Table aria-label="purchases" size="small">
                                 <TableHead>
                                     <TableRow>
                                         <TableCell><Typography fontWeight={ 600 }>שם השדה</Typography></TableCell>

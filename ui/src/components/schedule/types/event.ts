@@ -20,7 +20,7 @@ export function eventHasRoom(type: EventType): boolean
     return type !== EventType.PRAYER;
 }
 
-export type PersonId = number | 'איש חוץ';
+export type PersonId = 'איש חוץ' | number;
 
 export interface Event
 {

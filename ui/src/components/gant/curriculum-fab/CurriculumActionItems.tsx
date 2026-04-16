@@ -8,7 +8,7 @@ import { DeleteCurriculumAction } from "@/components/gant/curriculum-fab/action-
 import { DuplicateCurriculumAction } from "@/components/gant/curriculum-fab/action-items/DuplicateCurriculumAction";
 import { ToggleDraftAction } from "@/components/gant/curriculum-fab/action-items/ToggleDraftAction";
 
-export interface CreateNewCurriculumProps extends Omit<ButtonProps, 'sx' | 'onClick'>
+export interface CreateNewCurriculumProps extends Omit<ButtonProps, 'onClick' | 'sx'>
 {
     disabled: boolean;
     onCreate: (newCurriculum: CurriculumDocument) => void;
@@ -24,38 +24,38 @@ export function CurriculumActionItems({ onCreate, onUpdate, onDelete, disabled, 
 
     return (
         <Box
+            alignItems={ 'center' }
             display='flex'
             flexDirection="row"
-            gap={ 0.5 }
-            sx={ { mt: 1, mb: 0.5 } }
             flexWrap={ 'wrap' }
-            alignItems={ 'center' }
+            gap={ 0.5 }
             justifyContent={ 'center' }
             justifyItems={ 'center' }
+            sx={ { mt: 1, mb: 0.5 } }
         >
             <CreateDraftAction
+                disabled={ isDisabled }
                 onCreate={ onCreate }
                 onProcessingChange={ setIsProcessing }
-                disabled={ isDisabled }
                 { ...props }
             />
             <DuplicateCurriculumAction
-                sourceCurriculum={ sourceCurriculum }
+                disabled={ isDisabled || !sourceCurriculum }
                 onCreate={ onCreate }
                 onProcessingChange={ setIsProcessing }
-                disabled={ isDisabled || !sourceCurriculum }
+                sourceCurriculum={ sourceCurriculum }
             />
             <ToggleDraftAction
-                sourceCurriculum={ sourceCurriculum }
-                onUpdate={ onUpdate }
-                onProcessingChange={ setIsProcessing }
                 disabled={ isDisabled || !sourceCurriculum }
+                onProcessingChange={ setIsProcessing }
+                onUpdate={ onUpdate }
+                sourceCurriculum={ sourceCurriculum }
             />
             <DeleteCurriculumAction
-                sourceCurriculum={ sourceCurriculum }
+                disabled={ isDisabled || !sourceCurriculum }
                 onDelete={ onDelete }
                 onProcessingChange={ setIsProcessing }
-                disabled={ isDisabled || !sourceCurriculum }
+                sourceCurriculum={ sourceCurriculum }
             />
         </Box>
     );

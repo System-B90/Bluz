@@ -51,9 +51,9 @@ export function ModuleItem({ moduleId, weekIndex, dayIndex, ...props }: ModuleIt
     return (
         <Paper
             { ...props }
+            elevation={ isDragging ? 4 : 0 }
             ref={ setNodeRef }
             style={ style }
-            elevation={ isDragging ? 4 : 0 }
             sx={ { ...props.sx, backgroundColor: color } }
             { ...attributes }
             { ...listeners }
@@ -65,11 +65,11 @@ export function ModuleItem({ moduleId, weekIndex, dayIndex, ...props }: ModuleIt
                 ${isDragging ? "opacity-0 pointer-events-none" : "opacity-100"}
             `}
         >
-            <Typography variant="body2" className="select-none font-medium text-slate-700">
+            <Typography className="select-none font-medium text-slate-700" variant="body2">
                 { moduleDoc?.title ?? "Unknown Module" }
             </Typography>
             <Box className="flex flex-row items-center">
-                <Typography variant="body2" className="select-none font-medium text-slate-700">
+                <Typography className="select-none font-medium text-slate-700" variant="body2">
                     { syllabusTitle }
                 </Typography>
                 <Box width='0.3rem' />

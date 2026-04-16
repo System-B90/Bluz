@@ -17,7 +17,7 @@ import
 
 import { createFromPalette } from '@/components/theme/CreateFromPalette';
 
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = 'dark' | 'light' | 'system';
 
 export type ThemeContextState = {
     theme: ThemeMode;
@@ -33,8 +33,8 @@ export function BluzThemeProvider({ children, ...props }: ThemeProviderProps & {
             { ...props }
             attribute="class"
             defaultTheme="system"
-            enableSystem
             disableTransitionOnChange={ false }
+            enableSystem
         >
             <InnerThemeProvider>
                 <CssBaseline />

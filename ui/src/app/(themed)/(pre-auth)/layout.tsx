@@ -8,20 +8,20 @@ import ThemeSelectorIcon from "@/components/header/ThemeSelector";
 export default function PreAuthLayout({ children }: { children: ReactNode; })
 {
     return (
-        <Box sx={ { p: 0 } } width={ '100vw' } height={ '100vh' } display={ 'flex' } flexDirection={ 'column' }>
-            <AppBar enableColorOnDark={ false } position="relative" className='flex justify-center py-0 h-14' color='default'>
+        <Box display={ 'flex' } flexDirection={ 'column' } height={ '100vh' } sx={ { p: 0 } } width={ '100vw' }>
+            <AppBar className='flex justify-center py-0 h-14' color='default' enableColorOnDark={ false } position="relative">
                 <Toolbar variant="dense">
-                    <Box sx={ { flexGrow: 1 } } display="flex" alignItems="center" flexDirection={ 'row' } gap={ 1 }>
+                    <Box alignItems="center" display="flex" flexDirection={ 'row' } gap={ 1 } sx={ { flexGrow: 1 } }>
                         <Typography variant="h6" >
                             בלוז
                         </Typography>
                     </Box>
 
-                    <Box display={ 'flex' } alignItems={ 'center' } justifyContent={ 'flex-end' } alignContent={ 'center' }>
+                    <Box alignContent={ 'center' } alignItems={ 'center' } display={ 'flex' } justifyContent={ 'flex-end' }>
 
                         <ThemeSelectorIcon />
 
-                        <IconButton color="inherit" disabled={ true } aria-disabled={ true }>
+                        <IconButton aria-disabled={ true } color="inherit" disabled={ true }>
                             <SettingsIcon />
                         </IconButton>
                     </Box>

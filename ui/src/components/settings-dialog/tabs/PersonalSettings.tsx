@@ -21,7 +21,7 @@ export default function PersonalSettings()
 
     return (
         <Box>
-            <Typography variant="h6" gutterBottom>
+            <Typography gutterBottom variant="h6">
                 הגדרות אישיות
             </Typography>
 
@@ -29,10 +29,9 @@ export default function PersonalSettings()
             <FormControl fullWidth sx={ { mb: 3 } }>
                 <InputLabel>Selected Groups</InputLabel>
                 <Select
-                    multiple
-                    value={ groups }
-                    onChange={ (e) => setGroups(e.target.value as string[]) }
                     input={ <OutlinedInput label="Selected Groups" /> }
+                    multiple
+                    onChange={ (e) => setGroups(e.target.value as string[]) }
                     renderValue={ (selected) => (
                         <Box sx={ { display: "flex", flexWrap: "wrap", gap: 0.5 } }>
                             { selected.map((value) => (
@@ -40,6 +39,7 @@ export default function PersonalSettings()
                             )) }
                         </Box>
                     ) }
+                    value={ groups }
                 >
                     { allGroups.map((group) => (
                         <MenuItem key={ group } value={ group }>
@@ -53,10 +53,9 @@ export default function PersonalSettings()
             <FormControl fullWidth>
                 <InputLabel>Selected Instructors</InputLabel>
                 <Select
-                    multiple
-                    value={ instructors }
-                    onChange={ (e) => setInstructors(e.target.value as string[]) }
                     input={ <OutlinedInput label="Selected Instructors" /> }
+                    multiple
+                    onChange={ (e) => setInstructors(e.target.value as string[]) }
                     renderValue={ (selected) => (
                         <Box sx={ { display: "flex", flexWrap: "wrap", gap: 0.5 } }>
                             { selected.map((value) => (
@@ -64,6 +63,7 @@ export default function PersonalSettings()
                             )) }
                         </Box>
                     ) }
+                    value={ instructors }
                 >
                     { allInstructors.map((inst) => (
                         <MenuItem key={ inst } value={ inst }>

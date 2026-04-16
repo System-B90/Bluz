@@ -30,7 +30,7 @@ export function buildGantCollectionRoutes<
         try
         {
             const requestedIds = request.nextUrl.searchParams.get('ids');
-            let items: Record<TEntity[ "id" ], TEntity[ "title" ] | TEntity>;
+            let items: Record<TEntity[ "id" ], TEntity | TEntity[ "title" ]>;
 
             if (requestedIds === null)
             {

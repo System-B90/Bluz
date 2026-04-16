@@ -39,31 +39,31 @@ export default function PrayerSettings()
     }, [ getInitialTimes ]);
 
     return (
-        <Box border={ 'solid 0.15rem rgba(0,0,0,0.2)' } padding={ '0.5rem' } borderRadius={ 3 } gap={ 1 } display={ 'flex' } flexDirection={ 'column' }>
-            <Typography variant="h6" gutterBottom>זמני תפילות</Typography>
+        <Box border={ 'solid 0.15rem rgba(0,0,0,0.2)' } borderRadius={ 3 } display={ 'flex' } flexDirection={ 'column' } gap={ 1 } padding={ '0.5rem' }>
+            <Typography gutterBottom variant="h6">זמני תפילות</Typography>
             <Box display={ 'flex' } flexDirection={ 'column' } gap={ 1 }>
                 <TimePicker
                     label="שחרית"
+                    onChange={ (newValue) => handleTimeChange('shacharit', newValue) }
                     slots={ { openPickerIcon: WbTwilightIcon } }
                     value={ localTimes.shacharit }
-                    onChange={ (newValue) => handleTimeChange('shacharit', newValue) }
                 />
                 <TimePicker
                     label="מנחה"
+                    onChange={ (newValue) => handleTimeChange('mincha', newValue) }
                     slots={ { openPickerIcon: WbSunnyIcon } }
                     value={ localTimes.mincha }
-                    onChange={ (newValue) => handleTimeChange('mincha', newValue) }
                 />
                 <TimePicker
                     label="ערבית"
+                    onChange={ (newValue) => handleTimeChange('arvit', newValue) }
                     slots={ { openPickerIcon: BedtimeIcon } }
                     value={ localTimes.arvit }
-                    onChange={ (newValue) => handleTimeChange('arvit', newValue) }
                 />
             </Box>
             <ButtonGroup>
-                <Button color="primary" variant="contained" onClick={ handleSave }>שמירה</Button>
-                <Button color={ 'warning' } variant="contained" onClick={ handleRestore }>שחזור</Button>
+                <Button color="primary" onClick={ handleSave } variant="contained">שמירה</Button>
+                <Button color={ 'warning' } onClick={ handleRestore } variant="contained">שחזור</Button>
             </ButtonGroup>
         </Box>
     );

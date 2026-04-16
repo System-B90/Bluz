@@ -10,7 +10,7 @@ export default function useSessionWebSocketContext()
 {
     const { connectionString } = useWebSocketConfig();
 
-    const ws = useRef<WebSocket | null>(null);
+    const ws = useRef<null | WebSocket>(null);
     const messageHandlers = useRef<MessageHandlerType[]>([]);
 
     const addMessageHandler = useCallback((handler: MessageHandlerType) =>

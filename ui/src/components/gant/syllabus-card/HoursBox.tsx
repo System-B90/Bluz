@@ -30,31 +30,31 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps)
 
     return (
         <Box { ...props }>
-            <Box display="flex" flexDirection="row" alignItems="center" gap={ 1 }>
+            <Box alignItems="center" display="flex" flexDirection="row" gap={ 1 }>
                 <Gauge
-                    width={ 60 }
                     height={ 60 }
-                    value={ progressPercentage }
-                    text={ `${Math.round(progressPercentage)}%` }
                     sx={ {
                         [ `& .${gaugeClasses.valueText}` ]: {
                             fontSize: '0.75rem',
                             transform: 'translate(0px, -1px)',
                         },
                     } }
+                    text={ `${Math.round(progressPercentage)}%` }
+                    value={ progressPercentage }
+                    width={ 60 }
                 />
                 <Stack spacing={ 0 }>
-                    <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
-                        <Typography variant="body2" fontSize="0.8rem" color="text.secondary">הוקצו:</Typography>
-                        <Typography variant="body2" fontSize="0.8rem" fontWeight="bold">{ allocatedHours }</Typography>
+                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={ 1 }>
+                        <Typography color="text.secondary" fontSize="0.8rem" variant="body2">הוקצו:</Typography>
+                        <Typography fontSize="0.8rem" fontWeight="bold" variant="body2">{ allocatedHours }</Typography>
                     </Box>
-                    <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
-                        <Typography variant="body2" fontSize="0.8rem" color="text.secondary">מינימום:</Typography>
-                        <Typography variant="body2" fontSize="0.8rem" fontWeight="bold">{ minimumRequiredHours }</Typography>
+                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={ 1 }>
+                        <Typography color="text.secondary" fontSize="0.8rem" variant="body2">מינימום:</Typography>
+                        <Typography fontSize="0.8rem" fontWeight="bold" variant="body2">{ minimumRequiredHours }</Typography>
                     </Box>
-                    <Box display="flex" flexDirection="row" alignItems="baseline" gap={ 1 }>
-                        <Typography variant="body2" fontSize="0.8rem" color="text.secondary">אידיאל:</Typography>
-                        <Typography variant="body2" fontSize="0.8rem" fontWeight="bold">{ wantedHours }</Typography>
+                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={ 1 }>
+                        <Typography color="text.secondary" fontSize="0.8rem" variant="body2">אידיאל:</Typography>
+                        <Typography fontSize="0.8rem" fontWeight="bold" variant="body2">{ wantedHours }</Typography>
                     </Box>
                 </Stack>
             </Box>

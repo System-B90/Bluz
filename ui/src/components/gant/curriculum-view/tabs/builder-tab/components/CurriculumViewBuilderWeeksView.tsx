@@ -19,7 +19,7 @@ export function CurriculumViewBuilderWeeksView({
     setSelectedWeekGroup: Dispatch<SetStateAction<{ start: number; length: number; }>>;
 })
 {
-    const [ animationSelectedGroupIndex, setAnimationSelectedGroupIndex ] = useState<number | null>(null);
+    const [ animationSelectedGroupIndex, setAnimationSelectedGroupIndex ] = useState<null | number>(null);
     const groupedWeeks = useMemo(() => partitionWeeks(weeks, groupCount), [ weeks, groupCount ]);
     const onGroupClick = useCallback((groupIndex: number, start: number, length: number) =>
     {
@@ -40,18 +40,18 @@ export function CurriculumViewBuilderWeeksView({
         return (
             <Fragment key={ `frag-${groupKey}` }>
                 <WeekGroupPanel
-                    key={ groupKey }
-                    group={ group }
-                    onExpandGroup={ () => onGroupClick(index, group[ 0 ].number - 1, group.length) }
+                    flexBasis={ 0 }
                     flexGrow={ animationSelectedGroupIndex === null ? 1 : (animationSelectedGroupIndex === index ? 1 : 0) }
                     flexShrink={ animationSelectedGroupIndex === null ? undefined : (animationSelectedGroupIndex === index ? 0 : 1) }
-                    flexBasis={ 0 }
+                    group={ group }
+                    key={ groupKey }
+                    onExpandGroup={ () => onGroupClick(index, group[ 0 ].number - 1, group.length) }
                 />
                 { !isLast && (
                     <Divider
-                        variant="middle"
-                        orientation="vertical"
                         className="h-4/5 self-center"
+                        orientation="vertical"
+                        variant="middle"
                     />
                 ) }
             </Fragment>

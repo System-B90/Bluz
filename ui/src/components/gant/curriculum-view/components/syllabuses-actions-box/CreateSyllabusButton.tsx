@@ -16,9 +16,9 @@ export function CreateSyllabusButton({ curriculumId }: { curriculumId: Curriculu
 
     return (
         <Button
-            variant="contained"
-            startIcon={ <AddIcon /> }
             onClick={ clickHandler }
+            startIcon={ <AddIcon /> }
+            variant="contained"
         >
             סילבוס חדש
         </Button>

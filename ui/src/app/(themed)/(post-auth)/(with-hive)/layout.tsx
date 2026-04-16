@@ -27,15 +27,15 @@ export default function PostAuthLayout({ children }: { children: React.ReactNode
                             <CoursesProvider>
                                 <OfflineProvider>
                                     <CalendarProvider>
-                                        <Box sx={ { p: 0 } } width="100vw" height="100vh" display="flex" flexDirection="column" bgcolor={ 'Background' } overflow={ 'hidden' }>
+                                        <Box bgcolor={ 'Background' } display="flex" flexDirection="column" height="100vh" overflow={ 'hidden' } sx={ { p: 0 } } width="100vw">
                                             <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
                                             <Box height={ `calc(100vh - (var(--spacing) * 14))` }>
                                                 { children }
                                             </Box>
                                         </Box>
                                         <SettingsDialog
-                                            open={ openSettingsDialog }
                                             onClose={ () => setOpenSettingsDialog(false) }
+                                            open={ openSettingsDialog }
                                         />
                                     </CalendarProvider>
                                 </OfflineProvider>

@@ -10,7 +10,7 @@ interface BaseRoom
 {
     readonly id: number | string;
     name: string;
-    description?: string | null;
+    description?: null | string;
     source: RoomSource;
 }
 
@@ -26,12 +26,12 @@ export interface CustomRoom extends BaseRoom
 {
     readonly id: string;
     name: string;
-    description?: string | null;
+    description?: null | string;
     source: RoomSource.Custom;
 }
-export type Room = HiveRoom | CustomRoom;
-export type ResolvableRoom = { id: string; source: RoomSource.Custom; } | { id: number; source: RoomSource.Hive; };
-export type RoomLike = Room | ResolvableRoom;
+export type Room = CustomRoom | HiveRoom;
+export type ResolvableRoom = { id: number; source: RoomSource.Hive; } | { id: string; source: RoomSource.Custom; };
+export type RoomLike = ResolvableRoom | Room;
 export function areRoomsEqual(room1: RoomLike, room2: RoomLike): boolean
 {
     if (!room1 || !room2) { return false; }

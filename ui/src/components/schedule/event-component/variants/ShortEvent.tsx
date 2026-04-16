@@ -13,34 +13,34 @@ export default function ShortEventComponent({ event: event, containerSize: _cont
 {
     return (
         <Box
-            padding={ 0.3 }
-            display={ 'flex' }
-            justifyContent={ 'space-around' }
             alignItems={ 'flex-start' }
+            display={ 'flex' }
             height={ '100%' }
+            justifyContent={ 'space-around' }
+            padding={ 0.3 }
         >
             <Box
-                flexGrow={ 1 }
+                alignItems={ 'flex-start' }
                 display={ 'flex' }
                 flexDirection={ 'column' }
-                justifyContent={ 'space-around' }
-                alignItems={ 'flex-start' }
+                flexGrow={ 1 }
                 gap={ 0.3 }
                 height={ '100%' }
+                justifyContent={ 'space-around' }
             >
-                <Box marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } display={ 'flex' } flexDirection={ 'row' } alignItems={ 'center' } gap={ 0 }>
-                    <Box display={ 'flex' } flexGrow={ 1 } alignItems={ 'baseline' }>
+                <Box alignItems={ 'center' } display={ 'flex' } flexDirection={ 'row' } gap={ 0 } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } }>
+                    <Box alignItems={ 'baseline' } display={ 'flex' } flexGrow={ 1 }>
                         <EventTypeIcon event={ event } fontSize="inherit" />
                         <Typography
-                            variant="subtitle2"
                             noWrap
                             sx={ { ml: 0.5, fontWeight: 'bold' } }
+                            variant="subtitle2"
                         >
                             { event.name }
                         </Typography>
                     </Box>
                     <Box sx={ { width: '0.3rem' } } />
-                    <Box textOverflow={ 'ellipsis' } hidden={ event.type === 'break' } display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' }>
+                    <Box alignItems={ 'baseline' } display={ 'flex' } flexDirection={ 'row' } hidden={ event.type === 'break' } textOverflow={ 'ellipsis' }>
                         <SubjectComponent fontSize={ '0.8rem' } fontWeight={ 500 } subjectId={ event.subject } />
                         <Box sx={ { width: '0.2rem' } } />
                         { event.hiveModule ? <><Typography fontSize={ '0.8rem' } fontWeight={ 400 } >/</Typography>
@@ -52,33 +52,33 @@ export default function ShortEventComponent({ event: event, containerSize: _cont
                     display={ 'flex' }
                     flexDirection={ 'column' }
                     flexWrap={ 'wrap' }
-                    justifyContent={ 'flex-start' }
                     gap={ 0.2 }
-                    overflow={ 'hidden' }
                     height={ '100%' }
+                    justifyContent={ 'flex-start' }
+                    overflow={ 'hidden' }
                 >
-                    <InstructorsList event={ event } chipSize="smaller" showCaption={ false } />
+                    <InstructorsList chipSize="smaller" event={ event } showCaption={ false } />
                     <CourseComponent
-                        courseIds={ event.courses }
-                        showCaption={ false } chipSize="smaller"
+                        chipSize="smaller"
+                        courseIds={ event.courses } showCaption={ false }
                     />
-                    <RoomComponent roomIds={ event.rooms } showCaption={ false } chipSize="smaller" />
+                    <RoomComponent chipSize="smaller" roomIds={ event.rooms } showCaption={ false } />
                 </Box>
             </Box>
 
-            <Box position={ 'relative' }
+            <Box alignContent={ 'space-between' }
+                alignItems={ 'flex-end' }
                 display={ 'flex' }
+                flexDirection={ 'column' }
                 flexGrow={ 0 }
                 flexShrink={ 1 }
-                flexDirection={ 'column' }
-                alignItems={ 'flex-end' }
-                justifyContent={ 'space-between' }
-                alignContent={ 'space-between' }
-                height={ '100%' }
                 gap={ 0.2 }
+                height={ '100%' }
+                justifyContent={ 'space-between' }
+                position={ 'relative' }
             >
                 <EventDurationLabel event={ event } size="smaller" />
-                <EventStatusIcons flexGrow={ 1 } event={ event } size={ '1rem' } flexDirection={ 'column' } justifyContent={ 'flex-end' } />
+                <EventStatusIcons event={ event } flexDirection={ 'column' } flexGrow={ 1 } justifyContent={ 'flex-end' } size={ '1rem' } />
             </Box>
         </Box>
     );

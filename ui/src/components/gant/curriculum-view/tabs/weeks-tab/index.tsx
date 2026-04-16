@@ -19,17 +19,17 @@ export default function WeeksTab({ curriculumId }: { curriculumId: CurriculumId;
     const renderedPanels = useMemo(() =>
         (curriculum?.weeks || []).map((week, index) => (
             <WeekPanel
-                key={ week.number }
                 curriculumId={ curriculumId }
+                key={ week.number }
                 weekIndex={ index }
             />
         )),
         [ curriculum?.weeks, curriculumId ]);
 
     return (
-        <Box gap={ 2 } flexGrow={ 1 } display={ 'flex' } flexDirection={ 'column' } height={ '100%' }>
-            <Box display="flex" flexDirection="column" gap={ 1 } width={ '100%' } height={ '100%' }>
-                <Box gap={ 2 } display={ 'flex' } flexDirection={ 'column' } flexWrap={ 'wrap' } alignContent={ 'flex-start' } height={ '100%' } sx={ { overflowX: 'scroll' } }>
+        <Box display={ 'flex' } flexDirection={ 'column' } flexGrow={ 1 } gap={ 2 } height={ '100%' }>
+            <Box display="flex" flexDirection="column" gap={ 1 } height={ '100%' } width={ '100%' }>
+                <Box alignContent={ 'flex-start' } display={ 'flex' } flexDirection={ 'column' } flexWrap={ 'wrap' } gap={ 2 } height={ '100%' } sx={ { overflowX: 'scroll' } }>
                     { renderedPanels }
                 </Box>
             </Box>

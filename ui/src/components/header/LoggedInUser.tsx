@@ -7,17 +7,17 @@ export default function LoggedInUser()
 {
     const { userData } = useAuth();
     return (
-        <Tooltip title={
-            <Box display="flex" flexDirection="row" alignItems="center" gap={ 0.5 }>
+        <Tooltip placement="bottom" title={
+            <Box alignItems="center" display="flex" flexDirection="row" gap={ 0.5 }>
                 <Typography variant="subtitle2">מחובר כ-</Typography>
-                <Typography variant="subtitle2" fontStyle={ 'italic' }>{ userData.username }</Typography>
+                <Typography fontStyle={ 'italic' } variant="subtitle2">{ userData.username }</Typography>
             </Box>
-        } placement="bottom">
+        }>
             <Chip
-                avatar={ <HiveAvatar hiveId={ userData.id } alt={ userData.display_name ?? '' } /> }
+                avatar={ <HiveAvatar alt={ userData.display_name ?? '' } hiveId={ userData.id } /> }
+                color='secondary'
                 label={ userData.display_name }
                 size="medium"
-                color='secondary'
                 variant="outlined"
             />
         </Tooltip>

@@ -19,8 +19,8 @@ export type CalendarFiltersContextState = {
     setFilteredInstructors: Dispatch<SetStateAction<Array<number>>>;
     filteredCourses: CourseId[];
     setFilteredCourses: Dispatch<SetStateAction<Array<CourseId>>>;
-    showPAsFor: number | null;
-    setShowPAsFor: Dispatch<SetStateAction<number | null>>;
+    showPAsFor: null | number;
+    setShowPAsFor: Dispatch<SetStateAction<null | number>>;
     hidePrayers: boolean;
     setHidePrayers: Dispatch<SetStateAction<boolean>>;
 
@@ -50,7 +50,7 @@ export function isInstructorBusy(instructor: number, event: Event): boolean
 export const CalendarFiltersProvider = ({ children }: { children: React.ReactNode; }) =>
 {
     const [ hidePrayers, setHidePrayers ] = useState<boolean>(false);
-    const [ showPAsFor, setShowPAsFor ] = useState<number | null>(null /** ID of instructor */); // פ"א
+    const [ showPAsFor, setShowPAsFor ] = useState<null | number>(null /** ID of instructor */); // פ"א
     const [ filteredInstructors, setFilteredInstructors ] = useState<Array<number>>([]);
     const [ filteredCourses, setFilteredCourses ] = useState<Array<CourseId>>([]);
 

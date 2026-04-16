@@ -16,9 +16,9 @@ function InternalHeader({ syllabusId }: { syllabusId: SyllabusId; })
 
     return (
         <Box
+            alignItems={ 'center' }
             display={ 'flex' }
             flexDirection={ 'row' }
-            alignItems={ 'center' }
             flexWrap={ 'nowrap' }
         >
             <SyllabusName key={ `${syllabus?.title ?? '-syllabus-title'}` } syllabusId={ syllabusId } />

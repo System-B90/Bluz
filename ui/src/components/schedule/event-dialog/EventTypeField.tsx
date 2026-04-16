@@ -29,10 +29,10 @@ export default function EventTypeField({ event, onBlurCallback, ...props }: Even
         <FormControl fullWidth={ false } { ...props }>
             <InputLabel>סוג</InputLabel>
             <Select
-                value={ currentType }
                 label="סוג"
                 onChange={ onChange }
                 onClose={ onClose }
+                value={ currentType }
             >
                 { eventTypes.map((type) => (
                     <MenuItem key={ type } value={ type }>

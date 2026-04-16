@@ -20,15 +20,15 @@ interface MappingState
     // Key: `${weekIndex}-${dayIndex}-${moduleId}`
     mappings: Record<string, CurriculumModuleDayMapping>;
     isLoading: boolean;
-    error: string | null;
+    error: null | string;
 }
 
 type MappingAction =
-    | { type: 'SET_MAPPINGS'; payload: CurriculumModuleDayMapping[]; }
-    | { type: 'UPSERT_MAPPING'; payload: CurriculumModuleDayMapping; }
     | { type: 'DELETE_MAPPING'; payload: { weekIndex: number; dayIndex: number; moduleId: ModuleId; }; }
+    | { type: 'SET_ERROR'; payload: null | string; }
     | { type: 'SET_LOADING'; payload: boolean; }
-    | { type: 'SET_ERROR'; payload: string | null; };
+    | { type: 'SET_MAPPINGS'; payload: CurriculumModuleDayMapping[]; }
+    | { type: 'UPSERT_MAPPING'; payload: CurriculumModuleDayMapping; };
 
 const getMappingKey = (m: { weekIndex: number; dayIndex: number; moduleId: ModuleId; }) =>
     `${m.weekIndex}-${m.dayIndex}-${m.moduleId}`;

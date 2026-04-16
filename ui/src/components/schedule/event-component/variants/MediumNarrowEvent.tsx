@@ -13,45 +13,45 @@ export default function MediumNarrowEventComponent({ event: event }: EventProps<
     return (
         <Box padding={ 0.3 }>
             <Stack
-                direction={ "column" }
                 alignItems="flex-start"
+                direction={ "column" }
                 justifyContent={ "flex-start" }
                 spacing={ 0.5 }
             >
                 <Stack
-                    direction={ "row" }
                     alignItems="flex-start"
+                    borderBottom={ 1 }
+                    direction={ "row" }
                     justifyContent="space-between"
                     mb={ 0.5 }
-                    width={ '100%' }
-                    borderBottom={ 1 }
                     paddingBottom={ 0.5 }
+                    width={ '100%' }
                 >
-                    <Box display="flex" alignItems="center" minWidth={ 0 } gap={ 0 }>
-                        <Box display="flex" alignItems="baseline" minWidth={ 0 } gap={ 1 } flexDirection={ 'row' }>
+                    <Box alignItems="center" display="flex" gap={ 0 } minWidth={ 0 }>
+                        <Box alignItems="baseline" display="flex" flexDirection={ 'row' } gap={ 1 } minWidth={ 0 }>
                             <Typography
-                                variant="subtitle2"
-                                noWrap={ false }
                                 flexWrap={ 'wrap' }
+                                noWrap={ false }
                                 sx={ { ml: 0.5, fontWeight: 'bold' } }
+                                variant="subtitle2"
                             >
                                 { event.name }
                             </Typography>
                         </Box>
                     </Box>
 
-                    <Box display="flex" alignItems="flex-end" gap={ 1 } flexDirection={ 'column' }>
+                    <Box alignItems="flex-end" display="flex" flexDirection={ 'column' } gap={ 1 }>
                         <EventDurationLabel event={ event } />
                     </Box>
                 </Stack>
 
-                <Box display={ 'flex' } flexDirection={ 'column' } width={ '100%' } alignItems={ 'stretch' } borderBottom={ 1 } paddingBottom={ 0.5 }>
-                    <Box flexGrow={ 1 } flexBasis={ 0.5 }>
-                        <Box width={ '100%' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
-                            <InstructorsList event={ event } width={ '100%' } showCaption={ false } chipSize="smaller" />
+                <Box alignItems={ 'stretch' } borderBottom={ 1 } display={ 'flex' } flexDirection={ 'column' } paddingBottom={ 0.5 } width={ '100%' }>
+                    <Box flexBasis={ 0.5 } flexGrow={ 1 }>
+                        <Box marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } width={ '100%' } >
+                            <InstructorsList chipSize="smaller" event={ event } showCaption={ false } width={ '100%' } />
                         </Box>
 
-                        <Box marginBottom={ 0 } width={ '100%' } hidden={ event.type === 'break' } display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' }>
+                        <Box alignItems={ 'baseline' } display={ 'flex' } flexDirection={ 'row' } hidden={ event.type === 'break' } marginBottom={ 0 } width={ '100%' }>
                             <SubjectComponent fontSize={ '0.7rem' } fontWeight={ 500 } subjectId={ event.subject } />
                             <Box sx={ { width: '0.3rem' } } />
                             { event.hiveModule ? <><Typography fontSize={ '0.8rem' } fontWeight={ 300 } >/</Typography>
@@ -61,25 +61,25 @@ export default function MediumNarrowEventComponent({ event: event }: EventProps<
                     </Box>
 
                     <CourseComponent
-                        flexGrow={ 0 }
-                        flexBasis={ 0.5 }
-                        courseIds={ event.courses }
-                        width={ '100%' }
-                        showCaption={ false }
                         chipSize="smaller"
+                        courseIds={ event.courses }
+                        flexBasis={ 0.5 }
+                        flexGrow={ 0 }
+                        showCaption={ false }
+                        width={ '100%' }
                     />
                     <RoomComponent
-                        flexGrow={ 0 }
-                        flexBasis={ 0.5 }
-                        roomIds={ event.rooms }
-                        width={ '100%' }
-                        showCaption={ false }
                         chipSize="smaller"
+                        flexBasis={ 0.5 }
+                        flexGrow={ 0 }
+                        roomIds={ event.rooms }
+                        showCaption={ false }
+                        width={ '100%' }
                     />
                 </Box>
             </Stack>
 
-            <EventStatusIcons sx={ { bottom: 0, right: 0, position: 'absolute', margin: 0.4 } } event={ event } size={ '1rem' } />
+            <EventStatusIcons event={ event } size={ '1rem' } sx={ { bottom: 0, right: 0, position: 'absolute', margin: 0.4 } } />
         </Box>
     );
 }

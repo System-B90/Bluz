@@ -52,15 +52,15 @@ export function WorkTimePanel({ curriculumId, curriculum }: WorkTimePanelProps)
             height: '100%',
             flexGrow: 1,
         } }>
-            <Box display="flex" alignItems="center" justifyContent="space-between" mb={ 0.5 }>
-                <Typography variant="subtitle1" gutterBottom>שעות עבודה לשיבוץ</Typography>
+            <Box alignItems="center" display="flex" justifyContent="space-between" mb={ 0.5 }>
+                <Typography gutterBottom variant="subtitle1">שעות עבודה לשיבוץ</Typography>
                 <Tooltip title="הוספת שבוע">
                     <span>
                         <IconButton
-                            size="small"
                             color="primary"
-                            onClick={ () => void addWeek() }
                             disabled={ !canEdit }
+                            onClick={ () => void addWeek() }
+                            size="small"
                         >
                             <AddIcon fontSize="small" />
                         </IconButton>

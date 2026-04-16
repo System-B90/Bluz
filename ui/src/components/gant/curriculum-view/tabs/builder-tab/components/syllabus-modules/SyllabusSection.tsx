@@ -50,19 +50,19 @@ export function SyllabusSection({ syllabusId, ...props }: SyllabusSectionProps)
             { ...listeners }
         >
             {/* Sticky Header: Visible until the entire section scrolls out */ }
-            <Box className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm py-2 mb-2 shadow-sm" bgcolor={ color }>
+            <Box bgcolor={ color } className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm py-2 mb-2 shadow-sm">
                 <Typography
-                    variant="overline"
                     className="px-2 font-bold tracking-wider"
+                    color='textPrimary'
                     fontSize='1rem'
                     fontWeight={ 700 }
-                    color='textPrimary'
+                    variant="overline"
                 >
                     { syllabus?.title ?? 'Unnamed Syllabus' }
                 </Typography>
             </Box>
 
-            <Stack spacing={ 1 } className="px-2">
+            <Stack className="px-2" spacing={ 1 }>
                 { moduleItems }
             </Stack>
         </Box>

@@ -31,7 +31,7 @@ function arraysEqual<T>(a: T[] | undefined, b: T[] | undefined): boolean
     return true;
 }
 
-function isDateLike(value: Date | Dayjs | any): value is Date | { valueOf(): number; }
+function isDateLike(value: any | Date | Dayjs): value is { valueOf: () => number; } | Date
 {
     if (value instanceof Date) { return true; }
 

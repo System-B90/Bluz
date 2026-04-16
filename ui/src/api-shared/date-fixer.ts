@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-export function inplaceDateFixup<T>(item: T, fieldName: keyof T | Array<keyof T>): T
+export function inplaceDateFixup<T>(item: T, fieldName: Array<keyof T> | keyof T): T
 {
     if (Array.isArray(fieldName))
     {

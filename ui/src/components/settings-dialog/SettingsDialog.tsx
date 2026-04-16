@@ -29,10 +29,10 @@ export default function SettingsDialog({ open, onClose }: SettingsDialogProps)
     };
 
     return (
-        <Dialog open={ open } onClose={ onClose } maxWidth="md" fullWidth>
+        <Dialog fullWidth maxWidth="md" onClose={ onClose } open={ open }>
             <DialogTitle>הגדרות</DialogTitle>
             <DialogContent>
-                <Tabs value={ tab } onChange={ handleTabChange } sx={ { mb: 2 } }>
+                <Tabs onChange={ handleTabChange } sx={ { mb: 2 } } value={ tab }>
                     <Tab label="אישי" />
                     <Tab label="כללי" />
                 </Tabs>
@@ -43,7 +43,7 @@ export default function SettingsDialog({ open, onClose }: SettingsDialogProps)
                 </Box>
 
                 <Box sx={ { mt: 3, display: "flex", justifyContent: "flex-end" } }>
-                    <Button variant="outlined" onClick={ onClose }>
+                    <Button onClick={ onClose } variant="outlined">
                         סגירה
                     </Button>
                 </Box>

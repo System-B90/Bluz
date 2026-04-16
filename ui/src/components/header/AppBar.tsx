@@ -21,12 +21,12 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
     const [ filtersVisible, setFiltersVisible ] = useState<boolean>(!curriculumPage);
 
     return (
-        <AppBar enableColorOnDark={ false } position="sticky" className='flex justify-center py-0 h-14' sx={ { ...props.sx, zIndex: (theme) => theme.zIndex.drawer + 1 } } color='default' { ...props }>
+        <AppBar className='flex justify-center py-0 h-14' color='default' enableColorOnDark={ false } position="sticky" sx={ { ...props.sx, zIndex: (theme) => theme.zIndex.drawer + 1 } } { ...props }>
             <Toolbar variant="dense">
-                <Box display="flex" alignItems="center" flexDirection={ 'row' } gap={ 1 }>
-                    <Button variant='text' color="inherit" startIcon={
-                        <Logo width={ '2rem' } height={ '2rem' } />
-                    }>
+                <Box alignItems="center" display="flex" flexDirection={ 'row' } gap={ 1 }>
+                    <Button color="inherit" startIcon={
+                        <Logo height={ '2rem' } width={ '2rem' } />
+                    } variant='text'>
                         <Typography variant="h6" >
                             בלוז
                         </Typography>
@@ -37,20 +37,20 @@ export default function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
                     <LoggedInUser />
                 </Box>
 
-                <Box flexGrow={ 1 } display={ 'flex' } flexDirection={ 'row' } justifyContent={ 'center' } alignItems={ 'center' }>
-                    { filtersVisible && <Filters
-                        display={ 'flex' }
-                        flex={ 1 }
-                        justifyContent={ 'center' }
+                <Box alignItems={ 'center' } display={ 'flex' } flexDirection={ 'row' } flexGrow={ 1 } justifyContent={ 'center' }>
+                    { filtersVisible ? <Filters
                         alignItems={ 'center' }
                         boxSizing={ 'border-box' }
-                        paddingBlockStart={ 1 }
-                        paddingBlockEnd={ 1 }
+                        display={ 'flex' }
+                        flex={ 1 }
                         gap={ 1 }
-                    /> }
+                        justifyContent={ 'center' }
+                        paddingBlockEnd={ 1 }
+                        paddingBlockStart={ 1 }
+                    /> : null }
                 </Box>
 
-                <Box display={ 'flex' } alignItems={ 'center' } justifyContent={ 'flex-end' } alignContent={ 'center' }>
+                <Box alignContent={ 'center' } alignItems={ 'center' } display={ 'flex' } justifyContent={ 'flex-end' }>
                     { !curriculumPage && <FilterIcon filtersVisible={ filtersVisible } setFiltersVisible={ setFiltersVisible } /> }
                     { !curriculumPage && <OfflineModeIcon /> }
                     <CurriculumIcon />

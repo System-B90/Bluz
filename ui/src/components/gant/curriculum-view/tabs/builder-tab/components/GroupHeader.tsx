@@ -16,13 +16,13 @@ export default function GroupHeader({ start, end, totalHours, onExpandGroup, ...
     return (
         <Box { ...props } className="flex items-start justify-between mb-0" >
             <Box className="flex items-center gap-2" >
-                <Typography variant="h6" fontWeight="bold">
+                <Typography fontWeight="bold" variant="h6">
                     שבועות { start } - { end }
                 </Typography>
             </Box>
             <Box className='flex flex-col items-end' gap={ 1 }>
                 <WorkTimeChip totalHours={ totalHours } />
-                <IconButton onClick={ onExpandGroup } color="info" sx={ { mr: -1 } }>
+                <IconButton color="info" onClick={ onExpandGroup } sx={ { mr: -1 } }>
                     <ExpandIcon className='rotate-90' color="info" />
                 </IconButton>
             </Box>

@@ -7,11 +7,11 @@ export default function InstructorToolsIcon({ ...props }: Omit<IconButtonProps, 
     const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
 
     return (
-        <Tooltip title={ '' } placement='bottom'>
+        <Tooltip placement='bottom' title={ '' }>
             <IconButton
+                color={ props.color ?? "inherit" }
                 onMouseEnter={ (e) => setAnchorEl(e.currentTarget) }
                 onMouseLeave={ () => setAnchorEl(null) }
-                color={ props.color ?? "inherit" }
                 { ...props }
             >
                 <AssistantIcon />

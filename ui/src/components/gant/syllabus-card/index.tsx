@@ -57,26 +57,26 @@ export default function SyllabusCard({ curriculumId, syllabusId, ...props }: Syl
             { ...props }
         >
             <SyllabusCardHeader
-                sx={ { pb: 0, pt: 1.5, px: 2 } }
-                syllabusId={ syllabusId }
                 action={
                     <ExpandMore
-                        expand={ expanded }
-                        onClick={ handleExpandClick }
                         aria-expanded={ expanded }
                         aria-label="show more"
+                        expand={ expanded }
+                        onClick={ handleExpandClick }
                     >
                         <ExpandMoreIcon />
                     </ExpandMore>
                 }
+                sx={ { pb: 0, pt: 1.5, px: 2 } }
+                syllabusId={ syllabusId }
             />
 
             <Collapse in={ expanded } timeout="auto" unmountOnExit>
                 <CardContent sx={ { display: 'flex', flexDirection: 'column', paddingY: 1, flex: 1, overflow: 'hidden' } }>
                     <ModulesTable
-                        syllabusModules={ syllabus?.modules ?? [] }
-                        syllabusId={ syllabusId }
                         curriculumId={ curriculumId }
+                        syllabusId={ syllabusId }
+                        syllabusModules={ syllabus?.modules ?? [] }
                     />
                 </CardContent>
                 <SyllabusCardActions curriculumId={ curriculumId } syllabusId={ syllabusId } />

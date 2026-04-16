@@ -20,12 +20,12 @@ export default function SubjectField({ event, onEventChange, ...props }: Subject
     ));
 
     return (
-        <FormControl fullWidth={ false } disabled={ event?.type ? !eventHasSubject(event?.type) : false } { ...props }>
+        <FormControl disabled={ event?.type ? !eventHasSubject(event?.type) : false } fullWidth={ false } { ...props }>
             <InputLabel>מקצוע</InputLabel>
             <Select
-                value={ event?.subject ?? "" }
                 label="מקצוע"
                 onChange={ (e) => onEventChange({ subject: e.target.value }) }
+                value={ event?.subject ?? "" }
             >
                 { subjectMenuItems }
             </Select>

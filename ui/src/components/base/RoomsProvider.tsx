@@ -17,7 +17,7 @@ import { CustomRoom, HiveRoom, Room, RoomLike, RoomSource } from '@/components/s
 export type RoomsContextState = {
     default: boolean;
     rooms: Array<Room>;
-    getRoom: (id: RoomLike) => Room | null;
+    getRoom: (id: RoomLike) => null | Room;
 };
 
 const RoomsContext = createContext<RoomsContextState>({

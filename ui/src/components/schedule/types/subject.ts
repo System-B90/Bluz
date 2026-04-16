@@ -8,4 +8,4 @@ export interface Subject
     defaultGroupIDs?: string[];
 }
 
-export type SubjectLike = Subject | string | number;
+export type SubjectLike = number | string | Subject;

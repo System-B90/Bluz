@@ -41,7 +41,6 @@ export default function CourseField({ event, onBlurCallback, ...props }: CourseF
             <Select
                 label="מסלולים"
                 multiple
-                value={ currentCourseIds }
                 onChange={ handleChange }
                 onClose={ onClose }
                 renderValue={ (selected: Array<CourseId>) => (
@@ -50,16 +49,17 @@ export default function CourseField({ event, onBlurCallback, ...props }: CourseF
                             <Chip
                                 key={ value }
                                 label={ getCourse(value)?.name ?? value }
-                                size="small" // Optional: makes them fit better
                                 onDelete={ () => handleDelete(value) }
                                 onMouseDown={ (event) => event.stopPropagation() }
+                                size="small" // Optional: makes them fit better
                             />
                         )) }
                     </Box>
                 ) }
+                value={ currentCourseIds }
             >
                 { courses.map((course) => (
-                    <MenuItem key={ course.id } value={ course.id } color={ course.color ?? undefined }>
+                    <MenuItem color={ course.color ?? undefined } key={ course.id } value={ course.id }>
                         { course.name }
                     </MenuItem>
                 )) }

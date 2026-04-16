@@ -2,7 +2,7 @@ import { NormalizedStore } from "@/api-client/gant/drizzle-normalize";
 import { Curriculum, Module, ModuleEvent, Syllabus } from "@/api-shared/types/gant/curriculum";
 
 type NumberFieldKeys<T> = {
-    [ K in keyof T ]: T[ K ] extends number | undefined | null ? K : never;
+    [ K in keyof T ]: T[ K ] extends null | number | undefined ? K : never;
 }[ keyof T ];
 
 function calculateSumValueForModuleByField(module: Module, fieldName: NumberFieldKeys<ModuleEvent>, state: NormalizedStore): number

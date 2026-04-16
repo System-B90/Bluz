@@ -25,8 +25,8 @@ function CreateModuleEventButton({ moduleId }: { moduleId: ModuleId; })
     }, [ moduleId, createEvent ]);
 
     return (
-        <IconButton size="small" onClick={ clickHandler }>
-            <AddIcon fontSize="small" color='info' />
+        <IconButton onClick={ clickHandler } size="small">
+            <AddIcon color='info' fontSize="small" />
         </IconButton>
     );
 }
@@ -34,11 +34,11 @@ function CreateModuleEventButton({ moduleId }: { moduleId: ModuleId; })
 export function ModuleEventsView({ moduleId, eventIds }: { moduleId: ModuleId; eventIds: Array<ModuleEventId>; })
 {
     const eventItems = useMemo(() => eventIds.map(
-        (eventId) => (<ModuleEventView key={ eventId } moduleId={ moduleId } eventId={ eventId } />)
+        (eventId) => (<ModuleEventView eventId={ eventId } key={ eventId } moduleId={ moduleId } />)
     ), [ moduleId, eventIds ]);
 
     return (
-        <Box display={ 'flex' } flexWrap={ 'wrap' } alignItems={ 'flex-end' } gap={ 2 } flexGrow={ 1 } maxHeight={ '100%' }>
+        <Box alignItems={ 'flex-end' } display={ 'flex' } flexGrow={ 1 } flexWrap={ 'wrap' } gap={ 2 } maxHeight={ '100%' }>
             <Table size="small" stickyHeader={ true } sx={ { flexGrow: 1 } }>
                 <TableHead>
                     <TableRow>

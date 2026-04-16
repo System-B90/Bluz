@@ -17,7 +17,7 @@ export default function CurriculumIcon()
     }, [ curriculumPage, router ]);
 
     return (
-        <Tooltip title={ curriculumPage ? 'בחזרה ללו"ז' : 'בניית גאנט' } placement='bottom'>
+        <Tooltip placement='bottom' title={ curriculumPage ? 'בחזרה ללו"ז' : 'בניית גאנט' }>
             <IconButton className='relative' color={ 'inherit' } onClick={ onClick }>
                 { curriculumPage ? <CalendarMonthIcon /> : <AutoStoriesIcon /> }
             </IconButton>
