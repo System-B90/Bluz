@@ -5,6 +5,7 @@ import { Dispatch, SetStateAction } from "react";
 
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { CurriculumViewBuilderTab } from "@/components/gant/curriculum-view/tabs/builder-tab";
+import { CurriculumGanttView } from "@/components/gant/curriculum-view/tabs/gantt-view-tab";
 import { SyllabusesTab } from "@/components/gant/curriculum-view/tabs/syllabuses-tab";
 import { WeeksTab } from "@/components/gant/curriculum-view/tabs/weeks-tab";
 
@@ -45,6 +46,7 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps)
             <Tab label='סילבוסים' />
             <Tab label='שבועות' />
             <Tab label='בנייה' />
+            <Tab label='רצף זמן' />
         </Tabs>
     );
 }
@@ -63,6 +65,7 @@ export function CurriculumViewTabs({ curriculumId, selectedTabIndex, setSelected
                     { selectedTabIndex === 0 && <SyllabusesTab curriculumId={ curriculumId } /> }
                     { selectedTabIndex === 1 && <WeeksTab curriculumId={ curriculumId } /> }
                     { selectedTabIndex === 2 && <CurriculumViewBuilderTab curriculumId={ curriculumId } /> }
+                    { selectedTabIndex === 3 && <CurriculumGanttView curriculumId={ curriculumId } /> }
                 </Box>
             }
         </Box>

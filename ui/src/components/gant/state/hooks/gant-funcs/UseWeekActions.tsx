@@ -1,88 +1,82 @@
 import { useCallback } from "react";
 
-import { curriculumApi } from "@/api-client/gant/api";
-import { CurriculumDay, CurriculumDayId, CurriculumWeekId } from "@/api-shared/types/gant/curriculum";
+import { dayApi, weekApi } from "@/api-client/gant/api";
+import { CreateCurriculumDayPayload, CreateCurriculumWeekPayload } from "@/api-shared/types/gant/create-payloads";
+import { CurriculumDay, CurriculumDayId, CurriculumWeek, CurriculumWeekId } from "@/api-shared/types/gant/curriculum";
 import { withGantErrorHandling } from "@/components/gant/state/hooks/gant-funcs/WithGantErrorHandling";
-import { useCurriculumProviderActions, useCurriculumState } from "@/components/gant/state/provider";
+import { useCurriculumProviderActions } from "@/components/gant/state/provider";
 
-export function useWeekActions()
+export interface UseWeekActionsReturn
 {
-    const state = useCurriculumState();
+    createWeek: (payload: CreateCurriculumWeekPayload) => Promise<CurriculumWeek>;
+    updateWeek: (weekId: CurriculumWeekId, updates: Partial<{ comment?: string; closingSaturday?: boolean; }>) => Promise<CurriculumWeek>;
+    deleteWeek: (weekId: CurriculumWeekId) => Promise<void>;
+    createDay: (payload: CreateCurriculumDayPayload) => Promise<CurriculumDay>;
+    updateDay: (dayId: CurriculumDayId, updates: Partial<CurriculumDay>) => Promise<CurriculumDay>;
+    deleteDay: (dayId: CurriculumDayId) => Promise<void>;
+}
+
+export function useWeekActions(): UseWeekActionsReturn
+{
     const { dispatch } = useCurriculumProviderActions();
+
+    const createWeek = useCallback(async (payload: CreateCurriculumWeekPayload) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            const newWeek = await weekApi.apiCreate(payload);
+            dispatch({ type: 'ADD_WEEK', payload: { week: newWeek } });
+            return newWeek;
+        }, "Failed to create week:");
+    }, [ dispatch ]);
 
     const updateWeek = useCallback(async (weekId: CurriculumWeekId, updates: Partial<{ comment?: string; closingSaturday?: boolean; }>) =>
     {
         return withGantErrorHandling(async () =>
         {
-            const week = state.weeks[weekId];
-            if (!week) throw new Error(`Week not found: ${weekId}`);
-            
-            const curriculumId = week.curriculumId;
-            const curriculum = state.curriculums[curriculumId];
-            if (!curriculum) throw new Error(`Curriculum not found: ${curriculumId}`);
-            
-            // Update local state
-            const updatedWeek = { ...week, ...updates };
-            dispatch({ type: 'UPDATE_WEEK', payload: { id: weekId, updates } });
-            
-            // Update via API
-            const updatedCurriculum = await curriculumApi.apiUpdate({ 
-                id: curriculumId, 
-                weeks: curriculum.weeks 
-            });
-            dispatch({ type: 'UPDATE_CURRICULUM', payload: { id: curriculumId, updates: updatedCurriculum } });
-            return updatedCurriculum;
+            const updatedWeek = await weekApi.apiUpdate({ id: weekId, ...updates });
+            dispatch({ type: 'UPDATE_WEEK', payload: { id: weekId, updates: updatedWeek } });
+            return updatedWeek;
         }, `Failed to update week (ID: ${weekId}):`);
-    }, [ state, dispatch ]);
+    }, [ dispatch ]);
+
+    const deleteWeek = useCallback(async (weekId: CurriculumWeekId) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            await weekApi.apiDelete(weekId);
+            dispatch({ type: 'REMOVE_WEEK', payload: { weekId } });
+        }, `Failed to delete week (ID: ${weekId}):`);
+    }, [ dispatch ]);
+
+    const createDay = useCallback(async (payload: CreateCurriculumDayPayload) =>
+    {
+        return withGantErrorHandling(async () =>
+        {
+            const newDay = await dayApi.apiCreate(payload);
+            dispatch({ type: 'ADD_DAY', payload: { day: newDay } });
+            return newDay;
+        }, "Failed to create day:");
+    }, [ dispatch ]);
 
     const updateDay = useCallback(async (dayId: CurriculumDayId, updates: Partial<CurriculumDay>) =>
     {
         return withGantErrorHandling(async () =>
         {
-            const day = state.days[dayId];
-            if (!day) throw new Error(`Day not found: ${dayId}`);
-            
-            const week = state.weeks[day.curriculumWeekId];
-            if (!week) throw new Error(`Week not found: ${day.curriculumWeekId}`);
-            
-            const curriculum = state.curriculums[week.curriculumId];
-            if (!curriculum) throw new Error(`Curriculum not found: ${week.curriculumId}`);
-            
-            // Update local state
-            dispatch({ type: 'UPDATE_DAY', payload: { id: dayId, updates } });
-            
-            // Update via API
-            const updatedCurriculum = await curriculumApi.apiUpdate({ 
-                id: curriculum.id, 
-                weeks: curriculum.weeks 
-            });
-            dispatch({ type: 'UPDATE_CURRICULUM', payload: { id: curriculum.id, updates: updatedCurriculum } });
-            return updatedCurriculum;
-        }, [ state, dispatch ]);
-    }, [ state, dispatch ]);
+            const updatedDay = await dayApi.apiUpdate({ id: dayId, ...updates });
+            dispatch({ type: 'UPDATE_DAY', payload: { id: dayId, updates: updatedDay } });
+            return updatedDay;
+        }, `Failed to update day (ID: ${dayId}):`);
+    }, [ dispatch ]);
 
-    const updateWeekDays = useCallback(async (weekId: CurriculumWeekId, updates: Partial<{ closingSaturday?: boolean; dayIds?: CurriculumDayId[]; }>) =>
+    const deleteDay = useCallback(async (dayId: CurriculumDayId) =>
     {
         return withGantErrorHandling(async () =>
         {
-            const week = state.weeks[weekId];
-            if (!week) throw new Error(`Week not found: ${weekId}`);
-            
-            const curriculum = state.curriculums[week.curriculumId];
-            if (!curriculum) throw new Error(`Curriculum not found: ${week.curriculumId}`);
-            
-            // Update local state
-            dispatch({ type: 'UPDATE_WEEK', payload: { id: weekId, updates } });
-            
-            // Update via API
-            const updatedCurriculum = await curriculumApi.apiUpdate({ 
-                id: curriculum.id, 
-                weeks: curriculum.weeks 
-            });
-            dispatch({ type: 'UPDATE_CURRICULUM', payload: { id: curriculum.id, updates: updatedCurriculum } });
-            return updatedCurriculum;
-        }, [ state, dispatch ]);
-    }, [ state, dispatch ]);
+            await dayApi.apiDelete(dayId);
+            dispatch({ type: 'REMOVE_DAY', payload: { dayId } });
+        }, `Failed to delete day (ID: ${dayId}):`);
+    }, [ dispatch ]);
 
-    return { updateWeek, updateDay, updateWeekDays } as const;
+    return { createWeek, updateWeek, deleteWeek, createDay, updateDay, deleteDay } as const;
 }

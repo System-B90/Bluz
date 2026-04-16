@@ -9,15 +9,16 @@ import { useDroppable } from "@dnd-kit/core";
 import { Box, BoxProps, Divider } from "@mui/material";
 import { useMemo } from "react";
 
-import { CurriculumWeek } from "@/api-shared/types/gant/curriculum";
+import { CurriculumWeekId } from "@/api-shared/types/gant/curriculum";
 import { useCurriculumMappings } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { GroupHeader } from "@/components/gant/curriculum-view/tabs/builder-tab/components/GroupHeader";
 import { ModuleItem } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { calculateTotalWorkingTimeForWeeks } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
+import { useCurriculumState } from "@/components/gant/state/provider";
 
 export interface WeekGroupPanelProps extends BoxProps
 {
-    group: Array<CurriculumWeek>;
+    group: Array<CurriculumWeekId>;
     onExpandGroup: () => void;
 }
 
@@ -29,16 +30,28 @@ export function WeekGroupPanel({
 }: WeekGroupPanelProps)
 {
     const { state: { mappings } } = useCurriculumMappings();
+    const { weeks: weeksState } = useCurriculumState();
 
-    const startWeek = group[ 0 ].number;
-    const endWeek = group[ group.length - 1 ].number;
+    const startWeek = useMemo(() =>
+    {
+        const firstWeekId = group[0];
+        const week = weeksState[firstWeekId];
+        return week?.number ?? 1;
+    }, [ group, weeksState ]);
+
+    const endWeek = useMemo(() =>
+    {
+        const lastWeekId = group[group.length - 1];
+        const week = weeksState[lastWeekId];
+        return week?.number ?? group.length;
+    }, [ group, weeksState ]);
     const dropId = `weeks-${startWeek}-${endWeek}`;
 
     const { isOver, setNodeRef } = useDroppable({
         id: dropId,
         data: {
             type: "WEEK_GROUP",
-            weeks: group.map((w) => w.number),
+            weeks: group.map((weekId) => weeksState[weekId]?.number ?? 0).filter(n => n > 0),
             weekIndex: startWeek - 1,
             dayIndex: 0,
         },
@@ -46,10 +59,10 @@ export function WeekGroupPanel({
     const totalTime = useMemo(() => calculateTotalWorkingTimeForWeeks(group), [ group ]);
     const moduleItems = useMemo(() =>
         Object.values(mappings)
-            .filter((x) => group.some((w) => w.number === x.weekIndex + 1))
+            .filter((x) => group.some((weekId) => weeksState[weekId]?.number === x.weekIndex + 1))
             .map((x) => (
                 <ModuleItem dayIndex={ x.dayIndex } key={ x.moduleId } moduleId={ x.moduleId } weekIndex={ x.weekIndex } />
-            )), [ mappings, group ]);
+            )), [ mappings, group, weeksState ]);
 
     return (
         <Box

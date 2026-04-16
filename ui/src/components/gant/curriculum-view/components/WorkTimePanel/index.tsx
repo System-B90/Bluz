@@ -9,29 +9,48 @@ import AddIcon from '@mui/icons-material/Add';
 import { Box, Card, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
 import { useCallback, useState } from 'react';
 
-import { CurriculumWeek } from '@/api-shared/types/gant/curriculum';
+import { CurriculumWeekId } from '@/api-shared/types/gant/curriculum';
 import { OverviewTab } from '@/components/gant/curriculum-view/components/WorkTimePanel/OverviewTab';
 import { WorkTimePanelProps } from '@/components/gant/curriculum-view/components/WorkTimePanel/types';
 import { useWorkTimePanelLogic } from '@/components/gant/curriculum-view/components/WorkTimePanel/UseWorkTimePanelLogic';
 import { cloneWeeks } from '@/components/gant/curriculum-view/components/WorkTimePanel/utils';
+import { useWeekActions } from '@/components/gant/state/hooks/gant-funcs/UseWeekActions';
 
 export function WorkTimePanel({ curriculumId, curriculum }: WorkTimePanelProps)
 {
-    const [ localWeeks, setLocalWeeks ] = useState(() => cloneWeeks(curriculum?.weeks ?? []));
+    const [ localWeekIds, setLocalWeekIds ] = useState<CurriculumWeekId[]>(() => cloneWeeks(curriculum?.weeks ?? []));
+    const { createWeek } = useWeekActions();
 
     const canEdit = Boolean(curriculumId);
-    const curriculumWeeks = curriculum?.weeks ?? [];
-    const logic = useWorkTimePanelLogic(curriculumId, curriculumWeeks, localWeeks, setLocalWeeks);
+    const curriculumWeekIds = curriculum?.weeks ?? [];
+    const logic = useWorkTimePanelLogic(curriculumId, curriculumWeekIds, localWeekIds, setLocalWeekIds);
 
     const addWeek = useCallback(async () =>
     {
-        const nextNumber = (localWeeks[ localWeeks.length - 1 ]?.number ?? 0) + 1;
-        const updatedWeeks: Array<CurriculumWeek> = [
-            ...cloneWeeks(localWeeks),
-            { number: nextNumber, comment: '', days: logic.buildDefaultWeekDays(), closingSaturday: false }
-        ];
-        await logic.persistWeeks(updatedWeeks);
-    }, [ localWeeks, logic ]);
+        if (!curriculumId) return;
+        
+        // Calculate next week number based on existing weeks or start from 1
+        let nextNumber = 1;
+        if (curriculum?.weeks && curriculum.weeks.length > 0)
+        {
+            // Would need to fetch max week number, for now just increment length
+            nextNumber = curriculum.weeks.length + 1;
+        }
+
+        try
+        {
+            await createWeek({
+                curriculumId,
+                number: nextNumber,
+                comment: '',
+                closingSaturday: false,
+            });
+        }
+        catch (error)
+        {
+            console.error('Failed to add week:', error);
+        }
+    }, [ curriculumId, curriculum?.weeks, createWeek ]);
 
     if (!curriculum)
     {
@@ -68,7 +87,7 @@ export function WorkTimePanel({ curriculumId, curriculum }: WorkTimePanelProps)
                 </Tooltip>
             </Box>
 
-            <OverviewTab curriculumId={ curriculumId ?? '' } weeks={ localWeeks } />
+            <OverviewTab curriculumId={ curriculumId ?? '' } weeks={ localWeekIds } />
         </Card>
     );
 }

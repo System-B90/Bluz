@@ -1,67 +1,64 @@
 import { Dispatch, KeyboardEvent, SetStateAction, useCallback } from 'react';
 
-import { CurriculumId, CurriculumWeek } from '@/api-shared/types/gant/curriculum';
+import { CurriculumId, CurriculumWeekId } from '@/api-shared/types/gant/curriculum';
 import { buildDefaultWeekDays } from '@/components/gant/curriculum-view/components/WorkTimePanel/defaults';
 import { cloneWeeks, pickNextDay } from '@/components/gant/curriculum-view/components/WorkTimePanel/utils';
 import { useCurriculumActions } from '@/components/gant/state/hooks/gant-funcs/UseCurriculumActions';
 
 export function useWorkTimePanelLogic(
     curriculumId: CurriculumId | null,
-    curriculumWeeks: CurriculumWeek[],
-    localWeeks: CurriculumWeek[],
-    setLocalWeeks: Dispatch<SetStateAction<CurriculumWeek[]>>
+    curriculumWeekIds: CurriculumWeekId[],
+    localWeekIds: CurriculumWeekId[],
+    setLocalWeekIds: Dispatch<SetStateAction<CurriculumWeekId[]>>
 )
 {
     const { updateCurriculum } = useCurriculumActions();
 
-    const persistWeeks = useCallback(async (updatedWeeks: CurriculumWeek[]) =>
+    const persistWeeks = useCallback(async (updatedWeekIds: CurriculumWeekId[]) =>
     {
         if (!curriculumId) return;
-        setLocalWeeks(updatedWeeks);
-        await updateCurriculum(curriculumId, { weeks: updatedWeeks });
-    }, [ curriculumId, setLocalWeeks, updateCurriculum ]);
+        setLocalWeekIds(updatedWeekIds);
+        await updateCurriculum(curriculumId, { weeks: updatedWeekIds });
+    }, [ curriculumId, setLocalWeekIds, updateCurriculum ]);
 
-    const updateWeeksLocally = useCallback((updater: (weeks: CurriculumWeek[]) => CurriculumWeek[]) =>
+    const updateWeeksLocally = useCallback((updater: (weekIds: CurriculumWeekId[]) => CurriculumWeekId[]) =>
     {
-        setLocalWeeks((prev) => updater(cloneWeeks(prev)));
-    }, [ setLocalWeeks ]);
+        setLocalWeekIds((prev) => updater(cloneWeeks(prev)));
+    }, [ setLocalWeekIds ]);
 
-    const saveDayHours = useCallback(async (weekIndex: number, dayIndex: number) =>
+    const saveDayHours = useCallback(async () =>
     {
-        const original = curriculumWeeks[ weekIndex ]?.days[ dayIndex ]?.totalWorkingHours;
-        const edited = localWeeks[ weekIndex ]?.days[ dayIndex ]?.totalWorkingHours;
-        if (original === undefined || edited === undefined || original === edited) return;
-        await persistWeeks(cloneWeeks(localWeeks));
-    }, [ curriculumWeeks, localWeeks, persistWeeks ]);
+        // With normalized store, changes are tracked separately for each day
+        // This is called when user updates day hours
+        await persistWeeks(cloneWeeks(localWeekIds));
+    }, [ localWeekIds, persistWeeks ]);
 
-    const saveDayComment = useCallback(async (weekIndex: number, dayIndex: number) =>
+    const saveDayComment = useCallback(async () =>
     {
-        const original = curriculumWeeks[ weekIndex ]?.days[ dayIndex ]?.comment ?? '';
-        const edited = localWeeks[ weekIndex ]?.days[ dayIndex ]?.comment ?? '';
-        if (original === edited) return;
-        await persistWeeks(cloneWeeks(localWeeks));
-    }, [ curriculumWeeks, localWeeks, persistWeeks ]);
+        // With normalized store, changes are tracked separately for each day
+        // This is called when user updates day comment
+        await persistWeeks(cloneWeeks(localWeekIds));
+    }, [ localWeekIds, persistWeeks ]);
 
-    const saveWeekComment = useCallback(async (weekIndex: number) =>
+    const saveWeekComment = useCallback(async () =>
     {
-        const original = curriculumWeeks[ weekIndex ]?.comment ?? '';
-        const edited = localWeeks[ weekIndex ]?.comment ?? '';
-        if (original === edited) return;
-        await persistWeeks(cloneWeeks(localWeeks));
-    }, [ curriculumWeeks, localWeeks, persistWeeks ]);
+        // With normalized store, changes are tracked separately for each week
+        // This is called when user updates week comment
+        await persistWeeks(cloneWeeks(localWeekIds));
+    }, [ localWeekIds, persistWeeks ]);
 
-    const onHoursKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>, weekIndex: number, dayIndex: number) =>
+    const onHoursKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) =>
     {
         if (event.key !== 'Enter') return;
         event.preventDefault();
-        void saveDayHours(weekIndex, dayIndex);
+        void saveDayHours();
     }, [ saveDayHours ]);
 
-    const onWeekCommentKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>, weekIndex: number) =>
+    const onWeekCommentKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) =>
     {
         if (event.key !== 'Enter') return;
         event.preventDefault();
-        void saveWeekComment(weekIndex);
+        void saveWeekComment();
     }, [ saveWeekComment ]);
 
     return {

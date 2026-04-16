@@ -1,4 +1,4 @@
-import { CurriculumDay, CurriculumWeek, DayName } from '@/api-shared/types/gant/curriculum';
+import { CurriculumWeekId, DayName } from '@/api-shared/types/gant/curriculum';
 
 const dayOrder: DayName[] = [
     DayName.Sunday,
@@ -10,16 +10,13 @@ const dayOrder: DayName[] = [
     DayName.Saturday,
 ];
 
-export function cloneWeeks(weeks: CurriculumWeek[]): CurriculumWeek[]
+// Clone an array of week IDs (weeks are now stored as IDs in the normalized store)
+export function cloneWeeks(weekIds: CurriculumWeekId[]): CurriculumWeekId[]
 {
-    return weeks.map((week) => ({
-        ...week,
-        days: week.days.map((day) => ({ ...day })),
-    }));
+    return [...weekIds];
 }
 
-export function pickNextDay(days: CurriculumDay[]): DayName | null
+export function pickNextDay(dayNameSet: Set<DayName>): DayName | null
 {
-    const existing = new Set(days.map((day) => day.day));
-    return dayOrder.find((dayName) => !existing.has(dayName)) ?? null;
+    return dayOrder.find((dayName) => !dayNameSet.has(dayName)) ?? null;
 }
