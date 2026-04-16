@@ -43,7 +43,6 @@ export function CurriculumViewBuilderWeeksView({
                 <WeekGroupPanel
                     key={ groupKey }
                     group={ group }
-                    allWeeks={ weeks }
                     onExpandGroup={ () => onGroupClick(index, group[ 0 ].number - 1, group.length) }
                     flexGrow={ animationSelectedGroupIndex === null ? 1 : (animationSelectedGroupIndex === index ? 1 : 0) }
                     flexShrink={ animationSelectedGroupIndex === null ? undefined : (animationSelectedGroupIndex === index ? 0 : 1) }

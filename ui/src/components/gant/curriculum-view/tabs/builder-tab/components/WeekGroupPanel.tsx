@@ -17,13 +17,11 @@ import { useMemo } from "react";
 export interface WeekGroupPanelProps extends BoxProps
 {
     group: Array<CurriculumWeek>;
-    allWeeks: Array<CurriculumWeek>;
     onExpandGroup: () => void;
 }
 
 export default function WeekGroupPanel({
     group,
-    allWeeks,
     onExpandGroup,
     flexShrink,
     ...props
@@ -50,7 +48,7 @@ export default function WeekGroupPanel({
             .filter((x) => group.some((w) => w.number === x.weekIndex + 1))
             .map((x) => (
                 <ModuleItem key={ x.moduleId } moduleId={ x.moduleId } weekIndex={ x.weekIndex } dayIndex={ x.dayIndex } />
-            )), [ mappings, group, allWeeks ]);
+            )), [ mappings, group ]);
 
     return (
         <Box
