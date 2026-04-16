@@ -1,10 +1,11 @@
+import { FindOptions, UpdateOptions, WithId } from "mongodb";
+
 import databaseController from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { ClientApiError } from "@/api-shared/errors";
 import { PRAYER_TIMES_SETTING_KEY } from "@/api-shared/types/settings/prayer";
 import { Setting, SettingName } from "@/api-shared/types/settings/settings";
 import { MessageTypes } from "@/settings";
-import { FindOptions, UpdateOptions, WithId } from "mongodb";
 
 interface DbSetting
 {
@@ -43,7 +44,6 @@ async function initDbSettings()
         'shacharit': new Date(1970, 0, 1, 6, 0, 0, 0)
     } as Setting, { upsert: true });
 }
-
 
 export namespace DbSettings
 {

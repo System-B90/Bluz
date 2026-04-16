@@ -1,4 +1,3 @@
-import { useState } from "react";
 import
 {
     Dialog,
@@ -9,9 +8,10 @@ import
     Box,
     Button,
 } from "@mui/material";
+import { useState } from "react";
 
-import PersonalSection from "./tabs/PersonalSettings";
 import GlobalSection from "./tabs/global/GlobalSettings";
+import PersonalSection from "./tabs/PersonalSettings";
 
 interface SettingsDialogProps
 {

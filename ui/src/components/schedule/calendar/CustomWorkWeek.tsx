@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import
 {
     type DateLocalizer,
@@ -8,10 +9,9 @@ import
 } from 'react-big-calendar';
 
 // @ts-expect-error
+import TimeGrid from 'react-big-calendar/lib/TimeGrid';
 import Week from 'react-big-calendar/lib/Week';
 // @ts-expect-error
-import TimeGrid from 'react-big-calendar/lib/TimeGrid';
-import { ReactNode } from 'react';
 
 /**
  * Range calculator for the work week (Sun–Thu)
@@ -79,7 +79,6 @@ RawCustomWorkWeek.title = (
         'dayRangeHeaderFormat'
     );
 };
-
 
 const CustomWorkWeek: ((props: any) => ReactNode) & ViewStatic & { range: typeof workWeekRange; title: typeof Week.title; navigate: typeof Week.navigate; } = RawCustomWorkWeek;
 export default CustomWorkWeek;

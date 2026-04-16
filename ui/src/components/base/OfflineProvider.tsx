@@ -1,6 +1,4 @@
 'use client';
-import { Event, EventId } from '@/components/schedule/types/event';
-import { deepCopyEvent } from '@/components/schedule/types/EventUtils';
 import
     {
         createContext,
@@ -10,6 +8,9 @@ import
         useContext,
         useState,
     } from 'react';
+
+import { Event, EventId } from '@/components/schedule/types/event';
+import { deepCopyEvent } from '@/components/schedule/types/EventUtils';
 
 export type OfflineContextState = {
     default: boolean;

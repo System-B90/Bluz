@@ -1,12 +1,13 @@
+import LinkIcon from '@mui/icons-material/Link';
+import { Box, BoxProps, CircularProgress, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Tooltip } from "@mui/material";
+import { useSnackbar } from "notistack";
+import { useCallback, useMemo, useState } from "react";
+
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CurriculumId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { useCurriculum } from "@/components/gant/state/hooks";
 import { useSyllabusActions } from "@/components/gant/state/hooks/gant-funcs/UseSyllabusActions";
 import { useSyllabusNames } from "@/components/gant/state/providers/SyllabusNamesProvider";
-import LinkIcon from '@mui/icons-material/Link';
-import { Box, BoxProps, CircularProgress, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Tooltip } from "@mui/material";
-import { useSnackbar } from "notistack";
-import { useCallback, useMemo, useState } from "react";
 
 export interface SyllabusSelectionFieldProps extends BoxProps
 {
@@ -21,7 +22,6 @@ export default function SyllabusSelectionField({ curriculumId, ...props }: Sylla
     const { syllabusNames } = useSyllabusNames();
     const [ currentSyllabusId, setCurrentSyllabusId ] = useState<SyllabusId>("");
     const [ isLinking, setIsLinking ] = useState<boolean>(false);
-
 
     const onChange = useCallback((ev: SelectChangeEvent<SyllabusId>) =>
     {

@@ -1,8 +1,9 @@
 'use client';
-import ThemeSelectorIcon from "@/components/header/ThemeSelector";
+import SettingsIcon from '@mui/icons-material/Settings';
 import { Box, AppBar, Toolbar, Typography, IconButton } from "@mui/material";
 import { ReactNode } from "react";
-import SettingsIcon from '@mui/icons-material/Settings';
+
+import ThemeSelectorIcon from "@/components/header/ThemeSelector";
 
 export default function PreAuthLayout({ children }: { children: ReactNode; })
 {
@@ -15,7 +16,6 @@ export default function PreAuthLayout({ children }: { children: ReactNode; })
                             בלוז
                         </Typography>
                     </Box>
-
 
                     <Box display={ 'flex' } alignItems={ 'center' } justifyContent={ 'flex-end' } alignContent={ 'center' }>
 

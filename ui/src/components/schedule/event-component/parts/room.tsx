@@ -1,9 +1,10 @@
-import { getHiveBaseUrl } from "@/api-shared/common";
-import { useRooms } from "@/components/base/RoomsProvider";
-import { Room, RoomLike, RoomSource } from "@/components/schedule/types/room";
 import WarningIcon from '@mui/icons-material/Warning';
 import { Box, BoxProps, Chip, ChipProps, Link, Stack, Tooltip, Typography } from "@mui/material";
 import { useMemo } from "react";
+
+import { getHiveBaseUrl } from "@/api-shared/common";
+import { useRooms } from "@/components/base/RoomsProvider";
+import { Room, RoomLike, RoomSource } from "@/components/schedule/types/room";
 
 function SingleRoomComponent({ room, occupancy, size, ...props }: { room: Room; occupancy?: number; } & ChipProps)
 {

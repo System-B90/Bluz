@@ -1,14 +1,13 @@
 'use client';
 
-import ScheduleAppBar from '@/components/header/AppBar';
+import { Box } from '@mui/material';
+import { SetStateAction, useCallback, useEffect, useState } from 'react';
+
 import BluzCalendar from '@/components/schedule/calendar/calendar';
 import { makeEvent, useCalendar } from '@/components/schedule/calendar/calendar-provider';
 import EventDialog from '@/components/schedule/event-dialog';
 import PushOfflineUpdatesDialog from '@/components/schedule/offline-dialogs/push-updates-dialog';
-import SettingsDialog from "@/components/settings-dialog/SettingsDialog";
 import { Event, EventId } from "@/components/schedule/types/event";
-import { Box } from '@mui/material';
-import { SetStateAction, useCallback, useEffect, useState } from 'react';
 
 export default function SchedulePage()
 {

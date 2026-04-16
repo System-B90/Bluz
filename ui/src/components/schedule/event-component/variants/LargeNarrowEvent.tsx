@@ -1,12 +1,12 @@
-import { InstructorsList } from "@/components/schedule/event-component/parts/person";
-import RoomComponent from "@/components/schedule/event-component/parts/room";
-import { EventStatusIcons, EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
-import { Event } from "@/components/schedule/types/event";
-import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
 import { Box, Stack, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
-import CourseComponent from "@/components/schedule/event-component/parts/course";
 
+import CourseComponent from "@/components/schedule/event-component/parts/course";
+import { InstructorsList } from "@/components/schedule/event-component/parts/person";
+import RoomComponent from "@/components/schedule/event-component/parts/room";
+import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
+import { EventStatusIcons, EventDurationLabel } from "@/components/schedule/event-component/utils";
+import { Event } from "@/components/schedule/types/event";
 
 export default function LargeNarrowEventComponent({ event: event, ...props }: EventProps<Event>)
 {
@@ -59,7 +59,6 @@ export default function LargeNarrowEventComponent({ event: event, ...props }: Ev
                     paddingBottom={ 0.5 }
                 />
 
-
                 <Box borderBottom={ 2 } paddingBottom={ 0.2 } marginBottom={ 0 } width={ '100%' } hidden={ event.type === 'break' } display={ 'flex' } flexDirection={ 'row' } alignItems={ 'baseline' }>
                     <SubjectComponent fontSize={ '0.8rem' } fontWeight={ 500 } subjectId={ event.subject } />
                     <Box sx={ { width: '0.3rem' } } />
@@ -67,7 +66,6 @@ export default function LargeNarrowEventComponent({ event: event, ...props }: Ev
                         <Box sx={ { width: '0.3rem' } } />
                         <ModuleComponent fontSize={ '0.8rem' } fontWeight={ 400 } moduleId={ event.hiveModule } /></> : undefined }
                 </Box>
-
 
                 <Box width={ '100%' } marginTop={ 0 } paddingTop={ 0 } sx={ { marginTop: '0 !important' } } >
                     <InstructorsList event={ event } width={ '100%' }

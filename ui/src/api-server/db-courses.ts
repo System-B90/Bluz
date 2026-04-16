@@ -1,9 +1,10 @@
+import { FindOptions, UpdateOptions } from "mongodb";
+
 import databaseController from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { ClientApiError } from "@/api-shared/errors";
 import { Course } from "@/api-shared/types/course";
 import { MessageTypes } from "@/settings";
-import { FindOptions, ObjectId, UpdateOptions } from "mongodb";
 
 async function getDbCourses(options?: FindOptions): Promise<Array<Course>>
 {

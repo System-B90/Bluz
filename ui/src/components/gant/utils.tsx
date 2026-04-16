@@ -1,8 +1,5 @@
 import { NormalizedStore } from "@/api-client/gant/drizzle-normalize";
-import { apiGetModule } from "@/api-client/gant/module";
-import { apiGetModuleEvent } from "@/api-client/gant/module-event";
-import { apiGetSyllabus } from "@/api-client/gant/syllabus";
-import { Curriculum, Module, ModuleEvent, Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { Curriculum, Module, ModuleEvent, Syllabus } from "@/api-shared/types/gant/curriculum";
 
 type NumberFieldKeys<T> = {
     [ K in keyof T ]: T[ K ] extends number | undefined | null ? K : never;

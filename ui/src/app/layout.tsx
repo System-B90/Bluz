@@ -1,6 +1,7 @@
 import { MuiEmotionCacheProvider } from "@/components/theme/MuiEmotionCacheProvider";
 import { WebSocketConfigProvider } from "@/components/WebsocketConfigProvider";
 import { WEBSOCKET_PORT_SUFFIX, WEBSOCKET_PROTOCOL } from "@/settings";
+
 import "@/style/globals.css";
 import type { Metadata } from "next";
 

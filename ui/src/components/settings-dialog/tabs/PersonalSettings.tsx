@@ -1,4 +1,3 @@
-import { useState } from "react";
 import
 {
     Box,
@@ -10,6 +9,7 @@ import
     Chip,
     OutlinedInput,
 } from "@mui/material";
+import { useState } from "react";
 
 export default function PersonalSettings()
 {

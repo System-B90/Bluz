@@ -1,9 +1,10 @@
 'use server';
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth/next";
+
 import { authOptions } from "@/api-server/hive/sso";
 import { AuthSessionUser } from "@/api-shared/types/sso";
 import { AuthProvider } from "@/components/auth/AuthProvider";
-import { getServerSession } from "next-auth/next";
-import { redirect } from "next/navigation";
 
 export default async function PostAuthLayout({
     children,

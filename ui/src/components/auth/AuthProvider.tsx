@@ -1,5 +1,6 @@
 'use client';
 
+import { signOut } from "next-auth/react";
 import React, {
     createContext,
     useCallback,
@@ -8,9 +9,9 @@ import React, {
     useRef,
     useMemo
 } from 'react';
-import useSessionWebSocketContext, { MessageHandlerType } from '@/components/SessionWs';
-import { signOut } from "next-auth/react";
+
 import { AuthSessionUser } from '@/api-shared/types/sso';
+import useSessionWebSocketContext, { MessageHandlerType } from '@/components/SessionWs';
 import { MessageTypes } from '@/settings';
 
 export interface WebSocketSessionMessage
@@ -89,7 +90,6 @@ export const AuthProvider = ({ children, userData }: { children: React.ReactNode
     {
         signOut({ callbackUrl: '/login' });
     }, []);
-
 
     const contextValue = useMemo<AuthContextState>(() => ({
         userData,

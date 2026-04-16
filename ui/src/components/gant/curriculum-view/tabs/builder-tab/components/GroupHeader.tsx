@@ -1,6 +1,7 @@
-import { WorkTimeChip } from "@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel";
 import ExpandIcon from '@mui/icons-material/Expand';
 import { Box, BoxProps, IconButton, Typography } from "@mui/material";
+
+import { WorkTimeChip } from "@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel";
 
 export interface GroupHeaderProps extends Omit<BoxProps, 'onClick'>
 {

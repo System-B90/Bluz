@@ -1,6 +1,7 @@
-import { Curriculum } from "@/api-shared/types/gant/curriculum";
 import { ListItem, ListItemButton, ListItemText } from "@mui/material";
 import React from "react";
+
+import { Curriculum } from "@/api-shared/types/gant/curriculum";
 
 interface CurriculumEntryProps
 {

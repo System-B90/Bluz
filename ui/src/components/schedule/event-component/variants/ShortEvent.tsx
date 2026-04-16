@@ -1,13 +1,13 @@
-import { ContainerSize } from "@/components/schedule/event-component/base";
-import { InstructorsList } from "@/components/schedule/event-component/parts/person";
-import RoomComponent from "@/components/schedule/event-component/parts/room";
-import { EventStatusIcons, EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
-import { Event } from "@/components/schedule/types/event";
-import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
 import { Box, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
-import CourseComponent from "@/components/schedule/event-component/parts/course";
 
+import { ContainerSize } from "@/components/schedule/event-component/base";
+import CourseComponent from "@/components/schedule/event-component/parts/course";
+import { InstructorsList } from "@/components/schedule/event-component/parts/person";
+import RoomComponent from "@/components/schedule/event-component/parts/room";
+import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
+import { EventStatusIcons, EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
+import { Event } from "@/components/schedule/types/event";
 
 export default function ShortEventComponent({ event: event, containerSize }: { containerSize: ContainerSize; } & EventProps<Event>)
 {

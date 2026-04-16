@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+
 import { useTheme } from '@/components/theme/ThemeProvider';
 import './theme-selector.css';
 

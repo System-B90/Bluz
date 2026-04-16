@@ -1,6 +1,3 @@
-import { ModuleEventId, ModuleId } from "@/api-shared/types/gant/curriculum";
-import { ModuleEventView } from "@/components/gant/module-dialog/ModuleEventView";
-import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
 import AddIcon from '@mui/icons-material/Add';
 import
 {
@@ -14,6 +11,10 @@ import
     Typography
 } from "@mui/material";
 import { useCallback, useMemo } from "react";
+
+import { ModuleEventId, ModuleId } from "@/api-shared/types/gant/curriculum";
+import { ModuleEventView } from "@/components/gant/module-dialog/ModuleEventView";
+import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
 
 function CreateModuleEventButton({ moduleId }: { moduleId: ModuleId; })
 {

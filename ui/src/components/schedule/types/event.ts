@@ -1,7 +1,7 @@
+import { Dayjs } from "dayjs";
+
 import { CourseId } from "@/api-shared/types/course";
 import { ResolvableRoom } from "@/components/schedule/types/room";
-import { Dayjs } from "dayjs";
-import { ObjectId } from "mongodb";
 
 export enum EventType
 {
@@ -65,7 +65,6 @@ export interface PrayerEvent extends Event
     type: EventType.PRAYER;
     prayerType: PrayerType;
 }
-
 
 export function eventTypeToHebrew(type: Event[ 'type' ]): string
 {

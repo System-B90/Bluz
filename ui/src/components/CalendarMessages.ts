@@ -1,5 +1,6 @@
-import { Event } from "@/components/schedule/types/event";
 import { Messages } from "react-big-calendar";
+
+import { Event } from "@/components/schedule/types/event";
 
 const CALENDAR_MESSAGES: Messages<Event> = {
     date: 'תאריך',

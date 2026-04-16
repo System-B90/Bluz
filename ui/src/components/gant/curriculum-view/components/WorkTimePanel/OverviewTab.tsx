@@ -1,7 +1,8 @@
-import { CurriculumId, CurriculumWeek } from '@/api-shared/types/gant/curriculum';
-import { WeekWorkTimeChip } from '@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel';
 import { Box, Stack, Typography } from '@mui/material';
 import { useMemo } from 'react';
+
+import { CurriculumId, CurriculumWeek } from '@/api-shared/types/gant/curriculum';
+import { WeekWorkTimeChip } from '@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel';
 
 function WeekOverview({ curriculumId, weekIndex, week }: { curriculumId: CurriculumId; weekIndex: number; week: CurriculumWeek; })
 {

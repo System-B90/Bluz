@@ -1,9 +1,10 @@
+import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
+import { useCallback, useState } from "react";
+
 import { CourseId } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
-import { eventHasRoom, Event } from "@/components/schedule/types/event";
-import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
-import { Dispatch, SetStateAction, useCallback, useState } from "react";
+import { eventHasRoom } from "@/components/schedule/types/event";
 
 interface CourseFieldProps extends EventFieldProps { }
 

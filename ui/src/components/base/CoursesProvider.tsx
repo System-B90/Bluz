@@ -1,10 +1,4 @@
 'use client';
-import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { apiAddCourse, apiDeleteCourse, apiGetCourses, apiSetCourse } from '@/api-client/courses';
-import { Course, CourseId } from '@/api-shared/types/course';
-import { useAuth } from '@/components/auth/AuthProvider';
-import { MessageHandlerType } from '@/components/SessionWs';
-import { MessageTypes } from '@/settings';
 import { enqueueSnackbar } from 'notistack';
 import
 {
@@ -16,6 +10,12 @@ import
     useState,
 } from 'react';
 
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
+import { apiAddCourse, apiDeleteCourse, apiGetCourses, apiSetCourse } from '@/api-client/courses';
+import { Course, CourseId } from '@/api-shared/types/course';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { MessageHandlerType } from '@/components/SessionWs';
+import { MessageTypes } from '@/settings';
 
 export type CoursesContextState = {
     default: boolean;
@@ -86,7 +86,6 @@ export const CoursesProvider = ({ children }: { children: React.ReactNode; }) =>
     {
         loadCourses();
     }, [ loadCourses ]);
-
 
     const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, data: any) =>
     {

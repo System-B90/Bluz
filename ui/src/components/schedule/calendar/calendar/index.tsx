@@ -4,9 +4,8 @@ import { DnDCalendar, localizer } from './DndLocalizer';
 
 export { calendarMoment } from './DndLocalizer';
 
-import { Dispatch, SetStateAction, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-
 import dayjs, { Dayjs } from 'dayjs';
+import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
 import 'dayjs/locale/he';
 
 // Import types
@@ -16,18 +15,17 @@ import
     View,
     Views
 } from "react-big-calendar";
-
 import type { CalendarProps, DateRange, NavigateAction } from 'react-big-calendar';
 import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
 import { useRooms } from '@/components/base/RoomsProvider';
 import CALENDAR_MESSAGES from '@/components/CalendarMessages';
 import { makeEvent, useCalendar } from '@/components/schedule/calendar/calendar-provider';
+import CustomWorkWeek from '@/components/schedule/calendar/CustomWorkWeek';
+import { getRangeForView } from '@/components/schedule/calendar/utils';
 import BluzEventComponent from '@/components/schedule/event-component/base';
 import { Event } from "@/components/schedule/types/event";
 import { ResolvableRoom } from "@/components/schedule/types/room";
-import CustomWorkWeek from '@/components/schedule/calendar/CustomWorkWeek';
-import { getRangeForView } from '@/components/schedule/calendar/utils';
 
 export default function BluzCalendar({
     handleSaveEvent,

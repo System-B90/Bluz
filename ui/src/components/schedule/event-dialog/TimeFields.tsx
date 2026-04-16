@@ -1,10 +1,10 @@
 import { Box, BoxProps } from "@mui/material";
-import { Event } from "@/components/schedule/types/event";
 import { TimePicker } from "@mui/x-date-pickers";
+import { PickerValue } from "@mui/x-date-pickers/internals";
 import dayjs, { Dayjs } from "dayjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
-import { PickerValue } from "@mui/x-date-pickers/internals";
 
 interface EventTimeFieldProps extends EventFieldProps { };
 

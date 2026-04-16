@@ -138,7 +138,6 @@ export const moduleEventsRelations = relations(moduleEvents, ({ many }) => ({
     cEC: many(curriculumEventConfigurations), // curriculumConfigs
 }));
 
-
 export const curriculumSyllabusesRelations = relations(curriculumSyllabuses, ({ one }) => ({
     curriculum: one(curriculums, {
         fields: [ curriculumSyllabuses.curriculumId ],

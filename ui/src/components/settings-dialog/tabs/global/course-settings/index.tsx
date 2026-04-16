@@ -1,9 +1,11 @@
+import { Box, Button, ButtonGroup, Typography } from "@mui/material";
+import { useCallback, useRef, useState } from "react";
+
+import { CourseItem } from './CourseItem';
+
 import { Color } from "@/api-shared/common";
 import { Course } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
-import { Box, Button, ButtonGroup, Typography } from "@mui/material";
-import { useCallback, useRef, useState } from "react";
-import { CourseItem } from './CourseItem';
 
 export { CourseItem } from './CourseItem';
 

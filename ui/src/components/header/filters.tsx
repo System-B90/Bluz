@@ -1,11 +1,12 @@
+import ChatIcon from '@mui/icons-material/Chat';
+import DoNotDisturbAltIcon from '@mui/icons-material/DoNotDisturbAlt';
+import SynagogueIcon from '@mui/icons-material/Synagogue';
+import { Box, BoxProps, IconButton, Tooltip } from "@mui/material";
+import { useCallback } from "react";
+
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import FilterCourses from "@/components/header/FilterCourses";
 import FilterInstructors from "@/components/header/FilterInstructor";
-import { Box, BoxProps, IconButton, Tooltip } from "@mui/material";
-import ChatIcon from '@mui/icons-material/Chat';
-import { useCallback } from "react";
-import SynagogueIcon from '@mui/icons-material/Synagogue';
-import DoNotDisturbAltIcon from '@mui/icons-material/DoNotDisturbAlt';
 
 export default function Filters({ ...props }: BoxProps)
 {

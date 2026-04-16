@@ -1,7 +1,4 @@
 'use client';
-import { PotentialPA } from '@/api-shared/types';
-import { CourseId } from '@/api-shared/types/course';
-import { Event, EventType } from '@/components/schedule/types/event';
 import
 {
     createContext,
@@ -11,6 +8,10 @@ import
     useContext,
     useState,
 } from 'react';
+
+import { PotentialPA } from '@/api-shared/types';
+import { CourseId } from '@/api-shared/types/course';
+import { Event, EventType } from '@/components/schedule/types/event';
 
 export type CalendarFiltersContextState = {
     default: boolean;

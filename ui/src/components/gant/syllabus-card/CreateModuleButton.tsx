@@ -1,11 +1,12 @@
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { ModuleEventType, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useModuleActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleActions";
-import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
 import AddIcon from '@mui/icons-material/Add';
 import { CircularProgress, IconButton, Tooltip } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useCallback, useState } from 'react';
+
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { ModuleEventType, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { useModuleActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleActions";
+import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
 
 export function CreateModuleButton({ syllabusId }: { syllabusId: SyllabusId; })
 {

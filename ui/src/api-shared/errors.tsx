@@ -39,7 +39,6 @@ export class ClientApiError extends ClientError
     }
 }
 
-
 export class UserNotLoggedInError extends ClientApiError
 {
     constructor(message?: string)

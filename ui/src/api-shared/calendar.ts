@@ -1,6 +1,7 @@
+import dayjs from "dayjs";
+
 import { DbEventDocument } from "@/api-server/db-event";
 import { Event } from "@/components/schedule/types/event";
-import dayjs from "dayjs";
 
 export function eventDateFixup<T extends Partial<Event | DbEventDocument>>(event: T): T
 {

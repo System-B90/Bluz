@@ -1,10 +1,11 @@
+import { eq } from "drizzle-orm";
+
 import { postgresDb } from "@/api-server/curriculum";
 import { BaseDbDocument, drizzleOperationsBuilder } from "@/api-server/curriculum/db-base"; // Your new Drizzle builder
-import { curriculumEventConfigurations, curriculums, curriculumSyllabuses } from "@/api-server/curriculum/schema";
+import { curriculums, curriculumSyllabuses } from "@/api-server/curriculum/schema";
 import { ClientApiError } from "@/api-shared/errors";
 import { CreateCurriculumPayload } from "@/api-shared/types/gant/create-payloads";
 import { Curriculum, CurriculumId } from "@/api-shared/types/gant/curriculum";
-import { eq } from "drizzle-orm";
 
 const basicOperations = drizzleOperationsBuilder<
     Curriculum,

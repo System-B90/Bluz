@@ -1,9 +1,10 @@
 "use client";
+import { useSnackbar } from "notistack";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { syllabusApi } from "@/api-client/gant/api";
 import { SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useSnackbar } from "notistack";
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 export type SyllabusDictionary = Record<SyllabusId, string>;
 

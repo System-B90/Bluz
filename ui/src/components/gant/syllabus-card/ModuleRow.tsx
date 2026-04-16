@@ -1,12 +1,3 @@
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { moduleApi } from "@/api-client/gant/module";
-import { moduleEventApi } from "@/api-client/gant/module-event";
-import { CurriculumId, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useModule } from '@/components/gant/state/hooks';
-import { useModuleActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleActions";
-import { useCurriculumProviderActions, useCurriculumState } from '@/components/gant/state/provider';
-import OpenHandsIcon from "@/components/gant/syllabus-card/OpenHandsIcon";
-import { calculateAllocatedTimeForModule, calculateMinimumRequiredTimeForModule } from '@/components/gant/utils';
 import EditIcon from '@mui/icons-material/Edit';
 import
 {
@@ -21,6 +12,14 @@ import
 } from '@mui/material';
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from 'react';
+
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { CurriculumId, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { useModule } from '@/components/gant/state/hooks';
+import { useModuleActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleActions";
+import { useCurriculumProviderActions, useCurriculumState } from '@/components/gant/state/provider';
+import OpenHandsIcon from "@/components/gant/syllabus-card/OpenHandsIcon";
+import { calculateAllocatedTimeForModule, calculateMinimumRequiredTimeForModule } from '@/components/gant/utils';
 
 interface AllocatedTimeTableCellProps extends TableCellProps
 {

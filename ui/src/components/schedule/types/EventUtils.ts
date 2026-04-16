@@ -1,6 +1,6 @@
-import { Event } from "@/components/schedule/types/event";
-import dayjs, { Dayjs } from "dayjs";
+import { Dayjs } from "dayjs";
 
+import { Event } from "@/components/schedule/types/event";
 
 export function deepCopyEvent(event: Event): Event
 {

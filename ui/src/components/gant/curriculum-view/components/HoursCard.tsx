@@ -1,3 +1,7 @@
+import { Box, Card, CircularProgress, Stack, Typography, useTheme } from '@mui/material';
+import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge';
+import { useMemo } from 'react';
+
 import { CurriculumDocument } from '@/api-client/gant/curriculum';
 import { useCurriculumState } from '@/components/gant/state/provider';
 import
@@ -5,9 +9,6 @@ import
         calculateAllocatedTimeForCurriculum,
         calculateMinimumRequiredTimeForCurriculum
     } from '@/components/gant/utils';
-import { Box, Card, CircularProgress, Stack, Typography, useTheme } from '@mui/material';
-import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge';
-import { useMemo } from 'react';
 
 export function HoursCard({ curriculum }: { curriculum: CurriculumDocument | undefined; })
 {

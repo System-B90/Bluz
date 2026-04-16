@@ -10,7 +10,6 @@ export const USER_AUTH_COOKIE_NAME = 'auth';
 export const CACHE_CONTROL_HTTP_HEADER = 'Cache-Control';
 export const IMMUTABLE_CACHE_MAX_TTL = SECONDS_IN_A_DAY * DAYS_IN_A_WEEK * 4; // 28 days
 
-
 export function getJwtSecret()
 {
     const jwtSecret = process.env.JWT_SECRET;

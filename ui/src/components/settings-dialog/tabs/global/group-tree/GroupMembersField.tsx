@@ -1,9 +1,10 @@
-import { Box, Stack, Button } from "@mui/material";
+import { DndContext } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { Box, Button, Stack } from "@mui/material";
+
+import { Group } from "@/components/schedule/types/group";
 import { User } from "@/components/schedule/types/user";
 import GroupMemberField from "@/components/settings-dialog/tabs/global/group-tree/MemberField";
-import { Group } from "@/components/schedule/types/group";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { DndContext } from "@dnd-kit/core";
 
 interface GroupMemberFieldProps
 {

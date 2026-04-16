@@ -1,11 +1,11 @@
+import { Divider } from "@mui/material";
+import { Dispatch, SetStateAction, useCallback, useMemo, useState } from "react";
+import { Fragment } from "react/jsx-runtime";
+
 import { CurriculumId, CurriculumWeek } from "@/api-shared/types/gant/curriculum";
 import SyllabusModulesCurriculumViewSidebar from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules";
 import { partitionWeeks } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
 import WeekGroupPanel from "@/components/gant/curriculum-view/tabs/builder-tab/components/WeekGroupPanel";
-import { Divider } from "@mui/material";
-import { Dispatch, SetStateAction, useCallback, useMemo, useState } from "react";
-
-import { Fragment } from "react/jsx-runtime";
 export function CurriculumViewBuilderWeeksView({
     curriculumId,
     weeks,

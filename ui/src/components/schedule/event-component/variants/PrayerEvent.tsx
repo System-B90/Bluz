@@ -1,8 +1,8 @@
-import { EventStatusIcons, EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
-import { PrayerEvent } from "@/components/schedule/types/event";
 import { Box, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
 
+import { EventStatusIcons, EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
+import { PrayerEvent } from "@/components/schedule/types/event";
 
 export default function PrayerEventComponent({ event: event }: EventProps<PrayerEvent>)
 {

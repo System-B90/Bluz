@@ -1,10 +1,11 @@
 // Lot's of Gemini code in this file, quality may be inconsistent. Please review carefully.
-import { Course } from "@/api-shared/types/course";
-import { Color } from "@/api-shared/common";
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Box, Chip, InputBase, Tooltip, Typography } from "@mui/material";
 import { MuiColorInput, MuiColorInputColors, MuiColorInputProps } from 'mui-color-input';
 import { useCallback, useState } from "react";
+
+import { Color } from "@/api-shared/common";
+import { Course } from "@/api-shared/types/course";
 
 export function CourseItem({
     course,

@@ -1,3 +1,6 @@
+import { Box, BoxProps, Stack, Typography } from '@mui/material';
+import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge';
+
 import { SyllabusId } from '@/api-shared/types/gant/curriculum';
 import { useSyllabus } from '@/components/gant/state/hooks';
 import { useCurriculumState } from '@/components/gant/state/provider';
@@ -6,8 +9,6 @@ import
     calculateAllocatedTimeForSyllabus,
     calculateMinimumRequiredTimeForSyllabus
 } from '@/components/gant/utils';
-import { Box, BoxProps, Stack, Typography } from '@mui/material';
-import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge';
 
 export interface HoursBoxProps extends BoxProps
 {

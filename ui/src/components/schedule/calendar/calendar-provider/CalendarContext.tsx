@@ -1,6 +1,5 @@
 'use client';
 
-import { Event, EventId } from '@/components/schedule/types/event';
 import
 {
     createContext,
@@ -8,6 +7,8 @@ import
     SetStateAction,
     useContext,
 } from 'react';
+
+import { Event, EventId } from '@/components/schedule/types/event';
 
 export type CalendarContextState = {
     // State

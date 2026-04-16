@@ -1,19 +1,7 @@
 'use client';
 
-import { apiDeleteEvent, apiGetEvents, apiCreateEvent, apiUpdateEvent } from '@/api-client/calendar';
-import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { eventDateFixup } from '@/api-shared/calendar';
-import { EventAddedOrRemovedMessage, EventDataUpdateMessage } from '@/api-shared/types';
-import { useAuth } from '@/components/auth/AuthProvider';
-import { CalendarFiltersProvider } from '@/components/base/CalendarFilterProvider';
-import { useOffline } from '@/components/base/OfflineProvider';
-import { CalendarContext } from './CalendarContext';
-import { Event, EventId } from '@/components/schedule/types/event';
-import { MessageHandlerType } from '@/components/SessionWs';
-import { MessageTypes } from '@/settings';
 import { useHistoryState } from '@uidotdev/usehooks';
 import dayjs from 'dayjs';
-import 'dayjs/locale/he';
 import { enqueueSnackbar } from 'notistack';
 import
 {
@@ -22,6 +10,21 @@ import
     useRef,
     useState,
 } from 'react';
+
+import { CalendarContext } from './CalendarContext';
+
+import { apiDeleteEvent, apiGetEvents, apiCreateEvent, apiUpdateEvent } from '@/api-client/calendar';
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
+import { eventDateFixup } from '@/api-shared/calendar';
+import { EventAddedOrRemovedMessage, EventDataUpdateMessage } from '@/api-shared/types';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { CalendarFiltersProvider } from '@/components/base/CalendarFilterProvider';
+import { useOffline } from '@/components/base/OfflineProvider';
+import { Event, EventId } from '@/components/schedule/types/event';
+import { MessageHandlerType } from '@/components/SessionWs';
+import { MessageTypes } from '@/settings';
+
+import 'dayjs/locale/he';
 
 export { makeEvent } from './MakeEvent';
 export type { CalendarContextState } from './CalendarContext';

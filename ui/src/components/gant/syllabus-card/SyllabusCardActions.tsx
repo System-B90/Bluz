@@ -1,10 +1,11 @@
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { CurriculumId, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useSyllabusActions } from "@/components/gant/state/hooks/gant-funcs/UseSyllabusActions";
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import { CardActions, CardActionsProps, IconButton, Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
+
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { CurriculumId, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { useSyllabusActions } from "@/components/gant/state/hooks/gant-funcs/UseSyllabusActions";
 
 export interface SyllabusCardActionsProps extends CardActionsProps
 {

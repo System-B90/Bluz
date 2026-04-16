@@ -1,15 +1,12 @@
-import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
+import { Box, Stack, Typography } from "@mui/material";
+import { EventProps } from "react-big-calendar";
+
+import CourseComponent from "@/components/schedule/event-component/parts/course";
 import { InstructorsList } from "@/components/schedule/event-component/parts/person";
 import RoomComponent from "@/components/schedule/event-component/parts/room";
-import { EventStatusIcons, EventDurationLabel, EventTypeIcon, useElementSize } from "@/components/schedule/event-component/utils";
-import TinyEventComponent from "@/components/schedule/event-component/variants/TinyEvent";
-import { getPresentInstructors, Event } from "@/components/schedule/types/event";
 import SubjectComponent, { ModuleComponent } from "@/components/schedule/event-component/parts/subject";
-import { Box, Stack, Typography } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
-import { EventProps } from "react-big-calendar";
-import CourseComponent from "@/components/schedule/event-component/parts/course";
-
+import { EventStatusIcons, EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
+import { Event } from "@/components/schedule/types/event";
 
 export default function MediumEventComponent({ event: event, ...props }: EventProps<Event>)
 {

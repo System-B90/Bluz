@@ -1,7 +1,8 @@
+import { Box, BoxProps, Chip, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
+
 import { CourseId } from "@/api-shared/types/course";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useCourses } from "@/components/base/CoursesProvider";
-import { Box, BoxProps, Chip, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 
 export default function FilterCourses({ ...props }: BoxProps)
 {

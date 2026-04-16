@@ -1,7 +1,4 @@
 'use client';
-import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { apiGetRooms } from '@/api-client/rooms';
-import { CustomRoom, HiveRoom, Room, RoomLike, RoomSource } from '@/components/schedule/types/room';
 import { enqueueSnackbar } from 'notistack';
 import
 {
@@ -13,6 +10,9 @@ import
     useState,
 } from 'react';
 
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
+import { apiGetRooms } from '@/api-client/rooms';
+import { CustomRoom, HiveRoom, Room, RoomLike, RoomSource } from '@/components/schedule/types/room';
 
 export type RoomsContextState = {
     default: boolean;

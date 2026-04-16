@@ -1,5 +1,5 @@
 import { safeApiFetcher } from "@/api-client/common";
-import { Class, ClassTypeEnum, CourseUser } from "@/api-server/hive/types";
+import { Class, CourseUser } from "@/api-server/hive/types";
 import { Module } from "@/components/schedule/types/module";
 import { HiveRoom } from "@/components/schedule/types/room";
 import { Subject } from "@/components/schedule/types/subject";

@@ -5,14 +5,15 @@
  * Author: Michael K. Steinberg
  */
 
-import { CurriculumId } from "@/api-shared/types/gant/curriculum";
-import { SyllabusSection } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/SyllabusSection";
-import { useCurriculum } from "@/components/gant/state/hooks";
-import { useSyllabusNames } from "@/components/gant/state/providers/SyllabusNamesProvider";
 import { useDroppable } from "@dnd-kit/core";
 import { Box, BoxProps, Divider, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import React, { useMemo } from "react";
+
+import { CurriculumId } from "@/api-shared/types/gant/curriculum";
+import { SyllabusSection } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/SyllabusSection";
+import { useCurriculum } from "@/components/gant/state/hooks";
+import { useSyllabusNames } from "@/components/gant/state/providers/SyllabusNamesProvider";
 
 export interface SidebarProps extends BoxProps
 {

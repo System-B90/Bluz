@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+
 import { getHiveBaseUrl } from "@/api-shared/common";
 import { AuthSessionData } from "@/api-shared/types/sso";
 

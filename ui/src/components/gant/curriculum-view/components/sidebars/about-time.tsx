@@ -1,9 +1,10 @@
+import { Box } from "@mui/material";
+
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { CurriculumAboutCard } from "@/components/gant/curriculum-view/components/curriculum-about-card";
 import { HoursCard } from "@/components/gant/curriculum-view/components/HoursCard";
 import { WorkTimePanel } from "@/components/gant/curriculum-view/components/WorkTimePanel";
 import { useCurriculum } from "@/components/gant/state/hooks";
-import { Box } from "@mui/material";
 
 export default function AboutTimeCurriculumViewSidebar({ curriculumId }: { curriculumId: CurriculumId | null; })
 {

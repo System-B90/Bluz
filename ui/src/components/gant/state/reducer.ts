@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 import { BaseDocument } from "@/api-client/gant/base";
 import { NormalizedStore, normalizeCurriculumData } from "@/api-client/gant/drizzle-normalize";
 import { AllocateTimeToEventCallback, allocateTimeToModule } from "@/api-shared/gantt/allocate-time";
@@ -14,7 +16,6 @@ import
         Syllabus,
         SyllabusId
     } from "@/api-shared/types/gant/curriculum";
-import dayjs from "dayjs";
 
 export type Action =
     | { type: 'SET_DATA'; payload: ApiCurriculum; }

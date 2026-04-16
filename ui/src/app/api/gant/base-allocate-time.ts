@@ -5,10 +5,11 @@
  * Author: Michael K. Steinberg
  */
 
+import { NextRequest } from "next/server";
+
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { ClientApiError } from "@/api-shared/errors";
 import { BaseGantItem, CurriculumId, ModuleEventId } from "@/api-shared/types/gant/curriculum";
-import { NextRequest } from "next/server";
 
 export interface BasicGantAllocateTimeOperations<TEntity extends BaseGantItem>
 {

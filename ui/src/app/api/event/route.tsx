@@ -1,11 +1,12 @@
 export const dynamic = "force-dynamic";
 
+import { NextRequest } from "next/server";
+
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import { EventId } from "@/components/schedule/types/event";
-import { NextRequest } from "next/server";
 
 export async function GET(
     request: NextRequest

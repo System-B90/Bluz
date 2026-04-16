@@ -1,8 +1,9 @@
 'use client';
 
+import { Box, TextField } from '@mui/material';
+
 import EventTimeField from "@/components/schedule/event-dialog/TimeFields";
 import { Event } from "@/components/schedule/types/event";
-import { Box, TextField } from '@mui/material';
 
 export function EventPrimaryDetails({ event, onUpdate }: {
     event: Event,

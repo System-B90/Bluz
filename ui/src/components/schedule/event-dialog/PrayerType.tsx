@@ -1,5 +1,6 @@
-import { EventType, Event, PrayerEvent, PrayerType, prayerTypeToHebrew } from "@/components/schedule/types/event";
 import { FormControl, FormControlProps, InputLabel, MenuItem, Select } from "@mui/material";
+
+import { EventType, Event, PrayerEvent, PrayerType, prayerTypeToHebrew } from "@/components/schedule/types/event";
 
 interface PrayerTypeFieldProps
 {

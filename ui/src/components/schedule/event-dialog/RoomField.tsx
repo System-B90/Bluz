@@ -1,9 +1,10 @@
+import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
+import { useCallback, useState } from "react";
+
 import { useRooms } from "@/components/base/RoomsProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { eventHasRoom } from "@/components/schedule/types/event";
 import { areRoomsEqual, ResolvableRoom, roomToKey, roomToResolvable } from "@/components/schedule/types/room";
-import { Box, Chip, FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
-import { useCallback, useState } from "react";
 
 interface RoomFieldProps extends EventFieldProps { };
 

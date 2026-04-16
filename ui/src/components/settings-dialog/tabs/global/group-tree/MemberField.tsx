@@ -1,10 +1,11 @@
-import {Box, Chip, Paper, Stack, Tooltip, Typography} from "@mui/material";
 import {useSortable} from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
-import React from "react";
-import {User} from "@/components/schedule/types/user";
-import {userColors} from "@/components/schedule/types/types";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import {Box, Chip, Paper, Stack, Tooltip, Typography} from "@mui/material";
+import React from "react";
+
+import {userColors} from "@/components/schedule/types/types";
+import {User} from "@/components/schedule/types/user";
 
 interface GroupMemberFieldProps {
     user: User;

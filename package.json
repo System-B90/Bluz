@@ -65,7 +65,7 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
+    "@eslint/js": "^9.39.4",
     "@tailwindcss/postcss": "^4.1.17",
     "@types/node": "^24.12.2",
     "@types/pg": "^8.20.0",
@@ -75,14 +75,18 @@
     "@types/stylis": "^4.2.7",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
-    "eslint": "^9",
+    "eslint": "^9.39.4",
     "eslint-config-next": "^16.1.6",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-mui": "^0.1.1",
+    "eslint-plugin-perfectionist": "^5.8.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.0.0",
     "husky": "^9.0.0",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.51.0"
+    "typescript-eslint": "^8.58.2"
   }
 }

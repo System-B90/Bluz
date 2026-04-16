@@ -1,7 +1,8 @@
-import { useOffline } from "@/components/base/OfflineProvider";
 import WifiTetheringIcon from '@mui/icons-material/WifiTethering';
 import WifiTetheringOffIcon from '@mui/icons-material/WifiTetheringOff';
 import { IconButton, IconButtonProps, Tooltip } from "@mui/material";
+
+import { useOffline } from "@/components/base/OfflineProvider";
 
 export default function OfflineModeIcon({ ...props }: IconButtonProps)
 {

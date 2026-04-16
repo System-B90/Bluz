@@ -5,9 +5,10 @@
  * Author: Michael K. Steinberg
  */
 
+import { and, eq } from "drizzle-orm";
+
 import { postgresDb } from "@/api-server/curriculum";
 import { curriculumModuleDayAssignments } from "@/api-server/curriculum/schema";
-import { and, eq } from "drizzle-orm";
 
 /**
  * 1) Getting mappings for a specific curriculum.

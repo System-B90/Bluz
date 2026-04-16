@@ -1,8 +1,4 @@
 'use client';
-import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { apiGetModules } from '@/api-client/hive';
-import { Module, ModuleLike } from '@/components/schedule/types/module';
-import { SubjectLike } from '@/components/schedule/types/subject';
 import { enqueueSnackbar } from 'notistack';
 import
     {
@@ -14,6 +10,10 @@ import
         useState,
     } from 'react';
 
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
+import { apiGetModules } from '@/api-client/hive';
+import { Module, ModuleLike } from '@/components/schedule/types/module';
+import { SubjectLike } from '@/components/schedule/types/subject';
 
 export type HiveModulesContextState = {
     default: boolean;

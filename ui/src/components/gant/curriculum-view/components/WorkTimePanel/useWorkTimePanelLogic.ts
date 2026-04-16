@@ -1,8 +1,10 @@
-import { CurriculumId, CurriculumWeek } from '@/api-shared/types/gant/curriculum';
-import { useCurriculumActions } from '@/components/gant/state/hooks/gant-funcs/UseCurriculumActions';
 import { Dispatch, KeyboardEvent, SetStateAction, useCallback } from 'react';
+
 import { buildDefaultWeekDays } from './defaults';
 import { cloneWeeks, pickNextDay } from './utils';
+
+import { CurriculumId, CurriculumWeek } from '@/api-shared/types/gant/curriculum';
+import { useCurriculumActions } from '@/components/gant/state/hooks/gant-funcs/UseCurriculumActions';
 
 export function useWorkTimePanelLogic(
     curriculumId: CurriculumId | null,

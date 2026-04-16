@@ -1,15 +1,16 @@
 'use client';
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { curriculumApi } from "@/api-client/gant/curriculum";
-import { ApiCurriculum } from "@/api-shared/types/gant/api-layer"; // Ensure you import this type
-import { CurriculumId } from "@/api-shared/types/gant/curriculum";
-import CurriculumView from "@/components/gant/curriculum-view";
-import CurriculumFab from "@/components/gant/curriculum-fab";
-import { CurriculumProvider } from "@/components/gant/state/provider";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
+
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { curriculumApi } from "@/api-client/gant/curriculum";
+import { ApiCurriculum } from "@/api-shared/types/gant/api-layer"; // Ensure you import this type
+import { CurriculumId } from "@/api-shared/types/gant/curriculum";
+import CurriculumFab from "@/components/gant/curriculum-fab";
+import CurriculumView from "@/components/gant/curriculum-view";
+import { CurriculumProvider } from "@/components/gant/state/provider";
 
 export default function GanttPage()
 {

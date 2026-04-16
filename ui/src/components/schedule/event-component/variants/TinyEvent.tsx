@@ -1,10 +1,10 @@
+import { Box, Typography } from "@mui/material";
+import { EventProps } from "react-big-calendar";
+
 import { InstructorsList } from "@/components/schedule/event-component/parts/person";
 import RoomComponent from "@/components/schedule/event-component/parts/room";
 import { EventStatusIcons, EventDurationLabel } from "@/components/schedule/event-component/utils";
 import { Event } from "@/components/schedule/types/event";
-import { Box, Typography } from "@mui/material";
-import { EventProps } from "react-big-calendar";
-
 
 export default function TinyEventComponent({ event: event }: EventProps<Event>)
 {

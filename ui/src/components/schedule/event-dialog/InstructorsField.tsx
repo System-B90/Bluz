@@ -1,8 +1,9 @@
+import { Box, BoxProps, Chip, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
+import { useCallback, useMemo, useState } from "react";
+
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { EventType } from "@/components/schedule/types/event";
-import { Box, BoxProps, Chip, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
-import { useCallback, useMemo, useState } from "react";
 
 interface InstructorsFieldProps extends EventFieldProps { }
 

@@ -1,7 +1,8 @@
-import { Course, CourseId } from "@/api-shared/types/course";
-import { useCourses } from "@/components/base/CoursesProvider";
 import { Box, BoxProps, Chip, ChipProps, Stack, Typography } from "@mui/material";
 import { useMemo } from "react";
+
+import { Course, CourseId } from "@/api-shared/types/course";
+import { useCourses } from "@/components/base/CoursesProvider";
 
 function SingleCourseComponent({ course, size, ...props }: { course: Course; } & ChipProps)
 {

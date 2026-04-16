@@ -5,6 +5,11 @@
  * Author: Michael K. Steinberg
  */
 
+import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import { Box, Paper, PaperProps, Typography, useTheme } from "@mui/material";
+import { useMemo } from "react";
+
 import { ModuleId } from "@/api-shared/types/gant/curriculum";
 import { hashSyllabusToColor } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
 import { WorkTimeChip } from "@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel";
@@ -12,10 +17,6 @@ import { useModule } from "@/components/gant/state/hooks";
 import { useCurriculumState } from "@/components/gant/state/provider";
 import { useSyllabusNames } from "@/components/gant/state/providers/SyllabusNamesProvider";
 import { calculateMinimumRequiredTimeForModule } from "@/components/gant/utils";
-import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
-import { Box, Paper, PaperProps, Typography, useTheme } from "@mui/material";
-import { useMemo } from "react";
 
 export interface ModuleItemProps extends PaperProps
 {

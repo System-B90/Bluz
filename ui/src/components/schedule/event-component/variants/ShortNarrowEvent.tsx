@@ -1,11 +1,11 @@
-import { ContainerSize } from "@/components/schedule/event-component/base";
-import { InstructorsList } from "@/components/schedule/event-component/parts/person";
-import RoomComponent from "@/components/schedule/event-component/parts/room";
-import { EventDurationLabel, EventTypeIcon } from "@/components/schedule/event-component/utils";
-import { Event } from "@/components/schedule/types/event";
 import { Box, Typography } from "@mui/material";
 import { EventProps } from "react-big-calendar";
 
+import { ContainerSize } from "@/components/schedule/event-component/base";
+import { InstructorsList } from "@/components/schedule/event-component/parts/person";
+import RoomComponent from "@/components/schedule/event-component/parts/room";
+import { EventDurationLabel } from "@/components/schedule/event-component/utils";
+import { Event } from "@/components/schedule/types/event";
 
 export default function ShortNarrowEventComponent({ event: event, containerSize }: { containerSize: ContainerSize; } & EventProps<Event>)
 {

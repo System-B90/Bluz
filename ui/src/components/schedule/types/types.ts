@@ -1,7 +1,5 @@
-import { ScheduleConfig } from "@/components/schedule/types/config";
 import { GroupType } from "@/components/schedule/types/group";
 import { UserType } from "@/components/schedule/types/user";
-
 
 export const groupColors: Record<GroupType, string> = {
     students: '#4caf50',

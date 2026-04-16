@@ -1,9 +1,10 @@
 
+import { getServerSession } from "next-auth";
+
 import { HiveClient } from "@/api-server/hive/client";
 import { authOptions } from "@/api-server/hive/sso";
 import { UserNotLoggedInError } from "@/api-shared/errors";
 import { AuthSessionData } from "@/api-shared/types/sso";
-import { getServerSession } from "next-auth";
 
 export async function createHiveClientFromSession(session: AuthSessionData): Promise<HiveClient>
 {

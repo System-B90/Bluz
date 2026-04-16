@@ -1,9 +1,9 @@
-import InfoIcon from '@mui/icons-material/Info';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import InfoIcon from '@mui/icons-material/Info';
 import { Tooltip, IconButton } from '@mui/material';
 import { Dispatch, SetStateAction, useMemo } from 'react';
-import { useCalendarFilters } from '@/components/base/CalendarFilterProvider';
 
+import { useCalendarFilters } from '@/components/base/CalendarFilterProvider';
 
 export default function FilterIcon({ filtersVisible, setFiltersVisible }: { filtersVisible: boolean, setFiltersVisible: Dispatch<SetStateAction<boolean>>; })
 {

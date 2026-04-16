@@ -1,6 +1,7 @@
-import { CurriculumDay } from '@/api-shared/types/gant/curriculum';
 import { Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { KeyboardEvent } from 'react';
+
+import { CurriculumDay } from '@/api-shared/types/gant/curriculum';
 
 export interface DaysTableProps
 {

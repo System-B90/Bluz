@@ -1,8 +1,9 @@
+import { NextRequest } from "next/server";
+
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { BaseDbDocument } from "@/api-server/curriculum/db-base";
 import { ClientApiError } from "@/api-shared/errors";
 import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
-import { NextRequest } from "next/server";
 
 export interface BasicGantLinkOperations<TEntity extends BaseGantItem>
 {

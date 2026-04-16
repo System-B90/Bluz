@@ -1,4 +1,3 @@
-import { Event, eventTypeToHebrew } from "@/components/schedule/types/event";
 import ChatIcon from '@mui/icons-material/Chat';
 import EmojiFoodBeverageIcon from '@mui/icons-material/EmojiFoodBeverage';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
@@ -6,11 +5,13 @@ import FmdBadIcon from '@mui/icons-material/FmdBad';
 import LockIcon from '@mui/icons-material/Lock';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SchoolIcon from '@mui/icons-material/School';
+import SynagogueIcon from '@mui/icons-material/Synagogue';
 import { Box, BoxProps, Chip, ChipProps, SvgIconProps, Tooltip } from "@mui/material";
 import { Dayjs } from "dayjs";
 import moment from "moment";
 import { ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
-import SynagogueIcon from '@mui/icons-material/Synagogue';
+
+import { Event, eventTypeToHebrew } from "@/components/schedule/types/event";
 
 export function EventTypeIcon({ event, ...props }: { event: Event; } & SvgIconProps)
 {

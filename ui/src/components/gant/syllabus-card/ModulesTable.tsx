@@ -1,6 +1,3 @@
-import { CurriculumId, Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { CreateModuleButton } from "@/components/gant/syllabus-card/CreateModuleButton";
-import { ModuleRow } from "@/components/gant/syllabus-card/ModuleRow";
 import
     {
         Box,
@@ -13,6 +10,10 @@ import
         Typography
     } from '@mui/material';
 import { useMemo } from 'react';
+
+import { CurriculumId, Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { CreateModuleButton } from "@/components/gant/syllabus-card/CreateModuleButton";
+import { ModuleRow } from "@/components/gant/syllabus-card/ModuleRow";
 
 export interface ModulesTableProps
 {

@@ -1,10 +1,11 @@
+import { and, eq } from "drizzle-orm";
+
 import { postgresDb } from "@/api-server/curriculum";
 import { BaseDbDocument, drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } from "@/api-server/curriculum/db-base";
 import { curriculumEventConfigurations, moduleEvents, moduleToEvents } from "@/api-server/curriculum/schema";
 import { ClientApiError } from "@/api-shared/errors";
 import { CreateModuleEventPayload } from "@/api-shared/types/gant/create-payloads";
 import { CurriculumId, ModuleEvent, ModuleEventId, ModuleId } from "@/api-shared/types/gant/curriculum";
-import { and, eq } from "drizzle-orm";
 
 /**
  * Basic CRUD operations for the 'moduleEvents' table.
@@ -73,6 +74,7 @@ async function removeEventFromModule(moduleId: ModuleId, eventId: ModuleEventId)
         throw new ClientApiError(`No mapping found for event ${eventId} in module ${moduleId}`);
     }
 }
+
 /**
  * Retrieves the specific allocated duration for an event within a curriculum context.
  */

@@ -48,7 +48,6 @@ function hashSyllabusToColorByHue(syllabusId: string, themePrimaryColor: string,
     return `hsla(${hueJitter}, 70%, 60%, ${opacity})`;
 }
 
-
 function hashSyllabusToColorByGoldenRatio(syllabusId: string, themePrimaryColor: string, opacity: number): string
 {
     let hash = 0;

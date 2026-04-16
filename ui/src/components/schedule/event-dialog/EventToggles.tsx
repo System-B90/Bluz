@@ -1,7 +1,8 @@
 'use client';
 
-import { Event } from "@/components/schedule/types/event";
 import { Box, FormControlLabel, Switch } from '@mui/material';
+
+import { Event } from "@/components/schedule/types/event";
 
 export function EventToggles({ event, onUpdate }: {
     event: Event,

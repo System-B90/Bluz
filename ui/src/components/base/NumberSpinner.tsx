@@ -1,13 +1,11 @@
-import * as React from 'react';
 import { NumberField as BaseNumberField } from '@base-ui/react/number-field';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
-import FormLabel from '@mui/material/FormLabel';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
 import OutlinedInput from '@mui/material/OutlinedInput';
-import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import * as React from 'react';
 
 export default function NumberSpinner({
     id: idProp,

@@ -1,3 +1,8 @@
+import { Box, Tooltip } from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
+import { useMemo } from "react";
+import { EventProps } from "react-big-calendar";
+
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { useElementSize } from "@/components/schedule/event-component/utils";
@@ -11,10 +16,6 @@ import ShortNarrowEventComponent from "@/components/schedule/event-component/var
 import TinyEventComponent from "@/components/schedule/event-component/variants/TinyEvent";
 import TinyNarrowEventComponent from "@/components/schedule/event-component/variants/TinyNarrowEvent";
 import { Event, EventType, PrayerEvent } from "@/components/schedule/types/event";
-import { Box, Tooltip } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
-import { useMemo } from "react";
-import { EventProps } from "react-big-calendar";
 
 export interface ContainerSize
 {

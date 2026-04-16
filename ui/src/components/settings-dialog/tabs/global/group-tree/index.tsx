@@ -2,6 +2,13 @@
 
 import
 {
+    DndContext,
+} from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from '@dnd-kit/utilities';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import
+{
     Accordion,
     AccordionSummary,
     AccordionDetails,
@@ -9,16 +16,10 @@ import
     Box,
     Button,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import
-{
-    DndContext,
-} from '@dnd-kit/core';
+
 import { Group } from '@/components/schedule/types/group';
-import GroupMembersField from "@/components/settings-dialog/tabs/global/group-tree/GroupMembersField";
 import GroupField from "@/components/settings-dialog/tabs/global/group-tree/GroupField";
-import { CSS } from '@dnd-kit/utilities';
-import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import GroupMembersField from "@/components/settings-dialog/tabs/global/group-tree/GroupMembersField";
 
 function GroupItem({ group }: { group: Group; })
 {

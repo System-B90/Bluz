@@ -1,9 +1,3 @@
-import { Module, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { ModuleEventsView } from "@/components/gant/module-dialog/ModuleEventsView";
-import { HiveModulesView } from "@/components/gant/module-dialog/utils";
-import { useModule } from "@/components/gant/state/hooks";
-import { useModuleActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleActions";
-import { useCurriculumProviderActions } from "@/components/gant/state/provider";
 import
     {
         Box,
@@ -18,6 +12,13 @@ import
         TextField
     } from "@mui/material";
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
+
+import { Module, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { ModuleEventsView } from "@/components/gant/module-dialog/ModuleEventsView";
+import { HiveModulesView } from "@/components/gant/module-dialog/utils";
+import { useModule } from "@/components/gant/state/hooks";
+import { useModuleActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleActions";
+import { useCurriculumProviderActions } from "@/components/gant/state/provider";
 
 export interface ModuleDialogProps extends DialogProps
 {

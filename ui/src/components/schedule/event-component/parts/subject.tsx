@@ -1,13 +1,12 @@
+import { Typography, TypographyProps } from "@mui/material";
+import Link from "next/link";
+import { useMemo } from "react";
+
 import { getHiveBaseUrl } from "@/api-shared/common";
 import { useHiveModules } from "@/components/base/HiveModulesProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { ModuleLike } from "@/components/schedule/types/module";
 import { SubjectLike } from "@/components/schedule/types/subject";
-import { Typography, TypographyProps } from "@mui/material";
-import Link from "next/link";
-import { useMemo } from "react";
-
-
 
 export default function SubjectComponent({ subjectId, ...props }: { subjectId: SubjectLike; } & TypographyProps)
 {

@@ -5,15 +5,16 @@
  * Author: Michael K. Steinberg
  */
 
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Card, CardContent, CardProps, Collapse, IconButton } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { useState } from 'react';
+
 import { CurriculumId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { useSyllabus } from '@/components/gant/state/hooks';
 import { ModulesTable } from "@/components/gant/syllabus-card/ModulesTable";
 import SyllabusCardActions from "@/components/gant/syllabus-card/SyllabusCardActions";
 import SyllabusCardHeader from "@/components/gant/syllabus-card/SyllabusCardHeader";
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Card, CardContent, CardProps, Collapse, IconButton } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { useState } from 'react';
 
 export interface SyllabusCardProps extends Omit<CardProps, 'sx'>
 {

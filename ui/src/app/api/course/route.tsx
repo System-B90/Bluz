@@ -1,10 +1,11 @@
 export const dynamic = "force-dynamic";
 
+import { NextRequest } from "next/server";
+
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { DbCourses } from "@/api-server/db-courses";
 import { ClientApiError } from "@/api-shared/errors";
 import { Course } from "@/api-shared/types/course";
-import { NextRequest } from "next/server";
 
 export async function GET(
     request: NextRequest

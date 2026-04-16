@@ -5,14 +5,15 @@
 * Author: Michael K. Steinberg
 */
 
+import { useDroppable } from "@dnd-kit/core";
+import { Box, BoxProps, Divider } from "@mui/material";
+import { useMemo } from "react";
+
 import { CurriculumWeek } from "@/api-shared/types/gant/curriculum";
 import { useCurriculumMappings } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import GroupHeader from "@/components/gant/curriculum-view/tabs/builder-tab/components/GroupHeader";
 import { ModuleItem } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { calculateTotalWorkingTimeForWeeks } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
-import { useDroppable } from "@dnd-kit/core";
-import { Box, BoxProps, Divider } from "@mui/material";
-import { useMemo } from "react";
 
 export interface WeekGroupPanelProps extends BoxProps
 {

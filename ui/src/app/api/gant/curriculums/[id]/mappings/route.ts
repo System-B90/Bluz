@@ -5,6 +5,8 @@
  * Author: Michael K. Steinberg
  */
 
+import { NextRequest } from "next/server";
+
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import
     {
@@ -14,7 +16,6 @@ import
         updateModuleAssignment
     } from "@/api-server/curriculum/db-mappings";
 import { ClientApiError } from "@/api-shared/errors";
-import { NextRequest } from "next/server";
 
 export interface RouteContext
 {

@@ -5,14 +5,15 @@
  * Author: Michael K. Steinberg
  */
 
+import AddIcon from '@mui/icons-material/Add';
+import { Box, Card, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
+import { useCallback, useState } from 'react';
+
 import { CurriculumWeek } from '@/api-shared/types/gant/curriculum';
 import { OverviewTab } from '@/components/gant/curriculum-view/components/WorkTimePanel/OverviewTab';
 import { WorkTimePanelProps } from '@/components/gant/curriculum-view/components/WorkTimePanel/types';
 import { useWorkTimePanelLogic } from '@/components/gant/curriculum-view/components/WorkTimePanel/useWorkTimePanelLogic';
 import { cloneWeeks } from '@/components/gant/curriculum-view/components/WorkTimePanel/utils';
-import AddIcon from '@mui/icons-material/Add';
-import { Box, Card, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
-import { useCallback, useState } from 'react';
 
 export function WorkTimePanel({ curriculumId, curriculum }: WorkTimePanelProps)
 {

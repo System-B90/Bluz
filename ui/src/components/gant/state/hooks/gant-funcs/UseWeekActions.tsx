@@ -1,8 +1,9 @@
+import { useCallback } from "react";
+
 import { curriculumApi } from "@/api-client/gant/api";
 import { CurriculumDay, CurriculumId, CurriculumWeek } from "@/api-shared/types/gant/curriculum";
 import { withGantErrorHandling } from "@/components/gant/state/hooks/gant-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions, useCurriculumState } from "@/components/gant/state/provider";
-import { useCallback } from "react";
 
 export function useWeekActions()
 {

@@ -1,11 +1,12 @@
+import { Box, ButtonProps } from "@mui/material";
+import { useState } from "react";
+
 import { CurriculumDocument } from "@/api-client/gant/curriculum";
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { CreateDraftAction } from "@/components/gant/curriculum-fab/action-items/CreateDraftAction";
 import { DeleteCurriculumAction } from "@/components/gant/curriculum-fab/action-items/DeleteCurriculumAction";
 import { DuplicateCurriculumAction } from "@/components/gant/curriculum-fab/action-items/DuplicateCurriculumAction";
 import { ToggleDraftAction } from "@/components/gant/curriculum-fab/action-items/ToggleDraftAction";
-import { Box, ButtonProps } from "@mui/material";
-import { useState } from "react";
 
 export interface CreateNewCurriculumProps extends Omit<ButtonProps, 'sx' | 'onClick'>
 {

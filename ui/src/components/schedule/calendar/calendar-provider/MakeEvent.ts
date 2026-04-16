@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+
 import { Event, EventType } from '@/components/schedule/types/event';
 
 export function makeEvent(partial?: Partial<Event>): Event

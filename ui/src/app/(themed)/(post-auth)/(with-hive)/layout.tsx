@@ -1,5 +1,8 @@
 'use client';
 
+import { Box } from '@mui/material';
+import React, { useState } from 'react';
+
 import { CoursesProvider } from '@/components/base/CoursesProvider';
 import { HiveModulesProvider } from '@/components/base/HiveModulesProvider';
 import { HiveSubjectsProvider } from '@/components/base/HiveSubjectsProvider';
@@ -10,8 +13,6 @@ import { SettingsProvider } from '@/components/base/SettingsProvider';
 import ScheduleAppBar from '@/components/header/AppBar';
 import { CalendarProvider } from '@/components/schedule/calendar/calendar-provider';
 import SettingsDialog from '@/components/settings-dialog/SettingsDialog';
-import { Box } from '@mui/material';
-import React, { useState } from 'react';
 
 export default function PostAuthLayout({ children }: { children: React.ReactNode; })
 {

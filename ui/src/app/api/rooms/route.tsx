@@ -1,6 +1,7 @@
+import { NextRequest } from "next/server";
+
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { getAllRooms } from "@/app/api/rooms/utils";
-import { NextRequest } from "next/server";
 
 export async function GET(
     request: NextRequest,

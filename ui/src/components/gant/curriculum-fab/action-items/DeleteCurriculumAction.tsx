@@ -1,12 +1,12 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { useSnackbar } from 'notistack';
+import { useCallback } from 'react';
+
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { curriculumApi } from '@/api-client/gant/curriculum';
 import { CurriculumId } from '@/api-shared/types/gant/curriculum';
-import { CurriculumDocument } from '@/api-client/gant/curriculum';
 import { ActionItemButton } from '@/components/gant/curriculum-fab/action-items/ActionItemButton';
 import { CurriculumAwareActionItemProps } from '@/components/gant/curriculum-fab/action-items/ActionItemProps';
-import { useSnackbar } from 'notistack';
-import { useCallback } from 'react';
 
 export interface DeleteCurriculumActionProps extends CurriculumAwareActionItemProps
 {

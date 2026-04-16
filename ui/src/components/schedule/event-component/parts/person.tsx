@@ -1,9 +1,11 @@
-import { useHiveUsers } from "@/components/base/HiveUsersProvider";
-import { EventType, getPresentInstructors, Event } from "@/components/schedule/types/event";
+import assert from "assert";
+
 import WarningIcon from '@mui/icons-material/Warning';
 import { Box, BoxProps, Chip, ChipProps, Link, Stack, Typography } from "@mui/material";
-import assert from "assert";
 import { useMemo } from "react";
+
+import { useHiveUsers } from "@/components/base/HiveUsersProvider";
+import { EventType, getPresentInstructors, Event } from "@/components/schedule/types/event";
 
 export function PersonChip({ instructorId, personData, event, size, ...props }: { instructorId?: number; personData?: any; event: Event; } & ChipProps)
 {

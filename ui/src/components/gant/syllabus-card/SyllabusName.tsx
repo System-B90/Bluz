@@ -1,8 +1,9 @@
+import { TextField } from '@mui/material';
+import { ChangeEventHandler, useCallback, useState } from 'react';
+
 import { SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { useSyllabus } from '@/components/gant/state/hooks';
 import { useSyllabusActions } from "@/components/gant/state/hooks/gant-funcs/UseSyllabusActions";
-import { TextField } from '@mui/material';
-import { ChangeEventHandler, useCallback, useState } from 'react';
 
 export function SyllabusName({ syllabusId }: { syllabusId: SyllabusId; })
 {

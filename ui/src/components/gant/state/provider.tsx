@@ -1,11 +1,12 @@
 "use client";
 
+import React, { ReactNode, createContext, useCallback, useContext, useMemo, useReducer, useState } from 'react';
+
 import { NormalizedStore, normalizeCurriculumData } from '@/api-client/gant/drizzle-normalize';
 import { ApiCurriculum } from '@/api-shared/types/gant/api-layer';
 import { ModuleId, SyllabusId } from '@/api-shared/types/gant/curriculum';
 import { ModuleDialog } from '@/components/gant/module-dialog';
 import { Action, curriculumReducer } from '@/components/gant/state/reducer';
-import React, { ReactNode, createContext, useCallback, useContext, useMemo, useReducer, useState } from 'react';
 
 export type OpenModuleDialog = (syllabusId: SyllabusId, moduleId: ModuleId) => void;
 export type CloseModuleDialog = () => void;
@@ -131,5 +132,3 @@ export function useCurriculumProviderActions()
     if (!context) throw new Error("useCurriculumProviderActions must be used within a CurriculumProvider");
     return context;
 }
-
-

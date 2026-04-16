@@ -1,7 +1,3 @@
-import { ModuleEvent, ModuleEventId, ModuleEventType, ModuleId } from "@/api-shared/types/gant/curriculum";
-import NumberSpinner from "@/components/base/NumberSpinner";
-import { useEvent } from "@/components/gant/state/hooks";
-import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
 import DeleteIcon from '@mui/icons-material/Delete';
 import
     {
@@ -14,6 +10,11 @@ import
         TextField
     } from "@mui/material";
 import { useCallback, useState } from "react";
+
+import { ModuleEvent, ModuleEventId, ModuleEventType, ModuleId } from "@/api-shared/types/gant/curriculum";
+import NumberSpinner from "@/components/base/NumberSpinner";
+import { useEvent } from "@/components/gant/state/hooks";
+import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
 
 function ModuleEventTitle({ moduleEvent, handleCommit }: { moduleEvent: ModuleEvent | undefined; handleCommit: (updates: Partial<ModuleEvent>) => void; })
 {

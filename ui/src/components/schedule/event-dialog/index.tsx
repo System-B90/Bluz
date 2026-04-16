@@ -1,7 +1,5 @@
 'use client';
 
-import InstructorsField from "@/components/schedule/event-dialog/InstructorsField";
-import { Event, EventId } from "@/components/schedule/types/event";
 import
 {
     Box,
@@ -12,9 +10,13 @@ import
     DialogTitle,
 } from '@mui/material';
 import { FormEvent, useCallback, useState } from "react";
+
 import { EventClassification } from './EventClassification';
 import { EventPrimaryDetails } from './EventPrimaryDetails';
 import { EventToggles } from './EventToggles';
+
+import InstructorsField from "@/components/schedule/event-dialog/InstructorsField";
+import { Event, EventId } from "@/components/schedule/types/event";
 
 interface EventDialogProps
 {

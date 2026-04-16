@@ -1,7 +1,4 @@
 'use client';
-import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { getHiveUsers } from '@/api-client/hive';
-import { Clearance, CourseUser } from '@/api-server/hive/types';
 import { enqueueSnackbar } from 'notistack';
 import
 {
@@ -13,6 +10,9 @@ import
     useState,
 } from 'react';
 
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
+import { getHiveUsers } from '@/api-client/hive';
+import { Clearance, CourseUser } from '@/api-server/hive/types';
 
 export type HiveUsersContextState = {
     default: boolean;
@@ -38,7 +38,6 @@ export const HiveUsersProvider = ({ children }: { children: React.ReactNode; }) 
         const user = users[ id ];
         return user?.clearance >= Clearance.Segel ? user : undefined;
     }, [ users ]);
-
 
     const loadUsers = useCallback(() =>
     {

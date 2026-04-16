@@ -1,4 +1,5 @@
 import { registerOTel } from '@vercel/otel';
+
 import { DbSettings } from '@/api-server/db-settings';
 export function register()
 {

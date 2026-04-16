@@ -42,7 +42,6 @@ export enum ClassTypeEnum
     Student_Group = "Student Group",
 };
 
-
 /**
  * * `Male` - Male
  * `Female` - Female

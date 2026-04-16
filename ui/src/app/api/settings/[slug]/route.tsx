@@ -1,12 +1,13 @@
 export const dynamic = "force-dynamic";
 
+import { NextRequest } from "next/server";
+
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { DbSettings } from "@/api-server/db-settings";
 import { updatePrayerEvents } from "@/api-server/prayer";
 import { inplaceDateFixup } from "@/api-shared/date-fixer";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
 import { Setting, SettingName } from "@/api-shared/types/settings/settings";
-import { NextRequest } from "next/server";
 
 export async function GET(
     request: NextRequest,

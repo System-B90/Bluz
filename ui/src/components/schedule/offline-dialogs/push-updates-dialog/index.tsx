@@ -1,5 +1,7 @@
 'use client';
 
+import assert from 'assert';
+
 import
 {
     Box,
@@ -9,17 +11,17 @@ import
     DialogContent,
     DialogTitle,
 } from '@mui/material';
+import { enqueueSnackbar } from 'notistack';
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+
+import { EventCollisionsList } from './EventCollisionsList';
+import type { CollisionStates, PushOfflineUpdatesDialogProps } from './types';
 
 import { apiGetMultipleEvents } from '@/api-client/calendar';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { useOffline } from '@/components/base/OfflineProvider';
 import { useCalendar } from '@/components/schedule/calendar/calendar-provider';
 import { areEventsEqual } from '@/components/schedule/types/EventUtils';
-import assert from 'assert';
-import { enqueueSnackbar } from 'notistack';
-import { EventCollisionsList } from './EventCollisionsList';
-import type { CollisionStates, PushOfflineUpdatesDialogProps } from './types';
 
 export default function PushOfflineUpdatesDialog({
 

@@ -1,8 +1,9 @@
+import { Box, Card, CardProps, Skeleton, Typography } from '@mui/material';
+
 import { CurriculumDocument } from '@/api-client/gant/curriculum';
 import { CurriculumId } from '@/api-shared/types/gant/curriculum';
 import { CurriculumDescription } from '@/components/gant/curriculum-view/components/curriculum-about-card/CurriculumDescription';
 import { CurriculumName } from '@/components/gant/curriculum-view/components/curriculum-about-card/CurriculumName';
-import { Box, Card, CardProps, Skeleton, Typography } from '@mui/material';
 
 export interface CurriculumCardProps extends Omit<CardProps, 'sx'>
 {

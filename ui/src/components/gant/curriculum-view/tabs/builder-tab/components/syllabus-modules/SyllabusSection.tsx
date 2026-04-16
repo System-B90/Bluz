@@ -1,12 +1,13 @@
+import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import { Box, BoxProps, Stack, Typography, useTheme } from "@mui/material";
+import { useMemo } from "react";
+
 import { SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { useCurriculumMappings } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { ModuleItem } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { hashSyllabusToColor } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
 import { useSyllabus } from "@/components/gant/state/hooks";
-import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
-import { Box, BoxProps, Stack, Typography, useTheme } from "@mui/material";
-import { useMemo } from "react";
 
 export interface SyllabusSectionProps extends BoxProps
 {

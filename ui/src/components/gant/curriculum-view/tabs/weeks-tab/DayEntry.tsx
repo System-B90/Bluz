@@ -5,12 +5,13 @@
  * Author: Michael K. Steinberg
  */
 
-import { CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
-import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
-import { useCurriculumDay } from "@/components/gant/state/hooks/UseCurriculum";
 import { Add, Remove } from "@mui/icons-material";
 import { IconButton, TextField, Typography } from "@mui/material";
 import React, { useCallback, useState } from 'react';
+
+import { CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
+import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
+import { useCurriculumDay } from "@/components/gant/state/hooks/UseCurriculum";
 
 interface DayEntryProps
 {

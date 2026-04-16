@@ -5,12 +5,13 @@
  * Author: Michael K. Steinberg
  */
 
-import { CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
-import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
-import { useCurriculumWeek } from "@/components/gant/state/hooks/UseCurriculum";
 import { EventAvailable, EventBusy } from "@mui/icons-material";
 import { Chip, Tooltip } from "@mui/material";
 import { useCallback } from 'react';
+
+import { CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
+import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
+import { useCurriculumWeek } from "@/components/gant/state/hooks/UseCurriculum";
 
 interface ClosingSaturdayChipProps
 {

@@ -1,6 +1,5 @@
 'use client';
 
-import { Subject } from "@/components/schedule/types/subject";
 import
 {
     Box,
@@ -18,6 +17,8 @@ import
     TextField,
 } from '@mui/material';
 import { useState } from 'react';
+
+import { Subject } from "@/components/schedule/types/subject";
 
 const availableGroups = [ 'Group A', 'Group B', 'Group C' ];
 

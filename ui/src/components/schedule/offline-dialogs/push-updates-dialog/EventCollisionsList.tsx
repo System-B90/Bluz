@@ -1,10 +1,12 @@
 'use client';
 
-import { EventId } from "@/components/schedule/types/event";
 import { Checkbox, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Typography } from '@mui/material';
 import { useCallback, useState } from "react";
+
 import { EventListEntry } from './EventListEntry';
 import type { CollisionStates } from './types';
+
+import { EventId } from "@/components/schedule/types/event";
 
 export function EventCollisionsList({ collisionStates }: { collisionStates: CollisionStates; })
 {

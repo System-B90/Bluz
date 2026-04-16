@@ -1,7 +1,3 @@
-import { CurriculumDocument } from "@/api-client/gant/curriculum";
-import { CurriculumId } from "@/api-shared/types/gant/curriculum";
-import CurriculumListItems from "@/components/gant/curriculum-fab/CurriculumListItems";
-import { fetchDrawerData, sortCurriculumsByDraftAndUpdatedAt } from "@/components/gant/curriculum-fab/utils";
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import
     {
@@ -14,7 +10,13 @@ import
     } from "@mui/material";
 import { useSnackbar } from 'notistack';
 import { Dispatch, MouseEvent, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { CurriculumActionItems } from './CurriculumActionItems';
+
+import { CurriculumDocument } from "@/api-client/gant/curriculum";
+import { CurriculumId } from "@/api-shared/types/gant/curriculum";
+import CurriculumListItems from "@/components/gant/curriculum-fab/CurriculumListItems";
+import { fetchDrawerData, sortCurriculumsByDraftAndUpdatedAt } from "@/components/gant/curriculum-fab/utils";
 
 export interface CurriculumDrawerProps
 {

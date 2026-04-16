@@ -1,6 +1,5 @@
 'use client';
 
-import { createFromPalette } from '@/components/theme/CreateFromPalette';
 import { GlobalStyles } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider as MUIThemeProvider, createTheme } from '@mui/material/styles';
@@ -15,6 +14,8 @@ import
         useState,
         type ReactNode
     } from 'react';
+
+import { createFromPalette } from '@/components/theme/CreateFromPalette';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 

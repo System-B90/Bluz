@@ -1,3 +1,5 @@
+import { Filter, FindOptions } from "mongodb";
+
 import databaseController from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { eventDateFixup } from "@/api-shared/calendar";
@@ -5,7 +7,6 @@ import { ClientApiError } from "@/api-shared/errors";
 import { EventAddedOrRemovedMessage, EventDataUpdateMessage } from "@/api-shared/types";
 import { Event, EventId } from "@/components/schedule/types/event";
 import { MessageTypes } from "@/settings";
-import { Filter, FindOptions } from "mongodb";
 
 // No more ObjectId! We only need this if MongoDB still stores Date objects and you use Dayjs
 export type DbEventDocument = Omit<Event, 'startTime' | 'endTime'> & {

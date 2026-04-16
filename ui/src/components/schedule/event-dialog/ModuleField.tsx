@@ -1,7 +1,8 @@
-import { useHiveModules } from "@/components/base/HiveModulesProvider";
-import { eventHasSubject, Event } from "@/components/schedule/types/event";
 import { FormControl, FormControlProps, InputLabel, MenuItem, Select } from "@mui/material";
 import { useMemo } from "react";
+
+import { useHiveModules } from "@/components/base/HiveModulesProvider";
+import { eventHasSubject, Event } from "@/components/schedule/types/event";
 
 interface ModuleFieldProps
 {

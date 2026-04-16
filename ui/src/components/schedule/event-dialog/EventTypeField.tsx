@@ -1,7 +1,8 @@
 import { FormControl, FormControlProps, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
-import { EventType, Event, eventTypeToHebrew } from "@/components/schedule/types/event";
-import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { useCallback, useState, useRef } from "react";
+
+import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
+import { EventType, eventTypeToHebrew } from "@/components/schedule/types/event";
 
 export interface EventTypeFieldProps extends EventFieldProps { }
 

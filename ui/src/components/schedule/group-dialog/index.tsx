@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import
 {
     Dialog,
@@ -16,8 +15,9 @@ import
     Chip,
     Box,
 } from '@mui/material';
-import { Group } from "@/components/schedule/types/group";
+import { useState } from 'react';
 
+import { Group } from "@/components/schedule/types/group";
 
 interface GroupDialogProps
 {

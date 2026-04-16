@@ -1,9 +1,9 @@
 'use client';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { Tooltip, IconButton } from '@mui/material';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback } from 'react';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 export default function CurriculumIcon()
 {
     const pathname = usePathname();

@@ -5,17 +5,18 @@
  * Author: Michael K. Steinberg
  */
 
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, closestCenter, defaultDropAnimationSideEffects, useSensor, useSensors } from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { Box, BoxProps } from "@mui/material";
+import { useSnackbar } from "notistack";
+import { useCallback, useMemo, useState } from "react";
+
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ModuleId } from "@/api-shared/types/gant/curriculum";
 import { CurriculumMappingProvider, useCurriculumMappings } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { CurriculumViewBuilderWeeksView } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumViewBuilderWeeksView";
 import { ModuleItem } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { useCurriculum } from "@/components/gant/state/hooks";
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, closestCenter, defaultDropAnimationSideEffects, useSensor, useSensors } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { Box, BoxProps } from "@mui/material";
-import { useSnackbar } from "notistack";
-import { useCallback, useMemo, useState } from "react";
 
 export interface CurriculumViewBuilderTabProps extends Omit<BoxProps, 'className'>
 {

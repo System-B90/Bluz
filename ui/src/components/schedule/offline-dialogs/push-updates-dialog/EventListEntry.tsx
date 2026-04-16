@@ -1,7 +1,5 @@
 'use client';
 
-import { Event, EventId } from "@/components/schedule/types/event";
-import { areValuesEqual } from '@/components/schedule/types/EventUtils';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import
@@ -18,7 +16,11 @@ import
     Typography,
 } from '@mui/material';
 import { Fragment, useState } from "react";
+
 import { DeletedItemPlaceholder } from './DeletedItemPlaceholder';
+
+import { Event, EventId } from "@/components/schedule/types/event";
+import { areValuesEqual } from '@/components/schedule/types/EventUtils';
 
 export function EventListEntry({ isItemSelected, handleEntryClick, eventId, localModifiedEvent, serverVersion, capturedVersion, conflicting }: { isItemSelected: boolean, handleEntryClick: (event: React.MouseEvent<HTMLTableRowElement>, entryId: EventId) => void, eventId: EventId, localModifiedEvent: Event | undefined; serverVersion: Event | undefined; capturedVersion: Event | undefined; conflicting: boolean; })
 {

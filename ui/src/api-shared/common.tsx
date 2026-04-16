@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 
 export interface ApiResponseJson
 {
@@ -15,9 +14,7 @@ export function getKeysOfObject<T extends object>(obj: T): Keys<T>[]
 
 export type Color = string;
 
-
 export function getHiveBaseUrl()
 {
     return process.env.NEXT_PUBLIC_HIVE_URL ?? 'https://hive.org';
 }
-

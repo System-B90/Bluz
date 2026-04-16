@@ -1,11 +1,12 @@
-import { CurriculumId } from "@/api-shared/types/gant/curriculum";
-import CurriculumViewBuilderTab from "@/components/gant/curriculum-view/tabs/builder-tab";
-import SyllabusesTab from "@/components/gant/curriculum-view/tabs/syllabuses-tab";
-import WeeksTab from "@/components/gant/curriculum-view/tabs/weeks-tab";
 import KeyboardArrowLeft from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
 import { Box, BoxProps, Tab, Tabs } from "@mui/material";
 import { Dispatch, SetStateAction } from "react";
+
+import { CurriculumId } from "@/api-shared/types/gant/curriculum";
+import CurriculumViewBuilderTab from "@/components/gant/curriculum-view/tabs/builder-tab";
+import SyllabusesTab from "@/components/gant/curriculum-view/tabs/syllabuses-tab";
+import WeeksTab from "@/components/gant/curriculum-view/tabs/weeks-tab";
 
 interface TabProps
 {

@@ -1,7 +1,8 @@
+import { EnqueueSnackbar } from "notistack";
+
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { curriculumApi, CurriculumDocument } from "@/api-client/gant/curriculum";
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
-import { EnqueueSnackbar } from "notistack";
 
 export function sortCurriculumsByDraftAndUpdatedAt(curriculums: Record<CurriculumId, CurriculumDocument>): Array<CurriculumId>
 {

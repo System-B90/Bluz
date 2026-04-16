@@ -1,8 +1,7 @@
+import { Box, BoxProps, Chip, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
+
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
-import { PersonId } from "@/components/schedule/types/event";
-import { Box, BoxProps, Chip, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
-import { useState } from "react";
 
 export default function FilterInstructors({ ...props }: BoxProps)
 {

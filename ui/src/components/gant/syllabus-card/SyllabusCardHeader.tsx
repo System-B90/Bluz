@@ -1,8 +1,9 @@
+import { Box, CardHeader, CardHeaderProps } from "@mui/material";
+
 import { SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { useSyllabus } from "@/components/gant/state/hooks";
 import { HoursBox } from "@/components/gant/syllabus-card/HoursBox";
 import { SyllabusName } from "@/components/gant/syllabus-card/SyllabusName";
-import { Box, CardHeader, CardHeaderProps } from "@mui/material";
 
 export interface SyllabusCardHeaderProps extends Omit<CardHeaderProps, 'title'>
 {

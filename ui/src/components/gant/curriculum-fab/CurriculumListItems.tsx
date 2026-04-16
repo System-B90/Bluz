@@ -1,8 +1,9 @@
+import { ListItem, ListItemButton, Skeleton } from "@mui/material";
+import { Dispatch, SetStateAction } from "react";
+
 import { CurriculumDocument } from "@/api-client/gant/curriculum";
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { CurriculumEntry } from "@/components/gant/curriculum-fab/CurriculumEntry";
-import { ListItem, ListItemButton, Skeleton } from "@mui/material";
-import { Dispatch, SetStateAction } from "react";
 
 export interface CurriculumListItemsProps
 {

@@ -1,3 +1,5 @@
+import { and, asc, eq } from "drizzle-orm";
+
 import { postgresDb } from "@/api-server/curriculum";
 import { BaseDbDocument, drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } from "@/api-server/curriculum/db-base";
 import { curriculumEventConfigurations, modules, moduleToEvents, syllabusModules } from "@/api-server/curriculum/schema";
@@ -5,7 +7,6 @@ import { ClientApiError } from "@/api-shared/errors";
 import { AllocateTimeToEventCallback, allocateTimeToModule, AllocateTimeToModuleCallbackModuleEvents } from "@/api-shared/gantt/allocate-time";
 import { CreateModulePayload } from "@/api-shared/types/gant/create-payloads";
 import { CurriculumId, Module, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { and, asc, eq } from "drizzle-orm";
 
 const basicOperations = drizzleOperationsBuilder<
     Module,
@@ -25,7 +26,6 @@ const basicOperations = drizzleOperationsBuilder<
         type: 'syllabus'
     },
 });
-
 
 async function addModuleToSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): Promise<Module & BaseDbDocument>
 {
@@ -71,6 +71,7 @@ async function removeModuleFromSyllabus(syllabusId: SyllabusId, moduleId: Module
         throw new ClientApiError(`No mapping found for module ${moduleId} in syllabus ${syllabusId}`);
     }
 }
+
 async function setAllocatedTime(
     moduleId: ModuleId,
     curriculumId: CurriculumId,

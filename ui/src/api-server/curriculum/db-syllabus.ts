@@ -1,10 +1,11 @@
+import { and, eq } from "drizzle-orm";
+
 import { postgresDb } from "@/api-server/curriculum";
 import { BaseDbDocument, drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } from "@/api-server/curriculum/db-base";
 import { curriculumSyllabuses, syllabuses, syllabusModules } from "@/api-server/curriculum/schema";
 import { ClientApiError } from "@/api-shared/errors";
 import { CreateSyllabusPayload } from "@/api-shared/types/gant/create-payloads";
 import { CurriculumId, Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { and, eq } from "drizzle-orm";
 
 const basicOperations = drizzleOperationsBuilder<
     Syllabus,
@@ -71,7 +72,6 @@ async function removeSyllabusFromCurriculum(curriculumId: CurriculumId, syllabus
         throw new ClientApiError(`No mapping found for syllabus ${syllabusId} in curriculum ${curriculumId}`);
     }
 }
-
 
 export const DbSyllabus = {
     ...basicOperations,

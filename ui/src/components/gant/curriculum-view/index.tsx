@@ -1,8 +1,9 @@
+import { Box, BoxProps } from '@mui/material';
+import { useState } from 'react';
+
 import { CurriculumId } from '@/api-shared/types/gant/curriculum';
 import CurriculumViewSidebar from '@/components/gant/curriculum-view/components/sidebars';
 import CurriculumViewTabs from '@/components/gant/curriculum-view/tabs';
-import { Box, BoxProps } from '@mui/material';
-import { useState } from 'react';
 
 export interface CurriculumViewProps extends BoxProps
 {

@@ -1,6 +1,7 @@
+import { FormControl, FormControlProps, InputLabel, MenuItem, Select } from "@mui/material";
+
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { eventHasSubject, Event } from "@/components/schedule/types/event";
-import { FormControl, FormControlProps, InputLabel, MenuItem, Select } from "@mui/material";
 
 interface SubjectFieldProps
 {

@@ -1,4 +1,3 @@
-import { useSettings } from '@/components/base/SettingsProvider';
 import BedtimeIcon from '@mui/icons-material/Bedtime';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import WbTwilightIcon from '@mui/icons-material/WbTwilight';
@@ -6,6 +5,8 @@ import { Box, Button, ButtonGroup, Typography } from '@mui/material';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import { useCallback, useState } from 'react';
+
+import { useSettings } from '@/components/base/SettingsProvider';
 
 export default function PrayerSettings()
 {

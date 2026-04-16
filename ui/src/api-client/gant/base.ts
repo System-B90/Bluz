@@ -1,7 +1,8 @@
+import { Dayjs } from "dayjs";
+
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { inplaceDateFixup } from "@/api-shared/date-fixer";
 import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
-import { Dayjs } from "dayjs";
 
 export type BaseDocument = {
     createdAt: Dayjs;

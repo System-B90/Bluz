@@ -1,8 +1,9 @@
 import { useCallback } from "react";
+
 import { syllabusApi } from "@/api-client/gant/api";
 import { CurriculumId, SyllabusId, Syllabus } from "@/api-shared/types/gant/curriculum";
-import { useCurriculumProviderActions } from "@/components/gant/state/provider";
 import { withGantErrorHandling } from "@/components/gant/state/hooks/gant-funcs/WithGantErrorHandling";
+import { useCurriculumProviderActions } from "@/components/gant/state/provider";
 
 export function useSyllabusActions()
 {
