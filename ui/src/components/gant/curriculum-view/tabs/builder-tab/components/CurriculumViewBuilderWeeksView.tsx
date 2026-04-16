@@ -57,7 +57,7 @@ export function CurriculumViewBuilderWeeksView({
                 ) }
             </Fragment>
         );
-    }), [ animationSelectedGroupIndex, groupedWeeks, weeks, onGroupClick ]);
+    }), [ animationSelectedGroupIndex, groupedWeeks, onGroupClick ]);
 
     return (
         <Fragment>
