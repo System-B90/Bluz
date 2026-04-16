@@ -6,4 +6,3 @@ import { syllabusApi } from "@/api-client/gant/syllabus";
 import { weekApi } from "@/api-client/gant/week";
 
 export { curriculumApi, dayApi, moduleApi, moduleEventApi, syllabusApi, weekApi };
-

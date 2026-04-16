@@ -16,7 +16,7 @@ export interface CreateCurriculumPayload extends Omit<Curriculum, 'id' | 'syllab
  * - Omit 'days': A new week starts with an empty array of days.
  * - Add 'curriculumId': The foreign key to link this week to its parent curriculum.
  */
-export interface CreateCurriculumWeekPayload extends Omit<CurriculumWeek, 'id' | 'days'>
+export interface CreateCurriculumWeekPayload extends Omit<CurriculumWeek, 'days' | 'id'>
 {
     curriculumId: CurriculumId;
 }

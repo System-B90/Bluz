@@ -5,4 +5,3 @@ import { buildGantCollectionRoutes } from "@/app/api/gant/base-collection";
 
 const { GET, POST } = buildGantCollectionRoutes({ dbSet: DbDay });
 export { GET, POST };
-

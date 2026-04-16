@@ -3,7 +3,7 @@ import { useCurriculumState } from "@/components/gant/state/provider";
 
 export function useCurriculumWeek(weekId: null): undefined;
 export function useCurriculumWeek(weekId: CurriculumWeekId): (CurriculumWeek & { id: CurriculumWeekId; curriculumId: CurriculumId; }) | undefined;
-export function useCurriculumWeek(weekId: null | CurriculumWeekId): (CurriculumWeek & { id: CurriculumWeekId; curriculumId: CurriculumId; }) | undefined
+export function useCurriculumWeek(weekId: CurriculumWeekId | null): (CurriculumWeek & { id: CurriculumWeekId; curriculumId: CurriculumId; }) | undefined
 {
     const state = useCurriculumState();
 

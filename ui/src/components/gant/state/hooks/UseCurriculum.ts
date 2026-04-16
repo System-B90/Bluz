@@ -15,4 +15,3 @@ export function useCurriculum(curriculumId: CurriculumId | null): CurriculumDocu
 
     return state.curriculums[ curriculumId ];
 }
-

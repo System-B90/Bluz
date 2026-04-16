@@ -37,12 +37,12 @@ export type Action =
     // Removes
     | { type: 'SET_DATA'; payload: ApiCurriculum; }
     | { type: 'UPDATE_CURRICULUM'; payload: { id: CurriculumId; updates: Partial<Curriculum>; }; }
-    | { type: 'UPDATE_EVENT'; payload: { id: ModuleEventId; updates: Partial<ModuleEvent>; }; }
-    | { type: 'UPDATE_WEEK'; payload: { id: CurriculumWeekId; updates: any; }; }
     | { type: 'UPDATE_DAY'; payload: { id: CurriculumDayId; updates: Partial<CurriculumDay>; }; }
-
+    | { type: 'UPDATE_EVENT'; payload: { id: ModuleEventId; updates: Partial<ModuleEvent>; }; }
     | { type: 'UPDATE_MODULE'; payload: { id: ModuleId; updates: Partial<Module>; }; }
-    | { type: 'UPDATE_SYLLABUS'; payload: { id: SyllabusId; updates: Partial<Syllabus>; }; };
+
+    | { type: 'UPDATE_SYLLABUS'; payload: { id: SyllabusId; updates: Partial<Syllabus>; }; }
+    | { type: 'UPDATE_WEEK'; payload: { id: CurriculumWeekId; updates: any; }; };
 
 function injectDocumentTimes<T extends BaseGantItem>(rawDoc: T): T & BaseDocument
 {
