@@ -47,7 +47,7 @@ export default function WeekGroupPanel({
     const totalTime = useMemo(() => calculateTotalWorkingTimeForWeeks(group), [ group ]);
     const moduleItems = useMemo(() =>
         Object.values(mappings)
-            .filter((x) => group.includes(allWeeks[ x.weekIndex ]))
+            .filter((x) => group.some((w) => w.number === x.weekIndex + 1))
             .map((x) => (
                 <ModuleItem key={ x.moduleId } moduleId={ x.moduleId } weekIndex={ x.weekIndex } dayIndex={ x.dayIndex } />
             )), [ mappings, group, allWeeks ]);
