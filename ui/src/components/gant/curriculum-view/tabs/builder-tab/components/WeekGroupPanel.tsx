@@ -58,12 +58,7 @@ export default function WeekGroupPanel({
         <Box
             { ...props }
             ref={ setNodeRef }
-            sx={ {
-                ...sx,
-                transition: (theme) => theme.transitions.create([ 'flex', 'opacity', 'min-width' ], {
-                    duration: theme.transitions.duration.standard,
-                }),
-            } }
+            sx={ sx } // The parent now controls the transition and flex logic entirely
             className={ `
                 flex flex-col p-4 gap-4 border-2 border-transparent
                 ${isOver ? "bg-blue-50/50 border-dashed border-blue-300 scale-[1.01]" : "bg-transparent"}

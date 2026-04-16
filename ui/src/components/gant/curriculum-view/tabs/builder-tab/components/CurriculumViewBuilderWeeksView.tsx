@@ -1,7 +1,7 @@
 /**
  * Name: CurriculumViewBuilderWeeksView.tsx
- * Purpose: Manages the layout and expansion state of week groups.
- * Created: 2026-04-15
+ * Purpose: Manages the layout and expansion state of week groups with fixed collapse.
+ * Created: 2026-04-16
  * Author: Michael K. Steinberg
  */
 
@@ -32,19 +32,22 @@ export function CurriculumViewBuilderWeeksView({
 
     const onGroupClick = useCallback((start: number, length: number, groupKey: string) =>
     {
-        setExpandedGroupId(prev => prev === groupKey ? null : groupKey);
+        // Toggle expansion
+        setExpandedGroupId(prev => (prev === groupKey ? null : groupKey));
         setSelectedWeekGroup({ start, length });
     }, [ setSelectedWeekGroup ]);
 
     return (
-        <Box className="flex flex-row w-full h-full overflow-hidden">
+        <Box className="flex flex-row w-full h-full overflow-hidden items-stretch">
             <SyllabusModulesCurriculumViewSidebar curriculumId={ curriculumId } />
+
             { groupedWeeks.map((group, index) =>
             {
                 const isLast = index === groupedWeeks.length - 1;
                 const groupKey = `group-${group[ 0 ].number}`;
                 const isExpanded = expandedGroupId === groupKey;
-                const isHidden = expandedGroupId !== null && !isExpanded;
+                const isAnyExpanded = expandedGroupId !== null;
+                const isHidden = isAnyExpanded && !isExpanded;
 
                 return (
                     <Fragment key={ groupKey }>
@@ -53,14 +56,20 @@ export function CurriculumViewBuilderWeeksView({
                             allWeeks={ weeks }
                             onExpandGroup={ () => onGroupClick(group[ 0 ].number, group.length, groupKey) }
                             sx={ {
-                                flex: isExpanded ? "10 0 0%" : isHidden ? "0 0 0%" : "1 1 0%",
+                                // If this is expanded, grow to fill. If another is expanded, shrink to 0.
+                                // Otherwise, distribute equally.
+                                flex: isExpanded ? "1 0 100%" : isHidden ? "0 0 0%" : "1 1 0%",
+                                visibility: isHidden ? "hidden" : "visible",
                                 opacity: isHidden ? 0 : 1,
                                 minWidth: isHidden ? 0 : "300px",
-                                pointerEvents: isHidden ? "none" : "auto",
+                                padding: isHidden ? 0 : undefined,
                                 overflow: "hidden",
+                                transition: (theme) => theme.transitions.create([ 'flex', 'opacity', 'min-width', 'padding' ], {
+                                    duration: theme.transitions.duration.standard,
+                                }),
                             } }
                         />
-                        { !isLast && !isHidden && (
+                        { !isLast && !isHidden && !isExpanded && (
                             <Divider
                                 variant="middle"
                                 orientation="vertical"
