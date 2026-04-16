@@ -66,8 +66,8 @@ services:
       context: nginx
       dockerfile: Dockerfile.proxy
     ports:
-      - "80:80"
-      - "443:443"
+      - "127.0.0.3:80:80"
+      - "127.0.0.3:443:443"
     volumes:
       - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
