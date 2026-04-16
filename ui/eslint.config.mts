@@ -1,9 +1,9 @@
 import stylistic from "@stylistic/eslint-plugin";
-import { defineConfig } from "eslint/config";
 import nextConfig from "eslint-config-next/core-web-vitals";
 import importPlugin from "eslint-plugin-import";
 import perfectionist from "eslint-plugin-perfectionist";
 import unusedImports from "eslint-plugin-unused-imports";
+import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig([
@@ -19,7 +19,6 @@ export default defineConfig([
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        // Use projectService for better performance and automatic TSConfig matching
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
@@ -31,7 +30,8 @@ export default defineConfig([
       "eol-last": [ "error", "always" ],
       "no-multiple-empty-lines": [ "error", { max: 1, maxEOF: 0 } ],
 
-      // --- Variables & Imports ---
+      // --- Exports & Imports ---
+      "import/no-default-export": "error", // Prefer named exports
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "unused-imports/no-unused-vars": [
@@ -40,13 +40,11 @@ export default defineConfig([
       ],
       "unused-imports/no-unused-imports": "error",
 
-      // Force Absolute Imports - EXCEPT for Next.js internals
       "no-restricted-imports": [ "error", {
         patterns: [
           {
             group: [ "./*", "../*" ],
             message: "Relative imports are not allowed. Use absolute paths.",
-            // Allow Next.js internal type-safe route files
             allowTypeImports: true
           }
         ]
@@ -58,6 +56,21 @@ export default defineConfig([
           "groups": [ "builtin", "external", "internal", "parent", "sibling", "index" ],
           "newlines-between": "always",
           "alphabetize": { order: "asc", caseInsensitive: true }
+        }
+      ],
+
+      // --- React Hook Ordering ---
+      "perfectionist/sort-react-hooks": [
+        "error",
+        {
+          "groups": [
+            "useContext", // General hooks first
+            "useRef",
+            "useState",
+            "useMemo",
+            "useCallback",
+            "useEffect"
+          ]
         }
       ],
 
@@ -76,7 +89,16 @@ export default defineConfig([
       "object-property-newline": [ "error", { "allowAllPropertiesOnSameLine": true } ],
     },
   },
-  // Disable type-aware linting for config files to prevent TSConfig mismatches
+  // NextJS App Router Exception: Entry points MUST use default exports
+  {
+    files: [
+      "**/app/**/{page,layout,error,not-found,loading,template,default}.tsx",
+      "**/app/**/route.ts"
+    ],
+    rules: {
+      "import/no-default-export": "off",
+    },
+  },
   {
     files: [ "**/*.js", "**/*.mjs", "**/*.mts" ],
     ...tseslint.configs.disableTypeChecked,
