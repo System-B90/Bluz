@@ -1,26 +1,24 @@
 'use client';
 
-import { DnDCalendar, localizer } from './DndLocalizer';
-
-export { calendarMoment } from './DndLocalizer';
-
 import dayjs, { Dayjs } from 'dayjs';
-import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
 import 'dayjs/locale/he';
+import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
 
 // Import types
+import type { CalendarProps, NavigateAction } from 'react-big-calendar';
 import
-{
-    SlotInfo,
-    View,
-    Views
-} from "react-big-calendar";
-import type { CalendarProps, DateRange, NavigateAction } from 'react-big-calendar';
+    {
+        SlotInfo,
+        View,
+        Views
+    } from "react-big-calendar";
 import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
 import { useRooms } from '@/components/base/RoomsProvider';
 import CALENDAR_MESSAGES from '@/components/CalendarMessages';
-import { makeEvent, useCalendar } from '@/components/schedule/calendar/calendar-provider';
+import { DnDCalendar, localizer } from '@/components/schedule/calendar/calendar/DndLocalizer';
+import { useCalendar } from '@/components/schedule/calendar/calendar-provider/CalendarContext';
+import { makeEvent } from '@/components/schedule/calendar/calendar-provider/MakeEvent';
 import CustomWorkWeek from '@/components/schedule/calendar/CustomWorkWeek';
 import { getRangeForView } from '@/components/schedule/calendar/utils';
 import BluzEventComponent from '@/components/schedule/event-component/base';
@@ -115,22 +113,6 @@ export default function BluzCalendar({
         setEndDate(end);
     }, [ setStartDate, setEndDate ]);
 
-    const onRangeChangeHandler: CalendarProps[ 'onRangeChange' ] = useCallback(
-        (range: Date[] | DateRange) =>
-        {
-            if (Array.isArray(range))
-            {
-                setStartDate(range[ 0 ]);
-                setEndDate(range[ range.length - 1 ]);
-            } else
-            {
-                setStartDate(range.start);
-                setEndDate(range.end);
-            }
-        },
-        [ setStartDate, setEndDate ]
-    );
-
     useEffect(() =>
     {
         const today = new Date();
@@ -197,7 +179,7 @@ export default function BluzCalendar({
                 newEnd = originalEnd.add(30, 'minute');
             }
 
-            const { id, ...restCopied } = copiedEvent as any;
+            const { id: _id, ...restCopied } = copiedEvent as any;
 
             const newEvent = {
                 ...restCopied,
@@ -234,7 +216,6 @@ export default function BluzCalendar({
             timeslots={ 12 }
 
             rtl={ true }
-            // localizer={ dayjsLocalizer(dayjs) }
             localizer={ localizer }
             messages={ CALENDAR_MESSAGES }
 
@@ -265,7 +246,6 @@ export default function BluzCalendar({
             onNavigate={ onNavigateHandler }
             resizableAccessor={ (e) => !e.locked }
             draggableAccessor={ (e) => !e.locked }
-            // onRangeChange={ onRangeChangeHandler }
 
             showMultiDayTimes={ false }
             allDayMaxRows={ 0 }

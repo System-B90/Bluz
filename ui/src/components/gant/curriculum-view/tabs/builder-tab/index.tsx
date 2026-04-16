@@ -16,7 +16,7 @@ import { ModuleId } from "@/api-shared/types/gant/curriculum";
 import { CurriculumMappingProvider, useCurriculumMappings } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { CurriculumViewBuilderWeeksView } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumViewBuilderWeeksView";
 import { ModuleItem } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
-import { useCurriculum } from "@/components/gant/state/hooks";
+import { useCurriculum } from '@/components/gant/state/hooks/UseCurriculum';
 
 export interface CurriculumViewBuilderTabProps extends Omit<BoxProps, 'className'>
 {
@@ -111,7 +111,7 @@ function CurriculumViewBuilderTabInner({
             onDragStart={ handleDragStart }
             onDragEnd={ handleDragEnd }
         >
-            <CurriculumViewBuilderWeeksView curriculumId={ curriculumId } weeks={ selectedWeekGroup ?? [] } groupCount={ groupCount } weekIndexStartOffset={ 0 } setSelectedWeekGroup={ setSelectedWeekGroup } />
+            <CurriculumViewBuilderWeeksView curriculumId={ curriculumId } weeks={ selectedWeekGroup ?? [] } groupCount={ groupCount } setSelectedWeekGroup={ setSelectedWeekGroup } />
 
             <DragOverlay dropAnimation={ dropAnimation }>
                 { activeId ? (

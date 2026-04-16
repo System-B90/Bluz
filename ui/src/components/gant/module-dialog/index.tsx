@@ -16,14 +16,13 @@ import { Dispatch, SetStateAction, useCallback, useState } from "react";
 import { Module, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { ModuleEventsView } from "@/components/gant/module-dialog/ModuleEventsView";
 import { HiveModulesView } from "@/components/gant/module-dialog/utils";
-import { useModule } from "@/components/gant/state/hooks";
 import { useModuleActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleActions";
+import { useModule } from "@/components/gant/state/hooks/UseModule";
 import { useCurriculumProviderActions } from "@/components/gant/state/provider";
 
 export interface ModuleDialogProps extends DialogProps
 {
     setOpen: Dispatch<SetStateAction<boolean>>;
-    onSave?: (updated: Module) => void;
     moduleId: ModuleId | null;
     syllabusId: SyllabusId | null;
 }
@@ -31,7 +30,6 @@ export interface ModuleDialogProps extends DialogProps
 export function ModuleDialog({
     open,
     setOpen,
-    onSave,
     syllabusId,
     moduleId,
     ...props

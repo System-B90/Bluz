@@ -13,8 +13,8 @@ import { useCallback, useState } from "react";
 
 import { ModuleEvent, ModuleEventId, ModuleEventType, ModuleId } from "@/api-shared/types/gant/curriculum";
 import NumberSpinner from "@/components/base/NumberSpinner";
-import { useEvent } from "@/components/gant/state/hooks";
 import { useModuleEventActions } from "@/components/gant/state/hooks/gant-funcs/UseModuleEventActions";
+import { useEvent } from '@/components/gant/state/hooks/UseEvent';
 
 function ModuleEventTitle({ moduleEvent, handleCommit }: { moduleEvent: ModuleEvent | undefined; handleCommit: (updates: Partial<ModuleEvent>) => void; })
 {

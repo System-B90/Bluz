@@ -3,9 +3,8 @@
 import { Checkbox, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Typography } from '@mui/material';
 import { useCallback, useState } from "react";
 
-import { EventListEntry } from './EventListEntry';
-import type { CollisionStates } from './types';
-
+import { EventListEntry } from '@/components/schedule/offline-dialogs/push-updates-dialog/EventListEntry';
+import { CollisionStates } from '@/components/schedule/offline-dialogs/push-updates-dialog/types';
 import { EventId } from "@/components/schedule/types/event";
 
 export function EventCollisionsList({ collisionStates }: { collisionStates: CollisionStates; })

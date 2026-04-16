@@ -1,9 +1,9 @@
 import
-{
-    Box
-} from "@mui/material";
+    {
+        Box
+    } from "@mui/material";
 
-export function HiveModulesView({ hiveModules }: { hiveModules: Array<number>; })
+export function HiveModulesView({ hiveModules: _hiveModules }: { hiveModules: Array<number>; })
 {
     // TODO: Implement.
     return (

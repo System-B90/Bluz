@@ -11,7 +11,7 @@ import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { ClientApiError } from "@/api-shared/errors";
 import { BaseGantItem, CurriculumId, ModuleEventId } from "@/api-shared/types/gant/curriculum";
 
-export interface BasicGantAllocateTimeOperations<TEntity extends BaseGantItem>
+export interface BasicGantAllocateTimeOperations<_TEntity extends BaseGantItem>
 {
     getAllocatedTime: (eventId: ModuleEventId, containerId: CurriculumId) => Promise<number>;
     setAllocatedTime: (

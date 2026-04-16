@@ -22,9 +22,9 @@ export interface SyllabusCardProps extends Omit<CardProps, 'sx'>
     syllabusId: SyllabusId;
 }
 
-const ExpandMore = styled((props: { expand: boolean; } & any) =>
+const ExpandMore = styled((props: { _expand: boolean; } & any) =>
 {
-    const { expand, ...other } = props;
+    const { expand: _expand, ...other } = props;
     return <IconButton { ...other } />;
 })(({ theme, expand }) => ({
     transform: !expand ? 'rotate(0deg)' : 'rotate(180deg)',

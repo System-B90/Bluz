@@ -11,13 +11,11 @@ export function CurriculumViewBuilderWeeksView({
     curriculumId,
     weeks,
     groupCount,
-    weekIndexStartOffset,
     setSelectedWeekGroup,
 }: {
     curriculumId: CurriculumId;
     groupCount: number;
     weeks: Array<CurriculumWeek>;
-    weekIndexStartOffset: number;
     setSelectedWeekGroup: Dispatch<SetStateAction<{ start: number; length: number; }>>;
 })
 {

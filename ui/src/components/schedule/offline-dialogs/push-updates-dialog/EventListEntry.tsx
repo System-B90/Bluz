@@ -3,22 +3,21 @@
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import
-{
-    Box,
-    Checkbox,
-    Collapse,
-    IconButton,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    Typography,
-} from '@mui/material';
+    {
+        Box,
+        Checkbox,
+        Collapse,
+        IconButton,
+        Table,
+        TableBody,
+        TableCell,
+        TableHead,
+        TableRow,
+        Typography,
+    } from '@mui/material';
 import { Fragment, useState } from "react";
 
-import { DeletedItemPlaceholder } from './DeletedItemPlaceholder';
-
+import { DeletedItemPlaceholder } from "@/components/schedule/offline-dialogs/push-updates-dialog/DeletedItemPlaceholder";
 import { Event, EventId } from "@/components/schedule/types/event";
 import { areValuesEqual } from '@/components/schedule/types/EventUtils';
 

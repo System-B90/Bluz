@@ -1,17 +1,17 @@
 import
-{
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    Tabs,
-    Tab,
-    Box,
-    Button,
-} from "@mui/material";
+    {
+        Box,
+        Button,
+        Dialog,
+        DialogContent,
+        DialogTitle,
+        Tab,
+        Tabs,
+    } from "@mui/material";
 import { useState } from "react";
 
-import GlobalSection from "./tabs/global/GlobalSettings";
-import PersonalSection from "./tabs/PersonalSettings";
+import GlobalSettings from "@/components/settings-dialog/tabs/global/GlobalSettings";
+import PersonalSettings from "@/components/settings-dialog/tabs/PersonalSettings";
 
 interface SettingsDialogProps
 {
@@ -38,8 +38,8 @@ export default function SettingsDialog({ open, onClose }: SettingsDialogProps)
                 </Tabs>
 
                 <Box>
-                    { tab === 0 && <PersonalSection /> }
-                    { tab === 1 && <GlobalSection /> }
+                    { tab === 0 && <PersonalSettings /> }
+                    { tab === 1 && <GlobalSettings /> }
                 </Box>
 
                 <Box sx={ { mt: 3, display: "flex", justifyContent: "flex-end" } }>

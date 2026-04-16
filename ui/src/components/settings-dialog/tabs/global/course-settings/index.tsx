@@ -1,13 +1,10 @@
 import { Box, Button, ButtonGroup, Typography } from "@mui/material";
 import { useCallback, useRef, useState } from "react";
 
-import { CourseItem } from './CourseItem';
-
 import { Color } from "@/api-shared/common";
 import { Course } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
-
-export { CourseItem } from './CourseItem';
+import { CourseItem } from "@/components/settings-dialog/tabs/global/course-settings/CourseItem";
 
 export default function CourseSettings()
 {

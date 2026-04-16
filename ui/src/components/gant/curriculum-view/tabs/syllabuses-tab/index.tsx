@@ -3,7 +3,7 @@ import { useMemo } from "react";
 
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { SyllabusesActionsBox } from "@/components/gant/curriculum-view/components/syllabuses-actions-box";
-import { useCurriculum } from "@/components/gant/state/hooks";
+import { useCurriculum } from '@/components/gant/state/hooks/UseCurriculum';
 import SyllabusCard from "@/components/gant/syllabus-card";
 
 export default function SyllabusesTab({ curriculumId }: { curriculumId: CurriculumId; })

@@ -74,8 +74,8 @@ async function createDbEvent(eventData: DbEventDocument, options?: FindOptions):
         throw new ClientApiError('Event id is missing! Client must provide a UUID.');
     }
 
-    const fixedEvent = eventDateFixup(eventData);
-    const { id: eventId, ...updatePayload } = fixedEvent;
+    const { id: eventId, ...updatePayload } = eventData;
+    const fixedEvent = eventDateFixup(updatePayload);
 
     await databaseController.events.insertOne(fixedEvent as any, options);
 

@@ -1,17 +1,17 @@
 import { ReactNode } from 'react';
 import
-{
-    type DateLocalizer,
-    type NavigateAction,
-    type ViewStatic,
-    type TimeGridProps,
-    TitleOptions,
-} from 'react-big-calendar';
-
+    {
+        type DateLocalizer,
+        type NavigateAction,
+        type TimeGridProps,
+        TitleOptions,
+        type ViewStatic,
+    } from 'react-big-calendar';
+ 
 // @ts-expect-error
 import TimeGrid from 'react-big-calendar/lib/TimeGrid';
-import Week from 'react-big-calendar/lib/Week';
 // @ts-expect-error
+import Week from 'react-big-calendar/lib/Week';
 
 /**
  * Range calculator for the work week (Sun–Thu)

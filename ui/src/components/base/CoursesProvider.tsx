@@ -1,14 +1,14 @@
 'use client';
 import { enqueueSnackbar } from 'notistack';
 import
-{
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
-} from 'react';
+    {
+        createContext,
+        useCallback,
+        useContext,
+        useEffect,
+        useMemo,
+        useState,
+    } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { apiAddCourse, apiDeleteCourse, apiGetCourses, apiSetCourse } from '@/api-client/courses';
@@ -87,7 +87,7 @@ export const CoursesProvider = ({ children }: { children: React.ReactNode; }) =>
         loadCourses();
     }, [ loadCourses ]);
 
-    const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, data: any) =>
+    const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, _data: any) =>
     {
         if (messageType === MessageTypes.COURSES_UPDATE)
         {

@@ -13,7 +13,7 @@ import { useMemo } from "react";
 import { ModuleId } from "@/api-shared/types/gant/curriculum";
 import { hashSyllabusToColor } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
 import { WorkTimeChip } from "@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel";
-import { useModule } from "@/components/gant/state/hooks";
+import { useModule } from "@/components/gant/state/hooks/UseModule";
 import { useCurriculumState } from "@/components/gant/state/provider";
 import { useSyllabusNames } from "@/components/gant/state/providers/SyllabusNamesProvider";
 import { calculateMinimumRequiredTimeForModule } from "@/components/gant/utils";

@@ -100,7 +100,7 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
             dispatch({ type: 'SET_MAPPINGS', payload: data });
         } catch (e)
         {
-            dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch mappings' });
+            dispatch({ type: 'SET_ERROR', payload: JSON.stringify(e) });
         }
     }, [ dispatch, curriculumId ]);
 
@@ -141,7 +141,7 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
         {
             // Rollback on failure
             dispatch({ type: 'DELETE_MAPPING', payload: { weekIndex, dayIndex, moduleId } });
-            dispatch({ type: 'SET_ERROR', payload: 'Failed to create mapping' });
+            dispatch({ type: 'SET_ERROR', payload: JSON.stringify(e) });
         }
     }, [ dispatch, curriculumId ]);
 
@@ -174,7 +174,7 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
             // Rollback on failure
             dispatch({ type: 'DELETE_MAPPING', payload: { weekIndex: to.w, dayIndex: to.d, moduleId } });
             dispatch({ type: 'UPSERT_MAPPING', payload: originalMapping });
-            dispatch({ type: 'SET_ERROR', payload: 'Move failed. Changes rolled back.' });
+            dispatch({ type: 'SET_ERROR', payload: JSON.stringify(e) });
         }
     }, [ state.mappings, curriculumId, dispatch ]);
 
@@ -184,7 +184,7 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
         try
         {
             await curriculumModuleDayMappingApi.apiDelete(curriculumId, moduleId, weekIndex, dayIndex);
-        } catch (e)
+        } catch (_e)
         {
             refreshMappings(); // Re-sync on failure
         }

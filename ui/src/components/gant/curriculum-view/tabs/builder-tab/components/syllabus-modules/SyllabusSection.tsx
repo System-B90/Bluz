@@ -7,7 +7,7 @@ import { SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { useCurriculumMappings } from "@/components/gant/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { ModuleItem } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { hashSyllabusToColor } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
-import { useSyllabus } from "@/components/gant/state/hooks";
+import { useSyllabus } from "@/components/gant/state/hooks/UseSyllabus";
 
 export interface SyllabusSectionProps extends BoxProps
 {
@@ -55,7 +55,7 @@ export function SyllabusSection({ syllabusId, ...props }: SyllabusSectionProps)
                     variant="overline"
                     className="px-2 font-bold tracking-wider"
                     fontSize='1rem'
-                    fontWeight={700} 
+                    fontWeight={ 700 }
                     color='textPrimary'
                 >
                     { syllabus?.title ?? 'Unnamed Syllabus' }

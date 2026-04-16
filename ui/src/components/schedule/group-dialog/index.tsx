@@ -1,20 +1,20 @@
 'use client';
 
 import
-{
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    Button,
-    Select,
-    InputLabel,
-    FormControl,
-    OutlinedInput,
-    Chip,
-    Box,
-} from '@mui/material';
+    {
+        Box,
+        Button,
+        Chip,
+        Dialog,
+        DialogActions,
+        DialogContent,
+        DialogTitle,
+        FormControl,
+        InputLabel,
+        OutlinedInput,
+        Select,
+        TextField,
+    } from '@mui/material';
 import { useState } from 'react';
 
 import { Group } from "@/components/schedule/types/group";
@@ -27,7 +27,7 @@ interface GroupDialogProps
     onSave: (group: Group) => void;
 }
 
-export default function GroupDialog({ open, group, onClose, onSave }: GroupDialogProps)
+export default function GroupDialog({ open, group: _group, onClose, onSave }: GroupDialogProps)
 {
     const [ name, setName ] = useState('');
     const [ displayName, setDisplayName ] = useState('');

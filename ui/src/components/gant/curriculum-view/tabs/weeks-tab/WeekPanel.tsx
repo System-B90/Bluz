@@ -9,10 +9,9 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Box, Chip, Divider, InputBase, Paper, Stack, Typography } from "@mui/material";
 import { useCallback, useMemo } from 'react';
 
-import { DayEntry } from "./DayEntry";
-
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { ClosingSaturdayChip } from "@/components/gant/curriculum-view/tabs/weeks-tab/ClosingSaturdayChip";
+import { DayEntry } from '@/components/gant/curriculum-view/tabs/weeks-tab/DayEntry';
 import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
 import { useCurriculumWeek } from "@/components/gant/state/hooks/UseCurriculum";
 
@@ -22,7 +21,7 @@ interface WeekPanelProps
     weekIndex: number;
 }
 
-export function WorkTimeChip({ totalHours}: {
+export function WorkTimeChip({ totalHours }: {
     totalHours: number;
 })
 {

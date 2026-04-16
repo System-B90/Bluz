@@ -1,20 +1,19 @@
 'use client';
 
 import
-{
-    Box,
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-} from '@mui/material';
+    {
+        Box,
+        Button,
+        Dialog,
+        DialogActions,
+        DialogContent,
+        DialogTitle,
+    } from '@mui/material';
 import { FormEvent, useCallback, useState } from "react";
 
-import { EventClassification } from './EventClassification';
-import { EventPrimaryDetails } from './EventPrimaryDetails';
-import { EventToggles } from './EventToggles';
-
+import { EventClassification } from '@/components/schedule/event-dialog/EventClassification';
+import { EventPrimaryDetails } from '@/components/schedule/event-dialog/EventPrimaryDetails';
+import { EventToggles } from '@/components/schedule/event-dialog/EventToggles';
 import InstructorsField from "@/components/schedule/event-dialog/InstructorsField";
 import { Event, EventId } from "@/components/schedule/types/event";
 

@@ -5,8 +5,8 @@ import { useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CurriculumId, SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useCurriculum } from "@/components/gant/state/hooks";
 import { useSyllabusActions } from "@/components/gant/state/hooks/gant-funcs/UseSyllabusActions";
+import { useCurriculum } from '@/components/gant/state/hooks/UseCurriculum';
 import { useSyllabusNames } from "@/components/gant/state/providers/SyllabusNamesProvider";
 
 export interface SyllabusSelectionFieldProps extends BoxProps

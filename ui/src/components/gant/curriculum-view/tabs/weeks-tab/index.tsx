@@ -10,7 +10,7 @@ import { useMemo } from 'react';
 
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { WeekPanel } from "@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel";
-import { useCurriculum } from "@/components/gant/state/hooks";
+import { useCurriculum } from '@/components/gant/state/hooks/UseCurriculum';
 
 export default function WeeksTab({ curriculumId }: { curriculumId: CurriculumId; })
 {

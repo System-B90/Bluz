@@ -11,10 +11,9 @@ import
 import { useSnackbar } from 'notistack';
 import { Dispatch, MouseEvent, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { CurriculumActionItems } from './CurriculumActionItems';
-
 import { CurriculumDocument } from "@/api-client/gant/curriculum";
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
+import { CurriculumActionItems } from '@/components/gant/curriculum-fab/CurriculumActionItems';
 import CurriculumListItems from "@/components/gant/curriculum-fab/CurriculumListItems";
 import { fetchDrawerData, sortCurriculumsByDraftAndUpdatedAt } from "@/components/gant/curriculum-fab/utils";
 

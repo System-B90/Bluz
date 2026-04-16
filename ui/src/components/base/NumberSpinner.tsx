@@ -9,13 +9,13 @@ import * as React from 'react';
 
 export default function NumberSpinner({
     id: idProp,
-    label,
+    _label,
     error,
     size = 'medium',
     valueRenderFunction,
     ...other
 }: BaseNumberField.Root.Props & {
-    label?: React.ReactNode;
+    _label?: never;
     size?: 'small' | 'medium';
     error?: boolean;
     valueRenderFunction?: (value: string) => string;

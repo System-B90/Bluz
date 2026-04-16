@@ -3,24 +3,23 @@
 import assert from 'assert';
 
 import
-{
-    Box,
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-} from '@mui/material';
+    {
+        Box,
+        Button,
+        Dialog,
+        DialogActions,
+        DialogContent,
+        DialogTitle,
+    } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-
-import { EventCollisionsList } from './EventCollisionsList';
-import type { CollisionStates, PushOfflineUpdatesDialogProps } from './types';
 
 import { apiGetMultipleEvents } from '@/api-client/calendar';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { useOffline } from '@/components/base/OfflineProvider';
-import { useCalendar } from '@/components/schedule/calendar/calendar-provider';
+import { useCalendar } from '@/components/schedule/calendar/calendar-provider/CalendarContext';
+import { EventCollisionsList } from '@/components/schedule/offline-dialogs/push-updates-dialog/EventCollisionsList';
+import { CollisionStates, PushOfflineUpdatesDialogProps } from '@/components/schedule/offline-dialogs/push-updates-dialog/types';
 import { areEventsEqual } from '@/components/schedule/types/EventUtils';
 
 export default function PushOfflineUpdatesDialog({

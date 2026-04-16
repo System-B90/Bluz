@@ -4,31 +4,26 @@ import { useHistoryState } from '@uidotdev/usehooks';
 import dayjs from 'dayjs';
 import { enqueueSnackbar } from 'notistack';
 import
-{
-    useCallback,
-    useEffect,
-    useRef,
-    useState,
-} from 'react';
+    {
+        useCallback,
+        useEffect,
+        useRef,
+        useState,
+    } from 'react';
 
-import { CalendarContext } from './CalendarContext';
-
-import { apiDeleteEvent, apiGetEvents, apiCreateEvent, apiUpdateEvent } from '@/api-client/calendar';
+import { apiCreateEvent, apiDeleteEvent, apiGetEvents, apiUpdateEvent } from '@/api-client/calendar';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { eventDateFixup } from '@/api-shared/calendar';
 import { EventAddedOrRemovedMessage, EventDataUpdateMessage } from '@/api-shared/types';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { CalendarFiltersProvider } from '@/components/base/CalendarFilterProvider';
 import { useOffline } from '@/components/base/OfflineProvider';
+import { CalendarContext } from '@/components/schedule/calendar/calendar-provider/CalendarContext';
 import { Event, EventId } from '@/components/schedule/types/event';
 import { MessageHandlerType } from '@/components/SessionWs';
 import { MessageTypes } from '@/settings';
 
 import 'dayjs/locale/he';
-
-export { makeEvent } from './MakeEvent';
-export type { CalendarContextState } from './CalendarContext';
-export { useCalendar } from './CalendarContext';
 
 export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =>
 {

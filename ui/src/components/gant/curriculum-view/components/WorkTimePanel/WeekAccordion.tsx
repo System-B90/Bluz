@@ -2,9 +2,8 @@ import AddIcon from '@mui/icons-material/Add';
 import { Box, IconButton, TextField, Tooltip } from '@mui/material';
 import { KeyboardEvent } from 'react';
 
-import { DaysTable } from './DaysTable';
-
 import { CurriculumWeek } from '@/api-shared/types/gant/curriculum';
+import { DaysTable } from '@/components/gant/curriculum-view/components/WorkTimePanel/DaysTable';
 
 export interface WeekAccordionProps
 {

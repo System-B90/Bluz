@@ -1,6 +1,6 @@
 
+import '@/components/header/theme-selector.css';
 import { useTheme } from '@/components/theme/ThemeProvider';
-import './theme-selector.css';
 
 const SunIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b45309" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

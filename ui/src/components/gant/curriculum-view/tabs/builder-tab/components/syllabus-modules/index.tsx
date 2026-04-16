@@ -12,7 +12,7 @@ import React, { useMemo } from "react";
 
 import { CurriculumId } from "@/api-shared/types/gant/curriculum";
 import { SyllabusSection } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules/SyllabusSection";
-import { useCurriculum } from "@/components/gant/state/hooks";
+import { useCurriculum } from '@/components/gant/state/hooks/UseCurriculum';
 import { useSyllabusNames } from "@/components/gant/state/providers/SyllabusNamesProvider";
 
 export interface SidebarProps extends BoxProps

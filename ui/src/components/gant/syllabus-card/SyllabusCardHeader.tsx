@@ -1,7 +1,7 @@
 import { Box, CardHeader, CardHeaderProps } from "@mui/material";
 
 import { SyllabusId } from "@/api-shared/types/gant/curriculum";
-import { useSyllabus } from "@/components/gant/state/hooks";
+import { useSyllabus } from "@/components/gant/state/hooks/UseSyllabus";
 import { HoursBox } from "@/components/gant/syllabus-card/HoursBox";
 import { SyllabusName } from "@/components/gant/syllabus-card/SyllabusName";
 
