@@ -1,6 +1,6 @@
 /**
  * Name: WeekGroupPanel.tsx
- * Purpose: A droppable container for modules with animated expansion and distinct interaction zones.
+ * Purpose: A droppable container with animated expansion and distinct interaction zones.
  * Created: 2026-04-16
  * Author: Michael K. Steinberg
  */
@@ -18,7 +18,7 @@ export interface WeekGroupPanelProps extends BoxProps
 {
     group: Array<CurriculumWeek>;
     allWeeks: Array<CurriculumWeek>;
-    onExpandGroup: () => void; // This acts as the "Select/Focus" callback
+    onExpandGroup: () => void;
 }
 
 export default function WeekGroupPanel({
@@ -56,7 +56,7 @@ export default function WeekGroupPanel({
 
     const handleToggle = (e: React.MouseEvent) =>
     {
-        e.stopPropagation();
+        e.stopPropagation(); // Prevents triggering the selection logic
         setIsExpanded(!isExpanded);
     };
 
@@ -65,8 +65,8 @@ export default function WeekGroupPanel({
             { ...props }
             ref={ setNodeRef }
             className={ `
-                flex flex-col p-4 min-w-85 transition-all duration-300 border-2 rounded-xl
-                ${isOver ? "bg-blue-50 border-blue-400 scale-[1.02] shadow-lg" : "bg-white border-gray-100 hover:border-gray-300 shadow-sm"}
+                flex flex-col p-4 min-w-85 transition-all duration-300 border-2 rounded-lg
+                ${isOver ? "bg-blue-50/50 border-blue-300 scale-[1.01]" : "bg-white border-transparent shadow-sm hover:border-gray-200"}
             `}
         >
             <GroupHeader
@@ -78,12 +78,10 @@ export default function WeekGroupPanel({
                 onSelectGroup={ onExpandGroup }
             />
 
-            <Collapse in={ isExpanded } timeout={ 300 } unmountOnExit>
-                <Box className="mt-4">
-                    <Divider className="mb-4" />
-                    <Box className={ `flex flex-col gap-2 min-h-20 rounded-lg` }>
-                        { moduleItems }
-                    </Box>
+            <Collapse in={ isExpanded } timeout="auto" unmountOnExit>
+                <Divider className="my-2" />
+                <Box className="flex flex-col gap-2 grow min-h-25 py-2">
+                    { moduleItems }
                 </Box>
             </Collapse>
         </Box>
