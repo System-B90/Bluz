@@ -24,7 +24,30 @@ export const curriculums = pgTable('c', {
     title: text('title').notNull(),
     description: text('description').notNull().default(''),
     draft: boolean('draft').notNull().default(true),
-    weeks: jsonb('weeks').$type<any[]>().notNull().default([]),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const curriculumWeeks = pgTable('cW', {
+    id: text('id').primaryKey(),
+    curriculumId: text('curriculum_id')
+        .notNull()
+        .references(() => curriculums.id, { onDelete: 'cascade' }),
+    number: integer('number').notNull(),
+    comment: text('comment').default(''),
+    closingSaturday: boolean('closing_saturday').notNull().default(false),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const curriculumDays = pgTable('cD', {
+    id: text('id').primaryKey(),
+    curriculumWeekId: text('curriculum_week_id')
+        .notNull()
+        .references(() => curriculumWeeks.id, { onDelete: 'cascade' }),
+    day: integer('day').notNull(), // DayName enum value (0-6: Sunday-Saturday)
+    totalWorkingHours: real('total_working_hours').notNull().default(0),
+    comment: text('comment'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -118,9 +141,25 @@ export const moduleToEvents = pgTable('mE', {
 }));
 
 export const curriculumsRelations = relations(curriculums, ({ many }) => ({
+    weeks: many(curriculumWeeks),
     cS: many(curriculumSyllabuses),
     cEC: many(curriculumEventConfigurations), // eventConfigs
     cMDA: many(curriculumModuleDayAssignments),
+}));
+
+export const curriculumWeeksRelations = relations(curriculumWeeks, ({ many, one }) => ({
+    curriculum: one(curriculums, {
+        fields: [ curriculumWeeks.curriculumId ],
+        references: [ curriculums.id ],
+    }),
+    days: many(curriculumDays),
+}));
+
+export const curriculumDaysRelations = relations(curriculumDays, ({ one }) => ({
+    week: one(curriculumWeeks, {
+        fields: [ curriculumDays.curriculumWeekId ],
+        references: [ curriculumWeeks.id ],
+    }),
 }));
 
 export const syllabusesRelations = relations(syllabuses, ({ many }) => ({

@@ -1,26 +1,20 @@
-/**
- * Name: WeekPanel.tsx
- * Purpose: Individual vertical panel for curriculum week data entry with editable comments.
- * Created: 2026-04-14
- * Author: Michael K. Steinberg
- */
-
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Box, Chip, Divider, InputBase, Paper, Stack, Typography } from "@mui/material";
 import { useSnackbar } from 'notistack';
 import { useCallback, useMemo } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { CurriculumId } from "@/api-shared/types/gant/curriculum";
+import { CurriculumDayId, CurriculumId, CurriculumWeekId } from "@/api-shared/types/gant/curriculum";
 import { ClosingSaturdayChip } from "@/components/gant/curriculum-view/tabs/weeks-tab/ClosingSaturdayChip";
 import { DayEntry } from '@/components/gant/curriculum-view/tabs/weeks-tab/DayEntry';
 import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
-import { useCurriculumWeek } from "@/components/gant/state/hooks/UseCurriculum";
+import { useCurriculumWeek } from "@/components/gant/state/hooks/UseCurriculumWeek";
+import { useCurriculumState } from "@/components/gant/state/provider";
 
 interface WeekPanelProps
 {
     curriculumId: CurriculumId;
-    weekIndex: number;
+    weekId: CurriculumWeekId;
 }
 
 export function WorkTimeChip({ totalHours }: {
@@ -44,28 +38,31 @@ export function WorkTimeChip({ totalHours }: {
 }
 
 export function WeekWorkTimeChip({
-    curriculumId,
-    weekIndex,
+    weekId,
 }: {
-    curriculumId: CurriculumId;
-    weekIndex: number;
+    weekId: CurriculumWeekId;
 })
 {
-    const week = useCurriculumWeek(curriculumId, weekIndex);
-
-    const totalHours = useMemo(() =>
-        (week?.days ?? []).reduce((acc, d) => acc + d.totalWorkingHours, 0),
-        [ week?.days ]);
+    const state = useCurriculumState();
+    const week = useCurriculumWeek(weekId);
+    
+    const totalHours = useMemo(() => {
+        if (!week?.days) return 0;
+        return (week.days as CurriculumDayId[]).reduce((acc: number, dayId: CurriculumDayId) => {
+            const day = state.days[dayId];
+            return acc + (day?.totalWorkingHours ?? 0);
+        }, 0);
+    }, [ week?.days, state.days ]);
 
     return (
         <WorkTimeChip totalHours={ totalHours } />
     );
 }
 
-export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
+export function WeekPanel({ curriculumId, weekId }: WeekPanelProps)
 {
     const { enqueueSnackbar } = useSnackbar();
-    const week = useCurriculumWeek(curriculumId, weekIndex);
+    const week = useCurriculumWeek(weekId);
     const { updateWeek } = useWeekActions();
 
     const handleCommentBlur = useCallback((e: React.FocusEvent<HTMLTextAreaElement>) =>
@@ -73,21 +70,19 @@ export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
         const newValue = e.target.value;
         if (newValue !== week?.comment)
         {
-            updateWeek(curriculumId, weekIndex, { comment: newValue })
+            updateWeek(weekId, { comment: newValue })
                 .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת הערה נכשלה!', error));
         }
-    }, [ curriculumId, weekIndex, week?.comment, updateWeek, enqueueSnackbar ]);
+    }, [ weekId, week?.comment, updateWeek, enqueueSnackbar ]);
 
     const renderedDays = useMemo(() =>
-        (week?.days ?? []).map((day, dayIndex) => (
+        (week?.days ?? []).map((dayId: CurriculumDayId) => (
             <DayEntry
-                curriculumId={ curriculumId }
-                dayIndex={ dayIndex }
-                key={ dayIndex }
-                weekIndex={ weekIndex }
+                dayId={ dayId }
+                key={ dayId }
             />
         )),
-        [ curriculumId, weekIndex, week?.days ]);
+        [ week?.days ]);
 
     return (
         <Paper
@@ -120,13 +115,11 @@ export function WeekPanel({ curriculumId, weekIndex }: WeekPanelProps)
 
                 <Box alignItems='flex-end' display='flex' flexDirection='column' gap={ 1 } sx={ { minWidth: 'fit-content' } }>
                     <WeekWorkTimeChip
-                        curriculumId={ curriculumId }
-                        weekIndex={ weekIndex }
+                        weekId={ weekId }
                     />
                     <ClosingSaturdayChip
                         closingSaturday={ week?.closingSaturday ?? false }
-                        curriculumId={ curriculumId }
-                        weekIndex={ weekIndex }
+                        weekId={ weekId }
                     />
                 </Box>
             </Box>

@@ -8,7 +8,10 @@ import
     {
         BaseGantItem,
         Curriculum,
+        CurriculumDay,
+        CurriculumDayId,
         CurriculumId,
+        CurriculumWeekId,
         Module,
         ModuleEvent,
         ModuleEventId,
@@ -35,6 +38,8 @@ export type Action =
     | { type: 'SET_DATA'; payload: ApiCurriculum; }
     | { type: 'UPDATE_CURRICULUM'; payload: { id: CurriculumId; updates: Partial<Curriculum>; }; }
     | { type: 'UPDATE_EVENT'; payload: { id: ModuleEventId; updates: Partial<ModuleEvent>; }; }
+    | { type: 'UPDATE_WEEK'; payload: { id: CurriculumWeekId; updates: any; }; }
+    | { type: 'UPDATE_DAY'; payload: { id: CurriculumDayId; updates: Partial<CurriculumDay>; }; }
 
     | { type: 'UPDATE_MODULE'; payload: { id: ModuleId; updates: Partial<Module>; }; }
     | { type: 'UPDATE_SYLLABUS'; payload: { id: SyllabusId; updates: Partial<Syllabus>; }; };
@@ -94,6 +99,30 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
                 ...state,
                 events: {
                     ...state.events,
+                    [ action.payload.id ]: { ...existing, ...action.payload.updates }
+                }
+            };
+        }
+
+        case 'UPDATE_WEEK': {
+            const existing = state.weeks[ action.payload.id ];
+            if (!existing) return state;
+            return {
+                ...state,
+                weeks: {
+                    ...state.weeks,
+                    [ action.payload.id ]: { ...existing, ...action.payload.updates }
+                }
+            };
+        }
+
+        case 'UPDATE_DAY': {
+            const existing = state.days[ action.payload.id ];
+            if (!existing) return state;
+            return {
+                ...state,
+                days: {
+                    ...state.days,
                     [ action.payload.id ]: { ...existing, ...action.payload.updates }
                 }
             };

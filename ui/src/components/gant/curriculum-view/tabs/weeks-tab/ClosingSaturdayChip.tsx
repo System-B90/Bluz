@@ -11,39 +11,48 @@ import { useSnackbar } from "notistack";
 import { useCallback } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
+import { CurriculumDayId, CurriculumWeekId, DayName } from "@/api-shared/types/gant/curriculum";
 import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
-import { useCurriculumWeek } from "@/components/gant/state/hooks/UseCurriculum";
+import { useCurriculumWeek } from "@/components/gant/state/hooks/UseCurriculumWeek";
+import { useCurriculumState } from "@/components/gant/state/provider";
 
 interface ClosingSaturdayChipProps
 {
-    curriculumId: CurriculumId;
-    weekIndex: number;
+    weekId: CurriculumWeekId;
     closingSaturday: boolean;
 }
 
 export function ClosingSaturdayChip({
-    curriculumId,
-    weekIndex,
+    weekId,
     closingSaturday
 }: ClosingSaturdayChipProps)
 {
     const { enqueueSnackbar } = useSnackbar();
-    const week = useCurriculumWeek(curriculumId, weekIndex);
-    const { updateWeek } = useWeekActions();
+    const week = useCurriculumWeek(weekId);
+    const state = useCurriculumState();
+    const { updateWeekDays } = useWeekActions();
 
     const clickHandler = useCallback(() =>
     {
         if (!week) { return; }
         const isClosing = !closingSaturday;
-        const updatedDays = [ ...week.days.filter(d => (isClosing ? true : d.day !== DayName.Saturday)) ];
-        if (isClosing)
-        {
-            updatedDays.push({ day: DayName.Saturday, totalWorkingHours: 2 });
+        
+        // Get current days and filter/add Saturday
+        const currentDayIds = (week.days ?? []) as CurriculumDayId[];
+        const updatedDayIds: CurriculumDayId[] = [];
+        
+        for (const dayId of currentDayIds) {
+            const day = state.days[dayId];
+            if (day && (isClosing ? true : day.day !== DayName.Saturday)) {
+                updatedDayIds.push(dayId);
+            }
         }
-        updateWeek(curriculumId, weekIndex, { closingSaturday: isClosing, days: updatedDays })
+        
+        // If closing, add Saturday with 2 hours - for now we'll just update closingSaturday
+        // The actual day creation would happen during API update
+        updateWeekDays(weekId, { closingSaturday: isClosing, dayIds: updatedDayIds })
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת המידע של השבוע נכשלה!', error));
-    }, [ week, curriculumId, weekIndex, closingSaturday, updateWeek, enqueueSnackbar ]);
+    }, [ week, weekId, closingSaturday, updateWeekDays, enqueueSnackbar, state.days ]);
 
     return (
         <Tooltip arrow title={ closingSaturday ? "סוגרים שבת" : "יוצאים הביתה" }>

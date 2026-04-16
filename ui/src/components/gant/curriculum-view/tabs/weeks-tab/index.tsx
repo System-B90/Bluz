@@ -8,7 +8,7 @@
 import { Box } from "@mui/material";
 import { useMemo } from 'react';
 
-import { CurriculumId } from "@/api-shared/types/gant/curriculum";
+import { CurriculumId, CurriculumWeekId } from "@/api-shared/types/gant/curriculum";
 import { WeekPanel } from "@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useCurriculum } from '@/components/gant/state/hooks/UseCurriculum';
 
@@ -17,11 +17,11 @@ export function WeeksTab({ curriculumId }: { curriculumId: CurriculumId; })
     const curriculum = useCurriculum(curriculumId ?? '');
 
     const renderedPanels = useMemo(() =>
-        (curriculum?.weeks || []).map((week, index) => (
+        (curriculum?.weeks || []).map((weekId: CurriculumWeekId) => (
             <WeekPanel
                 curriculumId={ curriculumId }
-                key={ week.number }
-                weekIndex={ index }
+                key={ weekId }
+                weekId={ weekId }
             />
         )),
         [ curriculum?.weeks, curriculumId ]);

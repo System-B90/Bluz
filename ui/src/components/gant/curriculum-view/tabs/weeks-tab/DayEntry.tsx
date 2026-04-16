@@ -11,15 +11,13 @@ import { useSnackbar } from "notistack";
 import React, { useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { CurriculumId, DayName } from "@/api-shared/types/gant/curriculum";
+import { CurriculumDayId, DayName, getDayNameDisplay } from "@/api-shared/types/gant/curriculum";
 import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
-import { useCurriculumDay } from "@/components/gant/state/hooks/UseCurriculum";
+import { useCurriculumDay } from "@/components/gant/state/hooks/UseCurriculumDay";
 
 interface DayEntryProps
 {
-    curriculumId: CurriculumId;
-    weekIndex: number;
-    dayIndex: number;
+    dayId: CurriculumDayId;
 }
 
 const formatToTime = (hours: number): string =>
@@ -37,10 +35,10 @@ const parseToHours = (timeStr: string): number =>
     return hh + (mm / 60);
 };
 
-export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEntryProps) =>
+export const DayEntry = React.memo(({ dayId }: DayEntryProps) =>
 {
     const { enqueueSnackbar } = useSnackbar();
-    const day = useCurriculumDay(curriculumId, weekIndex, dayIndex);
+    const day = useCurriculumDay(dayId);
     const { updateDay } = useWeekActions();
 
     const [ localTime, setLocalTime ] = useState(() => formatToTime(day?.totalWorkingHours ?? 0));
@@ -50,19 +48,19 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
         const numericValue = parseToHours(localTime);
         if (numericValue !== day?.totalWorkingHours)
         {
-            updateDay(curriculumId, weekIndex, dayIndex, { totalWorkingHours: numericValue })
+            updateDay(dayId, { totalWorkingHours: numericValue })
                 .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת שעות נכשלה!', error));
         }
-    }, [ localTime, day?.totalWorkingHours, updateDay, curriculumId, weekIndex, dayIndex, enqueueSnackbar ]);
+    }, [ localTime, day?.totalWorkingHours, updateDay, dayId, enqueueSnackbar ]);
 
     const adjustHours = useCallback((amount: number) =>
     {
         const newHours = Math.max(0, Math.min(24, (day?.totalWorkingHours ?? 0) + amount));
         const formatted = formatToTime(newHours);
         setLocalTime(formatted); // Update local UI immediately
-        updateDay(curriculumId, weekIndex, dayIndex, { totalWorkingHours: newHours })
+        updateDay(dayId, { totalWorkingHours: newHours })
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת שעות נכשלה!', error));
-    }, [ curriculumId, weekIndex, dayIndex, updateDay, day?.totalWorkingHours, enqueueSnackbar ]);
+    }, [ dayId, updateDay, day?.totalWorkingHours, enqueueSnackbar ]);
 
     const isSaturday = day?.day === DayName.Saturday;
     const isDisabled = isSaturday && (day?.totalWorkingHours ?? 0) === 0;
@@ -75,7 +73,7 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
         `}>
             <div className="flex justify-between items-center">
                 <Typography className="font-bold text-slate-600 tracking-tight" variant="caption">
-                    { day?.day }
+                    { getDayNameDisplay(day?.day ?? DayName.Sunday) }
                 </Typography>
 
                 <div className="flex items-center gap-2 bg-white rounded-md border border-slate-200 px-1 py-0.5 shadow-inner">
@@ -110,7 +108,7 @@ export const DayEntry = React.memo(({ curriculumId, weekIndex, dayIndex }: DayEn
             <TextField
                 defaultValue={ day?.comment ?? '' }
                 fullWidth
-                onBlur={ (e) => updateDay(curriculumId, weekIndex, dayIndex, { comment: e.target.value }) }
+                onBlur={ (e) => updateDay(dayId, { comment: e.target.value }) }
                 placeholder="הערות..."
                 slotProps={ {
                     input: {

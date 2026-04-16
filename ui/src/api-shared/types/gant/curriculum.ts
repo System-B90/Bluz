@@ -37,13 +37,27 @@ export interface Syllabus extends BaseGantItem
 export type SyllabusId = Syllabus[ 'id' ];
 export enum DayName
 {
-    Sunday = 'ראשון',
-    Monday = 'שני',
-    Tuesday = 'שלישי',
-    Wednesday = 'רביעי',
-    Thursday = 'חמישי',
-    Friday = 'שישי',
-    Saturday = 'שבת',
+    Sunday = 0,
+    Monday = 1,
+    Tuesday = 2,
+    Wednesday = 3,
+    Thursday = 4,
+    Friday = 5,
+    Saturday = 6,
+}
+
+export const DAY_NAME_DISPLAY: Record<DayName, string> = {
+    [DayName.Sunday]: 'ראשון',
+    [DayName.Monday]: 'שני',
+    [DayName.Tuesday]: 'שלישי',
+    [DayName.Wednesday]: 'רביעי',
+    [DayName.Thursday]: 'חמישי',
+    [DayName.Friday]: 'שישי',
+    [DayName.Saturday]: 'שבת',
+};
+
+export function getDayNameDisplay(day: DayName): string {
+    return DAY_NAME_DISPLAY[day] ?? '';
 }
 export interface CurriculumDay
 {
@@ -51,20 +65,24 @@ export interface CurriculumDay
     totalWorkingHours: number;
     comment?: string;
 }
+export type CurriculumDayId = string;
+
 export interface CurriculumWeek
 {
     number: number;
-    days: Array<CurriculumDay>;
+    days: Array<CurriculumDayId>;
     comment?: string;
     closingSaturday: boolean;
 }
+export type CurriculumWeekId = string;
+
 export interface Curriculum extends BaseGantItem
 {
     title: string;
     description: string;
     syllabuses: Array<SyllabusId>;
     draft: boolean;
-    weeks: Array<CurriculumWeek>;
+    weeks: Array<CurriculumWeekId>;
 }
 export type CurriculumId = Curriculum[ 'id' ];
 
@@ -78,6 +96,26 @@ export function makeCurriculum(curriculum?: Partial<Curriculum>): MakerReturnTyp
         syllabuses: curriculum?.syllabuses ?? [],
         draft: curriculum?.draft ?? true,
         weeks: curriculum?.weeks ?? [],
+    };
+}
+
+export function makeCurriculumWeek(week?: Partial<CurriculumWeek>): Omit<CurriculumWeek, 'id'> & { id: string | undefined; }
+{
+    return {
+        id: undefined,
+        number: week?.number ?? 1,
+        days: week?.days ?? [],
+        comment: week?.comment ?? '',
+        closingSaturday: week?.closingSaturday ?? false,
+    };
+}
+
+export function makeCurriculumDay(day?: Partial<CurriculumDay>): CurriculumDay
+{
+    return {
+        day: day?.day ?? DayName.Sunday,
+        totalWorkingHours: day?.totalWorkingHours ?? 0,
+        comment: day?.comment ?? '',
     };
 }
 

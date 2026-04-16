@@ -3,7 +3,7 @@ import { CurriculumDocument } from "@/api-client/gant/curriculum";
 import { ModuleDocument } from "@/api-client/gant/module";
 import { ModuleEventDocument } from "@/api-client/gant/module-event";
 import { SyllabusDocument } from "@/api-client/gant/syllabus";
-import { CurriculumId, ModuleEventId, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { CurriculumDay, CurriculumDayId, CurriculumId, CurriculumWeek, CurriculumWeekId, ModuleEventId, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 
 export interface NormalizedStore
 {
@@ -11,6 +11,8 @@ export interface NormalizedStore
     syllabuses: Record<SyllabusId, SyllabusDocument>;
     modules: Record<ModuleId, ModuleDocument>;
     events: Record<ModuleEventId, ModuleEventDocument>;
+    weeks: Record<CurriculumWeekId, CurriculumWeek & { id: CurriculumWeekId; curriculumId: CurriculumId; }>;
+    days: Record<CurriculumDayId, CurriculumDay & { id: CurriculumDayId; curriculumWeekId: CurriculumWeekId; }>;
     moduleToSyllabusLookup: Record<ModuleId, SyllabusId>;
 }
 
@@ -21,10 +23,13 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
         syllabuses: {},
         modules: {},
         events: {},
+        weeks: {},
+        days: {},
         moduleToSyllabusLookup: {},
     };
 
     const curriculumSyllabusIds: SyllabusId[] = [];
+    const curriculumWeekIds: CurriculumWeekId[] = [];
 
     // Traverse Curriculums -> cS (Junction) -> Syllabus
     for (const link of (apiData.cS ?? []))
@@ -70,6 +75,37 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
         };
     }
 
+    // Normalize weeks
+    for (const apiWeek of (apiData.weeks ?? []))
+    {
+        const weekId = apiWeek.id as CurriculumWeekId;
+        curriculumWeekIds.push(weekId);
+        const dayIds: CurriculumDayId[] = [];
+
+        // Normalize days within week
+        for (const apiDay of (apiWeek.days ?? []))
+        {
+            const dayId = apiDay.id as CurriculumDayId;
+            dayIds.push(dayId);
+            store.days[ dayId ] = {
+                id: dayId,
+                curriculumWeekId: weekId,
+                day: apiDay.day,
+                totalWorkingHours: apiDay.totalWorkingHours,
+                comment: apiDay.comment,
+            };
+        }
+
+        store.weeks[ weekId ] = {
+            id: weekId,
+            curriculumId: apiData.id,
+            number: apiWeek.number,
+            days: dayIds,
+            comment: apiWeek.comment,
+            closingSaturday: apiWeek.closingSaturday,
+        };
+    }
+
     store.curriculums[ apiData.id ] = {
         id: apiData.id,
         title: apiData.title,
@@ -77,7 +113,7 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
         draft: apiData.draft,
         updatedAt: apiData.updatedAt,
         createdAt: apiData.createdAt,
-        weeks: [ ...(apiData.weeks ?? []) ],
+        weeks: curriculumWeekIds,
         syllabuses: curriculumSyllabusIds,
     };
 

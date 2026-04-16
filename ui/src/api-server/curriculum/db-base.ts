@@ -1,4 +1,4 @@
-import { eq, inArray, desc } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
 import { postgresDb } from "@/api-server/curriculum";
@@ -28,7 +28,7 @@ export interface DrizzleOperationsBuilderProps<TTable extends PgTableWithColumns
     typeName: string;
     junction?: JunctionConfig;
     parentJunction?: { type: 'curriculum' | 'module' | 'syllabus'; };
-    idPreffix: 'c' | 'e' | 'm' | 's';
+    idPreffix: 'c' | 'e' | 'm' | 's' | 'w' | 'd';
 }
 
 export function drizzleOperationsBuilder<

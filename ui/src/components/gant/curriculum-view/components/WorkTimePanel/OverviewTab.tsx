@@ -1,16 +1,21 @@
 import { Box, Stack, Typography } from '@mui/material';
 import { useMemo } from 'react';
 
-import { CurriculumId, CurriculumWeek } from '@/api-shared/types/gant/curriculum';
+import { CurriculumId, CurriculumWeekId } from '@/api-shared/types/gant/curriculum';
 import { WeekWorkTimeChip } from '@/components/gant/curriculum-view/tabs/weeks-tab/WeekPanel';
+import { useCurriculumWeek } from '@/components/gant/state/hooks/UseCurriculumWeek';
 
-function WeekOverview({ curriculumId, weekIndex, week }: { curriculumId: CurriculumId; weekIndex: number; week: CurriculumWeek; })
+function WeekOverview({ weekId }: { weekId: CurriculumWeekId; })
 {
+    const week = useCurriculumWeek(weekId);
+    
+    if (!week) return null;
+    
     return (
         <Box key={ week.number } sx={ { border: 1, borderColor: 'divider', borderRadius: 1, p: 1 } }>
             <Box alignItems="baseline" display="flex" justifyContent="space-between" mb={ 0.5 }>
                 <Typography variant="subtitle2">{ `שבוע ${week.number}` }</Typography>
-                <WeekWorkTimeChip curriculumId={ curriculumId } weekIndex={ weekIndex } />
+                <WeekWorkTimeChip weekId={ weekId } />
             </Box>
             <Typography color="text.secondary" variant="body2">
                 { week.comment?.trim() || 'ללא הערה' }
@@ -19,11 +24,11 @@ function WeekOverview({ curriculumId, weekIndex, week }: { curriculumId: Curricu
     );
 }
 
-export function OverviewTab({ curriculumId, weeks }: { curriculumId: CurriculumId; weeks: CurriculumWeek[]; })
+export function OverviewTab({ curriculumId, weeks }: { curriculumId: CurriculumId; weeks: CurriculumWeekId[]; })
 {
-    const overviews = useMemo(() => weeks.map((week, weekIndex) => (
-        <WeekOverview curriculumId={ curriculumId } key={ week.number } week={ week } weekIndex={ weekIndex } />
-    )), [ weeks, curriculumId ]);
+    const overviews = useMemo(() => weeks.map((weekId) => (
+        <WeekOverview key={ weekId } weekId={ weekId } />
+    )), [ weeks ]);
 
     return (
         <Box sx={ { overflowY: 'scroll', paddingInlineEnd: 1 } }>
