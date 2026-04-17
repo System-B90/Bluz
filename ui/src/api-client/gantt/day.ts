@@ -19,4 +19,3 @@ export
 {
     apiCreate as apiCreateDay, apiDelete as apiDeleteDay, apiGet as apiGetDay, apiGetMany as apiGetManyDays, apiList as apiListDays, apiUpdate as apiUpdateDay, dayApi
 };
-

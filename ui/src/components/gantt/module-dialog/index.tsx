@@ -26,7 +26,7 @@ export interface ModuleDialogProps extends DialogProps
 {
     setOpen: Dispatch<SetStateAction<boolean>>;
     moduleId: GanttModuleId | null;
-    syllabusId: null | GanttSyllabusId;
+    syllabusId: GanttSyllabusId | null;
 }
 
 export function ModuleDialog({

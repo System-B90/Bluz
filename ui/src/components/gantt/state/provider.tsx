@@ -25,7 +25,7 @@ const CurriculumActionsContext = createContext<{
  */
 function ModuleDialogManager({ children }: { children: ReactNode; })
 {
-    const [ currentSyllabusId, setCurrentSyllabusId ] = useState<null | GanttSyllabusId>(null);
+    const [ currentSyllabusId, setCurrentSyllabusId ] = useState<GanttSyllabusId | null>(null);
     const [ currentModuleId, setCurrentModuleId ] = useState<GanttModuleId | null>(null);
     const [ moduleDialogOpen, setModuleDialogOpen ] = useState<boolean>(false);
 
