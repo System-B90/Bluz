@@ -18,4 +18,3 @@ export
 {
     apiCreate as apiCreateCurriculum, apiDelete as apiDeleteCurriculum, apiGet as apiGetCurriculum, apiGetMany as apiGetManyCurriculums, apiList as apiListCurriculums, apiUpdate as apiUpdateCurriculum, curriculumApi
 };
-

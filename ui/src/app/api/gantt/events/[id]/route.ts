@@ -5,4 +5,3 @@ import { buildGantItemRoutes } from "@/app/api/gantt/base-item";
 
 const { GET, PATCH, DELETE } = buildGantItemRoutes({ dbSet: DbModuleEvent });
 export { DELETE, GET, PATCH };
-

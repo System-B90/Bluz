@@ -6,4 +6,3 @@ import { buildGantItemRoutes } from '@/app/api/gantt/base-item';
 
 const { GET, PATCH, DELETE } = buildGantItemRoutes<CurriculumDay>({ dbSet: DbDay });
 export { DELETE, GET, PATCH };
-

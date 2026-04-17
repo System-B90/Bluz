@@ -5,4 +5,3 @@ import { buildGantCollectionRoutes } from "@/app/api/gantt/base-collection";
 
 const { GET, POST } = buildGantCollectionRoutes({ dbSet: DbCurriculum });
 export { GET, POST };
-

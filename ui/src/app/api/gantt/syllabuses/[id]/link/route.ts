@@ -6,4 +6,3 @@ import { buildGantLinkRoutes } from '@/app/api/gantt/base-link';
 
 const { POST, DELETE } = buildGantLinkRoutes<Syllabus>({ dbSet: DbSyllabus });
 export { DELETE, POST };
-

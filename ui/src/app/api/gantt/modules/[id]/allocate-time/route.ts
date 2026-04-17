@@ -5,4 +5,3 @@ import { buildGantAllocateTimeRoutes } from '@/app/api/gantt/base-allocate-time'
 
 const { POST, GET } = buildGantAllocateTimeRoutes({ dbSet: DbModule });
 export { GET, POST };
-
