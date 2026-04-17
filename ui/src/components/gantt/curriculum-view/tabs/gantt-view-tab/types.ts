@@ -15,10 +15,10 @@ import type {
 
 import
     {
-        Curriculum,
-        Module,
-        ModuleEvent,
-        Syllabus
+        GanttCurriculum,
+        GanttEvent,
+        GanttModule,
+        GanttSyllabus
     } from '@/api-shared/types/gantt/curriculum';
 
 export { SvarGanttLink, SvarGanttScale, SvarGanttTask };
@@ -66,8 +66,8 @@ export interface MetricItemProps
  */
 export interface GanttDataSourceProps
 {
-    readonly curriculum: Curriculum;
-    readonly syllabuses: Array<Syllabus>;
-    readonly modules: Array<Module>;
-    readonly events: Array<ModuleEvent>;
+    readonly curriculum: GanttCurriculum;
+    readonly syllabuses: Array<GanttSyllabus>;
+    readonly modules: Array<GanttModule>;
+    readonly events: Array<GanttEvent>;
 }

@@ -1,27 +1,27 @@
 import { Dispatch, KeyboardEvent, SetStateAction, useCallback } from 'react';
 
-import { CurriculumId, CurriculumWeekId } from '@/api-shared/types/gantt/curriculum';
+import { GanttCurriculumId, GanttWeekId } from '@/api-shared/types/gantt/curriculum';
 import { buildDefaultWeekDays } from '@/components/gantt/curriculum-view/components/WorkTimePanel/defaults';
 import { cloneWeeks, pickNextDay } from '@/components/gantt/curriculum-view/components/WorkTimePanel/utils';
 import { useCurriculumActions } from '@/components/gantt/state/hooks/gantt-funcs/UseCurriculumActions';
 
 export function useWorkTimePanelLogic(
-    curriculumId: CurriculumId | null,
-    curriculumWeekIds: CurriculumWeekId[],
-    localWeekIds: CurriculumWeekId[],
-    setLocalWeekIds: Dispatch<SetStateAction<CurriculumWeekId[]>>
+    curriculumId: GanttCurriculumId | null,
+    curriculumWeekIds: GanttWeekId[],
+    localWeekIds: GanttWeekId[],
+    setLocalWeekIds: Dispatch<SetStateAction<GanttWeekId[]>>
 )
 {
     const { updateCurriculum } = useCurriculumActions();
 
-    const persistWeeks = useCallback(async (updatedWeekIds: CurriculumWeekId[]) =>
+    const persistWeeks = useCallback(async (updatedWeekIds: GanttWeekId[]) =>
     {
         if (!curriculumId) return;
         setLocalWeekIds(updatedWeekIds);
         await updateCurriculum(curriculumId, { weeks: updatedWeekIds });
     }, [ curriculumId, setLocalWeekIds, updateCurriculum ]);
 
-    const updateWeeksLocally = useCallback((updater: (weekIds: CurriculumWeekId[]) => CurriculumWeekId[]) =>
+    const updateWeeksLocally = useCallback((updater: (weekIds: GanttWeekId[]) => GanttWeekId[]) =>
     {
         setLocalWeekIds((prev) => updater(cloneWeeks(prev)));
     }, [ setLocalWeekIds ]);

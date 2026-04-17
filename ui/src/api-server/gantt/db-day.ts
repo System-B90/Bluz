@@ -5,13 +5,13 @@ import { drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
 import { ganttDaysSchema, ganttWeek2DaysSchema } from "@/api-server/gantt/schema";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiCurriculumDay } from "@/api-shared/types/gantt/api-layer";
-import { CreateCurriculumDayPayload } from "@/api-shared/types/gantt/create-payloads";
-import { CurriculumDay, CurriculumDayId } from "@/api-shared/types/gantt/curriculum";
+import { CreateGanttDayPayload } from "@/api-shared/types/gantt/create-payloads";
+import { GanttDay, GanttDayId } from "@/api-shared/types/gantt/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
-    CurriculumDay,
+    GanttDay,
     typeof ganttDaysSchema,
-    CreateCurriculumDayPayload
+    CreateGanttDayPayload
 >({
     table: ganttDaysSchema,
     typeName: 'יום',
@@ -23,7 +23,7 @@ const basicOperations = drizzleOperationsBuilder<
     }
 });
 
-async function getFullDay(id: CurriculumDayId): Promise<ApiCurriculumDay>
+async function getFullDay(id: GanttDayId): Promise<ApiCurriculumDay>
 {
     const result = await postgresDb.query.ganttDaysSchema.findFirst({
         where: eq(ganttDaysSchema.id, id),

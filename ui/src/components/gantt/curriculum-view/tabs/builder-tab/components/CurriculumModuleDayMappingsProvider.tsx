@@ -11,8 +11,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { curriculumModuleDayMappingApi } from '@/api-client/gantt/mappings';
 import { BaseDbDocument } from '@/api-server/gantt/db-base';
-import { CurriculumId, ModuleId } from "@/api-shared/types/gantt/curriculum";
-import { CurriculumModuleDayMapping } from "@/api-shared/types/gantt/mapping";
+import { GanttCurriculumId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/mapping";
 
 /**
  * State Definition
@@ -20,19 +20,19 @@ import { CurriculumModuleDayMapping } from "@/api-shared/types/gantt/mapping";
 interface MappingState
 {
     // Key: `${weekIndex}-${dayIndex}-${moduleId}`
-    mappings: Record<string, CurriculumModuleDayMapping>;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
     isLoading: boolean;
     error: null | string;
 }
 
 type MappingAction =
-    | { type: 'DELETE_MAPPING'; payload: { weekIndex: number; dayIndex: number; moduleId: ModuleId; }; }
+    | { type: 'DELETE_MAPPING'; payload: { weekIndex: number; dayIndex: number; moduleId: GanttModuleId; }; }
     | { type: 'SET_ERROR'; payload: null | string; }
     | { type: 'SET_LOADING'; payload: boolean; }
-    | { type: 'SET_MAPPINGS'; payload: CurriculumModuleDayMapping[]; }
-    | { type: 'UPSERT_MAPPING'; payload: CurriculumModuleDayMapping; };
+    | { type: 'SET_MAPPINGS'; payload: GanttCurriculumModuleDayMapping[]; }
+    | { type: 'UPSERT_MAPPING'; payload: GanttCurriculumModuleDayMapping; };
 
-const getMappingKey = (m: { weekIndex: number; dayIndex: number; moduleId: ModuleId; }) =>
+const getMappingKey = (m: { weekIndex: number; dayIndex: number; moduleId: GanttModuleId; }) =>
     `${m.weekIndex}-${m.dayIndex}-${m.moduleId}`;
 
 /**
@@ -43,7 +43,7 @@ function mappingReducer(state: MappingState, action: MappingAction): MappingStat
     switch (action.type)
     {
         case 'SET_MAPPINGS':
-            const newMappings: Record<string, CurriculumModuleDayMapping> = {};
+            const newMappings: Record<string, GanttCurriculumModuleDayMapping> = {};
             action.payload.forEach(m => { newMappings[ getMappingKey(m) ] = m; });
             return { ...state, mappings: newMappings, isLoading: false };
 
@@ -75,9 +75,9 @@ function mappingReducer(state: MappingState, action: MappingAction): MappingStat
 type CurriculumMappingContextType = {
     state: MappingState;
     refreshMappings: () => Promise<void>;
-    createMapping: (moduleId: ModuleId, weekIndex: number, dayIndex: number) => Promise<void>;
-    moveModule: (moduleId: ModuleId, from: { w: number, d: number; }, to: { w: number, d: number; }) => Promise<void>;
-    removeModule: (moduleId: ModuleId, weekIndex: number, dayIndex: number) => Promise<void>;
+    createMapping: (moduleId: GanttModuleId, weekIndex: number, dayIndex: number) => Promise<void>;
+    moveModule: (moduleId: GanttModuleId, from: { w: number, d: number; }, to: { w: number, d: number; }) => Promise<void>;
+    removeModule: (moduleId: GanttModuleId, weekIndex: number, dayIndex: number) => Promise<void>;
 };
 
 /**
@@ -85,7 +85,7 @@ type CurriculumMappingContextType = {
  */
 const CurriculumMappingContext = createContext<CurriculumMappingContextType | undefined>(undefined);
 
-export function CurriculumMappingProvider({ children, curriculumId }: { children: React.ReactNode; curriculumId: CurriculumId; })
+export function CurriculumMappingProvider({ children, curriculumId }: { children: React.ReactNode; curriculumId: GanttCurriculumId; })
 {
     const { enqueueSnackbar } = useSnackbar();
     const [ state, dispatch ] = useReducer(mappingReducer, {
@@ -111,13 +111,13 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
          * createMapping: Handles assigning a module to a day for the first time.
          */
     const createMapping = useCallback(async (
-        moduleId: ModuleId,
+        moduleId: GanttModuleId,
         weekIndex: number,
         dayIndex: number
     ) =>
     {
         const tempSortOrder = Date.now();
-        const optimisticMapping: CurriculumModuleDayMapping & BaseDbDocument = {
+        const optimisticMapping: GanttCurriculumModuleDayMapping & BaseDbDocument = {
             curriculumId,
             moduleId,
             weekIndex,
@@ -149,7 +149,7 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
     }, [ dispatch, curriculumId ]);
 
     const moveModule = useCallback(async (
-        moduleId: ModuleId,
+        moduleId: GanttModuleId,
         from: { w: number, d: number; },
         to: { w: number, d: number; }
     ) =>
@@ -181,7 +181,7 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
         }
     }, [ state.mappings, curriculumId, dispatch ]);
 
-    const removeModule = useCallback(async (moduleId: ModuleId, weekIndex: number, dayIndex: number) =>
+    const removeModule = useCallback(async (moduleId: GanttModuleId, weekIndex: number, dayIndex: number) =>
     {
         dispatch({ type: 'DELETE_MAPPING', payload: { weekIndex, dayIndex, moduleId } });
         try

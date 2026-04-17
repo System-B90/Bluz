@@ -1,12 +1,12 @@
 import { Box, BoxProps } from "@mui/material";
 
-import { CurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
 import { CreateSyllabusButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/CreateSyllabusButton";
 import { SyllabusSelectionField } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/SyllabusSelectionField";
 
 export interface SyllabusesActionsBoxProps extends Omit<BoxProps, 'display' | 'justifyContent'>
 {
-    curriculumId: CurriculumId;
+    curriculumId: GanttCurriculumId;
 };
 
 export function SyllabusesActionsBox({ curriculumId, ...props }: SyllabusesActionsBoxProps)

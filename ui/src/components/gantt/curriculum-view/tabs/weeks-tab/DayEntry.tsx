@@ -11,13 +11,13 @@ import { useSnackbar } from "notistack";
 import React, { useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { CurriculumDayId, DayIndex } from "@/api-shared/types/gantt/curriculum";
+import { GanttDayId, GanttDayIndex } from "@/api-shared/types/gantt/curriculum";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gantt/state/hooks/UseCurriculumDay";
 
 interface DayEntryProps
 {
-    dayId: CurriculumDayId;
+    dayId: GanttDayId;
 }
 
 const formatToTime = (hours: number): string =>
@@ -62,7 +62,7 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) =>
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת שעות נכשלה!', error));
     }, [ dayId, updateDay, day?.totalWorkingMinutes, enqueueSnackbar ]);
 
-    const isSaturday = day?.dayIndex === DayIndex.Saturday;
+    const isSaturday = day?.dayIndex === GanttDayIndex.Saturday;
     const isDisabled = isSaturday && (day?.totalWorkingMinutes ?? 0) === 0;
 
     return (

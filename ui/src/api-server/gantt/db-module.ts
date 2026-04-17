@@ -7,13 +7,13 @@ import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/sch
 import { ClientApiError } from "@/api-shared/errors";
 import { AllocateTimeToEventCallback, allocateTimeToModule, AllocateTimeToModuleCallbackModuleEvents } from "@/api-shared/gantt/allocate-time";
 import { ApiModule } from "@/api-shared/types/gantt/api-layer";
-import { CreateModulePayload } from "@/api-shared/types/gantt/create-payloads";
-import { CurriculumId, Module, ModuleId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { CreateGanttModulePayload } from "@/api-shared/types/gantt/create-payloads";
+import { GanttCurriculumId, GanttModule, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
-    Module,
+    GanttModule,
     typeof ganttModulesSchema,
-    CreateModulePayload
+    CreateGanttModulePayload
 >({
     table: ganttModulesSchema,
     typeName: 'מערך',
@@ -31,7 +31,7 @@ const basicOperations = drizzleOperationsBuilder<
     },
 });
 
-async function getFullModule(id: ModuleId): Promise<ApiModule>
+async function getFullModule(id: GanttModuleId): Promise<ApiModule>
 {
     const result = await postgresDb.query.ganttModulesSchema.findFirst({
         where: eq(ganttModulesSchema.id, id),
@@ -58,7 +58,7 @@ async function getFullModule(id: ModuleId): Promise<ApiModule>
     return result as any;
 }
 
-async function addModuleToSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): Promise<ApiModule>
+async function addModuleToSyllabus(syllabusId: GanttSyllabusId, moduleId: GanttModuleId): Promise<ApiModule>
 {
     try
     {
@@ -86,7 +86,7 @@ async function addModuleToSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): 
     }
 }
 
-async function removeModuleFromSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): Promise<void>
+async function removeModuleFromSyllabus(syllabusId: GanttSyllabusId, moduleId: GanttModuleId): Promise<void>
 {
     const result = await postgresDb.delete(ganttSyllabus2ModulesSchema)
         .where(
@@ -104,8 +104,8 @@ async function removeModuleFromSyllabus(syllabusId: SyllabusId, moduleId: Module
 }
 
 async function setAllocatedTime(
-    moduleId: ModuleId,
-    curriculumId: CurriculumId,
+    moduleId: GanttModuleId,
+    curriculumId: GanttCurriculumId,
     duration: number
 ): Promise<void>
 {
@@ -154,8 +154,8 @@ async function setAllocatedTime(
 }
 
 async function getAllocatedTime(
-    moduleId: ModuleId,
-    curriculumId: CurriculumId
+    moduleId: GanttModuleId,
+    curriculumId: GanttCurriculumId
 ): Promise<number>
 {
     const moduleData = await postgresDb.query.ganttModulesSchema.findFirst({

@@ -5,4 +5,13 @@ import { moduleEventApi } from "@/api-client/gantt/module-event";
 import { syllabusApi } from "@/api-client/gantt/syllabus";
 import { weekApi } from "@/api-client/gantt/week";
 
-export { curriculumApi, dayApi, moduleApi, moduleEventApi, syllabusApi, weekApi };
+const ganttApi = {
+    curriculum: curriculumApi,
+    day: dayApi,
+    module: moduleApi,
+    event: moduleEventApi,
+    syllabus: syllabusApi,
+    week: weekApi,
+} as const;
+export { ganttApi };
+export type GanttApi = typeof ganttApi;

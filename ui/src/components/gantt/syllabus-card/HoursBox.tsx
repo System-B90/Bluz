@@ -1,7 +1,7 @@
 import { Box, BoxProps, Stack, Typography } from '@mui/material';
 import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge';
 
-import { SyllabusId } from '@/api-shared/types/gantt/curriculum';
+import { GanttSyllabusId } from '@/api-shared/types/gantt/curriculum';
 import { useSyllabus } from '@/components/gantt/state/hooks/UseSyllabus';
 import { useCurriculumState } from '@/components/gantt/state/provider';
 import
@@ -12,7 +12,7 @@ import
 
 export interface HoursBoxProps extends BoxProps
 {
-    syllabusId: SyllabusId;
+    syllabusId: GanttSyllabusId;
 }
 
 export function HoursBox({ syllabusId, ...props }: HoursBoxProps)

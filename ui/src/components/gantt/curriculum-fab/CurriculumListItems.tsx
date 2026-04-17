@@ -1,17 +1,17 @@
 import { ListItem, ListItemButton, Skeleton } from "@mui/material";
 import { Dispatch, SetStateAction } from "react";
 
-import { CurriculumDocument } from "@/api-client/gantt/curriculum";
-import { CurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
 import { CurriculumEntry } from "@/components/gantt/curriculum-fab/CurriculumEntry";
 
 export interface CurriculumListItemsProps
 {
     isFetchingDetails: boolean;
-    curriculumsData: Record<CurriculumId, CurriculumDocument>;
-    sortedIds: Array<CurriculumId>;
-    setCurrentCurriculum: Dispatch<SetStateAction<CurriculumId | null>>;
-    currentCurriculum?: CurriculumId | null;
+    curriculumsData: Record<GanttCurriculumId, GanttCurriculumDocument>;
+    sortedIds: Array<GanttCurriculumId>;
+    setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
+    currentCurriculum?: GanttCurriculumId | null;
 }
 
 export function CurriculumListItems({ isFetchingDetails, curriculumsData, sortedIds, setCurrentCurriculum, currentCurriculum }: CurriculumListItemsProps)

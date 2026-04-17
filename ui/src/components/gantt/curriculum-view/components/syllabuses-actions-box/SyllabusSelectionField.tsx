@@ -4,14 +4,14 @@ import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { CurriculumId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useCurriculum } from '@/components/gantt/state/hooks/UseCurriculum';
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 
 export interface SyllabusSelectionFieldProps extends BoxProps
 {
-    curriculumId: CurriculumId;
+    curriculumId: GanttCurriculumId;
 }
 
 export function SyllabusSelectionField({ curriculumId, ...props }: SyllabusSelectionFieldProps)
@@ -20,12 +20,12 @@ export function SyllabusSelectionField({ curriculumId, ...props }: SyllabusSelec
     const curriculum = useCurriculum(curriculumId);
     const { linkSyllabusToCurriculum } = useSyllabusActions();
     const { syllabusNames } = useSyllabusNames();
-    const [ currentSyllabusId, setCurrentSyllabusId ] = useState<SyllabusId>("");
+    const [ currentSyllabusId, setCurrentSyllabusId ] = useState<GanttSyllabusId>("");
     const [ isLinking, setIsLinking ] = useState<boolean>(false);
 
-    const onChange = useCallback((ev: SelectChangeEvent<SyllabusId>) =>
+    const onChange = useCallback((ev: SelectChangeEvent<GanttSyllabusId>) =>
     {
-        const syllabusId = ev.target.value as SyllabusId;
+        const syllabusId = ev.target.value as GanttSyllabusId;
         setCurrentSyllabusId(syllabusId);
     }, []);
 

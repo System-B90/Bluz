@@ -4,10 +4,10 @@ import { useSnackbar } from 'notistack';
 import { useCallback } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { CurriculumId } from '@/api-shared/types/gantt/curriculum';
+import { GanttCurriculumId } from '@/api-shared/types/gantt/curriculum';
 import { useSyllabusActions } from '@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions';
 
-export function CreateSyllabusButton({ curriculumId }: { curriculumId: CurriculumId; })
+export function CreateSyllabusButton({ curriculumId }: { curriculumId: GanttCurriculumId; })
 {
     const { enqueueSnackbar } = useSnackbar();
     const { createSyllabus } = useSyllabusActions();

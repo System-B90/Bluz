@@ -8,13 +8,13 @@ import { ganttCurriculum2WeeksSchema, ganttWeek2DaysSchema } from "@/api-server/
 import { ganttWeeksSchema } from "@/api-server/gantt/schema/weeks";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiCurriculumWeek } from "@/api-shared/types/gantt/api-layer";
-import { CreateCurriculumWeekPayload } from "@/api-shared/types/gantt/create-payloads";
-import { CurriculumWeek, CurriculumWeekId, DayIndex } from "@/api-shared/types/gantt/curriculum";
+import { CreateGanttWeekPayload } from "@/api-shared/types/gantt/create-payloads";
+import { GanttDayIndex, GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
-    CurriculumWeek,
+    GanttWeek,
     typeof ganttWeeksSchema,
-    CreateCurriculumWeekPayload
+    CreateGanttWeekPayload
 >({
     table: ganttWeeksSchema,
     typeName: 'שבוע',
@@ -32,7 +32,7 @@ const basicOperations = drizzleOperationsBuilder<
     },
 });
 
-async function getFullWeek(id: CurriculumWeekId): Promise<ApiCurriculumWeek>
+async function getFullWeek(id: GanttWeekId): Promise<ApiCurriculumWeek>
 {
     const result = await postgresDb.query.ganttWeeksSchema.findFirst({
         where: eq(ganttWeeksSchema.id, id),
@@ -53,11 +53,11 @@ async function getFullWeek(id: CurriculumWeekId): Promise<ApiCurriculumWeek>
     return result as any;
 }
 
-async function createWeek(data: CreateCurriculumWeekPayload): Promise<ApiCurriculumWeek>
+async function createWeek(data: CreateGanttWeekPayload): Promise<ApiCurriculumWeek>
 {
     const newWeek = await basicOperations.createNewItem(data);
 
-    const newDays = await Promise.all([ DayIndex.Sunday, DayIndex.Monday, DayIndex.Tuesday, DayIndex.Wednesday, DayIndex.Thursday, DayIndex.Friday, DayIndex.Saturday ].map(async (dayIndex) =>
+    const newDays = await Promise.all([ GanttDayIndex.Sunday, GanttDayIndex.Monday, GanttDayIndex.Tuesday, GanttDayIndex.Wednesday, GanttDayIndex.Thursday, GanttDayIndex.Friday, GanttDayIndex.Saturday ].map(async (dayIndex) =>
     {
         const createPayload = {
             weekId: newWeek.id,

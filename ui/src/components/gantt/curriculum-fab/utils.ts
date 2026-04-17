@@ -1,12 +1,12 @@
 import { EnqueueSnackbar } from "notistack";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { curriculumApi, CurriculumDocument } from "@/api-client/gantt/curriculum";
-import { CurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { curriculumApi, GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
 
-export function sortCurriculumsByDraftAndUpdatedAt(curriculums: Record<CurriculumId, CurriculumDocument>): Array<CurriculumId>
+export function sortCurriculumsByDraftAndUpdatedAt(curriculums: Record<GanttCurriculumId, GanttCurriculumDocument>): Array<GanttCurriculumId>
 {
-    return (Object.keys(curriculums) as CurriculumId[]).sort((a, b) =>
+    return (Object.keys(curriculums) as GanttCurriculumId[]).sort((a, b) =>
     {
         const dataA = curriculums[ a ];
         const dataB = curriculums[ b ];
@@ -25,20 +25,20 @@ export function sortCurriculumsByDraftAndUpdatedAt(curriculums: Record<Curriculu
 export async function fetchDrawerData({ isMounted, enqueueSnackbar, setCurriculumsData, setIsFetchingDetails, }: {
     isMounted: boolean,
     enqueueSnackbar: EnqueueSnackbar,
-    setCurriculumsData: React.Dispatch<React.SetStateAction<Record<CurriculumId, CurriculumDocument>>>;
+    setCurriculumsData: React.Dispatch<React.SetStateAction<Record<GanttCurriculumId, GanttCurriculumDocument>>>;
     setIsFetchingDetails: React.Dispatch<React.SetStateAction<boolean>>;
 }): Promise<void>
 {
     try
     {
         const listData = await curriculumApi.apiList();
-        const keys: Array<CurriculumId> = Object.keys(listData);
+        const keys: Array<GanttCurriculumId> = Object.keys(listData);
 
         if (keys.length === 0)
         {
             if (isMounted)
             {
-                setCurriculumsData(({} as Record<CurriculumId, CurriculumDocument>));
+                setCurriculumsData(({} as Record<GanttCurriculumId, GanttCurriculumDocument>));
                 setIsFetchingDetails(false);
             }
             return;
@@ -48,7 +48,7 @@ export async function fetchDrawerData({ isMounted, enqueueSnackbar, setCurriculu
 
         if (isMounted)
         {
-            setCurriculumsData((detailedData as Record<CurriculumId, CurriculumDocument>));
+            setCurriculumsData((detailedData as Record<GanttCurriculumId, GanttCurriculumDocument>));
         }
     } catch (error)
     {

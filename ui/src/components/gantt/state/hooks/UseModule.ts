@@ -1,10 +1,10 @@
 import { ModuleDocument } from "@/api-client/gantt/module";
-import { ModuleId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useModule(moduleId: null): undefined;
-export function useModule(moduleId: ModuleId): (ModuleDocument & { syllabusId: SyllabusId; }) | undefined;
-export function useModule(moduleId: ModuleId | null): (ModuleDocument & { syllabusId: SyllabusId; }) | undefined
+export function useModule(moduleId: GanttModuleId): (ModuleDocument & { syllabusId: GanttSyllabusId; }) | undefined;
+export function useModule(moduleId: GanttModuleId | null): (ModuleDocument & { syllabusId: GanttSyllabusId; }) | undefined
 {
     const state = useCurriculumState();
 

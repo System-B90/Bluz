@@ -1,11 +1,11 @@
 import { Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { KeyboardEvent } from 'react';
 
-import { CurriculumDay } from '@/api-shared/types/gantt/curriculum';
+import { GanttDay } from '@/api-shared/types/gantt/curriculum';
 
 export interface DaysTableProps
 {
-    days: CurriculumDay[];
+    days: GanttDay[];
     canEdit: boolean;
     weekIndex: number;
     onHoursChange: (weekIndex: number, dayIndex: number, nextValueRaw: string) => void;

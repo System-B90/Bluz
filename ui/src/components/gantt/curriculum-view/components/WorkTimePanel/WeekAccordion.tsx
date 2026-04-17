@@ -2,18 +2,18 @@ import AddIcon from '@mui/icons-material/Add';
 import { Box, IconButton, TextField, Tooltip } from '@mui/material';
 import { KeyboardEvent } from 'react';
 
-import { CurriculumWeekId } from '@/api-shared/types/gantt/curriculum';
+import { GanttWeekId } from '@/api-shared/types/gantt/curriculum';
 import { useCurriculumWeek } from '@/components/gantt/state/hooks/UseCurriculumWeek';
 
 export interface WeekAccordionProps
 {
-    weekId: CurriculumWeekId;
+    weekId: GanttWeekId;
     canEdit: boolean;
     canAddDay: boolean;
-    onAddDay: (weekId: CurriculumWeekId) => Promise<void>;
-    onWeekCommentChange: (weekId: CurriculumWeekId, nextComment: string) => void;
-    onWeekCommentSave: (weekId: CurriculumWeekId) => Promise<void>;
-    onWeekCommentKeyDown: (event: KeyboardEvent<HTMLInputElement>, weekId: CurriculumWeekId) => void;
+    onAddDay: (weekId: GanttWeekId) => Promise<void>;
+    onWeekCommentChange: (weekId: GanttWeekId, nextComment: string) => void;
+    onWeekCommentSave: (weekId: GanttWeekId) => Promise<void>;
+    onWeekCommentKeyDown: (event: KeyboardEvent<HTMLInputElement>, weekId: GanttWeekId) => void;
 }
 
 export function WeekAccordion(props: WeekAccordionProps)

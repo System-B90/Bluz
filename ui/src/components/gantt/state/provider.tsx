@@ -4,11 +4,11 @@ import React, { ReactNode, createContext, useCallback, useContext, useMemo, useR
 
 import { NormalizedStore, normalizeCurriculumData } from '@/api-client/gantt/drizzle-normalize';
 import { ApiCurriculum } from '@/api-shared/types/gantt/api-layer';
-import { ModuleId, SyllabusId } from '@/api-shared/types/gantt/curriculum';
+import { GanttModuleId, GanttSyllabusId } from '@/api-shared/types/gantt/curriculum';
 import { ModuleDialog } from '@/components/gantt/module-dialog';
 import { Action, curriculumReducer } from '@/components/gantt/state/reducer';
 
-export type OpenModuleDialog = (syllabusId: SyllabusId, moduleId: ModuleId) => void;
+export type OpenModuleDialog = (syllabusId: GanttSyllabusId, moduleId: GanttModuleId) => void;
 export type CloseModuleDialog = () => void;
 
 const CurriculumStateContext = createContext<NormalizedStore | null>(null);
@@ -25,8 +25,8 @@ const CurriculumActionsContext = createContext<{
  */
 function ModuleDialogManager({ children }: { children: ReactNode; })
 {
-    const [ currentSyllabusId, setCurrentSyllabusId ] = useState<null | SyllabusId>(null);
-    const [ currentModuleId, setCurrentModuleId ] = useState<ModuleId | null>(null);
+    const [ currentSyllabusId, setCurrentSyllabusId ] = useState<null | GanttSyllabusId>(null);
+    const [ currentModuleId, setCurrentModuleId ] = useState<GanttModuleId | null>(null);
     const [ moduleDialogOpen, setModuleDialogOpen ] = useState<boolean>(false);
 
     // This function is passed to the Actions context

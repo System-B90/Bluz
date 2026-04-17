@@ -1,32 +1,32 @@
 import { RawBaseDocument } from "@/api-client/gantt/base";
-import { Curriculum, CurriculumDay, CurriculumDayId, CurriculumId, CurriculumWeek, CurriculumWeekId, Module, ModuleEvent, ModuleEventId, ModuleId, Syllabus, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculum, GanttCurriculumId, GanttDay, GanttDayId, GanttEvent, GanttEventId, GanttModule, GanttModuleId, GanttSyllabus, GanttSyllabusId, GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
 
-export interface ApiModuleEvent extends Omit<ModuleEvent & RawBaseDocument, 'allocatedDuration'>
+export interface ApiModuleEvent extends Omit<GanttEvent & RawBaseDocument, 'allocatedDuration'>
 {
-    cEC: Array<{ eventId: ModuleEventId; curriculumId: CurriculumId; allocatedDuration: number; }>;
+    cEC: Array<{ eventId: GanttEventId; curriculumId: GanttCurriculumId; allocatedDuration: number; }>;
 }
 
-export interface ApiModule extends Omit<Module & RawBaseDocument, 'events'>
+export interface ApiModule extends Omit<GanttModule & RawBaseDocument, 'events'>
 {
-    m2e: Array<{ moduleId: ModuleId; eventId: ModuleEventId; event: ApiModuleEvent; }>;
+    m2e: Array<{ moduleId: GanttModuleId; eventId: GanttEventId; event: ApiModuleEvent; }>;
 }
 
-export interface ApiSyllabus extends Omit<Syllabus & RawBaseDocument, 'modules'>
+export interface ApiSyllabus extends Omit<GanttSyllabus & RawBaseDocument, 'modules'>
 {
-    s2m: Array<{ syllabusId: SyllabusId; moduleId: ModuleId; module: ApiModule; }>;
+    s2m: Array<{ syllabusId: GanttSyllabusId; moduleId: GanttModuleId; module: ApiModule; }>;
 }
 
-export interface ApiCurriculumDay extends Omit<CurriculumDay & RawBaseDocument, 'title'>
+export interface ApiCurriculumDay extends Omit<GanttDay & RawBaseDocument, 'title'>
 {
 }
 
-export interface ApiCurriculumWeek extends Omit<CurriculumWeek & RawBaseDocument, 'days'>
+export interface ApiCurriculumWeek extends Omit<GanttWeek & RawBaseDocument, 'days'>
 {
-    w2d: Array<{ weekId: CurriculumWeekId; dayId: CurriculumDayId; day: ApiCurriculumDay; }>;
+    w2d: Array<{ weekId: GanttWeekId; dayId: GanttDayId; day: ApiCurriculumDay; }>;
 }
 
-export interface ApiCurriculum extends Omit<Curriculum & RawBaseDocument, 'syllabuses' | 'weeks'>
+export interface ApiCurriculum extends Omit<GanttCurriculum & RawBaseDocument, 'syllabuses' | 'weeks'>
 {
-    c2s: Array<{ curriculumId: CurriculumId; syllabusId: SyllabusId; syllabus: ApiSyllabus; }>;
-    c2w: Array<{ curriculumId: CurriculumId; weekId: CurriculumWeekId; week: ApiCurriculumWeek; }>;
+    c2s: Array<{ curriculumId: GanttCurriculumId; syllabusId: GanttSyllabusId; syllabus: ApiSyllabus; }>;
+    c2w: Array<{ curriculumId: GanttCurriculumId; weekId: GanttWeekId; week: ApiCurriculumWeek; }>;
 }

@@ -10,8 +10,8 @@ import { useMemo } from 'react';
 
 import
     {
-        Module,
-        Syllabus
+        GanttModule,
+        GanttSyllabus
     } from '@/api-shared/types/gantt/curriculum';
 import { useCurriculumMappings } from '@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider';
 import { GanttDataResult, GanttDataSourceProps, SvarGanttLink, SvarGanttTask } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/types';
@@ -44,7 +44,7 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult =>
             return { start: startDate, end: endDate };
         };
 
-        props.syllabuses.forEach((syllabus: Syllabus): void =>
+        props.syllabuses.forEach((syllabus: GanttSyllabus): void =>
         {
             const syllabusTaskId: string = `syllabus-${syllabus.id}`;
             let syllabusMinDate: Date | null = null;
@@ -54,8 +54,8 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult =>
 
             syllabus.modules.forEach((mId: string): void =>
             {
-                const moduleDoc: Module | undefined = props.modules.find(
-                    (m: Module): boolean => m.id === mId
+                const moduleDoc: GanttModule | undefined = props.modules.find(
+                    (m: GanttModule): boolean => m.id === mId
                 );
                 if (!moduleDoc) return;
 

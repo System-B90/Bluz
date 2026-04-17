@@ -3,7 +3,7 @@ import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
 import { Box, BoxProps, Tab, Tabs } from "@mui/material";
 import { Dispatch, SetStateAction } from "react";
 
-import { CurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
 import { CurriculumViewBuilderTab } from "@/components/gantt/curriculum-view/tabs/builder-tab";
 import { CurriculumGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab";
 import { SyllabusesTab } from "@/components/gantt/curriculum-view/tabs/syllabuses-tab";
@@ -17,7 +17,7 @@ interface TabProps
 
 export interface CurriculumViewTabsProps extends BoxProps, TabProps
 {
-    curriculumId: CurriculumId | null;
+    curriculumId: GanttCurriculumId | null;
 }
 
 function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps)

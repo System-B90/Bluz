@@ -1,10 +1,10 @@
 import { BaseDocument, baseDocumentFixup, clientGantApiBuilder } from "@/api-client/gantt/base";
-import { CreateCurriculumPayload } from "@/api-shared/types/gantt/create-payloads";
-import { Curriculum } from "@/api-shared/types/gantt/curriculum";
+import { CreateGanttCurriculumPayload } from "@/api-shared/types/gantt/create-payloads";
+import { GanttCurriculum } from "@/api-shared/types/gantt/curriculum";
 
-export type CurriculumDocument = Curriculum & BaseDocument;
+export type GanttCurriculumDocument = GanttCurriculum & BaseDocument;
 
-const curriculumApi = clientGantApiBuilder<Curriculum, CreateCurriculumPayload>({ apiBaseUrl: '/api/gantt/curriculums', dateFixup: baseDocumentFixup as any });
+const curriculumApi = clientGantApiBuilder<GanttCurriculum, CreateGanttCurriculumPayload>({ apiBaseUrl: '/api/gantt/curriculums', dateFixup: baseDocumentFixup as any });
 const {
     apiList,
     apiGet,
@@ -17,3 +17,4 @@ export
 {
     apiCreate as apiCreateCurriculum, apiDelete as apiDeleteCurriculum, apiGet as apiGetCurriculum, apiGetMany as apiGetManyCurriculums, apiList as apiListCurriculums, apiUpdate as apiUpdateCurriculum, curriculumApi
 };
+

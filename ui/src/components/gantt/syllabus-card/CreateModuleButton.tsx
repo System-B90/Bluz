@@ -4,11 +4,11 @@ import { useSnackbar } from 'notistack';
 import { useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { ModuleEventType, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttSyllabusId, ModuleEventType } from "@/api-shared/types/gantt/curriculum";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 
-export function CreateModuleButton({ syllabusId }: { syllabusId: SyllabusId; })
+export function CreateModuleButton({ syllabusId }: { syllabusId: GanttSyllabusId; })
 {
     const { enqueueSnackbar } = useSnackbar();
     const { createEvent } = useModuleEventActions();

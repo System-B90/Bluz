@@ -1,10 +1,11 @@
-import { CurriculumId, ModuleId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
 
-export interface CurriculumModuleDayMapping
+// TODO: WTF is this?
+export interface GanttCurriculumModuleDayMapping
 {
-    moduleId: ModuleId;
+    moduleId: GanttModuleId;
     weekIndex: number;
     dayIndex: number;
-    curriculumId: CurriculumId;
+    curriculumId: GanttCurriculumId;
     sortOrder: number;
 }

@@ -7,47 +7,47 @@ import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import
     {
         BaseGantItem,
-        Curriculum,
-        CurriculumDay,
-        CurriculumDayId,
-        CurriculumId,
-        CurriculumWeek,
-        CurriculumWeekId,
-        Module,
-        ModuleEvent,
-        ModuleEventId,
-        ModuleId,
-        Syllabus,
-        SyllabusId
+        GanttCurriculum,
+        GanttCurriculumId,
+        GanttDay,
+        GanttDayId,
+        GanttEvent,
+        GanttEventId,
+        GanttModule,
+        GanttModuleId,
+        GanttSyllabus,
+        GanttSyllabusId,
+        GanttWeek,
+        GanttWeekId
     } from "@/api-shared/types/gantt/curriculum";
 
 export type Action =
-    | { type: 'ADD_DAY'; payload: { day: CurriculumDay & { id: CurriculumDayId; }; }; }
+    | { type: 'ADD_DAY'; payload: { day: GanttDay & { id: GanttDayId; }; }; }
 
     // Updates
-    | { type: 'ADD_EVENT'; payload: { moduleId: ModuleId; event: ModuleEvent; }; }
-    | { type: 'ADD_MODULE'; payload: { syllabusId: SyllabusId; module: Module; }; }
-    | { type: 'ADD_SYLLABUS'; payload: { curriculumId: CurriculumId; syllabus: Syllabus; }; }
-    | { type: 'ADD_WEEK'; payload: { week: CurriculumWeek & { id: CurriculumWeekId; }; }; }
+    | { type: 'ADD_EVENT'; payload: { moduleId: GanttModuleId; event: GanttEvent; }; }
+    | { type: 'ADD_MODULE'; payload: { syllabusId: GanttSyllabusId; module: GanttModule; }; }
+    | { type: 'ADD_SYLLABUS'; payload: { curriculumId: GanttCurriculumId; syllabus: GanttSyllabus; }; }
+    | { type: 'ADD_WEEK'; payload: { week: GanttWeek & { id: GanttWeekId; }; }; }
 
     // Adds
-    | { type: 'ALLOCATE_TIME_TO_MODULE'; payload: { curriculumId: CurriculumId; moduleId: ModuleId; duration: number; }; }
-    | { type: 'ALLOCATE_TIME'; payload: { curriculumId: CurriculumId; eventId: ModuleEventId; duration: number; }; }
-    | { type: 'REMOVE_DAY'; payload: { dayId: CurriculumDayId; }; }
+    | { type: 'ALLOCATE_TIME_TO_MODULE'; payload: { curriculumId: GanttCurriculumId; moduleId: GanttModuleId; duration: number; }; }
+    | { type: 'ALLOCATE_TIME'; payload: { curriculumId: GanttCurriculumId; eventId: GanttEventId; duration: number; }; }
+    | { type: 'REMOVE_DAY'; payload: { dayId: GanttDayId; }; }
 
     // Removes
-    | { type: 'REMOVE_EVENT'; payload: { moduleId: ModuleId; eventId: ModuleEventId; }; }
-    | { type: 'REMOVE_MODULE'; payload: { syllabusId: SyllabusId; moduleId: ModuleId; }; }
-    | { type: 'REMOVE_SYLLABUS'; payload: { curriculumId: CurriculumId; syllabusId: SyllabusId; }; }
-    | { type: 'REMOVE_WEEK'; payload: { weekId: CurriculumWeekId; }; }
+    | { type: 'REMOVE_EVENT'; payload: { moduleId: GanttModuleId; eventId: GanttEventId; }; }
+    | { type: 'REMOVE_MODULE'; payload: { syllabusId: GanttSyllabusId; moduleId: GanttModuleId; }; }
+    | { type: 'REMOVE_SYLLABUS'; payload: { curriculumId: GanttCurriculumId; syllabusId: GanttSyllabusId; }; }
+    | { type: 'REMOVE_WEEK'; payload: { weekId: GanttWeekId; }; }
     | { type: 'SET_DATA'; payload: ApiCurriculum; }
 
-    | { type: 'UPDATE_CURRICULUM'; payload: { id: CurriculumId; updates: Partial<Curriculum>; }; }
-    | { type: 'UPDATE_DAY'; payload: { id: CurriculumDayId; updates: Partial<CurriculumDay>; }; }
-    | { type: 'UPDATE_EVENT'; payload: { id: ModuleEventId; updates: Partial<ModuleEvent>; }; }
-    | { type: 'UPDATE_MODULE'; payload: { id: ModuleId; updates: Partial<Module>; }; }
-    | { type: 'UPDATE_SYLLABUS'; payload: { id: SyllabusId; updates: Partial<Syllabus>; }; }
-    | { type: 'UPDATE_WEEK'; payload: { id: CurriculumWeekId; updates: any; }; };
+    | { type: 'UPDATE_CURRICULUM'; payload: { id: GanttCurriculumId; updates: Partial<GanttCurriculum>; }; }
+    | { type: 'UPDATE_DAY'; payload: { id: GanttDayId; updates: Partial<GanttDay>; }; }
+    | { type: 'UPDATE_EVENT'; payload: { id: GanttEventId; updates: Partial<GanttEvent>; }; }
+    | { type: 'UPDATE_MODULE'; payload: { id: GanttModuleId; updates: Partial<GanttModule>; }; }
+    | { type: 'UPDATE_SYLLABUS'; payload: { id: GanttSyllabusId; updates: Partial<GanttSyllabus>; }; }
+    | { type: 'UPDATE_WEEK'; payload: { id: GanttWeekId; updates: any; }; };
 
 function injectDocumentTimes<T extends BaseGantItem>(rawDoc: T): T & BaseDocument
 {
@@ -272,7 +272,7 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
         }
 
         case 'ADD_WEEK': {
-            const weeksRecord = state.weeks as Record<CurriculumWeekId, CurriculumWeek & { id: CurriculumWeekId; }>;
+            const weeksRecord = state.weeks as Record<GanttWeekId, GanttWeek & { id: GanttWeekId; }>;
             return {
                 ...state,
                 weeks: {
@@ -291,7 +291,7 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
         }
 
         case 'ADD_DAY': {
-            const daysRecord = state.days as Record<CurriculumDayId, CurriculumDay & { id: CurriculumDayId; }>;
+            const daysRecord = state.days as Record<GanttDayId, GanttDay & { id: GanttDayId; }>;
             return {
                 ...state,
                 days: {

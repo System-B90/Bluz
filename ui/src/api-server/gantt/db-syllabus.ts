@@ -5,13 +5,13 @@ import { drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } fro
 import { ganttCurriculum2SyllabusesSchema, ganttSyllabus2ModulesSchema, ganttSyllabusesSchema } from "@/api-server/gantt/schema";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiSyllabus } from "@/api-shared/types/gantt/api-layer";
-import { CreateSyllabusPayload } from "@/api-shared/types/gantt/create-payloads";
-import { CurriculumId, Syllabus, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { CreateGanttSyllabusPayload } from "@/api-shared/types/gantt/create-payloads";
+import { GanttCurriculumId, GanttSyllabus, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
-    Syllabus,
+    GanttSyllabus,
     typeof ganttSyllabusesSchema,
-    CreateSyllabusPayload
+    CreateGanttSyllabusPayload
 >({
     table: ganttSyllabusesSchema,
     typeName: 'סילבוס',
@@ -29,7 +29,7 @@ const basicOperations = drizzleOperationsBuilder<
     },
 });
 
-async function getFullSyllabus(id: SyllabusId): Promise<ApiSyllabus>
+async function getFullSyllabus(id: GanttSyllabusId): Promise<ApiSyllabus>
 {
     const result = await postgresDb.query.ganttSyllabusesSchema.findFirst({
         where: eq(ganttSyllabusesSchema.id, id),
@@ -64,7 +64,7 @@ async function getFullSyllabus(id: SyllabusId): Promise<ApiSyllabus>
     return result as any;
 }
 
-async function addSyllabusToCurriculum(curriculumId: CurriculumId, syllabusId: SyllabusId): Promise<ApiSyllabus>
+async function addSyllabusToCurriculum(curriculumId: GanttCurriculumId, syllabusId: GanttSyllabusId): Promise<ApiSyllabus>
 {
     try
     {
@@ -92,7 +92,7 @@ async function addSyllabusToCurriculum(curriculumId: CurriculumId, syllabusId: S
     }
 }
 
-async function removeSyllabusFromCurriculum(curriculumId: CurriculumId, syllabusId: SyllabusId): Promise<void>
+async function removeSyllabusFromCurriculum(curriculumId: GanttCurriculumId, syllabusId: GanttSyllabusId): Promise<void>
 {
     // We delete the specific mapping row from the junction table
     const result = await postgresDb.delete(ganttCurriculum2SyllabusesSchema)

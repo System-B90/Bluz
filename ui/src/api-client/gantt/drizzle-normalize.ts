@@ -1,21 +1,21 @@
 import { baseDocumentFixup } from "@/api-client/gantt/base";
-import { CurriculumDocument } from "@/api-client/gantt/curriculum";
-import { CurriculumDayDocument } from "@/api-client/gantt/day";
+import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
+import { GanttDayDocument } from "@/api-client/gantt/day";
 import { ModuleDocument } from "@/api-client/gantt/module";
 import { ModuleEventDocument } from "@/api-client/gantt/module-event";
 import { SyllabusDocument } from "@/api-client/gantt/syllabus";
 import { CurriculumWeekDocument } from "@/api-client/gantt/week";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
-import { CurriculumDayId, CurriculumId, CurriculumWeekId, DAY_NAME_DISPLAY, ModuleEventId, ModuleId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { DAY_NAME_DISPLAY, GanttCurriculumId, GanttDayId, GanttEventId, GanttModuleId, GanttSyllabusId, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
 
 export interface NormalizedStore
 {
-    curriculums: Record<CurriculumId, CurriculumDocument>;
-    syllabuses: Record<SyllabusId, SyllabusDocument & { curriculumId: CurriculumId; }>;
-    modules: Record<ModuleId, ModuleDocument & { syllabusId: SyllabusId; }>;
-    events: Record<ModuleEventId, ModuleEventDocument & { moduleId: ModuleId; }>;
-    weeks: Record<CurriculumWeekId, CurriculumWeekDocument & { id: CurriculumWeekId; curriculumId: CurriculumId; }>;
-    days: Record<CurriculumDayId, CurriculumDayDocument & { id: CurriculumDayId; weekId: CurriculumWeekId; }>;
+    curriculums: Record<GanttCurriculumId, GanttCurriculumDocument>;
+    syllabuses: Record<GanttSyllabusId, SyllabusDocument & { curriculumId: GanttCurriculumId; }>;
+    modules: Record<GanttModuleId, ModuleDocument & { syllabusId: GanttSyllabusId; }>;
+    events: Record<GanttEventId, ModuleEventDocument & { moduleId: GanttModuleId; }>;
+    weeks: Record<GanttWeekId, CurriculumWeekDocument & { id: GanttWeekId; curriculumId: GanttCurriculumId; }>;
+    days: Record<GanttDayId, GanttDayDocument & { id: GanttDayId; weekId: GanttWeekId; }>;
 }
 
 export function normalizeCurriculumData(apiData: ApiCurriculum): NormalizedStore
@@ -29,21 +29,21 @@ export function normalizeCurriculumData(apiData: ApiCurriculum): NormalizedStore
         days: {},
     };
 
-    const curriculumSyllabusIds: SyllabusId[] = [];
-    const curriculumWeekIds: CurriculumWeekId[] = [];
+    const curriculumSyllabusIds: GanttSyllabusId[] = [];
+    const curriculumWeekIds: GanttWeekId[] = [];
 
     const apiCurriculum = baseDocumentFixup(apiData);
     for (const link of (apiData.c2s ?? []))
     {
         const apiSyllabus = baseDocumentFixup(link.syllabus);
         curriculumSyllabusIds.push(apiSyllabus.id);
-        const syllabusModuleIds: ModuleId[] = [];
+        const syllabusModuleIds: GanttModuleId[] = [];
 
         for (const sMLink of (apiSyllabus.s2m ?? []))
         {
             const apiModule = baseDocumentFixup(sMLink.module);
             syllabusModuleIds.push(apiModule.id);
-            const moduleEventIds: ModuleEventId[] = [];
+            const moduleEventIds: GanttEventId[] = [];
 
             for (const mELink of (apiModule.m2e ?? []))
             {
@@ -80,7 +80,7 @@ export function normalizeCurriculumData(apiData: ApiCurriculum): NormalizedStore
     {
         const apiWeek = baseDocumentFixup(wLink.week);
         curriculumWeekIds.push(apiWeek.id);
-        const weekDayIds: Array<CurriculumDayId> = [];
+        const weekDayIds: Array<GanttDayId> = [];
 
         // Normalize days within week
         for (const dLink of (apiWeek.w2d ?? []))

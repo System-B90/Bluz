@@ -1,11 +1,11 @@
 import { ListItem, ListItemButton, ListItemText } from "@mui/material";
 import React from "react";
 
-import { Curriculum } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculum } from "@/api-shared/types/gantt/curriculum";
 
 interface CurriculumEntryProps
 {
-    curriculum: Curriculum;
+    curriculum: GanttCurriculum;
     onClick: () => void;
     selected: boolean;
 }

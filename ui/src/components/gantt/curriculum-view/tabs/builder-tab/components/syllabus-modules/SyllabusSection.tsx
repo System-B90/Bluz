@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Box, BoxProps, Stack, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
 
-import { SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { useCurriculumMappings } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { ModuleItem } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { hashSyllabusToColor } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
@@ -11,7 +11,7 @@ import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 
 export interface SyllabusSectionProps extends BoxProps
 {
-    syllabusId: SyllabusId;
+    syllabusId: GanttSyllabusId;
 }
 
 export function SyllabusSection({ syllabusId, ...props }: SyllabusSectionProps)

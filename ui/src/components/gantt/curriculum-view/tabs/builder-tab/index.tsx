@@ -12,7 +12,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { ModuleId } from "@/api-shared/types/gantt/curriculum";
+import { GanttModuleId } from "@/api-shared/types/gantt/curriculum";
 import { CurriculumMappingProvider, useCurriculumMappings } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { CurriculumViewBuilderWeeksView } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumViewBuilderWeeksView";
 import { ModuleItem } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
@@ -32,14 +32,14 @@ function CurriculumViewBuilderTabInner({
     const { enqueueSnackbar } = useSnackbar();
     const { moveModule, createMapping, removeModule } = useCurriculumMappings();
     const weeks = useCurriculum(curriculumId)?.weeks;
-    const [ activeId, setActiveId ] = useState<ModuleId | null>(null);
+    const [ activeId, setActiveId ] = useState<GanttModuleId | null>(null);
     const [ activeWeekIndex, setActiveWeekIndex ] = useState<number>();
     const [ activeDayIndex, setActiveDayIndex ] = useState<number>();
 
     function handleDragStart(event: DragStartEvent)
     {
         // Extract the ID from 'module-{moduleId}'
-        const id = event.active.id.toString().replace("module-", "") as ModuleId;
+        const id = event.active.id.toString().replace("module-", "") as GanttModuleId;
         setActiveId(id);
         setActiveWeekIndex((event.active.data as any).weekIndex ?? undefined);
         setActiveDayIndex((event.active.data as any).dayIndex ?? undefined);

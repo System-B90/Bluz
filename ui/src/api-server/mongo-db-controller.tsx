@@ -3,7 +3,7 @@ import { Collection, Db, MongoClient } from "mongodb";
 import { DbEventDocument } from "@/api-server/db-event";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import { Course } from "@/api-shared/types/course";
-import { Curriculum, Module, ModuleEvent, Syllabus } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculum, GanttEvent, GanttModule, GanttSyllabus } from "@/api-shared/types/gantt/curriculum";
 import { Setting } from "@/api-shared/types/settings/settings";
 import { CustomRoom } from "@/components/schedule/types/room";
 
@@ -17,10 +17,10 @@ class DatabaseController
     private _settings!: Collection<Setting>;
     private _courses!: Collection<Course>;
     private _rooms!: Collection<CustomRoom>;
-    private _curriculums!: Collection<Curriculum & BaseDbDocument>;
-    private _syllabuses!: Collection<Syllabus & BaseDbDocument>;
-    private _modules!: Collection<Module & BaseDbDocument>;
-    private _moduleEvents!: Collection<ModuleEvent & BaseDbDocument>;
+    private _curriculums!: Collection<GanttCurriculum & BaseDbDocument>;
+    private _syllabuses!: Collection<GanttSyllabus & BaseDbDocument>;
+    private _modules!: Collection<GanttModule & BaseDbDocument>;
+    private _moduleEvents!: Collection<GanttEvent & BaseDbDocument>;
 
     constructor()
     {

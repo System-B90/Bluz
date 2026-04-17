@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { curriculumApi } from "@/api-client/gantt/curriculum";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer"; // Ensure you import this type
-import { CurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
 import { CurriculumFab } from "@/components/gantt/curriculum-fab";
 import { CurriculumView } from "@/components/gantt/curriculum-view";
 import { CurriculumProvider } from "@/components/gantt/state/provider";
@@ -19,10 +19,10 @@ export default function GanttPage()
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const [ drawerOpen, setDrawerOpen ] = useState(true);
-    const [ currentCurriculum, setCurrentCurriculum ] = useState<CurriculumId | null>(() =>
+    const [ currentCurriculum, setCurrentCurriculum ] = useState<GanttCurriculumId | null>(() =>
     {
         const cidFromUrl = searchParams.get('cid');
-        return cidFromUrl ? cidFromUrl as CurriculumId : null;
+        return cidFromUrl ? cidFromUrl as GanttCurriculumId : null;
     });
 
     const [ initialData, setInitialData ] = useState<ApiCurriculum | null>(null);

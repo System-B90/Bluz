@@ -3,14 +3,14 @@ import { useSnackbar } from 'notistack';
 import { useCallback } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { curriculumApi, CurriculumDocument } from '@/api-client/gantt/curriculum';
+import { curriculumApi, GanttCurriculumDocument } from '@/api-client/gantt/curriculum';
 import { makeCurriculum } from '@/api-shared/types/gantt/curriculum';
 import { ActionItemButton } from '@/components/gantt/curriculum-fab/action-items/ActionItemButton';
 import { BaseActionItemProps } from '@/components/gantt/curriculum-fab/action-items/ActionItemProps';
 
 export interface CreateDraftActionProps extends BaseActionItemProps
 {
-    onCreate: (newCurriculum: CurriculumDocument) => void;
+    onCreate: (newCurriculum: GanttCurriculumDocument) => void;
 }
 
 export function CreateDraftAction({ onCreate, onProcessingChange, ...props }: CreateDraftActionProps)

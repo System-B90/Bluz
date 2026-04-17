@@ -3,11 +3,11 @@ import { useSnackbar } from 'notistack';
 import { ChangeEventHandler, useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useSyllabus } from '@/components/gantt/state/hooks/UseSyllabus';
 
-export function SyllabusName({ syllabusId }: { syllabusId: SyllabusId; })
+export function SyllabusName({ syllabusId }: { syllabusId: GanttSyllabusId; })
 {
     const { enqueueSnackbar } = useSnackbar();
     const { updateSyllabus } = useSyllabusActions();

@@ -15,7 +15,7 @@ import { useSnackbar } from "notistack";
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { Module, ModuleId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttModule, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import { HiveModulesView } from "@/components/gantt/module-dialog/utils";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
@@ -25,8 +25,8 @@ import { useCurriculumProviderActions } from "@/components/gantt/state/provider"
 export interface ModuleDialogProps extends DialogProps
 {
     setOpen: Dispatch<SetStateAction<boolean>>;
-    moduleId: ModuleId | null;
-    syllabusId: null | SyllabusId;
+    moduleId: GanttModuleId | null;
+    syllabusId: null | GanttSyllabusId;
 }
 
 export function ModuleDialog({
@@ -53,7 +53,7 @@ export function ModuleDialog({
         setOpen(false);
     }, [ setOpen ]);
 
-    const handleCommit = useCallback((updates: Partial<Module>) =>
+    const handleCommit = useCallback((updates: Partial<GanttModule>) =>
     {
         if (!syllabusId || !moduleId) return;
         updateModule(moduleId, updates)

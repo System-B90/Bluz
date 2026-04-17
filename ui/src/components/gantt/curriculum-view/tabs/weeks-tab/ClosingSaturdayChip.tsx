@@ -11,13 +11,13 @@ import { useSnackbar } from "notistack";
 import { useCallback } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { CurriculumWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttWeekId } from "@/api-shared/types/gantt/curriculum";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseCurriculumWeek";
 
 interface ClosingSaturdayChipProps
 {
-    weekId: CurriculumWeekId;
+    weekId: GanttWeekId;
     weekendDuty: boolean;
 }
 

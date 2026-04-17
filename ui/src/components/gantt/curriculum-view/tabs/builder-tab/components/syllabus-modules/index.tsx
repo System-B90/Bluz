@@ -10,14 +10,14 @@ import { Box, BoxProps, Divider, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import React, { useMemo } from "react";
 
-import { CurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
 import { SyllabusSection } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/SyllabusSection";
 import { useCurriculum } from '@/components/gantt/state/hooks/UseCurriculum';
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 
 export interface SidebarProps extends BoxProps
 {
-    curriculumId: CurriculumId | null;
+    curriculumId: GanttCurriculumId | null;
 }
 
 export function SyllabusModulesCurriculumViewSidebar({

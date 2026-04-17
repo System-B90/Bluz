@@ -1,14 +1,14 @@
 import { Box, Card, CardProps, Skeleton, Typography } from '@mui/material';
 
-import { CurriculumDocument } from '@/api-client/gantt/curriculum';
-import { CurriculumId } from '@/api-shared/types/gantt/curriculum';
+import { GanttCurriculumDocument } from '@/api-client/gantt/curriculum';
+import { GanttCurriculumId } from '@/api-shared/types/gantt/curriculum';
 import { CurriculumDescription } from '@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumDescription';
 import { CurriculumName } from '@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumName';
 
 export interface CurriculumCardProps extends Omit<CardProps, 'sx'>
 {
-    curriculumId: CurriculumId | null;
-    curriculum: CurriculumDocument | undefined;
+    curriculumId: GanttCurriculumId | null;
+    curriculum: GanttCurriculumDocument | undefined;
 }
 
 export function CurriculumAboutCard({ curriculumId, curriculum, ...props }: CurriculumCardProps)

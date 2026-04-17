@@ -9,7 +9,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { Box, BoxProps, Divider } from "@mui/material";
 import { useMemo } from "react";
 
-import { CurriculumWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttWeekId } from "@/api-shared/types/gantt/curriculum";
 import { useCurriculumMappings } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { GroupHeader } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/GroupHeader";
 import { ModuleItem } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
@@ -18,7 +18,7 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export interface WeekGroupPanelProps extends BoxProps
 {
-    group: Array<CurriculumWeekId>;
+    group: Array<GanttWeekId>;
     onExpandGroup: () => void;
 }
 

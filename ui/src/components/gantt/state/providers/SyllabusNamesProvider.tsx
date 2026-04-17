@@ -3,10 +3,10 @@ import { useSnackbar } from "notistack";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { syllabusApi } from "@/api-client/gantt/api";
-import { SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { syllabusApi } from "@/api-client/gantt";
+import { GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 
-export type SyllabusDictionary = Record<SyllabusId, string>;
+export type SyllabusDictionary = Record<GanttSyllabusId, string>;
 
 export interface SyllabusProviderState
 {

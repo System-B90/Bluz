@@ -8,16 +8,16 @@
 import { Box } from "@mui/material";
 import { useMemo } from 'react';
 
-import { CurriculumId, CurriculumWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
 import { WeekPanel } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useCurriculum } from '@/components/gantt/state/hooks/UseCurriculum';
 
-export function WeeksTab({ curriculumId }: { curriculumId: CurriculumId; })
+export function WeeksTab({ curriculumId }: { curriculumId: GanttCurriculumId; })
 {
     const curriculum = useCurriculum(curriculumId ?? '');
 
     const renderedPanels = useMemo(() =>
-        (curriculum?.weeks || []).map((weekId: CurriculumWeekId) => (
+        (curriculum?.weeks || []).map((weekId: GanttWeekId) => (
             <WeekPanel
                 curriculumId={ curriculumId }
                 key={ weekId }

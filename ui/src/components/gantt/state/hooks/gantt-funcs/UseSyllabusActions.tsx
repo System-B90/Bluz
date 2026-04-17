@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
-import { syllabusApi } from "@/api-client/gantt/api";
-import { CurriculumId, Syllabus, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { syllabusApi } from "@/api-client/gantt";
+import { GanttCurriculumId, GanttSyllabus, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
@@ -9,7 +9,7 @@ export function useSyllabusActions()
 {
     const { dispatch } = useCurriculumProviderActions();
 
-    const createSyllabus = useCallback(async (title: string, curriculumId: CurriculumId, hiveIds: number[] = []) =>
+    const createSyllabus = useCallback(async (title: string, curriculumId: GanttCurriculumId, hiveIds: number[] = []) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -19,7 +19,7 @@ export function useSyllabusActions()
         }, "Failed to create syllabus:");
     }, [ dispatch ]);
 
-    const updateSyllabus = useCallback(async (id: SyllabusId, updates: Partial<Syllabus>) =>
+    const updateSyllabus = useCallback(async (id: GanttSyllabusId, updates: Partial<GanttSyllabus>) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -29,7 +29,7 @@ export function useSyllabusActions()
         }, `Failed to update syllabus (ID: ${id}):`);
     }, [ dispatch ]);
 
-    const deleteSyllabus = useCallback(async (curriculumId: CurriculumId, syllabusId: SyllabusId) =>
+    const deleteSyllabus = useCallback(async (curriculumId: GanttCurriculumId, syllabusId: GanttSyllabusId) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -38,7 +38,7 @@ export function useSyllabusActions()
         }, `Failed to remove syllabus (ID: ${syllabusId}):`);
     }, [ dispatch ]);
 
-    const linkSyllabusToCurriculum = useCallback(async (curriculumId: CurriculumId, syllabusId: SyllabusId) =>
+    const linkSyllabusToCurriculum = useCallback(async (curriculumId: GanttCurriculumId, syllabusId: GanttSyllabusId) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -48,7 +48,7 @@ export function useSyllabusActions()
         }, `Failed to link syllabus (ID: ${syllabusId}) to curriculum (ID: ${curriculumId}):`);
     }, [ dispatch ]);
 
-    const unlinkSyllabusFromCurriculum = useCallback(async (curriculumId: CurriculumId, syllabusId: SyllabusId) =>
+    const unlinkSyllabusFromCurriculum = useCallback(async (curriculumId: GanttCurriculumId, syllabusId: GanttSyllabusId) =>
     {
         return withGantErrorHandling(async () =>
         {

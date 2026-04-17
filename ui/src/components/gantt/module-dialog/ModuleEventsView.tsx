@@ -14,11 +14,11 @@ import { useSnackbar } from 'notistack';
 import { useCallback, useMemo } from "react";
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { ModuleEventId, ModuleId } from "@/api-shared/types/gantt/curriculum";
+import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
 import { ModuleEventView } from "@/components/gantt/module-dialog/ModuleEventView";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 
-function CreateModuleEventButton({ moduleId }: { moduleId: ModuleId; })
+function CreateModuleEventButton({ moduleId }: { moduleId: GanttModuleId; })
 {
     const { enqueueSnackbar } = useSnackbar();
     const { createEvent } = useModuleEventActions();
@@ -35,7 +35,7 @@ function CreateModuleEventButton({ moduleId }: { moduleId: ModuleId; })
     );
 }
 
-export function ModuleEventsView({ moduleId, eventIds }: { moduleId: ModuleId; eventIds: Array<ModuleEventId>; })
+export function ModuleEventsView({ moduleId, eventIds }: { moduleId: GanttModuleId; eventIds: Array<GanttEventId>; })
 {
     const eventItems = useMemo(() => eventIds.map(
         (eventId) => (<ModuleEventView eventId={ eventId } key={ eventId } moduleId={ moduleId } />)

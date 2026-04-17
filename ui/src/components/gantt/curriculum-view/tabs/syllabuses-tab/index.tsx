@@ -1,12 +1,12 @@
 import { Box } from "@mui/material";
 import { useMemo } from "react";
 
-import { CurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
 import { SyllabusesActionsBox } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box";
 import { useCurriculum } from '@/components/gantt/state/hooks/UseCurriculum';
 import { SyllabusCard } from "@/components/gantt/syllabus-card";
 
-export function SyllabusesTab({ curriculumId }: { curriculumId: CurriculumId; })
+export function SyllabusesTab({ curriculumId }: { curriculumId: GanttCurriculumId; })
 {
     const curriculum = useCurriculum(curriculumId ?? '');
 

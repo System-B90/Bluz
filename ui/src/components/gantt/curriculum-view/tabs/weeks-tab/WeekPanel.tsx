@@ -4,7 +4,7 @@ import { useSnackbar } from 'notistack';
 import { useCallback, useMemo } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { CurriculumDayId, CurriculumId, CurriculumWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttDayId, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
 import { ClosingSaturdayChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/ClosingSaturdayChip";
 import { DayEntry } from '@/components/gantt/curriculum-view/tabs/weeks-tab/DayEntry';
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
@@ -13,8 +13,8 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 
 interface WeekPanelProps
 {
-    curriculumId: CurriculumId;
-    weekId: CurriculumWeekId;
+    curriculumId: GanttCurriculumId;
+    weekId: GanttWeekId;
 }
 
 export function WorkTimeChip({ totalHours }: {
@@ -40,7 +40,7 @@ export function WorkTimeChip({ totalHours }: {
 export function WeekWorkTimeChip({
     weekId,
 }: {
-    weekId: CurriculumWeekId;
+    weekId: GanttWeekId;
 })
 {
     const state = useCurriculumState();
@@ -49,7 +49,7 @@ export function WeekWorkTimeChip({
     const totalHours = useMemo(() =>
     {
         if (!week?.days) return 0;
-        return (week.days as CurriculumDayId[]).reduce((acc: number, dayId: CurriculumDayId) =>
+        return (week.days as GanttDayId[]).reduce((acc: number, dayId: GanttDayId) =>
         {
             const day = state.days[ dayId ];
             return acc + ((day?.totalWorkingMinutes ?? 0) / 60);
@@ -78,7 +78,7 @@ export function WeekPanel({ weekId }: WeekPanelProps)
     }, [ weekId, week?.comment, updateWeek, enqueueSnackbar ]);
 
     const renderedDays = useMemo(() =>
-        (week?.days ?? []).map((dayId: CurriculumDayId) => (
+        (week?.days ?? []).map((dayId: GanttDayId) => (
             <DayEntry
                 dayId={ dayId }
                 key={ dayId }

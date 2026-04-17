@@ -14,7 +14,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { CurriculumId, ModuleId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModule } from '@/components/gantt/state/hooks/UseModule';
 import { useCurriculumProviderActions, useCurriculumState } from '@/components/gantt/state/provider';
@@ -23,8 +23,8 @@ import { calculateAllocatedTimeForModule, calculateMinimumRequiredTimeForModule 
 
 interface AllocatedTimeTableCellProps extends TableCellProps
 {
-    moduleId: ModuleId;
-    curriculumId: CurriculumId;
+    moduleId: GanttModuleId;
+    curriculumId: GanttCurriculumId;
     minimumRequiredTime: number;
     allocatedTime: number | undefined;
 }
@@ -51,7 +51,7 @@ function AllocatedTimeTableCell({ moduleId, curriculumId, allocatedTime, minimum
     );
 }
 
-export function ModuleRow({ moduleId, syllabusId, curriculumId }: { moduleId: ModuleId; syllabusId: SyllabusId; curriculumId: CurriculumId; })
+export function ModuleRow({ moduleId, syllabusId, curriculumId }: { moduleId: GanttModuleId; syllabusId: GanttSyllabusId; curriculumId: GanttCurriculumId; })
 {
     const state = useCurriculumState();
     const { openModuleDialog } = useCurriculumProviderActions();

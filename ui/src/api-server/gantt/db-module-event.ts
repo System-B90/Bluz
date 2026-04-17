@@ -6,17 +6,17 @@ import { ganttEventsSchema, ganttModule2EventsSchema } from "@/api-server/gantt/
 import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/schema/mappings";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
-import { CreateModuleEventPayload } from "@/api-shared/types/gantt/create-payloads";
-import { CurriculumId, ModuleEvent, ModuleEventId, ModuleId } from "@/api-shared/types/gantt/curriculum";
+import { CreateGanttEventPayload } from "@/api-shared/types/gantt/create-payloads";
+import { GanttCurriculumId, GanttEvent, GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
 
 /**
  * Basic CRUD operations for the 'ganttEventsSchema' table.
  * Note: This entity does not have a downstream junction table in the current hierarchy.
  */
 const basicOperations = drizzleOperationsBuilder<
-    ModuleEvent,
+    GanttEvent,
     typeof ganttEventsSchema,
-    CreateModuleEventPayload
+    CreateGanttEventPayload
 >({
     table: ganttEventsSchema,
     typeName: 'מופע',
@@ -28,7 +28,7 @@ const basicOperations = drizzleOperationsBuilder<
     },
 });
 
-async function getFullModuleEvent(id: ModuleId): Promise<ApiModuleEvent>
+async function getFullModuleEvent(id: GanttModuleId): Promise<ApiModuleEvent>
 {
     const result = await postgresDb.query.ganttEventsSchema.findFirst({
         where: eq(ganttEventsSchema.id, id),
@@ -50,7 +50,7 @@ async function getFullModuleEvent(id: ModuleId): Promise<ApiModuleEvent>
 /**
  * Associates a specific event with a module in the junction table.
  */
-async function addEventToModule(moduleId: ModuleId, eventId: ModuleEventId): Promise<ApiModuleEvent>
+async function addEventToModule(moduleId: GanttModuleId, eventId: GanttEventId): Promise<ApiModuleEvent>
 {
     try
     {
@@ -81,7 +81,7 @@ async function addEventToModule(moduleId: ModuleId, eventId: ModuleEventId): Pro
 /**
  * Removes the association between a module and an event.
  */
-async function removeEventFromModule(moduleId: ModuleId, eventId: ModuleEventId): Promise<void>
+async function removeEventFromModule(moduleId: GanttModuleId, eventId: GanttEventId): Promise<void>
 {
     const result = await postgresDb.delete(ganttModule2EventsSchema)
         .where(
@@ -101,7 +101,7 @@ async function removeEventFromModule(moduleId: ModuleId, eventId: ModuleEventId)
 /**
  * Retrieves the specific allocated duration for an event within a curriculum context.
  */
-async function getAllocatedTime(eventId: ModuleEventId, curriculumId: CurriculumId): Promise<number>
+async function getAllocatedTime(eventId: GanttEventId, curriculumId: GanttCurriculumId): Promise<number>
 {
     const result = await postgresDb.query.ganttCurriculumEventConfigurationsSchema.findFirst({
         where: and(
@@ -121,8 +121,8 @@ async function getAllocatedTime(eventId: ModuleEventId, curriculumId: Curriculum
  * Uses an upsert strategy to maintain data integrity.
  */
 async function setAllocatedTime(
-    eventId: ModuleEventId,
-    curriculumId: CurriculumId,
+    eventId: GanttEventId,
+    curriculumId: GanttCurriculumId,
     duration: number
 ): Promise<void>
 {

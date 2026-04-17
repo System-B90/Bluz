@@ -11,8 +11,8 @@ import
 import { useSnackbar } from 'notistack';
 import { Dispatch, MouseEvent, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { CurriculumDocument } from "@/api-client/gantt/curriculum";
-import { CurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
 import { CurriculumActionItems } from '@/components/gantt/curriculum-fab/CurriculumActionItems';
 import { CurriculumListItems } from "@/components/gantt/curriculum-fab/CurriculumListItems";
 import { fetchDrawerData, sortCurriculumsByDraftAndUpdatedAt } from "@/components/gantt/curriculum-fab/utils";
@@ -21,8 +21,8 @@ export interface CurriculumDrawerProps
 {
     open?: boolean;
     setOpen?: Dispatch<SetStateAction<boolean>>;
-    setCurrentCurriculum: Dispatch<SetStateAction<CurriculumId | null>>;
-    currentCurriculum?: CurriculumId | null;
+    setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
+    currentCurriculum?: GanttCurriculumId | null;
 }
 
 const PANEL_WIDTH = 300;
@@ -33,7 +33,7 @@ export function CurriculumFab({
 }: CurriculumDrawerProps)
 {
     const { enqueueSnackbar } = useSnackbar();
-    const [ curriculumsData, setCurriculumsData ] = useState<Record<CurriculumId, CurriculumDocument>>({} as Record<CurriculumId, CurriculumDocument>);
+    const [ curriculumsData, setCurriculumsData ] = useState<Record<GanttCurriculumId, GanttCurriculumDocument>>({} as Record<GanttCurriculumId, GanttCurriculumDocument>);
     const [ isFetchingDetails, setIsFetchingDetails ] = useState<boolean>(true);
     const [ anchorEl, setAnchorEl ] = useState<HTMLButtonElement | null>(null);
     const hasInitializedSelection = useRef(false);
@@ -56,21 +56,21 @@ export function CurriculumFab({
         }
     }, [ sortedIds, currentCurriculum, setCurrentCurriculum ]);
 
-    const onCreateCallback = useCallback((newCurriculum: CurriculumDocument) =>
+    const onCreateCallback = useCallback((newCurriculum: GanttCurriculumDocument) =>
     {
         setCurrentCurriculum(newCurriculum.id);
         setCurriculumsData((prev) => ({ ...prev, [ newCurriculum.id ]: newCurriculum }));
         setAnchorEl(null);
     }, [ setCurrentCurriculum ]);
 
-    const onUpdateCallback = useCallback((updatedCurriculum: CurriculumDocument) =>
+    const onUpdateCallback = useCallback((updatedCurriculum: GanttCurriculumDocument) =>
     {
         setCurriculumsData((prev) => ({ ...prev, [ updatedCurriculum.id ]: updatedCurriculum }));
         setCurrentCurriculum(updatedCurriculum.id);
         setAnchorEl(null);
     }, [ setCurrentCurriculum ]);
 
-    const onDeleteCallback = useCallback((deletedCurriculumId: CurriculumId) =>
+    const onDeleteCallback = useCallback((deletedCurriculumId: GanttCurriculumId) =>
     {
         setCurriculumsData((prev) =>
         {
@@ -100,7 +100,7 @@ export function CurriculumFab({
         setAnchorEl(null);
     }, []);
 
-    const handleSelectCurriculum = useCallback((value: SetStateAction<CurriculumId | null>) =>
+    const handleSelectCurriculum = useCallback((value: SetStateAction<GanttCurriculumId | null>) =>
     {
         setCurrentCurriculum(value);
         handleClosePanel();

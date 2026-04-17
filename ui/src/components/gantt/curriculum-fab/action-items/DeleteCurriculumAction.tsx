@@ -4,13 +4,13 @@ import { useCallback } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { curriculumApi } from '@/api-client/gantt/curriculum';
-import { CurriculumId } from '@/api-shared/types/gantt/curriculum';
+import { GanttCurriculumId } from '@/api-shared/types/gantt/curriculum';
 import { ActionItemButton } from '@/components/gantt/curriculum-fab/action-items/ActionItemButton';
 import { CurriculumAwareActionItemProps } from '@/components/gantt/curriculum-fab/action-items/ActionItemProps';
 
 export interface DeleteCurriculumActionProps extends CurriculumAwareActionItemProps
 {
-    onDelete: (deletedCurriculumId: CurriculumId) => void;
+    onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
 }
 
 export function DeleteCurriculumAction({ sourceCurriculum, onDelete, onProcessingChange, ...props }: DeleteCurriculumActionProps)

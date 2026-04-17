@@ -13,7 +13,7 @@ export interface ModuleEventRequirements
 {
     // TODO: Implement
 }
-export interface ModuleEvent extends BaseGantItem 
+export interface GanttEvent extends BaseGantItem 
 {
     title: string;
     type: ModuleEventType;
@@ -21,23 +21,23 @@ export interface ModuleEvent extends BaseGantItem
     allocatedDuration: number;
     requirements: Array<ModuleEventRequirements>;
 }
-export type ModuleEventId = ModuleEvent[ 'id' ];
-export interface Module extends BaseGantItem
+export type GanttEventId = GanttEvent[ 'id' ];
+export interface GanttModule extends BaseGantItem
 {
     title: string;
     description: string;
-    events: Array<ModuleEventId>;
+    events: Array<GanttEventId>;
     hiveIds: Array<number>;
 }
-export type ModuleId = Module[ 'id' ];
-export interface Syllabus extends BaseGantItem
+export type GanttModuleId = GanttModule[ 'id' ];
+export interface GanttSyllabus extends BaseGantItem
 {
     title: string;
     hiveIds: Array<number>;
-    modules: Array<ModuleId>;
+    modules: Array<GanttModuleId>;
 }
-export type SyllabusId = Syllabus[ 'id' ];
-export enum DayIndex
+export type GanttSyllabusId = GanttSyllabus[ 'id' ];
+export enum GanttDayIndex
 {
     Sunday = 0,
     Monday = 1,
@@ -48,53 +48,53 @@ export enum DayIndex
     Saturday = 6,
 }
 
-export const DAY_NAME_DISPLAY: Record<DayIndex, string> = {
-    [ DayIndex.Sunday ]: 'ראשון',
-    [ DayIndex.Monday ]: 'שני',
-    [ DayIndex.Tuesday ]: 'שלישי',
-    [ DayIndex.Wednesday ]: 'רביעי',
-    [ DayIndex.Thursday ]: 'חמישי',
-    [ DayIndex.Friday ]: 'שישי',
-    [ DayIndex.Saturday ]: 'שבת',
+export const DAY_NAME_DISPLAY: Record<GanttDayIndex, string> = {
+    [ GanttDayIndex.Sunday ]: 'ראשון',
+    [ GanttDayIndex.Monday ]: 'שני',
+    [ GanttDayIndex.Tuesday ]: 'שלישי',
+    [ GanttDayIndex.Wednesday ]: 'רביעי',
+    [ GanttDayIndex.Thursday ]: 'חמישי',
+    [ GanttDayIndex.Friday ]: 'שישי',
+    [ GanttDayIndex.Saturday ]: 'שבת',
 };
 
-export function getDayNameDisplay(day: DayIndex): string
+export function getDayNameDisplay(day: GanttDayIndex): string
 {
     return DAY_NAME_DISPLAY[ day ] ?? '';
 }
-export interface CurriculumDay extends BaseGantItem
+export interface GanttDay extends BaseGantItem
 {
     readonly title: string;  // Generated from day name
-    weekId: CurriculumWeekId;
-    dayIndex: DayIndex;
+    weekId: GanttWeekId;
+    dayIndex: GanttDayIndex;
     totalWorkingMinutes: number;
     comment?: string;
 }
-export type CurriculumDayId = string;
+export type GanttDayId = string;
 
-export interface CurriculumWeek extends BaseGantItem
+export interface GanttWeek extends BaseGantItem
 {
     readonly title: string;  // Generated from week number
     number: number;
-    days: Array<CurriculumDayId>;
+    days: Array<GanttDayId>;
     comment?: string;
     weekendDuty: boolean;
 }
-export type CurriculumWeekId = string;
+export type GanttWeekId = string;
 
-export interface Curriculum extends BaseGantItem
+export interface GanttCurriculum extends BaseGantItem
 {
     title: string;
     description: string;
-    syllabuses: Array<SyllabusId>;
+    syllabuses: Array<GanttSyllabusId>;
     isDraft: boolean;
-    weeks: Array<CurriculumWeekId>;
+    weeks: Array<GanttWeekId>;
 }
-export type CurriculumId = Curriculum[ 'id' ];
+export type GanttCurriculumId = GanttCurriculum[ 'id' ];
 
 type MakerReturnType<T extends BaseGantItem> = Omit<T, 'id'> & { id: T[ 'id' ] | undefined; };
 
-export function makeCurriculum(curriculum?: Partial<Curriculum>): MakerReturnType<Curriculum>
+export function makeCurriculum(curriculum?: Partial<GanttCurriculum>): MakerReturnType<GanttCurriculum>
 {
     return {
         id: curriculum?.id,
@@ -107,10 +107,10 @@ export function makeCurriculum(curriculum?: Partial<Curriculum>): MakerReturnTyp
 }
 
 export type ApiT<T> =
-    T extends Curriculum ? ApiCurriculum :
-    T extends Syllabus ? ApiSyllabus :
-    T extends Module ? ApiModule :
-    T extends ModuleEvent ? ApiModuleEvent :
-    T extends CurriculumWeek ? ApiCurriculumWeek :
-    T extends CurriculumDay ? ApiCurriculumDay :
+    T extends GanttCurriculum ? ApiCurriculum :
+    T extends GanttSyllabus ? ApiSyllabus :
+    T extends GanttModule ? ApiModule :
+    T extends GanttEvent ? ApiModuleEvent :
+    T extends GanttWeek ? ApiCurriculumWeek :
+    T extends GanttDay ? ApiCurriculumDay :
     never;

@@ -1,16 +1,16 @@
-import { CurriculumId, Module, ModuleEvent, ModuleEventId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttEvent, GanttEventId, GanttModule } from "@/api-shared/types/gantt/curriculum";
 
-type AllocateTimeToEventCallbackSync = (props: { eventId: ModuleEventId, curriculumId: string, duration: number; }) => void;
-type AllocateTimeToEventCallbackAsync = (props: { eventId: ModuleEventId, curriculumId: string, duration: number; }) => Promise<void>;
+type AllocateTimeToEventCallbackSync = (props: { eventId: GanttEventId, curriculumId: string, duration: number; }) => void;
+type AllocateTimeToEventCallbackAsync = (props: { eventId: GanttEventId, curriculumId: string, duration: number; }) => Promise<void>;
 export type AllocateTimeToEventCallback = AllocateTimeToEventCallbackAsync | AllocateTimeToEventCallbackSync;
 
-export type AllocateTimeToModuleCallbackModuleEvents = Record<ModuleEventId, Pick<ModuleEvent, 'id' | 'minimumDuration'>>;
+export type AllocateTimeToModuleCallbackModuleEvents = Record<GanttEventId, Pick<GanttEvent, 'id' | 'minimumDuration'>>;
 
 export type AllocateTimeToModuleProps<T extends AllocateTimeToEventCallback> = {
-    module: Pick<Module, 'events' | 'id'>;
+    module: Pick<GanttModule, 'events' | 'id'>;
     totalDuration: number;
     moduleEvents: AllocateTimeToModuleCallbackModuleEvents;
-    curriculumId: CurriculumId;
+    curriculumId: GanttCurriculumId;
     allocateToEventCallback: T;
 };
 

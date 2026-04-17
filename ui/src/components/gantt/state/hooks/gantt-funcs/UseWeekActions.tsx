@@ -1,26 +1,26 @@
 import { useCallback } from "react";
 
-import { dayApi, weekApi } from "@/api-client/gantt/api";
-import { CreateCurriculumDayPayload, CreateCurriculumWeekPayload } from "@/api-shared/types/gantt/create-payloads";
-import { CurriculumDay, CurriculumDayId, CurriculumWeek, CurriculumWeekId } from "@/api-shared/types/gantt/curriculum";
+import { dayApi, weekApi } from "@/api-client/gantt";
+import { CreateGanttDayPayload, CreateGanttWeekPayload } from "@/api-shared/types/gantt/create-payloads";
+import { GanttDay, GanttDayId, GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export interface UseWeekActionsReturn
 {
-    createWeek: (payload: CreateCurriculumWeekPayload) => Promise<CurriculumWeek>;
-    updateWeek: (weekId: CurriculumWeekId, updates: Partial<{ comment?: string; weekendDuty?: boolean; }>) => Promise<CurriculumWeek>;
-    deleteWeek: (weekId: CurriculumWeekId) => Promise<void>;
-    createDay: (payload: CreateCurriculumDayPayload) => Promise<CurriculumDay>;
-    updateDay: (dayId: CurriculumDayId, updates: Partial<CurriculumDay>) => Promise<CurriculumDay>;
-    deleteDay: (dayId: CurriculumDayId) => Promise<void>;
+    createWeek: (payload: CreateGanttWeekPayload) => Promise<GanttWeek>;
+    updateWeek: (weekId: GanttWeekId, updates: Partial<{ comment?: string; weekendDuty?: boolean; }>) => Promise<GanttWeek>;
+    deleteWeek: (weekId: GanttWeekId) => Promise<void>;
+    createDay: (payload: CreateGanttDayPayload) => Promise<GanttDay>;
+    updateDay: (dayId: GanttDayId, updates: Partial<GanttDay>) => Promise<GanttDay>;
+    deleteDay: (dayId: GanttDayId) => Promise<void>;
 }
 
 export function useWeekActions(): UseWeekActionsReturn
 {
     const { dispatch } = useCurriculumProviderActions();
 
-    const createWeek = useCallback(async (payload: CreateCurriculumWeekPayload) =>
+    const createWeek = useCallback(async (payload: CreateGanttWeekPayload) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -30,7 +30,7 @@ export function useWeekActions(): UseWeekActionsReturn
         }, "Failed to create week:");
     }, [ dispatch ]);
 
-    const updateWeek = useCallback(async (weekId: CurriculumWeekId, updates: Partial<{ comment?: string; weekendDuty?: boolean; }>) =>
+    const updateWeek = useCallback(async (weekId: GanttWeekId, updates: Partial<{ comment?: string; weekendDuty?: boolean; }>) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -40,7 +40,7 @@ export function useWeekActions(): UseWeekActionsReturn
         }, `Failed to update week (ID: ${weekId}):`);
     }, [ dispatch ]);
 
-    const deleteWeek = useCallback(async (weekId: CurriculumWeekId) =>
+    const deleteWeek = useCallback(async (weekId: GanttWeekId) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -49,7 +49,7 @@ export function useWeekActions(): UseWeekActionsReturn
         }, `Failed to delete week (ID: ${weekId}):`);
     }, [ dispatch ]);
 
-    const createDay = useCallback(async (payload: CreateCurriculumDayPayload) =>
+    const createDay = useCallback(async (payload: CreateGanttDayPayload) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -59,7 +59,7 @@ export function useWeekActions(): UseWeekActionsReturn
         }, "Failed to create day:");
     }, [ dispatch ]);
 
-    const updateDay = useCallback(async (dayId: CurriculumDayId, updates: Partial<CurriculumDay>) =>
+    const updateDay = useCallback(async (dayId: GanttDayId, updates: Partial<GanttDay>) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -69,7 +69,7 @@ export function useWeekActions(): UseWeekActionsReturn
         }, `Failed to update day (ID: ${dayId}):`);
     }, [ dispatch ]);
 
-    const deleteDay = useCallback(async (dayId: CurriculumDayId) =>
+    const deleteDay = useCallback(async (dayId: GanttDayId) =>
     {
         return withGantErrorHandling(async () =>
         {

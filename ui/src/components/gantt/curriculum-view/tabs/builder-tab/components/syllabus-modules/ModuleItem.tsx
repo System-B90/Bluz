@@ -10,7 +10,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Box, Paper, PaperProps, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
 
-import { ModuleId } from "@/api-shared/types/gantt/curriculum";
+import { GanttModuleId } from "@/api-shared/types/gantt/curriculum";
 import { hashSyllabusToColor } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
 import { WorkTimeChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
@@ -20,7 +20,7 @@ import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils"
 
 export interface ModuleItemProps extends PaperProps
 {
-    moduleId: ModuleId;
+    moduleId: GanttModuleId;
     weekIndex?: number;
     dayIndex?: number;
 }

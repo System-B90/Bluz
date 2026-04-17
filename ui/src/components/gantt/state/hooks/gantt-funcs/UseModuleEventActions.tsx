@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
-import { moduleEventApi } from "@/api-client/gantt/api";
-import { CurriculumId, ModuleEvent, ModuleEventId, ModuleEventType, ModuleId } from "@/api-shared/types/gantt/curriculum";
+import { ganttApi } from "@/api-client/gantt";
+import { GanttCurriculumId, GanttEvent, GanttEventId, GanttModuleId, ModuleEventType } from "@/api-shared/types/gantt/curriculum";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
@@ -11,7 +11,7 @@ export function useModuleEventActions()
 
     const createEvent = useCallback(async (
         title: string,
-        moduleId: ModuleId,
+        moduleId: GanttModuleId,
         type: ModuleEventType = ModuleEventType.Lecture,
         minimumDuration: number = 0,
         allocatedDuration: number = 0
@@ -19,7 +19,7 @@ export function useModuleEventActions()
     {
         return withGantErrorHandling(async () =>
         {
-            const newEvent = await moduleEventApi.apiCreate({
+            const newEvent = await ganttApi.event.apiCreate({
                 title,
                 moduleId,
                 type,
@@ -32,49 +32,49 @@ export function useModuleEventActions()
         }, "Failed to create event:");
     }, [ dispatch ]);
 
-    const updateEvent = useCallback(async (id: ModuleEventId, updates: Partial<ModuleEvent>) =>
+    const updateEvent = useCallback(async (id: GanttEventId, updates: Partial<GanttEvent>) =>
     {
         return withGantErrorHandling(async () =>
         {
-            const updatedEvent = await moduleEventApi.apiUpdate({ id, ...updates });
+            const updatedEvent = await ganttApi.event.apiUpdate({ id, ...updates });
             dispatch({ type: 'UPDATE_EVENT', payload: { id, updates: updatedEvent } });
             return updatedEvent;
         }, `Failed to update event (ID: ${id}):`);
     }, [ dispatch ]);
 
-    const deleteEvent = useCallback(async (moduleId: ModuleId, eventId: ModuleEventId) =>
+    const deleteEvent = useCallback(async (moduleId: GanttModuleId, eventId: GanttEventId) =>
     {
         return withGantErrorHandling(async () =>
         {
-            await moduleEventApi.apiDelete(eventId);
+            await ganttApi.event.apiDelete(eventId);
             dispatch({ type: 'REMOVE_EVENT', payload: { moduleId, eventId } });
         }, `Failed to remove event (ID: ${eventId}):`);
     }, [ dispatch ]);
 
-    const linkEventToModule = useCallback(async (moduleId: ModuleId, eventId: ModuleEventId) =>
+    const linkEventToModule = useCallback(async (moduleId: GanttModuleId, eventId: GanttEventId) =>
     {
         return withGantErrorHandling(async () =>
         {
-            const linkedEvent = await moduleEventApi.apiLink(eventId, moduleId);
+            const linkedEvent = await ganttApi.event.apiLink(eventId, moduleId);
             dispatch({ type: 'ADD_EVENT', payload: { event: linkedEvent, moduleId } });
             return linkedEvent;
         }, `Failed to link event (ID: ${eventId}) to module (ID: ${moduleId}):`);
     }, [ dispatch ]);
 
-    const unlinkEventFromModule = useCallback(async (moduleId: ModuleId, eventId: ModuleEventId) =>
+    const unlinkEventFromModule = useCallback(async (moduleId: GanttModuleId, eventId: GanttEventId) =>
     {
         return withGantErrorHandling(async () =>
         {
-            await moduleEventApi.apiUnlink(eventId, moduleId);
+            await ganttApi.event.apiUnlink(eventId, moduleId);
             dispatch({ type: 'REMOVE_EVENT', payload: { eventId, moduleId } });
         }, `Failed to unlink event (ID: ${eventId}) from module (ID: ${moduleId}):`);
     }, [ dispatch ]);
 
-    const allocateTimeToModuleEvent = useCallback(async (eventId: ModuleEventId, curriculumId: CurriculumId, allocatedDuration: number) =>
+    const allocateTimeToModuleEvent = useCallback(async (eventId: GanttEventId, curriculumId: GanttCurriculumId, allocatedDuration: number) =>
     {
         return withGantErrorHandling(async () =>
         {
-            await moduleEventApi.apiSetAllocatedTime(eventId, curriculumId, allocatedDuration);
+            await ganttApi.event.apiSetAllocatedTime(eventId, curriculumId, allocatedDuration);
             dispatch({ type: 'ALLOCATE_TIME', payload: { eventId, curriculumId, duration: allocatedDuration } });
         }, `Failed to allocate time to event (ID: ${eventId}):`);
     }, [ dispatch ]);

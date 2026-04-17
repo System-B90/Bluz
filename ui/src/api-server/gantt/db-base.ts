@@ -3,7 +3,7 @@ import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
 import { postgresDb } from "@/api-server/gantt";
 import { ClientApiError } from "@/api-shared/errors";
-import { BaseGantItem, CurriculumId, CurriculumWeekId, ModuleId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { BaseGantItem, GanttCurriculumId, GanttModuleId, GanttSyllabusId, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
 import { BasicGantOperations } from "@/app/api/gantt/base-collection";
 
 export const FOREIGN_KEY_VIOLATION = '23503';
@@ -67,10 +67,10 @@ export function drizzleOperationsBuilder<
         const now = new Date();
 
         const { curriculumId, syllabusId, moduleId, weekId, ...entityData } = data as {
-            curriculumId?: CurriculumId;
-            syllabusId?: SyllabusId;
-            moduleId?: ModuleId;
-            weekId?: CurriculumWeekId;
+            curriculumId?: GanttCurriculumId;
+            syllabusId?: GanttSyllabusId;
+            moduleId?: GanttModuleId;
+            weekId?: GanttWeekId;
         } & TCreatePayload;
 
         const parentId: Record<string, string | undefined> = { curriculumId, syllabusId, moduleId, weekId };

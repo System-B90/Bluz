@@ -11,7 +11,7 @@ import { useSnackbar } from 'notistack';
 import { useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { CurriculumWeekId } from '@/api-shared/types/gantt/curriculum';
+import { GanttWeekId } from '@/api-shared/types/gantt/curriculum';
 import { OverviewTab } from '@/components/gantt/curriculum-view/components/WorkTimePanel/OverviewTab';
 import { WorkTimePanelProps } from '@/components/gantt/curriculum-view/components/WorkTimePanel/types';
 import { useWorkTimePanelLogic } from '@/components/gantt/curriculum-view/components/WorkTimePanel/UseWorkTimePanelLogic';
@@ -21,7 +21,7 @@ import { useWeekActions } from '@/components/gantt/state/hooks/gantt-funcs/UseWe
 export function WorkTimePanel({ curriculumId, curriculum }: WorkTimePanelProps)
 {
     const { enqueueSnackbar } = useSnackbar();
-    const [ localWeekIds, setLocalWeekIds ] = useState<CurriculumWeekId[]>(() => cloneWeeks(curriculum?.weeks ?? []));
+    const [ localWeekIds, setLocalWeekIds ] = useState<GanttWeekId[]>(() => cloneWeeks(curriculum?.weeks ?? []));
     const { createWeek } = useWeekActions();
 
     const canEdit = curriculumId !== null;

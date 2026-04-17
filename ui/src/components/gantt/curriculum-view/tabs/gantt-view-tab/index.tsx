@@ -9,7 +9,7 @@
 
 import React, { useMemo } from 'react';
 
-import { Curriculum, CurriculumId, Module, ModuleEvent, Syllabus } from '@/api-shared/types/gantt/curriculum';
+import { GanttCurriculum, GanttCurriculumId, GanttEvent, GanttModule, GanttSyllabus } from '@/api-shared/types/gantt/curriculum';
 import { CurriculumMappingProvider } from '@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider';
 import { CurriculumGanttViewInner } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/CurriculumGanttViewInner';
 import { GanttDataSourceProps } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/types';
@@ -18,12 +18,12 @@ import { useCurriculumState } from '@/components/gantt/state/provider';
 
 export interface CurriculumGanttViewProps
 {
-    readonly curriculumId: CurriculumId;
+    readonly curriculumId: GanttCurriculumId;
 }
 
 export function CurriculumGanttView({ curriculumId }: CurriculumGanttViewProps): null | React.ReactElement
 {
-    const curriculum: Curriculum | undefined = useCurriculum(curriculumId);
+    const curriculum: GanttCurriculum | undefined = useCurriculum(curriculumId);
     const state = useCurriculumState();
 
     const innerProps: GanttDataSourceProps | null = useMemo(
@@ -31,9 +31,9 @@ export function CurriculumGanttView({ curriculumId }: CurriculumGanttViewProps):
             curriculum
                 ? {
                     curriculum,
-                    syllabuses: Object.values(state.syllabuses) as Array<Syllabus>,
-                    modules: Object.values(state.modules) as Array<Module>,
-                    events: Object.values(state.events) as Array<ModuleEvent>
+                    syllabuses: Object.values(state.syllabuses) as Array<GanttSyllabus>,
+                    modules: Object.values(state.modules) as Array<GanttModule>,
+                    events: Object.values(state.events) as Array<GanttEvent>
                 }
                 : null,
         [ curriculum, state ]

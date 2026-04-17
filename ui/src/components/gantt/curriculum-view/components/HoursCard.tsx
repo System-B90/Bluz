@@ -2,7 +2,7 @@ import { Box, Card, CircularProgress, Stack, Typography, useTheme } from '@mui/m
 import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge';
 import { useMemo } from 'react';
 
-import { CurriculumDocument } from '@/api-client/gantt/curriculum';
+import { GanttCurriculumDocument } from '@/api-client/gantt/curriculum';
 import { useCurriculumState } from '@/components/gantt/state/provider';
 import
     {
@@ -10,7 +10,7 @@ import
         calculateMinimumRequiredTimeForCurriculum
     } from '@/components/gantt/utils';
 
-export function HoursCard({ curriculum }: { curriculum: CurriculumDocument | undefined; })
+export function HoursCard({ curriculum }: { curriculum: GanttCurriculumDocument | undefined; })
 {
     const theme = useTheme();
     const state = useCurriculumState();

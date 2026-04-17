@@ -1,13 +1,13 @@
 import { Box, BoxProps } from '@mui/material';
 import { useState } from 'react';
 
-import { CurriculumId } from '@/api-shared/types/gantt/curriculum';
+import { GanttCurriculumId } from '@/api-shared/types/gantt/curriculum';
 import { CurriculumViewSidebar } from '@/components/gantt/curriculum-view/components/sidebars';
 import { CurriculumViewTabs } from '@/components/gantt/curriculum-view/tabs';
 
 export interface CurriculumViewProps extends BoxProps
 {
-    curriculumId: CurriculumId | null;
+    curriculumId: GanttCurriculumId | null;
 }
 
 export function CurriculumView({ curriculumId, ...props }: CurriculumViewProps)

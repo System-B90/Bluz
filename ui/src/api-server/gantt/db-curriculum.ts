@@ -6,13 +6,13 @@ import { ganttCurriculum2SyllabusesSchema } from "@/api-server/gantt/schema";
 import { ganttCurriculumsSchema } from "@/api-server/gantt/schema/curriculums";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
-import { CreateCurriculumPayload } from "@/api-shared/types/gantt/create-payloads";
-import { Curriculum, CurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { CreateGanttCurriculumPayload } from "@/api-shared/types/gantt/create-payloads";
+import { GanttCurriculum, GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
-    Curriculum,
+    GanttCurriculum,
     typeof ganttCurriculumsSchema,
-    CreateCurriculumPayload
+    CreateGanttCurriculumPayload
 >({
     table: ganttCurriculumsSchema,
     typeName: 'גאנט',
@@ -25,7 +25,7 @@ const basicOperations = drizzleOperationsBuilder<
     },
 });
 
-async function getFullCurriculum(id: CurriculumId): Promise<ApiCurriculum>
+async function getFullCurriculum(id: GanttCurriculumId): Promise<ApiCurriculum>
 {
     const result = await postgresDb.query.ganttCurriculumsSchema.findFirst({
         where: eq(ganttCurriculumsSchema.id, id),

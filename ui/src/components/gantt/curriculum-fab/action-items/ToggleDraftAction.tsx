@@ -4,13 +4,13 @@ import { useSnackbar } from 'notistack';
 import { useCallback } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { curriculumApi, CurriculumDocument } from '@/api-client/gantt/curriculum';
+import { curriculumApi, GanttCurriculumDocument } from '@/api-client/gantt/curriculum';
 import { ActionItemButton } from '@/components/gantt/curriculum-fab/action-items/ActionItemButton';
 import { CurriculumAwareActionItemProps } from '@/components/gantt/curriculum-fab/action-items/ActionItemProps';
 
 export interface ToggleDraftActionProps extends CurriculumAwareActionItemProps
 {
-    onUpdate: (updatedCurriculum: CurriculumDocument) => void;
+    onUpdate: (updatedCurriculum: GanttCurriculumDocument) => void;
 }
 
 export function ToggleDraftAction({ sourceCurriculum, onUpdate, onProcessingChange, ...props }: ToggleDraftActionProps)

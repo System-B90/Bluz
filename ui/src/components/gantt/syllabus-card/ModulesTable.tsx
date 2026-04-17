@@ -11,15 +11,15 @@ import
     } from '@mui/material';
 import { useMemo } from 'react';
 
-import { CurriculumId, Syllabus, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttSyllabus, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { CreateModuleButton } from "@/components/gantt/syllabus-card/CreateModuleButton";
 import { ModuleRow } from "@/components/gantt/syllabus-card/ModuleRow";
 
 export interface ModulesTableProps
 {
-    syllabusId: SyllabusId;
-    curriculumId: CurriculumId;
-    syllabusModules: Syllabus[ 'modules' ];
+    syllabusId: GanttSyllabusId;
+    curriculumId: GanttCurriculumId;
+    syllabusModules: GanttSyllabus[ 'modules' ];
 }
 export function ModulesTable({ syllabusId, syllabusModules, curriculumId }: ModulesTableProps)
 {

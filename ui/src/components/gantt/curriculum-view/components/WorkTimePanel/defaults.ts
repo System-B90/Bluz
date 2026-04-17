@@ -1,15 +1,15 @@
-import { CurriculumDay, DAY_NAME_DISPLAY, DayIndex } from '@/api-shared/types/gantt/curriculum';
+import { DAY_NAME_DISPLAY, GanttDay, GanttDayIndex } from '@/api-shared/types/gantt/curriculum';
 
 const DEFAULT_WEEKDAY_HOURS_FALLBACK = 8;
 const DEFAULT_FRIDAY_HOURS_FALLBACK = 6;
 
-export const defaultWeekDayOrder: DayIndex[] = [
-    DayIndex.Sunday,
-    DayIndex.Monday,
-    DayIndex.Tuesday,
-    DayIndex.Wednesday,
-    DayIndex.Thursday,
-    DayIndex.Friday,
+export const defaultWeekDayOrder: GanttDayIndex[] = [
+    GanttDayIndex.Sunday,
+    GanttDayIndex.Monday,
+    GanttDayIndex.Tuesday,
+    GanttDayIndex.Wednesday,
+    GanttDayIndex.Thursday,
+    GanttDayIndex.Friday,
 ];
 
 function parseDefaultHours(rawValue: string | undefined, fallback: number): number
@@ -31,12 +31,12 @@ export const defaultFridayHours = parseDefaultHours(
     DEFAULT_FRIDAY_HOURS_FALLBACK
 );
 
-export function buildDefaultWeekDays(): Partial<CurriculumDay>[]
+export function buildDefaultWeekDays(): Partial<GanttDay>[]
 {
     return defaultWeekDayOrder.map((dayName) => ({
         title: DAY_NAME_DISPLAY[ dayName ],
         day: dayName,
-        totalWorkingHours: dayName === DayIndex.Friday ? defaultFridayHours : defaultWeekdayHours,
+        totalWorkingHours: dayName === GanttDayIndex.Friday ? defaultFridayHours : defaultWeekdayHours,
         comment: '',
     }));
 }

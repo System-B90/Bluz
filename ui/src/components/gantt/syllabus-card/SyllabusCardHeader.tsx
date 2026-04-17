@@ -1,16 +1,16 @@
 import { Box, CardHeader, CardHeaderProps } from "@mui/material";
 
-import { SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { HoursBox } from "@/components/gantt/syllabus-card/HoursBox";
 import { SyllabusName } from "@/components/gantt/syllabus-card/SyllabusName";
 
 export interface SyllabusCardHeaderProps extends Omit<CardHeaderProps, 'title'>
 {
-    syllabusId: SyllabusId;
+    syllabusId: GanttSyllabusId;
 }
 
-function InternalHeader({ syllabusId }: { syllabusId: SyllabusId; })
+function InternalHeader({ syllabusId }: { syllabusId: GanttSyllabusId; })
 {
     const syllabus = useSyllabus(syllabusId);
 

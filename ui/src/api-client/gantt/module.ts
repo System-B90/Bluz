@@ -1,10 +1,10 @@
 import { BaseDocument, baseDocumentFixup, clientGantApiBuilder } from "@/api-client/gantt/base";
-import { CreateModulePayload } from "@/api-shared/types/gantt/create-payloads";
-import { Module } from "@/api-shared/types/gantt/curriculum";
+import { CreateGanttModulePayload } from "@/api-shared/types/gantt/create-payloads";
+import { GanttModule } from "@/api-shared/types/gantt/curriculum";
 
-export type ModuleDocument = Module & BaseDocument;
+export type ModuleDocument = GanttModule & BaseDocument;
 
-const moduleApi = clientGantApiBuilder<Module, CreateModulePayload>({ apiBaseUrl: '/api/gantt/modules', dateFixup: baseDocumentFixup as any });
+const moduleApi = clientGantApiBuilder<GanttModule, CreateGanttModulePayload>({ apiBaseUrl: '/api/gantt/modules', dateFixup: baseDocumentFixup as any });
 const {
     apiList,
     apiGet,
@@ -19,3 +19,4 @@ export
 };
 
     export { moduleApi };
+

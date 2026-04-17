@@ -9,14 +9,14 @@ import { NextRequest } from "next/server";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { ClientApiError } from "@/api-shared/errors";
-import { BaseGantItem, CurriculumId, ModuleEventId } from "@/api-shared/types/gantt/curriculum";
+import { BaseGantItem, GanttCurriculumId, GanttEventId } from "@/api-shared/types/gantt/curriculum";
 
 export interface BasicGantAllocateTimeOperations<_TEntity extends BaseGantItem>
 {
-    getAllocatedTime: (eventId: ModuleEventId, containerId: CurriculumId) => Promise<number>;
+    getAllocatedTime: (eventId: GanttEventId, containerId: GanttCurriculumId) => Promise<number>;
     setAllocatedTime: (
-        eventId: ModuleEventId,
-        containerId: CurriculumId,
+        eventId: GanttEventId,
+        containerId: GanttCurriculumId,
         duration: number
     ) => Promise<void>;
 }
@@ -50,7 +50,7 @@ export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
             }
 
             const duration = await dbSet.getAllocatedTime(
-                (id as ModuleEventId),
+                (id as GanttEventId),
                 containerId
             );
 
@@ -82,7 +82,7 @@ export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
                 throw new ClientApiError("Invalid payload: containerId and duration (number) are required.");
             }
 
-            await dbSet.setAllocatedTime((id as ModuleEventId), containerId, duration);
+            await dbSet.setAllocatedTime((id as GanttEventId), containerId, duration);
 
             return ApiSuccess({ success: true });
         } catch (error)

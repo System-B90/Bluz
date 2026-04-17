@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
-import { moduleApi } from "@/api-client/gantt/api";
-import { CurriculumId, Module, ModuleId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { moduleApi } from "@/api-client/gantt";
+import { GanttCurriculumId, GanttModule, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
@@ -9,7 +9,7 @@ export function useModuleActions()
 {
     const { dispatch } = useCurriculumProviderActions();
 
-    const createModule = useCallback(async (title: string, syllabusId: SyllabusId, description: string = '', hiveIds: number[] = []) =>
+    const createModule = useCallback(async (title: string, syllabusId: GanttSyllabusId, description: string = '', hiveIds: number[] = []) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -19,7 +19,7 @@ export function useModuleActions()
         }, "Failed to create module:");
     }, [ dispatch ]);
 
-    const updateModule = useCallback(async (id: ModuleId, updates: Partial<Module>) =>
+    const updateModule = useCallback(async (id: GanttModuleId, updates: Partial<GanttModule>) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -29,7 +29,7 @@ export function useModuleActions()
         }, `Failed to update module (ID: ${id}):`);
     }, [ dispatch ]);
 
-    const deleteModule = useCallback(async (syllabusId: SyllabusId, moduleId: ModuleId) =>
+    const deleteModule = useCallback(async (syllabusId: GanttSyllabusId, moduleId: GanttModuleId) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -38,7 +38,7 @@ export function useModuleActions()
         }, `Failed to remove module (ID: ${moduleId}):`);
     }, [ dispatch ]);
 
-    const linkModuleToSyllabus = useCallback(async (syllabusId: SyllabusId, moduleId: ModuleId) =>
+    const linkModuleToSyllabus = useCallback(async (syllabusId: GanttSyllabusId, moduleId: GanttModuleId) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -48,7 +48,7 @@ export function useModuleActions()
         }, `Failed to link module (ID: ${moduleId}) to syllabus (ID: ${syllabusId}):`);
     }, [ dispatch ]);
 
-    const unlinkModuleToSyllabus = useCallback(async (syllabusId: SyllabusId, moduleId: ModuleId) =>
+    const unlinkModuleToSyllabus = useCallback(async (syllabusId: GanttSyllabusId, moduleId: GanttModuleId) =>
     {
         return withGantErrorHandling(async () =>
         {
@@ -57,7 +57,7 @@ export function useModuleActions()
         }, `Failed to unlink module (ID: ${moduleId}) from syllabus (ID: ${syllabusId}):`);
     }, [ dispatch ]);
 
-    const allocateTimeToModule = useCallback(async (moduleId: ModuleId, curriculumId: CurriculumId, allocatedDuration: number) =>
+    const allocateTimeToModule = useCallback(async (moduleId: GanttModuleId, curriculumId: GanttCurriculumId, allocatedDuration: number) =>
     {
         return withGantErrorHandling(async () =>
         {

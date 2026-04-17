@@ -13,12 +13,12 @@ import { useSnackbar } from 'notistack';
 import { useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { ModuleEvent, ModuleEventId, ModuleEventType, ModuleId } from "@/api-shared/types/gantt/curriculum";
+import { GanttEvent, GanttEventId, GanttModuleId, ModuleEventType } from "@/api-shared/types/gantt/curriculum";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from '@/components/gantt/state/hooks/UseEvent';
 
-function ModuleEventTitle({ moduleEvent, handleCommit }: { moduleEvent: ModuleEvent | undefined; handleCommit: (updates: Partial<ModuleEvent>) => void; })
+function ModuleEventTitle({ moduleEvent, handleCommit }: { moduleEvent: GanttEvent | undefined; handleCommit: (updates: Partial<GanttEvent>) => void; })
 {
     const [ localTitle, setLocalTitle ] = useState(moduleEvent?.title ?? '');
 
@@ -34,13 +34,13 @@ function ModuleEventTitle({ moduleEvent, handleCommit }: { moduleEvent: ModuleEv
     );
 }
 
-export function ModuleEventView({ moduleId, eventId }: { moduleId: ModuleId; eventId: ModuleEventId; })
+export function ModuleEventView({ moduleId, eventId }: { moduleId: GanttModuleId; eventId: GanttEventId; })
 {
     const { enqueueSnackbar } = useSnackbar();
     const moduleEvent = useEvent(eventId);
     const { deleteEvent, updateEvent } = useModuleEventActions();
 
-    const handleCommit = useCallback((updates: Partial<ModuleEvent>) =>
+    const handleCommit = useCallback((updates: Partial<GanttEvent>) =>
     {
         updateEvent(eventId, updates)
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'עדכון המופע נכשל!', error));

@@ -1,10 +1,10 @@
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
-import { CurriculumWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttWeekId } from "@/api-shared/types/gantt/curriculum";
 
 /**
  * Partitions the week IDs into N groups as balanced as possible.
  */
-export function partitionWeeks(weekIds: Array<CurriculumWeekId>, groupCount: number): Array<Array<CurriculumWeekId>>
+export function partitionWeeks(weekIds: Array<GanttWeekId>, groupCount: number): Array<Array<GanttWeekId>>
 {
     const totalWeeks = weekIds.length;
     if (totalWeeks === 0) return [];
@@ -22,7 +22,7 @@ export function partitionWeeks(weekIds: Array<CurriculumWeekId>, groupCount: num
     }).filter((group) => group.length > 0);
 }
 
-export function calculateTotalWorkingTimeForWeeks(weekIds: Array<CurriculumWeekId>, state: NormalizedStore): number
+export function calculateTotalWorkingTimeForWeeks(weekIds: Array<GanttWeekId>, state: NormalizedStore): number
 {
     return weekIds.reduce((accWeek, weekId) =>
     {

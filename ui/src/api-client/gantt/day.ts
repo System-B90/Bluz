@@ -1,10 +1,10 @@
 import { BaseDocument, baseDocumentFixup, clientGantApiBuilder } from "@/api-client/gantt/base";
-import { CreateCurriculumDayPayload } from "@/api-shared/types/gantt/create-payloads";
-import { CurriculumDay } from "@/api-shared/types/gantt/curriculum";
+import { CreateGanttDayPayload } from "@/api-shared/types/gantt/create-payloads";
+import { GanttDay } from "@/api-shared/types/gantt/curriculum";
 
-export type CurriculumDayDocument = CurriculumDay & BaseDocument;
+export type GanttDayDocument = GanttDay & BaseDocument;
 
-const dayApi = clientGantApiBuilder<CurriculumDay, CreateCurriculumDayPayload>({ apiBaseUrl: '/api/gantt/days', dateFixup: baseDocumentFixup as any });
+const dayApi = clientGantApiBuilder<GanttDay, CreateGanttDayPayload>({ apiBaseUrl: '/api/gantt/days', dateFixup: baseDocumentFixup as any });
 
 const {
     apiList,
@@ -19,3 +19,4 @@ export
 {
     apiCreate as apiCreateDay, apiDelete as apiDeleteDay, apiGet as apiGetDay, apiGetMany as apiGetManyDays, apiList as apiListDays, apiUpdate as apiUpdateDay, dayApi
 };
+

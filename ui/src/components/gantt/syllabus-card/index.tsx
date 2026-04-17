@@ -10,7 +10,7 @@ import { Card, CardContent, CardProps, Collapse, IconButton } from '@mui/materia
 import { styled } from '@mui/material/styles';
 import { useState } from 'react';
 
-import { CurriculumId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { useSyllabus } from '@/components/gantt/state/hooks/UseSyllabus';
 import { ModulesTable } from "@/components/gantt/syllabus-card/ModulesTable";
 import { SyllabusCardActions } from "@/components/gantt/syllabus-card/SyllabusCardActions";
@@ -18,8 +18,8 @@ import { SyllabusCardHeader } from "@/components/gantt/syllabus-card/SyllabusCar
 
 export interface SyllabusCardProps extends Omit<CardProps, 'sx'>
 {
-    curriculumId: CurriculumId;
-    syllabusId: SyllabusId;
+    curriculumId: GanttCurriculumId;
+    syllabusId: GanttSyllabusId;
 }
 
 const ExpandMore = styled((props: { _expand: boolean; } & any) =>
