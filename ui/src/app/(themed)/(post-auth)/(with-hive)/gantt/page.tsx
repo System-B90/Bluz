@@ -5,12 +5,12 @@ import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { curriculumApi } from "@/api-client/gant/curriculum";
-import { ApiCurriculum } from "@/api-shared/types/gant/api-layer"; // Ensure you import this type
-import { CurriculumId } from "@/api-shared/types/gant/curriculum";
-import { CurriculumFab } from "@/components/gant/curriculum-fab";
-import { CurriculumView } from "@/components/gant/curriculum-view";
-import { CurriculumProvider } from "@/components/gant/state/provider";
+import { curriculumApi } from "@/api-client/gantt/curriculum";
+import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer"; // Ensure you import this type
+import { CurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { CurriculumFab } from "@/components/gantt/curriculum-fab";
+import { CurriculumView } from "@/components/gantt/curriculum-view";
+import { CurriculumProvider } from "@/components/gantt/state/provider";
 
 export default function GanttPage()
 {

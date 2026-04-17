@@ -4,9 +4,9 @@ import { postgresDb } from "@/api-server/gantt";
 import { drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } from "@/api-server/gantt/db-base";
 import { ganttCurriculum2SyllabusesSchema, ganttSyllabus2ModulesSchema, ganttSyllabusesSchema } from "@/api-server/gantt/schema";
 import { ClientApiError } from "@/api-shared/errors";
-import { ApiSyllabus } from "@/api-shared/types/gant/api-layer";
-import { CreateSyllabusPayload } from "@/api-shared/types/gant/create-payloads";
-import { CurriculumId, Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { ApiSyllabus } from "@/api-shared/types/gantt/api-layer";
+import { CreateSyllabusPayload } from "@/api-shared/types/gantt/create-payloads";
+import { CurriculumId, Syllabus, SyllabusId } from "@/api-shared/types/gantt/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
     Syllabus,

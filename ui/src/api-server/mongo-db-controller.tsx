@@ -3,7 +3,7 @@ import { Collection, Db, MongoClient } from "mongodb";
 import { DbEventDocument } from "@/api-server/db-event";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import { Course } from "@/api-shared/types/course";
-import { Curriculum, Module, ModuleEvent, Syllabus } from "@/api-shared/types/gant/curriculum";
+import { Curriculum, Module, ModuleEvent, Syllabus } from "@/api-shared/types/gantt/curriculum";
 import { Setting } from "@/api-shared/types/settings/settings";
 import { CustomRoom } from "@/components/schedule/types/room";
 

@@ -6,9 +6,9 @@ import { ganttModule2EventsSchema, ganttModulesSchema, ganttSyllabus2ModulesSche
 import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/schema/mappings";
 import { ClientApiError } from "@/api-shared/errors";
 import { AllocateTimeToEventCallback, allocateTimeToModule, AllocateTimeToModuleCallbackModuleEvents } from "@/api-shared/gantt/allocate-time";
-import { ApiModule } from "@/api-shared/types/gant/api-layer";
-import { CreateModulePayload } from "@/api-shared/types/gant/create-payloads";
-import { CurriculumId, Module, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { ApiModule } from "@/api-shared/types/gantt/api-layer";
+import { CreateModulePayload } from "@/api-shared/types/gantt/create-payloads";
+import { CurriculumId, Module, ModuleId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
     Module,

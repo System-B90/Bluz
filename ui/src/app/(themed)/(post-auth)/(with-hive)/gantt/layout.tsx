@@ -1,6 +1,6 @@
 'use client';
 
-import { SyllabusNamesProvider } from "@/components/gant/state/providers/SyllabusNamesProvider";
+import { SyllabusNamesProvider } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 
 export default function GanttLayout({
     children,

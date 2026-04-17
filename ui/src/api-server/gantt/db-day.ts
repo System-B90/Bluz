@@ -4,9 +4,9 @@ import { postgresDb } from "@/api-server/gantt";
 import { drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
 import { ganttDaysSchema, ganttWeek2DaysSchema } from "@/api-server/gantt/schema";
 import { ClientApiError } from "@/api-shared/errors";
-import { ApiCurriculumDay } from "@/api-shared/types/gant/api-layer";
-import { CreateCurriculumDayPayload } from "@/api-shared/types/gant/create-payloads";
-import { CurriculumDay, CurriculumDayId } from "@/api-shared/types/gant/curriculum";
+import { ApiCurriculumDay } from "@/api-shared/types/gantt/api-layer";
+import { CreateCurriculumDayPayload } from "@/api-shared/types/gantt/create-payloads";
+import { CurriculumDay, CurriculumDayId } from "@/api-shared/types/gantt/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
     CurriculumDay,

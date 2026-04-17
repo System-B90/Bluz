@@ -5,9 +5,9 @@ import { drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
 import { ganttCurriculum2SyllabusesSchema } from "@/api-server/gantt/schema";
 import { ganttCurriculumsSchema } from "@/api-server/gantt/schema/curriculums";
 import { ClientApiError } from "@/api-shared/errors";
-import { ApiCurriculum } from "@/api-shared/types/gant/api-layer";
-import { CreateCurriculumPayload } from "@/api-shared/types/gant/create-payloads";
-import { Curriculum, CurriculumId } from "@/api-shared/types/gant/curriculum";
+import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
+import { CreateCurriculumPayload } from "@/api-shared/types/gantt/create-payloads";
+import { Curriculum, CurriculumId } from "@/api-shared/types/gantt/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
     Curriculum,

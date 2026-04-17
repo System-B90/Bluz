@@ -6,9 +6,9 @@ import { drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
 import { ganttCurriculum2WeeksSchema, ganttWeek2DaysSchema } from "@/api-server/gantt/schema";
 import { ganttWeeksSchema } from "@/api-server/gantt/schema/weeks";
 import { ClientApiError } from "@/api-shared/errors";
-import { ApiCurriculumWeek } from "@/api-shared/types/gant/api-layer";
-import { CreateCurriculumWeekPayload } from "@/api-shared/types/gant/create-payloads";
-import { CurriculumWeek, CurriculumWeekId } from "@/api-shared/types/gant/curriculum";
+import { ApiCurriculumWeek } from "@/api-shared/types/gantt/api-layer";
+import { CreateCurriculumWeekPayload } from "@/api-shared/types/gantt/create-payloads";
+import { CurriculumWeek, CurriculumWeekId } from "@/api-shared/types/gantt/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
     CurriculumWeek,

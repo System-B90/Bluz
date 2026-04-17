@@ -5,9 +5,9 @@ import { drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } fro
 import { ganttEventsSchema, ganttModule2EventsSchema } from "@/api-server/gantt/schema";
 import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/schema/mappings";
 import { ClientApiError } from "@/api-shared/errors";
-import { ApiModuleEvent } from "@/api-shared/types/gant/api-layer";
-import { CreateModuleEventPayload } from "@/api-shared/types/gant/create-payloads";
-import { CurriculumId, ModuleEvent, ModuleEventId, ModuleId } from "@/api-shared/types/gant/curriculum";
+import { ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
+import { CreateModuleEventPayload } from "@/api-shared/types/gantt/create-payloads";
+import { CurriculumId, ModuleEvent, ModuleEventId, ModuleId } from "@/api-shared/types/gantt/curriculum";
 
 /**
  * Basic CRUD operations for the 'ganttEventsSchema' table.
