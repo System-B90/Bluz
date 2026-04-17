@@ -118,6 +118,13 @@ export default defineConfig([
     },
   },
   {
+    files: [ "**/api-server/gantt/schema/**" ],
+    rules: {
+      "no-restricted-imports": "off",
+      "import/no-cycle": "off",
+    }
+  },
+  {
     files: [
       "**/app/**/{page,layout,-layout,error,not-found,loading,template,default}.tsx",
       "**/app/**/route.ts",
