@@ -37,7 +37,9 @@ export function CurriculumViewBuilderWeeksView({
     const weekGroupPanels = useMemo(() => groupedWeeks.map((group, index) =>
     {
         const isLast = index === groupedWeeks.length - 1;
-        const groupKey = `group-${group[ 0 ].number}-${group[ group.length - 1 ].number}`;
+        const firstWeekNum = weeksState[ group[ 0 ] ]?.number ?? 1;
+        const lastWeekNum = weeksState[ group[ group.length - 1 ] ]?.number ?? group.length;
+        const groupKey = `group-${firstWeekNum}-${lastWeekNum}`;
 
         return (
             <Fragment key={ `frag-${groupKey}` }>
@@ -47,7 +49,7 @@ export function CurriculumViewBuilderWeeksView({
                     flexShrink={ animationSelectedGroupIndex === null ? undefined : (animationSelectedGroupIndex === index ? 0 : 1) }
                     group={ group }
                     key={ groupKey }
-                    onExpandGroup={ () => onGroupClick(index, group[ 0 ].number - 1, group.length) }
+                    onExpandGroup={ () => onGroupClick(index, firstWeekNum - 1, group.length) }
                 />
                 { !isLast && (
                     <Divider
@@ -58,7 +60,7 @@ export function CurriculumViewBuilderWeeksView({
                 ) }
             </Fragment>
         );
-    }), [ animationSelectedGroupIndex, groupedWeeks, onGroupClick ]);
+    }), [ animationSelectedGroupIndex, groupedWeeks, onGroupClick, weeksState ]);
 
     return (
         <Fragment>

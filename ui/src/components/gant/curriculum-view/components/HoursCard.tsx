@@ -17,12 +17,17 @@ export function HoursCard({ curriculum }: { curriculum: CurriculumDocument | und
 
     const totalWorkingHours = useMemo(() =>
     {
-        return (curriculum?.weeks ?? []).reduce(
-            (total, currentWeek) =>
-                total + currentWeek.days.reduce((weekTotal, currentDay) => weekTotal + currentDay.totalWorkingHours, 0),
-            0
-        );
-    }, [ curriculum?.weeks ]);
+        return (curriculum?.weeks ?? []).reduce((total: number, weekId) =>
+        {
+            const week = state.weeks[weekId];
+            if (!week) return total;
+            return total + (week.days ?? []).reduce((weekTotal: number, dayId) =>
+            {
+                const day = state.days[dayId];
+                return weekTotal + (day?.totalWorkingHours ?? 0);
+            }, 0);
+        }, 0);
+    }, [ curriculum?.weeks, state.weeks, state.days ]);
 
     const minimumHoursRequired = useMemo(() => curriculum ? calculateMinimumRequiredTimeForCurriculum(curriculum, state) / 60 : 0, [ curriculum, state ]);
     const usedWorkingHours = useMemo(() => curriculum ? calculateAllocatedTimeForCurriculum(curriculum, state) / 60 : 0, [ curriculum, state ]);

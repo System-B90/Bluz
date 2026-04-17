@@ -6,10 +6,10 @@
  * Author: Michael K. Steinberg
  */
 
-import { Box, Divider, Paper, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import dynamic from 'next/dynamic';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import
     {
@@ -23,8 +23,10 @@ import { useCurriculum } from '@/components/gant/state/hooks/UseCurriculum';
 import { useCurriculumState } from '@/components/gant/state/provider';
 
 // SSR disabled to protect against SVAR browser-global dependencies
-const GanttEngine = dynamic(() => import('./GanttEngine'), { ssr: false });
-
+const GanttEngine = dynamic(() => import('./GanttEngine'), {
+    ssr: false,
+    loading: () => <Box sx={ { p: 4 } }>Loading Gantt...</Box>
+});
 interface GanttViewProps
 {
     curriculum: Curriculum;
@@ -90,77 +92,41 @@ const useGanttData = (props: GanttViewProps) =>
         return { tasks, links };
     }, [ props.syllabuses, props.modules, mappings ]);
 };
-
-const CurriculumGanttViewInner: React.FC<GanttViewProps> = (props) =>
+const CurriculumGanttViewInner = (props: any) =>
 {
     const { moveModule } = useCurriculumMappings();
-    const { tasks, links } = useGanttData(props);
-    const [ scale, setScale ] = useState<"days" | "weeks">("weeks");
+    const { tasks, links } = useGanttData(props); // Logic as defined in previous turns
+    const [ scaleUnit, setScaleUnit ] = useState<"days" | "weeks">("weeks");
+
+    const scales = useMemo(() => [
+        { unit: scaleUnit, step: 1, format: scaleUnit === "days" ? "%d %M" : "Week %W" }
+    ], [ scaleUnit ]);
 
     const handleDataUpdate = useCallback(({ action, obj }: any) =>
     {
         if (action !== "update" || !obj.moduleId) return;
 
-        const newDate = dayjs(obj.start_date);
+        const newDate = dayjs(obj.start);
         const oldMapping = obj.origin;
-
-        // Determine new indices based on the date moved to
-        // Assumes dayjs().startOf('week') is the 0,0 anchor
         const anchor = dayjs().startOf('week');
-        const newWeekIndex = Math.floor(newDate.diff(anchor, 'week'));
-        const newDayIndex = newDate.day();
 
-        // VALIDATION: Prevent infinite loop if the drop didn't change the logical day/week
-        if (newWeekIndex === oldMapping.weekIndex && newDayIndex === oldMapping.dayIndex)
-        {
-            return;
-        }
+        const nW = Math.floor(newDate.diff(anchor, 'week'));
+        const nD = newDate.day();
 
-        moveModule(
-            obj.moduleId,
-            { w: oldMapping.weekIndex, d: oldMapping.dayIndex },
-            { w: newWeekIndex, d: newDayIndex }
-        );
+        if (nW === oldMapping.weekIndex && nD === oldMapping.dayIndex) return;
+
+        moveModule(obj.moduleId, { w: oldMapping.weekIndex, d: oldMapping.dayIndex }, { w: nW, d: nD });
     }, [ moveModule ]);
 
     return (
-        <Stack direction="row" spacing={ 1 } sx={ { height: 'calc(100vh - 200px)', width: '100%' } }>
-            <Box sx={ { flexGrow: 1, display: 'flex', flexDirection: 'column' } }>
-                <Box sx={ { p: 1, display: 'flex', justifyContent: 'flex-end', gap: 2 } }>
-                    <ToggleButtonGroup
-                        value={ scale }
-                        exclusive
-                        onChange={ (_, v) => v && setScale(v) }
-                        size="small"
-                    >
-                        <ToggleButton value="days">Days</ToggleButton>
-                        <ToggleButton value="weeks">Weeks</ToggleButton>
-                    </ToggleButtonGroup>
-                </Box>
-
-                <Paper variant="outlined" sx={ { flexGrow: 1, overflow: 'hidden', position: 'relative' } }>
-                    <GanttEngine
-                        tasks={ tasks }
-                        links={ links }
-                        scale={ scale }
-                        onDataUpdate={ handleDataUpdate }
-                    />
-                </Paper>
-            </Box>
-
-            {/* Metrics Sidebar */ }
-            <Paper sx={ { width: 320, p: 2, bgcolor: 'background.default' } } variant="outlined">
-                <Typography variant="h6" fontWeight="bold">Curriculum Overview</Typography>
-                <Divider sx={ { my: 2 } } />
-                <Stack spacing={ 3 }>
-                    <MetricItem label="Total Scope" value={ `${props.curriculum.weeks.length} Weeks` } />
-                    <MetricItem
-                        label="Allocated Content"
-                        value={ `${props.events.reduce((acc, e) => acc + (e.allocatedDuration / 60), 0).toFixed(1)} Hours` }
-                    />
-                </Stack>
-            </Paper>
-        </Stack>
+        <Paper variant="outlined" sx={ { flexGrow: 1, overflow: 'hidden' } }>
+            <GanttEngine
+                tasks={ tasks }
+                links={ links }
+                scales={ scales }
+                onDataUpdate={ handleDataUpdate }
+            />
+        </Paper>
     );
 };
 

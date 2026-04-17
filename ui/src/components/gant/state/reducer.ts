@@ -11,6 +11,7 @@ import
         CurriculumDay,
         CurriculumDayId,
         CurriculumId,
+        CurriculumWeek,
         CurriculumWeekId,
         Module,
         ModuleEvent,
@@ -42,7 +43,11 @@ export type Action =
     | { type: 'UPDATE_MODULE'; payload: { id: ModuleId; updates: Partial<Module>; }; }
 
     | { type: 'UPDATE_SYLLABUS'; payload: { id: SyllabusId; updates: Partial<Syllabus>; }; }
-    | { type: 'UPDATE_WEEK'; payload: { id: CurriculumWeekId; updates: any; }; };
+    | { type: 'UPDATE_WEEK'; payload: { id: CurriculumWeekId; updates: any; }; }
+    | { type: 'ADD_WEEK'; payload: { week: CurriculumWeek & { id: CurriculumWeekId }; }; }
+    | { type: 'REMOVE_WEEK'; payload: { weekId: CurriculumWeekId; }; }
+    | { type: 'ADD_DAY'; payload: { day: CurriculumDay & { id: CurriculumDayId }; }; }
+    | { type: 'REMOVE_DAY'; payload: { dayId: CurriculumDayId; }; };
 
 function injectDocumentTimes<T extends BaseGantItem>(rawDoc: T): T & BaseDocument
 {
@@ -267,6 +272,44 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
                         events: parent.events.filter(id => id !== action.payload.eventId)
                     }
                 }
+            };
+        }
+
+        case 'ADD_WEEK': {
+            const weeksRecord = state.weeks as Record<CurriculumWeekId, CurriculumWeek & { id: CurriculumWeekId; }>;
+            return {
+                ...state,
+                weeks: {
+                    ...weeksRecord,
+                    [ action.payload.week.id ]: injectDocumentTimes(action.payload.week) as any
+                } as typeof state.weeks
+            };
+        }
+
+        case 'REMOVE_WEEK': {
+            const { [ action.payload.weekId ]: _, ...remainingWeeks } = state.weeks;
+            return {
+                ...state,
+                weeks: remainingWeeks
+            };
+        }
+
+        case 'ADD_DAY': {
+            const daysRecord = state.days as Record<CurriculumDayId, CurriculumDay & { id: CurriculumDayId; }>;
+            return {
+                ...state,
+                days: {
+                    ...daysRecord,
+                    [ action.payload.day.id ]: injectDocumentTimes(action.payload.day) as any
+                } as typeof state.days
+            };
+        }
+
+        case 'REMOVE_DAY': {
+            const { [ action.payload.dayId ]: _, ...remainingDays } = state.days;
+            return {
+                ...state,
+                days: remainingDays
             };
         }
 

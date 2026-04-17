@@ -13,20 +13,6 @@ export interface DuplicateCurriculumActionProps extends CurriculumAwareActionIte
     onCreate: (newCurriculum: CurriculumDocument) => void;
 }
 
-function copyWeeksForPayload(source: CurriculumDocument): CreateCurriculumPayload[ 'weeks' ]
-{
-    return source.weeks.map((week) => ({
-        number: week.number,
-        comment: week.comment,
-        closingSaturday: week.closingSaturday,
-        days: week.days.map((day) => ({
-            day: day.day,
-            totalWorkingHours: day.totalWorkingHours,
-            comment: day.comment,
-        })),
-    }));
-}
-
 export function DuplicateCurriculumAction({ sourceCurriculum, onCreate, onProcessingChange, ...props }: DuplicateCurriculumActionProps)
 {
     const { enqueueSnackbar } = useSnackbar();
@@ -35,15 +21,16 @@ export function DuplicateCurriculumAction({ sourceCurriculum, onCreate, onProces
     {
         if (!sourceCurriculum) return;
         onProcessingChange(true);
-        const payload: CreateCurriculumPayload = {
+        const payload: Omit<CreateCurriculumPayload, 'weeks'> & { weeks: typeof sourceCurriculum.weeks } = {
             title: `${sourceCurriculum.title} (Copy)`,
             description: sourceCurriculum.description,
             draft: true,
-            weeks: copyWeeksForPayload(sourceCurriculum),
+            weeks: sourceCurriculum.weeks,
         };
-        curriculumApi.apiCreate(payload)
+        // Cast to proper type - duplication uses the same week IDs structure
+        curriculumApi.apiCreate(payload as CreateCurriculumPayload)
             .then((newCurriculum) => onCreate(newCurriculum))
-            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, "שכפול הגאנט נכשל!", error))
+            .catch((error: unknown) => enqueueApiErrorSnackbar(enqueueSnackbar, "שכפול הגאנט נכשל!", error))
             .finally(() => onProcessingChange(false));
     }, [ enqueueSnackbar, onCreate, onProcessingChange, sourceCurriculum ]);
 

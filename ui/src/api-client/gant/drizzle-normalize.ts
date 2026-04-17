@@ -3,7 +3,7 @@ import { CurriculumDocument } from "@/api-client/gant/curriculum";
 import { ModuleDocument } from "@/api-client/gant/module";
 import { ModuleEventDocument } from "@/api-client/gant/module-event";
 import { SyllabusDocument } from "@/api-client/gant/syllabus";
-import { CurriculumDay, CurriculumDayId, CurriculumId, CurriculumWeek, CurriculumWeekId, ModuleEventId, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
+import { CurriculumDay, CurriculumDayId, CurriculumId, CurriculumWeek, CurriculumWeekId, DAY_NAME_DISPLAY, DayName, ModuleEventId, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 
 export interface NormalizedStore
 {
@@ -89,6 +89,7 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
             dayIds.push(dayId);
             store.days[ dayId ] = {
                 id: dayId,
+                title: DAY_NAME_DISPLAY[apiDay.day as DayName] ?? `יום ${apiDay.day}`,
                 curriculumWeekId: weekId,
                 day: apiDay.day,
                 totalWorkingHours: apiDay.totalWorkingHours,
@@ -98,6 +99,7 @@ export function normalizeCurriculumData(apiData: any): NormalizedStore
 
         store.weeks[ weekId ] = {
             id: weekId,
+            title: `שבוע ${apiWeek.number}`,
             curriculumId: apiData.id,
             number: apiWeek.number,
             days: dayIds,

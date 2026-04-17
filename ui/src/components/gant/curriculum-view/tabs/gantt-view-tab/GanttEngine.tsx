@@ -1,45 +1,30 @@
 'use client';
 /**
  * Name: GanttEngine.tsx
- * Purpose: Stabilized SVAR Gantt engine for Bluz curriculum management.
+ * Purpose: Officially documented SVAR Gantt integration for Next.js.
  * Created: 2026-04-17
  * Author: Michael K. Steinberg
  */
 
-import { Gantt, Willow } from "@svar-ui/react-gantt";
-import React from 'react';
-
+import { Gantt } from "@svar-ui/react-gantt";
+import '@svar-ui/react-gantt/all.css';
 interface GanttEngineProps
 {
     tasks: any[];
     links: any[];
-    scale: 'days' | 'weeks';
-    onDataUpdate: (event: { action: string; obj: any; id: string | number; }) => void;
+    scales: any[];
+    onDataUpdate: (event: any) => void;
 }
 
-const GanttEngine: React.FC<GanttEngineProps> = ({ tasks, links, scale, onDataUpdate }) =>
+export default function GanttEngine({ tasks, links, scales, onDataUpdate }: GanttEngineProps)
 {
+    console.log('tasks', tasks);
     return (
-        <div className="wx-willow-theme">
-            <Willow />
+        <div className="wx-willow-theme" style={ { width: "100%", height: "100%" } }>
             <Gantt
                 tasks={ tasks }
-                links={ links }
-                scales={ [
-                    {
-                        unit: scale,
-                        step: 1,
-                        format: scale === "days" ? "DD MMM" : "Week %W"
-                    }
-                ] }
                 onDataUpdate={ onDataUpdate }
-                columns={ [
-                    { name: "text", label: "Module Name", width: 250, tree: true },
-                    { name: "duration", label: "Days", width: 70 }
-                ] }
             />
         </div>
     );
-};
-
-export default GanttEngine;
+}

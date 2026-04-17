@@ -59,16 +59,18 @@ export const DAY_NAME_DISPLAY: Record<DayName, string> = {
 export function getDayNameDisplay(day: DayName): string {
     return DAY_NAME_DISPLAY[day] ?? '';
 }
-export interface CurriculumDay
+export interface CurriculumDay extends BaseGantItem
 {
+    title: string;  // Generated from day name
     day: DayName;
     totalWorkingHours: number;
     comment?: string;
 }
 export type CurriculumDayId = string;
 
-export interface CurriculumWeek
+export interface CurriculumWeek extends BaseGantItem
 {
+    title: string;  // Generated from week number
     number: number;
     days: Array<CurriculumDayId>;
     comment?: string;
@@ -99,10 +101,11 @@ export function makeCurriculum(curriculum?: Partial<Curriculum>): MakerReturnTyp
     };
 }
 
-export function makeCurriculumWeek(week?: Partial<CurriculumWeek>): Omit<CurriculumWeek, 'id'> & { id: string | undefined; }
+export function makeCurriculumWeek(week?: Partial<CurriculumWeek>): Omit<CurriculumWeek, 'id'> & { id: CurriculumWeekId | undefined; }
 {
     return {
-        id: undefined,
+        id: week?.id,
+        title: week?.title ?? `שבוע ${week?.number ?? 1}`,
         number: week?.number ?? 1,
         days: week?.days ?? [],
         comment: week?.comment ?? '',
@@ -110,10 +113,13 @@ export function makeCurriculumWeek(week?: Partial<CurriculumWeek>): Omit<Curricu
     };
 }
 
-export function makeCurriculumDay(day?: Partial<CurriculumDay>): CurriculumDay
+export function makeCurriculumDay(day?: Partial<CurriculumDay>): Omit<CurriculumDay, 'id'> & { id: CurriculumDayId | undefined; }
 {
+    const dayNumber = day?.day ?? DayName.Sunday;
     return {
-        day: day?.day ?? DayName.Sunday,
+        id: day?.id,
+        title: day?.title ?? DAY_NAME_DISPLAY[dayNumber],
+        day: dayNumber,
         totalWorkingHours: day?.totalWorkingHours ?? 0,
         comment: day?.comment ?? '',
     };

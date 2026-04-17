@@ -1,4 +1,4 @@
-import { CurriculumDay, DayName } from '@/api-shared/types/gant/curriculum';
+import { CurriculumDay, DAY_NAME_DISPLAY, DayName } from '@/api-shared/types/gant/curriculum';
 
 const DEFAULT_WEEKDAY_HOURS_FALLBACK = 8;
 const DEFAULT_FRIDAY_HOURS_FALLBACK = 6;
@@ -31,9 +31,10 @@ export const defaultFridayHours = parseDefaultHours(
     DEFAULT_FRIDAY_HOURS_FALLBACK
 );
 
-export function buildDefaultWeekDays(): CurriculumDay[]
+export function buildDefaultWeekDays(): Partial<CurriculumDay>[]
 {
     return defaultWeekDayOrder.map((dayName) => ({
+        title: DAY_NAME_DISPLAY[dayName],
         day: dayName,
         totalWorkingHours: dayName === DayName.Friday ? defaultFridayHours : defaultWeekdayHours,
         comment: '',
