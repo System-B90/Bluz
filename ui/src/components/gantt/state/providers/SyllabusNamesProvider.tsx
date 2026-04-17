@@ -3,7 +3,7 @@ import { useSnackbar } from "notistack";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { syllabusApi } from "@/api-client/gantt";
+import { ganttApi } from "@/api-client/gantt";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 
 export type SyllabusDictionary = Record<GanttSyllabusId, string>;
@@ -31,7 +31,7 @@ export function SyllabusNamesProvider({ children }: { children: React.ReactNode;
         setError(null);
         try
         {
-            const data = await syllabusApi.apiList();
+            const data = await ganttApi.syllabus.apiList();
             setSyllabuses(data);
         } catch (err)
         {

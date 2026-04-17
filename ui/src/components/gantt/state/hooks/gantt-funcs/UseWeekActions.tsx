@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import { dayApi, weekApi } from "@/api-client/gantt";
+import { ganttApi } from "@/api-client/gantt";
 import { CreateGanttDayPayload, CreateGanttWeekPayload } from "@/api-shared/types/gantt/create-payloads";
 import { GanttDay, GanttDayId, GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
@@ -24,7 +24,7 @@ export function useWeekActions(): UseWeekActionsReturn
     {
         return withGantErrorHandling(async () =>
         {
-            const newWeek = await weekApi.apiCreate(payload);
+            const newWeek = await ganttApi.week.apiCreate(payload);
             dispatch({ type: 'ADD_WEEK', payload: { week: newWeek } });
             return newWeek;
         }, "Failed to create week:");
@@ -34,7 +34,7 @@ export function useWeekActions(): UseWeekActionsReturn
     {
         return withGantErrorHandling(async () =>
         {
-            const updatedWeek = await weekApi.apiUpdate({ id: weekId, ...updates });
+            const updatedWeek = await ganttApi.week.apiUpdate({ id: weekId, ...updates });
             dispatch({ type: 'UPDATE_WEEK', payload: { id: weekId, updates: updatedWeek } });
             return updatedWeek;
         }, `Failed to update week (ID: ${weekId}):`);
@@ -44,7 +44,7 @@ export function useWeekActions(): UseWeekActionsReturn
     {
         return withGantErrorHandling(async () =>
         {
-            await weekApi.apiDelete(weekId);
+            await ganttApi.week.apiDelete(weekId);
             dispatch({ type: 'REMOVE_WEEK', payload: { weekId } });
         }, `Failed to delete week (ID: ${weekId}):`);
     }, [ dispatch ]);
@@ -53,7 +53,7 @@ export function useWeekActions(): UseWeekActionsReturn
     {
         return withGantErrorHandling(async () =>
         {
-            const newDay = await dayApi.apiCreate(payload);
+            const newDay = await ganttApi.day.apiCreate(payload);
             dispatch({ type: 'ADD_DAY', payload: { day: newDay } });
             return newDay;
         }, "Failed to create day:");
@@ -63,7 +63,7 @@ export function useWeekActions(): UseWeekActionsReturn
     {
         return withGantErrorHandling(async () =>
         {
-            const updatedDay = await dayApi.apiUpdate({ id: dayId, ...updates });
+            const updatedDay = await ganttApi.day.apiUpdate({ id: dayId, ...updates });
             dispatch({ type: 'UPDATE_DAY', payload: { id: dayId, updates: updatedDay } });
             return updatedDay;
         }, `Failed to update day (ID: ${dayId}):`);
@@ -73,7 +73,7 @@ export function useWeekActions(): UseWeekActionsReturn
     {
         return withGantErrorHandling(async () =>
         {
-            await dayApi.apiDelete(dayId);
+            await ganttApi.day.apiDelete(dayId);
             dispatch({ type: 'REMOVE_DAY', payload: { dayId } });
         }, `Failed to delete day (ID: ${dayId}):`);
     }, [ dispatch ]);

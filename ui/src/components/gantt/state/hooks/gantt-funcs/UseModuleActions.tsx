@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import { moduleApi } from "@/api-client/gantt";
+import { ganttApi } from "@/api-client/gantt";
 import { GanttCurriculumId, GanttModule, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
@@ -13,7 +13,7 @@ export function useModuleActions()
     {
         return withGantErrorHandling(async () =>
         {
-            const newModule = await moduleApi.apiCreate({ title, syllabusId, description, hiveIds });
+            const newModule = await ganttApi.module.apiCreate({ title, syllabusId, description, hiveIds });
             dispatch({ type: 'ADD_MODULE', payload: { module: newModule, syllabusId } });
             return newModule;
         }, "Failed to create module:");
@@ -23,7 +23,7 @@ export function useModuleActions()
     {
         return withGantErrorHandling(async () =>
         {
-            const updatedModule = await moduleApi.apiUpdate({ id, ...updates });
+            const updatedModule = await ganttApi.module.apiUpdate({ id, ...updates });
             dispatch({ type: 'UPDATE_MODULE', payload: { id, updates: updatedModule } });
             return updatedModule;
         }, `Failed to update module (ID: ${id}):`);
@@ -33,7 +33,7 @@ export function useModuleActions()
     {
         return withGantErrorHandling(async () =>
         {
-            await moduleApi.apiDelete(moduleId);
+            await ganttApi.module.apiDelete(moduleId);
             dispatch({ type: 'REMOVE_MODULE', payload: { syllabusId, moduleId } });
         }, `Failed to remove module (ID: ${moduleId}):`);
     }, [ dispatch ]);
@@ -42,7 +42,7 @@ export function useModuleActions()
     {
         return withGantErrorHandling(async () =>
         {
-            const linkedModule = await moduleApi.apiLink(moduleId, syllabusId);
+            const linkedModule = await ganttApi.module.apiLink(moduleId, syllabusId);
             dispatch({ type: 'ADD_MODULE', payload: { module: linkedModule, syllabusId } });
             return linkedModule;
         }, `Failed to link module (ID: ${moduleId}) to syllabus (ID: ${syllabusId}):`);
@@ -52,7 +52,7 @@ export function useModuleActions()
     {
         return withGantErrorHandling(async () =>
         {
-            await moduleApi.apiUnlink(moduleId, syllabusId);
+            await ganttApi.module.apiUnlink(moduleId, syllabusId);
             dispatch({ type: 'REMOVE_MODULE', payload: { moduleId, syllabusId } });
         }, `Failed to unlink module (ID: ${moduleId}) from syllabus (ID: ${syllabusId}):`);
     }, [ dispatch ]);
@@ -61,7 +61,7 @@ export function useModuleActions()
     {
         return withGantErrorHandling(async () =>
         {
-            await moduleApi.apiSetAllocatedTime(moduleId, curriculumId, allocatedDuration);
+            await ganttApi.module.apiSetAllocatedTime(moduleId, curriculumId, allocatedDuration);
             dispatch({ type: 'ALLOCATE_TIME_TO_MODULE', payload: { moduleId, curriculumId, duration: allocatedDuration } });
         }, `Failed to allocate time to module (ID: ${moduleId}):`);
     }, [ dispatch ]);
