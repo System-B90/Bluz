@@ -1,2 +1,0 @@
-ALTER TABLE "cMDA" DROP CONSTRAINT "cMDA_curriculum_id_week_index_day_index_module_id_pk";--> statement-breakpoint
-ALTER TABLE "cMDA" ADD CONSTRAINT "cMDA_curriculum_id_module_id_pk" PRIMARY KEY("curriculum_id","module_id");

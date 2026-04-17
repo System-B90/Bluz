@@ -1,13 +1,12 @@
 import { NextRequest } from "next/server";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
-import { BaseDbDocument } from "@/api-server/curriculum/db-base";
 import { ClientApiError } from "@/api-shared/errors";
-import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
+import { ApiT, BaseGantItem } from "@/api-shared/types/gant/curriculum";
 
 export interface BasicGantLinkOperations<TEntity extends BaseGantItem>
 {
-    linkItem: (newParentId: string, id: TEntity[ 'id' ]) => Promise<TEntity & BaseDbDocument>;
+    linkItem: (newParentId: string, id: TEntity[ 'id' ]) => Promise<ApiT<TEntity>>;
     unlinkItem: (oldParentId: string, id: TEntity[ 'id' ]) => Promise<void>;
 }
 

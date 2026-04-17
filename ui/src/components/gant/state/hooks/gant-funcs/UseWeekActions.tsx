@@ -9,7 +9,7 @@ import { useCurriculumProviderActions } from "@/components/gant/state/provider";
 export interface UseWeekActionsReturn
 {
     createWeek: (payload: CreateCurriculumWeekPayload) => Promise<CurriculumWeek>;
-    updateWeek: (weekId: CurriculumWeekId, updates: Partial<{ comment?: string; closingSaturday?: boolean; }>) => Promise<CurriculumWeek>;
+    updateWeek: (weekId: CurriculumWeekId, updates: Partial<{ comment?: string; weekendDuty?: boolean; }>) => Promise<CurriculumWeek>;
     deleteWeek: (weekId: CurriculumWeekId) => Promise<void>;
     createDay: (payload: CreateCurriculumDayPayload) => Promise<CurriculumDay>;
     updateDay: (dayId: CurriculumDayId, updates: Partial<CurriculumDay>) => Promise<CurriculumDay>;
@@ -30,7 +30,7 @@ export function useWeekActions(): UseWeekActionsReturn
         }, "Failed to create week:");
     }, [ dispatch ]);
 
-    const updateWeek = useCallback(async (weekId: CurriculumWeekId, updates: Partial<{ comment?: string; closingSaturday?: boolean; }>) =>
+    const updateWeek = useCallback(async (weekId: CurriculumWeekId, updates: Partial<{ comment?: string; weekendDuty?: boolean; }>) =>
     {
         return withGantErrorHandling(async () =>
         {

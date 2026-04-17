@@ -7,8 +7,10 @@
 
 import AddIcon from '@mui/icons-material/Add';
 import { Box, Card, CircularProgress, IconButton, Tooltip, Typography } from '@mui/material';
+import { useSnackbar } from 'notistack';
 import { useCallback, useState } from 'react';
 
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { CurriculumWeekId } from '@/api-shared/types/gant/curriculum';
 import { OverviewTab } from '@/components/gant/curriculum-view/components/WorkTimePanel/OverviewTab';
 import { WorkTimePanelProps } from '@/components/gant/curriculum-view/components/WorkTimePanel/types';
@@ -18,17 +20,18 @@ import { useWeekActions } from '@/components/gant/state/hooks/gant-funcs/UseWeek
 
 export function WorkTimePanel({ curriculumId, curriculum }: WorkTimePanelProps)
 {
+    const { enqueueSnackbar } = useSnackbar();
     const [ localWeekIds, setLocalWeekIds ] = useState<CurriculumWeekId[]>(() => cloneWeeks(curriculum?.weeks ?? []));
     const { createWeek } = useWeekActions();
 
-    const canEdit = Boolean(curriculumId);
+    const canEdit = curriculumId !== null;
     const curriculumWeekIds = curriculum?.weeks ?? [];
     const logic = useWorkTimePanelLogic(curriculumId, curriculumWeekIds, localWeekIds, setLocalWeekIds);
 
-    const addWeek = useCallback(async () =>
+    const addWeek = useCallback(() =>
     {
         if (!curriculumId) return;
-        
+
         // Calculate next week number based on existing weeks or start from 1
         let nextNumber = 1;
         if (curriculum?.weeks && curriculum.weeks.length > 0)
@@ -37,20 +40,15 @@ export function WorkTimePanel({ curriculumId, curriculum }: WorkTimePanelProps)
             nextNumber = curriculum.weeks.length + 1;
         }
 
-        try
-        {
-            await createWeek({
-                curriculumId,
-                number: nextNumber,
-                comment: '',
-                closingSaturday: false,
-            });
-        }
-        catch (error)
-        {
-            console.error('Failed to add week:', error);
-        }
-    }, [ curriculumId, curriculum?.weeks, createWeek ]);
+        createWeek({
+            curriculumId,
+            number: nextNumber,
+            comment: '',
+            weekendDuty: false,
+        })
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הוספת שבוע נכשלה!', error));
+
+    }, [ curriculumId, curriculum?.weeks, createWeek, enqueueSnackbar ]);
 
     if (!curriculum)
     {

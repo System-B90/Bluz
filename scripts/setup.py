@@ -208,7 +208,6 @@ def generate_env() -> None:
     ).execute()
 
     # Preserve or Auto-generate DB Credentials & Cryptographic Secrets
-    ws_port = existing_env.get("NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT", "8192")
     ws_auth_key = existing_env.get(
         "WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY"
     ) or generate_hex_key(32)
@@ -272,7 +271,6 @@ def generate_env() -> None:
 
     env_content: dict[str, str] = {
         "BLUZ_VERSION": existing_env.get("BLUZ_VERSION", "latest"),
-        "NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT": ws_port,
         "WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY": ws_auth_key,
         "NEXT_PUBLIC_HIVE_URL": hive_url,
         "NODE_TLS_REJECT_UNAUTHORIZED": "0",

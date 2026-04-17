@@ -13,12 +13,12 @@ export function sortCurriculumsByDraftAndUpdatedAt(curriculums: Record<Curriculu
 
         if (!dataA || !dataB) return 0;
 
-        if (dataA.draft === dataB.draft)
+        if (dataA.isDraft === dataB.isDraft)
         {
             // Assuming Dayjs objects. If they are raw dates, use dataB.updatedAt.getTime() - dataA.updatedAt.getTime()
             return dataB.updatedAt.diff(dataA.updatedAt);
         }
-        return dataA.draft ? 1 : -1;
+        return dataA.isDraft ? 1 : -1;
     });
 }
 

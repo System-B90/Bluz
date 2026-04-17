@@ -1,46 +1,48 @@
 import { eq } from "drizzle-orm";
 
-import { postgresDb } from "@/api-server/curriculum";
-import { BaseDbDocument, drizzleOperationsBuilder } from "@/api-server/curriculum/db-base"; // Your new Drizzle builder
-import { curriculums, curriculumSyllabuses } from "@/api-server/curriculum/schema";
+import { postgresDb } from "@/api-server/gantt";
+import { drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
+import { ganttCurriculum2SyllabusesSchema } from "@/api-server/gantt/schema";
+import { ganttCurriculumsSchema } from "@/api-server/gantt/schema/curriculums";
 import { ClientApiError } from "@/api-shared/errors";
+import { ApiCurriculum } from "@/api-shared/types/gant/api-layer";
 import { CreateCurriculumPayload } from "@/api-shared/types/gant/create-payloads";
 import { Curriculum, CurriculumId } from "@/api-shared/types/gant/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
     Curriculum,
-    typeof curriculums,
+    typeof ganttCurriculumsSchema,
     CreateCurriculumPayload
 >({
-    table: curriculums,
+    table: ganttCurriculumsSchema,
     typeName: 'גאנט',
     idPreffix: 'c',
     junction: {
-        table: curriculumSyllabuses,
-        localKey: curriculumSyllabuses.curriculumId,
-        relationKey: curriculumSyllabuses.syllabusId,
+        table: ganttCurriculum2SyllabusesSchema,
+        localKey: ganttCurriculum2SyllabusesSchema.curriculumId,
+        relationKey: ganttCurriculum2SyllabusesSchema.syllabusId,
         apiKey: "s"
     },
 });
 
-async function getFullCurriculum(id: CurriculumId): Promise<Curriculum & BaseDbDocument>
+async function getFullCurriculum(id: CurriculumId): Promise<ApiCurriculum>
 {
-    const result = await postgresDb.query.curriculums.findFirst({
-        where: eq(curriculums.id, id),
+    const result = await postgresDb.query.ganttCurriculumsSchema.findFirst({
+        where: eq(ganttCurriculumsSchema.id, id),
         with: {
-            cS: {
+            c2s: {
                 with: {
                     syllabus: {
                         with: {
-                            sM: {
+                            s2m: {
                                 with: {
                                     module: {
                                         with: {
-                                            mE: {
+                                            m2e: {
                                                 with: {
-                                                    event: { // moduleEvents table
+                                                    event: {
                                                         with: {
-                                                            cEC: { // curriculumEventConfigurations
+                                                            cEC: {
                                                                 where: (c, { eq }) => eq(c.curriculumId, id)
                                                             }
                                                         }
@@ -54,7 +56,20 @@ async function getFullCurriculum(id: CurriculumId): Promise<Curriculum & BaseDbD
                         }
                     }
                 }
-            }
+            },
+            c2w: {
+                with: {
+                    week: {
+                        with: {
+                            w2d: {
+                                with: {
+                                    day: true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
         }
     });
 
@@ -63,10 +78,10 @@ async function getFullCurriculum(id: CurriculumId): Promise<Curriculum & BaseDbD
         throw new ClientApiError(`גאנט עם מזהה ${id} לא נמצא`);
     }
 
-    return result as unknown as Curriculum & BaseDbDocument;
+    return result as any;
 }
 
-basicOperations.getItem = getFullCurriculum;
 export const DbCurriculum = {
     ...basicOperations,
+    getItem: getFullCurriculum,
 } as const;

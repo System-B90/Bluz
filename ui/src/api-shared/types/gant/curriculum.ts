@@ -1,3 +1,5 @@
+import { ApiCurriculum, ApiCurriculumDay, ApiCurriculumWeek, ApiModule, ApiModuleEvent, ApiSyllabus } from "@/api-shared/types/gant/api-layer";
+
 export interface BaseGantItem { id: string; title: string; }
 export enum ModuleEventType
 {
@@ -35,7 +37,7 @@ export interface Syllabus extends BaseGantItem
     modules: Array<ModuleId>;
 }
 export type SyllabusId = Syllabus[ 'id' ];
-export enum DayName
+export enum DayIndex
 {
     Sunday = 0,
     Monday = 1,
@@ -46,35 +48,37 @@ export enum DayName
     Saturday = 6,
 }
 
-export const DAY_NAME_DISPLAY: Record<DayName, string> = {
-    [DayName.Sunday]: 'ראשון',
-    [DayName.Monday]: 'שני',
-    [DayName.Tuesday]: 'שלישי',
-    [DayName.Wednesday]: 'רביעי',
-    [DayName.Thursday]: 'חמישי',
-    [DayName.Friday]: 'שישי',
-    [DayName.Saturday]: 'שבת',
+export const DAY_NAME_DISPLAY: Record<DayIndex, string> = {
+    [ DayIndex.Sunday ]: 'ראשון',
+    [ DayIndex.Monday ]: 'שני',
+    [ DayIndex.Tuesday ]: 'שלישי',
+    [ DayIndex.Wednesday ]: 'רביעי',
+    [ DayIndex.Thursday ]: 'חמישי',
+    [ DayIndex.Friday ]: 'שישי',
+    [ DayIndex.Saturday ]: 'שבת',
 };
 
-export function getDayNameDisplay(day: DayName): string {
-    return DAY_NAME_DISPLAY[day] ?? '';
+export function getDayNameDisplay(day: DayIndex): string
+{
+    return DAY_NAME_DISPLAY[ day ] ?? '';
 }
 export interface CurriculumDay extends BaseGantItem
 {
-    title: string;  // Generated from day name
-    day: DayName;
-    totalWorkingHours: number;
+    readonly title: string;  // Generated from day name
+    weekId: CurriculumWeekId;
+    dayIndex: DayIndex;
+    totalWorkingMinutes: number;
     comment?: string;
 }
 export type CurriculumDayId = string;
 
 export interface CurriculumWeek extends BaseGantItem
 {
-    title: string;  // Generated from week number
+    readonly title: string;  // Generated from week number
     number: number;
     days: Array<CurriculumDayId>;
     comment?: string;
-    closingSaturday: boolean;
+    weekendDuty: boolean;
 }
 export type CurriculumWeekId = string;
 
@@ -83,12 +87,13 @@ export interface Curriculum extends BaseGantItem
     title: string;
     description: string;
     syllabuses: Array<SyllabusId>;
-    draft: boolean;
+    isDraft: boolean;
     weeks: Array<CurriculumWeekId>;
 }
 export type CurriculumId = Curriculum[ 'id' ];
 
 type MakerReturnType<T extends BaseGantItem> = Omit<T, 'id'> & { id: T[ 'id' ] | undefined; };
+
 export function makeCurriculum(curriculum?: Partial<Curriculum>): MakerReturnType<Curriculum>
 {
     return {
@@ -96,64 +101,16 @@ export function makeCurriculum(curriculum?: Partial<Curriculum>): MakerReturnTyp
         title: curriculum?.title ?? 'הגאנט שלי',
         description: curriculum?.description ?? 'הגאנט של הקורס החדש שלי',
         syllabuses: curriculum?.syllabuses ?? [],
-        draft: curriculum?.draft ?? true,
+        isDraft: curriculum?.isDraft ?? true,
         weeks: curriculum?.weeks ?? [],
     };
 }
 
-export function makeCurriculumWeek(week?: Partial<CurriculumWeek>): Omit<CurriculumWeek, 'id'> & { id: CurriculumWeekId | undefined; }
-{
-    return {
-        id: week?.id,
-        title: week?.title ?? `שבוע ${week?.number ?? 1}`,
-        number: week?.number ?? 1,
-        days: week?.days ?? [],
-        comment: week?.comment ?? '',
-        closingSaturday: week?.closingSaturday ?? false,
-    };
-}
-
-export function makeCurriculumDay(day?: Partial<CurriculumDay>): Omit<CurriculumDay, 'id'> & { id: CurriculumDayId | undefined; }
-{
-    const dayNumber = day?.day ?? DayName.Sunday;
-    return {
-        id: day?.id,
-        title: day?.title ?? DAY_NAME_DISPLAY[dayNumber],
-        day: dayNumber,
-        totalWorkingHours: day?.totalWorkingHours ?? 0,
-        comment: day?.comment ?? '',
-    };
-}
-
-export function makeSyllabus(syllabus?: Partial<Syllabus>): MakerReturnType<Syllabus>
-{
-    return {
-        id: syllabus?.id,
-        title: syllabus?.title ?? 'סילבוס חדש',
-        hiveIds: syllabus?.hiveIds ?? [],
-        modules: syllabus?.modules ?? [],
-    };
-}
-
-export function makeModule(module?: Partial<Module>): MakerReturnType<Module>
-{
-    return {
-        id: module?.id,
-        title: module?.title ?? 'מערך חדש',
-        description: module?.description ?? 'המערך החדש שלי',
-        hiveIds: module?.hiveIds ?? [],
-        events: module?.events ?? [],
-    };
-}
-
-export function makeModuleEvent(moduleEvent?: Partial<ModuleEvent>): MakerReturnType<ModuleEvent>
-{
-    return {
-        id: moduleEvent?.id,
-        title: moduleEvent?.title ?? 'מופע חדש',
-        allocatedDuration: moduleEvent?.allocatedDuration ?? 0,
-        minimumDuration: moduleEvent?.minimumDuration ?? 45,
-        type: moduleEvent?.type ?? ModuleEventType.Other,
-        requirements: moduleEvent?.requirements ?? [],
-    };
-}
+export type ApiT<T> =
+    T extends Curriculum ? ApiCurriculum :
+    T extends Syllabus ? ApiSyllabus :
+    T extends Module ? ApiModule :
+    T extends ModuleEvent ? ApiModuleEvent :
+    T extends CurriculumWeek ? ApiCurriculumWeek :
+    T extends CurriculumDay ? ApiCurriculumDay :
+    never;

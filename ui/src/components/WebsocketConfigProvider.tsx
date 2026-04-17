@@ -10,7 +10,7 @@ interface WebSocketConfigContextType
     connectionString: string;
 }
 
-const WebSocketConfigContext = createContext<WebSocketConfigContextType>({ host: "localhost", protocol: 'ws', portSuffix: ':28199', connectionString: 'ws://localhost:8193/' });
+const WebSocketConfigContext = createContext<WebSocketConfigContextType>({ host: "bluz.biz", protocol: 'ws', portSuffix: '', connectionString: 'wss://bluz.bis/ws/' });
 
 interface WebSocketConfigProviderProps
 {

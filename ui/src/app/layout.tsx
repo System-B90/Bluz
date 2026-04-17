@@ -17,9 +17,9 @@ export default function RootLayout({
     children: React.ReactNode;
 }>)
 {
-    const wsHost = process.env.WEBSOCKET_SESSION_SERVER_HOST || "localhost";
-    const wsProtcol = WEBSOCKET_PROTOCOL || "ws";
-    const wsPortSuffix = WEBSOCKET_PORT_SUFFIX || ":28199";
+    const wsHost = process.env.WEBSOCKET_SESSION_SERVER_HOST || "bluz.bis";
+    const wsProtcol = WEBSOCKET_PROTOCOL || "wss";
+    const wsPortSuffix = WEBSOCKET_PORT_SUFFIX || "";
 
     return (
         <html dir="rtl" lang="he" suppressHydrationWarning>

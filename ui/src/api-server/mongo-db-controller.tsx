@@ -1,7 +1,7 @@
 import { Collection, Db, MongoClient } from "mongodb";
 
-import { BaseDbDocument } from "@/api-server/curriculum/db-base";
 import { DbEventDocument } from "@/api-server/db-event";
+import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import { Course } from "@/api-shared/types/course";
 import { Curriculum, Module, ModuleEvent, Syllabus } from "@/api-shared/types/gant/curriculum";
 import { Setting } from "@/api-shared/types/settings/settings";

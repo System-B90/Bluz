@@ -4,8 +4,7 @@ import { useSnackbar } from 'notistack';
 import { useCallback } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { CurriculumDocument } from '@/api-client/gant/curriculum';
-import { curriculumApi } from '@/api-client/gant/curriculum';
+import { curriculumApi, CurriculumDocument } from '@/api-client/gant/curriculum';
 import { ActionItemButton } from '@/components/gant/curriculum-fab/action-items/ActionItemButton';
 import { CurriculumAwareActionItemProps } from '@/components/gant/curriculum-fab/action-items/ActionItemProps';
 
@@ -22,12 +21,12 @@ export function ToggleDraftAction({ sourceCurriculum, onUpdate, onProcessingChan
     {
         if (!sourceCurriculum) return;
         onProcessingChange(true);
-        const nextDraftState = !sourceCurriculum.draft;
-        curriculumApi.apiUpdate({ id: sourceCurriculum.id, draft: nextDraftState })
+        const nextDraftState = !sourceCurriculum.isDraft;
+        curriculumApi.apiUpdate({ id: sourceCurriculum.id, isDraft: nextDraftState })
             .then((updatedCurriculum) => onUpdate(updatedCurriculum))
             .catch((error) => enqueueApiErrorSnackbar(
                 enqueueSnackbar,
-                sourceCurriculum.draft ? "פרסום הגאנט נכשל!" : "העברה לדראפט נכשלה!",
+                sourceCurriculum.isDraft ? "פרסום הגאנט נכשל!" : "העברה לדראפט נכשלה!",
                 error
             ))
             .finally(() => onProcessingChange(false));
@@ -35,12 +34,12 @@ export function ToggleDraftAction({ sourceCurriculum, onUpdate, onProcessingChan
 
     return (
         <ActionItemButton
-            color={ sourceCurriculum?.draft ? 'success' : 'warning' }
+            color={ sourceCurriculum?.isDraft ? 'success' : 'warning' }
             onClick={ clickHandler }
-            startIcon={ sourceCurriculum?.draft ? <TaskAltIcon fontSize="small" /> : <EditNoteIcon fontSize="small" /> }
+            startIcon={ sourceCurriculum?.isDraft ? <TaskAltIcon fontSize="small" /> : <EditNoteIcon fontSize="small" /> }
             { ...props }
         >
-            { sourceCurriculum?.draft ? 'פיבלוש' : 'החזרה לדראפט' }
+            { sourceCurriculum?.isDraft ? 'פיבלוש' : 'החזרה לדראפט' }
         </ActionItemButton>
     );
 }

@@ -24,7 +24,7 @@ export function DuplicateCurriculumAction({ sourceCurriculum, onCreate, onProces
         const payload: Omit<CreateCurriculumPayload, 'weeks'> & { weeks: typeof sourceCurriculum.weeks } = {
             title: `${sourceCurriculum.title} (Copy)`,
             description: sourceCurriculum.description,
-            draft: true,
+            isDraft: true,
             weeks: sourceCurriculum.weeks,
         };
         // Cast to proper type - duplication uses the same week IDs structure

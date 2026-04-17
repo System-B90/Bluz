@@ -2,7 +2,7 @@ import { Dayjs } from "dayjs";
 
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { inplaceDateFixup } from "@/api-shared/date-fixer";
-import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
+import { ApiT, BaseGantItem } from "@/api-shared/types/gant/curriculum";
 
 export type BaseDocument = {
     createdAt: Dayjs;
@@ -14,33 +14,33 @@ export type RawBaseDocument = {
     updatedAt: string;
 };
 
-export type DateFixup<TEntity extends BaseGantItem> = (rawItem: unknown) => TEntity & BaseDocument;
+export type DateFixup<T extends RawBaseDocument> =
+    <U extends T>(rawItem: unknown) => Exclude<U, RawBaseDocument> & BaseDocument;
 
-export function baseDocumentFixup<T extends null | RawBaseDocument>(doc: T): null | T
+export function baseDocumentFixup<T extends K & RawBaseDocument, K extends any>(doc: T): T & BaseDocument;
+export function baseDocumentFixup<T extends (K & RawBaseDocument) | null, K extends any>(doc: T): null | (T & BaseDocument)
 {
-    if (!doc) return null;
+    if (doc === null) return null;
     inplaceDateFixup(doc, [ 'updatedAt', 'createdAt' ]);
-    return doc;
+    return doc as T & BaseDocument;
 }
 
 export interface ClientGantApiBuilderProps<
     TEntity extends BaseGantItem,
-    _ApiT,
     _TCreatePayload = Omit<TEntity, 'id'>,
 >
 {
     apiBaseUrl: string;
-    dateFixup: DateFixup<TEntity>;
+    dateFixup: DateFixup<TEntity & RawBaseDocument>;
 }
 
 export interface BasicGantApi<
     TEntity extends BaseGantItem,
-    ApiT,
     TCreatePayload = Omit<TEntity, 'id'>,
 >
 {
     readonly apiList: (options?: ClientApiProps) => Promise<Record<TEntity[ 'id' ], TEntity[ 'title' ]>>;
-    readonly apiGet: (id: TEntity[ 'id' ], options?: ClientApiProps) => Promise<ApiT>;
+    readonly apiGet: (id: TEntity[ 'id' ], options?: ClientApiProps) => Promise<ApiT<TEntity & BaseDocument>>;
     readonly apiCreate: (payload: TCreatePayload, options?: ClientApiProps) => Promise<TEntity & BaseDocument>;
     readonly apiUpdate: (updates: Partial<TEntity> & { id: TEntity[ 'id' ]; }, options?: ClientApiProps) => Promise<TEntity & BaseDocument>;
     readonly apiDelete: (id: TEntity[ 'id' ], options?: ClientApiProps) => Promise<void>;
@@ -53,12 +53,11 @@ export interface BasicGantApi<
 
 export function clientGantApiBuilder<
     TEntity extends BaseGantItem,
-    ApiT,
     TCreatePayload = Omit<TEntity, 'id'>,
 >({
     apiBaseUrl,
     dateFixup
-}: ClientGantApiBuilderProps<TEntity, ApiT, TCreatePayload>): BasicGantApi<TEntity, ApiT, TCreatePayload>
+}: ClientGantApiBuilderProps<TEntity, TCreatePayload>): BasicGantApi<TEntity, TCreatePayload>
 {
     type TDocument = TEntity & BaseDocument;
 
@@ -70,15 +69,15 @@ export function clientGantApiBuilder<
         return await safeApiFetcher<Record<TEntity[ 'id' ], TEntity[ 'title' ]>>(buildUrl(), options);
     }
 
-    async function apiGet(id: TEntity[ 'id' ], options?: ClientApiProps): Promise<ApiT>
+    async function apiGet(id: TEntity[ 'id' ], options?: ClientApiProps): Promise<ApiT<TEntity & BaseDocument>>
     {
-        const rawData = await safeApiFetcher(buildItemUrl(id), options);
-        return dateFixup(rawData) as ApiT;
+        const rawData = await safeApiFetcher<ApiT<TEntity>>(buildItemUrl(id), options);
+        return dateFixup(rawData);
     }
 
     async function apiCreate(payload: TCreatePayload, options?: ClientApiProps): Promise<TDocument>
     {
-        const rawData = await safeApiFetcher(buildUrl(), {
+        const rawData = await safeApiFetcher<TEntity>(buildUrl(), {
             ...options,
             method: 'POST',
             body: JSON.stringify(payload),
@@ -90,7 +89,7 @@ export function clientGantApiBuilder<
     {
         const { id, ...patchPayload } = updates;
 
-        const rawData = await safeApiFetcher(buildUrl(id), {
+        const rawData = await safeApiFetcher<TEntity>(buildUrl(id), {
             ...options,
             method: 'PATCH',
             body: JSON.stringify(patchPayload),
@@ -100,7 +99,7 @@ export function clientGantApiBuilder<
 
     async function apiDelete(id: TEntity[ 'id' ], options?: ClientApiProps): Promise<void>
     {
-        await safeApiFetcher(buildItemUrl(id), {
+        await safeApiFetcher<void>(buildItemUrl(id), {
             ...options,
             method: 'DELETE',
         });
@@ -125,7 +124,7 @@ export function clientGantApiBuilder<
 
     async function apiLink(itemId: TEntity[ 'id' ], newParentId: BaseGantItem[ 'id' ], options?: ClientApiProps): Promise<TDocument>
     {
-        const rawData = await safeApiFetcher(buildItemUrl(itemId, 'link'), {
+        const rawData = await safeApiFetcher<TEntity>(buildItemUrl(itemId, 'link'), {
             ...options,
             method: 'POST',
             body: JSON.stringify({ newParentId }),
@@ -135,7 +134,7 @@ export function clientGantApiBuilder<
 
     async function apiUnlink(itemId: TEntity[ 'id' ], oldParentId: BaseGantItem[ 'id' ], options?: ClientApiProps): Promise<void>
     {
-        await safeApiFetcher(buildItemUrl(itemId, 'link'), {
+        await safeApiFetcher<void>(buildItemUrl(itemId, 'link'), {
             ...options,
             method: 'DELETE',
             body: JSON.stringify({ oldParentId }),

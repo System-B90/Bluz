@@ -10,7 +10,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { curriculumModuleDayMappingApi } from '@/api-client/gant/mappings';
-import { BaseDbDocument } from '@/api-server/curriculum/db-base';
+import { BaseDbDocument } from '@/api-server/gantt/db-base';
 import { CurriculumId, ModuleId } from "@/api-shared/types/gant/curriculum";
 import { CurriculumModuleDayMapping } from "@/api-shared/types/gant/mapping";
 

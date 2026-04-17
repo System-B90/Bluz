@@ -1,41 +1,72 @@
 import { and, asc, eq } from "drizzle-orm";
 
-import { postgresDb } from "@/api-server/curriculum";
-import { BaseDbDocument, drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } from "@/api-server/curriculum/db-base";
-import { curriculumEventConfigurations, modules, moduleToEvents, syllabusModules } from "@/api-server/curriculum/schema";
+import { postgresDb } from "@/api-server/gantt";
+import { drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } from "@/api-server/gantt/db-base";
+import { ganttModule2EventsSchema, ganttModulesSchema, ganttSyllabus2ModulesSchema } from "@/api-server/gantt/schema";
+import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/schema/mappings";
 import { ClientApiError } from "@/api-shared/errors";
 import { AllocateTimeToEventCallback, allocateTimeToModule, AllocateTimeToModuleCallbackModuleEvents } from "@/api-shared/gantt/allocate-time";
+import { ApiModule } from "@/api-shared/types/gant/api-layer";
 import { CreateModulePayload } from "@/api-shared/types/gant/create-payloads";
 import { CurriculumId, Module, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
     Module,
-    typeof modules,
+    typeof ganttModulesSchema,
     CreateModulePayload
 >({
-    table: modules,
+    table: ganttModulesSchema,
     typeName: 'מערך',
     idPreffix: 'm',
     junction: {
-        table: moduleToEvents,
-        localKey: moduleToEvents.moduleId,
-        relationKey: moduleToEvents.eventId,
+        table: ganttModule2EventsSchema,
+        localKey: ganttModule2EventsSchema.moduleId,
+        relationKey: ganttModule2EventsSchema.eventId,
         apiKey: "events"
     },
     parentJunction: {
-        type: 'syllabus'
+        table: ganttSyllabus2ModulesSchema,
+        parentKey: 'syllabusId',
+        selfKey: 'moduleId',
     },
 });
 
-async function addModuleToSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): Promise<Module & BaseDbDocument>
+async function getFullModule(id: ModuleId): Promise<ApiModule>
+{
+    const result = await postgresDb.query.ganttModulesSchema.findFirst({
+        where: eq(ganttModulesSchema.id, id),
+        with: {
+            m2e: {
+                with: {
+                    event: {
+                        with: {
+                            cEC: {
+                                where: (c, { eq }) => eq(c.curriculumId, id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!result)
+    {
+        throw new ClientApiError(`מערך עם מזהה ${id} לא נמצא`);
+    }
+
+    return result as any;
+}
+
+async function addModuleToSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): Promise<ApiModule>
 {
     try
     {
-        await postgresDb.insert(syllabusModules).values({
+        await postgresDb.insert(ganttSyllabus2ModulesSchema).values({
             syllabusId: syllabusId,
             moduleId: moduleId,
         });
-        return await basicOperations.getItem(moduleId);
+        return await getFullModule(moduleId);
     } catch (error: any)
     {
         const cause = error.cause as { name: string; severity: string; code: string; detail: string; };
@@ -57,14 +88,14 @@ async function addModuleToSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): 
 
 async function removeModuleFromSyllabus(syllabusId: SyllabusId, moduleId: ModuleId): Promise<void>
 {
-    const result = await postgresDb.delete(syllabusModules)
+    const result = await postgresDb.delete(ganttSyllabus2ModulesSchema)
         .where(
             and(
-                eq(syllabusModules.syllabusId, syllabusId),
-                eq(syllabusModules.moduleId, moduleId)
+                eq(ganttSyllabus2ModulesSchema.syllabusId, syllabusId),
+                eq(ganttSyllabus2ModulesSchema.moduleId, moduleId)
             )
         )
-        .returning({ deletedSyllabusId: syllabusModules.syllabusId });
+        .returning({ deletedSyllabusId: ganttSyllabus2ModulesSchema.syllabusId });
 
     if (result.length === 0)
     {
@@ -78,18 +109,18 @@ async function setAllocatedTime(
     duration: number
 ): Promise<void>
 {
-    const moduleToEventsData = await postgresDb.query.moduleToEvents.findMany({
-        where: eq(moduleToEvents.moduleId, moduleId),
+    const moduleToEventsData = await postgresDb.query.ganttModule2EventsSchema.findMany({
+        where: eq(ganttModule2EventsSchema.moduleId, moduleId),
         with: {
             event: { columns: { id: true, minimumDuration: true } }
         },
-        orderBy: [ asc(moduleToEvents.eventId) ],
+        orderBy: [ asc(ganttModule2EventsSchema.eventId) ],
     });
 
     const callback: AllocateTimeToEventCallback = async ({ eventId, curriculumId, duration }) =>
     {
         await postgresDb
-            .insert(curriculumEventConfigurations)
+            .insert(ganttCurriculumEventConfigurationsSchema)
             .values({
                 curriculumId,
                 eventId: eventId,
@@ -98,8 +129,8 @@ async function setAllocatedTime(
             })
             .onConflictDoUpdate({
                 target: [
-                    curriculumEventConfigurations.curriculumId,
-                    curriculumEventConfigurations.eventId
+                    ganttCurriculumEventConfigurationsSchema.curriculumId,
+                    ganttCurriculumEventConfigurationsSchema.eventId
                 ],
                 set: {
                     allocatedDuration: duration,
@@ -127,15 +158,15 @@ async function getAllocatedTime(
     curriculumId: CurriculumId
 ): Promise<number>
 {
-    const moduleData = await postgresDb.query.modules.findFirst({
-        where: eq(modules.id, moduleId),
+    const moduleData = await postgresDb.query.ganttModulesSchema.findFirst({
+        where: eq(ganttModulesSchema.id, moduleId),
         with: {
-            mE: {
+            m2e: {
                 with: {
                     event: {
                         with: {
                             cEC: {
-                                where: eq(curriculumEventConfigurations.curriculumId, curriculumId)
+                                where: eq(ganttCurriculumEventConfigurationsSchema.curriculumId, curriculumId)
                             }
                         }
                     }
@@ -149,7 +180,7 @@ async function getAllocatedTime(
         return 0;
     }
 
-    const total = moduleData.mE.reduce((acc, link) =>
+    const total = moduleData.m2e.reduce((acc, link) =>
     {
         const config = link.event.cEC[ 0 ];
         const duration = config?.allocatedDuration ?? 0;
@@ -161,6 +192,7 @@ async function getAllocatedTime(
 }
 
 export const DbModule = {
+    getItem: getFullModule,
     ...basicOperations,
     linkItem: addModuleToSyllabus,
     unlinkItem: removeModuleFromSyllabus,

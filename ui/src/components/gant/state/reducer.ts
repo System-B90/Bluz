@@ -22,32 +22,32 @@ import
     } from "@/api-shared/types/gant/curriculum";
 
 export type Action =
-    | { type: 'ADD_EVENT'; payload: { moduleId: ModuleId; event: ModuleEvent; }; }
+    | { type: 'ADD_DAY'; payload: { day: CurriculumDay & { id: CurriculumDayId; }; }; }
 
     // Updates
+    | { type: 'ADD_EVENT'; payload: { moduleId: ModuleId; event: ModuleEvent; }; }
     | { type: 'ADD_MODULE'; payload: { syllabusId: SyllabusId; module: Module; }; }
     | { type: 'ADD_SYLLABUS'; payload: { curriculumId: CurriculumId; syllabus: Syllabus; }; }
-    | { type: 'ALLOCATE_TIME_TO_MODULE'; payload: { curriculumId: CurriculumId; moduleId: ModuleId; duration: number; }; }
-    | { type: 'ALLOCATE_TIME'; payload: { curriculumId: CurriculumId; eventId: ModuleEventId; duration: number; }; }
+    | { type: 'ADD_WEEK'; payload: { week: CurriculumWeek & { id: CurriculumWeekId; }; }; }
 
     // Adds
+    | { type: 'ALLOCATE_TIME_TO_MODULE'; payload: { curriculumId: CurriculumId; moduleId: ModuleId; duration: number; }; }
+    | { type: 'ALLOCATE_TIME'; payload: { curriculumId: CurriculumId; eventId: ModuleEventId; duration: number; }; }
+    | { type: 'REMOVE_DAY'; payload: { dayId: CurriculumDayId; }; }
+
+    // Removes
     | { type: 'REMOVE_EVENT'; payload: { moduleId: ModuleId; eventId: ModuleEventId; }; }
     | { type: 'REMOVE_MODULE'; payload: { syllabusId: SyllabusId; moduleId: ModuleId; }; }
     | { type: 'REMOVE_SYLLABUS'; payload: { curriculumId: CurriculumId; syllabusId: SyllabusId; }; }
-
-    // Removes
+    | { type: 'REMOVE_WEEK'; payload: { weekId: CurriculumWeekId; }; }
     | { type: 'SET_DATA'; payload: ApiCurriculum; }
+
     | { type: 'UPDATE_CURRICULUM'; payload: { id: CurriculumId; updates: Partial<Curriculum>; }; }
     | { type: 'UPDATE_DAY'; payload: { id: CurriculumDayId; updates: Partial<CurriculumDay>; }; }
     | { type: 'UPDATE_EVENT'; payload: { id: ModuleEventId; updates: Partial<ModuleEvent>; }; }
     | { type: 'UPDATE_MODULE'; payload: { id: ModuleId; updates: Partial<Module>; }; }
-
     | { type: 'UPDATE_SYLLABUS'; payload: { id: SyllabusId; updates: Partial<Syllabus>; }; }
-    | { type: 'UPDATE_WEEK'; payload: { id: CurriculumWeekId; updates: any; }; }
-    | { type: 'ADD_WEEK'; payload: { week: CurriculumWeek & { id: CurriculumWeekId }; }; }
-    | { type: 'REMOVE_WEEK'; payload: { weekId: CurriculumWeekId; }; }
-    | { type: 'ADD_DAY'; payload: { day: CurriculumDay & { id: CurriculumDayId }; }; }
-    | { type: 'REMOVE_DAY'; payload: { dayId: CurriculumDayId; }; };
+    | { type: 'UPDATE_WEEK'; payload: { id: CurriculumWeekId; updates: any; }; };
 
 function injectDocumentTimes<T extends BaseGantItem>(rawDoc: T): T & BaseDocument
 {
@@ -176,7 +176,7 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
                 ...state,
                 syllabuses: {
                     ...state.syllabuses,
-                    [ action.payload.syllabus.id ]: injectDocumentTimes(action.payload.syllabus)
+                    [ action.payload.syllabus.id ]: injectDocumentTimes({ ...action.payload.syllabus, curriculumId: parent.id })
                 },
                 curriculums: {
                     ...state.curriculums,
@@ -195,7 +195,7 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
                 ...state,
                 modules: {
                     ...state.modules,
-                    [ action.payload.module.id ]: injectDocumentTimes(action.payload.module)
+                    [ action.payload.module.id ]: injectDocumentTimes({ ...action.payload.module, syllabusId: parent.id })
                 },
                 syllabuses: {
                     ...state.syllabuses,
@@ -203,10 +203,6 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
                         ...parent,
                         modules: [ ...parent.modules, action.payload.module.id ]
                     }
-                },
-                moduleToSyllabusLookup: {
-                    ...state.moduleToSyllabusLookup,
-                    [ action.payload.module.id ]: parent.id
                 },
             };
         }
@@ -218,7 +214,7 @@ export function curriculumReducer(state: NormalizedStore, action: Action): Norma
                 ...state,
                 events: {
                     ...state.events,
-                    [ action.payload.event.id ]: injectDocumentTimes(action.payload.event)
+                    [ action.payload.event.id ]: injectDocumentTimes({ ...action.payload.event, moduleId: parent.id })
                 },
                 modules: {
                     ...state.modules,

@@ -1,14 +1,13 @@
 import { NextRequest } from "next/server";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
-import { BaseDbDocument } from "@/api-server/curriculum/db-base";
 import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
 
 export interface BasicGantOperations<TEntity extends BaseGantItem, TCreatePayload = Omit<TEntity, 'id'>>
 {
     listItems: () => Promise<Record<TEntity[ 'id' ], TEntity[ 'title' ]>>;
     getMultipleItems: (ids: string[]) => Promise<TEntity[]>;
-    getItem: (id: TEntity[ 'id' ]) => Promise<TEntity & BaseDbDocument>;
+    getItem: (id: TEntity[ 'id' ]) => Promise<any>;
     createNewItem: (payload: TCreatePayload) => Promise<TEntity>;
     updateItem: (id: TEntity[ 'id' ], updates: Partial<TEntity>) => Promise<TEntity>;
     deleteItem: (id: TEntity[ 'id' ]) => Promise<void>;

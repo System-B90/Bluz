@@ -18,12 +18,12 @@ import { useCurriculumWeek } from "@/components/gant/state/hooks/UseCurriculumWe
 interface ClosingSaturdayChipProps
 {
     weekId: CurriculumWeekId;
-    closingSaturday: boolean;
+    weekendDuty: boolean;
 }
 
 export function ClosingSaturdayChip({
     weekId,
-    closingSaturday
+    weekendDuty
 }: ClosingSaturdayChipProps)
 {
     const { enqueueSnackbar } = useSnackbar();
@@ -33,27 +33,27 @@ export function ClosingSaturdayChip({
     const clickHandler = useCallback(() =>
     {
         if (!week) { return; }
-        const isClosing = !closingSaturday;
+        const isClosing = !weekendDuty;
         
-        updateWeek(weekId, { closingSaturday: isClosing })
+        updateWeek(weekId, { weekendDuty: isClosing })
             .catch((error: unknown) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת המידע של השבוע נכשלה!', error));
-    }, [ week, weekId, closingSaturday, updateWeek, enqueueSnackbar ]);
+    }, [ week, weekId, weekendDuty, updateWeek, enqueueSnackbar ]);
 
     return (
-        <Tooltip arrow title={ closingSaturday ? "סוגרים שבת" : "יוצאים הביתה" }>
+        <Tooltip arrow title={ weekendDuty ? "סוגרים שבת" : "יוצאים הביתה" }>
             <Chip
                 className={ `
                     transition-all duration-300 ease-in-out cursor-pointer font-bold
-                    ${closingSaturday
+                    ${weekendDuty
                         ? "bg-amber-600 text-white hover:bg-amber-700 shadow-md ring-2 ring-amber-200"
                         : "bg-slate-200 text-slate-600 hover:bg-slate-300"
                     }
                 `}
-                icon={ closingSaturday ?
+                icon={ weekendDuty ?
                     <EventBusy className="text-white" /> :
                     <EventAvailable className="text-slate-500" />
                 }
-                label={ closingSaturday ? "סוגרים" : "יוצאים" }
+                label={ weekendDuty ? "סוגרים" : "יוצאים" }
                 onClick={ clickHandler }
                 sx={ {
                     height: 28,

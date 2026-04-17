@@ -2,7 +2,6 @@
 
 ## Environment Variables
 
-* `NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT` - the port used for the client to communicate with the backend schedule server.
 * `WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY` - the auth key for communication with the backend server.
 * `MONGO_CONNECTION_STRING` - the connection string of the mongo instance.
 * `NEXT_PUBLIC_HIVE_URL` - the URL for the hive instance to work with.

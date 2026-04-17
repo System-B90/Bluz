@@ -1,27 +1,32 @@
-import { Curriculum, CurriculumDay, CurriculumWeek, Module, ModuleEvent, Syllabus } from "@/api-shared/types/gant/curriculum";
+import { RawBaseDocument } from "@/api-client/gant/base";
+import { Curriculum, CurriculumDay, CurriculumDayId, CurriculumId, CurriculumWeek, CurriculumWeekId, Module, ModuleEvent, ModuleEventId, ModuleId, Syllabus, SyllabusId } from "@/api-shared/types/gant/curriculum";
 
-export type ApiModuleEvent = ModuleEvent;
-export interface ApiModule extends Omit<Module, 'events'>
+export interface ApiModuleEvent extends Omit<ModuleEvent & RawBaseDocument, 'allocatedDuration'>
 {
-    events: Array<ModuleEvent>;
+    cEC: Array<{ eventId: ModuleEventId; curriculumId: CurriculumId; allocatedDuration: number; }>;
 }
 
-export interface ApiSyllabus extends Omit<Syllabus, 'modules'>
+export interface ApiModule extends Omit<Module & RawBaseDocument, 'events'>
 {
-    modules: Array<ApiModule>;
+    m2e: Array<{ moduleId: ModuleId; eventId: ModuleEventId; event: ApiModuleEvent; }>;
 }
 
-export interface ApiCurriculumDay extends Omit<CurriculumDay, 'id'>
+export interface ApiSyllabus extends Omit<Syllabus & RawBaseDocument, 'modules'>
+{
+    s2m: Array<{ syllabusId: SyllabusId; moduleId: ModuleId; module: ApiModule; }>;
+}
+
+export interface ApiCurriculumDay extends Omit<CurriculumDay & RawBaseDocument, 'title'>
 {
 }
 
-export interface ApiCurriculumWeek extends Omit<CurriculumWeek, 'days'>
+export interface ApiCurriculumWeek extends Omit<CurriculumWeek & RawBaseDocument, 'days'>
 {
-    days: Array<ApiCurriculumDay>;
+    w2d: Array<{ weekId: CurriculumWeekId; dayId: CurriculumDayId; day: ApiCurriculumDay; }>;
 }
 
-export interface ApiCurriculum extends Omit<Curriculum, 'syllabuses' | 'weeks'>
+export interface ApiCurriculum extends Omit<Curriculum & RawBaseDocument, 'syllabuses' | 'weeks'>
 {
-    syllabuses: Array<ApiSyllabus>;
-    weeks: Array<ApiCurriculumWeek>;
+    c2s: Array<{ curriculumId: CurriculumId; syllabusId: SyllabusId; syllabus: ApiSyllabus; }>;
+    c2w: Array<{ curriculumId: CurriculumId; weekId: CurriculumWeekId; week: ApiCurriculumWeek; }>;
 }

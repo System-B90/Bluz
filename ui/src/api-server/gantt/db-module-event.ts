@@ -1,41 +1,64 @@
 import { and, eq } from "drizzle-orm";
 
-import { postgresDb } from "@/api-server/curriculum";
-import { BaseDbDocument, drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } from "@/api-server/curriculum/db-base";
-import { curriculumEventConfigurations, moduleEvents, moduleToEvents } from "@/api-server/curriculum/schema";
+import { postgresDb } from "@/api-server/gantt";
+import { drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION } from "@/api-server/gantt/db-base";
+import { ganttEventsSchema, ganttModule2EventsSchema } from "@/api-server/gantt/schema";
+import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/schema/mappings";
 import { ClientApiError } from "@/api-shared/errors";
+import { ApiModuleEvent } from "@/api-shared/types/gant/api-layer";
 import { CreateModuleEventPayload } from "@/api-shared/types/gant/create-payloads";
 import { CurriculumId, ModuleEvent, ModuleEventId, ModuleId } from "@/api-shared/types/gant/curriculum";
 
 /**
- * Basic CRUD operations for the 'moduleEvents' table.
+ * Basic CRUD operations for the 'ganttEventsSchema' table.
  * Note: This entity does not have a downstream junction table in the current hierarchy.
  */
 const basicOperations = drizzleOperationsBuilder<
     ModuleEvent,
-    typeof moduleEvents,
+    typeof ganttEventsSchema,
     CreateModuleEventPayload
 >({
-    table: moduleEvents,
+    table: ganttEventsSchema,
     typeName: 'מופע',
     idPreffix: 'e',
     parentJunction: {
-        type: 'module'
+        table: ganttModule2EventsSchema,
+        parentKey: 'moduleId',
+        selfKey: 'eventId',
     },
 });
+
+async function getFullModuleEvent(id: ModuleId): Promise<ApiModuleEvent>
+{
+    const result = await postgresDb.query.ganttEventsSchema.findFirst({
+        where: eq(ganttEventsSchema.id, id),
+        with: {
+            cEC: {
+                where: (c, { eq }) => eq(c.curriculumId, id)
+            }
+        }
+    });
+
+    if (!result)
+    {
+        throw new ClientApiError(`מופע עם מזהה ${id} לא נמצא`);
+    }
+
+    return result as any;
+}
 
 /**
  * Associates a specific event with a module in the junction table.
  */
-async function addEventToModule(moduleId: ModuleId, eventId: ModuleEventId): Promise<ModuleEvent & BaseDbDocument>
+async function addEventToModule(moduleId: ModuleId, eventId: ModuleEventId): Promise<ApiModuleEvent>
 {
     try
     {
-        await postgresDb.insert(moduleToEvents).values({
+        await postgresDb.insert(ganttModule2EventsSchema).values({
             moduleId: moduleId,
             eventId: eventId,
         });
-        return await basicOperations.getItem(eventId);
+        return await getFullModuleEvent(eventId);
     } catch (error: any)
     {
         const cause = error.cause as { name: string; severity: string; code: string; detail: string; };
@@ -60,14 +83,14 @@ async function addEventToModule(moduleId: ModuleId, eventId: ModuleEventId): Pro
  */
 async function removeEventFromModule(moduleId: ModuleId, eventId: ModuleEventId): Promise<void>
 {
-    const result = await postgresDb.delete(moduleToEvents)
+    const result = await postgresDb.delete(ganttModule2EventsSchema)
         .where(
             and(
-                eq(moduleToEvents.moduleId, moduleId),
-                eq(moduleToEvents.eventId, eventId)
+                eq(ganttModule2EventsSchema.moduleId, moduleId),
+                eq(ganttModule2EventsSchema.eventId, eventId)
             )
         )
-        .returning({ deletedModuleId: moduleToEvents.moduleId });
+        .returning({ deletedModuleId: ganttModule2EventsSchema.moduleId });
 
     if (result.length === 0)
     {
@@ -80,10 +103,10 @@ async function removeEventFromModule(moduleId: ModuleId, eventId: ModuleEventId)
  */
 async function getAllocatedTime(eventId: ModuleEventId, curriculumId: CurriculumId): Promise<number>
 {
-    const result = await postgresDb.query.curriculumEventConfigurations.findFirst({
+    const result = await postgresDb.query.ganttCurriculumEventConfigurationsSchema.findFirst({
         where: and(
-            eq(curriculumEventConfigurations.curriculumId, curriculumId),
-            eq(curriculumEventConfigurations.eventId, eventId)
+            eq(ganttCurriculumEventConfigurationsSchema.curriculumId, curriculumId),
+            eq(ganttCurriculumEventConfigurationsSchema.eventId, eventId)
         ),
         columns: {
             allocatedDuration: true
@@ -104,7 +127,7 @@ async function setAllocatedTime(
 ): Promise<void>
 {
     await postgresDb
-        .insert(curriculumEventConfigurations)
+        .insert(ganttCurriculumEventConfigurationsSchema)
         .values({
             curriculumId,
             eventId,
@@ -113,8 +136,8 @@ async function setAllocatedTime(
         })
         .onConflictDoUpdate({
             target: [
-                curriculumEventConfigurations.curriculumId,
-                curriculumEventConfigurations.eventId
+                ganttCurriculumEventConfigurationsSchema.curriculumId,
+                ganttCurriculumEventConfigurationsSchema.eventId
             ],
             set: {
                 allocatedDuration: duration,
@@ -124,6 +147,7 @@ async function setAllocatedTime(
 }
 
 export const DbModuleEvent = {
+    getItem: getFullModuleEvent,
     ...basicOperations,
     linkItem: addEventToModule,
     unlinkItem: removeEventFromModule,

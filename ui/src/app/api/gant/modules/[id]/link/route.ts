@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic';
 
-import { DbModule } from '@/api-server/curriculum/db-module';
+import { DbModule } from '@/api-server/gantt/db-module';
+import { Module } from '@/api-shared/types/gant/curriculum';
 import { buildGantLinkRoutes } from '@/app/api/gant/base-link';
 
-const { POST, DELETE } = buildGantLinkRoutes({ dbSet: DbModule });
-export { POST, DELETE };
+const { POST, DELETE } = buildGantLinkRoutes<Module>({ dbSet: DbModule });
+export { DELETE, POST };

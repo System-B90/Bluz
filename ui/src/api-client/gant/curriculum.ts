@@ -7,7 +7,7 @@ export type CurriculumDocument = Curriculum & BaseDocument;
 
 const curriculumApi = clientGantApiBuilder<Curriculum, ApiCurriculum, CreateCurriculumPayload>({ apiBaseUrl: '/api/gant/curriculums', dateFixup: baseDocumentFixup as any });
 const {
- apiList,
+    apiList,
     apiGet,
     apiCreate,
     apiUpdate,

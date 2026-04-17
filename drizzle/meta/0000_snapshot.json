@@ -1,11 +1,131 @@
 {
-  "id": "cc1b1663-8157-41de-a5e2-b85a6b4b4d52",
+  "id": "c3bb39fb-e214-4025-8cc4-6eea21fdeb92",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.cS": {
-      "name": "cS",
+    "public.c2s": {
+      "name": "c2s",
+      "schema": "",
+      "columns": {
+        "c_id": {
+          "name": "c_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "s_id": {
+          "name": "s_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "c2s_c_id_c_id_fk": {
+          "name": "c2s_c_id_c_id_fk",
+          "tableFrom": "c2s",
+          "tableTo": "c",
+          "columnsFrom": [
+            "c_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "c2s_s_id_s_id_fk": {
+          "name": "c2s_s_id_s_id_fk",
+          "tableFrom": "c2s",
+          "tableTo": "s",
+          "columnsFrom": [
+            "s_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "c2s_c_id_s_id_pk": {
+          "name": "c2s_c_id_s_id_pk",
+          "columns": [
+            "c_id",
+            "s_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.c2w": {
+      "name": "c2w",
+      "schema": "",
+      "columns": {
+        "c_id": {
+          "name": "c_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "w_id": {
+          "name": "w_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "c2w_c_id_c_id_fk": {
+          "name": "c2w_c_id_c_id_fk",
+          "tableFrom": "c2w",
+          "tableTo": "c",
+          "columnsFrom": [
+            "c_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "c2w_w_id_w_id_fk": {
+          "name": "c2w_w_id_w_id_fk",
+          "tableFrom": "c2w",
+          "tableTo": "w",
+          "columnsFrom": [
+            "w_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "c2w_c_id_w_id_pk": {
+          "name": "c2w_c_id_w_id_pk",
+          "columns": [
+            "c_id",
+            "w_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cEC": {
+      "name": "cEC",
       "schema": "",
       "columns": {
         "curriculum_id": {
@@ -14,18 +134,32 @@
           "primaryKey": false,
           "notNull": true
         },
-        "syllabus_id": {
-          "name": "syllabus_id",
+        "event_id": {
+          "name": "event_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "allocated_duration": {
+          "name": "allocated_duration",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "cS_curriculum_id_c_id_fk": {
-          "name": "cS_curriculum_id_c_id_fk",
-          "tableFrom": "cS",
+        "cEC_curriculum_id_c_id_fk": {
+          "name": "cEC_curriculum_id_c_id_fk",
+          "tableFrom": "cEC",
           "tableTo": "c",
           "columnsFrom": [
             "curriculum_id"
@@ -36,12 +170,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "cS_syllabus_id_s_id_fk": {
-          "name": "cS_syllabus_id_s_id_fk",
-          "tableFrom": "cS",
-          "tableTo": "s",
+        "cEC_event_id_e_id_fk": {
+          "name": "cEC_event_id_e_id_fk",
+          "tableFrom": "cEC",
+          "tableTo": "e",
           "columnsFrom": [
-            "syllabus_id"
+            "event_id"
           ],
           "columnsTo": [
             "id"
@@ -51,11 +185,11 @@
         }
       },
       "compositePrimaryKeys": {
-        "cS_curriculum_id_syllabus_id_pk": {
-          "name": "cS_curriculum_id_syllabus_id_pk",
+        "cEC_curriculum_id_event_id_pk": {
+          "name": "cEC_curriculum_id_event_id_pk",
           "columns": [
             "curriculum_id",
-            "syllabus_id"
+            "event_id"
           ]
         }
       },
@@ -94,13 +228,6 @@
           "notNull": true,
           "default": true
         },
-        "weeks": {
-          "name": "weeks",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -124,8 +251,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.e": {
-      "name": "e",
+    "public.d": {
+      "name": "d",
       "schema": "",
       "columns": {
         "id": {
@@ -134,49 +261,40 @@
           "primaryKey": true,
           "notNull": true
         },
-        "title": {
-          "name": "title",
+        "w_id": {
+          "name": "w_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "type": {
-          "name": "type",
-          "type": "module_event_type",
-          "typeSchema": "public",
+        "d": {
+          "name": "d",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "minimum_duration": {
-          "name": "minimum_duration",
-          "type": "integer",
+        "tWH": {
+          "name": "tWH",
+          "type": "real",
           "primaryKey": false,
           "notNull": true,
           "default": 0
         },
-        "allocated_duration": {
-          "name": "allocated_duration",
-          "type": "integer",
+        "cmt": {
+          "name": "cmt",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": 0
+          "notNull": false
         },
-        "requirements": {
-          "name": "requirements",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "created_at": {
-          "name": "created_at",
+        "ca": {
+          "name": "ca",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "ua": {
+          "name": "ua",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -184,15 +302,29 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "d_w_id_w_id_fk": {
+          "name": "d_w_id_w_id_fk",
+          "tableFrom": "d",
+          "tableTo": "w",
+          "columnsFrom": [
+            "w_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.mE": {
-      "name": "mE",
+    "public.m2e": {
+      "name": "m2e",
       "schema": "",
       "columns": {
         "module_id": {
@@ -210,9 +342,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "mE_module_id_m_id_fk": {
-          "name": "mE_module_id_m_id_fk",
-          "tableFrom": "mE",
+        "m2e_module_id_m_id_fk": {
+          "name": "m2e_module_id_m_id_fk",
+          "tableFrom": "m2e",
           "tableTo": "m",
           "columnsFrom": [
             "module_id"
@@ -223,9 +355,9 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "mE_event_id_e_id_fk": {
-          "name": "mE_event_id_e_id_fk",
-          "tableFrom": "mE",
+        "m2e_event_id_e_id_fk": {
+          "name": "m2e_event_id_e_id_fk",
+          "tableFrom": "m2e",
           "tableTo": "e",
           "columnsFrom": [
             "event_id"
@@ -238,11 +370,130 @@
         }
       },
       "compositePrimaryKeys": {
-        "mE_module_id_event_id_pk": {
-          "name": "mE_module_id_event_id_pk",
+        "m2e_module_id_event_id_pk": {
+          "name": "m2e_module_id_event_id_pk",
           "columns": [
             "module_id",
             "event_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.cMDA": {
+      "name": "cMDA",
+      "schema": "",
+      "columns": {
+        "c_id": {
+          "name": "c_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "m_id": {
+          "name": "m_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "w_id": {
+          "name": "w_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "d_id": {
+          "name": "d_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "s": {
+          "name": "s",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "ca": {
+          "name": "ca",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ua": {
+          "name": "ua",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cMDA_c_id_c_id_fk": {
+          "name": "cMDA_c_id_c_id_fk",
+          "tableFrom": "cMDA",
+          "tableTo": "c",
+          "columnsFrom": [
+            "c_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "cMDA_m_id_m_id_fk": {
+          "name": "cMDA_m_id_m_id_fk",
+          "tableFrom": "cMDA",
+          "tableTo": "m",
+          "columnsFrom": [
+            "m_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "cMDA_w_id_w_id_fk": {
+          "name": "cMDA_w_id_w_id_fk",
+          "tableFrom": "cMDA",
+          "tableTo": "w",
+          "columnsFrom": [
+            "w_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "cMDA_d_id_d_id_fk": {
+          "name": "cMDA_d_id_d_id_fk",
+          "tableFrom": "cMDA",
+          "tableTo": "d",
+          "columnsFrom": [
+            "d_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cMDA_c_id_m_id_pk": {
+          "name": "cMDA_c_id_m_id_pk",
+          "columns": [
+            "c_id",
+            "m_id"
           ]
         }
       },
@@ -261,35 +512,35 @@
           "primaryKey": true,
           "notNull": true
         },
-        "title": {
-          "name": "title",
+        "t": {
+          "name": "t",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "description": {
-          "name": "description",
+        "d": {
+          "name": "d",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "default": "''"
         },
-        "hive_ids": {
-          "name": "hive_ids",
+        "h_ids": {
+          "name": "h_ids",
           "type": "integer[]",
           "primaryKey": false,
           "notNull": true,
           "default": "'{}'"
         },
-        "created_at": {
-          "name": "created_at",
+        "ca": {
+          "name": "ca",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "ua": {
+          "name": "ua",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -304,8 +555,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.sM": {
-      "name": "sM",
+    "public.s2m": {
+      "name": "s2m",
       "schema": "",
       "columns": {
         "syllabus_id": {
@@ -323,9 +574,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "sM_syllabus_id_s_id_fk": {
-          "name": "sM_syllabus_id_s_id_fk",
-          "tableFrom": "sM",
+        "s2m_syllabus_id_s_id_fk": {
+          "name": "s2m_syllabus_id_s_id_fk",
+          "tableFrom": "s2m",
           "tableTo": "s",
           "columnsFrom": [
             "syllabus_id"
@@ -336,9 +587,9 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "sM_module_id_m_id_fk": {
-          "name": "sM_module_id_m_id_fk",
-          "tableFrom": "sM",
+        "s2m_module_id_m_id_fk": {
+          "name": "s2m_module_id_m_id_fk",
+          "tableFrom": "s2m",
           "tableTo": "m",
           "columnsFrom": [
             "module_id"
@@ -351,8 +602,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "sM_syllabus_id_module_id_pk": {
-          "name": "sM_syllabus_id_module_id_pk",
+        "s2m_syllabus_id_module_id_pk": {
+          "name": "s2m_syllabus_id_module_id_pk",
           "columns": [
             "syllabus_id",
             "module_id"
@@ -374,28 +625,28 @@
           "primaryKey": true,
           "notNull": true
         },
-        "title": {
-          "name": "title",
+        "t": {
+          "name": "t",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "hive_ids": {
-          "name": "hive_ids",
+        "h_ids": {
+          "name": "h_ids",
           "type": "integer[]",
           "primaryKey": false,
           "notNull": true,
           "default": "'{}'"
         },
-        "created_at": {
-          "name": "created_at",
+        "ca": {
+          "name": "ca",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "ua": {
+          "name": "ua",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -405,6 +656,66 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.w2d": {
+      "name": "w2d",
+      "schema": "",
+      "columns": {
+        "w_id": {
+          "name": "w_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "d_id": {
+          "name": "d_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "w2d_w_id_w_id_fk": {
+          "name": "w2d_w_id_w_id_fk",
+          "tableFrom": "w2d",
+          "tableTo": "w",
+          "columnsFrom": [
+            "w_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "w2d_d_id_d_id_fk": {
+          "name": "w2d_d_id_d_id_fk",
+          "tableFrom": "w2d",
+          "tableTo": "d",
+          "columnsFrom": [
+            "d_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "w2d_w_id_d_id_pk": {
+          "name": "w2d_w_id_d_id_pk",
+          "columns": [
+            "w_id",
+            "d_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},

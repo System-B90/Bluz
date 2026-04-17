@@ -14,7 +14,7 @@ import
         deleteModuleAssignment,
         getModuleAssignments,
         updateModuleAssignment
-    } from "@/api-server/curriculum/db-mappings";
+    } from "@/api-server/gantt/db-mappings";
 import { ClientApiError } from "@/api-shared/errors";
 
 export interface RouteContext
@@ -32,10 +32,10 @@ export async function GET(request: NextRequest, context: RouteContext)
         const { id } = await context.params;
         if (!id) throw new ClientApiError('Curriculum ID is missing.');
 
-        const rawWeekIndex = request.nextUrl.searchParams.get('weekIndex');
-        const weekIndex = rawWeekIndex !== null ? Number(rawWeekIndex) : undefined;
+        const rawWeekIndex = request.nextUrl.searchParams.get('weekId');
+        const weekId = rawWeekIndex !== null ? Number(rawWeekIndex) : undefined;
 
-        const assignments = await getModuleAssignments(id, weekIndex);
+        const assignments = await getModuleAssignments(id, weekId);
         return ApiSuccess(assignments);
     } catch (error)
     {
@@ -54,15 +54,15 @@ export async function POST(request: NextRequest, context: RouteContext)
         const body = await request.json();
 
         // Validate required fields for creation
-        if (!body.moduleId || body.weekIndex === undefined || body.dayIndex === undefined)
+        if (!body.moduleId || body.weekId === undefined || body.dayIndex === undefined)
         {
-            throw new ClientApiError('Missing required fields: moduleId, weekIndex, or dayIndex.');
+            throw new ClientApiError('Missing required fields: moduleId, weekId, or dayIndex.');
         }
 
         const mapping = await createModuleAssignment({
             curriculumId,
             moduleId: body.moduleId,
-            weekIndex: body.weekIndex,
+            weekId: body.weekId,
             dayIndex: body.dayIndex,
             sortOrder: body.sortOrder,
         });
@@ -85,7 +85,7 @@ export async function PATCH(request: NextRequest, context: RouteContext)
         const body = await request.json();
 
         const { oldMapping, newValues } = body;
-        if (!oldMapping?.moduleId || oldMapping.weekIndex === undefined || oldMapping.dayIndex === undefined)
+        if (!oldMapping?.moduleId || oldMapping.weekId === undefined || oldMapping.dayIndex === undefined)
         {
             throw new ClientApiError('Missing oldMapping identifiers to locate the record.');
         }
@@ -108,13 +108,13 @@ export async function DELETE(request: NextRequest, context: RouteContext)
         const { id: curriculumId } = await context.params;
         const body = await request.json();
 
-        const { moduleId, weekIndex, dayIndex } = body;
-        if (!moduleId || weekIndex === undefined || dayIndex === undefined)
+        const { moduleId, weekId, dayIndex } = body;
+        if (!moduleId || weekId === undefined || dayIndex === undefined)
         {
-            throw new ClientApiError('Missing identifiers (moduleId, weekIndex, dayIndex) for deletion.');
+            throw new ClientApiError('Missing identifiers (moduleId, weekId, dayIndex) for deletion.');
         }
 
-        const deleted = await deleteModuleAssignment(curriculumId, moduleId, weekIndex, dayIndex);
+        const deleted = await deleteModuleAssignment(curriculumId, moduleId, weekId, dayIndex);
         return ApiSuccess(deleted);
     } catch (error)
     {

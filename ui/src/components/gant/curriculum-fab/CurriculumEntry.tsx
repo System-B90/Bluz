@@ -13,7 +13,7 @@ interface CurriculumEntryProps
 // Visual distinction between Draft and Prod handled here
 export const CurriculumEntry = React.memo(({ curriculum, onClick, selected }: CurriculumEntryProps) =>
 {
-    const isDraft = curriculum?.draft;
+    const isDraft = curriculum?.isDraft;
 
     return (
         <ListItem disablePadding>

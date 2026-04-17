@@ -1,29 +1,38 @@
-'use client';
 /**
  * Name: GanttEngine.tsx
- * Purpose: Officially documented SVAR Gantt integration for Next.js.
+ * Purpose: SVAR Gantt component wrapper with proper typing.
  * Created: 2026-04-17
  * Author: Michael K. Steinberg
  */
 
-import { Gantt } from "@svar-ui/react-gantt";
-import '@svar-ui/react-gantt/all.css';
-interface GanttEngineProps
-{
-    tasks: any[];
-    links: any[];
-    scales: any[];
-    onDataUpdate: (event: any) => void;
-}
+'use client';
 
-export default function GanttEngine({ tasks, links, scales, onDataUpdate }: GanttEngineProps)
+import { GanttEngineProps } from '@/components/gant/curriculum-view/tabs/gantt-view-tab/types';
+
+import { Gantt, Willow } from '@svar-ui/react-gantt';
+import '@svar-ui/react-gantt/all.css';
+import React from 'react';
+
+/**
+ * GanttEngine Component
+ */
+export default function GanttEngine({
+    tasks,
+    links,
+    scales,
+    onDataUpdate
+}: GanttEngineProps): React.ReactElement
 {
-    console.log('tasks', tasks);
+    const scaleArray = scales && scales.length > 0 ? scales : [ { unit: 'weeks' as const, step: 1 } ];
+
     return (
-        <div className="wx-willow-theme" style={ { width: "100%", height: "100%" } }>
+        <div className="wx-willow-theme" style={ { width: '100%', height: '100%' } }>
+            <Willow />
             <Gantt
-                tasks={ tasks }
+                links={ links }
+                // scales={ scaleArray }
                 onDataUpdate={ onDataUpdate }
+                tasks={ tasks }
             />
         </div>
     );

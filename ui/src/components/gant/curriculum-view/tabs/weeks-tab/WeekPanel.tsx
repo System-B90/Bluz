@@ -118,7 +118,7 @@ export function WeekPanel({ curriculumId, weekId }: WeekPanelProps)
                         weekId={ weekId }
                     />
                     <ClosingSaturdayChip
-                        closingSaturday={ week?.closingSaturday ?? false }
+                        weekendDuty={ week?.weekendDuty ?? false }
                         weekId={ weekId }
                     />
                 </Box>

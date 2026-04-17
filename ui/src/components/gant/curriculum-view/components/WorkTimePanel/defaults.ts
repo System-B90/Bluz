@@ -1,15 +1,15 @@
-import { CurriculumDay, DAY_NAME_DISPLAY, DayName } from '@/api-shared/types/gant/curriculum';
+import { CurriculumDay, DAY_NAME_DISPLAY, DayIndex } from '@/api-shared/types/gant/curriculum';
 
 const DEFAULT_WEEKDAY_HOURS_FALLBACK = 8;
 const DEFAULT_FRIDAY_HOURS_FALLBACK = 6;
 
-export const defaultWeekDayOrder: DayName[] = [
-    DayName.Sunday,
-    DayName.Monday,
-    DayName.Tuesday,
-    DayName.Wednesday,
-    DayName.Thursday,
-    DayName.Friday,
+export const defaultWeekDayOrder: DayIndex[] = [
+    DayIndex.Sunday,
+    DayIndex.Monday,
+    DayIndex.Tuesday,
+    DayIndex.Wednesday,
+    DayIndex.Thursday,
+    DayIndex.Friday,
 ];
 
 function parseDefaultHours(rawValue: string | undefined, fallback: number): number
@@ -36,7 +36,7 @@ export function buildDefaultWeekDays(): Partial<CurriculumDay>[]
     return defaultWeekDayOrder.map((dayName) => ({
         title: DAY_NAME_DISPLAY[dayName],
         day: dayName,
-        totalWorkingHours: dayName === DayName.Friday ? defaultFridayHours : defaultWeekdayHours,
+        totalWorkingHours: dayName === DayIndex.Friday ? defaultFridayHours : defaultWeekdayHours,
         comment: '',
     }));
 }

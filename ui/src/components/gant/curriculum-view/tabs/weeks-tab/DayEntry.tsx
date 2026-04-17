@@ -11,7 +11,7 @@ import { useSnackbar } from "notistack";
 import React, { useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { CurriculumDayId, DayName, getDayNameDisplay } from "@/api-shared/types/gant/curriculum";
+import { CurriculumDayId, DayIndex, getDayNameDisplay } from "@/api-shared/types/gant/curriculum";
 import { useWeekActions } from "@/components/gant/state/hooks/gant-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gant/state/hooks/UseCurriculumDay";
 
@@ -62,7 +62,7 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) =>
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת שעות נכשלה!', error));
     }, [ dayId, updateDay, day?.totalWorkingHours, enqueueSnackbar ]);
 
-    const isSaturday = day?.day === DayName.Saturday;
+    const isSaturday = day?.day === DayIndex.Saturday;
     const isDisabled = isSaturday && (day?.totalWorkingHours ?? 0) === 0;
 
     return (
@@ -73,7 +73,7 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) =>
         `}>
             <div className="flex justify-between items-center">
                 <Typography className="font-bold text-slate-600 tracking-tight" variant="caption">
-                    { getDayNameDisplay(day?.day ?? DayName.Sunday) }
+                    { getDayNameDisplay(day?.day ?? DayIndex.Sunday) }
                 </Typography>
 
                 <div className="flex items-center gap-2 bg-white rounded-md border border-slate-200 px-1 py-0.5 shadow-inner">

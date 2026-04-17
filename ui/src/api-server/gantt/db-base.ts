@@ -1,10 +1,9 @@
 import { desc, eq, inArray } from "drizzle-orm";
 import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
-import { postgresDb } from "@/api-server/curriculum";
-import { curriculumSyllabuses, moduleToEvents, syllabusModules } from "@/api-server/curriculum/schema";
+import { postgresDb } from "@/api-server/gantt";
 import { ClientApiError } from "@/api-shared/errors";
-import { BaseGantItem } from "@/api-shared/types/gant/curriculum";
+import { BaseGantItem, CurriculumId, ModuleId, SyllabusId } from "@/api-shared/types/gant/curriculum";
 import { BasicGantOperations } from "@/app/api/gant/base-collection";
 
 export const FOREIGN_KEY_VIOLATION = '23503';
@@ -22,12 +21,19 @@ export interface JunctionConfig
     apiKey: string;
 }
 
+export interface ParentJunctionConfig
+{
+    table: PgTableWithColumns<any>;
+    parentKey: string;
+    selfKey: string;
+}
+
 export interface DrizzleOperationsBuilderProps<TTable extends PgTableWithColumns<any>>
 {
     table: TTable;
     typeName: string;
-    junction?: JunctionConfig;
-    parentJunction?: { type: 'curriculum' | 'module' | 'syllabus'; };
+    junction?: Array<JunctionConfig> | JunctionConfig;
+    parentJunction?: ParentJunctionConfig;
     idPreffix: 'c' | 'd' | 'e' | 'm' | 's' | 'w';
 }
 
@@ -41,56 +47,10 @@ export function drizzleOperationsBuilder<
     junction,
     parentJunction,
     idPreffix,
-}: DrizzleOperationsBuilderProps<TTable>): BasicGantOperations<T, TCreatePayload>
+}: DrizzleOperationsBuilderProps<TTable>): Omit<BasicGantOperations<T, TCreatePayload>, 'getItem'>
 {
-
     type DbTDocument = T & BaseDbDocument;
     const cols = table as any;
-
-    async function getItem(id: T[ 'id' ]): Promise<DbTDocument>
-    {
-        if (!id) throw new ClientApiError(`מזהה ${typeName} חסר`);
-
-        if (junction)
-        {
-            const rows = await postgresDb
-                .select({
-                    entity: table,
-                    junction: junction.table,
-                })
-                .from(table as any)
-                .leftJoin(junction.table as any, eq(cols.id, junction.localKey))
-                .where(eq(cols.id, id));
-
-            if (rows.length === 0)
-            {
-                throw new ClientApiError(`${typeName} עם מזהה ${id} לא נמצא`);
-            }
-
-            const baseEntity = rows[ 0 ].entity as Record<string, any>;
-            const relatedIds = rows
-                .map((row) => (row.junction as any)?.[ junction.relationKey.name ])
-                .filter(Boolean);
-
-            return {
-                ...baseEntity,
-                [ junction.apiKey ]: relatedIds,
-            } as DbTDocument;
-        }
-
-        const [ result ] = await postgresDb
-            .select()
-            .from(table as any)
-            .where(eq(cols.id, id))
-            .limit(1);
-
-        if (!result)
-        {
-            throw new ClientApiError(`${typeName} עם מזהה ${id} לא נמצא`);
-        }
-
-        return result as DbTDocument;
-    }
 
     async function getMultipleItems(ids: Array<T[ 'id' ]>): Promise<DbTDocument[]>
     {
@@ -106,7 +66,13 @@ export function drizzleOperationsBuilder<
         const id = (data as any).id || `${idPreffix}_${crypto.randomUUID()}`;
         const now = new Date();
 
-        const { curriculumId, syllabusId, moduleId, ...entityData } = data as any;
+        const { curriculumId, syllabusId, moduleId, ...entityData } = data as {
+            curriculumId?: CurriculumId;
+            syllabusId?: SyllabusId;
+            moduleId?: ModuleId;
+        } & TCreatePayload;
+
+        const parentId: Record<string, string | undefined> = { curriculumId, syllabusId, moduleId };
 
         return await postgresDb.transaction(async (tx) =>
         {
@@ -117,29 +83,29 @@ export function drizzleOperationsBuilder<
                 updatedAt: now,
             }).returning();
 
-            if (curriculumId && parentJunction?.type === 'curriculum')
+            if (parentJunction)
             {
-                await tx.insert(curriculumSyllabuses).values({
-                    curriculumId: curriculumId,
-                    syllabusId: id,
-                });
-            } else if (syllabusId && parentJunction?.type === 'syllabus')
-            {
-                await tx.insert(syllabusModules).values({
-                    syllabusId: syllabusId,
-                    moduleId: id,
-                });
-            } else if (moduleId && parentJunction?.type === 'module')
-            {
-                await tx.insert(moduleToEvents).values({
-                    moduleId: moduleId,
-                    eventId: id,
-                });
+                const parentIdValue = parentId[ parentJunction.parentKey ];
+                if (!parentIdValue)
+                {
+                    throw new ClientApiError('No parent key was passed!');
+                }
+
+                const values = {
+                    [ parentJunction.parentKey ]: parentIdValue,
+                    [ parentJunction.selfKey ]: id,
+
+                };
+                await tx.insert(parentJunction.table).values(values);
             }
 
-            if (junction?.apiKey)
+            const junctions = Array.isArray(junction) ? junction : [ junction ];
+            for (const j of junctions)
             {
-                (newItem as any)[ junction.apiKey ] = [];
+                if (j?.apiKey)
+                {
+                    (newItem as any)[ j.apiKey ] = [];
+                }
             }
 
             return newItem as DbTDocument;
@@ -194,7 +160,6 @@ export function drizzleOperationsBuilder<
     }
 
     return {
-        getItem,
         getMultipleItems,
         createNewItem,
         updateItem,
