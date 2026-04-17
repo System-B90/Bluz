@@ -2,10 +2,11 @@ import { Divider } from "@mui/material";
 import { Dispatch, SetStateAction, useCallback, useMemo, useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 
-import { CurriculumId, CurriculumWeek } from "@/api-shared/types/gant/curriculum";
+import { CurriculumId, CurriculumWeekId } from "@/api-shared/types/gant/curriculum";
 import { SyllabusModulesCurriculumViewSidebar } from "@/components/gant/curriculum-view/tabs/builder-tab/components/syllabus-modules";
 import { partitionWeeks } from "@/components/gant/curriculum-view/tabs/builder-tab/components/utils";
 import { WeekGroupPanel } from "@/components/gant/curriculum-view/tabs/builder-tab/components/WeekGroupPanel";
+import { useCurriculumState } from "@/components/gant/state/provider";
 
 export function CurriculumViewBuilderWeeksView({
     curriculumId,
@@ -15,10 +16,11 @@ export function CurriculumViewBuilderWeeksView({
 }: {
     curriculumId: CurriculumId;
     groupCount: number;
-    weeks: Array<CurriculumWeek>;
+    weeks: Array<CurriculumWeekId>;
     setSelectedWeekGroup: Dispatch<SetStateAction<{ start: number; length: number; }>>;
 })
 {
+    const { weeks: weeksState } = useCurriculumState();
     const [ animationSelectedGroupIndex, setAnimationSelectedGroupIndex ] = useState<null | number>(null);
     const groupedWeeks = useMemo(() => partitionWeeks(weeks, groupCount), [ weeks, groupCount ]);
     const onGroupClick = useCallback((groupIndex: number, start: number, length: number) =>

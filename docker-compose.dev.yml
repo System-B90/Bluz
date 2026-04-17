@@ -9,10 +9,11 @@ services:
       watch:
         - action: sync
           path: .
-          target: /app
+          target: /app/
           ignore:
             - node_modules/
             - .next/
+            - ui/.next/
         - action: rebuild
           path: package.json
         - action: rebuild

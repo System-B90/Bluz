@@ -1,6 +1,6 @@
-import { WebSocketServer, WebSocket } from 'ws';
-import { WEBSOCKET_SESSION_SERVER_PORT, MessageTypes, WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY, WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC } from './session-common';
 import assert from 'assert';
+import { WebSocket, WebSocketServer } from 'ws';
+import { MessageTypes, WEBSOCKET_SESSION_SERVER_PORT, WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY, WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC } from './session-common';
 
 const GC_INTERVAL_MS = 3600 * 1000; // One hour
 
@@ -234,4 +234,4 @@ function abandonedSessionsGC()
 
 setInterval(abandonedSessionsGC, GC_INTERVAL_MS);
 
-export wss;
+export default wss;

@@ -5,25 +5,24 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
+RUN mkdir ui
 
 FROM deps AS dev
+WORKDIR /app
 COPY . .
+ENV NODE_ENV=development
+CMD ["npm", "run", "dev"]
 
 FROM node:22-alpine AS builder
 WORKDIR /app
-
-ARG WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=ci_placeholder
-ARG WEBSOCKET_SESSION_SERVER_HOST=localhost
-ARG WEBSOCKET_SESSION_SERVER_PORT=443
-
-ENV WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY
-ENV WEBSOCKET_SESSION_SERVER_HOST=$WEBSOCKET_SESSION_SERVER_HOST
-ENV WEBSOCKET_SESSION_SERVER_PORT=$WEBSOCKET_SESSION_SERVER_PORT
-
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+ARG WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=ci_placeholder
+ENV WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY
+
 RUN npm run build
+# Combined migration build if possible, or keep separate if logic differs
 RUN npx tsc ui/src/api-server/drizzle-migrate.ts --outDir ./dist-migrate --esModuleInterop --skipLibCheck
 
 FROM node:22-alpine AS runner

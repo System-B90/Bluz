@@ -4,7 +4,7 @@ import assert from "assert";
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { UserNotLoggedInError, ClientApiError } from "@/api-shared/errors";
+import { ClientApiError, UserNotLoggedInError } from "@/api-shared/errors";
 import { CACHE_CONTROL_HTTP_HEADER, IMMUTABLE_CACHE_MAX_TTL } from "@/settings";
 
 export type ApiResponseHeaders = Record<string, string>;
