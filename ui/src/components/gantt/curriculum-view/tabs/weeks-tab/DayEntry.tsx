@@ -41,7 +41,7 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) =>
     const day = useCurriculumDay(dayId);
     const { updateDay } = useWeekActions();
 
-    const [ localTime, setLocalTime ] = useState(() => formatToTime(day?.totalWorkingMinutes ?? 0));
+    const [ localTime, setLocalTime ] = useState(() => formatToTime((day?.totalWorkingMinutes ?? 0) / 60));
 
     const handleSync = useCallback(() =>
     {
@@ -55,10 +55,10 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) =>
 
     const adjustHours = useCallback((amount: number) =>
     {
-        const newHours = Math.max(0, Math.min(24, (day?.totalWorkingMinutes ?? 0) + amount));
-        const formatted = formatToTime(newHours);
+        const newMinutes = Math.max(0, Math.min(24 * 60, (day?.totalWorkingMinutes ?? 0) + (amount * 60)));
+        const formatted = formatToTime(newMinutes / 60);
         setLocalTime(formatted); // Update local UI immediately
-        updateDay(dayId, { totalWorkingMinutes: newHours })
+        updateDay(dayId, { totalWorkingMinutes: newMinutes })
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת שעות נכשלה!', error));
     }, [ dayId, updateDay, day?.totalWorkingMinutes, enqueueSnackbar ]);
 

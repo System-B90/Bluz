@@ -43,6 +43,13 @@
       "when": 1776448660159,
       "tag": "0005_same_pandemic",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1776457412189,
+      "tag": "0006_petite_paladin",
+      "breakpoints": true
     }
   ]
 }

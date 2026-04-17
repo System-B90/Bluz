@@ -3,7 +3,7 @@ import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
 import { postgresDb } from "@/api-server/gantt";
 import { ClientApiError } from "@/api-shared/errors";
-import { BaseGantItem, CurriculumId, ModuleId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { BaseGantItem, CurriculumId, CurriculumWeekId, ModuleId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { BasicGantOperations } from "@/app/api/gantt/base-collection";
 
 export const FOREIGN_KEY_VIOLATION = '23503';
@@ -66,13 +66,14 @@ export function drizzleOperationsBuilder<
         const id = (data as any).id || `${idPreffix}_${crypto.randomUUID()}`;
         const now = new Date();
 
-        const { curriculumId, syllabusId, moduleId, ...entityData } = data as {
+        const { curriculumId, syllabusId, moduleId, weekId, ...entityData } = data as {
             curriculumId?: CurriculumId;
             syllabusId?: SyllabusId;
             moduleId?: ModuleId;
+            weekId?: CurriculumWeekId;
         } & TCreatePayload;
 
-        const parentId: Record<string, string | undefined> = { curriculumId, syllabusId, moduleId };
+        const parentId: Record<string, string | undefined> = { curriculumId, syllabusId, moduleId, weekId };
 
         return await postgresDb.transaction(async (tx) =>
         {
