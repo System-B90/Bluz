@@ -15,7 +15,7 @@ import { useCallback, useState } from "react";
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { ModuleEvent, ModuleEventId, ModuleEventType, ModuleId } from "@/api-shared/types/gantt/curriculum";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
-import { useModuleEventActions } from "@/components/gantt/state/hooks/gant-funcs/UseModuleEventActions";
+import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from '@/components/gantt/state/hooks/UseEvent';
 
 function ModuleEventTitle({ moduleEvent, handleCommit }: { moduleEvent: ModuleEvent | undefined; handleCommit: (updates: Partial<ModuleEvent>) => void; })

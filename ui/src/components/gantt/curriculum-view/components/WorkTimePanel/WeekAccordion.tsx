@@ -3,7 +3,7 @@ import { Box, IconButton, TextField, Tooltip } from '@mui/material';
 import { KeyboardEvent } from 'react';
 
 import { CurriculumWeekId } from '@/api-shared/types/gantt/curriculum';
-import { useCurriculumWeek } from '@/components/gant/state/hooks/UseCurriculumWeek';
+import { useCurriculumWeek } from '@/components/gantt/state/hooks/UseCurriculumWeek';
 
 export interface WeekAccordionProps
 {

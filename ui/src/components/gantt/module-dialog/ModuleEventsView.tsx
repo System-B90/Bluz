@@ -16,7 +16,7 @@ import { useCallback, useMemo } from "react";
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { ModuleEventId, ModuleId } from "@/api-shared/types/gantt/curriculum";
 import { ModuleEventView } from "@/components/gantt/module-dialog/ModuleEventView";
-import { useModuleEventActions } from "@/components/gantt/state/hooks/gant-funcs/UseModuleEventActions";
+import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 
 function CreateModuleEventButton({ moduleId }: { moduleId: ModuleId; })
 {

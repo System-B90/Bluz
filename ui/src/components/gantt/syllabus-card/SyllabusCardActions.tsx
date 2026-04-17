@@ -5,7 +5,7 @@ import { useCallback } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CurriculumId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
-import { useSyllabusActions } from "@/components/gantt/state/hooks/gant-funcs/UseSyllabusActions";
+import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 
 export interface SyllabusCardActionsProps extends CardActionsProps
 {

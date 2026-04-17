@@ -5,7 +5,7 @@ import { Syllabus } from "@/api-shared/types/gantt/curriculum";
 
 export type SyllabusDocument = Syllabus & BaseDocument;
 
-const syllabusApi = clientGantApiBuilder<Syllabus, ApiSyllabus, CreateSyllabusPayload>({ apiBaseUrl: '/api/gant/syllabuses', dateFixup: baseDocumentFixup as any });
+const syllabusApi = clientGantApiBuilder<Syllabus, ApiSyllabus, CreateSyllabusPayload>({ apiBaseUrl: '/api/gantt/syllabuses', dateFixup: baseDocumentFixup as any });
 
 const {
     apiList,

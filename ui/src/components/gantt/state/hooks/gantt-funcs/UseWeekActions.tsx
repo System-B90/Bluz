@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { dayApi, weekApi } from "@/api-client/gantt/api";
 import { CreateCurriculumDayPayload, CreateCurriculumWeekPayload } from "@/api-shared/types/gantt/create-payloads";
 import { CurriculumDay, CurriculumDayId, CurriculumWeek, CurriculumWeekId } from "@/api-shared/types/gantt/curriculum";
-import { withGantErrorHandling } from "@/components/gantt/state/hooks/gant-funcs/WithGantErrorHandling";
+import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export interface UseWeekActionsReturn

@@ -5,8 +5,8 @@ import { useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ModuleEventType, SyllabusId } from "@/api-shared/types/gantt/curriculum";
-import { useModuleActions } from "@/components/gantt/state/hooks/gant-funcs/UseModuleActions";
-import { useModuleEventActions } from "@/components/gantt/state/hooks/gant-funcs/UseModuleEventActions";
+import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
+import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 
 export function CreateModuleButton({ syllabusId }: { syllabusId: SyllabusId; })
 {

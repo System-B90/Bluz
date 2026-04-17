@@ -19,7 +19,7 @@ async function apiGetModuleDayMapping(
     options?: ClientApiProps
 ): Promise<Array<CurriculumModuleDayMapping>>
 {
-    const url = new URL(`/api/gant/curriculums/${curriculumId}/mappings`, window.location.origin);
+    const url = new URL(`/api/gantt/curriculums/${curriculumId}/mappings`, window.location.origin);
     if (weekIndex !== undefined) url.searchParams.append('weekIndex', weekIndex.toString());
 
     const rawData: Array<RawBaseDocument> = await safeApiFetcher(url.toString(), {
@@ -37,7 +37,7 @@ async function apiCreateModuleDayMapping(
     options?: ClientApiProps
 ): Promise<CurriculumModuleDayMapping>
 {
-    const rawData = await safeApiFetcher(`/api/gant/curriculums/${curriculumId}/mappings`, {
+    const rawData = await safeApiFetcher(`/api/gantt/curriculums/${curriculumId}/mappings`, {
         ...options,
         method: 'POST',
         body: JSON.stringify(payload),
@@ -55,7 +55,7 @@ async function apiUpdateModuleDayMapping(
     options?: ClientApiProps
 ): Promise<CurriculumModuleDayMapping>
 {
-    const rawData = await safeApiFetcher(`/api/gant/curriculums/${curriculumId}/mappings`, {
+    const rawData = await safeApiFetcher(`/api/gantt/curriculums/${curriculumId}/mappings`, {
         ...options,
         method: 'PATCH',
         body: JSON.stringify({ oldMapping, newValues }),
@@ -74,7 +74,7 @@ async function apiDeleteModuleDayMapping(
     options?: ClientApiProps
 ): Promise<void>
 {
-    await safeApiFetcher(`/api/gant/curriculums/${curriculumId}/mappings`, {
+    await safeApiFetcher(`/api/gantt/curriculums/${curriculumId}/mappings`, {
         ...options,
         method: 'DELETE',
         body: JSON.stringify({ moduleId, weekIndex, dayIndex }),

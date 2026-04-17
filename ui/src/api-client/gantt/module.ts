@@ -5,7 +5,7 @@ import { Module } from "@/api-shared/types/gantt/curriculum";
 
 export type ModuleDocument = Module & BaseDocument;
 
-const moduleApi = clientGantApiBuilder<Module, ApiModule, CreateModulePayload>({ apiBaseUrl: '/api/gant/modules', dateFixup: baseDocumentFixup as any });
+const moduleApi = clientGantApiBuilder<Module, ApiModule, CreateModulePayload>({ apiBaseUrl: '/api/gantt/modules', dateFixup: baseDocumentFixup as any });
 const {
  apiList,
     apiGet,

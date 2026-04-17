@@ -3,7 +3,7 @@ import { Dispatch, KeyboardEvent, SetStateAction, useCallback } from 'react';
 import { CurriculumId, CurriculumWeekId } from '@/api-shared/types/gantt/curriculum';
 import { buildDefaultWeekDays } from '@/components/gantt/curriculum-view/components/WorkTimePanel/defaults';
 import { cloneWeeks, pickNextDay } from '@/components/gantt/curriculum-view/components/WorkTimePanel/utils';
-import { useCurriculumActions } from '@/components/gantt/state/hooks/gant-funcs/UseCurriculumActions';
+import { useCurriculumActions } from '@/components/gantt/state/hooks/gantt-funcs/UseCurriculumActions';
 
 export function useWorkTimePanelLogic(
     curriculumId: CurriculumId | null,

@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { CurriculumId } from '@/api-shared/types/gantt/curriculum';
 import { EditableCurriculumField } from '@/components/gantt/curriculum-view/components/curriculum-about-card/EditableCurriculumField';
-import { useCurriculumActions } from '@/components/gantt/state/hooks/gant-funcs/UseCurriculumActions';
+import { useCurriculumActions } from '@/components/gantt/state/hooks/gantt-funcs/UseCurriculumActions';
 
 export interface CurriculumNameProps
 {

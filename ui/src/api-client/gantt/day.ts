@@ -5,7 +5,7 @@ import { CurriculumDay } from "@/api-shared/types/gantt/curriculum";
 
 export type CurriculumDayDocument = CurriculumDay & BaseDocument;
 
-const dayApi = clientGantApiBuilder<CurriculumDay, ApiCurriculumDay, CreateCurriculumDayPayload>({ apiBaseUrl: '/api/gant/days', dateFixup: baseDocumentFixup as any });
+const dayApi = clientGantApiBuilder<CurriculumDay, ApiCurriculumDay, CreateCurriculumDayPayload>({ apiBaseUrl: '/api/gantt/days', dateFixup: baseDocumentFixup as any });
 
 const {
     apiList,

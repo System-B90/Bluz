@@ -7,7 +7,7 @@ import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { CurriculumDayId, CurriculumId, CurriculumWeekId } from "@/api-shared/types/gantt/curriculum";
 import { ClosingSaturdayChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/ClosingSaturdayChip";
 import { DayEntry } from '@/components/gantt/curriculum-view/tabs/weeks-tab/DayEntry';
-import { useWeekActions } from "@/components/gantt/state/hooks/gant-funcs/UseWeekActions";
+import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseCurriculumWeek";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 

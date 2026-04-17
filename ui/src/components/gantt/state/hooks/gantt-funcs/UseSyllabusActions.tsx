@@ -2,7 +2,7 @@ import { useCallback } from "react";
 
 import { syllabusApi } from "@/api-client/gantt/api";
 import { CurriculumId, Syllabus, SyllabusId } from "@/api-shared/types/gantt/curriculum";
-import { withGantErrorHandling } from "@/components/gantt/state/hooks/gant-funcs/WithGantErrorHandling";
+import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export function useSyllabusActions()

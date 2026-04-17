@@ -4,7 +4,7 @@ import { ChangeEventHandler, useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { SyllabusId } from "@/api-shared/types/gantt/curriculum";
-import { useSyllabusActions } from "@/components/gantt/state/hooks/gant-funcs/UseSyllabusActions";
+import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useSyllabus } from '@/components/gantt/state/hooks/UseSyllabus';
 
 export function SyllabusName({ syllabusId }: { syllabusId: SyllabusId; })

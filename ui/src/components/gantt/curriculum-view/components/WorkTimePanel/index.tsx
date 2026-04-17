@@ -16,7 +16,7 @@ import { OverviewTab } from '@/components/gantt/curriculum-view/components/WorkT
 import { WorkTimePanelProps } from '@/components/gantt/curriculum-view/components/WorkTimePanel/types';
 import { useWorkTimePanelLogic } from '@/components/gantt/curriculum-view/components/WorkTimePanel/UseWorkTimePanelLogic';
 import { cloneWeeks } from '@/components/gantt/curriculum-view/components/WorkTimePanel/utils';
-import { useWeekActions } from '@/components/gantt/state/hooks/gant-funcs/UseWeekActions';
+import { useWeekActions } from '@/components/gantt/state/hooks/gantt-funcs/UseWeekActions';
 
 export function WorkTimePanel({ curriculumId, curriculum }: WorkTimePanelProps)
 {

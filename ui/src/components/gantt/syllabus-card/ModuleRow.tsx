@@ -15,7 +15,7 @@ import { useCallback, useMemo } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CurriculumId, ModuleId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
-import { useModuleActions } from "@/components/gantt/state/hooks/gant-funcs/UseModuleActions";
+import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModule } from '@/components/gantt/state/hooks/UseModule';
 import { useCurriculumProviderActions, useCurriculumState } from '@/components/gantt/state/provider';
 import { OpenHandsIcon } from "@/components/gantt/syllabus-card/OpenHandsIcon";

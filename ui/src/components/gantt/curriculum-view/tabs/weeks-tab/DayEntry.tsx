@@ -12,7 +12,7 @@ import React, { useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CurriculumDayId, DayIndex, getDayNameDisplay } from "@/api-shared/types/gantt/curriculum";
-import { useWeekActions } from "@/components/gantt/state/hooks/gant-funcs/UseWeekActions";
+import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gantt/state/hooks/UseCurriculumDay";
 
 interface DayEntryProps

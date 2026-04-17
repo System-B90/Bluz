@@ -18,7 +18,7 @@ import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { Module, ModuleId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import { HiveModulesView } from "@/components/gantt/module-dialog/utils";
-import { useModuleActions } from "@/components/gantt/state/hooks/gant-funcs/UseModuleActions";
+import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 

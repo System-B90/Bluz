@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CurriculumId, SyllabusId } from "@/api-shared/types/gantt/curriculum";
-import { useSyllabusActions } from "@/components/gantt/state/hooks/gant-funcs/UseSyllabusActions";
+import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useCurriculum } from '@/components/gantt/state/hooks/UseCurriculum';
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 
