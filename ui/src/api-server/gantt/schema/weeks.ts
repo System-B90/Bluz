@@ -12,7 +12,7 @@ export const ganttWeeksSchema = pgTable('w', {
     updatedAt: timestamp('ua').defaultNow().notNull(),
 });
 
-export const curriculumWeeksRelations = relations(ganttWeeksSchema, ({ one, many }) => ({
+export const curriculumWeeksRelations = relations(ganttWeeksSchema, ({ many }) => ({
     c2w: many(ganttCurriculum2WeeksSchema),
     w2d: many(ganttWeek2DaysSchema),
 }));

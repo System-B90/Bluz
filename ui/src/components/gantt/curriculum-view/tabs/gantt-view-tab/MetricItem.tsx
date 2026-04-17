@@ -9,7 +9,7 @@
 
 import { Box, Typography } from '@mui/material';
 
-import { MetricItemProps } from './types';
+import { MetricItemProps } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/types';
 
 export function MetricItem({ label, value }: MetricItemProps)
 {

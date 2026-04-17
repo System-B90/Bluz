@@ -6,24 +6,25 @@
  */
 
 'use client';
-
-import { GanttEngineProps } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/types';
+import '@svar-ui/react-gantt/all.css';
+//
 
 import { Gantt, Willow } from '@svar-ui/react-gantt';
-import '@svar-ui/react-gantt/all.css';
 import React from 'react';
+
+import { GanttEngineProps } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/types';
 
 /**
  * GanttEngine Component
  */
-export default function GanttEngine({
+export function GanttEngine({
     tasks,
     links,
     scales,
     onDataUpdate
 }: GanttEngineProps): React.ReactElement
 {
-    const scaleArray = scales && scales.length > 0 ? scales : [ { unit: 'weeks' as const, step: 1 } ];
+    const _scaleArray = scales && scales.length > 0 ? scales : [ { unit: 'weeks' as const, step: 1 } ];
 
     return (
         <div className="wx-willow-theme" style={ { width: '100%', height: '100%' } }>

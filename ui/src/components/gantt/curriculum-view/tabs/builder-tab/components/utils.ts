@@ -1,3 +1,4 @@
+import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { CurriculumWeekId } from "@/api-shared/types/gantt/curriculum";
 
 /**
@@ -21,13 +22,17 @@ export function partitionWeeks(weekIds: Array<CurriculumWeekId>, groupCount: num
     }).filter((group) => group.length > 0);
 }
 
-// Note: This function needs context to resolve week/day data.
-// It remains as a placeholder and should be called from a component that can access the hooks.
-export function calculateTotalWorkingTimeForWeeks(weekIds: Array<CurriculumWeekId>): number
+export function calculateTotalWorkingTimeForWeeks(weekIds: Array<CurriculumWeekId>, state: NormalizedStore): number
 {
-    // This is now a placeholder - actual calculation requires fetching week/day data via hooks
-    // The caller should use useCurriculumWeek and useCurriculumDay hooks to sum the hours
-    return 0;
+    return weekIds.reduce((accWeek, weekId) =>
+    {
+        const week = state.weeks[ weekId ];
+        return accWeek + week.days.reduce((accDay, dayId) =>
+        {
+            const day = state.days[ dayId ];
+            return accDay + day.totalWorkingMinutes / 60;
+        }, 0);
+    }, 0);
 }
 
 function _hashSyllabusToColorByHue(syllabusId: string, themePrimaryColor: string, opacity: number): string

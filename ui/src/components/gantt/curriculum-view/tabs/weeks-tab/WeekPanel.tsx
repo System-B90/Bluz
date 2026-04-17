@@ -61,7 +61,7 @@ export function WeekWorkTimeChip({
     );
 }
 
-export function WeekPanel({ curriculumId, weekId }: WeekPanelProps)
+export function WeekPanel({ weekId }: WeekPanelProps)
 {
     const { enqueueSnackbar } = useSnackbar();
     const week = useCurriculumWeek(weekId);

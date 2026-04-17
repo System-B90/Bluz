@@ -8,9 +8,9 @@ import { useCurriculumWeek } from '@/components/gantt/state/hooks/UseCurriculumW
 function WeekOverview({ weekId }: { weekId: CurriculumWeekId; })
 {
     const week = useCurriculumWeek(weekId);
-    
+
     if (!week) return null;
-    
+
     return (
         <Box key={ week.number } sx={ { border: 1, borderColor: 'divider', borderRadius: 1, p: 1 } }>
             <Box alignItems="baseline" display="flex" justifyContent="space-between" mb={ 0.5 }>
@@ -24,7 +24,7 @@ function WeekOverview({ weekId }: { weekId: CurriculumWeekId; })
     );
 }
 
-export function OverviewTab({ curriculumId, weeks }: { curriculumId: CurriculumId; weeks: CurriculumWeekId[]; })
+export function OverviewTab({ weeks }: { curriculumId: CurriculumId; weeks: CurriculumWeekId[]; })
 {
     const overviews = useMemo(() => weeks.map((weekId) => (
         <WeekOverview key={ weekId } weekId={ weekId } />

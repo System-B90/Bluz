@@ -8,14 +8,13 @@
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
 
-import { GanttDataResult, GanttDataSourceProps, SvarGanttLink, SvarGanttTask } from './types';
-
 import
     {
         Module,
         Syllabus
     } from '@/api-shared/types/gantt/curriculum';
 import { useCurriculumMappings } from '@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider';
+import { GanttDataResult, GanttDataSourceProps, SvarGanttLink, SvarGanttTask } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/types';
 
 /**
  * Hook to map the curriculum hierarchy and mappings into SVAR-compatible tasks
@@ -55,10 +54,10 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult =>
 
             syllabus.modules.forEach((mId: string): void =>
             {
-                const module: Module | undefined = props.modules.find(
+                const moduleDoc: Module | undefined = props.modules.find(
                     (m: Module): boolean => m.id === mId
                 );
-                if (!module) return;
+                if (!moduleDoc) return;
 
                 // Find all days this module is mapped to
                 const moduleMappings = Object.values(mappings).filter(
@@ -84,11 +83,11 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult =>
                     const taskItem: SvarGanttTask = {
                         id: `mapping-${mapping.moduleId}-${mapping.weekIndex}-${mapping.dayIndex}`,
                         parent: syllabusTaskId,
-                        text: module.title,
+                        text: moduleDoc.title,
                         start_date: startDate,
                         end_date: endDate,
                         type: 'task',
-                        moduleId: module.id,
+                        moduleId: moduleDoc.id,
                         origin: mapping
                     };
 

@@ -25,8 +25,8 @@ export function WorkTimePanel({ curriculumId, curriculum }: WorkTimePanelProps)
     const { createWeek } = useWeekActions();
 
     const canEdit = curriculumId !== null;
-    const curriculumWeekIds = curriculum?.weeks ?? [];
-    const logic = useWorkTimePanelLogic(curriculumId, curriculumWeekIds, localWeekIds, setLocalWeekIds);
+    const curriculumWeekIds = curriculum?.weeks;
+    const _logic = useWorkTimePanelLogic(curriculumId, curriculumWeekIds ?? [], localWeekIds, setLocalWeekIds);
 
     const addWeek = useCallback(() =>
     {
@@ -34,10 +34,10 @@ export function WorkTimePanel({ curriculumId, curriculum }: WorkTimePanelProps)
 
         // Calculate next week number based on existing weeks or start from 1
         let nextNumber = 1;
-        if (curriculum?.weeks && curriculum.weeks.length > 0)
+        if (curriculumWeekIds && curriculumWeekIds.length > 0)
         {
             // Would need to fetch max week number, for now just increment length
-            nextNumber = curriculum.weeks.length + 1;
+            nextNumber = curriculumWeekIds.length + 1;
         }
 
         createWeek({
@@ -48,7 +48,7 @@ export function WorkTimePanel({ curriculumId, curriculum }: WorkTimePanelProps)
         })
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הוספת שבוע נכשלה!', error));
 
-    }, [ curriculumId, curriculum?.weeks, createWeek, enqueueSnackbar ]);
+    }, [ curriculumId, curriculumWeekIds, createWeek, enqueueSnackbar ]);
 
     if (!curriculum)
     {

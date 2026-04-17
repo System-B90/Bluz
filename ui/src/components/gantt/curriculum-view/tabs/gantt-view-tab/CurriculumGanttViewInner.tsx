@@ -9,18 +9,21 @@
 
 import { Paper } from '@mui/material';
 import dayjs from 'dayjs';
+import { useSnackbar } from 'notistack';
 import React, { useCallback, useMemo } from 'react';
 
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { useCurriculumMappings } from '@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider';
-import GanttEngine from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/GanttEngine';
+import { GanttEngine } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/GanttEngine';
 import { GanttDataResult, GanttDataSourceProps, SvarGanttDataUpdateEvent, SvarGanttScale } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/types';
-import { useGanttData } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/useGanttData';
+import { useGanttData } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/UseGanttData';
 
 /**
  * Inner component that handles Gantt rendering with data transformation
  */
 export function CurriculumGanttViewInner(props: GanttDataSourceProps): React.ReactElement
 {
+    const { enqueueSnackbar } = useSnackbar();
     const { moveModule } = useCurriculumMappings();
     const { tasks, links }: GanttDataResult = useGanttData(props);
 
@@ -57,9 +60,10 @@ export function CurriculumGanttViewInner(props: GanttDataSourceProps): React.Rea
                 event.obj.moduleId,
                 { w: oldMapping.weekIndex, d: oldMapping.dayIndex },
                 { w: newWeekIndex, d: newDayIndex }
-            );
+            )
+                .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הזזת המערך נכשלה!', error));
         },
-        [ moveModule ]
+        [ moveModule, enqueueSnackbar ]
     );
 
     return (

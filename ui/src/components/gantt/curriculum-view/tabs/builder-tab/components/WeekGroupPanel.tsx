@@ -30,7 +30,9 @@ export function WeekGroupPanel({
 }: WeekGroupPanelProps)
 {
     const { state: { mappings } } = useCurriculumMappings();
-    const { weeks: weeksState } = useCurriculumState();
+    const state = useCurriculumState();
+
+    const weeksState = useMemo(() => state.weeks, [ state.weeks ]);
 
     const startWeek = useMemo(() =>
     {
@@ -56,7 +58,7 @@ export function WeekGroupPanel({
             dayIndex: 0,
         },
     });
-    const totalTime = useMemo(() => calculateTotalWorkingTimeForWeeks(group), [ group ]);
+    const totalTime = useMemo(() => calculateTotalWorkingTimeForWeeks(group, state), [ group, state ]);
     const moduleItems = useMemo(() =>
         Object.values(mappings)
             .filter((x) => group.some((weekId) => weeksState[ weekId ]?.number === x.weekIndex + 1))
