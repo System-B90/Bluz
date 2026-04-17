@@ -19,12 +19,12 @@ export function HoursCard({ curriculum }: { curriculum: CurriculumDocument | und
     {
         return (curriculum?.weeks ?? []).reduce((total: number, weekId) =>
         {
-            const week = state.weeks[weekId];
+            const week = state.weeks[ weekId ];
             if (!week) return total;
             return total + (week.days ?? []).reduce((weekTotal: number, dayId) =>
             {
-                const day = state.days[dayId];
-                return weekTotal + (day?.totalWorkingHours ?? 0);
+                const day = state.days[ dayId ];
+                return weekTotal + ((day?.totalWorkingMinutes ?? 0) / 60);
             }, 0);
         }, 0);
     }, [ curriculum?.weeks, state.weeks, state.days ]);

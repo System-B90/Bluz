@@ -39,9 +39,9 @@ export function DaysTable({
             </TableHead>
             <TableBody>
                 { days.map((day, dayIndex) => (
-                    <TableRow key={ `${weekIndex}-${day.day}` }>
+                    <TableRow key={ `${weekIndex}-${day.dayIndex}` }>
                         <TableCell>
-                            <Typography variant="body2">{ day.day }</Typography>
+                            <Typography variant="body2">{ day.title }</Typography>
                         </TableCell>
                         <TableCell align="right">
                             <TextField
@@ -53,7 +53,7 @@ export function DaysTable({
                                 size="small"
                                 sx={ { width: '8rem' } }
                                 type="number"
-                                value={ day.totalWorkingHours }
+                                value={ day.totalWorkingMinutes }
                             />
                         </TableCell>
                         <TableCell>

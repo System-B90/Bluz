@@ -32,8 +32,8 @@ export async function GET(request: NextRequest, context: RouteContext)
         const { id } = await context.params;
         if (!id) throw new ClientApiError('Curriculum ID is missing.');
 
-        const rawWeekIndex = request.nextUrl.searchParams.get('weekId');
-        const weekId = rawWeekIndex !== null ? Number(rawWeekIndex) : undefined;
+        const weekId = request.nextUrl.searchParams.get('weekId');
+        if (weekId === null) throw new ClientApiError('Week ID is missing.');
 
         const assignments = await getModuleAssignments(id, weekId);
         return ApiSuccess(assignments);
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest, context: RouteContext)
             curriculumId,
             moduleId: body.moduleId,
             weekId: body.weekId,
-            dayIndex: body.dayIndex,
+            dayId: body.dayId,
             sortOrder: body.sortOrder,
         });
 

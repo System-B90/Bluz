@@ -45,12 +45,14 @@ export function WeekWorkTimeChip({
 {
     const state = useCurriculumState();
     const week = useCurriculumWeek(weekId);
-    
-    const totalHours = useMemo(() => {
+
+    const totalHours = useMemo(() =>
+    {
         if (!week?.days) return 0;
-        return (week.days as CurriculumDayId[]).reduce((acc: number, dayId: CurriculumDayId) => {
-            const day = state.days[dayId];
-            return acc + (day?.totalWorkingHours ?? 0);
+        return (week.days as CurriculumDayId[]).reduce((acc: number, dayId: CurriculumDayId) =>
+        {
+            const day = state.days[ dayId ];
+            return acc + ((day?.totalWorkingMinutes ?? 0) / 60);
         }, 0);
     }, [ week?.days, state.days ]);
 

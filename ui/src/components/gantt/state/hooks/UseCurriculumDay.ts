@@ -2,8 +2,8 @@ import { CurriculumDay, CurriculumDayId, CurriculumWeekId } from "@/api-shared/t
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useCurriculumDay(dayId: null): undefined;
-export function useCurriculumDay(dayId: CurriculumDayId): (CurriculumDay & { id: CurriculumDayId; curriculumWeekId: CurriculumWeekId; }) | undefined;
-export function useCurriculumDay(dayId: CurriculumDayId | null): (CurriculumDay & { id: CurriculumDayId; curriculumWeekId: CurriculumWeekId; }) | undefined
+export function useCurriculumDay(dayId: CurriculumDayId): (CurriculumDay & { id: CurriculumDayId; weekId: CurriculumWeekId; }) | undefined;
+export function useCurriculumDay(dayId: CurriculumDayId | null): (CurriculumDay & { id: CurriculumDayId; weekId: CurriculumWeekId; }) | undefined
 {
     const state = useCurriculumState();
 

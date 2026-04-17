@@ -11,7 +11,7 @@ import { useSnackbar } from "notistack";
 import React, { useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { CurriculumDayId, DayIndex, getDayNameDisplay } from "@/api-shared/types/gantt/curriculum";
+import { CurriculumDayId, DayIndex } from "@/api-shared/types/gantt/curriculum";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gantt/state/hooks/UseCurriculumDay";
 
@@ -41,29 +41,29 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) =>
     const day = useCurriculumDay(dayId);
     const { updateDay } = useWeekActions();
 
-    const [ localTime, setLocalTime ] = useState(() => formatToTime(day?.totalWorkingHours ?? 0));
+    const [ localTime, setLocalTime ] = useState(() => formatToTime(day?.totalWorkingMinutes ?? 0));
 
     const handleSync = useCallback(() =>
     {
         const numericValue = parseToHours(localTime);
-        if (numericValue !== day?.totalWorkingHours)
+        if (numericValue !== day?.totalWorkingMinutes)
         {
-            updateDay(dayId, { totalWorkingHours: numericValue })
+            updateDay(dayId, { totalWorkingMinutes: numericValue })
                 .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת שעות נכשלה!', error));
         }
-    }, [ localTime, day?.totalWorkingHours, updateDay, dayId, enqueueSnackbar ]);
+    }, [ localTime, day?.totalWorkingMinutes, updateDay, dayId, enqueueSnackbar ]);
 
     const adjustHours = useCallback((amount: number) =>
     {
-        const newHours = Math.max(0, Math.min(24, (day?.totalWorkingHours ?? 0) + amount));
+        const newHours = Math.max(0, Math.min(24, (day?.totalWorkingMinutes ?? 0) + amount));
         const formatted = formatToTime(newHours);
         setLocalTime(formatted); // Update local UI immediately
-        updateDay(dayId, { totalWorkingHours: newHours })
+        updateDay(dayId, { totalWorkingMinutes: newHours })
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'שמירת שעות נכשלה!', error));
-    }, [ dayId, updateDay, day?.totalWorkingHours, enqueueSnackbar ]);
+    }, [ dayId, updateDay, day?.totalWorkingMinutes, enqueueSnackbar ]);
 
-    const isSaturday = day?.day === DayIndex.Saturday;
-    const isDisabled = isSaturday && (day?.totalWorkingHours ?? 0) === 0;
+    const isSaturday = day?.dayIndex === DayIndex.Saturday;
+    const isDisabled = isSaturday && (day?.totalWorkingMinutes ?? 0) === 0;
 
     return (
         <div className={ `
@@ -73,7 +73,7 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) =>
         `}>
             <div className="flex justify-between items-center">
                 <Typography className="font-bold text-slate-600 tracking-tight" variant="caption">
-                    { getDayNameDisplay(day?.day ?? DayIndex.Sunday) }
+                    { day?.title ?? 'יום' }
                 </Typography>
 
                 <div className="flex items-center gap-2 bg-white rounded-md border border-slate-200 px-1 py-0.5 shadow-inner">

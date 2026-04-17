@@ -30,7 +30,7 @@ export interface CreateCurriculumWeekPayload extends Omit<CurriculumWeek, 'days'
  */
 export interface CreateCurriculumDayPayload extends Omit<CurriculumDay, 'id' | 'title'>
 {
-    curriculumWeekId: CurriculumWeekId;
+    weekId: CurriculumWeekId;
 }
 
 /**

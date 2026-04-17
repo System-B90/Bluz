@@ -1,13 +1,12 @@
 import { BaseDocument, baseDocumentFixup, clientGantApiBuilder } from "@/api-client/gantt/base";
-import { ApiModule } from "@/api-shared/types/gantt/api-layer";
 import { CreateModulePayload } from "@/api-shared/types/gantt/create-payloads";
 import { Module } from "@/api-shared/types/gantt/curriculum";
 
 export type ModuleDocument = Module & BaseDocument;
 
-const moduleApi = clientGantApiBuilder<Module, ApiModule, CreateModulePayload>({ apiBaseUrl: '/api/gantt/modules', dateFixup: baseDocumentFixup as any });
+const moduleApi = clientGantApiBuilder<Module, CreateModulePayload>({ apiBaseUrl: '/api/gantt/modules', dateFixup: baseDocumentFixup as any });
 const {
- apiList,
+    apiList,
     apiGet,
     apiCreate,
     apiUpdate,
@@ -20,3 +19,4 @@ export
 };
 
     export { moduleApi };
+
