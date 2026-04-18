@@ -12,7 +12,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 {
     const theme = useTheme();
     const state = useCurriculumState();
-    const { state: { mappings: globalMappings }, createMapping, moveMapping } = useGanttMappings();
+    const { state: { mappings: globalMappings }, createMapping, moveMapping, removeMapping } = useGanttMappings();
     const curriculum = state.curriculums[ curriculumId ];
 
     const timelineWeeks = useMemo(() =>
@@ -67,6 +67,11 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         await createMapping({ moduleId, eventId: null, dayId });
     }, [ createMapping ]);
 
+    const handleMapEvent = useCallback(async (moduleId: string, eventId: string, dayId: string) =>
+    {
+        await createMapping({ moduleId, eventId, dayId });
+    }, [ createMapping ]);
+
     const handleMoveModule = useCallback(async (moduleId: string, sourceDayId: string, targetDayId: string) =>
     {
         await moveMapping({ moduleId, eventId: null, from: { d: sourceDayId }, to: { d: targetDayId } });
@@ -84,7 +89,6 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         const module = state.modules[ moduleId ];
         const promises: Promise<void>[] = [];
 
-        // Shift explicit module mappings
         const mDays = moduleMappings[ moduleId ] || [];
         mDays.forEach(dayId =>
         {
@@ -97,7 +101,6 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             }
         });
 
-        // Uniformly shift all nested event mappings belonging to the module
         if (module && module.events)
         {
             module.events.forEach(eventId =>
@@ -119,7 +122,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         await Promise.all(promises);
     }, [ linearDays, state.modules, moduleMappings, eventMappings, moveMapping ]);
 
-    const handleDragEnd = useCallback((event: DragEndEvent) =>
+    const handleDragEnd = useCallback(async (event: DragEndEvent) =>
     {
         const { active, over } = event;
         if (!over) return;
@@ -129,15 +132,51 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 
         if (!payload || !target) return;
 
+        if (target.targetType === 'remove')
+        {
+            if (payload.type === 'module-move' || payload.type === 'module-shift')
+            {
+                const mDays = moduleMappings[ payload.moduleId ] || [];
+                const promises: Promise<void>[] = [];
+
+                mDays.forEach(d =>
+                {
+                    promises.push(removeMapping({ moduleId: payload.moduleId, eventId: null, dayId: d }));
+                });
+
+                const module = state.modules[ payload.moduleId ];
+                if (module && module.events)
+                {
+                    module.events.forEach(eId =>
+                    {
+                        const d = eventMappings[ eId ];
+                        if (d)
+                        {
+                            promises.push(removeMapping({ moduleId: payload.moduleId, eventId: eId, dayId: d }));
+                        }
+                    });
+                }
+                await Promise.all(promises);
+            } else if (payload.type === 'event-move')
+            {
+                await removeMapping({ moduleId: payload.moduleId, eventId: payload.eventId, dayId: payload.sourceDayId });
+            }
+            return;
+        }
+
         if (payload.type === 'module-map' && target.targetType === 'module')
         {
-            handleMapModule(payload.moduleId, target.dayId);
+            await handleMapModule(payload.moduleId, target.dayId);
+        }
+        else if (payload.type === 'event-map' && target.targetType === 'event')
+        {
+            await handleMapEvent(payload.moduleId, payload.eventId, target.dayId);
         }
         else if (payload.type === 'module-move' && target.targetType === 'module')
         {
             if (payload.sourceDayId !== target.dayId)
             {
-                handleMoveModule(payload.moduleId, payload.sourceDayId, target.dayId);
+                await handleMoveModule(payload.moduleId, payload.sourceDayId, target.dayId);
             }
         }
         else if (payload.type === 'module-shift' && target.targetType === 'module')
@@ -148,17 +187,17 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 
             if (deltaDays !== 0)
             {
-                handleShiftModule(payload.moduleId, deltaDays);
+                await handleShiftModule(payload.moduleId, deltaDays);
             }
         }
         else if (payload.type === 'event-move' && target.targetType === 'event')
         {
             if (payload.sourceDayId !== target.dayId)
             {
-                handleMoveEvent(payload.moduleId, payload.eventId, payload.sourceDayId, target.dayId);
+                await handleMoveEvent(payload.moduleId, payload.eventId, payload.sourceDayId, target.dayId);
             }
         }
-    }, [ handleMapModule, handleMoveModule, handleMoveEvent, handleShiftModule, linearDays ]);
+    }, [ handleMapModule, handleMapEvent, handleMoveModule, handleMoveEvent, handleShiftModule, linearDays, moduleMappings, eventMappings, removeMapping, state.modules ]);
 
     if (!curriculum)
     {
@@ -173,6 +212,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 moduleMappings,
                 eventMappings,
                 onMapModule: handleMapModule,
+                onMapEvent: handleMapEvent,
                 onMoveModule: handleMoveModule,
                 onMoveEvent: handleMoveEvent,
                 onShiftModule: handleShiftModule

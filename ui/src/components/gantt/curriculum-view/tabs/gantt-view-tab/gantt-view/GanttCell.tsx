@@ -11,8 +11,10 @@ export const GanttCell: React.FC<GanttCellProps> = ({
     hasBlock,
     blockId,
     blockPayload,
+    blockTitle,
     spanLength = 1,
-    isOpaque = false
+    isOpaque = false,
+    isAbsoluteBlock = true
 }) =>
 {
     const theme = useTheme();
@@ -51,8 +53,10 @@ export const GanttCell: React.FC<GanttCellProps> = ({
                     <GanttBlock
                         id={ blockId }
                         payload={ blockPayload }
+                        title={ blockTitle }
                         isOpaque={ isOpaque }
                         spanLength={ spanLength }
+                        isAbsolute={ isAbsoluteBlock }
                     />
                 ) }
             </Box>

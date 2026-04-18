@@ -3,7 +3,7 @@ import { Box, TableCell, TableRow, Typography, useTheme } from '@mui/material';
 import React, { useMemo, useState } from 'react';
 import { useGanttContext } from './context';
 import { GanttModuleRow } from './GanttModuleRow';
-import { GanttSyllabusGroupProps } from './types';
+import { GanttSyllabusGroupProps, SpanVariant } from './types';
 
 export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabusId }) =>
 {
@@ -42,8 +42,6 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
         return { min: Math.min(...indices), max: Math.max(...indices) };
     }, [ syllabus, state.modules, moduleMappings, eventMappings, linearDays ]);
 
-    const spanLength = spanIndices ? spanIndices.max - spanIndices.min + 1 : 0;
-
     return (
         <React.Fragment>
             <TableRow
@@ -59,7 +57,7 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
                         boxSizing: 'border-box',
                         position: 'sticky',
                         left: 0,
-                        zIndex: 1,
+                        zIndex: 5,
                         backgroundColor: theme.palette.background.default,
                         borderRight: `1px solid ${theme.palette.divider}`,
                         borderBottom: `1px solid ${theme.palette.divider}`
@@ -77,7 +75,26 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
                     week.days.map(dayId =>
                     {
                         const dayIndex = linearDays.indexOf(dayId);
-                        const isSpanStart = spanIndices !== null && dayIndex === spanIndices.min;
+
+                        let spanVariant: SpanVariant = 'none';
+                        if (spanIndices && dayIndex >= spanIndices.min && dayIndex <= spanIndices.max)
+                        {
+                            if (spanIndices.min === spanIndices.max) spanVariant = 'single';
+                            else if (dayIndex === spanIndices.min) spanVariant = 'start';
+                            else if (dayIndex === spanIndices.max) spanVariant = 'end';
+                            else spanVariant = 'middle';
+                        }
+
+                        const getSpanBorderRadius = () =>
+                        {
+                            switch (spanVariant)
+                            {
+                                case 'start': return '4px 0 0 4px';
+                                case 'end': return '0 4px 4px 0';
+                                case 'single': return '4px';
+                                default: return '0';
+                            }
+                        };
 
                         return (
                             <TableCell
@@ -94,19 +111,19 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
                                     position: 'relative'
                                 } }
                             >
-                                { isSpanStart && (
+                                { spanVariant !== 'none' && (
                                     <Box
                                         sx={ {
                                             position: 'absolute',
                                             top: '50%',
                                             transform: 'translateY(-50%)',
-                                            left: '4px',
-                                            width: `calc(${spanLength * 80}px - 8px)`,
+                                            left: spanVariant === 'middle' || spanVariant === 'end' ? '-1px' : '4px',
+                                            right: spanVariant === 'middle' || spanVariant === 'start' ? '-1px' : '4px',
                                             height: '8px',
                                             backgroundColor: theme.palette.text.secondary,
                                             opacity: 0.2,
-                                            borderRadius: '4px',
-                                            zIndex: 0,
+                                            borderRadius: getSpanBorderRadius(),
+                                            zIndex: 1,
                                         } }
                                     />
                                 ) }

@@ -1,10 +1,8 @@
-import { TableCell, TableHead, TableRow, Typography, useTheme } from '@mui/material';
-import React from 'react';
-
-import { useGanttContext } from './context';
-
 import { getDayNameDisplay } from '@/api-shared/types/gantt/models';
 import { useCurriculumState } from '@/components/gantt/state/provider';
+import { TableCell, TableHead, TableRow, Typography, useTheme } from '@mui/material';
+import React from 'react';
+import { useGanttContext } from './context';
 
 export const GanttHeader: React.FC = () =>
 {
@@ -26,25 +24,26 @@ export const GanttHeader: React.FC = () =>
                         position: 'sticky',
                         left: 0,
                         top: 0,
-                        zIndex: 3,
+                        // Elevated zIndex to stay above horizontal scrolls entirely
+                        zIndex: 6,
                         borderRight: `1px solid ${theme.palette.divider}`,
                         borderBottom: `1px solid ${theme.palette.divider}`
                     } }
                 >
-                    <Typography fontWeight="bold" variant="subtitle2">Syllabus / Module</Typography>
+                    <Typography variant="subtitle2" fontWeight="bold">Syllabus / Module</Typography>
                 </TableCell>
                 { timelineWeeks.map(week => (
                     <TableCell
-                        align="center"
-                        colSpan={ week.days.length }
                         key={ week.id }
+                        colSpan={ week.days.length }
+                        align="center"
                         sx={ {
                             borderLeft: `1px solid ${theme.palette.divider}`,
                             backgroundColor: theme.palette.background.paper,
                             zIndex: 2
                         } }
                     >
-                        <Typography fontWeight="bold" variant="subtitle2">{ week.title }</Typography>
+                        <Typography variant="subtitle2" fontWeight="bold">{ week.title }</Typography>
                     </TableCell>
                 )) }
             </TableRow>
@@ -56,8 +55,8 @@ export const GanttHeader: React.FC = () =>
                         if (!day) return null;
                         return (
                             <TableCell
-                                align="center"
                                 key={ dayId }
+                                align="center"
                                 sx={ {
                                     width: 80,
                                     minWidth: 80,

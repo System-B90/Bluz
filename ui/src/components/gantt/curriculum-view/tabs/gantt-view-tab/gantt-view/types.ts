@@ -7,6 +7,7 @@ export interface IGanttContext
     eventMappings: Record<string, string>; // eventId -> dayId
     moduleMappings: Record<string, string[]>; // moduleId -> dayId[]
     onMapModule: (moduleId: string, dayId: string) => Promise<void>;
+    onMapEvent: (moduleId: string, eventId: string, dayId: string) => Promise<void>;
     onMoveEvent: (moduleId: string, eventId: string, sourceDayId: string, targetDayId: string) => Promise<void>;
     onMoveModule: (moduleId: string, sourceDayId: string, targetDayId: string) => Promise<void>;
     onShiftModule: (moduleId: string, deltaDays: number) => Promise<void>;
@@ -26,6 +27,7 @@ export interface GanttBlockProps
     title?: string;
     isOpaque?: boolean;
     spanLength?: number;
+    isAbsolute?: boolean;
 }
 
 export interface GanttCellProps
@@ -36,8 +38,10 @@ export interface GanttCellProps
     hasBlock?: boolean;
     blockId?: string;
     blockPayload?: any;
+    blockTitle?: string;
     spanLength?: number;
     isOpaque?: boolean;
+    isAbsoluteBlock?: boolean;
 }
 
 export interface GanttModuleRowProps
