@@ -46,26 +46,26 @@ const WindowsLoadingScreen = () => {
 
   return (
     <Box
+      alignItems="center"
       display="flex"
       flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
       gap={3}
+      justifyContent="center"
     >
       <CircularProgress
         size={60}
-        thickness={2}
         sx={{ color: "primary.main" }}
+        thickness={2}
       />
       <Box sx={{ height: "24px" }}>
         <Typography
           key={index}
-          variant="h6"
           sx={{
             color: "text.secondary",
             fontWeight: 300,
             animation: `${fadeInOut} 3s ease-in-out infinite`,
           }}
+          variant="h6"
         >
           {LOADING_STRINGS[index]}
         </Typography>
@@ -167,9 +167,9 @@ export default function GanttPage() {
           </Typography>
         )}
 
-        {isLoading && <WindowsLoadingScreen />}
+        {isLoading ? <WindowsLoadingScreen /> : null}
 
-        {error && <Typography color="error">{error}</Typography>}
+        {error ? <Typography color="error">{error}</Typography> : null}
 
         {currentCurriculum && !isLoading && initialData ? (
           <CurriculumProvider initialData={initialData} key={currentCurriculum}>

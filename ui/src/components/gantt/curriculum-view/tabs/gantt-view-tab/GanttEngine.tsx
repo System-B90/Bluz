@@ -6,24 +6,24 @@ import { Gantt, Willow } from "@svar-ui/react-gantt";
 import { useEffect, useMemo, useState } from "react";
 
 export interface ITask {
-  id: string | number;
+  id: number | string;
   text?: string;
   start?: Date;
   end?: Date;
   duration?: number;
   progress?: number;
-  type?: "task" | "summary" | "milestone";
-  parent?: string | number;
+  type?: "milestone" | "summary" | "task";
+  parent?: number | string;
   open?: boolean;
   lazy?: boolean;
   [key: string]: any;
 }
 
 export interface ILink {
-  id: string | number;
-  source: string | number;
-  target: string | number;
-  type: "e2s" | "s2s" | "e2e" | "s2e";
+  id: number | string;
+  source: number | string;
+  target: number | string;
+  type: "e2e" | "e2s" | "s2e" | "s2s";
 }
 
 interface BluzGanttProps {
@@ -78,7 +78,7 @@ export default function BluzGantt({
   return (
     <Box className="h-full w-full flex-1 min-h-0">
       <Willow>
-        <Gantt tasks={normalizedTasks} links={normalizedLinks} />
+        <Gantt links={normalizedLinks} tasks={normalizedTasks} />
       </Willow>
     </Box>
   );
