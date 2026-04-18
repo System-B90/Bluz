@@ -66,6 +66,6 @@ export interface CreateGanttEventPayload extends Omit<GanttEvent, 'id'>
     moduleId: GanttModuleId;
 }
 
-export interface CreateGanttCurriculumModuleDayMapping extends Omit<GanttCurriculumModuleDayMapping, 'id' | 'curriculumId'>
+export interface CreateGanttCurriculumModuleDayMapping extends Omit<GanttCurriculumModuleDayMapping, 'curriculumId' | 'id'>
 {
 }

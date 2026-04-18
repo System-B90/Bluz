@@ -16,4 +16,3 @@ export { ganttCurriculumEventConfigurationsRelationsSchema, ganttCurriculumEvent
 export { ganttModuleRelationsSchema, ganttModulesSchema } from './modules';
 export { ganttSyllabusesRelationsSchema, ganttSyllabusesSchema } from './syllabuses';
 export { curriculumWeeksRelations, ganttWeeksSchema } from './weeks';
-

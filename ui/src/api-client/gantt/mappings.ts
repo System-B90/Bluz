@@ -16,7 +16,7 @@ import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/mappin
  */
 async function apiGetModuleDayMapping(
     curriculumId: GanttCurriculumId,
-    dayId?: GanttDayId | Array<GanttDayId>,
+    dayId?: Array<GanttDayId> | GanttDayId,
     options?: ClientApiProps
 ): Promise<Array<GanttCurriculumModuleDayMapping>>
 {

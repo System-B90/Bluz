@@ -11,9 +11,9 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'reac
 import { View, Views } from 'react-big-calendar';
 
 import { useRooms } from '@/components/base/RoomsProvider';
-import { useCalendar } from '@/components/schedule/calendar/calendar-provider/CalendarContext';
 import { CalendarView } from '@/components/schedule/calendar/calendar/CalendarView';
 import { useCalendarHandlers } from '@/components/schedule/calendar/calendar/UseCalendarHandlers';
+import { useCalendar } from '@/components/schedule/calendar/calendar-provider/CalendarContext';
 import { getRangeForView } from '@/components/schedule/calendar/utils';
 import { Event } from "@/components/schedule/types/event";
 

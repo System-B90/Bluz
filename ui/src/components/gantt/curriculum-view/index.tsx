@@ -1,11 +1,11 @@
 'use client';
 import { Box, BoxProps } from '@mui/material';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { GanttCurriculumId } from '@/api-shared/types/gantt/curriculum';
 import { CurriculumViewSidebar } from '@/components/gantt/curriculum-view/components/sidebars';
 import { CurriculumViewTabs } from '@/components/gantt/curriculum-view/tabs';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 export interface CurriculumViewProps extends BoxProps
 {

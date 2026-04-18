@@ -1,7 +1,8 @@
-import { useAuth } from "@/components/auth/AuthProvider";
-import { HiveAvatar } from "@/components/header/HiveAvatarImage";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { AvatarProps, Box, Chip, IconButton } from "@mui/material";
+
+import { useAuth } from "@/components/auth/AuthProvider";
+import { HiveAvatar } from "@/components/header/HiveAvatarImage";
 
 function ChipAvatar({ className, ...props }: AvatarProps)
 {
@@ -49,8 +50,8 @@ function ChipAvatar({ className, ...props }: AvatarProps)
         >
             <HiveAvatar
                 alt={ userData.display_name ?? "" }
-                hiveId={ userData.id }
                 className={ `hive-avatar ${className ?? ""}` }
+                hiveId={ userData.id }
                 sx={ { margin: '0 !important' } }
             />
 
@@ -77,12 +78,12 @@ export function UserAccessCard()
             color="secondary"
             label={ userData.display_name }
             size="medium"
-            variant="outlined"
             sx={ {
                 '& .MuiChip-label': {
                     paddingLeft: 0,
                 }
             } }
+            variant="outlined"
         />
     );
 }
