@@ -7,7 +7,8 @@
 
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { baseDocumentFixup, RawBaseDocument } from "@/api-client/gantt/base";
-import { GanttCurriculumId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
+import { CreateGanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/create-payloads";
+import { GanttCurriculumId, GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
 import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/mapping";
 
 /**
@@ -15,12 +16,17 @@ import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/mappin
  */
 async function apiGetModuleDayMapping(
     curriculumId: GanttCurriculumId,
-    weekIndex?: number,
+    dayId?: GanttDayId | Array<GanttDayId>,
     options?: ClientApiProps
 ): Promise<Array<GanttCurriculumModuleDayMapping>>
 {
     const url = new URL(`/api/gantt/curriculums/${curriculumId}/mappings`, window.location.origin);
-    if (weekIndex !== undefined) url.searchParams.append('weekIndex', weekIndex.toString());
+    if (dayId !== undefined)
+    {
+        Array.isArray(dayId)
+            ? dayId.forEach((dayId) => url.searchParams.append('dayId', dayId.toString()))
+            : url.searchParams.append('dayId', dayId.toString());
+    }
 
     const rawData: Array<RawBaseDocument> = await safeApiFetcher(url.toString(), {
         ...options,
@@ -33,7 +39,7 @@ async function apiGetModuleDayMapping(
  */
 async function apiCreateModuleDayMapping(
     curriculumId: GanttCurriculumId,
-    payload: { moduleId: GanttModuleId; weekIndex: number; dayIndex: number; sortOrder?: number; },
+    payload: CreateGanttCurriculumModuleDayMapping,
     options?: ClientApiProps
 ): Promise<GanttCurriculumModuleDayMapping>
 {
@@ -50,15 +56,16 @@ async function apiCreateModuleDayMapping(
  */
 async function apiUpdateModuleDayMapping(
     curriculumId: GanttCurriculumId,
-    oldMapping: { moduleId: GanttModuleId; weekIndex: number; dayIndex: number; },
-    newValues: { weekIndex?: number; dayIndex?: number; sortOrder?: number; },
+    moduleId: GanttModuleId,
+    oldMapping: { dayId: GanttDayId; },
+    newValues: { dayId?: GanttDayId; sortOrder?: number; },
     options?: ClientApiProps
 ): Promise<GanttCurriculumModuleDayMapping>
 {
     const rawData = await safeApiFetcher(`/api/gantt/curriculums/${curriculumId}/mappings`, {
         ...options,
         method: 'PATCH',
-        body: JSON.stringify({ oldMapping, newValues }),
+        body: JSON.stringify({ moduleId, oldMapping, newValues }),
     });
     return baseDocumentFixup(rawData as RawBaseDocument) as unknown as GanttCurriculumModuleDayMapping;
 }
@@ -69,15 +76,14 @@ async function apiUpdateModuleDayMapping(
 async function apiDeleteModuleDayMapping(
     curriculumId: GanttCurriculumId,
     moduleId: GanttModuleId,
-    weekIndex: number,
-    dayIndex: number,
+    dayId: GanttDayId,
     options?: ClientApiProps
 ): Promise<void>
 {
     await safeApiFetcher(`/api/gantt/curriculums/${curriculumId}/mappings`, {
         ...options,
         method: 'DELETE',
-        body: JSON.stringify({ moduleId, weekIndex, dayIndex }),
+        body: JSON.stringify({ moduleId, dayId }),
     });
 }
 

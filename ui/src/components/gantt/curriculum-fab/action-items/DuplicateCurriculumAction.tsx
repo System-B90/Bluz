@@ -3,7 +3,8 @@ import { useSnackbar } from 'notistack';
 import { useCallback } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { curriculumApi, GanttCurriculumDocument } from '@/api-client/gantt/curriculum';
+import { ganttApi } from '@/api-client/gantt';
+import { GanttCurriculumDocument } from '@/api-client/gantt/curriculum';
 import { CreateGanttCurriculumPayload } from '@/api-shared/types/gantt/create-payloads';
 import { ActionItemButton } from '@/components/gantt/curriculum-fab/action-items/ActionItemButton';
 import { CurriculumAwareActionItemProps } from '@/components/gantt/curriculum-fab/action-items/ActionItemProps';
@@ -21,14 +22,14 @@ export function DuplicateCurriculumAction({ sourceCurriculum, onCreate, onProces
     {
         if (!sourceCurriculum) return;
         onProcessingChange(true);
-        const payload: Omit<CreateGanttCurriculumPayload, 'weeks'> & { weeks: typeof sourceCurriculum.weeks } = {
+        const payload: Omit<CreateGanttCurriculumPayload, 'weeks'> & { weeks: typeof sourceCurriculum.weeks; } = {
             title: `${sourceCurriculum.title} (Copy)`,
             description: sourceCurriculum.description,
             isDraft: true,
             weeks: sourceCurriculum.weeks,
         };
         // Cast to proper type - duplication uses the same week IDs structure
-        curriculumApi.apiCreate(payload as CreateGanttCurriculumPayload)
+        ganttApi.curriculum.apiCreate(payload as CreateGanttCurriculumPayload)
             .then((newCurriculum) => onCreate(newCurriculum))
             .catch((error: unknown) => enqueueApiErrorSnackbar(enqueueSnackbar, "שכפול הגאנט נכשל!", error))
             .finally(() => onProcessingChange(false));

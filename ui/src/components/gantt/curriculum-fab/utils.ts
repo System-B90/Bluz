@@ -1,7 +1,8 @@
 import { EnqueueSnackbar } from "notistack";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { curriculumApi, GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
+import { ganttApi } from "@/api-client/gantt";
+import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
 
 export function sortCurriculumsByDraftAndUpdatedAt(curriculums: Record<GanttCurriculumId, GanttCurriculumDocument>): Array<GanttCurriculumId>
@@ -31,7 +32,7 @@ export async function fetchDrawerData({ isMounted, enqueueSnackbar, setCurriculu
 {
     try
     {
-        const listData = await curriculumApi.apiList();
+        const listData = await ganttApi.curriculum.apiList();
         const keys: Array<GanttCurriculumId> = Object.keys(listData);
 
         if (keys.length === 0)
@@ -44,7 +45,7 @@ export async function fetchDrawerData({ isMounted, enqueueSnackbar, setCurriculu
             return;
         }
 
-        const detailedData = await curriculumApi.apiGetMany(keys);
+        const detailedData = await ganttApi.curriculum.apiGetMany(keys);
 
         if (isMounted)
         {

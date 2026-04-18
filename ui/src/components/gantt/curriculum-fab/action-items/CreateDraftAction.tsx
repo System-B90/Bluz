@@ -3,7 +3,8 @@ import { useSnackbar } from 'notistack';
 import { useCallback } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { curriculumApi, GanttCurriculumDocument } from '@/api-client/gantt/curriculum';
+import { ganttApi } from '@/api-client/gantt';
+import { GanttCurriculumDocument } from '@/api-client/gantt/curriculum';
 import { makeCurriculum } from '@/api-shared/types/gantt/curriculum';
 import { ActionItemButton } from '@/components/gantt/curriculum-fab/action-items/ActionItemButton';
 import { BaseActionItemProps } from '@/components/gantt/curriculum-fab/action-items/ActionItemProps';
@@ -20,7 +21,7 @@ export function CreateDraftAction({ onCreate, onProcessingChange, ...props }: Cr
     const clickHandler = useCallback(() =>
     {
         onProcessingChange(true);
-        curriculumApi.apiCreate(makeCurriculum())
+        ganttApi.curriculum.apiCreate(makeCurriculum())
             .then((newCurriculum) => onCreate(newCurriculum))
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת הגאנט נשלכה!", error))
             .finally(() => onProcessingChange(false));

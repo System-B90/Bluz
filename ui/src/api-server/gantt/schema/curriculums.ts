@@ -8,7 +8,7 @@ import { relations } from "drizzle-orm";
 import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { ganttCurriculum2SyllabusesSchema, ganttCurriculum2WeeksSchema } from "./junctions";
-import { ganttCurriculumEventConfigurationsSchema, ganttModuleDayAssignmentsSchema } from "./mappings";
+import { ganttCurriculumEventConfigurationsSchema, ganttCurriculumModuleDayMappingsSchema } from "./mappings";
 
 export const ganttCurriculumsSchema = pgTable('c', {
     id: text('id').primaryKey(),
@@ -22,6 +22,6 @@ export const ganttCurriculumsSchema = pgTable('c', {
 export const ganttCurriculumsRelationsSchema = relations(ganttCurriculumsSchema, ({ many }) => ({
     c2s: many(ganttCurriculum2SyllabusesSchema),
     cEC: many(ganttCurriculumEventConfigurationsSchema), // eventConfigs
-    cMDA: many(ganttModuleDayAssignmentsSchema),
+    cMDA: many(ganttCurriculumModuleDayMappingsSchema),
     c2w: many(ganttCurriculum2WeeksSchema),
 }));

@@ -4,7 +4,8 @@ import { useSnackbar } from 'notistack';
 import { useCallback } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { curriculumApi, GanttCurriculumDocument } from '@/api-client/gantt/curriculum';
+import { ganttApi } from '@/api-client/gantt';
+import { GanttCurriculumDocument } from '@/api-client/gantt/curriculum';
 import { ActionItemButton } from '@/components/gantt/curriculum-fab/action-items/ActionItemButton';
 import { CurriculumAwareActionItemProps } from '@/components/gantt/curriculum-fab/action-items/ActionItemProps';
 
@@ -22,7 +23,7 @@ export function ToggleDraftAction({ sourceCurriculum, onUpdate, onProcessingChan
         if (!sourceCurriculum) return;
         onProcessingChange(true);
         const nextDraftState = !sourceCurriculum.isDraft;
-        curriculumApi.apiUpdate({ id: sourceCurriculum.id, isDraft: nextDraftState })
+        ganttApi.curriculum.apiUpdate({ id: sourceCurriculum.id, isDraft: nextDraftState })
             .then((updatedCurriculum) => onUpdate(updatedCurriculum))
             .catch((error) => enqueueApiErrorSnackbar(
                 enqueueSnackbar,

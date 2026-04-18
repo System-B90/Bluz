@@ -1,30 +1,30 @@
-/* eslint-disable import/order */
+/**
+ * Name: BluzCalendar.tsx
+ * Purpose: Entry point for the Bluz Schedule Calendar.
+ * Created: 2026-04-18
+ * Author: Michael K. Steinberg
+ */
+
 'use client';
 
-import dayjs, { Dayjs } from 'dayjs';
-import 'dayjs/locale/he';
-import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
-
-// Import types
-import type { CalendarProps, NavigateAction } from 'react-big-calendar';
-import
-    {
-        SlotInfo,
-        View,
-        Views
-    } from "react-big-calendar";
-import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
+import { View, Views } from 'react-big-calendar';
 
 import { useRooms } from '@/components/base/RoomsProvider';
-import { CALENDAR_MESSAGES } from '@/components/CalendarMessages';
 import { useCalendar } from '@/components/schedule/calendar/calendar-provider/CalendarContext';
-import { makeEvent } from '@/components/schedule/calendar/calendar-provider/MakeEvent';
-import { DnDCalendar, localizer } from '@/components/schedule/calendar/calendar/DndLocalizer';
-import { CustomWorkWeek } from '@/components/schedule/calendar/CustomWorkWeek';
+import { CalendarView } from '@/components/schedule/calendar/calendar/CalendarView';
+import { useCalendarHandlers } from '@/components/schedule/calendar/calendar/UseCalendarHandlers';
 import { getRangeForView } from '@/components/schedule/calendar/utils';
-import { BluzEventComponent } from '@/components/schedule/event-component/base';
 import { Event } from "@/components/schedule/types/event";
-import { ResolvableRoom } from "@/components/schedule/types/room";
+
+interface BluzCalendarProps
+{
+    handleSaveEvent: (event: Event) => void;
+    handleDeleteEvent: (eventId: Event[ 'id' ]) => void;
+    setOpenEventDialog: (open: boolean) => void;
+    setSelectedEvent: Dispatch<SetStateAction<Event | undefined>>;
+    events: Array<Event>;
+}
 
 export function BluzCalendar({
     handleSaveEvent,
@@ -32,25 +32,49 @@ export function BluzCalendar({
     setOpenEventDialog,
     setSelectedEvent,
     events,
-}: {
-    handleSaveEvent: (event: Event) => void;
-    handleDeleteEvent: (eventId: Event[ 'id' ]) => void;
-    setOpenEventDialog: (open: boolean) => void;
-    setSelectedEvent: Dispatch<SetStateAction<Event | undefined>>;
-    events: Array<Event>;
-})
+}: BluzCalendarProps)
 {
+    const [ mounted, setMounted ] = useState(false);
     const [ currentView, setCurrentView ] = useState<View>(Views.WEEK);
+
     const { rooms } = useRooms();
     const { setStartDate, setEndDate } = useCalendar();
 
-    // Copy-Paste Tracking States
-    const [ activeEvent, setActiveEvent ] = useState<Event | null>(null);
-    const [ copiedEvent, setCopiedEvent ] = useState<Event | null>(null);
-    const [ selectedSlotInfo, setSelectedSlotInfo ] = useState<{ start: Date, resourceId?: any; } | null>(null);
+    const {
+        handleEventDrag,
+        handleSlotSelect,
+        setActiveEvent
+    } = useCalendarHandlers(
+        events,
+        handleSaveEvent,
+        handleDeleteEvent,
+        setSelectedEvent,
+        setOpenEventDialog
+    );
 
-    // 2. Create a ref to hold the LATEST values silently
-    const copyPasteData = useRef({ activeEvent, copiedEvent, selectedSlotInfo });
+    // Only render the calendar after the component has mounted on the client.
+    useEffect(() =>
+    {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMounted(true);
+    }, []);
+
+    const updateDateRange = useCallback((date: Date, view: View) =>
+    {
+        const { start, end } = getRangeForView(date, view);
+        setStartDate(start);
+        setEndDate(end);
+    }, [ setStartDate, setEndDate ]);
+
+    const onNavigate = useCallback((newDate: Date, view: View) =>
+    {
+        updateDateRange(newDate, view);
+    }, [ updateDateRange ]);
+
+    useEffect(() =>
+    {
+        updateDateRange(new Date(), currentView);
+    }, [ currentView, updateDateRange ]);
 
     const handleEditEvent = useCallback((event: Event) =>
     {
@@ -62,194 +86,21 @@ export function BluzCalendar({
     {
         setActiveEvent(event);
         setSelectedEvent(event);
-        setSelectedSlotInfo(null); // Clear slot selection when an event is clicked
-    }, [ setSelectedEvent, setSelectedSlotInfo, setActiveEvent ]);
+    }, [ setSelectedEvent, setActiveEvent ]);
 
-    const handleEventDrag = useCallback((changes: EventInteractionArgs<Event>): void =>
-    {
-        if (changes.event.locked) { return; }
-        const updates: Partial<Event> = {
-            startTime: dayjs(changes.start),
-            endTime: dayjs(changes.end),
-        };
-
-        if (changes.resourceId !== undefined && changes.resourceId !== null && changes.event.rooms.length <= 1)
-        {
-            const roomId: ResolvableRoom = JSON.parse(changes.resourceId.toString());
-            updates.rooms = [ roomId ];
-        }
-
-        const newEvent = { ...changes.event, ...updates };
-        handleSaveEvent(newEvent);
-    }, [ handleSaveEvent ]);
-
-    const handleSlotSelect = useCallback((slotInfo: SlotInfo): void =>
-    {
-        // Track single clicks for pasting purposes before we return out
-        setSelectedSlotInfo({ start: slotInfo.start, resourceId: slotInfo.resourceId });
-        setActiveEvent(null); // Clear active event selection
-
-        if (slotInfo.action === "click") { return; }
-
-        const newEventPartialData: Partial<Event> = {
-            startTime: dayjs(slotInfo.start),
-            endTime: dayjs(slotInfo.end),
-        };
-
-        if (slotInfo.resourceId !== undefined && slotInfo.resourceId !== null)
-        {
-            const roomId: ResolvableRoom = JSON.parse(slotInfo.resourceId.toString());
-            newEventPartialData.rooms = (roomId && roomId instanceof Object && typeof roomId.source !== undefined && typeof roomId.id !== undefined) ? [ roomId ] : [];
-        }
-
-        setSelectedEvent(makeEvent(newEventPartialData));
-        setOpenEventDialog(true);
-    }, [ setSelectedSlotInfo, setActiveEvent, setSelectedEvent, setOpenEventDialog ]);
-
-    const onNavigateHandler: CalendarProps[ 'onNavigate' ] = useCallback((newDate: Date, view: View, _action: NavigateAction) =>
-    {
-        const { start, end } = getRangeForView(newDate, view);
-
-        setStartDate(start);
-        setEndDate(end);
-    }, [ setStartDate, setEndDate ]);
-
-    useEffect(() =>
-    {
-        const today = new Date();
-        const range = getRangeForView(today, currentView);
-        setStartDate(range.start);
-        setEndDate(range.end);
-    }, [ currentView, setStartDate, setEndDate, ]);
-
-    useEffect(() =>
-    {
-        copyPasteData.current = { activeEvent, copiedEvent, selectedSlotInfo };
-    }, [ activeEvent, copiedEvent, selectedSlotInfo ]);
-
-    const handleKeyDown = useCallback((e: KeyboardEvent) =>
-    {
-        if ([ 'INPUT', 'TEXTAREA' ].includes((e.target as HTMLElement).tagName)) { return; }
-
-        const { activeEvent, copiedEvent, selectedSlotInfo } = copyPasteData.current;
-
-        if (e.key === 'Delete')
-        {
-            if (!activeEvent?.id)
-            {
-                return;
-            }
-            handleDeleteEvent(activeEvent.id);
-            return;
-        }
-
-        // Pull the freshest data from the ref
-        const isCmdOrCtrl = e.ctrlKey || e.metaKey;
-
-        // COPY (Ctrl+C)
-        if (isCmdOrCtrl && e.key === 'c' && activeEvent)
-        {
-            setCopiedEvent(activeEvent);
-        }
-
-        // PASTE (Ctrl+V)
-        if (isCmdOrCtrl && e.key === 'v' && copiedEvent)
-        {
-            e.preventDefault();
-
-            const originalStart = dayjs(copiedEvent.startTime);
-            const originalEnd = dayjs(copiedEvent.endTime);
-            const durationMinutes = originalEnd.diff(originalStart, 'minute');
-
-            let newStart: dayjs.Dayjs;
-            let newEnd: dayjs.Dayjs;
-            let newRooms = copiedEvent.rooms;
-
-            if (selectedSlotInfo)
-            {
-                newStart = dayjs(selectedSlotInfo.start);
-                newEnd = newStart.add(durationMinutes, 'minute');
-
-                if (selectedSlotInfo.resourceId !== undefined && selectedSlotInfo.resourceId !== null)
-                {
-                    newRooms = [ JSON.parse(selectedSlotInfo.resourceId.toString()) ];
-                }
-            } else
-            {
-                newStart = originalStart.add(30, 'minute');
-                newEnd = originalEnd.add(30, 'minute');
-            }
-
-            const { id: _id, ...restCopied } = copiedEvent as any;
-
-            const newEvent = {
-                ...restCopied,
-                startTime: newStart.toDate(), // Make sure these are strictly Date objects
-                endTime: newEnd.toDate(),
-                rooms: newRooms,
-            } as Event;
-
-            handleSaveEvent(newEvent);
-
-            // Update state to focus on the newly pasted event
-            setActiveEvent(newEvent);
-            setSelectedSlotInfo(null);
-        }
-    }, [ handleSaveEvent, handleDeleteEvent, ]);
-
-    useEffect(() =>
-    {
-        window.addEventListener('keydown', handleKeyDown);
-
-        return () =>
-        {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [ handleKeyDown ]);
+    if (!mounted) return <div className="grow h-full bg-slate-50/50 animate-pulse" />;
 
     return (
-        <DnDCalendar
-            className='relative grow h-full'
-            defaultView={ "week" }
+        <CalendarView
+            currentView={ currentView }
             events={ events }
-            localizer={ localizer }
-            max={ new Date(2025, 0, 1, 22, 0) } // 6:00 PM
-            messages={ CALENDAR_MESSAGES }
-
-            min={ new Date(2025, 0, 1, 7, 0) }  // 8:00 AM
             onDoubleClickEvent={ handleEditEvent }
-            onSelectEvent={ handleSelectEvent }
-
-            onSelectSlot={ handleSlotSelect }
-
-            onView={ setCurrentView }
-            rtl={ true }
-            selectable
-
-            step={ 5 }
-            style={ { height: 'unset' } }
-            timeslots={ 12 }
-            views={ { day: true, week: true, work_week: CustomWorkWeek } } // restrict to day/week
-
-            { ...(currentView === 'day' && {
-                resources: rooms,
-                resourceIdAccessor: 'id',
-                resourceTitleAccessor: 'name',
-                resourceAccessor: (event: Event) => event.rooms
-            }) }
-
-            allDayMaxRows={ 0 }
-            components={ { event: BluzEventComponent } }
-            draggableAccessor={ (e) => !e.locked }
-            endAccessor={ (event) => (event.endTime as Dayjs).toDate() }
-            formats={ { timeGutterFormat: 'HH:mm' } }
             onEventDrop={ handleEventDrag }
-            onEventResize={ handleEventDrag }
-            onNavigate={ onNavigateHandler }
-            resizableAccessor={ (e) => !e.locked }
-
-            showMultiDayTimes={ false }
-            startAccessor={ (event) => (event.startTime as Dayjs).toDate() }
+            onNavigate={ onNavigate }
+            onSelectEvent={ handleSelectEvent }
+            onSelectSlot={ handleSlotSelect }
+            onView={ setCurrentView }
+            rooms={ rooms }
         />
     );
 }

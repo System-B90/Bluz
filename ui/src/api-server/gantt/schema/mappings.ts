@@ -11,37 +11,39 @@ import { ganttCurriculumsSchema } from "./curriculums";
 import { ganttDaysSchema } from "./days";
 import { ganttEventsSchema } from "./events";
 import { ganttModulesSchema } from "./modules";
-import { ganttWeeksSchema } from "./weeks";
 
 /**
  * curriculumModuleDayAssignments (cMDA)
  * Schedules modules into specific week/day slots.
  */
-export const ganttModuleDayAssignmentsSchema = pgTable('cMDA', {
+export const ganttCurriculumModuleDayMappingsSchema = pgTable('cMDA', {
     curriculumId: text('curriculum_id')
         .notNull()
         .references(() => ganttCurriculumsSchema.id, { onDelete: 'cascade' }),
     moduleId: text('module_id')
         .notNull()
         .references(() => ganttModulesSchema.id, { onDelete: 'cascade' }),
-    weekId: text('week_id').notNull().references(() => ganttWeeksSchema.id, { onDelete: 'cascade' }),
     dayId: text('day_id').notNull().references(() => ganttDaysSchema.id, { onDelete: 'cascade' }),
     sortOrder: real('s').notNull().default(0),
     createdAt: timestamp('ca').defaultNow().notNull(),
     updatedAt: timestamp('ua').defaultNow().notNull(),
 }, (t) => ({
     // Primary key ensures a module is unique per curriculum/module pairing
-    pk: primaryKey({ columns: [ t.curriculumId, t.moduleId ] })
+    pk: primaryKey({ columns: [ t.curriculumId, t.moduleId, t.dayId ] })
 }));
 
-export const ganttModuleDayAssignmentsRelationsSchema = relations(ganttModuleDayAssignmentsSchema, ({ one }) => ({
+export const ganttCurriculumModuleDayMappingsRelationsSchema = relations(ganttCurriculumModuleDayMappingsSchema, ({ one }) => ({
     curriculum: one(ganttCurriculumsSchema, {
-        fields: [ ganttModuleDayAssignmentsSchema.curriculumId ],
+        fields: [ ganttCurriculumModuleDayMappingsSchema.curriculumId ],
         references: [ ganttCurriculumsSchema.id ],
     }),
     module: one(ganttModulesSchema, {
-        fields: [ ganttModuleDayAssignmentsSchema.moduleId ],
+        fields: [ ganttCurriculumModuleDayMappingsSchema.moduleId ],
         references: [ ganttModulesSchema.id ],
+    }),
+    day: one(ganttDaysSchema, {
+        fields: [ ganttCurriculumModuleDayMappingsSchema.dayId ],
+        references: [ ganttDaysSchema.id ],
     }),
 }));
 

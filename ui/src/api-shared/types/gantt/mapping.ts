@@ -1,11 +1,16 @@
-import { GanttCurriculumId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
 
-// TODO: WTF is this?
+/**
+ * The date mapping of a module.
+ * This interface represents an instance of a module in a curriculum, set to be at a specific day in a specific week.
+ * Each mapping is unique to a module<->curriculum<->day(<->week)
+ * An order field is available in order to maintain a sorted array of mappings which are all temporarily allocated on the same day.
+ * This is used when zooming in and out of views.
+ */
 export interface GanttCurriculumModuleDayMapping
 {
     moduleId: GanttModuleId;
-    weekIndex: number;
-    dayIndex: number;
+    dayId: GanttDayId;
     curriculumId: GanttCurriculumId;
     sortOrder: number;
 }

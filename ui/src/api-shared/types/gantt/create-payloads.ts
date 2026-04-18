@@ -1,4 +1,5 @@
 import { GanttCurriculum, GanttCurriculumId, GanttDay, GanttEvent, GanttModule, GanttModuleId, GanttSyllabus, GanttSyllabusId, GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/mapping";
 
 /**
  * Payload to create a new Curriculum.
@@ -63,4 +64,8 @@ export interface CreateGanttModulePayload extends Omit<GanttModule, 'events' | '
 export interface CreateGanttEventPayload extends Omit<GanttEvent, 'id'>
 {
     moduleId: GanttModuleId;
+}
+
+export interface CreateGanttCurriculumModuleDayMapping extends Omit<GanttCurriculumModuleDayMapping, 'id' | 'curriculumId'>
+{
 }

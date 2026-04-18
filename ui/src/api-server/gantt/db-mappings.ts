@@ -5,23 +5,30 @@
  * Author: Michael K. Steinberg
  */
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
-import { ganttModuleDayAssignmentsSchema } from "@/api-server/gantt/schema/mappings";
+import { ganttCurriculumModuleDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
+import { GanttCurriculumId, GanttDayId, GanttModuleId, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
 
 /**
  * 1) Getting mappings for a specific curriculum.
  * Can be filtered by weekId if needed for partial loading.
  */
-export async function getModuleAssignments(curriculumId: string, weekId?: string)
+export async function getModuleDayMappingsForCurriculum(curriculumId: GanttCurriculumId, { _weekIds, dayIds }: { _weekIds?: Array<GanttWeekId>, dayIds?: Array<GanttDayId>; })
 {
-    const filters = [ eq(ganttModuleDayAssignmentsSchema.curriculumId, curriculumId) ];
+    const filters = [ eq(ganttCurriculumModuleDayMappingsSchema.curriculumId, curriculumId) ];
 
-    if (weekId !== undefined)
+    if (dayIds !== undefined)
     {
-        filters.push(eq(ganttModuleDayAssignmentsSchema.weekId, weekId));
+        filters.push(inArray(ganttCurriculumModuleDayMappingsSchema.dayId, dayIds));
     }
+
+    // TODO: Implement
+    // if (weekIds !== undefined)
+    // {
+    //     filters.push(inArray(ganttCurriculumModuleDayMappingsSchema.weekId, weekIds));
+    // }
 
     return await postgresDb.query.ganttModuleDayAssignmentsSchema.findMany({
         where: and(...filters),
@@ -31,15 +38,14 @@ export async function getModuleAssignments(curriculumId: string, weekId?: string
 /**
  * 2) Creating a mapping.
  */
-export async function createModuleAssignment(data: {
-    curriculumId: string;
-    moduleId: string;
-    weekId: string;
-    dayId: string;
+export async function createCurriculumModuleDayMapping(data: {
+    curriculumId: GanttCurriculumId;
+    moduleId: GanttModuleId;
+    dayId: GanttDayId;
     sortOrder?: number;
 })
 {
-    return await postgresDb.insert(ganttModuleDayAssignmentsSchema).values({
+    return await postgresDb.insert(ganttCurriculumModuleDayMappingsSchema).values({
         ...data,
         sortOrder: data.sortOrder ?? 0,
     }).returning();
@@ -49,21 +55,21 @@ export async function createModuleAssignment(data: {
  * 3) Updating an existing mapping (e.g., moving a module to a different day/week).
  * Uses the composite primary key for identification.
  */
-export async function updateModuleAssignment(
-    curriculumId: string,
-    oldMapping: { moduleId: string; weekId: string; dayId: string; },
-    newValues: { weekId?: string; dayId?: string; sortOrder?: number; }
+export async function updateCurriculumModuleDayMapping(
+    curriculumId: GanttCurriculumId,
+    moduleId: GanttModuleId,
+    oldMapping: { dayId: GanttDayId; },
+    newValues: { dayId?: GanttDayId; sortOrder?: number; }
 )
 {
     return await postgresDb
-        .update(ganttModuleDayAssignmentsSchema)
+        .update(ganttCurriculumModuleDayMappingsSchema)
         .set({ ...newValues, updatedAt: new Date() })
         .where(
             and(
-                eq(ganttModuleDayAssignmentsSchema.curriculumId, curriculumId),
-                eq(ganttModuleDayAssignmentsSchema.moduleId, oldMapping.moduleId),
-                eq(ganttModuleDayAssignmentsSchema.weekId, oldMapping.weekId),
-                eq(ganttModuleDayAssignmentsSchema.dayId, oldMapping.dayId)
+                eq(ganttCurriculumModuleDayMappingsSchema.curriculumId, curriculumId),
+                eq(ganttCurriculumModuleDayMappingsSchema.moduleId, moduleId),
+                eq(ganttCurriculumModuleDayMappingsSchema.dayId, oldMapping.dayId)
             )
         )
         .returning();
@@ -73,23 +79,21 @@ export async function updateModuleAssignment(
  * 4) Reordering modules within a specific day.
  * Implements a fractional/float-based update for the sortOrder.
  */
-export async function reorderModuleInDay(
-    curriculumId: string,
-    moduleId: string,
-    weekId: string,
-    dayId: string,
+export async function reorderCurriculumModuleMappingInDay(
+    curriculumId: GanttCurriculumId,
+    moduleId: GanttModuleId,
+    dayId: GanttDayId,
     newSortOrder: number
 )
 {
     return await postgresDb
-        .update(ganttModuleDayAssignmentsSchema)
+        .update(ganttCurriculumModuleDayMappingsSchema)
         .set({ sortOrder: newSortOrder, updatedAt: new Date() })
         .where(
             and(
-                eq(ganttModuleDayAssignmentsSchema.curriculumId, curriculumId),
-                eq(ganttModuleDayAssignmentsSchema.moduleId, moduleId),
-                eq(ganttModuleDayAssignmentsSchema.weekId, weekId),
-                eq(ganttModuleDayAssignmentsSchema.dayId, dayId)
+                eq(ganttCurriculumModuleDayMappingsSchema.curriculumId, curriculumId),
+                eq(ganttCurriculumModuleDayMappingsSchema.moduleId, moduleId),
+                eq(ganttCurriculumModuleDayMappingsSchema.dayId, dayId)
             )
         );
 }
@@ -97,21 +101,19 @@ export async function reorderModuleInDay(
 /**
  * 5) Delete an existing mapping.
  */
-export async function deleteModuleAssignment(
-    curriculumId: string,
-    moduleId: string,
-    weekId: string,
-    dayId: string
+export async function deleteCurriculumModuleDayMapping(
+    curriculumId: GanttCurriculumId,
+    moduleId: GanttModuleId,
+    dayId: GanttDayId,
 )
 {
     return await postgresDb
-        .delete(ganttModuleDayAssignmentsSchema)
+        .delete(ganttCurriculumModuleDayMappingsSchema)
         .where(
             and(
-                eq(ganttModuleDayAssignmentsSchema.curriculumId, curriculumId),
-                eq(ganttModuleDayAssignmentsSchema.moduleId, moduleId),
-                eq(ganttModuleDayAssignmentsSchema.weekId, weekId),
-                eq(ganttModuleDayAssignmentsSchema.dayId, dayId)
+                eq(ganttCurriculumModuleDayMappingsSchema.curriculumId, curriculumId),
+                eq(ganttCurriculumModuleDayMappingsSchema.moduleId, moduleId),
+                eq(ganttCurriculumModuleDayMappingsSchema.dayId, dayId)
             )
         )
         .returning();

@@ -5,7 +5,7 @@ import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { curriculumApi } from "@/api-client/gantt/curriculum";
+import { ganttApi } from "@/api-client/gantt";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer"; // Ensure you import this type
 import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
 import { CurriculumFab } from "@/components/gantt/curriculum-fab";
@@ -68,7 +68,7 @@ export default function GanttPage()
         {
             try
             {
-                const data = await curriculumApi.apiGet(currentCurriculum);
+                const data = await ganttApi.curriculum.apiGet(currentCurriculum);
                 if (isMounted) setInitialData(data);
             } catch (error: any)
             {

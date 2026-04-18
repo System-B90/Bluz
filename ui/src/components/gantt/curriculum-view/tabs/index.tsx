@@ -1,7 +1,7 @@
 import KeyboardArrowLeft from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
 import { Box, BoxProps, Tab, Tabs } from "@mui/material";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, Fragment, SetStateAction } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
 import { CurriculumViewBuilderTab } from "@/components/gantt/curriculum-view/tabs/builder-tab";
@@ -23,31 +23,34 @@ export interface CurriculumViewTabsProps extends BoxProps, TabProps
 function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps)
 {
     return (
-        <Tabs
-            onChange={ (_, v) => setSelectedTabIndex(v) }
-            slots={ {
-                StartScrollButtonIcon: KeyboardArrowLeft,
-                EndScrollButtonIcon: KeyboardArrowRight,
-            } }
-            sx={ {
-                mb: 1.5,
-                flexDirection: "row-reverse", // TODO: Known issue: https://github.com/mui/material-ui/issues/30409?issue=mui%7Cmaterial-ui%7C30207
-                '& .MuiTabs-scroller': {
-                    // Ensures the scroll container respects the RTL flow
-                    direction: 'ltr',
-                },
-                '& .MuiTabs-flexContainer': {
-                    flexDirection: "row",
-                }
-            } }
-            value={ selectedTabIndex }
-            variant='scrollable'
-        >
-            <Tab label='סילבוסים' />
-            <Tab label='שבועות' />
-            <Tab label='בנייה' />
-            <Tab label='רצף זמן' />
-        </Tabs>
+        <Fragment>
+            <Box width={ (selectedTabIndex === 2) ? '14rem' : 0 } />
+            <Tabs
+                onChange={ (_, v) => setSelectedTabIndex(v) }
+                slots={ {
+                    StartScrollButtonIcon: KeyboardArrowLeft,
+                    EndScrollButtonIcon: KeyboardArrowRight,
+                } }
+                sx={ {
+                    mb: 1.5,
+                    flexDirection: "row-reverse", // TODO: Known issue: https://github.com/mui/material-ui/issues/30409?issue=mui%7Cmaterial-ui%7C30207
+                    '& .MuiTabs-scroller': {
+                        // Ensures the scroll container respects the RTL flow
+                        direction: 'ltr',
+                    },
+                    '& .MuiTabs-flexContainer': {
+                        flexDirection: "row",
+                    }
+                } }
+                value={ selectedTabIndex }
+                variant='scrollable'
+            >
+                <Tab label='סילבוסים' />
+                <Tab label='שבועות' />
+                <Tab label='בנייה' />
+                <Tab label='רצף זמן' />
+            </Tabs>
+        </Fragment>
     );
 }
 

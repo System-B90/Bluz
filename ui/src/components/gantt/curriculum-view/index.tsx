@@ -1,9 +1,11 @@
+'use client';
 import { Box, BoxProps } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { GanttCurriculumId } from '@/api-shared/types/gantt/curriculum';
 import { CurriculumViewSidebar } from '@/components/gantt/curriculum-view/components/sidebars';
 import { CurriculumViewTabs } from '@/components/gantt/curriculum-view/tabs';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 export interface CurriculumViewProps extends BoxProps
 {
@@ -12,7 +14,38 @@ export interface CurriculumViewProps extends BoxProps
 
 export function CurriculumView({ curriculumId, ...props }: CurriculumViewProps)
 {
-    const [ selectedTabIndex, setSelectedTabIndex ] = useState<number>(0);
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
+    const [ selectedTabIndex, setSelectedTabIndex ] = useState<number>(() =>
+    {
+        const viewIndexFromUrl = searchParams.get('v');
+        return viewIndexFromUrl ? parseInt(viewIndexFromUrl) : 0;
+    });
+
+    useEffect(() =>
+    {
+        const urlViewIndex = searchParams.get('v');
+        const currentViewIndex = selectedTabIndex.toString() ?? null;
+
+        if (urlViewIndex === currentViewIndex)
+        {
+            return;
+        }
+
+        const nextParams = new URLSearchParams(searchParams.toString());
+        if (currentViewIndex)
+        {
+            nextParams.set('v', currentViewIndex);
+        } else
+        {
+            nextParams.delete('v');
+        }
+
+        const nextSearch = nextParams.toString();
+        router.replace(nextSearch ? `${pathname}?${nextSearch}` : pathname);
+    }, [ selectedTabIndex, pathname, router, searchParams ]);
 
     return (
         <Box

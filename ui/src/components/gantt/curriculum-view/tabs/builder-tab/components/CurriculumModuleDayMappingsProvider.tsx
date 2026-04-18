@@ -9,9 +9,9 @@ import { useSnackbar } from 'notistack';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { curriculumModuleDayMappingApi } from '@/api-client/gantt/mappings';
+import { ganttApi } from '@/api-client/gantt';
 import { BaseDbDocument } from '@/api-server/gantt/db-base';
-import { GanttCurriculumId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
 import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/mapping";
 
 /**
@@ -19,21 +19,21 @@ import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/mappin
  */
 interface MappingState
 {
-    // Key: `${weekIndex}-${dayIndex}-${moduleId}`
+    // Key: `${dayId}-${moduleId}`
     mappings: Record<string, GanttCurriculumModuleDayMapping>;
     isLoading: boolean;
     error: null | string;
 }
 
 type MappingAction =
-    | { type: 'DELETE_MAPPING'; payload: { weekIndex: number; dayIndex: number; moduleId: GanttModuleId; }; }
+    | { type: 'DELETE_MAPPING'; payload: { dayId: GanttDayId; moduleId: GanttModuleId; }; }
     | { type: 'SET_ERROR'; payload: null | string; }
     | { type: 'SET_LOADING'; payload: boolean; }
-    | { type: 'SET_MAPPINGS'; payload: GanttCurriculumModuleDayMapping[]; }
+    | { type: 'SET_MAPPINGS'; payload: Array<GanttCurriculumModuleDayMapping>; }
     | { type: 'UPSERT_MAPPING'; payload: GanttCurriculumModuleDayMapping; };
 
-const getMappingKey = (m: { weekIndex: number; dayIndex: number; moduleId: GanttModuleId; }) =>
-    `${m.weekIndex}-${m.dayIndex}-${m.moduleId}`;
+const getMappingKey = (m: { dayId: GanttDayId; moduleId: GanttModuleId; }) =>
+    `${m.dayId}-${m.moduleId}`;
 
 /**
  * High-Performance Reducer
@@ -75,9 +75,9 @@ function mappingReducer(state: MappingState, action: MappingAction): MappingStat
 type CurriculumMappingContextType = {
     state: MappingState;
     refreshMappings: () => Promise<void>;
-    createMapping: (moduleId: GanttModuleId, weekIndex: number, dayIndex: number) => Promise<void>;
-    moveModule: (moduleId: GanttModuleId, from: { w: number, d: number; }, to: { w: number, d: number; }) => Promise<void>;
-    removeModule: (moduleId: GanttModuleId, weekIndex: number, dayIndex: number) => Promise<void>;
+    createMapping: (moduleId: GanttModuleId, dayId: GanttDayId) => Promise<GanttCurriculumModuleDayMapping>;
+    moveModule: (moduleId: GanttModuleId, from: { d: GanttDayId; }, to: { d: GanttDayId; }) => Promise<void>;
+    removeModule: (moduleId: GanttModuleId, dayId: GanttDayId) => Promise<void>;
 };
 
 /**
@@ -99,7 +99,7 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
         dispatch({ type: 'SET_LOADING', payload: true });
         try
         {
-            const data = await curriculumModuleDayMappingApi.apiGet(curriculumId);
+            const data = await ganttApi.mappings.apiGet(curriculumId);
             dispatch({ type: 'SET_MAPPINGS', payload: data });
         } catch (e)
         {
@@ -112,16 +112,14 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
          */
     const createMapping = useCallback(async (
         moduleId: GanttModuleId,
-        weekIndex: number,
-        dayIndex: number
+        dayId: GanttDayId
     ) =>
     {
         const tempSortOrder = Date.now();
         const optimisticMapping: GanttCurriculumModuleDayMapping & BaseDbDocument = {
             curriculumId,
             moduleId,
-            weekIndex,
-            dayIndex,
+            dayId,
             sortOrder: tempSortOrder,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -132,61 +130,65 @@ export function CurriculumMappingProvider({ children, curriculumId }: { children
 
         try
         {
-            const result = await curriculumModuleDayMappingApi.apiCreate(curriculumId, {
+            const result = await ganttApi.mappings.apiCreate(curriculumId, {
                 moduleId,
-                weekIndex,
-                dayIndex,
+                dayId,
                 sortOrder: tempSortOrder
             });
             // Update with the actual data from the server (e.g., if IDs or timestamps were generated)
             dispatch({ type: 'UPSERT_MAPPING', payload: result });
+
+            return result;
         } catch (e)
         {
             // Rollback on failure
-            dispatch({ type: 'DELETE_MAPPING', payload: { weekIndex, dayIndex, moduleId } });
+            dispatch({ type: 'DELETE_MAPPING', payload: { dayId, moduleId } });
             dispatch({ type: 'SET_ERROR', payload: JSON.stringify(e) });
+            throw e;
         }
     }, [ dispatch, curriculumId ]);
 
     const moveModule = useCallback(async (
         moduleId: GanttModuleId,
-        from: { w: number, d: number; },
-        to: { w: number, d: number; }
+        from: { d: GanttDayId; },
+        to: { d: GanttDayId; }
     ) =>
     {
         // Optimistic UI Update
-        const oldKey = getMappingKey({ weekIndex: from.w, dayIndex: from.d, moduleId });
+        const oldKey = getMappingKey({ dayId: from.d, moduleId });
         const originalMapping = state.mappings[ oldKey ];
 
         if (!originalMapping) return;
 
-        const updatedMapping = { ...originalMapping, weekIndex: to.w, dayIndex: to.d };
+        const updatedMapping = { ...originalMapping, dayId: to.d };
 
-        dispatch({ type: 'DELETE_MAPPING', payload: { weekIndex: from.w, dayIndex: from.d, moduleId } });
+        dispatch({ type: 'DELETE_MAPPING', payload: { dayId: from.d, moduleId } });
         dispatch({ type: 'UPSERT_MAPPING', payload: updatedMapping });
 
         try
         {
-            await curriculumModuleDayMappingApi.apiUpdate(
+            await ganttApi.mappings.apiUpdate(
                 curriculumId,
-                { moduleId, weekIndex: from.w, dayIndex: from.d },
-                { weekIndex: to.w, dayIndex: to.d }
+                moduleId,
+                { dayId: from.d },
+                { dayId: to.d },
             );
         } catch (e)
         {
             // Rollback on failure
-            dispatch({ type: 'DELETE_MAPPING', payload: { weekIndex: to.w, dayIndex: to.d, moduleId } });
+            dispatch({ type: 'DELETE_MAPPING', payload: { dayId: to.d, moduleId } });
             dispatch({ type: 'UPSERT_MAPPING', payload: originalMapping });
             dispatch({ type: 'SET_ERROR', payload: JSON.stringify(e) });
+            throw e;
         }
     }, [ state.mappings, curriculumId, dispatch ]);
 
-    const removeModule = useCallback(async (moduleId: GanttModuleId, weekIndex: number, dayIndex: number) =>
+    const removeModule = useCallback(async (moduleId: GanttModuleId, dayId: GanttDayId) =>
     {
-        dispatch({ type: 'DELETE_MAPPING', payload: { weekIndex, dayIndex, moduleId } });
+        dispatch({ type: 'DELETE_MAPPING', payload: { dayId, moduleId } });
         try
         {
-            await curriculumModuleDayMappingApi.apiDelete(curriculumId, moduleId, weekIndex, dayIndex);
+            await ganttApi.mappings.apiDelete(curriculumId, moduleId, dayId);
         } catch 
         {
             await refreshMappings(); // Re-sync on failure

@@ -50,6 +50,13 @@
       "when": 1776457412189,
       "tag": "0006_petite_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1776469012457,
+      "tag": "0007_orange_bill_hollister",
+      "breakpoints": true
     }
   ]
 }

@@ -12,7 +12,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { GanttModuleId } from "@/api-shared/types/gantt/curriculum";
+import { GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
 import { CurriculumMappingProvider, useCurriculumMappings } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { CurriculumViewBuilderWeeksView } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumViewBuilderWeeksView";
 import { ModuleItem } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
@@ -32,17 +32,15 @@ function CurriculumViewBuilderTabInner({
     const { enqueueSnackbar } = useSnackbar();
     const { moveModule, createMapping, removeModule } = useCurriculumMappings();
     const weeks = useCurriculum(curriculumId)?.weeks;
-    const [ activeId, setActiveId ] = useState<GanttModuleId | null>(null);
-    const [ activeWeekIndex, setActiveWeekIndex ] = useState<number>();
-    const [ activeDayIndex, setActiveDayIndex ] = useState<number>();
+    const [ activeId, setActiveId ] = useState<GanttModuleId>();
+    const [ activeDayId, setActiveDayId ] = useState<GanttDayId>();
 
     function handleDragStart(event: DragStartEvent)
     {
         // Extract the ID from 'module-{moduleId}'
         const id = event.active.id.toString().replace("module-", "") as GanttModuleId;
         setActiveId(id);
-        setActiveWeekIndex((event.active.data as any).weekIndex ?? undefined);
-        setActiveDayIndex((event.active.data as any).dayIndex ?? undefined);
+        setActiveDayId((event.active.data as any).dayId ?? undefined);
     }
 
     const dropAnimation = {
@@ -68,35 +66,32 @@ function CurriculumViewBuilderTabInner({
 
     const handleDragEnd = useCallback((event: DragEndEvent) =>
     {
-        setActiveId(null);
-        setActiveWeekIndex(undefined);
-        setActiveDayIndex(undefined);
+        setActiveId(undefined);
+        setActiveDayId(undefined);
 
         const { active, over } = event;
         if (!over) return;
 
         const moduleId = (active.data.current as any).moduleId;
-        const originWeekIndex = (active.data.current as any).weekIndex;
-        const originDayIndex = (active.data.current as any).dayIndex;
+        const originDayId = (active.data.current as any).dayId;
 
         if ((over.data.current as any).type === 'SIDEBAR')
         {
-            removeModule(moduleId, originWeekIndex, originDayIndex)
+            removeModule(moduleId, originDayId)
                 .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הסרת המערך נכשלה!', error));
             return;
         }
 
-        const weekIndex = (over.data.current as any).weekIndex;
-        const dayIndex = (over.data.current as any).dayIndex;
+        const dayId = (over.data.current as any).dayId;
 
-        if (typeof originWeekIndex === 'number' && typeof originDayIndex === 'number')
+        if (typeof originDayId === 'string')
         {
-            moveModule(moduleId, { w: originWeekIndex, d: originDayIndex }, { w: weekIndex, d: dayIndex })
+            moveModule(moduleId, { d: originDayId }, { d: dayId })
                 .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הזזת המערך נכשלה!', error));
         }
         else
         {
-            createMapping(moduleId, weekIndex, dayIndex)
+            createMapping(moduleId, dayId)
                 .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הזזת המערך נכשלה!', error));
         }
     }, [ createMapping, moveModule, removeModule, enqueueSnackbar ]);
@@ -117,9 +112,8 @@ function CurriculumViewBuilderTabInner({
                 { activeId ? (
                     <ModuleItem
                         className="w-70 shadow-2xl rotate-3 cursor-grabbing"
-                        dayIndex={ activeDayIndex }
+                        dayId={ activeDayId }
                         moduleId={ activeId }
-                        weekIndex={ activeWeekIndex }
                     />
                 ) : null }
             </DragOverlay>

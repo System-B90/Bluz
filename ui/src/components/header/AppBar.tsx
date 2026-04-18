@@ -7,10 +7,10 @@ import { useState } from 'react';
 import { CurriculumIcon } from '@/components/header/CurriculumIcon';
 import { FilterIcon } from '@/components/header/FilterIcon';
 import { Filters } from '@/components/header/filters';
-import { LoggedInUser } from '@/components/header/LoggedInUser';
 import { Logo } from '@/components/header/logo';
 import { OfflineModeIcon } from '@/components/header/OfflineModeIcon';
 import { ThemeSelectorIcon } from '@/components/header/ThemeSelector';
+import { UserAccessCard } from '@/components/header/UserAccessCard';
 
 export function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
     setOpenSettingsDialog: (open: boolean) => void,
@@ -34,7 +34,7 @@ export function ScheduleAppBar({ setOpenSettingsDialog, ...props }: {
 
                     <Box width={ '0.3rem' } />
 
-                    <LoggedInUser />
+                    <UserAccessCard />
                 </Box>
 
                 <Box alignItems={ 'center' } display={ 'flex' } flexDirection={ 'row' } flexGrow={ 1 } justifyContent={ 'center' }>

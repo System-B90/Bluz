@@ -3,7 +3,7 @@ import { useSnackbar } from 'notistack';
 import { useCallback } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { curriculumApi } from '@/api-client/gantt/curriculum';
+import { ganttApi } from '@/api-client/gantt';
 import { GanttCurriculumId } from '@/api-shared/types/gantt/curriculum';
 import { ActionItemButton } from '@/components/gantt/curriculum-fab/action-items/ActionItemButton';
 import { CurriculumAwareActionItemProps } from '@/components/gantt/curriculum-fab/action-items/ActionItemProps';
@@ -21,7 +21,7 @@ export function DeleteCurriculumAction({ sourceCurriculum, onDelete, onProcessin
     {
         if (!sourceCurriculum) return;
         onProcessingChange(true);
-        curriculumApi.apiDelete(sourceCurriculum.id)
+        ganttApi.curriculum.apiDelete(sourceCurriculum.id)
             .then(() => onDelete(sourceCurriculum.id))
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, "מחיקת הגאנט נכשלה!", error))
             .finally(() => onProcessingChange(false));

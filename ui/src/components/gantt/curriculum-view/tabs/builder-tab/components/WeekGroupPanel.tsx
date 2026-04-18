@@ -59,12 +59,17 @@ export function WeekGroupPanel({
         },
     });
     const totalTime = useMemo(() => calculateTotalWorkingTimeForWeeks(group, state), [ group, state ]);
+
+    const dayIds = useMemo(() => group.flatMap((weekId) => weeksState[ weekId ]).flatMap((ganttWeek) => ganttWeek.days), [ weeksState, group ]);
+
     const moduleItems = useMemo(() =>
-        Object.values(mappings)
-            .filter((x) => group.some((weekId) => weeksState[ weekId ]?.number === x.weekIndex + 1))
+    {
+        return Object.values(mappings)
+            .filter((x) => dayIds.includes(x.dayId))
             .map((x) => (
-                <ModuleItem dayIndex={ x.dayIndex } key={ x.moduleId } moduleId={ x.moduleId } weekIndex={ x.weekIndex } />
-            )), [ mappings, group, weeksState ]);
+                <ModuleItem dayId={ x.dayId } key={ x.moduleId } moduleId={ x.moduleId } />
+            ));
+    }, [ mappings, dayIds ]);
 
     return (
         <Box
