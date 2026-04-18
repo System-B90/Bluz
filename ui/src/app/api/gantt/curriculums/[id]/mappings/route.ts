@@ -9,20 +9,20 @@ import { NextRequest } from "next/server";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import
-    {
-        createCurriculumModuleDayMapping,
-        deleteCurriculumModuleDayMapping,
-        getModuleDayMappingsForCurriculum,
-        updateCurriculumModuleDayMapping,
-    } from "@/api-server/gantt/db-mappings";
+{
+    createCurriculumModuleDayMapping,
+    deleteCurriculumModuleDayMapping,
+    getModuleDayMappingsForCurriculum,
+    updateCurriculumModuleDayMapping,
+} from "@/api-server/gantt/db-mappings";
 import { ClientApiError } from "@/api-shared/errors";
 import { CreateGanttCurriculumEventDayMapping } from "@/api-shared/types/gantt/create-payloads";
 import
-    {
-        GanttDayId,
-        GanttEventId,
-        GanttModuleId,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttDayId,
+    GanttEventId,
+    GanttModuleId,
+} from "@/api-shared/types/gantt/models";
 
 export interface RouteContext
 {

@@ -19,13 +19,13 @@ import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import
-    {
-        GanttCurriculumId,
-        GanttCurriculumModuleDayMapping,
-        GanttDayId,
-        GanttEventId,
-        GanttModuleId
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttCurriculumModuleDayMapping,
+    GanttDayId,
+    GanttEventId,
+    GanttModuleId
+} from "@/api-shared/types/gantt/models";
 
 /**
  * State Definition
@@ -41,7 +41,7 @@ interface MappingState
 type MappingAction =
     | {
         type: "DELETE_MAPPING";
-        payload: Pick<GanttCurriculumModuleDayMapping, "eventId" | 'dayId' | 'moduleId'>;
+        payload: Pick<GanttCurriculumModuleDayMapping, 'dayId' | 'moduleId' | "eventId">;
     }
     | { type: "SET_ERROR"; payload: null | string; }
     | { type: "SET_LOADING"; payload: boolean; }
@@ -61,36 +61,36 @@ function mappingReducer(
 {
     switch (action.type)
     {
-        case "SET_MAPPINGS":
-            const newMappings: Record<string, GanttCurriculumModuleDayMapping> = {};
-            action.payload.forEach((m) =>
-            {
-                newMappings[ getMappingKey(m) ] = m;
-            });
-            return { ...state, mappings: newMappings, isLoading: false };
+    case "SET_MAPPINGS":
+        const newMappings: Record<string, GanttCurriculumModuleDayMapping> = {};
+        action.payload.forEach((m) =>
+        {
+            newMappings[ getMappingKey(m) ] = m;
+        });
+        return { ...state, mappings: newMappings, isLoading: false };
 
-        case "UPSERT_MAPPING":
-            return {
-                ...state,
-                mappings: {
-                    ...state.mappings,
-                    [ getMappingKey(action.payload) ]: action.payload,
-                },
-            };
+    case "UPSERT_MAPPING":
+        return {
+            ...state,
+            mappings: {
+                ...state.mappings,
+                [ getMappingKey(action.payload) ]: action.payload,
+            },
+        };
 
-        case "DELETE_MAPPING":
-            const updated = { ...state.mappings };
-            delete updated[ getMappingKey(action.payload) ];
-            return { ...state, mappings: updated };
+    case "DELETE_MAPPING":
+        const updated = { ...state.mappings };
+        delete updated[ getMappingKey(action.payload) ];
+        return { ...state, mappings: updated };
 
-        case "SET_LOADING":
-            return { ...state, isLoading: action.payload };
+    case "SET_LOADING":
+        return { ...state, isLoading: action.payload };
 
-        case "SET_ERROR":
-            return { ...state, error: action.payload };
+    case "SET_ERROR":
+        return { ...state, error: action.payload };
 
-        default:
-            return state;
+    default:
+        return state;
     }
 }
 
@@ -156,14 +156,14 @@ export function CurriculumMappingProvider({
             const tempSortOrder = Date.now();
             const optimisticMapping: GanttCurriculumModuleDayMapping &
                 BaseDbDocument = {
-                curriculumId,
-                moduleId,
-                eventId,
-                dayId,
-                sortOrder: tempSortOrder,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            };
+                    curriculumId,
+                    moduleId,
+                    eventId,
+                    dayId,
+                    sortOrder: tempSortOrder,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                };
 
             // Optimistic UI Update
             dispatch({ type: "UPSERT_MAPPING", payload: optimisticMapping });

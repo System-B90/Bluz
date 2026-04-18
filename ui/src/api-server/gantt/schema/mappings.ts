@@ -6,15 +6,15 @@
  */
 import { relations } from "drizzle-orm";
 import
-    {
-        integer,
-        pgTable,
-        primaryKey,
-        real,
-        text,
-        timestamp,
-        unique,
-    } from "drizzle-orm/pg-core";
+{
+    integer,
+    pgTable,
+    primaryKey,
+    real,
+    text,
+    timestamp,
+    unique,
+} from "drizzle-orm/pg-core";
 
 import { ganttCurriculumsSchema } from "./curriculums";
 import { ganttDaysSchema } from "./days";

@@ -1,19 +1,19 @@
 import { Divider } from "@mui/material";
 import
-    {
-        Dispatch,
-        SetStateAction,
-        useCallback,
-        useMemo,
-        useState,
-    } from "react";
+{
+    Dispatch,
+    SetStateAction,
+    useCallback,
+    useMemo,
+    useState,
+} from "react";
 import { Fragment } from "react/jsx-runtime";
 
 import
-    {
-        GanttCurriculumId,
-        GanttWeekId,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttWeekId,
+} from "@/api-shared/types/gantt/models";
 import { SyllabusModulesCurriculumViewSidebar } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules";
 import { partitionWeeks } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
 import { WeekGroupPanel } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/WeekGroupPanel";
@@ -88,8 +88,8 @@ export function CurriculumViewBuilderWeeksView({
                         />
                         { !isLast && (
                             <Divider
-                                key={ `divider-${groupKey}` }
                                 className="h-4/5 self-center"
+                                key={ `divider-${groupKey}` }
                                 orientation="vertical"
                                 variant="middle"
                             />

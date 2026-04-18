@@ -8,15 +8,15 @@ import { relations } from "drizzle-orm";
 import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import
-    {
-        ganttCurriculum2SyllabusesSchema,
-        ganttCurriculum2WeeksSchema,
-    } from "./junctions";
+{
+    ganttCurriculum2SyllabusesSchema,
+    ganttCurriculum2WeeksSchema,
+} from "./junctions";
 import
-    {
-        ganttCurriculumEventConfigurationsSchema,
-        ganttCurriculumEventDayMappingsSchema,
-    } from "./mappings";
+{
+    ganttCurriculumEventConfigurationsSchema,
+    ganttCurriculumEventDayMappingsSchema,
+} from "./mappings";
 
 export const ganttCurriculumsSchema = pgTable("c", {
     id: text("id").primaryKey(),

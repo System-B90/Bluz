@@ -21,19 +21,25 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) =>
     const mappedDays = moduleMappings[ moduleId ] || [];
     const isUnmapped = mappedDays.length === 0 && !hasEvents;
 
-    // Calculate span based on events (if present) or module mappings
+    // Calculate span based on the union of module mappings AND event mappings
     const spanIndices = useMemo(() =>
     {
-        let dayIds: string[] = [];
+        const dayIds = new Set<string>();
+
+        // Always consider where the module itself is explicitly mapped
+        mappedDays.forEach(d => dayIds.add(d));
+
+        // If it has events, expand the bounding box to include all mapped events
         if (hasEvents)
         {
-            dayIds = module.events.map(eId => eventMappings[ eId ]).filter(Boolean);
-        } else
-        {
-            dayIds = mappedDays;
+            module.events.forEach(eId =>
+            {
+                const d = eventMappings[ eId ];
+                if (d) dayIds.add(d);
+            });
         }
 
-        const indices = dayIds.map(id => linearDays.indexOf(id)).filter(i => i !== -1);
+        const indices = Array.from(dayIds).map(id => linearDays.indexOf(id)).filter(i => i !== -1);
         if (indices.length === 0) return null;
         return { min: Math.min(...indices), max: Math.max(...indices) };
     }, [ hasEvents, module.events, eventMappings, mappedDays, linearDays ]);
@@ -97,6 +103,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) =>
                         }
 
                         const hasMappingBlock = mappedDays.includes(dayId);
+                        const showSolidBlock = hasMappingBlock && !hasEvents;
 
                         return (
                             <GanttCell
@@ -104,10 +111,10 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) =>
                                 dayId={ dayId }
                                 dropId={ `drop-module-${moduleId}-${dayId}` }
                                 payloadData={ { targetType: 'module', moduleId, dayId } }
-                                hasBlock={ hasMappingBlock && !hasEvents } // Don't show solid block if we are spanning events
+                                hasBlock={ showSolidBlock }
                                 blockId={ `drag-module-move-${moduleId}-${dayId}` }
                                 blockPayload={ { type: 'module-move', moduleId, sourceDayId: dayId } }
-                                spanVariant={ hasMappingBlock ? 'none' : spanVariant }
+                                spanVariant={ showSolidBlock ? 'none' : spanVariant }
                                 isOpaque={ true }
                             />
                         );

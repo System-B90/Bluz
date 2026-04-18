@@ -1,9 +1,11 @@
-import { useCurriculumState } from '@/components/gantt/state/provider';
 import { Box, TableCell, TableRow, Typography, useTheme } from '@mui/material';
 import React, { useMemo, useState } from 'react';
+
 import { useGanttContext } from './context';
 import { GanttModuleRow } from './GanttModuleRow';
 import { GanttSyllabusGroupProps, SpanVariant } from './types';
+
+import { useCurriculumState } from '@/components/gantt/state/provider';
 
 export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabusId }) =>
 {
@@ -63,7 +65,7 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
                         borderBottom: `1px solid ${theme.palette.divider}`
                     } }
                 >
-                    <Typography variant="subtitle2" sx={ { display: 'flex', alignItems: 'center', gap: 1 } }>
+                    <Typography sx={ { display: 'flex', alignItems: 'center', gap: 1 } } variant="subtitle2">
                         <Box component="span" sx={ { fontSize: '0.8rem', width: 16 } }>
                             { isExpanded ? '▼' : '▶' }
                         </Box>
@@ -116,9 +118,9 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
                 ) }
             </TableRow>
 
-            { isExpanded && syllabus.modules.map(moduleId => (
+            { isExpanded ? syllabus.modules.map(moduleId => (
                 <GanttModuleRow key={ moduleId } moduleId={ moduleId } />
-            )) }
+            )) : null }
         </React.Fragment>
     );
 };

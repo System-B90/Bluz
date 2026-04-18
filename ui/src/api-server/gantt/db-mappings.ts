@@ -10,13 +10,13 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { postgresDb } from "@/api-server/gantt";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
 import
-    {
-        GanttCurriculumId,
-        GanttDayId,
-        GanttEventId,
-        GanttModuleId,
-        GanttWeekId,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttDayId,
+    GanttEventId,
+    GanttModuleId,
+    GanttWeekId,
+} from "@/api-shared/types/gantt/models";
 
 /**
  * 1) Getting mappings for a specific curriculum.

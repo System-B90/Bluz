@@ -24,7 +24,7 @@ export interface GanttBlockProps
     isOpaque?: boolean;
 }
 
-export type SpanVariant = 'start' | 'middle' | 'end' | 'single' | 'none';
+export type SpanVariant = 'end' | 'middle' | 'none' | 'single' | 'start';
 
 export interface GanttCellProps
 {

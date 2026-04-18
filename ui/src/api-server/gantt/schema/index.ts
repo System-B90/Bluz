@@ -33,4 +33,3 @@ export
     ganttSyllabusesSchema
 } from "./syllabuses";
 export { curriculumWeeksRelations, ganttWeeksSchema } from "./weeks";
-

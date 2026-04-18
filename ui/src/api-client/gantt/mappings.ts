@@ -9,11 +9,11 @@ import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { baseDocumentFixup, RawBaseDocument } from "@/api-client/gantt/base";
 import { CreateGanttCurriculumEventDayMapping } from "@/api-shared/types/gantt/create-payloads";
 import
-    {
-        GanttCurriculumId, GanttCurriculumModuleDayMapping, GanttDayId,
-        GanttEventId,
-        GanttModuleId
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId, GanttCurriculumModuleDayMapping, GanttDayId,
+    GanttEventId,
+    GanttModuleId
+} from "@/api-shared/types/gantt/models";
 
 /**
  * GET: Retrieves all module mappings for a curriculum.

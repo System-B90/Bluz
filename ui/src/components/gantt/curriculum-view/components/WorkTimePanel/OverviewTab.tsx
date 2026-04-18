@@ -2,10 +2,10 @@ import { Box, Stack, Typography } from "@mui/material";
 import { useMemo } from "react";
 
 import
-    {
-        GanttCurriculumId,
-        GanttWeekId,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttWeekId,
+} from "@/api-shared/types/gantt/models";
 import { WeekWorkTimeChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 

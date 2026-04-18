@@ -1,12 +1,14 @@
-import { useCurriculumMappings } from '@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider';
-import { useCurriculumState } from '@/components/gantt/state/provider';
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { Box, Paper, Table, TableBody, TableContainer, Typography, useTheme } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
+
 import { GanttContext } from './context';
 import { GanttHeader } from './GanttHeader';
 import { GanttSyllabusGroup } from './GanttSyllabusGroup';
 import { GanttViewProps } from './types';
+
+import { useCurriculumMappings } from '@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider';
+import { useCurriculumState } from '@/components/gantt/state/provider';
 
 export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 {
@@ -35,21 +37,43 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     {
         const merged: Record<string, string[]> = { ...localModuleMappings };
 
-        // Parse the global mappings (key format: dayId-moduleId)
-        Object.keys(globalMappings).forEach(key =>
+        // Parse the global mappings supporting the new Event structure
+        Object.values(globalMappings).forEach((mapping: any) =>
         {
-            const mapping = globalMappings[ key ];
             if (mapping.curriculumId !== curriculumId) return;
 
-            const arr = merged[ mapping.moduleId ] || [];
-            if (!arr.includes(mapping.dayId))
+            // If eventId is null/undefined, this is a module-level mapping
+            if (!mapping.eventId)
             {
-                merged[ mapping.moduleId ] = [ ...arr, mapping.dayId ];
+                const arr = merged[ mapping.moduleId ] || [];
+                if (!arr.includes(mapping.dayId))
+                {
+                    merged[ mapping.moduleId ] = [ ...arr, mapping.dayId ];
+                }
             }
         });
 
         return merged;
     }, [ globalMappings, localModuleMappings, curriculumId ]);
+
+    // Merge global mappings with local PoC mapped events
+    const eventMappings = useMemo(() =>
+    {
+        const merged: Record<string, string> = { ...localEventMappings };
+
+        Object.values(globalMappings).forEach((mapping: any) =>
+        {
+            if (mapping.curriculumId !== curriculumId) return;
+
+            // If eventId is present, map it to the corresponding day
+            if (mapping.eventId)
+            {
+                merged[ mapping.eventId ] = mapping.dayId;
+            }
+        });
+
+        return merged;
+    }, [ globalMappings, localEventMappings, curriculumId ]);
 
     const handleMapModule = useCallback((moduleId: string, dayId: string) =>
     {
@@ -111,7 +135,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 timelineWeeks,
                 linearDays,
                 moduleMappings,
-                eventMappings: localEventMappings,
+                eventMappings,
                 onMapModule: handleMapModule,
                 onMoveModule: handleMoveModule,
                 onMoveEvent: handleMoveEvent
@@ -121,7 +145,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 
                         <Box sx={ { p: 2, borderBottom: `1px solid ${theme.palette.divider}`, flexShrink: 0 } }>
                             <Typography variant="h6">{ curriculum.title }</Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography color="text.secondary" variant="body2">
                                 { curriculum.description }
                             </Typography>
                         </Box>

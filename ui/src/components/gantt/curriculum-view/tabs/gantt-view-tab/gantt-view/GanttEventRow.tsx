@@ -1,9 +1,11 @@
-import { useCurriculumState } from '@/components/gantt/state/provider';
 import { TableCell, TableRow, Typography, useTheme } from '@mui/material';
 import React from 'react';
+
 import { useGanttContext } from './context';
 import { GanttCell } from './GanttCell';
 import { GanttEventRowProps } from './types';
+
+import { useCurriculumState } from '@/components/gantt/state/provider';
 
 export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId }) =>
 {
@@ -35,7 +37,7 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId 
                     borderRight: `1px solid ${theme.palette.divider}`
                 } }
             >
-                <Typography variant="caption" color="text.secondary" noWrap>↳ { event.title }</Typography>
+                <Typography color="text.secondary" noWrap variant="caption">↳ { event.title }</Typography>
             </TableCell>
 
             { timelineWeeks.map(week =>
@@ -44,13 +46,13 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId 
                     const isMappedHere = currentDayId === dayId;
                     return (
                         <GanttCell
-                            key={ `${dayId}-${eventId}` }
-                            dayId={ dayId }
-                            dropId={ `drop-event-${eventId}-${dayId}` }
-                            payloadData={ { targetType: 'event', eventId, dayId } }
-                            hasBlock={ isMappedHere }
                             blockId={ `drag-event-${eventId}-${dayId}` }
                             blockPayload={ { type: 'event-move', eventId, sourceDayId: dayId } }
+                            dayId={ dayId }
+                            dropId={ `drop-event-${eventId}-${dayId}` }
+                            hasBlock={ isMappedHere }
+                            key={ `${dayId}-${eventId}` }
+                            payloadData={ { targetType: 'event', eventId, dayId } }
                         />
                     );
                 })

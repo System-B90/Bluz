@@ -11,10 +11,10 @@ import { Box, Paper, PaperProps, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
 
 import
-    {
-        GanttDayId,
-        GanttModuleId,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttDayId,
+    GanttModuleId,
+} from "@/api-shared/types/gantt/models";
 import { DndDragEventActiveData } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/dnd-types";
 import { hashSyllabusToColor } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
 import { WorkTimeChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";

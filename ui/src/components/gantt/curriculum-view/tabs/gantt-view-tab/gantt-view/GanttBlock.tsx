@@ -1,6 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import { Box, Typography, useTheme } from '@mui/material';
 import React from 'react';
+
 import { GanttBlockProps } from './types';
 
 export const GanttBlock: React.FC<GanttBlockProps> = ({ id, payload, title, isOpaque }) =>
@@ -38,11 +39,9 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({ id, payload, title, isOp
                 ...style
             } }
         >
-            { title && (
-                <Typography variant="caption" sx={ { color: 'primary.contrastText', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }>
-                    { title }
-                </Typography>
-            ) }
+            { title ? <Typography sx={ { color: 'primary.contrastText', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } } variant="caption">
+                { title }
+            </Typography> : null }
         </Box>
     );
 };

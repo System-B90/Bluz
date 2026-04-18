@@ -10,13 +10,13 @@
 import React, { useMemo } from "react";
 
 import
-    {
-        GanttCurriculum,
-        GanttCurriculumId,
-        GanttEvent,
-        GanttModule,
-        GanttSyllabus,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculum,
+    GanttCurriculumId,
+    GanttEvent,
+    GanttModule,
+    GanttSyllabus,
+} from "@/api-shared/types/gantt/models";
 import { CurriculumMappingProvider } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { CurriculumGanttViewInner } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/CurriculumGanttViewInner";
 import { GanttDataSourceProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";

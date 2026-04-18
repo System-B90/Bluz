@@ -7,15 +7,15 @@ import { SyllabusDocument } from "@/api-client/gantt/syllabus";
 import { CurriculumWeekDocument } from "@/api-client/gantt/week";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import
-    {
-        DAY_NAME_DISPLAY,
-        GanttCurriculumId,
-        GanttDayId,
-        GanttEventId,
-        GanttModuleId,
-        GanttSyllabusId,
-        GanttWeekId,
-    } from "@/api-shared/types/gantt/models";
+{
+    DAY_NAME_DISPLAY,
+    GanttCurriculumId,
+    GanttDayId,
+    GanttEventId,
+    GanttModuleId,
+    GanttSyllabusId,
+    GanttWeekId,
+} from "@/api-shared/types/gantt/models";
 
 export interface NormalizedStore
 {

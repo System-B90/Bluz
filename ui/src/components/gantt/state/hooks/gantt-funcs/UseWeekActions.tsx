@@ -2,18 +2,18 @@ import { useCallback } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import
-    {
-        CreateGanttDayPayload,
-        CreateGanttWeekPayload,
-    } from "@/api-shared/types/gantt/create-payloads";
+{
+    CreateGanttDayPayload,
+    CreateGanttWeekPayload,
+} from "@/api-shared/types/gantt/create-payloads";
 import
-    {
-        GanttCurriculumId,
-        GanttDay,
-        GanttDayId,
-        GanttWeek,
-        GanttWeekId,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttDay,
+    GanttDayId,
+    GanttWeek,
+    GanttWeekId,
+} from "@/api-shared/types/gantt/models";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 

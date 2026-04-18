@@ -1,8 +1,10 @@
-import { GanttDayId, GanttModuleId, GanttSyllabusId, GanttWeekId } from "@/api-shared/types/gantt/models";
 import
-    {
-        DragEndEvent
-    } from "@dnd-kit/core";
+{
+    DragEndEvent
+} from "@dnd-kit/core";
+
+import { GanttDayId, GanttModuleId, GanttSyllabusId, GanttWeekId } from "@/api-shared/types/gantt/models";
+
 type DnDDragEndEvent<T, K> = DragEndEvent;
 
 export type DndDragEventActiveData = {
@@ -18,6 +20,10 @@ export type DndDragEventActiveData = {
 };
 
 export type DndDragEventOverData = {
+    type: 'DAY';
+    dayId: GanttDayId;
+    weekId?: undefined;
+} | {
     type: 'SIDEBAR';
     dayId?: undefined;
     weekId?: undefined;
@@ -26,8 +32,4 @@ export type DndDragEventOverData = {
     dayId?: undefined;
     weekId: GanttWeekId;
     firstDayId: GanttDayId;
-} | {
-    type: 'DAY';
-    dayId: GanttDayId;
-    weekId?: undefined;
 };

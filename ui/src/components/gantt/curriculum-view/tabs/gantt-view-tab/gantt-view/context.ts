@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+
 import { IGanttContext } from './types';
 
 export const GanttContext = createContext<IGanttContext | null>(null);
