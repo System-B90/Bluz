@@ -6,22 +6,22 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 export function CurriculumIcon() {
-  const pathname = usePathname();
-  const curriculumPage = pathname.includes("/gantt");
+    const pathname = usePathname();
+    const curriculumPage = pathname.includes("/gantt");
 
-  const router = useRouter();
-  const onClick = useCallback(() => {
-    router.push(curriculumPage ? "/" : "/gantt/");
-  }, [curriculumPage, router]);
+    const router = useRouter();
+    const onClick = useCallback(() => {
+        router.push(curriculumPage ? "/" : "/gantt/");
+    }, [curriculumPage, router]);
 
-  return (
-    <Tooltip
-      placement="bottom"
-      title={curriculumPage ? 'בחזרה ללו"ז' : "בניית גאנט"}
-    >
-      <IconButton className="relative" color={"inherit"} onClick={onClick}>
-        {curriculumPage ? <CalendarMonthIcon /> : <AutoStoriesIcon />}
-      </IconButton>
-    </Tooltip>
-  );
+    return (
+        <Tooltip
+            placement="bottom"
+            title={curriculumPage ? 'בחזרה ללו"ז' : "בניית גאנט"}
+        >
+            <IconButton className="relative" color={"inherit"} onClick={onClick}>
+                {curriculumPage ? <CalendarMonthIcon /> : <AutoStoriesIcon />}
+            </IconButton>
+        </Tooltip>
+    );
 }

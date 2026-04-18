@@ -1,9 +1,9 @@
 import {
-  FormControl,
-  FormControlProps,
-  InputLabel,
-  MenuItem,
-  Select,
+    FormControl,
+    FormControlProps,
+    InputLabel,
+    MenuItem,
+    Select,
 } from "@mui/material";
 import { useMemo } from "react";
 
@@ -16,39 +16,39 @@ interface ModuleFieldProps {
 }
 
 export function ModuleField({
-  event,
-  onEventChange,
-  ...props
+    event,
+    onEventChange,
+    ...props
 }: ModuleFieldProps & FormControlProps) {
-  const { getModulesOfSubject } = useHiveModules();
-  const modules = useMemo(
-    () => (event?.subject ? getModulesOfSubject(event?.subject) : []),
-    [event?.subject, getModulesOfSubject],
-  );
+    const { getModulesOfSubject } = useHiveModules();
+    const modules = useMemo(
+        () => (event?.subject ? getModulesOfSubject(event?.subject) : []),
+        [event?.subject, getModulesOfSubject],
+    );
 
-  const moduleMenuItems = modules.map((module) => (
-    <MenuItem key={module.id} value={module.id}>
-      {module.name}
-    </MenuItem>
-  ));
+    const moduleMenuItems = modules.map((module) => (
+        <MenuItem key={module.id} value={module.id}>
+            {module.name}
+        </MenuItem>
+    ));
 
-  return (
-    <FormControl
-      disabled={
-        (event?.type ? !eventHasSubject(event?.type) : false) ||
+    return (
+        <FormControl
+            disabled={
+                (event?.type ? !eventHasSubject(event?.type) : false) ||
         modules.length === 0
-      }
-      fullWidth={false}
-      {...props}
-    >
-      <InputLabel>מערך</InputLabel>
-      <Select
-        label="מערך"
-        onChange={(e) => onEventChange({ hiveModule: e.target.value })}
-        value={event?.hiveModule ?? ""}
-      >
-        {moduleMenuItems}
-      </Select>
-    </FormControl>
-  );
+            }
+            fullWidth={false}
+            {...props}
+        >
+            <InputLabel>מערך</InputLabel>
+            <Select
+                label="מערך"
+                onChange={(e) => onEventChange({ hiveModule: e.target.value })}
+                value={event?.hiveModule ?? ""}
+            >
+                {moduleMenuItems}
+            </Select>
+        </FormControl>
+    );
 }

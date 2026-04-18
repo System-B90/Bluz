@@ -6,12 +6,12 @@ export type ActionItemButtonProps = Omit<
 >;
 
 export function ActionItemButton(props: ActionItemButtonProps) {
-  return (
-    <Button
-      size="small"
-      sx={{ minHeight: 28, px: 1.25, py: 0.25, fontSize: "0.75rem" }}
-      variant="outlined"
-      {...props}
-    />
-  );
+    return (
+        <Button
+            size="small"
+            sx={{ minHeight: 28, px: 1.25, py: 0.25, fontSize: "0.75rem" }}
+            variant="outlined"
+            {...props}
+        />
+    );
 }

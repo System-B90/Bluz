@@ -3,13 +3,14 @@ import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
 import { postgresDb } from "@/api-server/gantt";
 import { ClientApiError } from "@/api-shared/errors";
-import {
-  BaseGantItem,
-  GanttCurriculumId,
-  GanttModuleId,
-  GanttSyllabusId,
-  GanttWeekId,
-} from "@/api-shared/types/gantt/models/curriculum";
+import
+{
+    BaseGantItem,
+    GanttCurriculumId,
+    GanttModuleId,
+    GanttSyllabusId,
+    GanttWeekId,
+} from "@/api-shared/types/gantt/models";
 import { BasicGantOperations } from "@/app/api/gantt/base-collection";
 
 export const FOREIGN_KEY_VIOLATION = "23503";
@@ -47,11 +48,11 @@ export function drizzleOperationsBuilder<
   TTable extends PgTableWithColumns<any>,
   TCreatePayload = Omit<T, "id">,
 >({
-  table,
-  typeName,
-  junction,
-  parentJunction,
-  idPreffix,
+    table,
+    typeName,
+    junction,
+    parentJunction,
+    idPreffix,
 }: DrizzleOperationsBuilderProps<TTable>): Omit<
   BasicGantOperations<T, TCreatePayload>,
   "getItem"
@@ -60,19 +61,19 @@ export function drizzleOperationsBuilder<
   const cols = table as any;
 
   async function getMultipleItems(ids: Array<T["id"]>): Promise<DbTDocument[]> {
-    if (!ids || ids.length === 0) return [];
+      if (!ids || ids.length === 0) return [];
 
-    return (await postgresDb
-      .select()
-      .from(table as any)
-      .where(inArray(cols.id, ids))) as DbTDocument[];
+      return (await postgresDb
+          .select()
+          .from(table as any)
+          .where(inArray(cols.id, ids))) as DbTDocument[];
   }
 
   async function createNewItem(data: TCreatePayload): Promise<DbTDocument> {
-    const id = (data as any).id || `${idPreffix}_${crypto.randomUUID()}`;
-    const now = new Date();
+      const id = (data as any).id || `${idPreffix}_${crypto.randomUUID()}`;
+      const now = new Date();
 
-    const { curriculumId, syllabusId, moduleId, weekId, ...entityData } =
+      const { curriculumId, syllabusId, moduleId, weekId, ...entityData } =
       data as {
         curriculumId?: GanttCurriculumId;
         syllabusId?: GanttSyllabusId;
@@ -80,110 +81,110 @@ export function drizzleOperationsBuilder<
         weekId?: GanttWeekId;
       } & TCreatePayload;
 
-    const parentId: Record<string, string | undefined> = {
-      curriculumId,
-      syllabusId,
-      moduleId,
-      weekId,
-    };
+      const parentId: Record<string, string | undefined> = {
+          curriculumId,
+          syllabusId,
+          moduleId,
+          weekId,
+      };
 
-    return await postgresDb.transaction(async (tx) => {
-      const [newItem] = await tx
-        .insert(table as any)
-        .values({
-          ...entityData,
-          id,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .returning();
+      return await postgresDb.transaction(async (tx) => {
+          const [newItem] = await tx
+              .insert(table as any)
+              .values({
+                  ...entityData,
+                  id,
+                  createdAt: now,
+                  updatedAt: now,
+              })
+              .returning();
 
-      if (parentJunction) {
-        const parentIdValue = parentId[parentJunction.parentKey];
-        if (!parentIdValue) {
-          throw new ClientApiError("No parent key was passed!");
-        }
+          if (parentJunction) {
+              const parentIdValue = parentId[parentJunction.parentKey];
+              if (!parentIdValue) {
+                  throw new ClientApiError("No parent key was passed!");
+              }
 
-        const values = {
-          [parentJunction.parentKey]: parentIdValue,
-          [parentJunction.selfKey]: id,
-        };
-        await tx.insert(parentJunction.table).values(values);
-      }
+              const values = {
+                  [parentJunction.parentKey]: parentIdValue,
+                  [parentJunction.selfKey]: id,
+              };
+              await tx.insert(parentJunction.table).values(values);
+          }
 
-      const junctions = Array.isArray(junction) ? junction : [junction];
-      for (const j of junctions) {
-        if (j?.apiKey) {
-          (newItem as any)[j.apiKey] = [];
-        }
-      }
+          const junctions = Array.isArray(junction) ? junction : [junction];
+          for (const j of junctions) {
+              if (j?.apiKey) {
+                  (newItem as any)[j.apiKey] = [];
+              }
+          }
 
-      return newItem as DbTDocument;
-    });
+          return newItem as DbTDocument;
+      });
   }
 
   async function updateItem(
-    id: T["id"],
-    updateData: Partial<T>,
+      id: T["id"],
+      updateData: Partial<T>,
   ): Promise<DbTDocument> {
-    if (!id) throw new ClientApiError(`מזהה נדרש לעדכון ${typeName}`);
+      if (!id) throw new ClientApiError(`מזהה נדרש לעדכון ${typeName}`);
 
-    const {
-      id: _id,
-      createdAt: _c,
-      updatedAt: _u,
-      ...safeData
-    } = updateData as any;
+      const {
+          id: _id,
+          createdAt: _c,
+          updatedAt: _u,
+          ...safeData
+      } = updateData as any;
 
-    const [updatedItem] = await postgresDb
-      .update(table as any)
-      .set({
-        ...safeData,
-        updatedAt: new Date(),
-      })
-      .where(eq(cols.id, id))
-      .returning();
+      const [updatedItem] = await postgresDb
+          .update(table as any)
+          .set({
+              ...safeData,
+              updatedAt: new Date(),
+          })
+          .where(eq(cols.id, id))
+          .returning();
 
-    if (!updatedItem) {
-      throw new ClientApiError(`${typeName} עם מזהה ${id} לא נמצא לעדכון`);
-    }
+      if (!updatedItem) {
+          throw new ClientApiError(`${typeName} עם מזהה ${id} לא נמצא לעדכון`);
+      }
 
-    return updatedItem as DbTDocument;
+      return updatedItem as DbTDocument;
   }
 
   async function deleteItem(id: T["id"]): Promise<void> {
-    const result = await postgresDb
-      .delete(table as any)
-      .where(eq(cols.id, id))
-      .returning({ deletedId: cols.id });
-    if (result.length === 0) {
-      throw new ClientApiError(`${typeName} עם מזהה ${id} לא נמצא למחיקה`);
-    }
+      const result = await postgresDb
+          .delete(table as any)
+          .where(eq(cols.id, id))
+          .returning({ deletedId: cols.id });
+      if (result.length === 0) {
+          throw new ClientApiError(`${typeName} עם מזהה ${id} לא נמצא למחיקה`);
+      }
   }
 
   async function listItems(): Promise<Record<T["id"], T["title"]>> {
-    const results = await postgresDb
-      .select({
-        id: cols.id,
-        title: cols.title,
-      })
-      .from(table as any)
-      .orderBy(desc(cols.updatedAt));
+      const results = await postgresDb
+          .select({
+              id: cols.id,
+              title: cols.title,
+          })
+          .from(table as any)
+          .orderBy(desc(cols.updatedAt));
 
-    return results.reduce(
-      (acc, row) => {
-        acc[row.id as T["id"]] = row.title;
-        return acc;
-      },
+      return results.reduce(
+          (acc, row) => {
+              acc[row.id as T["id"]] = row.title;
+              return acc;
+          },
       {} as Record<T["id"], T["title"]>,
-    );
+      );
   }
 
   return {
-    getMultipleItems,
-    createNewItem,
-    updateItem,
-    deleteItem,
-    listItems,
+      getMultipleItems,
+      createNewItem,
+      updateItem,
+      deleteItem,
+      listItems,
   } as const;
 }

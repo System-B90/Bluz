@@ -1,4 +1,4 @@
-import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { GanttDayId } from "@/api-shared/types/gantt/models/day";
 import { GanttModuleId } from "@/api-shared/types/gantt/models/module";
 

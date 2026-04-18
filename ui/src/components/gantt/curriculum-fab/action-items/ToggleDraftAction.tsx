@@ -14,46 +14,46 @@ export interface ToggleDraftActionProps extends CurriculumAwareActionItemProps {
 }
 
 export function ToggleDraftAction({
-  sourceCurriculum,
-  onUpdate,
-  onProcessingChange,
-  ...props
+    sourceCurriculum,
+    onUpdate,
+    onProcessingChange,
+    ...props
 }: ToggleDraftActionProps) {
-  const { enqueueSnackbar } = useSnackbar();
+    const { enqueueSnackbar } = useSnackbar();
 
-  const clickHandler = useCallback(() => {
-    if (!sourceCurriculum) return;
-    onProcessingChange(true);
-    const nextDraftState = !sourceCurriculum.isDraft;
-    ganttApi.curriculum
-      .apiUpdate({ id: sourceCurriculum.id, isDraft: nextDraftState })
-      .then((updatedCurriculum) => onUpdate(updatedCurriculum))
-      .catch((error) =>
-        enqueueApiErrorSnackbar(
-          enqueueSnackbar,
-          sourceCurriculum.isDraft
-            ? "פרסום הגאנט נכשל!"
-            : "העברה לדראפט נכשלה!",
-          error,
-        ),
-      )
-      .finally(() => onProcessingChange(false));
-  }, [enqueueSnackbar, onProcessingChange, onUpdate, sourceCurriculum]);
+    const clickHandler = useCallback(() => {
+        if (!sourceCurriculum) return;
+        onProcessingChange(true);
+        const nextDraftState = !sourceCurriculum.isDraft;
+        ganttApi.curriculum
+            .apiUpdate({ id: sourceCurriculum.id, isDraft: nextDraftState })
+            .then((updatedCurriculum) => onUpdate(updatedCurriculum))
+            .catch((error) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    sourceCurriculum.isDraft
+                        ? "פרסום הגאנט נכשל!"
+                        : "העברה לדראפט נכשלה!",
+                    error,
+                ),
+            )
+            .finally(() => onProcessingChange(false));
+    }, [enqueueSnackbar, onProcessingChange, onUpdate, sourceCurriculum]);
 
-  return (
-    <ActionItemButton
-      color={sourceCurriculum?.isDraft ? "success" : "warning"}
-      onClick={clickHandler}
-      startIcon={
-        sourceCurriculum?.isDraft ? (
-          <TaskAltIcon fontSize="small" />
-        ) : (
-          <EditNoteIcon fontSize="small" />
-        )
-      }
-      {...props}
-    >
-      {sourceCurriculum?.isDraft ? "פיבלוש" : "החזרה לדראפט"}
-    </ActionItemButton>
-  );
+    return (
+        <ActionItemButton
+            color={sourceCurriculum?.isDraft ? "success" : "warning"}
+            onClick={clickHandler}
+            startIcon={
+                sourceCurriculum?.isDraft ? (
+                    <TaskAltIcon fontSize="small" />
+                ) : (
+                    <EditNoteIcon fontSize="small" />
+                )
+            }
+            {...props}
+        >
+            {sourceCurriculum?.isDraft ? "פיבלוש" : "החזרה לדראפט"}
+        </ActionItemButton>
+    );
 }

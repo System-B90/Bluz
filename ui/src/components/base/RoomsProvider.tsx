@@ -1,22 +1,22 @@
 "use client";
 import { enqueueSnackbar } from "notistack";
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
 } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { apiGetRooms } from "@/api-client/rooms";
 import {
-  CustomRoom,
-  HiveRoom,
-  Room,
-  RoomLike,
-  RoomSource,
+    CustomRoom,
+    HiveRoom,
+    Room,
+    RoomLike,
+    RoomSource,
 } from "@/components/schedule/types/room";
 
 export type RoomsContextState = {
@@ -26,90 +26,90 @@ export type RoomsContextState = {
 };
 
 const RoomsContext = createContext<RoomsContextState>({
-  default: true,
-  rooms: [],
-  getRoom: (_id: RoomLike) => null,
+    default: true,
+    rooms: [],
+    getRoom: (_id: RoomLike) => null,
 });
 
 export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
-  const [customRoomLookup, setCustomRoomLookup] = useState<
+    const [customRoomLookup, setCustomRoomLookup] = useState<
     Record<string, CustomRoom>
   >({});
-  const [hiveRoomLookup, setHiveRoomLookup] = useState<
+    const [hiveRoomLookup, setHiveRoomLookup] = useState<
     Record<number, HiveRoom>
   >({});
 
-  const rooms = useMemo(
-    () => [
-      ...Object.values(customRoomLookup),
-      ...Object.values(hiveRoomLookup),
-    ],
-    [customRoomLookup, hiveRoomLookup],
-  );
+    const rooms = useMemo(
+        () => [
+            ...Object.values(customRoomLookup),
+            ...Object.values(hiveRoomLookup),
+        ],
+        [customRoomLookup, hiveRoomLookup],
+    );
 
-  const getRoom = useCallback(
-    (id: RoomLike) => {
-      if (!(id instanceof Object)) {
-        return null;
-      }
-      switch (id.source) {
-        case RoomSource.Custom:
-          return customRoomLookup[id.id];
-        case RoomSource.Hive:
-          return hiveRoomLookup[id.id];
-        default:
-          return null;
-      }
-    },
-    [customRoomLookup, hiveRoomLookup],
-  );
-
-  const loadRooms = useCallback(() => {
-    apiGetRooms()
-      .then((fetchedRooms) => {
-        const customRoomsMap: Record<string, CustomRoom> = {};
-        const hiveRoomsMap: Record<number, HiveRoom> = {};
-        fetchedRooms.forEach((room) => {
-          switch (room.source) {
+    const getRoom = useCallback(
+        (id: RoomLike) => {
+            if (!(id instanceof Object)) {
+                return null;
+            }
+            switch (id.source) {
             case RoomSource.Custom:
-              customRoomsMap[room.id] = room;
-              break;
+                return customRoomLookup[id.id];
             case RoomSource.Hive:
-              hiveRoomsMap[room.id] = room;
-              break;
-          }
-        });
-        setCustomRoomLookup(customRoomsMap);
-        setHiveRoomLookup(hiveRoomsMap);
-      })
-      .catch((error) =>
-        enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת חדרים נכשלה.", error),
-      );
-  }, []);
+                return hiveRoomLookup[id.id];
+            default:
+                return null;
+            }
+        },
+        [customRoomLookup, hiveRoomLookup],
+    );
 
-  useEffect(() => {
-    loadRooms();
-  }, [loadRooms]);
+    const loadRooms = useCallback(() => {
+        apiGetRooms()
+            .then((fetchedRooms) => {
+                const customRoomsMap: Record<string, CustomRoom> = {};
+                const hiveRoomsMap: Record<number, HiveRoom> = {};
+                fetchedRooms.forEach((room) => {
+                    switch (room.source) {
+                    case RoomSource.Custom:
+                        customRoomsMap[room.id] = room;
+                        break;
+                    case RoomSource.Hive:
+                        hiveRoomsMap[room.id] = room;
+                        break;
+                    }
+                });
+                setCustomRoomLookup(customRoomsMap);
+                setHiveRoomLookup(hiveRoomsMap);
+            })
+            .catch((error) =>
+                enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת חדרים נכשלה.", error),
+            );
+    }, []);
 
-  return (
-    <RoomsContext.Provider
-      value={{
-        default: false,
-        rooms,
-        getRoom,
-      }}
-    >
-      {children}
-    </RoomsContext.Provider>
-  );
+    useEffect(() => {
+        loadRooms();
+    }, [loadRooms]);
+
+    return (
+        <RoomsContext.Provider
+            value={{
+                default: false,
+                rooms,
+                getRoom,
+            }}
+        >
+            {children}
+        </RoomsContext.Provider>
+    );
 };
 
 export const useRooms = () => {
-  const context = useContext(RoomsContext);
+    const context = useContext(RoomsContext);
 
-  if (context === undefined || context.default) {
-    throw new Error("useRooms must be used within an RoomsProvider");
-  }
+    if (context === undefined || context.default) {
+        throw new Error("useRooms must be used within an RoomsProvider");
+    }
 
-  return context;
+    return context;
 };

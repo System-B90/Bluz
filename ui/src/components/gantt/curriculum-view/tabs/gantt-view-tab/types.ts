@@ -8,17 +8,18 @@
  */
 
 import type {
-  ILink as SvarGanttLink,
-  IScaleConfig as SvarGanttScale,
-  ITask as SvarGanttTask,
+    ILink as SvarGanttLink,
+    IScaleConfig as SvarGanttScale,
+    ITask as SvarGanttTask,
 } from "@svar-ui/gantt-store";
 
-import {
-  GanttCurriculum,
-  GanttEvent,
-  GanttModule,
-  GanttSyllabus,
-} from "@/api-shared/types/gantt/models/curriculum";
+import
+{
+    GanttCurriculum,
+    GanttEvent,
+    GanttModule,
+    GanttSyllabus,
+} from "@/api-shared/types/gantt/models";
 
 export { SvarGanttLink, SvarGanttScale, SvarGanttTask };
 

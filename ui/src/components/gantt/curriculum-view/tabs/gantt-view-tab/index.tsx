@@ -9,13 +9,14 @@
 
 import React, { useMemo } from "react";
 
-import {
-  GanttCurriculum,
-  GanttCurriculumId,
-  GanttEvent,
-  GanttModule,
-  GanttSyllabus,
-} from "@/api-shared/types/gantt/models/curriculum";
+import
+{
+    GanttCurriculum,
+    GanttCurriculumId,
+    GanttEvent,
+    GanttModule,
+    GanttSyllabus,
+} from "@/api-shared/types/gantt/models";
 import { CurriculumMappingProvider } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { CurriculumGanttViewInner } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/CurriculumGanttViewInner";
 import { GanttDataSourceProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";
@@ -27,29 +28,29 @@ export interface CurriculumGanttViewProps {
 }
 
 export function CurriculumGanttView({
-  curriculumId,
+    curriculumId,
 }: CurriculumGanttViewProps): null | React.ReactElement {
-  const curriculum: GanttCurriculum | undefined = useCurriculum(curriculumId);
-  const state = useCurriculumState();
+    const curriculum: GanttCurriculum | undefined = useCurriculum(curriculumId);
+    const state = useCurriculumState();
 
-  const innerProps: GanttDataSourceProps | null = useMemo(
-    (): GanttDataSourceProps | null =>
-      curriculum
-        ? {
-            curriculum,
-            syllabuses: Object.values(state.syllabuses) as Array<GanttSyllabus>,
-            modules: Object.values(state.modules) as Array<GanttModule>,
-            events: Object.values(state.events) as Array<GanttEvent>,
-          }
-        : null,
-    [curriculum, state],
-  );
+    const innerProps: GanttDataSourceProps | null = useMemo(
+        (): GanttDataSourceProps | null =>
+            curriculum
+                ? {
+                    curriculum,
+                    syllabuses: Object.values(state.syllabuses) as Array<GanttSyllabus>,
+                    modules: Object.values(state.modules) as Array<GanttModule>,
+                    events: Object.values(state.events) as Array<GanttEvent>,
+                }
+                : null,
+        [curriculum, state],
+    );
 
-  if (!innerProps) return null;
+    if (!innerProps) return null;
 
-  return (
-    <CurriculumMappingProvider curriculumId={curriculumId}>
-      <CurriculumGanttViewInner {...innerProps} />
-    </CurriculumMappingProvider>
-  );
+    return (
+        <CurriculumMappingProvider curriculumId={curriculumId}>
+            <CurriculumGanttViewInner {...innerProps} />
+        </CurriculumMappingProvider>
+    );
 }

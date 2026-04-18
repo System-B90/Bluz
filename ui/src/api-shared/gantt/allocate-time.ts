@@ -1,9 +1,10 @@
-import {
-  GanttCurriculumId,
-  GanttEvent,
-  GanttEventId,
-  GanttModule,
-} from "@/api-shared/types/gantt/models/curriculum";
+import
+{
+    GanttCurriculumId,
+    GanttEvent,
+    GanttEventId,
+    GanttModule,
+} from "@/api-shared/types/gantt/models";
 
 type AllocateTimeToEventCallbackSync = (props: {
   eventId: GanttEventId;
@@ -41,38 +42,38 @@ export function allocateTimeToModule(
 
 // Implementation
 export async function allocateTimeToModule({
-  module,
-  totalDuration,
-  moduleEvents,
-  curriculumId,
-  allocateToEventCallback,
+    module,
+    totalDuration,
+    moduleEvents,
+    curriculumId,
+    allocateToEventCallback,
 }: AllocateTimeToModuleProps<AllocateTimeToEventCallback>): Promise<void> {
-  let remainingBudget = totalDuration;
+    let remainingBudget = totalDuration;
 
-  for (const eventId of module.events) {
-    const event = moduleEvents[eventId];
+    for (const eventId of module.events) {
+        const event = moduleEvents[eventId];
 
-    // Red Flag: If eventId doesn't exist in the map, the logic would crash.
-    if (!event) continue;
+        // Red Flag: If eventId doesn't exist in the map, the logic would crash.
+        if (!event) continue;
 
-    let allocation = 0;
+        let allocation = 0;
 
-    // Optimization: Handle the common case where budget is already 0
-    if (remainingBudget <= 0) {
-      allocation = 0;
-    } else if (remainingBudget >= event.minimumDuration) {
-      allocation = event.minimumDuration;
-      remainingBudget -= event.minimumDuration;
-    } else {
-      allocation = remainingBudget;
-      remainingBudget = 0;
+        // Optimization: Handle the common case where budget is already 0
+        if (remainingBudget <= 0) {
+            allocation = 0;
+        } else if (remainingBudget >= event.minimumDuration) {
+            allocation = event.minimumDuration;
+            remainingBudget -= event.minimumDuration;
+        } else {
+            allocation = remainingBudget;
+            remainingBudget = 0;
+        }
+
+        // We await regardless; if the callback is sync, it resolves immediately.
+        await allocateToEventCallback({
+            eventId,
+            curriculumId,
+            duration: allocation,
+        });
     }
-
-    // We await regardless; if the callback is sync, it resolves immediately.
-    await allocateToEventCallback({
-      eventId,
-      curriculumId,
-      duration: allocation,
-    });
-  }
 }

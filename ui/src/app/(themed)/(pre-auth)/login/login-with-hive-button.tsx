@@ -1,8 +1,8 @@
 import {
-  Button,
-  ButtonProps,
-  Typography,
-  TypographyProps,
+    Button,
+    ButtonProps,
+    Typography,
+    TypographyProps,
 } from "@mui/material";
 import Image from "next/image";
 import { signIn, SignInOptions } from "next-auth/react";
@@ -17,46 +17,46 @@ interface LoginWithHiveProps extends ButtonProps {
 }
 
 export function LoginWithHive({
-  callbackUrl = "/",
-  fullWidth = true,
-  variant = "contained",
-  onClick,
-  size = "large",
-  fontSize = "1.2rem",
-  fontWeight = 600,
-  ...props
+    callbackUrl = "/",
+    fullWidth = true,
+    variant = "contained",
+    onClick,
+    size = "large",
+    fontSize = "1.2rem",
+    fontWeight = 600,
+    ...props
 }: LoginWithHiveProps) {
-  // Added callbackUrl to the dependency array to prevent stale closures
-  const defaultClickCallback = useCallback(
-    () => signIn("hive", { callbackUrl }),
-    [callbackUrl],
-  );
+    // Added callbackUrl to the dependency array to prevent stale closures
+    const defaultClickCallback = useCallback(
+        () => signIn("hive", { callbackUrl }),
+        [callbackUrl],
+    );
 
-  const clickCallback = onClick ?? defaultClickCallback;
+    const clickCallback = onClick ?? defaultClickCallback;
 
-  return (
-    <Button
-      fullWidth={fullWidth}
-      onClick={clickCallback}
-      size={size}
-      startIcon={
-        <Image
-          alt=""
-          height={24}
-          src={`${getHiveBaseUrl()}/static/icon.svg`}
-          width={24}
-        />
-      }
-      variant={variant}
-      {...props}
-    >
-      <Typography
-        color="textPrimary"
-        fontSize={fontSize}
-        fontWeight={fontWeight}
-      >
+    return (
+        <Button
+            fullWidth={fullWidth}
+            onClick={clickCallback}
+            size={size}
+            startIcon={
+                <Image
+                    alt=""
+                    height={24}
+                    src={`${getHiveBaseUrl()}/static/icon.svg`}
+                    width={24}
+                />
+            }
+            variant={variant}
+            {...props}
+        >
+            <Typography
+                color="textPrimary"
+                fontSize={fontSize}
+                fontWeight={fontWeight}
+            >
         התחברות עם הייב
-      </Typography>
-    </Button>
-  );
+            </Typography>
+        </Button>
+    );
 }

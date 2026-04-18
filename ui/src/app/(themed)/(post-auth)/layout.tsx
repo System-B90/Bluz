@@ -7,19 +7,19 @@ import { AuthSessionUser } from "@/api-shared/types/sso";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 
 export default async function PostAuthLayout({
-  children,
+    children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions);
 
-  if (!session || !session.user) {
-    redirect("/login");
-  }
+    if (!session || !session.user) {
+        redirect("/login");
+    }
 
-  return (
-    <AuthProvider userData={session.user as AuthSessionUser}>
-      {children}
-    </AuthProvider>
-  );
+    return (
+        <AuthProvider userData={session.user as AuthSessionUser}>
+            {children}
+        </AuthProvider>
+    );
 }

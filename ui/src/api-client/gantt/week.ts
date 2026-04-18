@@ -1,27 +1,29 @@
-import {
-  BaseDocument,
-  baseDocumentFixup,
-  clientGantApiBuilder,
+import
+{
+    BaseDocument,
+    baseDocumentFixup,
+    clientGantApiBuilder,
 } from "@/api-client/gantt/base";
 import { CreateGanttWeekPayload } from "@/api-shared/types/gantt/create-payloads";
-import { GanttWeek } from "@/api-shared/types/gantt/models/curriculum";
+import { GanttWeek } from "@/api-shared/types/gantt/models";
 
 export type CurriculumWeekDocument = GanttWeek & BaseDocument;
 
 const weekApi = clientGantApiBuilder<GanttWeek, CreateGanttWeekPayload>({
-  apiBaseUrl: "/api/gantt/weeks",
-  dateFixup: baseDocumentFixup as any,
+    apiBaseUrl: "/api/gantt/weeks",
+    dateFixup: baseDocumentFixup as any,
 });
 
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =
   weekApi;
 
-export {
-  apiCreate as apiCreateWeek,
-  apiDelete as apiDeleteWeek,
-  apiGetMany as apiGetManyWeeks,
-  apiGet as apiGetWeek,
-  apiList as apiListWeeks,
-  apiUpdate as apiUpdateWeek,
-  weekApi,
+export
+{
+    apiCreate as apiCreateWeek,
+    apiDelete as apiDeleteWeek,
+    apiGetMany as apiGetManyWeeks,
+    apiGet as apiGetWeek,
+    apiList as apiListWeeks,
+    apiUpdate as apiUpdateWeek,
+    weekApi
 };

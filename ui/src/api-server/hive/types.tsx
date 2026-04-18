@@ -20,16 +20,16 @@ export enum Clearance {
 }
 
 export const clearanceName = (clearance: Clearance) => {
-  switch (clearance) {
+    switch (clearance) {
     case Clearance.Hanich:
-      return "Hanich" as const;
+        return "Hanich" as const;
     case Clearance.Checker:
-      return "Checker" as const;
+        return "Checker" as const;
     case Clearance.Segel:
-      return "Segel" as const;
+        return "Segel" as const;
     case Clearance.Admin:
-      return "Admin" as const;
-  }
+        return "Admin" as const;
+    }
 };
 export enum ClassTypeEnum {
   Room = "Room",
@@ -44,9 +44,9 @@ export enum ClassTypeEnum {
 export type GenderEnum = (typeof GenderEnum)[keyof typeof GenderEnum];
 
 export const GenderEnum = {
-  Male: "Male",
-  Female: "Female",
-  NonBinary: "NonBinary",
+    Male: "Male",
+    Female: "Female",
+    NonBinary: "NonBinary",
 } as const;
 /**
  * * `Present` - Present
@@ -63,16 +63,16 @@ export const GenderEnum = {
 export type StatusEnum = (typeof StatusEnum)[keyof typeof StatusEnum];
 
 export const StatusEnum = {
-  Present: "Present",
-  Raised_Hand: "Raised Hand",
-  Toilet_Request: "Toilet Request",
-  Toilet: "Toilet",
-  Personal_Talk: "Personal Talk",
-  Work_Talk: "Work Talk",
-  Medical: "Medical",
-  Prayer: "Prayer",
-  Room: "Room",
-  Home: "Home",
+    Present: "Present",
+    Raised_Hand: "Raised Hand",
+    Toilet_Request: "Toilet Request",
+    Toilet: "Toilet",
+    Personal_Talk: "Personal Talk",
+    Work_Talk: "Work Talk",
+    Medical: "Medical",
+    Prayer: "Prayer",
+    Room: "Room",
+    Home: "Home",
 } as const;
 
 export interface CourseUser {

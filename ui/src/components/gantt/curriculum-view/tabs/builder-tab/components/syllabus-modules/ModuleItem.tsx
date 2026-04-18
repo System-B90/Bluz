@@ -10,10 +10,11 @@ import { CSS } from "@dnd-kit/utilities";
 import { Box, Paper, PaperProps, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
 
-import {
-  GanttDayId,
-  GanttModuleId,
-} from "@/api-shared/types/gantt/models/curriculum";
+import
+{
+    GanttDayId,
+    GanttModuleId,
+} from "@/api-shared/types/gantt/models";
 import { hashSyllabusToColor } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
 import { WorkTimeChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
@@ -27,70 +28,70 @@ export interface ModuleItemProps extends PaperProps {
 }
 
 export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
-  const theme = useTheme();
-  const state = useCurriculumState();
-  const { syllabusNames } = useSyllabusNames();
-  const moduleDoc = useModule(moduleId);
-  const syllabusId = moduleDoc?.syllabusId;
-  const color = useMemo(
-    () =>
-      syllabusId
-        ? hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2)
-        : undefined,
-    [syllabusId, theme.palette.primary.main],
-  );
-  const syllabusTitle = useMemo(
-    () => (syllabusId ? syllabusNames[syllabusId] : "סילבוס"),
-    [syllabusId, syllabusNames],
-  );
+    const theme = useTheme();
+    const state = useCurriculumState();
+    const { syllabusNames } = useSyllabusNames();
+    const moduleDoc = useModule(moduleId);
+    const syllabusId = moduleDoc?.syllabusId;
+    const color = useMemo(
+        () =>
+            syllabusId
+                ? hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2)
+                : undefined,
+        [syllabusId, theme.palette.primary.main],
+    );
+    const syllabusTitle = useMemo(
+        () => (syllabusId ? syllabusNames[syllabusId] : "סילבוס"),
+        [syllabusId, syllabusNames],
+    );
 
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
-      id: `module-${moduleId}`,
-      data: { type: "MODULE", moduleId, dayId },
+        id: `module-${moduleId}`,
+        data: { type: "MODULE", moduleId, dayId },
     });
 
-  const style = {
-    ...props.style,
-    transform: CSS.Translate.toString(transform),
-    transition: isDragging ? undefined : "transform 200ms ease",
-  };
+    const style = {
+        ...props.style,
+        transform: CSS.Translate.toString(transform),
+        transition: isDragging ? undefined : "transform 200ms ease",
+    };
 
-  const totalHours = useMemo(
-    () =>
-      moduleDoc
-        ? calculateMinimumRequiredTimeForModule(moduleDoc, state) / 60
-        : 0,
-    [moduleDoc, state],
-  );
+    const totalHours = useMemo(
+        () =>
+            moduleDoc
+                ? calculateMinimumRequiredTimeForModule(moduleDoc, state) / 60
+                : 0,
+        [moduleDoc, state],
+    );
 
-  return (
-    <Paper
-      {...props}
-      elevation={isDragging ? 4 : 0}
-      ref={setNodeRef}
-      style={style}
-      sx={{ ...props.sx, backgroundColor: color }}
-      {...attributes}
-      {...listeners}
-      className={`flex flex-row justify-between items-center
+    return (
+        <Paper
+            {...props}
+            elevation={isDragging ? 4 : 0}
+            ref={setNodeRef}
+            style={style}
+            sx={{ ...props.sx, backgroundColor: color }}
+            {...attributes}
+            {...listeners}
+            className={`flex flex-row justify-between items-center
                 p-2 border border-solid border-slate-200 cursor-grab 
                 hover:border-blue-400 hover:bg-blue-50 transition-all
                 active:cursor-grabbing touch-none
                 ${props.className ?? ""}
                 ${isDragging ? "opacity-0 pointer-events-none" : "opacity-100"}
             `}
-    >
-      <Typography className="select-none font-medium" variant="body2">
-        {moduleDoc?.title ?? "Unknown Module"}
-      </Typography>
-      <Box className="flex flex-row items-center">
-        <Typography className="select-none font-medium" variant="body2">
-          {syllabusTitle}
-        </Typography>
-        <Box width="0.3rem" />
-        <WorkTimeChip totalHours={totalHours} />
-      </Box>
-    </Paper>
-  );
+        >
+            <Typography className="select-none font-medium" variant="body2">
+                {moduleDoc?.title ?? "Unknown Module"}
+            </Typography>
+            <Box className="flex flex-row items-center">
+                <Typography className="select-none font-medium" variant="body2">
+                    {syllabusTitle}
+                </Typography>
+                <Box width="0.3rem" />
+                <WorkTimeChip totalHours={totalHours} />
+            </Box>
+        </Paper>
+    );
 }

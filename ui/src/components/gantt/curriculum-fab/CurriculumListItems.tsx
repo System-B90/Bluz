@@ -2,7 +2,7 @@ import { ListItem, ListItemButton, Skeleton } from "@mui/material";
 import { Dispatch, SetStateAction } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
-import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumEntry } from "@/components/gantt/curriculum-fab/CurriculumEntry";
 
 export interface CurriculumListItemsProps {
@@ -14,36 +14,36 @@ export interface CurriculumListItemsProps {
 }
 
 export function CurriculumListItems({
-  isFetchingDetails,
-  curriculumsData,
-  sortedIds,
-  setCurrentCurriculum,
-  currentCurriculum,
+    isFetchingDetails,
+    curriculumsData,
+    sortedIds,
+    setCurrentCurriculum,
+    currentCurriculum,
 }: CurriculumListItemsProps) {
-  if (isFetchingDetails) {
+    if (isFetchingDetails) {
     // Default to 3 skeletons while doing the initial double-fetch
-    const skeletonCount = Object.keys(curriculumsData).length || 3;
+        const skeletonCount = Object.keys(curriculumsData).length || 3;
 
-    return Array.from({ length: skeletonCount }).map((_, index) => (
-      <ListItem disablePadding key={`skeleton-${index}`}>
-        <ListItemButton disabled>
-          <Skeleton height={28} variant="text" width="80%" />
-        </ListItemButton>
-      </ListItem>
-    ));
-  }
+        return Array.from({ length: skeletonCount }).map((_, index) => (
+            <ListItem disablePadding key={`skeleton-${index}`}>
+                <ListItemButton disabled>
+                    <Skeleton height={28} variant="text" width="80%" />
+                </ListItemButton>
+            </ListItem>
+        ));
+    }
 
-  return sortedIds.map((id) => {
-    const curriculum = curriculumsData[id];
-    if (!curriculum) return null;
+    return sortedIds.map((id) => {
+        const curriculum = curriculumsData[id];
+        if (!curriculum) return null;
 
-    return (
-      <CurriculumEntry
-        curriculum={curriculum}
-        key={id}
-        onClick={() => setCurrentCurriculum(id)}
-        selected={currentCurriculum === id}
-      />
-    );
-  });
+        return (
+            <CurriculumEntry
+                curriculum={curriculum}
+                key={id}
+                onClick={() => setCurrentCurriculum(id)}
+                selected={currentCurriculum === id}
+            />
+        );
+    });
 }

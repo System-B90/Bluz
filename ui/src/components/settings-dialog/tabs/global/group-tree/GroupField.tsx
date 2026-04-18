@@ -13,27 +13,27 @@ interface GroupFieldProps {
 }
 
 export function GroupField({ group, attributes, listeners }: GroupFieldProps) {
-  return (
-    <Stack
-      alignItems="center"
-      direction="row"
-      spacing={2}
-      sx={{ width: "100%" }}
-    >
-      {/* Drag handle */}
-      <Box {...listeners} {...attributes} sx={{ cursor: "grab" }}>
-        <DragIndicatorIcon />
-      </Box>
+    return (
+        <Stack
+            alignItems="center"
+            direction="row"
+            spacing={2}
+            sx={{ width: "100%" }}
+        >
+            {/* Drag handle */}
+            <Box {...listeners} {...attributes} sx={{ cursor: "grab" }}>
+                <DragIndicatorIcon />
+            </Box>
 
-      {/* Group name and type */}
-      <Typography variant="subtitle1">{group.name}</Typography>
-      <Tooltip title={group.groupType}>
-        <Chip
-          label={group.groupType}
-          size="small"
-          sx={{ backgroundColor: groupColors[group.groupType], color: "#fff" }}
-        />
-      </Tooltip>
-    </Stack>
-  );
+            {/* Group name and type */}
+            <Typography variant="subtitle1">{group.name}</Typography>
+            <Tooltip title={group.groupType}>
+                <Chip
+                    label={group.groupType}
+                    size="small"
+                    sx={{ backgroundColor: groupColors[group.groupType], color: "#fff" }}
+                />
+            </Tooltip>
+        </Stack>
+    );
 }

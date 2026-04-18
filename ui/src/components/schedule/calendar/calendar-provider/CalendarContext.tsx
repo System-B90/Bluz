@@ -23,13 +23,13 @@ export type CalendarContextState = {
 
 // Removed the 'default' flag hack; it's better to just type the context as potentially undefined
 export const CalendarContext = createContext<CalendarContextState | undefined>(
-  undefined,
+    undefined,
 );
 
 export const useCalendar = () => {
-  const context = useContext(CalendarContext);
-  if (context === undefined) {
-    throw new Error("useCalendar must be used within a CalendarProvider");
-  }
-  return context;
+    const context = useContext(CalendarContext);
+    if (context === undefined) {
+        throw new Error("useCalendar must be used within a CalendarProvider");
+    }
+    return context;
 };

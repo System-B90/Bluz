@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
+    Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
 } from "@mui/material";
 import { FormEvent, useCallback, useState } from "react";
 
@@ -25,68 +25,68 @@ interface EventDialogProps {
 }
 
 export function EventDialog({
-  open,
-  event: inputEvent,
-  onClose,
-  onSave,
-  onDelete,
+    open,
+    event: inputEvent,
+    onClose,
+    onSave,
+    onDelete,
 }: EventDialogProps) {
-  const [event, setEventRaw] = useState<Event>({ ...inputEvent });
-  const [prevOpen, setPrevOpen] = useState(open);
-  const [prevInputEvent, setPrevInputEvent] = useState(inputEvent);
+    const [event, setEventRaw] = useState<Event>({ ...inputEvent });
+    const [prevOpen, setPrevOpen] = useState(open);
+    const [prevInputEvent, setPrevInputEvent] = useState(inputEvent);
 
-  if (open !== prevOpen || inputEvent !== prevInputEvent) {
-    setPrevOpen(open);
-    setPrevInputEvent(inputEvent);
-    if (open) {
-      setEventRaw({ ...inputEvent });
+    if (open !== prevOpen || inputEvent !== prevInputEvent) {
+        setPrevOpen(open);
+        setPrevInputEvent(inputEvent);
+        if (open) {
+            setEventRaw({ ...inputEvent });
+        }
     }
-  }
 
-  const handleUpdate = useCallback((update: Partial<Event>) => {
-    setEventRaw((prev) => ({ ...prev, ...update }));
-  }, []);
+    const handleUpdate = useCallback((update: Partial<Event>) => {
+        setEventRaw((prev) => ({ ...prev, ...update }));
+    }, []);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    onSave(event);
-  };
+    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        onSave(event);
+    };
 
-  return (
-    <Dialog fullWidth maxWidth="lg" onClose={onClose} open={open}>
-      <DialogTitle>ערוך מופע</DialogTitle>
+    return (
+        <Dialog fullWidth maxWidth="lg" onClose={onClose} open={open}>
+            <DialogTitle>ערוך מופע</DialogTitle>
 
-      <form onSubmit={handleSubmit}>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
-            <EventPrimaryDetails event={event} onUpdate={handleUpdate} />
+            <form onSubmit={handleSubmit}>
+                <DialogContent>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
+                        <EventPrimaryDetails event={event} onUpdate={handleUpdate} />
 
-            <EventClassification event={event} onUpdate={handleUpdate} />
+                        <EventClassification event={event} onUpdate={handleUpdate} />
 
-            <InstructorsField event={event} onBlurCallback={handleUpdate} />
+                        <InstructorsField event={event} onBlurCallback={handleUpdate} />
 
-            <EventToggles event={event} onUpdate={handleUpdate} />
-          </Box>
-        </DialogContent>
+                        <EventToggles event={event} onUpdate={handleUpdate} />
+                    </Box>
+                </DialogContent>
 
-        <DialogActions>
-          <Button
-            color="error"
-            disabled={!event?.id}
-            onClick={() => onDelete(event.id as string)}
-          >
+                <DialogActions>
+                    <Button
+                        color="error"
+                        disabled={!event?.id}
+                        onClick={() => onDelete(event.id as string)}
+                    >
             מחק
-          </Button>
-          <Button onClick={onClose}>ביטול</Button>
-          <Button
-            disabled={!event?.name?.trim()}
-            type="submit"
-            variant="contained"
-          >
+                    </Button>
+                    <Button onClick={onClose}>ביטול</Button>
+                    <Button
+                        disabled={!event?.name?.trim()}
+                        type="submit"
+                        variant="contained"
+                    >
             שמור
-          </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
-  );
+                    </Button>
+                </DialogActions>
+            </form>
+        </Dialog>
+    );
 }

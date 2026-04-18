@@ -11,10 +11,10 @@ export enum EventType {
   OTHER = "other",
 }
 export function eventHasSubject(type: EventType): boolean {
-  return type === EventType.EXERCISE || type === EventType.LECTURE;
+    return type === EventType.EXERCISE || type === EventType.LECTURE;
 }
 export function eventHasRoom(type: EventType): boolean {
-  return type !== EventType.PRAYER;
+    return type !== EventType.PRAYER;
 }
 
 export type PersonId = "איש חוץ" | number;
@@ -46,12 +46,12 @@ export enum PrayerType {
 }
 
 export function prayerTypeToHebrew(prayerType: PrayerType): string {
-  const LOOKUP: Record<PrayerType, string> = {
-    shacharit: "שחרית",
-    mincha: "מנחה",
-    arvit: "ערבית",
-  };
-  return LOOKUP[prayerType] ?? prayerType;
+    const LOOKUP: Record<PrayerType, string> = {
+        shacharit: "שחרית",
+        mincha: "מנחה",
+        arvit: "ערבית",
+    };
+    return LOOKUP[prayerType] ?? prayerType;
 }
 
 export interface PrayerEvent extends Event {
@@ -60,26 +60,26 @@ export interface PrayerEvent extends Event {
 }
 
 export function eventTypeToHebrew(type: Event["type"]): string {
-  const LOOKUP: Record<Event["type"], string> = {
-    exercise: 'ע"ע',
-    lecture: "הרצאה",
-    other: "אחר",
-    break: "הפסקה",
-    prayer: "תפילה",
-  };
-  return LOOKUP[type] ?? type;
+    const LOOKUP: Record<Event["type"], string> = {
+        exercise: 'ע"ע',
+        lecture: "הרצאה",
+        other: "אחר",
+        break: "הפסקה",
+        prayer: "תפילה",
+    };
+    return LOOKUP[type] ?? type;
 }
 
 export function getPresentInstructors(event: Event): Array<number>;
 export function getPresentInstructors(
-  event: Event,
-  includeOutsiders: boolean = false,
+    event: Event,
+    includeOutsiders: boolean = false,
 ): Array<PersonId> {
-  const reduced = new Set<PersonId>([
-    ...event.instructors,
-    ...(event.lecturers?.filter(
-      (v) => typeof v === "number" || includeOutsiders,
-    ) ?? []),
-  ]);
-  return Array.from(reduced);
+    const reduced = new Set<PersonId>([
+        ...event.instructors,
+        ...(event.lecturers?.filter(
+            (v) => typeof v === "number" || includeOutsiders,
+        ) ?? []),
+    ]);
+    return Array.from(reduced);
 }

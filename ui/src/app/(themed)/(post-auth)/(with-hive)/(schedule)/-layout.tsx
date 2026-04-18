@@ -1,9 +1,9 @@
 import React from "react";
 
 export default async function ScheduleLayout({
-  children,
+    children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return { children };
+    return { children };
 }

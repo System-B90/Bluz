@@ -1,8 +1,9 @@
-import {
-  GanttCurriculumId,
-  GanttWeek,
-  GanttWeekId,
-} from "@/api-shared/types/gantt/models/curriculum";
+import
+{
+    GanttCurriculumId,
+    GanttWeek,
+    GanttWeekId,
+} from "@/api-shared/types/gantt/models";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useCurriculumWeek(weekId: null): undefined;
@@ -12,15 +13,15 @@ export function useCurriculumWeek(
   | (GanttWeek & { id: GanttWeekId; curriculumId: GanttCurriculumId })
   | undefined;
 export function useCurriculumWeek(
-  weekId: GanttWeekId | null,
+    weekId: GanttWeekId | null,
 ):
   | (GanttWeek & { id: GanttWeekId; curriculumId: GanttCurriculumId })
   | undefined {
-  const state = useCurriculumState();
+    const state = useCurriculumState();
 
-  if (weekId === null) {
-    return undefined;
-  }
+    if (weekId === null) {
+        return undefined;
+    }
 
-  return state.weeks[weekId];
+    return state.weeks[weekId];
 }

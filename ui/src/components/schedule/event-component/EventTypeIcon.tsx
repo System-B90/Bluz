@@ -9,34 +9,34 @@ import { ReactNode } from "react";
 import { Event, eventTypeToHebrew } from "@/components/schedule/types/event";
 
 export function EventTypeIcon({
-  event,
-  ...props
+    event,
+    ...props
 }: { event: Event } & SvgIconProps) {
-  let icon: ReactNode = undefined;
-  switch (event.type) {
+    let icon: ReactNode = undefined;
+    switch (event.type) {
     case "exercise":
-      icon = <CoPresentIcon {...props} />;
-      break;
+        icon = <CoPresentIcon {...props} />;
+        break;
     case "lecture":
-      icon = <SchoolIcon {...props} />;
-      break;
+        icon = <SchoolIcon {...props} />;
+        break;
     case "other":
-      icon = <QuizIcon {...props} />;
-      break;
+        icon = <QuizIcon {...props} />;
+        break;
     case "break":
-      icon = <EmojiFoodBeverageIcon {...props} />;
-      break;
+        icon = <EmojiFoodBeverageIcon {...props} />;
+        break;
     case "prayer":
-      icon = <SynagogueIcon {...props} />;
-      break;
+        icon = <SynagogueIcon {...props} />;
+        break;
     default:
-      break;
-  }
-  return (
-    <Box>
-      {icon ? (
-        <Tooltip title={eventTypeToHebrew(event.type)}>{icon}</Tooltip>
-      ) : null}
-    </Box>
-  );
+        break;
+    }
+    return (
+        <Box>
+            {icon ? (
+                <Tooltip title={eventTypeToHebrew(event.type)}>{icon}</Tooltip>
+            ) : null}
+        </Box>
+    );
 }

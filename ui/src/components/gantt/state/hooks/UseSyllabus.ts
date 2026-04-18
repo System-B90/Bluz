@@ -1,5 +1,5 @@
 import { SyllabusDocument } from "@/api-client/gantt/syllabus";
-import { GanttSyllabusId } from "@/api-shared/types/gantt/models/curriculum";
+import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useSyllabus(syllabusId: null): undefined;
@@ -7,13 +7,13 @@ export function useSyllabus(
   syllabusId: GanttSyllabusId,
 ): SyllabusDocument | undefined;
 export function useSyllabus(
-  syllabusId: GanttSyllabusId | null,
+    syllabusId: GanttSyllabusId | null,
 ): SyllabusDocument | undefined {
-  const state = useCurriculumState();
+    const state = useCurriculumState();
 
-  if (syllabusId === null) {
-    return undefined;
-  }
+    if (syllabusId === null) {
+        return undefined;
+    }
 
-  return state.syllabuses[syllabusId];
+    return state.syllabuses[syllabusId];
 }

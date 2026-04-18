@@ -2,18 +2,18 @@
 
 import { signOut } from "next-auth/react";
 import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
 } from "react";
 
 import { AuthSessionUser } from "@/api-shared/types/sso";
 import {
-  MessageHandlerType,
-  useSessionWebSocketContext,
+    MessageHandlerType,
+    useSessionWebSocketContext,
 } from "@/components/SessionWs";
 import { MessageTypes } from "@/settings";
 
@@ -33,89 +33,89 @@ export type AuthContextState = {
 const AuthContext = createContext<AuthContextState | undefined>(undefined);
 
 export const AuthProvider = ({
-  children,
-  userData,
+    children,
+    userData,
 }: {
   children: React.ReactNode;
   userData: AuthSessionUser;
 }) => {
-  const { ws, addMessageHandler } = useSessionWebSocketContext();
-  const messageQueue = useRef<WebSocketSessionMessage[]>([]);
+    const { ws, addMessageHandler } = useSessionWebSocketContext();
+    const messageQueue = useRef<WebSocketSessionMessage[]>([]);
 
-  const canEdit: boolean = !!userData;
+    const canEdit: boolean = !!userData;
 
-  const onWebSocketMessage: MessageHandlerType = useCallback(
-    (messageType: MessageTypes, data: unknown) => {
-      console.log(`[onWebSocketMessage] ${messageType}`, data);
-    },
-    [],
-  );
+    const onWebSocketMessage: MessageHandlerType = useCallback(
+        (messageType: MessageTypes, data: unknown) => {
+            console.log(`[onWebSocketMessage] ${messageType}`, data);
+        },
+        [],
+    );
 
-  useEffect(() => {
-    return addMessageHandler(onWebSocketMessage);
-  }, [addMessageHandler, onWebSocketMessage]);
+    useEffect(() => {
+        return addMessageHandler(onWebSocketMessage);
+    }, [addMessageHandler, onWebSocketMessage]);
 
-  const sendMessage = useCallback(
-    (data: WebSocketSessionMessage) => {
-      if (!ws?.current) return;
+    const sendMessage = useCallback(
+        (data: WebSocketSessionMessage) => {
+            if (!ws?.current) return;
 
-      if (ws.current.readyState === WebSocket.OPEN) {
-        ws.current.send(JSON.stringify(data));
-      } else if (ws.current.readyState === WebSocket.CONNECTING) {
-        messageQueue.current.push(data);
-      } else {
-        console.error("WebSocket is closed. Cannot send message.");
-      }
-    },
-    [ws],
-  );
+            if (ws.current.readyState === WebSocket.OPEN) {
+                ws.current.send(JSON.stringify(data));
+            } else if (ws.current.readyState === WebSocket.CONNECTING) {
+                messageQueue.current.push(data);
+            } else {
+                console.error("WebSocket is closed. Cannot send message.");
+            }
+        },
+        [ws],
+    );
 
-  useEffect(() => {
-    if (!ws?.current) return;
+    useEffect(() => {
+        if (!ws?.current) return;
 
-    const socketInstance = ws.current;
+        const socketInstance = ws.current;
 
-    const handleSocketOpen = () => {
-      while (messageQueue.current.length > 0) {
-        const msg = messageQueue.current.shift();
-        if (msg) socketInstance.send(JSON.stringify(msg));
-      }
-    };
+        const handleSocketOpen = () => {
+            while (messageQueue.current.length > 0) {
+                const msg = messageQueue.current.shift();
+                if (msg) socketInstance.send(JSON.stringify(msg));
+            }
+        };
 
-    socketInstance.addEventListener("open", handleSocketOpen);
+        socketInstance.addEventListener("open", handleSocketOpen);
 
-    return () => {
-      socketInstance.removeEventListener("open", handleSocketOpen);
-    };
-  }, [ws]);
+        return () => {
+            socketInstance.removeEventListener("open", handleSocketOpen);
+        };
+    }, [ws]);
 
-  const logout = useCallback(() => {
+    const logout = useCallback(() => {
     // No return from this function
-    void signOut({ callbackUrl: "/login" });
-  }, []);
+        void signOut({ callbackUrl: "/login" });
+    }, []);
 
-  const contextValue = useMemo<AuthContextState>(
-    () => ({
-      userData,
-      logout,
-      canEdit,
-      addMessageHandler,
-      sendMessage,
-    }),
-    [logout, userData, canEdit, addMessageHandler, sendMessage],
-  );
+    const contextValue = useMemo<AuthContextState>(
+        () => ({
+            userData,
+            logout,
+            canEdit,
+            addMessageHandler,
+            sendMessage,
+        }),
+        [logout, userData, canEdit, addMessageHandler, sendMessage],
+    );
 
-  return (
-    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
-  );
+    return (
+        <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+    );
 };
 
 export const useAuth = (): AuthContextState => {
-  const context = useContext(AuthContext);
+    const context = useContext(AuthContext);
 
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+    if (context === undefined) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
 
-  return context;
+    return context;
 };

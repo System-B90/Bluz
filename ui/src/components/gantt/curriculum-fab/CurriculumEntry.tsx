@@ -1,7 +1,7 @@
 import { ListItem, ListItemButton, ListItemText } from "@mui/material";
 import React from "react";
 
-import { GanttCurriculum } from "@/api-shared/types/gantt/models/curriculum";
+import { GanttCurriculum } from "@/api-shared/types/gantt/models";
 
 interface CurriculumEntryProps {
   curriculum: GanttCurriculum;
@@ -11,31 +11,31 @@ interface CurriculumEntryProps {
 
 // Visual distinction between Draft and Prod handled here
 export const CurriculumEntry = React.memo(
-  ({ curriculum, onClick, selected }: CurriculumEntryProps) => {
-    const isDraft = curriculum?.isDraft;
+    ({ curriculum, onClick, selected }: CurriculumEntryProps) => {
+        const isDraft = curriculum?.isDraft;
 
-    return (
-      <ListItem disablePadding>
-        <ListItemButton onClick={onClick}>
-          <ListItemText
-            primary={curriculum?.title || "ללא שם"}
-            slotProps={{
-              primary: {
-                sx: {
-                  color: selected
-                    ? "text.action"
-                    : isDraft
-                      ? "text.secondary"
-                      : "text.primary",
-                  fontWeight: isDraft ? "normal" : "medium",
-                  fontStyle: isDraft ? "italic" : "normal",
-                },
-              },
-            }}
-          />
-        </ListItemButton>
-      </ListItem>
-    );
-  },
+        return (
+            <ListItem disablePadding>
+                <ListItemButton onClick={onClick}>
+                    <ListItemText
+                        primary={curriculum?.title || "ללא שם"}
+                        slotProps={{
+                            primary: {
+                                sx: {
+                                    color: selected
+                                        ? "text.action"
+                                        : isDraft
+                                            ? "text.secondary"
+                                            : "text.primary",
+                                    fontWeight: isDraft ? "normal" : "medium",
+                                    fontStyle: isDraft ? "italic" : "normal",
+                                },
+                            },
+                        }}
+                    />
+                </ListItemButton>
+            </ListItem>
+        );
+    },
 );
 CurriculumEntry.displayName = "CurriculumEntry";

@@ -10,42 +10,42 @@ import { PrayerSettings } from "@/api-shared/types/settings/prayer";
 import { Setting, SettingName } from "@/api-shared/types/settings/settings";
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> },
+    request: NextRequest,
+    { params }: { params: Promise<{ slug: string }> },
 ) {
-  try {
-    const { slug } = await params;
+    try {
+        const { slug } = await params;
 
-    const data = await DbSettings.get(slug as SettingName);
+        const data = await DbSettings.get(slug as SettingName);
 
-    return ApiSuccess(data);
-  } catch (e) {
-    return catchHandler(request, e);
-  }
+        return ApiSuccess(data);
+    } catch (e) {
+        return catchHandler(request, e);
+    }
 }
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> },
+    request: NextRequest,
+    { params }: { params: Promise<{ slug: string }> },
 ) {
-  try {
-    const { slug } = await params;
-    const value: Partial<Setting> = await request.json();
+    try {
+        const { slug } = await params;
+        const value: Partial<Setting> = await request.json();
 
-    if (slug === "prayerTimes") {
-      inplaceDateFixup(value, "shacharit");
-      inplaceDateFixup(value, "mincha");
-      inplaceDateFixup(value, "arvit");
-      await DbSettings.set(slug as SettingName, value);
+        if (slug === "prayerTimes") {
+            inplaceDateFixup(value, "shacharit");
+            inplaceDateFixup(value, "mincha");
+            inplaceDateFixup(value, "arvit");
+            await DbSettings.set(slug as SettingName, value);
 
-      await updatePrayerEvents({
-        startDate: new Date(Date.now()),
-        newConfig: value as PrayerSettings,
-      });
+            await updatePrayerEvents({
+                startDate: new Date(Date.now()),
+                newConfig: value as PrayerSettings,
+            });
+        }
+
+        return ApiSuccess();
+    } catch (e) {
+        return catchHandler(request, e);
     }
-
-    return ApiSuccess();
-  } catch (e) {
-    return catchHandler(request, e);
-  }
 }

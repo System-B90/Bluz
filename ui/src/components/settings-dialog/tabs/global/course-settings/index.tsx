@@ -7,125 +7,125 @@ import { useCourses } from "@/components/base/CoursesProvider";
 import { CourseItem } from "@/components/settings-dialog/tabs/global/course-settings/CourseItem";
 
 export function CourseSettings() {
-  const { courses, addCourse, updateCourse, deleteCourse } = useCourses();
-  const originalCourses = useRef<Array<Course>>(courses);
+    const { courses, addCourse, updateCourse, deleteCourse } = useCourses();
+    const originalCourses = useRef<Array<Course>>(courses);
 
-  // Deep clone the initial courses to prevent mutating the provider's state
-  const [localCourses, setLocalCourses] = useState<Array<Course>>(
-    courses.map((c) => ({ ...c })),
-  );
+    // Deep clone the initial courses to prevent mutating the provider's state
+    const [localCourses, setLocalCourses] = useState<Array<Course>>(
+        courses.map((c) => ({ ...c })),
+    );
 
-  const handleUpdateCourse = useCallback(
-    (
-      id: string,
-      { newName, newColor }: { newName?: string; newColor?: Color | null },
-    ) => {
-      setLocalCourses((prev) =>
-        prev.map((c) =>
-          c.id === id
-            ? { ...c, name: newName ?? c.name, color: newColor ?? c.color }
-            : c,
-        ),
-      );
-    },
-    [setLocalCourses],
-  );
+    const handleUpdateCourse = useCallback(
+        (
+            id: string,
+            { newName, newColor }: { newName?: string; newColor?: Color | null },
+        ) => {
+            setLocalCourses((prev) =>
+                prev.map((c) =>
+                    c.id === id
+                        ? { ...c, name: newName ?? c.name, color: newColor ?? c.color }
+                        : c,
+                ),
+            );
+        },
+        [setLocalCourses],
+    );
 
-  const handleDeleteCourse = useCallback(
-    (id: string) => {
-      setLocalCourses((prev) => prev.filter((c) => c.id !== id));
-    },
-    [setLocalCourses],
-  );
+    const handleDeleteCourse = useCallback(
+        (id: string) => {
+            setLocalCourses((prev) => prev.filter((c) => c.id !== id));
+        },
+        [setLocalCourses],
+    );
 
-  const handleSave = useCallback(async () => {
-    const baseline = originalCourses.current;
+    const handleSave = useCallback(async () => {
+        const baseline = originalCourses.current;
 
-    const deletePromises = baseline
-      .filter((course) => !localCourses.find((c) => c.id === course.id))
-      .map((course) => deleteCourse(course.id));
+        const deletePromises = baseline
+            .filter((course) => !localCourses.find((c) => c.id === course.id))
+            .map((course) => deleteCourse(course.id));
 
-    const addPromises = localCourses
-      .filter((course) => !baseline.find((c) => c.id === course.id))
-      .map((course) => addCourse(course));
+        const addPromises = localCourses
+            .filter((course) => !baseline.find((c) => c.id === course.id))
+            .map((course) => addCourse(course));
 
-    const updatePromises = localCourses
-      .filter((course) => {
-        const original = baseline.find((c) => c.id === course.id);
-        return (
-          original &&
+        const updatePromises = localCourses
+            .filter((course) => {
+                const original = baseline.find((c) => c.id === course.id);
+                return (
+                    original &&
           (original.name !== course.name || original.color !== course.color)
-        );
-      })
-      .map((course) => updateCourse(course));
+                );
+            })
+            .map((course) => updateCourse(course));
 
-    await Promise.all([...deletePromises, ...addPromises, ...updatePromises]);
+        await Promise.all([...deletePromises, ...addPromises, ...updatePromises]);
 
-    originalCourses.current = localCourses.map((c) => ({ ...c }));
-  }, [localCourses, addCourse, updateCourse, deleteCourse]);
+        originalCourses.current = localCourses.map((c) => ({ ...c }));
+    }, [localCourses, addCourse, updateCourse, deleteCourse]);
 
-  const handleRestore = useCallback(() => {
+    const handleRestore = useCallback(() => {
     // Deep clone the baseline to reset the draft
-    setLocalCourses(originalCourses.current.map((c) => ({ ...c })));
-  }, [setLocalCourses]);
+        setLocalCourses(originalCourses.current.map((c) => ({ ...c })));
+    }, [setLocalCourses]);
 
-  const handleCreate = useCallback(() => {
+    const handleCreate = useCallback(() => {
     // Add to local draft state with a temporary ID.
     // Note: Ensure your backend handles or ignores temporary IDs upon creation.
-    const newCourse = {
-      id: `temp-${Date.now()}`,
-      name: "מסלול חדש",
-      color: null,
-    } as Course;
+        const newCourse = {
+            id: `temp-${Date.now()}`,
+            name: "מסלול חדש",
+            color: null,
+        } as Course;
 
-    setLocalCourses((prev) => [...prev, newCourse]);
-  }, [setLocalCourses]);
+        setLocalCourses((prev) => [...prev, newCourse]);
+    }, [setLocalCourses]);
 
-  const courseItems = localCourses.map((course) => (
-    <CourseItem
-      course={course}
-      key={`${course.id}-${course.color}-${course.name}`}
-      onDelete={handleDeleteCourse}
-      onUpdate={handleUpdateCourse}
-    />
-  ));
+    const courseItems = localCourses.map((course) => (
+        <CourseItem
+            course={course}
+            key={`${course.id}-${course.color}-${course.name}`}
+            onDelete={handleDeleteCourse}
+            onUpdate={handleUpdateCourse}
+        />
+    ));
 
-  return (
-    <Box
-      border={"solid 0.15rem rgba(0,0,0,0.2)"}
-      borderRadius={3}
-      display={"flex"}
-      flexDirection={"column"}
-      gap={1}
-      justifyContent={"space-between"}
-      padding={"0.5rem"}
-    >
-      <Box>
-        <Typography gutterBottom variant="h6">
-          מסלולים
-        </Typography>
+    return (
         <Box
-          alignItems={"flex-start"}
-          display={"flex"}
-          flexDirection={"column"}
-          gap={1}
+            border={"solid 0.15rem rgba(0,0,0,0.2)"}
+            borderRadius={3}
+            display={"flex"}
+            flexDirection={"column"}
+            gap={1}
+            justifyContent={"space-between"}
+            padding={"0.5rem"}
         >
-          {courseItems}
-        </Box>
-      </Box>
-      <Box display={"flex"} flexDirection={"column"} gap={1} mt={2}>
-        <Button color={"secondary"} onClick={handleCreate} variant="contained">
+            <Box>
+                <Typography gutterBottom variant="h6">
+          מסלולים
+                </Typography>
+                <Box
+                    alignItems={"flex-start"}
+                    display={"flex"}
+                    flexDirection={"column"}
+                    gap={1}
+                >
+                    {courseItems}
+                </Box>
+            </Box>
+            <Box display={"flex"} flexDirection={"column"} gap={1} mt={2}>
+                <Button color={"secondary"} onClick={handleCreate} variant="contained">
           יצירת מסלול חדש
-        </Button>
-        <ButtonGroup fullWidth>
-          <Button color="primary" onClick={handleSave} variant="contained">
+                </Button>
+                <ButtonGroup fullWidth>
+                    <Button color="primary" onClick={handleSave} variant="contained">
             שמירה
-          </Button>
-          <Button color={"warning"} onClick={handleRestore} variant="contained">
+                    </Button>
+                    <Button color={"warning"} onClick={handleRestore} variant="contained">
             שחזור
-          </Button>
-        </ButtonGroup>
-      </Box>
-    </Box>
-  );
+                    </Button>
+                </ButtonGroup>
+            </Box>
+        </Box>
+    );
 }

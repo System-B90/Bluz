@@ -8,11 +8,11 @@
 "use client";
 
 import {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useState,
+    Dispatch,
+    SetStateAction,
+    useCallback,
+    useEffect,
+    useState,
 } from "react";
 import { View, Views } from "react-big-calendar";
 
@@ -32,83 +32,83 @@ interface BluzCalendarProps {
 }
 
 export function BluzCalendar({
-  handleSaveEvent,
-  handleDeleteEvent,
-  setOpenEventDialog,
-  setSelectedEvent,
-  events,
+    handleSaveEvent,
+    handleDeleteEvent,
+    setOpenEventDialog,
+    setSelectedEvent,
+    events,
 }: BluzCalendarProps) {
-  const [mounted, setMounted] = useState(false);
-  const [currentView, setCurrentView] = useState<View>(Views.WEEK);
+    const [mounted, setMounted] = useState(false);
+    const [currentView, setCurrentView] = useState<View>(Views.WEEK);
 
-  const { rooms } = useRooms();
-  const { setStartDate, setEndDate } = useCalendar();
+    const { rooms } = useRooms();
+    const { setStartDate, setEndDate } = useCalendar();
 
-  const { handleEventDrag, handleSlotSelect, setActiveEvent } =
+    const { handleEventDrag, handleSlotSelect, setActiveEvent } =
     useCalendarHandlers(
-      events,
-      handleSaveEvent,
-      handleDeleteEvent,
-      setSelectedEvent,
-      setOpenEventDialog,
+        events,
+        handleSaveEvent,
+        handleDeleteEvent,
+        setSelectedEvent,
+        setOpenEventDialog,
     );
 
-  // Only render the calendar after the component has mounted on the client.
-  useEffect(() => {
+    // Only render the calendar after the component has mounted on the client.
+    useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
+        setMounted(true);
+    }, []);
 
-  const updateDateRange = useCallback(
-    (date: Date, view: View) => {
-      const { start, end } = getRangeForView(date, view);
-      setStartDate(start);
-      setEndDate(end);
-    },
-    [setStartDate, setEndDate],
-  );
+    const updateDateRange = useCallback(
+        (date: Date, view: View) => {
+            const { start, end } = getRangeForView(date, view);
+            setStartDate(start);
+            setEndDate(end);
+        },
+        [setStartDate, setEndDate],
+    );
 
-  const onNavigate = useCallback(
-    (newDate: Date, view: View) => {
-      updateDateRange(newDate, view);
-    },
-    [updateDateRange],
-  );
+    const onNavigate = useCallback(
+        (newDate: Date, view: View) => {
+            updateDateRange(newDate, view);
+        },
+        [updateDateRange],
+    );
 
-  useEffect(() => {
-    updateDateRange(new Date(), currentView);
-  }, [currentView, updateDateRange]);
+    useEffect(() => {
+        updateDateRange(new Date(), currentView);
+    }, [currentView, updateDateRange]);
 
-  const handleEditEvent = useCallback(
-    (event: Event) => {
-      setSelectedEvent(event);
-      setOpenEventDialog(true);
-    },
-    [setSelectedEvent, setOpenEventDialog],
-  );
+    const handleEditEvent = useCallback(
+        (event: Event) => {
+            setSelectedEvent(event);
+            setOpenEventDialog(true);
+        },
+        [setSelectedEvent, setOpenEventDialog],
+    );
 
-  const handleSelectEvent = useCallback(
-    (event: Event) => {
-      setActiveEvent(event);
-      setSelectedEvent(event);
-    },
-    [setSelectedEvent, setActiveEvent],
-  );
+    const handleSelectEvent = useCallback(
+        (event: Event) => {
+            setActiveEvent(event);
+            setSelectedEvent(event);
+        },
+        [setSelectedEvent, setActiveEvent],
+    );
 
-  if (!mounted)
-    return <div className="grow h-full bg-slate-50/50 animate-pulse" />;
+    if (!mounted)
+        return <div className="grow h-full bg-slate-50/50 animate-pulse" />;
 
-  return (
-    <CalendarView
-      currentView={currentView}
-      events={events}
-      onDoubleClickEvent={handleEditEvent}
-      onEventDrop={handleEventDrag}
-      onNavigate={onNavigate}
-      onSelectEvent={handleSelectEvent}
-      onSelectSlot={handleSlotSelect}
-      onView={setCurrentView}
-      rooms={rooms}
-    />
-  );
+    return (
+        <CalendarView
+            currentView={currentView}
+            events={events}
+            onDoubleClickEvent={handleEditEvent}
+            onEventDrop={handleEventDrag}
+            onNavigate={onNavigate}
+            onSelectEvent={handleSelectEvent}
+            onSelectSlot={handleSlotSelect}
+            onView={setCurrentView}
+            rooms={rooms}
+        />
+    );
 }

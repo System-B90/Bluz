@@ -7,8 +7,8 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
 export const moduleEventTypeEnumSchema = pgEnum("module_event_type", [
-  "הרצאה",
-  'ע"ע',
-  'ל"ע',
-  "אחר",
+    "הרצאה",
+    'ע"ע',
+    'ל"ע',
+    "אחר",
 ]);

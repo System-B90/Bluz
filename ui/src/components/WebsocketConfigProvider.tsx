@@ -10,10 +10,10 @@ interface WebSocketConfigContextType {
 }
 
 const WebSocketConfigContext = createContext<WebSocketConfigContextType>({
-  host: "bluz.biz",
-  protocol: "ws",
-  portSuffix: "",
-  connectionString: "wss://bluz.bis/ws/",
+    host: "bluz.biz",
+    protocol: "ws",
+    portSuffix: "",
+    connectionString: "wss://bluz.bis/ws/",
 });
 
 interface WebSocketConfigProviderProps {
@@ -24,23 +24,23 @@ interface WebSocketConfigProviderProps {
 }
 
 export function WebSocketConfigProvider({
-  host,
-  protocol,
-  portSuffix,
-  children,
+    host,
+    protocol,
+    portSuffix,
+    children,
 }: WebSocketConfigProviderProps) {
-  const context = useMemo(() => {
-    const connectionString = `${protocol}://${host}${portSuffix}/ws/`;
-    return { host, protocol, portSuffix, connectionString };
-  }, [host, protocol, portSuffix]);
+    const context = useMemo(() => {
+        const connectionString = `${protocol}://${host}${portSuffix}/ws/`;
+        return { host, protocol, portSuffix, connectionString };
+    }, [host, protocol, portSuffix]);
 
-  return (
-    <WebSocketConfigContext.Provider value={context}>
-      {children}
-    </WebSocketConfigContext.Provider>
-  );
+    return (
+        <WebSocketConfigContext.Provider value={context}>
+            {children}
+        </WebSocketConfigContext.Provider>
+    );
 }
 
 export function useWebSocketConfig() {
-  return useContext(WebSocketConfigContext);
+    return useContext(WebSocketConfigContext);
 }

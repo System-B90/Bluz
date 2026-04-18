@@ -1,12 +1,12 @@
 "use client";
 import { enqueueSnackbar } from "notistack";
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
 } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
@@ -22,76 +22,76 @@ export type HiveModulesContextState = {
 };
 
 const HiveModulesContext = createContext<HiveModulesContextState | undefined>({
-  default: true,
-  modules: [],
-  getModule: (_id: ModuleLike) => undefined,
-  getModulesOfSubject: (_subject: SubjectLike) => [],
+    default: true,
+    modules: [],
+    getModule: (_id: ModuleLike) => undefined,
+    getModulesOfSubject: (_subject: SubjectLike) => [],
 });
 
 export const HiveModulesProvider = ({
-  children,
+    children,
 }: {
   children: React.ReactNode;
 }) => {
-  const [moduleLookup, setModuleLookup] = useState<Record<string, Module>>({});
+    const [moduleLookup, setModuleLookup] = useState<Record<string, Module>>({});
 
-  const modules = useMemo(() => Object.values(moduleLookup), [moduleLookup]);
-  const getModule = useCallback(
-    (id: ModuleLike) =>
-      id instanceof Object ? id : moduleLookup[id as number],
-    [moduleLookup],
-  );
+    const modules = useMemo(() => Object.values(moduleLookup), [moduleLookup]);
+    const getModule = useCallback(
+        (id: ModuleLike) =>
+            id instanceof Object ? id : moduleLookup[id as number],
+        [moduleLookup],
+    );
 
-  const getModulesOfSubject = useCallback(
-    (subject: SubjectLike) =>
-      modules.filter(
-        (module) =>
-          module.parent_subject ===
+    const getModulesOfSubject = useCallback(
+        (subject: SubjectLike) =>
+            modules.filter(
+                (module) =>
+                    module.parent_subject ===
           (subject instanceof Object ? subject.id : (subject as number)),
-      ),
-    [modules],
-  );
+            ),
+        [modules],
+    );
 
-  const loadModules = useCallback(() => {
-    apiGetModules()
-      .then((fetchedModules) => {
-        const modulesMap: Record<string, Module> = {};
-        fetchedModules.forEach((module) => {
-          modulesMap[module.id] = module;
-        });
-        setModuleLookup(modulesMap);
-      })
-      .catch((error) =>
-        enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת המערךים נכשלה.", error),
-      );
-  }, [setModuleLookup]);
+    const loadModules = useCallback(() => {
+        apiGetModules()
+            .then((fetchedModules) => {
+                const modulesMap: Record<string, Module> = {};
+                fetchedModules.forEach((module) => {
+                    modulesMap[module.id] = module;
+                });
+                setModuleLookup(modulesMap);
+            })
+            .catch((error) =>
+                enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת המערךים נכשלה.", error),
+            );
+    }, [setModuleLookup]);
 
-  useEffect(() => {
-    loadModules();
-  }, [loadModules]);
+    useEffect(() => {
+        loadModules();
+    }, [loadModules]);
 
-  return (
-    <HiveModulesContext.Provider
-      value={{
-        default: false,
-        modules,
-        getModule,
-        getModulesOfSubject,
-      }}
-    >
-      {children}
-    </HiveModulesContext.Provider>
-  );
+    return (
+        <HiveModulesContext.Provider
+            value={{
+                default: false,
+                modules,
+                getModule,
+                getModulesOfSubject,
+            }}
+        >
+            {children}
+        </HiveModulesContext.Provider>
+    );
 };
 
 export const useHiveModules = () => {
-  const context = useContext(HiveModulesContext);
+    const context = useContext(HiveModulesContext);
 
-  if (context === undefined || context.default) {
-    throw new Error(
-      "useHiveModules must be used within an HiveModulesProvider",
-    );
-  }
+    if (context === undefined || context.default) {
+        throw new Error(
+            "useHiveModules must be used within an HiveModulesProvider",
+        );
+    }
 
-  return context;
+    return context;
 };

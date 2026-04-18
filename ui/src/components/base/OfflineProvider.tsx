@@ -1,11 +1,11 @@
 "use client";
 import {
-  createContext,
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useContext,
-  useState,
+    createContext,
+    Dispatch,
+    SetStateAction,
+    useCallback,
+    useContext,
+    useState,
 } from "react";
 
 import { Event, EventId } from "@/components/schedule/types/event";
@@ -22,89 +22,89 @@ export type OfflineContextState = {
 };
 
 const OfflineContext = createContext<OfflineContextState | undefined>({
-  default: true,
-  offlineMode: false,
-  setOfflineMode: () => {},
-  pushDialogOpen: false,
-  captureEventBeforeEdit: (_event) => {},
-  purgeCapturedState: () => {},
-  getCapturedEvent: (_eventId) => null,
+    default: true,
+    offlineMode: false,
+    setOfflineMode: () => {},
+    pushDialogOpen: false,
+    captureEventBeforeEdit: (_event) => {},
+    purgeCapturedState: () => {},
+    getCapturedEvent: (_eventId) => null,
 });
 
 export const OfflineProvider = ({
-  children,
+    children,
 }: {
   children: React.ReactNode;
 }) => {
-  const [capturedStateBeforeOffline, setCapturedStateBeforeOffline] = useState<
+    const [capturedStateBeforeOffline, setCapturedStateBeforeOffline] = useState<
     Record<EventId, Event>
   >({});
-  const [offlineMode, setOfflineMode] = useState<boolean>(false);
-  const [pushDialogOpen, setPushDialogOpen] = useState<boolean>(false);
+    const [offlineMode, setOfflineMode] = useState<boolean>(false);
+    const [pushDialogOpen, setPushDialogOpen] = useState<boolean>(false);
 
-  const setOfflineModeWrapper = useCallback<Dispatch<SetStateAction<boolean>>>(
-    (value) => {
-      setOfflineMode((prev) => {
-        const next = typeof value === "function" ? value(prev) : value;
+    const setOfflineModeWrapper = useCallback<Dispatch<SetStateAction<boolean>>>(
+        (value) => {
+            setOfflineMode((prev) => {
+                const next = typeof value === "function" ? value(prev) : value;
 
-        // If previous value was true
-        if (prev === true) {
-          setPushDialogOpen(true);
-        }
+                // If previous value was true
+                if (prev === true) {
+                    setPushDialogOpen(true);
+                }
 
-        return next;
-      });
-    },
-    [setPushDialogOpen],
-  );
+                return next;
+            });
+        },
+        [setPushDialogOpen],
+    );
 
-  const captureEventBeforeEdit = useCallback((event: Event) => {
-    console.log("Capturing event", event);
-    setCapturedStateBeforeOffline((capturedState) => {
-      if (event.id in capturedState) {
-        // Use the older version.
-        return capturedState;
-      }
+    const captureEventBeforeEdit = useCallback((event: Event) => {
+        console.log("Capturing event", event);
+        setCapturedStateBeforeOffline((capturedState) => {
+            if (event.id in capturedState) {
+                // Use the older version.
+                return capturedState;
+            }
 
-      capturedState[event.id] = deepCopyEvent(event);
-      return capturedState;
-    });
-  }, []);
+            capturedState[event.id] = deepCopyEvent(event);
+            return capturedState;
+        });
+    }, []);
 
-  const purgeCapturedState = useCallback(() => {
-    setCapturedStateBeforeOffline({});
-  }, []);
+    const purgeCapturedState = useCallback(() => {
+        setCapturedStateBeforeOffline({});
+    }, []);
 
-  const getCapturedEvent = useCallback(
-    (eventId: EventId): Event | null => {
-      return capturedStateBeforeOffline[eventId] ?? null;
-    },
-    [capturedStateBeforeOffline],
-  );
+    const getCapturedEvent = useCallback(
+        (eventId: EventId): Event | null => {
+            return capturedStateBeforeOffline[eventId] ?? null;
+        },
+        [capturedStateBeforeOffline],
+    );
 
-  return (
-    <OfflineContext.Provider
-      value={{
-        default: false,
-        offlineMode,
-        setOfflineMode: setOfflineModeWrapper,
-        pushDialogOpen,
-        captureEventBeforeEdit,
-        purgeCapturedState,
-        getCapturedEvent,
-      }}
-    >
-      {children}
-    </OfflineContext.Provider>
-  );
+    return (
+        <OfflineContext.Provider
+            value={{
+                default: false,
+                offlineMode,
+                setOfflineMode: setOfflineModeWrapper,
+                pushDialogOpen,
+                captureEventBeforeEdit,
+                purgeCapturedState,
+                getCapturedEvent,
+            }}
+        >
+            {children}
+        </OfflineContext.Provider>
+    );
 };
 
 export const useOffline = () => {
-  const context = useContext(OfflineContext);
+    const context = useContext(OfflineContext);
 
-  if (context === undefined || context.default) {
-    throw new Error("useOffline must be used within an OfflineProvider");
-  }
+    if (context === undefined || context.default) {
+        throw new Error("useOffline must be used within an OfflineProvider");
+    }
 
-  return context;
+    return context;
 };

@@ -14,41 +14,41 @@ export interface DuplicateCurriculumActionProps extends CurriculumAwareActionIte
 }
 
 export function DuplicateCurriculumAction({
-  sourceCurriculum,
-  onCreate,
-  onProcessingChange,
-  ...props
+    sourceCurriculum,
+    onCreate,
+    onProcessingChange,
+    ...props
 }: DuplicateCurriculumActionProps) {
-  const { enqueueSnackbar } = useSnackbar();
+    const { enqueueSnackbar } = useSnackbar();
 
-  const clickHandler = useCallback(() => {
-    if (!sourceCurriculum) return;
-    onProcessingChange(true);
-    const payload: Omit<CreateGanttCurriculumPayload, "weeks"> & {
+    const clickHandler = useCallback(() => {
+        if (!sourceCurriculum) return;
+        onProcessingChange(true);
+        const payload: Omit<CreateGanttCurriculumPayload, "weeks"> & {
       weeks: typeof sourceCurriculum.weeks;
     } = {
-      title: `${sourceCurriculum.title} (Copy)`,
-      description: sourceCurriculum.description,
-      isDraft: true,
-      weeks: sourceCurriculum.weeks,
+        title: `${sourceCurriculum.title} (Copy)`,
+        description: sourceCurriculum.description,
+        isDraft: true,
+        weeks: sourceCurriculum.weeks,
     };
-    // Cast to proper type - duplication uses the same week IDs structure
-    ganttApi.curriculum
-      .apiCreate(payload as CreateGanttCurriculumPayload)
-      .then((newCurriculum) => onCreate(newCurriculum))
-      .catch((error: unknown) =>
-        enqueueApiErrorSnackbar(enqueueSnackbar, "שכפול הגאנט נכשל!", error),
-      )
-      .finally(() => onProcessingChange(false));
-  }, [enqueueSnackbar, onCreate, onProcessingChange, sourceCurriculum]);
+        // Cast to proper type - duplication uses the same week IDs structure
+        ganttApi.curriculum
+            .apiCreate(payload as CreateGanttCurriculumPayload)
+            .then((newCurriculum) => onCreate(newCurriculum))
+            .catch((error: unknown) =>
+                enqueueApiErrorSnackbar(enqueueSnackbar, "שכפול הגאנט נכשל!", error),
+            )
+            .finally(() => onProcessingChange(false));
+    }, [enqueueSnackbar, onCreate, onProcessingChange, sourceCurriculum]);
 
-  return (
-    <ActionItemButton
-      onClick={clickHandler}
-      startIcon={<ContentCopyIcon fontSize="small" />}
-      {...props}
-    >
+    return (
+        <ActionItemButton
+            onClick={clickHandler}
+            startIcon={<ContentCopyIcon fontSize="small" />}
+            {...props}
+        >
       שכפול
-    </ActionItemButton>
-  );
+        </ActionItemButton>
+    );
 }

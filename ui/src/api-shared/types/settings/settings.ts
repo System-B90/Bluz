@@ -1,6 +1,6 @@
 import {
-  PrayerSettings,
-  PRAYER_TIMES_SETTING_KEY,
+    PrayerSettings,
+    PRAYER_TIMES_SETTING_KEY,
 } from "@/api-shared/types/settings/prayer";
 
 export type Setting = PrayerSettings;
