@@ -7,20 +7,15 @@
 
 "use client";
 
-import { Paper } from "@mui/material";
-import { useSnackbar } from "notistack";
-import React, { useCallback, useMemo } from "react";
+import React from "react";
 
 import { useCurriculumMappings } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
-import { GanttEngine } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/GanttEngine";
+import { GanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/GanttView";
 import
-{
-    GanttDataResult,
-    GanttDataSourceProps,
-    SvarGanttDataUpdateEvent,
-    SvarGanttScale,
-} from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";
-import { useGanttData } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/UseGanttData";
+    {
+        GanttDataSourceProps
+    } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";
+import { useCurriculumState } from "@/components/gantt/state/provider";
 
 /**
  * Inner component that handles Gantt rendering with data transformation
@@ -29,37 +24,16 @@ export function CurriculumGanttViewInner(
     props: GanttDataSourceProps,
 ): React.ReactElement
 {
-    const { enqueueSnackbar } = useSnackbar();
-    const { moveModule } = useCurriculumMappings();
-    const { tasks, links }: GanttDataResult = useGanttData(props);
-
-    const scales: Array<SvarGanttScale> = useMemo(
-        (): Array<SvarGanttScale> => [
-            {
-                unit: "weeks",
-                step: 1,
-                format: "Week %W",
-            },
-        ],
-        [],
-    );
-
-    const handleDataUpdate = useCallback(
-        (_event: SvarGanttDataUpdateEvent): void =>
-        {
-            // TODO: Implement
-        },
-        [],
-    );
-
+    const state = useCurriculumState();
+    const { state: { mappings } } = useCurriculumMappings();
     return (
-        <Paper sx={ { flexGrow: 1, overflow: "hidden" } } variant="outlined">
-            <GanttEngine
-                links={ links }
-                onDataUpdate={ handleDataUpdate }
-                scales={ scales }
-                tasks={ tasks }
-            />
-        </Paper>
+        <GanttView
+            weeks={ new Map(Object.entries(state.weeks)) }
+            days={ new Map(Object.entries(state.days)) }
+            syllabuses={ new Map(Object.entries(state.syllabuses)) }
+            curriculum={ props.curriculum }
+            modules={ new Map(Object.entries(state.modules)) }
+            mappings={ Object.values(mappings) }
+        />
     );
 }
