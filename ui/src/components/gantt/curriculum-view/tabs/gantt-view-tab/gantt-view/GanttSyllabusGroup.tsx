@@ -1,11 +1,9 @@
+import { useCurriculumState } from '@/components/gantt/state/provider';
 import { Box, TableCell, TableRow, Typography, useTheme } from '@mui/material';
 import React, { useMemo, useState } from 'react';
-
 import { useGanttContext } from './context';
 import { GanttModuleRow } from './GanttModuleRow';
-import { GanttSyllabusGroupProps, SpanVariant } from './types';
-
-import { useCurriculumState } from '@/components/gantt/state/provider';
+import { GanttSyllabusGroupProps } from './types';
 
 export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabusId }) =>
 {
@@ -44,6 +42,8 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
         return { min: Math.min(...indices), max: Math.max(...indices) };
     }, [ syllabus, state.modules, moduleMappings, eventMappings, linearDays ]);
 
+    const spanLength = spanIndices ? spanIndices.max - spanIndices.min + 1 : 0;
+
     return (
         <React.Fragment>
             <TableRow
@@ -65,7 +65,7 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
                         borderBottom: `1px solid ${theme.palette.divider}`
                     } }
                 >
-                    <Typography sx={ { display: 'flex', alignItems: 'center', gap: 1 } } variant="subtitle2">
+                    <Typography variant="subtitle2" sx={ { display: 'flex', alignItems: 'center', gap: 1 } }>
                         <Box component="span" sx={ { fontSize: '0.8rem', width: 16 } }>
                             { isExpanded ? '▼' : '▶' }
                         </Box>
@@ -77,15 +77,7 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
                     week.days.map(dayId =>
                     {
                         const dayIndex = linearDays.indexOf(dayId);
-                        let spanVariant: SpanVariant = 'none';
-
-                        if (spanIndices && dayIndex >= spanIndices.min && dayIndex <= spanIndices.max)
-                        {
-                            if (spanIndices.min === spanIndices.max) spanVariant = 'single';
-                            else if (dayIndex === spanIndices.min) spanVariant = 'start';
-                            else if (dayIndex === spanIndices.max) spanVariant = 'end';
-                            else spanVariant = 'middle';
-                        }
+                        const isSpanStart = spanIndices !== null && dayIndex === spanIndices.min;
 
                         return (
                             <TableCell
@@ -94,21 +86,27 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
                                     backgroundColor: theme.palette.background.default,
                                     borderLeft: `1px solid ${theme.palette.divider}`,
                                     borderBottom: `1px solid ${theme.palette.divider}`,
-                                    p: spanVariant !== 'none' ? 0.5 : 0.5,
+                                    p: 0,
                                     width: 80,
                                     minWidth: 80,
                                     maxWidth: 80,
                                     boxSizing: 'border-box',
+                                    position: 'relative'
                                 } }
                             >
-                                { spanVariant !== 'none' && (
+                                { isSpanStart && (
                                     <Box
                                         sx={ {
-                                            width: '100%',
+                                            position: 'absolute',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            left: '4px',
+                                            width: `calc(${spanLength * 80}px - 8px)`,
                                             height: '8px',
                                             backgroundColor: theme.palette.text.secondary,
                                             opacity: 0.2,
-                                            borderRadius: spanVariant === 'start' ? '4px 0 0 4px' : spanVariant === 'end' ? '0 4px 4px 0' : spanVariant === 'single' ? '4px' : '0',
+                                            borderRadius: '4px',
+                                            zIndex: 0,
                                         } }
                                     />
                                 ) }
@@ -118,9 +116,9 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
                 ) }
             </TableRow>
 
-            { isExpanded ? syllabus.modules.map(moduleId => (
+            { isExpanded && syllabus.modules.map(moduleId => (
                 <GanttModuleRow key={ moduleId } moduleId={ moduleId } />
-            )) : null }
+            )) }
         </React.Fragment>
     );
 };

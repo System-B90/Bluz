@@ -6,18 +6,18 @@
  */
 
 import
-{
-    DndContext,
-    DragEndEvent,
-    DragOverlay,
-    DragStartEvent,
-    KeyboardSensor,
-    PointerSensor,
-    closestCenter,
-    defaultDropAnimationSideEffects,
-    useSensor,
-    useSensors,
-} from "@dnd-kit/core";
+    {
+        DndContext,
+        DragEndEvent,
+        DragOverlay,
+        DragStartEvent,
+        KeyboardSensor,
+        PointerSensor,
+        closestCenter,
+        defaultDropAnimationSideEffects,
+        useSensor,
+        useSensors,
+    } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Box, BoxProps } from "@mui/material";
 import { useSnackbar } from "notistack";
@@ -25,19 +25,19 @@ import { useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
-{
-    GanttDayId,
-    GanttModuleId,
-} from "@/api-shared/types/gantt/models";
-import
-{
-    CurriculumMappingProvider,
-    useCurriculumMappings,
-} from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
+    {
+        GanttDayId,
+        GanttModuleId,
+    } from "@/api-shared/types/gantt/models";
 import { CurriculumViewBuilderWeeksView } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumViewBuilderWeeksView";
 import { DndDragEventActiveData, DndDragEventOverData } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/dnd-types";
 import { ModuleItem } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
+import
+    {
+        GanttMappingProvider
+    } from "@/components/gantt/state/mappings/Provider";
+import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 
 export interface CurriculumViewBuilderTabProps extends Omit<
     BoxProps,
@@ -54,7 +54,7 @@ function CurriculumViewBuilderTabInner({
 }: Pick<CurriculumViewBuilderTabProps, "curriculumId" | "groupCount">)
 {
     const { enqueueSnackbar } = useSnackbar();
-    const { moveModule, createMapping, removeModule } = useCurriculumMappings();
+    const { moveMapping, createMapping, removeMapping } = useGanttMappings();
     const weeks = useCurriculum(curriculumId)?.weeks;
     const [ activeId, setActiveId ] = useState<GanttModuleId>();
     const [ activeDayId, setActiveDayId ] = useState<GanttDayId>();
@@ -113,7 +113,7 @@ function CurriculumViewBuilderTabInner({
 
             if (overData.type === "SIDEBAR" && originDayId)
             {
-                removeModule(moduleId, null, originDayId)
+                removeMapping({ moduleId, eventId: null, dayId: originDayId })
                     .catch((error) =>
                         enqueueApiErrorSnackbar(enqueueSnackbar, "הסרת המערך נכשלה!", error),
                     );
@@ -125,19 +125,19 @@ function CurriculumViewBuilderTabInner({
 
             if (originDayId && targetDayId)
             {
-                moveModule(moduleId, null, { d: originDayId }, { d: targetDayId })
+                moveMapping({ moduleId, eventId: null, from: { d: originDayId }, to: { d: targetDayId } })
                     .catch((error) =>
                         enqueueApiErrorSnackbar(enqueueSnackbar, "הזזת המערך נכשלה!", error),
                     );
             } else
             {
-                createMapping(moduleId, null, targetDayId)
+                createMapping({ moduleId, eventId: null, dayId: targetDayId })
                     .catch((error) =>
                         enqueueApiErrorSnackbar(enqueueSnackbar, "הזזת המערך נכשלה!", error),
                     );
             }
         },
-        [ createMapping, moveModule, removeModule, enqueueSnackbar ],
+        [ createMapping, moveMapping, removeMapping, enqueueSnackbar ],
     );
 
     const [ selectedWeekGroupIndicies, setSelectedWeekGroup ] = useState<{
@@ -188,12 +188,12 @@ export function CurriculumViewBuilderTab({
 {
     return (
         <Box { ...props } className="flex flex-row grow h-full gap-2">
-            <CurriculumMappingProvider curriculumId={ curriculumId }>
+            <GanttMappingProvider curriculumId={ curriculumId }>
                 <CurriculumViewBuilderTabInner
                     curriculumId={ curriculumId }
                     groupCount={ groupCount }
                 />
-            </CurriculumMappingProvider>
+            </GanttMappingProvider>
         </Box>
     );
 }

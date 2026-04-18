@@ -6,9 +6,10 @@ export interface IGanttContext
     linearDays: string[];
     eventMappings: Record<string, string>; // eventId -> dayId
     moduleMappings: Record<string, string[]>; // moduleId -> dayId[]
-    onMapModule: (moduleId: string, dayId: string) => void;
-    onMoveEvent: (eventId: string, dayId: string) => void;
-    onMoveModule: (moduleId: string, sourceDayId: string, targetDayId: string) => void;
+    onMapModule: (moduleId: string, dayId: string) => Promise<void>;
+    onMoveEvent: (moduleId: string, eventId: string, sourceDayId: string, targetDayId: string) => Promise<void>;
+    onMoveModule: (moduleId: string, sourceDayId: string, targetDayId: string) => Promise<void>;
+    onShiftModule: (moduleId: string, deltaDays: number) => Promise<void>;
 }
 
 export interface GanttViewProps
@@ -16,15 +17,16 @@ export interface GanttViewProps
     curriculumId: GanttCurriculumId;
 }
 
+export type SpanVariant = 'start' | 'middle' | 'end' | 'single' | 'none';
+
 export interface GanttBlockProps
 {
     id: string;
     payload: any;
     title?: string;
     isOpaque?: boolean;
+    spanLength?: number;
 }
-
-export type SpanVariant = 'end' | 'middle' | 'none' | 'single' | 'start';
 
 export interface GanttCellProps
 {
@@ -34,7 +36,7 @@ export interface GanttCellProps
     hasBlock?: boolean;
     blockId?: string;
     blockPayload?: any;
-    spanVariant?: SpanVariant;
+    spanLength?: number;
     isOpaque?: boolean;
 }
 

@@ -1,25 +1,19 @@
+import { useGanttMappings } from '@/components/gantt/state/mappings/hooks';
+import { useCurriculumState } from '@/components/gantt/state/provider';
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { Box, Paper, Table, TableBody, TableContainer, Typography, useTheme } from '@mui/material';
-import React, { useCallback, useMemo, useState } from 'react';
-
+import React, { useCallback, useMemo } from 'react';
 import { GanttContext } from './context';
 import { GanttHeader } from './GanttHeader';
 import { GanttSyllabusGroup } from './GanttSyllabusGroup';
 import { GanttViewProps } from './types';
 
-import { useCurriculumMappings } from '@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider';
-import { useCurriculumState } from '@/components/gantt/state/provider';
-
 export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 {
     const theme = useTheme();
     const state = useCurriculumState();
-    const { state: { mappings: globalMappings } } = useCurriculumMappings();
+    const { state: { mappings: globalMappings }, createMapping, moveMapping } = useGanttMappings();
     const curriculum = state.curriculums[ curriculumId ];
-
-    // Local PoC State for dragging entities without backend persistence yet
-    const [ localModuleMappings, setLocalModuleMappings ] = useState<Record<string, string[]>>({});
-    const [ localEventMappings, setLocalEventMappings ] = useState<Record<string, string>>({});
 
     const timelineWeeks = useMemo(() =>
     {
@@ -32,17 +26,13 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         return timelineWeeks.flatMap(w => w.days);
     }, [ timelineWeeks ]);
 
-    // Merge global mappings with local PoC mapped modules
     const moduleMappings = useMemo(() =>
     {
-        const merged: Record<string, string[]> = { ...localModuleMappings };
+        const merged: Record<string, string[]> = {};
 
-        // Parse the global mappings supporting the new Event structure
         Object.values(globalMappings).forEach((mapping: any) =>
         {
             if (mapping.curriculumId !== curriculumId) return;
-
-            // If eventId is null/undefined, this is a module-level mapping
             if (!mapping.eventId)
             {
                 const arr = merged[ mapping.moduleId ] || [];
@@ -54,18 +44,15 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         });
 
         return merged;
-    }, [ globalMappings, localModuleMappings, curriculumId ]);
+    }, [ globalMappings, curriculumId ]);
 
-    // Merge global mappings with local PoC mapped events
     const eventMappings = useMemo(() =>
     {
-        const merged: Record<string, string> = { ...localEventMappings };
+        const merged: Record<string, string> = {};
 
         Object.values(globalMappings).forEach((mapping: any) =>
         {
             if (mapping.curriculumId !== curriculumId) return;
-
-            // If eventId is present, map it to the corresponding day
             if (mapping.eventId)
             {
                 merged[ mapping.eventId ] = mapping.dayId;
@@ -73,26 +60,64 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         });
 
         return merged;
-    }, [ globalMappings, localEventMappings, curriculumId ]);
+    }, [ globalMappings, curriculumId ]);
 
-    const handleMapModule = useCallback((moduleId: string, dayId: string) =>
+    const handleMapModule = useCallback(async (moduleId: string, dayId: string) =>
     {
-        setLocalModuleMappings(prev => ({ ...prev, [ moduleId ]: [ dayId ] }));
-    }, []);
+        await createMapping({ moduleId, eventId: null, dayId });
+    }, [ createMapping ]);
 
-    const handleMoveModule = useCallback((moduleId: string, sourceDayId: string, targetDayId: string) =>
+    const handleMoveModule = useCallback(async (moduleId: string, sourceDayId: string, targetDayId: string) =>
     {
-        setLocalModuleMappings(prev =>
+        await moveMapping({ moduleId, eventId: null, from: { d: sourceDayId }, to: { d: targetDayId } });
+    }, [ moveMapping ]);
+
+    const handleMoveEvent = useCallback(async (moduleId: string, eventId: string, sourceDayId: string, targetDayId: string) =>
+    {
+        await moveMapping({ moduleId, eventId, from: { d: sourceDayId }, to: { d: targetDayId } });
+    }, [ moveMapping ]);
+
+    const handleShiftModule = useCallback(async (moduleId: string, deltaDays: number) =>
+    {
+        if (deltaDays === 0) return;
+
+        const module = state.modules[ moduleId ];
+        const promises: Promise<void>[] = [];
+
+        // Shift explicit module mappings
+        const mDays = moduleMappings[ moduleId ] || [];
+        mDays.forEach(dayId =>
         {
-            const existing = prev[ moduleId ] || [];
-            return { ...prev, [ moduleId ]: [ ...existing.filter(id => id !== sourceDayId), targetDayId ] };
+            const currentIdx = linearDays.indexOf(dayId);
+            const newIdx = currentIdx + deltaDays;
+            const targetDayId = linearDays[ newIdx ];
+            if (targetDayId)
+            {
+                promises.push(moveMapping({ moduleId, eventId: null, from: { d: dayId }, to: { d: targetDayId } }));
+            }
         });
-    }, []);
 
-    const handleMoveEvent = useCallback((eventId: string, dayId: string) =>
-    {
-        setLocalEventMappings(prev => ({ ...prev, [ eventId ]: dayId }));
-    }, []);
+        // Uniformly shift all nested event mappings belonging to the module
+        if (module && module.events)
+        {
+            module.events.forEach(eventId =>
+            {
+                const currentDayId = eventMappings[ eventId ];
+                if (currentDayId)
+                {
+                    const currentIdx = linearDays.indexOf(currentDayId);
+                    const newIdx = currentIdx + deltaDays;
+                    const targetDayId = linearDays[ newIdx ];
+                    if (targetDayId)
+                    {
+                        promises.push(moveMapping({ moduleId, eventId, from: { d: currentDayId }, to: { d: targetDayId } }));
+                    }
+                }
+            });
+        }
+
+        await Promise.all(promises);
+    }, [ linearDays, state.modules, moduleMappings, eventMappings, moveMapping ]);
 
     const handleDragEnd = useCallback((event: DragEndEvent) =>
     {
@@ -115,14 +140,25 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 handleMoveModule(payload.moduleId, payload.sourceDayId, target.dayId);
             }
         }
+        else if (payload.type === 'module-shift' && target.targetType === 'module')
+        {
+            const sourceIdx = linearDays.indexOf(payload.sourceDayId);
+            const targetIdx = linearDays.indexOf(target.dayId);
+            const deltaDays = targetIdx - sourceIdx;
+
+            if (deltaDays !== 0)
+            {
+                handleShiftModule(payload.moduleId, deltaDays);
+            }
+        }
         else if (payload.type === 'event-move' && target.targetType === 'event')
         {
             if (payload.sourceDayId !== target.dayId)
             {
-                handleMoveEvent(payload.eventId, target.dayId);
+                handleMoveEvent(payload.moduleId, payload.eventId, payload.sourceDayId, target.dayId);
             }
         }
-    }, [ handleMapModule, handleMoveModule, handleMoveEvent ]);
+    }, [ handleMapModule, handleMoveModule, handleMoveEvent, handleShiftModule, linearDays ]);
 
     if (!curriculum)
     {
@@ -138,14 +174,15 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 eventMappings,
                 onMapModule: handleMapModule,
                 onMoveModule: handleMoveModule,
-                onMoveEvent: handleMoveEvent
+                onMoveEvent: handleMoveEvent,
+                onShiftModule: handleShiftModule
             } }>
                 <Box sx={ { width: '100%', overflow: 'hidden', mt: 2 } }>
                     <Paper sx={ { width: '100%', maxHeight: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column', overflow: 'hidden' } }>
 
                         <Box sx={ { p: 2, borderBottom: `1px solid ${theme.palette.divider}`, flexShrink: 0 } }>
                             <Typography variant="h6">{ curriculum.title }</Typography>
-                            <Typography color="text.secondary" variant="body2">
+                            <Typography variant="body2" color="text.secondary">
                                 { curriculum.description }
                             </Typography>
                         </Box>

@@ -10,17 +10,17 @@
 import React, { useMemo } from "react";
 
 import
-{
-    GanttCurriculum,
-    GanttCurriculumId,
-    GanttEvent,
-    GanttModule,
-    GanttSyllabus,
-} from "@/api-shared/types/gantt/models";
-import { CurriculumMappingProvider } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
+    {
+        GanttCurriculum,
+        GanttCurriculumId,
+        GanttEvent,
+        GanttModule,
+        GanttSyllabus,
+    } from "@/api-shared/types/gantt/models";
 import { CurriculumGanttViewInner } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/CurriculumGanttViewInner";
 import { GanttDataSourceProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
+import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export interface CurriculumGanttViewProps
@@ -51,8 +51,8 @@ export function CurriculumGanttView({
     if (!innerProps) return null;
 
     return (
-        <CurriculumMappingProvider curriculumId={ curriculumId }>
+        <GanttMappingProvider curriculumId={ curriculumId }>
             <CurriculumGanttViewInner curriculumId={ curriculumId } { ...innerProps } />
-        </CurriculumMappingProvider>
+        </GanttMappingProvider>
     );
 }

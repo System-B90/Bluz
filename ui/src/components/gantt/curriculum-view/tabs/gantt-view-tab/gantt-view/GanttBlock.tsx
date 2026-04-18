@@ -1,10 +1,9 @@
 import { useDraggable } from '@dnd-kit/core';
 import { Box, Typography, useTheme } from '@mui/material';
 import React from 'react';
-
 import { GanttBlockProps } from './types';
 
-export const GanttBlock: React.FC<GanttBlockProps> = ({ id, payload, title, isOpaque }) =>
+export const GanttBlock: React.FC<GanttBlockProps> = ({ id, payload, title, isOpaque, spanLength = 1 }) =>
 {
     const theme = useTheme();
 
@@ -18,16 +17,23 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({ id, payload, title, isOp
         zIndex: 9999,
     } : undefined;
 
+    // Accurately stretch the block across N cells of exactly 80px width
+    const blockWidth = spanLength > 1 ? `calc(${spanLength * 80}px - 8px)` : 'calc(100% - 8px)';
+
     return (
         <Box
             ref={ setNodeRef }
             { ...listeners }
             { ...attributes }
             sx={ {
-                width: '100%',
+                position: 'absolute',
+                top: '5px',
+                bottom: '5px',
+                left: '4px',
+                width: blockWidth,
                 height: '24px',
                 backgroundColor: theme.palette.primary.main,
-                borderRadius: 1,
+                borderRadius: '4px',
                 cursor: isDragging ? 'grabbing' : 'grab',
                 opacity: isDragging ? 0.4 : (isOpaque ? 0.5 : 1),
                 boxShadow: isDragging ? theme.shadows[ 4 ] : 'none',
@@ -36,12 +42,15 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({ id, payload, title, isOp
                 justifyContent: 'center',
                 overflow: 'hidden',
                 px: 1,
+                zIndex: isDragging ? 9999 : 10,
                 ...style
             } }
         >
-            { title ? <Typography sx={ { color: 'primary.contrastText', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } } variant="caption">
-                { title }
-            </Typography> : null }
+            { title && (
+                <Typography variant="caption" sx={ { color: 'primary.contrastText', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }>
+                    { title }
+                </Typography>
+            ) }
         </Box>
     );
 };

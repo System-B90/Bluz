@@ -9,36 +9,39 @@ import dayjs from "dayjs";
 import { useMemo } from "react";
 
 import
-{
-    GanttDayId,
-    GanttModule,
-    GanttSyllabus,
-} from "@/api-shared/types/gantt/models";
-import { useCurriculumMappings } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
+    {
+        GanttDayId,
+        GanttModule,
+        GanttSyllabus,
+    } from "@/api-shared/types/gantt/models";
 import
-{
-    GanttDataResult,
-    GanttDataSourceProps,
-    SvarGanttLink,
-    SvarGanttTask,
-} from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";
+    {
+        GanttDataResult,
+        GanttDataSourceProps,
+        SvarGanttLink,
+        SvarGanttTask,
+    } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";
+import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 
 /**
  * Hook to map the curriculum hierarchy and mappings into SVAR-compatible tasks
  */
-export const useGanttData = (props: GanttDataSourceProps): GanttDataResult => {
+export const useGanttData = (props: GanttDataSourceProps): GanttDataResult =>
+{
     const {
         state: { mappings },
-    } = useCurriculumMappings();
+    } = useGanttMappings();
 
-    return useMemo((): GanttDataResult => {
+    return useMemo((): GanttDataResult =>
+    {
         const tasks: Array<SvarGanttTask> = [];
         const links: Array<SvarGanttLink> = [];
 
         // Helper function to calculate date range for a date
         const calculateTaskDate = (
             dayId: GanttDayId,
-        ): { start: Date; end: Date } => {
+        ): { start: Date; end: Date; } =>
+        {
             // TODO: Implement this properly
             const startDate: Date = dayjs().toDate();
 
@@ -47,14 +50,16 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult => {
             return { start: startDate, end: endDate };
         };
 
-        props.syllabuses.forEach((syllabus: GanttSyllabus): void => {
+        props.syllabuses.forEach((syllabus: GanttSyllabus): void =>
+        {
             const syllabusTaskId: string = `syllabus-${syllabus.id}`;
             let syllabusMinDate: Date | null = null;
             let syllabusMaxDate: Date | null = null;
 
             const syllabusChildren: Array<SvarGanttTask> = [];
 
-            syllabus.modules.forEach((mId: string): void => {
+            syllabus.modules.forEach((mId: string): void =>
+            {
                 const moduleDoc: GanttModule | undefined = props.modules.find(
                     (m: GanttModule): boolean => m.id === mId,
                 );
@@ -65,15 +70,18 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult => {
                     (m): boolean => m.moduleId === mId,
                 );
 
-                moduleMappings.forEach((mapping): void => {
+                moduleMappings.forEach((mapping): void =>
+                {
                     const { start: startDate, end: endDate } = calculateTaskDate(
                         mapping.dayId,
                     );
 
-                    if (!syllabusMinDate || startDate < syllabusMinDate) {
+                    if (!syllabusMinDate || startDate < syllabusMinDate)
+                    {
                         syllabusMinDate = startDate;
                     }
-                    if (!syllabusMaxDate || endDate > syllabusMaxDate) {
+                    if (!syllabusMaxDate || endDate > syllabusMaxDate)
+                    {
                         syllabusMaxDate = endDate;
                     }
 
@@ -113,5 +121,10 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult => {
         });
 
         return { tasks, links };
-    }, [props.syllabuses, props.modules, mappings]);
+    }, [ props.syllabuses, props.modules, mappings ]);
 };
+function useCurriculumMappings(): { state: { mappings: any; }; }
+{
+    throw new Error("Function not implemented.");
+}
+

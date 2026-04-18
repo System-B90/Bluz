@@ -10,11 +10,11 @@ import { Box, BoxProps, Divider } from "@mui/material";
 import { useMemo } from "react";
 
 import { GanttWeekId } from "@/api-shared/types/gantt/models";
-import { useCurriculumMappings } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { DndDragEventOverData } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/dnd-types";
 import { GroupHeader } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/GroupHeader";
 import { ModuleItem } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { calculateTotalWorkingTimeForWeeks } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
+import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export interface WeekGroupPanelProps extends BoxProps
@@ -32,7 +32,7 @@ export function WeekGroupPanel({
 {
     const {
         state: { mappings },
-    } = useCurriculumMappings();
+    } = useGanttMappings();
     const state = useCurriculumState();
 
     const weeksState = useMemo(() => state.weeks, [ state.weeks ]);

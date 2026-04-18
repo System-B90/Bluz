@@ -4,11 +4,11 @@ import { Box, BoxProps, Stack, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
 
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
-import { useCurriculumMappings } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { DndDragEventActiveData } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/dnd-types";
 import { ModuleItem } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { hashSyllabusToColor } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
+import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 
 export interface SyllabusSectionProps extends BoxProps
 {
@@ -23,7 +23,7 @@ export function SyllabusSection({
     const theme = useTheme();
     const {
         state: { mappings },
-    } = useCurriculumMappings();
+    } = useGanttMappings();
     const syllabus = useSyllabus(syllabusId);
     const color = useMemo(
         () => hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2),
