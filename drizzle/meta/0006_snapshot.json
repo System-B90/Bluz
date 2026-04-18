@@ -27,12 +27,8 @@
           "name": "c2s_curriculum_id_c_id_fk",
           "tableFrom": "c2s",
           "tableTo": "c",
-          "columnsFrom": [
-            "curriculum_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["curriculum_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -40,12 +36,8 @@
           "name": "c2s_syllabus_id_s_id_fk",
           "tableFrom": "c2s",
           "tableTo": "s",
-          "columnsFrom": [
-            "syllabus_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["syllabus_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -53,10 +45,7 @@
       "compositePrimaryKeys": {
         "c2s_curriculum_id_syllabus_id_pk": {
           "name": "c2s_curriculum_id_syllabus_id_pk",
-          "columns": [
-            "curriculum_id",
-            "syllabus_id"
-          ]
+          "columns": ["curriculum_id", "syllabus_id"]
         }
       },
       "uniqueConstraints": {},
@@ -87,12 +76,8 @@
           "name": "c2w_c_id_c_id_fk",
           "tableFrom": "c2w",
           "tableTo": "c",
-          "columnsFrom": [
-            "c_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["c_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -100,12 +85,8 @@
           "name": "c2w_w_id_w_id_fk",
           "tableFrom": "c2w",
           "tableTo": "w",
-          "columnsFrom": [
-            "w_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["w_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -113,10 +94,7 @@
       "compositePrimaryKeys": {
         "c2w_c_id_w_id_pk": {
           "name": "c2w_c_id_w_id_pk",
-          "columns": [
-            "c_id",
-            "w_id"
-          ]
+          "columns": ["c_id", "w_id"]
         }
       },
       "uniqueConstraints": {},
@@ -161,12 +139,8 @@
           "name": "cEC_curriculum_id_c_id_fk",
           "tableFrom": "cEC",
           "tableTo": "c",
-          "columnsFrom": [
-            "curriculum_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["curriculum_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -174,12 +148,8 @@
           "name": "cEC_event_id_e_id_fk",
           "tableFrom": "cEC",
           "tableTo": "e",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -187,10 +157,7 @@
       "compositePrimaryKeys": {
         "cEC_curriculum_id_event_id_pk": {
           "name": "cEC_curriculum_id_event_id_pk",
-          "columns": [
-            "curriculum_id",
-            "event_id"
-          ]
+          "columns": ["curriculum_id", "event_id"]
         }
       },
       "uniqueConstraints": {},
@@ -386,12 +353,8 @@
           "name": "m2e_module_id_m_id_fk",
           "tableFrom": "m2e",
           "tableTo": "m",
-          "columnsFrom": [
-            "module_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["module_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -399,12 +362,8 @@
           "name": "m2e_event_id_e_id_fk",
           "tableFrom": "m2e",
           "tableTo": "e",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -412,10 +371,7 @@
       "compositePrimaryKeys": {
         "m2e_module_id_event_id_pk": {
           "name": "m2e_module_id_event_id_pk",
-          "columns": [
-            "module_id",
-            "event_id"
-          ]
+          "columns": ["module_id", "event_id"]
         }
       },
       "uniqueConstraints": {},
@@ -479,12 +435,8 @@
           "name": "cMDA_curriculum_id_c_id_fk",
           "tableFrom": "cMDA",
           "tableTo": "c",
-          "columnsFrom": [
-            "curriculum_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["curriculum_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -492,12 +444,8 @@
           "name": "cMDA_module_id_m_id_fk",
           "tableFrom": "cMDA",
           "tableTo": "m",
-          "columnsFrom": [
-            "module_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["module_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -505,12 +453,8 @@
           "name": "cMDA_week_id_w_id_fk",
           "tableFrom": "cMDA",
           "tableTo": "w",
-          "columnsFrom": [
-            "week_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["week_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -518,12 +462,8 @@
           "name": "cMDA_day_id_d_id_fk",
           "tableFrom": "cMDA",
           "tableTo": "d",
-          "columnsFrom": [
-            "day_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["day_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -531,10 +471,7 @@
       "compositePrimaryKeys": {
         "cMDA_curriculum_id_module_id_pk": {
           "name": "cMDA_curriculum_id_module_id_pk",
-          "columns": [
-            "curriculum_id",
-            "module_id"
-          ]
+          "columns": ["curriculum_id", "module_id"]
         }
       },
       "uniqueConstraints": {},
@@ -618,12 +555,8 @@
           "name": "s2m_syllabus_id_s_id_fk",
           "tableFrom": "s2m",
           "tableTo": "s",
-          "columnsFrom": [
-            "syllabus_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["syllabus_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -631,12 +564,8 @@
           "name": "s2m_module_id_m_id_fk",
           "tableFrom": "s2m",
           "tableTo": "m",
-          "columnsFrom": [
-            "module_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["module_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -644,10 +573,7 @@
       "compositePrimaryKeys": {
         "s2m_syllabus_id_module_id_pk": {
           "name": "s2m_syllabus_id_module_id_pk",
-          "columns": [
-            "syllabus_id",
-            "module_id"
-          ]
+          "columns": ["syllabus_id", "module_id"]
         }
       },
       "uniqueConstraints": {},
@@ -724,12 +650,8 @@
           "name": "w2d_w_id_w_id_fk",
           "tableFrom": "w2d",
           "tableTo": "w",
-          "columnsFrom": [
-            "w_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["w_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -737,12 +659,8 @@
           "name": "w2d_d_id_d_id_fk",
           "tableFrom": "w2d",
           "tableTo": "d",
-          "columnsFrom": [
-            "d_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["d_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -750,10 +668,7 @@
       "compositePrimaryKeys": {
         "w2d_w_id_d_id_pk": {
           "name": "w2d_w_id_d_id_pk",
-          "columns": [
-            "w_id",
-            "d_id"
-          ]
+          "columns": ["w_id", "d_id"]
         }
       },
       "uniqueConstraints": {},
@@ -819,12 +734,7 @@
     "public.module_event_type": {
       "name": "module_event_type",
       "schema": "public",
-      "values": [
-        "הרצאה",
-        "ע\"ע",
-        "ל\"ע",
-        "אחר"
-      ]
+      "values": ["הרצאה", "ע\"ע", "ל\"ע", "אחר"]
     }
   },
   "schemas": {},

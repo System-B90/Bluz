@@ -1,19 +1,17 @@
-'use client';
+"use client";
 
-import
-    {
-        Button,
-        Dialog,
-        DialogActions,
-        DialogContent,
-        DialogTitle,
-        Typography,
-    } from '@mui/material';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Typography,
+} from "@mui/material";
 
 import { Event } from "@/components/schedule/types/event";
 
-interface DeleteDialogProps
-{
+interface DeleteDialogProps {
   open: boolean;
   event?: null | Partial<Event>;
   onClose: () => void;
@@ -25,30 +23,20 @@ export function DeleteDialog({
   event,
   onClose,
   onConfirm,
-}: DeleteDialogProps)
-{
+}: DeleteDialogProps) {
   if (!event) return null;
 
   return (
-    <Dialog
-      onClose={ onClose }
-      open={ open }
-    >
+    <Dialog onClose={onClose} open={open}>
       <DialogTitle>אשר מחיקה</DialogTitle>
       <DialogContent>
         <Typography>
-          האם אתה בטוח שברצונך למחוק את &quot;{ event.name }&quot; מ{ }?
+          האם אתה בטוח שברצונך למחוק את &quot;{event.name}&quot; מ{}?
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={ onClose }>
-          ביטול
-        </Button>
-        <Button
-          color="error"
-          onClick={ onConfirm }
-          variant="contained"
-        >
+        <Button onClick={onClose}>ביטול</Button>
+        <Button color="error" onClick={onConfirm} variant="contained">
           מחק
         </Button>
       </DialogActions>

@@ -1,133 +1,160 @@
-'use client';
-import
-{
-    createContext,
-    Dispatch,
-    SetStateAction,
-    useCallback,
-    useContext,
-    useState,
-} from 'react';
+"use client";
+import {
+  createContext,
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 
-import { PotentialPA } from '@/api-shared/types';
-import { CourseId } from '@/api-shared/types/course';
-import { Event, EventType } from '@/components/schedule/types/event';
+import { PotentialPA } from "@/api-shared/types";
+import { CourseId } from "@/api-shared/types/course";
+import { Event, EventType } from "@/components/schedule/types/event";
 
 export type CalendarFiltersContextState = {
-    default: boolean;
-    filteredInstructors: number[];
-    setFilteredInstructors: Dispatch<SetStateAction<Array<number>>>;
-    filteredCourses: CourseId[];
-    setFilteredCourses: Dispatch<SetStateAction<Array<CourseId>>>;
-    showPAsFor: null | number;
-    setShowPAsFor: Dispatch<SetStateAction<null | number>>;
-    hidePrayers: boolean;
-    setHidePrayers: Dispatch<SetStateAction<boolean>>;
+  default: boolean;
+  filteredInstructors: number[];
+  setFilteredInstructors: Dispatch<SetStateAction<Array<number>>>;
+  filteredCourses: CourseId[];
+  setFilteredCourses: Dispatch<SetStateAction<Array<CourseId>>>;
+  showPAsFor: null | number;
+  setShowPAsFor: Dispatch<SetStateAction<null | number>>;
+  hidePrayers: boolean;
+  setHidePrayers: Dispatch<SetStateAction<boolean>>;
 
-    eventFilteredOpacity: (event: Event) => number;
+  eventFilteredOpacity: (event: Event) => number;
 };
 
-const CalendarFiltersContext = createContext<CalendarFiltersContextState | undefined>({
-    default: true,
-    filteredInstructors: [],
-    setFilteredInstructors: () => { },
-    filteredCourses: [],
-    setFilteredCourses: () => { },
-    showPAsFor: null,
-    setShowPAsFor: () => { },
-    hidePrayers: false,
-    setHidePrayers: () => { },
+const CalendarFiltersContext = createContext<
+  CalendarFiltersContextState | undefined
+>({
+  default: true,
+  filteredInstructors: [],
+  setFilteredInstructors: () => {},
+  filteredCourses: [],
+  setFilteredCourses: () => {},
+  showPAsFor: null,
+  setShowPAsFor: () => {},
+  hidePrayers: false,
+  setHidePrayers: () => {},
 
-    eventFilteredOpacity: () => 1,
+  eventFilteredOpacity: () => 1,
 });
 
-export function isInstructorBusy(instructor: number, event: Event): boolean
-{
-    const isLecturer = event.lecturers?.includes(instructor) ?? false;
-    return event.instructors.includes(instructor) || isLecturer;
+export function isInstructorBusy(instructor: number, event: Event): boolean {
+  const isLecturer = event.lecturers?.includes(instructor) ?? false;
+  return event.instructors.includes(instructor) || isLecturer;
 }
 
-export const CalendarFiltersProvider = ({ children }: { children: React.ReactNode; }) =>
-{
-    const [ hidePrayers, setHidePrayers ] = useState<boolean>(false);
-    const [ showPAsFor, setShowPAsFor ] = useState<null | number>(null /** ID of instructor */); // פ"א
-    const [ filteredInstructors, setFilteredInstructors ] = useState<Array<number>>([]);
-    const [ filteredCourses, setFilteredCourses ] = useState<Array<CourseId>>([]);
+export const CalendarFiltersProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const [hidePrayers, setHidePrayers] = useState<boolean>(false);
+  const [showPAsFor, setShowPAsFor] = useState<null | number>(
+    null /** ID of instructor */,
+  ); // פ"א
+  const [filteredInstructors, setFilteredInstructors] = useState<Array<number>>(
+    [],
+  );
+  const [filteredCourses, setFilteredCourses] = useState<Array<CourseId>>([]);
 
-    const eventFilteredOpacity = useCallback((event: Event): number =>
-    {
-        // Desirec behaviour is that if hidePrayers is on, prayers should simply not exist on the calendar
-        if (event.type === EventType.PRAYER && hidePrayers) { return 0; }
+  const eventFilteredOpacity = useCallback(
+    (event: Event): number => {
+      // Desirec behaviour is that if hidePrayers is on, prayers should simply not exist on the calendar
+      if (event.type === EventType.PRAYER && hidePrayers) {
+        return 0;
+      }
 
-        // Quick no filter exit check
-        if (filteredInstructors.length === 0 && filteredCourses.length === 0 && showPAsFor === null) { return 1; }
-
-        const hasMatchingCourse = event.courses.some(courseId => filteredCourses.includes(courseId));
-        const noCourse = filteredCourses.length === 0 || event.courses.length === 0;
-
-        if (showPAsFor === null)
-        {
-            const hasMatchingInstructor = [ ...event.instructors, ...event.lecturers?.filter((v) => typeof v === 'number') ?? [] ].some(instructorId => filteredInstructors.includes(instructorId));
-
-            return (hasMatchingInstructor || hasMatchingCourse) ? 1 : 0.2;
-        }
-
-        // showPAsFor !== null
-
-        if (!hasMatchingCourse && !noCourse) { return 0; }
-        let paState: PotentialPA = event.personalTalk ? PotentialPA.YesRecommended : (event.required ? PotentialPA.No : PotentialPA.YesNotRecommended);
-        if (paState === PotentialPA.YesRecommended)
-        {
-            // Check if busy
-            if (isInstructorBusy(showPAsFor, event))
-            {
-                paState = PotentialPA.NoRecommendedButBusy;
-            }
-        }
-
-        switch (paState)
-        {
-            case PotentialPA.YesRecommended:
-                return 1;
-            case PotentialPA.YesNotRecommended:
-                return 0.6;
-            case PotentialPA.No:
-                return 0.1;
-            case PotentialPA.NoRecommendedButBusy:
-                return 0.3;
-        }
-
+      // Quick no filter exit check
+      if (
+        filteredInstructors.length === 0 &&
+        filteredCourses.length === 0 &&
+        showPAsFor === null
+      ) {
         return 1;
-    }, [ filteredInstructors, filteredCourses, showPAsFor, hidePrayers ]);
+      }
 
-    return (
-        <CalendarFiltersContext.Provider value={ {
-            default: false,
-            filteredInstructors,
-            setFilteredInstructors,
-            filteredCourses,
-            setFilteredCourses,
-            showPAsFor,
-            setShowPAsFor,
+      const hasMatchingCourse = event.courses.some((courseId) =>
+        filteredCourses.includes(courseId),
+      );
+      const noCourse =
+        filteredCourses.length === 0 || event.courses.length === 0;
 
-            hidePrayers,
-            setHidePrayers,
+      if (showPAsFor === null) {
+        const hasMatchingInstructor = [
+          ...event.instructors,
+          ...(event.lecturers?.filter((v) => typeof v === "number") ?? []),
+        ].some((instructorId) => filteredInstructors.includes(instructorId));
 
-            eventFilteredOpacity
-        } }>
-            { children }
-        </CalendarFiltersContext.Provider>
-    );
+        return hasMatchingInstructor || hasMatchingCourse ? 1 : 0.2;
+      }
+
+      // showPAsFor !== null
+
+      if (!hasMatchingCourse && !noCourse) {
+        return 0;
+      }
+      let paState: PotentialPA = event.personalTalk
+        ? PotentialPA.YesRecommended
+        : event.required
+          ? PotentialPA.No
+          : PotentialPA.YesNotRecommended;
+      if (paState === PotentialPA.YesRecommended) {
+        // Check if busy
+        if (isInstructorBusy(showPAsFor, event)) {
+          paState = PotentialPA.NoRecommendedButBusy;
+        }
+      }
+
+      switch (paState) {
+        case PotentialPA.YesRecommended:
+          return 1;
+        case PotentialPA.YesNotRecommended:
+          return 0.6;
+        case PotentialPA.No:
+          return 0.1;
+        case PotentialPA.NoRecommendedButBusy:
+          return 0.3;
+      }
+
+      return 1;
+    },
+    [filteredInstructors, filteredCourses, showPAsFor, hidePrayers],
+  );
+
+  return (
+    <CalendarFiltersContext.Provider
+      value={{
+        default: false,
+        filteredInstructors,
+        setFilteredInstructors,
+        filteredCourses,
+        setFilteredCourses,
+        showPAsFor,
+        setShowPAsFor,
+
+        hidePrayers,
+        setHidePrayers,
+
+        eventFilteredOpacity,
+      }}
+    >
+      {children}
+    </CalendarFiltersContext.Provider>
+  );
 };
 
-export const useCalendarFilters = () =>
-{
-    const context = useContext(CalendarFiltersContext);
+export const useCalendarFilters = () => {
+  const context = useContext(CalendarFiltersContext);
 
-    if (context === undefined || context.default)
-    {
-        throw new Error('useCalendarFilters must be used within an CalendarFiltersProvider');
-    }
+  if (context === undefined || context.default) {
+    throw new Error(
+      "useCalendarFilters must be used within an CalendarFiltersProvider",
+    );
+  }
 
-    return context;
+  return context;
 };

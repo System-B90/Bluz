@@ -3,15 +3,17 @@ import { GanttSyllabusId } from "@/api-shared/types/gantt/models/curriculum";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useSyllabus(syllabusId: null): undefined;
-export function useSyllabus(syllabusId: GanttSyllabusId): SyllabusDocument | undefined;
-export function useSyllabus(syllabusId: GanttSyllabusId | null): SyllabusDocument | undefined
-{
-    const state = useCurriculumState();
+export function useSyllabus(
+  syllabusId: GanttSyllabusId,
+): SyllabusDocument | undefined;
+export function useSyllabus(
+  syllabusId: GanttSyllabusId | null,
+): SyllabusDocument | undefined {
+  const state = useCurriculumState();
 
-    if (syllabusId === null)
-    {
-        return undefined;
-    }
+  if (syllabusId === null) {
+    return undefined;
+  }
 
-    return state.syllabuses[ syllabusId ];
+  return state.syllabuses[syllabusId];
 }

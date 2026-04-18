@@ -1,11 +1,9 @@
 @tailwind utilities;
 
-@layer base
-{
-    @font-face
-    {
-        font-family: 'Assistant';
-        src: url('/fonts/Assistant.ttf');
-        font-display: block;
-    }
+@layer base {
+  @font-face {
+    font-family: "Assistant";
+    src: url("/fonts/Assistant.ttf");
+    font-display: block;
+  }
 }

@@ -3,35 +3,39 @@ import React from "react";
 
 import { GanttCurriculum } from "@/api-shared/types/gantt/models/curriculum";
 
-interface CurriculumEntryProps
-{
-    curriculum: GanttCurriculum;
-    onClick: () => void;
-    selected: boolean;
+interface CurriculumEntryProps {
+  curriculum: GanttCurriculum;
+  onClick: () => void;
+  selected: boolean;
 }
 
 // Visual distinction between Draft and Prod handled here
-export const CurriculumEntry = React.memo(({ curriculum, onClick, selected }: CurriculumEntryProps) =>
-{
+export const CurriculumEntry = React.memo(
+  ({ curriculum, onClick, selected }: CurriculumEntryProps) => {
     const isDraft = curriculum?.isDraft;
 
     return (
-        <ListItem disablePadding>
-            <ListItemButton onClick={ onClick }>
-                <ListItemText
-                    primary={ curriculum?.title || "ללא שם" }
-                    slotProps={ {
-                        primary: {
-                            sx: {
-                                color: selected ? 'text.action' : (isDraft ? 'text.secondary' : 'text.primary'),
-                                fontWeight: isDraft ? 'normal' : 'medium',
-                                fontStyle: isDraft ? 'italic' : 'normal'
-                            }
-                        }
-                    } }
-                />
-            </ListItemButton>
-        </ListItem>
+      <ListItem disablePadding>
+        <ListItemButton onClick={onClick}>
+          <ListItemText
+            primary={curriculum?.title || "ללא שם"}
+            slotProps={{
+              primary: {
+                sx: {
+                  color: selected
+                    ? "text.action"
+                    : isDraft
+                      ? "text.secondary"
+                      : "text.primary",
+                  fontWeight: isDraft ? "normal" : "medium",
+                  fontStyle: isDraft ? "italic" : "normal",
+                },
+              },
+            }}
+          />
+        </ListItemButton>
+      </ListItem>
     );
-});
-CurriculumEntry.displayName = 'CurriculumEntry';
+  },
+);
+CurriculumEntry.displayName = "CurriculumEntry";

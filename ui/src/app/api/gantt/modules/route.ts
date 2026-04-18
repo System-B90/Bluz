@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 import { DbModule } from "@/api-server/gantt/db-module";
 import { buildGantCollectionRoutes } from "@/app/api/gantt/base-collection";

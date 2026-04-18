@@ -1,20 +1,51 @@
-import FilterListIcon from '@mui/icons-material/FilterList';
-import InfoIcon from '@mui/icons-material/Info';
-import { IconButton, Tooltip } from '@mui/material';
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import FilterListIcon from "@mui/icons-material/FilterList";
+import InfoIcon from "@mui/icons-material/Info";
+import { IconButton, Tooltip } from "@mui/material";
+import { Dispatch, SetStateAction, useMemo } from "react";
 
-import { useCalendarFilters } from '@/components/base/CalendarFilterProvider';
+import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 
-export function FilterIcon({ filtersVisible, setFiltersVisible }: { filtersVisible: boolean, setFiltersVisible: Dispatch<SetStateAction<boolean>>; })
-{
-    const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } = useCalendarFilters();
-    const hasAnyFilter = useMemo(() => hidePrayers || filteredCourses.length !== 0 || filteredInstructors.length !== 0 || showPAsFor !== null, [ filteredCourses, filteredInstructors, showPAsFor, hidePrayers ]);
-    return (
-        <Tooltip placement='bottom' title={ `${filtersVisible ? 'Hide' : 'Show'} Filters` }>
-            <IconButton className='relative' color={ filtersVisible ? 'primary' : 'inherit' } onClick={ () => { setFiltersVisible(v => !v); } }>
-                <FilterListIcon />
-                { (!filtersVisible && hasAnyFilter) ? <Tooltip placement='right' title='יש סננים נסתרים'><InfoIcon className='absolute top-0.5 right-0.5' color='info' fontSize='inherit' sx={ { fontSize: '1.1rem' } } /></Tooltip> : null }
-            </IconButton>
-        </Tooltip>
-    );
+export function FilterIcon({
+  filtersVisible,
+  setFiltersVisible,
+}: {
+  filtersVisible: boolean;
+  setFiltersVisible: Dispatch<SetStateAction<boolean>>;
+}) {
+  const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
+    useCalendarFilters();
+  const hasAnyFilter = useMemo(
+    () =>
+      hidePrayers ||
+      filteredCourses.length !== 0 ||
+      filteredInstructors.length !== 0 ||
+      showPAsFor !== null,
+    [filteredCourses, filteredInstructors, showPAsFor, hidePrayers],
+  );
+  return (
+    <Tooltip
+      placement="bottom"
+      title={`${filtersVisible ? "Hide" : "Show"} Filters`}
+    >
+      <IconButton
+        className="relative"
+        color={filtersVisible ? "primary" : "inherit"}
+        onClick={() => {
+          setFiltersVisible((v) => !v);
+        }}
+      >
+        <FilterListIcon />
+        {!filtersVisible && hasAnyFilter ? (
+          <Tooltip placement="right" title="יש סננים נסתרים">
+            <InfoIcon
+              className="absolute top-0.5 right-0.5"
+              color="info"
+              fontSize="inherit"
+              sx={{ fontSize: "1.1rem" }}
+            />
+          </Tooltip>
+        ) : null}
+      </IconButton>
+    </Tooltip>
+  );
 }

@@ -1,27 +1,27 @@
 {
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "always",
+    "source.organizeImports": "always"
+  },
+  // NextJS / React
+  "[typescript][typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.codeActionsOnSave": {
-        "source.fixAll": "always",
-        "source.organizeImports": "always"
-    },
-    // NextJS / React
-    "[typescript][typescriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "always",
-            "editor.suggest.autoImports": "always",
-        },
-    },
-    // Python Tooling
-    "[python]": {
-        "editor.defaultFormatter": "charliermarsh.ruff",
-        "editor.codeActionsOnSave": {
-            "source.fixAll.ruff": "explicit",
-            "source.organizeImports.ruff": "explicit"
-        }
-    },
-    "python.analysis.typeCheckingMode": "strict",
-    // UI Standards
-    "files.associations": {
-        "*.css": "tailwindcss"
+      "source.organizeImports": "always",
+      "editor.suggest.autoImports": "always"
     }
+  },
+  // Python Tooling
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "python.analysis.typeCheckingMode": "strict",
+  // UI Standards
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
 }

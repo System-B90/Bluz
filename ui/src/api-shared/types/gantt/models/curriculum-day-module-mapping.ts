@@ -9,10 +9,9 @@ import { GanttModuleId } from "@/api-shared/types/gantt/models/module";
  * An order field is available in order to maintain a sorted array of mappings which are all temporarily allocated on the same day.
  * This is used when zooming in and out of views.
  */
-export interface GanttCurriculumModuleDayMapping
-{
-    moduleId: GanttModuleId;
-    dayId: GanttDayId;
-    curriculumId: GanttCurriculumId;
-    sortOrder: number;
+export interface GanttCurriculumModuleDayMapping {
+  moduleId: GanttModuleId;
+  dayId: GanttDayId;
+  curriculumId: GanttCurriculumId;
+  sortOrder: number;
 }

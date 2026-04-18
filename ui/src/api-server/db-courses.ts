@@ -6,47 +6,49 @@ import { ClientApiError } from "@/api-shared/errors";
 import { Course } from "@/api-shared/types/course";
 import { MessageTypes } from "@/settings";
 
-async function getDbCourses(options?: FindOptions): Promise<Array<Course>>
-{
-    const data = databaseController.courses.find({}, options);
-    return await data.toArray();
+async function getDbCourses(options?: FindOptions): Promise<Array<Course>> {
+  const data = databaseController.courses.find({}, options);
+  return await data.toArray();
 }
 
-async function setDbCourse(course: Course, options?: UpdateOptions)
-{
-    const data = await databaseController.courses.updateOne({ 'id': course.id }, { '$set': course }, options);
-    if (data.matchedCount === 0 && !options?.upsert)
-    {
-        throw new ClientApiError(`No course by id ${course.id} found!`);
-    }
-    if (data.modifiedCount === 0)
-    {
-        throw new ClientApiError(`Course ${course.id} data not modified!`);
-    }
-    SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, { courses: { [ course.id ]: course } });
+async function setDbCourse(course: Course, options?: UpdateOptions) {
+  const data = await databaseController.courses.updateOne(
+    { id: course.id },
+    { $set: course },
+    options,
+  );
+  if (data.matchedCount === 0 && !options?.upsert) {
+    throw new ClientApiError(`No course by id ${course.id} found!`);
+  }
+  if (data.modifiedCount === 0) {
+    throw new ClientApiError(`Course ${course.id} data not modified!`);
+  }
+  SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, {
+    courses: { [course.id]: course },
+  });
 }
 
-async function createDbCourse(course: Course)
-{
-    await databaseController.courses.insertOne((course as Course));
-    SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, { courses: { [ course.id ]: course } });
-    return course;
+async function createDbCourse(course: Course) {
+  await databaseController.courses.insertOne(course as Course);
+  SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, {
+    courses: { [course.id]: course },
+  });
+  return course;
 }
 
-async function deleteDbCourse(courseId: Course[ 'id' ])
-{
-    const data = await databaseController.courses.deleteOne({ 'id': courseId });
-    if (data.deletedCount === 0)
-    {
-        throw new ClientApiError(`No course by id ${courseId} found!`);
-    }
-    SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, { courses: { [ courseId ]: null } });
+async function deleteDbCourse(courseId: Course["id"]) {
+  const data = await databaseController.courses.deleteOne({ id: courseId });
+  if (data.deletedCount === 0) {
+    throw new ClientApiError(`No course by id ${courseId} found!`);
+  }
+  SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, {
+    courses: { [courseId]: null },
+  });
 }
 
-export namespace DbCourses
-{
-    export const get = getDbCourses;
-    export const set = setDbCourse;
-    export const create = createDbCourse;
-    export const del = deleteDbCourse;
+export namespace DbCourses {
+  export const get = getDbCourses;
+  export const set = setDbCourse;
+  export const create = createDbCourse;
+  export const del = deleteDbCourse;
 }

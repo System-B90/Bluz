@@ -1,7 +1,4 @@
-import
-  {
-    defineConfig
-  } from "drizzle-kit";
+import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
   schema: "./ui/src/api-server/gantt/schema/index.ts",

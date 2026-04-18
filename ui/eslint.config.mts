@@ -14,11 +14,11 @@ export default defineConfig([
     plugins: {
       "@typescript-eslint": tseslint.plugin,
       "@stylistic": stylistic,
-      "import": importPlugin,
+      import: importPlugin,
       "unused-imports": unusedImports,
-      "perfectionist": perfectionist,
-      "react": reactPlugin,
-      "unicorn": unicorn, // 🆕 Added
+      perfectionist: perfectionist,
+      react: reactPlugin,
+      unicorn: unicorn, // 🆕 Added
     },
     languageOptions: {
       parser: tseslint.parser,
@@ -31,17 +31,22 @@ export default defineConfig([
       next: { rootDir: "ui/" },
     },
     rules: {
-      "eol-last": [ "error", "always" ],
-      "no-multiple-empty-lines": [ "error", { max: 1, maxEOF: 0 } ],
+      "eol-last": ["error", "always"],
+      "no-multiple-empty-lines": ["error", { max: 1, maxEOF: 0 }],
 
       // --- Variables, Types & Assertions ---
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "unused-imports/no-unused-vars": [
         "warn",
-        { vars: "all", varsIgnorePattern: "^_", args: "after-used", argsIgnorePattern: "^_" },
+        {
+          vars: "all",
+          varsIgnorePattern: "^_",
+          args: "after-used",
+          argsIgnorePattern: "^_",
+        },
       ],
-      "@typescript-eslint/method-signature-style": [ "error", "property" ],
+      "@typescript-eslint/method-signature-style": ["error", "property"],
       // "@typescript-eslint/consistent-type-assertions": [
       //   "error",
       //   { assertionStyle: "as", objectLiteralTypeAssertions: "allow-as-parameter" }
@@ -55,23 +60,42 @@ export default defineConfig([
       "no-restricted-imports": [
         "error",
         {
-          patterns: [ { group: [ "./*", "../*" ], message: "Use absolute paths.", allowTypeImports: true } ]
-        }
+          patterns: [
+            {
+              group: ["./*", "../*"],
+              message: "Use absolute paths.",
+              allowTypeImports: true,
+            },
+          ],
+        },
       ],
       "import/order": [
         "error",
         {
-          "groups": [ "builtin", "external", "internal", "parent", "sibling", "index" ],
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            "parent",
+            "sibling",
+            "index",
+          ],
           "newlines-between": "always",
-          "alphabetize": { order: "asc", caseInsensitive: true }
-        }
+          alphabetize: { order: "asc", caseInsensitive: true },
+        },
       ],
 
       // --- React & Perfectionist ---
-      "react/jsx-no-leaked-render": [ "error", { validStrategies: [ "ternary", "coerce" ] } ],
-      "perfectionist/sort-variable-declarations": [ "error", { type: "alphabetical" } ],
-      "perfectionist/sort-union-types": [ "error", { type: "alphabetical" } ],
-      "perfectionist/sort-jsx-props": [ "error", { type: "alphabetical" } ],
+      "react/jsx-no-leaked-render": [
+        "error",
+        { validStrategies: ["ternary", "coerce"] },
+      ],
+      "perfectionist/sort-variable-declarations": [
+        "error",
+        { type: "alphabetical" },
+      ],
+      "perfectionist/sort-union-types": ["error", { type: "alphabetical" }],
+      "perfectionist/sort-jsx-props": ["error", { type: "alphabetical" }],
 
       // --- Structural Spacing ---
       "@stylistic/padding-line-between-statements": [
@@ -84,18 +108,24 @@ export default defineConfig([
         { blankLine: "any", prev: "import", next: "import" },
       ],
 
-      "object-curly-newline": [ "error", { "ObjectPattern": { "multiline": true, "consistent": true } } ],
-      "object-property-newline": [ "error", { "allowAllPropertiesOnSameLine": true } ],
+      "object-curly-newline": [
+        "error",
+        { ObjectPattern: { multiline: true, consistent: true } },
+      ],
+      "object-property-newline": [
+        "error",
+        { allowAllPropertiesOnSameLine: true },
+      ],
 
       // --- Filename Convention (Unicorn) ---
       "unicorn/filename-case": [
         "error",
         {
-          "cases": {
-            "kebabCase": true,
-            "pascalCase": true
+          cases: {
+            kebabCase: true,
+            pascalCase: true,
           },
-          "ignore": [
+          ignore: [
             // Next.js reserved and specific logic files
             "index.tsx",
             "route.ts",
@@ -112,17 +142,17 @@ export default defineConfig([
             "utils.ts",
             "global.css",
             // Allow PascalCase for TSX components is handled by the "pascalCase: true" above
-          ]
-        }
-      ]
+          ],
+        },
+      ],
     },
   },
   {
-    files: [ "**/api-server/gantt/schema/**" ],
+    files: ["**/api-server/gantt/schema/**"],
     rules: {
       "no-restricted-imports": "off",
       "import/no-cycle": "off",
-    }
+    },
   },
   {
     files: [
@@ -134,7 +164,7 @@ export default defineConfig([
     rules: { "import/no-default-export": "off" },
   },
   {
-    files: [ "**/*.js", "**/*.mjs", "**/*.mts" ],
+    files: ["**/*.js", "**/*.mjs", "**/*.mts"],
     ...tseslint.configs.disableTypeChecked,
   },
   {
