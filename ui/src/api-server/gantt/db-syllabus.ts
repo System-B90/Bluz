@@ -6,7 +6,7 @@ import { ganttCurriculum2SyllabusesSchema, ganttSyllabus2ModulesSchema, ganttSyl
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiSyllabus } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttSyllabusPayload } from "@/api-shared/types/gantt/create-payloads";
-import { GanttCurriculumId, GanttSyllabus, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttSyllabus, GanttSyllabusId } from "@/api-shared/types/gantt/models/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
     GanttSyllabus,

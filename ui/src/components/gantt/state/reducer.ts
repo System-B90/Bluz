@@ -19,7 +19,7 @@ import
         GanttSyllabusId,
         GanttWeek,
         GanttWeekId
-    } from "@/api-shared/types/gantt/curriculum";
+    } from "@/api-shared/types/gantt/models/curriculum";
 
 export type Action =
     | { type: 'ADD_DAY'; payload: { day: GanttDay & { id: GanttDayId; }; }; }

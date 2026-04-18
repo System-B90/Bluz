@@ -8,7 +8,7 @@
 import { Box } from "@mui/material";
 import { useMemo } from 'react';
 
-import { GanttCurriculumId, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttWeekId } from "@/api-shared/types/gantt/models/curriculum";
 import { WeekPanel } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useCurriculum } from '@/components/gantt/state/hooks/UseCurriculum';
 

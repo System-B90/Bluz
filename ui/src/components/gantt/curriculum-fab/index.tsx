@@ -12,7 +12,7 @@ import { useSnackbar } from 'notistack';
 import { Dispatch, MouseEvent, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
-import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
 import { CurriculumActionItems } from '@/components/gantt/curriculum-fab/CurriculumActionItems';
 import { CurriculumListItems } from "@/components/gantt/curriculum-fab/CurriculumListItems";
 import { fetchDrawerData, sortCurriculumsByDraftAndUpdatedAt } from "@/components/gantt/curriculum-fab/utils";

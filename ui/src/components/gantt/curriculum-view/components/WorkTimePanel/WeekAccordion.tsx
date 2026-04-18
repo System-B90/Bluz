@@ -2,7 +2,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { Box, IconButton, TextField, Tooltip } from '@mui/material';
 import { KeyboardEvent } from 'react';
 
-import { GanttWeekId } from '@/api-shared/types/gantt/curriculum';
+import { GanttWeekId } from '@/api-shared/types/gantt/models/curriculum';
 import { useCurriculumWeek } from '@/components/gantt/state/hooks/UseCurriculumWeek';
 
 export interface WeekAccordionProps

@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { KeyboardEvent } from 'react';
 
-import { GanttDay } from '@/api-shared/types/gantt/curriculum';
+import { GanttDay } from '@/api-shared/types/gantt/models/curriculum';
 
 export interface DaysTableProps
 {

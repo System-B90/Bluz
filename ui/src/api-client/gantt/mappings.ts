@@ -8,8 +8,8 @@
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { baseDocumentFixup, RawBaseDocument } from "@/api-client/gantt/base";
 import { CreateGanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/create-payloads";
-import { GanttCurriculumId, GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
-import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/mapping";
+import { GanttCurriculumId, GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/models/curriculum";
+import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models/curriculum-day-module-mapping";
 
 /**
  * GET: Retrieves all module mappings for a curriculum.

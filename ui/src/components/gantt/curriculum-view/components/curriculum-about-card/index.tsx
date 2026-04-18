@@ -1,7 +1,7 @@
 import { Box, Card, CardProps, Skeleton, Typography } from '@mui/material';
 
 import { GanttCurriculumDocument } from '@/api-client/gantt/curriculum';
-import { GanttCurriculumId } from '@/api-shared/types/gantt/curriculum';
+import { GanttCurriculumId } from '@/api-shared/types/gantt/models/curriculum';
 import { CurriculumDescription } from '@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumDescription';
 import { CurriculumName } from '@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumName';
 

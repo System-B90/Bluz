@@ -1,5 +1,5 @@
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
-import { GanttCurriculum, GanttEvent, GanttModule, GanttSyllabus } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculum, GanttEvent, GanttModule, GanttSyllabus } from "@/api-shared/types/gantt/models/curriculum";
 
 type NumberFieldKeys<T> = {
     [ K in keyof T ]: T[ K ] extends null | number | undefined ? K : never;

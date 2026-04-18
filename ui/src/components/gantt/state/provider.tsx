@@ -4,7 +4,7 @@ import React, { ReactNode, createContext, useCallback, useContext, useMemo, useR
 
 import { NormalizedStore, normalizeCurriculumData } from '@/api-client/gantt/drizzle-normalize';
 import { ApiCurriculum } from '@/api-shared/types/gantt/api-layer';
-import { GanttModuleId, GanttSyllabusId } from '@/api-shared/types/gantt/curriculum';
+import { GanttModuleId, GanttSyllabusId } from '@/api-shared/types/gantt/models/curriculum';
 import { ModuleDialog } from '@/components/gantt/module-dialog';
 import { Action, curriculumReducer } from '@/components/gantt/state/reducer';
 

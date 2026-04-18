@@ -17,7 +17,7 @@ import
     } from "@/api-server/gantt/db-mappings";
 import { ClientApiError } from "@/api-shared/errors";
 import { CreateGanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/create-payloads";
-import { GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
+import { GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/models/curriculum";
 
 export interface RouteContext
 {

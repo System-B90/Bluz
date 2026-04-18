@@ -1,61 +1,109 @@
 'use client';
-import { Box, CircularProgress, Typography } from "@mui/material";
+
+import { Box, CircularProgress, Typography, keyframes } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
-import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer"; // Ensure you import this type
-import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
 import { CurriculumFab } from "@/components/gantt/curriculum-fab";
 import { CurriculumView } from "@/components/gantt/curriculum-view";
 import { CurriculumProvider } from "@/components/gantt/state/provider";
 
-export default function GanttPage()
-{
+/**
+ * Keyframes for the "Windows-style" fade animation
+ */
+const fadeInOut = keyframes`
+  0% { opacity: 0; transform: translateY(10px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+`;
+
+const LOADING_STRINGS = [
+    "Loading Gantt data...",
+    "Mapping Syllabuses...",
+    "Synchronizing nodes...",
+    "Optimizing timeline layout...",
+    "Almost there..."
+];
+
+/**
+ * Animated loading screen sub-component
+ */
+const WindowsLoadingScreen = () => {
+    const [index, setIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setIndex((prev) => (prev + 1) % LOADING_STRINGS.length);
+        }, 3000); // Cycles every 3 seconds
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <Box 
+            display="flex" 
+            flexDirection="column" 
+            alignItems="center" 
+            justifyContent="center" 
+            gap={3}
+        >
+            <CircularProgress size={60} thickness={2} sx={{ color: 'primary.main' }} />
+            <Box sx={{ height: '24px' }}>
+                <Typography
+                    key={index}
+                    variant="h6"
+                    sx={{
+                        color: 'text.secondary',
+                        fontWeight: 300,
+                        animation: `${fadeInOut} 3s ease-in-out infinite`,
+                    }}
+                >
+                    {LOADING_STRINGS[index]}
+                </Typography>
+            </Box>
+        </Box>
+    );
+};
+
+export default function GanttPage() {
     const { enqueueSnackbar } = useSnackbar();
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const [ drawerOpen, setDrawerOpen ] = useState(true);
-    const [ currentCurriculum, setCurrentCurriculum ] = useState<GanttCurriculumId | null>(() =>
-    {
+    const [drawerOpen, setDrawerOpen] = useState(true);
+    const [currentCurriculum, setCurrentCurriculum] = useState<GanttCurriculumId | null>(() => {
         const cidFromUrl = searchParams.get('cid');
-        return cidFromUrl ? cidFromUrl as GanttCurriculumId : null;
+        return cidFromUrl ? (cidFromUrl as GanttCurriculumId) : null;
     });
 
-    const [ initialData, setInitialData ] = useState<ApiCurriculum | null>(null);
-    const [ isLoading, setIsLoading ] = useState(false);
-    const [ error, setError ] = useState<null | string>(null);
+    const [initialData, setInitialData] = useState<ApiCurriculum | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<null | string>(null);
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         const urlCid = searchParams.get('cid');
         const currentCid = currentCurriculum ?? null;
 
-        if (urlCid === currentCid)
-        {
-            return;
-        }
+        if (urlCid === currentCid) return;
 
         const nextParams = new URLSearchParams(searchParams.toString());
-        if (currentCid)
-        {
+        if (currentCid) {
             nextParams.set('cid', currentCid);
-        } else
-        {
+        } else {
             nextParams.delete('cid');
         }
 
         const nextSearch = nextParams.toString();
         router.replace(nextSearch ? `${pathname}?${nextSearch}` : pathname);
-    }, [ currentCurriculum, pathname, router, searchParams ]);
+    }, [currentCurriculum, pathname, router, searchParams]);
 
-    useEffect(() =>
-    {
-        if (!currentCurriculum)
-        {
+    useEffect(() => {
+        if (!currentCurriculum) {
             setInitialData(null);
             return;
         }
@@ -64,53 +112,49 @@ export default function GanttPage()
         setIsLoading(true);
         setError(null);
 
-        const fetchCurriculum = async () =>
-        {
-            try
-            {
+        const fetchCurriculum = async () => {
+            try {
                 const data = await ganttApi.curriculum.apiGet(currentCurriculum);
                 if (isMounted) setInitialData(data);
-            } catch (error: any)
-            {
-                enqueueApiErrorSnackbar(enqueueSnackbar, `טעינת הגאנט נכשלה!`, error);
-                if (isMounted) setError(error.message);
-            } finally
-            {
+            } catch (err: any) {
+                enqueueApiErrorSnackbar(enqueueSnackbar, `טעינת הגאנט נכשלה!`, err);
+                if (isMounted) setError(err.message);
+            } finally {
                 if (isMounted) setIsLoading(false);
             }
         };
 
-        // Error handling internally
         void fetchCurriculum();
 
-        return () =>
-        {
+        return () => {
             isMounted = false;
         };
-    }, [ currentCurriculum, enqueueSnackbar ]);
+    }, [currentCurriculum, enqueueSnackbar]);
 
     return (
-        <Box display={ 'flex' } flexDirection={ 'row' } height={ '100%' } maxHeight={ '100%' } sx={ { position: 'relative' } }>
+        <Box display="flex" flexDirection="row" height="100%" maxHeight="100%" sx={{ position: 'relative' }}>
             <CurriculumFab
-                currentCurriculum={ currentCurriculum }
-                open={ drawerOpen }
-                setCurrentCurriculum={ setCurrentCurriculum }
-                setOpen={ setDrawerOpen }
+                currentCurriculum={currentCurriculum}
+                open={drawerOpen}
+                setCurrentCurriculum={setCurrentCurriculum}
+                setOpen={setDrawerOpen}
             />
 
-            <Box flexGrow={ 1 } sx={ { padding: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' } }>
-
-                { !currentCurriculum && (
+            <Box flexGrow={1} sx={{ padding: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                {!currentCurriculum && !isLoading && (
                     <Typography color="textSecondary">בחרו גאנט כדי להתחיל לעבוד</Typography>
-                ) }
+                )}
 
-                { isLoading ? <CircularProgress /> : null }
-                { error ? <Typography color="error">{ error }</Typography> : null }
+                {isLoading && <WindowsLoadingScreen />}
 
-                { currentCurriculum && !isLoading && initialData ? <CurriculumProvider initialData={ initialData } key={ currentCurriculum }>
-                    <CurriculumView curriculumId={ currentCurriculum } />
-                </CurriculumProvider> : null }
+                {error && <Typography color="error">{error}</Typography>}
+
+                {currentCurriculum && !isLoading && initialData ? (
+                    <CurriculumProvider initialData={initialData} key={currentCurriculum}>
+                        <CurriculumView curriculumId={currentCurriculum} />
+                    </CurriculumProvider>
+                ) : null}
             </Box>
-        </Box >
+        </Box>
     );
 }

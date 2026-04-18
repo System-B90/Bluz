@@ -1,11 +1,14 @@
+# syntax=docker/dockerfile:1
 # check=skip=SecretsUsedInArgOrEnv
 FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
-RUN mkdir ui
+COPY ui/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts
 
 FROM deps AS dev
 WORKDIR /app
@@ -18,12 +21,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ARG WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=ci_placeholder
-ENV WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
-# Combined migration build if possible, or keep separate if logic differs
-RUN npx tsc ui/src/api-server/drizzle-migrate.ts --outDir ./dist-migrate --esModuleInterop --skipLibCheck
+RUN npx tsc ui/src/api-server/drizzle-migrate.ts --outDir /app/dist-migrate --esModuleInterop --skipLibCheck
 
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -33,26 +34,20 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-COPY --from=builder /app/ui/public ./ui/public
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
 RUN mkdir -p ui/.next && chown nextjs:nodejs ui/.next
 
+COPY --from=builder --chown=nextjs:nodejs /app/ui/public ./ui/public
 COPY --from=builder --chown=nextjs:nodejs /app/ui/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/static
+COPY --from=builder --chown=nextjs:nodejs /usr/local/bin/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 COPY drizzle ./drizzle
 COPY --from=builder /app/dist-migrate/drizzle-migrate.js ./migrate.js
 
-COPY ui/docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
 USER nextjs
-
 EXPOSE 3000
 
 ENTRYPOINT ["docker-entrypoint.sh"]
-# Standalone server generated inside the ui directory structure
 CMD ["node", "ui/server.js"]

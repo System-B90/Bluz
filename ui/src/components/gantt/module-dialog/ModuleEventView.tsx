@@ -13,7 +13,7 @@ import { useSnackbar } from 'notistack';
 import { useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { GanttEvent, GanttEventId, GanttModuleId, ModuleEventType } from "@/api-shared/types/gantt/curriculum";
+import { GanttEvent, GanttEventId, GanttModuleId, ModuleEventType } from "@/api-shared/types/gantt/models/curriculum";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from '@/components/gantt/state/hooks/UseEvent';

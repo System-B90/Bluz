@@ -1,5 +1,10 @@
-import { GanttCurriculum, GanttCurriculumId, GanttDay, GanttEvent, GanttModule, GanttModuleId, GanttSyllabus, GanttSyllabusId, GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
-import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/mapping";
+import { GanttCurriculum, GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
+import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models/curriculum-day-module-mapping";
+import { GanttDay } from "@/api-shared/types/gantt/models/day";
+import { GanttEvent } from "@/api-shared/types/gantt/models/event";
+import { GanttModule, GanttModuleId } from "@/api-shared/types/gantt/models/module";
+import { GanttSyllabus, GanttSyllabusId } from "@/api-shared/types/gantt/models/syllabus";
+import { GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/models/week";
 
 /**
  * Payload to create a new Curriculum.

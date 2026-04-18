@@ -1,6 +1,6 @@
 import { Box, CardHeader, CardHeaderProps } from "@mui/material";
 
-import { GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttSyllabusId } from "@/api-shared/types/gantt/models/curriculum";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { HoursBox } from "@/components/gantt/syllabus-card/HoursBox";
 import { SyllabusName } from "@/components/gantt/syllabus-card/SyllabusName";

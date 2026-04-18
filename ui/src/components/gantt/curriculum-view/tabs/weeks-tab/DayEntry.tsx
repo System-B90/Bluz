@@ -11,7 +11,7 @@ import { useSnackbar } from "notistack";
 import React, { useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { GanttDayId, GanttDayIndex } from "@/api-shared/types/gantt/curriculum";
+import { GanttDayId, GanttDayIndex } from "@/api-shared/types/gantt/models/curriculum";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gantt/state/hooks/UseCurriculumDay";
 

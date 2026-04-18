@@ -7,7 +7,7 @@ import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/sch
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttEventPayload } from "@/api-shared/types/gantt/create-payloads";
-import { GanttCurriculumId, GanttEvent, GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttEvent, GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models/curriculum";
 
 /**
  * Basic CRUD operations for the 'ganttEventsSchema' table.

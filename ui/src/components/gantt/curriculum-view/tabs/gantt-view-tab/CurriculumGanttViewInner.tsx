@@ -8,11 +8,9 @@
 'use client';
 
 import { Paper } from '@mui/material';
-import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import React, { useCallback, useMemo } from 'react';
 
-import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { useCurriculumMappings } from '@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider';
 import { GanttEngine } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/GanttEngine';
 import { GanttDataResult, GanttDataSourceProps, SvarGanttDataUpdateEvent, SvarGanttScale } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/types';
@@ -39,31 +37,11 @@ export function CurriculumGanttViewInner(props: GanttDataSourceProps): React.Rea
     );
 
     const handleDataUpdate = useCallback(
-        (event: SvarGanttDataUpdateEvent): void =>
+        (_event: SvarGanttDataUpdateEvent): void =>
         {
-            if (event.action !== 'update' || !event.obj.moduleId) return;
-
-            const oldMapping = event.obj.origin;
-            if (!oldMapping) return;
-
-            const newDate: dayjs.Dayjs = dayjs(event.obj.start_date);
-            const anchor: dayjs.Dayjs = dayjs().startOf('week');
-            const newWeekIndex: number = Math.floor(newDate.diff(anchor, 'week'));
-            const newDayIndex: number = newDate.day();
-
-            if (newWeekIndex === oldMapping.weekIndex && newDayIndex === oldMapping.dayIndex)
-            {
-                return;
-            }
-
-            moveModule(
-                event.obj.moduleId,
-                { w: oldMapping.weekIndex, d: oldMapping.dayIndex },
-                { w: newWeekIndex, d: newDayIndex }
-            )
-                .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'הזזת המערך נכשלה!', error));
+            // TODO: Implement
         },
-        [ moveModule, enqueueSnackbar ]
+        []
     );
 
     return (

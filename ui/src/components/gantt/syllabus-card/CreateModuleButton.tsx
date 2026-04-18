@@ -4,7 +4,7 @@ import { useSnackbar } from 'notistack';
 import { useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { GanttSyllabusId, ModuleEventType } from "@/api-shared/types/gantt/curriculum";
+import { GanttSyllabusId, ModuleEventType } from "@/api-shared/types/gantt/models/curriculum";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 

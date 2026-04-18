@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { ClientApiError } from "@/api-shared/errors";
-import { BaseGantItem } from "@/api-shared/types/gantt/curriculum";
+import { BaseGantItem } from "@/api-shared/types/gantt/models/curriculum";
 import { BasicGantOperations } from "@/app/api/gantt/base-collection";
 
 export interface BuildGantItemRoutesProps<TEntity extends BaseGantItem, TCreatePayload = Omit<TEntity, 'id'>>

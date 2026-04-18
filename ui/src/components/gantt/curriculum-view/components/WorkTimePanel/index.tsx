@@ -11,7 +11,7 @@ import { useSnackbar } from 'notistack';
 import { useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { GanttWeekId } from '@/api-shared/types/gantt/curriculum';
+import { GanttWeekId } from '@/api-shared/types/gantt/models/curriculum';
 import { OverviewTab } from '@/components/gantt/curriculum-view/components/WorkTimePanel/OverviewTab';
 import { WorkTimePanelProps } from '@/components/gantt/curriculum-view/components/WorkTimePanel/types';
 import { useWorkTimePanelLogic } from '@/components/gantt/curriculum-view/components/WorkTimePanel/UseWorkTimePanelLogic';

@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { ganttApi } from '@/api-client/gantt';
-import { GanttCurriculumId } from '@/api-shared/types/gantt/curriculum';
+import { GanttCurriculumId } from '@/api-shared/types/gantt/models/curriculum';
 import { ActionItemButton } from '@/components/gantt/curriculum-fab/action-items/ActionItemButton';
 import { CurriculumAwareActionItemProps } from '@/components/gantt/curriculum-fab/action-items/ActionItemProps';
 

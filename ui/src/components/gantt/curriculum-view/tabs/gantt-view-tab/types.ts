@@ -19,7 +19,7 @@ import
         GanttEvent,
         GanttModule,
         GanttSyllabus
-    } from '@/api-shared/types/gantt/curriculum';
+    } from '@/api-shared/types/gantt/models/curriculum';
 
 export { SvarGanttLink, SvarGanttScale, SvarGanttTask };
 

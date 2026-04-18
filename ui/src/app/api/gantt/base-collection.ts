@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
-import { ApiT, BaseGantItem } from "@/api-shared/types/gantt/curriculum";
+import { ApiT, BaseGantItem } from "@/api-shared/types/gantt/models/curriculum";
 
 export interface BasicGantOperations<TEntity extends BaseGantItem, TCreatePayload = Omit<TEntity, 'id'>>
 {

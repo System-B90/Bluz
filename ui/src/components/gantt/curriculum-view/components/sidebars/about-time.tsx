@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 
-import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
 import { CurriculumAboutCard } from "@/components/gantt/curriculum-view/components/curriculum-about-card";
 import { HoursCard } from "@/components/gantt/curriculum-view/components/HoursCard";
 import { WorkTimePanel } from "@/components/gantt/curriculum-view/components/WorkTimePanel";

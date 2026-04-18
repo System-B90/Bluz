@@ -6,7 +6,7 @@ import { ModuleEventDocument } from "@/api-client/gantt/module-event";
 import { SyllabusDocument } from "@/api-client/gantt/syllabus";
 import { CurriculumWeekDocument } from "@/api-client/gantt/week";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
-import { DAY_NAME_DISPLAY, GanttCurriculumId, GanttDayId, GanttEventId, GanttModuleId, GanttSyllabusId, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
+import { DAY_NAME_DISPLAY, GanttCurriculumId, GanttDayId, GanttEventId, GanttModuleId, GanttSyllabusId, GanttWeekId } from "@/api-shared/types/gantt/models/curriculum";
 
 export interface NormalizedStore
 {

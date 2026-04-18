@@ -2,7 +2,7 @@ import { Dayjs } from "dayjs";
 
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { inplaceDateFixup } from "@/api-shared/date-fixer";
-import { ApiT, BaseGantItem } from "@/api-shared/types/gantt/curriculum";
+import { ApiT, BaseGantItem } from "@/api-shared/types/gantt/models/curriculum";
 
 export type BaseDocument = {
     createdAt: Dayjs;

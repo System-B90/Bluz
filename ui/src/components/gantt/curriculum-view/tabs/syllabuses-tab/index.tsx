@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import { useMemo } from "react";
 
-import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
 import { SyllabusesActionsBox } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box";
 import { useCurriculum } from '@/components/gantt/state/hooks/UseCurriculum';
 import { SyllabusCard } from "@/components/gantt/syllabus-card";

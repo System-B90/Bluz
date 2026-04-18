@@ -1,7 +1,7 @@
 import { ListItem, ListItemButton, ListItemText } from "@mui/material";
 import React from "react";
 
-import { GanttCurriculum } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculum } from "@/api-shared/types/gantt/models/curriculum";
 
 interface CurriculumEntryProps
 {

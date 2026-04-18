@@ -1,4 +1,4 @@
-import { GanttDay, GanttDayId, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttDay, GanttDayId, GanttWeekId } from "@/api-shared/types/gantt/models/curriculum";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useCurriculumDay(dayId: null): undefined;

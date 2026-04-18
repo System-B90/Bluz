@@ -10,9 +10,10 @@ import { useMemo } from 'react';
 
 import
     {
+        GanttDayId,
         GanttModule,
         GanttSyllabus
-    } from '@/api-shared/types/gantt/curriculum';
+    } from '@/api-shared/types/gantt/models/curriculum';
 import { useCurriculumMappings } from '@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider';
 import { GanttDataResult, GanttDataSourceProps, SvarGanttLink, SvarGanttTask } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/types';
 
@@ -29,12 +30,10 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult =>
         const links: Array<SvarGanttLink> = [];
 
         // Helper function to calculate date range for a date
-        const calculateTaskDate = (weekIndex: number, dayIndex: number): { start: Date; end: Date; } =>
+        const calculateTaskDate = (dayId: GanttDayId): { start: Date; end: Date; } =>
         {
+            // TODO: Implement this properly
             const startDate: Date = dayjs()
-                .startOf('week')
-                .add(weekIndex, 'week')
-                .add(dayIndex, 'day')
                 .toDate();
 
             const endDate: Date = dayjs(startDate)
@@ -67,8 +66,7 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult =>
                 moduleMappings.forEach((mapping): void =>
                 {
                     const { start: startDate, end: endDate } = calculateTaskDate(
-                        mapping.weekIndex,
-                        mapping.dayIndex
+                        mapping.dayId
                     );
 
                     if (!syllabusMinDate || startDate < syllabusMinDate)
@@ -81,7 +79,7 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult =>
                     }
 
                     const taskItem: SvarGanttTask = {
-                        id: `mapping-${mapping.moduleId}-${mapping.weekIndex}-${mapping.dayIndex}`,
+                        id: `mapping-${mapping.moduleId}-${mapping.dayId}`,
                         parent: syllabusTaskId,
                         text: moduleDoc.title,
                         start_date: startDate,

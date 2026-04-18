@@ -1,5 +1,10 @@
 import { RawBaseDocument } from "@/api-client/gantt/base";
-import { GanttCurriculum, GanttCurriculumId, GanttDay, GanttDayId, GanttEvent, GanttEventId, GanttModule, GanttModuleId, GanttSyllabus, GanttSyllabusId, GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculum, GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
+import { GanttDay, GanttDayId } from "@/api-shared/types/gantt/models/day";
+import { GanttEvent, GanttEventId } from "@/api-shared/types/gantt/models/event";
+import { GanttModule, GanttModuleId } from "@/api-shared/types/gantt/models/module";
+import { GanttSyllabus, GanttSyllabusId } from "@/api-shared/types/gantt/models/syllabus";
+import { GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/models/week";
 
 export interface ApiModuleEvent extends Omit<GanttEvent & RawBaseDocument, 'allocatedDuration'>
 {
@@ -30,3 +35,13 @@ export interface ApiCurriculum extends Omit<GanttCurriculum & RawBaseDocument, '
     c2s: Array<{ curriculumId: GanttCurriculumId; syllabusId: GanttSyllabusId; syllabus: ApiSyllabus; }>;
     c2w: Array<{ curriculumId: GanttCurriculumId; weekId: GanttWeekId; week: ApiCurriculumWeek; }>;
 }
+
+export type ApiT<T> =
+    T extends GanttCurriculum ? ApiCurriculum :
+    T extends GanttSyllabus ? ApiSyllabus :
+    T extends GanttModule ? ApiModule :
+    T extends GanttEvent ? ApiModuleEvent :
+    T extends GanttWeek ? ApiCurriculumWeek :
+    T extends GanttDay ? ApiCurriculumDay :
+    never;
+

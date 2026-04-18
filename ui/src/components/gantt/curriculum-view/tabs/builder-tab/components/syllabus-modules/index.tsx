@@ -10,7 +10,7 @@ import { Box, BoxProps, Divider, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import React, { useMemo } from "react";
 
-import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
 import { SyllabusSection } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/SyllabusSection";
 import { useCurriculum } from '@/components/gantt/state/hooks/UseCurriculum';
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";

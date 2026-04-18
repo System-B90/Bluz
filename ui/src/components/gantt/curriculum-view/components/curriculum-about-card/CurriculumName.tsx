@@ -1,7 +1,7 @@
 import { Typography } from '@mui/material';
 import { useCallback } from 'react';
 
-import { GanttCurriculumId } from '@/api-shared/types/gantt/curriculum';
+import { GanttCurriculumId } from '@/api-shared/types/gantt/models/curriculum';
 import { EditableCurriculumField } from '@/components/gantt/curriculum-view/components/curriculum-about-card/EditableCurriculumField';
 import { useCurriculumActions } from '@/components/gantt/state/hooks/gantt-funcs/UseCurriculumActions';
 

@@ -4,7 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
-import { GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttSyllabusId } from "@/api-shared/types/gantt/models/curriculum";
 
 export type SyllabusDictionary = Record<GanttSyllabusId, string>;
 

@@ -7,18 +7,19 @@
     "build": "next build ui",
     "start": "next start ui",
     "lint": "eslint --config ./ui/eslint.config.mts ui/",
-    "lint:fix": "eslint --config ./ui/eslint.config.mts --fix",
+    "lint:fix": "eslint --config ./ui/eslint.config.mts --fix && prettier --write",
     "prepare": "husky",
     "db:generate": "drizzle-kit generate --config=drizzle/drizzle.config.ts",
     "db:push": "drizzle-kit push --config=drizzle/drizzle.config.ts",
     "db:studio": "drizzle-kit studio --config=drizzle/drizzle.config.ts",
     "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d && docker compose -f docker-compose.yml -f docker-compose.dev.yml watch ui",
     "docker:prod": "docker compose up -d --build",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "docker:nuke": "docker compose down -- -v"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": "eslint --config ./ui/eslint.config.mts --fix",
-    "*.{json,css,md}": "prettier --write"
+    "*.{js,jsx,ts,tsx}": "eslint --config ./ui/eslint.config.mts",
+    "*.{json,css,md}": "prettier"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

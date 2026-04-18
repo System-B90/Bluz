@@ -11,7 +11,7 @@ import
     } from '@mui/material';
 import { useMemo } from 'react';
 
-import { GanttCurriculumId, GanttSyllabus, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttSyllabus, GanttSyllabusId } from "@/api-shared/types/gantt/models/curriculum";
 import { CreateModuleButton } from "@/components/gantt/syllabus-card/CreateModuleButton";
 import { ModuleRow } from "@/components/gantt/syllabus-card/ModuleRow";
 

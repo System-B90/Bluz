@@ -2,7 +2,7 @@ import { ListItem, ListItemButton, Skeleton } from "@mui/material";
 import { Dispatch, SetStateAction } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
-import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
 import { CurriculumEntry } from "@/components/gantt/curriculum-fab/CurriculumEntry";
 
 export interface CurriculumListItemsProps

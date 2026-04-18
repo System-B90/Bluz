@@ -3,7 +3,7 @@ import { EnqueueSnackbar } from "notistack";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
-import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
 
 export function sortCurriculumsByDraftAndUpdatedAt(curriculums: Record<GanttCurriculumId, GanttCurriculumDocument>): Array<GanttCurriculumId>
 {

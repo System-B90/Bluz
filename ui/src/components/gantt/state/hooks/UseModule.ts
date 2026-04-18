@@ -1,5 +1,5 @@
 import { ModuleDocument } from "@/api-client/gantt/module";
-import { GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/models/curriculum";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useModule(moduleId: null): undefined;

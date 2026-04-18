@@ -1,6 +1,6 @@
 import { Dispatch, KeyboardEvent, SetStateAction, useCallback } from 'react';
 
-import { GanttCurriculumId, GanttWeekId } from '@/api-shared/types/gantt/curriculum';
+import { GanttCurriculumId, GanttWeekId } from '@/api-shared/types/gantt/models/curriculum';
 import { buildDefaultWeekDays } from '@/components/gantt/curriculum-view/components/WorkTimePanel/defaults';
 import { cloneWeeks, pickNextDay } from '@/components/gantt/curriculum-view/components/WorkTimePanel/utils';
 import { useCurriculumActions } from '@/components/gantt/state/hooks/gantt-funcs/UseCurriculumActions';

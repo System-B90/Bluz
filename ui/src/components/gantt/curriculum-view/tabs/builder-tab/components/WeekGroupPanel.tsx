@@ -9,7 +9,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { Box, BoxProps, Divider } from "@mui/material";
 import { useMemo } from "react";
 
-import { GanttWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttWeekId } from "@/api-shared/types/gantt/models/curriculum";
 import { useCurriculumMappings } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
 import { GroupHeader } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/GroupHeader";
 import { ModuleItem } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";

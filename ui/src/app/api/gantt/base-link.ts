@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { ClientApiError } from "@/api-shared/errors";
-import { ApiT, BaseGantItem } from "@/api-shared/types/gantt/curriculum";
+import { ApiT, BaseGantItem } from "@/api-shared/types/gantt/models/curriculum";
 
 export interface BasicGantLinkOperations<TEntity extends BaseGantItem>
 {

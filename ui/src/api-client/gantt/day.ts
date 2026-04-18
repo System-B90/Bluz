@@ -1,6 +1,6 @@
 import { BaseDocument, baseDocumentFixup, clientGantApiBuilder } from "@/api-client/gantt/base";
 import { CreateGanttDayPayload } from "@/api-shared/types/gantt/create-payloads";
-import { GanttDay } from "@/api-shared/types/gantt/curriculum";
+import { GanttDay } from "@/api-shared/types/gantt/models/curriculum";
 
 export type GanttDayDocument = GanttDay & BaseDocument;
 
@@ -19,3 +19,4 @@ export
 {
     apiCreate as apiCreateDay, apiDelete as apiDeleteDay, apiGet as apiGetDay, apiGetMany as apiGetManyDays, apiList as apiListDays, apiUpdate as apiUpdateDay, dayApi
 };
+

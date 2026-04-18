@@ -4,7 +4,7 @@ import { useSnackbar } from 'notistack';
 import { useCallback, useMemo } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { GanttCurriculumId, GanttDayId, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttDayId, GanttWeekId } from "@/api-shared/types/gantt/models/curriculum";
 import { ClosingSaturdayChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/ClosingSaturdayChip";
 import { DayEntry } from '@/components/gantt/curriculum-view/tabs/weeks-tab/DayEntry';
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";

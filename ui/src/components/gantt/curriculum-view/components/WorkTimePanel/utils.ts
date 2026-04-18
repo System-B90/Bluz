@@ -1,4 +1,4 @@
-import { GanttDayIndex, GanttWeekId } from '@/api-shared/types/gantt/curriculum';
+import { GanttDayIndex, GanttWeekId } from '@/api-shared/types/gantt/models/curriculum';
 
 const dayOrder: GanttDayIndex[] = [
     GanttDayIndex.Sunday,

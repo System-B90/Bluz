@@ -1,6 +1,6 @@
 import { BaseDocument, baseDocumentFixup, clientGantApiBuilder } from "@/api-client/gantt/base";
 import { CreateGanttWeekPayload } from "@/api-shared/types/gantt/create-payloads";
-import { GanttWeek } from "@/api-shared/types/gantt/curriculum";
+import { GanttWeek } from "@/api-shared/types/gantt/models/curriculum";
 
 export type CurriculumWeekDocument = GanttWeek & BaseDocument;
 
@@ -19,3 +19,4 @@ export
 {
     apiCreate as apiCreateWeek, apiDelete as apiDeleteWeek, apiGetMany as apiGetManyWeeks, apiGet as apiGetWeek, apiList as apiListWeeks, apiUpdate as apiUpdateWeek, weekApi
 };
+

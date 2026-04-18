@@ -1,4 +1,4 @@
-import { DAY_NAME_DISPLAY, GanttDay, GanttDayIndex } from '@/api-shared/types/gantt/curriculum';
+import { DAY_NAME_DISPLAY, GanttDay, GanttDayIndex } from '@/api-shared/types/gantt/models/curriculum';
 
 const DEFAULT_WEEKDAY_HOURS_FALLBACK = 8;
 const DEFAULT_FRIDAY_HOURS_FALLBACK = 6;

@@ -1,5 +1,5 @@
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
-import { GanttWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttWeekId } from "@/api-shared/types/gantt/models/curriculum";
 
 /**
  * Partitions the week IDs into N groups as balanced as possible.

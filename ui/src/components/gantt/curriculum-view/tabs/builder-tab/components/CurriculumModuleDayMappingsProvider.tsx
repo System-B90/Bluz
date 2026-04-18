@@ -11,8 +11,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { ganttApi } from '@/api-client/gantt';
 import { BaseDbDocument } from '@/api-server/gantt/db-base';
-import { GanttCurriculumId, GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/curriculum";
-import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/mapping";
+import { GanttCurriculumId, GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/models/curriculum";
+import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models/curriculum-day-module-mapping";
 
 /**
  * State Definition

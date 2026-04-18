@@ -3,7 +3,7 @@ import { useSnackbar } from 'notistack';
 import { ChangeEventHandler, useCallback, useState } from 'react';
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttSyllabusId } from "@/api-shared/types/gantt/models/curriculum";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useSyllabus } from '@/components/gantt/state/hooks/UseSyllabus';
 

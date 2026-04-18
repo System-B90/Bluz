@@ -1,5 +1,5 @@
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
-import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useCurriculum(curriculumId: null): undefined;

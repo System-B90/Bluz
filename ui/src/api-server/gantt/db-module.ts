@@ -8,7 +8,7 @@ import { ClientApiError } from "@/api-shared/errors";
 import { AllocateTimeToEventCallback, allocateTimeToModule, AllocateTimeToModuleCallbackModuleEvents } from "@/api-shared/gantt/allocate-time";
 import { ApiModule } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttModulePayload } from "@/api-shared/types/gantt/create-payloads";
-import { GanttCurriculumId, GanttModule, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttModule, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/models/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
     GanttModule,

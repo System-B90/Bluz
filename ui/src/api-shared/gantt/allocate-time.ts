@@ -1,4 +1,4 @@
-import { GanttCurriculumId, GanttEvent, GanttEventId, GanttModule } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttEvent, GanttEventId, GanttModule } from "@/api-shared/types/gantt/models/curriculum";
 
 type AllocateTimeToEventCallbackSync = (props: { eventId: GanttEventId, curriculumId: string, duration: number; }) => void;
 type AllocateTimeToEventCallbackAsync = (props: { eventId: GanttEventId, curriculumId: string, duration: number; }) => Promise<void>;

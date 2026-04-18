@@ -15,7 +15,7 @@ import { useSnackbar } from "notistack";
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { GanttModule, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttModule, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/models/curriculum";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import { HiveModulesView } from "@/components/gantt/module-dialog/utils";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";

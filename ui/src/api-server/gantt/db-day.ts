@@ -6,7 +6,7 @@ import { ganttDaysSchema, ganttWeek2DaysSchema } from "@/api-server/gantt/schema
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiCurriculumDay } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttDayPayload } from "@/api-shared/types/gantt/create-payloads";
-import { GanttDay, GanttDayId } from "@/api-shared/types/gantt/curriculum";
+import { GanttDay, GanttDayId } from "@/api-shared/types/gantt/models/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
     GanttDay,

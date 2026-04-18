@@ -9,7 +9,7 @@ import { ganttWeeksSchema } from "@/api-server/gantt/schema/weeks";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiCurriculumWeek } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttWeekPayload } from "@/api-shared/types/gantt/create-payloads";
-import { GanttDayIndex, GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/curriculum";
+import { GanttDayIndex, GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/models/curriculum";
 
 const basicOperations = drizzleOperationsBuilder<
     GanttWeek,

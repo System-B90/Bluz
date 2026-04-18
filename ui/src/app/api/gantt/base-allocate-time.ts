@@ -9,7 +9,7 @@ import { NextRequest } from "next/server";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { ClientApiError } from "@/api-shared/errors";
-import { BaseGantItem, GanttCurriculumId, GanttEventId } from "@/api-shared/types/gantt/curriculum";
+import { BaseGantItem, GanttCurriculumId, GanttEventId } from "@/api-shared/types/gantt/models/curriculum";
 
 export interface BasicGantAllocateTimeOperations<_TEntity extends BaseGantItem>
 {

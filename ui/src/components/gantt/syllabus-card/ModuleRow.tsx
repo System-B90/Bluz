@@ -14,7 +14,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from 'react';
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { GanttCurriculumId, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/models/curriculum";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModule } from '@/components/gantt/state/hooks/UseModule';
 import { useCurriculumProviderActions, useCurriculumState } from '@/components/gantt/state/provider';

@@ -3,7 +3,7 @@ import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
 import { Box, BoxProps, Tab, Tabs } from "@mui/material";
 import { Dispatch, Fragment, SetStateAction } from "react";
 
-import { GanttCurriculumId } from "@/api-shared/types/gantt/curriculum";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
 import { CurriculumViewBuilderTab } from "@/components/gantt/curriculum-view/tabs/builder-tab";
 import { CurriculumGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab";
 import { SyllabusesTab } from "@/components/gantt/curriculum-view/tabs/syllabuses-tab";

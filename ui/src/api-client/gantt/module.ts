@@ -1,6 +1,6 @@
 import { BaseDocument, baseDocumentFixup, clientGantApiBuilder } from "@/api-client/gantt/base";
 import { CreateGanttModulePayload } from "@/api-shared/types/gantt/create-payloads";
-import { GanttModule } from "@/api-shared/types/gantt/curriculum";
+import { GanttModule } from "@/api-shared/types/gantt/models/curriculum";
 
 export type ModuleDocument = GanttModule & BaseDocument;
 
@@ -19,3 +19,4 @@ export
 };
 
     export { moduleApi };
+
