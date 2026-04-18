@@ -9,31 +9,19 @@
 
 import React from "react";
 
-import { useCurriculumMappings } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
-import { GanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/GanttView";
-import
-    {
-        GanttDataSourceProps
-    } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { GanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view";
 
 /**
  * Inner component that handles Gantt rendering with data transformation
  */
 export function CurriculumGanttViewInner(
-    props: GanttDataSourceProps,
+    { curriculumId }: { curriculumId: GanttCurriculumId; }
 ): React.ReactElement
 {
-    const state = useCurriculumState();
-    const { state: { mappings } } = useCurriculumMappings();
     return (
         <GanttView
-            weeks={ new Map(Object.entries(state.weeks)) }
-            days={ new Map(Object.entries(state.days)) }
-            syllabuses={ new Map(Object.entries(state.syllabuses)) }
-            curriculum={ props.curriculum }
-            modules={ new Map(Object.entries(state.modules)) }
-            mappings={ Object.values(mappings) }
+            curriculumId={ curriculumId }
         />
     );
 }

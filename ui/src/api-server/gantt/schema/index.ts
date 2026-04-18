@@ -1,11 +1,13 @@
-export {
+export
+{
     ganttCurriculumsRelationsSchema,
-    ganttCurriculumsSchema,
+    ganttCurriculumsSchema
 } from "./curriculums";
 export { curriculumDaysRelations, ganttDaysSchema } from "./days";
 export { moduleEventTypeEnumSchema } from "./enums";
 export { ganttEventsRelationsSchema, ganttEventsSchema } from "./events";
-export {
+export
+{
     ganttCurriculum2SyllabusesRelationsSchema,
     ganttCurriculum2SyllabusesSchema,
     ganttCurriculum2WeeksRelationsSchema,
@@ -15,17 +17,20 @@ export {
     ganttSyllabus2ModulesRelationsSchema,
     ganttSyllabus2ModulesSchema,
     ganttWeek2DaysRelationsSchema,
-    ganttWeek2DaysSchema,
+    ganttWeek2DaysSchema
 } from "./junctions";
-export {
+export
+{
     ganttCurriculumEventConfigurationsRelationsSchema,
     ganttCurriculumEventConfigurationsSchema,
-    ganttCurriculumModuleDayMappingsRelationsSchema as ganttModuleDayAssignmentsRelationsSchema,
-    ganttCurriculumModuleDayMappingsSchema as ganttModuleDayAssignmentsSchema,
+    ganttCurriculumEventDayMappingsRelationsSchema as ganttCurriculumModuleDayMappingsRelationsSchema,
+    ganttCurriculumEventDayMappingsSchema as ganttCurriculumModuleDayMappingsSchema
 } from "./mappings";
 export { ganttModuleRelationsSchema, ganttModulesSchema } from "./modules";
-export {
+export
+{
     ganttSyllabusesRelationsSchema,
-    ganttSyllabusesSchema,
+    ganttSyllabusesSchema
 } from "./syllabuses";
 export { curriculumWeeksRelations, ganttWeeksSchema } from "./weeks";
+

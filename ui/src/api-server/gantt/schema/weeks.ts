@@ -1,11 +1,12 @@
 import { relations } from "drizzle-orm";
-import {
-    boolean,
-    integer,
-    pgTable,
-    text,
-    timestamp,
-} from "drizzle-orm/pg-core";
+import
+    {
+        boolean,
+        integer,
+        pgTable,
+        text,
+        timestamp,
+    } from "drizzle-orm/pg-core";
 
 import { ganttCurriculum2WeeksSchema, ganttWeek2DaysSchema } from "./junctions";
 

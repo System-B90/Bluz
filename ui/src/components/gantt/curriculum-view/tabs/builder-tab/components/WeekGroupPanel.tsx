@@ -11,14 +11,16 @@ import { useMemo } from "react";
 
 import { GanttWeekId } from "@/api-shared/types/gantt/models";
 import { useCurriculumMappings } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumModuleDayMappingsProvider";
+import { DndDragEventOverData } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/dnd-types";
 import { GroupHeader } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/GroupHeader";
 import { ModuleItem } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { calculateTotalWorkingTimeForWeeks } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
-export interface WeekGroupPanelProps extends BoxProps {
-  group: Array<GanttWeekId>;
-  onExpandGroup: () => void;
+export interface WeekGroupPanelProps extends BoxProps
+{
+    group: Array<GanttWeekId>;
+    onExpandGroup: () => void;
 }
 
 export function WeekGroupPanel({
@@ -26,83 +28,86 @@ export function WeekGroupPanel({
     onExpandGroup,
     flexShrink,
     ...props
-}: WeekGroupPanelProps) {
+}: WeekGroupPanelProps)
+{
     const {
         state: { mappings },
     } = useCurriculumMappings();
     const state = useCurriculumState();
 
-    const weeksState = useMemo(() => state.weeks, [state.weeks]);
+    const weeksState = useMemo(() => state.weeks, [ state.weeks ]);
 
-    const startWeek = useMemo(() => {
-        const firstWeekId = group[0];
-        const week = weeksState[firstWeekId];
+    const startWeek = useMemo(() =>
+    {
+        const firstWeekId = group[ 0 ];
+        const week = weeksState[ firstWeekId ];
         return week?.number ?? 1;
-    }, [group, weeksState]);
+    }, [ group, weeksState ]);
 
-    const endWeek = useMemo(() => {
-        const lastWeekId = group[group.length - 1];
-        const week = weeksState[lastWeekId];
+    const endWeek = useMemo(() =>
+    {
+        const lastWeekId = group[ group.length - 1 ];
+        const week = weeksState[ lastWeekId ];
         return week?.number ?? group.length;
-    }, [group, weeksState]);
-    const dropId = `weeks-${startWeek}-${endWeek}`;
+    }, [ group, weeksState ]);
+    const dropId = `group-${group[ 0 ]}`;
+
+    const firstDayId = useMemo(() => weeksState[ group[ 0 ] ].days[ 0 ], [ group, weeksState ]);
 
     const { isOver, setNodeRef } = useDroppable({
         id: dropId,
         data: {
-            type: "WEEK_GROUP",
-            weeks: group
-                .map((weekId) => weeksState[weekId]?.number ?? 0)
-                .filter((n) => n > 0),
-            weekIndex: startWeek - 1,
-            dayIndex: 0,
-        },
+            type: "WEEK",
+            weekId: group[ 0 ],
+            firstDayId
+        } as DndDragEventOverData,
     });
     const totalTime = useMemo(
         () => calculateTotalWorkingTimeForWeeks(group, state),
-        [group, state],
+        [ group, state ],
     );
 
     const dayIds = useMemo(
         () =>
             group
-                .flatMap((weekId) => weeksState[weekId])
+                .flatMap((weekId) => weeksState[ weekId ])
                 .flatMap((ganttWeek) => ganttWeek.days),
-        [weeksState, group],
+        [ weeksState, group ],
     );
 
-    const moduleItems = useMemo(() => {
+    const moduleItems = useMemo(() =>
+    {
         return Object.values(mappings)
             .filter((x) => dayIds.includes(x.dayId))
             .map((x) => (
-                <ModuleItem dayId={x.dayId} key={x.moduleId} moduleId={x.moduleId} />
+                <ModuleItem dayId={ x.dayId } key={ x.moduleId } moduleId={ x.moduleId } />
             ));
-    }, [mappings, dayIds]);
+    }, [ mappings, dayIds ]);
 
     return (
         <Box
-            {...props}
-            className={`
+            { ...props }
+            className={ `
                flex flex-col py-4 ${flexShrink === 1 ? "px-0" : "px-4"} min-w-0 gap-4 transition-all duration-200 border-2 border-transparent
                overflow-hidden
                ${isOver ? "bg-blue-50/50 border-dashed border-blue-300 scale-[1.01]" : "bg-transparent"}
             `}
-            ref={setNodeRef}
+            ref={ setNodeRef }
         >
             <GroupHeader
-                end={endWeek}
-                onExpandGroup={onExpandGroup}
-                start={startWeek}
-                totalHours={totalTime}
+                end={ endWeek }
+                onExpandGroup={ onExpandGroup }
+                start={ startWeek }
+                totalHours={ totalTime }
             />
             <Divider />
             <Box
-                className={`
+                className={ `
                     flex flex-col gap-2 grow min-h-25 rounded-lg
                     ${isOver ? "ring-2 ring-blue-100 ring-inset" : ""}
                `}
             >
-                {moduleItems}
+                { moduleItems }
             </Box>
         </Box>
     );

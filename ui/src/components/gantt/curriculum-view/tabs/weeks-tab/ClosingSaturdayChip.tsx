@@ -13,7 +13,7 @@ import { useCallback } from "react";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttWeekId } from "@/api-shared/types/gantt/models";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
-import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseCurriculumWeek";
+import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 
 interface ClosingSaturdayChipProps {
   weekId: GanttWeekId;

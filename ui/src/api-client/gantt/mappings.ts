@@ -7,14 +7,13 @@
 
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { baseDocumentFixup, RawBaseDocument } from "@/api-client/gantt/base";
-import { CreateGanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/create-payloads";
+import { CreateGanttCurriculumEventDayMapping } from "@/api-shared/types/gantt/create-payloads";
 import
-{
-    GanttCurriculumId,
-    GanttDayId,
-    GanttModuleId,
-} from "@/api-shared/types/gantt/models";
-import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models-day-module-mapping";
+    {
+        GanttCurriculumId, GanttCurriculumModuleDayMapping, GanttDayId,
+        GanttEventId,
+        GanttModuleId
+    } from "@/api-shared/types/gantt/models";
 
 /**
  * GET: Retrieves all module mappings for a curriculum.
@@ -23,12 +22,14 @@ async function apiGetModuleDayMapping(
     curriculumId: GanttCurriculumId,
     dayId?: Array<GanttDayId> | GanttDayId,
     options?: ClientApiProps,
-): Promise<Array<GanttCurriculumModuleDayMapping>> {
+): Promise<Array<GanttCurriculumModuleDayMapping>>
+{
     const url = new URL(
         `/api/gantt/curriculums/${curriculumId}/mappings`,
         window.location.origin,
     );
-    if (dayId !== undefined) {
+    if (dayId !== undefined)
+    {
         Array.isArray(dayId)
             ? dayId.forEach((dayId) =>
                 url.searchParams.append("dayId", dayId.toString()),
@@ -49,9 +50,10 @@ async function apiGetModuleDayMapping(
  */
 async function apiCreateModuleDayMapping(
     curriculumId: GanttCurriculumId,
-    payload: CreateGanttCurriculumModuleDayMapping,
+    payload: CreateGanttCurriculumEventDayMapping,
     options?: ClientApiProps,
-): Promise<GanttCurriculumModuleDayMapping> {
+): Promise<GanttCurriculumModuleDayMapping>
+{
     const rawData = await safeApiFetcher(
         `/api/gantt/curriculums/${curriculumId}/mappings`,
         {
@@ -61,7 +63,7 @@ async function apiCreateModuleDayMapping(
         },
     );
     return baseDocumentFixup(
-    rawData as RawBaseDocument,
+        rawData as RawBaseDocument,
     ) as unknown as GanttCurriculumModuleDayMapping;
 }
 
@@ -71,20 +73,22 @@ async function apiCreateModuleDayMapping(
 async function apiUpdateModuleDayMapping(
     curriculumId: GanttCurriculumId,
     moduleId: GanttModuleId,
-    oldMapping: { dayId: GanttDayId },
-    newValues: { dayId?: GanttDayId; sortOrder?: number },
+    eventId: GanttEventId | null,
+    oldMapping: { dayId: GanttDayId; },
+    newValues: { dayId?: GanttDayId; sortOrder?: number; },
     options?: ClientApiProps,
-): Promise<GanttCurriculumModuleDayMapping> {
+): Promise<GanttCurriculumModuleDayMapping>
+{
     const rawData = await safeApiFetcher(
         `/api/gantt/curriculums/${curriculumId}/mappings`,
         {
             ...options,
             method: "PATCH",
-            body: JSON.stringify({ moduleId, oldMapping, newValues }),
+            body: JSON.stringify({ moduleId, eventId, oldMapping, newValues }),
         },
     );
     return baseDocumentFixup(
-    rawData as RawBaseDocument,
+        rawData as RawBaseDocument,
     ) as unknown as GanttCurriculumModuleDayMapping;
 }
 
@@ -94,13 +98,15 @@ async function apiUpdateModuleDayMapping(
 async function apiDeleteModuleDayMapping(
     curriculumId: GanttCurriculumId,
     moduleId: GanttModuleId,
+    eventId: GanttEventId | null,
     dayId: GanttDayId,
     options?: ClientApiProps,
-): Promise<void> {
+): Promise<void>
+{
     await safeApiFetcher(`/api/gantt/curriculums/${curriculumId}/mappings`, {
         ...options,
         method: "DELETE",
-        body: JSON.stringify({ moduleId, dayId }),
+        body: JSON.stringify({ moduleId, eventId, dayId }),
     });
 }
 

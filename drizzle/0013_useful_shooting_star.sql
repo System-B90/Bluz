@@ -1,0 +1,2 @@
+ALTER TABLE "cMDA" ALTER COLUMN "event_id" DROP DEFAULT;--> statement-breakpoint
+ALTER TABLE "cMDA" ALTER COLUMN "event_id" DROP NOT NULL;

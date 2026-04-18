@@ -1,5 +1,5 @@
 export type { GanttCurriculum, GanttCurriculumId } from '@/api-shared/types/gantt/models/curriculum';
-export type { GanttCurriculumModuleDayMapping } from '@/api-shared/types/gantt/models/curriculum-day-module-mapping';
+export type { GanttCurriculumEventDayMapping as GanttCurriculumModuleDayMapping } from '@/api-shared/types/gantt/models/curriculum-day-module-mapping';
 export { DAY_NAME_DISPLAY, GanttDayIndex, getDayNameDisplay } from '@/api-shared/types/gantt/models/day';
 export type { GanttDay, GanttDayId } from '@/api-shared/types/gantt/models/day';
 export { ModuleEventType } from '@/api-shared/types/gantt/models/event';
@@ -10,3 +10,4 @@ export type { GanttModule, GanttModuleId } from '@/api-shared/types/gantt/models
 export type { BaseGantItem } from '@/api-shared/types/gantt/models/shared';
 export type { GanttSyllabus, GanttSyllabusId } from '@/api-shared/types/gantt/models/syllabus';
 export type { GanttWeek, GanttWeekId } from '@/api-shared/types/gantt/models/week';
+

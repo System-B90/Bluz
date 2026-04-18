@@ -1,28 +1,28 @@
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import
-{
-    Box,
-    Chip,
-    Divider,
-    InputBase,
-    Paper,
-    Stack,
-    Typography,
-} from "@mui/material";
+    {
+        Box,
+        Chip,
+        Divider,
+        InputBase,
+        Paper,
+        Stack,
+        Typography,
+    } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
-{
-    GanttCurriculumId,
-    GanttDayId,
-    GanttWeekId,
-} from "@/api-shared/types/gantt/models";
+    {
+        GanttCurriculumId,
+        GanttDayId,
+        GanttWeekId,
+    } from "@/api-shared/types/gantt/models";
 import { ClosingSaturdayChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/ClosingSaturdayChip";
 import { DayEntry } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DayEntry";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
-import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseCurriculumWeek";
+import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 interface WeekPanelProps {

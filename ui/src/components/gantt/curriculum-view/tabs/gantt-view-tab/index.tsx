@@ -23,13 +23,15 @@ import { GanttDataSourceProps } from "@/components/gantt/curriculum-view/tabs/ga
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
-export interface CurriculumGanttViewProps {
-  readonly curriculumId: GanttCurriculumId;
+export interface CurriculumGanttViewProps
+{
+    readonly curriculumId: GanttCurriculumId;
 }
 
 export function CurriculumGanttView({
     curriculumId,
-}: CurriculumGanttViewProps): null | React.ReactElement {
+}: CurriculumGanttViewProps): null | React.ReactElement
+{
     const curriculum: GanttCurriculum | undefined = useCurriculum(curriculumId);
     const state = useCurriculumState();
 
@@ -43,14 +45,14 @@ export function CurriculumGanttView({
                     events: Object.values(state.events) as Array<GanttEvent>,
                 }
                 : null,
-        [curriculum, state],
+        [ curriculum, state ],
     );
 
     if (!innerProps) return null;
 
     return (
-        <CurriculumMappingProvider curriculumId={curriculumId}>
-            <CurriculumGanttViewInner {...innerProps} />
+        <CurriculumMappingProvider curriculumId={ curriculumId }>
+            <CurriculumGanttViewInner curriculumId={ curriculumId } { ...innerProps } />
         </CurriculumMappingProvider>
     );
 }

@@ -11,10 +11,11 @@ import { Box, Paper, PaperProps, Typography, useTheme } from "@mui/material";
 import { useMemo } from "react";
 
 import
-{
-    GanttDayId,
-    GanttModuleId,
-} from "@/api-shared/types/gantt/models";
+    {
+        GanttDayId,
+        GanttModuleId,
+    } from "@/api-shared/types/gantt/models";
+import { DndDragEventActiveData } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/dnd-types";
 import { hashSyllabusToColor } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
 import { WorkTimeChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
@@ -22,12 +23,14 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
-export interface ModuleItemProps extends PaperProps {
-  moduleId: GanttModuleId;
-  dayId?: GanttDayId;
+export interface ModuleItemProps extends PaperProps
+{
+    moduleId: GanttModuleId;
+    dayId?: GanttDayId;
 }
 
-export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
+export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps)
+{
     const theme = useTheme();
     const state = useCurriculumState();
     const { syllabusNames } = useSyllabusNames();
@@ -38,18 +41,23 @@ export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
             syllabusId
                 ? hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2)
                 : undefined,
-        [syllabusId, theme.palette.primary.main],
+        [ syllabusId, theme.palette.primary.main ],
     );
     const syllabusTitle = useMemo(
-        () => (syllabusId ? syllabusNames[syllabusId] : "סילבוס"),
-        [syllabusId, syllabusNames],
+        () => (syllabusId ? syllabusNames[ syllabusId ] : "סילבוס"),
+        [ syllabusId, syllabusNames ],
     );
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-        id: `module-${moduleId}`,
-        data: { type: "MODULE", moduleId, dayId },
-    });
+
+        useDraggable({
+            id: `module-${moduleId}`,
+            data: {
+                type: "MODULE",
+                moduleId,
+                dayId,
+            } as DndDragEventActiveData,
+        });
 
     const style = {
         ...props.style,
@@ -62,19 +70,19 @@ export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
             moduleDoc
                 ? calculateMinimumRequiredTimeForModule(moduleDoc, state) / 60
                 : 0,
-        [moduleDoc, state],
+        [ moduleDoc, state ],
     );
 
     return (
         <Paper
-            {...props}
-            elevation={isDragging ? 4 : 0}
-            ref={setNodeRef}
-            style={style}
-            sx={{ ...props.sx, backgroundColor: color }}
-            {...attributes}
-            {...listeners}
-            className={`flex flex-row justify-between items-center
+            { ...props }
+            elevation={ isDragging ? 4 : 0 }
+            ref={ setNodeRef }
+            style={ style }
+            sx={ { ...props.sx, backgroundColor: color } }
+            { ...attributes }
+            { ...listeners }
+            className={ `flex flex-row justify-between items-center
                 p-2 border border-solid border-slate-200 cursor-grab 
                 hover:border-blue-400 hover:bg-blue-50 transition-all
                 active:cursor-grabbing touch-none
@@ -83,14 +91,14 @@ export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
             `}
         >
             <Typography className="select-none font-medium" variant="body2">
-                {moduleDoc?.title ?? "Unknown Module"}
+                { moduleDoc?.title ?? "Unknown Module" }
             </Typography>
             <Box className="flex flex-row items-center">
                 <Typography className="select-none font-medium" variant="body2">
-                    {syllabusTitle}
+                    { syllabusTitle }
                 </Typography>
                 <Box width="0.3rem" />
-                <WorkTimeChip totalHours={totalHours} />
+                <WorkTimeChip totalHours={ totalHours } />
             </Box>
         </Paper>
     );

@@ -19,36 +19,37 @@ import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import
-{
-    GanttCurriculumId,
-    GanttCurriculumModuleDayMapping,
-    GanttDayId,
-    GanttModuleId,
-} from "@/api-shared/types/gantt/models";
+    {
+        GanttCurriculumId,
+        GanttCurriculumModuleDayMapping,
+        GanttDayId,
+        GanttEventId,
+        GanttModuleId
+    } from "@/api-shared/types/gantt/models";
 
 /**
  * State Definition
  */
 interface MappingState
 {
-  // Key: `${dayId}-${moduleId}`
-  mappings: Record<string, GanttCurriculumModuleDayMapping>;
-  isLoading: boolean;
-  error: null | string;
+    // Key: `${dayId}-${moduleId}-${eventId ?? 'null'}`
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    isLoading: boolean;
+    error: null | string;
 }
 
 type MappingAction =
-  | {
-    type: "DELETE_MAPPING";
-    payload: { dayId: GanttDayId; moduleId: GanttModuleId; };
-  }
-  | { type: "SET_ERROR"; payload: null | string; }
-  | { type: "SET_LOADING"; payload: boolean; }
-  | { type: "SET_MAPPINGS"; payload: Array<GanttCurriculumModuleDayMapping>; }
-  | { type: "UPSERT_MAPPING"; payload: GanttCurriculumModuleDayMapping; };
+    | {
+        type: "DELETE_MAPPING";
+        payload: Pick<GanttCurriculumModuleDayMapping, "eventId" | 'dayId' | 'moduleId'>;
+    }
+    | { type: "SET_ERROR"; payload: null | string; }
+    | { type: "SET_LOADING"; payload: boolean; }
+    | { type: "SET_MAPPINGS"; payload: Array<GanttCurriculumModuleDayMapping>; }
+    | { type: "UPSERT_MAPPING"; payload: GanttCurriculumModuleDayMapping; };
 
-const getMappingKey = (m: { dayId: GanttDayId; moduleId: GanttModuleId; }) =>
-    `${m.dayId}-${m.moduleId}`;
+const getMappingKey = (m: { dayId: GanttDayId; moduleId: GanttModuleId; eventId?: GanttEventId | null; }) =>
+    `${m.dayId}-${m.moduleId}-${m.eventId ?? 'null'}`;
 
 /**
  * High-Performance Reducer
@@ -60,67 +61,69 @@ function mappingReducer(
 {
     switch (action.type)
     {
-    case "SET_MAPPINGS":
-        const newMappings: Record<string, GanttCurriculumModuleDayMapping> = {};
-        action.payload.forEach((m) =>
-        {
-            newMappings[ getMappingKey(m) ] = m;
-        });
-        return { ...state, mappings: newMappings, isLoading: false };
+        case "SET_MAPPINGS":
+            const newMappings: Record<string, GanttCurriculumModuleDayMapping> = {};
+            action.payload.forEach((m) =>
+            {
+                newMappings[ getMappingKey(m) ] = m;
+            });
+            return { ...state, mappings: newMappings, isLoading: false };
 
-    case "UPSERT_MAPPING":
-        return {
-            ...state,
-            mappings: {
-                ...state.mappings,
-                [ getMappingKey(action.payload) ]: action.payload,
-            },
-        };
+        case "UPSERT_MAPPING":
+            return {
+                ...state,
+                mappings: {
+                    ...state.mappings,
+                    [ getMappingKey(action.payload) ]: action.payload,
+                },
+            };
 
-    case "DELETE_MAPPING":
-        const updated = { ...state.mappings };
-        delete updated[ getMappingKey(action.payload) ];
-        return { ...state, mappings: updated };
+        case "DELETE_MAPPING":
+            const updated = { ...state.mappings };
+            delete updated[ getMappingKey(action.payload) ];
+            return { ...state, mappings: updated };
 
-    case "SET_LOADING":
-        return { ...state, isLoading: action.payload };
+        case "SET_LOADING":
+            return { ...state, isLoading: action.payload };
 
-    case "SET_ERROR":
-        return { ...state, error: action.payload };
+        case "SET_ERROR":
+            return { ...state, error: action.payload };
 
-    default:
-        return state;
+        default:
+            return state;
     }
 }
 
 type CurriculumMappingContextType = {
-  state: MappingState;
-  refreshMappings: () => Promise<void>;
-  createMapping: (
-    moduleId: GanttModuleId,
-    dayId: GanttDayId,
-  ) => Promise<GanttCurriculumModuleDayMapping>;
-  moveModule: (
-    moduleId: GanttModuleId,
-    from: { d: GanttDayId; },
-    to: { d: GanttDayId; },
-  ) => Promise<void>;
-  removeModule: (moduleId: GanttModuleId, dayId: GanttDayId) => Promise<void>;
+    state: MappingState;
+    refreshMappings: () => Promise<void>;
+    createMapping: (
+        moduleId: GanttModuleId,
+        eventId: GanttEventId | null,
+        dayId: GanttDayId,
+    ) => Promise<GanttCurriculumModuleDayMapping>;
+    moveModule: (
+        moduleId: GanttModuleId,
+        eventId: GanttEventId | null,
+        from: { d: GanttDayId; },
+        to: { d: GanttDayId; },
+    ) => Promise<void>;
+    removeModule: (moduleId: GanttModuleId, eventId: GanttEventId | null, dayId: GanttDayId) => Promise<void>;
 };
 
 /**
  * Provider Context
  */
 const CurriculumMappingContext = createContext<
-  CurriculumMappingContextType | undefined
+    CurriculumMappingContextType | undefined
 >(undefined);
 
 export function CurriculumMappingProvider({
     children,
     curriculumId,
 }: {
-  children: React.ReactNode;
-  curriculumId: GanttCurriculumId;
+    children: React.ReactNode;
+    curriculumId: GanttCurriculumId;
 })
 {
     const { enqueueSnackbar } = useSnackbar();
@@ -140,6 +143,7 @@ export function CurriculumMappingProvider({
         } catch (e)
         {
             dispatch({ type: "SET_ERROR", payload: JSON.stringify(e) });
+            throw e;
         }
     }, [ dispatch, curriculumId ]);
 
@@ -147,18 +151,19 @@ export function CurriculumMappingProvider({
    * createMapping: Handles assigning a module to a day for the first time.
    */
     const createMapping = useCallback(
-        async (moduleId: GanttModuleId, dayId: GanttDayId) =>
+        async (moduleId: GanttModuleId, eventId: GanttEventId | null, dayId: GanttDayId) =>
         {
             const tempSortOrder = Date.now();
             const optimisticMapping: GanttCurriculumModuleDayMapping &
-        BaseDbDocument = {
-            curriculumId,
-            moduleId,
-            dayId,
-            sortOrder: tempSortOrder,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
+                BaseDbDocument = {
+                curriculumId,
+                moduleId,
+                eventId,
+                dayId,
+                sortOrder: tempSortOrder,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            };
 
             // Optimistic UI Update
             dispatch({ type: "UPSERT_MAPPING", payload: optimisticMapping });
@@ -167,6 +172,7 @@ export function CurriculumMappingProvider({
             {
                 const result = await ganttApi.mappings.apiCreate(curriculumId, {
                     moduleId,
+                    eventId,
                     dayId,
                     sortOrder: tempSortOrder,
                 });
@@ -177,7 +183,7 @@ export function CurriculumMappingProvider({
             } catch (e)
             {
                 // Rollback on failure
-                dispatch({ type: "DELETE_MAPPING", payload: { dayId, moduleId } });
+                dispatch({ type: "DELETE_MAPPING", payload: { dayId, moduleId, eventId } });
                 dispatch({ type: "SET_ERROR", payload: JSON.stringify(e) });
                 throw e;
             }
@@ -188,12 +194,13 @@ export function CurriculumMappingProvider({
     const moveModule = useCallback(
         async (
             moduleId: GanttModuleId,
+            eventId: GanttEventId | null,
             from: { d: GanttDayId; },
             to: { d: GanttDayId; },
         ) =>
         {
             // Optimistic UI Update
-            const oldKey = getMappingKey({ dayId: from.d, moduleId });
+            const oldKey = getMappingKey({ dayId: from.d, moduleId, eventId });
             const originalMapping = state.mappings[ oldKey ];
 
             if (!originalMapping) return;
@@ -202,7 +209,7 @@ export function CurriculumMappingProvider({
 
             dispatch({
                 type: "DELETE_MAPPING",
-                payload: { dayId: from.d, moduleId },
+                payload: { dayId: from.d, moduleId, eventId },
             });
             dispatch({ type: "UPSERT_MAPPING", payload: updatedMapping });
 
@@ -211,6 +218,7 @@ export function CurriculumMappingProvider({
                 await ganttApi.mappings.apiUpdate(
                     curriculumId,
                     moduleId,
+                    eventId,
                     { dayId: from.d },
                     { dayId: to.d },
                 );
@@ -219,7 +227,7 @@ export function CurriculumMappingProvider({
                 // Rollback on failure
                 dispatch({
                     type: "DELETE_MAPPING",
-                    payload: { dayId: to.d, moduleId },
+                    payload: { dayId: to.d, moduleId, eventId },
                 });
                 dispatch({ type: "UPSERT_MAPPING", payload: originalMapping });
                 dispatch({ type: "SET_ERROR", payload: JSON.stringify(e) });
@@ -230,12 +238,12 @@ export function CurriculumMappingProvider({
     );
 
     const removeModule = useCallback(
-        async (moduleId: GanttModuleId, dayId: GanttDayId) =>
+        async (moduleId: GanttModuleId, eventId: GanttEventId | null, dayId: GanttDayId) =>
         {
-            dispatch({ type: "DELETE_MAPPING", payload: { dayId, moduleId } });
+            dispatch({ type: "DELETE_MAPPING", payload: { dayId, moduleId, eventId } });
             try
             {
-                await ganttApi.mappings.apiDelete(curriculumId, moduleId, dayId);
+                await ganttApi.mappings.apiDelete(curriculumId, moduleId, eventId, dayId);
             } catch
             {
                 await refreshMappings(); // Re-sync on failure
