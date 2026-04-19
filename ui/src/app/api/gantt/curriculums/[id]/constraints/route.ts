@@ -7,6 +7,7 @@
 
 import { NextRequest } from "next/server";
 
+import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import
     {
@@ -19,6 +20,7 @@ import
     } from "@/api-server/gantt/db-constraints";
 import { ClientApiError } from "@/api-shared/errors";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { randomUUID } from "crypto";
 
 export interface RouteContext
 {
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest, context: RouteContext)
 {
     try
     {
-        const body = await request.json();
+        const body: CreateConstraintPayload = await request.json();
 
         if (!body.type)
         {
@@ -76,14 +78,28 @@ export async function POST(request: NextRequest, context: RouteContext)
             );
         }
 
-        if (body.type === "RELATIONAL" && (!body.targetEventId && !body.targetModuleId))
+        if (body.type === "RELATIONAL" && (!body.targetId))
         {
             throw new ClientApiError(
-                "Relational constraints must specify a targetEventId or targetModuleId."
+                "Relational constraints must specify a targetId."
             );
         }
 
-        const constraint = await createConstraint(body);
+        const creationData: Parameters<typeof createConstraint>[ 0 ] = {
+            id: randomUUID(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            'type': body.type,
+            'ownerEventId': body.ownerType === 'event' ? body.ownerEventId : undefined,
+            'ownerModuleId': body.ownerType === 'module' ? body.ownerModuleId : undefined,
+            'targetEventId': body.targetType === 'event' ? body.targetEventId : undefined,
+            'targetModuleId': body.targetType === 'module' ? body.targetModuleId : undefined,
+            'relation': body.type === 'RELATIONAL' ? body.relation : undefined,
+            'minDelayDays': body.type === 'RELATIONAL' ? body.minDelayDays : undefined,
+            'maxDelayDays': body.type === 'RELATIONAL' ? body.maxDelayDays : undefined,
+        };
+
+        const constraint = await createConstraint(creationData);
 
         return ApiSuccess(constraint);
     } catch (error)

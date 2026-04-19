@@ -10,39 +10,43 @@ export enum ConstraintType
 
 export type EntityType = "event" | "module";
 
-export interface BaseConstraint
-{
-    id: string;
-    type: ConstraintType;
-    ownerEventId: GanttEventId;
-    ownerModuleId: GanttModuleId;
-    ownerType: EntityType;
-}
+export type BaseConstraint =
+    {
+        id: string;
+        type: ConstraintType;
+        ownerEventId: GanttEventId;
+        ownerModuleId?: GanttModuleId | undefined;
+        ownerType: 'event';
+    } | {
+        id: string;
+        type: ConstraintType;
+        ownerEventId?: GanttEventId | undefined;
+        ownerModuleId: GanttModuleId;
+        ownerType: 'module';
+    };
 
 
 /**
  * Handles dependencies between two entities (Event-Event, Module-Module, Mixed).
  */
-export interface RelationalConstraint extends BaseConstraint
+export type RelationalConstraint = BaseConstraint &
 {
-    id: string;
     type: ConstraintType.Relational;
     targetId: GanttEventId | GanttModuleId; // ID of the referenced GanttEvent or GanttModule
     targetType: EntityType;
     relation: "after" | "before";
     minDelayDays?: number; // "at least N days after"
     maxDelayDays?: number; // "no more than N days after"
-}
+};
 
 /**
  * Handles fixed calendar and day-of-week constraints.
  */
-export interface TemporalConstraint extends BaseConstraint
+export type TemporalConstraint = BaseConstraint &
 {
-    id: string;
     type: ConstraintType.Temporal;
     allowedDays?: Array<GanttDayIndex>;   // e.g., "must be on Tuesday"
     forbiddenDays?: Array<GanttDayIndex>; // e.g., "must not be on Sunday"
-}
+};
 
 export type GanttConstraint = RelationalConstraint | TemporalConstraint;
