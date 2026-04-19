@@ -12,7 +12,7 @@ import { GanttConstraintState } from "@/components/gantt/state/constraints/types
 
 export type RefreshConstraints = () => Promise<void>;
 
-export type CreateConstraintPayload = Omit<GanttConstraint, "id" | "createdAt" | "updatedAt">;
+export type CreateConstraintPayload = Omit<GanttConstraint, "createdAt" | "id" | "updatedAt">;
 export type CreateConstraint = (payload: CreateConstraintPayload) => Promise<GanttConstraint | undefined>;
 
 export type UpdateConstraint = (id: string, payload: Partial<CreateConstraintPayload>) => Promise<void>;

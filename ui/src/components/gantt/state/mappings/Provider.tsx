@@ -1,24 +1,24 @@
 import { useSnackbar } from "notistack";
 import
-    {
-        ReactNode,
-        useCallback,
-        useEffect,
-        useMemo,
-        useReducer
-    } from "react";
+{
+    ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+    useReducer
+} from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import
-    {
-        GanttCurriculumId,
-        GanttCurriculumModuleDayMapping,
-        GanttDayId,
-        GanttEventId,
-        GanttModuleId
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttCurriculumModuleDayMapping,
+    GanttDayId,
+    GanttEventId,
+    GanttModuleId
+} from "@/api-shared/types/gantt/models";
 import { GanttMappingContext } from "@/components/gantt/state/mappings/context";
 import { ganttMappingReducer } from "@/components/gantt/state/mappings/reducer";
 import { getGanttMappingKey } from "@/components/gantt/state/mappings/types";
@@ -53,14 +53,14 @@ export function GanttMappingProvider({
             const tempSortOrder = Date.now();
             const optimisticMapping: GanttCurriculumModuleDayMapping &
                 BaseDbDocument = {
-                curriculumId,
-                moduleId,
-                eventId,
-                dayId,
-                sortOrder: tempSortOrder,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            };
+                    curriculumId,
+                    moduleId,
+                    eventId,
+                    dayId,
+                    sortOrder: tempSortOrder,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                };
 
             // Optimistic UI Update
             dispatch({ type: "UPSERT_MAPPING", payload: optimisticMapping });

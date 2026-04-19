@@ -1,5 +1,6 @@
 import { useTheme } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
+
 import { ConstraintLink } from './types';
 
 interface ConstraintLinesProps
@@ -74,8 +75,10 @@ export const ConstraintLines: React.FC<ConstraintLinesProps> = ({ links, contain
         <svg
             style={ {
                 position: 'absolute',
-                top: 0, left: 0,
-                width: '100%', height: '100%',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
                 pointerEvents: 'none',
                 zIndex: 10
             } }
@@ -83,11 +86,11 @@ export const ConstraintLines: React.FC<ConstraintLinesProps> = ({ links, contain
             { lines.map(l => (
                 <line
                     key={ l.id }
-                    x1={ l.x1 } y1={ l.y1 }
-                    x2={ l.x2 } y2={ l.y2 }
-                    stroke={ l.isViolated ? theme.palette.error.main : theme.palette.text.disabled }
-                    strokeWidth={ 2 }
-                    strokeDasharray={ l.isViolated ? 'none' : '4 4' }
+                    stroke={ l.isViolated ? theme.palette.error.main : theme.palette.text.disabled } strokeDasharray={ l.isViolated ? 'none' : '4 4' }
+                    strokeWidth={ 2 } x1={ l.x1 }
+                    x2={ l.x2 }
+                    y1={ l.y1 }
+                    y2={ l.y2 }
                 />
             )) }
         </svg>

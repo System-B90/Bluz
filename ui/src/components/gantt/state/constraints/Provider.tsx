@@ -1,6 +1,6 @@
 /**
  * Name: provider.tsx
- * Purpose: Context provider for managing and syncing Gantt constraints with optimistic UI updates.
+ * Purpose: Context provider for managing and syncing Gantt constraints, scoped by curriculum or module.
  * Created: 2026-04-19
  * Author: Michael K. Steinberg
  */
@@ -19,17 +19,21 @@ import
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
-import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
-import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
+import { GanttCurriculumId, GanttModuleId } from "@/api-shared/types/gantt/models";
+import { ConstraintType, GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 import { CreateConstraintPayload, GanttConstraintContext } from "@/components/gantt/state/constraints/context";
 import { ganttConstraintReducer } from "@/components/gantt/state/constraints/reducer";
 
+export type ProviderScope =
+    | { type: "curriculum"; curriculumId: GanttCurriculumId; }
+    | { type: "module"; curriculumId: GanttCurriculumId; syllabusId: string; moduleId: GanttModuleId; };
+
 export function GanttConstraintProvider({
     children,
-    curriculumId,
+    context,
 }: {
     children: ReactNode;
-    curriculumId: GanttCurriculumId;
+    context: ProviderScope;
 })
 {
     const { enqueueSnackbar } = useSnackbar();
@@ -38,52 +42,81 @@ export function GanttConstraintProvider({
         isLoading: true,
     });
 
+    const curriculumId = context.curriculumId;
+
+    // Helper to determine if the current scope has mutation rights over a constraint
+    const canModify = useCallback((constraint: GanttConstraint | CreateConstraintPayload) =>
+    {
+        if (context.type === "curriculum") return true;
+        if (constraint.type === ConstraintType.Temporal) return true;
+
+        // In module scope, we cannot modify constraints owned by a DIFFERENT module.
+        if (constraint.ownerModuleId && constraint.ownerModuleId !== context.moduleId)
+        {
+            return false;
+        }
+
+        // If the constraint is owned by another module but targets us, it's read-only.
+        if (!constraint.ownerModuleId && !constraint.ownerEventId)
+        {
+            return false;
+        }
+
+        return true;
+    }, [ context ]);
+
     const refreshConstraints = useCallback(async () =>
     {
         dispatch({ type: "SET_LOADING", payload: true });
         try
         {
-            const data = await ganttApi.constraints.apiGet(curriculumId);
+            const queryOptions = context.type === "module" ? { moduleId: context.moduleId, syllabusId: context.syllabusId } : {};
+            const data = await ganttApi.constraints.apiGet(curriculumId, queryOptions);
+
             dispatch({ type: "SET_CONSTRAINTS", payload: data });
         } catch (error)
         {
             enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת אילוצים נכשלה!", error);
             dispatch({ type: "SET_LOADING", payload: false });
         }
-    }, [ dispatch, curriculumId, enqueueSnackbar ]);
+    }, [ dispatch, curriculumId, context, enqueueSnackbar ]);
 
     const createConstraint = useCallback(
         async (payload: CreateConstraintPayload) =>
         {
-            // Generate a temporary ID for the optimistic update
+            if (!canModify(payload))
+            {
+                enqueueSnackbar("אין לך הרשאה ליצור אילוץ זה מהקשר הנוכחי.", { variant: "error" });
+                return undefined;
+            }
+
             const tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
-            const optimisticConstraint: GanttConstraint = {
+            const optimisticConstraint = {
                 ...payload,
                 id: tempId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
             } as GanttConstraint;
 
-            // Optimistic UI Update
             dispatch({ type: "UPSERT_CONSTRAINT", payload: optimisticConstraint });
 
             try
             {
                 const result = await ganttApi.constraints.apiCreate(curriculumId, payload);
 
-                // Remove the temporary constraint and inject the real database record
                 dispatch({ type: "DELETE_CONSTRAINT", payload: { id: tempId } });
                 dispatch({ type: "UPSERT_CONSTRAINT", payload: result });
 
                 return result;
             } catch (e)
             {
-                // Rollback on failure
                 dispatch({ type: "DELETE_CONSTRAINT", payload: { id: tempId } });
                 enqueueApiErrorSnackbar(enqueueSnackbar, 'יצירת אילוץ נכשלה!', e);
                 return undefined;
             }
         },
-        [ dispatch, enqueueSnackbar ],
+        [ dispatch, curriculumId, canModify, enqueueSnackbar ],
     );
 
     const updateConstraint = useCallback(
@@ -92,12 +125,17 @@ export function GanttConstraintProvider({
             const originalConstraint = state.constraints[ id ];
             if (!originalConstraint) return;
 
-            const updatedConstraint: GanttConstraint = {
+            if (!canModify(originalConstraint))
+            {
+                enqueueSnackbar("אינך יכול לערוך אילוץ המוגדר על ידי מודול אחר.", { variant: "warning" });
+                return;
+            }
+
+            const updatedConstraint = {
                 ...originalConstraint,
                 ...payload,
             } as GanttConstraint;
 
-            // Optimistic UI Update
             dispatch({ type: "UPSERT_CONSTRAINT", payload: updatedConstraint });
 
             try
@@ -105,12 +143,11 @@ export function GanttConstraintProvider({
                 await ganttApi.constraints.apiUpdate(curriculumId, id, payload);
             } catch (e)
             {
-                // Rollback to original state on failure
                 dispatch({ type: "UPSERT_CONSTRAINT", payload: originalConstraint });
                 enqueueApiErrorSnackbar(enqueueSnackbar, 'עדכון אילוץ נכשל!', e);
             }
         },
-        [ state.constraints, dispatch, enqueueSnackbar ],
+        [ state.constraints, curriculumId, dispatch, canModify, enqueueSnackbar ],
     );
 
     const removeConstraint = useCallback(
@@ -119,7 +156,12 @@ export function GanttConstraintProvider({
             const originalConstraint = state.constraints[ id ];
             if (!originalConstraint) return;
 
-            // Optimistic UI Update
+            if (!canModify(originalConstraint))
+            {
+                enqueueSnackbar("אינך יכול למחוק אילוץ המוגדר על ידי מודול אחר.", { variant: "error" });
+                return;
+            }
+
             dispatch({ type: "DELETE_CONSTRAINT", payload: { id } });
 
             try
@@ -127,12 +169,11 @@ export function GanttConstraintProvider({
                 await ganttApi.constraints.apiDelete(curriculumId, id);
             } catch (e)
             {
-                // Rollback by re-inserting the cached item to avoid a full network refresh
                 dispatch({ type: "UPSERT_CONSTRAINT", payload: originalConstraint });
                 enqueueApiErrorSnackbar(enqueueSnackbar, 'מחיקת אילוץ נכשלה!', e);
             }
         },
-        [ state.constraints, dispatch, enqueueSnackbar ],
+        [ state.constraints, curriculumId, dispatch, canModify, enqueueSnackbar ],
     );
 
     useEffect(() =>

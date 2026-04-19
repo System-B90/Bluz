@@ -9,18 +9,18 @@ import dayjs from "dayjs";
 import { useMemo } from "react";
 
 import
-    {
-        GanttDayId,
-        GanttModule,
-        GanttSyllabus,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttDayId,
+    GanttModule,
+    GanttSyllabus,
+} from "@/api-shared/types/gantt/models";
 import
-    {
-        GanttDataResult,
-        GanttDataSourceProps,
-        SvarGanttLink,
-        SvarGanttTask,
-    } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";
+{
+    GanttDataResult,
+    GanttDataSourceProps,
+    SvarGanttLink,
+    SvarGanttTask,
+} from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 
 /**
@@ -127,4 +127,3 @@ function useCurriculumMappings(): { state: { mappings: any; }; }
 {
     throw new Error("Function not implemented.");
 }
-

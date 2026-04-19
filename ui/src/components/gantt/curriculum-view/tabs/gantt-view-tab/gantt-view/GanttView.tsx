@@ -1,14 +1,16 @@
-import { useGanttConstraints } from '@/components/gantt/state/constraints/hooks';
-import { useGanttMappings } from '@/components/gantt/state/mappings/hooks';
-import { useCurriculumState } from '@/components/gantt/state/provider';
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { Box, FormControlLabel, Paper, Switch, Table, TableBody, TableContainer, Typography, useTheme } from '@mui/material';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+
 import { ConstraintLines } from './ConstraintLines';
 import { GanttContext } from './context';
 import { GanttHeader } from './GanttHeader';
 import { GanttSyllabusGroup } from './GanttSyllabusGroup';
 import { ConstraintLink, ConstraintType, GanttViewProps } from './types';
+
+import { useGanttConstraints } from '@/components/gantt/state/constraints/hooks';
+import { useGanttMappings } from '@/components/gantt/state/mappings/hooks';
+import { useCurriculumState } from '@/components/gantt/state/provider';
 
 export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 {
@@ -71,7 +73,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         const v: Record<string, string[]> = {};
         const links: ConstraintLink[] = [];
 
-        const getMappedDayIdx = (type: 'module' | 'event', id: string) =>
+        const getMappedDayIdx = (type: 'event' | 'module', id: string) =>
         {
             if (type === 'event')
             {
@@ -85,7 +87,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             }
         };
 
-        const processConstraints = (entity: any, entityId: string, entityType: 'module' | 'event') =>
+        const processConstraints = (entity: any, entityId: string, entityType: 'event' | 'module') =>
         {
             const cIds: string[] = entity.constraintIds || [];
             const myIdx = getMappedDayIdx(entityType, entityId);
@@ -313,7 +315,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                         <Box sx={ { p: 2, borderBottom: `1px solid ${theme.palette.divider}`, flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }>
                             <Box>
                                 <Typography variant="h6">{ curriculum.title }</Typography>
-                                <Typography variant="body2" color="text.secondary">
+                                <Typography color="text.secondary" variant="body2">
                                     { curriculum.description }
                                 </Typography>
                             </Box>
@@ -334,7 +336,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                     </TableBody>
                                 </Table>
                             </TableContainer>
-                            { showConstraints && <ConstraintLines links={ activeLinks } containerRef={ containerRef } /> }
+                            { showConstraints ? <ConstraintLines containerRef={ containerRef } links={ activeLinks } /> : null }
                         </Box>
 
                     </Paper>

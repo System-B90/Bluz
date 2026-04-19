@@ -19,6 +19,6 @@ export type GanttConstraintAction =
         type: "DELETE_CONSTRAINT";
         payload: { id: string; };
     }
-    | { type: "SET_LOADING"; payload: boolean; }
     | { type: "SET_CONSTRAINTS"; payload: Array<GanttConstraint>; }
+    | { type: "SET_LOADING"; payload: boolean; }
     | { type: "UPSERT_CONSTRAINT"; payload: GanttConstraint; };

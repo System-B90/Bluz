@@ -11,30 +11,31 @@ import React, {
 } from "react";
 
 import
-{
-    NormalizedStore,
-    normalizeCurriculumData,
-} from "@/api-client/gantt/drizzle-normalize";
+    {
+        NormalizedStore,
+        normalizeCurriculumData,
+    } from "@/api-client/gantt/drizzle-normalize";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import
-{
-    GanttModuleId,
-    GanttSyllabusId,
-} from "@/api-shared/types/gantt/models";
+    {
+        GanttCurriculumId,
+        GanttModuleId,
+        GanttSyllabusId,
+    } from "@/api-shared/types/gantt/models";
 import { ModuleDialog } from "@/components/gantt/module-dialog";
 import { Action, curriculumReducer } from "@/components/gantt/state/reducer";
 
 export type OpenModuleDialog = (
-  syllabusId: GanttSyllabusId,
-  moduleId: GanttModuleId,
+    syllabusId: GanttSyllabusId,
+    moduleId: GanttModuleId,
 ) => void;
 export type CloseModuleDialog = () => void;
 
 const CurriculumStateContext = createContext<NormalizedStore | null>(null);
 const CurriculumActionsContext = createContext<{
-  dispatch: React.Dispatch<Action>;
-  openModuleDialog: OpenModuleDialog;
-  closeModuleDialog: CloseModuleDialog;
+    dispatch: React.Dispatch<Action>;
+    openModuleDialog: OpenModuleDialog;
+    closeModuleDialog: CloseModuleDialog;
 } | null>(null);
 
 /**
@@ -42,17 +43,19 @@ const CurriculumActionsContext = createContext<{
  * This prevents the main CurriculumProvider from re-rendering children
  * when only the dialog state changes.
  */
-function ModuleDialogManager({ children }: { children: ReactNode }) {
-    const [currentSyllabusId, setCurrentSyllabusId] =
-    useState<GanttSyllabusId | null>(null);
-    const [currentModuleId, setCurrentModuleId] = useState<GanttModuleId | null>(
+function ModuleDialogManager({ children, curriculumId }: { children: ReactNode; curriculumId: GanttCurriculumId; })
+{
+    const [ currentSyllabusId, setCurrentSyllabusId ] =
+        useState<GanttSyllabusId | null>(null);
+    const [ currentModuleId, setCurrentModuleId ] = useState<GanttModuleId | null>(
         null,
     );
-    const [moduleDialogOpen, setModuleDialogOpen] = useState<boolean>(false);
+    const [ moduleDialogOpen, setModuleDialogOpen ] = useState<boolean>(false);
 
     // This function is passed to the Actions context
     const openModuleDialog: OpenModuleDialog = useCallback<OpenModuleDialog>(
-        (syllabusId, moduleId) => {
+        (syllabusId, moduleId) =>
+        {
             setCurrentSyllabusId(syllabusId);
             setCurrentModuleId(moduleId);
             setModuleDialogOpen(true);
@@ -67,16 +70,17 @@ function ModuleDialogManager({ children }: { children: ReactNode }) {
 
     return (
         <CurriculumUIProviderInternal
-            closeModuleDialog={closeModuleDialog}
-            openModuleDialog={openModuleDialog}
+            closeModuleDialog={ closeModuleDialog }
+            openModuleDialog={ openModuleDialog }
         >
-            {children}
+            { children }
             <ModuleDialog
-                key={`${currentSyllabusId}-${currentModuleId}`}
-                moduleId={currentModuleId}
-                open={moduleDialogOpen}
-                setOpen={setModuleDialogOpen}
-                syllabusId={currentSyllabusId}
+                key={ `${currentSyllabusId}-${currentModuleId}` }
+                moduleId={ currentModuleId }
+                curriculumId={ curriculumId }
+                open={ moduleDialogOpen }
+                setOpen={ setModuleDialogOpen }
+                syllabusId={ currentSyllabusId }
             />
         </CurriculumUIProviderInternal>
     );
@@ -88,10 +92,11 @@ function CurriculumUIProviderInternal({
     openModuleDialog,
     closeModuleDialog,
 }: {
-  children: ReactNode;
-  openModuleDialog: OpenModuleDialog;
-  closeModuleDialog: CloseModuleDialog;
-}) {
+    children: ReactNode;
+    openModuleDialog: OpenModuleDialog;
+    closeModuleDialog: CloseModuleDialog;
+})
+{
     const { dispatch } = useCurriculumProviderActions();
 
     const actionsValue = useMemo(
@@ -100,44 +105,47 @@ function CurriculumUIProviderInternal({
             openModuleDialog,
             closeModuleDialog,
         }),
-        [dispatch, openModuleDialog, closeModuleDialog],
+        [ dispatch, openModuleDialog, closeModuleDialog ],
     );
 
     return (
-        <CurriculumActionsContext.Provider value={actionsValue}>
-            {children}
+        <CurriculumActionsContext.Provider value={ actionsValue }>
+            { children }
         </CurriculumActionsContext.Provider>
     );
 }
 
 export function CurriculumProvider({
+    curriculumId,
     initialData,
     children,
 }: {
-  initialData: ApiCurriculum;
-  children: ReactNode;
-}) {
+    curriculumId: GanttCurriculumId;
+    initialData: ApiCurriculum;
+    children: ReactNode;
+})
+{
     // 2. Data State Layer
-    const [state, dispatch] = useReducer(
+    const [ state, dispatch ] = useReducer(
         curriculumReducer,
         initialData,
         normalizeCurriculumData,
     );
 
     // Dispatch is stable, so we wrap it in a provider that doesn't change
-    const stateValue = useMemo(() => state, [state]);
+    const stateValue = useMemo(() => state, [ state ]);
 
     return (
-        <CurriculumStateContext.Provider value={stateValue}>
-            {/* Provide dispatch early so ModuleDialogManager can access it */}
+        <CurriculumStateContext.Provider value={ stateValue }>
+            {/* Provide dispatch early so ModuleDialogManager can access it */ }
             <CurriculumActionsContext.Provider
-                value={{
+                value={ {
                     dispatch,
-                    openModuleDialog: () => {},
-                    closeModuleDialog: () => {},
-                }}
+                    openModuleDialog: () => { },
+                    closeModuleDialog: () => { },
+                } }
             >
-                <ModuleDialogManager>{children}</ModuleDialogManager>
+                <ModuleDialogManager curriculumId={ curriculumId }>{ children }</ModuleDialogManager>
             </CurriculumActionsContext.Provider>
         </CurriculumStateContext.Provider>
     );
@@ -148,7 +156,8 @@ export function CurriculumProvider({
  * **FOR INTERNAL USE ONLY**
  * @returns The full state of the curriculum and its internal nested items.
  */
-export function useCurriculumState() {
+export function useCurriculumState()
+{
     const context = useContext(CurriculumStateContext);
     if (!context)
         throw new Error(
@@ -162,7 +171,8 @@ export function useCurriculumState() {
  * **FOR INTERNAL USE ONLY**
  * @returns Destructable object with actions on the global curriculum provider.
  */
-export function useCurriculumProviderActions() {
+export function useCurriculumProviderActions()
+{
     const context = useContext(CurriculumActionsContext);
     if (!context)
         throw new Error(

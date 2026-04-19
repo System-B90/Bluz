@@ -1,25 +1,25 @@
 import { RawBaseDocument } from "@/api-client/gantt/base";
 import
-    {
-        GanttCurriculum,
-        GanttCurriculumId,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculum,
+    GanttCurriculumId,
+} from "@/api-shared/types/gantt/models";
 import { GanttDay, GanttDayId } from "@/api-shared/types/gantt/models/day";
 import
-    {
-        GanttEvent,
-        GanttEventId,
-    } from "@/api-shared/types/gantt/models/event";
+{
+    GanttEvent,
+    GanttEventId,
+} from "@/api-shared/types/gantt/models/event";
 import
-    {
-        GanttModule,
-        GanttModuleId,
-    } from "@/api-shared/types/gantt/models/module";
+{
+    GanttModule,
+    GanttModuleId,
+} from "@/api-shared/types/gantt/models/module";
 import
-    {
-        GanttSyllabus,
-        GanttSyllabusId,
-    } from "@/api-shared/types/gantt/models/syllabus";
+{
+    GanttSyllabus,
+    GanttSyllabusId,
+} from "@/api-shared/types/gantt/models/syllabus";
 import { GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/models/week";
 
 export interface ApiModuleEvent extends Omit<
@@ -36,7 +36,7 @@ export interface ApiModuleEvent extends Omit<
 
 export interface ApiModule extends Omit<
     GanttModule & RawBaseDocument,
-    "events" | "constraints"
+    "constraints" | "events"
 >
 {
     m2e: Array<{

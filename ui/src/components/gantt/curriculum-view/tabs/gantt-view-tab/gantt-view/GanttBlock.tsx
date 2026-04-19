@@ -1,76 +1,75 @@
 import { useDraggable } from '@dnd-kit/core';
 import { Box, Tooltip, Typography, useTheme } from '@mui/material';
 import React from 'react';
+
 import { GanttBlockProps } from './types';
 
 export const GanttBlock: React.FC<GanttBlockProps> = ({ 
-  id, 
-  payload, 
-  title, 
-  isOpaque, 
-  spanLength = 1,
-  isAbsolute = true,
-  elementId,
-  violations = []
+    id, 
+    payload, 
+    title, 
+    isOpaque, 
+    spanLength = 1,
+    isAbsolute = true,
+    elementId,
+    violations = []
 }) => {
-  const theme = useTheme();
+    const theme = useTheme();
   
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id,
-    data: payload
-  });
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+        id,
+        data: payload
+    });
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: 9999,
-  } : undefined;
+    const style = transform ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        zIndex: 9999,
+    } : undefined;
 
-  const blockWidth = spanLength > 1 
-    ? `calc(${spanLength * 80}px - 8px)` 
-    : (isAbsolute ? 'calc(100% - 8px)' : '100%');
+    const blockWidth = spanLength > 1 
+        ? `calc(${spanLength * 80}px - 8px)` 
+        : (isAbsolute ? 'calc(100% - 8px)' : '100%');
 
-  const isViolated = violations.length > 0;
+    const isViolated = violations.length > 0;
 
-  const block = (
-    <Box
-      id={elementId}
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      sx={{
-        position: isAbsolute ? 'absolute' : 'relative',
-        top: isAbsolute ? '5px' : 'auto',
-        bottom: isAbsolute ? '5px' : 'auto',
-        left: isAbsolute ? '4px' : 'auto',
-        width: blockWidth,
-        height: '24px',
-        backgroundColor: theme.palette.primary.main,
-        borderRadius: '4px',
-        border: isViolated ? `2px solid ${theme.palette.error.main}` : 'none',
-        cursor: isDragging ? 'grabbing' : 'grab',
-        opacity: isDragging ? 0.4 : (isOpaque ? 0.5 : 1),
-        boxShadow: isDragging ? theme.shadows[4] : 'none',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        px: 1,
-        boxSizing: 'border-box',
-        zIndex: isDragging ? 9999 : 1,
-        ...style
-      }}
-    >
-      {title && (
-        <Typography variant="caption" sx={{ color: 'primary.contrastText', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {title}
-        </Typography>
-      )}
-    </Box>
-  );
+    const block = (
+        <Box
+            id={elementId}
+            ref={setNodeRef}
+            {...listeners}
+            {...attributes}
+            sx={{
+                position: isAbsolute ? 'absolute' : 'relative',
+                top: isAbsolute ? '5px' : 'auto',
+                bottom: isAbsolute ? '5px' : 'auto',
+                left: isAbsolute ? '4px' : 'auto',
+                width: blockWidth,
+                height: '24px',
+                backgroundColor: theme.palette.primary.main,
+                borderRadius: '4px',
+                border: isViolated ? `2px solid ${theme.palette.error.main}` : 'none',
+                cursor: isDragging ? 'grabbing' : 'grab',
+                opacity: isDragging ? 0.4 : (isOpaque ? 0.5 : 1),
+                boxShadow: isDragging ? theme.shadows[4] : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                px: 1,
+                boxSizing: 'border-box',
+                zIndex: isDragging ? 9999 : 1,
+                ...style
+            }}
+        >
+            {title ? <Typography sx={{ color: 'primary.contrastText', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} variant="caption">
+                {title}
+            </Typography> : null}
+        </Box>
+    );
 
-  return isViolated ? (
-    <Tooltip title={violations.join('\n')} arrow placement="top">
-      {block}
-    </Tooltip>
-  ) : block;
+    return isViolated ? (
+        <Tooltip arrow placement="top" title={violations.join('\n')}>
+            {block}
+        </Tooltip>
+    ) : block;
 };

@@ -18,4 +18,3 @@ export type GanttMappingAction =
 
 export const getGanttMappingKey = (m: { dayId: GanttDayId; moduleId: GanttModuleId; eventId?: GanttEventId | null; }) =>
     `${m.dayId}-${m.moduleId}-${m.eventId ?? 'null'}`;
-

@@ -1,6 +1,7 @@
 import { useDroppable } from '@dnd-kit/core';
 import { Box, TableCell, useTheme } from '@mui/material';
 import React from 'react';
+
 import { GanttBlock } from './GanttBlock';
 import { GanttCellProps } from './types';
 
@@ -28,8 +29,8 @@ export const GanttCell: React.FC<GanttCellProps> = ({
 
     return (
         <TableCell
-            ref={ setNodeRef }
             align="center"
+            ref={ setNodeRef }
             sx={ {
                 borderLeft: `1px solid ${theme.palette.divider}`,
                 p: 0,
@@ -51,18 +52,16 @@ export const GanttCell: React.FC<GanttCellProps> = ({
                     justifyContent: 'center'
                 } }
             >
-                { hasBlock && blockId && blockPayload && (
-                    <GanttBlock
-                        id={ blockId }
-                        elementId={ elementId }
-                        payload={ blockPayload }
-                        title={ blockTitle }
-                        isOpaque={ isOpaque }
-                        spanLength={ spanLength }
-                        isAbsolute={ isAbsoluteBlock }
-                        violations={ violations }
-                    />
-                ) }
+                { hasBlock && blockId && blockPayload ? <GanttBlock
+                    elementId={ elementId }
+                    id={ blockId }
+                    isAbsolute={ isAbsoluteBlock }
+                    isOpaque={ isOpaque }
+                    payload={ blockPayload }
+                    spanLength={ spanLength }
+                    title={ blockTitle }
+                    violations={ violations }
+                /> : null }
             </Box>
         </TableCell>
     );

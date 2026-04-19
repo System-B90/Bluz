@@ -189,7 +189,7 @@ export default function GanttPage()
                 { error ? <Typography color="error">{ error }</Typography> : null }
 
                 { currentCurriculum && !isLoading && initialData ? (
-                    <CurriculumProvider initialData={ initialData } key={ currentCurriculum }>
+                    <CurriculumProvider curriculumId={ currentCurriculum } initialData={ initialData } key={ currentCurriculum }>
                         <CurriculumView curriculumId={ currentCurriculum } />
                     </CurriculumProvider>
                 ) : null }

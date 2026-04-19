@@ -7,28 +7,33 @@
 
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { baseDocumentFixup, RawBaseDocument } from "@/api-client/gantt/base";
-import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { GanttCurriculumId, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 
 // Matches the Omit type used in the Provider context
-export type CreateConstraintPayload = Omit<GanttConstraint, "id" | "createdAt" | "updatedAt">;
+export type CreateConstraintPayload = Omit<GanttConstraint, "createdAt" | "id" | "updatedAt">;
 
 /**
  * GET: Retrieves all constraints for a curriculum's modules and events.
  */
 async function apiGetConstraints(
     curriculumId: GanttCurriculumId,
+    { syllabusId, moduleId }: { syllabusId?: GanttSyllabusId; moduleId?: GanttModuleId; },
     options?: ClientApiProps,
-): Promise<Array<GanttConstraint>> {
+): Promise<Array<GanttConstraint>>
+{
     const url = new URL(
         `/api/gantt/curriculums/${curriculumId}/constraints`,
         window.location.origin,
     );
 
+    if (syllabusId) url.searchParams.append("syllabusId", syllabusId);
+    if (moduleId) url.searchParams.append("moduleId", moduleId);
+
     const rawData: Array<RawBaseDocument> = await safeApiFetcher(url.toString(), {
         ...options,
     });
-    
+
     return rawData.map(
         baseDocumentFixup,
     ) as unknown as Array<GanttConstraint>;
@@ -42,7 +47,8 @@ async function apiCreateConstraint(
     curriculumId: GanttCurriculumId,
     payload: CreateConstraintPayload,
     options?: ClientApiProps,
-): Promise<GanttConstraint> {
+): Promise<GanttConstraint>
+{
     const rawData = await safeApiFetcher(
         `/api/gantt/curriculums/${curriculumId}/constraints`,
         {
@@ -64,7 +70,8 @@ async function apiUpdateConstraint(
     id: string,
     payload: Partial<CreateConstraintPayload>,
     options?: ClientApiProps,
-): Promise<GanttConstraint> {
+): Promise<GanttConstraint>
+{
     const rawData = await safeApiFetcher(
         `/api/gantt/curriculums/${curriculumId}/constraints`,
         {
@@ -85,7 +92,8 @@ async function apiDeleteConstraint(
     curriculumId: GanttCurriculumId,
     id: string,
     options?: ClientApiProps,
-): Promise<void> {
+): Promise<void>
+{
     await safeApiFetcher(`/api/gantt/curriculums/${curriculumId}/constraints`, {
         ...options,
         method: "DELETE",

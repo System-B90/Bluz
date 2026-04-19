@@ -13,6 +13,8 @@ import
         createConstraint,
         deleteConstraint,
         getConstraintsForCurriculum,
+        getConstraintsForModule,
+        getConstraintsForSyllabus,
         updateConstraint,
     } from "@/api-server/gantt/db-constraints";
 import { ClientApiError } from "@/api-shared/errors";
@@ -32,6 +34,18 @@ export async function GET(request: NextRequest, context: RouteContext)
     {
         const { id } = await context.params;
         if (!id) throw new ClientApiError("Curriculum ID is missing.");
+
+        const syllabusId = request.nextUrl.searchParams.get("syllabusId");
+        const moduleId = request.nextUrl.searchParams.get("moduleId");
+
+        if (moduleId)
+        {
+            return ApiSuccess(await getConstraintsForModule(moduleId));
+        }
+        else if (syllabusId)
+        {
+            return ApiSuccess(await getConstraintsForSyllabus(syllabusId));
+        }
 
         const constraints = await getConstraintsForCurriculum(id as GanttCurriculumId);
         return ApiSuccess(constraints);

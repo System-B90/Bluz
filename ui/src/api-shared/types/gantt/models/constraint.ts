@@ -10,10 +10,20 @@ export enum ConstraintType
 
 export type EntityType = "event" | "module";
 
+export interface BaseConstraint
+{
+    id: string;
+    type: ConstraintType;
+    ownerEventId: GanttEventId;
+    ownerModuleId: GanttModuleId;
+    ownerType: EntityType;
+}
+
+
 /**
  * Handles dependencies between two entities (Event-Event, Module-Module, Mixed).
  */
-export interface RelationalConstraint
+export interface RelationalConstraint extends BaseConstraint
 {
     id: string;
     type: ConstraintType.Relational;
@@ -27,7 +37,7 @@ export interface RelationalConstraint
 /**
  * Handles fixed calendar and day-of-week constraints.
  */
-export interface TemporalConstraint
+export interface TemporalConstraint extends BaseConstraint
 {
     id: string;
     type: ConstraintType.Temporal;

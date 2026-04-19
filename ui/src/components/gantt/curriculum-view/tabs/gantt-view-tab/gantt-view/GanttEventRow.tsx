@@ -1,11 +1,13 @@
-import { useCurriculumState } from '@/components/gantt/state/provider';
 import { useDroppable } from '@dnd-kit/core';
 import { alpha, Box, TableCell, TableRow, Typography, useTheme } from '@mui/material';
 import React, { useMemo } from 'react';
+
 import { useGanttContext } from './context';
 import { GanttBlock } from './GanttBlock';
 import { GanttCell } from './GanttCell';
 import { GanttEventRowProps } from './types';
+
+import { useCurriculumState } from '@/components/gantt/state/provider';
 
 export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId }) =>
 {
@@ -67,20 +69,18 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId 
                     height: '100%'
                 } }
             >
-                <Typography variant="caption" color="text.secondary" noWrap sx={ { display: 'block' } }>↳ { event.title }</Typography>
+                <Typography color="text.secondary" noWrap sx={ { display: 'block' } } variant="caption">↳ { event.title }</Typography>
 
-                { isEventUnmapped && !isModuleMapped && (
-                    <Box sx={ { flexGrow: 1, position: 'relative', ml: 1, height: '24px' } }>
-                        <GanttBlock
-                            id={ `drag-event-unmapped-${eventId}` }
-                            elementId={ `block-event-${eventId}` }
-                            payload={ { type: 'event-map', moduleId, eventId } }
-                            title={ event.title }
-                            isAbsolute={ false }
-                            violations={ myViolations }
-                        />
-                    </Box>
-                ) }
+                { isEventUnmapped && !isModuleMapped ? <Box sx={ { flexGrow: 1, position: 'relative', ml: 1, height: '24px' } }>
+                    <GanttBlock
+                        elementId={ `block-event-${eventId}` }
+                        id={ `drag-event-unmapped-${eventId}` }
+                        isAbsolute={ false }
+                        payload={ { type: 'event-map', moduleId, eventId } }
+                        title={ event.title }
+                        violations={ myViolations }
+                    />
+                </Box> : null }
             </TableCell>
 
             { timelineWeeks.map(week =>
@@ -100,17 +100,17 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId 
 
                     return (
                         <GanttCell
-                            key={ `${dayId}-${eventId}` }
-                            dayId={ dayId }
-                            dropId={ `drop-event-${eventId}-${dayId}` }
-                            payloadData={ { targetType: 'event', eventId, dayId } }
-                            hasBlock={ hasBlock }
-                            elementId={ hasBlock ? `block-event-${eventId}` : undefined }
                             blockId={ blockId }
                             blockPayload={ blockPayload }
                             blockTitle={ event.title }
+                            dayId={ dayId }
+                            dropId={ `drop-event-${eventId}-${dayId}` }
+                            elementId={ hasBlock ? `block-event-${eventId}` : undefined }
+                            hasBlock={ hasBlock }
                             isAbsoluteBlock={ true }
                             isOpaque={ isWaitingInModuleStartColumn }
+                            key={ `${dayId}-${eventId}` }
+                            payloadData={ { targetType: 'event', eventId, dayId } }
                             violations={ hasBlock ? myViolations : undefined }
                         />
                     );

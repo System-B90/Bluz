@@ -1,5 +1,6 @@
-import { GanttConstraintContext, GanttConstraintContextType } from "@/components/gantt/state/constraints/context";
 import { useContext } from "react";
+
+import { GanttConstraintContext, GanttConstraintContextType } from "@/components/gantt/state/constraints/context";
 
 /**
  * Hook for specialized access

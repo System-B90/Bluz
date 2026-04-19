@@ -1,5 +1,6 @@
-import { GanttMappingContext, GanttMappingContextType } from "@/components/gantt/state/mappings/context";
 import { useContext } from "react";
+
+import { GanttMappingContext, GanttMappingContextType } from "@/components/gantt/state/mappings/context";
 
 /**
  * Hook for specialized access

@@ -53,7 +53,7 @@ export function CurriculumGanttView({
 
     return (
         <GanttMappingProvider curriculumId={ curriculumId }>
-            <GanttConstraintProvider curriculumId={ curriculumId }>
+            <GanttConstraintProvider context={ { curriculumId, type: 'curriculum' } }>
                 <CurriculumGanttViewInner curriculumId={ curriculumId } { ...innerProps } />
             </GanttConstraintProvider>
         </GanttMappingProvider>

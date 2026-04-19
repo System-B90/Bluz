@@ -9,4 +9,3 @@ export type { GanttModule, GanttModuleId } from '@/api-shared/types/gantt/models
 export type { BaseGantItem } from '@/api-shared/types/gantt/models/shared';
 export type { GanttSyllabus, GanttSyllabusId } from '@/api-shared/types/gantt/models/syllabus';
 export type { GanttWeek, GanttWeekId } from '@/api-shared/types/gantt/models/week';
-

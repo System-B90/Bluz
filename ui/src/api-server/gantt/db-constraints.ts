@@ -131,3 +131,64 @@ export async function getConstraintsForCurriculum(curriculumId: GanttCurriculumI
             )
         );
 }
+/**
+ * Name: getConstraintsForSyllabus
+ * Purpose: Retrieves all constraints for any module or event within a specific syllabus using a single database query.
+ * Created: 2026-04-19
+ * Author: Michael K. Steinberg
+ */
+export async function getConstraintsForSyllabus(syllabusId: string)
+{
+    // Subquery 1: Resolve all module IDs mapped directly to the syllabus
+    const moduleIdsSubquery = postgresDb
+        .select({ moduleId: ganttSyllabus2ModulesSchema.moduleId })
+        .from(ganttSyllabus2ModulesSchema)
+        .where(eq(ganttSyllabus2ModulesSchema.syllabusId, syllabusId));
+
+    // Subquery 2: Resolve all event IDs mapped to the modules within the syllabus
+    const eventIdsSubquery = postgresDb
+        .select({ eventId: ganttModule2EventsSchema.eventId })
+        .from(ganttModule2EventsSchema)
+        .innerJoin(
+            ganttSyllabus2ModulesSchema,
+            eq(ganttSyllabus2ModulesSchema.moduleId, ganttModule2EventsSchema.moduleId)
+        )
+        .where(eq(ganttSyllabus2ModulesSchema.syllabusId, syllabusId));
+
+    // Main Query: Fetch constraints matching either subquery
+    return await postgresDb
+        .select()
+        .from(ganttConstraintsSchema)
+        .where(
+            or(
+                inArray(ganttConstraintsSchema.ownerModuleId, moduleIdsSubquery),
+                inArray(ganttConstraintsSchema.ownerEventId, eventIdsSubquery)
+            )
+        );
+}
+
+/**
+ * Name: getConstraintsForModule
+ * Purpose: Retrieves all constraints owned by a specific module or its nested events.
+ * Created: 2026-04-19
+ * Author: Michael K. Steinberg
+ */
+export async function getConstraintsForModule(moduleId: GanttModuleId)
+{
+    // Subquery: Resolve all event IDs mapped directly to the module
+    const eventIdsSubquery = postgresDb
+        .select({ eventId: ganttModule2EventsSchema.eventId })
+        .from(ganttModule2EventsSchema)
+        .where(eq(ganttModule2EventsSchema.moduleId, moduleId));
+
+    // Main Query: Fetch constraints owned by the module explicitly, or by its events
+    return await postgresDb
+        .select()
+        .from(ganttConstraintsSchema)
+        .where(
+            or(
+                eq(ganttConstraintsSchema.ownerModuleId, moduleId),
+                inArray(ganttConstraintsSchema.ownerEventId, eventIdsSubquery)
+            )
+        );
+}
