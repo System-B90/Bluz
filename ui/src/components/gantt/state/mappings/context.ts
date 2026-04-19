@@ -17,9 +17,6 @@ export type GanttMappingContextType = {
     removeMapping: RemoveMapping;
 };
 
-/**
- * Provider Context
- */
 export const GanttMappingContext = createContext<
     GanttMappingContextType | undefined
 >(undefined);

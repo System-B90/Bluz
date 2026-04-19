@@ -8,31 +8,36 @@ import { GanttCell } from './GanttCell';
 import { GanttEventRow } from './GanttEventRow';
 import { GanttModuleRowProps } from './types';
 
-export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
+export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) =>
+{
   const theme = useTheme();
   const state = useCurriculumState();
-  const { timelineWeeks, linearDays, moduleMappings, eventMappings } = useGanttContext();
-  const [isExpanded, setIsExpanded] = useState(false);
-  
+  const { timelineWeeks, linearDays, moduleMappings, eventMappings, violations } = useGanttContext();
+  const [ isExpanded, setIsExpanded ] = useState(false);
+
   const { isOver: isRemoveOver, setNodeRef: setRemoveNodeRef } = useDroppable({
     id: `drop-remove-module-${moduleId}`,
     data: { targetType: 'remove', moduleId, eventId: null }
   });
 
-  const module = state.modules[moduleId];
+  const module = state.modules[ moduleId ];
   if (!module) return null;
 
   const hasEvents = module.events && module.events.length > 0;
-  const mappedDays = moduleMappings[moduleId] || [];
+  const mappedDays = moduleMappings[ moduleId ] || [];
+  const myViolations = violations[ moduleId ] || [];
 
-  const spanIndices = useMemo(() => {
+  const spanIndices = useMemo(() =>
+  {
     const dayIds = new Set<string>();
-    
+
     mappedDays.forEach(d => dayIds.add(d));
 
-    if (hasEvents) {
-      module.events.forEach(eId => {
-        const d = eventMappings[eId];
+    if (hasEvents)
+    {
+      module.events.forEach(eId =>
+      {
+        const d = eventMappings[ eId ];
         if (d) dayIds.add(d);
       });
     }
@@ -40,7 +45,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
     const indices = Array.from(dayIds).map(id => linearDays.indexOf(id)).filter(i => i !== -1);
     if (indices.length === 0) return null;
     return { min: Math.min(...indices), max: Math.max(...indices) };
-  }, [hasEvents, module.events, eventMappings, mappedDays, linearDays]);
+  }, [ hasEvents, module.events, eventMappings, mappedDays, linearDays ]);
 
   const isUnmapped = spanIndices === null;
   const spanLength = spanIndices ? spanIndices.max - spanIndices.min + 1 : 1;
@@ -48,12 +53,12 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
   return (
     <React.Fragment>
       <TableRow hover>
-        <TableCell 
-          ref={setRemoveNodeRef}
-          sx={{ 
-            pl: 4, 
+        <TableCell
+          ref={ setRemoveNodeRef }
+          sx={ {
+            pl: 4,
             width: 250,
-            minWidth: 250, 
+            minWidth: 250,
             maxWidth: 250,
             boxSizing: 'border-box',
             position: 'sticky',
@@ -65,61 +70,66 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
             alignItems: 'center',
             height: '100%',
             transition: 'background-color 0.2s'
-          }}
+          } }
         >
-          {hasEvents && (
-            <Box 
-              component="span" 
-              onClick={() => setIsExpanded(!isExpanded)}
-              sx={{ fontSize: '0.8rem', width: 20, cursor: 'pointer', display: 'inline-block' }}
+          { hasEvents && (
+            <Box
+              component="span"
+              onClick={ () => setIsExpanded(!isExpanded) }
+              sx={ { fontSize: '0.8rem', width: 20, cursor: 'pointer', display: 'inline-block' } }
             >
-              {isExpanded ? '▼' : '▶'}
+              { isExpanded ? '▼' : '▶' }
             </Box>
-          )}
-          {!hasEvents && <Box sx={{ width: 20, display: 'inline-block' }} />}
-          
-          <Box sx={{ flexGrow: 1, position: 'relative' }}>
-            {isUnmapped ? (
-              <GanttBlock 
-                id={`drag-module-unmapped-${moduleId}`} 
-                payload={{ type: 'module-map', moduleId }} 
-                title={module.title}
-                spanLength={1}
-                isAbsolute={false}
+          ) }
+          { !hasEvents && <Box sx={ { width: 20, display: 'inline-block' } } /> }
+
+          <Box sx={ { flexGrow: 1, position: 'relative' } }>
+            { isUnmapped ? (
+              <GanttBlock
+                id={ `drag-module-unmapped-${moduleId}` }
+                elementId={ `block-module-${moduleId}` }
+                payload={ { type: 'module-map', moduleId } }
+                title={ module.title }
+                spanLength={ 1 }
+                isAbsolute={ false }
+                violations={ myViolations }
               />
             ) : (
-              <Typography variant="body2" sx={{ lineHeight: '24px' }} noWrap>{module.title}</Typography>
-            )}
+              <Typography variant="body2" sx={ { lineHeight: '24px' } } noWrap>{ module.title }</Typography>
+            ) }
           </Box>
         </TableCell>
 
-        {timelineWeeks.map(week =>
-          week.days.map(dayId => {
+        { timelineWeeks.map(week =>
+          week.days.map(dayId =>
+          {
             const dayIndex = linearDays.indexOf(dayId);
             const isSpanStart = spanIndices !== null && dayIndex === spanIndices.min;
 
             return (
-              <GanttCell 
-                key={`${dayId}-${moduleId}`} 
-                dayId={dayId} 
-                dropId={`drop-module-${moduleId}-${dayId}`}
-                payloadData={{ targetType: 'module', moduleId, dayId }}
-                hasBlock={isSpanStart}
-                blockId={`drag-module-shift-${moduleId}-${dayId}`}
-                blockPayload={{ type: 'module-shift', moduleId, sourceDayId: dayId }}
-                blockTitle={module.title}
-                spanLength={spanLength}
-                isOpaque={hasEvents && isExpanded}
-                isAbsoluteBlock={true}
+              <GanttCell
+                key={ `${dayId}-${moduleId}` }
+                dayId={ dayId }
+                dropId={ `drop-module-${moduleId}-${dayId}` }
+                payloadData={ { targetType: 'module', moduleId, dayId } }
+                hasBlock={ isSpanStart }
+                elementId={ isSpanStart ? `block-module-${moduleId}` : undefined }
+                blockId={ `drag-module-shift-${moduleId}-${dayId}` }
+                blockPayload={ { type: 'module-shift', moduleId, sourceDayId: dayId } }
+                blockTitle={ module.title }
+                spanLength={ spanLength }
+                isOpaque={ hasEvents && isExpanded }
+                isAbsoluteBlock={ true }
+                violations={ isSpanStart ? myViolations : undefined }
               />
             );
           })
-        )}
+        ) }
       </TableRow>
 
-      {isExpanded && hasEvents && module.events.map(eventId => (
-        <GanttEventRow key={eventId} eventId={eventId} moduleId={moduleId} />
-      ))}
+      { isExpanded && hasEvents && module.events.map(eventId => (
+        <GanttEventRow key={ eventId } eventId={ eventId } moduleId={ moduleId } />
+      )) }
     </React.Fragment>
   );
 };

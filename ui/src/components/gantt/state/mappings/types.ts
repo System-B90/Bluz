@@ -1,8 +1,5 @@
 import { GanttCurriculumModuleDayMapping, GanttDayId, GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
 
-/**
- * State Definition
- */
 export interface GanttMappingState
 {
     // Key: `${dayId}-${moduleId}-${eventId ?? 'null'}`

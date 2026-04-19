@@ -19,6 +19,7 @@ import
     } from "@/api-shared/types/gantt/models";
 import { CurriculumGanttViewInner } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/CurriculumGanttViewInner";
 import { GanttDataSourceProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";
+import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
 import { useCurriculumState } from "@/components/gantt/state/provider";
@@ -52,7 +53,9 @@ export function CurriculumGanttView({
 
     return (
         <GanttMappingProvider curriculumId={ curriculumId }>
-            <CurriculumGanttViewInner curriculumId={ curriculumId } { ...innerProps } />
+            <GanttConstraintProvider curriculumId={ curriculumId }>
+                <CurriculumGanttViewInner curriculumId={ curriculumId } { ...innerProps } />
+            </GanttConstraintProvider>
         </GanttMappingProvider>
     );
 }

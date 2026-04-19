@@ -1,11 +1,47 @@
-import { GanttCurriculumId, GanttWeek } from '@/api-shared/types/gantt/models';
+import { GanttCurriculumId, GanttDayIndex, GanttWeek } from '@/api-shared/types/gantt/models';
+
+export enum ConstraintType
+{
+    Relational = "RELATIONAL",
+    Temporal = "TEMPORAL"
+}
+
+export type EntityType = "event" | "module";
+
+export interface RelationalConstraint
+{
+    id: string;
+    type: ConstraintType.Relational;
+    targetId: string;
+    targetType: EntityType;
+    relation: "after" | "before";
+    minDelayDays?: number;
+    maxDelayDays?: number;
+}
+
+export interface TemporalConstraint
+{
+    id: string;
+    type: ConstraintType.Temporal;
+    allowedDays?: Array<GanttDayIndex>;
+    forbiddenDays?: Array<GanttDayIndex>;
+}
+
+export type GanttConstraint = RelationalConstraint | TemporalConstraint;
+
+export interface GanttConstraintState
+{
+    constraints: Record<string, GanttConstraint>;
+    isLoading: boolean;
+}
 
 export interface IGanttContext
 {
     timelineWeeks: GanttWeek[];
     linearDays: string[];
-    eventMappings: Record<string, string>; // eventId -> dayId
-    moduleMappings: Record<string, string[]>; // moduleId -> dayId[]
+    eventMappings: Record<string, string>;
+    moduleMappings: Record<string, string[]>;
+    violations: Record<string, string[]>;
     onMapModule: (moduleId: string, dayId: string) => Promise<void>;
     onMapEvent: (moduleId: string, eventId: string, dayId: string) => Promise<void>;
     onMoveEvent: (moduleId: string, eventId: string, sourceDayId: string, targetDayId: string) => Promise<void>;
@@ -28,6 +64,8 @@ export interface GanttBlockProps
     isOpaque?: boolean;
     spanLength?: number;
     isAbsolute?: boolean;
+    elementId?: string;
+    violations?: string[];
 }
 
 export interface GanttCellProps
@@ -42,6 +80,8 @@ export interface GanttCellProps
     spanLength?: number;
     isOpaque?: boolean;
     isAbsoluteBlock?: boolean;
+    elementId?: string;
+    violations?: string[];
 }
 
 export interface GanttModuleRowProps
@@ -58,4 +98,12 @@ export interface GanttEventRowProps
 export interface GanttSyllabusGroupProps
 {
     syllabusId: string;
+}
+
+export interface ConstraintLink
+{
+    id: string;
+    sourceId: string;
+    targetId: string;
+    isViolated: boolean;
 }

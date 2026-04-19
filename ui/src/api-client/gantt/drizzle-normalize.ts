@@ -7,15 +7,15 @@ import { SyllabusDocument } from "@/api-client/gantt/syllabus";
 import { CurriculumWeekDocument } from "@/api-client/gantt/week";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import
-{
-    DAY_NAME_DISPLAY,
-    GanttCurriculumId,
-    GanttDayId,
-    GanttEventId,
-    GanttModuleId,
-    GanttSyllabusId,
-    GanttWeekId,
-} from "@/api-shared/types/gantt/models";
+    {
+        DAY_NAME_DISPLAY,
+        GanttCurriculumId,
+        GanttDayId,
+        GanttEventId,
+        GanttModuleId,
+        GanttSyllabusId,
+        GanttWeekId,
+    } from "@/api-shared/types/gantt/models";
 
 export interface NormalizedStore
 {
@@ -82,6 +82,7 @@ export function normalizeCurriculumData(
                     ...apiEvent,
                     moduleId: apiModule.id,
                     allocatedDuration: apiEvent.cEC[ 0 ]?.allocatedDuration ?? 0,
+                    constraints: [],
                 };
             }
 
@@ -94,6 +95,7 @@ export function normalizeCurriculumData(
                 hiveIds: [ ...(apiModule.hiveIds ?? []) ],
                 events: moduleEventIds,
                 syllabusId: apiSyllabus.id,
+                constraints: [],
             };
         }
 

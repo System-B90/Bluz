@@ -1,19 +1,27 @@
+import { useGanttConstraints } from '@/components/gantt/state/constraints/hooks';
 import { useGanttMappings } from '@/components/gantt/state/mappings/hooks';
 import { useCurriculumState } from '@/components/gantt/state/provider';
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
-import { Box, Paper, Table, TableBody, TableContainer, Typography, useTheme } from '@mui/material';
-import React, { useCallback, useMemo } from 'react';
+import { Box, FormControlLabel, Paper, Switch, Table, TableBody, TableContainer, Typography, useTheme } from '@mui/material';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { ConstraintLines } from './ConstraintLines';
 import { GanttContext } from './context';
 import { GanttHeader } from './GanttHeader';
 import { GanttSyllabusGroup } from './GanttSyllabusGroup';
-import { GanttViewProps } from './types';
+import { ConstraintLink, ConstraintType, GanttViewProps } from './types';
 
 export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 {
     const theme = useTheme();
     const state = useCurriculumState();
     const { state: { mappings: globalMappings }, createMapping, moveMapping, removeMapping } = useGanttMappings();
+    const { state: { constraints } } = useGanttConstraints();
     const curriculum = state.curriculums[ curriculumId ];
+
+    // Strongly type as HTMLDivElement to satisfy MUI TableContainer
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const [ showConstraints, setShowConstraints ] = useState(true);
 
     const timelineWeeks = useMemo(() =>
     {
@@ -29,7 +37,6 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     const moduleMappings = useMemo(() =>
     {
         const merged: Record<string, string[]> = {};
-
         Object.values(globalMappings).forEach((mapping: any) =>
         {
             if (mapping.curriculumId !== curriculumId) return;
@@ -42,14 +49,12 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 }
             }
         });
-
         return merged;
     }, [ globalMappings, curriculumId ]);
 
     const eventMappings = useMemo(() =>
     {
         const merged: Record<string, string> = {};
-
         Object.values(globalMappings).forEach((mapping: any) =>
         {
             if (mapping.curriculumId !== curriculumId) return;
@@ -58,9 +63,93 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 merged[ mapping.eventId ] = mapping.dayId;
             }
         });
-
         return merged;
     }, [ globalMappings, curriculumId ]);
+
+    const { violations, activeLinks } = useMemo(() =>
+    {
+        const v: Record<string, string[]> = {};
+        const links: ConstraintLink[] = [];
+
+        const getMappedDayIdx = (type: 'module' | 'event', id: string) =>
+        {
+            if (type === 'event')
+            {
+                const dayId = eventMappings[ id ];
+                return dayId ? linearDays.indexOf(dayId) : -1;
+            } else
+            {
+                const dayIds = moduleMappings[ id ] || [];
+                const indices = dayIds.map(d => linearDays.indexOf(d)).filter(i => i !== -1);
+                return indices.length ? Math.min(...indices) : -1;
+            }
+        };
+
+        const processConstraints = (entity: any, entityId: string, entityType: 'module' | 'event') =>
+        {
+            const cIds: string[] = entity.constraintIds || [];
+            const myIdx = getMappedDayIdx(entityType, entityId);
+            if (myIdx === -1) return;
+
+            const myDay = state.days[ linearDays[ myIdx ] ];
+            if (!myDay) return;
+
+            cIds.forEach(cId =>
+            {
+                const c = constraints[ cId ];
+                if (!c) return;
+
+                if (c.type === ConstraintType.Temporal)
+                {
+                    if (c.allowedDays && !c.allowedDays.includes(myDay.dayIndex))
+                    {
+                        if (!v[ entityId ]) v[ entityId ] = [];
+                        v[ entityId ].push('Violates allowed days');
+                    }
+                    if (c.forbiddenDays && c.forbiddenDays.includes(myDay.dayIndex))
+                    {
+                        if (!v[ entityId ]) v[ entityId ] = [];
+                        v[ entityId ].push('Violates forbidden days');
+                    }
+                } else if (c.type === ConstraintType.Relational)
+                {
+                    const targetIdx = getMappedDayIdx(c.targetType, c.targetId);
+                    if (targetIdx === -1) return;
+
+                    let isViolated = false;
+                    const delta = myIdx - targetIdx;
+
+                    if (c.relation === 'after')
+                    {
+                        if (delta <= 0) isViolated = true;
+                        if (c.minDelayDays !== undefined && delta < c.minDelayDays) isViolated = true;
+                        if (c.maxDelayDays !== undefined && delta > c.maxDelayDays) isViolated = true;
+                    } else if (c.relation === 'before')
+                    {
+                        if (delta >= 0) isViolated = true;
+                    }
+
+                    if (isViolated)
+                    {
+                        if (!v[ entityId ]) v[ entityId ] = [];
+                        v[ entityId ].push(`Violates relational constraint with ${c.targetType}`);
+                    }
+
+                    links.push({
+                        id: `${entityId}-${c.targetId}`,
+                        sourceId: `block-${entityType}-${entityId}`,
+                        targetId: `block-${c.targetType}-${c.targetId}`,
+                        isViolated
+                    });
+                }
+            });
+        };
+
+        Object.values(state.modules).forEach(m => processConstraints(m, m.id, 'module'));
+        Object.values(state.events).forEach(e => processConstraints(e, e.id, 'event'));
+
+        return { violations: v, activeLinks: links };
+    }, [ state.modules, state.events, constraints, moduleMappings, eventMappings, linearDays, state.days ]);
 
     const handleMapModule = useCallback(async (moduleId: string, dayId: string) =>
     {
@@ -211,6 +300,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 linearDays,
                 moduleMappings,
                 eventMappings,
+                violations,
                 onMapModule: handleMapModule,
                 onMapEvent: handleMapEvent,
                 onMoveModule: handleMoveModule,
@@ -220,23 +310,32 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                 <Box sx={ { width: '100%', overflow: 'hidden', mt: 2 } }>
                     <Paper sx={ { width: '100%', maxHeight: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column', overflow: 'hidden' } }>
 
-                        <Box sx={ { p: 2, borderBottom: `1px solid ${theme.palette.divider}`, flexShrink: 0 } }>
-                            <Typography variant="h6">{ curriculum.title }</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                { curriculum.description }
-                            </Typography>
+                        <Box sx={ { p: 2, borderBottom: `1px solid ${theme.palette.divider}`, flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }>
+                            <Box>
+                                <Typography variant="h6">{ curriculum.title }</Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    { curriculum.description }
+                                </Typography>
+                            </Box>
+                            <FormControlLabel
+                                control={ <Switch checked={ showConstraints } onChange={ e => setShowConstraints(e.target.checked) } /> }
+                                label="Show Constraints"
+                            />
                         </Box>
 
-                        <TableContainer sx={ { flexGrow: 1, overflow: 'auto', minWidth: 0, minHeight: 0 } }>
-                            <Table size="small" stickyHeader sx={ { width: 'max-content', tableLayout: 'fixed' } }>
-                                <GanttHeader />
-                                <TableBody>
-                                    { curriculum.syllabuses.map(syllabusId => (
-                                        <GanttSyllabusGroup key={ syllabusId } syllabusId={ syllabusId } />
-                                    )) }
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                        <Box sx={ { flexGrow: 1, position: 'relative', overflow: 'hidden' } }>
+                            <TableContainer ref={ containerRef } sx={ { width: '100%', height: '100%', overflow: 'auto' } }>
+                                <Table size="small" stickyHeader sx={ { width: 'max-content', tableLayout: 'fixed' } }>
+                                    <GanttHeader />
+                                    <TableBody>
+                                        { curriculum.syllabuses.map(syllabusId => (
+                                            <GanttSyllabusGroup key={ syllabusId } syllabusId={ syllabusId } />
+                                        )) }
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                            { showConstraints && <ConstraintLines links={ activeLinks } containerRef={ containerRef } /> }
+                        </Box>
 
                     </Paper>
                 </Box>

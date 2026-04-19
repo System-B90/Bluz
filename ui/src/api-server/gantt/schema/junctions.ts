@@ -28,6 +28,7 @@ export const ganttCurriculum2SyllabusesSchema = pgTable(
         pk: primaryKey({ columns: [ t.curriculumId, t.syllabusId ] }),
     }),
 );
+
 export const ganttCurriculum2SyllabusesRelationsSchema = relations(
     ganttCurriculum2SyllabusesSchema,
     ({ one }) => ({

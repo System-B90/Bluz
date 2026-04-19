@@ -8,10 +8,10 @@ import { relations } from "drizzle-orm";
 import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import
-{
-    ganttModule2EventsSchema,
-    ganttSyllabus2ModulesSchema,
-} from "./junctions";
+    {
+        ganttModule2EventsSchema,
+        ganttSyllabus2ModulesSchema,
+    } from "./junctions";
 
 export const ganttModulesSchema = pgTable("m", {
     id: text("id").primaryKey(),

@@ -1,5 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, Tooltip, Typography, useTheme } from '@mui/material';
 import React from 'react';
 import { GanttBlockProps } from './types';
 
@@ -9,7 +9,9 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
   title, 
   isOpaque, 
   spanLength = 1,
-  isAbsolute = true
+  isAbsolute = true,
+  elementId,
+  violations = []
 }) => {
   const theme = useTheme();
   
@@ -27,8 +29,11 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
     ? `calc(${spanLength * 80}px - 8px)` 
     : (isAbsolute ? 'calc(100% - 8px)' : '100%');
 
-  return (
+  const isViolated = violations.length > 0;
+
+  const block = (
     <Box
+      id={elementId}
       ref={setNodeRef}
       {...listeners}
       {...attributes}
@@ -41,6 +46,7 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
         height: '24px',
         backgroundColor: theme.palette.primary.main,
         borderRadius: '4px',
+        border: isViolated ? `2px solid ${theme.palette.error.main}` : 'none',
         cursor: isDragging ? 'grabbing' : 'grab',
         opacity: isDragging ? 0.4 : (isOpaque ? 0.5 : 1),
         boxShadow: isDragging ? theme.shadows[4] : 'none',
@@ -49,7 +55,7 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
         justifyContent: 'center',
         overflow: 'hidden',
         px: 1,
-        // Default to a lower zIndex to slide under the sticky column
+        boxSizing: 'border-box',
         zIndex: isDragging ? 9999 : 1,
         ...style
       }}
@@ -61,4 +67,10 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
       )}
     </Box>
   );
+
+  return isViolated ? (
+    <Tooltip title={violations.join('\n')} arrow placement="top">
+      {block}
+    </Tooltip>
+  ) : block;
 };

@@ -20,8 +20,6 @@ export function CurriculumGanttViewInner(
 ): React.ReactElement
 {
     return (
-        <GanttView
-            curriculumId={ curriculumId }
-        />
+        <GanttView curriculumId={ curriculumId } />
     );
 }

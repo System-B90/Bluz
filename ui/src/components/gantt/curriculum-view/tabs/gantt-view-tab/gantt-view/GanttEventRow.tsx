@@ -11,7 +11,7 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId 
 {
     const theme = useTheme();
     const state = useCurriculumState();
-    const { timelineWeeks, linearDays, moduleMappings, eventMappings } = useGanttContext();
+    const { timelineWeeks, linearDays, moduleMappings, eventMappings, violations } = useGanttContext();
 
     const { isOver: isRemoveOver, setNodeRef: setRemoveNodeRef } = useDroppable({
         id: `drop-remove-event-${eventId}`,
@@ -23,8 +23,8 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId 
 
     const currentDayId = eventMappings[ eventId ];
     const isEventUnmapped = !currentDayId;
+    const myViolations = violations[ eventId ] || [];
 
-    // Calculate if the parent module is mapped and where its span starts
     const { isModuleMapped, moduleStartDayId } = useMemo(() =>
     {
         const mappedDays = moduleMappings[ moduleId ] || [];
@@ -69,14 +69,15 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId 
             >
                 <Typography variant="caption" color="text.secondary" noWrap sx={ { display: 'block' } }>↳ { event.title }</Typography>
 
-                {/* Render fully unmapped events in the sticky column */ }
                 { isEventUnmapped && !isModuleMapped && (
                     <Box sx={ { flexGrow: 1, position: 'relative', ml: 1, height: '24px' } }>
                         <GanttBlock
                             id={ `drag-event-unmapped-${eventId}` }
+                            elementId={ `block-event-${eventId}` }
                             payload={ { type: 'event-map', moduleId, eventId } }
                             title={ event.title }
                             isAbsolute={ false }
+                            violations={ myViolations }
                         />
                     </Box>
                 ) }
@@ -104,12 +105,13 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId 
                             dropId={ `drop-event-${eventId}-${dayId}` }
                             payloadData={ { targetType: 'event', eventId, dayId } }
                             hasBlock={ hasBlock }
+                            elementId={ hasBlock ? `block-event-${eventId}` : undefined }
                             blockId={ blockId }
                             blockPayload={ blockPayload }
                             blockTitle={ event.title }
                             isAbsoluteBlock={ true }
-                            // Add opacity cue to unmapped blocks resting under the module start block
                             isOpaque={ isWaitingInModuleStartColumn }
+                            violations={ hasBlock ? myViolations : undefined }
                         />
                     );
                 })
