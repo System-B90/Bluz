@@ -6,7 +6,7 @@ import { Box, Chip, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import { userColors } from "@/components/schedule/types/types";
 import { User } from "@/components/schedule/types/user";
 
-interface GroupMemberFieldProps {
+type GroupMemberFieldProps = {
   user: User;
 }
 

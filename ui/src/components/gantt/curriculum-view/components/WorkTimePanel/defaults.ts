@@ -8,7 +8,7 @@ import
 const DEFAULT_WEEKDAY_HOURS_FALLBACK = 8;
 const DEFAULT_FRIDAY_HOURS_FALLBACK = 6;
 
-export const defaultWeekDayOrder: GanttDayIndex[] = [
+export const defaultWeekDayOrder: Array<GanttDayIndex> = [
     GanttDayIndex.Sunday,
     GanttDayIndex.Monday,
     GanttDayIndex.Tuesday,
@@ -38,7 +38,7 @@ export const defaultFridayHours = parseDefaultHours(
     DEFAULT_FRIDAY_HOURS_FALLBACK,
 );
 
-export function buildDefaultWeekDays(): Partial<GanttDay>[] {
+export function buildDefaultWeekDays(): Array<Partial<GanttDay>> {
     return defaultWeekDayOrder.map((dayName) => ({
         title: DAY_NAME_DISPLAY[dayName],
         day: dayName,

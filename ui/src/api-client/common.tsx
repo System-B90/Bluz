@@ -18,14 +18,14 @@ export async function safeFetcher(
     input: RequestInfo,
     init?: RequestInit | undefined,
 ): Promise<Response> {
-    return fetch(input, init);
+    return await fetch(input, init);
 }
 
 export async function safeApiFetcher<T = unknown>(
     input: RequestInfo,
     init?: RequestInit | undefined,
 ): Promise<T> {
-    return safeFetcher(input, init)
+    return await safeFetcher(input, init)
         .then((response): Promise<any> => {
             // An API request should only return a redirect if the user is not logged in!
             if (response.redirected) {

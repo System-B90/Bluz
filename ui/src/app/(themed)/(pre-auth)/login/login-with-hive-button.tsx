@@ -10,11 +10,11 @@ import { useCallback } from "react";
 
 import { getHiveBaseUrl } from "@/api-shared/common";
 
-interface LoginWithHiveProps extends ButtonProps {
+type LoginWithHiveProps = {
   callbackUrl?: SignInOptions["callbackUrl"];
   fontSize?: TypographyProps["fontSize"];
   fontWeight?: TypographyProps["fontWeight"];
-}
+} & ButtonProps
 
 export function LoginWithHive({
     callbackUrl = "/",

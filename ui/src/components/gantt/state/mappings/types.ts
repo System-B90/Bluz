@@ -1,7 +1,6 @@
 import { GanttCurriculumModuleDayMapping, GanttDayId, GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
 
-export interface GanttMappingState
-{
+export type GanttMappingState = {
     // Key: `${dayId}-${moduleId}-${eventId ?? 'null'}`
     mappings: Record<string, GanttCurriculumModuleDayMapping>;
     isLoading: boolean;

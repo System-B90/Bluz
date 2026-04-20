@@ -9,7 +9,7 @@ import {
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { Event, eventHasSubject } from "@/components/schedule/types/event";
 
-interface SubjectFieldProps {
+type SubjectFieldProps = {
   event?: Partial<Event>;
   onEventChange: (updates: Partial<Event>) => void;
 }

@@ -5,7 +5,7 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { EditableCurriculumField } from "@/components/gantt/curriculum-view/components/curriculum-about-card/EditableCurriculumField";
 import { useCurriculumActions } from "@/components/gantt/state/hooks/gantt-funcs/UseCurriculumActions";
 
-export interface CurriculumDescriptionProps {
+export type CurriculumDescriptionProps = {
   curriculumId: GanttCurriculumId | null;
   description?: string;
 }

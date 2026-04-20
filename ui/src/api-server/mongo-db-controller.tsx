@@ -75,7 +75,7 @@ export type ProjectionMap<T> = {
 };
 
 export function createProjectionMap<T extends object>(
-    keys: (keyof T)[],
+    keys: Array<keyof T>,
 ): ProjectionMap<T> {
     const map: any = {};
 

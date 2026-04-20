@@ -20,7 +20,7 @@ import {
     roomToResolvable,
 } from "@/components/schedule/types/room";
 
-interface RoomFieldProps extends EventFieldProps {}
+type RoomFieldProps = {} & EventFieldProps
 
 export function RoomField({
     event,

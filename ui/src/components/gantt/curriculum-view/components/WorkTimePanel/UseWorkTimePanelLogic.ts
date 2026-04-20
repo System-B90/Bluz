@@ -15,14 +15,14 @@ import { useCurriculumActions } from "@/components/gantt/state/hooks/gantt-funcs
 
 export function useWorkTimePanelLogic(
     curriculumId: GanttCurriculumId | null,
-    curriculumWeekIds: GanttWeekId[],
-    localWeekIds: GanttWeekId[],
-    setLocalWeekIds: Dispatch<SetStateAction<GanttWeekId[]>>,
+    curriculumWeekIds: Array<GanttWeekId>,
+    localWeekIds: Array<GanttWeekId>,
+    setLocalWeekIds: Dispatch<SetStateAction<Array<GanttWeekId>>>,
 ) {
     const { updateCurriculum } = useCurriculumActions();
 
     const persistWeeks = useCallback(
-        async (updatedWeekIds: GanttWeekId[]) => {
+        async (updatedWeekIds: Array<GanttWeekId>) => {
             if (!curriculumId) return;
             setLocalWeekIds(updatedWeekIds);
             await updateCurriculum(curriculumId, { weeks: updatedWeekIds });
@@ -31,7 +31,7 @@ export function useWorkTimePanelLogic(
     );
 
     const updateWeeksLocally = useCallback(
-        (updater: (weekIds: GanttWeekId[]) => GanttWeekId[]) => {
+        (updater: (weekIds: Array<GanttWeekId>) => Array<GanttWeekId>) => {
             setLocalWeekIds((prev) => updater(cloneWeeks(prev)));
         },
         [setLocalWeekIds],

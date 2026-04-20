@@ -18,9 +18,9 @@ import { BluzEventComponent } from "@/components/schedule/event-component/base";
 import { Event } from "@/components/schedule/types/event";
 import { Room } from "@/components/schedule/types/room"; // Import the full Room type
 
-interface CalendarViewProps {
-  events: Event[];
-  rooms: Room[]; // Changed from ResolvableRoom[] to Room[]
+type CalendarViewProps = {
+  events: Array<Event>;
+  rooms: Array<Room>; // Changed from ResolvableRoom[] to Room[]
   currentView: View;
   onView: (view: View) => void;
   onNavigate: CalendarProps["onNavigate"];

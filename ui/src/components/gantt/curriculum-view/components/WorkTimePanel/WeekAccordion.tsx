@@ -5,7 +5,7 @@ import { KeyboardEvent } from "react";
 import { GanttWeekId } from "@/api-shared/types/gantt/models";
 import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 
-export interface WeekAccordionProps {
+export type WeekAccordionProps = {
   weekId: GanttWeekId;
   canEdit: boolean;
   canAddDay: boolean;

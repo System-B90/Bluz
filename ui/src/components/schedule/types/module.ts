@@ -1,4 +1,4 @@
-export interface Module {
+export type Module = {
   id: string;
   name: string;
   parent_subject: number;

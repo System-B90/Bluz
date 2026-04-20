@@ -14,7 +14,7 @@ import {
     prayerTypeToHebrew,
 } from "@/components/schedule/types/event";
 
-interface PrayerTypeFieldProps {
+type PrayerTypeFieldProps = {
   event?: Partial<Event>;
   onEventChange: (updates: Partial<PrayerEvent>) => void;
 }

@@ -1,12 +1,12 @@
-export interface ApiResponseJson {
+export type ApiResponseJson = {
   status: number;
   data?: any;
   error?: any;
 }
 
 export type Keys<T> = keyof T;
-export function getKeysOfObject<T extends object>(obj: T): Keys<T>[] {
-    return Object.keys(obj) as Keys<T>[];
+export function getKeysOfObject<T extends object>(obj: T): Array<Keys<T>> {
+    return Object.keys(obj) as Array<Keys<T>>;
 }
 
 export type Color = string;

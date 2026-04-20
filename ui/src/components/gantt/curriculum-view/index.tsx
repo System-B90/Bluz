@@ -7,9 +7,9 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumViewSidebar } from "@/components/gantt/curriculum-view/components/sidebars";
 import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
 
-export interface CurriculumViewProps extends BoxProps {
+export type CurriculumViewProps = {
   curriculumId: GanttCurriculumId | null;
-}
+} & BoxProps
 
 export function CurriculumView({
     curriculumId,

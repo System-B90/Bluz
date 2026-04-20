@@ -2,7 +2,7 @@ import { Session } from "next-auth";
 
 import { Clearance, GenderEnum } from "@/api-server/hive/types";
 
-export interface AuthSessionUser {
+export type AuthSessionUser = {
   id: string;
   name: string;
   email: null | string;
@@ -14,8 +14,8 @@ export interface AuthSessionUser {
   is_teacher: boolean;
 }
 
-export interface AuthSessionData extends Session {
+export type AuthSessionData = {
   user: AuthSessionUser;
   accessToken: string;
   refreshToken: string;
-}
+} & Session

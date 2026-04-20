@@ -10,7 +10,7 @@ import { useMemo } from "react";
 import { useHiveModules } from "@/components/base/HiveModulesProvider";
 import { Event, eventHasSubject } from "@/components/schedule/types/event";
 
-interface ModuleFieldProps {
+type ModuleFieldProps = {
   event?: Partial<Event>;
   onEventChange: (updates: Partial<Event>) => void;
 }

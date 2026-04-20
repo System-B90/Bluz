@@ -21,7 +21,7 @@ import {
     PrayerEvent,
 } from "@/components/schedule/types/event";
 
-export interface ContainerSize {
+export type ContainerSize = {
   width: number;
   height: number;
 }

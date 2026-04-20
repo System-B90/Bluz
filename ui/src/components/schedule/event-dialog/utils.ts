@@ -1,6 +1,6 @@
 import { Event } from "@/components/schedule/types/event";
 
-export interface EventFieldProps {
+export type EventFieldProps = {
   event?: Partial<Event>;
   onBlurCallback: (event: Partial<Event>) => void;
 }

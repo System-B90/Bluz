@@ -9,7 +9,7 @@ import { Group } from "@/components/schedule/types/group";
 import { User } from "@/components/schedule/types/user";
 import { GroupMemberField } from "@/components/settings-dialog/tabs/global/group-tree/MemberField";
 
-interface GroupMemberFieldProps {
+type GroupMemberFieldProps = {
   group: Group;
 }
 

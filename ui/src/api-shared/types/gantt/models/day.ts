@@ -26,12 +26,11 @@ export function getDayNameDisplay(day: GanttDayIndex): string
 {
     return DAY_NAME_DISPLAY[ day ] ?? "";
 }
-export interface GanttDay extends BaseGantItem
-{
+export type GanttDay = {
     readonly title: string; // Generated from day name
     weekId: GanttWeekId;
     dayIndex: GanttDayIndex;
     totalWorkingMinutes: number;
     comment?: string;
-}
+} & BaseGantItem
 export type GanttDayId = string;

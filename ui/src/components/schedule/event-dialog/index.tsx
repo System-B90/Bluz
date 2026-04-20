@@ -16,7 +16,7 @@ import { EventToggles } from "@/components/schedule/event-dialog/EventToggles";
 import { InstructorsField } from "@/components/schedule/event-dialog/InstructorsField";
 import { Event, EventId } from "@/components/schedule/types/event";
 
-interface EventDialogProps {
+type EventDialogProps = {
   open: boolean;
   event: Event;
   onClose: () => void;

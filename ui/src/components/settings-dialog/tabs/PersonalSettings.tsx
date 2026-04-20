@@ -11,8 +11,8 @@ import {
 import { useState } from "react";
 
 export function PersonalSettings() {
-    const [groups, setGroups] = useState<string[]>([]);
-    const [instructors, setInstructors] = useState<string[]>([]);
+    const [groups, setGroups] = useState<Array<string>>([]);
+    const [instructors, setInstructors] = useState<Array<string>>([]);
 
     const allGroups = ["Group A", "Group B", "Group C"];
     const allInstructors = ["Alice", "Bob", "Charlie"];
@@ -29,7 +29,7 @@ export function PersonalSettings() {
                 <Select
                     input={<OutlinedInput label="Selected Groups" />}
                     multiple
-                    onChange={(e) => setGroups(e.target.value as string[])}
+                    onChange={(e) => setGroups(e.target.value as Array<string>)}
                     renderValue={(selected) => (
                         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                             {selected.map((value) => (
@@ -53,7 +53,7 @@ export function PersonalSettings() {
                 <Select
                     input={<OutlinedInput label="Selected Instructors" />}
                     multiple
-                    onChange={(e) => setInstructors(e.target.value as string[])}
+                    onChange={(e) => setInstructors(e.target.value as Array<string>)}
                     renderValue={(selected) => (
                         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                             {selected.map((value) => (

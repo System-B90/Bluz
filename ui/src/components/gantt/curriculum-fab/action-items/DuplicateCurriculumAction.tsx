@@ -9,9 +9,9 @@ import { CreateGanttCurriculumPayload } from "@/api-shared/types/gantt/create-pa
 import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items/ActionItemButton";
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 
-export interface DuplicateCurriculumActionProps extends CurriculumAwareActionItemProps {
+export type DuplicateCurriculumActionProps = {
   onCreate: (newCurriculum: GanttCurriculumDocument) => void;
-}
+} & CurriculumAwareActionItemProps
 
 export function DuplicateCurriculumAction({
     sourceCurriculum,

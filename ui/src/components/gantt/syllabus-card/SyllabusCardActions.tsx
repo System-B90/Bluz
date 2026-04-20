@@ -17,10 +17,10 @@ import
 } from "@/api-shared/types/gantt/models";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 
-export interface SyllabusCardActionsProps extends CardActionsProps {
+export type SyllabusCardActionsProps = {
   curriculumId: GanttCurriculumId;
   syllabusId: GanttSyllabusId;
-}
+} & CardActionsProps
 
 export function SyllabusCardActions({
     curriculumId,

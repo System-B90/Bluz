@@ -10,10 +10,9 @@ import { hashSyllabusToColor } from "@/components/gantt/curriculum-view/tabs/bui
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 
-export interface SyllabusSectionProps extends BoxProps
-{
+export type SyllabusSectionProps = {
     syllabusId: GanttSyllabusId;
-}
+} & BoxProps
 
 export function SyllabusSection({
     syllabusId,

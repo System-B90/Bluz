@@ -23,7 +23,7 @@ import { useCalendar } from "@/components/schedule/calendar/calendar-provider/Ca
 import { getRangeForView } from "@/components/schedule/calendar/utils";
 import { Event } from "@/components/schedule/types/event";
 
-interface BluzCalendarProps {
+type BluzCalendarProps = {
   handleSaveEvent: (event: Event) => void;
   handleDeleteEvent: (eventId: Event["id"]) => void;
   setOpenEventDialog: (open: boolean) => void;

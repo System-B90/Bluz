@@ -22,60 +22,52 @@ import
 } from "@/api-shared/types/gantt/models/syllabus";
 import { GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/models/week";
 
-export interface ApiModuleEvent extends Omit<
-    GanttEvent & RawBaseDocument,
-    "allocatedDuration" | "constraints"
->
-{
+export type ApiModuleEvent = {
     cEC: Array<{
         eventId: GanttEventId;
         curriculumId: GanttCurriculumId;
         allocatedDuration: number;
     }>;
-}
-
-export interface ApiModule extends Omit<
-    GanttModule & RawBaseDocument,
-    "constraints" | "events"
+} & Omit<
+    GanttEvent & RawBaseDocument,
+    "allocatedDuration" | "constraints"
 >
-{
+
+export type ApiModule = {
     m2e: Array<{
         moduleId: GanttModuleId;
         eventId: GanttEventId;
         event: ApiModuleEvent;
     }>;
-}
-
-export interface ApiSyllabus extends Omit<
-    GanttSyllabus & RawBaseDocument,
-    "modules"
+} & Omit<
+    GanttModule & RawBaseDocument,
+    "constraints" | "events"
 >
-{
+
+export type ApiSyllabus = {
     s2m: Array<{
         syllabusId: GanttSyllabusId;
         moduleId: GanttModuleId;
         module: ApiModule;
     }>;
-}
+} & Omit<
+    GanttSyllabus & RawBaseDocument,
+    "modules"
+>
 
-export interface ApiCurriculumDay extends Omit<
+export type ApiCurriculumDay = { } & Omit<
     GanttDay & RawBaseDocument,
     "title"
-> { }
+>
 
-export interface ApiCurriculumWeek extends Omit<
+export type ApiCurriculumWeek = {
+    w2d: Array<{ weekId: GanttWeekId; dayId: GanttDayId; day: ApiCurriculumDay; }>;
+} & Omit<
     GanttWeek & RawBaseDocument,
     "days"
 >
-{
-    w2d: Array<{ weekId: GanttWeekId; dayId: GanttDayId; day: ApiCurriculumDay; }>;
-}
 
-export interface ApiCurriculum extends Omit<
-    GanttCurriculum & RawBaseDocument,
-    "syllabuses" | "weeks"
->
-{
+export type ApiCurriculum = {
     c2s: Array<{
         curriculumId: GanttCurriculumId;
         syllabusId: GanttSyllabusId;
@@ -86,7 +78,10 @@ export interface ApiCurriculum extends Omit<
         weekId: GanttWeekId;
         week: ApiCurriculumWeek;
     }>;
-}
+} & Omit<
+    GanttCurriculum & RawBaseDocument,
+    "syllabuses" | "weeks"
+>
 
 export type ApiT<T> = T extends GanttCurriculum
     ? ApiCurriculum

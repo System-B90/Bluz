@@ -12,7 +12,7 @@ export async function apiGetEvents({
     const endpoint = new URL("/api/event", window.location.origin);
     endpoint.searchParams.set("sd", startDate?.toISOString() ?? "");
     endpoint.searchParams.set("ed", endDate?.toISOString() ?? "");
-    return safeApiFetcher<Array<Event>>(endpoint.toString(), {
+    return await safeApiFetcher<Array<Event>>(endpoint.toString(), {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
@@ -41,21 +41,21 @@ export async function apiGetMultipleEvents(
 }
 
 export async function apiCreateEvent(event: Event): Promise<Event> {
-    return safeApiFetcher<Event>("/api/event", {
+    return await safeApiFetcher<Event>("/api/event", {
         method: "PUT",
         body: JSON.stringify(event),
     }).then(eventDateFixup);
 }
 
 export async function apiUpdateEvent(event: Event): Promise<Event> {
-    return safeApiFetcher<Event>("/api/event", {
+    return await safeApiFetcher<Event>("/api/event", {
         method: "POST",
         body: JSON.stringify(event),
     }).then(eventDateFixup);
 }
 
 export async function apiDeleteEvent(eventId: EventId): Promise<void> {
-    return safeApiFetcher("/api/event", {
+    return await safeApiFetcher("/api/event", {
         method: "DELETE",
         body: JSON.stringify(eventId),
     });

@@ -15,7 +15,7 @@ import { Event } from "@/components/schedule/types/event";
 import { ResolvableRoom } from "@/components/schedule/types/room";
 
 export function useCalendarHandlers(
-    events: Event[],
+    events: Array<Event>,
     handleSaveEvent: (event: Event) => void,
     handleDeleteEvent: (eventId: Event["id"]) => void,
     setSelectedEvent: (event: Event | undefined) => void,

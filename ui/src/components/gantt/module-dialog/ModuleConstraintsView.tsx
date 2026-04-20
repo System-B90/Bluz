@@ -1,21 +1,21 @@
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
-
 import
-    {
-        Box,
-        Button,
-        Card,
-        CardContent,
-        CircularProgress,
-        IconButton,
-        MenuItem,
-        Select,
-        Stack,
-        TextField,
-        Typography
-    } from "@mui/material";
+{
+    Box,
+    Button,
+    Card,
+    CardContent,
+    CircularProgress,
+    IconButton,
+    MenuItem,
+    Select,
+    Stack,
+    TextField,
+    Typography
+} from "@mui/material";
+import { ListSubheader } from "@mui/material";
 import { useMemo, useState } from "react";
 
 import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
@@ -23,12 +23,11 @@ import { GanttModuleId } from "@/api-shared/types/gantt/models";
 import { ConstraintType } from "@/api-shared/types/gantt/models/constraint";
 import { useGanttConstraints } from "@/components/gantt/state/constraints/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
-import { ListSubheader } from "@mui/material";
 
 type TargetOption = {
     id: string;
     label: string;
-    type: "module" | "event";
+    type: "event" | "module";
     syllabusId: string;
 };
 
@@ -38,7 +37,7 @@ function useTargetOptions()
 
     return useMemo(() =>
     {
-        const result: Record<string, TargetOption[]> = {};
+        const result: Record<string, Array<TargetOption>> = {};
 
         for (const syllabus of Object.values(state.syllabuses))
         {
@@ -172,10 +171,10 @@ export function ModuleConstraintsView({ moduleId }: { moduleId: GanttModuleId; }
                     <Typography variant="h6">אילוצים</Typography>
                     <Button
                         color="primary"
+                        disabled={ !!draft }
+                        onClick={ startCreate }
                         size="small"
                         variant="outlined"
-                        onClick={ startCreate }
-                        disabled={ !!draft }
                     >
                         הוספת אילוץ
                     </Button>
@@ -189,13 +188,13 @@ export function ModuleConstraintsView({ moduleId }: { moduleId: GanttModuleId; }
                     <Stack spacing={ 1 }>
                         { constraintsList.map((constraint) => (
                             <Box
-                                key={ constraint.id }
-                                display="flex"
-                                justifyContent="space-between"
                                 alignItems="center"
                                 border={ 1 }
                                 borderColor="divider"
                                 borderRadius={ 1 }
+                                display="flex"
+                                justifyContent="space-between"
+                                key={ constraint.id }
                                 p={ 1 }
                             >
                                 <Typography variant="body2">
@@ -215,171 +214,169 @@ export function ModuleConstraintsView({ moduleId }: { moduleId: GanttModuleId; }
                         )) }
 
                         {/* INLINE CREATION ROW */ }
-                        { draft && (
-                            <Box
-                                border={ 1 }
-                                borderColor="primary.main"
-                                borderRadius={ 1 }
-                                p={ 1 }
-                            >
-                                <Stack spacing={ 1 }>
-                                    <Select
-                                        size="small"
-                                        value={ draft.type }
-                                        onChange={ (e) =>
+                        { draft ? <Box
+                            border={ 1 }
+                            borderColor="primary.main"
+                            borderRadius={ 1 }
+                            p={ 1 }
+                        >
+                            <Stack spacing={ 1 }>
+                                <Select
+                                    onChange={ (e) =>
+                                    {
+                                        const nextType = e.target.value as ConstraintType;
+
+                                        if (nextType === ConstraintType.Relational)
                                         {
-                                            const nextType = e.target.value as ConstraintType;
-
-                                            if (nextType === ConstraintType.Relational)
-                                            {
-                                                setDraft({
-                                                    type: ConstraintType.Relational,
-                                                    targetId: "",
-                                                    relation: "after",
-                                                    minDelay: "",
-                                                    maxDelay: ""
-                                                });
-                                            }
-                                            else
-                                            {
-                                                setDraft({
-                                                    type: ConstraintType.Temporal,
-                                                    allowedDays: "",
-                                                    forbiddenDays: ""
-                                                });
-                                            }
-                                        } }
-                                    >
-                                        <MenuItem value={ ConstraintType.Relational }>
+                                            setDraft({
+                                                type: ConstraintType.Relational,
+                                                targetId: "",
+                                                relation: "after",
+                                                minDelay: "",
+                                                maxDelay: ""
+                                            });
+                                        }
+                                        else
+                                        {
+                                            setDraft({
+                                                type: ConstraintType.Temporal,
+                                                allowedDays: "",
+                                                forbiddenDays: ""
+                                            });
+                                        }
+                                    } }
+                                    size="small"
+                                    value={ draft.type }
+                                >
+                                    <MenuItem value={ ConstraintType.Relational }>
                                             אילוץ יחסי
-                                        </MenuItem>
-                                        <MenuItem value={ ConstraintType.Temporal }>
+                                    </MenuItem>
+                                    <MenuItem value={ ConstraintType.Temporal }>
                                             אילוץ זמן
-                                        </MenuItem>
-                                    </Select>
+                                    </MenuItem>
+                                </Select>
 
-                                    { draft.type === ConstraintType.Relational && (
-                                        <Stack direction="row" spacing={ 1 }>
-                                            <Select
-                                                size="small"
-                                                value={ draft.targetId }
-                                                onChange={ (e) =>
-                                                    setDraft({
-                                                        ...draft,
-                                                        targetId: e.target.value
-                                                    })
+                                { draft.type === ConstraintType.Relational && (
+                                    <Stack direction="row" spacing={ 1 }>
+                                        <Select
+                                            displayEmpty
+                                            MenuProps={ {
+                                                PaperProps: {
+                                                    style: { maxHeight: 400 }
                                                 }
-                                                displayEmpty
-                                                renderValue={ (value) =>
+                                            } }
+                                            onChange={ (e) =>
+                                                setDraft({
+                                                    ...draft,
+                                                    targetId: e.target.value
+                                                })
+                                            }
+                                            renderValue={ (value) =>
+                                            {
+                                                if (!value) return "בחר יעד";
+
+                                                for (const group of Object.values(targetOptions))
                                                 {
-                                                    if (!value) return "בחר יעד";
-
-                                                    for (const group of Object.values(targetOptions))
-                                                    {
-                                                        const found = group.find((o) => o.id === value);
-                                                        if (found) return found.label;
-                                                    }
-
-                                                    return value;
-                                                } }
-                                                MenuProps={ {
-                                                    PaperProps: {
-                                                        style: { maxHeight: 400 }
-                                                    }
-                                                } }
-                                            >
-                                                { Object.entries(targetOptions).map(([ syllabusId, options ]) =>
-                                                {
-                                                    const syllabus = curriculumState.syllabuses[ syllabusId ];
-
-                                                    return [
-                                                        <ListSubheader key={ `header-${syllabusId}` }>
-                                                            { syllabus.title }
-                                                        </ListSubheader>,
-
-                                                        ...options.map((option) => (
-                                                            <MenuItem key={ option.id } value={ option.id }>
-                                                                { option.label }
-                                                            </MenuItem>
-                                                        ))
-                                                    ];
-                                                }) }
-                                            </Select>
-
-                                            <Select
-                                                size="small"
-                                                value={ draft.relation }
-                                                onChange={ (e) =>
-                                                    setDraft({
-                                                        ...draft,
-                                                        relation: e.target.value as "after" | "before"
-                                                    })
+                                                    const found = group.find((o) => o.id === value);
+                                                    if (found) return found.label;
                                                 }
-                                            >
-                                                <MenuItem value="after">אחרי</MenuItem>
-                                                <MenuItem value="before">לפני</MenuItem>
-                                            </Select>
 
-                                            <TextField
-                                                size="small"
-                                                type="number"
-                                                label="Min"
-                                                value={ draft.minDelay }
-                                                onChange={ (e) =>
-                                                    setDraft({ ...draft, minDelay: e.target.value })
-                                                }
-                                            />
+                                                return value;
+                                            } }
+                                            size="small"
+                                            value={ draft.targetId }
+                                        >
+                                            { Object.entries(targetOptions).map(([ syllabusId, options ]) =>
+                                            {
+                                                const syllabus = curriculumState.syllabuses[ syllabusId ];
 
-                                            <TextField
-                                                size="small"
-                                                type="number"
-                                                label="Max"
-                                                value={ draft.maxDelay }
-                                                onChange={ (e) =>
-                                                    setDraft({ ...draft, maxDelay: e.target.value })
-                                                }
-                                            />
-                                        </Stack>
-                                    ) }
+                                                return [
+                                                    <ListSubheader key={ `header-${syllabusId}` }>
+                                                        { syllabus.title }
+                                                    </ListSubheader>,
 
-                                    { draft.type === ConstraintType.Temporal && (
-                                        <Stack direction="row" spacing={ 1 }>
-                                            <TextField
-                                                size="small"
-                                                label="Allowed"
-                                                value={ draft.allowedDays }
-                                                onChange={ (e) =>
-                                                    setDraft({
-                                                        ...draft,
-                                                        allowedDays: e.target.value
-                                                    })
-                                                }
-                                            />
-                                            <TextField
-                                                size="small"
-                                                label="Forbidden"
-                                                value={ draft.forbiddenDays }
-                                                onChange={ (e) =>
-                                                    setDraft({
-                                                        ...draft,
-                                                        forbiddenDays: e.target.value
-                                                    })
-                                                }
-                                            />
-                                        </Stack>
-                                    ) }
+                                                    ...options.map((option) => (
+                                                        <MenuItem key={ option.id } value={ option.id }>
+                                                            { option.label }
+                                                        </MenuItem>
+                                                    ))
+                                                ];
+                                            }) }
+                                        </Select>
 
-                                    <Stack direction="row" spacing={ 1 } justifyContent="flex-end">
-                                        <IconButton color="primary" onClick={ submitCreate }>
-                                            <CheckIcon />
-                                        </IconButton>
-                                        <IconButton onClick={ cancelCreate }>
-                                            <CloseIcon />
-                                        </IconButton>
+                                        <Select
+                                            onChange={ (e) =>
+                                                setDraft({
+                                                    ...draft,
+                                                    relation: e.target.value as "after" | "before"
+                                                })
+                                            }
+                                            size="small"
+                                            value={ draft.relation }
+                                        >
+                                            <MenuItem value="after">אחרי</MenuItem>
+                                            <MenuItem value="before">לפני</MenuItem>
+                                        </Select>
+
+                                        <TextField
+                                            label="Min"
+                                            onChange={ (e) =>
+                                                setDraft({ ...draft, minDelay: e.target.value })
+                                            }
+                                            size="small"
+                                            type="number"
+                                            value={ draft.minDelay }
+                                        />
+
+                                        <TextField
+                                            label="Max"
+                                            onChange={ (e) =>
+                                                setDraft({ ...draft, maxDelay: e.target.value })
+                                            }
+                                            size="small"
+                                            type="number"
+                                            value={ draft.maxDelay }
+                                        />
                                     </Stack>
+                                ) }
+
+                                { draft.type === ConstraintType.Temporal && (
+                                    <Stack direction="row" spacing={ 1 }>
+                                        <TextField
+                                            label="Allowed"
+                                            onChange={ (e) =>
+                                                setDraft({
+                                                    ...draft,
+                                                    allowedDays: e.target.value
+                                                })
+                                            }
+                                            size="small"
+                                            value={ draft.allowedDays }
+                                        />
+                                        <TextField
+                                            label="Forbidden"
+                                            onChange={ (e) =>
+                                                setDraft({
+                                                    ...draft,
+                                                    forbiddenDays: e.target.value
+                                                })
+                                            }
+                                            size="small"
+                                            value={ draft.forbiddenDays }
+                                        />
+                                    </Stack>
+                                ) }
+
+                                <Stack direction="row" justifyContent="flex-end" spacing={ 1 }>
+                                    <IconButton color="primary" onClick={ submitCreate }>
+                                        <CheckIcon />
+                                    </IconButton>
+                                    <IconButton onClick={ cancelCreate }>
+                                        <CloseIcon />
+                                    </IconButton>
                                 </Stack>
-                            </Box>
-                        ) }
+                            </Stack>
+                        </Box> : null }
 
                         { constraintsList.length === 0 && !draft && (
                             <Typography color="text.secondary" variant="body2">

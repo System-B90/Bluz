@@ -29,9 +29,9 @@ async function getDbEvent(
 }
 
 async function getDbEvents(
-    eventIds: EventId[],
+    eventIds: Array<EventId>,
     options?: FindOptions,
-): Promise<DbEventDocument[]> {
+): Promise<Array<DbEventDocument>> {
     const cursor = databaseController.events.find(
         { id: { $in: eventIds } },
         options,
@@ -45,7 +45,7 @@ async function getDbEventsInRange(
     endDate: Date,
     options?: FindOptions,
     filter?: Filter<DbEventDocument>,
-): Promise<DbEventDocument[]> {
+): Promise<Array<DbEventDocument>> {
     const cursor = databaseController.events.find(
         { startTime: { $gte: startDate }, endTime: { $lte: endDate }, ...filter },
         options,

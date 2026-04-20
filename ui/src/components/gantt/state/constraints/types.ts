@@ -7,8 +7,7 @@
 
 import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 
-export interface GanttConstraintState
-{
+export type GanttConstraintState = {
     // Key: constraint.id
     constraints: Record<string, GanttConstraint>;
     isLoading: boolean;

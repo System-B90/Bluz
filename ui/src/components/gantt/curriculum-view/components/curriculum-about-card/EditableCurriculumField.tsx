@@ -2,7 +2,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { Box, IconButton, Skeleton, TextField, Tooltip } from "@mui/material";
 import { KeyboardEvent, ReactNode, useCallback, useState } from "react";
 
-export interface EditableCurriculumFieldProps {
+export type EditableCurriculumFieldProps = {
   value?: string;
   canEdit: boolean;
   editTooltip: string;

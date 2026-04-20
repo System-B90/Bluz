@@ -25,9 +25,9 @@ import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/U
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 
-export interface SyllabusSelectionFieldProps extends BoxProps {
+export type SyllabusSelectionFieldProps = {
   curriculumId: GanttCurriculumId;
-}
+} & BoxProps
 
 export function SyllabusSelectionField({
     curriculumId,

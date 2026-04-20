@@ -3,13 +3,12 @@ import { Box, BoxProps, IconButton, Typography } from "@mui/material";
 
 import { WorkTimeChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
 
-export interface GroupHeaderProps extends Omit<BoxProps, "onClick">
-{
+export type GroupHeaderProps = {
     start: number;
     end: number;
     totalHours: number;
     onExpandGroup: () => void;
-}
+} & Omit<BoxProps, "onClick">
 
 export function GroupHeader({
     start,

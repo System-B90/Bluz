@@ -9,14 +9,14 @@ import { CurriculumGanttView } from "@/components/gantt/curriculum-view/tabs/gan
 import { SyllabusesTab } from "@/components/gantt/curriculum-view/tabs/syllabuses-tab";
 import { WeeksTab } from "@/components/gantt/curriculum-view/tabs/weeks-tab";
 
-interface TabProps {
+type TabProps = {
   selectedTabIndex: number;
   setSelectedTabIndex: Dispatch<SetStateAction<number>>;
 }
 
-export interface CurriculumViewTabsProps extends BoxProps, TabProps {
+export type CurriculumViewTabsProps = {
   curriculumId: GanttCurriculumId | null;
-}
+} & BoxProps & TabProps
 
 function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
     return (

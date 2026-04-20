@@ -31,7 +31,7 @@ export function WorkTimePanel({
     curriculum,
 }: WorkTimePanelProps) {
     const { enqueueSnackbar } = useSnackbar();
-    const [localWeekIds, setLocalWeekIds] = useState<GanttWeekId[]>(() =>
+    const [localWeekIds, setLocalWeekIds] = useState<Array<GanttWeekId>>(() =>
         cloneWeeks(curriculum?.weeks ?? []),
     );
     const { createWeek } = useWeekActions();

@@ -14,7 +14,7 @@ export function useCurriculumActions() {
 
     const updateCurriculum = useCallback(
         async (id: GanttCurriculumId, updates: Partial<GanttCurriculum>) => {
-            return withGantErrorHandling(async () => {
+            return await withGantErrorHandling(async () => {
                 const updatedCurriculum = await ganttApi.curriculum.apiUpdate({
                     id,
                     ...updates,

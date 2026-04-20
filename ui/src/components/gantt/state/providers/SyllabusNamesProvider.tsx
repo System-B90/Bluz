@@ -15,7 +15,7 @@ import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 
 export type SyllabusDictionary = Record<GanttSyllabusId, string>;
 
-export interface SyllabusProviderState {
+export type SyllabusProviderState = {
   syllabusNames: SyllabusDictionary;
   isLoading: boolean;
   error: Error | null;

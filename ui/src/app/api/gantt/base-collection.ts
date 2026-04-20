@@ -4,13 +4,12 @@ import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { ApiT } from "@/api-shared/types/gantt/api-layer";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 
-export interface BasicGantOperations<
+export type BasicGantOperations<
   TEntity extends BaseGantItem,
   TCreatePayload = Omit<TEntity, "id">,
->
-{
+> = {
   listItems: () => Promise<Record<TEntity[ "id" ], TEntity[ "title" ]>>;
-  getMultipleItems: (ids: string[]) => Promise<TEntity[]>;
+  getMultipleItems: (ids: Array<string>) => Promise<Array<TEntity>>;
   getItem: (id: TEntity[ "id" ]) => Promise<any>;
   createNewItem: (payload: TCreatePayload) => Promise<ApiT<TEntity> | TEntity>; // TODO: This should always be ApiT<TEntity>
   updateItem: (
@@ -20,11 +19,10 @@ export interface BasicGantOperations<
   deleteItem: (id: TEntity[ "id" ]) => Promise<void>;
 }
 
-export interface BuildGantCollectionRoutesProps<
+export type BuildGantCollectionRoutesProps<
   TEntity extends BaseGantItem,
   TCreatePayload = Omit<TEntity, "id">,
->
-{
+> = {
   dbSet: BasicGantOperations<TEntity, TCreatePayload>;
 }
 

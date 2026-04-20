@@ -7,7 +7,7 @@ import { PRAYER_TIMES_SETTING_KEY } from "@/api-shared/types/settings/prayer";
 import { Setting, SettingName } from "@/api-shared/types/settings/settings";
 import { MessageTypes } from "@/settings";
 
-interface DbSetting {
+type DbSetting = {
   key: SettingName;
   value: Setting;
 }

@@ -12,8 +12,8 @@ import { KeyboardEvent } from "react";
 
 import { GanttDay } from "@/api-shared/types/gantt/models";
 
-export interface DaysTableProps {
-  days: GanttDay[];
+export type DaysTableProps = {
+  days: Array<GanttDay>;
   canEdit: boolean;
   weekIndex: number;
   onHoursChange: (

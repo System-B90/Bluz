@@ -5,19 +5,16 @@ import { ClientApiError } from "@/api-shared/errors";
 import { ApiT } from "@/api-shared/types/gantt/api-layer";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 
-export interface BasicGantLinkOperations<TEntity extends BaseGantItem>
-{
+export type BasicGantLinkOperations<TEntity extends BaseGantItem> = {
   linkItem: (newParentId: string, id: TEntity[ "id" ]) => Promise<ApiT<TEntity>>;
   unlinkItem: (oldParentId: string, id: TEntity[ "id" ]) => Promise<void>;
 }
 
-export interface BuildGantLinkRoutesProps<TEntity extends BaseGantItem>
-{
+export type BuildGantLinkRoutesProps<TEntity extends BaseGantItem> = {
   dbSet: BasicGantLinkOperations<TEntity>;
 }
 
-export interface RouteContext
-{
+export type RouteContext = {
   params: Promise<{ id: string; }>;
 }
 

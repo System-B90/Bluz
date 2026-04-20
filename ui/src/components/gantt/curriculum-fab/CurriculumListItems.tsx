@@ -5,7 +5,7 @@ import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumEntry } from "@/components/gantt/curriculum-fab/CurriculumEntry";
 
-export interface CurriculumListItemsProps {
+export type CurriculumListItemsProps = {
   isFetchingDetails: boolean;
   curriculumsData: Record<GanttCurriculumId, GanttCurriculumDocument>;
   sortedIds: Array<GanttCurriculumId>;

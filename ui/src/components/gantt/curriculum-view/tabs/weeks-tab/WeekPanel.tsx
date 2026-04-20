@@ -25,7 +25,7 @@ import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWe
 import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
-interface WeekPanelProps {
+type WeekPanelProps = {
   curriculumId: GanttCurriculumId;
   weekId: GanttWeekId;
 }
@@ -53,7 +53,7 @@ export function WeekWorkTimeChip({ weekId }: { weekId: GanttWeekId }) {
 
     const totalHours = useMemo(() => {
         if (!week?.days) return 0;
-        return (week.days as GanttDayId[]).reduce(
+        return (week.days as Array<GanttDayId>).reduce(
             (acc: number, dayId: GanttDayId) => {
                 const day = state.days[dayId];
                 return acc + (day?.totalWorkingMinutes ?? 0) / 60;

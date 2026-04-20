@@ -1,7 +1,7 @@
 import { ThemeOptions } from "@mui/material/styles";
 
 declare module "@mui/material/Chip" {
-  interface ChipPropsSizeOverrides {
+  type ChipPropsSizeOverrides = {
     smaller: true;
     smallest: true;
   }

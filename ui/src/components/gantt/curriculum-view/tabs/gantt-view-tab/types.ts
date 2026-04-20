@@ -21,12 +21,12 @@ import
     GanttSyllabus,
 } from "@/api-shared/types/gantt/models";
 
-export { SvarGanttLink, SvarGanttScale, SvarGanttTask };
+export type { SvarGanttLink, SvarGanttScale, SvarGanttTask };
 
 /**
  * SVAR Gantt data update event (custom wrapper around SvarGanttTask)
  */
-export interface SvarGanttDataUpdateEvent {
+export type SvarGanttDataUpdateEvent = {
   action: string;
   obj: SvarGanttTask;
 }
@@ -34,7 +34,7 @@ export interface SvarGanttDataUpdateEvent {
 /**
  * Gantt data return type from useGanttData hook
  */
-export interface GanttDataResult {
+export type GanttDataResult = {
   tasks: Array<SvarGanttTask>;
   links: Array<SvarGanttLink>;
 }
@@ -42,7 +42,7 @@ export interface GanttDataResult {
 /**
  * Props for GanttEngine component
  */
-export interface GanttEngineProps {
+export type GanttEngineProps = {
   readonly tasks: Array<SvarGanttTask>;
   readonly links: Array<SvarGanttLink>;
   readonly scales: Array<SvarGanttScale>;
@@ -52,7 +52,7 @@ export interface GanttEngineProps {
 /**
  * Props for MetricItem component
  */
-export interface MetricItemProps {
+export type MetricItemProps = {
   readonly label: string;
   readonly value: string;
 }
@@ -60,7 +60,7 @@ export interface MetricItemProps {
 /**
  * Props for data source (used in useGanttData and CurriculumGanttViewInner)
  */
-export interface GanttDataSourceProps {
+export type GanttDataSourceProps = {
   readonly curriculum: GanttCurriculum;
   readonly syllabuses: Array<GanttSyllabus>;
   readonly modules: Array<GanttModule>;

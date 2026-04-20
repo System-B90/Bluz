@@ -14,9 +14,9 @@ import { Event, EventType } from "@/components/schedule/types/event";
 
 export type CalendarFiltersContextState = {
   default: boolean;
-  filteredInstructors: number[];
+  filteredInstructors: Array<number>;
   setFilteredInstructors: Dispatch<SetStateAction<Array<number>>>;
-  filteredCourses: CourseId[];
+  filteredCourses: Array<CourseId>;
   setFilteredCourses: Dispatch<SetStateAction<Array<CourseId>>>;
   showPAsFor: null | number;
   setShowPAsFor: Dispatch<SetStateAction<null | number>>;

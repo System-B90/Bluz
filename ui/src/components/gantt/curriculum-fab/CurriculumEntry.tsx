@@ -3,7 +3,7 @@ import React from "react";
 
 import { GanttCurriculum } from "@/api-shared/types/gantt/models";
 
-interface CurriculumEntryProps {
+type CurriculumEntryProps = {
   curriculum: GanttCurriculum;
   onClick: () => void;
   selected: boolean;

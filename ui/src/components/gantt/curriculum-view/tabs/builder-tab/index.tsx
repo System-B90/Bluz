@@ -39,14 +39,13 @@ import
     GanttMappingProvider
 } from "@/components/gantt/state/mappings/Provider";
 
-export interface CurriculumViewBuilderTabProps extends Omit<
+export type CurriculumViewBuilderTabProps = {
+    curriculumId: string;
+    groupCount?: number;
+} & Omit<
     BoxProps,
     "className"
 >
-{
-    curriculumId: string;
-    groupCount?: number;
-}
 
 function CurriculumViewBuilderTabInner({
     curriculumId,

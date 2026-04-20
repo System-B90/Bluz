@@ -8,16 +8,16 @@ import { DeleteCurriculumAction } from "@/components/gantt/curriculum-fab/action
 import { DuplicateCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DuplicateCurriculumAction";
 import { ToggleDraftAction } from "@/components/gantt/curriculum-fab/action-items/ToggleDraftAction";
 
-export interface CreateNewCurriculumProps extends Omit<
-  ButtonProps,
-  "onClick" | "sx"
-> {
+export type CreateNewCurriculumProps = {
   disabled: boolean;
   onCreate: (newCurriculum: GanttCurriculumDocument) => void;
   onUpdate: (updatedCurriculum: GanttCurriculumDocument) => void;
   onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
   sourceCurriculum?: GanttCurriculumDocument | null;
-}
+} & Omit<
+  ButtonProps,
+  "onClick" | "sx"
+>
 
 export function CurriculumActionItems({
     onCreate,

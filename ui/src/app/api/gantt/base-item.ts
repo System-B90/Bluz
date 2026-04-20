@@ -5,16 +5,14 @@ import { ClientApiError } from "@/api-shared/errors";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 import { BasicGantOperations } from "@/app/api/gantt/base-collection";
 
-export interface BuildGantItemRoutesProps<
+export type BuildGantItemRoutesProps<
   TEntity extends BaseGantItem,
   TCreatePayload = Omit<TEntity, "id">,
->
-{
+> = {
   dbSet: BasicGantOperations<TEntity, TCreatePayload>;
 }
 
-export interface RouteContext
-{
+export type RouteContext = {
   params: Promise<{ id: string; }>;
 }
 

@@ -12,7 +12,7 @@ import { useState } from "react";
 import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalSettings";
 import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
 
-interface SettingsDialogProps {
+type SettingsDialogProps = {
   open: boolean;
   onClose: () => void;
 }

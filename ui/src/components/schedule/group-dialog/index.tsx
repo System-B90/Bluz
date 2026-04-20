@@ -18,7 +18,7 @@ import { useState } from "react";
 
 import { Group } from "@/components/schedule/types/group";
 
-interface GroupDialogProps {
+type GroupDialogProps = {
   open: boolean;
   group: Partial<Group>;
   onClose: () => void;
@@ -34,7 +34,7 @@ export function GroupDialog({
     const [name, setName] = useState("");
     const [displayName, setDisplayName] = useState("");
     const [color, setColor] = useState("#1976d2");
-    const [groups, setGroups] = useState<string[]>([]);
+    const [groups, setGroups] = useState<Array<string>>([]);
 
     const handleSave = () => {
     // onSave({id: "", name, displayName, defaultGroupIDs: groups });
@@ -78,7 +78,7 @@ export function GroupDialog({
                     <Select
                         input={<OutlinedInput label="Assigned Groups" />}
                         multiple
-                        onChange={(e) => setGroups(e.target.value as string[])}
+                        onChange={(e) => setGroups(e.target.value as Array<string>)}
                         renderValue={(selected) => (
                             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                                 {selected.map((value) => (

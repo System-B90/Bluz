@@ -24,8 +24,7 @@ import
     GanttModuleId,
 } from "@/api-shared/types/gantt/models";
 
-export interface RouteContext
-{
+export type RouteContext = {
     params: Promise<{ id: string; }>;
 }
 

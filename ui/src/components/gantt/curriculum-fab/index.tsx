@@ -31,7 +31,7 @@ import
     sortCurriculumsByDraftAndUpdatedAt,
 } from "@/components/gantt/curriculum-fab/utils";
 
-export interface CurriculumDrawerProps {
+export type CurriculumDrawerProps = {
   open?: boolean;
   setOpen?: Dispatch<SetStateAction<boolean>>;
   setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;

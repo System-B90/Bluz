@@ -75,10 +75,10 @@ export const StatusEnum = {
     Home: "Home",
 } as const;
 
-export interface CourseUser {
+export type CourseUser = {
   avatar_filename?: string;
   checkers_brief?: string;
-  classes?: number[];
+  classes?: Array<number>;
   /**
    * @minimum -2147483648
    * @maximum 2147483647
@@ -87,7 +87,7 @@ export interface CourseUser {
   confirmed?: boolean;
   /** @nullable */
   readonly current_assignment: null | number;
-  readonly current_assignment_options: readonly number[];
+  readonly current_assignment_options: ReadonlyArray<number>;
   disable_queue?: boolean;
   disable_user_queue?: boolean;
   readonly display_name: string;
@@ -99,7 +99,7 @@ export interface CourseUser {
   readonly id: number;
   /** @maxLength 150 */
   last_name?: string;
-  mentees: number[];
+  mentees: Array<number>;
   /** @nullable */
   mentor?: null | number;
   /**
@@ -127,7 +127,7 @@ export interface CourseUser {
   username: string;
 }
 
-export interface Class {
+export type Class = {
   /**
    * @maxLength 100
    * @nullable
@@ -142,5 +142,5 @@ export interface Class {
   program: number;
   readonly program__name: string;
   type?: ClassTypeEnum;
-  users: number[];
+  users: Array<number>;
 }

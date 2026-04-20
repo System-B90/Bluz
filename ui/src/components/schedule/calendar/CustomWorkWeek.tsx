@@ -19,7 +19,7 @@ import Week from "react-big-calendar/lib/Week";
 function workWeekRange(
     date: Date,
     { localizer }: { localizer: DateLocalizer },
-): Date[] {
+): Array<Date> {
     return Week.range(date, { localizer }).filter(
         (d: any) => ![5, 6].includes(d.getDay()), // Fri (5), Sat (6)
     );

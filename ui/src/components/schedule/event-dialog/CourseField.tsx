@@ -15,7 +15,7 @@ import { useCourses } from "@/components/base/CoursesProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { eventHasRoom } from "@/components/schedule/types/event";
 
-interface CourseFieldProps extends EventFieldProps {}
+type CourseFieldProps = {} & EventFieldProps
 
 export function CourseField({
     event,

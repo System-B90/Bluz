@@ -2,7 +2,7 @@
 
 import { createContext, ReactNode, useContext, useMemo } from "react";
 
-interface WebSocketConfigContextType {
+type WebSocketConfigContextType = {
   host: string;
   protocol: string;
   portSuffix: string;
@@ -16,7 +16,7 @@ const WebSocketConfigContext = createContext<WebSocketConfigContextType>({
     connectionString: "wss://bluz.bis/ws/",
 });
 
-interface WebSocketConfigProviderProps {
+type WebSocketConfigProviderProps = {
   host: string;
   protocol: string;
   portSuffix: string;

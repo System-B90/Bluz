@@ -6,7 +6,7 @@ import { Box, Chip, Stack, Tooltip, Typography } from "@mui/material";
 import { Group } from "@/components/schedule/types/group";
 import { groupColors } from "@/components/schedule/types/types";
 
-interface GroupFieldProps {
+type GroupFieldProps = {
   group: Group;
   attributes: DraggableAttributes;
   listeners?: SyntheticListenerMap;

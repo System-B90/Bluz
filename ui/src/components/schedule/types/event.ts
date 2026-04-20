@@ -19,7 +19,7 @@ export function eventHasRoom(type: EventType): boolean {
 
 export type PersonId = "איש חוץ" | number;
 
-export interface Event {
+export type Event = {
   id: string;
   name: string;
   subject: number; // Subject ID
@@ -29,9 +29,9 @@ export interface Event {
   type: EventType;
   courses: Array<CourseId>;
   rooms: Array<ResolvableRoom>;
-  instructors: number[];
+  instructors: Array<number>;
   lecturers?: Array<PersonId>;
-  tags: number[];
+  tags: Array<number>;
   notes: string;
   locked: boolean;
   hidden: boolean;
@@ -54,10 +54,10 @@ export function prayerTypeToHebrew(prayerType: PrayerType): string {
     return LOOKUP[prayerType] ?? prayerType;
 }
 
-export interface PrayerEvent extends Event {
+export type PrayerEvent = {
   type: EventType.PRAYER;
   prayerType: PrayerType;
-}
+} & Event
 
 export function eventTypeToHebrew(type: Event["type"]): string {
     const LOOKUP: Record<Event["type"], string> = {

@@ -17,9 +17,9 @@ export function useSyllabusActions() {
         async (
             title: string,
             curriculumId: GanttCurriculumId,
-            hiveIds: number[] = [],
+            hiveIds: Array<number> = [],
         ) => {
-            return withGantErrorHandling(async () => {
+            return await withGantErrorHandling(async () => {
                 const newSyllabus = await ganttApi.syllabus.apiCreate({
                     title,
                     curriculumId,
@@ -37,7 +37,7 @@ export function useSyllabusActions() {
 
     const updateSyllabus = useCallback(
         async (id: GanttSyllabusId, updates: Partial<GanttSyllabus>) => {
-            return withGantErrorHandling(async () => {
+            return await withGantErrorHandling(async () => {
                 const updatedSyllabus = await ganttApi.syllabus.apiUpdate({
                     id,
                     ...updates,
@@ -54,7 +54,7 @@ export function useSyllabusActions() {
 
     const deleteSyllabus = useCallback(
         async (curriculumId: GanttCurriculumId, syllabusId: GanttSyllabusId) => {
-            return withGantErrorHandling(async () => {
+            return await withGantErrorHandling(async () => {
                 await ganttApi.syllabus.apiDelete(syllabusId);
                 dispatch({
                     type: "REMOVE_SYLLABUS",
@@ -67,7 +67,7 @@ export function useSyllabusActions() {
 
     const linkSyllabusToCurriculum = useCallback(
         async (curriculumId: GanttCurriculumId, syllabusId: GanttSyllabusId) => {
-            return withGantErrorHandling(async () => {
+            return await withGantErrorHandling(async () => {
                 const linkedSyllabus = await ganttApi.syllabus.apiLink(
                     syllabusId,
                     curriculumId,
@@ -84,7 +84,7 @@ export function useSyllabusActions() {
 
     const unlinkSyllabusFromCurriculum = useCallback(
         async (curriculumId: GanttCurriculumId, syllabusId: GanttSyllabusId) => {
-            return withGantErrorHandling(async () => {
+            return await withGantErrorHandling(async () => {
                 await ganttApi.syllabus.apiUnlink(syllabusId, curriculumId);
                 dispatch({
                     type: "REMOVE_SYLLABUS",

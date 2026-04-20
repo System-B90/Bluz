@@ -5,10 +5,10 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumDescription } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumDescription";
 import { CurriculumName } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumName";
 
-export interface CurriculumCardProps extends Omit<CardProps, "sx"> {
+export type CurriculumCardProps = {
   curriculumId: GanttCurriculumId | null;
   curriculum: GanttCurriculumDocument | undefined;
-}
+} & Omit<CardProps, "sx">
 
 export function CurriculumAboutCard({
     curriculumId,

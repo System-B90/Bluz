@@ -38,7 +38,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 
     const moduleMappings = useMemo(() =>
     {
-        const merged: Record<string, string[]> = {};
+        const merged: Record<string, Array<string>> = {};
         Object.values(globalMappings).forEach((mapping: any) =>
         {
             if (mapping.curriculumId !== curriculumId) return;
@@ -70,8 +70,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 
     const { violations, activeLinks } = useMemo(() =>
     {
-        const v: Record<string, string[]> = {};
-        const links: ConstraintLink[] = [];
+        const v: Record<string, Array<string>> = {};
+        const links: Array<ConstraintLink> = [];
 
         const getMappedDayIdx = (type: 'event' | 'module', id: string) =>
         {
@@ -89,7 +89,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 
         const processConstraints = (entity: any, entityId: string, entityType: 'event' | 'module') =>
         {
-            const cIds: string[] = entity.constraintIds || [];
+            const cIds: Array<string> = entity.constraintIds || [];
             const myIdx = getMappedDayIdx(entityType, entityId);
             if (myIdx === -1) return;
 
@@ -178,7 +178,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         if (deltaDays === 0) return;
 
         const module = state.modules[ moduleId ];
-        const promises: Promise<void>[] = [];
+        const promises: Array<Promise<void>> = [];
 
         const mDays = moduleMappings[ moduleId ] || [];
         mDays.forEach(dayId =>
@@ -228,7 +228,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             if (payload.type === 'module-move' || payload.type === 'module-shift')
             {
                 const mDays = moduleMappings[ payload.moduleId ] || [];
-                const promises: Promise<void>[] = [];
+                const promises: Array<Promise<void>> = [];
 
                 mDays.forEach(d =>
                 {

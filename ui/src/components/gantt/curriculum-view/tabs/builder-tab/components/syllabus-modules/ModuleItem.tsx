@@ -23,11 +23,10 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
-export interface ModuleItemProps extends PaperProps
-{
+export type ModuleItemProps = {
     moduleId: GanttModuleId;
     dayId?: GanttDayId;
-}
+} & PaperProps
 
 export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps)
 {

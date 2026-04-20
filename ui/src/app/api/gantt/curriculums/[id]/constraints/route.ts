@@ -5,25 +5,25 @@
  * Author: Michael K. Steinberg
  */
 
+import { randomUUID } from "crypto";
+
 import { NextRequest } from "next/server";
 
 import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import
-    {
-        createConstraint,
-        deleteConstraint,
-        getConstraintsForCurriculum,
-        getConstraintsForModule,
-        getConstraintsForSyllabus,
-        updateConstraint,
-    } from "@/api-server/gantt/db-constraints";
+{
+    createConstraint,
+    deleteConstraint,
+    getConstraintsForCurriculum,
+    getConstraintsForModule,
+    getConstraintsForSyllabus,
+    updateConstraint,
+} from "@/api-server/gantt/db-constraints";
 import { ClientApiError } from "@/api-shared/errors";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
-import { randomUUID } from "crypto";
 
-export interface RouteContext
-{
+export type RouteContext = {
     params: Promise<{ id: string; }>;
 }
 

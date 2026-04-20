@@ -19,9 +19,9 @@ export function useModuleActions() {
             title: string,
             syllabusId: GanttSyllabusId,
             description: string = "",
-            hiveIds: number[] = [],
+            hiveIds: Array<number> = [],
         ) => {
-            return withGantErrorHandling(async () => {
+            return await withGantErrorHandling(async () => {
                 const newModule = await ganttApi.module.apiCreate({
                     title,
                     syllabusId,
@@ -40,7 +40,7 @@ export function useModuleActions() {
 
     const updateModule = useCallback(
         async (id: GanttModuleId, updates: Partial<GanttModule>) => {
-            return withGantErrorHandling(async () => {
+            return await withGantErrorHandling(async () => {
                 const updatedModule = await ganttApi.module.apiUpdate({
                     id,
                     ...updates,
@@ -57,7 +57,7 @@ export function useModuleActions() {
 
     const deleteModule = useCallback(
         async (syllabusId: GanttSyllabusId, moduleId: GanttModuleId) => {
-            return withGantErrorHandling(async () => {
+            return await withGantErrorHandling(async () => {
                 await ganttApi.module.apiDelete(moduleId);
                 dispatch({ type: "REMOVE_MODULE", payload: { syllabusId, moduleId } });
             }, `Failed to remove module (ID: ${moduleId}):`);
@@ -67,7 +67,7 @@ export function useModuleActions() {
 
     const linkModuleToSyllabus = useCallback(
         async (syllabusId: GanttSyllabusId, moduleId: GanttModuleId) => {
-            return withGantErrorHandling(async () => {
+            return await withGantErrorHandling(async () => {
                 const linkedModule = await ganttApi.module.apiLink(
                     moduleId,
                     syllabusId,
@@ -84,7 +84,7 @@ export function useModuleActions() {
 
     const unlinkModuleToSyllabus = useCallback(
         async (syllabusId: GanttSyllabusId, moduleId: GanttModuleId) => {
-            return withGantErrorHandling(async () => {
+            return await withGantErrorHandling(async () => {
                 await ganttApi.module.apiUnlink(moduleId, syllabusId);
                 dispatch({ type: "REMOVE_MODULE", payload: { moduleId, syllabusId } });
             }, `Failed to unlink module (ID: ${moduleId}) from syllabus (ID: ${syllabusId}):`);
@@ -98,7 +98,7 @@ export function useModuleActions() {
             curriculumId: GanttCurriculumId,
             allocatedDuration: number,
         ) => {
-            return withGantErrorHandling(async () => {
+            return await withGantErrorHandling(async () => {
                 await ganttApi.module.apiSetAllocatedTime(
                     moduleId,
                     curriculumId,

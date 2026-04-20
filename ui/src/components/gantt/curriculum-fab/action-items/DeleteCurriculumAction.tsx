@@ -8,9 +8,9 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items/ActionItemButton";
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 
-export interface DeleteCurriculumActionProps extends CurriculumAwareActionItemProps {
+export type DeleteCurriculumActionProps = {
   onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
-}
+} & CurriculumAwareActionItemProps
 
 export function DeleteCurriculumAction({
     sourceCurriculum,

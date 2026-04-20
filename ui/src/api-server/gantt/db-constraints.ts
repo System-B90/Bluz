@@ -11,11 +11,11 @@ import { postgresDb } from "@/api-server/gantt";
 import { ganttCurriculum2SyllabusesSchema, ganttModule2EventsSchema, ganttSyllabus2ModulesSchema } from "@/api-server/gantt/schema";
 import { ganttConstraintsSchema } from "@/api-server/gantt/schema/constraints";
 import
-    {
-        GanttCurriculumId,
-        GanttEventId,
-        GanttModuleId,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttEventId,
+    GanttModuleId,
+} from "@/api-shared/types/gantt/models";
 
 export type EntityType = "event" | "module";
 

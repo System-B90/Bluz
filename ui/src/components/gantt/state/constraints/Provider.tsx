@@ -9,13 +9,13 @@
 
 import { useSnackbar } from "notistack";
 import
-    {
-        ReactNode,
-        useCallback,
-        useEffect,
-        useMemo,
-        useReducer,
-    } from "react";
+{
+    ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+    useReducer,
+} from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
@@ -45,7 +45,7 @@ export function GanttConstraintProvider({
     const curriculumId = context.curriculumId;
 
     // Helper to determine if the current scope has mutation rights over a constraint
-    const canModify = useCallback((constraint: GanttConstraint | CreateConstraintPayload) =>
+    const canModify = useCallback((constraint: CreateConstraintPayload | GanttConstraint) =>
     {
         if (context.type === "curriculum") return true;
         if (constraint.type === ConstraintType.Temporal) return true;

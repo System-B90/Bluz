@@ -17,8 +17,7 @@ import
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
 
-export interface NormalizedStore
-{
+export type NormalizedStore = {
     curriculums: Record<GanttCurriculumId, GanttCurriculumDocument>;
     syllabuses: Record<
         GanttSyllabusId,
@@ -58,21 +57,21 @@ export function normalizeCurriculumData(
         days: {},
     };
 
-    const curriculumSyllabusIds: GanttSyllabusId[] = [];
-    const curriculumWeekIds: GanttWeekId[] = [];
+    const curriculumSyllabusIds: Array<GanttSyllabusId> = [];
+    const curriculumWeekIds: Array<GanttWeekId> = [];
 
     const apiCurriculum = baseDocumentFixup(apiData);
     for (const link of apiData.c2s ?? [])
     {
         const apiSyllabus = baseDocumentFixup(link.syllabus);
         curriculumSyllabusIds.push(apiSyllabus.id);
-        const syllabusModuleIds: GanttModuleId[] = [];
+        const syllabusModuleIds: Array<GanttModuleId> = [];
 
         for (const sMLink of apiSyllabus.s2m ?? [])
         {
             const apiModule = baseDocumentFixup(sMLink.module);
             syllabusModuleIds.push(apiModule.id);
-            const moduleEventIds: GanttEventId[] = [];
+            const moduleEventIds: Array<GanttEventId> = [];
 
             for (const mELink of apiModule.m2e ?? [])
             {

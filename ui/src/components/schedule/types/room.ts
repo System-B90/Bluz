@@ -5,26 +5,26 @@ export enum RoomSource {
   Hive,
 }
 
-interface BaseRoom {
+type BaseRoom = {
   readonly id: number | string;
   name: string;
   description?: null | string;
   source: RoomSource;
 }
 
-export interface HiveRoom extends Class, BaseRoom {
+export type HiveRoom = {
   readonly id: number;
   readonly display_name: string;
   type: ClassTypeEnum.Room;
   source: RoomSource.Hive;
-}
+} & Class & BaseRoom
 
-export interface CustomRoom extends BaseRoom {
+export type CustomRoom = {
   readonly id: string;
   name: string;
   description?: null | string;
   source: RoomSource.Custom;
-}
+} & BaseRoom
 export type Room = CustomRoom | HiveRoom;
 export type ResolvableRoom =
   | { id: number; source: RoomSource.Hive }

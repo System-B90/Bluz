@@ -17,11 +17,10 @@ import { calculateTotalWorkingTimeForWeeks } from "@/components/gantt/curriculum
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
-export interface WeekGroupPanelProps extends BoxProps
-{
+export type WeekGroupPanelProps = {
     group: Array<GanttWeekId>;
     onExpandGroup: () => void;
-}
+} & BoxProps
 
 export function WeekGroupPanel({
     group,

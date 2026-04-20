@@ -16,9 +16,9 @@ import
     GanttEventId,
 } from "@/api-shared/types/gantt/models";
 
-export interface BasicGantAllocateTimeOperations<
+export type BasicGantAllocateTimeOperations<
   _TEntity extends BaseGantItem,
-> {
+> = {
   getAllocatedTime: (
     eventId: GanttEventId,
     containerId: GanttCurriculumId,
@@ -30,13 +30,13 @@ export interface BasicGantAllocateTimeOperations<
   ) => Promise<void>;
 }
 
-export interface BuildGantAllocateTimeRoutesProps<
+export type BuildGantAllocateTimeRoutesProps<
   TEntity extends BaseGantItem,
-> {
+> = {
   dbSet: BasicGantAllocateTimeOperations<TEntity>;
 }
 
-export interface RouteContext {
+export type RouteContext = {
   params: Promise<{ id: string }>;
 }
 

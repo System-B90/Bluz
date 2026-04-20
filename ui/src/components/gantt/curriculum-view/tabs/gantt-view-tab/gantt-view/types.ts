@@ -8,8 +8,7 @@ export enum ConstraintType
 
 export type EntityType = "event" | "module";
 
-export interface RelationalConstraint
-{
+export type RelationalConstraint = {
     id: string;
     type: ConstraintType.Relational;
     targetId: string;
@@ -19,8 +18,7 @@ export interface RelationalConstraint
     maxDelayDays?: number;
 }
 
-export interface TemporalConstraint
-{
+export type TemporalConstraint = {
     id: string;
     type: ConstraintType.Temporal;
     allowedDays?: Array<GanttDayIndex>;
@@ -29,19 +27,17 @@ export interface TemporalConstraint
 
 export type GanttConstraint = RelationalConstraint | TemporalConstraint;
 
-export interface GanttConstraintState
-{
+export type GanttConstraintState = {
     constraints: Record<string, GanttConstraint>;
     isLoading: boolean;
 }
 
-export interface IGanttContext
-{
-    timelineWeeks: GanttWeek[];
-    linearDays: string[];
+export type IGanttContext = {
+    timelineWeeks: Array<GanttWeek>;
+    linearDays: Array<string>;
     eventMappings: Record<string, string>;
-    moduleMappings: Record<string, string[]>;
-    violations: Record<string, string[]>;
+    moduleMappings: Record<string, Array<string>>;
+    violations: Record<string, Array<string>>;
     onMapModule: (moduleId: string, dayId: string) => Promise<void>;
     onMapEvent: (moduleId: string, eventId: string, dayId: string) => Promise<void>;
     onMoveEvent: (moduleId: string, eventId: string, sourceDayId: string, targetDayId: string) => Promise<void>;
@@ -49,15 +45,13 @@ export interface IGanttContext
     onShiftModule: (moduleId: string, deltaDays: number) => Promise<void>;
 }
 
-export interface GanttViewProps
-{
+export type GanttViewProps = {
     curriculumId: GanttCurriculumId;
 }
 
 export type SpanVariant = 'end' | 'middle' | 'none' | 'single' | 'start';
 
-export interface GanttBlockProps
-{
+export type GanttBlockProps = {
     id: string;
     payload: any;
     title?: string;
@@ -65,11 +59,10 @@ export interface GanttBlockProps
     spanLength?: number;
     isAbsolute?: boolean;
     elementId?: string;
-    violations?: string[];
+    violations?: Array<string>;
 }
 
-export interface GanttCellProps
-{
+export type GanttCellProps = {
     dayId: string;
     dropId: string;
     payloadData: any;
@@ -81,27 +74,23 @@ export interface GanttCellProps
     isOpaque?: boolean;
     isAbsoluteBlock?: boolean;
     elementId?: string;
-    violations?: string[];
+    violations?: Array<string>;
 }
 
-export interface GanttModuleRowProps
-{
+export type GanttModuleRowProps = {
     moduleId: string;
 }
 
-export interface GanttEventRowProps
-{
+export type GanttEventRowProps = {
     eventId: string;
     moduleId: string;
 }
 
-export interface GanttSyllabusGroupProps
-{
+export type GanttSyllabusGroupProps = {
     syllabusId: string;
 }
 
-export interface ConstraintLink
-{
+export type ConstraintLink = {
     id: string;
     sourceId: string;
     targetId: string;

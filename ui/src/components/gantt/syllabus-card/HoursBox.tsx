@@ -10,9 +10,9 @@ import
     calculateMinimumRequiredTimeForSyllabus,
 } from "@/components/gantt/utils";
 
-export interface HoursBoxProps extends BoxProps {
+export type HoursBoxProps = {
   syllabusId: GanttSyllabusId;
-}
+} & BoxProps
 
 export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
     const state = useCurriculumState();

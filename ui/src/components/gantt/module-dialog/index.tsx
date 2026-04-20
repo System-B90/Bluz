@@ -1,27 +1,27 @@
 import
-    {
-        Box,
-        Button,
-        Dialog,
-        DialogActions,
-        DialogContent,
-        DialogProps,
-        DialogTitle,
-        Divider,
-        Stack,
-        TextField,
-    } from "@mui/material";
+{
+    Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogProps,
+    DialogTitle,
+    Divider,
+    Stack,
+    TextField,
+} from "@mui/material";
 import { useSnackbar } from "notistack";
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
-    {
-        GanttCurriculumId,
-        GanttModule,
-        GanttModuleId,
-        GanttSyllabusId,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttModule,
+    GanttModuleId,
+    GanttSyllabusId,
+} from "@/api-shared/types/gantt/models";
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/ModuleConstraintsView"; // <-- Added Import
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import { HiveModulesView } from "@/components/gantt/module-dialog/utils";
@@ -30,13 +30,12 @@ import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/Use
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
-export interface ModuleDialogProps extends DialogProps
-{
+export type ModuleDialogProps = {
     setOpen: Dispatch<SetStateAction<boolean>>;
     moduleId: GanttModuleId | null;
     syllabusId: GanttSyllabusId | null;
     curriculumId: GanttCurriculumId | null;
-}
+} & DialogProps
 
 function ModuleDialogInner({
     open,

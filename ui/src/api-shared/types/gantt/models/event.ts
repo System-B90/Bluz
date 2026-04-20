@@ -9,12 +9,11 @@ export enum ModuleEventType
   Other = "אחר",
 }
 
-export interface GanttEvent extends BaseGantItem
-{
+export type GanttEvent = {
   title: string;
   type: ModuleEventType;
   minimumDuration: number;
   allocatedDuration: number;
   constraints: Array<GanttConstraint>;
-}
+} & BaseGantItem
 export type GanttEventId = GanttEvent[ "id" ];

@@ -10,13 +10,13 @@
 import React, { useMemo } from "react";
 
 import
-    {
-        GanttCurriculum,
-        GanttCurriculumId,
-        GanttEvent,
-        GanttModule,
-        GanttSyllabus,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculum,
+    GanttCurriculumId,
+    GanttEvent,
+    GanttModule,
+    GanttSyllabus,
+} from "@/api-shared/types/gantt/models";
 import { CurriculumGanttViewInner } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/CurriculumGanttViewInner";
 import { GanttDataSourceProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
@@ -24,8 +24,7 @@ import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
-export interface CurriculumGanttViewProps
-{
+export type CurriculumGanttViewProps = {
     readonly curriculumId: GanttCurriculumId;
 }
 

@@ -4,14 +4,13 @@ import { OAuthConfig } from "next-auth/providers/index";
 import { Clearance, GenderEnum } from "@/api-server/hive/types";
 import { AuthSessionData } from "@/api-shared/types/sso";
 
-interface JwtTokenData {
+type JwtTokenData = {
   user: HiveUser;
   accessToken: string;
   refreshToken: string;
   expires_at: number;
 }
-
-interface HiveSsoProfile extends Profile {
+type HiveSsoProfile = {
   sub: string;
   aud: string;
   iat: number;
@@ -39,9 +38,8 @@ interface HiveSsoProfile extends Profile {
     refresh_token: string;
     expires_at: number;
   };
-}
-
-interface HiveUser {
+} & Profile
+type HiveUser = {
   id: string;
   name: string;
   email: null | string;

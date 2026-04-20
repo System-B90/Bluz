@@ -39,7 +39,7 @@ export function OverviewTab({
     weeks,
 }: {
   curriculumId: GanttCurriculumId;
-  weeks: GanttWeekId[];
+  weeks: Array<GanttWeekId>;
 }) {
     const overviews = useMemo(
         () => weeks.map((weekId) => <WeekOverview key={weekId} weekId={weekId} />),

@@ -81,7 +81,7 @@ async function createWeek(
           dayIndex < 6 ? 14 * 60 : dayIndex === 6 ? 2 * 60 : 0,
             };
 
-            return DbDay.createNewItem(createPayload);
+            return await DbDay.createNewItem(createPayload);
         }),
     );
 

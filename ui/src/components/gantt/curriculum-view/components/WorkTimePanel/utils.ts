@@ -4,7 +4,7 @@ import
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
 
-const dayOrder: GanttDayIndex[] = [
+const dayOrder: Array<GanttDayIndex> = [
     GanttDayIndex.Sunday,
     GanttDayIndex.Monday,
     GanttDayIndex.Tuesday,
@@ -15,7 +15,7 @@ const dayOrder: GanttDayIndex[] = [
 ];
 
 // Clone an array of week IDs (weeks are now stored as IDs in the normalized store)
-export function cloneWeeks(weekIds: GanttWeekId[]): GanttWeekId[] {
+export function cloneWeeks(weekIds: Array<GanttWeekId>): Array<GanttWeekId> {
     return [...weekIds];
 }
 

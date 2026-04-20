@@ -11,7 +11,7 @@ import {
 
 import { Event } from "@/components/schedule/types/event";
 
-interface DeleteDialogProps {
+type DeleteDialogProps = {
   open: boolean;
   event?: null | Partial<Event>;
   onClose: () => void;

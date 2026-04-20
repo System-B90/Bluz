@@ -2,13 +2,13 @@ import { useCallback } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import
-    {
-        GanttCurriculumId,
-        GanttEvent,
-        GanttEventId,
-        GanttModuleId,
-        ModuleEventType,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttEvent,
+    GanttEventId,
+    GanttModuleId,
+    ModuleEventType,
+} from "@/api-shared/types/gantt/models";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
@@ -25,7 +25,7 @@ export function useModuleEventActions()
             allocatedDuration: number = 0,
         ) =>
         {
-            return withGantErrorHandling(async () =>
+            return await withGantErrorHandling(async () =>
             {
                 const newEvent = await ganttApi.event.apiCreate({
                     title,
@@ -44,7 +44,7 @@ export function useModuleEventActions()
     const updateEvent = useCallback(
         async (id: GanttEventId, updates: Partial<GanttEvent>) =>
         {
-            return withGantErrorHandling(async () =>
+            return await withGantErrorHandling(async () =>
             {
                 const updatedEvent = await ganttApi.event.apiUpdate({ id, ...updates });
                 dispatch({
@@ -60,7 +60,7 @@ export function useModuleEventActions()
     const deleteEvent = useCallback(
         async (moduleId: GanttModuleId, eventId: GanttEventId) =>
         {
-            return withGantErrorHandling(async () =>
+            return await withGantErrorHandling(async () =>
             {
                 await ganttApi.event.apiDelete(eventId);
                 dispatch({ type: "REMOVE_EVENT", payload: { moduleId, eventId } });
@@ -72,7 +72,7 @@ export function useModuleEventActions()
     const linkEventToModule = useCallback(
         async (moduleId: GanttModuleId, eventId: GanttEventId) =>
         {
-            return withGantErrorHandling(async () =>
+            return await withGantErrorHandling(async () =>
             {
                 const linkedEvent = await ganttApi.event.apiLink(eventId, moduleId);
                 dispatch({
@@ -88,7 +88,7 @@ export function useModuleEventActions()
     const unlinkEventFromModule = useCallback(
         async (moduleId: GanttModuleId, eventId: GanttEventId) =>
         {
-            return withGantErrorHandling(async () =>
+            return await withGantErrorHandling(async () =>
             {
                 await ganttApi.event.apiUnlink(eventId, moduleId);
                 dispatch({ type: "REMOVE_EVENT", payload: { eventId, moduleId } });
@@ -104,7 +104,7 @@ export function useModuleEventActions()
             allocatedDuration: number,
         ) =>
         {
-            return withGantErrorHandling(async () =>
+            return await withGantErrorHandling(async () =>
             {
                 await ganttApi.event.apiSetAllocatedTime(
                     eventId,

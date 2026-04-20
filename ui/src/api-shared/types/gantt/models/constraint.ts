@@ -25,7 +25,6 @@ export type BaseConstraint =
         ownerType: 'module';
     };
 
-
 /**
  * Handles dependencies between two entities (Event-Event, Module-Module, Mixed).
  */

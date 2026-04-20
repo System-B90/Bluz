@@ -3,16 +3,15 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { ConstraintLink } from './types';
 
-interface ConstraintLinesProps
-{
-    links: ConstraintLink[];
+type ConstraintLinesProps = {
+    links: Array<ConstraintLink>;
     containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export const ConstraintLines: React.FC<ConstraintLinesProps> = ({ links, containerRef }) =>
 {
     const theme = useTheme();
-    const [ lines, setLines ] = useState<any[]>([]);
+    const [ lines, setLines ] = useState<Array<any>>([]);
 
     const drawLines = useCallback(() =>
     {

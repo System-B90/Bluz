@@ -34,12 +34,12 @@ import
     calculateMinimumRequiredTimeForModule,
 } from "@/components/gantt/utils";
 
-interface AllocatedTimeTableCellProps extends TableCellProps {
+type AllocatedTimeTableCellProps = {
   moduleId: GanttModuleId;
   curriculumId: GanttCurriculumId;
   minimumRequiredTime: number;
   allocatedTime: number | undefined;
-}
+} & TableCellProps
 
 function AllocatedTimeTableCell({
     moduleId,

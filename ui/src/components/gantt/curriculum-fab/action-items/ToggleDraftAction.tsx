@@ -9,9 +9,9 @@ import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items/ActionItemButton";
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 
-export interface ToggleDraftActionProps extends CurriculumAwareActionItemProps {
+export type ToggleDraftActionProps = {
   onUpdate: (updatedCurriculum: GanttCurriculumDocument) => void;
-}
+} & CurriculumAwareActionItemProps
 
 export function ToggleDraftAction({
     sourceCurriculum,

@@ -27,10 +27,10 @@ import { ModulesTable } from "@/components/gantt/syllabus-card/ModulesTable";
 import { SyllabusCardActions } from "@/components/gantt/syllabus-card/SyllabusCardActions";
 import { SyllabusCardHeader } from "@/components/gantt/syllabus-card/SyllabusCardHeader";
 
-export interface SyllabusCardProps extends Omit<CardProps, "sx"> {
+export type SyllabusCardProps = {
   curriculumId: GanttCurriculumId;
   syllabusId: GanttSyllabusId;
-}
+} & Omit<CardProps, "sx">
 
 const ExpandMore = styled((props: { _expand: boolean } & any) => {
     const { expand: _expand, ...other } = props;

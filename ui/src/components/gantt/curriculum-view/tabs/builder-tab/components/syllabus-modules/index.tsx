@@ -16,10 +16,9 @@ import { SyllabusSection } from "@/components/gantt/curriculum-view/tabs/builder
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 
-export interface SidebarProps extends BoxProps
-{
+export type SidebarProps = {
     curriculumId: GanttCurriculumId | null;
-}
+} & BoxProps
 
 export function SyllabusModulesCurriculumViewSidebar({
     curriculumId,

@@ -1,6 +1,6 @@
 import { Event, EventId } from "@/components/schedule/types/event";
 
-export interface PushOfflineUpdatesDialogProps {}
+export type PushOfflineUpdatesDialogProps = {}
 
 export type CollisionStates = Record<
   EventId,

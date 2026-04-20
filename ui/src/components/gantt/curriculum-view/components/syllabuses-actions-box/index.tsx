@@ -4,12 +4,12 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CreateSyllabusButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/CreateSyllabusButton";
 import { SyllabusSelectionField } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/SyllabusSelectionField";
 
-export interface SyllabusesActionsBoxProps extends Omit<
+export type SyllabusesActionsBoxProps = {
+  curriculumId: GanttCurriculumId;
+} & Omit<
   BoxProps,
   "display" | "justifyContent"
-> {
-  curriculumId: GanttCurriculumId;
-}
+>
 
 export function SyllabusesActionsBox({
     curriculumId,

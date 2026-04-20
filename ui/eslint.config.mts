@@ -61,6 +61,7 @@ export default defineConfig([
             "@typescript-eslint/prefer-for-of": "error",
             "@typescript-eslint/prefer-includes": "error",
             "@typescript-eslint/return-await": [ "error", "always" ],
+            "@typescript-eslint/adjacent-overload-signatures": "error",
 
             // --- Exports & Imports ---
             "import/no-default-export": "error",

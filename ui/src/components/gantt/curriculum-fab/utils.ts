@@ -8,7 +8,7 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 export function sortCurriculumsByDraftAndUpdatedAt(
     curriculums: Record<GanttCurriculumId, GanttCurriculumDocument>,
 ): Array<GanttCurriculumId> {
-    return (Object.keys(curriculums) as GanttCurriculumId[]).sort((a, b) => {
+    return (Object.keys(curriculums) as Array<GanttCurriculumId>).sort((a, b) => {
         const dataA = curriculums[a];
         const dataB = curriculums[b];
 

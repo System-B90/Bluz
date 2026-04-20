@@ -17,8 +17,7 @@ import
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
-export interface UseWeekActionsReturn
-{
+export type UseWeekActionsReturn = {
     createWeek: (payload: CreateGanttWeekPayload) => Promise<GanttWeek>;
     updateWeek: (
         weekId: GanttWeekId,
@@ -40,7 +39,7 @@ export function useWeekActions(): UseWeekActionsReturn
     const createWeek = useCallback(
         async (payload: CreateGanttWeekPayload) =>
         {
-            return withGantErrorHandling(async () =>
+            return await withGantErrorHandling(async () =>
             {
                 const newWeek = await ganttApi.week.apiCreate(payload);
                 dispatch({ type: "ADD_WEEK", payload: { week: newWeek, curriculumId: payload.curriculumId } });
@@ -56,7 +55,7 @@ export function useWeekActions(): UseWeekActionsReturn
             updates: Partial<{ comment?: string; weekendDuty?: boolean; }>,
         ) =>
         {
-            return withGantErrorHandling(async () =>
+            return await withGantErrorHandling(async () =>
             {
                 const updatedWeek = await ganttApi.week.apiUpdate({
                     id: weekId,
@@ -75,7 +74,7 @@ export function useWeekActions(): UseWeekActionsReturn
     const deleteWeek = useCallback(
         async (weekId: GanttWeekId, curriculumId: GanttCurriculumId) =>
         {
-            return withGantErrorHandling(async () =>
+            return await withGantErrorHandling(async () =>
             {
                 await ganttApi.week.apiDelete(weekId);
                 dispatch({ type: "REMOVE_WEEK", payload: { weekId, curriculumId } });
@@ -87,7 +86,7 @@ export function useWeekActions(): UseWeekActionsReturn
     const createDay = useCallback(
         async (payload: CreateGanttDayPayload) =>
         {
-            return withGantErrorHandling(async () =>
+            return await withGantErrorHandling(async () =>
             {
                 const newDay = await ganttApi.day.apiCreate(payload);
                 dispatch({ type: "ADD_DAY", payload: { day: newDay } });
@@ -100,7 +99,7 @@ export function useWeekActions(): UseWeekActionsReturn
     const updateDay = useCallback(
         async (dayId: GanttDayId, updates: Partial<GanttDay>) =>
         {
-            return withGantErrorHandling(async () =>
+            return await withGantErrorHandling(async () =>
             {
                 const updatedDay = await ganttApi.day.apiUpdate({
                     id: dayId,
@@ -119,7 +118,7 @@ export function useWeekActions(): UseWeekActionsReturn
     const deleteDay = useCallback(
         async (dayId: GanttDayId) =>
         {
-            return withGantErrorHandling(async () =>
+            return await withGantErrorHandling(async () =>
             {
                 await ganttApi.day.apiDelete(dayId);
                 dispatch({ type: "REMOVE_DAY", payload: { dayId } });

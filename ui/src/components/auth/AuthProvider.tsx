@@ -17,7 +17,7 @@ import {
 } from "@/components/SessionWs";
 import { MessageTypes } from "@/settings";
 
-export interface WebSocketSessionMessage {
+export type WebSocketSessionMessage = {
   type: MessageTypes;
   [key: string]: unknown;
 }
@@ -40,7 +40,7 @@ export const AuthProvider = ({
   userData: AuthSessionUser;
 }) => {
     const { ws, addMessageHandler } = useSessionWebSocketContext();
-    const messageQueue = useRef<WebSocketSessionMessage[]>([]);
+    const messageQueue = useRef<Array<WebSocketSessionMessage>>([]);
 
     const canEdit: boolean = !!userData;
 

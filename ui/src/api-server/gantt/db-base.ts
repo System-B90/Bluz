@@ -20,22 +20,22 @@ export type BaseDbDocument = {
   updatedAt: Date;
 };
 
-export interface JunctionConfig {
+export type JunctionConfig = {
   table: PgTableWithColumns<any>;
   localKey: AnyPgColumn;
   relationKey: AnyPgColumn;
   apiKey: string;
 }
 
-export interface ParentJunctionConfig {
+export type ParentJunctionConfig = {
   table: PgTableWithColumns<any>;
   parentKey: string;
   selfKey: string;
 }
 
-export interface DrizzleOperationsBuilderProps<
+export type DrizzleOperationsBuilderProps<
   TTable extends PgTableWithColumns<any>,
-> {
+> = {
   table: TTable;
   typeName: string;
   junction?: Array<JunctionConfig> | JunctionConfig;
@@ -60,13 +60,13 @@ export function drizzleOperationsBuilder<
   type DbTDocument = T & BaseDbDocument;
   const cols = table as any;
 
-  async function getMultipleItems(ids: Array<T["id"]>): Promise<DbTDocument[]> {
+  async function getMultipleItems(ids: Array<T["id"]>): Promise<Array<DbTDocument>> {
       if (!ids || ids.length === 0) return [];
 
       return (await postgresDb
           .select()
           .from(table as any)
-          .where(inArray(cols.id, ids))) as DbTDocument[];
+          .where(inArray(cols.id, ids))) as Array<DbTDocument>;
   }
 
   async function createNewItem(data: TCreatePayload): Promise<DbTDocument> {

@@ -4,13 +4,13 @@ import { Module } from "@/components/schedule/types/module";
 import { HiveRoom, RoomSource } from "@/components/schedule/types/room";
 import { Subject } from "@/components/schedule/types/subject";
 
-interface TimeoutError extends Error {
+type TimeoutError = {
   name: "TypeError";
   cause: {
     name: string;
     [key: string]: unknown;
   };
-}
+} & Error
 
 export function isTimeoutError(e: unknown): e is TimeoutError {
     return (
@@ -75,14 +75,14 @@ export class HiveClient {
         if (response.status === 401) {
             if (!isRetry && this.refreshTokenValue) {
                 await this.refreshAccessToken();
-                return this._get<T>(url, true);
+                return await this._get<T>(url, true);
             }
             throw new HiveClientError("הטוקן אינו תקף, אנא התחבר מחדש");
         }
 
         if (response.status === 500) {
             await new Promise((resolve) => setTimeout(resolve, 200));
-            return this._get<T>(url, isRetry);
+            return await this._get<T>(url, isRetry);
         }
 
         if (!response.ok) {
@@ -91,7 +91,7 @@ export class HiveClient {
             );
         }
 
-        return response.json();
+        return await response.json();
     }
 
     /**
@@ -114,7 +114,7 @@ export class HiveClient {
         if (response.status === 401) {
             if (!isRetry && this.refreshTokenValue) {
                 await this.refreshAccessToken();
-                return this.fetchWithTokenCookie(url, init, true);
+                return await this.fetchWithTokenCookie(url, init, true);
             }
         }
 
@@ -123,13 +123,13 @@ export class HiveClient {
 
     async getUsers(params?: Record<string, any>): Promise<Array<CourseUser>> {
         const queryString = new URLSearchParams(params).toString();
-        return this._get<Array<CourseUser>>(
+        return await this._get<Array<CourseUser>>(
             this.buildUrl(`/api/core/management/users/?${queryString}`),
         );
     }
 
     async getClasses(): Promise<Array<Class>> {
-        return this._get<Array<Class>>(
+        return await this._get<Array<Class>>(
             this.buildUrl("/api/core/management/classes/?type=Student%20Group"),
         );
     }
@@ -143,12 +143,12 @@ export class HiveClient {
     }
 
     async getSubjects(): Promise<Array<Subject>> {
-        return this._get<Array<Subject>>(
+        return await this._get<Array<Subject>>(
             this.buildUrl("/api/core/course/subjects/"),
         );
     }
 
     async getModules(): Promise<Array<Module>> {
-        return this._get<Array<Module>>(this.buildUrl("/api/core/course/modules/"));
+        return await this._get<Array<Module>>(this.buildUrl("/api/core/course/modules/"));
     }
 }

@@ -5,12 +5,12 @@ import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { HoursBox } from "@/components/gantt/syllabus-card/HoursBox";
 import { SyllabusName } from "@/components/gantt/syllabus-card/SyllabusName";
 
-export interface SyllabusCardHeaderProps extends Omit<
+export type SyllabusCardHeaderProps = {
+  syllabusId: GanttSyllabusId;
+} & Omit<
   CardHeaderProps,
   "title"
-> {
-  syllabusId: GanttSyllabusId;
-}
+>
 
 function InternalHeader({ syllabusId }: { syllabusId: GanttSyllabusId }) {
     const syllabus = useSyllabus(syllabusId);

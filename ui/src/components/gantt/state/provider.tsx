@@ -11,17 +11,17 @@ import React, {
 } from "react";
 
 import
-    {
-        NormalizedStore,
-        normalizeCurriculumData,
-    } from "@/api-client/gantt/drizzle-normalize";
+{
+    NormalizedStore,
+    normalizeCurriculumData,
+} from "@/api-client/gantt/drizzle-normalize";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import
-    {
-        GanttCurriculumId,
-        GanttModuleId,
-        GanttSyllabusId,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttModuleId,
+    GanttSyllabusId,
+} from "@/api-shared/types/gantt/models";
 import { ModuleDialog } from "@/components/gantt/module-dialog";
 import { Action, curriculumReducer } from "@/components/gantt/state/reducer";
 
@@ -75,9 +75,9 @@ function ModuleDialogManager({ children, curriculumId }: { children: ReactNode; 
         >
             { children }
             <ModuleDialog
+                curriculumId={ curriculumId }
                 key={ `${currentSyllabusId}-${currentModuleId}` }
                 moduleId={ currentModuleId }
-                curriculumId={ curriculumId }
                 open={ moduleDialogOpen }
                 setOpen={ setModuleDialogOpen }
                 syllabusId={ currentSyllabusId }

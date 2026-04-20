@@ -9,9 +9,9 @@ import { makeCurriculum } from "@/api-shared/types/gantt/maker";
 import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items/ActionItemButton";
 import { BaseActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 
-export interface CreateDraftActionProps extends BaseActionItemProps {
+export type CreateDraftActionProps = {
   onCreate: (newCurriculum: GanttCurriculumDocument) => void;
-}
+} & BaseActionItemProps
 
 export function CreateDraftAction({
     onCreate,

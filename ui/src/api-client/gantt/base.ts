@@ -32,20 +32,18 @@ export function baseDocumentFixup<
     return doc as T & BaseDocument;
 }
 
-export interface ClientGantApiBuilderProps<
+export type ClientGantApiBuilderProps<
     TEntity extends BaseGantItem,
     _TCreatePayload = Omit<TEntity, "id">,
->
-{
+> = {
     apiBaseUrl: string;
     dateFixup: DateFixup<TEntity & RawBaseDocument>;
 }
 
-export interface BasicGantApi<
+export type BasicGantApi<
     TEntity extends BaseGantItem,
     TCreatePayload = Omit<TEntity, "id">,
->
-{
+> = {
     readonly apiList: (
         options?: ClientApiProps,
     ) => Promise<Record<TEntity[ "id" ], TEntity[ "title" ]>>;

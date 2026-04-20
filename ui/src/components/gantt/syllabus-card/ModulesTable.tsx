@@ -20,7 +20,7 @@ import
 import { CreateModuleButton } from "@/components/gantt/syllabus-card/CreateModuleButton";
 import { ModuleRow } from "@/components/gantt/syllabus-card/ModuleRow";
 
-export interface ModulesTableProps {
+export type ModulesTableProps = {
   syllabusId: GanttSyllabusId;
   curriculumId: GanttCurriculumId;
   syllabusModules: GanttSyllabus["modules"];

@@ -21,7 +21,7 @@ import { Subject } from "@/components/schedule/types/subject";
 
 const availableGroups = ["Group A", "Group B", "Group C"];
 
-interface SubjectDialogProps {
+type SubjectDialogProps = {
   open: boolean;
   subject: Partial<Subject>;
   onClose: () => void;
@@ -37,7 +37,7 @@ export function SubjectDialog({
     const [name, setName] = useState("");
     const [displayName, setDisplayName] = useState("");
     const [color, setColor] = useState("#1976d2");
-    const [groups, setGroups] = useState<string[]>([]);
+    const [groups, setGroups] = useState<Array<string>>([]);
 
     const handleSave = () => {
         onSave({ id: "", name, displayName, color, defaultGroupIDs: groups });
@@ -81,7 +81,7 @@ export function SubjectDialog({
                     <Select
                         input={<OutlinedInput label="Assigned Groups" />}
                         multiple
-                        onChange={(e) => setGroups(e.target.value as string[])}
+                        onChange={(e) => setGroups(e.target.value as Array<string>)}
                         renderValue={(selected) => (
                             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                                 {selected.map((value) => (

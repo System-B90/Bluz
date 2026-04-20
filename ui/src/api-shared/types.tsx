@@ -1,16 +1,15 @@
 import { DbEventDocument } from "@/api-server/db-event";
 import { Event } from "@/components/schedule/types/event";
 
-export interface EventDataUpdateMessage<T extends DbEventDocument | Event> {
+export type EventDataUpdateMessage<T extends DbEventDocument | Event> = {
   events: Record<string, T>;
 }
 
-interface EventRemovedMessage {
+type EventRemovedMessage = {
   action: "removed";
   eventId: string;
 }
-
-interface EventAddedMessage<T extends DbEventDocument | Event> {
+type EventAddedMessage<T extends DbEventDocument | Event> = {
   action: "added";
   eventId: string;
   newData: T;

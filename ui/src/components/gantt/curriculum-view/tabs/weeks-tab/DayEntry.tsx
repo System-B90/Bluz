@@ -19,7 +19,7 @@ import
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gantt/state/hooks/UseDay";
 
-interface DayEntryProps {
+type DayEntryProps = {
   dayId: GanttDayId;
 }
 
