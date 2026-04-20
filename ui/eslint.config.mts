@@ -1,11 +1,11 @@
 import stylistic from "@stylistic/eslint-plugin";
-import { defineConfig } from "eslint/config";
 import nextConfig from "eslint-config-next/core-web-vitals";
 import importPlugin from "eslint-plugin-import";
 import perfectionist from "eslint-plugin-perfectionist";
 import reactPlugin from "eslint-plugin-react";
 import unicorn from "eslint-plugin-unicorn";
 import unusedImports from "eslint-plugin-unused-imports";
+import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig([
@@ -53,6 +53,14 @@ export default defineConfig([
             //   { assertionStyle: "as", objectLiteralTypeAssertions: "allow-as-parameter" }
             // ],
             "@typescript-eslint/no-floating-promises": "error",
+            "@typescript-eslint/array-type": [ "error", { "default": "generic" } ],
+            "@typescript-eslint/consistent-type-definitions": [ "error", "type" ],
+            "@typescript-eslint/no-base-to-string": "error",
+            "@typescript-eslint/ban-tslint-comment": "error",
+            "@typescript-eslint/no-for-in-array": "error", // Use "of" instead
+            "@typescript-eslint/prefer-for-of": "error",
+            "@typescript-eslint/prefer-includes": "error",
+            "@typescript-eslint/return-await": [ "error", "always" ],
 
             // --- Exports & Imports ---
             "import/no-default-export": "error",
@@ -85,6 +93,7 @@ export default defineConfig([
                     alphabetize: { order: "asc", caseInsensitive: true },
                 },
             ],
+            "@typescript-eslint/consistent-type-exports": [ "error", { fixMixedExportsWithInlineTypeSpecifier: true } ],
 
             // --- React & Perfectionist ---
             "react/jsx-no-leaked-render": [
