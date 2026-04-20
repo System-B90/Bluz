@@ -1,2 +1,2 @@
-export { GanttView } from './GanttView';
-export * from './types';
+export { GanttView } from '@/components/gantt/curriculum-view//tabs/gantt-view-tab/gantt-view/GanttView';
+export type * from '@/components/gantt/curriculum-view//tabs/gantt-view-tab/gantt-view/types';

@@ -1,11 +1,11 @@
 import stylistic from "@stylistic/eslint-plugin";
+import { defineConfig } from "eslint/config";
 import nextConfig from "eslint-config-next/core-web-vitals";
 import importPlugin from "eslint-plugin-import";
 import perfectionist from "eslint-plugin-perfectionist";
 import reactPlugin from "eslint-plugin-react";
 import unicorn from "eslint-plugin-unicorn";
 import unusedImports from "eslint-plugin-unused-imports";
-import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig([
@@ -62,6 +62,7 @@ export default defineConfig([
             "@typescript-eslint/prefer-includes": "error",
             "@typescript-eslint/return-await": [ "error", "always" ],
             "@typescript-eslint/adjacent-overload-signatures": "error",
+            "@typescript-eslint/ban-ts-comment": [ "error", { "ts-ignore": "allow-with-description" } ],
 
             // --- Exports & Imports ---
             "import/no-default-export": "error",
@@ -188,6 +189,10 @@ export default defineConfig([
             "ui/dist/*",
             "node_modules/*",
             "ui/next-env.d.ts",
+            // These files are not directly part of the UI, and cause the linter to freak out
+            "drizzle/drizzle.config.ts",
+            "session-server/session-common.ts",
+            "session-server/session-server.ts",
         ],
     },
 ]);

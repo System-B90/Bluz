@@ -9,13 +9,13 @@ import
     CardContent,
     CircularProgress,
     IconButton,
+    ListSubheader,
     MenuItem,
     Select,
     Stack,
     TextField,
     Typography
 } from "@mui/material";
-import { ListSubheader } from "@mui/material";
 import { useMemo, useState } from "react";
 
 import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
@@ -44,30 +44,30 @@ function useTargetOptions()
             result[ syllabus.id ] = [];
         }
 
-        for (const module of Object.values(state.modules))
+        for (const ganttModule of Object.values(state.modules))
         {
-            const syllabus = state.syllabuses[ module.syllabusId ];
+            const syllabus = state.syllabuses[ ganttModule.syllabusId ];
 
-            const label = `${syllabus.title} / ${module.title}`;
+            const label = `${syllabus.title} / ${ganttModule.title}`;
 
-            result[ module.syllabusId ].push({
-                id: module.id,
+            result[ ganttModule.syllabusId ].push({
+                id: ganttModule.id,
                 label,
                 type: "module",
-                syllabusId: module.syllabusId
+                syllabusId: ganttModule.syllabusId
             });
 
             // OPTIONAL: include events
-            for (const eventId of module.events)
+            for (const eventId of ganttModule.events)
             {
                 const event = state.events[ eventId ];
                 if (!event) continue;
 
-                result[ module.syllabusId ].push({
+                result[ ganttModule.syllabusId ].push({
                     id: event.id,
                     label: `${label} / ${event.title}`,
                     type: "event",
-                    syllabusId: module.syllabusId
+                    syllabusId: ganttModule.syllabusId
                 });
             }
         }
@@ -249,10 +249,10 @@ export function ModuleConstraintsView({ moduleId }: { moduleId: GanttModuleId; }
                                     value={ draft.type }
                                 >
                                     <MenuItem value={ ConstraintType.Relational }>
-                                            אילוץ יחסי
+                                        אילוץ יחסי
                                     </MenuItem>
                                     <MenuItem value={ ConstraintType.Temporal }>
-                                            אילוץ זמן
+                                        אילוץ זמן
                                     </MenuItem>
                                 </Select>
 

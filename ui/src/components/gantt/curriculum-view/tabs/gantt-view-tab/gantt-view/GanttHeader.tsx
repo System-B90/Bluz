@@ -1,9 +1,8 @@
 import { TableCell, TableHead, TableRow, Typography, useTheme } from '@mui/material';
 import React from 'react';
 
-import { useGanttContext } from './context';
-
 import { getDayNameDisplay } from '@/api-shared/types/gantt/models';
+import { useGanttContext } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context';
 import { useCurriculumState } from '@/components/gantt/state/provider';
 
 export const GanttHeader: React.FC = () =>

@@ -25,7 +25,7 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 
 export type RouteContext = {
     params: Promise<{ id: string; }>;
-}
+};
 
 /**
  * GET: Fetches all constraints associated with a curriculum's modules and events.
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest, context: RouteContext)
 /**
  * POST: Creates a new relational or temporal constraint.
  */
-export async function POST(request: NextRequest, context: RouteContext)
+export async function POST(request: NextRequest, _context: RouteContext/** Constraints are not unique to a curriculum, but to a syllabus. The API is under curriculum for efficiency when fetching */)
 {
     try
     {
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest, context: RouteContext)
 /**
  * PATCH: Updates an existing constraint.
  */
-export async function PATCH(request: NextRequest, context: RouteContext)
+export async function PATCH(request: NextRequest, _context: RouteContext)
 {
     try
     {
@@ -135,7 +135,7 @@ export async function PATCH(request: NextRequest, context: RouteContext)
 /**
  * DELETE: Removes a constraint.
  */
-export async function DELETE(request: NextRequest, context: RouteContext)
+export async function DELETE(request: NextRequest, _context: RouteContext)
 {
     try
     {

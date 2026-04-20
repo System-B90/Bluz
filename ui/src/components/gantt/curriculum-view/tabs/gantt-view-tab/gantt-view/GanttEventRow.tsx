@@ -2,11 +2,10 @@ import { useDroppable } from '@dnd-kit/core';
 import { alpha, Box, TableCell, TableRow, Typography, useTheme } from '@mui/material';
 import React, { useMemo } from 'react';
 
-import { useGanttContext } from './context';
-import { GanttBlock } from './GanttBlock';
-import { GanttCell } from './GanttCell';
-import { GanttEventRowProps } from './types';
-
+import { useGanttContext } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context';
+import { GanttBlock } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock';
+import { GanttCell } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell';
+import { GanttEventRowProps } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types';
 import { useCurriculumState } from '@/components/gantt/state/provider';
 
 export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId }) =>
@@ -21,7 +20,6 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId 
     });
 
     const event = state.events[ eventId ];
-    if (!event) return null;
 
     const currentDayId = eventMappings[ eventId ];
     const isEventUnmapped = !currentDayId;
@@ -32,10 +30,10 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId 
         const mappedDays = moduleMappings[ moduleId ] || [];
         const dayIds = new Set<string>(mappedDays);
 
-        const module = state.modules[ moduleId ];
-        if (module && module.events)
+        const ganttModule = state.modules[ moduleId ];
+        if (ganttModule && ganttModule.events)
         {
-            module.events.forEach(eId =>
+            ganttModule.events.forEach(eId =>
             {
                 if (eventMappings[ eId ]) dayIds.add(eventMappings[ eId ]);
             });
@@ -47,6 +45,8 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({ eventId, moduleId 
 
         return { isModuleMapped: mapped, moduleStartDayId: startId };
     }, [ moduleId, state.modules, moduleMappings, eventMappings, linearDays ]);
+
+    if (!event) return null;
 
     return (
         <TableRow hover>

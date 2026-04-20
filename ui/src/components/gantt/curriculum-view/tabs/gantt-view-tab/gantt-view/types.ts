@@ -1,38 +1,11 @@
-import { GanttCurriculumId, GanttDayIndex, GanttWeek } from '@/api-shared/types/gantt/models';
-
-export enum ConstraintType
-{
-    Relational = "RELATIONAL",
-    Temporal = "TEMPORAL"
-}
-
-export type EntityType = "event" | "module";
-
-export type RelationalConstraint = {
-    id: string;
-    type: ConstraintType.Relational;
-    targetId: string;
-    targetType: EntityType;
-    relation: "after" | "before";
-    minDelayDays?: number;
-    maxDelayDays?: number;
-}
-
-export type TemporalConstraint = {
-    id: string;
-    type: ConstraintType.Temporal;
-    allowedDays?: Array<GanttDayIndex>;
-    forbiddenDays?: Array<GanttDayIndex>;
-}
-
-export type GanttConstraint = RelationalConstraint | TemporalConstraint;
+import { GanttConstraint, GanttCurriculumId, GanttWeek } from '@/api-shared/types/gantt/models';
 
 export type GanttConstraintState = {
     constraints: Record<string, GanttConstraint>;
     isLoading: boolean;
-}
+};
 
-export type IGanttContext = {
+export type GanttContextType = {
     timelineWeeks: Array<GanttWeek>;
     linearDays: Array<string>;
     eventMappings: Record<string, string>;
@@ -43,11 +16,11 @@ export type IGanttContext = {
     onMoveEvent: (moduleId: string, eventId: string, sourceDayId: string, targetDayId: string) => Promise<void>;
     onMoveModule: (moduleId: string, sourceDayId: string, targetDayId: string) => Promise<void>;
     onShiftModule: (moduleId: string, deltaDays: number) => Promise<void>;
-}
+};
 
 export type GanttViewProps = {
     curriculumId: GanttCurriculumId;
-}
+};
 
 export type SpanVariant = 'end' | 'middle' | 'none' | 'single' | 'start';
 
@@ -60,7 +33,7 @@ export type GanttBlockProps = {
     isAbsolute?: boolean;
     elementId?: string;
     violations?: Array<string>;
-}
+};
 
 export type GanttCellProps = {
     dayId: string;
@@ -75,24 +48,24 @@ export type GanttCellProps = {
     isAbsoluteBlock?: boolean;
     elementId?: string;
     violations?: Array<string>;
-}
+};
 
 export type GanttModuleRowProps = {
     moduleId: string;
-}
+};
 
 export type GanttEventRowProps = {
     eventId: string;
     moduleId: string;
-}
+};
 
 export type GanttSyllabusGroupProps = {
     syllabusId: string;
-}
+};
 
 export type ConstraintLink = {
     id: string;
     sourceId: string;
     targetId: string;
     isViolated: boolean;
-}
+};

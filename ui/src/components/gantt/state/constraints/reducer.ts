@@ -35,7 +35,7 @@ export function ganttConstraintReducer(
     case "DELETE_CONSTRAINT":
         // Micro-optimization: Object destructuring avoids the `delete` keyword,
         // preventing the de-optimization of V8 hidden classes.
-        const { [ action.payload.id ]: removed, ...remainingConstraints } = state.constraints;
+        const { [ action.payload.id ]: _removedId, ...remainingConstraints } = state.constraints;
         return { ...state, constraints: remainingConstraints };
 
     case "SET_LOADING":

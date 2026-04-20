@@ -2,20 +2,21 @@ import { useDraggable } from '@dnd-kit/core';
 import { Box, Tooltip, Typography, useTheme } from '@mui/material';
 import React from 'react';
 
-import { GanttBlockProps } from './types';
+import { GanttBlockProps } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types';
 
-export const GanttBlock: React.FC<GanttBlockProps> = ({ 
-    id, 
-    payload, 
-    title, 
-    isOpaque, 
+export const GanttBlock: React.FC<GanttBlockProps> = ({
+    id,
+    payload,
+    title,
+    isOpaque,
     spanLength = 1,
     isAbsolute = true,
     elementId,
     violations = []
-}) => {
+}) =>
+{
     const theme = useTheme();
-  
+
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id,
         data: payload
@@ -26,19 +27,19 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
         zIndex: 9999,
     } : undefined;
 
-    const blockWidth = spanLength > 1 
-        ? `calc(${spanLength * 80}px - 8px)` 
+    const blockWidth = spanLength > 1
+        ? `calc(${spanLength * 80}px - 8px)`
         : (isAbsolute ? 'calc(100% - 8px)' : '100%');
 
     const isViolated = violations.length > 0;
 
     const block = (
         <Box
-            id={elementId}
-            ref={setNodeRef}
-            {...listeners}
-            {...attributes}
-            sx={{
+            id={ elementId }
+            ref={ setNodeRef }
+            { ...listeners }
+            { ...attributes }
+            sx={ {
                 position: isAbsolute ? 'absolute' : 'relative',
                 top: isAbsolute ? '5px' : 'auto',
                 bottom: isAbsolute ? '5px' : 'auto',
@@ -50,7 +51,7 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
                 border: isViolated ? `2px solid ${theme.palette.error.main}` : 'none',
                 cursor: isDragging ? 'grabbing' : 'grab',
                 opacity: isDragging ? 0.4 : (isOpaque ? 0.5 : 1),
-                boxShadow: isDragging ? theme.shadows[4] : 'none',
+                boxShadow: isDragging ? theme.shadows[ 4 ] : 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -59,17 +60,17 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
                 boxSizing: 'border-box',
                 zIndex: isDragging ? 9999 : 1,
                 ...style
-            }}
+            } }
         >
-            {title ? <Typography sx={{ color: 'primary.contrastText', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} variant="caption">
-                {title}
-            </Typography> : null}
+            { title ? <Typography sx={ { color: 'primary.contrastText', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } } variant="caption">
+                { title }
+            </Typography> : null }
         </Box>
     );
 
     return isViolated ? (
-        <Tooltip arrow placement="top" title={violations.join('\n')}>
-            {block}
+        <Tooltip arrow placement="top" title={ violations.join('\n') }>
+            { block }
         </Tooltip>
     ) : block;
 };

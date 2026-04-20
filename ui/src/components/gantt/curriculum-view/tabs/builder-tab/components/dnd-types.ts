@@ -1,11 +1,5 @@
-import
-{
-    DragEndEvent
-} from "@dnd-kit/core";
 
 import { GanttDayId, GanttModuleId, GanttSyllabusId, GanttWeekId } from "@/api-shared/types/gantt/models";
-
-type DnDDragEndEvent<T, K> = DragEndEvent;
 
 export type DndDragEventActiveData = {
     type: 'MODULE';

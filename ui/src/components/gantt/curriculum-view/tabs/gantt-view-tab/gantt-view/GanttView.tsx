@@ -2,12 +2,12 @@ import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { Box, FormControlLabel, Paper, Switch, Table, TableBody, TableContainer, Typography, useTheme } from '@mui/material';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { ConstraintLines } from './ConstraintLines';
-import { GanttContext } from './context';
-import { GanttHeader } from './GanttHeader';
-import { GanttSyllabusGroup } from './GanttSyllabusGroup';
-import { ConstraintLink, ConstraintType, GanttViewProps } from './types';
-
+import { ConstraintType } from '@/api-shared/types/gantt/models/constraint';
+import { ConstraintLines } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/ConstraintLines';
+import { GanttContext } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context';
+import { GanttHeader } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHeader';
+import { GanttSyllabusGroup } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttSyllabusGroup';
+import { ConstraintLink, GanttViewProps } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types';
 import { useGanttConstraints } from '@/components/gantt/state/constraints/hooks';
 import { useGanttMappings } from '@/components/gantt/state/mappings/hooks';
 import { useCurriculumState } from '@/components/gantt/state/provider';
@@ -177,7 +177,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
     {
         if (deltaDays === 0) return;
 
-        const module = state.modules[ moduleId ];
+        const ganttModule = state.modules[ moduleId ];
         const promises: Array<Promise<void>> = [];
 
         const mDays = moduleMappings[ moduleId ] || [];
@@ -192,9 +192,9 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
             }
         });
 
-        if (module && module.events)
+        if (ganttModule && ganttModule.events)
         {
-            module.events.forEach(eventId =>
+            ganttModule.events.forEach(eventId =>
             {
                 const currentDayId = eventMappings[ eventId ];
                 if (currentDayId)
@@ -235,10 +235,10 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                     promises.push(removeMapping({ moduleId: payload.moduleId, eventId: null, dayId: d }));
                 });
 
-                const module = state.modules[ payload.moduleId ];
-                if (module && module.events)
+                const ganttModule = state.modules[ payload.moduleId ];
+                if (ganttModule && ganttModule.events)
                 {
-                    module.events.forEach(eId =>
+                    ganttModule.events.forEach(eId =>
                     {
                         const d = eventMappings[ eId ];
                         if (d)

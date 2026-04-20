@@ -1,10 +1,9 @@
 import { Box, TableCell, TableRow, Typography, useTheme } from '@mui/material';
 import React, { useMemo, useState } from 'react';
 
-import { useGanttContext } from './context';
-import { GanttModuleRow } from './GanttModuleRow';
-import { GanttSyllabusGroupProps, SpanVariant } from './types';
-
+import { useGanttContext } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context';
+import { GanttModuleRow } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttModuleRow';
+import { GanttSyllabusGroupProps, SpanVariant } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types';
 import { useCurriculumState } from '@/components/gantt/state/provider';
 
 export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabusId }) =>
@@ -15,23 +14,22 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
     const [ isExpanded, setIsExpanded ] = useState(true);
 
     const syllabus = state.syllabuses[ syllabusId ];
-    if (!syllabus) return null;
 
     const spanIndices = useMemo(() =>
     {
         const allMappedDays = new Set<string>();
 
-        syllabus.modules.forEach(moduleId =>
+        (syllabus?.modules ?? []).forEach(moduleId =>
         {
-            const module = state.modules[ moduleId ];
-            if (!module) return;
+            const ganttModule = state.modules[ moduleId ];
+            if (!ganttModule) return;
 
             const mDays = moduleMappings[ moduleId ] || [];
             mDays.forEach(d => allMappedDays.add(d));
 
-            if (module.events)
+            if (ganttModule.events)
             {
-                module.events.forEach(eId =>
+                ganttModule.events.forEach(eId =>
                 {
                     const eDay = eventMappings[ eId ];
                     if (eDay) allMappedDays.add(eDay);
@@ -43,6 +41,8 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
         if (indices.length === 0) return null;
         return { min: Math.min(...indices), max: Math.max(...indices) };
     }, [ syllabus, state.modules, moduleMappings, eventMappings, linearDays ]);
+
+    if (!syllabus) return null;
 
     return (
         <React.Fragment>

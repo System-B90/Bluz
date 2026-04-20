@@ -178,7 +178,8 @@ export function GanttConstraintProvider({
 
     useEffect(() =>
     {
-        refreshConstraints();
+        // Error handling is done inside the refresh function 
+        void refreshConstraints();
     }, [ refreshConstraints ]);
 
     const value = useMemo(

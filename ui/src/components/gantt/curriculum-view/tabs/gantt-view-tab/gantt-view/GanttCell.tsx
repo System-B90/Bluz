@@ -2,11 +2,11 @@ import { useDroppable } from '@dnd-kit/core';
 import { Box, TableCell, useTheme } from '@mui/material';
 import React from 'react';
 
-import { GanttBlock } from './GanttBlock';
-import { GanttCellProps } from './types';
+import { GanttBlock } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock';
+import { GanttCellProps } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types';
 
 export const GanttCell: React.FC<GanttCellProps> = ({
-    dayId,
+    dayId: _dayId,
     dropId,
     payloadData,
     hasBlock,

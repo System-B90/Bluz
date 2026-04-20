@@ -39,7 +39,7 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult =>
 
         // Helper function to calculate date range for a date
         const calculateTaskDate = (
-            dayId: GanttDayId,
+            _dayId: GanttDayId,
         ): { start: Date; end: Date; } =>
         {
             // TODO: Implement this properly
@@ -123,7 +123,3 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult =>
         return { tasks, links };
     }, [ props.syllabuses, props.modules, mappings ]);
 };
-function useCurriculumMappings(): { state: { mappings: any; }; }
-{
-    throw new Error("Function not implemented.");
-}

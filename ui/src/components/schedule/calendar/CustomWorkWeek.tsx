@@ -1,6 +1,7 @@
 /* eslint-disable import/order */
 import { ReactNode } from "react";
-import {
+import
+{
     type DateLocalizer,
     type NavigateAction,
     type TimeGridProps,
@@ -8,9 +9,9 @@ import {
     type ViewStatic,
 } from "react-big-calendar";
 
-// @ts-expect-error
+// @ts-expect-error: ReactBigCalendar exports these in an odd way
 import TimeGrid from "react-big-calendar/lib/TimeGrid";
-// @ts-expect-error
+// @ts-expect-error: ReactBigCalendar exports these in an odd way
 import Week from "react-big-calendar/lib/Week";
 
 /**
@@ -18,22 +19,24 @@ import Week from "react-big-calendar/lib/Week";
  */
 function workWeekRange(
     date: Date,
-    { localizer }: { localizer: DateLocalizer },
-): Array<Date> {
+    { localizer }: { localizer: DateLocalizer; },
+): Array<Date>
+{
     return Week.range(date, { localizer }).filter(
-        (d: any) => ![5, 6].includes(d.getDay()), // Fri (5), Sat (6)
+        (d: any) => ![ 5, 6 ].includes(d.getDay()), // Fri (5), Sat (6)
     );
 }
 
 function RawCustomWorkWeek(
     props: TimeGridProps & {
-    date: Date;
-    localizer: DateLocalizer;
-    min?: Date;
-    max?: Date;
-    scrollToTime?: Date;
-  },
-): React.JSX.Element {
+        date: Date;
+        localizer: DateLocalizer;
+        min?: Date;
+        max?: Date;
+        scrollToTime?: Date;
+    },
+): React.JSX.Element
+{
     const {
         date,
         localizer,
@@ -45,13 +48,13 @@ function RawCustomWorkWeek(
 
     return (
         <TimeGrid
-            {...rest}
-            eventOffset={15}
-            localizer={localizer}
-            max={max}
-            min={min}
-            range={workWeekRange(date, props)}
-            scrollToTime={scrollToTime}
+            { ...rest }
+            eventOffset={ 15 }
+            localizer={ localizer }
+            max={ max }
+            min={ min }
+            range={ workWeekRange(date, props) }
+            scrollToTime={ scrollToTime }
         />
     );
 }
@@ -63,25 +66,27 @@ RawCustomWorkWeek.range = workWeekRange;
 RawCustomWorkWeek.navigate = (
     date: Date,
     action: NavigateAction,
-    { localizer }: { localizer: DateLocalizer },
-): Date => {
+    { localizer }: { localizer: DateLocalizer; },
+): Date =>
+{
     return Week.navigate(date, action, { localizer });
 };
 
-RawCustomWorkWeek.title = (date: Date, options: TitleOptions): string => {
-    const { localizer }: { localizer: DateLocalizer } = options as unknown as {
-    localizer: DateLocalizer;
-  };
+RawCustomWorkWeek.title = (date: Date, options: TitleOptions): string =>
+{
+    const { localizer }: { localizer: DateLocalizer; } = options as unknown as {
+        localizer: DateLocalizer;
+    };
     const range = workWeekRange(date, { localizer });
-    const start = range[0];
-    const end = range[range.length - 1];
+    const start = range[ 0 ];
+    const end = range[ range.length - 1 ];
 
     return localizer.format({ start, end }, "dayRangeHeaderFormat");
 };
 
 export const CustomWorkWeek: ((props: any) => ReactNode) &
-  ViewStatic & {
-    range: typeof workWeekRange;
-    title: typeof Week.title;
-    navigate: typeof Week.navigate;
-  } = RawCustomWorkWeek;
+    ViewStatic & {
+        range: typeof workWeekRange;
+        title: typeof Week.title;
+        navigate: typeof Week.navigate;
+    } = RawCustomWorkWeek;

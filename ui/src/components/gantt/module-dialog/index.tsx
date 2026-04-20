@@ -35,16 +35,15 @@ export type ModuleDialogProps = {
     moduleId: GanttModuleId | null;
     syllabusId: GanttSyllabusId | null;
     curriculumId: GanttCurriculumId | null;
-} & DialogProps
+} & DialogProps;
 
 function ModuleDialogInner({
     open,
     setOpen,
     syllabusId,
     moduleId,
-    curriculumId,
     ...props
-}: ModuleDialogProps)
+}: Omit<ModuleDialogProps, 'curriculumId'>)
 {
     const { enqueueSnackbar } = useSnackbar();
     const { closeModuleDialog } = useCurriculumProviderActions();
@@ -184,7 +183,6 @@ export function ModuleDialog({
     {
         return (
             <ModuleDialogInner
-                curriculumId={ curriculumId }
                 moduleId={ moduleId }
                 syllabusId={ syllabusId }
                 { ...props }
@@ -202,7 +200,6 @@ export function ModuleDialog({
             } }
         >
             <ModuleDialogInner
-                curriculumId={ curriculumId }
                 moduleId={ moduleId }
                 syllabusId={ syllabusId }
                 { ...props }
