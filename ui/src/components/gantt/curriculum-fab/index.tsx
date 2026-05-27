@@ -155,6 +155,14 @@ export function CurriculumFab({
                     right: 16,
                     bottom: 16,
                     zIndex: (theme) => theme.zIndex.speedDial,
+                    transition: "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease",
+                    "&:hover": {
+                        transform: "scale(1.12) rotate(6deg)",
+                        boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+                    },
+                    "&:active": {
+                        transform: "scale(0.92)",
+                    }
                 }}
             >
                 <MenuBookIcon />
@@ -167,10 +175,13 @@ export function CurriculumFab({
                 open={isOpen}
                 slotProps={{
                     paper: {
+                        className: "animate-slide-up-fade",
                         sx: {
                             width: PANEL_WIDTH,
                             maxHeight: 420,
                             overflow: "hidden",
+                            borderRadius: "12px",
+                            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
                         },
                     },
                 }}

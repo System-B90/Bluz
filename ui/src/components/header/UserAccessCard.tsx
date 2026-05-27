@@ -79,6 +79,14 @@ export function UserAccessCard() {
             label={userData.display_name}
             size="medium"
             sx={{
+                transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                cursor: "pointer",
+                "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+                    borderColor: "primary.main",
+                    backgroundColor: "action.hover",
+                },
                 "& .MuiChip-label": {
                     paddingLeft: 0,
                 },

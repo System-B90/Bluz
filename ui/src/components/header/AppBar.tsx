@@ -96,6 +96,7 @@ export function ScheduleAppBar({
                     <ThemeSelectorIcon />
 
                     <IconButton
+                        className="hover-spin-slow transition-all duration-200 hover:scale-110 active:scale-90 hover:bg-slate-100 dark:hover:bg-slate-800"
                         color="inherit"
                         onClick={() => setOpenSettingsDialog(true)}
                     >

@@ -28,7 +28,7 @@ export function FilterIcon({
             title={`${filtersVisible ? "Hide" : "Show"} Filters`}
         >
             <IconButton
-                className="relative"
+                className="relative transition-all duration-200 hover:scale-110 active:scale-90 hover:bg-slate-100 dark:hover:bg-slate-800"
                 color={filtersVisible ? "primary" : "inherit"}
                 onClick={() => {
                     setFiltersVisible((v) => !v);
@@ -38,7 +38,7 @@ export function FilterIcon({
                 {!filtersVisible && hasAnyFilter ? (
                     <Tooltip placement="right" title="יש סננים נסתרים">
                         <InfoIcon
-                            className="absolute top-0.5 right-0.5"
+                            className="absolute top-0.5 right-0.5 animate-pulse-soft"
                             color="info"
                             fontSize="inherit"
                             sx={{ fontSize: "1.1rem" }}

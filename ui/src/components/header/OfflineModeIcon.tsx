@@ -11,6 +11,7 @@ export function OfflineModeIcon({ ...props }: IconButtonProps) {
         <Tooltip title={offlineMode ? "מצב לוקלי" : "עבור למצב לוקלי"}>
             <IconButton
                 {...props}
+                className={`transition-all duration-200 hover:scale-110 active:scale-90 hover:bg-slate-100 dark:hover:bg-slate-800 ${offlineMode ? "animate-pulse-soft" : ""}`}
                 color={offlineMode ? "primary" : "inherit"}
                 onClick={() => setOfflineMode((v) => !v)}
             >
