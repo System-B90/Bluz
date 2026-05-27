@@ -1,11 +1,37 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import { Alert, AlertTitle, Box, Typography } from "@mui/material";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 import { LoginWithHive } from "@/app/(themed)/(pre-auth)/login/login-with-hive-button";
 import { Logo } from "@/components/header/logo";
 
+function getAuthenticationErrorMessage(error: null | string) {
+    switch (error) {
+    case null:
+        return null;
+    case "AccessDenied":
+        return "למשתמש שלך אין הרשאה מתאימה לגישה למערכת.";
+    case "OAuthAccountNotLinked":
+        return "כתובת המייל משויכת לחשבון קיים. יש להתחבר באמצעות שיטת ההתחברות המקורית.";
+    case "OAuthCallback":
+    case "OAuthSignin":
+        return "לא ניתן היה להשלים את תהליך ההזדהות מול הייב.";
+    case "SessionRequired":
+        return "נדרשת התחברות מחדש כדי להמשיך.";
+    default:
+        return "אירעה שגיאה במהלך תהליך ההתחברות.";
+    }
+}
+
 function LoginWidget() {
+    const searchParams = useSearchParams();
+    const authError = searchParams.get("error");
+    const authErrorMessage = getAuthenticationErrorMessage(authError);
+    const authErrorDetails =
+        searchParams.get("error_description") ?? searchParams.get("message") ?? authError;
+
     return (
         <Box
             bgcolor={"hsl(var(--background))"}
@@ -53,6 +79,17 @@ function LoginWidget() {
             </Box>
 
             <Box mt={0}>
+                {authErrorMessage ? (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        <AlertTitle>ההתחברות נכשלה</AlertTitle>
+                        {authErrorMessage}
+                        {authErrorDetails ? (
+                            <Typography component="p" fontSize={13} mt={1}>
+                                קוד שגיאה: {authErrorDetails}
+                            </Typography>
+                        ) : null}
+                    </Alert>
+                ) : null}
                 <LoginWithHive />
             </Box>
         </Box>
@@ -72,7 +109,9 @@ export default function LoginPage() {
             pt={"20vh"}
             width={"full"}
         >
-            <LoginWidget />
+            <Suspense fallback={null}>
+                <LoginWidget />
+            </Suspense>
         </Box>
     );
 }
