@@ -1,4 +1,4 @@
-"use client";
+"use client"; // TODO: This should be a server component to better performance
 
 import { Box, CircularProgress, Typography, keyframes } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
