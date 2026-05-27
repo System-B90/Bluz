@@ -1,3 +1,4 @@
+// Settings Dialog redesigned with modern UI/UX, vertical sidebar, and auto-saving optimistic states.
 import CloseIcon from "@mui/icons-material/Close";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -189,4 +190,3 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
         </Dialog>
     );
 }
-
