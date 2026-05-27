@@ -11,18 +11,18 @@ export function CourseSettings() {
 
     const handleCreate = useCallback(() => {
         // Instantly triggers optimistic update & auto-save API add
-        addCourse({
+        void addCourse({
             name: "מסלול חדש",
             color: "#67C8DD", // Brand turquoise as default
         });
     }, [addCourse]);
 
     const handleUpdateCourse = useCallback(
-        (id: string, name?: string, color?: string | null) => {
+        (id: string, name?: string, color?: null | string) => {
             const changes: any = {};
             if (name !== undefined) changes.name = name;
             if (color !== undefined) changes.color = color;
-            updateCoursePartial(id, changes);
+            void updateCoursePartial(id, changes);
         },
         [updateCoursePartial],
     );
@@ -48,7 +48,7 @@ export function CourseSettings() {
         >
             <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
                 {/* Header */}
-                <Box display="flex" alignItems="center" gap={1.5} mb={2.5}>
+                <Box alignItems="center" display="flex" gap={1.5} mb={2.5}>
                     <Box
                         sx={{
                             p: 1,
@@ -111,11 +111,10 @@ export function CourseSettings() {
             {/* Create Button */}
             <Box sx={{ mt: 2 }}>
                 <Button
-                    fullWidth
                     color="secondary"
+                    fullWidth
                     onClick={handleCreate}
                     startIcon={<AddIcon sx={{ ml: 0.5 }} />}
-                    variant="contained"
                     sx={{
                         borderRadius: "10px",
                         py: 1.2,
@@ -126,6 +125,7 @@ export function CourseSettings() {
                             boxShadow: "0 6px 16px rgba(26, 60, 89, 0.25)",
                         },
                     }}
+                    variant="contained"
                 >
           יצירת מסלול חדש
                 </Button>
@@ -133,4 +133,3 @@ export function CourseSettings() {
         </Box>
     );
 }
-
