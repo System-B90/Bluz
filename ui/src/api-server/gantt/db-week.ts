@@ -9,6 +9,7 @@ import {
 } from "@/api-server/gantt/schema";
 import { ganttWeeksSchema } from "@/api-server/gantt/schema/weeks";
 import { ClientApiError } from "@/api-shared/errors";
+import { getDefaultWorkingMinutesForDay } from "@/api-shared/gantt/week-defaults";
 import { ApiCurriculumWeek } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttWeekPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
@@ -75,8 +76,7 @@ async function createWeek(
             const createPayload = {
                 weekId: newWeek.id,
                 dayIndex: dayIndex,
-                totalWorkingMinutes:
-          dayIndex < 6 ? 14 * 60 : dayIndex === 6 ? 2 * 60 : 0,
+                totalWorkingMinutes: getDefaultWorkingMinutesForDay(dayIndex),
             };
 
             return await DbDay.createNewItem(createPayload);

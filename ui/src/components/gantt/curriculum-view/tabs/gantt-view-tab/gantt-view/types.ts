@@ -11,6 +11,7 @@ export type GanttConstraintState = {
 
 export type GanttContextType = {
   weeklyView: boolean;
+  startDate: null | string;
   timelineWeeks: Array<GanttWeek>;
   linearDays: Array<string>;
   eventMappings: Record<string, string>;

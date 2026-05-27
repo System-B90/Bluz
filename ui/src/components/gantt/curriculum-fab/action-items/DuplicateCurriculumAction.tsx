@@ -29,6 +29,7 @@ export function DuplicateCurriculumAction({
     } = {
         title: `${sourceCurriculum.title} (Copy)`,
         description: sourceCurriculum.description,
+        startDate: sourceCurriculum.startDate,
         isDraft: true,
         weeks: sourceCurriculum.weeks,
     };

@@ -1,11 +1,13 @@
 import { useCallback } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
+import { ApiCurriculumWeek } from "@/api-shared/types/gantt/api-layer";
 import {
     CreateGanttDayPayload,
     CreateGanttWeekPayload,
 } from "@/api-shared/types/gantt/create-payloads";
 import {
+    DAY_NAME_DISPLAY,
     GanttCurriculumId,
     GanttDay,
     GanttDayId,
@@ -40,9 +42,42 @@ export function useWeekActions(): UseWeekActionsReturn {
         async (payload: CreateGanttWeekPayload) => {
             return await withGantErrorHandling(async () => {
                 const newWeek = await ganttApi.week.apiCreate(payload);
+                const apiWeek = newWeek as unknown as ApiCurriculumWeek;
+                const linkedDays = [...(apiWeek.w2d ?? [])].sort(
+                    (a, b) => a.day.dayIndex - b.day.dayIndex,
+                );
+
+                for (const dayLink of linkedDays) {
+                    dispatch({
+                        type: "ADD_DAY",
+                        payload: {
+                            day: {
+                                id: dayLink.day.id,
+                                title:
+                  DAY_NAME_DISPLAY[dayLink.day.dayIndex] ??
+                  `יום ${dayLink.day.dayIndex + 1}`,
+                                weekId: dayLink.weekId,
+                                dayIndex: dayLink.day.dayIndex,
+                                totalWorkingMinutes: dayLink.day.totalWorkingMinutes,
+                                comment: dayLink.day.comment,
+                            },
+                        },
+                    });
+                }
+
                 dispatch({
                     type: "ADD_WEEK",
-                    payload: { week: newWeek, curriculumId: payload.curriculumId },
+                    payload: {
+                        week: {
+                            id: apiWeek.id,
+                            title: `שבוע ${apiWeek.number}`,
+                            number: apiWeek.number,
+                            days: linkedDays.map((dayLink) => dayLink.dayId),
+                            comment: apiWeek.comment,
+                            weekendDuty: apiWeek.weekendDuty,
+                        },
+                        curriculumId: payload.curriculumId,
+                    },
                 });
                 return newWeek;
             }, "Failed to create week:");

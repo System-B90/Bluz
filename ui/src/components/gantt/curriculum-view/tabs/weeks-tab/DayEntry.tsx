@@ -12,24 +12,15 @@ import React, { useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttDayId, GanttDayIndex } from "@/api-shared/types/gantt/models";
+import {
+    formatMinutesAsTimeInput,
+    parseTimeInputToMinutes,
+} from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gantt/state/hooks/UseDay";
 
 type DayEntryProps = {
   dayId: GanttDayId;
-};
-
-const formatToTime = (hours: number): string => {
-    const hh = Math.floor(hours);
-    const mm = Math.round((hours - hh) * 60);
-    return `${hh.toString().padStart(2, "0")}:${mm.toString().padStart(2, "0")}`;
-};
-
-const parseToHours = (timeStr: string): number => {
-    const parts = timeStr.split(":");
-    const hh = parseInt(parts[0] || "0", 10);
-    const mm = parseInt(parts[1] || "0", 10);
-    return hh + mm / 60;
 };
 
 export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
@@ -38,13 +29,18 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
     const { updateDay } = useWeekActions();
 
     const [localTime, setLocalTime] = useState(() =>
-        formatToTime((day?.totalWorkingMinutes ?? 0) / 60),
+        formatMinutesAsTimeInput(day?.totalWorkingMinutes ?? 0),
     );
 
     const handleSync = useCallback(() => {
-        const numericValue = parseToHours(localTime);
-        if (numericValue !== day?.totalWorkingMinutes) {
-            updateDay(dayId, { totalWorkingMinutes: numericValue }).catch((error) =>
+        const parsedMinutes = parseTimeInputToMinutes(localTime);
+        if (parsedMinutes === null) {
+            setLocalTime(formatMinutesAsTimeInput(day?.totalWorkingMinutes ?? 0));
+            return;
+        }
+
+        if (parsedMinutes !== day?.totalWorkingMinutes) {
+            void updateDay(dayId, { totalWorkingMinutes: parsedMinutes }).catch((error) =>
                 enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת שעות נכשלה!", error),
             );
         }
@@ -56,9 +52,9 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
                 0,
                 Math.min(24 * 60, (day?.totalWorkingMinutes ?? 0) + amount * 60),
             );
-            const formatted = formatToTime(newMinutes / 60);
+            const formatted = formatMinutesAsTimeInput(newMinutes);
             setLocalTime(formatted); // Update local UI immediately
-            updateDay(dayId, { totalWorkingMinutes: newMinutes }).catch((error) =>
+            void updateDay(dayId, { totalWorkingMinutes: newMinutes }).catch((error) =>
                 enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת שעות נכשלה!", error),
             );
         },
@@ -116,7 +112,9 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
             <TextField
                 defaultValue={day?.comment ?? ""}
                 fullWidth
-                onBlur={(e) => updateDay(dayId, { comment: e.target.value })}
+                onBlur={(e) => {
+                    void updateDay(dayId, { comment: e.target.value });
+                }}
                 placeholder="הערות..."
                 slotProps={{
                     input: {

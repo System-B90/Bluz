@@ -385,6 +385,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             <GanttContext.Provider
                 value={{
                     weeklyView,
+                    startDate: curriculum.startDate,
                     timelineWeeks,
                     linearDays,
                     moduleMappings,

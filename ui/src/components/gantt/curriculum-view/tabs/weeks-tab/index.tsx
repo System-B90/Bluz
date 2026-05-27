@@ -1,121 +1,100 @@
 /**
  * Name: WeeksTab.tsx
- * Purpose: Container for horizontal scrolling week panels in Bluz.
+ * Purpose: Dense course-duration and capacity editor for Bluz Gantt weeks.
  * Created: 2026-04-14
  * Author: Michael K. Steinberg
  */
 
-import { Box, Paper, Skeleton, Stack } from "@mui/material";
-import { memo, useMemo } from "react";
+import { Box, CircularProgress, Paper, Stack, Typography } from "@mui/material";
+import { memo } from "react";
 
-import {
-    GanttCurriculumId,
-    GanttWeekId,
-} from "@/api-shared/types/gantt/models";
-import { useProgressiveItemCount } from "@/components/gantt/curriculum-view/tabs/UseProgressiveItemCount";
-import { WeekPanel } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { CourseStartDateControl } from "@/components/gantt/curriculum-view/tabs/weeks-tab/CourseStartDateControl";
+import { WeekLengthMenu } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekLengthMenu";
+import { WeeksCapacityGrid } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeeksCapacityGrid";
+import { WeeksSummaryBar } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeeksSummaryBar";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
+import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
+import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
+import { useCurriculumState } from "@/components/gantt/state/provider";
 
 type WeeksTabProps = {
   curriculumId: GanttCurriculumId;
 };
 
-const INITIAL_WEEK_PANEL_COUNT = 2;
-const WEEK_PANEL_BATCH_SIZE = 3;
-const MAX_WEEK_PANEL_SKELETONS = 3;
-const EMPTY_WEEK_IDS: Array<GanttWeekId> = [];
+function WeeksTabInner({ curriculumId }: WeeksTabProps) {
+    const curriculum = useCurriculum(curriculumId);
+    const state = useCurriculumState();
+    const {
+        state: { isLoading, mappings },
+    } = useGanttMappings();
 
-function WeekPanelSkeleton() {
-    return (
-        <Paper
-            elevation={1}
-            sx={{
-                minWidth: 300,
-                p: 2,
-                display: "flex",
-                flexDirection: "column",
-                gap: 1.5,
-                borderRadius: 2,
-                bgcolor: "background.paper",
-            }}
-        >
-            <Box
-                alignItems="flex-start"
-                display="flex"
-                gap={1}
-                justifyContent="space-between"
-            >
-                <Box flex={1}>
-                    <Skeleton height={18} width="35%" />
-                    <Skeleton height={24} width="80%" />
-                </Box>
-                <Box alignItems="flex-end" display="flex" flexDirection="column" gap={1}>
-                    <Skeleton height={24} variant="rounded" width={88} />
-                    <Skeleton height={24} variant="rounded" width={104} />
-                </Box>
+    if (!curriculum) {
+        return (
+            <Box alignItems="center" display="flex" flex={1} justifyContent="center">
+                <CircularProgress size={28} />
             </Box>
-            <Skeleton height={1} variant="rectangular" />
-            <Stack spacing={1}>
-                {Array.from({ length: 4 }).map((_, index) => (
-                    <Skeleton height={58} key={index} variant="rounded" />
-                ))}
-            </Stack>
-        </Paper>
+        );
+    }
+
+    return (
+        <Box display="flex" flexDirection="column" gap={1.5} height="100%" minHeight={0}>
+            <Paper
+                elevation={0}
+                sx={{
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 8,
+                    p: 1.5,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    bgcolor: "background.default",
+                }}
+            >
+                <Stack spacing={1.5}>
+                    <Box
+                        alignItems="center"
+                        display="flex"
+                        flexWrap="wrap"
+                        gap={2}
+                        justifyContent="space-between"
+                    >
+                        <Box>
+                            <Typography fontWeight={700} variant="h6">
+                שבועות
+                            </Typography>
+                            <Typography color="text.secondary" variant="body2">
+                אורך הקורס, תאריכים, שעות זמינות ושבתות בבסיס
+                            </Typography>
+                        </Box>
+                        <WeekLengthMenu curriculum={curriculum} curriculumId={curriculumId} />
+                    </Box>
+                    <CourseStartDateControl
+                        curriculum={curriculum}
+                        curriculumId={curriculumId}
+                    />
+                    <WeeksSummaryBar curriculum={curriculum} state={state} />
+                    {isLoading ? (
+                        <Typography color="text.secondary" variant="caption">
+              טוען שיבוצים קיימים...
+                        </Typography>
+                    ) : null}
+                </Stack>
+            </Paper>
+            <WeeksCapacityGrid
+                curriculum={curriculum}
+                mappings={mappings}
+                state={state}
+            />
+        </Box>
     );
 }
 
-export const WeeksTab = memo(function WeeksTab({
-    curriculumId,
-}: WeeksTabProps) {
-    const curriculum = useCurriculum(curriculumId);
-    const weeks = curriculum?.weeks ?? EMPTY_WEEK_IDS;
-    const visibleWeekCount = useProgressiveItemCount(weeks.length, {
-        batchSize: WEEK_PANEL_BATCH_SIZE,
-        initialCount: INITIAL_WEEK_PANEL_COUNT,
-        resetKey: curriculumId,
-    });
-    const hiddenWeekCount = weeks.length - visibleWeekCount;
-
-    const renderedPanels = useMemo(
-        () =>
-            weeks.slice(0, visibleWeekCount).map((weekId: GanttWeekId) => (
-                <WeekPanel curriculumId={curriculumId} key={weekId} weekId={weekId} />
-            )),
-        [curriculumId, visibleWeekCount, weeks],
-    );
-
+export const WeeksTab = memo(function WeeksTab({ curriculumId }: WeeksTabProps) {
     return (
-        <Box
-            display={"flex"}
-            flexDirection={"column"}
-            flexGrow={1}
-            gap={2}
-            height={"100%"}
-        >
-            <Box
-                display="flex"
-                flexDirection="column"
-                gap={1}
-                height={"100%"}
-                width={"100%"}
-            >
-                <Box
-                    alignContent={"flex-start"}
-                    display={"flex"}
-                    flexDirection={"column"}
-                    flexWrap={"wrap"}
-                    gap={2}
-                    height={"100%"}
-                    sx={{ overflowX: "scroll" }}
-                >
-                    {renderedPanels}
-                    {Array.from({
-                        length: Math.min(hiddenWeekCount, MAX_WEEK_PANEL_SKELETONS),
-                    }).map((_, index) => (
-                        <WeekPanelSkeleton key={`week-panel-skeleton-${index}`} />
-                    ))}
-                </Box>
-            </Box>
-        </Box>
+        <GanttMappingProvider curriculumId={curriculumId}>
+            <WeeksTabInner curriculumId={curriculumId} />
+        </GanttMappingProvider>
     );
 });

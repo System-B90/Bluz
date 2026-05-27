@@ -5,6 +5,7 @@ import { GanttWeekId } from "@/api-shared/types/gantt/models/week";
 export type GanttCurriculum = {
   title: string;
   description: string;
+  startDate: null | string;
   syllabuses: Array<GanttSyllabusId>;
   isDraft: boolean;
   weeks: Array<GanttWeekId>;

@@ -8,13 +8,19 @@ import {
 import React from "react";
 
 import { getDayNameDisplay } from "@/api-shared/types/gantt/models";
+import {
+    formatShortDate,
+    formatWeekDateRange,
+    getDayDate,
+    getWeekDateRange,
+} from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export const GanttHeader: React.FC = () => {
     const theme = useTheme();
     const state = useCurriculumState();
-    const { timelineWeeks, weeklyView } = useGanttContext();
+    const { startDate, timelineWeeks, weeklyView } = useGanttContext();
 
     return (
         <TableHead>
@@ -40,29 +46,45 @@ export const GanttHeader: React.FC = () => {
             Syllabus / Module
                     </Typography>
                 </TableCell>
-                {timelineWeeks.map((week) => (
-                    <TableCell
-                        align="center"
-                        colSpan={weeklyView ? 1 : week.days.length}
-                        key={week.id}
-                        sx={{
-                            borderLeft: `1px solid ${theme.palette.divider}`,
-                            backgroundColor: theme.palette.background.paper,
-                            zIndex: 2,
-                        }}
-                    >
-                        <Typography fontWeight="bold" variant="subtitle2">
-                            {week.title}
-                        </Typography>
-                    </TableCell>
-                ))}
+                {timelineWeeks.map((week, weekIndex) => {
+                    const dateRangeLabel = formatWeekDateRange(
+                        getWeekDateRange(startDate, weekIndex),
+                    );
+
+                    return (
+                        <TableCell
+                            align="center"
+                            colSpan={weeklyView ? 1 : week.days.length}
+                            key={week.id}
+                            sx={{
+                                borderLeft: `1px solid ${theme.palette.divider}`,
+                                backgroundColor: theme.palette.background.paper,
+                                zIndex: 2,
+                            }}
+                        >
+                            <Typography fontWeight="bold" variant="subtitle2">
+                                {week.title}
+                            </Typography>
+                            {dateRangeLabel ? (
+                                <Typography color="text.secondary" variant="caption">
+                                    {dateRangeLabel}
+                                </Typography>
+                            ) : null}
+                        </TableCell>
+                    );
+                })}
             </TableRow>
             {!weeklyView && (
                 <TableRow>
-                    {timelineWeeks.map((week) =>
+                    {timelineWeeks.map((week, weekIndex) =>
                         week.days.map((dayId) => {
                             const day = state.days[dayId];
                             if (!day) return null;
+                            const dayDate = getDayDate(
+                                startDate,
+                                weekIndex,
+                                day.dayIndex,
+                            );
                             return (
                                 <TableCell
                                     align="center"
@@ -79,6 +101,15 @@ export const GanttHeader: React.FC = () => {
                                     <Typography variant="caption">
                                         {getDayNameDisplay(day.dayIndex)}
                                     </Typography>
+                                    {dayDate ? (
+                                        <Typography
+                                            color="text.secondary"
+                                            display="block"
+                                            variant="caption"
+                                        >
+                                            {formatShortDate(dayDate)}
+                                        </Typography>
+                                    ) : null}
                                 </TableCell>
                             );
                         }),
