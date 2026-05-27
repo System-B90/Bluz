@@ -2,7 +2,8 @@ import { GanttDayIndex } from "@/api-shared/types/gantt/models/day";
 import { GanttEventId } from "@/api-shared/types/gantt/models/event";
 import { GanttModuleId } from "@/api-shared/types/gantt/models/module";
 
-export enum ConstraintType {
+export enum ConstraintType
+{
   Relational = "RELATIONAL",
   Temporal = "TEMPORAL",
 }
@@ -11,19 +12,19 @@ export type EntityType = "event" | "module";
 
 export type BaseConstraint =
   | {
-      id: string;
-      type: ConstraintType;
-      ownerEventId: GanttEventId;
-      ownerModuleId?: GanttModuleId | undefined;
-      ownerType: "event";
-    }
+    id: string;
+    type: ConstraintType;
+    ownerEventId: GanttEventId;
+    ownerModuleId?: GanttModuleId | undefined;
+    ownerType: "event";
+  }
   | {
-      id: string;
-      type: ConstraintType;
-      ownerEventId?: GanttEventId | undefined;
-      ownerModuleId: GanttModuleId;
-      ownerType: "module";
-    };
+    id: string;
+    type: ConstraintType;
+    ownerEventId?: GanttEventId | undefined;
+    ownerModuleId: GanttModuleId;
+    ownerType: "module";
+  };
 
 /**
  * Handles dependencies between two entities (Event-Event, Module-Module, Mixed).

@@ -43,6 +43,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
     const containerRef = useRef<HTMLDivElement>(null);
 
     const [showConstraints, setShowConstraints] = useState(true);
+    const [weeklyView, setWeeklyView] = useState(true);
 
     const timelineWeeks = useMemo(() => {
         if (!curriculum) return [];
@@ -383,6 +384,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
         <DndContext onDragEnd={handleDragEnd}>
             <GanttContext.Provider
                 value={{
+                    weeklyView,
                     timelineWeeks,
                     linearDays,
                     moduleMappings,
@@ -421,15 +423,26 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                     {curriculum.description}
                                 </Typography>
                             </Box>
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={showConstraints}
-                                        onChange={(e) => setShowConstraints(e.target.checked)}
-                                    />
-                                }
-                                label="Show Constraints"
-                            />
+                            <Box sx={{ display: "flex", gap: 2 }}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={weeklyView}
+                                            onChange={(e) => setWeeklyView(e.target.checked)}
+                                        />
+                                    }
+                                    label="Weekly View"
+                                />
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={showConstraints}
+                                            onChange={(e) => setShowConstraints(e.target.checked)}
+                                        />
+                                    }
+                                    label="Show Constraints"
+                                />
+                            </Box>
                         </Box>
 
                         <Box sx={{ flexGrow: 1, position: "relative", overflow: "hidden" }}>
@@ -440,7 +453,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                 <Table
                                     size="small"
                                     stickyHeader
-                                    sx={{ width: "max-content", tableLayout: "fixed" }}
+                                    sx={{ width: "max-content", minWidth: "100%", tableLayout: "fixed" }}
                                 >
                                     <GanttHeader />
                                     <TableBody>

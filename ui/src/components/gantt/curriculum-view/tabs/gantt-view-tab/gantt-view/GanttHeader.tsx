@@ -14,13 +14,13 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 export const GanttHeader: React.FC = () => {
     const theme = useTheme();
     const state = useCurriculumState();
-    const { timelineWeeks } = useGanttContext();
+    const { timelineWeeks, weeklyView } = useGanttContext();
 
     return (
         <TableHead>
             <TableRow>
                 <TableCell
-                    rowSpan={2}
+                    rowSpan={weeklyView ? 1 : 2}
                     sx={{
                         width: 250,
                         minWidth: 250,
@@ -43,7 +43,7 @@ export const GanttHeader: React.FC = () => {
                 {timelineWeeks.map((week) => (
                     <TableCell
                         align="center"
-                        colSpan={week.days.length}
+                        colSpan={weeklyView ? 1 : week.days.length}
                         key={week.id}
                         sx={{
                             borderLeft: `1px solid ${theme.palette.divider}`,
@@ -57,33 +57,35 @@ export const GanttHeader: React.FC = () => {
                     </TableCell>
                 ))}
             </TableRow>
-            <TableRow>
-                {timelineWeeks.map((week) =>
-                    week.days.map((dayId) => {
-                        const day = state.days[dayId];
-                        if (!day) return null;
-                        return (
-                            <TableCell
-                                align="center"
-                                key={dayId}
-                                sx={{
-                                    width: 80,
-                                    minWidth: 80,
-                                    maxWidth: 80,
-                                    boxSizing: "border-box",
-                                    borderLeft: `1px solid ${theme.palette.divider}`,
-                                    backgroundColor: theme.palette.background.paper,
-                                    zIndex: 2,
-                                }}
-                            >
-                                <Typography variant="caption">
-                                    {getDayNameDisplay(day.dayIndex)}
-                                </Typography>
-                            </TableCell>
-                        );
-                    }),
-                )}
-            </TableRow>
+            {!weeklyView && (
+                <TableRow>
+                    {timelineWeeks.map((week) =>
+                        week.days.map((dayId) => {
+                            const day = state.days[dayId];
+                            if (!day) return null;
+                            return (
+                                <TableCell
+                                    align="center"
+                                    key={dayId}
+                                    sx={{
+                                        width: 80,
+                                        minWidth: 80,
+                                        maxWidth: 80,
+                                        boxSizing: "border-box",
+                                        borderLeft: `1px solid ${theme.palette.divider}`,
+                                        backgroundColor: theme.palette.background.paper,
+                                        zIndex: 2,
+                                    }}
+                                >
+                                    <Typography variant="caption">
+                                        {getDayNameDisplay(day.dayIndex)}
+                                    </Typography>
+                                </TableCell>
+                            );
+                        }),
+                    )}
+                </TableRow>
+            )}
         </TableHead>
     );
 };

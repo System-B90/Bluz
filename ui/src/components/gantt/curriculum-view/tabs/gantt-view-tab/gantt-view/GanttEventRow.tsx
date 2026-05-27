@@ -22,6 +22,7 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
     const theme = useTheme();
     const state = useCurriculumState();
     const {
+        weeklyView,
         timelineWeeks,
         linearDays,
         moduleMappings,
@@ -60,7 +61,90 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
         return { isModuleMapped: mapped, moduleStartDayId: startId };
     }, [moduleId, state.modules, moduleMappings, eventMappings, linearDays]);
 
+    // In weekly mode, find which week the module start falls in
+    const moduleStartWeekIdx = useMemo(() => {
+        if (!weeklyView || !moduleStartDayId) return -1;
+        return timelineWeeks.findIndex((w) => w.days.includes(moduleStartDayId));
+    }, [weeklyView, moduleStartDayId, timelineWeeks]);
+
     if (!event) return null;
+
+    const renderCells = () => {
+        if (weeklyView) {
+            return timelineWeeks.map((week, weekIdx) => {
+                const firstDayId = week.days[0];
+
+                // Check if this event is mapped to any day in this week
+                const isExplicitlyMappedHere = currentDayId
+                    ? week.days.includes(currentDayId)
+                    : false;
+                const isWaitingInModuleStartColumn =
+                    isEventUnmapped && isModuleMapped && weekIdx === moduleStartWeekIdx;
+                const hasBlock =
+                    isExplicitlyMappedHere || isWaitingInModuleStartColumn;
+
+                const blockPayload = isExplicitlyMappedHere
+                    ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId }
+                    : { type: "event-map", moduleId, eventId };
+
+                const blockId = isExplicitlyMappedHere
+                    ? `drag-event-${eventId}-${currentDayId}`
+                    : `drag-event-staged-${eventId}`;
+
+                return (
+                    <GanttCell
+                        blockId={blockId}
+                        blockPayload={blockPayload}
+                        blockTitle={event.title}
+                        dayId={firstDayId}
+                        dropId={`drop-event-${eventId}-${firstDayId}`}
+                        elementId={hasBlock ? `block-event-${eventId}` : undefined}
+                        hasBlock={hasBlock}
+                        isAbsoluteBlock={true}
+                        isOpaque={isWaitingInModuleStartColumn}
+                        key={`week-${week.id}-${eventId}`}
+                        payloadData={{ targetType: "event", eventId, dayId: firstDayId }}
+                        violations={hasBlock ? myViolations : undefined}
+                    />
+                );
+            });
+        }
+
+        return timelineWeeks.map((week) =>
+            week.days.map((dayId) => {
+                const isExplicitlyMappedHere = currentDayId === dayId;
+                const isWaitingInModuleStartColumn =
+                    isEventUnmapped && isModuleMapped && moduleStartDayId === dayId;
+                const hasBlock =
+                    isExplicitlyMappedHere || isWaitingInModuleStartColumn;
+
+                const blockPayload = isExplicitlyMappedHere
+                    ? { type: "event-move", moduleId, eventId, sourceDayId: dayId }
+                    : { type: "event-map", moduleId, eventId };
+
+                const blockId = isExplicitlyMappedHere
+                    ? `drag-event-${eventId}-${dayId}`
+                    : `drag-event-staged-${eventId}`;
+
+                return (
+                    <GanttCell
+                        blockId={blockId}
+                        blockPayload={blockPayload}
+                        blockTitle={event.title}
+                        dayId={dayId}
+                        dropId={`drop-event-${eventId}-${dayId}`}
+                        elementId={hasBlock ? `block-event-${eventId}` : undefined}
+                        hasBlock={hasBlock}
+                        isAbsoluteBlock={true}
+                        isOpaque={isWaitingInModuleStartColumn}
+                        key={`${dayId}-${eventId}`}
+                        payloadData={{ targetType: "event", eventId, dayId }}
+                        violations={hasBlock ? myViolations : undefined}
+                    />
+                );
+            }),
+        );
+    };
 
     return (
         <TableRow hover>
@@ -110,40 +194,7 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
                 ) : null}
             </TableCell>
 
-            {timelineWeeks.map((week) =>
-                week.days.map((dayId) => {
-                    const isExplicitlyMappedHere = currentDayId === dayId;
-                    const isWaitingInModuleStartColumn =
-            isEventUnmapped && isModuleMapped && moduleStartDayId === dayId;
-                    const hasBlock =
-            isExplicitlyMappedHere || isWaitingInModuleStartColumn;
-
-                    const blockPayload = isExplicitlyMappedHere
-                        ? { type: "event-move", moduleId, eventId, sourceDayId: dayId }
-                        : { type: "event-map", moduleId, eventId };
-
-                    const blockId = isExplicitlyMappedHere
-                        ? `drag-event-${eventId}-${dayId}`
-                        : `drag-event-staged-${eventId}`;
-
-                    return (
-                        <GanttCell
-                            blockId={blockId}
-                            blockPayload={blockPayload}
-                            blockTitle={event.title}
-                            dayId={dayId}
-                            dropId={`drop-event-${eventId}-${dayId}`}
-                            elementId={hasBlock ? `block-event-${eventId}` : undefined}
-                            hasBlock={hasBlock}
-                            isAbsoluteBlock={true}
-                            isOpaque={isWaitingInModuleStartColumn}
-                            key={`${dayId}-${eventId}`}
-                            payloadData={{ targetType: "event", eventId, dayId }}
-                            violations={hasBlock ? myViolations : undefined}
-                        />
-                    );
-                }),
-            )}
+            {renderCells()}
         </TableRow>
     );
 };

@@ -10,6 +10,7 @@ export type GanttConstraintState = {
 };
 
 export type GanttContextType = {
+  weeklyView: boolean;
   timelineWeeks: Array<GanttWeek>;
   linearDays: Array<string>;
   eventMappings: Record<string, string>;

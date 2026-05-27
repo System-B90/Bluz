@@ -20,6 +20,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
     const theme = useTheme();
     const ganttModule = useModule(moduleId);
     const {
+        weeklyView,
         timelineWeeks,
         linearDays,
         moduleMappings,
@@ -46,6 +47,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
         [moduleId, violations],
     );
 
+    // Day-level span (used in daily mode)
     const spanIndices = useMemo(() => {
         const dayIds = new Set<string>();
 
@@ -65,8 +67,97 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
         return { min: Math.min(...indices), max: Math.max(...indices) };
     }, [hasEvents, ganttModule?.events, eventMappings, mappedDays, linearDays]);
 
-    const isUnmapped = spanIndices === null;
-    const spanLength = spanIndices ? spanIndices.max - spanIndices.min + 1 : 1;
+    // Week-level span (used in weekly mode)
+    const weekSpanIndices = useMemo(() => {
+        if (!weeklyView) return null;
+
+        const dayIds = new Set<string>();
+        mappedDays.forEach((d) => dayIds.add(d));
+        if (hasEvents) {
+            (ganttModule?.events ?? []).forEach((eId) => {
+                const d = eventMappings[eId];
+                if (d) dayIds.add(d);
+            });
+        }
+
+        const weekIndices = new Set<number>();
+        dayIds.forEach((dayId) => {
+            const weekIdx = timelineWeeks.findIndex((w) => w.days.includes(dayId));
+            if (weekIdx !== -1) weekIndices.add(weekIdx);
+        });
+
+        if (weekIndices.size === 0) return null;
+        const arr = Array.from(weekIndices);
+        return { min: Math.min(...arr), max: Math.max(...arr) };
+    }, [weeklyView, mappedDays, hasEvents, ganttModule?.events, eventMappings, timelineWeeks]);
+
+    const isUnmapped = weeklyView ? weekSpanIndices === null : spanIndices === null;
+    const spanLength = weeklyView
+        ? (weekSpanIndices ? weekSpanIndices.max - weekSpanIndices.min + 1 : 1)
+        : (spanIndices ? spanIndices.max - spanIndices.min + 1 : 1);
+
+    // Build cells depending on view mode
+    const renderCells = () => {
+        if (weeklyView) {
+            return timelineWeeks.map((week, weekIdx) => {
+                const firstDayId = week.days[0];
+                const isSpanStart =
+                    weekSpanIndices !== null && weekIdx === weekSpanIndices.min;
+
+                return (
+                    <GanttCell
+                        blockId={`drag-module-shift-${moduleId}-${firstDayId}`}
+                        blockPayload={{
+                            type: "module-shift",
+                            moduleId,
+                            sourceDayId: firstDayId,
+                        }}
+                        blockTitle={ganttModule?.title}
+                        dayId={firstDayId}
+                        dropId={`drop-module-${moduleId}-${firstDayId}`}
+                        elementId={isSpanStart ? `block-module-${moduleId}` : undefined}
+                        hasBlock={isSpanStart}
+                        isAbsoluteBlock={true}
+                        isOpaque={hasEvents ? isExpanded : undefined}
+                        key={`week-${week.id}-${moduleId}`}
+                        payloadData={{ targetType: "module", moduleId, dayId: firstDayId }}
+                        spanLength={spanLength}
+                        violations={isSpanStart ? myViolations : undefined}
+                    />
+                );
+            });
+        }
+
+        return timelineWeeks.map((week) =>
+            week.days.map((dayId) => {
+                const dayIndex = linearDays.indexOf(dayId);
+                const isSpanStart =
+                    spanIndices !== null && dayIndex === spanIndices.min;
+
+                return (
+                    <GanttCell
+                        blockId={`drag-module-shift-${moduleId}-${dayId}`}
+                        blockPayload={{
+                            type: "module-shift",
+                            moduleId,
+                            sourceDayId: dayId,
+                        }}
+                        blockTitle={ganttModule?.title}
+                        dayId={dayId}
+                        dropId={`drop-module-${moduleId}-${dayId}`}
+                        elementId={isSpanStart ? `block-module-${moduleId}` : undefined}
+                        hasBlock={isSpanStart}
+                        isAbsoluteBlock={true}
+                        isOpaque={hasEvents ? isExpanded : undefined}
+                        key={`${dayId}-${moduleId}`}
+                        payloadData={{ targetType: "module", moduleId, dayId }}
+                        spanLength={spanLength}
+                        violations={isSpanStart ? myViolations : undefined}
+                    />
+                );
+            }),
+        );
+    };
 
     return (
         <React.Fragment>
@@ -127,35 +218,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                     </Box>
                 </TableCell>
 
-                {timelineWeeks.map((week) =>
-                    week.days.map((dayId) => {
-                        const dayIndex = linearDays.indexOf(dayId);
-                        const isSpanStart =
-              spanIndices !== null && dayIndex === spanIndices.min;
-
-                        return (
-                            <GanttCell
-                                blockId={`drag-module-shift-${moduleId}-${dayId}`}
-                                blockPayload={{
-                                    type: "module-shift",
-                                    moduleId,
-                                    sourceDayId: dayId,
-                                }}
-                                blockTitle={ganttModule?.title}
-                                dayId={dayId}
-                                dropId={`drop-module-${moduleId}-${dayId}`}
-                                elementId={isSpanStart ? `block-module-${moduleId}` : undefined}
-                                hasBlock={isSpanStart}
-                                isAbsoluteBlock={true}
-                                isOpaque={hasEvents ? isExpanded : undefined}
-                                key={`${dayId}-${moduleId}`}
-                                payloadData={{ targetType: "module", moduleId, dayId }}
-                                spanLength={spanLength}
-                                violations={isSpanStart ? myViolations : undefined}
-                            />
-                        );
-                    }),
-                )}
+                {renderCells()}
             </TableRow>
 
             {isExpanded && hasEvents
