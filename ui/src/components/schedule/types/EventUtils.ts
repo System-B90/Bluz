@@ -16,7 +16,10 @@ export function deepCopyEvent(event: Event): Event {
     return cpy;
 }
 
-function arraysEqual<T>(a: Array<T> | undefined, b: Array<T> | undefined): boolean {
+function arraysEqual<T>(
+    a: Array<T> | undefined,
+    b: Array<T> | undefined,
+): boolean {
     if (a === b) return true;
     if (!a || !b) return false;
     if (a.length !== b.length) return false;

@@ -22,16 +22,13 @@ import { MessageTypes } from "@/settings";
  * };
  * ```
  */
-export type MessageHandlerType = (
-  messageType: MessageTypes,
-  data: any,
-) => void;
+export type MessageHandlerType = (messageType: MessageTypes, data: any) => void;
 const MessageHandlerContext = createContext<MessageHandlerType>(() => {});
 
 /**
  * Custom hook to establish and manage client-side WebSocket sessions.
  * Manages event listener registrations and session heartbeats.
- * 
+ *
  * @returns An object containing the WebSocket ref and helper to add/remove handlers.
  * @example
  * ```typescript

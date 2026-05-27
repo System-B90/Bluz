@@ -12,11 +12,12 @@ import { WeeksTab } from "@/components/gantt/curriculum-view/tabs/weeks-tab";
 type TabProps = {
   selectedTabIndex: number;
   setSelectedTabIndex: Dispatch<SetStateAction<number>>;
-}
+};
 
 export type CurriculumViewTabsProps = {
   curriculumId: GanttCurriculumId | null;
-} & BoxProps & TabProps
+} & BoxProps &
+  TabProps;
 
 function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
     return (

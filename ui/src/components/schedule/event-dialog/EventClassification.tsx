@@ -8,7 +8,11 @@ import { ModuleField } from "@/components/schedule/event-dialog/ModuleField";
 import { PrayerTypeField } from "@/components/schedule/event-dialog/PrayerType";
 import { RoomField } from "@/components/schedule/event-dialog/RoomField";
 import { SubjectField } from "@/components/schedule/event-dialog/SubjectField";
-import { Event, PrayerEvent, EventType } from "@/components/schedule/types/event";
+import {
+    Event,
+    PrayerEvent,
+    EventType,
+} from "@/components/schedule/types/event";
 
 export function EventClassification({
     event,

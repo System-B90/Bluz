@@ -7,5 +7,5 @@ export type GanttWeek = {
   days: Array<GanttDayId>;
   comment?: string;
   weekendDuty: boolean;
-} & BaseGantItem
+} & BaseGantItem;
 export type GanttWeekId = string;

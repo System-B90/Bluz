@@ -1,6 +1,5 @@
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
-import
-{
+import {
     GanttCurriculum,
     GanttEvent,
     GanttModule,

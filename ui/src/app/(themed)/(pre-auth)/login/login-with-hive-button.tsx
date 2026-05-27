@@ -14,7 +14,7 @@ type LoginWithHiveProps = {
   callbackUrl?: SignInOptions["callbackUrl"];
   fontSize?: TypographyProps["fontSize"];
   fontWeight?: TypographyProps["fontWeight"];
-} & ButtonProps
+} & ButtonProps;
 
 export function LoginWithHive({
     callbackUrl = "/",

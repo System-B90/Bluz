@@ -2,19 +2,16 @@ import { registerOTel } from "@vercel/otel";
 
 import { DbSettings } from "@/api-server/db-settings";
 
-export function register()
-{
+export function register() {
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
     registerOTel("next-app");
 
     DbSettings.init()
-        .then(() =>
-        {
+        .then(() => {
             console.log(`Successfully initialized Settings DB!`);
         })
-        .catch((error) =>
-        {
+        .catch((error) => {
             console.error(`Failed to initialize Settings DB!`, error);
         });
 }

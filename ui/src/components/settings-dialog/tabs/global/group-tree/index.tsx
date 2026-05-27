@@ -65,7 +65,11 @@ function GroupItem({ group }: { group: Group }) {
     );
 }
 
-export function GroupTreeViewer({ initialGroups }: { initialGroups: Array<Group> }) {
+export function GroupTreeViewer({
+    initialGroups,
+}: {
+  initialGroups: Array<Group>;
+}) {
     const items = initialGroups.map((g) => <GroupItem group={g} key={g.id} />);
 
     return (

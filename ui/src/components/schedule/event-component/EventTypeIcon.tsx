@@ -6,7 +6,11 @@ import SynagogueIcon from "@mui/icons-material/Synagogue";
 import { Box, SvgIconProps, Tooltip } from "@mui/material";
 import { ReactNode } from "react";
 
-import { Event, EventType, eventTypeToHebrew } from "@/components/schedule/types/event";
+import {
+    Event,
+    EventType,
+    eventTypeToHebrew,
+} from "@/components/schedule/types/event";
 
 export function EventTypeIcon({
     event,

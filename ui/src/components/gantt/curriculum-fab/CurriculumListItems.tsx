@@ -11,7 +11,7 @@ export type CurriculumListItemsProps = {
   sortedIds: Array<GanttCurriculumId>;
   setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
   currentCurriculum?: GanttCurriculumId | null;
-}
+};
 
 export function CurriculumListItems({
     isFetchingDetails,

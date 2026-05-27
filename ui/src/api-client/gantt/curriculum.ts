@@ -1,5 +1,4 @@
-import
-{
+import {
     BaseDocument,
     baseDocumentFixup,
     clientGantApiBuilder,
@@ -18,13 +17,12 @@ const curriculumApi = clientGantApiBuilder<
 });
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =
   curriculumApi;
-export
-{
+export {
     apiCreate as apiCreateCurriculum,
     apiDelete as apiDeleteCurriculum,
     apiGet as apiGetCurriculum,
     apiGetMany as apiGetManyCurriculums,
     apiList as apiListCurriculums,
     apiUpdate as apiUpdateCurriculum,
-    curriculumApi
+    curriculumApi,
 };

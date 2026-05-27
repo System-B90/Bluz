@@ -7,13 +7,11 @@
 import { relations } from "drizzle-orm";
 import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-import
-{
+import {
     ganttCurriculum2SyllabusesSchema,
     ganttCurriculum2WeeksSchema,
 } from "./junctions";
-import
-{
+import {
     ganttCurriculumEventConfigurationsSchema,
     ganttCurriculumEventDayMappingsSchema,
 } from "./mappings";

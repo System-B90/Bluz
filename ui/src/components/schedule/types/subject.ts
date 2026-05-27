@@ -4,6 +4,6 @@ export type Subject = {
   displayName: string;
   color?: string;
   defaultGroupIDs?: Array<string>;
-}
+};
 
 export type SubjectLike = number | string | Subject;

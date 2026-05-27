@@ -20,7 +20,7 @@ export type SyllabusProviderState = {
   isLoading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
-}
+};
 
 const SyllabusContext = createContext<SyllabusProviderState | undefined>(
     undefined,

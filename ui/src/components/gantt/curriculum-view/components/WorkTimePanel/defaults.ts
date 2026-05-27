@@ -1,5 +1,4 @@
-import
-{
+import {
     DAY_NAME_DISPLAY,
     GanttDay,
     GanttDayIndex,

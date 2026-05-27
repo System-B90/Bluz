@@ -24,7 +24,7 @@ import {
 export type ContainerSize = {
   width: number;
   height: number;
-}
+};
 
 const EVENT_SIZE_VARIANTS_THRESHOLDS = {
     H_TINY: 35, // Up to _px height is considered "tiny"

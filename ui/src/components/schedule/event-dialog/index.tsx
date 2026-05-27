@@ -22,7 +22,7 @@ type EventDialogProps = {
   onClose: () => void;
   onSave: (event: Event) => void;
   onDelete: (eventId: EventId) => void;
-}
+};
 
 export function EventDialog({
     open,

@@ -1,8 +1,7 @@
 import { useCallback } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
-import
-{
+import {
     GanttCurriculum,
     GanttCurriculumId,
 } from "@/api-shared/types/gantt/models";

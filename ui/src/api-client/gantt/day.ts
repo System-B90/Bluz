@@ -1,5 +1,4 @@
-import
-{
+import {
     BaseDocument,
     baseDocumentFixup,
     clientGantApiBuilder,
@@ -16,13 +15,12 @@ const dayApi = clientGantApiBuilder<GanttDay, CreateGanttDayPayload>({
 
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } = dayApi;
 
-export
-{
+export {
     apiCreate as apiCreateDay,
     apiDelete as apiDeleteDay,
     apiGet as apiGetDay,
     apiGetMany as apiGetManyDays,
     apiList as apiListDays,
     apiUpdate as apiUpdateDay,
-    dayApi
+    dayApi,
 };

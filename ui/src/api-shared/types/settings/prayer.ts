@@ -6,4 +6,4 @@ export type PrayerSettings = {
   shacharit: Date | Dayjs;
   mincha: Date | Dayjs;
   arvit: Date | Dayjs;
-}
+};

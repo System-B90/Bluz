@@ -14,7 +14,7 @@ import {
     eventTypeToHebrew,
 } from "@/components/schedule/types/event";
 
-export type EventTypeFieldProps = {} & EventFieldProps
+export type EventTypeFieldProps = {} & EventFieldProps;
 
 export function EventTypeField({
     event,

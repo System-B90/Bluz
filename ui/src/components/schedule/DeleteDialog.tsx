@@ -16,7 +16,7 @@ type DeleteDialogProps = {
   event?: null | Partial<Event>;
   onClose: () => void;
   onConfirm: () => void;
-}
+};
 
 export function DeleteDialog({
     open,

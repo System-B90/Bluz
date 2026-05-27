@@ -14,10 +14,7 @@ export type CreateNewCurriculumProps = {
   onUpdate: (updatedCurriculum: GanttCurriculumDocument) => void;
   onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
   sourceCurriculum?: GanttCurriculumDocument | null;
-} & Omit<
-  ButtonProps,
-  "onClick" | "sx"
->
+} & Omit<ButtonProps, "onClick" | "sx">;
 
 export function CurriculumActionItems({
     onCreate,

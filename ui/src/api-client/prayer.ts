@@ -9,5 +9,8 @@ export async function apiGetPrayerSettings() {
 }
 
 export async function apiSetPrayerSettings(settings: PrayerSettings) {
-    return await apiSetSetting<PrayerSettings>(PRAYER_TIMES_SETTING_KEY, settings);
+    return await apiSetSetting<PrayerSettings>(
+        PRAYER_TIMES_SETTING_KEY,
+        settings,
+    );
 }

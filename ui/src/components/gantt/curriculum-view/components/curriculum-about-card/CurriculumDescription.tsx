@@ -8,7 +8,7 @@ import { useCurriculumActions } from "@/components/gantt/state/hooks/gantt-funcs
 export type CurriculumDescriptionProps = {
   curriculumId: GanttCurriculumId | null;
   description?: string;
-}
+};
 
 export function CurriculumDescription({
     curriculumId,

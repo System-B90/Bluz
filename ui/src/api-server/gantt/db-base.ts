@@ -3,8 +3,7 @@ import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
 import { postgresDb } from "@/api-server/gantt";
 import { ClientApiError } from "@/api-shared/errors";
-import
-{
+import {
     BaseGantItem,
     GanttCurriculumId,
     GanttModuleId,
@@ -25,13 +24,13 @@ export type JunctionConfig = {
   localKey: AnyPgColumn;
   relationKey: AnyPgColumn;
   apiKey: string;
-}
+};
 
 export type ParentJunctionConfig = {
   table: PgTableWithColumns<any>;
   parentKey: string;
   selfKey: string;
-}
+};
 
 export type DrizzleOperationsBuilderProps<
   TTable extends PgTableWithColumns<any>,
@@ -41,7 +40,7 @@ export type DrizzleOperationsBuilderProps<
   junction?: Array<JunctionConfig> | JunctionConfig;
   parentJunction?: ParentJunctionConfig;
   idPrefix: "c" | "d" | "e" | "m" | "s" | "w";
-}
+};
 
 export function drizzleOperationsBuilder<
   T extends BaseGantItem,
@@ -60,7 +59,9 @@ export function drizzleOperationsBuilder<
   type DbTDocument = T & BaseDbDocument;
   const cols = table as any;
 
-  async function getMultipleItems(ids: Array<T["id"]>): Promise<Array<DbTDocument>> {
+  async function getMultipleItems(
+      ids: Array<T["id"]>,
+  ): Promise<Array<DbTDocument>> {
       if (!ids || ids.length === 0) return [];
 
       return (await postgresDb

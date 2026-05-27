@@ -1,5 +1,9 @@
 import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models";
-import { GanttMappingAction, GanttMappingState, getGanttMappingKey } from "@/components/gantt/state/mappings/types";
+import {
+    GanttMappingAction,
+    GanttMappingState,
+    getGanttMappingKey,
+} from "@/components/gantt/state/mappings/types";
 
 /**
  * High-Performance Reducer
@@ -7,15 +11,12 @@ import { GanttMappingAction, GanttMappingState, getGanttMappingKey } from "@/com
 export function ganttMappingReducer(
     state: GanttMappingState,
     action: GanttMappingAction,
-): GanttMappingState
-{
-    switch (action.type)
-    {
+): GanttMappingState {
+    switch (action.type) {
     case "SET_MAPPINGS":
         const newMappings: Record<string, GanttCurriculumModuleDayMapping> = {};
-        action.payload.forEach((m) =>
-        {
-            newMappings[ getGanttMappingKey(m) ] = m;
+        action.payload.forEach((m) => {
+            newMappings[getGanttMappingKey(m)] = m;
         });
         return { ...state, mappings: newMappings, isLoading: false };
 
@@ -24,13 +25,13 @@ export function ganttMappingReducer(
             ...state,
             mappings: {
                 ...state.mappings,
-                [ getGanttMappingKey(action.payload) ]: action.payload,
+                [getGanttMappingKey(action.payload)]: action.payload,
             },
         };
 
     case "DELETE_MAPPING":
         const updated = { ...state.mappings };
-        delete updated[ getGanttMappingKey(action.payload) ];
+        delete updated[getGanttMappingKey(action.payload)];
         return { ...state, mappings: updated };
 
     case "SET_LOADING":

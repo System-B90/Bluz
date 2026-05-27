@@ -1,6 +1,5 @@
 import DeleteIcon from "@mui/icons-material/Delete";
-import
-{
+import {
     FormControl,
     IconButton,
     MenuItem,
@@ -13,8 +12,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import
-{
+import {
     GanttEvent,
     GanttEventId,
     GanttModuleId,

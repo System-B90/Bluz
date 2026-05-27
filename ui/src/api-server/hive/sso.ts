@@ -9,7 +9,7 @@ type JwtTokenData = {
   accessToken: string;
   refreshToken: string;
   expires_at: number;
-}
+};
 type HiveSsoProfile = {
   sub: string;
   aud: string;
@@ -38,7 +38,7 @@ type HiveSsoProfile = {
     refresh_token: string;
     expires_at: number;
   };
-} & Profile
+} & Profile;
 type HiveUser = {
   id: string;
   name: string;
@@ -52,7 +52,7 @@ type HiveUser = {
   temp_access_token?: string;
   temp_refresh_token?: string;
   temp_expires_at?: number;
-}
+};
 
 const NEXT_PUBLIC_HIVE_URL = process.env.NEXT_PUBLIC_HIVE_URL ?? "";
 const HIVE_PROVIDER: OAuthConfig<HiveSsoProfile> = {
@@ -180,6 +180,23 @@ const sessionCallback: CallbacksOptions["session"] = async ({
 };
 
 export const authOptions: AuthOptions = {
+    debug: true,
+    // 2. Override the logger to intercept metadata
+    logger: {
+        error(code, metadata) {
+            console.error(`\n❌ [NextAuth Error]: ${code}`);
+            console.error(JSON.stringify(metadata, null, 2));
+            console.error(`Hive URL: ${NEXT_PUBLIC_HIVE_URL}`);
+        },
+        warn(code) {
+            console.warn(`\n⚠️ [NextAuth Warning]: ${code}`);
+        },
+        debug(code, metadata) {
+            console.log(`\n🐛 [NextAuth Debug]: ${code}`);
+            console.log(JSON.stringify(metadata, null, 2));
+        },
+    },
+
     providers: [HIVE_PROVIDER],
     pages: {
         signIn: "/login",

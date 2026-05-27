@@ -5,5 +5,5 @@ export type GanttSyllabus = {
   title: string;
   hiveIds: Array<number>;
   modules: Array<GanttModuleId>;
-} & BaseGantItem
+} & BaseGantItem;
 export type GanttSyllabusId = GanttSyllabus["id"];

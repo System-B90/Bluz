@@ -12,7 +12,7 @@ import { Event, eventHasSubject } from "@/components/schedule/types/event";
 type SubjectFieldProps = {
   event?: Partial<Event>;
   onEventChange: (updates: Partial<Event>) => void;
-}
+};
 
 export function SubjectField({
     event,

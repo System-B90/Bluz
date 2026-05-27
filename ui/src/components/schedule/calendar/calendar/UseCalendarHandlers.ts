@@ -122,7 +122,7 @@ export function useCalendarHandlers(
                 const newEvent = {
                     ...rest,
                     startTime: newStart, // Keep Dayjs objects to align with the Event type signature
-                    endTime: newEnd,     // Keep Dayjs objects to align with the Event type signature
+                    endTime: newEnd, // Keep Dayjs objects to align with the Event type signature
                     rooms: newRooms,
                 } as Event;
 

@@ -8,7 +8,7 @@ import { User } from "@/components/schedule/types/user";
 
 type GroupMemberFieldProps = {
   user: User;
-}
+};
 
 export function GroupMemberField({ user }: GroupMemberFieldProps) {
     const { attributes, listeners, setNodeRef, transform, transition } =

@@ -17,26 +17,23 @@ import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 
 export type SidebarProps = {
-    curriculumId: GanttCurriculumId | null;
-} & BoxProps
+  curriculumId: GanttCurriculumId | null;
+} & BoxProps;
 
 export function SyllabusModulesCurriculumViewSidebar({
     curriculumId,
     ...props
-}: SidebarProps)
-{
+}: SidebarProps) {
     const theme = useTheme();
     const { syllabusNames } = useSyllabusNames();
     const curriculum = useCurriculum(curriculumId ?? "");
     const syllabuses = curriculum?.syllabuses;
 
-    const sortedSyllabusIds = useMemo(() =>
-    {
-        return [ ...(syllabuses ?? []) ].sort((a, b) =>
-        {
-            return (syllabusNames[ a ] ?? "").localeCompare(syllabusNames[ b ] ?? "");
+    const sortedSyllabusIds = useMemo(() => {
+        return [...(syllabuses ?? [])].sort((a, b) => {
+            return (syllabusNames[a] ?? "").localeCompare(syllabusNames[b] ?? "");
         });
-    }, [ syllabuses, syllabusNames ]);
+    }, [syllabuses, syllabusNames]);
 
     const dropId = `sidebar`;
 
@@ -48,30 +45,29 @@ export function SyllabusModulesCurriculumViewSidebar({
     });
 
     // Memoize the rendered sections to optimize performance during drag operations
-    const renderedSyllabusSections = useMemo(() =>
-    {
+    const renderedSyllabusSections = useMemo(() => {
         return sortedSyllabusIds.map((s, idx) => (
-            <React.Fragment key={ s }>
-                <SyllabusSection syllabusId={ s } />
-                { idx !== sortedSyllabusIds.length - 1 && (
+            <React.Fragment key={s}>
+                <SyllabusSection syllabusId={s} />
+                {idx !== sortedSyllabusIds.length - 1 && (
                     <Divider className="mx-4 opacity-60" />
-                ) }
+                )}
             </React.Fragment>
         ));
-    }, [ sortedSyllabusIds ]);
+    }, [sortedSyllabusIds]);
 
     return (
         <Box
-            { ...props }
+            {...props}
             className="flex flex-col h-full overflow-x-clip shrink-0 border-r border-slate-200"
-            ref={ setNodeRef }
-            sx={ {
+            ref={setNodeRef}
+            sx={{
                 width: 320,
                 backgroundColor: isOver
                     ? alpha(theme.palette.error.main, 0.08)
                     : "transparent",
                 transition: theme.transitions.create(
-                    [ "background-color", "transform" ],
+                    ["background-color", "transform"],
                     {
                         duration: theme.transitions.duration.shorter,
                     },
@@ -79,10 +75,10 @@ export function SyllabusModulesCurriculumViewSidebar({
                 transform: isOver ? "scale(1.01)" : "scale(1)",
                 zIndex: isOver ? 1 : "auto",
                 ...props.sx,
-            } }
+            }}
         >
             <Box className="grow overflow-y-auto overflow-x-clip scroll-smooth bg-slate-50/30 pl-1">
-                { renderedSyllabusSections }
+                {renderedSyllabusSections}
             </Box>
         </Box>
     );

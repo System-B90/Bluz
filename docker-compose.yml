@@ -8,8 +8,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-    extra_hosts:
-      - "hive.org:host-gateway"
+    # extra_hosts:
+    # - "hive.org:host-gateway" # If running Hive locally
     networks:
       - bluz_net
     depends_on:

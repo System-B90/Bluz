@@ -1,14 +1,12 @@
 import { and, eq } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
-import
-{
+import {
     drizzleOperationsBuilder,
     FOREIGN_KEY_VIOLATION,
     UNIQUE_VIOLATION,
 } from "@/api-server/gantt/db-base";
-import
-{
+import {
     ganttEventsSchema,
     ganttModule2EventsSchema,
 } from "@/api-server/gantt/schema";
@@ -16,8 +14,7 @@ import { ganttCurriculumEventConfigurationsSchema } from "@/api-server/gantt/sch
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttEventPayload } from "@/api-shared/types/gantt/create-payloads";
-import
-{
+import {
     GanttCurriculumId,
     GanttEvent,
     GanttEventId,

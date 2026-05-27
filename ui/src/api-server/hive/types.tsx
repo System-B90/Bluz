@@ -125,7 +125,7 @@ export type CourseUser = {
    * @pattern ^[\w.@+-]+$
    */
   username: string;
-}
+};
 
 export type Class = {
   /**
@@ -143,4 +143,4 @@ export type Class = {
   readonly program__name: string;
   type?: ClassTypeEnum;
   users: Array<number>;
-}
+};

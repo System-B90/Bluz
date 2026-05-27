@@ -1,4 +1,3 @@
-
 export const WEBSOCKET_SESSION_SERVER_PORT = parseInt(
   process.env.WEBSOCKET_SESSION_SERVER_PORT ?? "443",
   10,
@@ -23,8 +22,7 @@ export const WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC = "server";
 export const WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY =
   process.env.WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY;
 
-export enum MessageTypes
-{
+export enum MessageTypes {
   REGISTER_SESSION = "register-session",
   REGISTER_SYNC_PROVIDER = "register-sync-provider",
   SYNC_OBJECT_UPDATE = "sync-object-update",

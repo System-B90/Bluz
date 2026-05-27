@@ -11,7 +11,7 @@ import { BaseActionItemProps } from "@/components/gantt/curriculum-fab/action-it
 
 export type CreateDraftActionProps = {
   onCreate: (newCurriculum: GanttCurriculumDocument) => void;
-} & BaseActionItemProps
+} & BaseActionItemProps;
 
 export function CreateDraftAction({
     onCreate,

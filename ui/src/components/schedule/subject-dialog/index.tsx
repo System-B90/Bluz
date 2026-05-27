@@ -26,7 +26,7 @@ type SubjectDialogProps = {
   subject: Partial<Subject>;
   onClose: () => void;
   onSave: (subject: Subject) => void;
-}
+};
 
 export function SubjectDialog({
     open,

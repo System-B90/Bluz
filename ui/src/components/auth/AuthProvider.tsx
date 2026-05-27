@@ -20,7 +20,7 @@ import { MessageTypes } from "@/settings";
 export type WebSocketSessionMessage = {
   type: MessageTypes;
   [key: string]: unknown;
-}
+};
 
 export type AuthContextState = {
   userData: AuthSessionUser;

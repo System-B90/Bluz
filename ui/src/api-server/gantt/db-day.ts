@@ -2,19 +2,14 @@ import { eq } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
 import { drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
-import
-{
+import {
     ganttDaysSchema,
     ganttWeek2DaysSchema,
 } from "@/api-server/gantt/schema";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiCurriculumDay } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttDayPayload } from "@/api-shared/types/gantt/create-payloads";
-import
-{
-    GanttDay,
-    GanttDayId,
-} from "@/api-shared/types/gantt/models";
+import { GanttDay, GanttDayId } from "@/api-shared/types/gantt/models";
 
 const basicOperations = drizzleOperationsBuilder<
   GanttDay,

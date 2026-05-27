@@ -57,7 +57,7 @@ async function getDbEventsInRange(
 /**
  * Updates an existing calendar event in the MongoDB collection.
  * Triggers a real-time WebSocket broadcast to all connected clients.
- * 
+ *
  * @param eventData The document payload sent by the client. Must contain a valid `id` UUID.
  * @param options MongoDB FindOptions.
  * @returns The fixed and serialized DbEventDocument.
@@ -104,7 +104,7 @@ async function setDbEvent(
 /**
  * Inserts a new calendar event into the MongoDB collection.
  * Triggers a real-time WebSocket broadcast to notify clients of the new event.
- * 
+ *
  * @param eventData The document payload sent by the client. Must contain a valid `id` UUID.
  * @param options MongoDB FindOptions.
  * @returns The fixed, created DbEventDocument.
@@ -125,7 +125,7 @@ async function createDbEvent(
     }
 
     const { id: eventId, ...updatePayload } = eventData;
-    
+
     // Fix dates and explicitly preserve the client-generated UUID in the id field
     const fixedEvent = {
         ...eventDateFixup(updatePayload),

@@ -6,4 +6,4 @@ export type User = {
   type: UserType;
   username?: string;
   email?: string;
-}
+};

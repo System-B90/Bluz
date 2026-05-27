@@ -8,5 +8,5 @@ export type GanttCurriculum = {
   syllabuses: Array<GanttSyllabusId>;
   isDraft: boolean;
   weeks: Array<GanttWeekId>;
-} & BaseGantItem
+} & BaseGantItem;
 export type GanttCurriculumId = GanttCurriculum["id"];

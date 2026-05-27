@@ -15,11 +15,10 @@ import { GanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-ta
 /**
  * Inner component that handles Gantt rendering with data transformation
  */
-export function CurriculumGanttViewInner(
-    { curriculumId }: { curriculumId: GanttCurriculumId; }
-): React.ReactElement
-{
-    return (
-        <GanttView curriculumId={ curriculumId } />
-    );
+export function CurriculumGanttViewInner({
+    curriculumId,
+}: {
+  curriculumId: GanttCurriculumId;
+}): React.ReactElement {
+    return <GanttView curriculumId={curriculumId} />;
 }

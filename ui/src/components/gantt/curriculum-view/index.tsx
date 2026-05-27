@@ -9,7 +9,7 @@ import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
 
 export type CurriculumViewProps = {
   curriculumId: GanttCurriculumId | null;
-} & BoxProps
+} & BoxProps;
 
 export function CurriculumView({
     curriculumId,

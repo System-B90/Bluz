@@ -29,7 +29,7 @@ type BluzCalendarProps = {
   setOpenEventDialog: (open: boolean) => void;
   setSelectedEvent: Dispatch<SetStateAction<Event | undefined>>;
   events: Array<Event>;
-}
+};
 
 export function BluzCalendar({
     handleSaveEvent,

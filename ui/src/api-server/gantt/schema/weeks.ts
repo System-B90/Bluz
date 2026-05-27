@@ -1,6 +1,5 @@
 import { relations } from "drizzle-orm";
-import
-{
+import {
     boolean,
     integer,
     pgTable,

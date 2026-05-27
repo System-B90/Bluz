@@ -4,8 +4,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import
-{
+import {
     GanttSyllabusId,
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
@@ -16,25 +15,21 @@ export function CreateModuleButton({
     syllabusId,
 }: {
   syllabusId: GanttSyllabusId;
-})
-{
+}) {
     const { enqueueSnackbar } = useSnackbar();
     const { createEvent } = useModuleEventActions();
     const { createModule } = useModuleActions();
-    const [ isCreating, setIsCreating ] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
 
-    const clickHandler = useCallback(async () =>
-    {
+    const clickHandler = useCallback(async () => {
         setIsCreating(true);
-        try
-        {
+        try {
             const newModule = await createModule(
                 "מערך חדש",
                 syllabusId,
                 "המערך החדש שלי",
             );
-            try
-            {
+            try {
                 await createEvent(
                     "הרצאת מבוא",
                     newModule.id,
@@ -42,37 +37,34 @@ export function CreateModuleButton({
                     60,
                 );
                 await createEvent('ע"ע', newModule.id, ModuleEventType.Exercise, 45);
-            } catch (error)
-            {
+            } catch (error) {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "יצירת מופעי ברירת מחדל במערך נכשלה!",
                     error,
                 );
             }
-        } catch (error)
-        {
+        } catch (error) {
             enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת המערך נכשלה!", error);
-        } finally
-        {
+        } finally {
             setIsCreating(false);
         }
-    }, [ syllabusId, enqueueSnackbar, createModule, createEvent ]);
+    }, [syllabusId, enqueueSnackbar, createModule, createEvent]);
 
     return (
         <Tooltip placement="top" title="מערך חדש">
             <span>
                 <IconButton
                     color="secondary"
-                    disabled={ isCreating }
-                    onClick={ clickHandler }
+                    disabled={isCreating}
+                    onClick={clickHandler}
                     size="small"
                 >
-                    { isCreating ? (
+                    {isCreating ? (
                         <CircularProgress color="inherit" size="1.25rem" />
                     ) : (
                         <AddIcon fontSize="small" />
-                    ) }
+                    )}
                 </IconButton>
             </span>
         </Tooltip>

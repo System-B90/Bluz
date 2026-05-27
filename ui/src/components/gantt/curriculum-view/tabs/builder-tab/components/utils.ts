@@ -7,8 +7,7 @@ import { GanttWeekId } from "@/api-shared/types/gantt/models";
 export function partitionWeeks(
     weekIds: Array<GanttWeekId>,
     groupCount: number,
-): Array<Array<GanttWeekId>>
-{
+): Array<Array<GanttWeekId>> {
     const totalWeeks = weekIds.length;
     if (totalWeeks === 0) return [];
 
@@ -16,8 +15,7 @@ export function partitionWeeks(
     const remainder = totalWeeks % groupCount;
 
     let currentIndex = 0;
-    return Array.from({ length: groupCount }, (_, i) =>
-    {
+    return Array.from({ length: groupCount }, (_, i) => {
         const size = baseSize + (i < remainder ? 1 : 0);
         const group = weekIds.slice(currentIndex, currentIndex + size);
         currentIndex += size;
@@ -28,18 +26,15 @@ export function partitionWeeks(
 export function calculateTotalWorkingTimeForWeeks(
     weekIds: Array<GanttWeekId>,
     state: NormalizedStore,
-): number
-{
-    return weekIds.reduce((accWeek, weekId) =>
-    {
-        const week = state.weeks[ weekId ];
+): number {
+    return weekIds.reduce((accWeek, weekId) => {
+        const week = state.weeks[weekId];
         return (
             accWeek +
-            week.days.reduce((accDay, dayId) =>
-            {
-                const day = state.days[ dayId ];
-                return accDay + day.totalWorkingMinutes / 60;
-            }, 0)
+      week.days.reduce((accDay, dayId) => {
+          const day = state.days[dayId];
+          return accDay + day.totalWorkingMinutes / 60;
+      }, 0)
         );
     }, 0);
 }
@@ -48,12 +43,10 @@ function _hashSyllabusToColorByHue(
     syllabusId: string,
     themePrimaryColor: string,
     opacity: number,
-): string
-{
+): string {
     // Simple hash of the ID
     let hash = 0;
-    for (let i = 0; i < syllabusId.length; i++)
-    {
+    for (let i = 0; i < syllabusId.length; i++) {
         hash = syllabusId.charCodeAt(i) + ((hash << 5) - hash);
     }
 
@@ -70,11 +63,9 @@ function hashSyllabusToColorByGoldenRatio(
     syllabusId: string,
     themePrimaryColor: string,
     opacity: number,
-): string
-{
+): string {
     let hash = 0;
-    for (let i = 0; i < syllabusId.length; i++)
-    {
+    for (let i = 0; i < syllabusId.length; i++) {
         hash = syllabusId.charCodeAt(i) + ((hash << 5) - hash);
     }
 
@@ -89,8 +80,7 @@ export function hashSyllabusToColor(
     syllabusId: string,
     themePrimaryColor: string,
     opacity: number,
-)
-{
+) {
     return hashSyllabusToColorByGoldenRatio(
         syllabusId,
         themePrimaryColor,

@@ -23,7 +23,7 @@ type GroupDialogProps = {
   group: Partial<Group>;
   onClose: () => void;
   onSave: (group: Group) => void;
-}
+};
 
 export function GroupDialog({
     open,

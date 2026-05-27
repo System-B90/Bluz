@@ -1,97 +1,101 @@
-import { useTheme } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useTheme } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
 
-import { ConstraintLink } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types';
+import { ConstraintLink } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 
 type ConstraintLinesProps = {
-    links: Array<ConstraintLink>;
-    containerRef: React.RefObject<HTMLDivElement | null>;
+  links: Array<ConstraintLink>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 };
 
-export const ConstraintLines: React.FC<ConstraintLinesProps> = ({ links, containerRef }) =>
-{
+export const ConstraintLines: React.FC<ConstraintLinesProps> = ({
+    links,
+    containerRef,
+}) => {
     const theme = useTheme();
-    const [ lines, setLines ] = useState<Array<any>>([]);
+    const [lines, setLines] = useState<Array<any>>([]);
 
-    const drawLines = useCallback(() =>
-    {
+    const drawLines = useCallback(() => {
         if (!containerRef.current) return;
         const container = containerRef.current;
         const containerRect = container.getBoundingClientRect();
 
-        const newLines = links.map(link =>
-        {
-            const srcEl = document.getElementById(link.sourceId);
-            const tgtEl = document.getElementById(link.targetId);
-            if (!srcEl || !tgtEl) return null;
+        const newLines = links
+            .map((link) => {
+                const srcEl = document.getElementById(link.sourceId);
+                const tgtEl = document.getElementById(link.targetId);
+                if (!srcEl || !tgtEl) return null;
 
-            const srcRect = srcEl.getBoundingClientRect();
-            const tgtRect = tgtEl.getBoundingClientRect();
+                const srcRect = srcEl.getBoundingClientRect();
+                const tgtRect = tgtEl.getBoundingClientRect();
 
-            return {
-                id: link.id,
-                // Target points to Source visually
-                x1: tgtRect.left + tgtRect.width / 2 - containerRect.left,
-                y1: tgtRect.top + tgtRect.height / 2 - containerRect.top,
-                x2: srcRect.left + srcRect.width / 2 - containerRect.left,
-                y2: srcRect.top + srcRect.height / 2 - containerRect.top,
-                isViolated: link.isViolated
-            };
-        }).filter(Boolean);
+                return {
+                    id: link.id,
+                    // Target points to Source visually
+                    x1: tgtRect.left + tgtRect.width / 2 - containerRect.left,
+                    y1: tgtRect.top + tgtRect.height / 2 - containerRect.top,
+                    x2: srcRect.left + srcRect.width / 2 - containerRect.left,
+                    y2: srcRect.top + srcRect.height / 2 - containerRect.top,
+                    isViolated: link.isViolated,
+                };
+            })
+            .filter(Boolean);
 
         setLines(newLines);
-    }, [ links, containerRef ]);
+    }, [links, containerRef]);
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         drawLines();
 
-        window.addEventListener('resize', drawLines);
+        window.addEventListener("resize", drawLines);
 
         const container = containerRef.current;
-        if (container)
-        {
-            container.addEventListener('scroll', drawLines);
+        if (container) {
+            container.addEventListener("scroll", drawLines);
         }
 
-        const table = container?.querySelector('table');
+        const table = container?.querySelector("table");
         let ro: ResizeObserver;
-        if (table)
-        {
+        if (table) {
             ro = new ResizeObserver(drawLines);
             ro.observe(table);
         }
 
-        return () =>
-        {
-            window.removeEventListener('resize', drawLines);
-            if (container) container.removeEventListener('scroll', drawLines);
+        return () => {
+            window.removeEventListener("resize", drawLines);
+            if (container) container.removeEventListener("scroll", drawLines);
             if (ro) ro.disconnect();
         };
-    }, [ drawLines, containerRef ]);
+    }, [drawLines, containerRef]);
 
     return (
         <svg
-            style={ {
-                position: 'absolute',
+            style={{
+                position: "absolute",
                 top: 0,
                 left: 0,
-                width: '100%',
-                height: '100%',
-                pointerEvents: 'none',
-                zIndex: 10
-            } }
+                width: "100%",
+                height: "100%",
+                pointerEvents: "none",
+                zIndex: 10,
+            }}
         >
-            { lines.map(l => (
+            {lines.map((l) => (
                 <line
-                    key={ l.id }
-                    stroke={ l.isViolated ? theme.palette.error.main : theme.palette.text.disabled } strokeDasharray={ l.isViolated ? 'none' : '4 4' }
-                    strokeWidth={ 2 } x1={ l.x1 }
-                    x2={ l.x2 }
-                    y1={ l.y1 }
-                    y2={ l.y2 }
+                    key={l.id}
+                    stroke={
+                        l.isViolated
+                            ? theme.palette.error.main
+                            : theme.palette.text.disabled
+                    }
+                    strokeDasharray={l.isViolated ? "none" : "4 4"}
+                    strokeWidth={2}
+                    x1={l.x1}
+                    x2={l.x2}
+                    y1={l.y1}
+                    y2={l.y2}
                 />
-            )) }
+            ))}
         </svg>
     );
 };

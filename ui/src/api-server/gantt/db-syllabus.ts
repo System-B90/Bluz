@@ -1,14 +1,12 @@
 import { and, eq } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
-import
-{
+import {
     drizzleOperationsBuilder,
     FOREIGN_KEY_VIOLATION,
     UNIQUE_VIOLATION,
 } from "@/api-server/gantt/db-base";
-import
-{
+import {
     ganttCurriculum2SyllabusesSchema,
     ganttSyllabus2ModulesSchema,
     ganttSyllabusesSchema,
@@ -16,8 +14,7 @@ import
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiSyllabus } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttSyllabusPayload } from "@/api-shared/types/gantt/create-payloads";
-import
-{
+import {
     GanttCurriculumId,
     GanttSyllabus,
     GanttSyllabusId,

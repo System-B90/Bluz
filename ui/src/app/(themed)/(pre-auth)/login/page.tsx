@@ -30,7 +30,9 @@ function LoginWidget() {
     const authError = searchParams.get("error");
     const authErrorMessage = getAuthenticationErrorMessage(authError);
     const authErrorDetails =
-        searchParams.get("error_description") ?? searchParams.get("message") ?? authError;
+    searchParams.get("error_description") ??
+    searchParams.get("message") ??
+    authError;
 
     return (
         <Box
@@ -85,7 +87,7 @@ function LoginWidget() {
                         {authErrorMessage}
                         {authErrorDetails ? (
                             <Typography component="p" fontSize={13} mt={1}>
-                                קוד שגיאה: {authErrorDetails}
+                קוד שגיאה: {authErrorDetails}
                             </Typography>
                         ) : null}
                     </Alert>

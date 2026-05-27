@@ -13,7 +13,7 @@ import { Event, eventHasSubject } from "@/components/schedule/types/event";
 type ModuleFieldProps = {
   event?: Partial<Event>;
   onEventChange: (updates: Partial<Event>) => void;
-}
+};
 
 export function ModuleField({
     event,

@@ -1,6 +1,5 @@
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import
-{
+import {
     Box,
     Fab,
     List,
@@ -9,8 +8,7 @@ import
     Typography,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import
-{
+import {
     Dispatch,
     MouseEvent,
     SetStateAction,
@@ -25,8 +23,7 @@ import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumActionItems } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumListItems } from "@/components/gantt/curriculum-fab/CurriculumListItems";
-import
-{
+import {
     fetchDrawerData,
     sortCurriculumsByDraftAndUpdatedAt,
 } from "@/components/gantt/curriculum-fab/utils";
@@ -36,7 +33,7 @@ export type CurriculumDrawerProps = {
   setOpen?: Dispatch<SetStateAction<boolean>>;
   setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
   currentCurriculum?: GanttCurriculumId | null;
-}
+};
 
 const PANEL_WIDTH = 300;
 

@@ -1,5 +1,4 @@
-import
-{
+import {
     Table,
     TableBody,
     TableCell,
@@ -38,7 +37,7 @@ export type DaysTableProps = {
     weekIndex: number,
     dayIndex: number,
   ) => void;
-}
+};
 
 export function DaysTable({
     days,

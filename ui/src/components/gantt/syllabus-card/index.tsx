@@ -6,8 +6,7 @@
  */
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import
-{
+import {
     Card,
     CardContent,
     CardProps,
@@ -17,8 +16,7 @@ import
 import { styled } from "@mui/material/styles";
 import { useState } from "react";
 
-import
-{
+import {
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
@@ -30,7 +28,7 @@ import { SyllabusCardHeader } from "@/components/gantt/syllabus-card/SyllabusCar
 export type SyllabusCardProps = {
   curriculumId: GanttCurriculumId;
   syllabusId: GanttSyllabusId;
-} & Omit<CardProps, "sx">
+} & Omit<CardProps, "sx">;
 
 const ExpandMore = styled((props: { _expand: boolean } & any) => {
     const { expand: _expand, ...other } = props;

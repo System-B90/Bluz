@@ -7,8 +7,7 @@ import { ganttCurriculumsSchema } from "@/api-server/gantt/schema/curriculums";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttCurriculumPayload } from "@/api-shared/types/gantt/create-payloads";
-import
-{
+import {
     GanttCurriculum,
     GanttCurriculumId,
 } from "@/api-shared/types/gantt/models";

@@ -1,6 +1,5 @@
 import EditIcon from "@mui/icons-material/Edit";
-import
-{
+import {
     CircularProgress,
     IconButton,
     Skeleton,
@@ -14,22 +13,19 @@ import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import
-{
+import {
     GanttCurriculumId,
     GanttModuleId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
-import
-{
+import {
     useCurriculumProviderActions,
     useCurriculumState,
 } from "@/components/gantt/state/provider";
 import { OpenHandsIcon } from "@/components/gantt/syllabus-card/OpenHandsIcon";
-import
-{
+import {
     calculateAllocatedTimeForModule,
     calculateMinimumRequiredTimeForModule,
 } from "@/components/gantt/utils";
@@ -39,7 +35,7 @@ type AllocatedTimeTableCellProps = {
   curriculumId: GanttCurriculumId;
   minimumRequiredTime: number;
   allocatedTime: number | undefined;
-} & TableCellProps
+} & TableCellProps;
 
 function AllocatedTimeTableCell({
     moduleId,

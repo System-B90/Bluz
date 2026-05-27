@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 
-type EventTimeFieldProps = {} & EventFieldProps
+type EventTimeFieldProps = {} & EventFieldProps;
 
 export function EventTimeField({
     event,

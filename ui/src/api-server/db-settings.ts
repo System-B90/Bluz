@@ -10,7 +10,7 @@ import { MessageTypes } from "@/settings";
 type DbSetting = {
   key: SettingName;
   value: Setting;
-}
+};
 
 async function getDbSetting(
     name: SettingName,

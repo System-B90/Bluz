@@ -1,4 +1,8 @@
-import { GanttCurriculumId, GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
+import {
+    GanttCurriculumId,
+    GanttEventId,
+    GanttModuleId,
+} from "@/api-shared/types/gantt/models";
 import { GanttDayId } from "@/api-shared/types/gantt/models/day";
 
 /**
@@ -14,4 +18,4 @@ export type GanttCurriculumEventDayMapping = {
   dayId: GanttDayId;
   curriculumId: GanttCurriculumId;
   sortOrder: number;
-}
+};

@@ -11,7 +11,7 @@ import {
  * Dispatch an asynchronous server-to-server request over WebSocket to the Session Server.
  * This runs within Next.js server-side API routes to broadcast event changes, additions,
  * or deletions to all connected clients in real-time.
- * 
+ *
  * @param type The type of message being broadcasted (e.g. MessageTypes.EVENT_DATA_UPDATE).
  * @param data Optional payload containing details of the updated/added/removed entities.
  * @example
@@ -41,6 +41,9 @@ export function SendServerRequestToSessionServer(
         ws.close();
     };
     ws.onerror = (err) => {
-        console.error("[WS Server Sender] Error dispatching message to session server:", err);
+        console.error(
+            "[WS Server Sender] Error dispatching message to session server:",
+            err,
+        );
     };
 }

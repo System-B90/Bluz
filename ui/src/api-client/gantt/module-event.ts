@@ -1,5 +1,4 @@
-import
-{
+import {
     BaseDocument,
     baseDocumentFixup,
     clientGantApiBuilder,
@@ -15,13 +14,12 @@ const moduleEventApi = clientGantApiBuilder<
 >({ apiBaseUrl: "/api/gantt/events", dateFixup: baseDocumentFixup as any });
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =
   moduleEventApi;
-export
-{
+export {
     apiCreate as apiCreateModuleEvent,
     apiDelete as apiDeleteModuleEvent,
     apiGetMany as apiGetManyModuleEvents,
     apiGet as apiGetModuleEvent,
     apiList as apiListModuleEvents,
     apiUpdate as apiUpdateModuleEvent,
-    moduleEventApi
+    moduleEventApi,
 };

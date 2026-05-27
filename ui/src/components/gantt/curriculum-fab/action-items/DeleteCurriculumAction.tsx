@@ -10,7 +10,7 @@ import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fa
 
 export type DeleteCurriculumActionProps = {
   onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
-} & CurriculumAwareActionItemProps
+} & CurriculumAwareActionItemProps;
 
 export function DeleteCurriculumAction({
     sourceCurriculum,

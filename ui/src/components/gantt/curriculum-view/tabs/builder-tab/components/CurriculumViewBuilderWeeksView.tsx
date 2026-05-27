@@ -1,6 +1,5 @@
 import { Divider } from "@mui/material";
-import
-{
+import {
     Dispatch,
     SetStateAction,
     useCallback,
@@ -9,8 +8,7 @@ import
 } from "react";
 import { Fragment } from "react/jsx-runtime";
 
-import
-{
+import {
     GanttCurriculumId,
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
@@ -25,47 +23,43 @@ export function CurriculumViewBuilderWeeksView({
     groupCount,
     setSelectedWeekGroup,
 }: {
-    curriculumId: GanttCurriculumId;
-    groupCount: number;
-    weeks: Array<GanttWeekId>;
-    setSelectedWeekGroup: Dispatch<
-        SetStateAction<{ start: number; length: number; }>
-    >;
-})
-{
+  curriculumId: GanttCurriculumId;
+  groupCount: number;
+  weeks: Array<GanttWeekId>;
+  setSelectedWeekGroup: Dispatch<
+    SetStateAction<{ start: number; length: number }>
+  >;
+}) {
     const { weeks: weeksState } = useCurriculumState();
-    const [ animationSelectedGroupIndex, setAnimationSelectedGroupIndex ] =
-        useState<null | number>(null);
+    const [animationSelectedGroupIndex, setAnimationSelectedGroupIndex] =
+    useState<null | number>(null);
     const groupedWeeks = useMemo(
         () => partitionWeeks(weeks, groupCount),
-        [ weeks, groupCount ],
+        [weeks, groupCount],
     );
     const onGroupClick = useCallback(
-        (groupIndex: number, start: number, length: number) =>
-        {
+        (groupIndex: number, start: number, length: number) => {
             console.log(start, length);
             setAnimationSelectedGroupIndex(groupIndex);
-            setTimeout(() =>
-            {
+            setTimeout(() => {
                 setSelectedWeekGroup({ start, length });
                 setAnimationSelectedGroupIndex(null);
             }, 400);
         },
-        [ setSelectedWeekGroup ],
+        [setSelectedWeekGroup],
     );
 
     const weekGroupPanels = useMemo(
         () =>
-            groupedWeeks.map((group, index) =>
-            {
+            groupedWeeks.map((group, index) => {
                 const isLast = index === groupedWeeks.length - 1;
-                const firstWeek = weeksState[ group[ 0 ] ];
+                const firstWeek = weeksState[group[0]];
                 const groupKey = `group-${firstWeek.id}`;
 
                 return (
-                    <Fragment key={ `frag-${groupKey}` }>
+                    <Fragment key={`frag-${groupKey}`}>
                         <WeekGroupPanel
-                            flexBasis={ 0 }
+                            flexBasis={0}
                             flexGrow={
                                 animationSelectedGroupIndex === null
                                     ? 1
@@ -80,30 +74,30 @@ export function CurriculumViewBuilderWeeksView({
                                         ? 0
                                         : 1
                             }
-                            group={ group }
-                            key={ groupKey }
-                            onExpandGroup={ () =>
+                            group={group}
+                            key={groupKey}
+                            onExpandGroup={() =>
                                 onGroupClick(index, firstWeek.number, group.length)
                             }
                         />
-                        { !isLast && (
+                        {!isLast && (
                             <Divider
                                 className="h-4/5 self-center"
-                                key={ `divider-${groupKey}` }
+                                key={`divider-${groupKey}`}
                                 orientation="vertical"
                                 variant="middle"
                             />
-                        ) }
+                        )}
                     </Fragment>
                 );
             }),
-        [ animationSelectedGroupIndex, groupedWeeks, onGroupClick, weeksState ],
+        [animationSelectedGroupIndex, groupedWeeks, onGroupClick, weeksState],
     );
 
     return (
         <Fragment>
-            <SyllabusModulesCurriculumViewSidebar curriculumId={ curriculumId } />
-            { weekGroupPanels }
+            <SyllabusModulesCurriculumViewSidebar curriculumId={curriculumId} />
+            {weekGroupPanels}
         </Fragment>
     );
 }

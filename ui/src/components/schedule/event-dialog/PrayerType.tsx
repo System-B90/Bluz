@@ -17,7 +17,7 @@ import {
 type PrayerTypeFieldProps = {
   event?: Partial<Event>;
   onEventChange: (updates: Partial<PrayerEvent>) => void;
-}
+};
 
 export function PrayerTypeField({
     event,

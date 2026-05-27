@@ -1,6 +1,5 @@
 import { ModuleDocument } from "@/api-client/gantt/module";
-import
-{
+import {
     GanttModuleId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";

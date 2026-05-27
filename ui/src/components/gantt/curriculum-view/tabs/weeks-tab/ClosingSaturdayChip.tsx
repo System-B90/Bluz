@@ -18,7 +18,7 @@ import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 type ClosingSaturdayChipProps = {
   weekId: GanttWeekId;
   weekendDuty: boolean;
-}
+};
 
 export function ClosingSaturdayChip({
     weekId,

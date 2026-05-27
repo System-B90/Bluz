@@ -1,6 +1,5 @@
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import
-{
+import {
     Box,
     Chip,
     Divider,
@@ -13,8 +12,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import
-{
+import {
     GanttCurriculumId,
     GanttDayId,
     GanttWeekId,
@@ -28,7 +26,7 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 type WeekPanelProps = {
   curriculumId: GanttCurriculumId;
   weekId: GanttWeekId;
-}
+};
 
 export function WorkTimeChip({ totalHours }: { totalHours: number }) {
     return (

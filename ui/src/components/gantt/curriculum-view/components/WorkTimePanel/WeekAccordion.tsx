@@ -16,7 +16,7 @@ export type WeekAccordionProps = {
     event: KeyboardEvent<HTMLInputElement>,
     weekId: GanttWeekId,
   ) => void;
-}
+};
 
 export function WeekAccordion(props: WeekAccordionProps) {
     const { weekId, canEdit, canAddDay } = props;

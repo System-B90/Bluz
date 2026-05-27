@@ -3,8 +3,7 @@ import { Collection, Db, MongoClient } from "mongodb";
 import { DbEventDocument } from "@/api-server/db-event";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import { Course } from "@/api-shared/types/course";
-import
-{
+import {
     GanttCurriculum,
     GanttEvent,
     GanttModule,

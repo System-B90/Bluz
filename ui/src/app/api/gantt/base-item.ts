@@ -10,85 +10,75 @@ export type BuildGantItemRoutesProps<
   TCreatePayload = Omit<TEntity, "id">,
 > = {
   dbSet: BasicGantOperations<TEntity, TCreatePayload>;
-}
+};
 
 export type RouteContext = {
-  params: Promise<{ id: string; }>;
-}
+  params: Promise<{ id: string }>;
+};
 
 export function buildGantItemRoutes<
   TEntity extends BaseGantItem,
   TCreatePayload = Omit<TEntity, "id">,
->({ dbSet }: BuildGantItemRoutesProps<TEntity, TCreatePayload>)
-{
-    async function GET(request: NextRequest, context: RouteContext)
-    {
-        try
-        {
+>({ dbSet }: BuildGantItemRoutesProps<TEntity, TCreatePayload>) {
+    async function GET(request: NextRequest, context: RouteContext) {
+        try {
             const { id } = await context.params;
-            if (!id)
-            {
+            if (!id) {
                 throw new ClientApiError(
                     "Item identifier (id) is missing from the request parameters.",
                 );
             }
 
-            const item = await dbSet.getItem(id as TEntity[ "id" ]);
+            const item = await dbSet.getItem(id as TEntity["id"]);
             return ApiSuccess(item);
-        } catch (error)
-        {
+        } catch (error) {
             return catchHandler(request, error);
         }
     }
 
-    async function PATCH(request: NextRequest, context: RouteContext)
-    {
-        try
-        {
+    async function PATCH(request: NextRequest, context: RouteContext) {
+        try {
             const { id } = await context.params;
-            if (!id)
-            {
+            if (!id) {
                 throw new ClientApiError(
                     "Item identifier (id) is missing from the request parameters.",
                 );
             }
 
             const textBody = await request.text();
-            if (!textBody)
-            {
+            if (!textBody) {
                 throw new ClientApiError("Payload cannot be empty.");
             }
 
             // Strongly typed to Partial<TEntity> to ensure we only update valid frontend properties
             const payload = JSON.parse(textBody) as Partial<TEntity>;
-            if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
+            if (
+                typeof payload !== "object" ||
+        payload === null ||
+        Array.isArray(payload)
+            ) {
                 throw new ClientApiError("Payload must be a JSON object.");
             }
 
-            const updatedItem = await dbSet.updateItem(id as TEntity[ "id" ], payload);
+            const updatedItem = await dbSet.updateItem(id as TEntity["id"], payload);
             return ApiSuccess(updatedItem);
-        } catch (error)
-        {
+        } catch (error) {
             return catchHandler(request, error);
         }
     }
 
-    async function DELETE(request: NextRequest, context: RouteContext)
-    {
-        try
-        {
+    async function DELETE(request: NextRequest, context: RouteContext) {
+        try {
             const { id } = await context.params;
-            if (!id)
-            {
+            if (!id) {
                 throw new ClientApiError(
                     "Item identifier (id) is missing from the request parameters.",
                 );
             }
 
-            await dbSet.deleteItem(id as TEntity[ "id" ]);
+            await dbSet.deleteItem(id as TEntity["id"]);
             return ApiSuccess({ deleted: true, id: id });
-        } catch (error)
-        {
+        } catch (error) {
             return catchHandler(request, error);
         }
     }

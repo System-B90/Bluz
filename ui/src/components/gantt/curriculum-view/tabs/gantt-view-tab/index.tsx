@@ -9,8 +9,7 @@
 
 import React, { useMemo } from "react";
 
-import
-{
+import {
     GanttCurriculum,
     GanttCurriculumId,
     GanttEvent,
@@ -25,13 +24,12 @@ import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type CurriculumGanttViewProps = {
-    readonly curriculumId: GanttCurriculumId;
-}
+  readonly curriculumId: GanttCurriculumId;
+};
 
 export function CurriculumGanttView({
     curriculumId,
-}: CurriculumGanttViewProps): null | React.ReactElement
-{
+}: CurriculumGanttViewProps): null | React.ReactElement {
     const curriculum: GanttCurriculum | undefined = useCurriculum(curriculumId);
     const state = useCurriculumState();
 
@@ -45,15 +43,15 @@ export function CurriculumGanttView({
                     events: Object.values(state.events) as Array<GanttEvent>,
                 }
                 : null,
-        [ curriculum, state ],
+        [curriculum, state],
     );
 
     if (!innerProps) return null;
 
     return (
-        <GanttMappingProvider curriculumId={ curriculumId }>
-            <GanttConstraintProvider context={ { curriculumId, type: 'curriculum' } }>
-                <CurriculumGanttViewInner curriculumId={ curriculumId } { ...innerProps } />
+        <GanttMappingProvider curriculumId={curriculumId}>
+            <GanttConstraintProvider context={{ curriculumId, type: "curriculum" }}>
+                <CurriculumGanttViewInner curriculumId={curriculumId} {...innerProps} />
             </GanttConstraintProvider>
         </GanttMappingProvider>
     );

@@ -1,6 +1,5 @@
 import LinkIcon from "@mui/icons-material/Link";
-import
-{
+import {
     Box,
     BoxProps,
     CircularProgress,
@@ -16,8 +15,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import
-{
+import {
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
@@ -27,7 +25,7 @@ import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNam
 
 export type SyllabusSelectionFieldProps = {
   curriculumId: GanttCurriculumId;
-} & BoxProps
+} & BoxProps;
 
 export function SyllabusSelectionField({
     curriculumId,

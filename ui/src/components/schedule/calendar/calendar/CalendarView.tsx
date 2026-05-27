@@ -28,7 +28,7 @@ type CalendarViewProps = {
   onDoubleClickEvent: (event: Event) => void;
   onSelectSlot: (slotInfo: any) => void;
   onEventDrop: (args: any) => void;
-}
+};
 
 export function CalendarView({
     events,

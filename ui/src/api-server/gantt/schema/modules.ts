@@ -7,8 +7,7 @@
 import { relations } from "drizzle-orm";
 import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-import
-{
+import {
     ganttModule2EventsSchema,
     ganttSyllabus2ModulesSchema,
 } from "./junctions";

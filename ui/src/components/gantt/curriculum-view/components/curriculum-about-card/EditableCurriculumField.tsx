@@ -12,7 +12,7 @@ export type EditableCurriculumFieldProps = {
   allowEmpty: boolean;
   onSave: (nextValue: string) => Promise<void>;
   renderDisplay: (value: string) => ReactNode;
-}
+};
 
 function EditableCurriculumFieldInner({
     value,

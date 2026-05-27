@@ -3,8 +3,7 @@ import { eq } from "drizzle-orm";
 import { postgresDb } from "@/api-server/gantt";
 import { drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
 import { DbDay } from "@/api-server/gantt/db-day";
-import
-{
+import {
     ganttCurriculum2WeeksSchema,
     ganttWeek2DaysSchema,
 } from "@/api-server/gantt/schema";
@@ -12,8 +11,7 @@ import { ganttWeeksSchema } from "@/api-server/gantt/schema/weeks";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiCurriculumWeek } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttWeekPayload } from "@/api-shared/types/gantt/create-payloads";
-import
-{
+import {
     GanttDayIndex,
     GanttWeek,
     GanttWeekId,

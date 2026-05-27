@@ -9,16 +9,13 @@ import { NextRequest } from "next/server";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { ClientApiError } from "@/api-shared/errors";
-import
-{
+import {
     BaseGantItem,
     GanttCurriculumId,
     GanttEventId,
 } from "@/api-shared/types/gantt/models";
 
-export type BasicGantAllocateTimeOperations<
-  _TEntity extends BaseGantItem,
-> = {
+export type BasicGantAllocateTimeOperations<_TEntity extends BaseGantItem> = {
   getAllocatedTime: (
     eventId: GanttEventId,
     containerId: GanttCurriculumId,
@@ -28,17 +25,15 @@ export type BasicGantAllocateTimeOperations<
     containerId: GanttCurriculumId,
     duration: number,
   ) => Promise<void>;
-}
+};
 
-export type BuildGantAllocateTimeRoutesProps<
-  TEntity extends BaseGantItem,
-> = {
+export type BuildGantAllocateTimeRoutesProps<TEntity extends BaseGantItem> = {
   dbSet: BasicGantAllocateTimeOperations<TEntity>;
-}
+};
 
 export type RouteContext = {
   params: Promise<{ id: string }>;
-}
+};
 
 export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
     dbSet,

@@ -1,46 +1,49 @@
-import { Box, TableCell, TableRow, Typography, useTheme } from '@mui/material';
-import React, { useMemo, useState } from 'react';
+import { Box, TableCell, TableRow, Typography, useTheme } from "@mui/material";
+import React, { useMemo, useState } from "react";
 
-import { useGanttContext } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context';
-import { GanttModuleRow } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttModuleRow';
-import { GanttSyllabusGroupProps, SpanVariant } from '@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types';
-import { useCurriculumState } from '@/components/gantt/state/provider';
+import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
+import { GanttModuleRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttModuleRow";
+import {
+    GanttSyllabusGroupProps,
+    SpanVariant,
+} from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
+import { useCurriculumState } from "@/components/gantt/state/provider";
 
-export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabusId }) =>
-{
+export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
+    syllabusId,
+}) => {
     const theme = useTheme();
     const state = useCurriculumState();
-    const { timelineWeeks, linearDays, moduleMappings, eventMappings } = useGanttContext();
-    const [ isExpanded, setIsExpanded ] = useState(true);
+    const { timelineWeeks, linearDays, moduleMappings, eventMappings } =
+    useGanttContext();
+    const [isExpanded, setIsExpanded] = useState(true);
 
-    const syllabus = state.syllabuses[ syllabusId ];
+    const syllabus = state.syllabuses[syllabusId];
 
-    const spanIndices = useMemo(() =>
-    {
+    const spanIndices = useMemo(() => {
         const allMappedDays = new Set<string>();
 
-        (syllabus?.modules ?? []).forEach(moduleId =>
-        {
-            const ganttModule = state.modules[ moduleId ];
+        (syllabus?.modules ?? []).forEach((moduleId) => {
+            const ganttModule = state.modules[moduleId];
             if (!ganttModule) return;
 
-            const mDays = moduleMappings[ moduleId ] || [];
-            mDays.forEach(d => allMappedDays.add(d));
+            const mDays = moduleMappings[moduleId] || [];
+            mDays.forEach((d) => allMappedDays.add(d));
 
-            if (ganttModule.events)
-            {
-                ganttModule.events.forEach(eId =>
-                {
-                    const eDay = eventMappings[ eId ];
+            if (ganttModule.events) {
+                ganttModule.events.forEach((eId) => {
+                    const eDay = eventMappings[eId];
                     if (eDay) allMappedDays.add(eDay);
                 });
             }
         });
 
-        const indices = Array.from(allMappedDays).map(id => linearDays.indexOf(id)).filter(i => i !== -1);
+        const indices = Array.from(allMappedDays)
+            .map((id) => linearDays.indexOf(id))
+            .filter((i) => i !== -1);
         if (indices.length === 0) return null;
         return { min: Math.min(...indices), max: Math.max(...indices) };
-    }, [ syllabus, state.modules, moduleMappings, eventMappings, linearDays ]);
+    }, [syllabus, state.modules, moduleMappings, eventMappings, linearDays]);
 
     if (!syllabus) return null;
 
@@ -48,60 +51,67 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
         <React.Fragment>
             <TableRow
                 hover
-                onClick={ () => setIsExpanded(!isExpanded) }
-                sx={ { cursor: 'pointer' } }
+                onClick={() => setIsExpanded(!isExpanded)}
+                sx={{ cursor: "pointer" }}
             >
                 <TableCell
-                    sx={ {
+                    sx={{
                         width: 250,
                         minWidth: 250,
                         maxWidth: 250,
-                        boxSizing: 'border-box',
-                        position: 'sticky',
+                        boxSizing: "border-box",
+                        position: "sticky",
                         left: 0,
                         zIndex: 5,
                         backgroundColor: theme.palette.background.default,
                         borderRight: `1px solid ${theme.palette.divider}`,
-                        borderBottom: `1px solid ${theme.palette.divider}`
-                    } }
+                        borderBottom: `1px solid ${theme.palette.divider}`,
+                    }}
                 >
-                    <Typography sx={ { display: 'flex', alignItems: 'center', gap: 1 } } variant="subtitle2">
-                        <Box component="span" sx={ { fontSize: '0.8rem', width: 16 } }>
-                            { isExpanded ? '▼' : '▶' }
+                    <Typography
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        variant="subtitle2"
+                    >
+                        <Box component="span" sx={{ fontSize: "0.8rem", width: 16 }}>
+                            {isExpanded ? "▼" : "▶"}
                         </Box>
-                        { syllabus.title }
+                        {syllabus.title}
                     </Typography>
                 </TableCell>
 
-                { timelineWeeks.map(week =>
-                    week.days.map(dayId =>
-                    {
+                {timelineWeeks.map((week) =>
+                    week.days.map((dayId) => {
                         const dayIndex = linearDays.indexOf(dayId);
 
-                        let spanVariant: SpanVariant = 'none';
-                        if (spanIndices && dayIndex >= spanIndices.min && dayIndex <= spanIndices.max)
-                        {
-                            if (spanIndices.min === spanIndices.max) spanVariant = 'single';
-                            else if (dayIndex === spanIndices.min) spanVariant = 'start';
-                            else if (dayIndex === spanIndices.max) spanVariant = 'end';
-                            else spanVariant = 'middle';
+                        let spanVariant: SpanVariant = "none";
+                        if (
+                            spanIndices &&
+              dayIndex >= spanIndices.min &&
+              dayIndex <= spanIndices.max
+                        ) {
+                            if (spanIndices.min === spanIndices.max) spanVariant = "single";
+                            else if (dayIndex === spanIndices.min) spanVariant = "start";
+                            else if (dayIndex === spanIndices.max) spanVariant = "end";
+                            else spanVariant = "middle";
                         }
 
-                        const getSpanBorderRadius = () =>
-                        {
-                            switch (spanVariant)
-                            {
-                            case 'start': return '4px 0 0 4px';
-                            case 'end': return '0 4px 4px 0';
-                            case 'single': return '4px';
-                            default: return '0';
+                        const getSpanBorderRadius = () => {
+                            switch (spanVariant) {
+                            case "start":
+                                return "4px 0 0 4px";
+                            case "end":
+                                return "0 4px 4px 0";
+                            case "single":
+                                return "4px";
+                            default:
+                                return "0";
                             }
                         };
 
                         return (
                             <TableCell
-                                key={ dayId }
-                                sx={ {
+                                key={dayId}
+                                sx={{
                                     backgroundColor: theme.palette.background.default,
                                     borderLeft: `1px solid ${theme.palette.divider}`,
                                     borderBottom: `1px solid ${theme.palette.divider}`,
@@ -109,35 +119,43 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({ syllabus
                                     width: 80,
                                     minWidth: 80,
                                     maxWidth: 80,
-                                    boxSizing: 'border-box',
-                                    position: 'relative'
-                                } }
+                                    boxSizing: "border-box",
+                                    position: "relative",
+                                }}
                             >
-                                { spanVariant !== 'none' && (
+                                {spanVariant !== "none" && (
                                     <Box
-                                        sx={ {
-                                            position: 'absolute',
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            left: spanVariant === 'middle' || spanVariant === 'end' ? '-1px' : '4px',
-                                            right: spanVariant === 'middle' || spanVariant === 'start' ? '-1px' : '4px',
-                                            height: '8px',
+                                        sx={{
+                                            position: "absolute",
+                                            top: "50%",
+                                            transform: "translateY(-50%)",
+                                            left:
+                        spanVariant === "middle" || spanVariant === "end"
+                            ? "-1px"
+                            : "4px",
+                                            right:
+                        spanVariant === "middle" || spanVariant === "start"
+                            ? "-1px"
+                            : "4px",
+                                            height: "8px",
                                             backgroundColor: theme.palette.text.secondary,
                                             opacity: 0.2,
                                             borderRadius: getSpanBorderRadius(),
                                             zIndex: 1,
-                                        } }
+                                        }}
                                     />
-                                ) }
+                                )}
                             </TableCell>
                         );
-                    })
-                ) }
+                    }),
+                )}
             </TableRow>
 
-            { isExpanded ? syllabus.modules.map(moduleId => (
-                <GanttModuleRow key={ moduleId } moduleId={ moduleId } />
-            )) : null }
+            {isExpanded
+                ? syllabus.modules.map((moduleId) => (
+                    <GanttModuleRow key={moduleId} moduleId={moduleId} />
+                ))
+                : null}
         </React.Fragment>
     );
 };

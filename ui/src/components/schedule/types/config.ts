@@ -4,4 +4,4 @@ export type ScheduleConfig = {
 
   // rooms: Room[]
   // groups: Group[]
-}
+};

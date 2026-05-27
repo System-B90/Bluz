@@ -8,5 +8,5 @@ export type GanttModule = {
   events: Array<GanttEventId>;
   hiveIds: Array<number>;
   constraints: Array<GanttConstraint>;
-} & BaseGantItem
-export type GanttModuleId = GanttModule[ "id" ];
+} & BaseGantItem;
+export type GanttModuleId = GanttModule["id"];

@@ -11,14 +11,13 @@ import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 
 export type SyllabusSectionProps = {
-    syllabusId: GanttSyllabusId;
-} & BoxProps
+  syllabusId: GanttSyllabusId;
+} & BoxProps;
 
 export function SyllabusSection({
     syllabusId,
     ...props
-}: SyllabusSectionProps)
-{
+}: SyllabusSectionProps) {
     const theme = useTheme();
     const {
         state: { mappings },
@@ -26,14 +25,14 @@ export function SyllabusSection({
     const syllabus = useSyllabus(syllabusId);
     const color = useMemo(
         () => hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2),
-        [ syllabusId, theme.palette.primary.main ],
+        [syllabusId, theme.palette.primary.main],
     );
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
-        useDraggable({
-            id: `syllabus-${syllabusId}`,
-            data: { type: "SYLLABUS", syllabusId } as DndDragEventActiveData,
-        });
+    useDraggable({
+        id: `syllabus-${syllabusId}`,
+        data: { type: "SYLLABUS", syllabusId } as DndDragEventActiveData,
+    });
 
     const style = {
         ...props.style,
@@ -45,37 +44,37 @@ export function SyllabusSection({
         () =>
             (syllabus?.modules ?? [])
                 .filter((m) => !Object.values(mappings).some((x) => x.moduleId === m))
-                .map((m) => <ModuleItem key={ m } moduleId={ m } />),
-        [ syllabus?.modules, mappings ],
+                .map((m) => <ModuleItem key={m} moduleId={m} />),
+        [syllabus?.modules, mappings],
     );
 
     return (
         <Box
-            { ...props }
+            {...props}
             className="flex flex-col pb-4"
-            ref={ setNodeRef }
-            style={ style }
-            { ...attributes }
-            { ...listeners }
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
         >
-            {/* Sticky Header: Visible until the entire section scrolls out */ }
+            {/* Sticky Header: Visible until the entire section scrolls out */}
             <Box
-                bgcolor={ color }
+                bgcolor={color}
                 className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm py-2 mb-2 shadow-sm"
             >
                 <Typography
                     className="px-2 font-bold tracking-wider"
                     color="textPrimary"
                     fontSize="1rem"
-                    fontWeight={ 700 }
+                    fontWeight={700}
                     variant="overline"
                 >
-                    { syllabus?.title ?? "Unnamed Syllabus" }
+                    {syllabus?.title ?? "Unnamed Syllabus"}
                 </Typography>
             </Box>
 
-            <Stack className="px-2" spacing={ 1 }>
-                { moduleItems }
+            <Stack className="px-2" spacing={1}>
+                {moduleItems}
             </Stack>
         </Box>
     );

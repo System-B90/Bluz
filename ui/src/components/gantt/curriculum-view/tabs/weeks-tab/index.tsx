@@ -8,8 +8,7 @@
 import { Box } from "@mui/material";
 import { useMemo } from "react";
 
-import
-{
+import {
     GanttCurriculumId,
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";

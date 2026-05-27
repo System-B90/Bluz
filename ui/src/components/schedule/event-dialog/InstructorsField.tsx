@@ -14,7 +14,7 @@ import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { EventType } from "@/components/schedule/types/event";
 
-type InstructorsFieldProps = {} & EventFieldProps
+type InstructorsFieldProps = {} & EventFieldProps;
 
 function LecturerSelectionField({
     event,

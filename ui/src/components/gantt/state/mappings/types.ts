@@ -1,19 +1,30 @@
-import { GanttCurriculumModuleDayMapping, GanttDayId, GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
+import {
+    GanttCurriculumModuleDayMapping,
+    GanttDayId,
+    GanttEventId,
+    GanttModuleId,
+} from "@/api-shared/types/gantt/models";
 
 export type GanttMappingState = {
-    // Key: `${dayId}-${moduleId}-${eventId ?? 'null'}`
-    mappings: Record<string, GanttCurriculumModuleDayMapping>;
-    isLoading: boolean;
-}
+  // Key: `${dayId}-${moduleId}-${eventId ?? 'null'}`
+  mappings: Record<string, GanttCurriculumModuleDayMapping>;
+  isLoading: boolean;
+};
 
 export type GanttMappingAction =
-    | {
-        type: "DELETE_MAPPING";
-        payload: Pick<GanttCurriculumModuleDayMapping, 'dayId' | 'moduleId' | "eventId">;
+  | {
+      type: "DELETE_MAPPING";
+      payload: Pick<
+        GanttCurriculumModuleDayMapping,
+        "dayId" | "eventId" | "moduleId"
+      >;
     }
-    | { type: "SET_LOADING"; payload: boolean; }
-    | { type: "SET_MAPPINGS"; payload: Array<GanttCurriculumModuleDayMapping>; }
-    | { type: "UPSERT_MAPPING"; payload: GanttCurriculumModuleDayMapping; };
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_MAPPINGS"; payload: Array<GanttCurriculumModuleDayMapping> }
+  | { type: "UPSERT_MAPPING"; payload: GanttCurriculumModuleDayMapping };
 
-export const getGanttMappingKey = (m: { dayId: GanttDayId; moduleId: GanttModuleId; eventId?: GanttEventId | null; }) =>
-    `${m.dayId}-${m.moduleId}-${m.eventId ?? 'null'}`;
+export const getGanttMappingKey = (m: {
+  dayId: GanttDayId;
+  moduleId: GanttModuleId;
+  eventId?: GanttEventId | null;
+}) => `${m.dayId}-${m.moduleId}-${m.eventId ?? "null"}`;

@@ -1,5 +1,4 @@
-import
-{
+import {
     GanttCurriculumId,
     GanttEvent,
     GanttEventId,

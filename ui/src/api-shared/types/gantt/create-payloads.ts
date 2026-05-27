@@ -1,14 +1,15 @@
-import
-{
+import {
     GanttCurriculum,
     GanttCurriculumId,
-    GanttCurriculumModuleDayMapping, GanttDay,
+    GanttCurriculumModuleDayMapping,
+    GanttDay,
     GanttEvent,
     GanttModule,
     GanttModuleId,
     GanttSyllabus,
     GanttSyllabusId,
-    GanttWeek, GanttWeekId,
+    GanttWeek,
+    GanttWeekId,
 } from "@/api-shared/types/gantt/models";
 
 /**
@@ -18,10 +19,7 @@ import
  */
 export type CreateGanttCurriculumPayload = {
   // Weeks are created separately, new curriculum starts with empty weeks
-} & Omit<
-  GanttCurriculum,
-  "id" | "syllabuses" | "weeks"
->
+} & Omit<GanttCurriculum, "id" | "syllabuses" | "weeks">;
 
 /**
  * Payload to create a new Curriculum Week.
@@ -32,10 +30,7 @@ export type CreateGanttCurriculumPayload = {
  */
 export type CreateGanttWeekPayload = {
   curriculumId: GanttCurriculumId;
-} & Omit<
-  GanttWeek,
-  "days" | "id" | "title"
->
+} & Omit<GanttWeek, "days" | "id" | "title">;
 
 /**
  * Payload to create a new Curriculum Day.
@@ -45,7 +40,7 @@ export type CreateGanttWeekPayload = {
  */
 export type CreateGanttDayPayload = {
   weekId: GanttWeekId;
-} & Omit<GanttDay, "id" | "title">
+} & Omit<GanttDay, "id" | "title">;
 
 /**
  * Payload to create a new Syllabus.
@@ -55,10 +50,7 @@ export type CreateGanttDayPayload = {
  */
 export type CreateGanttSyllabusPayload = {
   curriculumId: GanttCurriculumId;
-} & Omit<
-  GanttSyllabus,
-  "id" | "modules"
->
+} & Omit<GanttSyllabus, "id" | "modules">;
 
 /**
  * Payload to create a new Module.
@@ -68,10 +60,7 @@ export type CreateGanttSyllabusPayload = {
  */
 export type CreateGanttModulePayload = {
   syllabusId: GanttSyllabusId;
-} & Omit<
-  GanttModule,
-  'constraints' | "events" | "id"
->
+} & Omit<GanttModule, "constraints" | "events" | "id">;
 
 /**
  * Payload to create a new Module Event.
@@ -80,9 +69,9 @@ export type CreateGanttModulePayload = {
  */
 export type CreateGanttEventPayload = {
   moduleId: GanttModuleId;
-} & Omit<GanttEvent, 'constraints' | "id">
+} & Omit<GanttEvent, "constraints" | "id">;
 
-export type CreateGanttCurriculumEventDayMapping = { } & Omit<
+export type CreateGanttCurriculumEventDayMapping = {} & Omit<
   GanttCurriculumModuleDayMapping,
   "curriculumId" | "id"
->
+>;

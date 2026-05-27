@@ -9,4 +9,4 @@ export type Group = {
   groupType: GroupType;
   members?: Array<User>;
   subGroups?: Array<Group>;
-}
+};

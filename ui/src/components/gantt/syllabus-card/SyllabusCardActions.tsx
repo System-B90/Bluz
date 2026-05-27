@@ -1,6 +1,5 @@
 import LinkOffIcon from "@mui/icons-material/LinkOff";
-import
-{
+import {
     CardActions,
     CardActionsProps,
     IconButton,
@@ -10,8 +9,7 @@ import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import
-{
+import {
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
@@ -20,7 +18,7 @@ import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/U
 export type SyllabusCardActionsProps = {
   curriculumId: GanttCurriculumId;
   syllabusId: GanttSyllabusId;
-} & CardActionsProps
+} & CardActionsProps;
 
 export function SyllabusCardActions({
     curriculumId,

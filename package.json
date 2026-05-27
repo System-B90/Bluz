@@ -7,7 +7,7 @@
     "build": "next build ui",
     "start": "next start ui",
     "lint": "eslint --config ./ui/eslint.config.mts ui/",
-    "lint:fix": "eslint --config ./ui/eslint.config.mts --fix && prettier --write",
+    "lint:fix": "eslint --config ./ui/eslint.config.mts --fix",
     "prepare": "husky",
     "db:generate": "drizzle-kit generate --config=drizzle/drizzle.config.ts",
     "db:push": "drizzle-kit push --config=drizzle/drizzle.config.ts",
@@ -89,6 +89,7 @@
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.0.0",
     "husky": "^9.0.0",
+    "prettier": "3.8.3",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.58.2"

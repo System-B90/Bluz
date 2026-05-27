@@ -12,10 +12,10 @@ export type AuthSessionUser = {
   gender: GenderEnum;
   display_name: string;
   is_teacher: boolean;
-}
+};
 
 export type AuthSessionData = {
   user: AuthSessionUser;
   accessToken: string;
   refreshToken: string;
-} & Session
+} & Session;

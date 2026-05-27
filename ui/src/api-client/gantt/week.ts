@@ -1,5 +1,4 @@
-import
-{
+import {
     BaseDocument,
     baseDocumentFixup,
     clientGantApiBuilder,
@@ -17,13 +16,12 @@ const weekApi = clientGantApiBuilder<GanttWeek, CreateGanttWeekPayload>({
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =
   weekApi;
 
-export
-{
+export {
     apiCreate as apiCreateWeek,
     apiDelete as apiDeleteWeek,
     apiGetMany as apiGetManyWeeks,
     apiGet as apiGetWeek,
     apiList as apiListWeeks,
     apiUpdate as apiUpdateWeek,
-    weekApi
+    weekApi,
 };

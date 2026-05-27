@@ -7,10 +7,7 @@ import { SyllabusName } from "@/components/gantt/syllabus-card/SyllabusName";
 
 export type SyllabusCardHeaderProps = {
   syllabusId: GanttSyllabusId;
-} & Omit<
-  CardHeaderProps,
-  "title"
->
+} & Omit<CardHeaderProps, "title">;
 
 function InternalHeader({ syllabusId }: { syllabusId: GanttSyllabusId }) {
     const syllabus = useSyllabus(syllabusId);

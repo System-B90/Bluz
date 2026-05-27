@@ -1,5 +1,4 @@
-import
-{
+import {
     BaseDocument,
     baseDocumentFixup,
     clientGantApiBuilder,
@@ -15,14 +14,13 @@ const moduleApi = clientGantApiBuilder<GanttModule, CreateGanttModulePayload>({
 });
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =
   moduleApi;
-export
-{
+export {
     apiCreate as apiCreateModule,
     apiDelete as apiDeleteModule,
     apiGetMany as apiGetManyModules,
     apiGet as apiGetModule,
     apiList as apiListModules,
-    apiUpdate as apiUpdateModule
+    apiUpdate as apiUpdateModule,
 };
 
 export { moduleApi };

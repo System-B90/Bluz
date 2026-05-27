@@ -2,8 +2,7 @@
 
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import
-{
+import {
     Box,
     Checkbox,
     Collapse,
@@ -30,20 +29,19 @@ export function EventListEntry({
     capturedVersion,
     conflicting,
 }: {
-    isItemSelected: boolean;
-    handleEntryClick: (
-        event: React.MouseEvent<HTMLTableRowElement>,
-        entryId: EventId,
-    ) => void;
-    eventId: EventId;
-    localModifiedEvent: Event | undefined;
-    serverVersion: Event | undefined;
-    capturedVersion: Event | undefined;
-    conflicting: boolean;
-})
-{
+  isItemSelected: boolean;
+  handleEntryClick: (
+    event: React.MouseEvent<HTMLTableRowElement>,
+    entryId: EventId,
+  ) => void;
+  eventId: EventId;
+  localModifiedEvent: Event | undefined;
+  serverVersion: Event | undefined;
+  capturedVersion: Event | undefined;
+  conflicting: boolean;
+}) {
     // console.log(eventId, localModifiedEvent, serverVersion, capturedVersion, conflicting);
-    const [ expanded, setExpanded ] = useState<boolean>(false);
+    const [expanded, setExpanded] = useState<boolean>(false);
     const allKeys: Array<keyof Event> = [
         ...new Set([
             ...Object.keys(localModifiedEvent ?? {}),
@@ -56,40 +54,40 @@ export function EventListEntry({
         .filter(
             (key) =>
                 (localModifiedEvent !== undefined &&
-                    serverVersion !== undefined &&
-                    !areValuesEqual(localModifiedEvent?.[ key ], serverVersion?.[ key ])) ||
-                (serverVersion !== undefined &&
-                    capturedVersion !== undefined &&
-                    !areValuesEqual(serverVersion?.[ key ], capturedVersion?.[ key ])) ||
-                (localModifiedEvent !== undefined &&
-                    capturedVersion !== undefined &&
-                    !areValuesEqual(localModifiedEvent?.[ key ], capturedVersion?.[ key ])),
+          serverVersion !== undefined &&
+          !areValuesEqual(localModifiedEvent?.[key], serverVersion?.[key])) ||
+        (serverVersion !== undefined &&
+          capturedVersion !== undefined &&
+          !areValuesEqual(serverVersion?.[key], capturedVersion?.[key])) ||
+        (localModifiedEvent !== undefined &&
+          capturedVersion !== undefined &&
+          !areValuesEqual(localModifiedEvent?.[key], capturedVersion?.[key])),
         )
         .map((key) => (
-            <TableRow key={ `${eventId}-${key}` }>
+            <TableRow key={`${eventId}-${key}`}>
                 <TableCell>
-                    <Typography>{ key }</Typography>
+                    <Typography>{key}</Typography>
                 </TableCell>
                 <TableCell>
-                    { localModifiedEvent?.[ key ] ? (
-                        <Typography>{ JSON.stringify(localModifiedEvent?.[ key ]) }</Typography>
+                    {localModifiedEvent?.[key] ? (
+                        <Typography>{JSON.stringify(localModifiedEvent?.[key])}</Typography>
                     ) : (
                         <DeletedItemPlaceholder />
-                    ) }
+                    )}
                 </TableCell>
                 <TableCell>
-                    { capturedVersion?.[ key ] ? (
-                        <Typography>{ JSON.stringify(capturedVersion?.[ key ]) }</Typography>
+                    {capturedVersion?.[key] ? (
+                        <Typography>{JSON.stringify(capturedVersion?.[key])}</Typography>
                     ) : (
                         <DeletedItemPlaceholder />
-                    ) }
+                    )}
                 </TableCell>
                 <TableCell>
-                    { serverVersion?.[ key ] ? (
-                        <Typography>{ JSON.stringify(serverVersion?.[ key ]) }</Typography>
+                    {serverVersion?.[key] ? (
+                        <Typography>{JSON.stringify(serverVersion?.[key])}</Typography>
                     ) : (
                         <DeletedItemPlaceholder />
-                    ) }
+                    )}
                 </TableCell>
             </TableRow>
         ));
@@ -97,73 +95,72 @@ export function EventListEntry({
     return (
         <Fragment>
             <TableRow
-                aria-checked={ isItemSelected }
+                aria-checked={isItemSelected}
                 hover
-                onClick={ (e) => handleEntryClick(e, eventId) }
+                onClick={(e) => handleEntryClick(e, eventId)}
                 role="checkbox"
-                selected={ isItemSelected }
-                sx={ { "& > *": { borderBottom: "unset" } } }
+                selected={isItemSelected}
+                sx={{ "& > *": { borderBottom: "unset" } }}
             >
                 <TableCell>
                     <IconButton
                         aria-label="expand row"
-                        onClick={ (e) =>
-                        {
+                        onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
                             setExpanded((v) => !v);
-                        } }
+                        }}
                         size="small"
                     >
-                        { expanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon /> }
+                        {expanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
                     </IconButton>
                 </TableCell>
                 <TableCell component="th" scope="row">
-                    <Typography>{ eventId }</Typography>
+                    <Typography>{eventId}</Typography>
                 </TableCell>
                 <TableCell>
                     <Typography>
-                        { localModifiedEvent?.name ??
-                            serverVersion?.name ??
-                            capturedVersion?.name }
+                        {localModifiedEvent?.name ??
+              serverVersion?.name ??
+              capturedVersion?.name}
                     </Typography>
                 </TableCell>
                 <TableCell>
-                    <Typography color={ conflicting ? "error" : "inherit" }>
-                        { conflicting ? "קונפליקט!" : "אין" }
+                    <Typography color={conflicting ? "error" : "inherit"}>
+                        {conflicting ? "קונפליקט!" : "אין"}
                     </Typography>
                 </TableCell>
                 <TableCell padding="checkbox">
-                    <Checkbox checked={ isItemSelected } color="primary" />
+                    <Checkbox checked={isItemSelected} color="primary" />
                 </TableCell>
             </TableRow>
             <TableRow>
-                <TableCell colSpan={ 4 } style={ { paddingBottom: 0, paddingTop: 0 } }>
-                    <Collapse in={ expanded } timeout="auto" unmountOnExit>
-                        <Box sx={ { margin: 1 } }>
+                <TableCell colSpan={4} style={{ paddingBottom: 0, paddingTop: 0 }}>
+                    <Collapse in={expanded} timeout="auto" unmountOnExit>
+                        <Box sx={{ margin: 1 }}>
                             <Typography component="div" gutterBottom variant="h6">
-                                שינויים
+                שינויים
                             </Typography>
                             <Table aria-label="purchases" size="small">
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>
-                                            <Typography fontWeight={ 600 }>שם השדה</Typography>
+                                            <Typography fontWeight={600}>שם השדה</Typography>
                                         </TableCell>
                                         <TableCell>
-                                            <Typography fontWeight={ 600 }>השינוי שלך</Typography>
+                                            <Typography fontWeight={600}>השינוי שלך</Typography>
                                         </TableCell>
                                         <TableCell>
-                                            <Typography fontWeight={ 600 }>
-                                                מה שראית לפני ששינית
+                                            <Typography fontWeight={600}>
+                        מה שראית לפני ששינית
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
-                                            <Typography fontWeight={ 600 }>מה שיש כרגע בשרת</Typography>
+                                            <Typography fontWeight={600}>מה שיש כרגע בשרת</Typography>
                                         </TableCell>
                                     </TableRow>
                                 </TableHead>
-                                <TableBody>{ changeItems }</TableBody>
+                                <TableBody>{changeItems}</TableBody>
                             </Table>
                         </Box>
                     </Collapse>

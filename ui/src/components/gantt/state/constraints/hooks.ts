@@ -1,12 +1,14 @@
 import { useContext } from "react";
 
-import { GanttConstraintContext, GanttConstraintContextType } from "@/components/gantt/state/constraints/context";
+import {
+    GanttConstraintContext,
+    GanttConstraintContextType,
+} from "@/components/gantt/state/constraints/context";
 
 /**
  * Hook for specialized access
  */
-export function useGanttConstraints(): GanttConstraintContextType
-{
+export function useGanttConstraints(): GanttConstraintContextType {
     const context = useContext(GanttConstraintContext);
     if (!context)
         throw new Error(

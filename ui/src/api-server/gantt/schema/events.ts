@@ -20,6 +20,8 @@ export const ganttEventsRelationsSchema = relations(
         m2e: many(ganttModule2EventsSchema),
         cEC: many(ganttCurriculumEventConfigurationsSchema), // curriculumConfigs
         constraints: many(ganttConstraintsSchema, { relationName: "ownerEvent" }),
-        targetedByConstraints: many(ganttConstraintsSchema, { relationName: "targetEvent" }),
+        targetedByConstraints: many(ganttConstraintsSchema, {
+            relationName: "targetEvent",
+        }),
     }),
 );

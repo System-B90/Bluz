@@ -7,7 +7,7 @@ type WebSocketConfigContextType = {
   protocol: string;
   portSuffix: string;
   connectionString: string;
-}
+};
 
 const WebSocketConfigContext = createContext<WebSocketConfigContextType>({
     host: "bluz.biz",
@@ -21,7 +21,7 @@ type WebSocketConfigProviderProps = {
   protocol: string;
   portSuffix: string;
   children: ReactNode;
-}
+};
 
 export function WebSocketConfigProvider({
     host,

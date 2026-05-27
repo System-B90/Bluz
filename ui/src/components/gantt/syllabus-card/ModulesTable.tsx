@@ -1,5 +1,4 @@
-import
-{
+import {
     Box,
     Table,
     TableBody,
@@ -11,8 +10,7 @@ import
 } from "@mui/material";
 import { useMemo } from "react";
 
-import
-{
+import {
     GanttCurriculumId,
     GanttSyllabus,
     GanttSyllabusId,
@@ -24,7 +22,7 @@ export type ModulesTableProps = {
   syllabusId: GanttSyllabusId;
   curriculumId: GanttCurriculumId;
   syllabusModules: GanttSyllabus["modules"];
-}
+};
 export function ModulesTable({
     syllabusId,
     syllabusModules,

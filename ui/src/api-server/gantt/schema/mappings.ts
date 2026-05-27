@@ -5,8 +5,7 @@
  * Author: Michael K. Steinberg
  */
 import { relations } from "drizzle-orm";
-import
-{
+import {
     integer,
     pgTable,
     primaryKey,
@@ -38,8 +37,9 @@ export const ganttCurriculumEventDayMappingsSchema = pgTable(
         moduleId: text("module_id")
             .notNull()
             .references(() => ganttModulesSchema.id, { onDelete: "cascade" }),
-        eventId: text("event_id")
-            .references(() => ganttEventsSchema.id, { onDelete: "cascade" }),
+        eventId: text("event_id").references(() => ganttEventsSchema.id, {
+            onDelete: "cascade",
+        }),
         dayId: text("day_id")
             .notNull()
             .references(() => ganttDaysSchema.id, { onDelete: "cascade" }),
@@ -48,12 +48,7 @@ export const ganttCurriculumEventDayMappingsSchema = pgTable(
         updatedAt: timestamp("ua").defaultNow().notNull(),
     },
     (t) => ({
-        unq: unique().on(
-            t.curriculumId,
-            t.moduleId,
-            t.eventId,
-            t.dayId
-        ),
+        unq: unique().on(t.curriculumId, t.moduleId, t.eventId, t.dayId),
     }),
 );
 
@@ -61,20 +56,20 @@ export const ganttCurriculumEventDayMappingsRelationsSchema = relations(
     ganttCurriculumEventDayMappingsSchema,
     ({ one }) => ({
         curriculum: one(ganttCurriculumsSchema, {
-            fields: [ ganttCurriculumEventDayMappingsSchema.curriculumId ],
-            references: [ ganttCurriculumsSchema.id ],
+            fields: [ganttCurriculumEventDayMappingsSchema.curriculumId],
+            references: [ganttCurriculumsSchema.id],
         }),
         event: one(ganttEventsSchema, {
-            fields: [ ganttCurriculumEventDayMappingsSchema.eventId ],
-            references: [ ganttEventsSchema.id ],
+            fields: [ganttCurriculumEventDayMappingsSchema.eventId],
+            references: [ganttEventsSchema.id],
         }),
         module: one(ganttModulesSchema, {
-            fields: [ ganttCurriculumEventDayMappingsSchema.moduleId ],
-            references: [ ganttModulesSchema.id ],
+            fields: [ganttCurriculumEventDayMappingsSchema.moduleId],
+            references: [ganttModulesSchema.id],
         }),
         day: one(ganttDaysSchema, {
-            fields: [ ganttCurriculumEventDayMappingsSchema.dayId ],
-            references: [ ganttDaysSchema.id ],
+            fields: [ganttCurriculumEventDayMappingsSchema.dayId],
+            references: [ganttDaysSchema.id],
         }),
     }),
 );
@@ -95,7 +90,7 @@ export const ganttCurriculumEventConfigurationsSchema = pgTable(
         updatedAt: timestamp("updated_at").defaultNow().notNull(),
     },
     (t) => ({
-        pk: primaryKey({ columns: [ t.curriculumId, t.eventId ] }),
+        pk: primaryKey({ columns: [t.curriculumId, t.eventId] }),
     }),
 );
 
@@ -103,12 +98,12 @@ export const ganttCurriculumEventConfigurationsRelationsSchema = relations(
     ganttCurriculumEventConfigurationsSchema,
     ({ one }) => ({
         curriculum: one(ganttCurriculumsSchema, {
-            fields: [ ganttCurriculumEventConfigurationsSchema.curriculumId ],
-            references: [ ganttCurriculumsSchema.id ],
+            fields: [ganttCurriculumEventConfigurationsSchema.curriculumId],
+            references: [ganttCurriculumsSchema.id],
         }),
         event: one(ganttEventsSchema, {
-            fields: [ ganttCurriculumEventConfigurationsSchema.eventId ],
-            references: [ ganttEventsSchema.id ],
+            fields: [ganttCurriculumEventConfigurationsSchema.eventId],
+            references: [ganttEventsSchema.id],
         }),
     }),
 );

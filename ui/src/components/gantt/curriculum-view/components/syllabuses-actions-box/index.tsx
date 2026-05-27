@@ -6,10 +6,7 @@ import { SyllabusSelectionField } from "@/components/gantt/curriculum-view/compo
 
 export type SyllabusesActionsBoxProps = {
   curriculumId: GanttCurriculumId;
-} & Omit<
-  BoxProps,
-  "display" | "justifyContent"
->
+} & Omit<BoxProps, "display" | "justifyContent">;
 
 export function SyllabusesActionsBox({
     curriculumId,

@@ -8,8 +8,7 @@
 import { NextRequest } from "next/server";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
-import
-{
+import {
     createCurriculumModuleDayMapping,
     deleteCurriculumModuleDayMapping,
     getModuleDayMappingsForCurriculum,
@@ -17,24 +16,21 @@ import
 } from "@/api-server/gantt/db-mappings";
 import { ClientApiError } from "@/api-shared/errors";
 import { CreateGanttCurriculumEventDayMapping } from "@/api-shared/types/gantt/create-payloads";
-import
-{
+import {
     GanttDayId,
     GanttEventId,
     GanttModuleId,
 } from "@/api-shared/types/gantt/models";
 
 export type RouteContext = {
-    params: Promise<{ id: string; }>;
-}
+  params: Promise<{ id: string }>;
+};
 
 /**
  * GET: Fetches assignments for a curriculum.
  */
-export async function GET(request: NextRequest, context: RouteContext)
-{
-    try
-    {
+export async function GET(request: NextRequest, context: RouteContext) {
+    try {
         const { id } = await context.params;
         if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
@@ -42,8 +38,7 @@ export async function GET(request: NextRequest, context: RouteContext)
 
         const mappings = await getModuleDayMappingsForCurriculum(id, { dayIds });
         return ApiSuccess(mappings);
-    } catch (error)
-    {
+    } catch (error) {
         return catchHandler(request, error);
     }
 }
@@ -51,16 +46,13 @@ export async function GET(request: NextRequest, context: RouteContext)
 /**
  * POST: Creates a new module-to-day mapping.
  */
-export async function POST(request: NextRequest, context: RouteContext)
-{
-    try
-    {
+export async function POST(request: NextRequest, context: RouteContext) {
+    try {
         const { id: curriculumId } = await context.params;
         const body: CreateGanttCurriculumEventDayMapping = await request.json();
 
         // Validate required fields for creation
-        if (!body.moduleId || !body.dayId)
-        {
+        if (!body.moduleId || !body.dayId) {
             throw new ClientApiError("Missing required fields: moduleId or dayId.");
         }
 
@@ -73,8 +65,7 @@ export async function POST(request: NextRequest, context: RouteContext)
         });
 
         return ApiSuccess(mapping);
-    } catch (error)
-    {
+    } catch (error) {
         return catchHandler(request, error);
     }
 }
@@ -82,21 +73,18 @@ export async function POST(request: NextRequest, context: RouteContext)
 /**
  * PATCH: Updates or reorders an existing mapping.
  */
-export async function PATCH(request: NextRequest, context: RouteContext)
-{
-    try
-    {
+export async function PATCH(request: NextRequest, context: RouteContext) {
+    try {
         const { id: curriculumId } = await context.params;
         const body = await request.json();
 
         const { eventId, moduleId, oldMapping, newValues } = body as {
-            moduleId: GanttModuleId;
-            eventId?: GanttEventId | null;
-            oldMapping: { dayId: GanttDayId; };
-            newValues: { dayId?: GanttDayId; sortOrder?: number; };
-        };
-        if (!moduleId || !oldMapping.dayId)
-        {
+      moduleId: GanttModuleId;
+      eventId?: GanttEventId | null;
+      oldMapping: { dayId: GanttDayId };
+      newValues: { dayId?: GanttDayId; sortOrder?: number };
+    };
+        if (!moduleId || !oldMapping.dayId) {
             throw new ClientApiError(
                 "Missing oldMapping or eventId identifiers to locate the record.",
             );
@@ -110,8 +98,7 @@ export async function PATCH(request: NextRequest, context: RouteContext)
             newValues,
         );
         return ApiSuccess(updated);
-    } catch (error)
-    {
+    } catch (error) {
         return catchHandler(request, error);
     }
 }
@@ -119,20 +106,17 @@ export async function PATCH(request: NextRequest, context: RouteContext)
 /**
  * DELETE: Removes a module mapping.
  */
-export async function DELETE(request: NextRequest, context: RouteContext)
-{
-    try
-    {
+export async function DELETE(request: NextRequest, context: RouteContext) {
+    try {
         const { id: curriculumId } = await context.params;
         const body = await request.json();
 
         const { moduleId, eventId, dayId } = body as {
-            moduleId: GanttModuleId;
-            eventId: GanttEventId;
-            dayId: GanttDayId;
-        };
-        if (!moduleId || !dayId)
-        {
+      moduleId: GanttModuleId;
+      eventId: GanttEventId;
+      dayId: GanttDayId;
+    };
+        if (!moduleId || !dayId) {
             throw new ClientApiError(
                 "Missing identifiers (moduleId or dayIndex) for deletion.",
             );
@@ -145,8 +129,7 @@ export async function DELETE(request: NextRequest, context: RouteContext)
             dayId,
         );
         return ApiSuccess(deleted);
-    } catch (error)
-    {
+    } catch (error) {
         return catchHandler(request, error);
     }
 }

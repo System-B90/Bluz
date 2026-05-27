@@ -21,7 +21,9 @@ export async function GET(request: NextRequest) {
         if (id) {
             return ApiSuccess(await DbEvent.get(id));
         } else if (ids !== null) {
-            const parsedIds = ids.split(",").filter((v) => v.length === 36 || v.length === 24);
+            const parsedIds = ids
+                .split(",")
+                .filter((v) => v.length === 36 || v.length === 24);
             const eventArray = await DbEvent.getMultiple(parsedIds);
             const eventRecord = eventArray.reduce(
                 (prev, ev) => ({ ...prev, [ev.id]: ev }),

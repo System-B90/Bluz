@@ -15,7 +15,7 @@ import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSett
 type SettingsDialogProps = {
   open: boolean;
   onClose: () => void;
-}
+};
 
 export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     const [tab, setTab] = useState(0);

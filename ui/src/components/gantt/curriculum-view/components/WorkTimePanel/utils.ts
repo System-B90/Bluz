@@ -1,8 +1,4 @@
-import
-{
-    GanttDayIndex,
-    GanttWeekId,
-} from "@/api-shared/types/gantt/models";
+import { GanttDayIndex, GanttWeekId } from "@/api-shared/types/gantt/models";
 
 const dayOrder: Array<GanttDayIndex> = [
     GanttDayIndex.Sunday,

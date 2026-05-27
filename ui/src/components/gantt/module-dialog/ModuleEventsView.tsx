@@ -1,6 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
-import
-{
+import {
     Box,
     IconButton,
     Table,
@@ -14,11 +13,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import
-{
-    GanttEventId,
-    GanttModuleId,
-} from "@/api-shared/types/gantt/models";
+import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
 import { ModuleEventView } from "@/components/gantt/module-dialog/ModuleEventView";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 

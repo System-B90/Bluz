@@ -10,7 +10,7 @@ type TimeoutError = {
     name: string;
     [key: string]: unknown;
   };
-} & Error
+} & Error;
 
 export function isTimeoutError(e: unknown): e is TimeoutError {
     return (
@@ -149,6 +149,8 @@ export class HiveClient {
     }
 
     async getModules(): Promise<Array<Module>> {
-        return await this._get<Array<Module>>(this.buildUrl("/api/core/course/modules/"));
+        return await this._get<Array<Module>>(
+            this.buildUrl("/api/core/course/modules/"),
+        );
     }
 }

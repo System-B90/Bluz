@@ -4,15 +4,14 @@ import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useCurriculumState } from "@/components/gantt/state/provider";
-import
-{
+import {
     calculateAllocatedTimeForSyllabus,
     calculateMinimumRequiredTimeForSyllabus,
 } from "@/components/gantt/utils";
 
 export type HoursBoxProps = {
   syllabusId: GanttSyllabusId;
-} & BoxProps
+} & BoxProps;
 
 export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
     const state = useCurriculumState();

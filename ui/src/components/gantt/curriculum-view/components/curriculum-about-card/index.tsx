@@ -8,7 +8,7 @@ import { CurriculumName } from "@/components/gantt/curriculum-view/components/cu
 export type CurriculumCardProps = {
   curriculumId: GanttCurriculumId | null;
   curriculum: GanttCurriculumDocument | undefined;
-} & Omit<CardProps, "sx">
+} & Omit<CardProps, "sx">;
 
 export function CurriculumAboutCard({
     curriculumId,

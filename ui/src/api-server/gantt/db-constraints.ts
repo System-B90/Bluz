@@ -8,10 +8,13 @@
 import { eq, inArray, or } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
-import { ganttCurriculum2SyllabusesSchema, ganttModule2EventsSchema, ganttSyllabus2ModulesSchema } from "@/api-server/gantt/schema";
+import {
+    ganttCurriculum2SyllabusesSchema,
+    ganttModule2EventsSchema,
+    ganttSyllabus2ModulesSchema,
+} from "@/api-server/gantt/schema";
 import { ganttConstraintsSchema } from "@/api-server/gantt/schema/constraints";
-import
-{
+import {
     GanttCurriculumId,
     GanttEventId,
     GanttModuleId,
@@ -26,9 +29,9 @@ export type EntityType = "event" | "module";
 export async function getConstraintsForOwner(
     ownerId: GanttEventId | GanttModuleId,
     ownerType: EntityType,
-)
-{
-    const condition = ownerType === "event"
+) {
+    const condition =
+    ownerType === "event"
         ? eq(ganttConstraintsSchema.ownerEventId, ownerId)
         : eq(ganttConstraintsSchema.ownerModuleId, ownerId);
 
@@ -44,9 +47,9 @@ export async function getConstraintsForOwner(
 export async function getConstraintsTargetingEntity(
     targetId: GanttEventId | GanttModuleId,
     targetType: EntityType,
-)
-{
-    const condition = targetType === "event"
+) {
+    const condition =
+    targetType === "event"
         ? eq(ganttConstraintsSchema.targetEventId, targetId)
         : eq(ganttConstraintsSchema.targetModuleId, targetId);
 
@@ -60,8 +63,7 @@ export async function getConstraintsTargetingEntity(
  */
 export async function createConstraint(
     data: typeof ganttConstraintsSchema.$inferInsert,
-)
-{
+) {
     return await postgresDb
         .insert(ganttConstraintsSchema)
         .values(data)
@@ -74,8 +76,7 @@ export async function createConstraint(
 export async function updateConstraint(
     constraintId: string,
     newValues: Partial<typeof ganttConstraintsSchema.$inferInsert>,
-)
-{
+) {
     return await postgresDb
         .update(ganttConstraintsSchema)
         .set({ ...newValues, updatedAt: new Date() })
@@ -86,23 +87,26 @@ export async function updateConstraint(
 /**
  * 5) Delete a constraint.
  */
-export async function deleteConstraint(constraintId: string)
-{
+export async function deleteConstraint(constraintId: string) {
     return await postgresDb
         .delete(ganttConstraintsSchema)
         .where(eq(ganttConstraintsSchema.id, constraintId))
         .returning();
 }
 
-export async function getConstraintsForCurriculum(curriculumId: GanttCurriculumId)
-{
+export async function getConstraintsForCurriculum(
+    curriculumId: GanttCurriculumId,
+) {
     // Subquery 1: Resolve all module IDs mapped to the curriculum
     const moduleIdsSubquery = postgresDb
         .select({ moduleId: ganttSyllabus2ModulesSchema.moduleId })
         .from(ganttSyllabus2ModulesSchema)
         .innerJoin(
             ganttCurriculum2SyllabusesSchema,
-            eq(ganttCurriculum2SyllabusesSchema.syllabusId, ganttSyllabus2ModulesSchema.syllabusId)
+            eq(
+                ganttCurriculum2SyllabusesSchema.syllabusId,
+                ganttSyllabus2ModulesSchema.syllabusId,
+            ),
         )
         .where(eq(ganttCurriculum2SyllabusesSchema.curriculumId, curriculumId));
 
@@ -112,11 +116,17 @@ export async function getConstraintsForCurriculum(curriculumId: GanttCurriculumI
         .from(ganttModule2EventsSchema)
         .innerJoin(
             ganttSyllabus2ModulesSchema,
-            eq(ganttSyllabus2ModulesSchema.moduleId, ganttModule2EventsSchema.moduleId)
+            eq(
+                ganttSyllabus2ModulesSchema.moduleId,
+                ganttModule2EventsSchema.moduleId,
+            ),
         )
         .innerJoin(
             ganttCurriculum2SyllabusesSchema,
-            eq(ganttCurriculum2SyllabusesSchema.syllabusId, ganttSyllabus2ModulesSchema.syllabusId)
+            eq(
+                ganttCurriculum2SyllabusesSchema.syllabusId,
+                ganttSyllabus2ModulesSchema.syllabusId,
+            ),
         )
         .where(eq(ganttCurriculum2SyllabusesSchema.curriculumId, curriculumId));
 
@@ -127,8 +137,8 @@ export async function getConstraintsForCurriculum(curriculumId: GanttCurriculumI
         .where(
             or(
                 inArray(ganttConstraintsSchema.ownerModuleId, moduleIdsSubquery),
-                inArray(ganttConstraintsSchema.ownerEventId, eventIdsSubquery)
-            )
+                inArray(ganttConstraintsSchema.ownerEventId, eventIdsSubquery),
+            ),
         );
 }
 /**
@@ -137,8 +147,7 @@ export async function getConstraintsForCurriculum(curriculumId: GanttCurriculumI
  * Created: 2026-04-19
  * Author: Michael K. Steinberg
  */
-export async function getConstraintsForSyllabus(syllabusId: string)
-{
+export async function getConstraintsForSyllabus(syllabusId: string) {
     // Subquery 1: Resolve all module IDs mapped directly to the syllabus
     const moduleIdsSubquery = postgresDb
         .select({ moduleId: ganttSyllabus2ModulesSchema.moduleId })
@@ -151,7 +160,10 @@ export async function getConstraintsForSyllabus(syllabusId: string)
         .from(ganttModule2EventsSchema)
         .innerJoin(
             ganttSyllabus2ModulesSchema,
-            eq(ganttSyllabus2ModulesSchema.moduleId, ganttModule2EventsSchema.moduleId)
+            eq(
+                ganttSyllabus2ModulesSchema.moduleId,
+                ganttModule2EventsSchema.moduleId,
+            ),
         )
         .where(eq(ganttSyllabus2ModulesSchema.syllabusId, syllabusId));
 
@@ -162,8 +174,8 @@ export async function getConstraintsForSyllabus(syllabusId: string)
         .where(
             or(
                 inArray(ganttConstraintsSchema.ownerModuleId, moduleIdsSubquery),
-                inArray(ganttConstraintsSchema.ownerEventId, eventIdsSubquery)
-            )
+                inArray(ganttConstraintsSchema.ownerEventId, eventIdsSubquery),
+            ),
         );
 }
 
@@ -173,8 +185,7 @@ export async function getConstraintsForSyllabus(syllabusId: string)
  * Created: 2026-04-19
  * Author: Michael K. Steinberg
  */
-export async function getConstraintsForModule(moduleId: GanttModuleId)
-{
+export async function getConstraintsForModule(moduleId: GanttModuleId) {
     // Subquery: Resolve all event IDs mapped directly to the module
     const eventIdsSubquery = postgresDb
         .select({ eventId: ganttModule2EventsSchema.eventId })
@@ -188,7 +199,7 @@ export async function getConstraintsForModule(moduleId: GanttModuleId)
         .where(
             or(
                 eq(ganttConstraintsSchema.ownerModuleId, moduleId),
-                inArray(ganttConstraintsSchema.ownerEventId, eventIdsSubquery)
-            )
+                inArray(ganttConstraintsSchema.ownerEventId, eventIdsSubquery),
+            ),
         );
 }

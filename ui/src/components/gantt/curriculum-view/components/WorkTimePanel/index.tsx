@@ -6,8 +6,7 @@
  */
 
 import AddIcon from "@mui/icons-material/Add";
-import
-{
+import {
     Box,
     Card,
     CircularProgress,

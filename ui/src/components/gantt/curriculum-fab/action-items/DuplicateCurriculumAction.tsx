@@ -11,7 +11,7 @@ import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fa
 
 export type DuplicateCurriculumActionProps = {
   onCreate: (newCurriculum: GanttCurriculumDocument) => void;
-} & CurriculumAwareActionItemProps
+} & CurriculumAwareActionItemProps;
 
 export function DuplicateCurriculumAction({
     sourceCurriculum,

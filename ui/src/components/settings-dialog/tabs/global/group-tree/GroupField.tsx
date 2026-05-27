@@ -10,7 +10,7 @@ type GroupFieldProps = {
   group: Group;
   attributes: DraggableAttributes;
   listeners?: SyntheticListenerMap;
-}
+};
 
 export function GroupField({ group, attributes, listeners }: GroupFieldProps) {
     return (

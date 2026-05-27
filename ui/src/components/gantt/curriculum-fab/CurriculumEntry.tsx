@@ -7,7 +7,7 @@ type CurriculumEntryProps = {
   curriculum: GanttCurriculum;
   onClick: () => void;
   selected: boolean;
-}
+};
 
 // Visual distinction between Draft and Prod handled here
 export const CurriculumEntry = React.memo(

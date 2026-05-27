@@ -8,7 +8,7 @@ import { useCurriculumActions } from "@/components/gantt/state/hooks/gantt-funcs
 export type CurriculumNameProps = {
   curriculumId: GanttCurriculumId | null;
   title?: string;
-}
+};
 
 export function CurriculumName({ curriculumId, title }: CurriculumNameProps) {
     const { updateCurriculum } = useCurriculumActions();

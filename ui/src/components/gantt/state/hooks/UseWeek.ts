@@ -1,5 +1,4 @@
-import
-{
+import {
     GanttCurriculumId,
     GanttWeek,
     GanttWeekId,
@@ -10,20 +9,18 @@ export function useCurriculumWeek(weekId: null): undefined;
 export function useCurriculumWeek(
   weekId: GanttWeekId,
 ):
-  | (GanttWeek & { id: GanttWeekId; curriculumId: GanttCurriculumId; })
+  | (GanttWeek & { id: GanttWeekId; curriculumId: GanttCurriculumId })
   | undefined;
 export function useCurriculumWeek(
     weekId: GanttWeekId | null,
 ):
-  | (GanttWeek & { id: GanttWeekId; curriculumId: GanttCurriculumId; })
-  | undefined
-{
+  | (GanttWeek & { id: GanttWeekId; curriculumId: GanttCurriculumId })
+  | undefined {
     const state = useCurriculumState();
 
-    if (weekId === null)
-    {
+    if (weekId === null) {
         return undefined;
     }
 
-    return state.weeks[ weekId ];
+    return state.weeks[weekId];
 }

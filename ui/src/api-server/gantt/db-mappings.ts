@@ -9,8 +9,7 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
-import
-{
+import {
     GanttCurriculumId,
     GanttDayId,
     GanttEventId,
@@ -27,15 +26,13 @@ export async function getModuleDayMappingsForCurriculum(
     {
         _weekIds,
         dayIds,
-    }: { _weekIds?: Array<GanttWeekId>; dayIds?: Array<GanttDayId>; },
-)
-{
+    }: { _weekIds?: Array<GanttWeekId>; dayIds?: Array<GanttDayId> },
+) {
     const filters = [
         eq(ganttCurriculumEventDayMappingsSchema.curriculumId, curriculumId),
     ];
 
-    if (dayIds !== undefined && dayIds.length > 0)
-    {
+    if (dayIds !== undefined && dayIds.length > 0) {
         filters.push(inArray(ganttCurriculumEventDayMappingsSchema.dayId, dayIds));
     }
 
@@ -45,22 +42,23 @@ export async function getModuleDayMappingsForCurriculum(
     //     filters.push(inArray(ganttCurriculumModuleDayMappingsSchema.weekId, weekIds));
     // }
 
-    return await postgresDb.query.ganttCurriculumModuleDayMappingsSchema.findMany({
-        where: and(...filters),
-    });
+    return await postgresDb.query.ganttCurriculumModuleDayMappingsSchema.findMany(
+        {
+            where: and(...filters),
+        },
+    );
 }
 
 /**
  * 2) Creating a mapping.
  */
 export async function createCurriculumModuleDayMapping(data: {
-    curriculumId: GanttCurriculumId;
-    moduleId: GanttModuleId;
-    eventId?: GanttEventId | null;
-    dayId: GanttDayId;
-    sortOrder?: number;
-})
-{
+  curriculumId: GanttCurriculumId;
+  moduleId: GanttModuleId;
+  eventId?: GanttEventId | null;
+  dayId: GanttDayId;
+  sortOrder?: number;
+}) {
     const { eventId, moduleId, sortOrder, ...v } = { ...data };
 
     return await postgresDb
@@ -82,10 +80,9 @@ export async function updateCurriculumModuleDayMapping(
     curriculumId: GanttCurriculumId,
     moduleId: GanttModuleId,
     eventId: GanttEventId | null,
-    oldMapping: { dayId: GanttDayId; },
-    newValues: { dayId?: GanttDayId; sortOrder?: number; },
-)
-{
+    oldMapping: { dayId: GanttDayId },
+    newValues: { dayId?: GanttDayId; sortOrder?: number },
+) {
     return await postgresDb
         .update(ganttCurriculumEventDayMappingsSchema)
         .set({ ...newValues, updatedAt: new Date() })
@@ -112,8 +109,7 @@ export async function reorderCurriculumModuleMappingInDay(
     eventId: GanttEventId | null,
     dayId: GanttDayId,
     newSortOrder: number,
-)
-{
+) {
     return await postgresDb
         .update(ganttCurriculumEventDayMappingsSchema)
         .set({ sortOrder: newSortOrder, updatedAt: new Date() })
@@ -137,8 +133,7 @@ export async function deleteCurriculumModuleDayMapping(
     moduleId: GanttModuleId,
     eventId: GanttEventId | null,
     dayId: GanttDayId,
-)
-{
+) {
     return await postgresDb
         .delete(ganttCurriculumEventDayMappingsSchema)
         .where(

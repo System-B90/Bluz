@@ -11,7 +11,7 @@ import { GroupMemberField } from "@/components/settings-dialog/tabs/global/group
 
 type GroupMemberFieldProps = {
   group: Group;
-}
+};
 
 export function GroupMembersField({ group }: GroupMemberFieldProps) {
     return (
