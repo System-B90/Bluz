@@ -7,15 +7,12 @@
 
 import { createContext } from "react";
 
+import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
 import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 import { GanttConstraintState } from "@/components/gantt/state/constraints/types";
 
 export type RefreshConstraints = () => Promise<void>;
 
-export type CreateConstraintPayload = Omit<
-  GanttConstraint,
-  "createdAt" | "id" | "updatedAt"
->;
 export type CreateConstraint = (
   payload: CreateConstraintPayload,
 ) => Promise<GanttConstraint | undefined>;

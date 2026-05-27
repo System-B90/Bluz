@@ -1,4 +1,5 @@
-import {
+import
+{
     Box,
     Button,
     Dialog,
@@ -14,13 +15,14 @@ import { useSnackbar } from "notistack";
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import {
+import
+{
     GanttCurriculumId,
     GanttModule,
     GanttModuleId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
-import { ModuleConstraintsView } from "@/components/gantt/module-dialog/ModuleConstraintsView"; // <-- Added Import
+import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView"; // <-- Added Import
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import { HiveModulesView } from "@/components/gantt/module-dialog/utils";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
@@ -29,10 +31,10 @@ import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export type ModuleDialogProps = {
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  moduleId: GanttModuleId | null;
-  syllabusId: GanttSyllabusId | null;
-  curriculumId: GanttCurriculumId | null;
+    setOpen: Dispatch<SetStateAction<boolean>>;
+    moduleId: GanttModuleId | null;
+    syllabusId: GanttSyllabusId | null;
+    curriculumId: GanttCurriculumId | null;
 } & DialogProps;
 
 function ModuleDialogInner({
@@ -41,46 +43,51 @@ function ModuleDialogInner({
     syllabusId,
     moduleId,
     ...props
-}: Omit<ModuleDialogProps, "curriculumId">) {
+}: Omit<ModuleDialogProps, "curriculumId">)
+{
     const { enqueueSnackbar } = useSnackbar();
     const { closeModuleDialog } = useCurriculumProviderActions();
     const { deleteModule, updateModule } = useModuleActions();
     const moduleDoc = useModule(moduleId ?? "");
 
-    const [isActionLoading, setIsActionLoading] = useState<boolean>(false);
+    const [ isActionLoading, setIsActionLoading ] = useState<boolean>(false);
 
     // Local State Buffers
-    const [localTitle, setLocalTitle] = useState(moduleDoc?.title ?? "");
-    const [localDescription, setLocalDescription] = useState(
+    const [ localTitle, setLocalTitle ] = useState(moduleDoc?.title ?? "");
+    const [ localDescription, setLocalDescription ] = useState(
         moduleDoc?.description ?? "",
     );
 
-    const handleClose = useCallback(() => {
+    const handleClose = useCallback(() =>
+    {
         setOpen(false);
-    }, [setOpen]);
+    }, [ setOpen ]);
 
     const handleCommit = useCallback(
-        (updates: Partial<GanttModule>) => {
+        (updates: Partial<GanttModule>) =>
+        {
             if (!syllabusId || !moduleId) return;
             updateModule(moduleId, updates).catch((error) =>
                 enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת המערך נכשלה!", error),
             );
         },
-        [moduleId, syllabusId, updateModule, enqueueSnackbar],
+        [ moduleId, syllabusId, updateModule, enqueueSnackbar ],
     );
 
-    const handleDelete = useCallback(() => {
+    const handleDelete = useCallback(() =>
+    {
         if (!syllabusId || !moduleId) return;
 
         setIsActionLoading(true);
         deleteModule(syllabusId, moduleId)
-            .then(() => {
+            .then(() =>
+            {
                 closeModuleDialog();
                 setIsActionLoading(false);
                 setOpen(false);
             })
             .catch(() => setIsActionLoading(false));
-    }, [syllabusId, moduleId, deleteModule, closeModuleDialog, setOpen]);
+    }, [ syllabusId, moduleId, deleteModule, closeModuleDialog, setOpen ]);
 
     // Ensure hooks are called before this check
     if (syllabusId === null || moduleId === null) return null;
@@ -89,9 +96,9 @@ function ModuleDialogInner({
         <Dialog
             fullWidth
             maxWidth="xl"
-            onClose={handleClose}
-            open={open}
-            {...props}
+            onClose={ handleClose }
+            open={ open }
+            { ...props }
         >
             <DialogTitle>עריכת מערך</DialogTitle>
 
@@ -100,63 +107,63 @@ function ModuleDialogInner({
                     alignItems="flex-start"
                     display="flex"
                     flexDirection="row"
-                    gap={2}
-                    mt={1}
+                    gap={ 2 }
+                    mt={ 1 }
                 >
-                    <Stack spacing={2} width="30%">
+                    <Stack spacing={ 2 } width="30%">
                         <TextField
                             fullWidth
                             label="כותרת"
-                            onBlur={() => handleCommit({ title: localTitle })}
-                            onChange={(e) => setLocalTitle(e.target.value)}
-                            value={localTitle}
+                            onBlur={ () => handleCommit({ title: localTitle }) }
+                            onChange={ (e) => setLocalTitle(e.target.value) }
+                            value={ localTitle }
                         />
 
                         <TextField
                             fullWidth
                             label="תיאור"
-                            minRows={10}
+                            minRows={ 10 }
                             multiline
-                            onBlur={() => handleCommit({ description: localDescription })}
-                            onChange={(e) => setLocalDescription(e.target.value)}
-                            sx={{
+                            onBlur={ () => handleCommit({ description: localDescription }) }
+                            onChange={ (e) => setLocalDescription(e.target.value) }
+                            sx={ {
                                 flex: 1,
                                 "& .MuiInputBase-root": {
                                     height: "100%",
                                     alignItems: "stretch",
                                 },
                                 "& textarea": { height: "100% !important" },
-                            }}
-                            value={localDescription}
+                            } }
+                            value={ localDescription }
                         />
                     </Stack>
 
                     <Divider flexItem orientation="vertical" />
 
-                    <Stack flexGrow={1} mt={1} spacing={2}>
+                    <Stack flexGrow={ 1 } mt={ 1 } spacing={ 2 }>
                         <ModuleEventsView
-                            eventIds={moduleDoc?.events ?? []}
-                            moduleId={moduleId}
+                            eventIds={ moduleDoc?.events ?? [] }
+                            moduleId={ moduleId }
                         />
-                        <HiveModulesView hiveModules={moduleDoc?.hiveIds ?? []} />
+                        <HiveModulesView hiveModules={ moduleDoc?.hiveIds ?? [] } />
                     </Stack>
                 </Box>
-                <Box height={"1rem"} />
-                <ModuleConstraintsView moduleId={moduleId} /> {/* <-- Injected Panel */}
+                <Box height={ "1rem" } />
+                <ModuleConstraintsView moduleId={ moduleId } /> {/* <-- Injected Panel */ }
             </DialogContent>
 
             <DialogActions>
-                <Button color="error" disabled={isActionLoading} onClick={handleDelete}>
-          מחיקה
+                <Button color="error" disabled={ isActionLoading } onClick={ handleDelete }>
+                    מחיקה
                 </Button>
 
                 <Button
                     color="primary"
-                    disabled={isActionLoading}
-                    onClick={handleClose}
+                    disabled={ isActionLoading }
+                    onClick={ handleClose }
                     variant="contained"
                 >
-          סגירה
+                    סגירה
                 </Button>
             </DialogActions>
         </Dialog>
@@ -168,30 +175,32 @@ export function ModuleDialog({
     syllabusId,
     moduleId,
     ...props
-}: ModuleDialogProps) {
-    if (!syllabusId || !moduleId || !curriculumId) {
+}: ModuleDialogProps)
+{
+    if (!syllabusId || !moduleId || !curriculumId)
+    {
         return (
             <ModuleDialogInner
-                moduleId={moduleId}
-                syllabusId={syllabusId}
-                {...props}
+                moduleId={ moduleId }
+                syllabusId={ syllabusId }
+                { ...props }
             />
         );
     }
 
     return (
         <GanttConstraintProvider
-            context={{
+            context={ {
                 type: "module",
                 curriculumId,
                 syllabusId,
                 moduleId,
-            }}
+            } }
         >
             <ModuleDialogInner
-                moduleId={moduleId}
-                syllabusId={syllabusId}
-                {...props}
+                moduleId={ moduleId }
+                syllabusId={ syllabusId }
+                { ...props }
             />
         </GanttConstraintProvider>
     );
