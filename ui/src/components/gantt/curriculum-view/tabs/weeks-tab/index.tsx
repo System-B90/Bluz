@@ -5,8 +5,8 @@
  * Author: Michael K. Steinberg
  */
 
-import { Box, CircularProgress, Paper, Stack, Typography } from "@mui/material";
-import { memo } from "react";
+import { Box, CircularProgress, FormControlLabel, Paper, Stack, Switch, Typography } from "@mui/material";
+import { memo, useState } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CourseStartDateControl } from "@/components/gantt/curriculum-view/tabs/weeks-tab/CourseStartDateControl";
@@ -25,6 +25,7 @@ type WeeksTabProps = {
 function WeeksTabInner({ curriculumId }: WeeksTabProps) {
     const curriculum = useCurriculum(curriculumId);
     const state = useCurriculumState();
+    const [isCompact, setIsCompact] = useState(false);
     const {
         state: { isLoading, mappings },
     } = useGanttMappings();
@@ -38,18 +39,27 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
     }
 
     return (
-        <Box display="flex" flexDirection="column" gap={1.5} height="100%" minHeight={0}>
+        <Box 
+            className="animate-slide-up-fade" 
+            display="flex" 
+            flexDirection="column" 
+            gap={1.5} 
+            height="100%"
+            minHeight={0}
+            sx={{ pl: 3.5 }}
+        >
             <Paper
                 elevation={0}
                 sx={{
                     position: "sticky",
                     top: 0,
                     zIndex: 8,
-                    p: 1.5,
-                    border: 1,
+                    p: 2,
+                    border: "1px solid",
                     borderColor: "divider",
-                    borderRadius: 1,
+                    borderRadius: "16px",
                     bgcolor: "background.default",
+                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.04)",
                 }}
             >
                 <Stack spacing={1.5}>
@@ -70,10 +80,33 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                         </Box>
                         <WeekLengthMenu curriculum={curriculum} curriculumId={curriculumId} />
                     </Box>
-                    <CourseStartDateControl
-                        curriculum={curriculum}
-                        curriculumId={curriculumId}
-                    />
+                    <Box
+                        alignItems="center"
+                        display="flex"
+                        flexWrap="wrap"
+                        gap={2}
+                        justifyContent="space-between"
+                    >
+                        <CourseStartDateControl
+                            curriculum={curriculum}
+                            curriculumId={curriculumId}
+                        />
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={isCompact}
+                                    onChange={(e) => setIsCompact(e.target.checked)}
+                                    size="small"
+                                />
+                            }
+                            label={
+                                <Typography sx={{ fontWeight: 700, fontSize: "0.85rem", color: "text.secondary" }}>
+                                    תצוגה מצומצמת
+                                </Typography>
+                            }
+                            sx={{ m: 0 }}
+                        />
+                    </Box>
                     <WeeksSummaryBar curriculum={curriculum} state={state} />
                     {isLoading ? (
                         <Typography color="text.secondary" variant="caption">
@@ -84,6 +117,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
             </Paper>
             <WeeksCapacityGrid
                 curriculum={curriculum}
+                isCompact={isCompact}
                 mappings={mappings}
                 state={state}
             />

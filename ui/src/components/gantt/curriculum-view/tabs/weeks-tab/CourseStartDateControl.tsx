@@ -40,9 +40,17 @@ export function CourseStartDateControl({
 
     const saveStartDate = useCallback(
         (nextValue: Dayjs | null) => {
+            let snappedValue = nextValue;
+            if (snappedValue && snappedValue.isValid()) {
+                const dayOfWeek = snappedValue.day();
+                if (dayOfWeek !== 0) {
+                    snappedValue = snappedValue.subtract(dayOfWeek, "day");
+                }
+            }
+
             const nextStartDate =
-        nextValue && nextValue.isValid()
-            ? nextValue.format("YYYY-MM-DD")
+        snappedValue && snappedValue.isValid()
+            ? snappedValue.format("YYYY-MM-DD")
             : null;
 
             if (nextStartDate === curriculum.startDate) {
@@ -71,6 +79,7 @@ export function CourseStartDateControl({
                 format="DD/MM/YYYY"
                 label="יום ראשון של שבוע 1"
                 onChange={saveStartDate}
+                shouldDisableDate={(date: Dayjs) => date.day() !== 0}
                 slotProps={{
                     textField: {
                         size: "small",

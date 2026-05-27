@@ -1,11 +1,7 @@
-import EventAvailableIcon from "@mui/icons-material/EventAvailable";
-import EventBusyIcon from "@mui/icons-material/EventBusy";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import {
     Box,
     Chip,
-    FormControlLabel,
-    Switch,
     Table,
     TableBody,
     TableCell,
@@ -15,6 +11,7 @@ import {
     TextField,
     Tooltip,
     Typography,
+    Switch,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { KeyboardEvent, useCallback, useMemo, useState } from "react";
@@ -45,6 +42,7 @@ import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWe
 
 export type WeeksCapacityGridProps = {
   curriculum: GanttCurriculum;
+  isCompact?: boolean;
   mappings: Record<string, GanttCurriculumModuleDayMapping>;
   state: NormalizedStore;
 };
@@ -68,12 +66,14 @@ function getDayIdByIndex(
 }
 
 function WeekRow({
+    isCompact = false,
     mappings,
     startDate,
     state,
     week,
     weekIndex,
 }: {
+  isCompact?: boolean;
   mappings: Record<string, GanttCurriculumModuleDayMapping>;
   startDate: null | string;
   state: NormalizedStore;
@@ -83,6 +83,7 @@ function WeekRow({
     const { enqueueSnackbar } = useSnackbar();
     const { updateWeek } = useWeekActions();
     const [localComment, setLocalComment] = useState(week.comment ?? "");
+    const [isCommentFocused, setIsCommentFocused] = useState(false);
 
     const weekTotalMinutes = useMemo(
         () => getWeekTotalMinutes(week, state),
@@ -108,7 +109,7 @@ function WeekRow({
 
     const handleCommentKeyDown = useCallback(
         (event: KeyboardEvent<HTMLInputElement>) => {
-            if (event.key !== "Enter") return;
+            if (event.key !== "Enter" || !event.ctrlKey) return;
             event.preventDefault();
             commitComment();
             event.currentTarget.blur();
@@ -136,20 +137,22 @@ function WeekRow({
                     position: "sticky",
                     insetInlineStart: 0,
                     zIndex: 3,
-                    minWidth: 150,
                     bgcolor: "background.paper",
-                    borderInlineEnd: 1,
+                    borderInlineEnd: "1px solid",
                     borderColor: "divider",
                     verticalAlign: "top",
+                    pt: isCompact ? 0.35 : 1.25,
+                    pb: isCompact ? 0.15 : 0.75,
+                    px: 1.25,
                 }}
             >
-                <Typography fontWeight={700} variant="subtitle2">
+                <Typography fontWeight={800} sx={{ fontSize: "0.88rem", color: "text.primary" }} variant="subtitle2">
           שבוע {week.number}
                 </Typography>
-                <Typography color="text.secondary" variant="caption">
+                <Typography color="text.secondary" sx={{ fontSize: "0.72rem" }} variant="caption">
                     {formatWeekDateRange(weekDateRange) || "ללא תאריך"}
                 </Typography>
-                <Box mt={1}>
+                <Box mt={0.75}>
                     <Chip
                         color={
                             weekStatus === "error"
@@ -159,54 +162,123 @@ function WeekRow({
                                     : "primary"
                         }
                         label={`${formatHoursLabel(scheduledMinutes)} / ${formatHoursLabel(weekTotalMinutes)}`}
-                        size="small"
+                        size="smaller"
+                        sx={{ fontWeight: 700 }}
                         variant="outlined"
                     />
                 </Box>
             </TableCell>
-            <TableCell sx={{ minWidth: 190, verticalAlign: "top" }}>
+            <TableCell sx={{ verticalAlign: "top", pt: isCompact ? 0.35 : 1.25, pb: isCompact ? 0.15 : 0.75, px: isCompact ? 0.5 : 1.25 }}>
                 <TextField
                     fullWidth
+                    minRows={2}
                     multiline
-                    onBlur={commitComment}
+                    onBlur={() => {
+                        commitComment();
+                        setIsCommentFocused(false);
+                    }}
                     onChange={(event) => setLocalComment(event.target.value)}
+                    onFocus={() => setIsCommentFocused(true)}
                     onKeyDown={handleCommentKeyDown}
-                    placeholder="שם / הערת שבוע"
+                    placeholder="שם / הערת שבוע..."
                     size="small"
+                    slotProps={{
+                        input: {
+                            style: {
+                                fontSize: "0.82rem",
+                                fontWeight: 500,
+                            }
+                        }
+                    }}
+                    sx={{
+                        "& .MuiOutlinedInput-root": {
+                            transition: "all 0.2s ease",
+                            bgcolor: isCommentFocused ? "background.default" : "transparent",
+                        },
+                        "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: isCommentFocused ? "primary.main" : "transparent",
+                        },
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: isCommentFocused ? "primary.main" : "divider",
+                        },
+                    }}
                     value={localComment}
                 />
             </TableCell>
-            <TableCell sx={{ minWidth: 154, verticalAlign: "top" }}>
-                <Box display="flex" flexDirection="column" gap={1}>
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={week.weekendDuty}
-                                onChange={(event) => toggleWeekendDuty(event.target.checked)}
-                                size="small"
-                            />
-                        }
-                        label={
-                            <Box alignItems="center" display="flex" gap={0.5}>
-                                {week.weekendDuty ? (
-                                    <EventBusyIcon color="warning" fontSize="small" />
-                                ) : (
-                                    <EventAvailableIcon color="success" fontSize="small" />
-                                )}
-                                <Typography variant="body2">
-                                    {week.weekendDuty ? "סוגרים שבת" : "יוצאים"}
-                                </Typography>
-                            </Box>
-                        }
-                        sx={{ m: 0 }}
-                    />
+            <TableCell sx={{ verticalAlign: "top", pt: isCompact ? 0.35 : 1.25, pb: isCompact ? 0.15 : 0.75, px: isCompact ? 0.5 : 1.25, textAlign: "center" }}>
+                <Box alignItems="center" display="flex" flexDirection="column" gap={0.75}>
+                    <Tooltip arrow title={week.weekendDuty ? "צא הביתה" : "סגור שבת"}>
+                        <Switch
+                            checked={week.weekendDuty}
+                            onChange={(event) => toggleWeekendDuty(event.target.checked)}
+                            sx={{
+                                width: 52,
+                                height: 28,
+                                padding: 0,
+                                "& .MuiSwitch-switchBase": {
+                                    padding: "2px",
+                                    transition: "transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+                                    "&.Mui-checked": {
+                                        transform: "translateX(24px)",
+                                        "& + .MuiSwitch-track": {
+                                            bgcolor: (theme) => theme.palette.mode === "light" ? "rgba(237, 108, 2, 0.2)" : "rgba(237, 108, 2, 0.3)",
+                                            opacity: 1,
+                                        }
+                                    }
+                                },
+                                "& .MuiSwitch-thumb": {
+                                    width: 24,
+                                    height: 24,
+                                    bgcolor: "success.main",
+                                    boxShadow: "0 1px 4px rgba(46, 125, 50, 0.3)",
+                                    position: "relative",
+                                    transition: "background-color 300ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+                                    "&::before": {
+                                        content: '"🏠"',
+                                        position: "absolute",
+                                        top: 0,
+                                        left: 0,
+                                        width: "100%",
+                                        height: "100%",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        fontSize: 13,
+                                        transition: "opacity 200ms ease",
+                                    },
+                                },
+                                "& .MuiSwitch-switchBase:hover .MuiSwitch-thumb": {
+                                    transform: "scale(1.08)",
+                                    transition: "background-color 300ms ease, box-shadow 300ms ease, transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+                                },
+                                "& .MuiSwitch-switchBase.Mui-checked .MuiSwitch-thumb": {
+                                    bgcolor: "warning.main",
+                                    boxShadow: "0 1px 4px rgba(237, 108, 2, 0.3)",
+                                    "&::before": {
+                                        content: '"🛏️"',
+                                    },
+                                },
+                                "& .MuiSwitch-track": {
+                                    borderRadius: 14,
+                                    bgcolor: (theme) => theme.palette.mode === "light" ? "rgba(46, 125, 50, 0.15)" : "rgba(46, 125, 50, 0.25)",
+                                    opacity: 1,
+                                    transition: "background-color 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+                                }
+                            }}
+                        />
+                    </Tooltip>
                     {saturdayMismatch ? (
                         <Tooltip title="השבוע מסומן כיוצאים, אך לשבת הוגדרו שעות עבודה">
                             <Chip
                                 color="warning"
                                 icon={<WarningAmberIcon />}
                                 label="שבת עם שעות"
-                                size="small"
+                                size="smaller"
+                                sx={{ 
+                                    fontWeight: 600,
+                                    mt: 0.5,
+                                    fontSize: "0.7rem",
+                                }}
                                 variant="outlined"
                             />
                         </Tooltip>
@@ -228,6 +300,7 @@ function WeekRow({
                 return (
                     <DayCapacityCell
                         dayId={dayId}
+                        isCompact={isCompact}
                         isMuted={isMutedSaturday}
                         key={`${week.id}-${dayIndex}-${day?.totalWorkingMinutes ?? 0}-${day?.comment ?? ""}-${dayDate?.format("YYYY-MM-DD") ?? ""}`}
                         scheduledMinutes={getScheduledMinutesForDay({
@@ -246,6 +319,7 @@ function WeekRow({
 
 export function WeeksCapacityGrid({
     curriculum,
+    isCompact = false,
     mappings,
     state,
 }: WeeksCapacityGridProps) {
@@ -267,16 +341,20 @@ export function WeeksCapacityGrid({
 
     return (
         <TableContainer
+            className="animate-slide-up-fade"
             sx={{
                 flex: 1,
-                border: 1,
+                border: "1px solid",
                 borderColor: "divider",
-                borderRadius: 1,
-                overflow: "auto",
+                borderRadius: "16px",
+                overflowX: "hidden",
+                overflowY: "auto",
                 bgcolor: "background.paper",
+                boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
+                clipPath: "inset(0 round 16px)",
             }}
         >
-            <Table size="small" stickyHeader sx={{ minWidth: 1500 }}>
+            <Table size="small" stickyHeader sx={{ width: "100%", tableLayout: "fixed" }}>
                 <TableHead>
                     <TableRow>
                         <TableCell
@@ -284,18 +362,68 @@ export function WeeksCapacityGrid({
                                 position: "sticky",
                                 insetInlineStart: 0,
                                 zIndex: 5,
-                                minWidth: 150,
-                                bgcolor: "background.paper",
-                                borderInlineEnd: 1,
+                                width: "8%",
+                                minWidth: "80px",
+                                bgcolor: (theme) =>
+                                    theme.palette.mode === "light"
+                                        ? "rgb(244, 250, 252)"
+                                        : "rgb(12, 34, 55)",
+                                borderInlineEnd: "1px solid",
                                 borderColor: "divider",
+                                fontWeight: 800,
+                                py: 1.5,
+                                fontSize: "0.85rem",
                             }}
                         >
               שבוע
                         </TableCell>
-                        <TableCell sx={{ minWidth: 190 }}>שם / הערת שבוע</TableCell>
-                        <TableCell sx={{ minWidth: 154 }}>שבת בבסיס</TableCell>
+                        <TableCell 
+                            sx={{ 
+                                width: "11%",
+                                minWidth: "100px",
+                                bgcolor: (theme) =>
+                                    theme.palette.mode === "light"
+                                        ? "rgb(244, 250, 252)"
+                                        : "rgb(12, 34, 55)",
+                                fontWeight: 800,
+                                py: 1.5,
+                                fontSize: "0.85rem",
+                            }}
+                        >
+                            שם / הערת שבוע
+                        </TableCell>
+                        <TableCell 
+                            align="center"
+                            sx={{ 
+                                width: "8%",
+                                minWidth: "80px",
+                                bgcolor: (theme) =>
+                                    theme.palette.mode === "light"
+                                        ? "rgb(244, 250, 252)"
+                                        : "rgb(12, 34, 55)",
+                                fontWeight: 800,
+                                py: 1.5,
+                                fontSize: "0.85rem",
+                            }}
+                        >
+                            שבת בבסיס
+                        </TableCell>
                         {DAY_COLUMNS.map((dayIndex) => (
-                            <TableCell align="center" key={dayIndex} sx={{ minWidth: 160 }}>
+                            <TableCell 
+                                align="center" 
+                                key={dayIndex} 
+                                sx={{ 
+                                    width: "9.7%",
+                                    minWidth: "90px",
+                                    bgcolor: (theme) =>
+                                        theme.palette.mode === "light"
+                                            ? "rgba(244, 250, 252, 0.95)"
+                                            : "rgba(12, 34, 55, 0.95)",
+                                    fontWeight: 800,
+                                    py: 1.5,
+                                    fontSize: "0.85rem",
+                                }}
+                            >
                                 {getDayNameDisplay(dayIndex)}
                             </TableCell>
                         ))}
@@ -305,6 +433,7 @@ export function WeeksCapacityGrid({
                     {weeks.length > 0 ? (
                         weeks.map((week, weekIndex) => (
                             <WeekRow
+                                isCompact={isCompact}
                                 key={`${week.id}-${week.comment ?? ""}-${week.weekendDuty}`}
                                 mappings={mappings}
                                 startDate={curriculum.startDate}
