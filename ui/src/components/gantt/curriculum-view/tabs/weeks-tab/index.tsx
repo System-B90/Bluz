@@ -23,6 +23,7 @@ type WeeksTabProps = {
 const INITIAL_WEEK_PANEL_COUNT = 2;
 const WEEK_PANEL_BATCH_SIZE = 3;
 const MAX_WEEK_PANEL_SKELETONS = 3;
+const EMPTY_WEEK_IDS: Array<GanttWeekId> = [];
 
 function WeekPanelSkeleton() {
     return (
@@ -67,7 +68,7 @@ export const WeeksTab = memo(function WeeksTab({
     curriculumId,
 }: WeeksTabProps) {
     const curriculum = useCurriculum(curriculumId);
-    const weeks = curriculum?.weeks ?? [];
+    const weeks = curriculum?.weeks ?? EMPTY_WEEK_IDS;
     const visibleWeekCount = useProgressiveItemCount(weeks.length, {
         batchSize: WEEK_PANEL_BATCH_SIZE,
         initialCount: INITIAL_WEEK_PANEL_COUNT,

@@ -115,25 +115,21 @@ function DeferredTabContent({
   selectedTabIndex: number;
 }) {
     const [renderedTabIndex, setRenderedTabIndex] = useState(selectedTabIndex);
-    const [showPendingFallback, setShowPendingFallback] = useState(false);
+    const isPendingTabContent = renderedTabIndex !== selectedTabIndex;
 
     useEffect(() => {
-        if (renderedTabIndex === selectedTabIndex) {
-            setShowPendingFallback(false);
+        if (!isPendingTabContent) {
             return;
         }
-
-        setShowPendingFallback(true);
 
         return scheduleTabContentMount(() => {
             startTransition(() => {
                 setRenderedTabIndex(selectedTabIndex);
-                setShowPendingFallback(false);
             });
         });
-    }, [renderedTabIndex, selectedTabIndex]);
+    }, [isPendingTabContent, selectedTabIndex]);
 
-    if (showPendingFallback) {
+    if (isPendingTabContent) {
         return <TabContentFallback />;
     }
 
