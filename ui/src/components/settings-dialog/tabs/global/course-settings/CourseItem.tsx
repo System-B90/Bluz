@@ -1,6 +1,6 @@
-// Lot's of Gemini code in this file, quality may be inconsistent. Please review carefully.
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Box, Chip, InputBase, Tooltip, Typography } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import { Box, IconButton, InputBase, Tooltip, Typography } from "@mui/material";
 import {
     MuiColorInput,
     MuiColorInputColors,
@@ -8,7 +8,6 @@ import {
 } from "mui-color-input";
 import { useCallback, useState } from "react";
 
-import { Color } from "@/api-shared/common";
 import { Course } from "@/api-shared/types/course";
 
 export function CourseItem({
@@ -17,35 +16,23 @@ export function CourseItem({
     onDelete,
 }: {
   course: Course;
-  onUpdate: (
-    id: string,
-    { newName, newColor }: { newName?: string; newColor?: Color | null },
-  ) => void;
+  onUpdate: (id: string, name?: string, color?: string | null) => void;
   onDelete: (id: string) => void;
 }) {
     const [title, setTitle] = useState<string>(course.name);
-    const [color, setColor] = useState<Color | null>(course.color);
+    const [color, setColor] = useState<string>(course.color ?? "#e0e0e0");
     const [isEditing, setIsEditing] = useState<boolean>(false);
 
     const commitTitleChange = useCallback(() => {
         setIsEditing(false);
-        if (title.trim() && title !== course.name) {
-            onUpdate(course.id, { newName: title.trim() });
+        const trimmed = title.trim();
+        if (trimmed && trimmed !== course.name) {
+            // Instantly auto-saves name change
+            onUpdate(course.id, trimmed, undefined);
         } else {
             setTitle(course.name);
         }
     }, [title, course.name, course.id, onUpdate]);
-
-    const commitColorChange = useCallback(
-        (newColor: Color) => {
-            if (newColor !== course.color) {
-                onUpdate(course.id, { newColor });
-            }
-            // No need to manually reset state here; if the update fails or changes,
-            // the parent will eventually trigger a remount if the key changes.
-        },
-        [course.color, course.id, onUpdate],
-    );
 
     const handleKeyDown = useCallback(
         (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -60,71 +47,154 @@ export function CourseItem({
     );
 
     const handleColorChange: MuiColorInputProps["onChange"] = useCallback(
-        (_value: string, colors: MuiColorInputColors) => {
-            const hex = colors.hex as Color;
+        (value: string, colors: MuiColorInputColors) => {
+            const hex = colors.hex;
             setColor(hex);
-            commitColorChange(hex);
+            // Instantly auto-saves color change
+            onUpdate(course.id, undefined, hex);
         },
-        [commitColorChange],
+        [course.id, onUpdate],
     );
 
     return (
-        <Chip
-            deleteIcon={
-                <Tooltip title="מחק מסלול">
-                    <DeleteIcon />
-                </Tooltip>
-            }
-            label={
-                <Box
-                    alignItems={"center"}
-                    display={"flex"}
-                    flexDirection={"row"}
-                    gap={0.5}
-                >
-                    <MuiColorInput
-                        dir="ltr"
-                        format="hex"
-                        fullWidth={false}
-                        isAlphaHidden
-                        onChange={handleColorChange}
-                        size={"small"}
-                        sx={{
-                            p: 0,
-                            m: 0,
-                            width: "1rem",
-                            height: "1rem",
-                            "& .MuiInputBase-root": {
-                                padding: 0,
-                                "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+        <Box
+            sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                p: "6px 14px",
+                borderRadius: "20px",
+                border: "1px solid",
+                borderColor: "divider",
+                bgcolor: (theme) =>
+                    theme.palette.mode === "light"
+                        ? "rgba(103, 200, 221, 0.04)"
+                        : "rgba(255, 255, 255, 0.02)",
+                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                position: "relative",
+                overflow: "hidden",
+                "& .delete-btn": {
+                    opacity: 0,
+                    transform: "scale(0.8) translateX(8px)",
+                    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                    width: 0,
+                    p: 0,
+                },
+                "&:hover": {
+                    borderColor: "primary.main",
+                    boxShadow: "0 4px 12px rgba(103, 200, 221, 0.08)",
+                    bgcolor: "action.hover",
+                    "& .delete-btn": {
+                        opacity: 1,
+                        transform: "scale(1) translateX(0)",
+                        width: "28px",
+                        p: "4px",
+                    },
+                },
+            }}
+        >
+            {/* Color Input Dot (Styled Color Circle Hack) */}
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+                <MuiColorInput
+                    dir="ltr"
+                    format="hex"
+                    fullWidth={false}
+                    isAlphaHidden
+                    onChange={handleColorChange}
+                    size="small"
+                    sx={{
+                        p: 0,
+                        m: 0,
+                        width: "18px",
+                        height: "18px",
+                        minWidth: 0,
+                        "& .MuiInputBase-root": {
+                            padding: 0,
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "50%",
+                            overflow: "hidden",
+                            border: "none",
+                            "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+                            "& input": { display: "none" },
+                            "& .MuiInputAdornment-root": { m: 0, width: "100%", height: "100%" },
+                            "& .MuiButtonBase-root": {
+                                width: "100%",
+                                height: "100%",
+                                borderRadius: "50%",
+                                border: "1px solid rgba(0,0,0,0.15)",
+                                transition: "all 0.2s ease",
+                                "&:hover": { transform: "scale(1.2)" },
                             },
+                        },
+                    }}
+                    value={color}
+                />
+            </Box>
+
+            {/* Editable Name Field */}
+            <Box
+                onClick={() => !isEditing && setIsEditing(true)}
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.8,
+                    cursor: "pointer",
+                }}
+            >
+                {isEditing ? (
+                    <InputBase
+                        autoFocus
+                        onBlur={commitTitleChange}
+                        onChange={(e) => setTitle(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        sx={{
+                            fontSize: "0.88rem",
+                            fontWeight: 700,
+                            fontFamily: "Assistant, sans-serif",
+                            width: `${Math.max(title.length, 6)}ch`,
+                            borderBottom: "1px solid",
+                            borderColor: "primary.main",
                         }}
-                        value={color ?? "#e0e0e0"}
+                        value={title}
                     />
-                    {isEditing ? (
-                        <InputBase
-                            autoFocus
-                            onBlur={commitTitleChange}
-                            onChange={(e) => setTitle(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            sx={{
-                                fontSize: "inherit",
-                                width: `${Math.max(title.length, 5)}ch`,
-                            }}
-                            value={title}
-                        />
-                    ) : (
+                ) : (
+                    <Box display="flex" alignItems="center" gap={0.5} sx={{ "&:hover svg": { opacity: 1 } }}>
                         <Typography
-                            onDoubleClick={() => setIsEditing(true)}
-                            sx={{ cursor: "pointer", userSelect: "none" }}
+                            sx={{
+                                fontWeight: 700,
+                                fontSize: "0.88rem",
+                                fontFamily: "Assistant, sans-serif",
+                                userSelect: "none",
+                                color: "text.primary",
+                            }}
                         >
                             {title}
                         </Typography>
-                    )}
-                </Box>
-            }
-            onDelete={() => onDelete(course.id)}
-            size="small"
-        />
+                        <EditIcon
+                            sx={{
+                                fontSize: 11,
+                                color: "text.secondary",
+                                opacity: 0,
+                                transition: "opacity 0.2s ease",
+                            }}
+                        />
+                    </Box>
+                )}
+            </Box>
+
+            {/* Hover-to-Reveal Delete Action */}
+            <Tooltip title="מחק מסלול">
+                <IconButton
+                    className="delete-btn"
+                    color="error"
+                    onClick={() => onDelete(course.id)}
+                    size="small"
+                >
+                    <DeleteIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+            </Tooltip>
+        </Box>
     );
 }
+
