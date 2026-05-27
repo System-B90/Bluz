@@ -66,6 +66,7 @@ export function WeekWorkTimeChip({ weekId }: { weekId: GanttWeekId }) {
 export function WeekPanel({ weekId }: WeekPanelProps) {
     const { enqueueSnackbar } = useSnackbar();
     const week = useCurriculumWeek(weekId);
+    const state = useCurriculumState();
     const { updateWeek } = useWeekActions();
 
     const handleCommentBlur = useCallback(
@@ -82,10 +83,17 @@ export function WeekPanel({ weekId }: WeekPanelProps) {
 
     const renderedDays = useMemo(
         () =>
-            (week?.days ?? []).map((dayId: GanttDayId) => (
-                <DayEntry dayId={dayId} key={dayId} />
-            )),
-        [week?.days],
+            (week?.days ?? []).map((dayId: GanttDayId) => {
+                const day = state.days[dayId];
+
+                return (
+                    <DayEntry
+                        dayId={dayId}
+                        key={`${dayId}-${day?.totalWorkingMinutes ?? 0}-${day?.comment ?? ""}`}
+                    />
+                );
+            }),
+        [state.days, week?.days],
     );
 
     return (

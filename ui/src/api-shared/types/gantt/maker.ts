@@ -12,6 +12,7 @@ export function makeCurriculum(
         id: curriculum?.id,
         title: curriculum?.title ?? "הגאנט שלי",
         description: curriculum?.description ?? "הגאנט של הקורס החדש שלי",
+        startDate: curriculum?.startDate ?? null,
         syllabuses: curriculum?.syllabuses ?? [],
         isDraft: curriculum?.isDraft ?? true,
         weeks: curriculum?.weeks ?? [],

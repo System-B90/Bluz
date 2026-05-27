@@ -1,0 +1,1 @@
+ALTER TABLE "c" ADD COLUMN "start_date" date;

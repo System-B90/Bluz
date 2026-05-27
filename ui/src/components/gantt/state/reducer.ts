@@ -358,7 +358,10 @@ export function curriculumReducer(
             weeks: {
                 ...weeksRecord,
                 [action.payload.week.id]: injectDocumentTimes(
-                    action.payload.week,
+                    {
+                        ...action.payload.week,
+                        curriculumId: action.payload.curriculumId,
+                    },
                 ) as any,
             },
             curriculums: {
@@ -375,10 +378,31 @@ export function curriculumReducer(
     }
 
     case "REMOVE_WEEK": {
+        const existingWeek = state.weeks[action.payload.weekId];
         const { [action.payload.weekId]: _, ...remainingWeeks } = state.weeks;
+        const remainingDays = { ...state.days };
+
+        for (const dayId of existingWeek?.days ?? []) {
+            delete remainingDays[dayId];
+        }
+
+        const parent = state.curriculums[action.payload.curriculumId];
+
         return {
             ...state,
             weeks: remainingWeeks,
+            days: remainingDays,
+            curriculums: parent
+                ? {
+                    ...state.curriculums,
+                    [parent.id]: {
+                        ...parent,
+                        weeks: parent.weeks.filter(
+                            (weekId) => weekId !== action.payload.weekId,
+                        ),
+                    },
+                }
+                : state.curriculums,
         };
     }
 

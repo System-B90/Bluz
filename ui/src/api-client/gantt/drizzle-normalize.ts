@@ -119,7 +119,7 @@ export function normalizeCurriculumData(
                 id: apiDay.id,
                 title:
           DAY_NAME_DISPLAY[apiDay.dayIndex] ?? `יום ${apiDay.dayIndex + 1}`,
-                weekId: apiDay.weekId,
+                weekId: dLink.weekId,
                 dayIndex: apiDay.dayIndex,
                 totalWorkingMinutes: apiDay.totalWorkingMinutes,
                 comment: apiDay.comment,
@@ -147,6 +147,7 @@ export function normalizeCurriculumData(
         id: apiCurriculum.id,
         title: apiCurriculum.title,
         description: apiCurriculum.description,
+        startDate: apiCurriculum.startDate,
         isDraft: apiCurriculum.isDraft,
         updatedAt: apiCurriculum.updatedAt,
         createdAt: apiCurriculum.createdAt,
