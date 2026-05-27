@@ -19,7 +19,24 @@ export function RelationalDraftFields({
             <Select
                 displayEmpty
                 MenuProps={ { PaperProps: { style: { maxHeight: 400 } } } }
-                onChange={ (e) => setDraft({ ...draft, targetId: e.target.value }) }
+                onChange={ (e) => {
+                    const selectedId = e.target.value;
+                    let selectedType: "" | "event" | "module" = "";
+                    for (const group of Object.values(targetOptions))
+                    {
+                        const found = group.find((o) => o.id === selectedId);
+                        if (found)
+                        {
+                            selectedType = found.type;
+                            break;
+                        }
+                    }
+                    setDraft({
+                        ...draft,
+                        targetId: selectedId,
+                        targetType: selectedType,
+                    });
+                } }
                 renderValue={ (value) =>
                 {
                     if (!value) return "בחר יעד";
@@ -40,11 +57,27 @@ export function RelationalDraftFields({
                         <ListSubheader key={ `header-${syllabusId}` }>
                             { syllabus.title }
                         </ListSubheader>,
-                        ...options.map((option) => (
-                            <MenuItem key={ option.id } value={ option.id }>
-                                { option.label }
-                            </MenuItem>
-                        )),
+                        ...options.map((option) => {
+                            const isModule = option.type === "module";
+                            return (
+                                <MenuItem
+                                    key={ option.id }
+                                    sx={ isModule ? {
+                                        fontWeight: "bold",
+                                        color: "primary.main",
+                                        pt: 1.5,
+                                        pb: 0.5,
+                                    } : {
+                                        pl: 4,
+                                        fontSize: "0.9rem",
+                                        color: "text.secondary",
+                                    } }
+                                    value={ option.id }
+                                >
+                                    { isModule ? `📦 ${option.title}` : `🔹 ${option.title}` }
+                                </MenuItem>
+                            );
+                        }),
                     ];
                 }) }
             </Select>

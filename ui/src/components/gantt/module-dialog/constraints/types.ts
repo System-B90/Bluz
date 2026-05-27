@@ -4,6 +4,7 @@ import { ConstraintType } from "@/api-shared/types/gantt/models/constraint";
 export type TargetOption = {
     id: string;
     label: string;
+    title: string;
     type: "event" | "module";
     syllabusId: string;
 };
@@ -11,6 +12,7 @@ export type TargetOption = {
 export type RelationalDraft = {
     type: ConstraintType.Relational;
     targetId: string;
+    targetType: "" | "event" | "module";
     relation: "after" | "before";
     minDelay?: string;
     maxDelay?: string;
