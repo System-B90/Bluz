@@ -31,6 +31,7 @@ export function DraftConstraintForm({
             setDraft({
                 type: ConstraintType.Relational,
                 targetId: "",
+                targetType: "",
                 relation: "after",
                 minDelay: "",
                 maxDelay: "",

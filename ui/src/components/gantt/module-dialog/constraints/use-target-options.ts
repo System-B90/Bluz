@@ -24,6 +24,7 @@ export function useTargetOptions()
             result[ ganttModule.syllabusId ].push({
                 id: ganttModule.id,
                 label,
+                title: ganttModule.title,
                 type: "module",
                 syllabusId: ganttModule.syllabusId,
             });
@@ -36,6 +37,7 @@ export function useTargetOptions()
                 result[ ganttModule.syllabusId ].push({
                     id: event.id,
                     label: `${label} / ${event.title}`,
+                    title: event.title,
                     type: "event",
                     syllabusId: ganttModule.syllabusId,
                 });
