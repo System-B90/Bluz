@@ -43,6 +43,7 @@ export function ModuleConstraintsView({
         setDraft({
             type: ConstraintType.Relational,
             targetId: "",
+            targetType: "",
             relation: "after",
             minDelay: "",
             maxDelay: "",
@@ -68,7 +69,7 @@ export function ModuleConstraintsView({
                 ownerModuleId: moduleId,
                 // @ts-ignore: TS doesn't narrow correctly
                 targetId: draft.targetId,
-                targetType: draft.targetId.startsWith('e_') ? "event" : "module",
+                targetType: draft.targetType as "event" | "module",
                 relation: draft.relation,
                 minDelayDays: draft.minDelay ? Number(draft.minDelay) : undefined,
                 maxDelayDays: draft.maxDelay ? Number(draft.maxDelay) : undefined,
