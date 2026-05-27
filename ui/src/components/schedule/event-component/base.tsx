@@ -1,4 +1,4 @@
-import { Box, Tooltip } from "@mui/material";
+import { Box } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { useMemo } from "react";
 import { EventProps } from "react-big-calendar";
