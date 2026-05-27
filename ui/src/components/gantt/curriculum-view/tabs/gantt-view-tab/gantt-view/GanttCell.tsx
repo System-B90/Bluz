@@ -18,6 +18,8 @@ export const GanttCell: React.FC<GanttCellProps> = ({
     isAbsoluteBlock = true,
     elementId,
     violations,
+    blockLeftPx,
+    blockWidthPx,
 }) => {
     const theme = useTheme();
 
@@ -53,6 +55,8 @@ export const GanttCell: React.FC<GanttCellProps> = ({
             >
                 {hasBlock && blockId && blockPayload ? (
                     <GanttBlock
+                        blockLeftPx={blockLeftPx}
+                        blockWidthPx={blockWidthPx}
                         elementId={elementId}
                         id={blockId}
                         isAbsolute={isAbsoluteBlock}
