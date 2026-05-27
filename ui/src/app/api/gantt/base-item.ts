@@ -61,6 +61,9 @@ export function buildGantItemRoutes<
 
             // Strongly typed to Partial<TEntity> to ensure we only update valid frontend properties
             const payload = JSON.parse(textBody) as Partial<TEntity>;
+            if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
+                throw new ClientApiError("Payload must be a JSON object.");
+            }
 
             const updatedItem = await dbSet.updateItem(id as TEntity[ "id" ], payload);
             return ApiSuccess(updatedItem);

@@ -35,7 +35,7 @@ const basicOperations = drizzleOperationsBuilder<
 >({
     table: ganttEventsSchema,
     typeName: "מופע",
-    idPreffix: "e",
+    idPrefix: "e",
     parentJunction: {
         table: ganttModule2EventsSchema,
         parentKey: "moduleId",

@@ -26,7 +26,7 @@ const basicOperations = drizzleOperationsBuilder<
 >({
     table: ganttWeeksSchema,
     typeName: "שבוע",
-    idPreffix: "w",
+    idPrefix: "w",
     junction: {
         table: ganttWeek2DaysSchema,
         localKey: ganttWeek2DaysSchema.weekId,

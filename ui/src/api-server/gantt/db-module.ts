@@ -38,7 +38,7 @@ const basicOperations = drizzleOperationsBuilder<
 >({
     table: ganttModulesSchema,
     typeName: "מערך",
-    idPreffix: "m",
+    idPrefix: "m",
     junction: {
         table: ganttModule2EventsSchema,
         localKey: ganttModule2EventsSchema.moduleId,

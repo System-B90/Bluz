@@ -15,11 +15,19 @@ export function inplaceDateFixup<T>(
         if (typeof window === "undefined") {
             // SERVER SIDE: Prepare for MongoDB/API
             // Convert to native Date object or ISO string
-            item[fieldName] = new Date(value as any) as any;
+            const parsedDate = new Date(value as any);
+            if (Number.isNaN(parsedDate.getTime())) {
+                return item;
+            }
+            item[fieldName] = parsedDate as any;
         } else {
             // CLIENT SIDE: Prepare for UI
             // Convert to Dayjs object for easy manipulation
-            item[fieldName] = dayjs(value as any) as any;
+            const parsedDayjs = dayjs(value as any);
+            if (!parsedDayjs.isValid()) {
+                return item;
+            }
+            item[fieldName] = parsedDayjs as any;
         }
     }
     return item;

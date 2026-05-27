@@ -40,7 +40,7 @@ export type DrizzleOperationsBuilderProps<
   typeName: string;
   junction?: Array<JunctionConfig> | JunctionConfig;
   parentJunction?: ParentJunctionConfig;
-  idPreffix: "c" | "d" | "e" | "m" | "s" | "w";
+  idPrefix: "c" | "d" | "e" | "m" | "s" | "w";
 }
 
 export function drizzleOperationsBuilder<
@@ -52,7 +52,7 @@ export function drizzleOperationsBuilder<
     typeName,
     junction,
     parentJunction,
-    idPreffix,
+    idPrefix,
 }: DrizzleOperationsBuilderProps<TTable>): Omit<
   BasicGantOperations<T, TCreatePayload>,
   "getItem"
@@ -70,7 +70,7 @@ export function drizzleOperationsBuilder<
   }
 
   async function createNewItem(data: TCreatePayload): Promise<DbTDocument> {
-      const id = (data as any).id || `${idPreffix}_${crypto.randomUUID()}`;
+      const id = (data as any).id || `${idPrefix}_${crypto.randomUUID()}`;
       const now = new Date();
 
       const { curriculumId, syllabusId, moduleId, weekId, ...entityData } =

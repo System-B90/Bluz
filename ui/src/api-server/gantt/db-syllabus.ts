@@ -30,7 +30,7 @@ const basicOperations = drizzleOperationsBuilder<
 >({
     table: ganttSyllabusesSchema,
     typeName: "סילבוס",
-    idPreffix: "s",
+    idPrefix: "s",
     junction: {
         table: ganttSyllabus2ModulesSchema,
         localKey: ganttSyllabus2ModulesSchema.syllabusId,

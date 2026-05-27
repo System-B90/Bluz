@@ -20,7 +20,7 @@ const basicOperations = drizzleOperationsBuilder<
 >({
     table: ganttCurriculumsSchema,
     typeName: "גאנט",
-    idPreffix: "c",
+    idPrefix: "c",
     junction: {
         table: ganttCurriculum2SyllabusesSchema,
         localKey: ganttCurriculum2SyllabusesSchema.curriculumId,
