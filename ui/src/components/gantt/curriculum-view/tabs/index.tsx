@@ -1,7 +1,15 @@
 import KeyboardArrowLeft from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
-import { Box, BoxProps, Tab, Tabs } from "@mui/material";
-import { Dispatch, Fragment, SetStateAction } from "react";
+import { Box, BoxProps, CircularProgress, Tab, Tabs } from "@mui/material";
+import {
+    Dispatch,
+    Fragment,
+    SetStateAction,
+    memo,
+    startTransition,
+    useEffect,
+    useState,
+} from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumViewBuilderTab } from "@/components/gantt/curriculum-view/tabs/builder-tab";
@@ -13,6 +21,9 @@ type TabProps = {
   selectedTabIndex: number;
   setSelectedTabIndex: Dispatch<SetStateAction<number>>;
 };
+
+const MemoizedCurriculumGanttView = memo(CurriculumGanttView);
+const MemoizedCurriculumViewBuilderTab = memo(CurriculumViewBuilderTab);
 
 export type CurriculumViewTabsProps = {
   curriculumId: GanttCurriculumId | null;
@@ -52,6 +63,83 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
     );
 }
 
+function scheduleTabContentMount(callback: () => void) {
+    if (typeof window === "undefined") {
+        return () => {};
+    }
+
+    let frameId = window.requestAnimationFrame(() => {
+        frameId = window.requestAnimationFrame(callback);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+}
+
+function TabContentFallback() {
+    return (
+        <Box
+            alignItems="center"
+            display="flex"
+            height="100%"
+            justifyContent="center"
+            width="100%"
+        >
+            <CircularProgress size={28} />
+        </Box>
+    );
+}
+
+function renderTabContent(
+    tabIndex: number,
+    curriculumId: GanttCurriculumId,
+) {
+    switch (tabIndex) {
+    case 0:
+        return <SyllabusesTab curriculumId={curriculumId} />;
+    case 1:
+        return <WeeksTab curriculumId={curriculumId} />;
+    case 2:
+        return <MemoizedCurriculumViewBuilderTab curriculumId={curriculumId} />;
+    case 3:
+        return <MemoizedCurriculumGanttView curriculumId={curriculumId} />;
+    default:
+        return null;
+    }
+}
+
+function DeferredTabContent({
+    curriculumId,
+    selectedTabIndex,
+}: {
+  curriculumId: GanttCurriculumId;
+  selectedTabIndex: number;
+}) {
+    const [renderedTabIndex, setRenderedTabIndex] = useState(selectedTabIndex);
+    const [showPendingFallback, setShowPendingFallback] = useState(false);
+
+    useEffect(() => {
+        if (renderedTabIndex === selectedTabIndex) {
+            setShowPendingFallback(false);
+            return;
+        }
+
+        setShowPendingFallback(true);
+
+        return scheduleTabContentMount(() => {
+            startTransition(() => {
+                setRenderedTabIndex(selectedTabIndex);
+                setShowPendingFallback(false);
+            });
+        });
+    }, [renderedTabIndex, selectedTabIndex]);
+
+    if (showPendingFallback) {
+        return <TabContentFallback />;
+    }
+
+    return renderTabContent(renderedTabIndex, curriculumId);
+}
+
 export function CurriculumViewTabs({
     curriculumId,
     selectedTabIndex,
@@ -66,16 +154,10 @@ export function CurriculumViewTabs({
             />
             {curriculumId !== null && (
                 <Box flexGrow={1} height="80%">
-                    {selectedTabIndex === 0 && (
-                        <SyllabusesTab curriculumId={curriculumId} />
-                    )}
-                    {selectedTabIndex === 1 && <WeeksTab curriculumId={curriculumId} />}
-                    {selectedTabIndex === 2 && (
-                        <CurriculumViewBuilderTab curriculumId={curriculumId} />
-                    )}
-                    {selectedTabIndex === 3 && (
-                        <CurriculumGanttView curriculumId={curriculumId} />
-                    )}
+                    <DeferredTabContent
+                        curriculumId={curriculumId}
+                        selectedTabIndex={selectedTabIndex}
+                    />
                 </Box>
             )}
         </Box>

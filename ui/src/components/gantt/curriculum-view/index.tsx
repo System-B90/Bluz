@@ -1,6 +1,6 @@
 "use client";
 import { Box, BoxProps } from "@mui/material";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
@@ -15,33 +15,38 @@ export function CurriculumView({
     curriculumId,
     ...props
 }: CurriculumViewProps) {
-    const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
     const [selectedTabIndex, setSelectedTabIndex] = useState<number>(() => {
         const viewIndexFromUrl = searchParams.get("v");
-        return viewIndexFromUrl ? parseInt(viewIndexFromUrl) : 0;
+        const parsedViewIndex = viewIndexFromUrl
+            ? parseInt(viewIndexFromUrl, 10)
+            : 0;
+
+        return Number.isFinite(parsedViewIndex) ? parsedViewIndex : 0;
     });
 
     useEffect(() => {
-        const urlViewIndex = searchParams.get("v");
-        const currentViewIndex = selectedTabIndex.toString() ?? null;
-
-        if (urlViewIndex === currentViewIndex) {
+        if (typeof window === "undefined") {
             return;
         }
 
-        const nextParams = new URLSearchParams(searchParams.toString());
-        if (currentViewIndex) {
-            nextParams.set("v", currentViewIndex);
-        } else {
-            nextParams.delete("v");
+        const currentViewIndex = selectedTabIndex.toString();
+        const nextParams = new URLSearchParams(window.location.search);
+
+        if (nextParams.get("v") === currentViewIndex) {
+            return;
         }
 
+        nextParams.set("v", currentViewIndex);
+
+        const hash = window.location.hash;
         const nextSearch = nextParams.toString();
-        router.replace(nextSearch ? `${pathname}?${nextSearch}` : pathname);
-    }, [selectedTabIndex, pathname, router, searchParams]);
+        const nextUrl = `${pathname}${nextSearch ? `?${nextSearch}` : ""}${hash}`;
+
+        window.history.replaceState(window.history.state, "", nextUrl);
+    }, [selectedTabIndex, pathname]);
 
     return (
         <Box
