@@ -1,9 +1,8 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Box, IconButton } from "@mui/material";
 
-import { ConstraintHumanReadableEntry } from "@/components/gantt/module-dialog/constraints/ConstraintHumanReadableEntry";
-
 import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
+import { ConstraintHumanReadableEntry } from "@/components/gantt/module-dialog/constraints/ConstraintHumanReadableEntry";
 
 export function ConstraintListItem({
     constraint,

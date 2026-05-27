@@ -11,14 +11,13 @@ import {
 } from "@mui/material";
 import { useState, useMemo } from "react";
 
+import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
+import { GanttModuleId } from "@/api-shared/types/gantt/models";
+import { ConstraintType } from "@/api-shared/types/gantt/models/constraint";
 import { ConstraintListItem } from "@/components/gantt/module-dialog/constraints/ConstraintListItem";
 import { DraftConstraintForm } from "@/components/gantt/module-dialog/constraints/DraftConstraintForm";
 import { DraftConstraint } from "@/components/gantt/module-dialog/constraints/types";
 import { useTargetOptions } from "@/components/gantt/module-dialog/constraints/use-target-options";
-
-import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
-import { GanttModuleId } from "@/api-shared/types/gantt/models";
-import { ConstraintType } from "@/api-shared/types/gantt/models/constraint";
 import { useGanttConstraints } from "@/components/gantt/state/constraints/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 

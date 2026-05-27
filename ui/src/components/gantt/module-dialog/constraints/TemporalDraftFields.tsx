@@ -1,9 +1,8 @@
 import { Alert, Autocomplete, Box, Collapse, Stack, TextField } from "@mui/material";
 import React, { useMemo } from "react";
 
-import { TemporalDraft } from "@/components/gantt/module-dialog/constraints/types";
-
 import { GanttDayIndex, getDayNameDisplay } from "@/api-shared/types/gantt/models";
+import { TemporalDraft } from "@/components/gantt/module-dialog/constraints/types";
 
 const DAYS_OF_WEEK = [
     { index: GanttDayIndex.Sunday, label: getDayNameDisplay(GanttDayIndex.Sunday), short: 'א' },

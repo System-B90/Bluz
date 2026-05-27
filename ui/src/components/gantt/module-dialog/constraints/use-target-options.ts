@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 
 import { TargetOption } from "@/components/gantt/module-dialog/constraints/types";
-
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useTargetOptions()

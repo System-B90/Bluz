@@ -3,11 +3,10 @@ import CloseIcon from "@mui/icons-material/Close";
 import { Box, IconButton, MenuItem, Select, Stack } from "@mui/material";
 import { useCallback } from "react";
 
+import { ConstraintType } from "@/api-shared/types/gantt/models/constraint";
 import { RelationalDraftFields } from "@/components/gantt/module-dialog/constraints/RelationalDraftFields";
 import { TemporalDraftFields } from "@/components/gantt/module-dialog/constraints/TemporalDraftFields";
 import { DraftConstraint, TargetOption } from "@/components/gantt/module-dialog/constraints/types";
-
-import { ConstraintType } from "@/api-shared/types/gantt/models/constraint";
 
 export function DraftConstraintForm({
     draft,
