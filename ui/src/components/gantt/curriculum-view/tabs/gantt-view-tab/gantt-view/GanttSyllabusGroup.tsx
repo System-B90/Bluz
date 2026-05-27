@@ -119,7 +119,6 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                             p: 0,
                             width: 80,
                             minWidth: 80,
-                            maxWidth: 80,
                             boxSizing: "border-box",
                             position: "relative",
                         }}
@@ -166,7 +165,6 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                             p: 0,
                             width: 80,
                             minWidth: 80,
-                            maxWidth: 80,
                             boxSizing: "border-box",
                             position: "relative",
                         }}

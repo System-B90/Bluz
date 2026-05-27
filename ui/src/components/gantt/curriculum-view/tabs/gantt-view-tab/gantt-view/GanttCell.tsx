@@ -37,7 +37,6 @@ export const GanttCell: React.FC<GanttCellProps> = ({
                 p: 0,
                 width: 80,
                 minWidth: 80,
-                maxWidth: 80,
                 boxSizing: "border-box",
                 backgroundColor: isOver ? theme.palette.action.hover : "inherit",
                 transition: "background-color 0.2s",

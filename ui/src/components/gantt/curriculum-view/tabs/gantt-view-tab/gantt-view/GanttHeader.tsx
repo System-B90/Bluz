@@ -70,7 +70,6 @@ export const GanttHeader: React.FC = () => {
                                     sx={{
                                         width: 80,
                                         minWidth: 80,
-                                        maxWidth: 80,
                                         boxSizing: "border-box",
                                         borderLeft: `1px solid ${theme.palette.divider}`,
                                         backgroundColor: theme.palette.background.paper,
