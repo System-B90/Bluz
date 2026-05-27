@@ -9,7 +9,6 @@ import { randomUUID } from "crypto";
 
 import { NextRequest } from "next/server";
 
-import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import
 {
@@ -64,7 +63,7 @@ export async function POST(request: NextRequest, _context: RouteContext/** Const
 {
     try
     {
-        const body: CreateConstraintPayload = await request.json();
+        const body: any = await request.json();
 
         if (!body.type)
         {

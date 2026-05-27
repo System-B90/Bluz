@@ -11,7 +11,7 @@ import {
     ModuleComponent,
     SubjectComponent,
 } from "@/components/schedule/event-component/parts/subject";
-import { Event } from "@/components/schedule/types/event";
+import { Event, EventType } from "@/components/schedule/types/event";
 
 export function LargeEventComponent({ event: event }: EventProps<Event>) {
     return (
@@ -79,7 +79,7 @@ export function LargeEventComponent({ event: event }: EventProps<Event>) {
                     borderBottom={2}
                     display={"flex"}
                     flexDirection={"row"}
-                    hidden={event.type === "break"}
+                    hidden={event.type === EventType.BREAK}
                     marginBottom={0}
                     paddingBottom={0.2}
                     width={"100%"}

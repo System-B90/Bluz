@@ -12,7 +12,7 @@ import {
     ModuleComponent,
     SubjectComponent,
 } from "@/components/schedule/event-component/parts/subject";
-import { Event } from "@/components/schedule/types/event";
+import { Event, EventType } from "@/components/schedule/types/event";
 
 export function ShortEventComponent({
     event: event,
@@ -59,7 +59,7 @@ export function ShortEventComponent({
                         alignItems={"baseline"}
                         display={"flex"}
                         flexDirection={"row"}
-                        hidden={event.type === "break"}
+                        hidden={event.type === EventType.BREAK}
                         textOverflow={"ellipsis"}
                     >
                         <SubjectComponent

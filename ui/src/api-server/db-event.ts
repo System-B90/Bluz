@@ -54,6 +54,19 @@ async function getDbEventsInRange(
     return data;
 }
 
+/**
+ * Updates an existing calendar event in the MongoDB collection.
+ * Triggers a real-time WebSocket broadcast to all connected clients.
+ * 
+ * @param eventData The document payload sent by the client. Must contain a valid `id` UUID.
+ * @param options MongoDB FindOptions.
+ * @returns The fixed and serialized DbEventDocument.
+ * @throws ClientApiError if the event ID is missing or the event is not found in the database.
+ * @example
+ * ```typescript
+ * const updated = await DbEvent.set(eventPayload);
+ * ```
+ */
 async function setDbEvent(
     eventData: DbEventDocument,
     options?: FindOptions,
@@ -75,8 +88,10 @@ async function setDbEvent(
         options,
     );
 
-    if (updateResult.modifiedCount === 0) {
-        throw new ClientApiError(`Event ${eventId} data not modified!`);
+    // Verify the document exists in MongoDB. Using matchedCount ensures we don't throw an
+    // error if the user clicks Save without changing any fields (modifiedCount would be 0).
+    if (updateResult.matchedCount === 0) {
+        throw new ClientApiError(`Event ${eventId} not found!`);
     }
 
     SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
@@ -86,6 +101,19 @@ async function setDbEvent(
     return fixedEvent;
 }
 
+/**
+ * Inserts a new calendar event into the MongoDB collection.
+ * Triggers a real-time WebSocket broadcast to notify clients of the new event.
+ * 
+ * @param eventData The document payload sent by the client. Must contain a valid `id` UUID.
+ * @param options MongoDB FindOptions.
+ * @returns The fixed, created DbEventDocument.
+ * @throws ClientApiError if the event ID is missing.
+ * @example
+ * ```typescript
+ * const newEvent = await DbEvent.create(eventPayload);
+ * ```
+ */
 async function createDbEvent(
     eventData: DbEventDocument,
     options?: FindOptions,
@@ -97,7 +125,12 @@ async function createDbEvent(
     }
 
     const { id: eventId, ...updatePayload } = eventData;
-    const fixedEvent = eventDateFixup(updatePayload);
+    
+    // Fix dates and explicitly preserve the client-generated UUID in the id field
+    const fixedEvent = {
+        ...eventDateFixup(updatePayload),
+        id: eventId,
+    };
 
     await databaseController.events.insertOne(fixedEvent as any, options);
 

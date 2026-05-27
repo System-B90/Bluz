@@ -11,7 +11,7 @@ import {
     ModuleComponent,
     SubjectComponent,
 } from "@/components/schedule/event-component/parts/subject";
-import { Event } from "@/components/schedule/types/event";
+import { Event, EventType } from "@/components/schedule/types/event";
 
 export function MediumEventComponent({ event: event }: EventProps<Event>) {
     return (
@@ -86,7 +86,7 @@ export function MediumEventComponent({ event: event }: EventProps<Event>) {
                             alignItems={"baseline"}
                             display={"flex"}
                             flexDirection={"row"}
-                            hidden={event.type === "break"}
+                            hidden={event.type === EventType.BREAK}
                             marginBottom={0}
                             width={"100%"}
                         >

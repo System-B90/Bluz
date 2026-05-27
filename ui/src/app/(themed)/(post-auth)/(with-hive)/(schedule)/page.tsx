@@ -75,6 +75,7 @@ export default function SchedulePage() {
 
             <EventDialog
                 event={selectedEvent ?? makeEvent()}
+                key={selectedEvent?.id}
                 onClose={handleCloseEventDialog}
                 onDelete={handleDelete}
                 onSave={handleSave}
