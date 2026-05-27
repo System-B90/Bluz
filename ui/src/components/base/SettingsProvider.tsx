@@ -1,11 +1,12 @@
 "use client";
+import { Dayjs } from "dayjs";
 import { enqueueSnackbar } from "notistack";
 import {
     createContext,
     useCallback,
     useContext,
     useEffect,
-    useState,
+    useReducer,
 } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
@@ -20,54 +21,119 @@ export type SettingsContextState = {
   default: boolean;
   prayerTimes: PrayerSettings;
   updatePrayerTimes: (newPrayerTimes: PrayerSettings) => void;
+  updatePrayerTime: (key: keyof PrayerSettings, value: Date | Dayjs) => void;
 };
 
 const SettingsContext = createContext<SettingsContextState | undefined>({
     default: true,
     prayerTimes: {} as PrayerSettings,
     updatePrayerTimes: (_newPrayerTimes: PrayerSettings) => {},
+    updatePrayerTime: (_key: keyof PrayerSettings, _value: Date | Dayjs) => {},
 });
+
+type PrayerSettingsState = {
+  prayerTimes: PrayerSettings;
+  isLoading: boolean;
+};
+type PrayerSettingsAction =
+  | { type: "ROLLBACK_PRAYER_TIMES"; payload: PrayerSettings }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_PRAYER_TIMES"; payload: PrayerSettings }
+  | { type: "UPDATE_PRAYER_TIME"; payload: { key: keyof PrayerSettings; value: Date | Dayjs } };
+
+function prayerSettingsReducer(state: PrayerSettingsState, action: PrayerSettingsAction): PrayerSettingsState {
+    switch (action.type) {
+    case "SET_LOADING":
+        return { ...state, isLoading: action.payload };
+    case "SET_PRAYER_TIMES":
+        return { ...state, prayerTimes: action.payload, isLoading: false };
+    case "UPDATE_PRAYER_TIME":
+        return {
+            ...state,
+            prayerTimes: {
+                ...state.prayerTimes,
+                [action.payload.key]: action.payload.value,
+            },
+        };
+    case "ROLLBACK_PRAYER_TIMES":
+        return { ...state, prayerTimes: action.payload };
+    default:
+        return state;
+    }
+}
 
 export const SettingsProvider = ({
     children,
 }: {
   children: React.ReactNode;
 }) => {
-    const [prayer, setPrayer] = useState<PrayerSettings>({} as PrayerSettings);
+    const [state, dispatch] = useReducer(prayerSettingsReducer, {
+        prayerTimes: {} as PrayerSettings,
+        isLoading: true,
+    });
 
     const loadPrayerSettings = useCallback(() => {
+        dispatch({ type: "SET_LOADING", payload: true });
         apiGetPrayerSettings()
             .then((fetchedPrayerSettings) => {
                 inplaceDateFixup(fetchedPrayerSettings, "shacharit");
                 inplaceDateFixup(fetchedPrayerSettings, "mincha");
                 inplaceDateFixup(fetchedPrayerSettings, "arvit");
-                setPrayer(fetchedPrayerSettings);
+                dispatch({ type: "SET_PRAYER_TIMES", payload: fetchedPrayerSettings });
             })
-            .catch((error) =>
+            .catch((error) => {
+                dispatch({ type: "SET_LOADING", payload: false });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "טעינת הגדרות התפילות נכשלה.",
                     error,
-                ),
-            );
-    }, [setPrayer]);
+                );
+            });
+    }, [dispatch]);
 
     const updatePrayerTimes = useCallback(
         async (newPrayerTimes: PrayerSettings) => {
-            await apiSetPrayerSettings(newPrayerTimes)
-                .then(() => {
-                    enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", { variant: "success" });
-                })
-                .catch((error) =>
-                    enqueueApiErrorSnackbar(
-                        enqueueSnackbar,
-                        "עדכון שעות תפילה נכשל!",
-                        error,
-                    ),
+            const previousPrayerTimes = state.prayerTimes;
+            dispatch({ type: "SET_PRAYER_TIMES", payload: newPrayerTimes });
+
+            try {
+                await apiSetPrayerSettings(newPrayerTimes);
+                enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", { variant: "success" });
+            } catch (error) {
+                dispatch({ type: "ROLLBACK_PRAYER_TIMES", payload: previousPrayerTimes });
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "עדכון שעות תפילה נכשל!",
+                    error,
                 );
-            setPrayer(newPrayerTimes);
+            }
         },
-        [setPrayer],
+        [state.prayerTimes, dispatch],
+    );
+
+    const updatePrayerTime = useCallback(
+        async (key: keyof PrayerSettings, value: Date | Dayjs) => {
+            const previousPrayerTimes = state.prayerTimes;
+            dispatch({ type: "UPDATE_PRAYER_TIME", payload: { key, value } });
+
+            const updatedTimes = {
+                ...state.prayerTimes,
+                [key]: value,
+            };
+
+            try {
+                await apiSetPrayerSettings(updatedTimes);
+                enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", { variant: "success" });
+            } catch (error) {
+                dispatch({ type: "ROLLBACK_PRAYER_TIMES", payload: previousPrayerTimes });
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "עדכון שעות תפילה נכשל!",
+                    error,
+                );
+            }
+        },
+        [state.prayerTimes, dispatch],
     );
 
     useEffect(() => {
@@ -78,8 +144,9 @@ export const SettingsProvider = ({
         <SettingsContext.Provider
             value={{
                 default: false,
-                prayerTimes: prayer,
+                prayerTimes: state.prayerTimes,
                 updatePrayerTimes,
+                updatePrayerTime,
             }}
         >
             {children}

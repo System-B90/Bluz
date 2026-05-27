@@ -1,7 +1,8 @@
 import { Box, Card, CardContent, Skeleton } from "@mui/material";
 import { memo, useMemo } from "react";
 
-import {
+import
+{
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";

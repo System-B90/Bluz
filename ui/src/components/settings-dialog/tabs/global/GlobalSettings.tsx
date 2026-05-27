@@ -1,17 +1,24 @@
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 
 import { CourseSettings } from "@/components/settings-dialog/tabs/global/course-settings";
 import { PrayerSettings } from "@/components/settings-dialog/tabs/global/PrayerSettings";
 
 export function GlobalSettings() {
     return (
-        <Box>
-            <Typography gutterBottom variant="h6">
-        הגדרות כלליות
-            </Typography>
-
-            <Box display={"flex"} gap={2}>
+        <Box
+            sx={{
+                display: "flex",
+                flexDirection: { xs: "column", lg: "row" },
+                gap: 3,
+                alignItems: "stretch",
+                justifyContent: "center",
+                width: "100%",
+            }}
+        >
+            <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
                 <PrayerSettings />
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
                 <CourseSettings />
             </Box>
         </Box>

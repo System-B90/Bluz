@@ -1,130 +1,134 @@
-import { Box, Button, ButtonGroup, Typography } from "@mui/material";
-import { useCallback, useRef, useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import LayersIcon from "@mui/icons-material/Layers";
+import { Box, Button, Typography } from "@mui/material";
+import { useCallback } from "react";
 
-import { Color } from "@/api-shared/common";
-import { Course } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { CourseItem } from "@/components/settings-dialog/tabs/global/course-settings/CourseItem";
 
 export function CourseSettings() {
-    const { courses, addCourse, updateCourse, deleteCourse } = useCourses();
-    const originalCourses = useRef<Array<Course>>(courses);
-
-    // Deep clone the initial courses to prevent mutating the provider's state
-    const [localCourses, setLocalCourses] = useState<Array<Course>>(
-        courses.map((c) => ({ ...c })),
-    );
-
-    const handleUpdateCourse = useCallback(
-        (
-            id: string,
-            { newName, newColor }: { newName?: string; newColor?: Color | null },
-        ) => {
-            setLocalCourses((prev) =>
-                prev.map((c) =>
-                    c.id === id
-                        ? { ...c, name: newName ?? c.name, color: newColor ?? c.color }
-                        : c,
-                ),
-            );
-        },
-        [setLocalCourses],
-    );
-
-    const handleDeleteCourse = useCallback(
-        (id: string) => {
-            setLocalCourses((prev) => prev.filter((c) => c.id !== id));
-        },
-        [setLocalCourses],
-    );
-
-    const handleSave = useCallback(async () => {
-        const baseline = originalCourses.current;
-
-        const deletePromises = baseline
-            .filter((course) => !localCourses.find((c) => c.id === course.id))
-            .map((course) => deleteCourse(course.id));
-
-        const addPromises = localCourses
-            .filter((course) => !baseline.find((c) => c.id === course.id))
-            .map((course) => addCourse(course));
-
-        const updatePromises = localCourses
-            .filter((course) => {
-                const original = baseline.find((c) => c.id === course.id);
-                return (
-                    original &&
-          (original.name !== course.name || original.color !== course.color)
-                );
-            })
-            .map((course) => updateCourse(course));
-
-        await Promise.all([...deletePromises, ...addPromises, ...updatePromises]);
-
-        originalCourses.current = localCourses.map((c) => ({ ...c }));
-    }, [localCourses, addCourse, updateCourse, deleteCourse]);
-
-    const handleRestore = useCallback(() => {
-    // Deep clone the baseline to reset the draft
-        setLocalCourses(originalCourses.current.map((c) => ({ ...c })));
-    }, [setLocalCourses]);
+    const { courses, addCourse, updateCoursePartial, deleteCourse } = useCourses();
 
     const handleCreate = useCallback(() => {
-    // Add to local draft state with a temporary ID.
-    // Note: Ensure your backend handles or ignores temporary IDs upon creation.
-        const newCourse = {
-            id: `temp-${Date.now()}`,
+        // Instantly triggers optimistic update & auto-save API add
+        void addCourse({
             name: "מסלול חדש",
-            color: null,
-        } as Course;
+            color: "#67C8DD", // Brand turquoise as default
+        });
+    }, [addCourse]);
 
-        setLocalCourses((prev) => [...prev, newCourse]);
-    }, [setLocalCourses]);
-
-    const courseItems = localCourses.map((course) => (
-        <CourseItem
-            course={course}
-            key={`${course.id}-${course.color}-${course.name}`}
-            onDelete={handleDeleteCourse}
-            onUpdate={handleUpdateCourse}
-        />
-    ));
+    const handleUpdateCourse = useCallback(
+        (id: string, name?: string, color?: null | string) => {
+            const changes: any = {};
+            if (name !== undefined) changes.name = name;
+            if (color !== undefined) changes.color = color;
+            void updateCoursePartial(id, changes);
+        },
+        [updateCoursePartial],
+    );
 
     return (
         <Box
-            border={"solid 0.15rem rgba(0,0,0,0.2)"}
-            borderRadius={3}
-            display={"flex"}
-            flexDirection={"column"}
-            gap={1}
-            justifyContent={"space-between"}
-            padding={"0.5rem"}
+            sx={{
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: "16px",
+                p: 3,
+                boxShadow: (theme) =>
+                    theme.palette.mode === "light"
+                        ? "0 8px 24px rgba(103, 200, 221, 0.04)"
+                        : "0 8px 24px rgba(0, 0, 0, 0.2)",
+                bgcolor: "background.paper",
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+                height: "100%",
+                justifyContent: "space-between",
+            }}
         >
-            <Box>
-                <Typography gutterBottom variant="h6">
-          מסלולים
-                </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
+                {/* Header */}
+                <Box alignItems="center" display="flex" gap={1.5} mb={2.5}>
+                    <Box
+                        sx={{
+                            p: 1,
+                            borderRadius: "10px",
+                            bgcolor: "secondary.light",
+                            color: "secondary.contrastText",
+                            display: "flex",
+                            alignItems: "center",
+                        }}
+                    >
+                        <LayersIcon sx={{ fontSize: 20 }} />
+                    </Box>
+                    <Box>
+                        <Typography
+                            sx={{
+                                fontWeight: 800,
+                                fontSize: "1.1rem",
+                                fontFamily: "Assistant, sans-serif",
+                                color: "text.primary",
+                            }}
+                        >
+              מסלולים
+                        </Typography>
+                        <Typography
+                            sx={{
+                                fontSize: "0.75rem",
+                                color: "text.secondary",
+                                fontFamily: "Assistant, sans-serif",
+                            }}
+                        >
+              הגדרת מסלולים וצבעים לתצוגה ביומן
+                        </Typography>
+                    </Box>
+                </Box>
+
+                {/* Courses List Container */}
                 <Box
-                    alignItems={"flex-start"}
-                    display={"flex"}
-                    flexDirection={"column"}
-                    gap={1}
+                    sx={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 1.5,
+                        alignItems: "flex-start",
+                        flexGrow: 1,
+                        overflowY: "auto",
+                        pr: 0.5,
+                        minHeight: 180,
+                    }}
                 >
-                    {courseItems}
+                    {courses.map((course) => (
+                        <CourseItem
+                            course={course}
+                            key={course.id}
+                            onDelete={deleteCourse}
+                            onUpdate={handleUpdateCourse}
+                        />
+                    ))}
                 </Box>
             </Box>
-            <Box display={"flex"} flexDirection={"column"} gap={1} mt={2}>
-                <Button color={"secondary"} onClick={handleCreate} variant="contained">
+
+            {/* Create Button */}
+            <Box sx={{ mt: 2 }}>
+                <Button
+                    color="secondary"
+                    fullWidth
+                    onClick={handleCreate}
+                    startIcon={<AddIcon sx={{ ml: 0.5 }} />}
+                    sx={{
+                        borderRadius: "10px",
+                        py: 1.2,
+                        boxShadow: "0 4px 12px rgba(26, 60, 89, 0.15)",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                            transform: "translateY(-2px)",
+                            boxShadow: "0 6px 16px rgba(26, 60, 89, 0.25)",
+                        },
+                    }}
+                    variant="contained"
+                >
           יצירת מסלול חדש
                 </Button>
-                <ButtonGroup fullWidth>
-                    <Button color="primary" onClick={handleSave} variant="contained">
-            שמירה
-                    </Button>
-                    <Button color={"warning"} onClick={handleRestore} variant="contained">
-            שחזור
-                    </Button>
-                </ButtonGroup>
             </Box>
         </Box>
     );
