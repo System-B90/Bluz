@@ -99,28 +99,6 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
     // Build cells depending on view mode
     const renderCells = () => {
         if (weeklyView) {
-            // Compute proportional pixel positioning for multi-week blocks
-            let blockLeftPx: number | undefined;
-            let blockWidthPx: number | undefined;
-
-            if (weekSpanIndices !== null && spanIndices !== null) {
-                const CELL = 80;
-                const firstWeek = timelineWeeks[weekSpanIndices.min];
-                const lastWeek = timelineWeeks[weekSpanIndices.max];
-                const firstDayLinear = linearDays[spanIndices.min];
-                const lastDayLinear = linearDays[spanIndices.max];
-                const firstDayPosInWeek = firstWeek.days.indexOf(firstDayLinear);
-                const lastDayPosInWeek = lastWeek.days.indexOf(lastDayLinear);
-
-                const startFrac = firstDayPosInWeek / firstWeek.days.length;
-                const endFrac = (lastDayPosInWeek + 1) / lastWeek.days.length;
-                const weekSpan = weekSpanIndices.max - weekSpanIndices.min;
-
-                blockLeftPx = Math.round(startFrac * CELL) + 2;
-                blockWidthPx = Math.round(weekSpan * CELL + endFrac * CELL - startFrac * CELL) - 4;
-                blockWidthPx = Math.max(blockWidthPx, 16); // minimum visible width
-            }
-
             return timelineWeeks.map((week, weekIdx) => {
                 const firstDayId = week.days[0];
                 const isSpanStart =
@@ -129,14 +107,12 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                 return (
                     <GanttCell
                         blockId={`drag-module-shift-${moduleId}-${firstDayId}`}
-                        blockLeftPx={isSpanStart ? blockLeftPx : undefined}
                         blockPayload={{
                             type: "module-shift",
                             moduleId,
                             sourceDayId: firstDayId,
                         }}
                         blockTitle={ganttModule?.title}
-                        blockWidthPx={isSpanStart ? blockWidthPx : undefined}
                         dayId={firstDayId}
                         dropId={`drop-module-${moduleId}-${firstDayId}`}
                         elementId={isSpanStart ? `block-module-${moduleId}` : undefined}

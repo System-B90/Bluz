@@ -13,8 +13,6 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
     isAbsolute = true,
     elementId,
     violations = [],
-    blockLeftPx,
-    blockWidthPx,
 }) => {
     const theme = useTheme();
 
@@ -31,15 +29,12 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
         }
         : undefined;
 
-    const blockWidth = blockWidthPx !== undefined
-        ? `${blockWidthPx}px`
-        : spanLength > 1
-            ? `calc(${spanLength * 80}px - 8px)`
-            : isAbsolute
-                ? "calc(100% - 8px)"
-                : "100%";
-
-    const blockLeft = blockLeftPx !== undefined ? `${blockLeftPx}px` : "4px";
+    const blockWidth =
+    spanLength > 1
+        ? `calc(${spanLength * 100}% - 8px)`
+        : isAbsolute
+            ? "calc(100% - 8px)"
+            : "100%";
 
     const isViolated = violations.length > 0;
 
@@ -53,7 +48,7 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
                 position: isAbsolute ? "absolute" : "relative",
                 top: isAbsolute ? "5px" : "auto",
                 bottom: isAbsolute ? "5px" : "auto",
-                left: isAbsolute ? blockLeft : "auto",
+                left: isAbsolute ? "4px" : "auto",
                 width: blockWidth,
                 height: "24px",
                 backgroundColor: theme.palette.primary.main,

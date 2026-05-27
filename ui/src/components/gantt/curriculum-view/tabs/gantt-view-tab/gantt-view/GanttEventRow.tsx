@@ -91,25 +91,11 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
                     ? `drag-event-${eventId}-${currentDayId}`
                     : `drag-event-staged-${eventId}`;
 
-                // Proportional positioning within the week column
-                let eventLeftPx: number | undefined;
-                let eventWidthPx: number | undefined;
-                if (isExplicitlyMappedHere && currentDayId) {
-                    const CELL = 80;
-                    const dayPosInWeek = week.days.indexOf(currentDayId);
-                    const startFrac = dayPosInWeek / week.days.length;
-                    const endFrac = (dayPosInWeek + 1) / week.days.length;
-                    eventLeftPx = Math.round(startFrac * CELL) + 2;
-                    eventWidthPx = Math.max(Math.round((endFrac - startFrac) * CELL) - 4, 16);
-                }
-
                 return (
                     <GanttCell
                         blockId={blockId}
-                        blockLeftPx={isExplicitlyMappedHere ? eventLeftPx : undefined}
                         blockPayload={blockPayload}
                         blockTitle={event.title}
-                        blockWidthPx={isExplicitlyMappedHere ? eventWidthPx : undefined}
                         dayId={firstDayId}
                         dropId={`drop-event-${eventId}-${firstDayId}`}
                         elementId={hasBlock ? `block-event-${eventId}` : undefined}
