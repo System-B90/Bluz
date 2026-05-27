@@ -44,49 +44,48 @@ type CoursesState = {
   courses: Record<CourseId, Course>;
   isLoading: boolean;
 };
-
 type CoursesAction =
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "SET_COURSES"; payload: Record<CourseId, Course> }
   | { type: "ADD_COURSE"; payload: Course }
-  | { type: "UPDATE_COURSE"; payload: Partial<Course> & { id: CourseId } }
   | { type: "DELETE_COURSE"; payload: CourseId }
-  | { type: "ROLLBACK_COURSES"; payload: Record<CourseId, Course> };
+  | { type: "ROLLBACK_COURSES"; payload: Record<CourseId, Course> }
+  | { type: "SET_COURSES"; payload: Record<CourseId, Course> }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "UPDATE_COURSE"; payload: Partial<Course> & { id: CourseId } };
 
 function coursesReducer(state: CoursesState, action: CoursesAction): CoursesState {
     switch (action.type) {
-        case "SET_LOADING":
-            return { ...state, isLoading: action.payload };
-        case "SET_COURSES":
-            return { ...state, courses: action.payload, isLoading: false };
-        case "ADD_COURSE":
-            return {
-                ...state,
-                courses: {
-                    ...state.courses,
-                    [action.payload.id]: action.payload,
-                },
-            };
-        case "UPDATE_COURSE":
-            return {
-                ...state,
-                courses: {
-                    ...state.courses,
-                    [action.payload.id]: {
-                        ...state.courses[action.payload.id],
-                        ...action.payload,
-                    } as Course,
-                },
-            };
-        case "DELETE_COURSE": {
-            const next = { ...state.courses };
-            delete next[action.payload];
-            return { ...state, courses: next };
-        }
-        case "ROLLBACK_COURSES":
-            return { ...state, courses: action.payload };
-        default:
-            return state;
+    case "SET_LOADING":
+        return { ...state, isLoading: action.payload };
+    case "SET_COURSES":
+        return { ...state, courses: action.payload, isLoading: false };
+    case "ADD_COURSE":
+        return {
+            ...state,
+            courses: {
+                ...state.courses,
+                [action.payload.id]: action.payload,
+            },
+        };
+    case "UPDATE_COURSE":
+        return {
+            ...state,
+            courses: {
+                ...state.courses,
+                [action.payload.id]: {
+                    ...state.courses[action.payload.id],
+                    ...action.payload,
+                } as Course,
+            },
+        };
+    case "DELETE_COURSE": {
+        const next = { ...state.courses };
+        delete next[action.payload];
+        return { ...state, courses: next };
+    }
+    case "ROLLBACK_COURSES":
+        return { ...state, courses: action.payload };
+    default:
+        return state;
     }
 }
 

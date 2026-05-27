@@ -11,36 +11,35 @@ import { useSnackbar } from "notistack";
 import { useEffect, useReducer } from "react";
 
 type PersonalState = {
-  groups: string[];
-  instructors: string[];
+  groups: Array<string>;
+  instructors: Array<string>;
 };
-
 type PersonalAction =
-  | { type: "INITIALIZE"; payload: PersonalState }
   | { type: "ADD_GROUP"; payload: string }
-  | { type: "REMOVE_GROUP"; payload: string }
   | { type: "ADD_INSTRUCTOR"; payload: string }
+  | { type: "INITIALIZE"; payload: PersonalState }
+  | { type: "REMOVE_GROUP"; payload: string }
   | { type: "REMOVE_INSTRUCTOR"; payload: string };
 
 function personalSettingsReducer(state: PersonalState, action: PersonalAction): PersonalState {
     let nextState = state;
     switch (action.type) {
-        case "INITIALIZE":
-            return action.payload;
-        case "ADD_GROUP":
-            if (state.groups.includes(action.payload)) return state;
-            nextState = { ...state, groups: [...state.groups, action.payload] };
-            break;
-        case "REMOVE_GROUP":
-            nextState = { ...state, groups: state.groups.filter((g) => g !== action.payload) };
-            break;
-        case "ADD_INSTRUCTOR":
-            if (state.instructors.includes(action.payload)) return state;
-            nextState = { ...state, instructors: [...state.instructors, action.payload] };
-            break;
-        case "REMOVE_INSTRUCTOR":
-            nextState = { ...state, instructors: state.instructors.filter((i) => i !== action.payload) };
-            break;
+    case "INITIALIZE":
+        return action.payload;
+    case "ADD_GROUP":
+        if (state.groups.includes(action.payload)) return state;
+        nextState = { ...state, groups: [...state.groups, action.payload] };
+        break;
+    case "REMOVE_GROUP":
+        nextState = { ...state, groups: state.groups.filter((g) => g !== action.payload) };
+        break;
+    case "ADD_INSTRUCTOR":
+        if (state.instructors.includes(action.payload)) return state;
+        nextState = { ...state, instructors: [...state.instructors, action.payload] };
+        break;
+    case "REMOVE_INSTRUCTOR":
+        nextState = { ...state, instructors: state.instructors.filter((i) => i !== action.payload) };
+        break;
     }
     // Auto-save instantly to local storage
     if (typeof window !== "undefined") {
@@ -74,7 +73,7 @@ export function PersonalSettings() {
         }
     }, []);
 
-    const handleAddGroup = (group: string | null) => {
+    const handleAddGroup = (group: null | string) => {
         if (!group) return;
         dispatch({ type: "ADD_GROUP", payload: group });
         enqueueSnackbar("הקבוצה התווספה בהצלחה.", { variant: "success" });
@@ -85,7 +84,7 @@ export function PersonalSettings() {
         enqueueSnackbar("הקבוצה הוסרה בהצלחה.", { variant: "success" });
     };
 
-    const handleAddInstructor = (instructor: string | null) => {
+    const handleAddInstructor = (instructor: null | string) => {
         if (!instructor) return;
         dispatch({ type: "ADD_INSTRUCTOR", payload: instructor });
         enqueueSnackbar("המרצה התווסף בהצלחה.", { variant: "success" });
@@ -128,7 +127,7 @@ export function PersonalSettings() {
                 }}
             >
                 {/* Header */}
-                <Box display="flex" alignItems="center" gap={1.5}>
+                <Box alignItems="center" display="flex" gap={1.5}>
                     <Box
                         sx={{
                             p: 1,
@@ -167,8 +166,8 @@ export function PersonalSettings() {
                 {/* Autocomplete Selector */}
                 <Box>
                     <Autocomplete
-                        options={allGroups.filter((g) => !state.groups.includes(g))}
                         onChange={(_e, val) => handleAddGroup(val)}
+                        options={allGroups.filter((g) => !state.groups.includes(g))}
                         renderInput={(params) => (
                             <TextField
                                 {...params}
@@ -247,7 +246,7 @@ export function PersonalSettings() {
                 }}
             >
                 {/* Header */}
-                <Box display="flex" alignItems="center" gap={1.5}>
+                <Box alignItems="center" display="flex" gap={1.5}>
                     <Box
                         sx={{
                             p: 1,
@@ -286,8 +285,8 @@ export function PersonalSettings() {
                 {/* Autocomplete Selector */}
                 <Box>
                     <Autocomplete
-                        options={allInstructors.filter((i) => !state.instructors.includes(i))}
                         onChange={(_e, val) => handleAddInstructor(val)}
+                        options={allInstructors.filter((i) => !state.instructors.includes(i))}
                         renderInput={(params) => (
                             <TextField
                                 {...params}
@@ -347,4 +346,3 @@ export function PersonalSettings() {
         </Box>
     );
 }
-

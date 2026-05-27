@@ -7,8 +7,8 @@ import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs, { Dayjs } from "dayjs";
 import { useCallback } from "react";
 
-import { useSettings } from "@/components/base/SettingsProvider";
 import { PrayerSettings as IPrayerSettings } from "@/api-shared/types/settings/prayer";
+import { useSettings } from "@/components/base/SettingsProvider";
 
 export function PrayerSettings() {
     const { prayerTimes, updatePrayerTime } = useSettings();
@@ -69,7 +69,7 @@ export function PrayerSettings() {
             }}
         >
             {/* Section Header */}
-            <Box display="flex" alignItems="center" gap={1.5}>
+            <Box alignItems="center" display="flex" gap={1.5}>
                 <Box
                     sx={{
                         p: 1,
@@ -168,4 +168,3 @@ export function PrayerSettings() {
         </Box>
     );
 }
-

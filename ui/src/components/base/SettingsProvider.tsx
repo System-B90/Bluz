@@ -35,31 +35,30 @@ type PrayerSettingsState = {
   prayerTimes: PrayerSettings;
   isLoading: boolean;
 };
-
 type PrayerSettingsAction =
+  | { type: "ROLLBACK_PRAYER_TIMES"; payload: PrayerSettings }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_PRAYER_TIMES"; payload: PrayerSettings }
-  | { type: "UPDATE_PRAYER_TIME"; payload: { key: keyof PrayerSettings; value: Date | Dayjs } }
-  | { type: "ROLLBACK_PRAYER_TIMES"; payload: PrayerSettings };
+  | { type: "UPDATE_PRAYER_TIME"; payload: { key: keyof PrayerSettings; value: Date | Dayjs } };
 
 function prayerSettingsReducer(state: PrayerSettingsState, action: PrayerSettingsAction): PrayerSettingsState {
     switch (action.type) {
-        case "SET_LOADING":
-            return { ...state, isLoading: action.payload };
-        case "SET_PRAYER_TIMES":
-            return { ...state, prayerTimes: action.payload, isLoading: false };
-        case "UPDATE_PRAYER_TIME":
-            return {
-                ...state,
-                prayerTimes: {
-                    ...state.prayerTimes,
-                    [action.payload.key]: action.payload.value,
-                },
-            };
-        case "ROLLBACK_PRAYER_TIMES":
-            return { ...state, prayerTimes: action.payload };
-        default:
-            return state;
+    case "SET_LOADING":
+        return { ...state, isLoading: action.payload };
+    case "SET_PRAYER_TIMES":
+        return { ...state, prayerTimes: action.payload, isLoading: false };
+    case "UPDATE_PRAYER_TIME":
+        return {
+            ...state,
+            prayerTimes: {
+                ...state.prayerTimes,
+                [action.payload.key]: action.payload.value,
+            },
+        };
+    case "ROLLBACK_PRAYER_TIMES":
+        return { ...state, prayerTimes: action.payload };
+    default:
+        return state;
     }
 }
 
@@ -164,4 +163,3 @@ export const useSettings = () => {
 
     return context;
 };
-

@@ -16,7 +16,7 @@ export function CourseItem({
     onDelete,
 }: {
   course: Course;
-  onUpdate: (id: string, name?: string, color?: string | null) => void;
+  onUpdate: (id: string, name?: string, color?: null | string) => void;
   onDelete: (id: string) => void;
 }) {
     const [title, setTitle] = useState<string>(course.name);
@@ -159,7 +159,7 @@ export function CourseItem({
                         value={title}
                     />
                 ) : (
-                    <Box display="flex" alignItems="center" gap={0.5} sx={{ "&:hover svg": { opacity: 1 } }}>
+                    <Box alignItems="center" display="flex" gap={0.5} sx={{ "&:hover svg": { opacity: 1 } }}>
                         <Typography
                             sx={{
                                 fontWeight: 700,
@@ -197,4 +197,3 @@ export function CourseItem({
         </Box>
     );
 }
-
