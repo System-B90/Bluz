@@ -121,8 +121,8 @@ export function useCalendarHandlers(
                 const { id: _, ...rest } = currentCopied as any;
                 const newEvent = {
                     ...rest,
-                    startTime: newStart.toDate(),
-                    endTime: newEnd.toDate(),
+                    startTime: newStart, // Keep Dayjs objects to align with the Event type signature
+                    endTime: newEnd,     // Keep Dayjs objects to align with the Event type signature
                     rooms: newRooms,
                 } as Event;
 

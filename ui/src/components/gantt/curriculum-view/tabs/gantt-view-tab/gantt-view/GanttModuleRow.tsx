@@ -123,7 +123,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) =>
                 ) }
             </TableRow>
 
-            { isExpanded && hasEvents ? ganttModule.events.map(eventId => (
+            { isExpanded && hasEvents ? ganttModule?.events?.map(eventId => (
                 <GanttEventRow eventId={ eventId } key={ eventId } moduleId={ moduleId } />
             )) : null }
         </React.Fragment>

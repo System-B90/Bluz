@@ -38,7 +38,7 @@ export function PersonChip({
     );
 
     const isLecturer =
-    event.type === "lecture" &&
+    event.type === EventType.LECTURE &&
     event.lecturers?.includes(instructorId ?? personData);
 
     /** TODO: Link component to mattermost chat with the mentor */

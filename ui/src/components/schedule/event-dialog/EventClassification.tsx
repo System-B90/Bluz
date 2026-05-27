@@ -8,7 +8,7 @@ import { ModuleField } from "@/components/schedule/event-dialog/ModuleField";
 import { PrayerTypeField } from "@/components/schedule/event-dialog/PrayerType";
 import { RoomField } from "@/components/schedule/event-dialog/RoomField";
 import { SubjectField } from "@/components/schedule/event-dialog/SubjectField";
-import { Event, PrayerEvent } from "@/components/schedule/types/event";
+import { Event, PrayerEvent, EventType } from "@/components/schedule/types/event";
 
 export function EventClassification({
     event,
@@ -25,7 +25,7 @@ export function EventClassification({
                 sx={{ width: "12.5%" }}
             />
 
-            {event?.type === "prayer" ? (
+            {event?.type === EventType.PRAYER ? (
                 <PrayerTypeField
                     event={event as PrayerEvent}
                     onEventChange={onUpdate}

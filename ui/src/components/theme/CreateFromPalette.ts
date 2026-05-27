@@ -1,7 +1,8 @@
 import { ThemeOptions } from "@mui/material/styles";
 
 declare module "@mui/material/Chip" {
-  type ChipPropsSizeOverrides = {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+  interface ChipPropsSizeOverrides {
     smaller: true;
     smallest: true;
   }

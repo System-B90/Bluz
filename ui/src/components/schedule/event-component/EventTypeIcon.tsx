@@ -6,7 +6,7 @@ import SynagogueIcon from "@mui/icons-material/Synagogue";
 import { Box, SvgIconProps, Tooltip } from "@mui/material";
 import { ReactNode } from "react";
 
-import { Event, eventTypeToHebrew } from "@/components/schedule/types/event";
+import { Event, EventType, eventTypeToHebrew } from "@/components/schedule/types/event";
 
 export function EventTypeIcon({
     event,
@@ -14,19 +14,19 @@ export function EventTypeIcon({
 }: { event: Event } & SvgIconProps) {
     let icon: ReactNode = undefined;
     switch (event.type) {
-    case "exercise":
+    case EventType.EXERCISE:
         icon = <CoPresentIcon {...props} />;
         break;
-    case "lecture":
+    case EventType.LECTURE:
         icon = <SchoolIcon {...props} />;
         break;
-    case "other":
+    case EventType.OTHER:
         icon = <QuizIcon {...props} />;
         break;
-    case "break":
+    case EventType.BREAK:
         icon = <EmojiFoodBeverageIcon {...props} />;
         break;
-    case "prayer":
+    case EventType.PRAYER:
         icon = <SynagogueIcon {...props} />;
         break;
     default:

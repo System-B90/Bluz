@@ -9,13 +9,35 @@ import {
 import { useWebSocketConfig } from "@/components/WebsocketConfigProvider";
 import { MessageTypes } from "@/settings";
 
+/**
+ * Handler callback for processing incoming WebSocket messages on the client.
+ * @param messageType The type of WS message (from MessageTypes).
+ * @param data The JSON data payload containing domain entities/changes.
+ * @example
+ * ```typescript
+ * const onWebSocketMessage: MessageHandlerType = (type, data) => {
+ *   if (type === MessageTypes.COURSES_UPDATE) {
+ *     loadCourses();
+ *   }
+ * };
+ * ```
+ */
 export type MessageHandlerType = (
   messageType: MessageTypes,
-  messageTarget: string,
   data: any,
 ) => void;
 const MessageHandlerContext = createContext<MessageHandlerType>(() => {});
 
+/**
+ * Custom hook to establish and manage client-side WebSocket sessions.
+ * Manages event listener registrations and session heartbeats.
+ * 
+ * @returns An object containing the WebSocket ref and helper to add/remove handlers.
+ * @example
+ * ```typescript
+ * const { ws, addMessageHandler } = useSessionWebSocketContext();
+ * ```
+ */
 export function useSessionWebSocketContext() {
     const { connectionString } = useWebSocketConfig();
 
@@ -35,10 +57,10 @@ export function useSessionWebSocketContext() {
     }, []);
 
     const webSocketMessageHandler = useCallback((ev: MessageEvent<any>) => {
-        const data = JSON.parse(ev.data);
-        const { type, target }: { type: MessageTypes; target: string } = data;
+        const parsed = JSON.parse(ev.data);
+        const { type, data }: { type: MessageTypes; data: any } = parsed;
         console.log(`[WS] Message type: ${type}`);
-        messageHandlers.current.forEach((handler) => handler(type, target, data));
+        messageHandlers.current.forEach((handler) => handler(type, data));
     }, []);
 
     const registerCurrentSession = useCallback(() => {
