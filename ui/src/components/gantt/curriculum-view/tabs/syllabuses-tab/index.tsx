@@ -1,7 +1,10 @@
 import { Box, Card, CardContent, Skeleton } from "@mui/material";
 import { memo, useMemo } from "react";
 
-import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import {
+    GanttCurriculumId,
+    GanttSyllabusId,
+} from "@/api-shared/types/gantt/models";
 import { SyllabusesActionsBox } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box";
 import { useProgressiveItemCount } from "@/components/gantt/curriculum-view/tabs/UseProgressiveItemCount";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
@@ -14,6 +17,7 @@ type SyllabusesTabProps = {
 const INITIAL_SYLLABUS_CARD_COUNT = 2;
 const SYLLABUS_CARD_BATCH_SIZE = 2;
 const MAX_SYLLABUS_CARD_SKELETONS = 3;
+const EMPTY_SYLLABUS_IDS: Array<GanttSyllabusId> = [];
 
 function SyllabusCardSkeleton() {
     return (
@@ -55,7 +59,7 @@ export const SyllabusesTab = memo(function SyllabusesTab({
     curriculumId,
 }: SyllabusesTabProps) {
     const curriculum = useCurriculum(curriculumId);
-    const syllabuses = curriculum?.syllabuses ?? [];
+    const syllabuses = curriculum?.syllabuses ?? EMPTY_SYLLABUS_IDS;
     const visibleSyllabusCount = useProgressiveItemCount(syllabuses.length, {
         batchSize: SYLLABUS_CARD_BATCH_SIZE,
         initialCount: INITIAL_SYLLABUS_CARD_COUNT,
