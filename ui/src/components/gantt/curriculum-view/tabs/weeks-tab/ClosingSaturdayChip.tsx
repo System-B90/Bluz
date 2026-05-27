@@ -44,7 +44,7 @@ export function ClosingSaturdayChip({
     }, [week, weekId, weekendDuty, updateWeek, enqueueSnackbar]);
 
     return (
-        <Tooltip arrow title={weekendDuty ? "סוגרים שבת" : "יוצאים הביתה"}>
+        <Tooltip arrow title={weekendDuty ? "צא הביתה" : "סגור שבת"}>
             <Chip
                 className={`
                     transition-all duration-300 ease-in-out cursor-pointer font-bold

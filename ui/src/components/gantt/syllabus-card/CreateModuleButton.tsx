@@ -55,7 +55,7 @@ export function CreateModuleButton({
     }, [syllabusId, enqueueSnackbar, createModule, createEvent, openModuleDialog]);
 
     return (
-        <Tooltip placement="top" title="מערך חדש">
+        <Tooltip placement="top" title="צור מערך חדש">
             <span>
                 <IconButton
                     color="secondary"

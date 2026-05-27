@@ -26,7 +26,7 @@ export function CurriculumName({ curriculumId, title }: CurriculumNameProps) {
         <EditableCurriculumField
             allowEmpty={false}
             canEdit={Boolean(curriculumId)}
-            editTooltip="שינוי שם תכנית"
+            editTooltip="ערוך שם תכנית"
             onSave={saveNameHandler}
             renderDisplay={(value) => (
                 <Typography color="primary" variant="h6">

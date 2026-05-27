@@ -27,13 +27,11 @@ export function GroupField({ group, attributes, listeners }: GroupFieldProps) {
 
             {/* Group name and type */}
             <Typography variant="subtitle1">{group.name}</Typography>
-            <Tooltip title={group.groupType}>
-                <Chip
-                    label={group.groupType}
-                    size="small"
-                    sx={{ backgroundColor: groupColors[group.groupType], color: "#fff" }}
-                />
-            </Tooltip>
+            <Chip
+                label={group.groupType}
+                size="small"
+                sx={{ backgroundColor: groupColors[group.groupType], color: "#fff" }}
+            />
         </Stack>
     );
 }

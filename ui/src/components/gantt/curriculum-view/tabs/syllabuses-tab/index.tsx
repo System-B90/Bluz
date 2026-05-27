@@ -1,11 +1,10 @@
 import { Box, Card, CardContent, Skeleton } from "@mui/material";
 import { memo, useMemo } from "react";
 
-import
-    {
-        GanttCurriculumId,
-        GanttSyllabusId,
-    } from "@/api-shared/types/gantt/models";
+import {
+    GanttCurriculumId,
+    GanttSyllabusId,
+} from "@/api-shared/types/gantt/models";
 import { SyllabusesActionsBox } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box";
 import { useProgressiveItemCount } from "@/components/gantt/curriculum-view/tabs/UseProgressiveItemCount";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
@@ -104,8 +103,8 @@ export const SyllabusesTab = memo(function SyllabusesTab({
                     flexWrap={ "wrap" }
                     gap={ 2 }
                     height={ "100%" }
-                    sx={ { overflowX: "scroll" } }
                     pt={ 1 }
+                    sx={ { overflowX: "scroll" } }
                 >
                     { syllabusCards }
                     { Array.from({

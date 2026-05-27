@@ -8,12 +8,13 @@ export function OfflineModeIcon({ ...props }: IconButtonProps) {
     const { offlineMode, setOfflineMode } = useOffline();
 
     return (
-        <Tooltip title={offlineMode ? "מצב לוקלי" : "עבור למצב לוקלי"}>
+        <Tooltip title={offlineMode ? "חזור למצב מקוון" : "עבור למצב לוקלי"}>
             <IconButton
                 {...props}
-                className={`transition-all duration-200 hover:scale-110 active:scale-90 hover:bg-slate-100 dark:hover:bg-slate-800 ${offlineMode ? "animate-pulse-soft" : ""}`}
+                className={`transition-all duration-200 hover:scale-110 active:scale-95 ${offlineMode ? "animate-pulse-soft" : ""}`}
                 color={offlineMode ? "primary" : "inherit"}
                 onClick={() => setOfflineMode((v) => !v)}
+                size="small"
             >
                 {offlineMode ? (
                     <WifiTetheringOffIcon color="inherit" />

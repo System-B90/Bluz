@@ -25,14 +25,15 @@ export function FilterIcon({
     return (
         <Tooltip
             placement="bottom"
-            title={`${filtersVisible ? "Hide" : "Show"} Filters`}
+            title={filtersVisible ? "הסתר סננים" : "הצג סננים"}
         >
             <IconButton
-                className="relative transition-all duration-200 hover:scale-110 active:scale-90 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="relative transition-all duration-200 hover:scale-110 active:scale-95"
                 color={filtersVisible ? "primary" : "inherit"}
                 onClick={() => {
                     setFiltersVisible((v) => !v);
                 }}
+                size="small"
             >
                 <FilterListIcon />
                 {!filtersVisible && hasAnyFilter ? (

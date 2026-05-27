@@ -40,7 +40,7 @@ export function SyllabusCardActions({
 
     return (
         <CardActions {...props}>
-            <Tooltip title="הסרת הסילבוס מהגאנט">
+            <Tooltip title="הסר סילבוס מהגאנט">
                 <IconButton color="warning" onClick={deleteHandler} size="small">
                     <LinkOffIcon fontSize="small" />
                 </IconButton>

@@ -97,7 +97,7 @@ export function SyllabusSelectionField({
                     {syllabusMenuItems}
                 </Select>
             </FormControl>
-            <Tooltip title="הוספת סילבוס לגאנט">
+            <Tooltip title="הוסף סילבוס לגאנט">
                 <IconButton
                     disabled={currentSyllabusId.length === 0}
                     onClick={addClickHandler}

@@ -26,7 +26,7 @@ export function Filters({ ...props }: BoxProps) {
             <FilterCourses boxSizing={"border-box"} minWidth={200} width={"auto"} />
 
             <Tooltip
-                title={showPAsFor !== null ? 'מראה חלונות פ"א' : 'גלה חלונות פ"א'}
+                title={showPAsFor !== null ? 'הסתר חלונות פ"א' : 'גלה חלונות פ"א'}
             >
                 <IconButton
                     color={showPAsFor !== null ? "primary" : "inherit"}
@@ -36,7 +36,7 @@ export function Filters({ ...props }: BoxProps) {
                 </IconButton>
             </Tooltip>
 
-            <Tooltip title={hidePrayers ? "הראה תפילות" : "הסתר תפילות"}>
+            <Tooltip title={hidePrayers ? "הצג תפילות" : "הסתר תפילות"}>
                 <IconButton
                     className="relative"
                     color="inherit"
