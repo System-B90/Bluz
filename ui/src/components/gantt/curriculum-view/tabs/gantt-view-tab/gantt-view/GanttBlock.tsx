@@ -88,8 +88,12 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
         </Box>
     );
 
-    return isViolated ? (
-        <Tooltip arrow placement="top" title={violations.join("\n")}>
+    const tooltipContent = isViolated
+        ? `${title ?? ""}\n${violations.join("\n")}`.trim()
+        : title ?? "";
+
+    return tooltipContent ? (
+        <Tooltip arrow placement="top" title={tooltipContent}>
             {block}
         </Tooltip>
     ) : (
