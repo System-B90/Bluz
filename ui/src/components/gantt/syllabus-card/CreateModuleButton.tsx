@@ -10,6 +10,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
+import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export function CreateModuleButton({
     syllabusId,
@@ -19,6 +20,7 @@ export function CreateModuleButton({
     const { enqueueSnackbar } = useSnackbar();
     const { createEvent } = useModuleEventActions();
     const { createModule } = useModuleActions();
+    const { openModuleDialog } = useCurriculumProviderActions();
     const [isCreating, setIsCreating] = useState(false);
 
     const clickHandler = useCallback(async () => {
@@ -29,6 +31,7 @@ export function CreateModuleButton({
                 syllabusId,
                 "המערך החדש שלי",
             );
+            openModuleDialog(syllabusId, newModule.id);
             try {
                 await createEvent(
                     "הרצאת מבוא",
@@ -49,7 +52,7 @@ export function CreateModuleButton({
         } finally {
             setIsCreating(false);
         }
-    }, [syllabusId, enqueueSnackbar, createModule, createEvent]);
+    }, [syllabusId, enqueueSnackbar, createModule, createEvent, openModuleDialog]);
 
     return (
         <Tooltip placement="top" title="מערך חדש">
