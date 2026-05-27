@@ -29,7 +29,7 @@ export function WeekAccordion(props: WeekAccordionProps) {
     return (
         <Box>
             <Box display="flex" justifyContent="flex-end" mb={1}>
-                <Tooltip title="הוספת יום">
+                <Tooltip title="הוסף יום">
                     <span>
                         <IconButton
                             color="primary"

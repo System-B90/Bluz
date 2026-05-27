@@ -25,7 +25,7 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
 
     const style = transform
         ? {
-            transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+            transform: `translate3d(${transform.x}px, ${transform.y}px, 0)${isDragging ? " rotate(2.5deg) scale(1.02)" : ""}`,
             zIndex: 9999,
         }
         : undefined;
@@ -56,8 +56,8 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
                 borderRadius: "4px",
                 border: isViolated ? `2px solid ${theme.palette.error.main}` : "none",
                 cursor: isDragging ? "grabbing" : "grab",
-                opacity: isDragging ? 0.4 : isOpaque ? 0.5 : 1,
-                boxShadow: isDragging ? theme.shadows[ 4 ] : "none",
+                opacity: isDragging ? 0.8 : isOpaque ? 0.5 : 1,
+                boxShadow: isDragging ? "0 10px 25px rgba(0, 0, 0, 0.2)" : "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

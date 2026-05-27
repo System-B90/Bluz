@@ -14,7 +14,7 @@ export function InstructorToolsIcon({
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
     return (
-        <Tooltip placement="bottom" title={""}>
+        <Tooltip placement="bottom" title="פתח כלי מדריך">
             <IconButton
                 color={props.color ?? "inherit"}
                 onMouseEnter={(e) => setAnchorEl(e.currentTarget)}

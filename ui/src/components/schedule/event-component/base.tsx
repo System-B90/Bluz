@@ -87,65 +87,47 @@ function BluzEventInnerComponent({
     switch (variant) {
     case "prayer":
         return (
-            <Tooltip title="תפילה">
-                <PrayerEventComponent event={event as PrayerEvent} {...props} />
-            </Tooltip>
+            <PrayerEventComponent event={event as PrayerEvent} {...props} />
         );
     case "tiny-narrow":
         return (
-            <Tooltip title="Tiny & Narrow">
-                <TinyNarrowEventComponent
-                    containerSize={size}
-                    event={event}
-                    {...props}
-                />
-            </Tooltip>
+            <TinyNarrowEventComponent
+                containerSize={size}
+                event={event}
+                {...props}
+            />
         );
     case "tiny-wide":
         return (
-            <Tooltip title="Tiny">
-                <TinyEventComponent event={event} {...props} />
-            </Tooltip>
+            <TinyEventComponent event={event} {...props} />
         );
     case "short-narrow":
         return (
-            <Tooltip title="Short & Narrow">
-                <ShortNarrowEventComponent
-                    containerSize={size}
-                    event={event}
-                    {...props}
-                />
-            </Tooltip>
+            <ShortNarrowEventComponent
+                containerSize={size}
+                event={event}
+                {...props}
+            />
         );
     case "short-wide":
         return (
-            <Tooltip title="Short">
-                <ShortEventComponent containerSize={size} event={event} {...props} />
-            </Tooltip>
+            <ShortEventComponent containerSize={size} event={event} {...props} />
         );
     case "medium-wide":
         return (
-            <Tooltip title="Medium">
-                <MediumEventComponent event={event} {...props} />
-            </Tooltip>
+            <MediumEventComponent event={event} {...props} />
         );
     case "medium-narrow":
         return (
-            <Tooltip title="Medium & Narrow">
-                <MediumNarrowEventComponent event={event} {...props} />
-            </Tooltip>
+            <MediumNarrowEventComponent event={event} {...props} />
         );
     case "large-wide":
         return (
-            <Tooltip title="Large">
-                <LargeEventComponent event={event} {...props} />
-            </Tooltip>
+            <LargeEventComponent event={event} {...props} />
         );
     case "large-narrow":
         return (
-            <Tooltip title="Large & Narrow">
-                <LargeNarrowEventComponent event={event} {...props} />
-            </Tooltip>
+            <LargeNarrowEventComponent event={event} {...props} />
         );
     default:
         window.alert(`Unimplemented variant: ${variant}`);

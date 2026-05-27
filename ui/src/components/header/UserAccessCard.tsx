@@ -1,5 +1,5 @@
 import LogoutIcon from "@mui/icons-material/Logout";
-import { AvatarProps, Box, Chip, IconButton } from "@mui/material";
+import { AvatarProps, Box, Chip, IconButton, Tooltip } from "@mui/material";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { HiveAvatar } from "@/components/header/HiveAvatarImage";
@@ -56,15 +56,17 @@ function ChipAvatar({ className, ...props }: AvatarProps) {
                 sx={{ margin: "0 !important" }}
             />
 
-            <IconButton
-                className="logout-icon"
-                color="error"
-                onClick={logout}
-                size="small"
-                sx={{ p: 0.5 }} // controlled padding instead of default
-            >
-                <LogoutIcon fontSize="small" />
-            </IconButton>
+            <Tooltip title="התנתק">
+                <IconButton
+                    className="logout-icon"
+                    color="error"
+                    onClick={logout}
+                    size="small"
+                    sx={{ p: 0.5 }} // controlled padding instead of default
+                >
+                    <LogoutIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
         </Box>
     );
 }

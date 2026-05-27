@@ -26,13 +26,11 @@ export function GroupMemberField({ user }: GroupMemberFieldProps) {
                     <DragIndicatorIcon />
                 </Box>
                 <Typography>{user.name}</Typography>
-                <Tooltip title={user.type}>
-                    <Chip
-                        label={user.type}
-                        size="small"
-                        sx={{ backgroundColor: userColors[user.type], color: "#000" }}
-                    />
-                </Tooltip>
+                <Chip
+                    label={user.type}
+                    size="small"
+                    sx={{ backgroundColor: userColors[user.type], color: "#000" }}
+                />
             </Stack>
         </Paper>
     );

@@ -17,16 +17,17 @@ export function CurriculumIcon() {
     return (
         <Tooltip
             placement="bottom"
-            title={curriculumPage ? 'בחזרה ללו"ז' : "בניית גאנט"}
+            title={curriculumPage ? 'חזור ללו"ז' : "עבור לבניית גאנט"}
         >
             <IconButton 
-                className="relative transition-all duration-200 hover:scale-110 active:scale-90 hover:bg-slate-100 dark:hover:bg-slate-800" 
+                className="relative transition-all duration-200 hover:scale-110 active:scale-95" 
                 color={"inherit"} 
                 onClick={onClick}
+                size="small"
             >
-                <div className="animate-flip-in-y" key={curriculumPage ? "gantt" : "calendar"}>
+                <span className="animate-flip-in-y inline-flex" key={curriculumPage ? "gantt" : "calendar"}>
                     {curriculumPage ? <CalendarMonthIcon /> : <AutoStoriesIcon />}
-                </div>
+                </span>
             </IconButton>
         </Tooltip>
     );
