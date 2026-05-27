@@ -51,6 +51,8 @@ export type GanttBlockProps = {
   isAbsolute?: boolean;
   elementId?: string;
   violations?: Array<string>;
+  blockLeftPx?: number;
+  blockWidthPx?: number;
 };
 
 export type GanttCellProps = {
@@ -66,6 +68,8 @@ export type GanttCellProps = {
   isAbsoluteBlock?: boolean;
   elementId?: string;
   violations?: Array<string>;
+  blockLeftPx?: number;
+  blockWidthPx?: number;
 };
 
 export type GanttModuleRowProps = {
