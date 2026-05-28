@@ -10,7 +10,7 @@ import {
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
-    apiAddCourse,
+    apiCreateCourse,
     apiDeleteCourse,
     apiGetCourses,
     apiSetCourse,
@@ -21,36 +21,36 @@ import { MessageHandlerType } from "@/components/SessionWs";
 import { MessageTypes } from "@/settings";
 
 export type CoursesContextState = {
-  default: boolean;
-  courses: Array<Course>;
-  getCourse: (id: CourseId) => Course | undefined;
-  addCourse: (course: Omit<Course, "id">) => Promise<void>;
-  updateCourse: (course: Course) => Promise<void>;
-  updateCoursePartial: (id: CourseId, changes: Partial<Course>) => Promise<void>;
-  deleteCourse: (courseId: CourseId) => Promise<void>;
+    default: boolean;
+    courses: Array<Course>;
+    getCourse: (id: CourseId) => Course | undefined;
+    addCourse: (course: Omit<Course, "id">) => Promise<void>;
+    updateCourse: (course: Course) => Promise<void>;
+    updateCoursePartial: (id: CourseId, changes: Partial<Course>) => Promise<void>;
+    deleteCourse: (courseId: CourseId) => Promise<void>;
 };
 
 const CoursesContext = createContext<CoursesContextState>({
     default: true,
     courses: [],
     getCourse: () => undefined,
-    addCourse: async () => {},
-    updateCourse: async () => {},
-    updateCoursePartial: async () => {},
-    deleteCourse: async () => {},
+    addCourse: async () => { },
+    updateCourse: async () => { },
+    updateCoursePartial: async () => { },
+    deleteCourse: async () => { },
 });
 
 type CoursesState = {
-  courses: Record<CourseId, Course>;
-  isLoading: boolean;
+    courses: Record<CourseId, Course>;
+    isLoading: boolean;
 };
 type CoursesAction =
-  | { type: "ADD_COURSE"; payload: Course }
-  | { type: "DELETE_COURSE"; payload: CourseId }
-  | { type: "ROLLBACK_COURSES"; payload: Record<CourseId, Course> }
-  | { type: "SET_COURSES"; payload: Record<CourseId, Course> }
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "UPDATE_COURSE"; payload: Partial<Course> & { id: CourseId } };
+    | { type: "ADD_COURSE"; payload: Course }
+    | { type: "DELETE_COURSE"; payload: CourseId }
+    | { type: "ROLLBACK_COURSES"; payload: Record<CourseId, Course> }
+    | { type: "SET_COURSES"; payload: Record<CourseId, Course> }
+    | { type: "SET_LOADING"; payload: boolean }
+    | { type: "UPDATE_COURSE"; payload: Partial<Course> & { id: CourseId } };
 
 function coursesReducer(state: CoursesState, action: CoursesAction): CoursesState {
     switch (action.type) {
@@ -92,7 +92,7 @@ function coursesReducer(state: CoursesState, action: CoursesAction): CoursesStat
 export const CoursesProvider = ({
     children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) => {
     const { addMessageHandler } = useAuth();
     const { enqueueSnackbar } = useSnackbar();
@@ -139,7 +139,7 @@ export const CoursesProvider = ({
             dispatch({ type: "ADD_COURSE", payload: optimisticCourse });
 
             try {
-                const createdCourse = await apiAddCourse(courseData);
+                const createdCourse = await apiCreateCourse(optimisticCourse);
                 enqueueSnackbar(`יצירת מסלול ${courseData.name} הסתיימה בהצלחה.`, {
                     variant: "success",
                 });

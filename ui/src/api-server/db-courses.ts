@@ -12,19 +12,20 @@ async function getDbCourses(options?: FindOptions): Promise<Array<Course>> {
 }
 
 async function setDbCourse(course: Course, options?: UpdateOptions) {
+    const { _id: _, id: courseId, ...courseData } = course as any;
     const data = await databaseController.courses.updateOne(
-        { id: course.id },
-        { $set: course },
+        { id: courseId },
+        { $set: courseData },
         options,
     );
     if (data.matchedCount === 0 && !options?.upsert) {
-        throw new ClientApiError(`No course by id ${course.id} found!`);
+        throw new ClientApiError(`No course by id ${courseId} found!`);
     }
     if (data.modifiedCount === 0) {
-        throw new ClientApiError(`Course ${course.id} data not modified!`);
+        throw new ClientApiError(`Course ${courseId} data not modified!`);
     }
     SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, {
-        courses: { [course.id]: course },
+        courses: { [courseId]: course },
     });
 }
 
@@ -47,8 +48,8 @@ async function deleteDbCourse(courseId: Course["id"]) {
 }
 
 export namespace DbCourses {
-  export const get = getDbCourses;
-  export const set = setDbCourse;
-  export const create = createDbCourse;
-  export const del = deleteDbCourse;
+    export const get = getDbCourses;
+    export const set = setDbCourse;
+    export const create = createDbCourse;
+    export const del = deleteDbCourse;
 }

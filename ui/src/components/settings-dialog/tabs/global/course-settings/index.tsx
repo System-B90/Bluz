@@ -88,9 +88,9 @@ export function CourseSettings() {
                 <Box
                     sx={{
                         display: "flex",
-                        flexWrap: "wrap",
+                        flexDirection: "column",
                         gap: 1.5,
-                        alignItems: "flex-start",
+                        alignItems: "stretch",
                         flexGrow: 1,
                         overflowY: "auto",
                         pr: 0.5,

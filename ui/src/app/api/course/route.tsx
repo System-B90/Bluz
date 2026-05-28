@@ -1,24 +1,36 @@
 export const dynamic = "force-dynamic";
 
-import { NextRequest } from "next/server";
-
-import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
 import { DbCourses } from "@/api-server/db-courses";
 import { ClientApiError } from "@/api-shared/errors";
-import { Course } from "@/api-shared/types/course";
+import {
+    ApiCourseCreatePayload,
+    ApiCourseCreateResponse,
+    ApiCourseDeletePayload,
+    ApiCourseDeleteResponse,
+    ApiCourseGetPayload,
+    ApiCourseGetResponse,
+    ApiCourseUpdatePayload,
+    ApiCourseUpdateResponse,
+} from "@/api-shared/types/course";
 
-export async function GET(request: NextRequest) {
+type ServerApiCourseGet = ServerApi<ApiCourseGetPayload, ApiCourseGetResponse>;
+type ServerApiCourseUpdate = ServerApi<ApiCourseUpdatePayload, ApiCourseUpdateResponse>;
+type ServerApiCourseCreate = ServerApi<ApiCourseCreatePayload, ApiCourseCreateResponse>;
+type ServerApiCourseDelete = ServerApi<ApiCourseDeletePayload, ApiCourseDeleteResponse>;
+
+export const GET: ServerApiCourseGet = async (request) => {
     try {
         const data = await DbCourses.get();
         return ApiSuccess(data);
     } catch (e) {
         return catchHandler(request, e);
     }
-}
+};
 
-export async function POST(request: NextRequest) {
+export const POST: ServerApiCourseUpdate = async (request) => {
     try {
-        const course: Course = await request.json();
+        const course = await request.json();
         if (!course) {
             throw new ClientApiError("No data provided!");
         }
@@ -27,28 +39,33 @@ export async function POST(request: NextRequest) {
     } catch (e) {
         return catchHandler(request, e);
     }
-}
+};
 
-export async function DELETE(request: NextRequest) {
+export const DELETE: ServerApiCourseDelete = async (request) => {
     try {
-        const courseId: Course["id"] = await request.json();
+        const courseId = await request.json();
         if (!courseId) {
             throw new ClientApiError("No courseId provided!");
         }
-        return ApiSuccess(await DbCourses.del(courseId));
+        await DbCourses.del(courseId);
+        return ApiSuccess();
     } catch (e) {
         return catchHandler(request, e);
     }
-}
+};
 
-export async function PUT(request: NextRequest) {
+export const PUT: ServerApiCourseCreate = async (request) => {
     try {
-        const course: Course = await request.json();
+        const course = await request.json();
         if (!course) {
             throw new ClientApiError("No data provided!");
         }
-        return ApiSuccess(await DbCourses.create(course));
+        if (!course.id) {
+            throw new ClientApiError("Course id is not provided!");
+        }
+        const createdCourse = await DbCourses.create(course);
+        return ApiSuccess(createdCourse);
     } catch (e) {
         return catchHandler(request, e);
     }
-}
+};

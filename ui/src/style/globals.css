@@ -320,6 +320,22 @@
   animation: spin-slow 3s linear infinite;
 }
 
+.hover-rotate-subtle svg {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-rotate-subtle:hover svg {
+  transform: rotate(45deg);
+}
+
+.hover-rotate-90 svg {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-rotate-90:hover svg {
+  transform: rotate(90deg);
+}
+
 .animate-pulse-soft {
   animation: pulse-soft 2s ease-in-out infinite;
 }

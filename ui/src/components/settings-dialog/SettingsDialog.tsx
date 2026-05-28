@@ -179,37 +179,43 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                     sx={{
                         flexGrow: 1,
                         p: 4,
-                        position: "relative",
+                        minWidth: 0,
                         display: "flex",
                         flexDirection: "column",
                     }}
                 >
-                    {/* Floating Close Button */}
-                    <IconButton
-                        className="hover-spin-slow"
-                        onClick={onClose}
+                    {/* Header Row with Close Button */}
+                    <Box
                         sx={{
-                            position: "absolute",
-                            top: 20,
-                            right: 20,
-                            bgcolor: "action.hover",
-                            color: "text.secondary",
-                            transition: "all 0.2s ease",
-                            "&:hover": {
-                                bgcolor: "action.selected",
-                                color: "text.primary",
-                                transform: "scale(1.1)",
-                            },
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            mb: 2.5,
+                            mt: -1.5,
                         }}
                     >
-                        <CloseIcon sx={{ fontSize: 18 }} />
-                    </IconButton>
+                        <IconButton
+                            className="hover-rotate-90"
+                            onClick={onClose}
+                            sx={{
+                                bgcolor: "action.hover",
+                                color: "text.secondary",
+                                transition: "all 0.2s ease",
+                                "&:hover": {
+                                    bgcolor: "action.selected",
+                                    color: "text.primary",
+                                    transform: "scale(1.1)",
+                                },
+                            }}
+                        >
+                            <CloseIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                    </Box>
 
                     {/* Active Tab Panel with Entry Animation */}
                     <Box
                         className="animate-slide-up-fade"
                         key={tab}
-                        sx={{ flexGrow: 1, height: "100%", pt: 1 }}
+                        sx={{ flexGrow: 1, height: "100%" }}
                     >
                         {tab === 0 && <PersonalSettings />}
                         {tab === 1 && <GlobalSettings />}

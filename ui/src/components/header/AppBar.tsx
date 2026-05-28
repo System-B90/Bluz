@@ -94,7 +94,7 @@ export function ScheduleAppBar({
                     {/* <InstructorToolsIcon /> */}
 
                     <IconButton
-                        className="hover-spin-slow transition-all duration-200 hover:scale-110 active:scale-95"
+                        className="hover-rotate-subtle transition-all duration-200 hover:scale-110 active:scale-95"
                         color="inherit"
                         onClick={() => setOpenSettingsDialog(true)}
                         size="small"

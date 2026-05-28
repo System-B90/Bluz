@@ -136,10 +136,12 @@ export function CourseItem({
             <Box
                 onClick={() => !isEditing && setIsEditing(true)}
                 sx={{
+                    flexGrow: 1,
                     display: "flex",
                     alignItems: "center",
                     gap: 0.8,
                     cursor: "pointer",
+                    minWidth: 0,
                 }}
             >
                 {isEditing ? (
@@ -152,21 +154,25 @@ export function CourseItem({
                             fontSize: "0.88rem",
                             fontWeight: 700,
                             fontFamily: "Assistant, sans-serif",
-                            width: `${Math.max(title.length, 6)}ch`,
+                            width: "100%",
+                            maxWidth: "180px",
                             borderBottom: "1px solid",
                             borderColor: "primary.main",
                         }}
                         value={title}
                     />
                 ) : (
-                    <Box alignItems="center" display="flex" gap={0.5} sx={{ "&:hover svg": { opacity: 1 } }}>
+                    <Box alignItems="center" display="flex" gap={0.5} sx={{ minWidth: 0, "&:hover svg": { opacity: 1 } }}>
                         <Typography
+                            noWrap
                             sx={{
                                 fontWeight: 700,
                                 fontSize: "0.88rem",
                                 fontFamily: "Assistant, sans-serif",
                                 userSelect: "none",
                                 color: "text.primary",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
                             }}
                         >
                             {title}
@@ -177,6 +183,7 @@ export function CourseItem({
                                 color: "text.secondary",
                                 opacity: 0,
                                 transition: "opacity 0.2s ease",
+                                flexShrink: 0,
                             }}
                         />
                     </Box>

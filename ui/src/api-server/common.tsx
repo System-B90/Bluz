@@ -9,16 +9,16 @@ import { CACHE_CONTROL_HTTP_HEADER, IMMUTABLE_CACHE_MAX_TTL } from "@/settings";
 
 export type ApiResponseHeaders = Record<string, string>;
 export type ApiResponseInit =
-  | (Omit<ResponseInit, "headers" | "status"> & { headers: ApiResponseHeaders })
-  | undefined;
+    | (Omit<ResponseInit, "headers" | "status"> & { headers: ApiResponseHeaders })
+    | undefined;
 export type ApiCacheControl =
-  | "immutable"
-  | "must-revalidate"
-  | "no-cache"
-  | "no-store"
-  | number;
-export function ApiResponseMaker(
-    data: any,
+    | "immutable"
+    | "must-revalidate"
+    | "no-cache"
+    | "no-store"
+    | number;
+export function ApiResponseMaker<T>(
+    data: T,
     cacheControl?: ApiCacheControl,
     init?: ApiResponseInit,
 ) {
@@ -31,14 +31,14 @@ export function ApiResponseMaker(
             additionalHeaders[CACHE_CONTROL_HTTP_HEADER] = `public, ${cacheControl}`;
             if (cacheControl === "immutable") {
                 additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
-          `public, max-age=${IMMUTABLE_CACHE_MAX_TTL}, immutable`;
+                    `public, max-age=${IMMUTABLE_CACHE_MAX_TTL}, immutable`;
             } else if (cacheControl === "must-revalidate") {
                 additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
-          `public, max-age=1, must-revalidate`;
+                    `public, max-age=1, must-revalidate`;
             }
         } else if (typeof cacheControl === "number") {
             additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
-        `public, max-age=${cacheControl}, immutable`;
+                `public, max-age=${cacheControl}, immutable`;
         }
     }
 
@@ -48,12 +48,12 @@ export function ApiResponseMaker(
         init.headers = { ...init.headers, ...additionalHeaders };
     }
 
-    return new NextResponse(JSON.stringify({ status: 0, data: data }), {
+    return new NextResponse<{ 'status': number; 'data': T }>(JSON.stringify({ status: 0, data: data }), {
         status: 200,
         ...init,
     });
 }
-export function ApiErrorMaker(e: any) {
+export function ApiErrorMaker(e: any): NextResponse<{ 'status': number; 'error': any }> {
     let errorPayload: any = {};
     if (e instanceof Error) {
         errorPayload = {
@@ -82,8 +82,8 @@ export function ApiAccessError(e: any) {
     return ApiErrorMaker(e);
 }
 
-export function ApiSuccess(
-    data?: any,
+export function ApiSuccess<T>(
+    data?: T,
     cacheControl?: ApiCacheControl,
     init?: ApiResponseInit,
 ) {
@@ -102,3 +102,6 @@ export function catchHandler<T extends NextRequest>(request: T, e: any) {
     console.log("catchHandler", e);
     return ApiError(e);
 }
+
+export type ServerApiRequest<T> = Omit<NextRequest, 'json'> & { json: () => Promise<T> }
+export type ServerApi<PayloadT, ResponseT> = (request: ServerApiRequest<PayloadT>) => Promise<NextResponse<ResponseT> | Response>;
