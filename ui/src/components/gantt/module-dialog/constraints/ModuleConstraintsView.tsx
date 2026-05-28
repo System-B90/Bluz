@@ -9,7 +9,7 @@ import {
     Stack,
     Typography,
 } from "@mui/material";
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
 import { GanttModuleId } from "@/api-shared/types/gantt/models";
@@ -25,21 +25,19 @@ export function ModuleConstraintsView({
     moduleId,
 }: {
     moduleId: GanttModuleId;
-})
-{
+}) {
     const targetOptions = useTargetOptions();
     const curriculumState = useCurriculumState();
     const { state, removeConstraint, createConstraint } = useGanttConstraints();
 
-    const [ draft, setDraft ] = useState<DraftConstraint | null>(null);
+    const [draft, setDraft] = useState<DraftConstraint | null>(null);
 
     const constraintsList = useMemo(
         () => Object.values(state.constraints),
-        [ state.constraints ]
+        [state.constraints]
     );
 
-    const handleStartCreate = () =>
-    {
+    const handleStartCreate = () => {
         setDraft({
             type: ConstraintType.Relational,
             targetId: "",
@@ -50,19 +48,16 @@ export function ModuleConstraintsView({
         });
     };
 
-    const handleCancelCreate = () =>
-    {
+    const handleCancelCreate = () => {
         setDraft(null);
     };
 
-    const handleSubmitCreate = async () =>
-    {
+    const handleSubmitCreate = async () => {
         if (!draft) return;
 
-        let payload: CreateConstraintPayload;
+        let payload: Omit<CreateConstraintPayload, 'id'>;
 
-        if (draft.type === ConstraintType.Relational)
-        {
+        if (draft.type === ConstraintType.Relational) {
             payload = {
                 type: ConstraintType.Relational,
                 ownerType: "module",
@@ -74,8 +69,7 @@ export function ModuleConstraintsView({
                 minDelayDays: draft.minDelay ? Number(draft.minDelay) : undefined,
                 maxDelayDays: draft.maxDelay ? Number(draft.maxDelay) : undefined,
             };
-        } else
-        {
+        } else {
             payload = {
                 type: ConstraintType.Temporal,
                 ownerType: "module",
@@ -101,13 +95,13 @@ export function ModuleConstraintsView({
                     alignItems="center"
                     direction="row"
                     justifyContent="space-between"
-                    mb={ 2 }
+                    mb={2}
                 >
                     <Typography variant="h6">אילוצים</Typography>
                     <Button
                         color="primary"
-                        disabled={ !!draft }
-                        onClick={ handleStartCreate }
+                        disabled={!!draft}
+                        onClick={handleStartCreate}
                         size="small"
                         variant="outlined"
                     >
@@ -115,36 +109,36 @@ export function ModuleConstraintsView({
                     </Button>
                 </Stack>
 
-                { state.isLoading ? (
-                    <Box display="flex" justifyContent="center" p={ 2 }>
-                        <CircularProgress size={ 24 } />
+                {state.isLoading ? (
+                    <Box display="flex" justifyContent="center" p={2}>
+                        <CircularProgress size={24} />
                     </Box>
                 ) : (
-                    <Stack spacing={ 1 }>
-                        { constraintsList.map((constraint) => (
+                    <Stack spacing={1}>
+                        {constraintsList.map((constraint) => (
                             <ConstraintListItem
-                                constraint={ constraint }
-                                key={ constraint.id }
-                                onRemove={ removeConstraint }
+                                constraint={constraint}
+                                key={constraint.id}
+                                onRemove={removeConstraint}
                             />
-                        )) }
+                        ))}
 
-                        { draft ? <DraftConstraintForm
-                            curriculumState={ curriculumState }
-                            draft={ draft }
-                            onCancel={ handleCancelCreate }
-                            onSubmit={ handleSubmitCreate }
-                            setDraft={ setDraft }
-                            targetOptions={ targetOptions }
-                        /> : null }
+                        {draft ? <DraftConstraintForm
+                            curriculumState={curriculumState}
+                            draft={draft}
+                            onCancel={handleCancelCreate}
+                            onSubmit={handleSubmitCreate}
+                            setDraft={setDraft}
+                            targetOptions={targetOptions}
+                        /> : null}
 
-                        { constraintsList.length === 0 && !draft && (
+                        {constraintsList.length === 0 && !draft && (
                             <Typography color="text.secondary" variant="body2">
                                 לא הוגדרו אילוצים למערך זה.
                             </Typography>
-                        ) }
+                        )}
                     </Stack>
-                ) }
+                )}
             </CardContent>
         </Card>
     );

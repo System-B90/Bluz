@@ -52,7 +52,7 @@ export function GanttConstraintProvider({
 
     // Helper to determine if the current scope has mutation rights over a constraint
     const canModify = useCallback(
-        (constraint: CreateConstraintPayload | GanttConstraint) => {
+        (constraint: Omit<CreateConstraintPayload, 'id'> | GanttConstraint) => {
             if (context.type === "curriculum") return true;
             if (constraint.type === ConstraintType.Temporal) return true;
 
@@ -94,7 +94,7 @@ export function GanttConstraintProvider({
     }, [dispatch, curriculumId, context, enqueueSnackbar]);
 
     const createConstraint = useCallback(
-        async (payload: CreateConstraintPayload) => {
+        async (payload: Omit<CreateConstraintPayload, 'id'>) => {
             if (!canModify(payload)) {
                 enqueueSnackbar("אין לך הרשאה ליצור אילוץ זה מהקשר הנוכחי.", {
                     variant: "error",
@@ -104,17 +104,17 @@ export function GanttConstraintProvider({
 
             const constraintId = crypto.randomUUID();
 
-            const optimisticConstraint = {
+            const constraint = {
                 ...payload,
                 id: constraintId,
             } as GanttConstraint;
 
-            dispatch({ type: "UPSERT_CONSTRAINT", payload: optimisticConstraint });
+            dispatch({ type: "UPSERT_CONSTRAINT", payload: constraint });
 
             try {
                 const result = await ganttApi.constraints.apiCreate(
                     curriculumId,
-                    payload,
+                    constraint,
                 );
 
                 dispatch({ type: "DELETE_CONSTRAINT", payload: { id: constraintId } });
