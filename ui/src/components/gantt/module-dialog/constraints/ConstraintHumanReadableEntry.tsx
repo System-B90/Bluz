@@ -22,7 +22,11 @@ function RelationalConstraintHumanReadableEntry({ constraint }: { constraint: Re
 
     let delayPhrase = "";
     if (hasMin && hasMax) {
-        delayPhrase = `בין ${constraint.minDelayDays} ל-${constraint.maxDelayDays} ימים`;
+        if (constraint.minDelayDays === constraint.maxDelayDays) {
+            delayPhrase = `בדיוק ${constraint.minDelayDays} ימים`;
+        } else {
+            delayPhrase = `בין ${constraint.minDelayDays} ל-${constraint.maxDelayDays} ימים`;
+        }
     } else if (hasMin) {
         delayPhrase = `לפחות ${constraint.minDelayDays} ימים`;
     } else if (hasMax) {
