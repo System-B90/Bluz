@@ -1,15 +1,14 @@
-export const dynamic = "force-dynamic";
-
-import { NextRequest } from "next/server";
-
-import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
 import { createHiveClient } from "@/api-server/hive/session-client";
+import { ApiHiveUsersGetPayload, ApiHiveUsersGetResponse } from "@/api-shared/types/hive";
 
-export async function GET(request: NextRequest) {
+type ServerApiHiveUsersGet = ServerApi<ApiHiveUsersGetPayload, ApiHiveUsersGetResponse>;
+
+export const GET: ServerApiHiveUsersGet = async (request) => {
     try {
         const hiveClient = await createHiveClient();
         return ApiSuccess(await hiveClient.getUsers());
     } catch (e) {
         return catchHandler(request, e);
     }
-}
+};

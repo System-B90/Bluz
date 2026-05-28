@@ -1,20 +1,24 @@
 export const dynamic = "force-dynamic";
 
-import { NextRequest } from "next/server";
-
-import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { ApiSuccess, catchHandler, ServerApiWithParams } from "@/api-server/common";
 import { DbSettings } from "@/api-server/db-settings";
 import { updatePrayerEvents } from "@/api-server/prayer";
 import { inplaceDateFixup } from "@/api-shared/date-fixer";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
-import { Setting, SettingName } from "@/api-shared/types/settings/settings";
+import {
+    ApiSettingGetPayload,
+    ApiSettingGetResponse,
+    ApiSettingUpdatePayload,
+    ApiSettingUpdateResponse,
+    SettingName,
+} from "@/api-shared/types/settings/settings";
 
-export async function GET(
-    request: NextRequest,
-    { params }: { params: Promise<{ slug: string }> },
-) {
+type ServerApiSettingGet = ServerApiWithParams<ApiSettingGetPayload, ApiSettingGetResponse, { slug: string }>;
+type ServerApiSettingUpdate = ServerApiWithParams<ApiSettingUpdatePayload, ApiSettingUpdateResponse, { slug: string }>;
+
+export const GET: ServerApiSettingGet = async (request, context) => {
     try {
-        const { slug } = await params;
+        const { slug } = await context.params;
 
         const data = await DbSettings.get(slug as SettingName);
 
@@ -22,15 +26,12 @@ export async function GET(
     } catch (e) {
         return catchHandler(request, e);
     }
-}
+};
 
-export async function POST(
-    request: NextRequest,
-    { params }: { params: Promise<{ slug: string }> },
-) {
+export const POST: ServerApiSettingUpdate = async (request, context) => {
     try {
-        const { slug } = await params;
-        const value: Partial<Setting> = await request.json();
+        const { slug } = await context.params;
+        const value: ApiSettingUpdatePayload = await request.json();
 
         if (slug === "prayerTimes") {
             inplaceDateFixup(value, "shacharit");
@@ -48,4 +49,4 @@ export async function POST(
     } catch (e) {
         return catchHandler(request, e);
     }
-}
+};

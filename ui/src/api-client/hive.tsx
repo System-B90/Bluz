@@ -1,30 +1,41 @@
-import { safeApiFetcher } from "@/api-client/common";
-import { Class, CourseUser } from "@/api-shared/types/hive";
-import { Module } from "@/api-shared/types/module";
-import { HiveRoom } from "@/api-shared/types/room";
-import { Subject } from "@/api-shared/types/subject";
+import { ClientApiNoPayload, safeApiFetcher } from "@/api-client/common";
+import {
+    ApiHiveClassesGetResponse,
+    ApiHiveRoomsGetResponse,
+    ApiHiveStudentsGetResponse,
+    ApiHiveUsersGetResponse,
+} from "@/api-shared/types/hive";
+import { ApiHiveModulesGetResponse } from "@/api-shared/types/module";
+import { ApiHiveSubjectsGetResponse } from "@/api-shared/types/subject";
 
-export async function apiGetStudents() {
-    return await safeApiFetcher<Array<CourseUser>>("/api/hive/students");
-}
+type ClientApiGetStudents = ClientApiNoPayload<ApiHiveStudentsGetResponse>;
+type ClientApiGetClasses = ClientApiNoPayload<ApiHiveClassesGetResponse>;
+type ClientApiGetSubjects = ClientApiNoPayload<ApiHiveSubjectsGetResponse>;
+type ClientApiGetHiveRooms = ClientApiNoPayload<ApiHiveRoomsGetResponse>;
+type ClientApiGetHiveUsers = ClientApiNoPayload<ApiHiveUsersGetResponse>;
+type ClientApiGetModules = ClientApiNoPayload<ApiHiveModulesGetResponse>;
 
-export async function apiGetClasses() {
-    return await safeApiFetcher<Array<Class>>("/api/hive/classes");
-}
+export const apiGetStudents: ClientApiGetStudents = async (props) => {
+    return await safeApiFetcher<ApiHiveStudentsGetResponse>("/api/hive/students", props);
+};
 
-export async function apiGetSubjects() {
-    return await safeApiFetcher<Array<Subject>>("/api/hive/subjects");
-}
+export const apiGetClasses: ClientApiGetClasses = async (props) => {
+    return await safeApiFetcher<ApiHiveClassesGetResponse>("/api/hive/classes", props);
+};
+
+export const apiGetSubjects: ClientApiGetSubjects = async (props) => {
+    return await safeApiFetcher<ApiHiveSubjectsGetResponse>("/api/hive/subjects", props);
+};
 
 // TODO: Is this function actually needed? Rooms are a subtype of class in Hive
-export async function apiGetHiveRooms() {
-    return await safeApiFetcher<Array<HiveRoom>>("/api/hive/rooms");
-}
+export const apiGetHiveRooms: ClientApiGetHiveRooms = async (props) => {
+    return await safeApiFetcher<ApiHiveRoomsGetResponse>("/api/hive/rooms", props);
+};
 
-export async function getHiveUsers() {
-    return await safeApiFetcher<Array<CourseUser>>("/api/hive/users");
-}
+export const getHiveUsers: ClientApiGetHiveUsers = async (props) => {
+    return await safeApiFetcher<ApiHiveUsersGetResponse>("/api/hive/users", props);
+};
 
-export async function apiGetModules() {
-    return await safeApiFetcher<Array<Module>>("/api/hive/modules");
-}
+export const apiGetModules: ClientApiGetModules = async (props) => {
+    return await safeApiFetcher<ApiHiveModulesGetResponse>("/api/hive/modules", props);
+};

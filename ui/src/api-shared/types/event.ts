@@ -156,3 +156,15 @@ export type DbEventDocument = Omit<Event, "endTime" | "startTime"> & {
   startTime: Date;
   endTime: Date;
 };
+
+export type ApiEventGetPayload = void;
+export type ApiEventGetResponse = Array<DbEventDocument> | DbEventDocument | null | Record<EventId, Partial<DbEventDocument>>;
+
+export type ApiEventUpdatePayload = DbEventDocument;
+export type ApiEventUpdateResponse = DbEventDocument;
+
+export type ApiEventCreatePayload = DbEventDocument;
+export type ApiEventCreateResponse = DbEventDocument;
+
+export type ApiEventDeletePayload = EventId;
+export type ApiEventDeleteResponse = void;

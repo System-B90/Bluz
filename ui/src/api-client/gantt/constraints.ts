@@ -7,8 +7,7 @@
 
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { baseDocumentFixup, RawBaseDocument } from "@/api-client/gantt/base";
-import
-{
+import {
     GanttCurriculumId,
     GanttModuleId,
     GanttSyllabusId,
@@ -18,14 +17,12 @@ import { ConstraintType, GanttConstraint, RelationalConstraint, TemporalConstrai
 // Matches the Omit type used in the Provider context
 export type CreateConstraintPayload = Omit<
     RelationalConstraint,
-    "createdAt" | "id" | "updatedAt"
-> | Omit<TemporalConstraint, "createdAt" | "id" | "updatedAt">;
+    "createdAt" | "updatedAt"
+> | Omit<TemporalConstraint, "createdAt" | "updatedAt">;
 
-function normalizeConstraintObject(serverConstraint: any): GanttConstraint
-{
+function normalizeConstraintObject(serverConstraint: any): GanttConstraint {
     console.log('serverConstraint', serverConstraint);
-    if (serverConstraint.type === ConstraintType.Relational)
-    {
+    if (serverConstraint.type === ConstraintType.Relational) {
         const { ownerEventId, ownerModuleId, targetEventId, targetModuleId, ...otherParams } = serverConstraint;
         const targetType = targetModuleId ? 'module' : 'event';
         if (targetType === 'event' && !targetEventId) { throw Error(`Malformed constraint! Target type is "event" but no targetEventId was provided.`); }
@@ -41,8 +38,7 @@ function normalizeConstraintObject(serverConstraint: any): GanttConstraint
             targetType,
         });
     }
-    else if (serverConstraint.type === ConstraintType.Temporal)
-    {
+    else if (serverConstraint.type === ConstraintType.Temporal) {
         const { ownerEventId, ownerModuleId, ...otherParams } = serverConstraint;
         const ownerType = ownerModuleId ? 'module' : 'event';
         if (ownerType === 'event' && !ownerEventId) { throw Error(`Malformed constraint! Owner type is "event" but no ownerEventId was provided.`); }
@@ -66,8 +62,7 @@ async function apiGetConstraints(
         moduleId,
     }: { syllabusId?: GanttSyllabusId; moduleId?: GanttModuleId; },
     options?: ClientApiProps,
-): Promise<Array<GanttConstraint>>
-{
+): Promise<Array<GanttConstraint>> {
     const url = new URL(
         `/api/gantt/curriculums/${curriculumId}/constraints`,
         window.location.origin,
@@ -91,8 +86,7 @@ async function apiCreateConstraint(
     curriculumId: GanttCurriculumId,
     payload: CreateConstraintPayload,
     options?: ClientApiProps,
-): Promise<GanttConstraint>
-{
+): Promise<GanttConstraint> {
     const rawData = await safeApiFetcher<RawBaseDocument>(
         `/api/gantt/curriculums/${curriculumId}/constraints`,
         {
@@ -115,8 +109,7 @@ async function apiUpdateConstraint(
     id: string,
     payload: Partial<CreateConstraintPayload>,
     options?: ClientApiProps,
-): Promise<GanttConstraint>
-{
+): Promise<GanttConstraint> {
     const rawData = await safeApiFetcher<RawBaseDocument>(
         `/api/gantt/curriculums/${curriculumId}/constraints`,
         {
@@ -137,8 +130,7 @@ async function apiDeleteConstraint(
     curriculumId: GanttCurriculumId,
     id: string,
     options?: ClientApiProps,
-): Promise<void>
-{
+): Promise<void> {
     await safeApiFetcher<void>(`/api/gantt/curriculums/${curriculumId}/constraints`, {
         ...options,
         method: "DELETE",

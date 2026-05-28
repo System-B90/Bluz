@@ -1,3 +1,5 @@
+import { randomUUID } from "crypto";
+
 import { useSnackbar } from "notistack";
 import {
     createContext,
@@ -129,21 +131,21 @@ export const CoursesProvider = ({
 
     const addCourse = useCallback(
         async (courseData: Omit<Course, "id">) => {
-            const tempId = `temp-${Date.now()}` as CourseId;
-            const optimisticCourse: Course = {
-                id: tempId,
+            const courseId: CourseId = `course-${randomUUID()}`;
+            const course: Course = {
+                id: courseId,
                 ...courseData,
             };
             const previousCourses = { ...state.courses };
 
-            dispatch({ type: "ADD_COURSE", payload: optimisticCourse });
+            dispatch({ type: "ADD_COURSE", payload: course });
 
             try {
-                const createdCourse = await apiCreateCourse(optimisticCourse);
+                const createdCourse = await apiCreateCourse(course);
                 enqueueSnackbar(`יצירת מסלול ${courseData.name} הסתיימה בהצלחה.`, {
                     variant: "success",
                 });
-                dispatch({ type: "DELETE_COURSE", payload: tempId });
+                dispatch({ type: "DELETE_COURSE", payload: courseId });
                 dispatch({ type: "ADD_COURSE", payload: createdCourse });
                 loadCourses();
             } catch (error) {

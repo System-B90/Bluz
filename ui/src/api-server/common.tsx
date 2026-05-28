@@ -105,3 +105,7 @@ export function catchHandler<T extends NextRequest>(request: T, e: any) {
 
 export type ServerApiRequest<T> = Omit<NextRequest, 'json'> & { json: () => Promise<T> }
 export type ServerApi<PayloadT, ResponseT> = (request: ServerApiRequest<PayloadT>) => Promise<NextResponse<ResponseT> | Response>;
+export type ServerApiWithParams<PayloadT, ResponseT, ParamsT> = (
+    request: ServerApiRequest<PayloadT>,
+    context: { params: Promise<ParamsT> }
+) => Promise<NextResponse<ResponseT> | Response>;

@@ -5,3 +5,6 @@ export type Module = {
 };
 
 export type ModuleLike = Module | number | string;
+
+export type ApiHiveModulesGetPayload = void;
+export type ApiHiveModulesGetResponse = Array<Module>;

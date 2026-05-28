@@ -57,3 +57,6 @@ export function roomToResolvable<T extends Room>(
 export function roomToKey(room: RoomLike): string {
     return `${room.source}-${room.id}`;
 }
+
+export type ApiRoomsGetPayload = void;
+export type ApiRoomsGetResponse = Array<Room>;

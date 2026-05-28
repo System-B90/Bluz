@@ -1,6 +1,8 @@
-import { safeApiFetcher } from "@/api-client/common";
-import { Room } from "@/api-shared/types/room";
+import { ClientApiNoPayload, safeApiFetcher } from "@/api-client/common";
+import { ApiRoomsGetResponse } from "@/api-shared/types/room";
 
-export async function apiGetRooms() {
-    return await safeApiFetcher<Array<Room>>("/api/rooms");
-}
+type ClientApiGetRooms = ClientApiNoPayload<ApiRoomsGetResponse>;
+
+export const apiGetRooms: ClientApiGetRooms = async (props) => {
+    return await safeApiFetcher<ApiRoomsGetResponse>("/api/rooms", props);
+};

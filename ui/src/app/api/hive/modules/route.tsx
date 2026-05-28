@@ -1,15 +1,15 @@
-import { NextRequest } from "next/server";
-
-import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
 import { createHiveClient } from "@/api-server/hive/session-client";
-import { Module } from "@/api-shared/types/module";
+import { ApiHiveModulesGetPayload, ApiHiveModulesGetResponse } from "@/api-shared/types/module";
 
-export async function GET(request: NextRequest) {
+type ServerApiHiveModulesGet = ServerApi<ApiHiveModulesGetPayload, ApiHiveModulesGetResponse>;
+
+export const GET: ServerApiHiveModulesGet = async (request) => {
     try {
         const hiveClient = await createHiveClient();
-        const modules: Array<Module> = await hiveClient.getModules();
+        const modules = await hiveClient.getModules();
         return ApiSuccess(modules);
     } catch (e) {
         return catchHandler(request, e);
     }
-}
+};

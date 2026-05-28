@@ -1,14 +1,28 @@
 export const dynamic = "force-dynamic";
 
-import { NextRequest } from "next/server";
-
-import { ApiSuccess, catchHandler } from "@/api-server/common";
-import { DbEvent, DbEventDocument } from "@/api-server/db-event";
+import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
+import { DbEvent } from "@/api-server/db-event";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
-import { EventId } from "@/components/schedule/types/event";
+import {
+    ApiEventCreatePayload,
+    ApiEventCreateResponse,
+    ApiEventDeletePayload,
+    ApiEventDeleteResponse,
+    ApiEventGetPayload,
+    ApiEventGetResponse,
+    ApiEventUpdatePayload,
+    ApiEventUpdateResponse,
+    DbEventDocument,
+    EventId,
+} from "@/api-shared/types/event";
 
-export async function GET(request: NextRequest) {
+type ServerApiEventGet = ServerApi<ApiEventGetPayload, ApiEventGetResponse>;
+type ServerApiEventUpdate = ServerApi<ApiEventUpdatePayload, ApiEventUpdateResponse>;
+type ServerApiEventCreate = ServerApi<ApiEventCreatePayload, ApiEventCreateResponse>;
+type ServerApiEventDelete = ServerApi<ApiEventDeletePayload, ApiEventDeleteResponse>;
+
+export const GET: ServerApiEventGet = async (request) => {
     try {
         const id = request.nextUrl.searchParams.get("id");
         const ids = request.nextUrl.searchParams.get("ids");
@@ -30,19 +44,19 @@ export async function GET(request: NextRequest) {
         {} as Record<EventId, Partial<DbEventDocument>>,
             );
             return ApiSuccess(eventRecord);
-        } else if (rawStartDate && rawEndDate) {
+        } else {
             return ApiSuccess(
-                await DbEvent.getInRange(new Date(rawStartDate), new Date(rawEndDate)),
+                await DbEvent.getInRange(new Date(rawStartDate!), new Date(rawEndDate!)),
             );
         }
     } catch (e) {
         return catchHandler(request, e);
     }
-}
+};
 
-export async function POST(request: NextRequest) {
+export const POST: ServerApiEventUpdate = async (request) => {
     try {
-        const event: DbEventDocument = eventDateFixup(await request.json());
+        const event: ApiEventUpdatePayload = eventDateFixup(await request.json());
         if (!event) {
             throw new ClientApiError("No data provided!");
         }
@@ -50,11 +64,11 @@ export async function POST(request: NextRequest) {
     } catch (e) {
         return catchHandler(request, e);
     }
-}
+};
 
-export async function PUT(request: NextRequest) {
+export const PUT: ServerApiEventCreate = async (request) => {
     try {
-        const event: DbEventDocument = eventDateFixup(await request.json());
+        const event: ApiEventCreatePayload = eventDateFixup(await request.json());
         if (!event) {
             throw new ClientApiError("No data provided!");
         }
@@ -62,16 +76,17 @@ export async function PUT(request: NextRequest) {
     } catch (e) {
         return catchHandler(request, e);
     }
-}
+};
 
-export async function DELETE(request: NextRequest) {
+export const DELETE: ServerApiEventDelete = async (request) => {
     try {
-        const eventId: EventId = await request.json();
+        const eventId: ApiEventDeletePayload = await request.json();
         if (!eventId) {
             throw new ClientApiError("No eventId provided!");
         }
-        return ApiSuccess(await DbEvent.del(eventId));
+        await DbEvent.del(eventId);
+        return ApiSuccess();
     } catch (e) {
         return catchHandler(request, e);
     }
-}
+};

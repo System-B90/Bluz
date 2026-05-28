@@ -7,3 +7,6 @@ export type Subject = {
 };
 
 export type SubjectLike = number | string | Subject;
+
+export type ApiHiveSubjectsGetPayload = void;
+export type ApiHiveSubjectsGetResponse = Array<Subject>;

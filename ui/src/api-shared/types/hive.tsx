@@ -1,3 +1,5 @@
+import { HiveRoom } from "@/api-shared/types/room";
+
 /*
  * Note: This file does not update automatically.
  * DRF-Spectacular outputs enum values in the description: https://github.com/tfranzel/drf-spectacular/pull/952
@@ -146,3 +148,15 @@ export type Class = {
   type?: ClassTypeEnum;
   users: Array<number>;
 };
+
+export type ApiHiveStudentsGetPayload = void;
+export type ApiHiveStudentsGetResponse = Array<CourseUser>;
+
+export type ApiHiveClassesGetPayload = void;
+export type ApiHiveClassesGetResponse = Array<Class>;
+
+export type ApiHiveRoomsGetPayload = void;
+export type ApiHiveRoomsGetResponse = Array<HiveRoom>;
+
+export type ApiHiveUsersGetPayload = void;
+export type ApiHiveUsersGetResponse = Array<CourseUser>;
