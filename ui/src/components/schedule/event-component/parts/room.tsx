@@ -1,11 +1,10 @@
+import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import WarningIcon from "@mui/icons-material/Warning";
 import {
     Box,
     BoxProps,
-    Chip,
     ChipProps,
     Link,
-    Stack,
     Tooltip,
     Typography,
 } from "@mui/material";
@@ -15,12 +14,26 @@ import { getHiveBaseUrl } from "@/api-shared/common";
 import { Room, RoomLike, RoomSource } from "@/api-shared/types/room";
 import { useRooms } from "@/components/base/RoomsProvider";
 
-function SingleRoomComponent({
+/** Lightweight tag — matching the unified tag style. */
+const tagSx = (overcrowded: boolean) => ({
+    display: "inline-flex",
+    alignItems: "center",
+    px: 0.6,
+    py: 0.1,
+    borderRadius: "4px",
+    fontSize: "0.72rem",
+    lineHeight: 1.4,
+    fontWeight: 400,
+    whiteSpace: "nowrap" as const,
+    border: "1px solid",
+    borderColor: overcrowded ? "warning.main" : "var(--event-border)",
+    color: "inherit",
+});
+
+function SingleRoomTag({
     room,
     occupancy,
-    size,
-    ...props
-}: { room: Room; occupancy?: number } & ChipProps) {
+}: { room: Room; occupancy?: number }) {
     const roomCapacity =
     room.source === RoomSource.Hive ? (room?.users.length ?? -1) : -1;
     const overcrowded =
@@ -30,28 +43,23 @@ function SingleRoomComponent({
         <Tooltip
             title={overcrowded ? `עומס יתר: ${occupancy}/${roomCapacity}` : ""}
         >
-            <Chip
-                size={size ?? "small"}
-                {...props}
-                icon={
-                    overcrowded ? (
-                        <WarningIcon color="warning" fontSize="small" />
-                    ) : undefined
-                }
-                label={
-                    room.source === RoomSource.Hive ? (
-                        <Link
-                            color={"inherit"}
-                            href={`${getHiveBaseUrl()}/mentor/classes?id=${room?.id}`}
-                            underline="hover"
-                        >
-                            {" "}
-                            {room?.name}
-                        </Link>
-                    ) : undefined
-                }
-                sx={{ color: "inherit" }}
-            />
+            <Box component="span" sx={tagSx(overcrowded)}>
+                {overcrowded ? <WarningIcon
+                    color="warning"
+                    sx={{ fontSize: "0.7rem", mr: 0.3 }}
+                /> : null}
+                {room.source === RoomSource.Hive ? (
+                    <Link
+                        color="inherit"
+                        href={`${getHiveBaseUrl()}/mentor/classes?id=${room?.id}`}
+                        underline="hover"
+                    >
+                        {room?.name}
+                    </Link>
+                ) : (
+                    room?.name
+                )}
+            </Box>
         </Tooltip>
     );
 }
@@ -60,7 +68,7 @@ export function RoomComponent({
     roomIds,
     occupancy,
     showCaption,
-    chipSize,
+    chipSize: _chipSize,
     ...props
 }: {
   roomIds: Array<RoomLike>;
@@ -76,45 +84,39 @@ export function RoomComponent({
 
     return (
         <Box
-            alignItems={props.alignItems ?? "flex-start"}
-            display={props.display ?? "flex"}
-            flexDirection={props.flexDirection ?? "column"}
-            gap={0.2}
+            alignItems="center"
+            display="flex"
+            flexDirection="row"
+            flexWrap="wrap"
+            gap={0.4}
             {...props}
         >
             {rooms.length === 0 ? (
-                <Box alignItems={"center"} display={"flex"} flexDirection={"row"}>
+                <>
                     <WarningIcon
                         color="error"
-                        fontSize="inherit"
-                        sx={{ verticalAlign: "middle", mr: 0.5 }}
+                        sx={{ fontSize: "0.85rem", mr: 0.3 }}
                     />
                     <Typography color="error" fontWeight={600} variant="caption">
-            אין חדר
+                        אין חדר
                     </Typography>
-                </Box>
+                </>
             ) : (
                 <>
                     {showCaption !== false && (
-                        <Typography fontWeight={600} noWrap variant="caption">
-                            {roomIds.length === 1 ? "חדר" : "חדרים"}
-                        </Typography>
-                    )}
-                    <Stack
-                        display={"flex"}
-                        flexDirection={props.flexDirection ?? "row"}
-                        flexWrap="wrap"
-                        gap={0.3}
-                    >
-                        {rooms.map((room) => (
-                            <SingleRoomComponent
-                                key={room.id}
-                                occupancy={occupancy}
-                                room={room}
-                                size={chipSize}
+                        <Tooltip title={roomIds.length === 1 ? "חדר" : "חדרים"}>
+                            <MeetingRoomIcon
+                                sx={{ fontSize: "0.85rem", opacity: 0.6 }}
                             />
-                        ))}
-                    </Stack>
+                        </Tooltip>
+                    )}
+                    {rooms.map((room) => (
+                        <SingleRoomTag
+                            key={room.id}
+                            occupancy={occupancy}
+                            room={room}
+                        />
+                    ))}
                 </>
             )}
         </Box>

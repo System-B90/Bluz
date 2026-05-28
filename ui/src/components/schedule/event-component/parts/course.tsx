@@ -1,35 +1,46 @@
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import {
     Box,
     BoxProps,
-    Chip,
     ChipProps,
-    Stack,
-    Typography,
+    Tooltip,
 } from "@mui/material";
 import { useMemo } from "react";
 
 import { Course, CourseId } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
 
-function SingleCourseComponent({
-    course,
-    size,
-    ...props
-}: { course: Course } & ChipProps) {
+/** Lightweight tag — matching the person tag style. */
+const tagSx = (color?: string) => ({
+    display: "inline-flex",
+    alignItems: "center",
+    px: 0.6,
+    py: 0.1,
+    borderRadius: "4px",
+    fontSize: "0.72rem",
+    lineHeight: 1.4,
+    fontWeight: 400,
+    whiteSpace: "nowrap" as const,
+    border: "1px solid",
+    borderColor: "var(--event-border)",
+    color: color ?? "inherit",
+});
+
+function SingleCourseTag({ course }: { course: Course }) {
     return (
-        <Chip
-            size={size ?? "small"}
-            {...props}
-            label={course.name}
-            sx={{ color: course.color ?? "inherit" }}
-        />
+        <Box
+            component="span"
+            sx={tagSx(course.color ?? undefined)}
+        >
+            {course.name}
+        </Box>
     );
 }
 
 export function CourseComponent({
     courseIds,
     showCaption,
-    chipSize,
+    chipSize: _chipSize,
     ...props
 }: {
   courseIds: Array<CourseId>;
@@ -44,31 +55,23 @@ export function CourseComponent({
 
     return (
         <Box
-            alignItems={props.alignItems ?? "flex-start"}
-            display={props.display ?? "flex"}
-            flexDirection={props.flexDirection ?? "column"}
-            gap={0.2}
+            alignItems="center"
+            display="flex"
+            flexDirection="row"
+            flexWrap="wrap"
+            gap={0.4}
             {...props}
         >
             {showCaption !== false && (
-                <Typography fontWeight={600} noWrap variant="caption">
-                    {courseIds.length === 1 ? "מסלול" : "מסלולים"}
-                </Typography>
-            )}
-            <Stack
-                display={"flex"}
-                flexDirection={props.flexDirection ?? "row"}
-                flexWrap="wrap"
-                gap={0.3}
-            >
-                {courses.map((course) => (
-                    <SingleCourseComponent
-                        course={course}
-                        key={course.id}
-                        size={chipSize}
+                <Tooltip title={courseIds.length === 1 ? "מסלול" : "מסלולים"}>
+                    <MenuBookIcon
+                        sx={{ fontSize: "0.85rem", opacity: 0.6 }}
                     />
-                ))}
-            </Stack>
+                </Tooltip>
+            )}
+            {courses.map((course) => (
+                <SingleCourseTag course={course} key={course.id} />
+            ))}
         </Box>
     );
 }

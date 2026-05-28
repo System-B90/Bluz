@@ -1,5 +1,3 @@
-import { randomUUID } from "crypto";
-
 import { useSnackbar } from "notistack";
 import {
     createContext,
@@ -131,7 +129,7 @@ export const CoursesProvider = ({
 
     const addCourse = useCallback(
         async (courseData: Omit<Course, "id">) => {
-            const courseId: CourseId = `course-${randomUUID()}`;
+            const courseId: CourseId = `course-${crypto.randomUUID()}`;
             const course: Course = {
                 id: courseId,
                 ...courseData,

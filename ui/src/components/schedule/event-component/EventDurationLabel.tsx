@@ -1,16 +1,24 @@
-import { Chip, ChipProps, Tooltip } from "@mui/material";
+import { Chip, ChipProps, SxProps, Theme, Tooltip, Typography } from "@mui/material";
 import { Dayjs } from "dayjs";
 import moment from "moment";
 import { useMemo } from "react";
 
 import { Event } from "@/components/schedule/types/event";
 
+type EventDurationLabelProps = {
+    event: Event;
+    /** "chip" renders as a Chip (default), "text" renders as plain Typography */
+    variant?: "chip" | "text";
+    size?: ChipProps["size"];
+    sx?: SxProps<Theme>;
+};
+
 export function EventDurationLabel({
     event,
+    variant = "chip",
     sx,
     size,
-    ...props
-}: { event: Event } & ChipProps) {
+}: EventDurationLabelProps) {
     const start = moment((event.startTime as Dayjs).toDate());
     const end = moment((event.endTime as Dayjs).toDate());
 
@@ -24,18 +32,33 @@ export function EventDurationLabel({
 
     const durationLabel =
     hours && minutes
-        ? `${hours} ש׳ ${minutes} ד׳`
+        ? `${hours}:${String(minutes).padStart(2, "0")}`
         : hours
             ? `${hours} ש׳`
             : `${minutes} ד׳`;
 
+    const timeRange = `${start.format("HH:mm")} - ${end.format("HH:mm")}`;
+
+    if (variant === "text") {
+        return (
+            <Tooltip title={timeRange}>
+                <Typography
+                    noWrap
+                    sx={{ ...sx, color: "inherit", opacity: 0.85 }}
+                    variant="caption"
+                >
+                    {durationLabel}
+                </Typography>
+            </Tooltip>
+        );
+    }
+
     return (
-        <Tooltip title={`${start.format("HH:mm")} - ${end.format("HH:mm")}`}>
+        <Tooltip title={timeRange}>
             <Chip
                 label={durationLabel}
                 size={size ?? "small"}
                 sx={{ ...sx, color: "inherit" }}
-                {...props}
             />
         </Tooltip>
     );
