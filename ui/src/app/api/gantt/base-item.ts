@@ -6,19 +6,19 @@ import { BaseGantItem } from "@/api-shared/types/gantt/models";
 import { BasicGantOperations } from "@/app/api/gantt/base-collection";
 
 export type BuildGantItemRoutesProps<
-  TEntity extends BaseGantItem,
-  TCreatePayload = Omit<TEntity, "id">,
+    TEntity extends BaseGantItem,
+    TCreatePayload = Omit<TEntity, "id">,
 > = {
-  dbSet: BasicGantOperations<TEntity, TCreatePayload>;
+    dbSet: BasicGantOperations<TEntity, TCreatePayload>;
 };
 
 export type RouteContext = {
-  params: Promise<{ id: string }>;
+    params: Promise<{ id: string }>;
 };
 
 export function buildGantItemRoutes<
-  TEntity extends BaseGantItem,
-  TCreatePayload = Omit<TEntity, "id">,
+    TEntity extends BaseGantItem,
+    TCreatePayload = Omit<TEntity, "id">,
 >({ dbSet }: BuildGantItemRoutesProps<TEntity, TCreatePayload>) {
     async function GET(request: NextRequest, context: RouteContext) {
         try {
@@ -54,8 +54,8 @@ export function buildGantItemRoutes<
             const payload = JSON.parse(textBody) as Partial<TEntity>;
             if (
                 typeof payload !== "object" ||
-        payload === null ||
-        Array.isArray(payload)
+                payload === null ||
+                Array.isArray(payload)
             ) {
                 throw new ClientApiError("Payload must be a JSON object.");
             }
