@@ -17,7 +17,7 @@ import {
     Room,
     RoomLike,
     RoomSource,
-} from "@/components/schedule/types/room";
+} from "@/api-shared/types/room";
 
 export type RoomsContextState = {
   default: boolean;

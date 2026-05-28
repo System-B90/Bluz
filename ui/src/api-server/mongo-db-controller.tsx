@@ -9,8 +9,8 @@ import {
     GanttModule,
     GanttSyllabus,
 } from "@/api-shared/types/gantt/models";
+import { CustomRoom } from "@/api-shared/types/room";
 import { Setting } from "@/api-shared/types/settings/settings";
-import { CustomRoom } from "@/components/schedule/types/room";
 
 const MONGO_CONNECTION_STRING =
   process.env.MONGO_CONNECTION_STRING ?? "mongodb://127.0.0.1:27017/";

@@ -1,7 +1,7 @@
 import { Dayjs } from "dayjs";
 
 import { CourseId } from "@/api-shared/types/course";
-import { ResolvableRoom } from "@/components/schedule/types/room";
+import { ResolvableRoom } from "@/api-shared/types/room";
 
 /**
  * Standardized Hebrew event types for the calendar engine,
@@ -151,3 +151,8 @@ export function getPresentInstructors(
     ]);
     return Array.from(reduced);
 }
+
+export type DbEventDocument = Omit<Event, "endTime" | "startTime"> & {
+  startTime: Date;
+  endTime: Date;
+};

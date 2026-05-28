@@ -17,9 +17,9 @@ export function OfflineModeIcon({ ...props }: IconButtonProps) {
                 size="small"
             >
                 {offlineMode ? (
-                    <WifiTetheringOffIcon color="inherit" />
+                    <WifiTetheringOffIcon color="inherit" fontSize="small" />
                 ) : (
-                    <WifiTetheringIcon color="inherit" />
+                    <WifiTetheringIcon color="inherit" fontSize="small" />
                 )}
             </IconButton>
         </Tooltip>

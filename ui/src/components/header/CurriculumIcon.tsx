@@ -19,14 +19,14 @@ export function CurriculumIcon() {
             placement="bottom"
             title={curriculumPage ? 'חזור ללו"ז' : "עבור לבניית גאנט"}
         >
-            <IconButton 
-                className="relative transition-all duration-200 hover:scale-110 active:scale-95" 
-                color={"inherit"} 
+            <IconButton
+                className="relative transition-all duration-200 hover:scale-110 active:scale-95"
+                color={"inherit"}
                 onClick={onClick}
                 size="small"
             >
                 <span className="animate-flip-in-y inline-flex" key={curriculumPage ? "gantt" : "calendar"}>
-                    {curriculumPage ? <CalendarMonthIcon /> : <AutoStoriesIcon />}
+                    {curriculumPage ? <CalendarMonthIcon fontSize="small" /> : <AutoStoriesIcon fontSize="small" />}
                 </span>
             </IconButton>
         </Tooltip>

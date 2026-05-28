@@ -143,7 +143,7 @@ export function PrayerSettings() {
                         </Box>
 
                         {/* Picker Control */}
-                        <Box sx={{ flexGrow: 1 }}>
+                        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                             <TimePicker
                                 label={row.label}
                                 onChange={(newValue) => handleTimeChange(row.key, newValue)}

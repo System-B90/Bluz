@@ -76,7 +76,7 @@ async function apiGetConstraints(
     if (syllabusId) url.searchParams.append("syllabusId", syllabusId);
     if (moduleId) url.searchParams.append("moduleId", moduleId);
 
-    const rawData: Array<RawBaseDocument> = await safeApiFetcher(url.toString(), {
+    const rawData = await safeApiFetcher<Array<RawBaseDocument>>(url.toString(), {
         ...options,
     });
 
@@ -93,7 +93,7 @@ async function apiCreateConstraint(
     options?: ClientApiProps,
 ): Promise<GanttConstraint>
 {
-    const rawData = await safeApiFetcher(
+    const rawData = await safeApiFetcher<RawBaseDocument>(
         `/api/gantt/curriculums/${curriculumId}/constraints`,
         {
             ...options,
@@ -117,7 +117,7 @@ async function apiUpdateConstraint(
     options?: ClientApiProps,
 ): Promise<GanttConstraint>
 {
-    const rawData = await safeApiFetcher(
+    const rawData = await safeApiFetcher<RawBaseDocument>(
         `/api/gantt/curriculums/${curriculumId}/constraints`,
         {
             ...options,
@@ -139,7 +139,7 @@ async function apiDeleteConstraint(
     options?: ClientApiProps,
 ): Promise<void>
 {
-    await safeApiFetcher(`/api/gantt/curriculums/${curriculumId}/constraints`, {
+    await safeApiFetcher<void>(`/api/gantt/curriculums/${curriculumId}/constraints`, {
         ...options,
         method: "DELETE",
         body: JSON.stringify({ id }),

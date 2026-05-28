@@ -10,9 +10,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { SlotInfo } from "react-big-calendar";
 import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
+import { ResolvableRoom } from "@/api-shared/types/room";
 import { makeEvent } from "@/components/schedule/calendar/calendar-provider/MakeEvent";
 import { Event } from "@/components/schedule/types/event";
-import { ResolvableRoom } from "@/components/schedule/types/room";
 
 export function useCalendarHandlers(
     events: Array<Event>,

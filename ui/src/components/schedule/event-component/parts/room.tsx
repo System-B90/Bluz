@@ -12,8 +12,8 @@ import {
 import { useMemo } from "react";
 
 import { getHiveBaseUrl } from "@/api-shared/common";
+import { Room, RoomLike, RoomSource } from "@/api-shared/types/room";
 import { useRooms } from "@/components/base/RoomsProvider";
-import { Room, RoomLike, RoomSource } from "@/components/schedule/types/room";
 
 function SingleRoomComponent({
     room,

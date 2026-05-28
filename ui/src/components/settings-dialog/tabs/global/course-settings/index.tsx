@@ -70,7 +70,7 @@ export function CourseSettings() {
                                 color: "text.primary",
                             }}
                         >
-              מסלולים
+                            מסלולים
                         </Typography>
                         <Typography
                             sx={{
@@ -79,7 +79,7 @@ export function CourseSettings() {
                                 fontFamily: "Assistant, sans-serif",
                             }}
                         >
-              הגדרת מסלולים וצבעים לתצוגה ביומן
+                            הגדרת מסלולים וצבעים לתצוגה ביומן
                         </Typography>
                     </Box>
                 </Box>
@@ -127,7 +127,7 @@ export function CourseSettings() {
                     }}
                     variant="contained"
                 >
-          יצירת מסלול חדש
+                    יצירת מסלול חדש
                 </Button>
             </Box>
         </Box>

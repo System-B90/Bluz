@@ -8,14 +8,10 @@ import {
     EventAddedOrRemovedMessage,
     EventDataUpdateMessage,
 } from "@/api-shared/types";
-import { Event, EventId } from "@/components/schedule/types/event";
+import { EventId, DbEventDocument } from "@/api-shared/types/event";
 import { MessageTypes } from "@/settings";
 
-// No more ObjectId! We only need this if MongoDB still stores Date objects and you use Dayjs
-export type DbEventDocument = Omit<Event, "endTime" | "startTime"> & {
-  startTime: Date;
-  endTime: Date;
-};
+export type { DbEventDocument };
 
 async function getDbEvent(
     eventId: EventId,

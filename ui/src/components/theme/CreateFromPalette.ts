@@ -10,6 +10,7 @@ declare module "@mui/material/Chip" {
 
 export function createFromPalette(paletteMode: "dark" | "light"): ThemeOptions {
     return {
+        direction: "rtl",
         typography: {
             fontFamily: ['"Assistant"', "sans-serif"].join(","),
             h1: { fontWeight: 700 },

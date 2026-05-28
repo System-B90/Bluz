@@ -1,6 +1,6 @@
 import { Session } from "next-auth";
 
-import { Clearance, GenderEnum } from "@/api-server/hive/types";
+import { Clearance, GenderEnum } from "@/api-shared/types/hive";
 
 export type AuthSessionUser = {
   id: string;

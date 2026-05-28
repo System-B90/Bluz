@@ -31,6 +31,7 @@ export const clearanceName = (clearance: Clearance) => {
         return "Admin" as const;
     }
 };
+
 export enum ClassTypeEnum {
   Room = "Room",
   Student_Group = "Student Group",
@@ -48,6 +49,7 @@ export const GenderEnum = {
     Female: "Female",
     NonBinary: "NonBinary",
 } as const;
+
 /**
  * * `Present` - Present
  * `Raised Hand` - Raisedhand

@@ -54,7 +54,22 @@ export function ApiResponseMaker(
     });
 }
 export function ApiErrorMaker(e: any) {
-    return new NextResponse(JSON.stringify({ status: -1, error: e }), {
+    let errorPayload: any = {};
+    if (e instanceof Error) {
+        errorPayload = {
+            name: e.name,
+            message: e.message,
+            status: (e as any).status,
+        };
+    } else if (typeof e === "string") {
+        errorPayload = {
+            name: "Error",
+            message: e,
+        };
+    } else {
+        errorPayload = e;
+    }
+    return new NextResponse(JSON.stringify({ status: -1, error: errorPayload }), {
         status: 200,
     });
 }

@@ -22,8 +22,8 @@ export async function apiAddCourse(
 }
 
 export async function apiDeleteCourse(courseId: CourseId): Promise<void> {
-    await safeApiFetcher("/api/course", {
+    await safeApiFetcher<void>("/api/course", {
         method: "DELETE",
-        body: JSON.stringify({ id: courseId }),
+        body: JSON.stringify(courseId),
     });
 }

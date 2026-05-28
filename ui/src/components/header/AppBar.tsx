@@ -17,19 +17,18 @@ import { FilterIcon } from "@/components/header/FilterIcon";
 import { Filters } from "@/components/header/filters";
 import { Logo } from "@/components/header/logo";
 import { OfflineModeIcon } from "@/components/header/OfflineModeIcon";
-import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
 import { UserAccessCard } from "@/components/header/UserAccessCard";
 
 export function ScheduleAppBar({
     setOpenSettingsDialog,
     ...props
 }: {
-  setOpenSettingsDialog: (open: boolean) => void;
+    setOpenSettingsDialog: (open: boolean) => void;
 } & Exclude<AppBarProps, "position">) {
     const pathname = usePathname();
     const curriculumPage = pathname.includes("/curriculum");
     const [filtersVisible, setFiltersVisible] =
-    useState<boolean>(!curriculumPage);
+        useState<boolean>(!curriculumPage);
 
     return (
         <AppBar
@@ -80,6 +79,7 @@ export function ScheduleAppBar({
                     alignContent={"center"}
                     alignItems={"center"}
                     display={"flex"}
+                    gap={1}
                     justifyContent={"flex-end"}
                 >
                     {!curriculumPage && (
@@ -93,15 +93,13 @@ export function ScheduleAppBar({
 
                     {/* <InstructorToolsIcon /> */}
 
-                    <ThemeSelectorIcon />
-
                     <IconButton
                         className="hover-spin-slow transition-all duration-200 hover:scale-110 active:scale-95"
                         color="inherit"
                         onClick={() => setOpenSettingsDialog(true)}
                         size="small"
                     >
-                        <SettingsIcon />
+                        <SettingsIcon color="inherit" fontSize="small" />
                     </IconButton>
                 </Box>
             </Toolbar>

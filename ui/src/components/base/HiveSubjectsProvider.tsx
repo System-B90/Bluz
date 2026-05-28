@@ -11,7 +11,7 @@ import {
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { apiGetSubjects } from "@/api-client/hive";
-import { Subject, SubjectLike } from "@/components/schedule/types/subject";
+import { Subject, SubjectLike } from "@/api-shared/types/subject";
 
 export type HiveSubjectsContextState = {
   default: boolean;

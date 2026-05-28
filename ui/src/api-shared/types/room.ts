@@ -1,4 +1,4 @@
-import { Class, ClassTypeEnum } from "@/api-server/hive/types";
+import { Class, ClassTypeEnum } from "@/api-shared/types/hive";
 
 export enum RoomSource {
   Custom,
@@ -26,11 +26,15 @@ export type CustomRoom = {
   description?: null | string;
   source: RoomSource.Custom;
 } & BaseRoom;
+
 export type Room = CustomRoom | HiveRoom;
+
 export type ResolvableRoom =
   | { id: number; source: RoomSource.Hive }
   | { id: string; source: RoomSource.Custom };
+
 export type RoomLike = ResolvableRoom | Room;
+
 export function areRoomsEqual(room1: RoomLike, room2: RoomLike): boolean {
     if (!room1 || !room2) {
         return false;
@@ -38,7 +42,7 @@ export function areRoomsEqual(room1: RoomLike, room2: RoomLike): boolean {
     if (room1 === room2) {
         return true;
     }
-    return room1.id === room1.id && room1.source === room2.source;
+    return room1.id === room2.id && room1.source === room2.source;
 }
 
 export function roomToResolvable<T extends Room>(

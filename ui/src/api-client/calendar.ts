@@ -1,6 +1,6 @@
 import { safeApiFetcher } from "@/api-client/common";
 import { eventDateFixup } from "@/api-shared/calendar";
-import { Event, EventId } from "@/components/schedule/types/event";
+import { Event, EventId } from "@/api-shared/types/event";
 
 export async function apiGetEvents({
     startDate,
@@ -55,7 +55,7 @@ export async function apiUpdateEvent(event: Event): Promise<Event> {
 }
 
 export async function apiDeleteEvent(eventId: EventId): Promise<void> {
-    return await safeApiFetcher("/api/event", {
+    return await safeApiFetcher<void>("/api/event", {
         method: "DELETE",
         body: JSON.stringify(eventId),
     });

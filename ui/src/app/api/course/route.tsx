@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
         if (!course) {
             throw new ClientApiError("No data provided!");
         }
-        return ApiSuccess(await DbCourses.set(course));
+        await DbCourses.set(course);
+        return ApiSuccess(course);
     } catch (e) {
         return catchHandler(request, e);
     }

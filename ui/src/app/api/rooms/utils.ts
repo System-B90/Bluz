@@ -5,7 +5,7 @@ import {
     HiveRoom,
     Room,
     RoomSource,
-} from "@/components/schedule/types/room";
+} from "@/api-shared/types/room";
 
 export async function getAllRooms(): Promise<Array<Room>> {
     const hiveClient = await createHiveClient();

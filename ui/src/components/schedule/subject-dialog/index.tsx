@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 
-import { Subject } from "@/components/schedule/types/subject";
+import { Subject } from "@/api-shared/types/subject";
 
 const availableGroups = ["Group A", "Group B", "Group C"];
 

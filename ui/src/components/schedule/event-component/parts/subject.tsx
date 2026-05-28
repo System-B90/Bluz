@@ -3,10 +3,10 @@ import Link from "next/link";
 import { useMemo } from "react";
 
 import { getHiveBaseUrl } from "@/api-shared/common";
+import { ModuleLike } from "@/api-shared/types/module";
+import { SubjectLike } from "@/api-shared/types/subject";
 import { useHiveModules } from "@/components/base/HiveModulesProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
-import { ModuleLike } from "@/components/schedule/types/module";
-import { SubjectLike } from "@/components/schedule/types/subject";
 
 export function SubjectComponent({
     subjectId,

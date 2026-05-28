@@ -8,6 +8,7 @@
 import { Dayjs } from "dayjs";
 import { CalendarProps, View, Views } from "react-big-calendar";
 
+import { Room } from "@/api-shared/types/room"; // Import the full Room type
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import {
     DnDCalendar,
@@ -16,7 +17,6 @@ import {
 import { CustomWorkWeek } from "@/components/schedule/calendar/CustomWorkWeek";
 import { BluzEventComponent } from "@/components/schedule/event-component/base";
 import { Event } from "@/components/schedule/types/event";
-import { Room } from "@/components/schedule/types/room"; // Import the full Room type
 
 type CalendarViewProps = {
   events: Array<Event>;

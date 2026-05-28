@@ -1,8 +1,8 @@
-import { Class, CourseUser } from "@/api-server/hive/types";
 import { HiveClientError } from "@/api-shared/errors";
-import { Module } from "@/components/schedule/types/module";
-import { HiveRoom, RoomSource } from "@/components/schedule/types/room";
-import { Subject } from "@/components/schedule/types/subject";
+import { Class, CourseUser } from "@/api-shared/types/hive";
+import { Module } from "@/api-shared/types/module";
+import { HiveRoom, RoomSource } from "@/api-shared/types/room";
+import { Subject } from "@/api-shared/types/subject";
 
 type TimeoutError = {
   name: "TypeError";

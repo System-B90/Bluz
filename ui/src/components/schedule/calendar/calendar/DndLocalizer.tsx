@@ -17,7 +17,7 @@ import "react-big-calendar/lib/sass/styles.scss";
 import "@/style/calendar.css";
 
 import { Event } from "@/components/schedule/types/event";
-import { Room } from "@/components/schedule/types/room";
+import { Room } from "@/api-shared/types/room";
 
 const DnDCalendar = withDragAndDrop<Event, Room>(Calendar);
 

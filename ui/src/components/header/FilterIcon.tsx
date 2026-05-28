@@ -9,17 +9,17 @@ export function FilterIcon({
     filtersVisible,
     setFiltersVisible,
 }: {
-  filtersVisible: boolean;
-  setFiltersVisible: Dispatch<SetStateAction<boolean>>;
+    filtersVisible: boolean;
+    setFiltersVisible: Dispatch<SetStateAction<boolean>>;
 }) {
     const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
-    useCalendarFilters();
+        useCalendarFilters();
     const hasAnyFilter = useMemo(
         () =>
             hidePrayers ||
-      filteredCourses.length !== 0 ||
-      filteredInstructors.length !== 0 ||
-      showPAsFor !== null,
+            filteredCourses.length !== 0 ||
+            filteredInstructors.length !== 0 ||
+            showPAsFor !== null,
         [filteredCourses, filteredInstructors, showPAsFor, hidePrayers],
     );
     return (
@@ -35,7 +35,7 @@ export function FilterIcon({
                 }}
                 size="small"
             >
-                <FilterListIcon />
+                <FilterListIcon color="inherit" fontSize="small" />
                 {!filtersVisible && hasAnyFilter ? (
                     <Tooltip placement="right" title="יש סננים נסתרים">
                         <InfoIcon

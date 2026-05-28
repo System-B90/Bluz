@@ -1,5 +1,5 @@
 import { createHiveClient } from "@/api-server/hive/session-client";
-import { Clearance } from "@/api-server/hive/types";
+import { Clearance } from "@/api-shared/types/hive";
 
 export async function getHiveStudents() {
     const hiveClient = await createHiveClient();

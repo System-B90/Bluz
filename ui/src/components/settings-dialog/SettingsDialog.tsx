@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 
+import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
 import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalSettings";
 import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
 
@@ -50,6 +51,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                 <Box
                     sx={{
                         width: 220,
+                        flexShrink: 0,
                         bgcolor: (theme) =>
                             theme.palette.mode === "light"
                                 ? "rgba(103, 200, 221, 0.08)"
@@ -143,6 +145,33 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                             </Box>
                         );
                     })}
+
+                    <Box sx={{ flexGrow: 1 }} />
+
+                    {/* Theme Selector Container */}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: 1,
+                            pt: 2,
+                            borderTop: "1px solid",
+                            borderColor: "divider",
+                        }}
+                    >
+                        <Typography
+                            sx={{
+                                fontSize: "0.78rem",
+                                color: "text.secondary",
+                                fontFamily: "Assistant, sans-serif",
+                                fontWeight: 600,
+                            }}
+                        >
+                            מצב תצוגה
+                        </Typography>
+                        <ThemeSelectorIcon />
+                    </Box>
                 </Box>
 
                 {/* Content Pane */}
@@ -162,7 +191,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                         sx={{
                             position: "absolute",
                             top: 20,
-                            left: 20,
+                            right: 20,
                             bgcolor: "action.hover",
                             color: "text.secondary",
                             transition: "all 0.2s ease",

@@ -1,7 +1,7 @@
 import { AuthOptions, CallbacksOptions, Profile } from "next-auth";
 import { OAuthConfig } from "next-auth/providers/index";
 
-import { Clearance, GenderEnum } from "@/api-server/hive/types";
+import { Clearance, GenderEnum } from "@/api-shared/types/hive";
 import { AuthSessionData } from "@/api-shared/types/sso";
 
 type JwtTokenData = {

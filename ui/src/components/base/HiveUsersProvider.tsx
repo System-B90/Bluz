@@ -11,7 +11,7 @@ import {
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { getHiveUsers } from "@/api-client/hive";
-import { Clearance, CourseUser } from "@/api-server/hive/types";
+import { Clearance, CourseUser } from "@/api-shared/types/hive";
 
 export type HiveUsersContextState = {
   default: boolean;

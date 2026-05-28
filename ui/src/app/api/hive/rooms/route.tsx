@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { createHiveClient } from "@/api-server/hive/session-client";
-import { HiveRoom } from "@/components/schedule/types/room";
+import { HiveRoom } from "@/api-shared/types/room";
 
 export async function GET(request: NextRequest) {
     try {
