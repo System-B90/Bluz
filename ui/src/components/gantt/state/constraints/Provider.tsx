@@ -52,7 +52,7 @@ export function GanttConstraintProvider({
 
     // Helper to determine if the current scope has mutation rights over a constraint
     const canModify = useCallback(
-        (constraint: Omit<CreateConstraintPayload, 'id'> | GanttConstraint) => {
+        (constraint: GanttConstraint | Omit<CreateConstraintPayload, 'id'>) => {
             if (context.type === "curriculum") return true;
             if (constraint.type === ConstraintType.Temporal) return true;
 
@@ -150,7 +150,10 @@ export function GanttConstraintProvider({
             dispatch({ type: "UPSERT_CONSTRAINT", payload: updatedConstraint });
 
             try {
-                await ganttApi.constraints.apiUpdate(curriculumId, id, payload);
+                const result = await ganttApi.constraints.apiUpdate(curriculumId, id, payload);
+                if (result) {
+                    dispatch({ type: "UPSERT_CONSTRAINT", payload: result });
+                }
             } catch (e) {
                 dispatch({ type: "UPSERT_CONSTRAINT", payload: originalConstraint });
                 enqueueApiErrorSnackbar(enqueueSnackbar, "עדכון אילוץ נכשל!", e);

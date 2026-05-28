@@ -9,11 +9,11 @@ import {
     Stack,
     Typography,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
 import { GanttModuleId } from "@/api-shared/types/gantt/models";
-import { ConstraintType } from "@/api-shared/types/gantt/models/constraint";
+import { ConstraintType, GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 import { ConstraintListItem } from "@/components/gantt/module-dialog/constraints/ConstraintListItem";
 import { DraftConstraintForm } from "@/components/gantt/module-dialog/constraints/DraftConstraintForm";
 import { DraftConstraint } from "@/components/gantt/module-dialog/constraints/types";
@@ -28,16 +28,18 @@ export function ModuleConstraintsView({
 }) {
     const targetOptions = useTargetOptions();
     const curriculumState = useCurriculumState();
-    const { state, removeConstraint, createConstraint } = useGanttConstraints();
+    const { state, removeConstraint, createConstraint, updateConstraint } = useGanttConstraints();
 
     const [draft, setDraft] = useState<DraftConstraint | null>(null);
+    const [editingConstraintId, setEditingConstraintId] = useState<null | string>(null);
+    const [editingDraft, setEditingDraft] = useState<DraftConstraint | null>(null);
 
     const constraintsList = useMemo(
         () => Object.values(state.constraints),
         [state.constraints]
     );
 
-    const handleStartCreate = () => {
+    const handleStartCreate = useCallback(() => {
         setDraft({
             type: ConstraintType.Relational,
             targetId: "",
@@ -46,13 +48,13 @@ export function ModuleConstraintsView({
             minDelay: "",
             maxDelay: "",
         });
-    };
+    }, []);
 
-    const handleCancelCreate = () => {
+    const handleCancelCreate = useCallback(() => {
         setDraft(null);
-    };
+    }, []);
 
-    const handleSubmitCreate = async () => {
+    const handleSubmitCreate = useCallback(async () => {
         if (!draft) return;
 
         let payload: Omit<CreateConstraintPayload, 'id'>;
@@ -86,7 +88,63 @@ export function ModuleConstraintsView({
 
         await createConstraint(payload);
         setDraft(null);
-    };
+    }, [draft, moduleId, createConstraint]);
+
+    const handleStartEdit = useCallback((constraint: GanttConstraint) => {
+        setEditingConstraintId(constraint.id);
+        if (constraint.type === ConstraintType.Relational) {
+            setEditingDraft({
+                type: ConstraintType.Relational,
+                targetId: constraint.targetId,
+                targetType: constraint.targetType,
+                relation: constraint.relation,
+                minDelay: constraint.minDelayDays !== undefined ? String(constraint.minDelayDays) : "",
+                maxDelay: constraint.maxDelayDays !== undefined ? String(constraint.maxDelayDays) : "",
+            });
+        } else {
+            setEditingDraft({
+                type: ConstraintType.Temporal,
+                allowedDays: constraint.allowedDays ?? [],
+                forbiddenDays: constraint.forbiddenDays ?? [],
+            });
+        }
+    }, []);
+
+    const handleCancelEdit = useCallback(() => {
+        setEditingConstraintId(null);
+        setEditingDraft(null);
+    }, []);
+
+    const handleSubmitEdit = useCallback(async () => {
+        if (!editingConstraintId || !editingDraft) return;
+
+        let payload: Partial<CreateConstraintPayload>;
+
+        if (editingDraft.type === ConstraintType.Relational) {
+            payload = {
+                type: ConstraintType.Relational,
+                targetId: editingDraft.targetId,
+                targetType: editingDraft.targetType as "event" | "module",
+                relation: editingDraft.relation,
+                minDelayDays: editingDraft.minDelay ? Number(editingDraft.minDelay) : undefined,
+                maxDelayDays: editingDraft.maxDelay ? Number(editingDraft.maxDelay) : undefined,
+            };
+        } else {
+            payload = {
+                type: ConstraintType.Temporal,
+                allowedDays: editingDraft.allowedDays
+                    ? (Array.isArray(editingDraft.allowedDays) ? editingDraft.allowedDays : String(editingDraft.allowedDays).split(",").map((d: string) => Number(d.trim())))
+                    : undefined,
+                forbiddenDays: editingDraft.forbiddenDays
+                    ? (Array.isArray(editingDraft.forbiddenDays) ? editingDraft.forbiddenDays : String(editingDraft.forbiddenDays).split(",").map((d: string) => Number(d.trim())))
+                    : undefined,
+            };
+        }
+
+        await updateConstraint(editingConstraintId, payload);
+        setEditingConstraintId(null);
+        setEditingDraft(null);
+    }, [editingConstraintId, editingDraft, updateConstraint]);
 
     return (
         <Card variant="outlined">
@@ -115,13 +173,30 @@ export function ModuleConstraintsView({
                     </Box>
                 ) : (
                     <Stack spacing={1}>
-                        {constraintsList.map((constraint) => (
-                            <ConstraintListItem
-                                constraint={constraint}
-                                key={constraint.id}
-                                onRemove={removeConstraint}
-                            />
-                        ))}
+                        {constraintsList.map((constraint) => {
+                            const isEditing = constraint.id === editingConstraintId;
+                            if (isEditing && editingDraft) {
+                                return (
+                                    <DraftConstraintForm
+                                        curriculumState={curriculumState}
+                                        draft={editingDraft}
+                                        key={constraint.id}
+                                        onCancel={handleCancelEdit}
+                                        onSubmit={handleSubmitEdit}
+                                        setDraft={setEditingDraft}
+                                        targetOptions={targetOptions}
+                                    />
+                                );
+                            }
+                            return (
+                                <ConstraintListItem
+                                    constraint={constraint}
+                                    key={constraint.id}
+                                    onEdit={() => handleStartEdit(constraint)}
+                                    onRemove={removeConstraint}
+                                />
+                            );
+                        })}
 
                         {draft ? <DraftConstraintForm
                             curriculumState={curriculumState}

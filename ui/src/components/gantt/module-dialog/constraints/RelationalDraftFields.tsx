@@ -1,4 +1,6 @@
-import { Stack, Select, MenuItem, ListSubheader, TextField } from "@mui/material";
+import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
+import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
+import { Stack, Select, MenuItem, ListSubheader, TextField, InputAdornment } from "@mui/material";
 
 import { RelationalDraft, TargetOption, DraftConstraint } from "@/components/gantt/module-dialog/constraints/types";
 
@@ -15,7 +17,7 @@ export function RelationalDraftFields({
 })
 {
     return (
-        <Stack direction="row" spacing={ 1 }>
+        <Stack direction="row" spacing={ 1 } sx={ { flexGrow: 1 } }>
             <Select
                 displayEmpty
                 MenuProps={ { PaperProps: { style: { maxHeight: 400 } } } }
@@ -48,6 +50,7 @@ export function RelationalDraftFields({
                     return value;
                 } }
                 size="small"
+                sx={ { minWidth: 200, flexGrow: 1 } }
                 value={ draft.targetId }
             >
                 { Object.entries(targetOptions).map(([ syllabusId, options ]) =>
@@ -63,18 +66,31 @@ export function RelationalDraftFields({
                                 <MenuItem
                                     key={ option.id }
                                     sx={ isModule ? {
-                                        fontWeight: "bold",
+                                        fontWeight: "medium",
                                         color: "primary.main",
-                                        pt: 1.5,
-                                        pb: 0.5,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
+                                        pt: 1.2,
+                                        pb: 1.2,
                                     } : {
                                         pl: 4,
-                                        fontSize: "0.9rem",
+                                        fontSize: "0.875rem",
                                         color: "text.secondary",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
+                                        pt: 0.8,
+                                        pb: 0.8,
                                     } }
                                     value={ option.id }
                                 >
-                                    { isModule ? `📦 ${option.title}` : `🔹 ${option.title}` }
+                                    { isModule ? (
+                                        <FolderOutlinedIcon sx={ { fontSize: "1.1rem", flexShrink: 0 } } />
+                                    ) : (
+                                        <CalendarTodayOutlinedIcon sx={ { fontSize: "1rem", flexShrink: 0, opacity: 0.8 } } />
+                                    ) }
+                                    <span>{ option.title }</span>
                                 </MenuItem>
                             );
                         }),
@@ -87,6 +103,7 @@ export function RelationalDraftFields({
                     setDraft({ ...draft, relation: e.target.value as "after" | "before" })
                 }
                 size="small"
+                sx={ { minWidth: 100 } }
                 value={ draft.relation }
             >
                 <MenuItem value="after">אחרי</MenuItem>
@@ -94,17 +111,27 @@ export function RelationalDraftFields({
             </Select>
 
             <TextField
-                label="Min"
+                InputProps={ {
+                    endAdornment: <InputAdornment position="end">ימים</InputAdornment>,
+                    inputProps: { min: 0 }
+                } }
+                label="מינימום"
                 onChange={ (e) => setDraft({ ...draft, minDelay: e.target.value }) }
                 size="small"
+                sx={ { width: 120 } }
                 type="number"
                 value={ draft.minDelay || "" }
             />
 
             <TextField
-                label="Max"
+                InputProps={ {
+                    endAdornment: <InputAdornment position="end">ימים</InputAdornment>,
+                    inputProps: { min: 0 }
+                } }
+                label="מקסימום"
                 onChange={ (e) => setDraft({ ...draft, maxDelay: e.target.value }) }
                 size="small"
+                sx={ { width: 120 } }
                 type="number"
                 value={ draft.maxDelay || "" }
             />

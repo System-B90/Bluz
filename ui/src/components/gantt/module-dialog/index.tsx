@@ -10,9 +10,10 @@ import
     Divider,
     Stack,
     TextField,
+    Typography,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { Dispatch, SetStateAction, useCallback, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
@@ -28,7 +29,7 @@ import { HiveModulesView } from "@/components/gantt/module-dialog/utils";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
+import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/provider";
 
 export type ModuleDialogProps = {
     setOpen: Dispatch<SetStateAction<boolean>>;
@@ -46,9 +47,27 @@ function ModuleDialogInner({
 }: Omit<ModuleDialogProps, "curriculumId">)
 {
     const { enqueueSnackbar } = useSnackbar();
-    const { closeModuleDialog } = useCurriculumProviderActions();
+    const { closeModuleDialog, openModuleDialog } = useCurriculumProviderActions();
     const { deleteModule, updateModule } = useModuleActions();
     const moduleDoc = useModule(moduleId ?? "");
+
+    const state = useCurriculumState();
+    const syllabus = syllabusId ? state.syllabuses[ syllabusId ] : null;
+
+    // Get sibling modules for fast navigation
+    const siblingModules = useMemo(() =>
+    {
+        if (!syllabus) return [];
+        return syllabus.modules
+            .map((mId) => state.modules[ mId ])
+            .filter((m) => !!m);
+    }, [ syllabus, state.modules ]);
+
+    const handleNavigate = useCallback((mId: string) =>
+    {
+        if (!syllabusId) return;
+        openModuleDialog(syllabusId, mId);
+    }, [ syllabusId, openModuleDialog ]);
 
     const [ isActionLoading, setIsActionLoading ] = useState<boolean>(false);
 
@@ -66,12 +85,27 @@ function ModuleDialogInner({
     const handleCommit = useCallback(
         (updates: Partial<GanttModule>) =>
         {
-            if (!syllabusId || !moduleId) return;
-            updateModule(moduleId, updates).catch((error) =>
+            if (!syllabusId || !moduleId || !moduleDoc) return;
+
+            const changedUpdates: Partial<GanttModule> = {};
+            let hasChanges = false;
+
+            for (const [ key, value ] of Object.entries(updates))
+            {
+                if (moduleDoc[ key as keyof GanttModule ] !== value)
+                {
+                    (changedUpdates as any)[ key ] = value;
+                    hasChanges = true;
+                }
+            }
+
+            if (!hasChanges) return;
+
+            updateModule(moduleId, changedUpdates).catch((error) =>
                 enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת המערך נכשלה!", error),
             );
         },
-        [ moduleId, syllabusId, updateModule, enqueueSnackbar ],
+        [ moduleId, syllabusId, moduleDoc, updateModule, enqueueSnackbar ],
     );
 
     const handleDelete = useCallback(() =>
@@ -100,9 +134,87 @@ function ModuleDialogInner({
             open={ open }
             { ...props }
         >
-            <DialogTitle>עריכת מערך</DialogTitle>
+            <DialogTitle sx={ { pb: 1 } }>
+                <Stack spacing={ 0.5 }>
+                    <Typography component="span" sx={ { fontWeight: "bold" } } variant="h5">
+                        עריכת מערך: { moduleDoc?.title }
+                    </Typography>
+                    { !!syllabus && (
+                        <Typography component="span" sx={ { color: "text.secondary" } } variant="caption">
+                            סילבוס: { syllabus.title }
+                        </Typography>
+                    ) }
+                </Stack>
+            </DialogTitle>
 
             <DialogContent>
+                { !!syllabus && siblingModules.length > 1 && (
+                    <Box
+                        sx={ {
+                            alignItems: "center",
+                            borderBottom: 1,
+                            borderColor: "divider",
+                            display: "flex",
+                            gap: 2,
+                            mb: 2,
+                            pb: 2,
+                        } }
+                    >
+                        <Typography
+                            sx={ {
+                                color: "text.secondary",
+                                fontWeight: "bold",
+                                whiteSpace: "nowrap",
+                            } }
+                            variant="body2"
+                        >
+                            מערכים בסילבוס זה:
+                        </Typography>
+                        <Stack
+                            direction="row"
+                            spacing={ 1 }
+                            sx={ {
+                                flexGrow: 1,
+                                overflowX: "auto",
+                                pb: 0.5,
+                                "&::-webkit-scrollbar": { height: 4 },
+                                "&::-webkit-scrollbar-thumb": {
+                                    bgcolor: "action.selected",
+                                    borderRadius: 2,
+                                },
+                            } }
+                        >
+                            { siblingModules.map((m) => {
+                                const isActive = m.id === moduleId;
+                                return (
+                                    <Button
+                                        key={ m.id }
+                                        onClick={ () => handleNavigate(m.id) }
+                                        size="small"
+                                        sx={ {
+                                            borderRadius: 2,
+                                            fontWeight: isActive ? "bold" : "normal",
+                                            minWidth: "auto",
+                                            px: 2,
+                                            py: 0.5,
+                                            textTransform: "none",
+                                            transition: "all 0.2s ease-in-out",
+                                            whiteSpace: "nowrap",
+                                            "&:hover": {
+                                                boxShadow: isActive ? 2 : 1,
+                                                transform: "translateY(-1px)",
+                                            },
+                                        } }
+                                        variant={ isActive ? "contained" : "outlined" }
+                                    >
+                                        { m.title }
+                                    </Button>
+                                );
+                            }) }
+                        </Stack>
+                    </Box>
+                ) }
+
                 <Box
                     alignItems="flex-start"
                     display="flex"

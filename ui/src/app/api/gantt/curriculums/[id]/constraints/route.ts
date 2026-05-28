@@ -120,8 +120,32 @@ export async function PATCH(request: NextRequest, _context: RouteContext) {
             throw new ClientApiError("Missing constraint id for update.");
         }
 
-        const updated = await updateConstraint(constraintId, newValues);
-        return ApiSuccess(updated);
+        const updateData: any = {};
+        if (newValues.type !== undefined) updateData.type = newValues.type;
+        if (newValues.relation !== undefined) updateData.relation = newValues.relation;
+        if (newValues.minDelayDays !== undefined) updateData.minDelayDays = newValues.minDelayDays;
+        if (newValues.maxDelayDays !== undefined) updateData.maxDelayDays = newValues.maxDelayDays;
+        if (newValues.allowedDays !== undefined) updateData.allowedDays = newValues.allowedDays;
+        if (newValues.forbiddenDays !== undefined) updateData.forbiddenDays = newValues.forbiddenDays;
+
+        if (newValues.type === "RELATIONAL") {
+            // Nullify both to clear previous relations properly
+            updateData.targetEventId = null;
+            updateData.targetModuleId = null;
+            if (newValues.targetId) {
+                if (newValues.targetType === "event") {
+                    updateData.targetEventId = newValues.targetId;
+                } else {
+                    updateData.targetModuleId = newValues.targetId;
+                }
+            }
+        }
+
+        const updated = await updateConstraint(constraintId, updateData);
+        if (!updated || updated.length === 0) {
+            throw new ClientApiError("Failed to update constraint.");
+        }
+        return ApiSuccess(updated[ 0 ]);
     } catch (error) {
         return catchHandler(request, error);
     }
