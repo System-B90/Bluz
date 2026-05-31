@@ -1,6 +1,7 @@
 "use client";
 
-import {
+import
+{
     Box,
     Button,
     Dialog,
@@ -16,12 +17,13 @@ import { EventToggles } from "@/components/schedule/event-dialog/EventToggles";
 import { InstructorsField } from "@/components/schedule/event-dialog/InstructorsField";
 import { Event, EventId } from "@/components/schedule/types/event";
 
+type EventOrPartial = Event | Omit<Event, "id"> | Partial<Event>;
 type EventDialogProps = {
-  open: boolean;
-  event: Event;
-  onClose: () => void;
-  onSave: (event: Event) => void;
-  onDelete: (eventId: EventId) => void;
+    open: boolean;
+    event: EventOrPartial;
+    onClose: () => void;
+    onSave: (event: EventOrPartial) => void;
+    onDelete: (eventId: EventId) => void;
 };
 
 export function EventDialog({
@@ -30,60 +32,65 @@ export function EventDialog({
     onClose,
     onSave,
     onDelete,
-}: EventDialogProps) {
-    const [event, setEventRaw] = useState<Event>({ ...inputEvent });
-    const [prevOpen, setPrevOpen] = useState(open);
-    const [prevInputEvent, setPrevInputEvent] = useState(inputEvent);
+}: EventDialogProps)
+{
+    const [ event, setEventRaw ] = useState<EventOrPartial>({ ...inputEvent });
+    const [ prevOpen, setPrevOpen ] = useState(open);
+    const [ prevInputEvent, setPrevInputEvent ] = useState(inputEvent);
 
-    if (open !== prevOpen || inputEvent !== prevInputEvent) {
+    if (open !== prevOpen || inputEvent !== prevInputEvent)
+    {
         setPrevOpen(open);
         setPrevInputEvent(inputEvent);
-        if (open) {
+        if (open)
+        {
             setEventRaw({ ...inputEvent });
         }
     }
 
-    const handleUpdate = useCallback((update: Partial<Event>) => {
+    const handleUpdate = useCallback((update: Partial<Event>) =>
+    {
         setEventRaw((prev) => ({ ...prev, ...update }));
     }, []);
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: FormEvent<HTMLFormElement>) =>
+    {
         e.preventDefault();
         onSave(event);
     };
 
     return (
-        <Dialog fullWidth maxWidth="lg" onClose={onClose} open={open}>
+        <Dialog fullWidth maxWidth="lg" onClose={ onClose } open={ open }>
             <DialogTitle>ערוך מופע</DialogTitle>
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={ handleSubmit }>
                 <DialogContent>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
-                        <EventPrimaryDetails event={event} onUpdate={handleUpdate} />
+                    <Box sx={ { display: "flex", flexDirection: "column", gap: 3, mt: 1 } }>
+                        <EventPrimaryDetails event={ event } onUpdate={ handleUpdate } />
 
-                        <EventClassification event={event} onUpdate={handleUpdate} />
+                        <EventClassification event={ event } onUpdate={ handleUpdate } />
 
-                        <InstructorsField event={event} onBlurCallback={handleUpdate} />
+                        <InstructorsField event={ event } onBlurCallback={ handleUpdate } />
 
-                        <EventToggles event={event} onUpdate={handleUpdate} />
+                        <EventToggles event={ event } onUpdate={ handleUpdate } />
                     </Box>
                 </DialogContent>
 
                 <DialogActions>
                     <Button
                         color="error"
-                        disabled={!event?.id}
-                        onClick={() => onDelete(event.id as string)}
+                        disabled={ (!('id' in event)) || !event?.id }
+                        onClick={ () => ('id' in event) ? onDelete(event.id as string) : {} }
                     >
-            מחק
+                        מחק
                     </Button>
-                    <Button onClick={onClose}>ביטול</Button>
+                    <Button onClick={ onClose }>ביטול</Button>
                     <Button
-                        disabled={!event?.name?.trim()}
+                        disabled={ !event?.name?.trim() }
                         type="submit"
                         variant="contained"
                     >
-            שמור
+                        שמור
                     </Button>
                 </DialogActions>
             </form>

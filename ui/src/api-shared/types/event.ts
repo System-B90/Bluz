@@ -7,12 +7,13 @@ import { ResolvableRoom } from "@/api-shared/types/room";
  * Standardized Hebrew event types for the calendar engine,
  * fully aligning with the Gantt engine event types.
  */
-export enum EventType {
-  EXERCISE = 'ע"ע',
-  LECTURE = "הרצאה",
-  BREAK = "הפסקה",
-  PRAYER = "תפילה",
-  OTHER = "אחר",
+export enum EventType
+{
+    EXERCISE = 'ע"ע',
+    LECTURE = "הרצאה",
+    BREAK = "הפסקה",
+    PRAYER = "תפילה",
+    OTHER = "אחר",
 }
 
 /**
@@ -30,40 +31,41 @@ export type PersonId = "איש חוץ" | number;
  * Represents a standard calendar event in the Bluz schedule.
  */
 export type Event = {
-  id: EventId;
-  name: string;
-  subject: number; // Subject ID
-  hiveModule: number; // Module ID
-  startTime: Dayjs;
-  endTime: Dayjs;
-  type: EventType;
-  courses: Array<CourseId>;
-  rooms: Array<ResolvableRoom>;
-  instructors: Array<number>;
-  lecturers?: Array<PersonId>;
-  tags: Array<number>;
-  notes: string;
-  locked: boolean;
-  hidden: boolean;
-  required: boolean;
-  personalTalk: boolean;
+    id: EventId;
+    name: string;
+    subject: number; // Subject ID
+    hiveModule: number; // Module ID
+    startTime: Dayjs;
+    endTime: Dayjs;
+    type: EventType;
+    courses: Array<CourseId>;
+    rooms: Array<ResolvableRoom>;
+    instructors: Array<number>;
+    lecturers?: Array<PersonId>;
+    tags: Array<number>;
+    notes: string;
+    locked: boolean;
+    hidden: boolean;
+    required: boolean;
+    personalTalk: boolean;
 };
 
 /**
  * Standardized types of prayers.
  */
-export enum PrayerType {
-  SHACHARIT = "shacharit",
-  MINCHA = "mincha",
-  ARVIT = "arvit",
+export enum PrayerType
+{
+    SHACHARIT = "shacharit",
+    MINCHA = "mincha",
+    ARVIT = "arvit",
 }
 
 /**
  * Represents a prayer-specific calendar event.
  */
 export type PrayerEvent = {
-  type: EventType.PRAYER;
-  prayerType: PrayerType;
+    type: EventType.PRAYER;
+    prayerType: PrayerType;
 } & Event;
 
 /**
@@ -77,7 +79,8 @@ export type PrayerEvent = {
  * }
  * ```
  */
-export function eventHasSubject(type: EventType): boolean {
+export function eventHasSubject(type: EventType): boolean
+{
     return type === EventType.EXERCISE || type === EventType.LECTURE;
 }
 
@@ -92,7 +95,8 @@ export function eventHasSubject(type: EventType): boolean {
  * }
  * ```
  */
-export function eventHasRoom(type: EventType): boolean {
+export function eventHasRoom(type: EventType): boolean
+{
     return type !== EventType.PRAYER;
 }
 
@@ -105,13 +109,14 @@ export function eventHasRoom(type: EventType): boolean {
  * const label = prayerTypeToHebrew(PrayerType.SHACHARIT); // "שחרית"
  * ```
  */
-export function prayerTypeToHebrew(prayerType: PrayerType): string {
+export function prayerTypeToHebrew(prayerType: PrayerType): string
+{
     const LOOKUP: Record<PrayerType, string> = {
-        [PrayerType.SHACHARIT]: "שחרית",
-        [PrayerType.MINCHA]: "מנחה",
-        [PrayerType.ARVIT]: "ערבית",
+        [ PrayerType.SHACHARIT ]: "שחרית",
+        [ PrayerType.MINCHA ]: "מנחה",
+        [ PrayerType.ARVIT ]: "ערבית",
     };
-    return LOOKUP[prayerType] ?? prayerType;
+    return LOOKUP[ prayerType ] ?? prayerType;
 }
 
 /**
@@ -124,7 +129,8 @@ export function prayerTypeToHebrew(prayerType: PrayerType): string {
  * const label = eventTypeToHebrew(event.type); // "הרצאה", "תפילה", etc.
  * ```
  */
-export function eventTypeToHebrew(type: EventType): string {
+export function eventTypeToHebrew(type: EventType): string
+{
     return type;
 }
 
@@ -142,7 +148,8 @@ export function getPresentInstructors(event: Event): Array<number>;
 export function getPresentInstructors(
     event: Event,
     includeOutsiders: boolean = false,
-): Array<PersonId> {
+): Array<PersonId>
+{
     const reduced = new Set<PersonId>([
         ...event.instructors,
         ...(event.lecturers?.filter(
@@ -153,8 +160,8 @@ export function getPresentInstructors(
 }
 
 export type DbEventDocument = Omit<Event, "endTime" | "startTime"> & {
-  startTime: Date;
-  endTime: Date;
+    startTime: Date;
+    endTime: Date;
 };
 
 export type ApiEventGetPayload = void;

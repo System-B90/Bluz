@@ -2,7 +2,8 @@ import assert from "assert";
 
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import WarningIcon from "@mui/icons-material/Warning";
-import {
+import
+{
     Box,
     BoxProps,
     ChipProps,
@@ -13,11 +14,12 @@ import {
 import { useMemo } from "react";
 
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
-import { shortenInstructorName } from "@/components/schedule/event-component/nameUtils";
-import {
+import { shortenInstructorName } from "@/components/schedule/event-component/NameUtils";
+import
+{
+    Event,
     EventType,
     getPresentInstructors,
-    Event,
 } from "@/components/schedule/types/event";
 
 /** Lightweight tag style — replaces MUI Chip for a more compact, professional look. */
@@ -42,13 +44,12 @@ export function PersonChip({
     instructorId,
     personData,
     event,
-    size: _size,
-    ...props
-}: { instructorId?: number; personData?: any; event: Event } & ChipProps) {
+}: { instructorId?: number; personData?: any; event: Event; })
+{
     const { getInstructor } = useHiveUsers();
     const instructor = useMemo(
         () => (instructorId ? getInstructor(instructorId) : personData),
-        [instructorId, getInstructor, personData],
+        [ instructorId, getInstructor, personData ],
     );
 
     assert(
@@ -57,8 +58,8 @@ export function PersonChip({
     );
 
     const isLecturer =
-    event.type === EventType.LECTURE &&
-    event.lecturers?.includes(instructorId ?? personData);
+        event.type === EventType.LECTURE &&
+        event.lecturers?.includes(instructorId ?? personData);
 
     const fullName: string =
         instructor?.display_name ?? personData ?? instructorId;
@@ -67,13 +68,13 @@ export function PersonChip({
         : fullName;
 
     return (
-        <Tooltip title={fullName}>
+        <Tooltip title={ fullName }>
             <Box
                 component="span"
-                sx={tagSx(!!isLecturer)}
+                sx={ tagSx(!!isLecturer) }
             >
                 <Link color="inherit" href="a" underline="hover">
-                    {shortName}
+                    { shortName }
                 </Link>
             </Box>
         </Tooltip>
@@ -86,53 +87,54 @@ export function InstructorsList({
     showCaption = true,
     ...props
 }: {
-  event: Event;
-  showCaption?: boolean;
-  chipSize?: ChipProps["size"];
-} & BoxProps) {
+    event: Event;
+    showCaption?: boolean;
+    chipSize?: ChipProps[ "size" ];
+} & BoxProps)
+{
     return (
         <Box
             alignItems="center"
             display="flex"
             flexDirection="row"
             flexWrap="wrap"
-            gap={0.4}
-            {...props}
+            gap={ 0.4 }
+            { ...props }
         >
-            {getPresentInstructors(event).length === 0 ? (
+            { getPresentInstructors(event).length === 0 ? (
                 <>
                     <WarningIcon
                         color="error"
-                        sx={{ fontSize: "0.85rem", mr: 0.3 }}
+                        sx={ { fontSize: "0.85rem", mr: 0.3 } }
                     />
-                    <Typography color="error" fontWeight={600} variant="caption">
+                    <Typography color="error" fontWeight={ 600 } variant="caption">
                         אין מבוזרים
                     </Typography>
                 </>
             ) : (
                 <>
-                    {showCaption ? <Tooltip title={event.instructors.length === 1 ? "מבוזר" : "מבוזרים"}>
+                    { showCaption ? <Tooltip title={ event.instructors.length === 1 ? "מבוזר" : "מבוזרים" }>
                         <PersonOutlinedIcon
-                            sx={{ fontSize: "0.85rem", opacity: 0.6 }}
+                            sx={ { fontSize: "0.85rem", opacity: 0.6 } }
                         />
-                    </Tooltip> : null}
-                    {event.type === EventType.LECTURE &&
+                    </Tooltip> : null }
+                    { event.type === EventType.LECTURE &&
                         event.lecturers?.includes("איש חוץ") ? (
                             <PersonChip
-                                event={event}
+                                event={ event }
                                 key="איש חוץ"
                                 personData="איש חוץ"
                             />
-                        ) : null}
-                    {getPresentInstructors(event).map((instructor) => (
+                        ) : null }
+                    { getPresentInstructors(event).map((instructor) => (
                         <PersonChip
-                            event={event}
-                            instructorId={instructor}
-                            key={instructor}
+                            event={ event }
+                            instructorId={ instructor }
+                            key={ instructor }
                         />
-                    ))}
+                    )) }
                 </>
-            )}
+            ) }
         </Box>
     );
 }

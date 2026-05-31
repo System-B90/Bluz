@@ -11,31 +11,33 @@ import type { SlotInfo } from "react-big-calendar";
 import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
 import { ResolvableRoom } from "@/api-shared/types/room";
-import { makeEvent } from "@/components/schedule/calendar/calendar-provider/MakeEvent";
 import { Event } from "@/components/schedule/types/event";
 
 export function useCalendarHandlers(
     events: Array<Event>,
     handleSaveEvent: (event: Event) => void,
-    handleDeleteEvent: (eventId: Event["id"]) => void,
-    setSelectedEvent: (event: Event | undefined) => void,
+    handleDeleteEvent: (eventId: Event[ "id" ]) => void,
+    setSelectedEvent: (event: Partial<Event> | undefined) => void,
     setOpenEventDialog: (open: boolean) => void,
-) {
-    const [activeEvent, setActiveEvent] = useState<Event | null>(null);
-    const [copiedEvent, setCopiedEvent] = useState<Event | null>(null);
-    const [selectedSlotInfo, setSelectedSlotInfo] = useState<{
-    start: Date;
-    resourceId?: any;
-  } | null>(null);
+)
+{
+    const [ activeEvent, setActiveEvent ] = useState<Event | null>(null);
+    const [ copiedEvent, setCopiedEvent ] = useState<Event | null>(null);
+    const [ selectedSlotInfo, setSelectedSlotInfo ] = useState<{
+        start: Date;
+        resourceId?: any;
+    } | null>(null);
 
     const copyPasteData = useRef({ activeEvent, copiedEvent, selectedSlotInfo });
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         copyPasteData.current = { activeEvent, copiedEvent, selectedSlotInfo };
-    }, [activeEvent, copiedEvent, selectedSlotInfo]);
+    }, [ activeEvent, copiedEvent, selectedSlotInfo ]);
 
     const handleEventDrag = useCallback(
-        (changes: EventInteractionArgs<Event>): void => {
+        (changes: EventInteractionArgs<Event>): void =>
+        {
             if (changes.event.locked) return;
 
             const roomId: null | ResolvableRoom = changes.resourceId
@@ -47,17 +49,18 @@ export function useCalendarHandlers(
                 startTime: dayjs(changes.start),
                 endTime: dayjs(changes.end),
                 ...(roomId && changes.event.rooms.length <= 1
-                    ? { rooms: [roomId] }
+                    ? { rooms: [ roomId ] }
                     : {}),
             };
 
             handleSaveEvent(updatedEvent);
         },
-        [handleSaveEvent],
+        [ handleSaveEvent ],
     );
 
     const handleSlotSelect = useCallback(
-        (slotInfo: SlotInfo): void => {
+        (slotInfo: SlotInfo): void =>
+        {
             setSelectedSlotInfo({
                 start: slotInfo.start,
                 resourceId: slotInfo.resourceId,
@@ -70,21 +73,22 @@ export function useCalendarHandlers(
                 ? JSON.parse(slotInfo.resourceId.toString())
                 : null;
 
-            const newEvent = makeEvent({
+            const newEvent = {
                 startTime: dayjs(slotInfo.start),
                 endTime: dayjs(slotInfo.end),
-                rooms: roomId ? [roomId] : [],
-            });
+                rooms: roomId ? [ roomId ] : [],
+            };
 
             setSelectedEvent(newEvent);
             setOpenEventDialog(true);
         },
-        [setSelectedEvent, setOpenEventDialog],
+        [ setSelectedEvent, setOpenEventDialog ],
     );
 
     const handleKeyDown = useCallback(
-        (e: KeyboardEvent) => {
-            if (["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).tagName))
+        (e: KeyboardEvent) =>
+        {
+            if ([ "INPUT", "TEXTAREA" ].includes((e.target as HTMLElement).tagName))
                 return;
 
             const {
@@ -94,15 +98,18 @@ export function useCalendarHandlers(
             } = copyPasteData.current;
             const isCmdOrCtrl = e.ctrlKey || e.metaKey;
 
-            if (e.key === "Delete" && currentActive?.id) {
+            if (e.key === "Delete" && currentActive?.id)
+            {
                 handleDeleteEvent(currentActive.id);
             }
 
-            if (isCmdOrCtrl && e.key === "c" && currentActive) {
+            if (isCmdOrCtrl && e.key === "c" && currentActive)
+            {
                 setCopiedEvent(currentActive);
             }
 
-            if (isCmdOrCtrl && e.key === "v" && currentCopied) {
+            if (isCmdOrCtrl && e.key === "v" && currentCopied)
+            {
                 e.preventDefault();
                 const originalStart = dayjs(currentCopied.startTime);
                 const originalEnd = dayjs(currentCopied.endTime);
@@ -114,8 +121,9 @@ export function useCalendarHandlers(
                 let newEnd = newStart.add(duration, "minute");
 
                 let newRooms = currentCopied.rooms;
-                if (currentSlot?.resourceId) {
-                    newRooms = [JSON.parse(currentSlot.resourceId.toString())];
+                if (currentSlot?.resourceId)
+                {
+                    newRooms = [ JSON.parse(currentSlot.resourceId.toString()) ];
                 }
 
                 const { id: _, ...rest } = currentCopied as any;
@@ -131,13 +139,14 @@ export function useCalendarHandlers(
                 setSelectedSlotInfo(null);
             }
         },
-        [handleSaveEvent, handleDeleteEvent],
+        [ handleSaveEvent, handleDeleteEvent ],
     );
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [handleKeyDown]);
+    }, [ handleKeyDown ]);
 
     return {
         handleEventDrag,

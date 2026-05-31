@@ -7,7 +7,8 @@
 
 "use client";
 
-import {
+import
+{
     Dispatch,
     SetStateAction,
     useCallback,
@@ -24,11 +25,11 @@ import { getRangeForView } from "@/components/schedule/calendar/utils";
 import { Event } from "@/components/schedule/types/event";
 
 type BluzCalendarProps = {
-  handleSaveEvent: (event: Event) => void;
-  handleDeleteEvent: (eventId: Event["id"]) => void;
-  setOpenEventDialog: (open: boolean) => void;
-  setSelectedEvent: Dispatch<SetStateAction<Event | undefined>>;
-  events: Array<Event>;
+    handleSaveEvent: (event: Event) => void;
+    handleDeleteEvent: (eventId: Event[ "id" ]) => void;
+    setOpenEventDialog: (open: boolean) => void;
+    setSelectedEvent: Dispatch<SetStateAction<Partial<Event> | undefined>>;
+    events: Array<Event>;
 };
 
 export function BluzCalendar({
@@ -37,78 +38,82 @@ export function BluzCalendar({
     setOpenEventDialog,
     setSelectedEvent,
     events,
-}: BluzCalendarProps) {
-    const [mounted, setMounted] = useState(false);
-    const [currentView, setCurrentView] = useState<View>(Views.WEEK);
+}: BluzCalendarProps)
+{
+    const [ mounted, setMounted ] = useState(false);
+    const [ currentView, setCurrentView ] = useState<View>(Views.WEEK);
 
     const { rooms } = useRooms();
     const { setStartDate, setEndDate } = useCalendar();
 
     const { handleEventDrag, handleSlotSelect, setActiveEvent } =
-    useCalendarHandlers(
-        events,
-        handleSaveEvent,
-        handleDeleteEvent,
-        setSelectedEvent,
-        setOpenEventDialog,
-    );
+        useCalendarHandlers(
+            events,
+            handleSaveEvent,
+            handleDeleteEvent,
+            setSelectedEvent,
+            setOpenEventDialog,
+        );
 
     // Only render the calendar after the component has mounted on the client.
-    useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    useEffect(() =>
+    {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 
-    const updateDateRange = useCallback(
-        (date: Date, view: View) => {
-            const { start, end } = getRangeForView(date, view);
-            setStartDate(start);
-            setEndDate(end);
-        },
-        [setStartDate, setEndDate],
-    );
+    const updateDateRange = useCallback((date: Date, view: View) =>
+    {
+        const { start, end } = getRangeForView(date, view);
+        console.log('Updating date range:', start, end, 'for view:', view, ' from: ', date);
+        setStartDate(start);
+        setEndDate(end);
+    }, [ setStartDate, setEndDate ]);
 
-    const onNavigate = useCallback(
-        (newDate: Date, view: View) => {
-            updateDateRange(newDate, view);
-        },
-        [updateDateRange],
-    );
+    const onNavigate = useCallback((newDate: Date, view: View) =>
+    {
+        console.log('newDate: ', newDate, 'view: ', view);
+        updateDateRange(newDate, view);
+    }, [ updateDateRange ]);
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         updateDateRange(new Date(), currentView);
-    }, [currentView, updateDateRange]);
+    }, [ currentView, updateDateRange ]);
 
     const handleEditEvent = useCallback(
-        (event: Event) => {
+        (event: Event) =>
+        {
             setSelectedEvent(event);
             setOpenEventDialog(true);
         },
-        [setSelectedEvent, setOpenEventDialog],
+        [ setSelectedEvent, setOpenEventDialog ],
     );
 
-    const handleSelectEvent = useCallback(
-        (event: Event) => {
-            setActiveEvent(event);
-            setSelectedEvent(event);
-        },
-        [setSelectedEvent, setActiveEvent],
-    );
+    const handleSelectEvent = useCallback((event: Event) =>
+    {
+        setActiveEvent(event);
+        setSelectedEvent(event);
+    }, [ setSelectedEvent, setActiveEvent ]);
 
     if (!mounted)
-        return <div className="grow h-full bg-slate-50/50 animate-pulse" />;
+    {
+        return (
+            <div className="grow h-full bg-slate-50/50 animate-pulse" />
+        );
+    }
 
     return (
         <CalendarView
-            currentView={currentView}
-            events={events}
-            onDoubleClickEvent={handleEditEvent}
-            onEventDrop={handleEventDrag}
-            onNavigate={onNavigate}
-            onSelectEvent={handleSelectEvent}
-            onSelectSlot={handleSlotSelect}
-            onView={setCurrentView}
-            rooms={rooms}
+            currentView={ currentView }
+            events={ events }
+            onDoubleClickEvent={ handleEditEvent }
+            onEventDrop={ handleEventDrag }
+            onNavigate={ onNavigate }
+            onSelectEvent={ handleSelectEvent }
+            onSelectSlot={ handleSlotSelect }
+            onView={ setCurrentView }
+            rooms={ rooms }
         />
     );
 }
