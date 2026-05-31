@@ -1,7 +1,7 @@
 import assert from "assert";
 
+import PersonOffIcon from "@mui/icons-material/PersonOff";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
-import WarningIcon from "@mui/icons-material/Warning";
 import
 {
     Box,
@@ -9,10 +9,10 @@ import
     ChipProps,
     Link,
     Tooltip,
-    Typography,
 } from "@mui/material";
 import { useMemo } from "react";
 
+import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { shortenInstructorName } from "@/components/schedule/event-component/NameUtils";
 import
@@ -92,6 +92,31 @@ export function InstructorsList({
     chipSize?: ChipProps[ "size" ];
 } & BoxProps)
 {
+    const { showMisconfigurations } = useCalendarFilters();
+    const presentInstructors = getPresentInstructors(event);
+
+    if (presentInstructors.length === 0) {
+        if (!showMisconfigurations) {
+            return null;
+        }
+        return (
+            <Tooltip title="אין מבוזרים">
+                <Box
+                    alignItems="center"
+                    display="flex"
+                    flexDirection="row"
+                    gap={0.4}
+                    {...props}
+                >
+                    <PersonOffIcon
+                        color="error"
+                        sx={{ fontSize: "1.1rem" }}
+                    />
+                </Box>
+            </Tooltip>
+        );
+    }
+
     return (
         <Box
             alignItems="center"
@@ -101,40 +126,26 @@ export function InstructorsList({
             gap={ 0.4 }
             { ...props }
         >
-            { getPresentInstructors(event).length === 0 ? (
-                <>
-                    <WarningIcon
-                        color="error"
-                        sx={ { fontSize: "0.85rem", mr: 0.3 } }
+            { showCaption ? <Tooltip title={ event.instructors.length === 1 ? "מבוזר" : "מבוזרים" }>
+                <PersonOutlinedIcon
+                    sx={ { fontSize: "0.85rem", opacity: 0.6 } }
+                />
+            </Tooltip> : null }
+            { event.type === EventType.LECTURE &&
+                event.lecturers?.includes("איש חוץ") ? (
+                    <PersonChip
+                        event={ event }
+                        key="איש חוץ"
+                        personData="איש חוץ"
                     />
-                    <Typography color="error" fontWeight={ 600 } variant="caption">
-                        אין מבוזרים
-                    </Typography>
-                </>
-            ) : (
-                <>
-                    { showCaption ? <Tooltip title={ event.instructors.length === 1 ? "מבוזר" : "מבוזרים" }>
-                        <PersonOutlinedIcon
-                            sx={ { fontSize: "0.85rem", opacity: 0.6 } }
-                        />
-                    </Tooltip> : null }
-                    { event.type === EventType.LECTURE &&
-                        event.lecturers?.includes("איש חוץ") ? (
-                            <PersonChip
-                                event={ event }
-                                key="איש חוץ"
-                                personData="איש חוץ"
-                            />
-                        ) : null }
-                    { getPresentInstructors(event).map((instructor) => (
-                        <PersonChip
-                            event={ event }
-                            instructorId={ instructor }
-                            key={ instructor }
-                        />
-                    )) }
-                </>
-            ) }
+                ) : null }
+            { presentInstructors.map((instructor) => (
+                <PersonChip
+                    event={ event }
+                    instructorId={ instructor }
+                    key={ instructor }
+                />
+            )) }
         </Box>
     );
 }

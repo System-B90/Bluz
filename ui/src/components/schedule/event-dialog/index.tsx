@@ -60,7 +60,17 @@ export function EventDialog({
     };
 
     return (
-        <Dialog fullWidth maxWidth="lg" onClose={ onClose } open={ open }>
+        <Dialog
+            fullWidth
+            maxWidth="lg"
+            onClose={ onClose }
+            open={ open }
+            PaperProps={{
+                sx: {
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                }
+            }}
+        >
             <DialogTitle>ערוך מופע</DialogTitle>
 
             <form onSubmit={ handleSubmit }>

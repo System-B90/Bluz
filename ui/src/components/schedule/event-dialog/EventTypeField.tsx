@@ -1,6 +1,13 @@
+"use client";
+
+import CoPresentIcon from "@mui/icons-material/CoPresent";
+import EmojiFoodBeverageIcon from "@mui/icons-material/EmojiFoodBeverage";
+import QuizIcon from "@mui/icons-material/Quiz";
+import SchoolIcon from "@mui/icons-material/School";
+import SynagogueIcon from "@mui/icons-material/Synagogue";
 import {
+    Box,
     FormControl,
-    FormControlProps,
     InputLabel,
     MenuItem,
     Select,
@@ -14,13 +21,30 @@ import {
     eventTypeToHebrew,
 } from "@/components/schedule/types/event";
 
+function getEventTypeIcon(type: EventType, props = {}) {
+    switch (type) {
+    case EventType.EXERCISE:
+        return <CoPresentIcon {...props} />;
+    case EventType.LECTURE:
+        return <SchoolIcon {...props} />;
+    case EventType.OTHER:
+        return <QuizIcon {...props} />;
+    case EventType.BREAK:
+        return <EmojiFoodBeverageIcon {...props} />;
+    case EventType.PRAYER:
+        return <SynagogueIcon {...props} />;
+    default:
+        return null;
+    }
+}
+
 export type EventTypeFieldProps = {} & EventFieldProps;
 
 export function EventTypeField({
     event,
     onBlurCallback,
     ...props
-}: EventTypeFieldProps & FormControlProps) {
+}: EventTypeFieldProps & any) {
     const [currentType, setCurrentType] = useState<EventType>(
         event?.type ?? EventType.EXERCISE,
     );
@@ -39,20 +63,31 @@ export function EventTypeField({
     }, [onBlurCallback]);
 
     return (
-        <FormControl fullWidth={false} {...props}>
-            <InputLabel>סוג</InputLabel>
-            <Select
-                label="סוג"
-                onChange={onChange}
-                onClose={onClose}
-                value={currentType}
-            >
-                {eventTypes.map((type) => (
-                    <MenuItem key={type} value={type}>
-                        {eventTypeToHebrew(type)}
-                    </MenuItem>
-                ))}
-            </Select>
-        </FormControl>
+        <Box alignItems="center" display="flex" gap={1.5} {...props}>
+            {getEventTypeIcon(currentType, { color: "action", sx: { fontSize: 26 } })}
+            <FormControl fullWidth sx={{ flexGrow: 1 }}>
+                <InputLabel>סוג</InputLabel>
+                <Select
+                    label="סוג"
+                    onChange={onChange}
+                    onClose={onClose}
+                    renderValue={(selected) => (
+                        <Box alignItems="center" display="flex" gap={1}>
+                            {eventTypeToHebrew(selected as EventType)}
+                        </Box>
+                    )}
+                    value={currentType}
+                >
+                    {eventTypes.map((type) => (
+                        <MenuItem key={type} value={type}>
+                            <Box alignItems="center" display="flex" gap={1}>
+                                {getEventTypeIcon(type, { fontSize: "small", color: "action" })}
+                                {eventTypeToHebrew(type)}
+                            </Box>
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+        </Box>
     );
 }

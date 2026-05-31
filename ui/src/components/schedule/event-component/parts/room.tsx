@@ -1,4 +1,5 @@
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
+import NoMeetingRoomIcon from "@mui/icons-material/NoMeetingRoom";
 import WarningIcon from "@mui/icons-material/Warning";
 import {
     Box,
@@ -6,12 +7,12 @@ import {
     ChipProps,
     Link,
     Tooltip,
-    Typography,
 } from "@mui/material";
 import { useMemo } from "react";
 
 import { getHiveBaseUrl } from "@/api-shared/common";
 import { Room, RoomLike, RoomSource } from "@/api-shared/types/room";
+import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
 
 /** Lightweight tag — matching the unified tag style. */
@@ -77,10 +78,33 @@ export function RoomComponent({
   chipSize?: ChipProps["size"];
 } & BoxProps) {
     const { getRoom } = useRooms();
+    const { showMisconfigurations } = useCalendarFilters();
     const rooms = useMemo(
         () => roomIds.map(getRoom).filter((v) => !!v),
         [roomIds, getRoom],
     );
+
+    if (rooms.length === 0) {
+        if (!showMisconfigurations) {
+            return null;
+        }
+        return (
+            <Tooltip title="אין כיתה">
+                <Box
+                    alignItems="center"
+                    display="flex"
+                    flexDirection="row"
+                    gap={0.4}
+                    {...props}
+                >
+                    <NoMeetingRoomIcon
+                        color="error"
+                        sx={{ fontSize: "1.1rem" }}
+                    />
+                </Box>
+            </Tooltip>
+        );
+    }
 
     return (
         <Box
@@ -91,34 +115,20 @@ export function RoomComponent({
             gap={0.4}
             {...props}
         >
-            {rooms.length === 0 ? (
-                <>
-                    <WarningIcon
-                        color="error"
-                        sx={{ fontSize: "0.85rem", mr: 0.3 }}
+            {showCaption !== false && (
+                <Tooltip title={roomIds.length === 1 ? "חדר" : "חדרים"}>
+                    <MeetingRoomIcon
+                        sx={{ fontSize: "0.85rem", opacity: 0.6 }}
                     />
-                    <Typography color="error" fontWeight={600} variant="caption">
-                        אין חדר
-                    </Typography>
-                </>
-            ) : (
-                <>
-                    {showCaption !== false && (
-                        <Tooltip title={roomIds.length === 1 ? "חדר" : "חדרים"}>
-                            <MeetingRoomIcon
-                                sx={{ fontSize: "0.85rem", opacity: 0.6 }}
-                            />
-                        </Tooltip>
-                    )}
-                    {rooms.map((room) => (
-                        <SingleRoomTag
-                            key={room.id}
-                            occupancy={occupancy}
-                            room={room}
-                        />
-                    ))}
-                </>
+                </Tooltip>
             )}
+            {rooms.map((room) => (
+                <SingleRoomTag
+                    key={room.id}
+                    occupancy={occupancy}
+                    room={room}
+                />
+            ))}
         </Box>
     );
 }

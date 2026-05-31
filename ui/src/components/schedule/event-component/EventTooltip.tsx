@@ -5,6 +5,7 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import WarningIcon from "@mui/icons-material/Warning";
 import { Box, Divider, Stack, Typography } from "@mui/material";
 import { Dayjs } from "dayjs";
 import moment from "moment";
@@ -59,6 +60,8 @@ export function EventTooltipContent({ event }: { event: Event }) {
     const hasOutsider =
         event.type === EventType.LECTURE &&
         event.lecturers?.includes("איש חוץ");
+    const isPrayer = event.type === EventType.PRAYER;
+    const isBreak = event.type === EventType.BREAK;
 
     const statusFlags: Array<{ icon: React.ReactNode; label: string }> = [];
     if (event.locked)
@@ -105,21 +108,37 @@ export function EventTooltipContent({ event }: { event: Event }) {
             )}
 
             {/* Rooms */}
-            {rooms.length > 0 && (
+            {rooms.length > 0 ? (
                 <TooltipRow
                     icon={<MeetingRoomIcon fontSize="inherit" />}
                     text={rooms.map((r) => r.name).join(", ")}
                 />
+            ) : (
+                !isPrayer && !isBreak ? (
+                    <TooltipRow
+                        icon={<WarningIcon color="error" fontSize="inherit" />}
+                        text="אין חדר"
+                    />
+                ) : null
             )}
 
             {/* Instructors */}
-            {(instructors.length > 0 || hasOutsider) ? <TooltipRow
-                icon={<PersonOutlinedIcon fontSize="inherit" />}
-                text={[
-                    ...(hasOutsider ? ["איש חוץ"] : []),
-                    ...instructors.map((i) => i.display_name),
-                ].join(", ")}
-            /> : null}
+            {(instructors.length > 0 || hasOutsider) ? (
+                <TooltipRow
+                    icon={<PersonOutlinedIcon fontSize="inherit" />}
+                    text={[
+                        ...(hasOutsider ? ["איש חוץ"] : []),
+                        ...instructors.map((i) => i.display_name),
+                    ].join(", ")}
+                />
+            ) : (
+                !isPrayer ? (
+                    <TooltipRow
+                        icon={<WarningIcon color="error" fontSize="inherit" />}
+                        text="אין מבוזרים"
+                    />
+                ) : null
+            )}
 
             {/* Status flags */}
             {statusFlags.length > 0 && (

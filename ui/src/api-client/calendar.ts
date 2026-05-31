@@ -44,7 +44,7 @@ export async function apiGetMultipleEvents(
         },
     );
     for (const key of Object.keys(rawData)) {
-        eventDateFixup(rawData[key]);
+        rawData[key] = eventDateFixup(rawData[key]);
     }
     return rawData as unknown as Record<EventId, Event>;
 }

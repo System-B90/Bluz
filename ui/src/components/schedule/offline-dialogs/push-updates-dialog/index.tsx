@@ -1,7 +1,5 @@
 "use client";
 
-import assert from "assert";
-
 import {
     Box,
     Button,
@@ -9,44 +7,144 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Typography,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
-import { apiGetMultipleEvents } from "@/api-client/calendar";
+import {
+    apiCreateEvent,
+    apiDeleteEvent,
+    apiGetMultipleEvents,
+    apiUpdateEvent,
+} from "@/api-client/calendar";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { useOffline } from "@/components/base/OfflineProvider";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { EventCollisionsList } from "@/components/schedule/offline-dialogs/push-updates-dialog/EventCollisionsList";
-import {
-    CollisionStates,
-    PushOfflineUpdatesDialogProps,
-} from "@/components/schedule/offline-dialogs/push-updates-dialog/types";
-import { areEventsEqual } from "@/components/schedule/types/EventUtils";
+import { CollisionStates } from "@/components/schedule/offline-dialogs/push-updates-dialog/types";
+import { areDiffValuesEqual } from "@/components/schedule/offline-dialogs/push-updates-dialog/utils";
+import { EventId } from "@/components/schedule/types/event";
 
-export function PushOfflineUpdatesDialog({}: PushOfflineUpdatesDialogProps) {
+export function PushOfflineUpdatesDialog() {
     const { enqueueSnackbar } = useSnackbar();
-    const { pushDialogOpen, getCapturedEvent } = useOffline();
-    const { events: localEvents } = useCalendar();
+    const {
+        pushDialogOpen,
+        setPushDialogOpen,
+        setOfflineMode,
+        getCapturedEvent,
+        getCapturedState,
+        purgeCapturedState,
+    } = useOffline();
+
+    const { events: localEvents, dispatch } = useCalendar();
+
     const [collisionStates, setCollisionStates] = useState<CollisionStates>({});
+    const [selectedIds, setSelectedIds] = useState<Array<EventId>>([]);
+    const [loading, setLoading] = useState<boolean>(false);
 
-    const onClose = useCallback(() => {}, []);
-    const submitHandler = useCallback((e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-    }, []);
+    // Cancel: keep the edits and stay in offline mode
+    const handleCancel = useCallback(() => {
+        setOfflineMode(true);
+        setPushDialogOpen(false);
+    }, [setOfflineMode, setPushDialogOpen]);
 
-    const checkEventCollisionStates =
-    useCallback(async (): Promise<CollisionStates> => {
+    // Revert: discard all local edits and restore server version
+    const handleRevert = useCallback(() => {
+        Object.keys(collisionStates).forEach((eventId) => {
+            const state = collisionStates[eventId];
+            if (state.serverVersion === undefined) {
+                // Was created locally, so delete from local calendar
+                dispatch({ type: "DELETE_EVENT", payload: eventId });
+            } else {
+                // Restore server version
+                dispatch({ type: "UPSERT_EVENT", payload: state.serverVersion });
+            }
+        });
+        purgeCapturedState();
+        setPushDialogOpen(false);
+        enqueueSnackbar("כל השינויים הלוקליים שוחזרו בהצלחה.", { variant: "info" });
+    }, [collisionStates, dispatch, purgeCapturedState, setPushDialogOpen, enqueueSnackbar]);
+
+    // Save: commit selected events to server, revert unselected ones
+    const submitHandler = useCallback(
+        async (e: FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
+            setLoading(true);
+
+            try {
+                const keys = Object.keys(collisionStates);
+                for (const eventId of keys) {
+                    const state = collisionStates[eventId];
+                    const isSelected = selectedIds.includes(eventId);
+
+                    if (isSelected) {
+                        if (state.localModifiedEvent === undefined) {
+                            // Deleted locally -> delete on server
+                            await apiDeleteEvent(eventId);
+                        } else if (state.capturedVersion === undefined) {
+                            // Created locally -> create on server
+                            if (state.localModifiedEvent) {
+                                await apiCreateEvent(state.localModifiedEvent);
+                            }
+                        } else {
+                            // Modified locally -> update on server
+                            if (state.localModifiedEvent) {
+                                await apiUpdateEvent(state.localModifiedEvent);
+                            }
+                        }
+                    } else {
+                        // Unselected -> Discard local edit and restore server state
+                        if (state.serverVersion === undefined) {
+                            dispatch({ type: "DELETE_EVENT", payload: eventId });
+                        } else {
+                            dispatch({ type: "UPSERT_EVENT", payload: state.serverVersion });
+                        }
+                    }
+                }
+
+                enqueueSnackbar("השינויים סונכרנו בהצלחה!", { variant: "success" });
+                purgeCapturedState();
+                setPushDialogOpen(false);
+            } catch (error) {
+                enqueueApiErrorSnackbar(enqueueSnackbar, "סנכרון השינויים לשרת נכשל!", error);
+            } finally {
+                setLoading(false);
+            }
+        },
+        [collisionStates, selectedIds, dispatch, purgeCapturedState, setPushDialogOpen, enqueueSnackbar],
+    );
+
+    const checkEventCollisionStates = useCallback(async (): Promise<CollisionStates> => {
         const states: CollisionStates = {};
 
-        // Get the saved copy of the events we changed locally from before they were changed
-        const capturedEventsBeforeEdit = localEvents
-            .map((event) => getCapturedEvent(event.id))
-            .filter((ev) => !!ev);
+        // Find all event IDs that are in localEvents or in the captured offline state
+        const allEventIds = Array.from(
+            new Set([
+                ...localEvents.map((ev) => ev.id),
+                ...Object.keys(getCapturedState()),
+            ]),
+        );
 
-        const serverEvents = await apiGetMultipleEvents(
-            localEvents.map((ev) => ev.id),
-        ).catch((error) => {
+        // Filter for events that actually have local edits (created, modified, or deleted)
+        const editedIds = allEventIds.filter((id) => {
+            const local = localEvents.find((ev) => ev.id === id);
+            const captured = getCapturedEvent(id) ?? undefined;
+
+            if (local === undefined || captured === undefined) {
+                if (local !== undefined) return true; // Created locally
+                if (captured !== undefined) return true; // Deleted locally
+                return false;
+            }
+
+            return !areDiffValuesEqual(local, captured); // Modified locally
+        });
+
+        if (editedIds.length === 0) {
+            return {};
+        }
+
+        const serverEvents = await apiGetMultipleEvents(editedIds).catch((error) => {
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
                 `טעינת המצב העדכני בשרת נכשלה!`,
@@ -54,41 +152,49 @@ export function PushOfflineUpdatesDialog({}: PushOfflineUpdatesDialogProps) {
             );
             return null;
         });
+
         if (serverEvents === null) {
             return {};
         }
 
-        // console.log('capturedEventsBeforeEdit', capturedEventsBeforeEdit);
-        // console.log('serverEvents', serverEvents);
+        editedIds.forEach((id) => {
+            const local = localEvents.find((ev) => ev.id === id);
+            const captured = getCapturedEvent(id) ?? undefined;
+            const server = serverEvents[id] ?? undefined;
 
-        capturedEventsBeforeEdit.forEach((capturedEventBeforeEdit) => {
-        // For each of the events we changed locally and have a capture, check if the server version changed between the capture and the new data
-            const serverVersion = serverEvents[capturedEventBeforeEdit.id];
-            assert(
-                serverVersion === undefined ||
-            capturedEventBeforeEdit === undefined ||
-            serverVersion.id === capturedEventBeforeEdit.id,
-            ); // Sanity
+            // Conflict if captured version differs from committed server version
+            const conflicting = !areDiffValuesEqual(captured, server);
 
-            states[capturedEventBeforeEdit.id] = {
-                localModifiedEvent: localEvents.find(
-                    (ev) => ev.id === capturedEventBeforeEdit.id,
-                ),
-                capturedVersion: capturedEventBeforeEdit,
-                serverVersion,
-                conflicting: !areEventsEqual(capturedEventBeforeEdit, serverVersion),
+            states[id] = {
+                localModifiedEvent: local,
+                capturedVersion: captured,
+                serverVersion: server,
+                conflicting,
             };
         });
 
         return states;
-    }, [localEvents, getCapturedEvent, enqueueSnackbar]);
+    }, [localEvents, getCapturedEvent, getCapturedState, enqueueSnackbar]);
 
     useEffect(() => {
         if (!pushDialogOpen) {
             return;
         }
         checkEventCollisionStates()
-            .then(setCollisionStates)
+            .then((states) => {
+                const keys = Object.keys(states);
+                if (keys.length === 0) {
+                    setPushDialogOpen(false);
+                    purgeCapturedState();
+                    enqueueSnackbar("יצאת ממצב אופליין. לא בוצעו שינויים לסינכרון.", { variant: "info" });
+                    return;
+                }
+                setCollisionStates(states);
+                // Pre-select only non-conflicting edits by default
+                setSelectedIds(
+                    keys.filter((id) => !states[id].conflicting),
+                );
+            })
             .catch((error) =>
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -96,12 +202,7 @@ export function PushOfflineUpdatesDialog({}: PushOfflineUpdatesDialogProps) {
                     error,
                 ),
             );
-    }, [
-        pushDialogOpen,
-        checkEventCollisionStates,
-        setCollisionStates,
-        enqueueSnackbar,
-    ]);
+    }, [pushDialogOpen, checkEventCollisionStates, purgeCapturedState, setPushDialogOpen, enqueueSnackbar]);
 
     const collisionListKey = useMemo(
         () =>
@@ -113,31 +214,50 @@ export function PushOfflineUpdatesDialog({}: PushOfflineUpdatesDialogProps) {
         [collisionStates],
     );
 
+    const hasChanges = Object.keys(collisionStates).length > 0;
+
     return (
-        <Dialog fullWidth maxWidth="lg" onClose={onClose} open={pushDialogOpen}>
-            <DialogTitle>שמירת שינויים לוקלים</DialogTitle>
+        <Dialog fullWidth maxWidth="lg" onClose={handleCancel} open={pushDialogOpen}>
+            <DialogTitle sx={{ fontWeight: 600 }}>שמירת שינויים לוקליים (מצב אופליין)</DialogTitle>
 
             <form onSubmit={submitHandler}>
-                <DialogContent>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 1 }}>
-                        <Box display={"flex"} gap={2} width={"100%"}>
-                            <EventCollisionsList
-                                collisionStates={collisionStates}
-                                key={collisionListKey}
-                            />
+                <DialogContent sx={{ p: 3 }}>
+                    {hasChanges ? (
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            <Typography color="text.secondary" sx={{ mb: 1 }} variant="body2">
+                                להלן השינויים שביצעת בזמן שהיית במצב לוקלי. סמן את השינויים שברצונך לשמור לשרת.
+                                שינויים שלא יסומנו ישוחזרו לגרסת השרת הנוכחית.
+                            </Typography>
+                            <Box display={"flex"} gap={2} width={"100%"}>
+                                <EventCollisionsList
+                                    collisionStates={collisionStates}
+                                    key={collisionListKey}
+                                    selected={selectedIds}
+                                    setSelected={setSelectedIds}
+                                />
+                            </Box>
                         </Box>
-                    </Box>
+                    ) : (
+                        <Typography color="text.secondary" sx={{ py: 4 }} textAlign="center" variant="body1">
+                            לא נמצאו שינויים לוקליים לסינכרון.
+                        </Typography>
+                    )}
                 </DialogContent>
 
-                <DialogActions>
-                    <Button color="warning" onClick={() => {}}>
-            שחזר
+                <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+                    {hasChanges ? <Button color="error" disabled={loading} onClick={handleRevert} variant="outlined">
+                            שחזר הכל
+                    </Button> : null}
+                    <Button color="inherit" disabled={loading} onClick={handleCancel}>
+                        ביטול (הישאר באופליין)
                     </Button>
-                    <Button color="secondary" onClick={onClose}>
-            ביטול
-                    </Button>
-                    <Button color="success" type="submit" variant="contained">
-            שמור
+                    <Button
+                        color="success"
+                        disabled={loading || !hasChanges}
+                        type="submit"
+                        variant="contained"
+                    >
+                        {loading ? "שומר..." : "שמור שינויים מסומנים"}
                     </Button>
                 </DialogActions>
             </form>

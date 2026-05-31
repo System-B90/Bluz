@@ -4,6 +4,7 @@ import {
     Chip,
     FormControl,
     InputLabel,
+    ListSubheader,
     MenuItem,
     Select,
     SelectChangeEvent,
@@ -15,16 +16,34 @@ import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { EventType } from "@/components/schedule/types/event";
 
 type InstructorsFieldProps = {} & EventFieldProps;
+type LecturerSelectionFieldProps = {
+    selectedInstructors?: Array<number>;
+} & InstructorsFieldProps & BoxProps;
 
 function LecturerSelectionField({
     event,
     onBlurCallback,
+    selectedInstructors = [],
     ...props
-}: InstructorsFieldProps & BoxProps) {
+}: LecturerSelectionFieldProps) {
     const { instructors, getInstructor } = useHiveUsers();
     const [currentLecturers, setCurrentLecturers] = useState(
         event?.lecturers ?? [],
     );
+
+    const { selectedList, remainingList } = useMemo(() => {
+        const selectedSet = new Set(selectedInstructors);
+        const selected: typeof instructors = [];
+        const remaining: typeof instructors = [];
+        for (const instructor of instructors) {
+            if (selectedSet.has(instructor.id)) {
+                selected.push(instructor);
+            } else {
+                remaining.push(instructor);
+            }
+        }
+        return { selectedList: selected, remainingList: remaining };
+    }, [instructors, selectedInstructors]);
 
     const handleChange = useCallback(
         (ev: SelectChangeEvent<typeof currentLecturers>) => {
@@ -34,11 +53,11 @@ function LecturerSelectionField({
 
             // Handle potential string autofill values vs actual arrays
             const newIds =
-        typeof value === "string"
-            ? value
-                .split(",")
-                .map((v) => (v === "איש חוץ" ? "איש חוץ" : Number(v)))
-            : value;
+                typeof value === "string"
+                    ? value
+                        .split(",")
+                        .map((v) => (v === "איש חוץ" ? "איש חוץ" : Number(v)))
+                    : value;
 
             setCurrentLecturers(newIds);
         },
@@ -69,9 +88,9 @@ function LecturerSelectionField({
                             {selected.map((id) => {
                                 // Look up instructor details by ID
                                 const lecturer =
-                  typeof id === "number"
-                      ? getInstructor(id)
-                      : { id, display_name: id };
+                                    typeof id === "number"
+                                        ? getInstructor(id)
+                                        : { id, display_name: id };
                                 return (
                                     <Chip
                                         key={id}
@@ -96,13 +115,42 @@ function LecturerSelectionField({
                         }}
                         value={"איש חוץ"}
                     >
-            איש חוץ
+                        איש חוץ
                     </MenuItem>
-                    {instructors.map((instructor) => (
-                        <MenuItem key={instructor.id} value={instructor.id}>
-                            {instructor.display_name}
-                        </MenuItem>
-                    ))}
+                    {selectedList.length > 0 ? (
+                        [
+                            <ListSubheader disableSticky key="subheader-selected" sx={{ fontWeight: 'bold', lineHeight: '36px', color: 'primary.main', bgcolor: 'background.paper' }}>
+                                מבוזרים שנבחרו
+                            </ListSubheader>,
+                            ...selectedList.map((instructor) => (
+                                <MenuItem key={instructor.id} value={instructor.id}>
+                                    {instructor.display_name}
+                                </MenuItem>
+                            )),
+                            <ListSubheader disableSticky key="subheader-remaining" sx={{
+                                borderTopWidth: "0.2rem",
+                                borderTopStyle: "solid",
+                                borderTopColor: "hsl(var(--border))",
+                                fontWeight: 'bold',
+                                lineHeight: '36px',
+                                color: 'text.secondary',
+                                bgcolor: 'background.paper'
+                            }}>
+                                שאר הסגל
+                            </ListSubheader>,
+                            ...remainingList.map((instructor) => (
+                                <MenuItem key={instructor.id} value={instructor.id}>
+                                    {instructor.display_name}
+                                </MenuItem>
+                            ))
+                        ]
+                    ) : (
+                        instructors.map((instructor) => (
+                            <MenuItem key={instructor.id} value={instructor.id}>
+                                {instructor.display_name}
+                            </MenuItem>
+                        ))
+                    )}
                 </Select>
             </FormControl>
         </Box>
@@ -114,7 +162,7 @@ export function InstructorsField({
     onBlurCallback,
 }: InstructorsFieldProps) {
     const { instructors, getInstructor } = useHiveUsers();
-    const [currentInstructors, setCurrentInstructors] = useState(
+    const [currentInstructors, setCurrentInstructors] = useState<Array<number>>(
         event?.instructors ?? [],
     );
 
@@ -131,10 +179,10 @@ export function InstructorsField({
 
             // Handle potential string autofill values vs actual arrays
             const newIds =
-        typeof value === "string" ? value.split(",").map(Number) : value;
+                typeof value === "string" ? value.split(",").map(Number) : value;
 
             // Use functional update pattern for SetStateAction
-            setCurrentInstructors(newIds);
+            setCurrentInstructors(newIds as Array<number>);
         },
         [],
     );
@@ -150,7 +198,7 @@ export function InstructorsField({
     }, [event, currentInstructors, onBlurCallback]);
 
     return (
-        <Box display={"flex"} gap={isLecture ? 2 : 0} width={"100%"}>
+        <Box alignItems={"flex-start"} display={"flex"} flexDirection={'row'} flexWrap={'nowrap'} width={"100%"}>
             <Box flexGrow={1}>
                 <FormControl fullWidth={true}>
                     <InputLabel>מבוזרים</InputLabel>
@@ -187,13 +235,30 @@ export function InstructorsField({
                     </Select>
                 </FormControl>
             </Box>
-            {isLecture ? (
+            <Box
+                sx={{
+                    width: isLecture ? "30%" : "0%",
+                    opacity: isLecture ? 1 : 0,
+                    ml: isLecture ? 1 : 0,
+                    pt: 1.5,
+                    mt: -1.5,
+                    overflow: "hidden",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    visibility: isLecture ? "visible" : "hidden",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+            >
                 <LecturerSelectionField
-                    className="w-[30%]"
                     event={event}
                     onBlurCallback={onBlurCallback}
+                    selectedInstructors={currentInstructors}
+                    sx={{
+                        width: "100%",
+                        minWidth: "250px",
+                    }}
                 />
-            ) : null}
+            </Box>
         </Box>
     );
 }

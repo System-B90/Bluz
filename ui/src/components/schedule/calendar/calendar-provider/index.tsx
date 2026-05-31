@@ -16,11 +16,17 @@ import "dayjs/locale/he";
 
 export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =>
 {
-    const { offlineMode, captureEventBeforeEdit } = useOffline();
+    const { offlineMode, captureEventBeforeEdit, captureInitialEvents } = useOffline();
     const [ startDate, setStartDate ] = useState<Date>();
     const [ endDate, setEndDate ] = useState<Date>();
 
     const { events, dispatch, undo, redo } = useEventState();
+
+    useEffect(() => {
+        if (offlineMode && events.length > 0) {
+            captureInitialEvents(events);
+        }
+    }, [offlineMode, events, captureInitialEvents]);
 
     useEventWebsocket(offlineMode, dispatch);
 
@@ -61,6 +67,7 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
                     deleteEvent,
                     undo,
                     redo,
+                    dispatch,
                 } }
             >
                 { children }

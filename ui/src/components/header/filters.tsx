@@ -1,6 +1,7 @@
 import ChatIcon from "@mui/icons-material/Chat";
 import DoNotDisturbAltIcon from "@mui/icons-material/DoNotDisturbAlt";
 import SynagogueIcon from "@mui/icons-material/Synagogue";
+import WarningIcon from "@mui/icons-material/Warning";
 import { Box, BoxProps, IconButton, Tooltip } from "@mui/material";
 import { useCallback } from "react";
 
@@ -9,8 +10,8 @@ import { FilterCourses } from "@/components/header/FilterCourses";
 import { FilterInstructors } from "@/components/header/FilterInstructor";
 
 export function Filters({ ...props }: BoxProps) {
-    const { showPAsFor, setShowPAsFor, hidePrayers, setHidePrayers } =
-    useCalendarFilters();
+    const { showPAsFor, setShowPAsFor, hidePrayers, setHidePrayers, showMisconfigurations, setShowMisconfigurations } =
+        useCalendarFilters();
 
     const handleShowPA = useCallback(() => {
         setShowPAsFor((v) => (v === null ? 365 : null));
@@ -54,6 +55,15 @@ export function Filters({ ...props }: BoxProps) {
                         fontSize="large"
                         sx={{ opacity: hidePrayers ? 1 : 0 }}
                     />
+                </IconButton>
+            </Tooltip>
+
+            <Tooltip title={showMisconfigurations ? "הסתר פערי איוש" : "הצג פערי איוש"}>
+                <IconButton
+                    color={showMisconfigurations ? "warning" : "inherit"}
+                    onClick={() => setShowMisconfigurations((v) => !v)}
+                >
+                    <WarningIcon />
                 </IconButton>
             </Tooltip>
         </Box>

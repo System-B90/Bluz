@@ -22,6 +22,8 @@ export type CalendarFiltersContextState = {
   setShowPAsFor: Dispatch<SetStateAction<null | number>>;
   hidePrayers: boolean;
   setHidePrayers: Dispatch<SetStateAction<boolean>>;
+  showMisconfigurations: boolean;
+  setShowMisconfigurations: Dispatch<SetStateAction<boolean>>;
 
   eventFilteredOpacity: (event: Event) => number;
 };
@@ -38,6 +40,8 @@ const CalendarFiltersContext = createContext<
     setShowPAsFor: () => {},
     hidePrayers: false,
     setHidePrayers: () => {},
+    showMisconfigurations: true,
+    setShowMisconfigurations: () => {},
 
     eventFilteredOpacity: () => 1,
 });
@@ -53,6 +57,7 @@ export const CalendarFiltersProvider = ({
   children: React.ReactNode;
 }) => {
     const [hidePrayers, setHidePrayers] = useState<boolean>(false);
+    const [showMisconfigurations, setShowMisconfigurations] = useState<boolean>(true);
     const [showPAsFor, setShowPAsFor] = useState<null | number>(
         null /** ID of instructor */,
     ); // פ"א
@@ -138,6 +143,8 @@ export const CalendarFiltersProvider = ({
 
                 hidePrayers,
                 setHidePrayers,
+                showMisconfigurations,
+                setShowMisconfigurations,
 
                 eventFilteredOpacity,
             }}

@@ -12,22 +12,23 @@ import {
     TableSortLabel,
     Typography,
 } from "@mui/material";
-import { useCallback, useState } from "react";
+import { Dispatch, SetStateAction, useCallback } from "react";
 
 import { EventListEntry } from "@/components/schedule/offline-dialogs/push-updates-dialog/EventListEntry";
 import { CollisionStates } from "@/components/schedule/offline-dialogs/push-updates-dialog/types";
 import { EventId } from "@/components/schedule/types/event";
 
+type EventCollisionsListProps = {
+    collisionStates: CollisionStates;
+    selected: Array<EventId>;
+    setSelected: Dispatch<SetStateAction<Array<EventId>>>;
+}
+
 export function EventCollisionsList({
     collisionStates,
-}: {
-  collisionStates: CollisionStates;
-}) {
-    const [selected, setSelected] = useState<Array<EventId>>(
-        Object.keys(collisionStates).filter(
-            (eventId) => !collisionStates[eventId].conflicting,
-        ),
-    );
+    selected,
+    setSelected,
+}: EventCollisionsListProps) {
     const numSelected = selected.length;
     const rowCount = Object.keys(collisionStates).length;
 
@@ -39,7 +40,7 @@ export function EventCollisionsList({
                 return [];
             }
         });
-    }, [collisionStates]);
+    }, [collisionStates, setSelected]);
 
     const handleEntryClick = useCallback(
         (_e: React.MouseEvent<HTMLTableRowElement>, eventId: EventId) => {
@@ -51,7 +52,7 @@ export function EventCollisionsList({
                 }
             });
         },
-        [],
+        [setSelected],
     );
 
     const items = Object.keys(collisionStates).map((eventId) => (
@@ -68,8 +69,8 @@ export function EventCollisionsList({
         <TableContainer component={Paper}>
             <Table aria-label="collapsible table">
                 <TableHead>
-                    <TableRow>
-                        <TableCell />
+                    <TableRow sx={{ bgcolor: "action.hover" }}>
+                        <TableCell width={50} />
                         <TableCell>
                             <Typography fontWeight={600}>מזהה מופע</Typography>
                         </TableCell>

@@ -2,6 +2,7 @@
 
 import { createContext, Dispatch, SetStateAction, useContext } from "react";
 
+import { CalendarAction } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { Event, EventId } from "@/components/schedule/types/event";
 
 export type CalendarContextState = {
@@ -19,6 +20,7 @@ export type CalendarContextState = {
     deleteEvent: (eventId: EventId) => void;
     undo: () => void;
     redo: () => void;
+    dispatch: (action: CalendarAction) => void;
 };
 
 export const CalendarContext = createContext<CalendarContextState | undefined>(

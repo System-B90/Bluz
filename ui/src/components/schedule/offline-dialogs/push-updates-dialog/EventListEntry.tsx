@@ -3,22 +3,30 @@
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import {
-    Box,
     Checkbox,
     Collapse,
     IconButton,
-    Table,
-    TableBody,
     TableCell,
-    TableHead,
     TableRow,
     Typography,
 } from "@mui/material";
 import { Fragment, useState } from "react";
 
-import { DeletedItemPlaceholder } from "@/components/schedule/offline-dialogs/push-updates-dialog/DeletedItemPlaceholder";
+import { DiffDetailsTable } from "@/components/schedule/offline-dialogs/push-updates-dialog/DiffDetailsTable";
 import { Event, EventId } from "@/components/schedule/types/event";
-import { areValuesEqual } from "@/components/schedule/types/EventUtils";
+
+type EventListEntryProps = {
+    isItemSelected: boolean;
+    handleEntryClick: (
+        event: React.MouseEvent<HTMLTableRowElement>,
+        entryId: EventId,
+    ) => void;
+    eventId: EventId;
+    localModifiedEvent: Event | undefined;
+    serverVersion: Event | undefined;
+    capturedVersion: Event | undefined;
+    conflicting: boolean;
+}
 
 export function EventListEntry({
     isItemSelected,
@@ -28,69 +36,8 @@ export function EventListEntry({
     serverVersion,
     capturedVersion,
     conflicting,
-}: {
-  isItemSelected: boolean;
-  handleEntryClick: (
-    event: React.MouseEvent<HTMLTableRowElement>,
-    entryId: EventId,
-  ) => void;
-  eventId: EventId;
-  localModifiedEvent: Event | undefined;
-  serverVersion: Event | undefined;
-  capturedVersion: Event | undefined;
-  conflicting: boolean;
-}) {
-    // console.log(eventId, localModifiedEvent, serverVersion, capturedVersion, conflicting);
+}: EventListEntryProps) {
     const [expanded, setExpanded] = useState<boolean>(false);
-    const allKeys: Array<keyof Event> = [
-        ...new Set([
-            ...Object.keys(localModifiedEvent ?? {}),
-            ...Object.keys(serverVersion ?? {}),
-            ...Object.keys(capturedVersion ?? {}),
-        ]),
-    ] as Array<keyof Event>;
-
-    const changeItems = allKeys
-        .filter(
-            (key) =>
-                (localModifiedEvent !== undefined &&
-          serverVersion !== undefined &&
-          !areValuesEqual(localModifiedEvent?.[key], serverVersion?.[key])) ||
-        (serverVersion !== undefined &&
-          capturedVersion !== undefined &&
-          !areValuesEqual(serverVersion?.[key], capturedVersion?.[key])) ||
-        (localModifiedEvent !== undefined &&
-          capturedVersion !== undefined &&
-          !areValuesEqual(localModifiedEvent?.[key], capturedVersion?.[key])),
-        )
-        .map((key) => (
-            <TableRow key={`${eventId}-${key}`}>
-                <TableCell>
-                    <Typography>{key}</Typography>
-                </TableCell>
-                <TableCell>
-                    {localModifiedEvent?.[key] ? (
-                        <Typography>{JSON.stringify(localModifiedEvent?.[key])}</Typography>
-                    ) : (
-                        <DeletedItemPlaceholder />
-                    )}
-                </TableCell>
-                <TableCell>
-                    {capturedVersion?.[key] ? (
-                        <Typography>{JSON.stringify(capturedVersion?.[key])}</Typography>
-                    ) : (
-                        <DeletedItemPlaceholder />
-                    )}
-                </TableCell>
-                <TableCell>
-                    {serverVersion?.[key] ? (
-                        <Typography>{JSON.stringify(serverVersion?.[key])}</Typography>
-                    ) : (
-                        <DeletedItemPlaceholder />
-                    )}
-                </TableCell>
-            </TableRow>
-        ));
 
     return (
         <Fragment>
@@ -100,7 +47,7 @@ export function EventListEntry({
                 onClick={(e) => handleEntryClick(e, eventId)}
                 role="checkbox"
                 selected={isItemSelected}
-                sx={{ "& > *": { borderBottom: "unset" } }}
+                sx={{ "& > *": { borderBottom: "unset" }, cursor: "pointer" }}
             >
                 <TableCell>
                     <IconButton
@@ -116,17 +63,21 @@ export function EventListEntry({
                     </IconButton>
                 </TableCell>
                 <TableCell component="th" scope="row">
-                    <Typography>{eventId}</Typography>
+                    <Typography fontWeight={500}>{eventId}</Typography>
                 </TableCell>
                 <TableCell>
                     <Typography>
                         {localModifiedEvent?.name ??
-              serverVersion?.name ??
-              capturedVersion?.name}
+                            serverVersion?.name ??
+                            capturedVersion?.name ??
+                            "מופע חדש"}
                     </Typography>
                 </TableCell>
                 <TableCell>
-                    <Typography color={conflicting ? "error" : "inherit"}>
+                    <Typography
+                        color={conflicting ? "error.main" : "success.main"}
+                        sx={{ fontWeight: 600 }}
+                    >
                         {conflicting ? "קונפליקט!" : "אין"}
                     </Typography>
                 </TableCell>
@@ -135,34 +86,14 @@ export function EventListEntry({
                 </TableCell>
             </TableRow>
             <TableRow>
-                <TableCell colSpan={4} style={{ paddingBottom: 0, paddingTop: 0 }}>
+                <TableCell colSpan={5} style={{ paddingBottom: 0, paddingTop: 0 }}>
                     <Collapse in={expanded} timeout="auto" unmountOnExit>
-                        <Box sx={{ margin: 1 }}>
-                            <Typography component="div" gutterBottom variant="h6">
-                שינויים
-                            </Typography>
-                            <Table aria-label="purchases" size="small">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>
-                                            <Typography fontWeight={600}>שם השדה</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography fontWeight={600}>השינוי שלך</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography fontWeight={600}>
-                        מה שראית לפני ששינית
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography fontWeight={600}>מה שיש כרגע בשרת</Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>{changeItems}</TableBody>
-                            </Table>
-                        </Box>
+                        <DiffDetailsTable
+                            capturedVersion={capturedVersion}
+                            eventId={eventId}
+                            localModifiedEvent={localModifiedEvent}
+                            serverVersion={serverVersion}
+                        />
                     </Collapse>
                 </TableCell>
             </TableRow>

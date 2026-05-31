@@ -1,5 +1,7 @@
 import { Box, Typography } from "@mui/material";
+import React from "react";
 
+import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { ContainerSize } from "@/components/schedule/event-component/base";
 import { EventDurationLabel } from "@/components/schedule/event-component/EventDurationLabel";
 import { EventStatusIcons } from "@/components/schedule/event-component/EventStatusIcons";
@@ -11,7 +13,11 @@ import {
     ModuleComponent,
     SubjectComponent,
 } from "@/components/schedule/event-component/parts/subject";
-import { Event, EventType } from "@/components/schedule/types/event";
+import {
+    Event,
+    EventType,
+    getPresentInstructors,
+} from "@/components/schedule/types/event";
 
 /* ── Detail-level thresholds (px) ───────────────────────────── */
 const DETAIL = {
@@ -59,6 +65,7 @@ export function UnifiedEvent({
   event: Event;
   size: ContainerSize;
 }) {
+    const { showMisconfigurations } = useCalendarFilters();
     const detail = getDetailLevel(size.height);
     const isNarrow = size.width < NARROW_WIDTH;
     const isPrayer = event.type === EventType.PRAYER;
@@ -83,7 +90,7 @@ export function UnifiedEvent({
                     {event.name}
                 </Typography>
                 {/* Instructor name is the 2nd-most important element — always visible */}
-                {!isPrayer && (
+                {!isPrayer && (getPresentInstructors(event).length > 0 || showMisconfigurations) ? (
                     <>
                         <Box
                             sx={{
@@ -99,13 +106,17 @@ export function UnifiedEvent({
                             sx={{ flexShrink: 1, minWidth: 0, overflow: "hidden" }}
                         />
                     </>
-                )}
+                ) : null}
             </Box>
         );
     }
 
     /* ── COMPACT ──────────────────────────────────────────────── */
     if (detail === "compact") {
+        const hasInstructors = !isPrayer && (getPresentInstructors(event).length > 0 || showMisconfigurations);
+        const hasRooms = !isPrayer && size.height >= 55 && !isBreak && (event.rooms.length > 0 || showMisconfigurations);
+        const showSecondRow = hasInstructors || hasRooms;
+
         return (
             <Box
                 display="flex"
@@ -141,7 +152,7 @@ export function UnifiedEvent({
                 </Box>
 
                 {/* Row 2: instructors (always) + room if space */}
-                {!isPrayer && (
+                {showSecondRow ? (
                     <>
                         <AccentDivider />
                         <Box
@@ -150,29 +161,31 @@ export function UnifiedEvent({
                             gap={0.6}
                             overflow="hidden"
                         >
-                            <InstructorsList
-                                event={event}
-                                showCaption={false}
-                            />
-                            {size.height >= 55 && !isBreak && (
-                                <>
-                                    <Box
-                                        sx={{
-                                            width: "1px",
-                                            alignSelf: "stretch",
-                                            bgcolor: "var(--event-divider)",
-                                            flexShrink: 0,
-                                        }}
-                                    />
-                                    <RoomComponent
-                                        roomIds={event.rooms}
-                                        showCaption={false}
-                                    />
-                                </>
-                            )}
+                            {hasInstructors ? (
+                                <InstructorsList
+                                    event={event}
+                                    showCaption={false}
+                                />
+                            ) : null}
+                            {hasInstructors && hasRooms ? (
+                                <Box
+                                    sx={{
+                                        width: "1px",
+                                        alignSelf: "stretch",
+                                        bgcolor: "var(--event-divider)",
+                                        flexShrink: 0,
+                                    }}
+                                />
+                            ) : null}
+                            {hasRooms ? (
+                                <RoomComponent
+                                    roomIds={event.rooms}
+                                    showCaption={false}
+                                />
+                            ) : null}
                         </Box>
                     </>
-                )}
+                ) : null}
             </Box>
         );
     }
@@ -181,6 +194,81 @@ export function UnifiedEvent({
     const showSubject = detail === "full" && !isBreak && !isPrayer;
     const showNotes = detail === "full" && !!event.notes;
     const showCaptions = detail === "full";
+
+    const rows: Array<React.ReactNode> = [];
+
+    if (!isPrayer && (getPresentInstructors(event).length > 0 || showMisconfigurations)) {
+        rows.push(
+            <InstructorsList
+                event={event}
+                key="instructors"
+                showCaption={showCaptions}
+            />
+        );
+    }
+
+    if (!isPrayer && !isBreak && (event.rooms.length > 0 || showMisconfigurations)) {
+        rows.push(
+            <RoomComponent
+                key="rooms"
+                roomIds={event.rooms}
+                showCaption={showCaptions}
+            />
+        );
+    }
+
+    if (!isPrayer && !isBreak && event.courses.length > 0) {
+        rows.push(
+            <CourseComponent
+                courseIds={event.courses}
+                key="courses"
+                showCaption={showCaptions}
+            />
+        );
+    }
+
+    if (showSubject) {
+        rows.push(
+            <Box
+                alignItems="baseline"
+                display="flex"
+                flexDirection="row"
+                gap={0.3}
+                key="subject"
+            >
+                <SubjectComponent
+                    fontSize="0.75rem"
+                    fontWeight={500}
+                    subjectId={event.subject}
+                />
+                {event.hiveModule ? (
+                    <>
+                        <Typography fontSize="0.75rem" fontWeight={300}>
+                                /
+                        </Typography>
+                        <ModuleComponent
+                            fontSize="0.75rem"
+                            fontWeight={400}
+                            moduleId={event.hiveModule}
+                        />
+                    </>
+                ) : null}
+            </Box>
+        );
+    }
+
+    if (showNotes) {
+        rows.push(
+            <Typography
+                key="notes"
+                noWrap
+                sx={{ opacity: 0.75, fontStyle: "italic" }}
+                variant="caption"
+            >
+                {event.notes}
+            </Typography>
+        );
+    }
 
     return (
         <Box
@@ -215,78 +303,14 @@ export function UnifiedEvent({
                 />
             </Box>
 
-            <AccentDivider />
+            {rows.length > 0 && <AccentDivider />}
 
-            {/* ── Instructors row (always visible for non-prayer) ── */}
-            {!isPrayer && (
-                <InstructorsList
-                    event={event}
-                    showCaption={showCaptions}
-                />
-            )}
-
-            {/* ── Room row ────────────────────────────────────── */}
-            {!isPrayer && !isBreak && (
-                <>
-                    <AccentDivider />
-                    <RoomComponent
-                        roomIds={event.rooms}
-                        showCaption={showCaptions}
-                    />
-                </>
-            )}
-
-            {/* ── Course row ──────────────────────────────────── */}
-            {!isPrayer && !isBreak && (
-                <>
-                    <AccentDivider />
-                    <CourseComponent
-                        courseIds={event.courses}
-                        showCaption={showCaptions}
-                    />
-                </>
-            )}
-
-            {/* ── Subject / Module (full only) ────────────────── */}
-            {showSubject ? <>
-                <AccentDivider />
-                <Box
-                    alignItems="baseline"
-                    display="flex"
-                    flexDirection="row"
-                    gap={0.3}
-                >
-                    <SubjectComponent
-                        fontSize="0.75rem"
-                        fontWeight={500}
-                        subjectId={event.subject}
-                    />
-                    {event.hiveModule ? (
-                        <>
-                            <Typography fontSize="0.75rem" fontWeight={300}>
-                                    /
-                            </Typography>
-                            <ModuleComponent
-                                fontSize="0.75rem"
-                                fontWeight={400}
-                                moduleId={event.hiveModule}
-                            />
-                        </>
-                    ) : null}
-                </Box>
-            </> : null}
-
-            {/* ── Notes (full only) ───────────────────────────── */}
-            {showNotes ? <>
-                <AccentDivider />
-                <Typography
-                    noWrap
-                    sx={{ opacity: 0.75, fontStyle: "italic" }}
-                    variant="caption"
-                >
-                    {event.notes}
-                </Typography>
-            </> : null}
+            {rows.map((row, idx) => (
+                <React.Fragment key={idx}>
+                    {idx > 0 && <AccentDivider />}
+                    {row}
+                </React.Fragment>
+            ))}
 
             {/* ── Status icons (bottom-right) ─────────────────── */}
             <EventStatusIcons

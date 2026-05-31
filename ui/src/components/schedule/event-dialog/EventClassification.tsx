@@ -23,34 +23,67 @@ export function EventClassification({
     onUpdate: (u: Partial<Event>) => void;
 })
 {
+    const isPrayer = event?.type === EventType.PRAYER;
+
     return (
-        <Box display="flex" gap={ 2 } justifyContent="flex-start" width="100%">
+        <Box alignItems="flex-start" display="flex" gap={ 2 } justifyContent="flex-start" width="100%">
             <EventTypeField
                 event={ event }
                 onBlurCallback={ onUpdate }
-                sx={ { width: "12.5%" } }
+                sx={ { width: "15%" } }
             />
 
-            { event?.type === EventType.PRAYER ? (
+            {/* Prayer specific field with transition */}
+            <Box
+                sx={{
+                    width: isPrayer ? "25%" : 0,
+                    opacity: isPrayer ? 1 : 0,
+                    transform: isPrayer ? "scale(1)" : "scale(0.95)",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    overflow: "hidden",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    visibility: isPrayer ? "visible" : "hidden",
+                    mr: isPrayer ? 0 : -2,
+                    pt: 1.5,
+                    mt: -1.5,
+                }}
+            >
                 <PrayerTypeField
                     event={ event as PrayerEvent }
                     onEventChange={ onUpdate }
-                    sx={ { width: "25%" } }
+                    sx={ { width: "100%" } }
                 />
-            ) : (
-                <>
-                    <SubjectField
-                        event={ event }
-                        onEventChange={ onUpdate }
-                        sx={ { width: "18%" } }
-                    />
-                    <ModuleField
-                        event={ event }
-                        onEventChange={ onUpdate }
-                        sx={ { width: "17%" } }
-                    />
-                </>
-            ) }
+            </Box>
+
+            {/* Subject and Module fields with transition */}
+            <Box
+                sx={{
+                    width: !isPrayer ? "35%" : 0,
+                    opacity: !isPrayer ? 1 : 0,
+                    transform: !isPrayer ? "scale(1)" : "scale(0.95)",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    overflow: "hidden",
+                    display: "flex",
+                    gap: 2,
+                    alignItems: "flex-start",
+                    visibility: !isPrayer ? "visible" : "hidden",
+                    mr: !isPrayer ? 0 : -2,
+                    pt: 1.5,
+                    mt: -1.5,
+                }}
+            >
+                <SubjectField
+                    event={ event }
+                    onEventChange={ onUpdate }
+                    sx={ { width: "50%", minWidth: "80px" } }
+                />
+                <ModuleField
+                    event={ event }
+                    onEventChange={ onUpdate }
+                    sx={ { width: "50%", minWidth: "80px" } }
+                />
+            </Box>
 
             <Box display="flex" flexGrow={ 1 } gap="inherit">
                 <CourseField event={ event } fullWidth onBlurCallback={ onUpdate } />

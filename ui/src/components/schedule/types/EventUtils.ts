@@ -1,4 +1,4 @@
-import { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 
 import { Event } from "@/components/schedule/types/event";
 
@@ -16,43 +16,16 @@ export function deepCopyEvent(event: Event): Event {
     return cpy;
 }
 
-function arraysEqual<T>(
-    a: Array<T> | undefined,
-    b: Array<T> | undefined,
+function arraysEqual(
+    a: Array<any> | undefined,
+    b: Array<any> | undefined,
 ): boolean {
     if (a === b) return true;
     if (!a || !b) return false;
     if (a.length !== b.length) return false;
 
     for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) return false;
-    }
-
-    return true;
-}
-
-function isDateLike(
-    value: any | Date | Dayjs,
-): value is { valueOf: () => number } | Date {
-    if (value instanceof Date) {
-        return true;
-    }
-
-    // Check Dayjs fields
-    if (typeof value !== "object") {
-        return false;
-    }
-    if (typeof value["toDate"] !== "function") {
-        return false;
-    }
-    if (typeof value["hour"] !== "function") {
-        return false;
-    }
-    if (typeof value["month"] !== "function") {
-        return false;
-    }
-    if (typeof value["daysInMonth"] !== "function") {
-        return false;
+        if (!areValuesEqual(a[i], b[i])) return false;
     }
 
     return true;
@@ -65,20 +38,22 @@ export function areValuesEqual(a: any, b: any): boolean {
         return a === b;
     }
 
-    // Handle Date / Dayjs
-    if (isDateLike(a) && isDateLike(b)) {
-        return a.valueOf() === b.valueOf();
+    // Handle Date / Dayjs / ISO string-based dates
+    const isDateA = a instanceof Date || dayjs.isDayjs(a) || (typeof a === "string" && dayjs(a).isValid() && !isNaN(Date.parse(a)));
+    const isDateB = b instanceof Date || dayjs.isDayjs(b) || (typeof b === "string" && dayjs(b).isValid() && !isNaN(Date.parse(b)));
+    if (isDateA && isDateB) {
+        return dayjs(a).valueOf() === dayjs(b).valueOf();
     }
 
-    // Handle arrays
+    // Handle arrays deeply
     if (Array.isArray(a) && Array.isArray(b)) {
         return arraysEqual(a, b);
     }
 
-    // Handle objects (including extra dynamic properties)
+    // Handle objects (including extra dynamic properties and excluding database _id)
     if (typeof a === "object" && typeof b === "object") {
-        const keysA = Object.keys(a);
-        const keysB = Object.keys(b);
+        const keysA = Object.keys(a).filter((k) => k !== "_id");
+        const keysB = Object.keys(b).filter((k) => k !== "_id");
 
         if (keysA.length !== keysB.length) return false;
 
@@ -90,7 +65,7 @@ export function areValuesEqual(a: any, b: any): boolean {
         return true;
     }
 
-    return false;
+    return String(a) === String(b);
 }
 
 export function areEventsEqual(event1: Event, event2: Event): boolean {
