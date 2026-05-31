@@ -7,11 +7,11 @@ import { EventTimeField } from "@/components/schedule/event-dialog/TimeFields";
 import { Event } from "@/components/schedule/types/event";
 
 const PROMPTS = [
-    "איפה המצגת?",
-    "כמה זמן יקח לקשט את הכיתה?",
-    "האם צריך להביא ציוד מיוחד?",
-    "מי מעביר את התרגול הפעם?",
-    "לא לשכוח לשלוח סיכום שיעור.",
+    "המצגת נמצאת בתיקייה של המורים",
+    "צריך לקשט את הכיתה חצי שעה מראש",
+    "לתאם שאיש חוץ יביא גיטרה באמצע ההרצאה",
+    "יש חותכים בזמן הע\"ע?",
+    "צריך לשלוח למרצה מ\"י בסוף היום"
 ];
 
 export function EventPrimaryDetails({
@@ -20,8 +20,7 @@ export function EventPrimaryDetails({
 }: {
     event: Partial<Event>;
     onUpdate: (u: Partial<Event>) => void;
-})
-{
+}) {
     const isEmpty = !event.notes;
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [currentText, setCurrentText] = useState("");
@@ -66,19 +65,19 @@ export function EventPrimaryDetails({
 
     return (
         <>
-            <Box display="flex" gap={ 2 } width="100%">
+            <Box display="flex" gap={2} width="100%">
                 <TextField
                     fullWidth
                     label="שם"
-                    onChange={ (e) => onUpdate({ name: e.target.value }) }
+                    onChange={(e) => onUpdate({ name: e.target.value })}
                     required
-                    sx={ { flexGrow: 1 } }
-                    value={ event.name ?? "" }
+                    sx={{ flexGrow: 1 }}
+                    value={event.name ?? ""}
                 />
                 <EventTimeField
-                    event={ event }
-                    onBlurCallback={ onUpdate }
-                    sx={ { flexShrink: 1 } }
+                    event={event}
+                    onBlurCallback={onUpdate}
+                    sx={{ flexShrink: 1 }}
                 />
             </Box>
 
@@ -86,10 +85,10 @@ export function EventPrimaryDetails({
                 fullWidth
                 label="הערות"
                 multiline
-                onChange={ (e) => onUpdate({ notes: e.target.value }) }
-                placeholder={ currentText ? `${currentText}|` : "" }
-                rows={ 3 }
-                value={ event.notes ?? "" }
+                onChange={(e) => onUpdate({ notes: e.target.value })}
+                placeholder={currentText ? `${currentText}|` : ""}
+                rows={3}
+                value={event.notes ?? ""}
             />
         </>
     );
