@@ -50,7 +50,6 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
         attributes,
         listeners,
         setNodeRef: setDragRef,
-        transform,
         isDragging,
     } = useDraggable({
         id: `course-${course.id}`,
