@@ -215,10 +215,10 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                         <MuiColorInput
                             format="hex"
-                            PopoverProps={{ sx: { direction: "ltr" } }}
                             fullWidth={false}
                             isAlphaHidden
                             onChange={handleColorChange}
+                            PopoverProps={{ sx: { direction: "ltr" } }}
                             size="small"
                             sx={{
                                 p: 0,

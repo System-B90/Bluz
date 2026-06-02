@@ -12,7 +12,7 @@
  * shortenInstructorName("אבי כץ", allNames)  // "אבי כץ"
  * shortenInstructorName("איש חוץ", allNames) // "איש חוץ"
  */
-export function shortenInstructorName(fullName: string, allInstructors: readonly string[]): string {
+export function shortenInstructorName(fullName: string, allInstructors: ReadonlyArray<string>): string {
     if (fullName === "איש חוץ") {
         return fullName;
     }

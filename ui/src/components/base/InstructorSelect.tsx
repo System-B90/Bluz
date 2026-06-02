@@ -17,8 +17,8 @@ export function InstructorSelect<T = unknown>({ children, ...props }: SelectProp
 
     const groupedItems = useMemo(() => {
         // 1. Build course hierarchy adjacency list
-        const coursesByParent: Record<string, Course[]> = {};
-        const rootCourses: Course[] = [];
+        const coursesByParent: Record<string, Array<Course>> = {};
+        const rootCourses: Array<Course> = [];
 
         for (const course of courses) {
             if (course.parentId) {
@@ -33,8 +33,8 @@ export function InstructorSelect<T = unknown>({ children, ...props }: SelectProp
 
         // 2. Helper to traverse courses hierarchically
         const traverse = (
-            parentId: string | null,
-        ): Array<{ course: Course; instructors: CourseUser[] }> => {
+            parentId: null | string,
+        ): Array<{ course: Course; instructors: Array<CourseUser> }> => {
             const siblings =
                 parentId === null ? rootCourses : coursesByParent[parentId] || [];
             // Sort sibling courses alphabetically
@@ -42,10 +42,10 @@ export function InstructorSelect<T = unknown>({ children, ...props }: SelectProp
                 a.name.localeCompare(b.name, "he"),
             );
 
-            const list: Array<{ course: Course; instructors: CourseUser[] }> = [];
+            const list: Array<{ course: Course; instructors: Array<CourseUser> }> = [];
             for (const course of sortedSiblings) {
                 const assignedIds = course.instructorIds || [];
-                const resolved: CourseUser[] = [];
+                const resolved: Array<CourseUser> = [];
                 for (const id of assignedIds) {
                     const inst = getInstructor(id);
                     if (inst) {
@@ -92,7 +92,7 @@ export function InstructorSelect<T = unknown>({ children, ...props }: SelectProp
     // 4. Flatten all components (children, groups, unassigned) to avoid using React.Fragment
     // which can break MUI Select arrow/keyboard navigation.
     const items = useMemo(() => {
-        const result: React.ReactNode[] = [];
+        const result: Array<React.ReactNode> = [];
         if (children) {
             result.push(children);
         }
