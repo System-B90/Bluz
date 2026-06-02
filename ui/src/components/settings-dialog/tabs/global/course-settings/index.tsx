@@ -38,13 +38,13 @@ const dialogOffsetModifier: Modifier = ({ transform }) => {
     return transform;
 };
 
-function InstructorDragOverlay({ activeId, instructors }: { activeId: string; instructors: any[] }) {
+function InstructorDragOverlay({ activeId, instructors }: { activeId: string; instructors: Array<any> }) {
     const inst = instructors.find((i) => `instructor-${i.id}` === activeId);
     if (!inst) return null;
     return <InstructorCard instructor={inst} isOverlay />;
 }
 
-function CourseDragOverlay({ activeId, courses }: { activeId: string; courses: any[] }) {
+function CourseDragOverlay({ activeId, courses }: { activeId: string; courses: Array<any> }) {
     const course = courses.find((c) => `course-${c.id}` === activeId);
     if (!course) return null;
     return (
