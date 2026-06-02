@@ -199,6 +199,7 @@ export default defineConfig([
             "drizzle/drizzle.config.ts",
             "session-server/session-common.ts",
             "session-server/session-server.ts",
+            "scripts/**",
         ],
     },
 ]);

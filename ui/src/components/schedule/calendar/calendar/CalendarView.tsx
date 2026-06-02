@@ -10,8 +10,7 @@ import { CalendarProps, View, Views } from "react-big-calendar";
 
 import { Room } from "@/api-shared/types/room"; // Import the full Room type
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
-import
-{
+import {
     DnDCalendar,
     localizer,
 } from "@/components/schedule/calendar/calendar/DndLocalizer";
@@ -24,7 +23,7 @@ type CalendarViewProps = {
     rooms: Array<Room>;
     currentView: View;
     onView: (view: View) => void;
-    onNavigate: CalendarProps[ "onNavigate" ];
+    onNavigate: CalendarProps["onNavigate"];
     onSelectEvent: (event: Event) => void;
     onDoubleClickEvent: (event: Event) => void;
     onSelectSlot: (slotInfo: any) => void;
@@ -41,41 +40,40 @@ export function CalendarView({
     onDoubleClickEvent,
     onSelectSlot,
     onEventDrop,
-}: CalendarViewProps)
-{
+}: CalendarViewProps) {
     return (
         <DnDCalendar
             className="relative grow h-full"
-            components={ { event: BluzEventComponent } }
-            defaultView={ Views.WEEK }
-            draggableAccessor={ (e) => !e.locked }
-            endAccessor={ (e) => (e.endTime as Dayjs).toDate() }
-            events={ events }
-            formats={ { timeGutterFormat: "HH:mm" } }
-            localizer={ localizer }
-            max={ new Date(2025, 0, 1, 22, 0) }
-            messages={ CALENDAR_MESSAGES }
-            min={ new Date(2025, 0, 1, 7, 0) }
-            onDoubleClickEvent={ onDoubleClickEvent }
-            onEventDrop={ onEventDrop }
-            onEventResize={ onEventDrop }
-            onNavigate={ onNavigate }
-            onSelectEvent={ onSelectEvent }
-            onSelectSlot={ onSelectSlot }
-            onView={ onView }
-            resizableAccessor={ (e) => !e.locked }
-            resourceAccessor={ (event: Event) => event.rooms }
+            components={{ event: BluzEventComponent }}
+            defaultView={Views.WEEK}
+            draggableAccessor={(e) => !e.locked}
+            endAccessor={(e) => (e.endTime as Dayjs).toDate()}
+            events={events}
+            formats={{ timeGutterFormat: "HH:mm" }}
+            localizer={localizer}
+            max={new Date(2025, 0, 1, 22, 0)}
+            messages={CALENDAR_MESSAGES}
+            min={new Date(2025, 0, 1, 7, 0)}
+            onDoubleClickEvent={onDoubleClickEvent}
+            onEventDrop={onEventDrop}
+            onEventResize={onEventDrop}
+            onNavigate={onNavigate}
+            onSelectEvent={onSelectEvent}
+            onSelectSlot={onSelectSlot}
+            onView={onView}
+            resizableAccessor={(e) => !e.locked}
+            resourceAccessor={(event: Event) => event.rooms}
             resourceIdAccessor="id"
             // Resource logic
-            resources={ currentView === Views.DAY ? rooms : undefined }
+            resources={currentView === Views.DAY ? rooms : undefined}
             resourceTitleAccessor="name"
-            rtl={ true }
+            rtl={true}
             selectable
-            startAccessor={ (e) => (e.startTime as Dayjs).toDate() }
-            step={ 5 }
-            style={ { height: "unset" } }
-            timeslots={ 12 }
-            views={ { day: true, week: true, work_week: CustomWorkWeek } }
+            startAccessor={(e) => (e.startTime as Dayjs).toDate()}
+            step={5}
+            style={{ height: "unset" }}
+            timeslots={12}
+            views={{ day: true, week: true, work_week: CustomWorkWeek }}
         />
     );
 }

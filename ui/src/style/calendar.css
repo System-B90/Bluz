@@ -197,7 +197,9 @@ button.rbc-input::-moz-focus-inner {
 }
 .rbc-event,
 .rbc-slot-selection {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
   background-color: hsl(var(--primary));
   color: hsl(var(--foreground));
   padding: 3px;
@@ -208,12 +210,17 @@ button.rbc-input::-moz-focus-inner {
   outline-width: 0;
 
   cursor: grab;
-  transition: transform 0.2s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.2s cubic-bezier(0.165, 0.84, 0.44, 1), outline-width 0.2s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.165, 0.84, 0.44, 1),
+    box-shadow 0.2s cubic-bezier(0.165, 0.84, 0.44, 1),
+    outline-width 0.2s ease;
 }
 
 .rbc-event:hover {
   transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.15),
+    0 4px 6px rgba(0, 0, 0, 0.08);
   z-index: 50 !important;
 }
 
@@ -255,7 +262,8 @@ button.rbc-input::-moz-focus-inner {
 }
 
 @keyframes selected-pulse {
-  0%, 100% {
+  0%,
+  100% {
     outline-offset: 0px;
     outline-color: rgba(99, 102, 241, 0.85);
     box-shadow: 0 0 0 0px rgba(99, 102, 241, 0.4);
@@ -745,6 +753,7 @@ button.rbc-input::-moz-focus-inner {
   width: 100%;
   border-top: 2px solid hsl(var(--border));
   overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
 }
 

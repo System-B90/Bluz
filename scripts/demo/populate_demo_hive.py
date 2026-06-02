@@ -8,10 +8,10 @@ from random import randint, shuffle
 # Force UTF-8 stdout/stderr to avoid charmap encoding errors on Windows
 if sys.platform.startswith("win"):
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-import httpx
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
 import tqdm
 from dotenv import load_dotenv
 from pyhive import HiveClient
