@@ -4,16 +4,15 @@ import {
     Chip,
     FormControl,
     InputLabel,
-    MenuItem,
-    Select,
     SelectChangeEvent,
 } from "@mui/material";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
+import { InstructorSelect } from "@/components/base/InstructorSelect";
 
 export function FilterInstructors({ ...props }: BoxProps) {
-    const { instructors, getInstructor } = useHiveUsers();
+    const { getInstructor } = useHiveUsers();
     const { filteredInstructors, setFilteredInstructors } = useCalendarFilters();
 
     const handleChange = (
@@ -38,7 +37,7 @@ export function FilterInstructors({ ...props }: BoxProps) {
         <Box {...props}>
             <FormControl fullWidth={true} size="small">
                 <InputLabel size="small">סינון לפי מדריכים</InputLabel>
-                <Select
+                <InstructorSelect
                     label="סינון לפי מדריכים"
                     multiple
                     onChange={handleChange}
@@ -65,13 +64,7 @@ export function FilterInstructors({ ...props }: BoxProps) {
                     )}
                     size="small"
                     value={filteredInstructors}
-                >
-                    {instructors.map((instructor) => (
-                        <MenuItem key={instructor.id} value={instructor.id}>
-                            {instructor.display_name}
-                        </MenuItem>
-                    ))}
-                </Select>
+                />
             </FormControl>
         </Box>
     );

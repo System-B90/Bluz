@@ -8,7 +8,7 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { Box, Chip, Collapse, IconButton, InputBase, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
 import { MuiColorInput, MuiColorInputColors, MuiColorInputProps } from "mui-color-input";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Course } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
@@ -40,6 +40,9 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
     // Instructor Quick-Add Menu State
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const isMenuOpen = Boolean(anchorEl);
+    
+    // Debounce for color picker to avoid server commits on every pixel change
+    const colorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Filter children courses
     const subCourses = allCourses.filter((c) => c.parentId === course.id);
@@ -97,7 +100,12 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
         (value: string, colors: MuiColorInputColors) => {
             const hex = colors.hex;
             setColor(hex);
-            void updateCoursePartial(course.id, { color: hex });
+            if (colorTimeoutRef.current) {
+                clearTimeout(colorTimeoutRef.current);
+            }
+            colorTimeoutRef.current = setTimeout(() => {
+                void updateCoursePartial(course.id, { color: hex });
+            }, 600);
         },
         [course.id, updateCoursePartial],
     );
@@ -206,8 +214,8 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
                     {/* Color Input Dot */}
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                         <MuiColorInput
-                            dir="ltr"
                             format="hex"
+                            PopoverProps={{ sx: { direction: "ltr" } }}
                             fullWidth={false}
                             isAlphaHidden
                             onChange={handleColorChange}
@@ -275,7 +283,7 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
                                 alignItems="center"
                                 display="flex"
                                 gap={0.5}
-                                sx={{ minWidth: 0, "&:hover svg": { opacity: 1 } }}
+                                sx={{ flexGrow: 1, minWidth: 0, "&:hover svg": { opacity: 1 } }}
                             >
                                 <Typography
                                     noWrap
@@ -287,6 +295,7 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
                                         color: "text.primary",
                                         overflow: "hidden",
                                         textOverflow: "ellipsis",
+                                        flexGrow: 1,
                                     }}
                                 >
                                     {title}

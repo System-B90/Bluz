@@ -4,14 +4,13 @@ import {
     Chip,
     FormControl,
     InputLabel,
-    ListSubheader,
     MenuItem,
-    Select,
     SelectChangeEvent,
 } from "@mui/material";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
+import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { EventType } from "@/components/schedule/types/event";
 
@@ -23,27 +22,11 @@ type LecturerSelectionFieldProps = {
 function LecturerSelectionField({
     event,
     onBlurCallback,
-    selectedInstructors = [],
+    selectedInstructors: _selectedInstructors = [],
     ...props
 }: LecturerSelectionFieldProps) {
-    const { instructors, getInstructor } = useHiveUsers();
-    const [currentLecturers, setCurrentLecturers] = useState(
-        event?.lecturers ?? [],
-    );
-
-    const { selectedList, remainingList } = useMemo(() => {
-        const selectedSet = new Set(selectedInstructors);
-        const selected: typeof instructors = [];
-        const remaining: typeof instructors = [];
-        for (const instructor of instructors) {
-            if (selectedSet.has(instructor.id)) {
-                selected.push(instructor);
-            } else {
-                remaining.push(instructor);
-            }
-        }
-        return { selectedList: selected, remainingList: remaining };
-    }, [instructors, selectedInstructors]);
+    const { getInstructor } = useHiveUsers();
+    const currentLecturers = event?.lecturers ?? [];
 
     const handleChange = useCallback(
         (ev: SelectChangeEvent<typeof currentLecturers>) => {
@@ -59,29 +42,23 @@ function LecturerSelectionField({
                         .map((v) => (v === "איש חוץ" ? "איש חוץ" : Number(v)))
                     : value;
 
-            setCurrentLecturers(newIds);
+            onBlurCallback({ ...event, lecturers: newIds });
         },
-        [],
+        [event, onBlurCallback],
     );
 
     const handleDelete = useCallback((idToDelete: number | string) => {
-        setCurrentLecturers((prev) =>
-            (prev ?? []).filter((id) => id !== idToDelete),
-        );
-    }, []);
-
-    const handleBlur = useCallback(() => {
-        onBlurCallback({ ...event, lecturers: currentLecturers });
-    }, [event, currentLecturers, onBlurCallback]);
+        const newIds = (event?.lecturers ?? []).filter((id) => id !== idToDelete);
+        onBlurCallback({ ...event, lecturers: newIds });
+    }, [event, onBlurCallback]);
 
     return (
         <Box {...props}>
             <FormControl fullWidth={true}>
                 <InputLabel>מרצים</InputLabel>
-                <Select
+                <InstructorSelect
                     label="מרצים"
                     multiple
-                    onBlur={handleBlur}
                     onChange={handleChange}
                     renderValue={(selected) => (
                         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
@@ -117,41 +94,7 @@ function LecturerSelectionField({
                     >
                         איש חוץ
                     </MenuItem>
-                    {selectedList.length > 0 ? (
-                        [
-                            <ListSubheader disableSticky key="subheader-selected" sx={{ fontWeight: 'bold', lineHeight: '36px', color: 'primary.main', bgcolor: 'background.paper' }}>
-                                מבוזרים שנבחרו
-                            </ListSubheader>,
-                            ...selectedList.map((instructor) => (
-                                <MenuItem key={instructor.id} value={instructor.id}>
-                                    {instructor.display_name}
-                                </MenuItem>
-                            )),
-                            <ListSubheader disableSticky key="subheader-remaining" sx={{
-                                borderTopWidth: "0.2rem",
-                                borderTopStyle: "solid",
-                                borderTopColor: "hsl(var(--border))",
-                                fontWeight: 'bold',
-                                lineHeight: '36px',
-                                color: 'text.secondary',
-                                bgcolor: 'background.paper'
-                            }}>
-                                שאר הסגל
-                            </ListSubheader>,
-                            ...remainingList.map((instructor) => (
-                                <MenuItem key={instructor.id} value={instructor.id}>
-                                    {instructor.display_name}
-                                </MenuItem>
-                            ))
-                        ]
-                    ) : (
-                        instructors.map((instructor) => (
-                            <MenuItem key={instructor.id} value={instructor.id}>
-                                {instructor.display_name}
-                            </MenuItem>
-                        ))
-                    )}
-                </Select>
+                </InstructorSelect>
             </FormControl>
         </Box>
     );
@@ -161,10 +104,8 @@ export function InstructorsField({
     event,
     onBlurCallback,
 }: InstructorsFieldProps) {
-    const { instructors, getInstructor } = useHiveUsers();
-    const [currentInstructors, setCurrentInstructors] = useState<Array<number>>(
-        event?.instructors ?? [],
-    );
+    const { getInstructor } = useHiveUsers();
+    const currentInstructors = event?.instructors ?? [];
 
     const isLecture = useMemo(
         () => event?.type === EventType.LECTURE,
@@ -172,40 +113,33 @@ export function InstructorsField({
     );
 
     const handleChange = useCallback(
-        (event: SelectChangeEvent<typeof currentInstructors>) => {
+        (ev: SelectChangeEvent<typeof currentInstructors>) => {
             const {
                 target: { value },
-            } = event;
+            } = ev;
 
             // Handle potential string autofill values vs actual arrays
             const newIds =
                 typeof value === "string" ? value.split(",").map(Number) : value;
 
-            // Use functional update pattern for SetStateAction
-            setCurrentInstructors(newIds as Array<number>);
+            onBlurCallback({ ...event, instructors: newIds as Array<number> });
         },
-        [],
+        [event, onBlurCallback],
     );
 
     const handleDelete = useCallback((idToDelete: number) => {
-        setCurrentInstructors((prev) =>
-            (prev ?? []).filter((id) => id !== idToDelete),
-        );
-    }, []);
-
-    const handleBlur = useCallback(() => {
-        onBlurCallback({ ...event, instructors: currentInstructors });
-    }, [event, currentInstructors, onBlurCallback]);
+        const newIds = (event?.instructors ?? []).filter((id) => id !== idToDelete);
+        onBlurCallback({ ...event, instructors: newIds });
+    }, [event, onBlurCallback]);
 
     return (
         <Box alignItems={"flex-start"} display={"flex"} flexDirection={'row'} flexWrap={'nowrap'} width={"100%"}>
             <Box flexGrow={1}>
                 <FormControl fullWidth={true}>
                     <InputLabel>מבוזרים</InputLabel>
-                    <Select
+                    <InstructorSelect
                         label="מבוזרים"
                         multiple
-                        onBlur={handleBlur}
                         onChange={handleChange}
                         renderValue={(selected) => (
                             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
@@ -226,13 +160,7 @@ export function InstructorsField({
                             </Box>
                         )}
                         value={currentInstructors}
-                    >
-                        {instructors.map((instructor) => (
-                            <MenuItem key={instructor.id} value={instructor.id}>
-                                {instructor.display_name}
-                            </MenuItem>
-                        ))}
-                    </Select>
+                    />
                 </FormControl>
             </Box>
             <Box

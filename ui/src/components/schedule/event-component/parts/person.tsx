@@ -2,8 +2,7 @@ import assert from "assert";
 
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
-import
-{
+import {
     Box,
     BoxProps,
     ChipProps,
@@ -15,8 +14,7 @@ import { useMemo } from "react";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { shortenInstructorName } from "@/components/schedule/event-component/NameUtils";
-import
-{
+import {
     Event,
     EventType,
     getPresentInstructors,
@@ -44,12 +42,11 @@ export function PersonChip({
     instructorId,
     personData,
     event,
-}: { instructorId?: number; personData?: any; event: Event; })
-{
-    const { getInstructor } = useHiveUsers();
+}: { instructorId?: number; personData?: any; event: Event; }) {
+    const { getInstructor, instructors } = useHiveUsers();
     const instructor = useMemo(
         () => (instructorId ? getInstructor(instructorId) : personData),
-        [ instructorId, getInstructor, personData ],
+        [instructorId, getInstructor, personData],
     );
 
     assert(
@@ -63,18 +60,18 @@ export function PersonChip({
 
     const fullName: string =
         instructor?.display_name ?? personData ?? instructorId;
-    const shortName = typeof fullName === "string"
-        ? shortenInstructorName(fullName)
-        : fullName;
+    const shortName = useMemo(() => typeof fullName === "string"
+        ? shortenInstructorName(fullName, instructors.map((x) => x.display_name))
+        : fullName, [fullName, instructors]);
 
     return (
-        <Tooltip title={ fullName }>
+        <Tooltip title={fullName}>
             <Box
                 component="span"
-                sx={ tagSx(!!isLecturer) }
+                sx={tagSx(!!isLecturer)}
             >
                 <Link color="inherit" href="a" underline="hover">
-                    { shortName }
+                    {shortName}
                 </Link>
             </Box>
         </Tooltip>
@@ -89,9 +86,8 @@ export function InstructorsList({
 }: {
     event: Event;
     showCaption?: boolean;
-    chipSize?: ChipProps[ "size" ];
-} & BoxProps)
-{
+    chipSize?: ChipProps["size"];
+} & BoxProps) {
     const { showMisconfigurations } = useCalendarFilters();
     const presentInstructors = getPresentInstructors(event);
 
@@ -123,29 +119,29 @@ export function InstructorsList({
             display="flex"
             flexDirection="row"
             flexWrap="wrap"
-            gap={ 0.4 }
-            { ...props }
+            gap={0.4}
+            {...props}
         >
-            { showCaption ? <Tooltip title={ event.instructors.length === 1 ? "מבוזר" : "מבוזרים" }>
+            {showCaption ? <Tooltip title={event.instructors.length === 1 ? "מבוזר" : "מבוזרים"}>
                 <PersonOutlinedIcon
-                    sx={ { fontSize: "0.85rem", opacity: 0.6 } }
+                    sx={{ fontSize: "0.85rem", opacity: 0.6 }}
                 />
-            </Tooltip> : null }
-            { event.type === EventType.LECTURE &&
+            </Tooltip> : null}
+            {event.type === EventType.LECTURE &&
                 event.lecturers?.includes("איש חוץ") ? (
-                    <PersonChip
-                        event={ event }
-                        key="איש חוץ"
-                        personData="איש חוץ"
-                    />
-                ) : null }
-            { presentInstructors.map((instructor) => (
                 <PersonChip
-                    event={ event }
-                    instructorId={ instructor }
-                    key={ instructor }
+                    event={event}
+                    key="איש חוץ"
+                    personData="איש חוץ"
                 />
-            )) }
+            ) : null}
+            {presentInstructors.map((instructor) => (
+                <PersonChip
+                    event={event}
+                    instructorId={instructor}
+                    key={instructor}
+                />
+            ))}
         </Box>
     );
 }

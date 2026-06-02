@@ -59,7 +59,11 @@ export function EventTypeField({
     }, []);
 
     const onClose = useCallback(() => {
-        onBlurCallback({ type: latestTypeRef.current });
+        if (latestTypeRef.current !== EventType.LECTURE) {
+            onBlurCallback({ type: latestTypeRef.current, lecturers: [] });
+        } else {
+            onBlurCallback({ type: latestTypeRef.current });
+        }
     }, [onBlurCallback]);
 
     return (
