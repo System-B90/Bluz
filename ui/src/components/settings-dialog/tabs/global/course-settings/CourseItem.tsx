@@ -70,7 +70,6 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
     });
 
     const style = {
-        transform: transform ? CSS.Translate.toString(transform) : undefined,
         opacity: isDragging ? 0.4 : 1,
     };
 

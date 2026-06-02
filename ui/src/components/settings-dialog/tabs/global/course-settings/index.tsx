@@ -1,4 +1,4 @@
-import { defaultDropAnimationSideEffects, DndContext, DragEndEvent, DragOverlay, DragStartEvent, useDroppable } from "@dnd-kit/core";
+import { defaultDropAnimationSideEffects, DndContext, DragEndEvent, DragOverlay, DragStartEvent, Modifier, useDroppable } from "@dnd-kit/core";
 import AddIcon from "@mui/icons-material/Add";
 import LayersIcon from "@mui/icons-material/Layers";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
@@ -20,6 +20,22 @@ const dropAnimation = {
             },
         },
     }),
+};
+
+const dialogOffsetModifier: Modifier = ({ transform }) => {
+    if (typeof window !== "undefined") {
+        // Find the nearest Dialog containing block to compensate for the fixed positioning offset it introduces
+        const dialog = document.querySelector(".MuiDialog-paper");
+        if (dialog) {
+            const rect = dialog.getBoundingClientRect();
+            return {
+                ...transform,
+                x: transform.x - rect.left,
+                y: transform.y - rect.top,
+            };
+        }
+    }
+    return transform;
 };
 
 function InstructorDragOverlay({ activeId, instructors }: { activeId: string; instructors: any[] }) {
@@ -375,7 +391,7 @@ export function CourseSettings() {
                     </Box>
                 </Box>
             </Box>
-            <DragOverlay dropAnimation={dropAnimation}>
+            <DragOverlay dropAnimation={dropAnimation} modifiers={[dialogOffsetModifier]}>
                 {activeDrag ? (
                     activeDrag.type === "INSTRUCTOR" ? (
                         <InstructorDragOverlay activeId={activeDrag.id} instructors={instructors} />
