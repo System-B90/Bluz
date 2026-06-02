@@ -30,7 +30,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     return (
         <Dialog
             fullWidth
-            maxWidth="md"
+            maxWidth="lg"
             onClose={onClose}
             open={open}
             PaperProps={{

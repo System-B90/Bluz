@@ -27,3 +27,7 @@ services:
   curriculum-db:
     ports:
       - "127.0.0.3:5432:5432"
+
+  mongodb:
+    ports:
+      - "127.0.0.3:27018:27017"

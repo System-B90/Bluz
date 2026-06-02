@@ -5,6 +5,8 @@ export type Course = {
   id: CourseId;
   name: string;
   color: Color | null;
+  parentId?: null | string;
+  instructorIds?: Array<number>;
 };
 
 export type ApiCourseCreatePayload = Course;

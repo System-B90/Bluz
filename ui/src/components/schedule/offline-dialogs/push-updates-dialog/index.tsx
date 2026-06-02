@@ -218,7 +218,7 @@ export function PushOfflineUpdatesDialog() {
 
     return (
         <Dialog fullWidth maxWidth="lg" onClose={handleCancel} open={pushDialogOpen}>
-            <DialogTitle sx={{ fontWeight: 600 }}>שמירת שינויים לוקליים (מצב אופליין)</DialogTitle>
+            <DialogTitle sx={{ fontWeight: 600 }}>שמירת שינויים לוקליים</DialogTitle>
 
             <form onSubmit={submitHandler}>
                 <DialogContent sx={{ p: 3 }}>
@@ -246,7 +246,7 @@ export function PushOfflineUpdatesDialog() {
 
                 <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
                     {hasChanges ? <Button color="error" disabled={loading} onClick={handleRevert} variant="outlined">
-                            שחזר הכל
+                        שחזר הכל
                     </Button> : null}
                     <Button color="inherit" disabled={loading} onClick={handleCancel}>
                         ביטול (הישאר באופליין)

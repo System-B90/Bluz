@@ -47,7 +47,7 @@ function LayoutContent({
                 {children}
             </Box>
 
-            {offlineMode ? <Tooltip placement="right" title="מצב עריכה לוקלי (אופליין) פעיל">
+            {offlineMode ? <Tooltip placement="right" title="מצב עריכה לוקלי פעיל">
                 <Fab
                     aria-label="offline-status"
                     color="warning"
@@ -85,7 +85,7 @@ function LayoutContent({
 export default function PostAuthLayout({
     children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
     const [openSettingsDialog, setOpenSettingsDialog] = useState<boolean>(false);
 
