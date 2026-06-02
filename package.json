@@ -12,6 +12,7 @@
     "db:generate": "drizzle-kit generate --config=drizzle/drizzle.config.ts",
     "db:push": "drizzle-kit push --config=drizzle/drizzle.config.ts",
     "db:studio": "drizzle-kit studio --config=drizzle/drizzle.config.ts",
+    "db:seed": "python scripts/demo/populate_demo_hive.py && npx tsx scripts/demo/populate_demo_bluz.ts",
     "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d && docker compose -f docker-compose.yml -f docker-compose.dev.yml watch ui",
     "docker:prod": "docker compose up -d --build",
     "docker:down": "docker compose down",

@@ -1,0 +1,133 @@
+{
+  "segel": [
+    {
+      "id": 435,
+      "username": "api",
+      "first_name": "Api",
+      "last_name": "Account"
+    },
+    {
+      "id": 442,
+      "username": "test-itair",
+      "first_name": "איתי",
+      "last_name": "רגב"
+    },
+    {
+      "id": 440,
+      "username": "test-davida",
+      "first_name": "דוד",
+      "last_name": "אברהמי"
+    },
+    {
+      "id": 443,
+      "username": "test-danaf",
+      "first_name": "דנה",
+      "last_name": "פרידמן"
+    },
+    {
+      "id": 437,
+      "username": "test-yuvalb",
+      "first_name": "יובל",
+      "last_name": "ברוורמן"
+    },
+    {
+      "id": 438,
+      "username": "test-mayag",
+      "first_name": "מאיה",
+      "last_name": "גבע"
+    },
+    {
+      "id": 436,
+      "username": "test-michaelks",
+      "first_name": "מיכאל",
+      "last_name": "שטיינברג"
+    },
+    {
+      "id": 439,
+      "username": "test-noag",
+      "first_name": "נועה",
+      "last_name": "גולן"
+    },
+    {
+      "id": 441,
+      "username": "test-ronis",
+      "first_name": "רוני",
+      "last_name": "סגל"
+    }
+  ],
+  "subjects": [
+    {
+      "id": 61,
+      "name": "עד מתי",
+      "symbol": "ע",
+      "color": "#1F1229"
+    },
+    {
+      "id": 60,
+      "name": "סעמק",
+      "symbol": "ס",
+      "color": "#1F1229"
+    },
+    {
+      "id": 63,
+      "name": "פרויקטים",
+      "symbol": "פ",
+      "color": "#1F1229"
+    },
+    {
+      "id": 62,
+      "name": "עבודות רסר",
+      "symbol": "ר",
+      "color": "#1F1229"
+    }
+  ],
+  "modules": [
+    {
+      "id": 96,
+      "name": "התחפשנות חוד",
+      "parent_subject_id": 61
+    },
+    {
+      "id": 97,
+      "name": "שנץ",
+      "parent_subject_id": 61
+    },
+    {
+      "id": 98,
+      "name": "טאטוא עלים",
+      "parent_subject_id": 62
+    },
+    {
+      "id": 99,
+      "name": "ניקוי שירותים",
+      "parent_subject_id": 62
+    },
+    {
+      "id": 100,
+      "name": "שטיפת רצפות",
+      "parent_subject_id": 62
+    }
+  ],
+  "rooms": [
+    {
+      "id": 40,
+      "name": "גבעתיים"
+    },
+    {
+      "id": 42,
+      "name": "ים המלח"
+    },
+    {
+      "id": 41,
+      "name": "פתח תקווה"
+    },
+    {
+      "id": 39,
+      "name": "רמת גן"
+    },
+    {
+      "id": 38,
+      "name": "תל אביב"
+    }
+  ]
+}
