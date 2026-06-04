@@ -1,4 +1,4 @@
-// Settings Dialog redesigned with modern UI/UX, vertical sidebar, and auto-saving optimistic states.
+import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import CloseIcon from "@mui/icons-material/Close";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -12,6 +12,7 @@ import { useState } from "react";
 
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
 import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalSettings";
+import { RoomSettings } from "@/components/settings-dialog/tabs/global/RoomSettings";
 import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
 
 type SettingsDialogProps = {
@@ -25,6 +26,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     const tabs = [
         { label: "אישי", icon: <PersonIcon />, value: 0 },
         { label: "כללי", icon: <SettingsIcon />, value: 1 },
+        { label: "חדרים", icon: <MeetingRoomIcon />, value: 2 },
     ];
 
     return (
@@ -219,6 +221,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                     >
                         {tab === 0 && <PersonalSettings />}
                         {tab === 1 && <GlobalSettings />}
+                        {tab === 2 && <RoomSettings />}
                     </Box>
                 </Box>
             </Box>

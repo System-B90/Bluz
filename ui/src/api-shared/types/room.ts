@@ -60,3 +60,13 @@ export function roomToKey(room: RoomLike): string {
 
 export type ApiRoomsGetPayload = void;
 export type ApiRoomsGetResponse = Array<Room>;
+
+export type ApiRoomCreatePayload = CustomRoom;
+export type ApiRoomCreateResponse = CustomRoom;
+
+export type ApiRoomUpdatePayload = CustomRoom;
+export type ApiRoomUpdateResponse = CustomRoom;
+
+export type ApiRoomDeletePayload = CustomRoom["id"];
+export type ApiRoomDeleteResponse = void;
+
