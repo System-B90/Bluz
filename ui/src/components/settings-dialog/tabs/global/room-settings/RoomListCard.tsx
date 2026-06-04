@@ -3,8 +3,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import { Box, Button, InputAdornment, List, TextField, Typography } from "@mui/material";
 
 import { Room } from "@/api-shared/types/room";
-import { RoomListHeader } from "./RoomListHeader";
-import { RoomListItem } from "./RoomListItem";
+import { RoomListHeader } from "@/components/settings-dialog/tabs/global/room-settings/RoomListHeader";
+import { RoomListItem } from "@/components/settings-dialog/tabs/global/room-settings/RoomListItem";
 
 type RoomListCardProps = {
     filteredRooms: Array<Room>;

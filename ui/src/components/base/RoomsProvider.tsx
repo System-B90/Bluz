@@ -1,34 +1,34 @@
 "use client";
 import { enqueueSnackbar } from "notistack";
 import
-    {
-        createContext,
-        useCallback,
-        useContext,
-        useEffect,
-        useMemo,
-        useReducer,
-    } from "react";
+{
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useReducer,
+} from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
-    {
-        apiCreateRoom,
-        apiDeleteRoom,
-        apiGetRooms,
-        apiUpdateRoom,
-        apiUpdateRoomExtendedInfo,
-    } from "@/api-client/rooms";
+{
+    apiCreateRoom,
+    apiDeleteRoom,
+    apiGetRooms,
+    apiUpdateRoom,
+    apiUpdateRoomExtendedInfo,
+} from "@/api-client/rooms";
 import
-    {
-        CustomRoom,
-        HiveRoom,
-        Room,
-        RoomExtendedInfo,
-        RoomId,
-        RoomLike,
-        RoomSource
-    } from "@/api-shared/types/room";
+{
+    CustomRoom,
+    HiveRoom,
+    Room,
+    RoomExtendedInfo,
+    RoomId,
+    RoomLike,
+    RoomSource
+} from "@/api-shared/types/room";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { MessageHandlerType } from "@/components/SessionWs";
 import { MessageTypes } from "@/settings";
@@ -58,7 +58,6 @@ type RoomsState = {
     hiveRooms: Record<number, HiveRoom>;
     isLoading: boolean;
 };
-
 type RoomsAction =
     | { type: "ADD_CUSTOM_ROOM"; payload: CustomRoom }
     | { type: "DELETE_CUSTOM_ROOM"; payload: string }

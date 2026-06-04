@@ -1,11 +1,12 @@
-import { Room, RoomSource } from "@/api-shared/types/room";
-import { HiveLogo } from "@/components/base/HiveLogo";
-import { RoomExtendedInfoChip } from "@/components/settings-dialog/tabs/global/room-settings/RoomExtendedInfoChip";
 import ComputerIcon from "@mui/icons-material/Computer";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import EventSeatIcon from "@mui/icons-material/EventSeat";
 import { Box, Chip, IconButton, ListItem, ListItemText, Tooltip, Typography } from "@mui/material";
+
+import { Room, RoomSource } from "@/api-shared/types/room";
+import { HiveLogo } from "@/components/base/HiveLogo";
+import { RoomExtendedInfoChip } from "@/components/settings-dialog/tabs/global/room-settings/RoomExtendedInfoChip";
 
 type RoomListItemProps = {
     room: Room;
@@ -55,13 +56,11 @@ export function RoomListItem({ room, isActive, onPopulateForm, onDelete }: RoomL
                             </IconButton>
                         </Tooltip>
                     )}
-                    {isHive && (
-                        <Tooltip title="חדר הייב">
-                            <Box sx={{ display: "flex", alignItems: "center", mr: 0.5 }}>
-                                <HiveLogo size={18} />
-                            </Box>
-                        </Tooltip>
-                    )}
+                    {isHive ? <Tooltip title="חדר הייב">
+                        <Box sx={{ display: "flex", alignItems: "center", mr: 0.5 }}>
+                            <HiveLogo size={18} />
+                        </Box>
+                    </Tooltip> : null}
                 </Box>
             }
             sx={{
@@ -99,21 +98,19 @@ export function RoomListItem({ room, isActive, onPopulateForm, onDelete }: RoomL
                     >
                         <Box alignItems="center" display="flex" gap={1}>
                             <span>{room.name}</span>
-                            {isHive && (
-                                <Chip
-                                    icon={<HiveLogo size={12} />}
-                                    label="הייב"
-                                    size="small"
-                                    sx={{
-                                        height: 20,
-                                        fontSize: "0.65rem",
-                                        fontWeight: 700,
-                                        borderRadius: "6px",
-                                        "& .MuiChip-icon": { ml: 0.3 },
-                                    }}
-                                    variant="outlined"
-                                />
-                            )}
+                            {isHive ? <Chip
+                                icon={<HiveLogo size={12} />}
+                                label="הייב"
+                                size="small"
+                                sx={{
+                                    height: 20,
+                                    fontSize: "0.65rem",
+                                    fontWeight: 700,
+                                    borderRadius: "6px",
+                                    "& .MuiChip-icon": { ml: 0.3 },
+                                }}
+                                variant="outlined"
+                            /> : null}
                         </Box>
                     </Typography>
                 }
@@ -128,28 +125,24 @@ export function RoomListItem({ room, isActive, onPopulateForm, onDelete }: RoomL
                     >
                         <Box display="flex" flexDirection="column" gap={0.5} mt={0.5}>
                             <span>{room.description || "אין תיאור"}</span>
-                            {ext && (
-                                <Box display="flex" flexWrap="wrap" gap={0.5}>
-                                    {ext.workstationCount !== null && (
-                                        <RoomExtendedInfoChip
-                                            iconNode={<ComputerIcon sx={{ fontSize: "0.7rem !important" }} />}
-                                            label={`${ext.workstationCount} עמדות`}
-                                        />
-                                    )}
-                                    {ext.lectureSeatCount !== null && (
-                                        <RoomExtendedInfoChip
-                                            iconNode={<EventSeatIcon sx={{ fontSize: "0.7rem !important" }} />}
-                                            label={`${ext.lectureSeatCount} כסאות`}
-                                        />
-                                    )}
-                                    {ext.lectureComfortable && (
-                                        <RoomExtendedInfoChip
-                                            color="success"
-                                            label="נוח להרצאה ✓"
-                                        />
-                                    )}
-                                </Box>
-                            )}
+                            {ext ? <Box display="flex" flexWrap="wrap" gap={0.5}>
+                                {ext.workstationCount !== null && (
+                                    <RoomExtendedInfoChip
+                                        iconNode={<ComputerIcon sx={{ fontSize: "0.7rem !important" }} />}
+                                        label={`${ext.workstationCount} עמדות`}
+                                    />
+                                )}
+                                {ext.lectureSeatCount !== null && (
+                                    <RoomExtendedInfoChip
+                                        iconNode={<EventSeatIcon sx={{ fontSize: "0.7rem !important" }} />}
+                                        label={`${ext.lectureSeatCount} כסאות`}
+                                    />
+                                )}
+                                {ext.lectureComfortable ? <RoomExtendedInfoChip
+                                    color="success"
+                                    label="נוח להרצאה ✓"
+                                /> : null}
+                            </Box> : null}
                         </Box>
                     </Typography>
                 }
