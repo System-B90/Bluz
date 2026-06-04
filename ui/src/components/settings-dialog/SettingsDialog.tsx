@@ -12,12 +12,12 @@ import { useState } from "react";
 
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
 import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalSettings";
-import { RoomSettings } from "@/components/settings-dialog/tabs/global/RoomSettings";
+import { RoomSettings } from "@/components/settings-dialog/tabs/global/room-settings";
 import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
 
 type SettingsDialogProps = {
-  open: boolean;
-  onClose: () => void;
+    open: boolean;
+    onClose: () => void;
 };
 
 export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
@@ -48,7 +48,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
         >
             {/* Main Flex Container */}
             <Box display="flex" flexDirection="row" sx={{ minHeight: 480 }}>
-                
+
                 {/* Sidebar Navigation */}
                 <Box
                     sx={{
@@ -76,7 +76,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 fontFamily: "Assistant, sans-serif",
                             }}
                         >
-              הגדרות
+                            הגדרות
                         </Typography>
                         <Typography
                             sx={{
@@ -85,7 +85,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 mt: 0.5,
                             }}
                         >
-              ניהול העדפות המערכת
+                            ניהול העדפות המערכת
                         </Typography>
                     </Box>
 

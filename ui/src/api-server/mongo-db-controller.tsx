@@ -9,8 +9,13 @@ import {
     GanttModule,
     GanttSyllabus,
 } from "@/api-shared/types/gantt/models";
-import { CustomRoom } from "@/api-shared/types/room";
+import { CustomRoom, RoomExtendedInfo, RoomId, RoomSource } from "@/api-shared/types/room";
 import { Setting } from "@/api-shared/types/settings/settings";
+
+export type RoomExtendedInfoDocument = RoomExtendedInfo & {
+    roomId: RoomId;
+    roomSource: RoomSource;
+};
 
 const MONGO_CONNECTION_STRING =
   process.env.MONGO_CONNECTION_STRING ?? "mongodb://127.0.0.1:27017/";
@@ -26,6 +31,7 @@ class DatabaseController {
     private _syllabuses!: Collection<GanttSyllabus & BaseDbDocument>;
     private _modules!: Collection<GanttModule & BaseDbDocument>;
     private _moduleEvents!: Collection<GanttEvent & BaseDbDocument>;
+    private _roomExtendedInfo!: Collection<RoomExtendedInfoDocument>;
 
     constructor() {
         this.mongoClient = new MongoClient(MONGO_CONNECTION_STRING);
@@ -38,6 +44,7 @@ class DatabaseController {
         this._syllabuses = this.bluzDb.collection("syllabuses");
         this._modules = this.bluzDb.collection("modules");
         this._moduleEvents = this.bluzDb.collection("moduleEvents");
+        this._roomExtendedInfo = this.bluzDb.collection("roomExtendedInfo");
     }
 
     public get events(): Collection<DbEventDocument> {
@@ -63,6 +70,9 @@ class DatabaseController {
     }
     public get moduleEvents() {
         return this._moduleEvents;
+    }
+    public get roomExtendedInfo(): Collection<RoomExtendedInfoDocument> {
+        return this._roomExtendedInfo;
     }
 }
 
