@@ -1,5 +1,5 @@
-// Settings Dialog redesigned with modern UI/UX, vertical sidebar, and auto-saving optimistic states.
 import CloseIcon from "@mui/icons-material/Close";
+import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
@@ -12,11 +12,12 @@ import { useState } from "react";
 
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
 import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalSettings";
+import { RoomSettings } from "@/components/settings-dialog/tabs/global/room-settings";
 import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
 
 type SettingsDialogProps = {
-  open: boolean;
-  onClose: () => void;
+    open: boolean;
+    onClose: () => void;
 };
 
 export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
@@ -25,6 +26,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
     const tabs = [
         { label: "אישי", icon: <PersonIcon />, value: 0 },
         { label: "כללי", icon: <SettingsIcon />, value: 1 },
+        { label: "חדרים", icon: <MeetingRoomIcon />, value: 2 },
     ];
 
     return (
@@ -46,7 +48,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
         >
             {/* Main Flex Container */}
             <Box display="flex" flexDirection="row" sx={{ minHeight: 480 }}>
-                
+
                 {/* Sidebar Navigation */}
                 <Box
                     sx={{
@@ -74,7 +76,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 fontFamily: "Assistant, sans-serif",
                             }}
                         >
-              הגדרות
+                            הגדרות
                         </Typography>
                         <Typography
                             sx={{
@@ -83,7 +85,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 mt: 0.5,
                             }}
                         >
-              ניהול העדפות המערכת
+                            ניהול העדפות המערכת
                         </Typography>
                     </Box>
 
@@ -219,6 +221,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                     >
                         {tab === 0 && <PersonalSettings />}
                         {tab === 1 && <GlobalSettings />}
+                        {tab === 2 && <RoomSettings />}
                     </Box>
                 </Box>
             </Box>

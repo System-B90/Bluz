@@ -21,6 +21,7 @@ Route "127.0.0.3" to "bluz.bis" in your hosts file.
 
 ```pwsh
 pip install typer InquirerPy python-dotenv
+git config core.ignorecase false
 python setup.py
 npm run docker:dev
 ```

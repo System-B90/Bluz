@@ -8,7 +8,7 @@
 import { Dayjs } from "dayjs";
 import { CalendarProps, View, Views } from "react-big-calendar";
 
-import { Room } from "@/api-shared/types/room"; // Import the full Room type
+import { Room, roomToResolvable } from "@/api-shared/types/room"; // Import the full Room type and roomToResolvable
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
 import {
@@ -82,8 +82,8 @@ export function CalendarView({
             onSelectSlot={onSelectSlot}
             onView={onView}
             resizableAccessor={(e) => !e.locked}
-            resourceAccessor={(event: Event) => event.rooms}
-            resourceIdAccessor="id"
+            resourceAccessor={(event: Event) => event.rooms.map((room) => JSON.stringify(room))}
+            resourceIdAccessor={(room: Room) => JSON.stringify(roomToResolvable(room))}
             // Resource logic
             resources={currentView === Views.DAY ? rooms : undefined}
             resourceTitleAccessor="name"
