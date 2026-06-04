@@ -69,4 +69,3 @@ export type ApiRoomUpdateResponse = CustomRoom;
 
 export type ApiRoomDeletePayload = CustomRoom["id"];
 export type ApiRoomDeleteResponse = void;
-

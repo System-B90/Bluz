@@ -50,14 +50,13 @@ type RoomsState = {
     hiveRooms: Record<number, HiveRoom>;
     isLoading: boolean;
 };
-
 type RoomsAction =
+    | { type: "ADD_CUSTOM_ROOM"; payload: CustomRoom }
+    | { type: "DELETE_CUSTOM_ROOM"; payload: string }
+    | { type: "ROLLBACK_ROOMS"; payload: { custom: Record<string, CustomRoom>; hive: Record<number, HiveRoom> } }
     | { type: "SET_LOADING"; payload: boolean }
     | { type: "SET_ROOMS"; payload: { custom: Record<string, CustomRoom>; hive: Record<number, HiveRoom> } }
-    | { type: "ADD_CUSTOM_ROOM"; payload: CustomRoom }
-    | { type: "UPDATE_CUSTOM_ROOM"; payload: CustomRoom }
-    | { type: "DELETE_CUSTOM_ROOM"; payload: string }
-    | { type: "ROLLBACK_ROOMS"; payload: { custom: Record<string, CustomRoom>; hive: Record<number, HiveRoom> } };
+    | { type: "UPDATE_CUSTOM_ROOM"; payload: CustomRoom };
 
 function roomsReducer(state: RoomsState, action: RoomsAction): RoomsState {
     switch (action.type) {

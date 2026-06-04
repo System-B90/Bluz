@@ -21,8 +21,8 @@ import IconButton from "@mui/material/IconButton";
 import { useSnackbar } from "notistack";
 import React, { useMemo, useState } from "react";
 
-import { useRooms } from "@/components/base/RoomsProvider";
 import { CustomRoom, RoomSource } from "@/api-shared/types/room";
+import { useRooms } from "@/components/base/RoomsProvider";
 
 export function RoomSettings() {
     const { rooms, addRoom, updateRoom, deleteRoom } = useRooms();
@@ -179,15 +179,15 @@ export function RoomSettings() {
                             </InputAdornment>
                         ),
                     }}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="חפש חדר..."
                     size="small"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
                     sx={{
                         "& .MuiOutlinedInput-root": {
                             borderRadius: "10px",
                         },
                     }}
+                    value={searchQuery}
                 />
 
                 {/* Scrollable Room List */}
@@ -215,6 +215,36 @@ export function RoomSettings() {
                                 return (
                                     <ListItem
                                         key={room.id}
+                                        secondaryAction={
+                                            <Box display="flex" gap={0.5}>
+                                                <Tooltip title="ערוך">
+                                                    <IconButton
+                                                        edge="end"
+                                                        onClick={() => handleEdit(room)}
+                                                        size="small"
+                                                        sx={{
+                                                            color: "text.secondary",
+                                                            "&:hover": { color: "primary.main" },
+                                                        }}
+                                                    >
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="מחק">
+                                                    <IconButton
+                                                        edge="end"
+                                                        onClick={() => handleDelete(room.id)}
+                                                        size="small"
+                                                        sx={{
+                                                            color: "text.secondary",
+                                                            "&:hover": { color: "error.main" },
+                                                        }}
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </Box>
+                                        }
                                         sx={{
                                             border: "1px solid",
                                             borderColor: isEditing ? "primary.main" : "divider",
@@ -234,46 +264,16 @@ export function RoomSettings() {
                                                 boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
                                             },
                                         }}
-                                        secondaryAction={
-                                            <Box display="flex" gap={0.5}>
-                                                <Tooltip title="ערוך">
-                                                    <IconButton
-                                                        edge="end"
-                                                        size="small"
-                                                        onClick={() => handleEdit(room)}
-                                                        sx={{
-                                                            color: "text.secondary",
-                                                            "&:hover": { color: "primary.main" },
-                                                        }}
-                                                    >
-                                                        <EditIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="מחק">
-                                                    <IconButton
-                                                        edge="end"
-                                                        size="small"
-                                                        onClick={() => handleDelete(room.id)}
-                                                        sx={{
-                                                            color: "text.secondary",
-                                                            "&:hover": { color: "error.main" },
-                                                        }}
-                                                    >
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
-                                        }
                                     >
                                         <ListItemText
                                             primary={room.name}
-                                            secondary={room.description || "אין תיאור לחדר זה"}
                                             primaryTypographyProps={{
                                                 fontWeight: 700,
                                                 fontSize: "0.9rem",
                                                 fontFamily: "Assistant, sans-serif",
                                                 color: "text.primary",
                                             }}
+                                            secondary={room.description || "אין תיאור לחדר זה"}
                                             secondaryTypographyProps={{
                                                 fontSize: "0.75rem",
                                                 fontFamily: "Assistant, sans-serif",
@@ -349,42 +349,40 @@ export function RoomSettings() {
                 {/* Form Fields */}
                 <Box display="flex" flexDirection="column" gap={2.5}>
                     <TextField
-                        required
                         fullWidth
                         label="שם החדר"
-                        placeholder="לדוגמה: כיתת הדרכה 3"
-                        size="small"
-                        value={name}
                         onChange={(e) => setName(e.target.value)}
+                        placeholder="לדוגמה: כיתת הדרכה 3"
+                        required
+                        size="small"
                         sx={{
                             "& .MuiOutlinedInput-root": {
                                 borderRadius: "10px",
                             },
                         }}
+                        value={name}
                     />
                     <TextField
                         fullWidth
-                        multiline
-                        rows={3}
                         label="תיאור"
-                        placeholder="תיאור קצר, מיקום או פרטים נוספים..."
-                        size="small"
-                        value={description}
+                        multiline
                         onChange={(e) => setDescription(e.target.value)}
+                        placeholder="תיאור קצר, מיקום או פרטים נוספים..."
+                        rows={3}
+                        size="small"
                         sx={{
                             "& .MuiOutlinedInput-root": {
                                 borderRadius: "10px",
                             },
                         }}
+                        value={description}
                     />
                 </Box>
 
                 {/* Actions Row */}
                 <Box display="flex" gap={1.5} mt={1}>
                     <Button
-                        type="submit"
                         color={editingRoom ? "primary" : "secondary"}
-                        variant="contained"
                         sx={{
                             flex: 1,
                             borderRadius: "10px",
@@ -393,25 +391,25 @@ export function RoomSettings() {
                             fontSize: "0.82rem",
                             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
                         }}
+                        type="submit"
+                        variant="contained"
                     >
                         {editingRoom ? "עדכן חדר" : "צור חדר"}
                     </Button>
-                    {editingRoom && (
-                        <Button
-                            onClick={handleCancelEdit}
-                            variant="outlined"
-                            color="inherit"
-                            startIcon={<ClearIcon />}
-                            sx={{
-                                borderRadius: "10px",
-                                py: 1,
-                                fontWeight: 700,
-                                fontSize: "0.82rem",
-                            }}
-                        >
+                    {editingRoom ? <Button
+                        color="inherit"
+                        onClick={handleCancelEdit}
+                        startIcon={<ClearIcon />}
+                        sx={{
+                            borderRadius: "10px",
+                            py: 1,
+                            fontWeight: 700,
+                            fontSize: "0.82rem",
+                        }}
+                        variant="outlined"
+                    >
                             ביטול
-                        </Button>
-                    )}
+                    </Button> : null}
                 </Box>
             </Box>
         </Box>
