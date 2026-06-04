@@ -7,16 +7,23 @@
 
 "use client";
 
-import
-{
+import FilterListIcon from "@mui/icons-material/FilterList";
+import FullscreenIcon from "@mui/icons-material/Fullscreen";
+import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import { Box, IconButton, Tooltip } from "@mui/material";
+import {
     Dispatch,
     SetStateAction,
     useCallback,
     useEffect,
+    useMemo,
     useState,
 } from "react";
 import { View, Views } from "react-big-calendar";
 
+import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
 import { CalendarView } from "@/components/schedule/calendar/calendar/CalendarView";
 import { useCalendarHandlers } from "@/components/schedule/calendar/calendar/UseCalendarHandlers";
@@ -26,7 +33,7 @@ import { Event } from "@/components/schedule/types/event";
 
 type BluzCalendarProps = {
     handleSaveEvent: (event: Event) => void;
-    handleDeleteEvent: (eventId: Event[ "id" ]) => void;
+    handleDeleteEvent: (eventId: Event["id"]) => void;
     setOpenEventDialog: (open: boolean) => void;
     setSelectedEvent: Dispatch<SetStateAction<Partial<Event> | undefined>>;
     events: Array<Event>;
@@ -38,13 +45,35 @@ export function BluzCalendar({
     setOpenEventDialog,
     setSelectedEvent,
     events,
-}: BluzCalendarProps)
-{
-    const [ mounted, setMounted ] = useState(false);
-    const [ currentView, setCurrentView ] = useState<View>(Views.WEEK);
+}: BluzCalendarProps) {
+    const [mounted, setMounted] = useState(false);
+    const [currentView, setCurrentView] = useState<View>(Views.WEEK);
+    const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
+    const [showToolbar, setShowToolbar] = useState<boolean>(true);
+    const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
     const { rooms } = useRooms();
     const { setStartDate, setEndDate } = useCalendar();
+    const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } = useCalendarFilters();
+
+    const hasAnyFilter = useMemo(
+        () =>
+            hidePrayers ||
+            filteredCourses.length !== 0 ||
+            filteredInstructors.length !== 0 ||
+            showPAsFor !== null,
+        [filteredCourses, filteredInstructors, showPAsFor, hidePrayers],
+    );
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && isFullscreen) {
+                setIsFullscreen(false);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isFullscreen]);
 
     const { handleEventDrag, handleSlotSelect, setActiveEvent } =
         useCalendarHandlers(
@@ -56,64 +85,215 @@ export function BluzCalendar({
         );
 
     // Only render the calendar after the component has mounted on the client.
-    useEffect(() =>
-    {
+    useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 
-    const updateDateRange = useCallback((date: Date, view: View) =>
-    {
+    const updateDateRange = useCallback((date: Date, view: View) => {
         const { start, end } = getRangeForView(date, view);
         console.log('Updating date range:', start, end, 'for view:', view, ' from: ', date);
         setStartDate(start);
         setEndDate(end);
-    }, [ setStartDate, setEndDate ]);
+    }, [setStartDate, setEndDate]);
 
-    const onNavigate = useCallback((newDate: Date, view: View) =>
-    {
-        console.log('newDate: ', newDate, 'view: ', view);
-        updateDateRange(newDate, view);
-    }, [ updateDateRange ]);
+    const onNavigate = useCallback((newDate: Date) => {
+        console.log('newDate: ', newDate);
+        setCurrentDate(newDate);
+    }, []);
 
-    useEffect(() =>
-    {
-        updateDateRange(new Date(), currentView);
-    }, [ currentView, updateDateRange ]);
+    useEffect(() => {
+        updateDateRange(currentDate, currentView);
+    }, [currentDate, currentView, updateDateRange]);
 
     const handleEditEvent = useCallback(
-        (event: Event) =>
-        {
+        (event: Event) => {
             setSelectedEvent(event);
             setOpenEventDialog(true);
         },
-        [ setSelectedEvent, setOpenEventDialog ],
+        [setSelectedEvent, setOpenEventDialog],
     );
 
-    const handleSelectEvent = useCallback((event: Event) =>
-    {
+    const handleSelectEvent = useCallback((event: Event) => {
         setActiveEvent(event);
         setSelectedEvent(event);
-    }, [ setSelectedEvent, setActiveEvent ]);
+    }, [setSelectedEvent, setActiveEvent]);
 
-    if (!mounted)
-    {
+    if (!mounted) {
         return (
             <div className="grow h-full bg-slate-50/50 animate-pulse" />
         );
     }
 
     return (
-        <CalendarView
-            currentView={ currentView }
-            events={ events }
-            onDoubleClickEvent={ handleEditEvent }
-            onEventDrop={ handleEventDrag }
-            onNavigate={ onNavigate }
-            onSelectEvent={ handleSelectEvent }
-            onSelectSlot={ handleSlotSelect }
-            onView={ setCurrentView }
-            rooms={ rooms }
-        />
+        <Box
+            sx={isFullscreen ? {
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100vh",
+                zIndex: 9999,
+                bgcolor: "background.paper",
+                p: 2,
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                animation: "fullscreen-enter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+                "@keyframes fullscreen-enter": {
+                    "0%": {
+                        transform: "scale(0.95)",
+                        opacity: 0,
+                    },
+                    "100%": {
+                        transform: "scale(1)",
+                        opacity: 1,
+                    }
+                }
+            } : {
+                position: "relative",
+                height: "100%",
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                transition: "all 0.2s ease-in-out",
+            }}
+        >
+            {/* Floating controls in top-left corner (only when toolbar is hidden / in fullscreen) */}
+            {(isFullscreen || !showToolbar) ? (
+                <Box
+                    style={{
+                        position: "absolute",
+                        top: 12,
+                        left: 16,
+                    }}
+                    sx={{
+                        zIndex: 100,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                        bgcolor: "background.paper",
+                        borderRadius: 1,
+                        p: 0.5,
+                        boxShadow: 2,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        transition: "all 0.2s ease-in-out",
+                        "&:hover": {
+                            boxShadow: 4,
+                            transform: "translateY(-1px)",
+                        },
+                    }}
+                >
+                    {/* Filter indicator */}
+                    {hasAnyFilter && (isFullscreen || !showToolbar) ? (
+                        <Tooltip title="יש סננים פעילים">
+                            <Box sx={{ display: "flex", alignItems: "center", color: "info.main", px: 0.5 }}>
+                                <FilterListIcon className="animate-pulse" fontSize="small" />
+                            </Box>
+                        </Tooltip>
+                    ) : null}
+
+                    {isFullscreen ? (
+                        <Tooltip title="צא ממסך מלא (Esc)">
+                            <IconButton
+                                onClick={() => setIsFullscreen(false)}
+                                size="small"
+                                sx={{
+                                    transition: "all 0.2s ease-in-out",
+                                    "&:hover": {
+                                        color: "primary.main",
+                                    },
+                                    "&:hover .MuiSvgIcon-root": {
+                                        animation: "pulse-expand 1.2s infinite ease-in-out",
+                                    },
+                                    "@keyframes pulse-expand": {
+                                        "0%, 100%": {
+                                            transform: "scale(1)",
+                                        },
+                                        "50%": {
+                                            transform: "scale(1.25)",
+                                        }
+                                    },
+                                    "&:active": {
+                                        transform: "scale(0.95)",
+                                    }
+                                }}
+                            >
+                                <FullscreenExitIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    ) : (
+                        <>
+                            <Tooltip title={showToolbar ? "הסתר סרגל כלים" : "הצג סרגל כלים"}>
+                                <IconButton
+                                    onClick={() => setShowToolbar(!showToolbar)}
+                                    size="small"
+                                    sx={{
+                                        transition: "all 0.2s ease-in-out",
+                                        "&:hover": {
+                                            transform: "scale(1.15)",
+                                            color: "primary.main",
+                                        },
+                                        "&:active": {
+                                            transform: "scale(0.95)",
+                                        }
+                                    }}
+                                >
+                                    {showToolbar ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="מסך מלא">
+                                <IconButton
+                                    onClick={() => setIsFullscreen(true)}
+                                    size="small"
+                                    sx={{
+                                        transition: "all 0.2s ease-in-out",
+                                        "&:hover": {
+                                            color: "primary.main",
+                                        },
+                                        "&:hover .MuiSvgIcon-root": {
+                                            animation: "pulse-expand 1.2s infinite ease-in-out",
+                                        },
+                                        "@keyframes pulse-expand": {
+                                            "0%, 100%": {
+                                                transform: "scale(1)",
+                                            },
+                                            "50%": {
+                                                transform: "scale(1.25)",
+                                            }
+                                        },
+                                        "&:active": {
+                                            transform: "scale(0.95)",
+                                        }
+                                    }}
+                                >
+                                    <FullscreenIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </>
+                    )}
+
+                </Box>
+            ) : null}
+
+            <CalendarView
+                currentView={currentView}
+                date={currentDate}
+                events={events}
+                onDoubleClickEvent={handleEditEvent}
+                onEventDrop={handleEventDrag}
+                onNavigate={onNavigate}
+                onSelectEvent={handleSelectEvent}
+                onSelectSlot={handleSlotSelect}
+                onToggleFullscreen={() => setIsFullscreen(true)}
+                onToggleToolbar={() => setShowToolbar(!showToolbar)}
+                onView={setCurrentView}
+                rooms={rooms}
+                showToolbar={showToolbar && !isFullscreen ? true : false}
+            />
+        </Box>
     );
 }

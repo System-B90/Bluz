@@ -10,6 +10,7 @@ import { CalendarProps, View, Views } from "react-big-calendar";
 
 import { Room } from "@/api-shared/types/room"; // Import the full Room type
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
+import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
 import {
     DnDCalendar,
     localizer,
@@ -22,29 +23,48 @@ type CalendarViewProps = {
     events: Array<Event>;
     rooms: Array<Room>;
     currentView: View;
+    date: Date;
+    showToolbar: boolean;
     onView: (view: View) => void;
     onNavigate: CalendarProps["onNavigate"];
     onSelectEvent: (event: Event) => void;
     onDoubleClickEvent: (event: Event) => void;
     onSelectSlot: (slotInfo: any) => void;
     onEventDrop: (args: any) => void;
+    onToggleFullscreen: () => void;
+    onToggleToolbar: () => void;
 };
 
 export function CalendarView({
     events,
     rooms,
     currentView,
+    date,
+    showToolbar,
     onView,
     onNavigate,
     onSelectEvent,
     onDoubleClickEvent,
     onSelectSlot,
     onEventDrop,
+    onToggleFullscreen,
+    onToggleToolbar,
 }: CalendarViewProps) {
     return (
         <DnDCalendar
             className="relative grow h-full"
-            components={{ event: BluzEventComponent }}
+            components={{ 
+                event: BluzEventComponent, 
+                toolbar: (props: any) => (
+                    <CalendarToolbar 
+                        {...props} 
+                        onToggleFullscreen={onToggleFullscreen} 
+                        onToggleToolbar={onToggleToolbar} 
+                        showToolbar={showToolbar}
+                    />
+                )
+            }}
+            date={date}
             defaultView={Views.WEEK}
             draggableAccessor={(e) => !e.locked}
             endAccessor={(e) => (e.endTime as Dayjs).toDate()}
@@ -71,8 +91,9 @@ export function CalendarView({
             selectable
             startAccessor={(e) => (e.startTime as Dayjs).toDate()}
             step={5}
-            style={{ height: "unset" }}
+            style={{ height: "100%" }}
             timeslots={12}
+            view={currentView}
             views={{ day: true, week: true, work_week: CustomWorkWeek }}
         />
     );
