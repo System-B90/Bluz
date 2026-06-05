@@ -36,12 +36,15 @@ function LoginWidget() {
 
     return (
         <Box
-            bgcolor={"hsl(var(--background))"}
-            border={"1px solid hsl(var(--border))"}
-            borderRadius={"12px"}
-            boxShadow={
-                "0 20px 25px -5px hsl(var(--foreground) / 0.1), 0 10px 10px -5px hsl(var(--foreground) / 0.04)"
+            bgcolor={"background.paper"}
+            border={"1px solid"}
+            borderColor={(theme) =>
+                theme.palette.mode === "light"
+                    ? "rgba(0,0,0,0.08)"
+                    : "rgba(255,255,255,0.08)"
             }
+            borderRadius={"20px"}
+            boxShadow={"0 24px 50px rgba(0,0,0,0.15)"}
             display={"flex"}
             flexDirection={"column"}
             gap={4}
@@ -103,7 +106,7 @@ export default function LoginPage() {
         <Box
             alignContent={"flex-start"}
             alignItems={"flex-start"}
-            bgcolor={"hsl(var(--background))"}
+            bgcolor={"background.default"}
             display={"flex"}
             height={"100vh"}
             justifyContent={"center"}

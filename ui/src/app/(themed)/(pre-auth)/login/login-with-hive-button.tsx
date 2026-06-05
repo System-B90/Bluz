@@ -51,7 +51,7 @@ export function LoginWithHive({
             {...props}
         >
             <Typography
-                color="textPrimary"
+                color="inherit"
                 fontSize={fontSize}
                 fontWeight={fontWeight}
             >

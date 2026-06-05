@@ -124,11 +124,28 @@ export function createFromPalette(paletteMode: "dark" | "light"): ThemeOptions {
                     },
                 },
             },
+            MuiDialog: {
+                styleOverrides: {
+                    paper: {
+                        borderRadius: "20px",
+                        overflow: "hidden",
+                        backgroundColor: paletteMode === "light" ? "#FFFFFF" : "#0C2237",
+                        backgroundImage: "none",
+                        boxShadow: "0 24px 50px rgba(0,0,0,0.15)",
+                        border: "1px solid",
+                        borderColor: paletteMode === "light" ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)",
+                    },
+                },
+            },
             MuiAppBar: {
                 styleOverrides: {
-                    colorDefault: {
-                        backgroundColor:
-              paletteMode === "light" ? "rgba(173,226,238,0.29)" : undefined,
+                    root: {
+                        backgroundColor: paletteMode === "light" ? "#FFFFFF" : "#0C2237",
+                        backgroundImage: "none",
+                        boxShadow: "none",
+                        borderBottom: "1px solid",
+                        borderColor: paletteMode === "light" ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)",
+                        color: paletteMode === "light" ? "#0D2336" : "#EBF7FA",
                     },
                 },
             },

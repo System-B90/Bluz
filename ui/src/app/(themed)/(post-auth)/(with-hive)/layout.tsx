@@ -29,7 +29,7 @@ function LayoutContent({
 
     return (
         <Box
-            bgcolor={"Background"}
+            bgcolor="background.default"
             display="flex"
             flexDirection="column"
             height="100vh"
