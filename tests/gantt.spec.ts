@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-import { SELECTORS, waitForAppLoad } from "./fixtures";
+import { SELECTORS, gotoAppHome, waitForAppLoad } from "./fixtures";
 
 /**
  * Gantt page integration tests.
@@ -219,21 +219,13 @@ test.describe("Gantt Page", () => {
     }) => {
         const appBar = page.locator(SELECTORS.appBar);
 
-        // Click the logo/title button to go back to schedule
-        const logoButton = appBar
-            .locator("button, a")
-            .filter({ hasText: "בלוז" });
-
-        if ((await logoButton.count()) > 0) {
-            await logoButton.first().click();
-            await page.waitForTimeout(1000);
-
-            // Should be back on the schedule page (root /)
-            const url = page.url();
-            const isSchedule =
-                url.endsWith("/") ||
-                !url.includes("/gantt");
-            expect(isSchedule).toBeTruthy();
-        }
+        const scheduleButton = appBar.locator(
+            "button:has(svg[data-testid='CalendarMonthIcon'])",
+        );
+        await expect(scheduleButton).toBeVisible();
+        await scheduleButton.click();
+        await expect(page.locator(SELECTORS.calendarRoot)).toBeVisible({
+            timeout: 60_000,
+        });
     });
 });

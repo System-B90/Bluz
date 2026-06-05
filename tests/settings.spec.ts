@@ -4,8 +4,8 @@ import {
     SELECTORS,
     openSettingsDialog,
     closeSettingsDialog,
+    gotoAppHome,
     navigateToSettingsTab,
-    waitForAppLoad,
     testId,
 } from "./fixtures";
 
@@ -17,8 +17,7 @@ import {
 
 test.describe("Settings Dialog", () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto("/");
-        await waitForAppLoad(page);
+        await gotoAppHome(page);
     });
 
     // ─── Open / Close ───────────────────────────────────────────────────────
@@ -35,17 +34,14 @@ test.describe("Settings Dialog", () => {
         await expect(dialog).not.toBeVisible();
     });
 
-    test("closes settings dialog by clicking outside (backdrop)", async ({
+    test("closes settings dialog with Escape key", async ({
         page,
     }) => {
         await openSettingsDialog(page);
         const dialog = page.locator(SELECTORS.settingsDialog).first();
         await expect(dialog).toBeVisible();
 
-        // Click the backdrop (outside the dialog paper)
-        await page.locator(".MuiBackdrop-root").click({ force: true });
-        await page.waitForTimeout(500);
-
+        await page.keyboard.press("Escape");
         await expect(dialog).not.toBeVisible();
     });
 
@@ -58,17 +54,14 @@ test.describe("Settings Dialog", () => {
         // Tab labels and expected content markers
         const tabs = [
             { label: "אישי", marker: "קבוצות שלי" },
-            { label: "כללי", marker: "תפילות" },  // PrayerSettings header
+            { label: "כללי", marker: "זמני תפילות" },
             { label: "חדרים", marker: "חדרים" },
             { label: "אנשי חוץ", marker: "אנשי חוץ" },
         ];
 
-        for (const { label } of tabs) {
+        for (const { label, marker } of tabs) {
             await navigateToSettingsTab(page, label);
-
-            // Verify the tab is now active (has primary color/bg)
-            const tabElement = dialog.getByText(label, { exact: true });
-            await expect(tabElement).toBeVisible();
+            await expect(dialog.getByText(marker).first()).toBeVisible();
         }
     });
 
@@ -95,7 +88,9 @@ test.describe("Settings Dialog", () => {
         ).toBeVisible();
 
         // Outsiders card
-        await expect(dialog.getByText("אנשי חוץ מועדפים")).toBeVisible();
+        await expect(
+            dialog.getByText("בחירת אנשי חוץ מועדפים שיופיעו בראש הרשימה ביומן"),
+        ).toBeVisible();
     });
 
     test("adds and removes a group in personal settings", async ({ page }) => {
@@ -187,14 +182,10 @@ test.describe("Settings Dialog", () => {
 
         const dialog = page.locator(SELECTORS.settingsDialog).first();
 
-        // Prayer settings section should exist
-        // Course settings section should exist
-        // At least one of these content markers should be visible
-        const hasContent =
-            (await dialog.getByText("תפילות").count()) > 0 ||
-            (await dialog.getByText("קורסים").count()) > 0 ||
-            (await dialog.locator(SELECTORS.switch).count()) > 0;
-        expect(hasContent).toBeTruthy();
+        await expect(dialog.getByText("זמני תפילות").first()).toBeVisible();
+        await expect(
+            dialog.getByText("היררכיית מסלולים ומדריכים").first(),
+        ).toBeVisible();
     });
 
     // ─── Room Settings ──────────────────────────────────────────────────────

@@ -9,6 +9,7 @@ import {
     Toolbar,
     Typography,
 } from "@mui/material";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -43,6 +44,8 @@ export function ScheduleAppBar({
                 <Box alignItems="center" display="flex" flexDirection={"row"} gap={1}>
                     <Button
                         color="inherit"
+                        component={Link}
+                        href="/"
                         startIcon={<Logo height={"2rem"} width={"2rem"} />}
                         variant="text"
                     >

@@ -6,12 +6,10 @@ import { test, expect } from "@playwright/test";
  */
 
 test.describe("Login Page", () => {
-    test.use({ storageState: { cookies: [], origins: [] } });
-
     test("renders the login page with logo, heading, and subtitle", async ({
         page,
     }) => {
-        await page.goto("/login");
+        await page.goto("/login", { waitUntil: "commit" });
 
         // Verify the main heading
         await expect(page.getByText("ברוכים הבאים לבלוז")).toBeVisible();
@@ -21,7 +19,7 @@ test.describe("Login Page", () => {
     });
 
     test("displays the Hive SSO login button", async ({ page }) => {
-        await page.goto("/login");
+        await page.goto("/login", { waitUntil: "commit" });
 
         // The LoginWithHive component renders a sign-in button
         const loginButton = page.locator("button, a").filter({
@@ -31,7 +29,7 @@ test.describe("Login Page", () => {
     });
 
     test("shows error alert for AccessDenied", async ({ page }) => {
-        await page.goto("/login?error=AccessDenied");
+        await page.goto("/login?error=AccessDenied", { waitUntil: "commit" });
 
         // Verify error alert renders
         await expect(page.getByText("ההתחברות נכשלה")).toBeVisible();
@@ -41,7 +39,7 @@ test.describe("Login Page", () => {
     });
 
     test("shows error alert for SessionRequired", async ({ page }) => {
-        await page.goto("/login?error=SessionRequired");
+        await page.goto("/login?error=SessionRequired", { waitUntil: "commit" });
 
         await expect(page.getByText("ההתחברות נכשלה")).toBeVisible();
         await expect(
@@ -50,7 +48,7 @@ test.describe("Login Page", () => {
     });
 
     test("shows error alert for OAuthCallback", async ({ page }) => {
-        await page.goto("/login?error=OAuthCallback");
+        await page.goto("/login?error=OAuthCallback", { waitUntil: "commit" });
 
         await expect(page.getByText("ההתחברות נכשלה")).toBeVisible();
         await expect(
@@ -59,7 +57,7 @@ test.describe("Login Page", () => {
     });
 
     test("shows generic error for unknown error codes", async ({ page }) => {
-        await page.goto("/login?error=SomethingWeird");
+        await page.goto("/login?error=SomethingWeird", { waitUntil: "commit" });
 
         await expect(page.getByText("ההתחברות נכשלה")).toBeVisible();
         await expect(
@@ -70,7 +68,7 @@ test.describe("Login Page", () => {
     test("redirects unauthenticated root access to login", async ({
         page,
     }) => {
-        await page.goto("/");
+        await page.goto("/", { waitUntil: "commit" });
 
         // Should redirect to /login
         await expect(page).toHaveURL(/\/login/);

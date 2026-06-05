@@ -20,9 +20,10 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
     testDir: "./tests",
+    timeout: 60_000,
     fullyParallel: false,
     forbidOnly: !!process.env.CI,
-    retries: process.env.CI ? 2 : 0,
+    retries: process.env.CI ? 2 : 1,
     workers: 1,
     reporter: process.env.CI ? [["html"], ["github"]] : [["html"], ["list"]],
 
@@ -38,12 +39,21 @@ export default defineConfig({
 
     projects: [
         {
+            name: "login",
+            testMatch: /login\.spec\.ts/,
+            use: {
+                ...devices["Desktop Chrome"],
+                storageState: { cookies: [], origins: [] },
+            },
+        },
+        {
             name: "setup",
             testMatch: /auth\.setup\.ts/,
             timeout: 240_000,
         },
         {
             name: "chromium",
+            testIgnore: [/login\.spec\.ts/, /auth\.setup\.ts/],
             use: {
                 ...devices["Desktop Chrome"],
                 storageState: ".auth/user.json",

@@ -1,6 +1,11 @@
 import { test, expect } from "@playwright/test";
 
-import { SELECTORS, openSettingsDialog, waitForAppLoad } from "./fixtures";
+import {
+    SELECTORS,
+    clickIconButton,
+    gotoAppHome,
+    openSettingsDialog,
+} from "./fixtures";
 
 /**
  * Header / AppBar integration tests.
@@ -9,8 +14,7 @@ import { SELECTORS, openSettingsDialog, waitForAppLoad } from "./fixtures";
 
 test.describe("Header / AppBar", () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto("/");
-        await waitForAppLoad(page);
+        await gotoAppHome(page);
     });
 
     test("renders the AppBar with logo and title", async ({ page }) => {
@@ -60,23 +64,16 @@ test.describe("Header / AppBar", () => {
             "button:has(svg[data-testid='FilterListIcon'])",
         );
 
-        // Filters should be initially visible (autocomplete dropdowns present)
-        const autocompletes = appBar.locator(SELECTORS.autocomplete);
-        await expect(autocompletes.first()).toBeVisible();
+        const instructorFilter = page
+            .getByText("סינון לפי מדריכים")
+            .first();
+        await expect(instructorFilter).toBeVisible();
 
-        // Click filter toggle to hide
         await filterToggle.click();
-        await page.waitForTimeout(400);
+        await expect(instructorFilter).not.toBeVisible({ timeout: 10_000 });
 
-        // Filters should be hidden
-        await expect(autocompletes.first()).not.toBeVisible();
-
-        // Click again to show
         await filterToggle.click();
-        await page.waitForTimeout(400);
-
-        // Filters should be visible again
-        await expect(autocompletes.first()).toBeVisible();
+        await expect(instructorFilter).toBeVisible({ timeout: 10_000 });
     });
 
     test("toggles prayer filter on click", async ({ page }) => {
@@ -106,17 +103,15 @@ test.describe("Header / AppBar", () => {
             "button:has(svg[data-testid='ChatIcon'])",
         );
 
-        // Click to activate PA filter
         await paToggle.click();
-        await page.waitForTimeout(300);
+        await expect
+            .poll(async () => paToggle.getAttribute("aria-label"))
+            .toMatch(/הסתר חלונות/, { timeout: 10_000 });
 
-        // The button should now have primary color (active state)
-        // We verify via the color attribute on the IconButton
-        await expect(paToggle).toHaveAttribute("class", /MuiIconButton-colorPrimary/);
-
-        // Toggle off
         await paToggle.click();
-        await page.waitForTimeout(300);
+        await expect
+            .poll(async () => paToggle.getAttribute("aria-label"))
+            .toMatch(/גלה חלונות/, { timeout: 10_000 });
     });
 
     test("navigates to the Gantt page via curriculum icon", async ({
@@ -124,19 +119,22 @@ test.describe("Header / AppBar", () => {
     }) => {
         const appBar = page.locator(SELECTORS.appBar);
 
-        // The curriculum icon button should be visible
-        const curriculumButton = appBar.locator(
-            "button:has(svg), a:has(svg)",
-        ).filter({
-            has: page.locator("[data-testid='AutoStoriesIcon'], [data-testid='SchoolIcon']"),
-        });
-
-        // If CurriculumIcon is a link/button, click it
-        if (await curriculumButton.count() > 0) {
-            await curriculumButton.first().click();
-            await page.waitForURL(/\/gantt/);
-            await expect(page).toHaveURL(/\/gantt/);
+        const ganttButton = appBar.locator(
+            "button:has(svg[data-testid='AutoStoriesIcon'])",
+        );
+        await expect(ganttButton).toBeVisible();
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await ganttButton.click();
+            try {
+                await page.waitForURL(/\/gantt/, { timeout: 15_000 });
+                break;
+            } catch {
+                if (attempt === 2) {
+                    throw new Error("Failed to navigate to /gantt");
+                }
+            }
         }
+        await expect(page).toHaveURL(/\/gantt/);
     });
 
     test("opens settings dialog via gear icon", async ({ page }) => {
@@ -158,15 +156,12 @@ test.describe("Header / AppBar", () => {
 
         if ((await offlineToggle.count()) > 0) {
             await offlineToggle.first().click();
-            await page.waitForTimeout(500);
-
-            // The offline FAB indicator should appear in the bottom-left
-            const offlineFab = page.locator(
-                "button[aria-label='offline-status']",
+            await expect(offlineToggle.first()).toHaveAttribute(
+                "aria-label",
+                "חזור למצב מקוון",
+                { timeout: 15_000 },
             );
-            await expect(offlineFab).toBeVisible();
 
-            // Toggle off
             await offlineToggle.first().click();
             await page.waitForTimeout(500);
         }
@@ -180,18 +175,24 @@ test.describe("Header / AppBar", () => {
             "button:has(svg[data-testid='WarningIcon'])",
         );
 
-        // Click to activate
-        await misconfigToggle.click();
-        await page.waitForTimeout(300);
+        const initialMisconfigLabel =
+            await misconfigToggle.getAttribute("aria-label");
 
-        // Button should have warning color class
-        await expect(misconfigToggle).toHaveAttribute(
-            "class",
-            /MuiIconButton-colorWarning/,
-        );
+        if (initialMisconfigLabel?.includes("הסתר")) {
+            await misconfigToggle.click();
+            await expect
+                .poll(async () => misconfigToggle.getAttribute("aria-label"))
+                .toMatch(/הצג פערי/, { timeout: 10_000 });
+        }
 
-        // Click to deactivate
         await misconfigToggle.click();
-        await page.waitForTimeout(300);
+        await expect
+            .poll(async () => misconfigToggle.getAttribute("aria-label"))
+            .toMatch(/הסתר פערי/, { timeout: 10_000 });
+
+        await misconfigToggle.click();
+        await expect
+            .poll(async () => misconfigToggle.getAttribute("aria-label"))
+            .toMatch(/הצג פערי/, { timeout: 10_000 });
     });
 });

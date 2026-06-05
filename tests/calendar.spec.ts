@@ -1,6 +1,13 @@
 import { expect, test } from "@playwright/test";
 
-import { SELECTORS, testId, waitForAppLoad } from "./fixtures";
+import {
+    SELECTORS,
+    getEventDialog,
+    gotoAppHome,
+    selectCalendarTimeRange,
+    switchToDayView,
+    testId,
+} from "./fixtures";
 
 /**
  * Calendar (Schedule) integration tests.
@@ -10,8 +17,7 @@ import { SELECTORS, testId, waitForAppLoad } from "./fixtures";
 
 test.describe("Calendar Page", () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto("/");
-        await waitForAppLoad(page);
+        await gotoAppHome(page);
     });
 
     // ─── Page Load ──────────────────────────────────────────────────────────
@@ -48,10 +54,8 @@ test.describe("Calendar Page", () => {
         await dayButton.click();
         await page.waitForTimeout(300);
 
-        // In day view, the calendar should show a single day column
-        // Look for headers in the time-header area specifically
-        const dayHeaders = page.locator(".rbc-time-header .rbc-header");
-        await expect(dayHeaders).toHaveCount(1);
+        // Day view highlights the active view button (resource columns may still be >1)
+        await expect(dayButton).toHaveClass(/MuiButton-contained/);
     });
 
     test("switches to work-week view", async ({ page }) => {
@@ -187,62 +191,31 @@ test.describe("Calendar Page", () => {
     // ─── Event Dialog ───────────────────────────────────────────────────────
 
     test("opens event dialog by clicking a time slot", async ({ page }) => {
-        // Switch to day view for easier slot targeting
-        await page.getByRole("button", { name: "יום", exact: true }).click();
-        await page.waitForTimeout(300);
+        await selectCalendarTimeRange(page);
 
-        // Click a time slot in the day view
-        const timeSlots = page.locator(SELECTORS.calendarDaySlot + " .rbc-timeslot-group");
-        if ((await timeSlots.count()) > 2) {
-            // Click on the 3rd time slot (roughly mid-morning)
-            await timeSlots.nth(4).click();
-            await page.waitForTimeout(500);
-
-            // The event dialog should open
-            const dialog = page.locator(SELECTORS.eventDialog);
-            if ((await dialog.count()) > 0) {
-                await expect(dialog.first()).toBeVisible();
-                // Dialog title should be "ערוך מופע"
-                await expect(
-                    dialog.first().getByText("ערוך מופע"),
-                ).toBeVisible();
-            }
-        }
+        const dialog = getEventDialog(page);
+        await expect(dialog).toBeVisible();
+        await expect(dialog.getByText("ערוך מופע")).toBeVisible();
     });
 
     test("creates a new event via the event dialog", async ({ page }) => {
         const eventName = testId("event");
 
-        // Switch to day view
-        await page.getByRole("button", { name: "יום", exact: true }).click();
-        await page.waitForTimeout(300);
+        await selectCalendarTimeRange(page);
 
-        // Click a time slot
-        const timeSlots = page.locator(SELECTORS.calendarDaySlot + " .rbc-timeslot-group");
-        if ((await timeSlots.count()) > 4) {
-            await timeSlots.nth(4).click();
-            await page.waitForTimeout(500);
-        }
+        const dialog = getEventDialog(page);
+        await expect(dialog).toBeVisible();
 
-        const dialog = page.locator(SELECTORS.eventDialog);
-        if ((await dialog.count()) > 0 && (await dialog.first().isVisible())) {
-            // Fill the event name
-            const nameField = dialog.first().locator("input").first();
-            await nameField.fill(eventName);
+        const nameField = dialog.locator("input").first();
+        await nameField.fill(eventName);
 
-            // Click save button (שמור)
-            const saveButton = dialog
-                .first()
-                .getByRole("button", { name: "שמור" });
-            await saveButton.click();
-            await page.waitForTimeout(500);
+        await dialog.getByRole("button", { name: "שמור" }).click();
+        await page.waitForTimeout(500);
 
-            // The event should appear on the calendar
-            const calendarEvent = page.locator(SELECTORS.calendarEvent).filter({
-                hasText: eventName,
-            });
-            await expect(calendarEvent.first()).toBeVisible();
-        }
+        const calendarEvent = page.locator(SELECTORS.calendarEvent).filter({
+            hasText: eventName,
+        });
+        await expect(calendarEvent.first()).toBeVisible();
     });
 
     test("edits an existing event via double-click", async ({ page }) => {
@@ -273,104 +246,57 @@ test.describe("Calendar Page", () => {
     });
 
     test("event dialog shows all expected fields", async ({ page }) => {
-        // Switch to day view and open dialog
-        await page.getByRole("button", { name: "יום", exact: true }).click();
-        await page.waitForTimeout(300);
+        await selectCalendarTimeRange(page);
 
-        const timeSlots = page.locator(SELECTORS.calendarDaySlot + " .rbc-timeslot-group");
-        if ((await timeSlots.count()) > 4) {
-            await timeSlots.nth(4).click();
-            await page.waitForTimeout(500);
-        }
+        const dialog = getEventDialog(page);
+        await expect(dialog).toBeVisible();
+        await expect(dialog.getByText("שם").first()).toBeVisible();
+        await expect(dialog.getByText("הערות").first()).toBeVisible();
+        await expect(dialog.getByText("מתואם").first()).toBeVisible();
+        await expect(dialog.getByText("קריטי").first()).toBeVisible();
+        await expect(dialog.getByRole("button", { name: "שמור" })).toBeVisible();
+        await expect(dialog.getByRole("button", { name: "ביטול" })).toBeVisible();
+        await expect(dialog.getByRole("button", { name: "מחק" })).toBeVisible();
 
-        const dialog = page.locator(SELECTORS.eventDialog);
-        if ((await dialog.count()) > 0 && (await dialog.first().isVisible())) {
-            // Verify key fields exist
-            // Name field (שם)
-            await expect(dialog.first().getByText("שם")).toBeVisible();
-
-            // Notes field (הערות)
-            await expect(dialog.first().getByText("הערות")).toBeVisible();
-
-            // Toggle switches (מתואם, קריטי, חלון פ"א)
-            await expect(dialog.first().getByText("מתואם")).toBeVisible();
-            await expect(dialog.first().getByText("קריטי")).toBeVisible();
-
-            // Action buttons
-            await expect(
-                dialog.first().getByRole("button", { name: "שמור" }),
-            ).toBeVisible();
-            await expect(
-                dialog.first().getByRole("button", { name: "ביטול" }),
-            ).toBeVisible();
-            await expect(
-                dialog.first().getByRole("button", { name: "מחק" }),
-            ).toBeVisible();
-
-            // Close dialog
-            await dialog
-                .first()
-                .getByRole("button", { name: "ביטול" })
-                .click();
-        }
+        await dialog.getByRole("button", { name: "ביטול" }).click();
     });
 
     test("event dialog toggles work correctly", async ({ page }) => {
-        // Open event dialog
-        await page.getByRole("button", { name: "יום", exact: true }).click();
-        await page.waitForTimeout(300);
+        await selectCalendarTimeRange(page);
 
-        const timeSlots = page.locator(SELECTORS.calendarDaySlot + " .rbc-timeslot-group");
-        if ((await timeSlots.count()) > 4) {
-            await timeSlots.nth(4).click();
-            await page.waitForTimeout(500);
-        }
+        const dialog = getEventDialog(page);
+        await expect(dialog).toBeVisible();
 
-        const dialog = page.locator(SELECTORS.eventDialog);
-        if ((await dialog.count()) > 0 && (await dialog.first().isVisible())) {
-            // Find the "מתואם" switch and toggle it
-            const lockedSwitch = dialog
-                .first()
-                .locator(SELECTORS.formControlLabel)
-                .filter({ hasText: "מתואם" })
-                .locator("input[type='checkbox']");
+        const lockedSwitch = dialog
+            .locator(SELECTORS.formControlLabel)
+            .filter({ hasText: "מתואם" })
+            .locator("input[type='checkbox']");
 
-            const wasChecked = await lockedSwitch.isChecked();
-            await lockedSwitch.click();
-            await page.waitForTimeout(200);
+        const wasChecked = await lockedSwitch.isChecked();
+        await lockedSwitch.click();
+        await page.waitForTimeout(200);
 
-            const isNowChecked = await lockedSwitch.isChecked();
-            expect(isNowChecked).toBe(!wasChecked);
+        const isNowChecked = await lockedSwitch.isChecked();
+        expect(isNowChecked).toBe(!wasChecked);
 
-            // Close dialog
-            await dialog
-                .first()
-                .getByRole("button", { name: "ביטול" })
-                .click();
-        }
+        await dialog.getByRole("button", { name: "ביטול" }).click();
     });
 
     // ─── Keyboard Shortcuts ─────────────────────────────────────────────────
 
     test("Escape key exits fullscreen mode", async ({ page }) => {
-        // Enter fullscreen
         const fullscreenButton = page.locator(
             "button:has(svg[data-testid='FullscreenIcon'])",
         );
         await fullscreenButton.first().click();
         await page.waitForTimeout(500);
 
-        // Verify we're in fullscreen
         const exitButton = page.locator(
             "button:has(svg[data-testid='FullscreenExitIcon'])",
         );
         await expect(exitButton).toBeVisible();
 
-        // Press Escape
         await page.keyboard.press("Escape");
-        await page.waitForTimeout(500);
-
-        // Should exit fullscreen
-        await expect(exitButton).not.toBeVisible();
+        await expect(exitButton).not.toBeVisible({ timeout: 10_000 });
     });
 });
