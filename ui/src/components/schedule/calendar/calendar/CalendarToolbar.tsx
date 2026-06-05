@@ -64,6 +64,10 @@ export function CalendarToolbar({
                 justifyContent="space-between"
                 px={2}
                 py={1.5}
+                sx={{
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                }}
                 width="100%"
             >
                 <Box alignItems="center" display="flex" flexWrap="wrap" gap={1.5}>

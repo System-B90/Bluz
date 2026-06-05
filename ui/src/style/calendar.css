@@ -122,7 +122,11 @@ button.rbc-input::-moz-focus-inner {
 }
 
 .rbc-today {
-  background-color: hsl(var(--muted));
+  background-color: hsl(240 4.8% 95.9%);
+}
+
+.dark .rbc-today {
+  background-color: hsl(240 3.7% 25.9%);
 }
 
 .rbc-toolbar {
