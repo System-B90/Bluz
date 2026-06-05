@@ -14,6 +14,8 @@ import { ResolvableRoom } from "@/api-shared/types/room";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { Event } from "@/components/schedule/types/event";
 
+const DUMMY_ROOM_ID = "no-room-unassigned";
+
 export function useCalendarHandlers(
     events: Array<Event>,
     handleSaveEvent: (event: Event) => void,
@@ -44,13 +46,20 @@ export function useCalendarHandlers(
                 ? JSON.parse(changes.resourceId.toString())
                 : null;
 
+            let newRooms = changes.event.rooms;
+            if (roomId) {
+                if (roomId.id === DUMMY_ROOM_ID) {
+                    newRooms = [];
+                } else if (changes.event.rooms.length <= 1) {
+                    newRooms = [roomId];
+                }
+            }
+
             const updatedEvent: Event = {
                 ...changes.event,
                 startTime: dayjs(changes.start),
                 endTime: dayjs(changes.end),
-                ...(roomId && changes.event.rooms.length <= 1
-                    ? { rooms: [roomId] }
-                    : {}),
+                rooms: newRooms,
             };
 
             handleSaveEvent(updatedEvent);
@@ -72,10 +81,12 @@ export function useCalendarHandlers(
                 ? JSON.parse(slotInfo.resourceId.toString())
                 : null;
 
+            const newRooms = roomId && roomId.id !== DUMMY_ROOM_ID ? [roomId] : [];
+
             const newEvent = {
                 startTime: dayjs(slotInfo.start),
                 endTime: dayjs(slotInfo.end),
-                rooms: roomId ? [roomId] : [],
+                rooms: newRooms,
                 instructors: filteredInstructors,
                 courses: filteredCourses,
             };
@@ -119,7 +130,8 @@ export function useCalendarHandlers(
 
                 let newRooms = currentCopied.rooms;
                 if (currentSlot?.resourceId) {
-                    newRooms = [JSON.parse(currentSlot.resourceId.toString())];
+                    const parsedRoomId = JSON.parse(currentSlot.resourceId.toString());
+                    newRooms = parsedRoomId.id === DUMMY_ROOM_ID ? [] : [parsedRoomId];
                 }
 
                 const { id: _, ...rest } = currentCopied as any;

@@ -9,6 +9,7 @@ import {
     GanttModule,
     GanttSyllabus,
 } from "@/api-shared/types/gantt/models";
+import { Outsider } from "@/api-shared/types/outsider";
 import { CustomRoom, RoomExtendedInfo, RoomId, RoomSource } from "@/api-shared/types/room";
 import { Setting } from "@/api-shared/types/settings/settings";
 
@@ -32,6 +33,7 @@ class DatabaseController {
     private _modules!: Collection<GanttModule & BaseDbDocument>;
     private _moduleEvents!: Collection<GanttEvent & BaseDbDocument>;
     private _roomExtendedInfo!: Collection<RoomExtendedInfoDocument>;
+    private _outsiders!: Collection<Outsider>;
 
     constructor() {
         this.mongoClient = new MongoClient(MONGO_CONNECTION_STRING);
@@ -45,6 +47,7 @@ class DatabaseController {
         this._modules = this.bluzDb.collection("modules");
         this._moduleEvents = this.bluzDb.collection("moduleEvents");
         this._roomExtendedInfo = this.bluzDb.collection("roomExtendedInfo");
+        this._outsiders = this.bluzDb.collection("outsiders");
     }
 
     public get events(): Collection<DbEventDocument> {
@@ -73,6 +76,9 @@ class DatabaseController {
     }
     public get roomExtendedInfo(): Collection<RoomExtendedInfoDocument> {
         return this._roomExtendedInfo;
+    }
+    public get outsiders(): Collection<Outsider> {
+        return this._outsiders;
     }
 }
 

@@ -8,7 +8,7 @@
 import { Dayjs } from "dayjs";
 import { CalendarProps, View, Views } from "react-big-calendar";
 
-import { Room, roomToResolvable } from "@/api-shared/types/room"; // Import the full Room type and roomToResolvable
+import { Room, RoomSource, roomToResolvable } from "@/api-shared/types/room"; // Import the full Room type and roomToResolvable
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
 import {
@@ -18,6 +18,13 @@ import {
 import { CustomWorkWeek } from "@/components/schedule/calendar/CustomWorkWeek";
 import { BluzEventComponent } from "@/components/schedule/event-component/base";
 import { Event } from "@/components/schedule/types/event";
+
+const DUMMY_ROOM_ID = "no-room-unassigned";
+const NO_ROOM_RESOURCE: Room = {
+    id: DUMMY_ROOM_ID,
+    name: "ללא כיתה",
+    source: RoomSource.Custom,
+};
 
 type CalendarViewProps = {
     events: Array<Event>;
@@ -82,10 +89,14 @@ export function CalendarView({
             onSelectSlot={onSelectSlot}
             onView={onView}
             resizableAccessor={(e) => !e.locked}
-            resourceAccessor={(event: Event) => event.rooms.map((room) => JSON.stringify(room))}
+            resourceAccessor={(event: Event) =>
+                event.rooms.length > 0
+                    ? event.rooms.map((room) => JSON.stringify(room))
+                    : [JSON.stringify({ id: DUMMY_ROOM_ID, source: RoomSource.Custom })]
+            }
             resourceIdAccessor={(room: Room) => JSON.stringify(roomToResolvable(room))}
             // Resource logic
-            resources={currentView === Views.DAY ? rooms : undefined}
+            resources={currentView === Views.DAY ? [NO_ROOM_RESOURCE, ...rooms] : undefined}
             resourceTitleAccessor="name"
             rtl={true}
             selectable

@@ -3,17 +3,33 @@ import {
     MenuItem,
     Select,
     SelectProps,
+    Box,
+    TextField,
 } from "@mui/material";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 
 import { Course } from "@/api-shared/types/course";
 import { CourseUser } from "@/api-shared/types/hive";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
+import { useOutsiders } from "@/components/base/OutsidersProvider";
 
-export function InstructorSelect<T = unknown>({ children, ...props }: SelectProps<T>) {
+type CustomInstructorSelectProps<T> = {
+    showOutsiders?: boolean;
+    favoriteOutsiders?: Array<string>;
+} & SelectProps<T>;
+
+export function InstructorSelect<T = unknown>({
+    children,
+    showOutsiders = false,
+    favoriteOutsiders = [],
+    ...props
+}: CustomInstructorSelectProps<T>) {
     const { courses } = useCourses();
     const { instructors, getInstructor } = useHiveUsers();
+    const { outsiders } = useOutsiders();
+
+    const [searchQuery, setSearchQuery] = useState("");
 
     const groupedItems = useMemo(() => {
         // 1. Build course hierarchy adjacency list
@@ -89,15 +105,118 @@ export function InstructorSelect<T = unknown>({ children, ...props }: SelectProp
         };
     }, [courses, instructors, getInstructor]);
 
-    // 4. Flatten all components (children, groups, unassigned) to avoid using React.Fragment
-    // which can break MUI Select arrow/keyboard navigation.
+    // Apply search filter to grouped items
+    const filteredGroupedItems = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return groupedItems;
+
+        const filteredCourseGroups = groupedItems.courseGroups.map((g) => ({
+            ...g,
+            instructors: g.instructors.filter((i) => i.display_name.toLowerCase().includes(query)),
+        })).filter((g) => g.instructors.length > 0);
+
+        const filteredUnassigned = groupedItems.unassigned.filter((i) => i.display_name.toLowerCase().includes(query));
+
+        return {
+            courseGroups: filteredCourseGroups,
+            unassigned: filteredUnassigned,
+        };
+    }, [groupedItems, searchQuery]);
+
+    // Apply search filter to outsiders
+    const filteredOutsiders = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return outsiders;
+        return outsiders.filter((o) => o.name.toLowerCase().includes(query));
+    }, [outsiders, searchQuery]);
+
+    // Split outsiders into favorite and other lists
+    const { favoriteList, otherList } = useMemo(() => {
+        const favList: Array<any> = [];
+        const othList: Array<any> = [];
+
+        filteredOutsiders.forEach((o) => {
+            if (favoriteOutsiders.includes(o.id)) {
+                favList.push(o);
+            } else {
+                othList.push(o);
+            }
+        });
+
+        // Sort alphabetically
+        favList.sort((a, b) => a.name.localeCompare(b.name, "he"));
+        othList.sort((a, b) => a.name.localeCompare(b.name, "he"));
+
+        return { favoriteList: favList, otherList: othList };
+    }, [filteredOutsiders, favoriteOutsiders]);
+
+    // 4. Flatten all components (children, groups, unassigned, outsiders)
     const items = useMemo(() => {
         const result: Array<React.ReactNode> = [];
+
+        // Sticky search input at the top of the select
+        result.push(
+            <Box
+                key="search-container"
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                sx={{
+                    p: 1.5,
+                    position: "sticky",
+                    top: 0,
+                    bgcolor: "background.paper",
+                    zIndex: 2,
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                }}
+            >
+                <TextField
+                    autoFocus
+                    fullWidth
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key !== "Escape") {
+                            e.stopPropagation();
+                        }
+                    }}
+                    placeholder="חיפוש מרצה..."
+                    size="small"
+                    value={searchQuery}
+                />
+            </Box>
+        );
+
         if (children) {
             result.push(children);
         }
 
-        groupedItems.courseGroups.forEach(({ course, instructors }) => {
+        // Render favorite outsiders
+        if (showOutsiders && favoriteList.length > 0) {
+            result.push(
+                <ListSubheader
+                    disableSticky
+                    key="subheader-favorites"
+                    sx={{
+                        fontWeight: "bold",
+                        lineHeight: "36px",
+                        color: "warning.main",
+                        bgcolor: "background.paper",
+                    }}
+                >
+                    אנשי חוץ מועדפים
+                </ListSubheader>
+            );
+            favoriteList.forEach((outsider) => {
+                result.push(
+                    <MenuItem key={`outsider-${outsider.id}`} value={outsider.id}>
+                        {outsider.name}
+                    </MenuItem>
+                );
+            });
+        }
+
+        // Render course groups
+        filteredGroupedItems.courseGroups.forEach(({ course, instructors }) => {
             result.push(
                 <ListSubheader
                     disableSticky
@@ -121,7 +240,8 @@ export function InstructorSelect<T = unknown>({ children, ...props }: SelectProp
             });
         });
 
-        if (groupedItems.unassigned.length > 0) {
+        // Render unassigned instructors
+        if (filteredGroupedItems.unassigned.length > 0) {
             result.push(
                 <ListSubheader
                     disableSticky
@@ -136,7 +256,7 @@ export function InstructorSelect<T = unknown>({ children, ...props }: SelectProp
                     ללא מסלול
                 </ListSubheader>,
             );
-            groupedItems.unassigned.forEach((inst) => {
+            filteredGroupedItems.unassigned.forEach((inst) => {
                 result.push(
                     <MenuItem key={`unassigned-${inst.id}`} value={inst.id}>
                         {inst.display_name}
@@ -145,8 +265,53 @@ export function InstructorSelect<T = unknown>({ children, ...props }: SelectProp
             });
         }
 
-        return result;
-    }, [children, groupedItems]);
+        // Render other outsiders at the bottom
+        if (showOutsiders && otherList.length > 0) {
+            result.push(
+                <ListSubheader
+                    disableSticky
+                    key="subheader-others"
+                    sx={{
+                        fontWeight: "bold",
+                        lineHeight: "36px",
+                        color: "text.secondary",
+                        bgcolor: "background.paper",
+                    }}
+                >
+                    אנשי חוץ נוספים
+                </ListSubheader>
+            );
+            otherList.forEach((outsider) => {
+                result.push(
+                    <MenuItem key={`outsider-${outsider.id}`} value={outsider.id}>
+                        {outsider.name}
+                    </MenuItem>
+                );
+            });
+        }
 
-    return <Select<T> {...props}>{items}</Select>;
+        return result;
+    }, [children, showOutsiders, favoriteList, otherList, filteredGroupedItems, searchQuery]);
+
+    return (
+        <Select<T>
+            {...props}
+            MenuProps={{
+                autoFocus: false,
+                ...props.MenuProps,
+                slotProps: {
+                    ...props.MenuProps?.slotProps,
+                    paper: {
+                        ...props.MenuProps?.slotProps?.paper,
+                        sx: {
+                            maxHeight: 400,
+                            ...props.MenuProps?.slotProps?.paper?.sx,
+                        },
+                    },
+                },
+            }}
+        >
+            {items}
+        </Select>
+    );
 }

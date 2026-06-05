@@ -33,5 +33,6 @@ export enum MessageTypes {
   SETTINGS_UPDATE = "su",
   COURSES_UPDATE = "cu",
   ROOMS_UPDATE = "ru",
+  OUTSIDERS_UPDATE = "ou",
 }
 export const COMBO_DATA_KEY = "combo-data";

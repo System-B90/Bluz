@@ -7,10 +7,11 @@ import {
     MenuItem,
     SelectChangeEvent,
 } from "@mui/material";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
+import { useOutsiders } from "@/components/base/OutsidersProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { EventType } from "@/components/schedule/types/event";
 
@@ -26,7 +27,25 @@ function LecturerSelectionField({
     ...props
 }: LecturerSelectionFieldProps) {
     const { getInstructor } = useHiveUsers();
+    const { getOutsider } = useOutsiders();
     const currentLecturers = event?.lecturers ?? [];
+
+    const [favoriteOutsiders] = useState<Array<string>>(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("bluz_personal_settings");
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && Array.isArray(parsed.favoriteOutsiders)) {
+                        return parsed.favoriteOutsiders;
+                    }
+                } catch (e) {
+                    console.error("Failed to load favorite outsiders", e);
+                }
+            }
+        }
+        return [];
+    });
 
     const handleChange = useCallback(
         (ev: SelectChangeEvent<typeof currentLecturers>) => {
@@ -39,7 +58,11 @@ function LecturerSelectionField({
                 typeof value === "string"
                     ? value
                         .split(",")
-                        .map((v) => (v === "איש חוץ" ? "איש חוץ" : Number(v)))
+                        .map((v) => {
+                            if (v === "איש חוץ") return "איש חוץ";
+                            if (v.startsWith("outsider-")) return v;
+                            return Number(v);
+                        })
                     : value;
 
             onBlurCallback({ ...event, lecturers: newIds });
@@ -57,17 +80,21 @@ function LecturerSelectionField({
             <FormControl fullWidth={true}>
                 <InputLabel>מרצים</InputLabel>
                 <InstructorSelect
+                    favoriteOutsiders={favoriteOutsiders}
                     label="מרצים"
                     multiple
                     onChange={handleChange}
                     renderValue={(selected) => (
                         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                             {selected.map((id) => {
-                                // Look up instructor details by ID
+                                // Look up instructor/outsider details by ID
+                                const outsider = typeof id === "string" && id.startsWith("outsider-") ? getOutsider(id) : null;
                                 const lecturer =
                                     typeof id === "number"
                                         ? getInstructor(id)
-                                        : { id, display_name: id };
+                                        : outsider
+                                            ? { id, display_name: outsider.name }
+                                            : { id, display_name: id };
                                 return (
                                     <Chip
                                         key={id}
@@ -81,6 +108,7 @@ function LecturerSelectionField({
                             })}
                         </Box>
                     )}
+                    showOutsiders
                     value={currentLecturers}
                 >
                     <MenuItem

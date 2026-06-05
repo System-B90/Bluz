@@ -25,7 +25,7 @@ export type EventId = string;
  * Identifies a person associated with an event, either a registered user ID (number)
  * or a special external guest string marker.
  */
-export type PersonId = "איש חוץ" | number;
+export type PersonId = "איש חוץ" | number | string;
 
 /**
  * Represents a standard calendar event in the Bluz schedule.

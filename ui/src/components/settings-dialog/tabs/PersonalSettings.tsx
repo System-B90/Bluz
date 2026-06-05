@@ -1,5 +1,6 @@
 "use client";
 
+import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
 import {
@@ -13,17 +14,21 @@ import { useSnackbar } from "notistack";
 import { memo, useCallback, useEffect, useReducer, type ReactNode } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { useOutsiders } from "@/components/base/OutsidersProvider";
 
 type PersonalState = {
     groups: Array<string>;
     instructors: Array<string>;
+    favoriteOutsiders: Array<string>;
 };
 type PersonalAction =
     | { type: "ADD_GROUP"; payload: string }
     | { type: "ADD_INSTRUCTOR"; payload: string }
+    | { type: "ADD_OUTSIDER"; payload: string }
     | { type: "INITIALIZE"; payload: PersonalState }
     | { type: "REMOVE_GROUP"; payload: string }
-    | { type: "REMOVE_INSTRUCTOR"; payload: string };
+    | { type: "REMOVE_INSTRUCTOR"; payload: string }
+    | { type: "REMOVE_OUTSIDER"; payload: string };
 
 const ALL_GROUPS: ReadonlyArray<string> = ["Group A", "Group B", "Group C", "Group D", "Group E"];
 const ALL_INSTRUCTORS: ReadonlyArray<string> = ["Alice", "Bob", "Charlie", "David", "Emma"];
@@ -31,22 +36,29 @@ const ALL_INSTRUCTORS: ReadonlyArray<string> = ["Alice", "Bob", "Charlie", "Davi
 function personalSettingsReducer(state: PersonalState, action: PersonalAction): PersonalState {
     let nextState = state;
     switch (action.type) {
-        case "INITIALIZE":
-            return action.payload;
-        case "ADD_GROUP":
-            if (state.groups.includes(action.payload)) return state;
-            nextState = { ...state, groups: [...state.groups, action.payload] };
-            break;
-        case "REMOVE_GROUP":
-            nextState = { ...state, groups: state.groups.filter((g) => g !== action.payload) };
-            break;
-        case "ADD_INSTRUCTOR":
-            if (state.instructors.includes(action.payload)) return state;
-            nextState = { ...state, instructors: [...state.instructors, action.payload] };
-            break;
-        case "REMOVE_INSTRUCTOR":
-            nextState = { ...state, instructors: state.instructors.filter((i) => i !== action.payload) };
-            break;
+    case "INITIALIZE":
+        return action.payload;
+    case "ADD_GROUP":
+        if (state.groups.includes(action.payload)) return state;
+        nextState = { ...state, groups: [...state.groups, action.payload] };
+        break;
+    case "REMOVE_GROUP":
+        nextState = { ...state, groups: state.groups.filter((g) => g !== action.payload) };
+        break;
+    case "ADD_INSTRUCTOR":
+        if (state.instructors.includes(action.payload)) return state;
+        nextState = { ...state, instructors: [...state.instructors, action.payload] };
+        break;
+    case "REMOVE_INSTRUCTOR":
+        nextState = { ...state, instructors: state.instructors.filter((i) => i !== action.payload) };
+        break;
+    case "ADD_OUTSIDER":
+        if (state.favoriteOutsiders.includes(action.payload)) return state;
+        nextState = { ...state, favoriteOutsiders: [...state.favoriteOutsiders, action.payload] };
+        break;
+    case "REMOVE_OUTSIDER":
+        nextState = { ...state, favoriteOutsiders: state.favoriteOutsiders.filter((o) => o !== action.payload) };
+        break;
     }
 
     if (typeof window !== "undefined") {
@@ -55,17 +67,21 @@ function personalSettingsReducer(state: PersonalState, action: PersonalAction): 
     return nextState;
 }
 
+type SelectionItem = {
+    id: string;
+    label: string;
+};
 type SelectionCardProps = {
     readonly title: string;
     readonly description: string;
     readonly icon: ReactNode;
-    readonly colorTheme: "primary" | "secondary";
-    readonly availableOptions: ReadonlyArray<string>;
-    readonly selectedItems: ReadonlyArray<string>;
+    readonly colorTheme: "info" | "primary" | "secondary" | "success" | "warning";
+    readonly availableOptions: ReadonlyArray<SelectionItem>;
+    readonly selectedItems: ReadonlyArray<SelectionItem>;
     readonly emptyMessage: string;
     readonly searchLabel: string;
-    readonly onAdd: (item: null | string) => void;
-    readonly onRemove: (item: string) => void;
+    readonly onAdd: (item: null | SelectionItem) => void;
+    readonly onRemove: (id: string) => void;
 }
 
 const SelectionCard = memo(function SelectionCard({
@@ -138,6 +154,7 @@ const SelectionCard = memo(function SelectionCard({
 
             <Box>
                 <Autocomplete
+                    getOptionLabel={(option) => option.label}
                     onChange={(_e, val) => onAdd(val)}
                     options={availableOptions}
                     renderInput={(params) => (
@@ -177,10 +194,10 @@ const SelectionCard = memo(function SelectionCard({
                 ) : (
                     selectedItems.map((item) => (
                         <Chip
-                            color={colorTheme}
-                            key={item}
-                            label={item}
-                            onDelete={() => onRemove(item)}
+                            color={colorTheme as any}
+                            key={item.id}
+                            label={item.label}
+                            onDelete={() => onRemove(item.id)}
                             size="small"
                             sx={{
                                 borderRadius: "8px",
@@ -200,10 +217,12 @@ const SelectionCard = memo(function SelectionCard({
 
 export function PersonalSettings() {
     const { enqueueSnackbar } = useSnackbar();
+    const { outsiders, getOutsider } = useOutsiders();
 
     const [state, dispatch] = useReducer(personalSettingsReducer, {
         groups: [],
         instructors: [],
+        favoriteOutsiders: [],
     });
 
     useEffect(() => {
@@ -211,7 +230,15 @@ export function PersonalSettings() {
             const saved = localStorage.getItem("bluz_personal_settings");
             if (saved) {
                 try {
-                    dispatch({ type: "INITIALIZE", payload: JSON.parse(saved) });
+                    const parsed = JSON.parse(saved);
+                    dispatch({
+                        type: "INITIALIZE",
+                        payload: {
+                            groups: parsed.groups || [],
+                            instructors: parsed.instructors || [],
+                            favoriteOutsiders: parsed.favoriteOutsiders || [],
+                        },
+                    });
                 } catch (e) {
                     enqueueApiErrorSnackbar(enqueueSnackbar, "כשל בטעינת העדפות אישיות", e as Error);
                 }
@@ -220,77 +247,131 @@ export function PersonalSettings() {
     }, [enqueueSnackbar]);
 
     const handleAddGroup = useCallback(
-        (group: null | string) => {
+        (group: null | SelectionItem) => {
             if (!group) return;
-            dispatch({ type: "ADD_GROUP", payload: group });
+            dispatch({ type: "ADD_GROUP", payload: group.id });
             enqueueSnackbar("הקבוצה התווספה בהצלחה.", { variant: "success" });
         },
         [enqueueSnackbar]
     );
 
     const handleRemoveGroup = useCallback(
-        (group: string) => {
-            dispatch({ type: "REMOVE_GROUP", payload: group });
+        (id: string) => {
+            dispatch({ type: "REMOVE_GROUP", payload: id });
             enqueueSnackbar("הקבוצה הוסרה בהצלחה.", { variant: "success" });
         },
         [enqueueSnackbar]
     );
 
     const handleAddInstructor = useCallback(
-        (instructor: null | string) => {
+        (instructor: null | SelectionItem) => {
             if (!instructor) return;
-            dispatch({ type: "ADD_INSTRUCTOR", payload: instructor });
+            dispatch({ type: "ADD_INSTRUCTOR", payload: instructor.id });
             enqueueSnackbar("המרצה התווסף בהצלחה.", { variant: "success" });
         },
         [enqueueSnackbar]
     );
 
     const handleRemoveInstructor = useCallback(
-        (instructor: string) => {
-            dispatch({ type: "REMOVE_INSTRUCTOR", payload: instructor });
+        (id: string) => {
+            dispatch({ type: "REMOVE_INSTRUCTOR", payload: id });
             enqueueSnackbar("המרצה הוסר בהצלחה.", { variant: "success" });
         },
         [enqueueSnackbar]
     );
 
-    const availableGroups = ALL_GROUPS.filter((g) => !state.groups.includes(g));
-    const availableInstructors = ALL_INSTRUCTORS.filter((i) => !state.instructors.includes(i));
+    const handleAddOutsider = useCallback(
+        (outsider: null | SelectionItem) => {
+            if (!outsider) return;
+            dispatch({ type: "ADD_OUTSIDER", payload: outsider.id });
+            enqueueSnackbar("איש החוץ התווסף למועדפים בהצלחה.", { variant: "success" });
+        },
+        [enqueueSnackbar]
+    );
+
+    const handleRemoveOutsider = useCallback(
+        (id: string) => {
+            dispatch({ type: "REMOVE_OUTSIDER", payload: id });
+            enqueueSnackbar("איש החוץ הוסר מהמועדפים בהצלחה.", { variant: "success" });
+        },
+        [enqueueSnackbar]
+    );
+
+    const availableGroups = ALL_GROUPS.filter((g) => !state.groups.includes(g)).map((g) => ({ id: g, label: g }));
+    const selectedGroups = state.groups.map((g) => ({ id: g, label: g }));
+
+    const availableInstructors = ALL_INSTRUCTORS.filter((i) => !state.instructors.includes(i)).map((i) => ({ id: i, label: i }));
+    const selectedInstructors = state.instructors.map((i) => ({ id: i, label: i }));
+
+    const availableOutsiders = outsiders.filter((o) => !state.favoriteOutsiders.includes(o.id)).map((o) => ({ id: o.id, label: o.name }));
+    const selectedOutsiders = state.favoriteOutsiders.map((id) => {
+        const o = getOutsider(id);
+        return { id, label: o ? o.name : id };
+    });
 
     return (
         <Box
             sx={{
                 display: "flex",
-                flexDirection: { xs: "column", lg: "row" },
+                flexDirection: "column",
                 gap: 3,
-                alignItems: "stretch",
-                justifyContent: "center",
                 width: "100%",
             }}
         >
-            <SelectionCard
-                availableOptions={availableGroups}
-                colorTheme="primary"
-                description="בחירת קבוצות להצגה מותאמת ביומן"
-                emptyMessage="טרם נבחרו קבוצות"
-                icon={<PeopleIcon sx={{ fontSize: 20 }} />}
-                onAdd={handleAddGroup}
-                onRemove={handleRemoveGroup}
-                searchLabel="חפש והוסף קבוצה..."
-                selectedItems={state.groups}
-                title="קבוצות שלי"
-            />
-            <SelectionCard
-                availableOptions={availableInstructors}
-                colorTheme="secondary"
-                description="מעקב אחר מרצים מבוקשים ביומן"
-                emptyMessage="טרם נבחרו מרצים"
-                icon={<SchoolIcon sx={{ fontSize: 20 }} />}
-                onAdd={handleAddInstructor}
-                onRemove={handleRemoveInstructor}
-                searchLabel="חפש והוסף מרצה..."
-                selectedItems={state.instructors}
-                title="מרצים מועדפים"
-            />
+            <Box
+                sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", lg: "row" },
+                    gap: 3,
+                    alignItems: "stretch",
+                    justifyContent: "center",
+                    width: "100%",
+                }}
+            >
+                <SelectionCard
+                    availableOptions={availableGroups}
+                    colorTheme="primary"
+                    description="בחירת קבוצות להצגה מותאמת ביומן"
+                    emptyMessage="טרם נבחרו קבוצות"
+                    icon={<PeopleIcon sx={{ fontSize: 20 }} />}
+                    onAdd={handleAddGroup}
+                    onRemove={handleRemoveGroup}
+                    searchLabel="חפש והוסף קבוצה..."
+                    selectedItems={selectedGroups}
+                    title="קבוצות שלי"
+                />
+                <SelectionCard
+                    availableOptions={availableInstructors}
+                    colorTheme="secondary"
+                    description="מעקב אחר מרצים מבוקשים ביומן"
+                    emptyMessage="טרם נבחרו מרצים"
+                    icon={<SchoolIcon sx={{ fontSize: 20 }} />}
+                    onAdd={handleAddInstructor}
+                    onRemove={handleRemoveInstructor}
+                    searchLabel="חפש והוסף מרצה..."
+                    selectedItems={selectedInstructors}
+                    title="מרצים מועדפים"
+                />
+            </Box>
+            <Box
+                sx={{
+                    display: "flex",
+                    width: "100%",
+                }}
+            >
+                <SelectionCard
+                    availableOptions={availableOutsiders}
+                    colorTheme="warning"
+                    description="בחירת אנשי חוץ מועדפים שיופיעו בראש הרשימה ביומן"
+                    emptyMessage="טרם נבחרו אנשי חוץ מועדפים"
+                    icon={<AssignmentIndIcon sx={{ fontSize: 20 }} />}
+                    onAdd={handleAddOutsider}
+                    onRemove={handleRemoveOutsider}
+                    searchLabel="חפש והוסף איש חוץ..."
+                    selectedItems={selectedOutsiders}
+                    title="אנשי חוץ מועדפים"
+                />
+            </Box>
         </Box>
     );
 }

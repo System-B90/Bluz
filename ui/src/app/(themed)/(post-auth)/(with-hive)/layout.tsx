@@ -9,6 +9,7 @@ import { HiveModulesProvider } from "@/components/base/HiveModulesProvider";
 import { HiveSubjectsProvider } from "@/components/base/HiveSubjectsProvider";
 import { HiveUsersProvider } from "@/components/base/HiveUsersProvider";
 import { OfflineProvider, useOffline } from "@/components/base/OfflineProvider";
+import { OutsidersProvider } from "@/components/base/OutsidersProvider";
 import { RoomsProvider } from "@/components/base/RoomsProvider";
 import { SettingsProvider } from "@/components/base/SettingsProvider";
 import { ScheduleAppBar } from "@/components/header/AppBar";
@@ -94,20 +95,22 @@ export default function PostAuthLayout({
             <HiveSubjectsProvider>
                 <HiveModulesProvider>
                     <RoomsProvider>
-                        <SettingsProvider>
-                            <CoursesProvider>
-                                <OfflineProvider>
-                                    <CalendarProvider>
-                                        <LayoutContent
-                                            openSettingsDialog={openSettingsDialog}
-                                            setOpenSettingsDialog={setOpenSettingsDialog}
-                                        >
-                                            {children}
-                                        </LayoutContent>
-                                    </CalendarProvider>
-                                </OfflineProvider>
-                            </CoursesProvider>
-                        </SettingsProvider>
+                        <OutsidersProvider>
+                            <SettingsProvider>
+                                <CoursesProvider>
+                                    <OfflineProvider>
+                                        <CalendarProvider>
+                                            <LayoutContent
+                                                openSettingsDialog={openSettingsDialog}
+                                                setOpenSettingsDialog={setOpenSettingsDialog}
+                                            >
+                                                {children}
+                                            </LayoutContent>
+                                        </CalendarProvider>
+                                    </OfflineProvider>
+                                </CoursesProvider>
+                            </SettingsProvider>
+                        </OutsidersProvider>
                     </RoomsProvider>
                 </HiveModulesProvider>
             </HiveSubjectsProvider>
