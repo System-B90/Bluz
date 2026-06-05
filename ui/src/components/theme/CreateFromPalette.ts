@@ -140,7 +140,7 @@ export function createFromPalette(paletteMode: "dark" | "light"): ThemeOptions {
             MuiAppBar: {
                 styleOverrides: {
                     root: {
-                        backgroundColor: paletteMode === "light" ? "#FFFFFF" : "#0C2237",
+                        backgroundColor: paletteMode === "light" ? "rgba(173,226,238,0.29)" : "#0C2237",
                         backgroundImage: "none",
                         boxShadow: "none",
                         borderBottom: "1px solid",

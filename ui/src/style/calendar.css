@@ -129,6 +129,11 @@ button.rbc-input::-moz-focus-inner {
   background-color: rgba(103, 200, 221, 0.08);
 }
 
+.dark .rbc-header,
+.dark .rbc-time-header {
+  background-color: hsl(var(--card));
+}
+
 .rbc-toolbar {
   display: -webkit-flex;
   display: -ms-flexbox;

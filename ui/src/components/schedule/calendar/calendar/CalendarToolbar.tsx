@@ -67,6 +67,8 @@ export function CalendarToolbar({
                 sx={{
                     borderBottom: "1px solid",
                     borderColor: "divider",
+                    bgcolor: (theme) =>
+                        theme.palette.mode === "dark" ? "background.paper" : "transparent",
                 }}
                 width="100%"
             >
