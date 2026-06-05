@@ -1,0 +1,42 @@
+# Docker Compose override for E2E testing.
+# Orchestrates dedicated containers so tests don't pollute the dev databases.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
+#   npx playwright test
+#   docker compose -f docker-compose.yml -f docker-compose.test.yml down -v
+
+services:
+  ui:
+    build:
+      context: .
+      dockerfile: ui/Dockerfile
+      target: dev
+    container_name: bluz-test-ui
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+      - MONGO_CONNECTION_STRING=mongodb://mongo_admin:4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP@bluz-test-mongodb:27017/
+      - DATABASE_URL=postgres://admin:lCqoKrgSLSGmZH98gvV15Kz6yaDUw8w2@bluz-test-curriculum-db:5432/curriculum_db
+    depends_on:
+      - curriculum-db
+      - sessions
+      - mongodb
+
+  curriculum-db:
+    container_name: bluz-test-curriculum-db
+
+  mongodb:
+    container_name: bluz-test-mongodb
+
+  sessions:
+    container_name: bluz-test-sessions
+
+  proxy:
+    container_name: bluz-test-proxy
+    ports: !override
+      - "127.0.0.3:80:80"
+      - "127.0.0.3:443:443"
+    volumes: !override
+      - ./nginx/nginx.conf.test:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
