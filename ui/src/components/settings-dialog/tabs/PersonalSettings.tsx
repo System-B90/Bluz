@@ -1,6 +1,5 @@
 "use client";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
 import {
@@ -13,11 +12,12 @@ import {
 import { useSnackbar } from "notistack";
 import { memo, useCallback, useEffect, useReducer, type ReactNode } from "react";
 
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+
 type PersonalState = {
     groups: Array<string>;
     instructors: Array<string>;
 };
-
 type PersonalAction =
     | { type: "ADD_GROUP"; payload: string }
     | { type: "ADD_INSTRUCTOR"; payload: string }
@@ -55,7 +55,7 @@ function personalSettingsReducer(state: PersonalState, action: PersonalAction): 
     return nextState;
 }
 
-interface SelectionCardProps {
+type SelectionCardProps = {
     readonly title: string;
     readonly description: string;
     readonly icon: ReactNode;
@@ -64,7 +64,7 @@ interface SelectionCardProps {
     readonly selectedItems: ReadonlyArray<string>;
     readonly emptyMessage: string;
     readonly searchLabel: string;
-    readonly onAdd: (item: string | null) => void;
+    readonly onAdd: (item: null | string) => void;
     readonly onRemove: (item: string) => void;
 }
 
@@ -220,7 +220,7 @@ export function PersonalSettings() {
     }, [enqueueSnackbar]);
 
     const handleAddGroup = useCallback(
-        (group: string | null) => {
+        (group: null | string) => {
             if (!group) return;
             dispatch({ type: "ADD_GROUP", payload: group });
             enqueueSnackbar("הקבוצה התווספה בהצלחה.", { variant: "success" });
@@ -237,7 +237,7 @@ export function PersonalSettings() {
     );
 
     const handleAddInstructor = useCallback(
-        (instructor: string | null) => {
+        (instructor: null | string) => {
             if (!instructor) return;
             dispatch({ type: "ADD_INSTRUCTOR", payload: instructor });
             enqueueSnackbar("המרצה התווסף בהצלחה.", { variant: "success" });
