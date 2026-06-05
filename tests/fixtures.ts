@@ -1,4 +1,4 @@
-import { test, expect, Page } from "@playwright/test";
+import { expect, Page } from "@playwright/test";
 
 /**
  * Shared test fixtures and helper utilities for Bluz integration tests.

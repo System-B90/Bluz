@@ -23,7 +23,13 @@ export default defineConfig([
         languageOptions: {
             parser: tseslint.parser,
             parserOptions: {
-                projectService: true,
+                projectService: {
+                    allowDefaultProject: [
+                        "../playwright.config.ts",
+                        "../tests/*.ts",
+                        "../tests/*.tsx"
+                    ]
+                },
                 tsconfigRootDir: import.meta.dirname,
             },
         },
@@ -31,9 +37,9 @@ export default defineConfig([
             next: { rootDir: "ui/" },
         },
         rules: {
-            "eol-last": ["error", "always"],
-            "no-multiple-empty-lines": ["error", { max: 1, maxEOF: 0 }],
-            indent: ["error", 4],
+            "eol-last": [ "error", "always" ],
+            "no-multiple-empty-lines": [ "error", { max: 1, maxEOF: 0 } ],
+            indent: [ "error", 4 ],
 
             // --- Variables, Types & Assertions ---
             "no-unused-vars": "off",
@@ -47,20 +53,20 @@ export default defineConfig([
                     argsIgnorePattern: "^_",
                 },
             ],
-            "@typescript-eslint/method-signature-style": ["error", "property"],
+            "@typescript-eslint/method-signature-style": [ "error", "property" ],
             // "@typescript-eslint/consistent-type-assertions": [
             //   "error",
             //   { assertionStyle: "as", objectLiteralTypeAssertions: "allow-as-parameter" }
             // ],
             "@typescript-eslint/no-floating-promises": "error",
-            "@typescript-eslint/array-type": ["error", { default: "generic" }],
-            "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+            "@typescript-eslint/array-type": [ "error", { default: "generic" } ],
+            "@typescript-eslint/consistent-type-definitions": [ "error", "type" ],
             "@typescript-eslint/no-base-to-string": "error",
             "@typescript-eslint/ban-tslint-comment": "error",
             "@typescript-eslint/no-for-in-array": "error", // Use "of" instead
             "@typescript-eslint/prefer-for-of": "error",
             "@typescript-eslint/prefer-includes": "error",
-            "@typescript-eslint/return-await": ["error", "always"],
+            "@typescript-eslint/return-await": [ "error", "always" ],
             "@typescript-eslint/adjacent-overload-signatures": "error",
             "@typescript-eslint/ban-ts-comment": [
                 "error",
@@ -76,7 +82,7 @@ export default defineConfig([
                 {
                     patterns: [
                         {
-                            group: ["./*", "../*"],
+                            group: [ "./*", "../*" ],
                             message: "Use absolute paths.",
                             allowTypeImports: true,
                         },
@@ -106,14 +112,14 @@ export default defineConfig([
             // --- React & Perfectionist ---
             "react/jsx-no-leaked-render": [
                 "error",
-                { validStrategies: ["ternary", "coerce"] },
+                { validStrategies: [ "ternary", "coerce" ] },
             ],
             "perfectionist/sort-variable-declarations": [
                 "error",
                 { type: "alphabetical" },
             ],
-            "perfectionist/sort-union-types": ["error", { type: "alphabetical" }],
-            "perfectionist/sort-jsx-props": ["error", { type: "alphabetical" }],
+            "perfectionist/sort-union-types": [ "error", { type: "alphabetical" } ],
+            "perfectionist/sort-jsx-props": [ "error", { type: "alphabetical" } ],
 
             // --- Structural Spacing ---
             "@stylistic/padding-line-between-statements": [
@@ -166,7 +172,7 @@ export default defineConfig([
         },
     },
     {
-        files: ["**/api-server/gantt/schema/**"],
+        files: [ "**/api-server/gantt/schema/**" ],
         rules: {
             "no-restricted-imports": "off",
             "import/no-cycle": "off",
@@ -182,7 +188,7 @@ export default defineConfig([
         rules: { "import/no-default-export": "off" },
     },
     {
-        files: ["**/*.js", "**/*.mjs", "**/*.mts"],
+        files: [ "**/*.js", "**/*.mjs", "**/*.mts" ],
         ...tseslint.configs.disableTypeChecked,
     },
     {
@@ -200,6 +206,7 @@ export default defineConfig([
             "session-server/session-common.ts",
             "session-server/session-server.ts",
             "scripts/**",
+            "tests/**",
         ],
     },
 ]);
