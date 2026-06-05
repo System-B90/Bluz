@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
-import { SELECTORS, waitForAppLoad, testId } from "./fixtures";
+import { expect, test } from "@playwright/test";
+import { SELECTORS, testId, waitForAppLoad } from "./fixtures";
 
 /**
  * Calendar (Schedule) integration tests.
@@ -23,7 +23,7 @@ test.describe("Calendar Page", () => {
 
     test("displays navigation buttons (prev/today/next)", async ({ page }) => {
         // Toolbar navigation buttons with Hebrew text
-        await expect(page.getByRole("button", { name: "הקודם" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "קודם" })).toBeVisible();
         await expect(page.getByRole("button", { name: "היום" })).toBeVisible();
         await expect(page.getByRole("button", { name: "הבא" })).toBeVisible();
     });
@@ -31,23 +31,25 @@ test.describe("Calendar Page", () => {
     test("displays view switching buttons (day/work-week/week)", async ({
         page,
     }) => {
-        await expect(page.getByRole("button", { name: "יום" })).toBeVisible();
+        await expect(
+            page.getByRole("button", { name: "יום", exact: true }),
+        ).toBeVisible();
         await expect(
             page.getByRole("button", { name: "שבוע עבודה" }),
         ).toBeVisible();
-        await expect(page.getByRole("button", { name: "שבוע" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "שבוע", exact: true })).toBeVisible();
     });
 
     // ─── View Switching ─────────────────────────────────────────────────────
 
     test("switches to day view", async ({ page }) => {
-        const dayButton = page.getByRole("button", { name: "יום" });
+        const dayButton = page.getByRole("button", { name: "יום", exact: true });
         await dayButton.click();
         await page.waitForTimeout(300);
 
         // In day view, the calendar should show a single day column
-        // The rbc-time-header should contain exactly 1 day cell
-        const dayHeaders = page.locator(".rbc-header");
+        // Look for headers in the time-header area specifically
+        const dayHeaders = page.locator(".rbc-time-header .rbc-header");
         await expect(dayHeaders).toHaveCount(1);
     });
 
@@ -65,7 +67,7 @@ test.describe("Calendar Page", () => {
     });
 
     test("switches to full week view", async ({ page }) => {
-        const weekButton = page.getByRole("button", { name: "שבוע" });
+        const weekButton = page.getByRole("button", { name: "שבוע", exact: true });
         await weekButton.click();
         await page.waitForTimeout(300);
 
@@ -78,11 +80,8 @@ test.describe("Calendar Page", () => {
     // ─── Date Navigation ────────────────────────────────────────────────────
 
     test("navigates to next period", async ({ page }) => {
-        // Get initial header label text
-        const headerLabel = page
-            .locator("h6")
-            .filter({ hasText: /\d{4}/ })
-            .first();
+        // Get initial header label text - the visible range header
+        const headerLabel = page.locator("h6").filter({ hasText: "–" }).first();
         const initialText = await headerLabel.textContent();
 
         // Click "next"
@@ -95,13 +94,11 @@ test.describe("Calendar Page", () => {
     });
 
     test("navigates to previous period", async ({ page }) => {
-        const headerLabel = page
-            .locator("h6")
-            .filter({ hasText: /\d{4}/ })
-            .first();
+        // Get initial header label text - the visible range header
+        const headerLabel = page.locator("h6").filter({ hasText: "–" }).first();
         const initialText = await headerLabel.textContent();
 
-        await page.getByRole("button", { name: "הקודם" }).click();
+        await page.getByRole("button", { name: "קודם" }).click();
         await page.waitForTimeout(500);
 
         const newText = await headerLabel.textContent();
@@ -190,7 +187,7 @@ test.describe("Calendar Page", () => {
 
     test("opens event dialog by clicking a time slot", async ({ page }) => {
         // Switch to day view for easier slot targeting
-        await page.getByRole("button", { name: "יום" }).click();
+        await page.getByRole("button", { name: "יום", exact: true }).click();
         await page.waitForTimeout(300);
 
         // Click a time slot in the day view
@@ -216,7 +213,7 @@ test.describe("Calendar Page", () => {
         const eventName = testId("event");
 
         // Switch to day view
-        await page.getByRole("button", { name: "יום" }).click();
+        await page.getByRole("button", { name: "יום", exact: true }).click();
         await page.waitForTimeout(300);
 
         // Click a time slot
@@ -276,7 +273,7 @@ test.describe("Calendar Page", () => {
 
     test("event dialog shows all expected fields", async ({ page }) => {
         // Switch to day view and open dialog
-        await page.getByRole("button", { name: "יום" }).click();
+        await page.getByRole("button", { name: "יום", exact: true }).click();
         await page.waitForTimeout(300);
 
         const timeSlots = page.locator(SELECTORS.calendarDaySlot + " .rbc-timeslot-group");
@@ -319,7 +316,7 @@ test.describe("Calendar Page", () => {
 
     test("event dialog toggles work correctly", async ({ page }) => {
         // Open event dialog
-        await page.getByRole("button", { name: "יום" }).click();
+        await page.getByRole("button", { name: "יום", exact: true }).click();
         await page.waitForTimeout(300);
 
         const timeSlots = page.locator(SELECTORS.calendarDaySlot + " .rbc-timeslot-group");
