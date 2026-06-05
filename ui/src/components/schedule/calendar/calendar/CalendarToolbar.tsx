@@ -68,7 +68,7 @@ export function CalendarToolbar({
                     borderBottom: "1px solid",
                     borderColor: "divider",
                     bgcolor: (theme) =>
-                        theme.palette.mode === "dark" ? "background.paper" : "transparent",
+                        theme.palette.mode === "dark" ? "background.default" : "transparent",
                 }}
                 width="100%"
             >
