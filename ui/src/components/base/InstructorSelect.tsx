@@ -17,12 +17,14 @@ import { useOutsiders } from "@/components/base/OutsidersProvider";
 type CustomInstructorSelectProps<T> = {
     showOutsiders?: boolean;
     favoriteOutsiders?: Array<string>;
+    excludeTeachers?: boolean;
 } & SelectProps<T>;
 
 export function InstructorSelect<T = unknown>({
     children,
     showOutsiders = false,
     favoriteOutsiders = [],
+    excludeTeachers = false,
     ...props
 }: CustomInstructorSelectProps<T>) {
     const { courses } = useCourses();
@@ -65,7 +67,9 @@ export function InstructorSelect<T = unknown>({
                 for (const id of assignedIds) {
                     const inst = getInstructor(id);
                     if (inst) {
-                        resolved.push(inst);
+                        if (!excludeTeachers || !inst.teacher) {
+                            resolved.push(inst);
+                        }
                     }
                 }
                 // Sort instructors within this group alphabetically
@@ -95,7 +99,7 @@ export function InstructorSelect<T = unknown>({
         }
 
         const unassigned = instructors.filter(
-            (inst) => !assignedInstructorIds.has(inst.id),
+            (inst) => !assignedInstructorIds.has(inst.id) && (!excludeTeachers || !inst.teacher),
         );
         unassigned.sort((a, b) => a.display_name.localeCompare(b.display_name, "he"));
 
@@ -103,7 +107,7 @@ export function InstructorSelect<T = unknown>({
             courseGroups,
             unassigned,
         };
-    }, [courses, instructors, getInstructor]);
+    }, [courses, instructors, getInstructor, excludeTeachers]);
 
     // Apply search filter to grouped items
     const filteredGroupedItems = useMemo(() => {

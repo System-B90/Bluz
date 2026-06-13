@@ -24,7 +24,7 @@ export function FilterInstructors({ ...props }: BoxProps) {
 
         // Handle potential string autofill values vs actual arrays
         const newIds =
-      typeof value === "string" ? value.split(",").map(Number) : value;
+            typeof value === "string" ? value.split(",").map(Number) : value;
 
         setFilteredInstructors(newIds);
     };
@@ -38,6 +38,7 @@ export function FilterInstructors({ ...props }: BoxProps) {
             <FormControl fullWidth={true} size="small">
                 <InputLabel size="small">סינון לפי מדריכים</InputLabel>
                 <InstructorSelect
+                    excludeTeachers={true}
                     label="סינון לפי מדריכים"
                     multiple
                     onChange={handleChange}

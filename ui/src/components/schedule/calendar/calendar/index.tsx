@@ -135,7 +135,7 @@ export function BluzCalendar({
                 height: "100vh",
                 zIndex: 9999,
                 bgcolor: "background.paper",
-                p: 2,
+                p: 0,
                 boxSizing: "border-box",
                 display: "flex",
                 flexDirection: "column",
