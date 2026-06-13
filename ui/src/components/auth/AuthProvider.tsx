@@ -1,6 +1,7 @@
 "use client";
 
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
+import { useSnackbar } from "notistack";
 import React, {
     createContext,
     useCallback,
@@ -40,7 +41,50 @@ export const AuthProvider = ({
   userData: AuthSessionUser;
 }) => {
     const { ws, addMessageHandler } = useSessionWebSocketContext();
+    const { enqueueSnackbar } = useSnackbar();
     const messageQueue = useRef<Array<WebSocketSessionMessage>>([]);
+    const { data: session } = useSession();
+
+    useEffect(() => {
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            const url = typeof args[0] === "string" ? args[0] : (args[0] instanceof Request ? args[0].url : "");
+            
+            if (url.includes("/api/auth/_log")) {
+                try {
+                    const init = args[1];
+                    if (init && init.body && typeof init.body === "string") {
+                        const body = JSON.parse(init.body);
+                        if (body.code === "CLIENT_FETCH_ERROR") {
+                            enqueueSnackbar("שגיאת תקשורת עם שרת ההזדהות. ייתכנו שיבושים בפעילות המערכת.", {
+                                variant: "error",
+                                preventDuplicate: true,
+                            });
+                        }
+                    }
+                } catch (e) {
+                    // Ignore parse errors
+                }
+            }
+            
+            return originalFetch(...args);
+        };
+        
+        return () => {
+            window.fetch = originalFetch;
+        };
+    }, [enqueueSnackbar]);
+
+    const logout = useCallback(() => {
+        void signOut({ callbackUrl: "/login" });
+    }, []);
+
+    useEffect(() => {
+        if (session && (session as any).error === "TokenExpiredError") {
+            enqueueSnackbar("ההתחברות שלך פגה. אנא התחבר מחדש.", { variant: "warning" });
+            logout();
+        }
+    }, [session, logout, enqueueSnackbar]);
 
     const canEdit: boolean = !!userData;
 
@@ -88,11 +132,6 @@ export const AuthProvider = ({
             socketInstance.removeEventListener("open", handleSocketOpen);
         };
     }, [ws]);
-
-    const logout = useCallback(() => {
-    // No return from this function
-        void signOut({ callbackUrl: "/login" });
-    }, []);
 
     const contextValue = useMemo<AuthContextState>(
         () => ({

@@ -67,11 +67,12 @@ const HIVE_PROVIDER: OAuthConfig<HiveSsoProfile> = {
     },
 
     issuer: `${NEXT_PUBLIC_HIVE_URL}/api/core/sso`,
-    wellKnown: `${NEXT_PUBLIC_HIVE_URL}/api/core/sso/.well-known/openid-configuration`,
-
     authorization: {
+        url: `${NEXT_PUBLIC_HIVE_URL}/api/core/sso/authorize`,
         params: { scope: `openid profile clearance extended_profile api` },
     },
+    token: `${NEXT_PUBLIC_HIVE_URL}/api/core/sso/token`,
+    userinfo: `${NEXT_PUBLIC_HIVE_URL}/api/core/sso/userinfo`,
 
     clientId: process.env.HIVE_CLIENT_ID,
     clientSecret: process.env.HIVE_CLIENT_SECRET,
@@ -158,6 +159,11 @@ const jwtCallback: CallbacksOptions["jwt"] = async ({
             // or return a token with empty access flags to force a re-login.
             throw new Error("Authentication failed during token exchange.");
         }
+    } else if (token && token.data) {
+        const tokenData = token.data as JwtTokenData;
+        if (tokenData.expires_at * 1000 < Date.now()) {
+            token.error = "TokenExpiredError";
+        }
     }
 
     return token;
@@ -170,6 +176,10 @@ const sessionCallback: CallbacksOptions["session"] = async ({
     if (token && token.data) {
         const authSessionData: AuthSessionData = session as AuthSessionData;
         const tokenData = token.data as JwtTokenData;
+
+        if (token.error === "TokenExpiredError") {
+            authSessionData.error = "TokenExpiredError";
+        }
 
         authSessionData.user = tokenData.user;
         authSessionData.accessToken = tokenData.accessToken;

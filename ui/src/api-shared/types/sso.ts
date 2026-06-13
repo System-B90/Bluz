@@ -18,4 +18,5 @@ export type AuthSessionData = {
   user: AuthSessionUser;
   accessToken: string;
   refreshToken: string;
+  error?: "TokenExpiredError";
 } & Session;

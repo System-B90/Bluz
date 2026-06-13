@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
 
 import { authOptions } from "@/api-server/hive/sso";
-import { AuthSessionUser } from "@/api-shared/types/sso";
+import { AuthSessionData, AuthSessionUser } from "@/api-shared/types/sso";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 
 export default async function PostAuthLayout({
@@ -11,9 +11,9 @@ export default async function PostAuthLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as AuthSessionData | null;
 
-    if (!session || !session.user) {
+    if (!session || !session.user || session.error === "TokenExpiredError") {
         redirect("/login");
     }
 
