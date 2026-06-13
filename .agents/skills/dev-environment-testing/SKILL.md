@@ -35,7 +35,7 @@ npm run docker:dev
 ```
 Or run the composition explicitly:
 ```powershell
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d; docker compose -f docker-compose.yml -f docker-compose.dev.yml watch ui
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d && docker compose -f docker-compose.yml -f docker-compose.dev.yml watch ui
 ```
 
 ### Stop the Development Environment
