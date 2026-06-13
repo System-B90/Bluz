@@ -122,7 +122,13 @@ export function CalendarToolbar({
                         open={open}
                         slotProps={{
                             textField: {
-                                sx: { display: "none" },
+                                sx: {
+                                    position: "absolute",
+                                    width: 0,
+                                    height: 0,
+                                    opacity: 0,
+                                    pointerEvents: "none",
+                                },
                             },
                         }}
                         value={dayjs(date)}
