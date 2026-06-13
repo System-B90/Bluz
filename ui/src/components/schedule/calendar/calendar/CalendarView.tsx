@@ -5,9 +5,9 @@
  * Author: Michael K. Steinberg
  */
 
+import { Box, Typography } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
 import { CalendarProps, View, Views } from "react-big-calendar";
-import { Box, Typography } from "@mui/material";
 
 import { Room, RoomSource, roomToResolvable } from "@/api-shared/types/room"; // Import the full Room type and roomToResolvable
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";

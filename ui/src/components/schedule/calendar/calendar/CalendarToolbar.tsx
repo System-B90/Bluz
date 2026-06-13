@@ -9,12 +9,12 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { Box, Button, ButtonGroup, Collapse, IconButton, Tooltip, Typography } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import { useCallback, useMemo, useState } from "react";
 import { ToolbarProps } from "react-big-calendar";
 
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
-import { DatePicker } from "@mui/x-date-pickers";
 
 export function CalendarToolbar({
     date,
