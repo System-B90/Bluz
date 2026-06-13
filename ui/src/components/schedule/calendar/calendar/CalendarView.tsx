@@ -135,6 +135,7 @@ export function CalendarView({
             defaultView={Views.WEEK}
             draggableAccessor={(e) => !e.locked}
             endAccessor={(e) => (e.endTime as Dayjs).toDate()}
+            events={events}
             formats={{
                 timeGutterFormat: "HH:mm",
                 dayRangeHeaderFormat: ({ start, end }) => {
@@ -147,7 +148,6 @@ export function CalendarView({
                     }
                 }
             }}
-            events={events}
             localizer={localizer}
             max={new Date(2025, 0, 1, 22, 0)}
             messages={CALENDAR_MESSAGES}

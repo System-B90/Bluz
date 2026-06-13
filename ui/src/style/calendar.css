@@ -611,7 +611,7 @@ button.rbc-input::-moz-focus-inner {
 }
 
 .rbc-day-slot .rbc-event {
-  border: 1px solid hsla(var(--primary), 0.9);
+  border: none;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
