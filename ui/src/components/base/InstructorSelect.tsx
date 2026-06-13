@@ -183,7 +183,7 @@ export function InstructorSelect<T = unknown>({
                             e.stopPropagation();
                         }
                     }}
-                    placeholder="חיפוש מרצה..."
+                    placeholder={excludeTeachers ? "חיפוש מדריך..." : "חיפוש מרצה..."}
                     size="small"
                     value={searchQuery}
                 />

@@ -89,10 +89,9 @@ export const CalendarFiltersProvider = ({
         filteredCourses.length === 0 || event.courses.length === 0;
 
             if (showPAsFor === null) {
-                const hasMatchingInstructor = [
-                    ...event.instructors,
-                    ...(event.lecturers?.filter((v) => typeof v === "number") ?? []),
-                ].some((instructorId) => filteredInstructors.includes(instructorId));
+                const hasMatchingInstructor = event.instructors.some(
+                    (instructorId) => filteredInstructors.includes(instructorId),
+                );
 
                 return hasMatchingInstructor || hasMatchingCourse ? 1 : 0.2;
             }
