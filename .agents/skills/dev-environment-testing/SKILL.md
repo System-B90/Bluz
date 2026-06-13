@@ -1,38 +1,52 @@
 ---
 name: dev-environment-testing
 description: Guides the agent in running, managing, and debugging the Docker-based Bluz development and E2E testing environments, running E2E suites with Playwright, and ensuring code quality.
-version: 1.0.0
+version: 1.1.0
 tags:
   - docker
   - playwright
   - testing
   - dev-ops
+  - windows-11
+  - pwsh-7
 ---
 
-# Dev Environment & Testing Skill
+# Dev Environment & Testing Skill (Windows 11 & PWSH 7)
 
-This skill provides guidelines and procedures for managing the Bluz Docker composition, executing Playwright E2E tests, and checking code style conventions.
+This skill provides guidelines and procedures for managing the Bluz Docker composition, executing Playwright E2E tests, and checking code style conventions on **Windows 11** using **PowerShell 7 (PWSH 7)**.
+
+## Environment Constraints
+
+- **OS:** Windows 11
+- **Shell:** PowerShell 7 (PWSH 7)
+- **Command Chaining:** PWSH 7 natively supports `&&` and `||` operators, as well as statement separators like `;`.
+- **Environment Variables:** Set environment variables using `$env:VAR_NAME = "value"` (e.g., `$env:BLUZ_VERSION = "0.2.0"`).
+
+---
 
 ## Development Environment Setup
 
 Bluz utilizes Docker Compose for running backend dependencies (PostgreSQL, MongoDB, session websockets, and Nginx proxy) alongside the Next.js frontend application.
 
 ### Start the Development Environment
-Run the development environment locally using:
-```bash
+Run the development environment locally in PWSH 7:
+```powershell
 npm run docker:dev
 ```
-This command starts all background containers (Postgres, MongoDB, WebSocket sessions, proxy) in detached mode and configures Docker Compose to sync/watch frontend changes in the `ui` directory.
+Or run the composition explicitly:
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d; docker compose -f docker-compose.yml -f docker-compose.dev.yml watch ui
+```
 
 ### Stop the Development Environment
 To gracefully stop the environment, run:
-```bash
+```powershell
 npm run docker:down
 ```
 
 ### Complete Environment Reset
 If databases or containers get into an inconsistent state, wipe out the Docker volumes and restart clean:
-```bash
+```powershell
 npm run docker:nuke
 ```
 
@@ -40,49 +54,33 @@ npm run docker:nuke
 
 ## E2E Testing Guidelines
 
-All end-to-end integration tests are built with Playwright and **must run against the dedicated test Docker composition**. This ensures that test executions do not pollute or modify the active development database.
+All end-to-end integration tests are built with Playwright and **must run against the dedicated test Docker composition**.
 
 ### Running Tests
 
 1. **Start the Test Composition:**
    Spin up the dedicated test containers (e.g. `bluz-test-ui`, `bluz-test-mongodb`, `bluz-test-curriculum-db`):
-   ```bash
+   ```powershell
    npm run docker:test
    ```
 
 2. **Execute the E2E Test Suite:**
-   Run Playwright tests in headless mode:
-   ```bash
+   Run Playwright tests in headless mode inside the PWSH 7 terminal:
+   ```powershell
    npm run test:e2e
    ```
    Or run the tests using the interactive Playwright UI:
-   ```bash
+   ```powershell
    npm run test:e2e:ui
    ```
 
 3. **Stop & Clean Up Test Composition:**
    Always tear down the test containers and purge test databases/volumes after run completion:
-   ```bash
+   ```powershell
    npm run docker:test:down
    ```
 
 ### Debugging Test Failures
-- If tests fail, look at the Playwright reports or HTML reports located in the `playwright-report/` directory.
-- Trace files and screenshots are captured on failure and stored in `test-results/`.
-- Ensure `bluz.bis` maps to `127.0.0.3` in your hosts file, as E2E tests target this domain.
-
----
-
-## Linting & Code Quality
-
-Always verify code formatting and type safety prior to committing.
-
-- **Check for Code Issues:**
-  ```bash
-  npm run lint
-  ```
-- **Auto-Fix Safe Formatting Issues:**
-  ```bash
-  npm run lint:fix
-  ```
-- The project runs code formatting validation on `git commit` via `husky` and `lint-staged`.
+- Playwright reports are stored in `playwright-report\`.
+- Trace files and screenshots are captured on failure and stored in `test-results\`. Use backslashes (`\`) for Windows 11 file paths in commands.
+- Ensure `bluz.bis` maps to `127.0.0.3` in your Windows hosts file (`C:\Windows\System32\drivers\etc\hosts`).

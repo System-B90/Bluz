@@ -1,7 +1,7 @@
 ---
 name: frontend-theme-customization
 description: Guides the agent in styling React interfaces using Material-UI (MUI) themes, implementing RTL Hebrew alignments, and designing micro-interactions and animations.
-version: 1.0.0
+version: 1.1.0
 tags:
   - mui
   - react
@@ -9,18 +9,31 @@ tags:
   - hebrew
   - micro-interactions
   - animations
+  - windows-11
+  - pwsh-7
 ---
 
-# Frontend & Theme Customization Skill
+# Frontend & Theme Customization Skill (Windows 11 & PWSH 7)
 
-This skill documents guidelines for styling React components in Bluz using Material-UI (MUI), handling Hebrew localization and RTL (Right-to-Left) layouts, and implementing responsive, high-fidelity micro-interactions.
+This skill documents guidelines for styling React components in Bluz using Material-UI (MUI), handling Hebrew localization and RTL (Right-to-Left) layouts, and implementing responsive, high-fidelity micro-interactions on **Windows 11** using **PowerShell 7 (PWSH 7)**.
+
+## Environment Constraints
+
+- **OS:** Windows 11
+- **Shell:** PowerShell 7 (PWSH 7)
+- **Path Separators:** Use backslashes (`\`) for local paths:
+  - `ui\src\components\theme\`
+  - `ui\src\components\schedule\`
+  - `ui\src\components\gantt\`
+
+---
 
 ## Material-UI (MUI) Styling Constraints
 
 Bluz relies exclusively on **MUI v5/v6** for layout and component design.
 - **Component Exclusivity:** Always use MUI components (`Box`, `Grid`, `Typography`, `Button`, `FormControl`, `Select`) rather than raw HTML tags.
-- **Styling Utility:** Use the `sx` prop or custom styled wrappers (`styled(...)` from `@mui/material/styles`) instead of standalone CSS classes unless specifically required by third-party plugins (e.g. `react-big-calendar`).
-- **Harmonious Palettes:** Access colors directly from `theme.palette` (e.g. `theme.palette.primary.main`, `theme.palette.background.paper`). Avoid hardcoded hex codes for structural elements.
+- **Styling Utility:** Use the `sx` prop or custom styled wrappers (`styled(...)` from `@mui/material/styles`) instead of standalone CSS classes.
+- **Harmonious Palettes:** Access colors directly from `theme.palette`. Avoid hardcoded hex codes for structural elements.
 
 ---
 
@@ -29,7 +42,7 @@ Bluz relies exclusively on **MUI v5/v6** for layout and component design.
 Bluz is a Hebrew-first scheduling tool. Layout flows must default to Right-to-Left (RTL).
 
 ### 1. Stylis RTL Plugin
-RTL formatting is processed automatically using `stylis-plugin-rtl` via custom theme providers. However, manual positioning must respect bidirectional flow:
+RTL formatting is processed automatically using `stylis-plugin-rtl`. However, manual positioning must respect bidirectional flow:
 - Use logical properties: prefer `marginInlineStart` / `marginInlineEnd` over `marginLeft` / `marginRight`.
 - For flex alignment, use standard values; verify that layouts flip correctly in RTL mode.
 
