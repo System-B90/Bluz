@@ -117,11 +117,11 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 if (c.type === ConstraintType.Temporal) {
                     if (c.allowedDays && !c.allowedDays.includes(myDay.dayIndex)) {
                         if (!v[entityId]) v[entityId] = [];
-                        v[entityId].push("Violates allowed days");
+                        v[entityId].push("מפר ימי עבודה מותרים");
                     }
                     if (c.forbiddenDays && c.forbiddenDays.includes(myDay.dayIndex)) {
                         if (!v[entityId]) v[entityId] = [];
-                        v[entityId].push("Violates forbidden days");
+                        v[entityId].push("מפר ימי עבודה אסורים");
                     }
                 } else if (c.type === ConstraintType.Relational) {
                     const targetIdx = getMappedDayIdx(c.targetType, c.targetId);
@@ -143,7 +143,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                     if (isViolated) {
                         if (!v[entityId]) v[entityId] = [];
                         v[entityId].push(
-                            `Violates relational constraint with ${c.targetType}`,
+                            `מפר אילוץ יחסי עם ${c.targetType === "event" ? "מפגש" : "מערך"}`,
                         );
                     }
 
@@ -377,7 +377,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
     );
 
     if (!curriculum) {
-        return <Typography sx={{ p: 2 }}>Loading curriculum...</Typography>;
+        return <Typography sx={{ p: 2 }}>טוען גאנט...</Typography>;
     }
 
     return (
@@ -432,7 +432,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                             onChange={(e) => setWeeklyView(e.target.checked)}
                                         />
                                     }
-                                    label="Weekly View"
+                                    label="תצוגה שבועית"
                                 />
                                 <FormControlLabel
                                     control={
@@ -441,7 +441,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                             onChange={(e) => setShowConstraints(e.target.checked)}
                                         />
                                     }
-                                    label="Show Constraints"
+                                    label="הצג אילוצים"
                                 />
                             </Box>
                         </Box>

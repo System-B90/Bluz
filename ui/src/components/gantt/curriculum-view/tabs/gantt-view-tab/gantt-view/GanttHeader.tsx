@@ -43,7 +43,7 @@ export const GanttHeader: React.FC = () => {
                     }}
                 >
                     <Typography fontWeight="bold" variant="subtitle2">
-            Syllabus / Module
+            סילבוס / מערך
                     </Typography>
                 </TableCell>
                 {timelineWeeks.map((week, weekIndex) => {
