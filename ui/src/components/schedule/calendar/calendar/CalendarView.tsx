@@ -5,8 +5,9 @@
  * Author: Michael K. Steinberg
  */
 
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { CalendarProps, View, Views } from "react-big-calendar";
+import { Box, Typography } from "@mui/material";
 
 import { Room, RoomSource, roomToResolvable } from "@/api-shared/types/room"; // Import the full Room type and roomToResolvable
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
@@ -25,6 +26,64 @@ const NO_ROOM_RESOURCE: Room = {
     name: "ללא כיתה",
     source: RoomSource.Custom,
 };
+
+const HEBREW_DAYS_FULL = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+const HEBREW_DAYS_SHORT = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
+
+function CalendarHeader({ date }: { date: Date }) {
+    const dayIndex = date.getDay();
+    const dayFull = HEBREW_DAYS_FULL[dayIndex];
+    const dayShort = HEBREW_DAYS_SHORT[dayIndex];
+    const dayjsDate = dayjs(date);
+    const dateStr = dayjsDate.format("DD/MM");
+    const isToday = dayjsDate.isSame(dayjs(), "day");
+
+    return (
+        <Box
+            alignItems="center"
+            display="flex"
+            gap={1}
+            justifyContent="center"
+            py={0.75}
+            sx={{
+                width: "100%",
+                minHeight: 38,
+            }}
+        >
+            <Typography
+                component="span"
+                sx={{
+                    fontSize: "0.875rem",
+                    fontWeight: isToday ? "bold" : 600,
+                    color: isToday ? "primary.main" : "text.primary",
+                }}
+            >
+                <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
+                    {dayFull}
+                </Box>
+                <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>
+                    {dayShort}
+                </Box>
+            </Typography>
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "6px",
+                    fontSize: "0.85rem",
+                    fontWeight: isToday ? "bold" : 500,
+                    bgcolor: isToday ? "primary.main" : "action.hover",
+                    color: isToday ? "primary.contrastText" : "text.secondary",
+                    px: 1,
+                    py: 0.25,
+                }}
+            >
+                {dateStr}
+            </Box>
+        </Box>
+    );
+}
 
 type CalendarViewProps = {
     events: Array<Event>;
@@ -69,7 +128,8 @@ export function CalendarView({
                         onToggleToolbar={onToggleToolbar} 
                         showToolbar={showToolbar}
                     />
-                )
+                ),
+                header: CalendarHeader
             }}
             date={date}
             defaultView={Views.WEEK}

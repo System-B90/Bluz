@@ -5,15 +5,16 @@
  * Author: Antigravity
  */
 
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { Box, Button, ButtonGroup, Collapse, Tooltip, Typography } from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers";
+import { Box, Button, ButtonGroup, Collapse, IconButton, Tooltip, Typography } from "@mui/material";
 import dayjs from "dayjs";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ToolbarProps } from "react-big-calendar";
 
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
+import { DatePicker } from "@mui/x-date-pickers";
 
 export function CalendarToolbar({
     date,
@@ -27,8 +28,9 @@ export function CalendarToolbar({
 }: ToolbarProps<any, any> & {
     showToolbar: boolean;
     onToggleFullscreen: () => void;
-    onToggleToolbar: () => void;
 }) {
+    const [open, setOpen] = useState(false);
+
     const handleDateChange = useCallback((val: dayjs.Dayjs | null) => {
         if (val && val.isValid()) {
             onNavigate("DATE", val.toDate());
@@ -87,28 +89,45 @@ export function CalendarToolbar({
                             {CALENDAR_MESSAGES.next}
                         </Button>
                     </ButtonGroup>
+                </Box>
 
+                <Box alignItems="center" display="flex" gap={1}>
+                    <Typography fontWeight="bold" sx={{ color: "text.primary" }} variant="h6">
+                        {label}
+                    </Typography>
+                    <IconButton
+                        onClick={() => setOpen(true)}
+                        size="small"
+                        sx={{
+                            color: "text.secondary",
+                            transition: "all 0.2s ease-in-out",
+                            "&:hover": {
+                                color: "primary.main",
+                                transform: "scale(1.1)",
+                            },
+                            "&:active": {
+                                transform: "scale(0.95)",
+                            }
+                        }}
+                    >
+                        <CalendarTodayIcon fontSize="small" />
+                    </IconButton>
                     <DatePicker
                         format="DD/MM/YYYY"
-                        onChange={handleDateChange}
+                        onChange={(val) => {
+                            handleDateChange(val);
+                            setOpen(false);
+                        }}
+                        onClose={() => setOpen(false)}
+                        open={open}
                         slotProps={{
                             textField: {
-                                size: "small",
-                                sx: {
-                                    width: 140,
-                                    "& .MuiInputBase-root": {
-                                        height: 30.75, // Matches standard small MUI buttons height
-                                    },
-                                },
+                                sx: { display: "none" },
                             },
                         }}
                         value={dayjs(date)}
                     />
                 </Box>
-
-                <Typography fontWeight="bold" variant="h6">
-                    {label}
-                </Typography>
 
                 <Box alignItems="center" display="flex" gap={1.5}>
                     <ButtonGroup size="small" variant="outlined">
