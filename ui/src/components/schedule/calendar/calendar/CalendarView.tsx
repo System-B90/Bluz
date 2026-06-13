@@ -135,8 +135,19 @@ export function CalendarView({
             defaultView={Views.WEEK}
             draggableAccessor={(e) => !e.locked}
             endAccessor={(e) => (e.endTime as Dayjs).toDate()}
+            formats={{
+                timeGutterFormat: "HH:mm",
+                dayRangeHeaderFormat: ({ start, end }) => {
+                    const s = dayjs(start).locale("he");
+                    const e = dayjs(end).locale("he");
+                    if (s.month() === e.month()) {
+                        return `${s.format("DD")} - ${e.format("DD")} ב${s.format("MMMM")} ${s.format("YYYY")}`;
+                    } else {
+                        return `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")} ${e.format("YYYY")}`;
+                    }
+                }
+            }}
             events={events}
-            formats={{ timeGutterFormat: "HH:mm" }}
             localizer={localizer}
             max={new Date(2025, 0, 1, 22, 0)}
             messages={CALENDAR_MESSAGES}
