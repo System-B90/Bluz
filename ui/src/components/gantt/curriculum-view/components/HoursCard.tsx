@@ -10,9 +10,10 @@ import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { useMemo } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
+import { getCurriculumScheduledMinutes } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 import {
-    calculateAllocatedTimeForCurriculum,
     calculateMinimumRequiredTimeForCurriculum,
 } from "@/components/gantt/utils";
 
@@ -23,6 +24,8 @@ export function HoursCard({
 }) {
     const theme = useTheme();
     const state = useCurriculumState();
+    const { state: mappingState } = useGanttMappings();
+    const mappings = mappingState.mappings;
 
     const totalWorkingHours = useMemo(() => {
         return (curriculum?.weeks ?? []).reduce((total: number, weekId) => {
@@ -48,9 +51,9 @@ export function HoursCard({
     const usedWorkingHours = useMemo(
         () =>
             curriculum
-                ? calculateAllocatedTimeForCurriculum(curriculum, state) / 60
+                ? getCurriculumScheduledMinutes({ curriculum, mappings, state }) / 60
                 : 0,
-        [curriculum, state],
+        [curriculum, mappings, state],
     );
 
     if (!curriculum) {
@@ -116,7 +119,7 @@ export function HoursCard({
                     </Box>
                     <Box alignItems="baseline" display="flex" flexDirection="row" gap={1}>
                         <Typography color="text.secondary" variant="body2">
-              שנוצלו:
+              שובצו:
                         </Typography>
                         <Typography fontWeight="bold" variant="body2">
                             {usedWorkingHours.toFixed(2)}

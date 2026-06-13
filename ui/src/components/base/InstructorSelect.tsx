@@ -293,9 +293,8 @@ export function InstructorSelect<T = unknown>({
                 );
             });
         }
-
         return result;
-    }, [children, showOutsiders, favoriteList, otherList, filteredGroupedItems, searchQuery]);
+    }, [children, showOutsiders, favoriteList, otherList, filteredGroupedItems, searchQuery, excludeTeachers]);
 
     return (
         <Select<T>

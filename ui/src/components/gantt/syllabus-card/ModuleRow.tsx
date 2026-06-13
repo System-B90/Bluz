@@ -4,81 +4,30 @@ import {
     IconButton,
     Skeleton,
     TableCell,
-    TableCellProps,
     TableRow,
     Tooltip,
     Typography,
 } from "@mui/material";
-import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     GanttCurriculumId,
     GanttModuleId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
-import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import {
     useCurriculumProviderActions,
     useCurriculumState,
 } from "@/components/gantt/state/provider";
-import { OpenHandsIcon } from "@/components/gantt/syllabus-card/OpenHandsIcon";
 import {
-    calculateAllocatedTimeForModule,
     calculateMinimumRequiredTimeForModule,
 } from "@/components/gantt/utils";
-
-type AllocatedTimeTableCellProps = {
-  moduleId: GanttModuleId;
-  curriculumId: GanttCurriculumId;
-  minimumRequiredTime: number;
-  allocatedTime: number | undefined;
-} & TableCellProps;
-
-function AllocatedTimeTableCell({
-    moduleId,
-    curriculumId,
-    allocatedTime,
-    minimumRequiredTime,
-    ...props
-}: AllocatedTimeTableCellProps) {
-    const { enqueueSnackbar } = useSnackbar();
-    const { allocateTimeToModule } = useModuleActions();
-    const allocateTimeHandler = useCallback(() => {
-        allocateTimeToModule(moduleId, curriculumId, minimumRequiredTime).catch(
-            (error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "הקצאת השעות נכשלה!", error),
-        );
-    }, [
-        moduleId,
-        curriculumId,
-        minimumRequiredTime,
-        allocateTimeToModule,
-        enqueueSnackbar,
-    ]);
-
-    return (
-        <TableCell {...props}>
-            {allocatedTime !== undefined ? (
-                allocatedTime
-            ) : (
-                <CircularProgress size="1rem" />
-            )}
-            <Tooltip title="הקצה את כל השעות">
-                <IconButton color="primary" onClick={allocateTimeHandler} size="small">
-                    <OpenHandsIcon fontSize="small" />
-                </IconButton>
-            </Tooltip>
-        </TableCell>
-    );
-}
 
 export function ModuleRow({
     moduleId,
     syllabusId,
-    curriculumId,
+    curriculumId: _curriculumId,
 }: {
   moduleId: GanttModuleId;
   syllabusId: GanttSyllabusId;
@@ -92,10 +41,6 @@ export function ModuleRow({
             moduleDoc ? calculateMinimumRequiredTimeForModule(moduleDoc, state) : 0,
         [moduleDoc, state],
     );
-    const allocatedTime = useMemo(
-        () => (moduleDoc ? calculateAllocatedTimeForModule(moduleDoc, state) : 0),
-        [moduleDoc, state],
-    );
 
     const editClickHandler = useCallback(() => {
         openModuleDialog(syllabusId, moduleId);
@@ -106,9 +51,6 @@ export function ModuleRow({
             <TableRow>
                 <TableCell>
                     <Skeleton variant="text" width="80%" />
-                </TableCell>
-                <TableCell>
-                    <Skeleton variant="text" width="40px" />
                 </TableCell>
                 <TableCell>
                     <Skeleton variant="text" width="40px" />
@@ -132,12 +74,6 @@ export function ModuleRow({
                     <CircularProgress size="1rem" />
                 )}
             </TableCell>
-            <AllocatedTimeTableCell
-                allocatedTime={allocatedTime}
-                curriculumId={curriculumId}
-                minimumRequiredTime={minimumRequiredTime}
-                moduleId={moduleId}
-            />
             <TableCell>
                 <Tooltip placement="top" title="ערוך מערך">
                     <IconButton color="primary" onClick={editClickHandler} size="small">

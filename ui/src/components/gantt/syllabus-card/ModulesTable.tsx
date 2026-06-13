@@ -54,7 +54,6 @@ export function ModulesTable({
                     <TableRow>
                         <TableCell sx={{ fontWeight: "bold" }}>שם המערך</TableCell>
                         <TableCell sx={{ fontWeight: "bold" }}>זמן רצוי</TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>זמן מוקצב</TableCell>
                         <TableCell align="center" width="1rem">
                             <CreateModuleButton syllabusId={syllabusId} />
                         </TableCell>
@@ -65,7 +64,7 @@ export function ModulesTable({
                         moduleRows
                     ) : (
                         <TableRow>
-                            <TableCell align="center" colSpan={4}>
+                            <TableCell align="center" colSpan={3}>
                                 <Typography color="textSecondary" variant="caption">
                   לא נמצאו מערכים. לחצו על הוסף כדי להתחיל.
                                 </Typography>

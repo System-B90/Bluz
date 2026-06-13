@@ -11,6 +11,7 @@ import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumFab } from "@/components/gantt/curriculum-fab";
 import { CurriculumView } from "@/components/gantt/curriculum-view";
+import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
 import { CurriculumProvider } from "@/components/gantt/state/provider";
 
 /**
@@ -179,7 +180,9 @@ export default function GanttPage() {
                         initialData={initialData}
                         key={currentCurriculum}
                     >
-                        <CurriculumView curriculumId={currentCurriculum} />
+                        <GanttMappingProvider curriculumId={currentCurriculum}>
+                            <CurriculumView curriculumId={currentCurriculum} />
+                        </GanttMappingProvider>
                     </CurriculumProvider>
                 ) : null}
             </Box>

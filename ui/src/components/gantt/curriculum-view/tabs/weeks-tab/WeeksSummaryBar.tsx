@@ -6,10 +6,11 @@ import { GanttCurriculum } from "@/api-shared/types/gantt/models";
 import {
     formatHours,
     formatHoursLabel,
+    getCurriculumScheduledMinutes,
     getCurriculumTotalWorkingMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import {
-    calculateAllocatedTimeForCurriculum,
     calculateMinimumRequiredTimeForCurriculum,
 } from "@/components/gantt/utils";
 
@@ -64,8 +65,11 @@ export function WeeksSummaryBar({
     curriculum,
     state,
 }: WeeksSummaryBarProps) {
+    const { state: mappingState } = useGanttMappings();
+    const mappings = mappingState.mappings;
+
     const {
-        allocatedMinutes,
+        scheduledMinutes,
         minimumMinutes,
         remainingMinutes,
         totalWorkingMinutes,
@@ -73,16 +77,16 @@ export function WeeksSummaryBar({
     } = useMemo(() => {
         const total = getCurriculumTotalWorkingMinutes(curriculum, state);
         const minimum = calculateMinimumRequiredTimeForCurriculum(curriculum, state);
-        const allocated = calculateAllocatedTimeForCurriculum(curriculum, state);
+        const scheduled = getCurriculumScheduledMinutes({ curriculum, mappings, state });
 
         return {
             totalWorkingMinutes: total,
             minimumMinutes: minimum,
-            allocatedMinutes: allocated,
-            remainingMinutes: total - allocated,
-            utilization: total > 0 ? Math.min((allocated / total) * 100, 100) : 0,
+            scheduledMinutes: scheduled,
+            remainingMinutes: total - scheduled,
+            utilization: total > 0 ? Math.min((scheduled / total) * 100, 100) : 0,
         };
-    }, [curriculum, state]);
+    }, [curriculum, state, mappings]);
 
     const remainingTone = remainingMinutes < 0 ? "error" : "primary";
 
@@ -105,7 +109,7 @@ export function WeeksSummaryBar({
             <Divider flexItem orientation="vertical" />
             <SummaryMetric label="שעות זמינות" value={formatHoursLabel(totalWorkingMinutes)} />
             <SummaryMetric label="מינימום דרוש" value={formatHoursLabel(minimumMinutes)} />
-            <SummaryMetric label="הוקצו" value={formatHoursLabel(allocatedMinutes)} />
+            <SummaryMetric label="שובצו" value={formatHoursLabel(scheduledMinutes)} />
             <SummaryMetric
                 label={remainingMinutes < 0 ? "חריגה" : "יתרה"}
                 tone={remainingTone}
@@ -136,7 +140,7 @@ export function WeeksSummaryBar({
                     </Typography>
                     <Chip
                         color={remainingMinutes < 0 ? "error" : "primary"}
-                        label={`${formatHours(allocatedMinutes)} / ${formatHours(totalWorkingMinutes)} ש׳`}
+                        label={`${formatHours(scheduledMinutes)} / ${formatHours(totalWorkingMinutes)} ש׳`}
                         size="small"
                         sx={{ 
                             fontWeight: 700,

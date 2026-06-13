@@ -5,17 +5,21 @@
  * Author: Michael K. Steinberg
  */
 
-import { Box, CircularProgress, FormControlLabel, Paper, Stack, Switch, Typography } from "@mui/material";
-import { memo, useState } from "react";
+import DownloadIcon from "@mui/icons-material/Download";
+import UploadIcon from "@mui/icons-material/Upload";
+import { Box, Button, CircularProgress, FormControlLabel, Paper, Stack, Switch, Typography } from "@mui/material";
+import { useSnackbar } from "notistack";
+import React, { memo, useCallback, useState } from "react";
 
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CourseStartDateControl } from "@/components/gantt/curriculum-view/tabs/weeks-tab/CourseStartDateControl";
 import { WeekLengthMenu } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekLengthMenu";
 import { WeeksCapacityGrid } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeeksCapacityGrid";
 import { WeeksSummaryBar } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeeksSummaryBar";
+import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 type WeeksTabProps = {
@@ -29,6 +33,139 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
     const {
         state: { isLoading, mappings },
     } = useGanttMappings();
+
+    const { enqueueSnackbar } = useSnackbar();
+    const { createWeek, updateWeek, deleteWeek, updateDay } = useWeekActions();
+
+    const handleExportWeeks = useCallback(() => {
+        if (!curriculum) return;
+        try {
+            const weeksData = curriculum.weeks.map((weekId) => {
+                const week = state.weeks[weekId];
+                if (!week) return null;
+                const days = (week.days ?? []).map((dayId) => {
+                    const day = state.days[dayId];
+                    if (!day) return null;
+                    return {
+                        dayIndex: day.dayIndex,
+                        totalWorkingMinutes: day.totalWorkingMinutes,
+                        comment: day.comment,
+                    };
+                }).filter(Boolean);
+                return {
+                    comment: week.comment,
+                    weekendDuty: week.weekendDuty,
+                    days,
+                };
+            }).filter(Boolean);
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(weeksData, null, 2));
+            const downloadAnchor = document.createElement("a");
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `weeks_${curriculumId}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            enqueueSnackbar("שבועות הגאנט יוצאו בהצלחה!", { variant: "success" });
+        } catch {
+            enqueueSnackbar("ייצוא שבועות הגאנט נכשל!", { variant: "error" });
+        }
+    }, [curriculum, state.weeks, state.days, curriculumId, enqueueSnackbar]);
+
+    const handleImportWeeks = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!curriculum) return;
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const importedWeeks = JSON.parse(event.target?.result as string);
+                if (!Array.isArray(importedWeeks)) {
+                    throw new Error("Invalid format: expected an array of weeks");
+                }
+
+                enqueueSnackbar("מתחיל ייבוא שבועות...", { variant: "info" });
+
+                const currentWeekIds = [...curriculum.weeks];
+                const finalWeekIds: Array<string> = [];
+                const createdWeeksMap = new Map<string, any>();
+
+                // 1. Delete excess weeks
+                for (let i = 0; i < currentWeekIds.length; i++) {
+                    if (i < importedWeeks.length) {
+                        finalWeekIds.push(currentWeekIds[i]);
+                    } else {
+                        await deleteWeek(currentWeekIds[i], curriculumId);
+                    }
+                }
+
+                // 2. Create missing weeks
+                for (let i = currentWeekIds.length; i < importedWeeks.length; i++) {
+                    const newWeek = await createWeek({
+                        curriculumId,
+                        number: i + 1,
+                        comment: "",
+                        weekendDuty: false,
+                    });
+                    finalWeekIds.push(newWeek.id);
+                    createdWeeksMap.set(newWeek.id, newWeek);
+                }
+
+                // 3. Update weeks and days
+                for (let i = 0; i < importedWeeks.length; i++) {
+                    const weekId = finalWeekIds[i];
+                    const importedWeek = importedWeeks[i];
+
+                    // Find day IDs for this week
+                    let dayIds: Array<string> = [];
+                    const existingWeek = state.weeks[weekId];
+                    if (existingWeek && existingWeek.days && existingWeek.days.length > 0) {
+                        dayIds = existingWeek.days;
+                    } else {
+                        const newlyCreatedWeek = createdWeeksMap.get(weekId);
+                        if (newlyCreatedWeek && newlyCreatedWeek.w2d) {
+                            dayIds = newlyCreatedWeek.w2d.map((link: any) => link.dayId);
+                        }
+                    }
+
+                    // Update week attributes
+                    await updateWeek(weekId, {
+                        comment: importedWeek.comment ?? "",
+                        weekendDuty: importedWeek.weekendDuty ?? false,
+                    });
+
+                    // Update day attributes
+                    if (Array.isArray(importedWeek.days)) {
+                        for (const dId of dayIds) {
+                            let currentDayIndex: number | undefined = state.days[dId]?.dayIndex;
+                            if (currentDayIndex === undefined) {
+                                const link = createdWeeksMap.get(weekId)?.w2d?.find((l: any) => l.dayId === dId);
+                                if (link) {
+                                    currentDayIndex = link.day.dayIndex;
+                                }
+                            }
+
+                            const importedDay = importedWeek.days.find((d: any) => d.dayIndex === currentDayIndex);
+                            if (importedDay) {
+                                await updateDay(dId, {
+                                    totalWorkingMinutes: importedDay.totalWorkingMinutes ?? 0,
+                                    comment: importedDay.comment ?? "",
+                                });
+                            }
+                        }
+                    }
+                }
+
+                enqueueSnackbar("ייבוא שבועות הגאנט הושלם בהצלחה!", { variant: "success" });
+            } catch (error: any) {
+                enqueueApiErrorSnackbar(enqueueSnackbar, "ייבוא שבועות הגאנט נכשל!", error);
+            } finally {
+                e.target.value = "";
+            }
+        };
+        reader.readAsText(file);
+    }, [curriculum, curriculumId, state.weeks, state.days, createWeek, updateWeek, deleteWeek, updateDay, enqueueSnackbar]);
 
     if (!curriculum) {
         return (
@@ -78,7 +215,33 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                 אורך הקורס, תאריכים, שעות זמינות ושבתות בבסיס
                             </Typography>
                         </Box>
-                        <WeekLengthMenu curriculum={curriculum} curriculumId={curriculumId} />
+                        <Stack alignItems="center" direction="row" spacing={1}>
+                            <Button
+                                color="primary"
+                                onClick={handleExportWeeks}
+                                size="small"
+                                startIcon={<DownloadIcon />}
+                                variant="outlined"
+                            >
+                                ייצוא שבועות
+                            </Button>
+                            <Button
+                                color="secondary"
+                                component="label"
+                                size="small"
+                                startIcon={<UploadIcon />}
+                                variant="outlined"
+                            >
+                                ייבוא שבועות
+                                <input
+                                    accept=".json"
+                                    hidden
+                                    onChange={handleImportWeeks}
+                                    type="file"
+                                />
+                            </Button>
+                            <WeekLengthMenu curriculum={curriculum} curriculumId={curriculumId} />
+                        </Stack>
                     </Box>
                     <Box
                         alignItems="center"
@@ -127,8 +290,6 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
 
 export const WeeksTab = memo(function WeeksTab({ curriculumId }: WeeksTabProps) {
     return (
-        <GanttMappingProvider curriculumId={curriculumId}>
-            <WeeksTabInner curriculumId={curriculumId} />
-        </GanttMappingProvider>
+        <WeeksTabInner curriculumId={curriculumId} />
     );
 });

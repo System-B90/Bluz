@@ -203,7 +203,7 @@ export function DayCapacityCell({
                 }}
             >
                 <Box sx={cellBoxStyles}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box alignItems="center" display="flex" justifyContent="space-between">
                         <Typography 
                             fontWeight={700} 
                             sx={{
@@ -219,9 +219,9 @@ export function DayCapacityCell({
                         {day?.dayIndex === GanttDayIndex.Saturday && (
                             <Tooltip arrow title={week?.weekendDuty ? "צא הביתה" : "סגור שבת"}>
                                 <Switch
-                                    size="small"
                                     checked={week?.weekendDuty ?? false}
                                     onChange={(event) => toggleWeekendDuty(event.target.checked)}
+                                    size="small"
                                 />
                             </Tooltip>
                         )}
@@ -291,9 +291,9 @@ export function DayCapacityCell({
                         {day?.dayIndex === GanttDayIndex.Saturday && (
                             <Tooltip arrow title={week?.weekendDuty ? "צא הביתה" : "סגור שבת"}>
                                 <Switch
-                                    size="small"
                                     checked={week?.weekendDuty ?? false}
                                     onChange={(event) => toggleWeekendDuty(event.target.checked)}
+                                    size="small"
                                 />
                             </Tooltip>
                         )}

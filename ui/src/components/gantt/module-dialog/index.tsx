@@ -22,12 +22,14 @@ import
     GanttModule,
     GanttModuleId,
     GanttSyllabusId,
+    ModuleEventType,
 } from "@/api-shared/types/gantt/models";
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView"; // <-- Added Import
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import { HiveModulesView } from "@/components/gantt/module-dialog/utils";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
+import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/provider";
 
@@ -48,7 +50,8 @@ function ModuleDialogInner({
 {
     const { enqueueSnackbar } = useSnackbar();
     const { closeModuleDialog, openModuleDialog } = useCurriculumProviderActions();
-    const { deleteModule, updateModule } = useModuleActions();
+    const { createModule, deleteModule, updateModule } = useModuleActions();
+    const { createEvent } = useModuleEventActions();
     const moduleDoc = useModule(moduleId ?? "");
 
     const state = useCurriculumState();
@@ -70,6 +73,39 @@ function ModuleDialogInner({
     }, [ syllabusId, openModuleDialog ]);
 
     const [ isActionLoading, setIsActionLoading ] = useState<boolean>(false);
+    const [ isCreatingNew, setIsCreatingNew ] = useState<boolean>(false);
+
+    const handleCreateNew = useCallback(async () => {
+        if (!syllabusId) return;
+        setIsCreatingNew(true);
+        try {
+            const newModule = await createModule(
+                "מערך חדש",
+                syllabusId,
+                "המערך החדש שלי",
+            );
+            handleNavigate(newModule.id);
+            try {
+                await createEvent(
+                    "הרצאת מבוא",
+                    newModule.id,
+                    ModuleEventType.Lecture,
+                    60,
+                );
+                await createEvent('ע"ע', newModule.id, ModuleEventType.Exercise, 45);
+            } catch (error) {
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "יצירת מופעי ברירת מחדל במערך נכשלה!",
+                    error,
+                );
+            }
+        } catch (error) {
+            enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת המערך נכשלה!", error);
+        } finally {
+            setIsCreatingNew(false);
+        }
+    }, [syllabusId, createModule, createEvent, handleNavigate, enqueueSnackbar]);
 
     // Local State Buffers
     const [ localTitle, setLocalTitle ] = useState(moduleDoc?.title ?? "");
@@ -148,7 +184,7 @@ function ModuleDialogInner({
             </DialogTitle>
 
             <DialogContent>
-                { !!syllabus && siblingModules.length > 1 && (
+                { !!syllabus && siblingModules.length > 0 && (
                     <Box
                         sx={ {
                             alignItems: "center",
@@ -211,6 +247,27 @@ function ModuleDialogInner({
                                     </Button>
                                 );
                             }) }
+                            <Button
+                                color="secondary"
+                                disabled={ isCreatingNew }
+                                onClick={ handleCreateNew }
+                                size="small"
+                                sx={ {
+                                    borderRadius: 2,
+                                    minWidth: "auto",
+                                    px: 2,
+                                    py: 0.5,
+                                    transition: "all 0.2s ease-in-out",
+                                    whiteSpace: "nowrap",
+                                    "&:hover": {
+                                        boxShadow: 1,
+                                        transform: "translateY(-1px)",
+                                    },
+                                } }
+                                variant="outlined"
+                            >
+                                { isCreatingNew ? "מייצר..." : "+ חדש" }
+                            </Button>
                         </Stack>
                     </Box>
                 ) }

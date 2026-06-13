@@ -1,4 +1,3 @@
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import {
     Box,
     Chip,
@@ -9,9 +8,7 @@ import {
     TableHead,
     TableRow,
     TextField,
-    Tooltip,
     Typography,
-    Switch,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { KeyboardEvent, useCallback, useMemo, useState } from "react";
@@ -28,14 +25,15 @@ import {
 } from "@/api-shared/types/gantt/models";
 import {
     formatHoursLabel,
+    formatMinutesAsTimeInput,
     formatWeekDateRange,
     getCapacityStatus,
     getDayDate,
-    getSaturdayForWeek,
     getScheduledMinutesForDay,
     getWeekDateRange,
     getWeekScheduledMinutes,
     getWeekTotalMinutes,
+    parseTimeInputToMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { DayCapacityCell } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DayCapacityCell";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
@@ -94,9 +92,6 @@ function WeekRow({
         [mappings, state, week],
     );
     const weekStatus = getCapacityStatus(weekTotalMinutes, scheduledMinutes);
-    const saturday = getSaturdayForWeek(week, state);
-    const saturdayMismatch =
-    !week.weekendDuty && (saturday?.totalWorkingMinutes ?? 0) > 0;
     const weekDateRange = getWeekDateRange(startDate, weekIndex);
 
     const commitComment = useCallback(() => {
@@ -116,8 +111,6 @@ function WeekRow({
         },
         [commitComment],
     );
-
-
 
     return (
         <TableRow hover>
@@ -227,6 +220,133 @@ function WeekRow({
     );
 }
 
+function DayHeaderCell({
+    dayIndex,
+    curriculum,
+    state,
+}: {
+    dayIndex: GanttDayIndex;
+    curriculum: GanttCurriculum;
+    state: NormalizedStore;
+}) {
+    const { enqueueSnackbar } = useSnackbar();
+    const { updateDay } = useWeekActions();
+    
+    // Load default hours from localStorage, fallback to 8 hours (480 minutes)
+    const localStorageKey = `bluz_gantt_default_hours_${dayIndex}`;
+    const initialMinutes = useMemo(() => {
+        const stored = localStorage.getItem(localStorageKey);
+        if (stored !== null) {
+            const parsed = parseInt(stored, 10);
+            if (!isNaN(parsed)) return parsed;
+        }
+        // Default fallbacks: Saturday is typically 0 (closed), others 8 hours (480 mins)
+        return dayIndex === GanttDayIndex.Saturday ? 0 : 480;
+    }, [dayIndex, localStorageKey]);
+
+    const [inputValue, setInputValue] = useState(() => 
+        formatMinutesAsTimeInput(initialMinutes)
+    );
+
+    const handleBlur = useCallback(async () => {
+        const parsedMinutes = parseTimeInputToMinutes(inputValue);
+        if (parsedMinutes === null) {
+            // Revert on invalid input
+            setInputValue(formatMinutesAsTimeInput(initialMinutes));
+            return;
+        }
+
+        // Save to localStorage
+        localStorage.setItem(localStorageKey, parsedMinutes.toString());
+
+        // Perform bulk update on all weeks for that day in the current curriculum
+        const dayIdsToUpdate: Array<string> = [];
+        for (const weekId of curriculum.weeks) {
+            const week = state.weeks[weekId];
+            if (week) {
+                const dayId = week.days.find(
+                    (dId) => state.days[dId]?.dayIndex === dayIndex
+                );
+                if (dayId) {
+                    const currentDay = state.days[dayId];
+                    if (currentDay && currentDay.totalWorkingMinutes !== parsedMinutes) {
+                        dayIdsToUpdate.push(dayId);
+                    }
+                }
+            }
+        }
+
+        if (dayIdsToUpdate.length === 0) return;
+
+        try {
+            await Promise.all(
+                dayIdsToUpdate.map((dayId) =>
+                    updateDay(dayId, { totalWorkingMinutes: parsedMinutes })
+                )
+            );
+            enqueueSnackbar("שעות העבודה עודכנו בהצלחה לכל השבועות!", { variant: "success" });
+        } catch (error) {
+            enqueueApiErrorSnackbar(enqueueSnackbar, "עדכון שעות העבודה נכשל!", error);
+        }
+    }, [inputValue, initialMinutes, localStorageKey, curriculum.weeks, state.weeks, state.days, dayIndex, updateDay, enqueueSnackbar]);
+
+    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            void handleBlur();
+            e.currentTarget.blur();
+        }
+    }, [handleBlur]);
+
+    return (
+        <TableCell 
+            align="center" 
+            sx={{ 
+                width: "9.7%",
+                minWidth: "90px",
+                bgcolor: (theme) =>
+                    theme.palette.mode === "light"
+                        ? "rgba(244, 250, 252, 0.95)"
+                        : "rgba(12, 34, 55, 0.95)",
+                fontWeight: 800,
+                py: 1,
+                fontSize: "0.85rem",
+            }}
+        >
+            <Box alignItems="center" display="flex" flexDirection="column" gap={0.5}>
+                <Typography sx={{ fontWeight: 700, fontSize: "0.82rem" }} variant="subtitle2">
+                    {getDayNameDisplay(dayIndex)}
+                </Typography>
+                <TextField
+                    onBlur={handleBlur}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    size="small"
+                    slotProps={{
+                        input: {
+                            style: {
+                                textAlign: "center",
+                                fontSize: "0.72rem",
+                                padding: "2px 4px",
+                                fontFamily: "monospace",
+                                fontWeight: 700,
+                            }
+                        }
+                    }}
+                    sx={{
+                        width: "54px",
+                        "& .MuiOutlinedInput-root": {
+                            borderRadius: "4px",
+                            bgcolor: "background.paper",
+                        }
+                    }}
+                    value={inputValue}
+                />
+            </Box>
+        </TableCell>
+    );
+}
+
 export function WeeksCapacityGrid({
     curriculum,
     isCompact = false,
@@ -304,23 +424,12 @@ export function WeeksCapacityGrid({
                         </TableCell>
 
                         {DAY_COLUMNS.map((dayIndex) => (
-                            <TableCell 
-                                align="center" 
-                                key={dayIndex} 
-                                sx={{ 
-                                    width: "9.7%",
-                                    minWidth: "90px",
-                                    bgcolor: (theme) =>
-                                        theme.palette.mode === "light"
-                                            ? "rgba(244, 250, 252, 0.95)"
-                                            : "rgba(12, 34, 55, 0.95)",
-                                    fontWeight: 800,
-                                    py: 1.5,
-                                    fontSize: "0.85rem",
-                                }}
-                            >
-                                {getDayNameDisplay(dayIndex)}
-                            </TableCell>
+                            <DayHeaderCell
+                                curriculum={curriculum}
+                                dayIndex={dayIndex}
+                                key={dayIndex}
+                                state={state}
+                            />
                         ))}
                     </TableRow>
                 </TableHead>

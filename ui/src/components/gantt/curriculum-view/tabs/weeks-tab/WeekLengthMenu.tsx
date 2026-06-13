@@ -81,7 +81,6 @@ export function WeekLengthMenu({
         curriculum.weeks,
         curriculumId,
         enqueueSnackbar,
-        state.weeks,
     ]);
 
     const removeLastWeek = useCallback(() => {

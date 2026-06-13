@@ -93,7 +93,7 @@ export function CurriculumViewBuilderWeeksView({
                     </Fragment>
                 );
             }),
-        [animationSelectedGroupIndex, groupedWeeks, onGroupClick, weeksState],
+        [animationSelectedGroupIndex, groupedWeeks, onGroupClick, weeksState, weeks],
     );
 
     return (
