@@ -117,18 +117,7 @@ function WeekRow({
         [commitComment],
     );
 
-    const toggleWeekendDuty = useCallback(
-        (checked: boolean) => {
-            void updateWeek(week.id, { weekendDuty: checked }).catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "שמירת המידע של השבוע נכשלה!",
-                    error,
-                ),
-            );
-        },
-        [enqueueSnackbar, updateWeek, week.id],
-    );
+
 
     return (
         <TableRow hover>
@@ -205,86 +194,7 @@ function WeekRow({
                     value={localComment}
                 />
             </TableCell>
-            <TableCell sx={{ verticalAlign: "top", pt: isCompact ? 0.35 : 1.25, pb: isCompact ? 0.15 : 0.75, px: isCompact ? 0.5 : 1.25, textAlign: "center" }}>
-                <Box alignItems="center" display="flex" flexDirection="column" gap={0.75}>
-                    <Tooltip arrow title={week.weekendDuty ? "צא הביתה" : "סגור שבת"}>
-                        <Switch
-                            checked={week.weekendDuty}
-                            onChange={(event) => toggleWeekendDuty(event.target.checked)}
-                            sx={{
-                                width: 52,
-                                height: 28,
-                                padding: 0,
-                                "& .MuiSwitch-switchBase": {
-                                    padding: "2px",
-                                    transition: "transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)",
-                                    "&.Mui-checked": {
-                                        transform: "translateX(24px)",
-                                        "& + .MuiSwitch-track": {
-                                            bgcolor: (theme) => theme.palette.mode === "light" ? "rgba(237, 108, 2, 0.2)" : "rgba(237, 108, 2, 0.3)",
-                                            opacity: 1,
-                                        }
-                                    }
-                                },
-                                "& .MuiSwitch-thumb": {
-                                    width: 24,
-                                    height: 24,
-                                    bgcolor: "success.main",
-                                    boxShadow: "0 1px 4px rgba(46, 125, 50, 0.3)",
-                                    position: "relative",
-                                    transition: "background-color 300ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-                                    "&::before": {
-                                        content: '"🏠"',
-                                        position: "absolute",
-                                        top: 0,
-                                        left: 0,
-                                        width: "100%",
-                                        height: "100%",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        fontSize: 13,
-                                        transition: "opacity 200ms ease",
-                                    },
-                                },
-                                "& .MuiSwitch-switchBase:hover .MuiSwitch-thumb": {
-                                    transform: "scale(1.08)",
-                                    transition: "background-color 300ms ease, box-shadow 300ms ease, transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)",
-                                },
-                                "& .MuiSwitch-switchBase.Mui-checked .MuiSwitch-thumb": {
-                                    bgcolor: "warning.main",
-                                    boxShadow: "0 1px 4px rgba(237, 108, 2, 0.3)",
-                                    "&::before": {
-                                        content: '"🛏️"',
-                                    },
-                                },
-                                "& .MuiSwitch-track": {
-                                    borderRadius: 14,
-                                    bgcolor: (theme) => theme.palette.mode === "light" ? "rgba(46, 125, 50, 0.15)" : "rgba(46, 125, 50, 0.25)",
-                                    opacity: 1,
-                                    transition: "background-color 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-                                }
-                            }}
-                        />
-                    </Tooltip>
-                    {saturdayMismatch ? (
-                        <Tooltip title="השבוע מסומן כיוצאים, אך לשבת הוגדרו שעות עבודה">
-                            <Chip
-                                color="warning"
-                                icon={<WarningAmberIcon />}
-                                label="שבת עם שעות"
-                                size="smaller"
-                                sx={{ 
-                                    fontWeight: 600,
-                                    mt: 0.5,
-                                    fontSize: "0.7rem",
-                                }}
-                                variant="outlined"
-                            />
-                        </Tooltip>
-                    ) : null}
-                </Box>
-            </TableCell>
+
             {DAY_COLUMNS.map((dayIndex) => {
                 const dayId = getDayIdByIndex(week, state, dayIndex);
 
@@ -392,22 +302,7 @@ export function WeeksCapacityGrid({
                         >
                             שם / הערת שבוע
                         </TableCell>
-                        <TableCell 
-                            align="center"
-                            sx={{ 
-                                width: "8%",
-                                minWidth: "80px",
-                                bgcolor: (theme) =>
-                                    theme.palette.mode === "light"
-                                        ? "rgb(244, 250, 252)"
-                                        : "rgb(12, 34, 55)",
-                                fontWeight: 800,
-                                py: 1.5,
-                                fontSize: "0.85rem",
-                            }}
-                        >
-                            שבת בבסיס
-                        </TableCell>
+
                         {DAY_COLUMNS.map((dayIndex) => (
                             <TableCell 
                                 align="center" 

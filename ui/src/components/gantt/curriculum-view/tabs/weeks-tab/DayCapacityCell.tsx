@@ -10,6 +10,8 @@ import {
     Typography,
     alpha,
     useTheme,
+    Switch,
+    Tooltip,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { KeyboardEvent, useCallback, useMemo, useState } from "react";
@@ -18,6 +20,7 @@ import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     GanttDayId,
     getDayNameDisplay,
+    GanttDayIndex,
 } from "@/api-shared/types/gantt/models";
 import {
     CapacityStatus,
@@ -30,6 +33,7 @@ import {
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gantt/state/hooks/UseDay";
+import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type DayCapacityCellProps = {
   dayId: GanttDayId;
@@ -58,8 +62,24 @@ export function DayCapacityCell({
 }: DayCapacityCellProps) {
     const theme = useTheme();
     const { enqueueSnackbar } = useSnackbar();
+    const state = useCurriculumState();
     const day = useCurriculumDay(dayId);
-    const { updateDay } = useWeekActions();
+    const { updateDay, updateWeek } = useWeekActions();
+    const week = day ? state.weeks[day.weekId] : undefined;
+
+    const toggleWeekendDuty = useCallback(
+        (checked: boolean) => {
+            if (!day) return;
+            void updateWeek(day.weekId, { weekendDuty: checked }).catch((error) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "שמירת המידע של השבוע נכשלה!",
+                    error,
+                ),
+            );
+        },
+        [day, enqueueSnackbar, updateWeek],
+    );
 
     const [localTime, setLocalTime] = useState(() =>
         formatMinutesAsTimeInput(day?.totalWorkingMinutes ?? 0),
@@ -183,7 +203,7 @@ export function DayCapacityCell({
                 }}
             >
                 <Box sx={cellBoxStyles}>
-                    <Box>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Typography 
                             fontWeight={700} 
                             sx={{
@@ -196,6 +216,15 @@ export function DayCapacityCell({
                             {dayName}
                             {dateLabel ? ` (${dateLabel})` : ""}
                         </Typography>
+                        {day?.dayIndex === GanttDayIndex.Saturday && (
+                            <Tooltip arrow title={week?.weekendDuty ? "צא הביתה" : "סגור שבת"}>
+                                <Switch
+                                    size="small"
+                                    checked={week?.weekendDuty ?? false}
+                                    onChange={(event) => toggleWeekendDuty(event.target.checked)}
+                                />
+                            </Tooltip>
+                        )}
                     </Box>
                     
                     <Box 
@@ -259,6 +288,15 @@ export function DayCapacityCell({
                             {dayName}
                             {dateLabel ? ` (${dateLabel})` : ""}
                         </Typography>
+                        {day?.dayIndex === GanttDayIndex.Saturday && (
+                            <Tooltip arrow title={week?.weekendDuty ? "צא הביתה" : "סגור שבת"}>
+                                <Switch
+                                    size="small"
+                                    checked={week?.weekendDuty ?? false}
+                                    onChange={(event) => toggleWeekendDuty(event.target.checked)}
+                                />
+                            </Tooltip>
+                        )}
                     </Box>
                     <Box
                         alignItems="center"
