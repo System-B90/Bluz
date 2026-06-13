@@ -91,7 +91,9 @@ export const CalendarFiltersProvider = ({
             if (showPAsFor === null) {
                 const hasMatchingInstructor = event.instructors.some(
                     (instructorId) => filteredInstructors.includes(instructorId),
-                );
+                ) || (event.lecturers?.some(
+                    (lecturerId) => filteredInstructors.includes(lecturerId),
+                ) ?? false);
 
                 return hasMatchingInstructor || hasMatchingCourse ? 1 : 0.2;
             }
