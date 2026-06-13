@@ -67,7 +67,7 @@ export function RoomListItem({ room, isActive, onPopulateForm, onDelete }: RoomL
                     { isHive ? (
                         <Tooltip title="חדר הייב">
                             <Box sx={ { display: "flex", alignItems: "center", mr: 0.5, color: hiveLogoColor } }>
-                                <HiveLogo color={ hiveLogoColor } size={ 18 } />
+                                <HiveLogo size={ 18 } />
                             </Box>
                         </Tooltip>
                     ) : null }
@@ -110,7 +110,7 @@ export function RoomListItem({ room, isActive, onPopulateForm, onDelete }: RoomL
                         </Typography>
                         { isHive ? (
                             <Chip
-                                icon={ <HiveLogo color={ hiveLogoColor } size={ 12 } /> }
+                                icon={ <HiveLogo size={ 12 } /> }
                                 label="הייב"
                                 size="small"
                                 sx={ {

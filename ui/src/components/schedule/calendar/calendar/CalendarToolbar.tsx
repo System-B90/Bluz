@@ -28,6 +28,7 @@ export function CalendarToolbar({
 }: ToolbarProps<any, any> & {
     showToolbar: boolean;
     onToggleFullscreen: () => void;
+    onToggleToolbar: () => void;
 }) {
     const [open, setOpen] = useState(false);
 

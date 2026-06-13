@@ -305,12 +305,17 @@ export function InstructorSelect<T = unknown>({
                 ...props.MenuProps,
                 slotProps: {
                     ...props.MenuProps?.slotProps,
-                    paper: {
-                        ...props.MenuProps?.slotProps?.paper,
-                        sx: {
-                            maxHeight: 400,
-                            ...props.MenuProps?.slotProps?.paper?.sx,
-                        },
+                    paper: (ownerState: any) => {
+                        const original = typeof props.MenuProps?.slotProps?.paper === "function"
+                            ? (props.MenuProps.slotProps.paper as Function)(ownerState)
+                            : props.MenuProps?.slotProps?.paper;
+                        return {
+                            ...original,
+                            sx: {
+                                maxHeight: 400,
+                                ...original?.sx,
+                            },
+                        };
                     },
                 },
             }}
