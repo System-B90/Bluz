@@ -31,12 +31,7 @@ async function setDbSetting(
         { $set: { value: setting } },
         options,
     );
-    if (data.matchedCount === 0 && !options?.upsert) {
-        throw new ClientApiError(`No setting by name ${name} found!`);
-    }
-    if (data.modifiedCount === 0) {
-        throw new ClientApiError(`Setting ${name} data not modified!`);
-    }
+
     SendServerRequestToSessionServer(MessageTypes.SETTINGS_UPDATE, {
         settings: { [name]: setting },
     } as any);

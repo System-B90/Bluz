@@ -25,6 +25,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
 RUN npx tsc ui/src/api-server/drizzle-migrate.ts --outDir /app/dist-migrate --esModuleInterop --skipLibCheck
+RUN npm prune --omit=dev
 
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -40,8 +41,9 @@ RUN mkdir -p ui/.next && chown nextjs:nodejs ui/.next
 
 COPY --from=builder --chown=nextjs:nodejs /app/ui/public ./ui/public
 COPY --from=builder --chown=nextjs:nodejs /app/ui/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/static
-COPY --from=builder --chown=nextjs:nodejs /usr/local/bin/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --from=deps --chown=nextjs:nodejs /usr/local/bin/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 COPY drizzle ./drizzle
 COPY --from=builder /app/dist-migrate/drizzle-migrate.js ./migrate.js
