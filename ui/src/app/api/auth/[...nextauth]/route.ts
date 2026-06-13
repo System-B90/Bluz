@@ -1,8 +1,7 @@
+import { NextResponse } from "next/server";
 import NextAuth from "next-auth";
 
 import { authOptions } from "@/api-server/hive/sso";
-
-import { NextResponse } from "next/server";
 
 const handler = NextAuth(authOptions);
 

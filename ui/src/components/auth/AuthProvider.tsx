@@ -19,16 +19,16 @@ import {
 import { MessageTypes } from "@/settings";
 
 export type WebSocketSessionMessage = {
-  type: MessageTypes;
-  [key: string]: unknown;
+    type: MessageTypes;
+    [key: string]: unknown;
 };
 
 export type AuthContextState = {
-  userData: AuthSessionUser;
-  logout: () => void;
-  canEdit: boolean;
-  addMessageHandler: (handler: MessageHandlerType) => () => void;
-  sendMessage: (data: WebSocketSessionMessage) => void;
+    userData: AuthSessionUser;
+    logout: () => void;
+    canEdit: boolean;
+    addMessageHandler: (handler: MessageHandlerType) => () => void;
+    sendMessage: (data: WebSocketSessionMessage) => void;
 };
 
 const AuthContext = createContext<AuthContextState | undefined>(undefined);
@@ -37,8 +37,8 @@ export const AuthProvider = ({
     children,
     userData,
 }: {
-  children: React.ReactNode;
-  userData: AuthSessionUser;
+    children: React.ReactNode;
+    userData: AuthSessionUser;
 }) => {
     const { ws, addMessageHandler } = useSessionWebSocketContext();
     const { enqueueSnackbar } = useSnackbar();
@@ -49,7 +49,7 @@ export const AuthProvider = ({
         const originalFetch = window.fetch;
         window.fetch = async (...args) => {
             const url = typeof args[0] === "string" ? args[0] : (args[0] instanceof Request ? args[0].url : "");
-            
+
             if (url.includes("/api/auth/_log")) {
                 try {
                     const init = args[1];
@@ -62,14 +62,14 @@ export const AuthProvider = ({
                             });
                         }
                     }
-                } catch (e) {
+                } catch {
                     // Ignore parse errors
                 }
             }
-            
-            return originalFetch(...args);
+
+            return await originalFetch(...args);
         };
-        
+
         return () => {
             window.fetch = originalFetch;
         };
