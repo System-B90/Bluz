@@ -147,7 +147,7 @@ function WeekRow({
                 }}
             >
                 <Typography fontWeight={800} sx={{ fontSize: "0.88rem", color: "text.primary" }} variant="subtitle2">
-          שבוע {week.number}
+          שבוע {weekIndex + 1}
                 </Typography>
                 <Typography color="text.secondary" sx={{ fontSize: "0.72rem" }} variant="caption">
                     {formatWeekDateRange(weekDateRange) || "ללא תאריך"}

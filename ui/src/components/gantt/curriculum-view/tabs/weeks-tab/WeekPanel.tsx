@@ -69,6 +69,18 @@ export function WeekPanel({ weekId }: WeekPanelProps) {
     const state = useCurriculumState();
     const { updateWeek } = useWeekActions();
 
+    const curriculum = useMemo(() => {
+        return Object.values(state.curriculums).find((c) =>
+            c.weeks.includes(weekId),
+        );
+    }, [state.curriculums, weekId]);
+
+    const weekIndex = useMemo(() => {
+        return curriculum ? curriculum.weeks.indexOf(weekId) : -1;
+    }, [curriculum, weekId]);
+
+    const weekNumber = weekIndex !== -1 ? weekIndex + 1 : (week?.number ?? 1);
+
     const handleCommentBlur = useCallback(
         (e: React.FocusEvent<HTMLTextAreaElement>) => {
             const newValue = e.target.value;
@@ -122,7 +134,7 @@ export function WeekPanel({ weekId }: WeekPanelProps) {
                         className="text-slate-400 font-bold leading-none"
                         variant="overline"
                     >
-            שבוע {week?.number}
+            שבוע {weekNumber}
                     </Typography>
                     <InputBase
                         className="text-sm font-bold text-slate-800"

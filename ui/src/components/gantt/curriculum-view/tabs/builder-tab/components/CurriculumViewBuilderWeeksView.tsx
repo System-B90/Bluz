@@ -55,6 +55,8 @@ export function CurriculumViewBuilderWeeksView({
                 const isLast = index === groupedWeeks.length - 1;
                 const firstWeek = weeksState[group[0]];
                 const groupKey = `group-${firstWeek.id}`;
+                const firstWeekIndex = weeks.indexOf(group[0]);
+                const firstWeekNumber = firstWeekIndex !== -1 ? firstWeekIndex + 1 : (firstWeek?.number ?? 1);
 
                 return (
                     <Fragment key={`frag-${groupKey}`}>
@@ -77,7 +79,7 @@ export function CurriculumViewBuilderWeeksView({
                             group={group}
                             key={groupKey}
                             onExpandGroup={() =>
-                                onGroupClick(index, firstWeek.number, group.length)
+                                onGroupClick(index, firstWeekNumber, group.length)
                             }
                         />
                         {!isLast && (

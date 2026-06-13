@@ -35,17 +35,23 @@ export function WeekGroupPanel({
 
     const weeksState = useMemo(() => state.weeks, [state.weeks]);
 
+    const curriculum = useMemo(() => {
+        return Object.values(state.curriculums).find((c) =>
+            c.weeks.includes(group[0]),
+        );
+    }, [state.curriculums, group]);
+
     const startWeek = useMemo(() => {
-        const firstWeekId = group[0];
-        const week = weeksState[firstWeekId];
-        return week?.number ?? 1;
-    }, [group, weeksState]);
+        if (!curriculum) return 1;
+        const idx = curriculum.weeks.indexOf(group[0]);
+        return idx !== -1 ? idx + 1 : 1;
+    }, [group, curriculum]);
 
     const endWeek = useMemo(() => {
-        const lastWeekId = group[group.length - 1];
-        const week = weeksState[lastWeekId];
-        return week?.number ?? group.length;
-    }, [group, weeksState]);
+        if (!curriculum) return group.length;
+        const idx = curriculum.weeks.indexOf(group[group.length - 1]);
+        return idx !== -1 ? idx + 1 : group.length;
+    }, [group, curriculum]);
     const dropId = `group-${group[0]}`;
 
     const firstDayId = useMemo(

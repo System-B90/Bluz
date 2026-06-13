@@ -65,11 +65,7 @@ export function WeekLengthMenu({
 
     const addWeek = useCallback(() => {
         closeMenu();
-        const nextNumber =
-      Math.max(
-          0,
-          ...curriculum.weeks.map((weekId) => state.weeks[weekId]?.number ?? 0),
-      ) + 1;
+        const nextNumber = curriculum.weeks.length + 1;
 
         void createWeek({
             curriculumId,
