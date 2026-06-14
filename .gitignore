@@ -57,3 +57,4 @@ next-env.d.ts
 .vscode/PythonImportHelper-v2-Completion.json
 .husky
 ssl/
+certificates
