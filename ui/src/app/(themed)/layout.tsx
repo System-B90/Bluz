@@ -11,7 +11,7 @@ import { BluzThemeProvider } from "@/components/theme/ThemeProvider";
 export default function ThemedLayout({
     children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
     return (
         <BluzThemeProvider>

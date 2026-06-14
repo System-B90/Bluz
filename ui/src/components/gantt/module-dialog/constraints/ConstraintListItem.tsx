@@ -12,9 +12,9 @@ export function ConstraintListItem({
     onEdit,
     onRemove,
 }: {
-  constraint: GanttConstraint;
-  onEdit: () => void;
-  onRemove: (id: string) => void;
+    constraint: GanttConstraint;
+    onEdit: () => void;
+    onRemove: (id: string) => void;
 }) {
     return (
         <Box

@@ -8,11 +8,11 @@ import { ResolvableRoom } from "@/api-shared/types/room";
  * fully aligning with the Gantt engine event types.
  */
 export enum EventType {
-  EXERCISE = 'ע"ע',
-  LECTURE = "הרצאה",
-  BREAK = "הפסקה",
-  PRAYER = "תפילה",
-  OTHER = "אחר",
+    EXERCISE = 'ע"ע',
+    LECTURE = "הרצאה",
+    BREAK = "הפסקה",
+    PRAYER = "תפילה",
+    OTHER = "אחר",
 }
 
 /**
@@ -30,40 +30,40 @@ export type PersonId = "איש חוץ" | number | string;
  * Represents a standard calendar event in the Bluz schedule.
  */
 export type Event = {
-  id: EventId;
-  name: string;
-  subject: number; // Subject ID
-  hiveModule: number; // Module ID
-  startTime: Dayjs;
-  endTime: Dayjs;
-  type: EventType;
-  courses: Array<CourseId>;
-  rooms: Array<ResolvableRoom>;
-  instructors: Array<number>;
-  lecturers?: Array<PersonId>;
-  tags: Array<number>;
-  notes: string;
-  locked: boolean;
-  hidden: boolean;
-  required: boolean;
-  personalTalk: boolean;
+    id: EventId;
+    name: string;
+    subject: number; // Subject ID
+    hiveModule: number; // Module ID
+    startTime: Dayjs;
+    endTime: Dayjs;
+    type: EventType;
+    courses: Array<CourseId>;
+    rooms: Array<ResolvableRoom>;
+    instructors: Array<number>;
+    lecturers?: Array<PersonId>;
+    tags: Array<number>;
+    notes: string;
+    locked: boolean;
+    hidden: boolean;
+    required: boolean;
+    personalTalk: boolean;
 };
 
 /**
  * Standardized types of prayers.
  */
 export enum PrayerType {
-  SHACHARIT = "shacharit",
-  MINCHA = "mincha",
-  ARVIT = "arvit",
+    SHACHARIT = "shacharit",
+    MINCHA = "mincha",
+    ARVIT = "arvit",
 }
 
 /**
  * Represents a prayer-specific calendar event.
  */
 export type PrayerEvent = {
-  type: EventType.PRAYER;
-  prayerType: PrayerType;
+    type: EventType.PRAYER;
+    prayerType: PrayerType;
 } & Event;
 
 /**
@@ -153,16 +153,16 @@ export function getPresentInstructors(
 }
 
 export type DbEventDocument = Omit<Event, "endTime" | "startTime"> & {
-  startTime: Date;
-  endTime: Date;
+    startTime: Date;
+    endTime: Date;
 };
 
 export type ApiEventGetPayload = void;
 export type ApiEventGetResponse =
-  | Array<DbEventDocument>
-  | DbEventDocument
-  | null
-  | Record<EventId, Partial<DbEventDocument>>;
+    | Array<DbEventDocument>
+    | DbEventDocument
+    | null
+    | Record<EventId, Partial<DbEventDocument>>;
 
 export type ApiEventUpdatePayload = DbEventDocument;
 export type ApiEventUpdateResponse = DbEventDocument;

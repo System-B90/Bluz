@@ -17,30 +17,30 @@ import {
 } from "@/api-shared/types/gantt/models";
 
 export type NormalizedStore = {
-  curriculums: Record<GanttCurriculumId, GanttCurriculumDocument>;
-  syllabuses: Record<
-    GanttSyllabusId,
-    SyllabusDocument & { curriculumId: GanttCurriculumId }
-  >;
-  modules: Record<
-    GanttModuleId,
-    ModuleDocument & { syllabusId: GanttSyllabusId }
-  >;
-  events: Record<
-    GanttEventId,
-    ModuleEventDocument & { moduleId: GanttModuleId }
-  >;
-  weeks: Record<
-    GanttWeekId,
-    CurriculumWeekDocument & {
-      id: GanttWeekId;
-      curriculumId: GanttCurriculumId;
-    }
-  >;
-  days: Record<
-    GanttDayId,
-    GanttDayDocument & { id: GanttDayId; weekId: GanttWeekId }
-  >;
+    curriculums: Record<GanttCurriculumId, GanttCurriculumDocument>;
+    syllabuses: Record<
+        GanttSyllabusId,
+        SyllabusDocument & { curriculumId: GanttCurriculumId }
+    >;
+    modules: Record<
+        GanttModuleId,
+        ModuleDocument & { syllabusId: GanttSyllabusId }
+    >;
+    events: Record<
+        GanttEventId,
+        ModuleEventDocument & { moduleId: GanttModuleId }
+    >;
+    weeks: Record<
+        GanttWeekId,
+        CurriculumWeekDocument & {
+            id: GanttWeekId;
+            curriculumId: GanttCurriculumId;
+        }
+    >;
+    days: Record<
+        GanttDayId,
+        GanttDayDocument & { id: GanttDayId; weekId: GanttWeekId }
+    >;
 };
 
 export function normalizeCurriculumData(
@@ -118,7 +118,8 @@ export function normalizeCurriculumData(
             store.days[apiDay.id] = {
                 id: apiDay.id,
                 title:
-          DAY_NAME_DISPLAY[apiDay.dayIndex] ?? `יום ${apiDay.dayIndex + 1}`,
+                    DAY_NAME_DISPLAY[apiDay.dayIndex] ??
+                    `יום ${apiDay.dayIndex + 1}`,
                 weekId: dLink.weekId,
                 dayIndex: apiDay.dayIndex,
                 totalWorkingMinutes: apiDay.totalWorkingMinutes,

@@ -15,16 +15,16 @@ import {
 
 type ClientApiGetCourses = ClientApiNoPayload<ApiCourseGetResponse>;
 type ClientApiSetCourse = ClientApi<
-  ApiCourseUpdatePayload,
-  ApiCourseUpdateResponse
+    ApiCourseUpdatePayload,
+    ApiCourseUpdateResponse
 >;
 type ClientApiCreateCourse = ClientApi<
-  ApiCourseCreatePayload,
-  ApiCourseCreateResponse
+    ApiCourseCreatePayload,
+    ApiCourseCreateResponse
 >;
 type ClientApiDeleteCourse = ClientApi<
-  ApiCourseDeletePayload,
-  ApiCourseDeleteResponse
+    ApiCourseDeletePayload,
+    ApiCourseDeleteResponse
 >;
 
 export const apiGetCourses: ClientApiGetCourses = async (props) => {

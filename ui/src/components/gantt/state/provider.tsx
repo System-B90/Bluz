@@ -24,16 +24,16 @@ import { ModuleDialog } from "@/components/gantt/module-dialog";
 import { Action, curriculumReducer } from "@/components/gantt/state/reducer";
 
 export type OpenModuleDialog = (
-  syllabusId: GanttSyllabusId,
-  moduleId: GanttModuleId,
+    syllabusId: GanttSyllabusId,
+    moduleId: GanttModuleId,
 ) => void;
 export type CloseModuleDialog = () => void;
 
 const CurriculumStateContext = createContext<NormalizedStore | null>(null);
 const CurriculumActionsContext = createContext<{
-  dispatch: React.Dispatch<Action>;
-  openModuleDialog: OpenModuleDialog;
-  closeModuleDialog: CloseModuleDialog;
+    dispatch: React.Dispatch<Action>;
+    openModuleDialog: OpenModuleDialog;
+    closeModuleDialog: CloseModuleDialog;
 } | null>(null);
 
 /**
@@ -45,14 +45,13 @@ function ModuleDialogManager({
     children,
     curriculumId,
 }: {
-  children: ReactNode;
-  curriculumId: GanttCurriculumId;
+    children: ReactNode;
+    curriculumId: GanttCurriculumId;
 }) {
     const [currentSyllabusId, setCurrentSyllabusId] =
-    useState<GanttSyllabusId | null>(null);
-    const [currentModuleId, setCurrentModuleId] = useState<GanttModuleId | null>(
-        null,
-    );
+        useState<GanttSyllabusId | null>(null);
+    const [currentModuleId, setCurrentModuleId] =
+        useState<GanttModuleId | null>(null);
     const [moduleDialogOpen, setModuleDialogOpen] = useState<boolean>(false);
 
     // This function is passed to the Actions context
@@ -94,9 +93,9 @@ function CurriculumUIProviderInternal({
     openModuleDialog,
     closeModuleDialog,
 }: {
-  children: ReactNode;
-  openModuleDialog: OpenModuleDialog;
-  closeModuleDialog: CloseModuleDialog;
+    children: ReactNode;
+    openModuleDialog: OpenModuleDialog;
+    closeModuleDialog: CloseModuleDialog;
 }) {
     const { dispatch } = useCurriculumProviderActions();
 
@@ -121,9 +120,9 @@ export function CurriculumProvider({
     initialData,
     children,
 }: {
-  curriculumId: GanttCurriculumId;
-  initialData: ApiCurriculum;
-  children: ReactNode;
+    curriculumId: GanttCurriculumId;
+    initialData: ApiCurriculum;
+    children: ReactNode;
 }) {
     // 2. Data State Layer
     const [state, dispatch] = useReducer(

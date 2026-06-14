@@ -23,12 +23,12 @@ export function DraftConstraintForm({
     targetOptions,
     curriculumState,
 }: {
-  draft: DraftConstraint;
-  setDraft: (draft: DraftConstraint) => void;
-  onSubmit: () => void;
-  onCancel: () => void;
-  targetOptions: Record<string, Array<TargetOption>>;
-  curriculumState: any;
+    draft: DraftConstraint;
+    setDraft: (draft: DraftConstraint) => void;
+    onSubmit: () => void;
+    onCancel: () => void;
+    targetOptions: Record<string, Array<TargetOption>>;
+    curriculumState: any;
 }) {
     const handleTypeChange = useCallback(
         (nextType: ConstraintType) => {
@@ -62,13 +62,19 @@ export function DraftConstraintForm({
             >
                 <Stack direction="row" flexGrow={1} spacing={1}>
                     <Select
-                        onChange={(e) => handleTypeChange(e.target.value as ConstraintType)}
+                        onChange={(e) =>
+                            handleTypeChange(e.target.value as ConstraintType)
+                        }
                         size="small"
                         sx={{ flexShrink: 0, minWidth: "8rem" }}
                         value={draft.type}
                     >
-                        <MenuItem value={ConstraintType.Relational}>אילוץ יחסי</MenuItem>
-                        <MenuItem value={ConstraintType.Temporal}>אילוץ זמן</MenuItem>
+                        <MenuItem value={ConstraintType.Relational}>
+                            אילוץ יחסי
+                        </MenuItem>
+                        <MenuItem value={ConstraintType.Temporal}>
+                            אילוץ זמן
+                        </MenuItem>
                     </Select>
 
                     {draft.type === ConstraintType.Relational ? (

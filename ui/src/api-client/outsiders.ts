@@ -15,20 +15,23 @@ import {
 
 type ClientApiGetOutsiders = ClientApiNoPayload<ApiOutsidersGetResponse>;
 type ClientApiCreateOutsider = ClientApi<
-  ApiOutsiderCreatePayload,
-  ApiOutsiderCreateResponse
+    ApiOutsiderCreatePayload,
+    ApiOutsiderCreateResponse
 >;
 type ClientApiUpdateOutsider = ClientApi<
-  ApiOutsiderUpdatePayload,
-  ApiOutsiderUpdateResponse
+    ApiOutsiderUpdatePayload,
+    ApiOutsiderUpdateResponse
 >;
 type ClientApiDeleteOutsider = ClientApi<
-  ApiOutsiderDeletePayload,
-  ApiOutsiderDeleteResponse
+    ApiOutsiderDeletePayload,
+    ApiOutsiderDeleteResponse
 >;
 
 export const apiGetOutsiders: ClientApiGetOutsiders = async (props) => {
-    return await safeApiFetcher<ApiOutsidersGetResponse>("/api/outsiders", props);
+    return await safeApiFetcher<ApiOutsidersGetResponse>(
+        "/api/outsiders",
+        props,
+    );
 };
 
 export const apiCreateOutsider: ClientApiCreateOutsider = async (

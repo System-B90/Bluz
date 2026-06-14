@@ -14,27 +14,30 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 function RelationalConstraintHumanReadableEntry({
     constraint,
 }: {
-  constraint: RelationalConstraint;
+    constraint: RelationalConstraint;
 }) {
     const state = useCurriculumState();
 
     const target =
-    constraint.targetType === "module"
-        ? state.modules[constraint.targetId]
-        : state.events[constraint.targetId];
+        constraint.targetType === "module"
+            ? state.modules[constraint.targetId]
+            : state.events[constraint.targetId];
 
     const ownerTypeName = constraint.ownerType === "event" ? "המופע" : "המערך";
-    const targetTypeName = constraint.targetType === "module" ? "המערך" : "המופע";
+    const targetTypeName =
+        constraint.targetType === "module" ? "המערך" : "המופע";
 
     const ownerName =
-    (constraint.ownerType === "event"
-        ? state.events[constraint.ownerEventId]?.title
-        : state.modules[constraint.ownerModuleId]?.title) ?? "*לא נמצא*";
+        (constraint.ownerType === "event"
+            ? state.events[constraint.ownerEventId]?.title
+            : state.modules[constraint.ownerModuleId]?.title) ?? "*לא נמצא*";
 
     const hasMin =
-    constraint.minDelayDays !== undefined && constraint.minDelayDays !== null;
+        constraint.minDelayDays !== undefined &&
+        constraint.minDelayDays !== null;
     const hasMax =
-    constraint.maxDelayDays !== undefined && constraint.maxDelayDays !== null;
+        constraint.maxDelayDays !== undefined &&
+        constraint.maxDelayDays !== null;
 
     let delayPhrase = "";
     if (hasMin && hasMax) {
@@ -50,7 +53,12 @@ function RelationalConstraintHumanReadableEntry({
     }
 
     return (
-        <Box alignItems="center" display="flex" flexDirection="row" flexWrap="wrap">
+        <Box
+            alignItems="center"
+            display="flex"
+            flexDirection="row"
+            flexWrap="wrap"
+        >
             <Typography color="text.primary" variant="body2">
                 {ownerTypeName}
             </Typography>
@@ -80,7 +88,7 @@ function RelationalConstraintHumanReadableEntry({
             </Typography>
             <Box width="0.2rem" />
             <Typography color="text.primary" variant="body2">
-        ש{targetTypeName}
+                ש{targetTypeName}
             </Typography>
             <Box width="0.2rem" />
             <Typography color="primary" fontStyle={"italic"} variant="body2">
@@ -97,7 +105,7 @@ function RelationalConstraintHumanReadableEntry({
 function TemporalConstraintHumanReadableEntry({
     constraint,
 }: {
-  constraint: TemporalConstraint;
+    constraint: TemporalConstraint;
 }) {
     const validDays = new Set(
         (
@@ -128,7 +136,7 @@ function TemporalConstraintHumanReadableEntry({
 export function ConstraintHumanReadableEntry({
     constraint,
 }: {
-  constraint: GanttConstraint;
+    constraint: GanttConstraint;
 }) {
     return constraint.type === ConstraintType.Relational ? (
         <RelationalConstraintHumanReadableEntry constraint={constraint} />

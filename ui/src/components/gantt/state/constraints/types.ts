@@ -8,16 +8,16 @@
 import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 
 export type GanttConstraintState = {
-  // Key: constraint.id
-  constraints: Record<string, GanttConstraint>;
-  isLoading: boolean;
+    // Key: constraint.id
+    constraints: Record<string, GanttConstraint>;
+    isLoading: boolean;
 };
 
 export type GanttConstraintAction =
-  | {
-      type: "DELETE_CONSTRAINT";
-      payload: { id: string };
-    }
-  | { type: "SET_CONSTRAINTS"; payload: Array<GanttConstraint> }
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "UPSERT_CONSTRAINT"; payload: GanttConstraint };
+    | {
+          type: "DELETE_CONSTRAINT";
+          payload: { id: string };
+      }
+    | { type: "SET_CONSTRAINTS"; payload: Array<GanttConstraint> }
+    | { type: "SET_LOADING"; payload: boolean }
+    | { type: "UPSERT_CONSTRAINT"; payload: GanttConstraint };

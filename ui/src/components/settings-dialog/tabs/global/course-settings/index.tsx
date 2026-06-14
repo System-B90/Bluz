@@ -42,7 +42,7 @@ const dropAnimation = {
 
 const dialogOffsetModifier: Modifier = ({ transform }) => {
     if (typeof window !== "undefined") {
-    // Find the nearest Dialog containing block to compensate for the fixed positioning offset it introduces
+        // Find the nearest Dialog containing block to compensate for the fixed positioning offset it introduces
         const dialog = document.querySelector(".MuiDialog-paper");
         if (dialog) {
             const rect = dialog.getBoundingClientRect();
@@ -60,8 +60,8 @@ function InstructorDragOverlay({
     activeId,
     instructors,
 }: {
-  activeId: string;
-  instructors: Array<any>;
+    activeId: string;
+    instructors: Array<any>;
 }) {
     const inst = instructors.find((i) => `instructor-${i.id}` === activeId);
     if (!inst) return null;
@@ -72,8 +72,8 @@ function CourseDragOverlay({
     activeId,
     courses,
 }: {
-  activeId: string;
-  courses: Array<any>;
+    activeId: string;
+    courses: Array<any>;
 }) {
     const course = courses.find((c) => `course-${c.id}` === activeId);
     if (!course) return null;
@@ -141,8 +141,8 @@ function RootDropZone() {
                     isOver
                         ? "action.selected"
                         : theme.palette.mode === "light"
-                            ? "rgba(0, 0, 0, 0.01)"
-                            : "rgba(255, 255, 255, 0.01)",
+                          ? "rgba(0, 0, 0, 0.01)"
+                          : "rgba(255, 255, 255, 0.01)",
                 transition: "all 0.25s ease",
             }}
         >
@@ -173,10 +173,10 @@ export function CourseSettings() {
     const { enqueueSnackbar } = useSnackbar();
 
     const [activeDrag, setActiveDrag] = useState<{
-    id: string;
-    type: "COURSE" | "INSTRUCTOR";
-    data: any;
-  } | null>(null);
+        id: string;
+        type: "COURSE" | "INSTRUCTOR";
+        data: any;
+    } | null>(null);
 
     const handleCreate = useCallback(() => {
         void addCourse({
@@ -209,11 +209,13 @@ export function CourseSettings() {
             const { active, over } = event;
             if (!over) return;
 
-            const activeData = active.data.current as DraggedItemData | undefined;
+            const activeData = active.data.current as
+                | DraggedItemData
+                | undefined;
             const overData = over.data.current as
-        | DropTargetCourseData
-        | DropTargetRootData
-        | undefined;
+                | DropTargetCourseData
+                | DropTargetRootData
+                | undefined;
 
             if (!activeData || !overData) return;
 
@@ -221,12 +223,17 @@ export function CourseSettings() {
             if (activeData.type === "INSTRUCTOR") {
                 if (overData.type === "COURSE_DROP") {
                     const targetCourseId = overData.targetCourseId;
-                    const courseObj = courses.find((c) => c.id === targetCourseId);
+                    const courseObj = courses.find(
+                        (c) => c.id === targetCourseId,
+                    );
                     if (courseObj) {
                         const currentIds = courseObj.instructorIds ?? [];
                         if (!currentIds.includes(activeData.instructorId)) {
                             void updateCoursePartial(targetCourseId, {
-                                instructorIds: [...currentIds, activeData.instructorId],
+                                instructorIds: [
+                                    ...currentIds,
+                                    activeData.instructorId,
+                                ],
                             });
                         }
                     }
@@ -253,7 +260,10 @@ export function CourseSettings() {
                     if (draggedId === targetId) return;
 
                     // Cycle Detection: check if target is a descendant of dragged course
-                    const hasCycle = (dragId: string, destId: string): boolean => {
+                    const hasCycle = (
+                        dragId: string,
+                        destId: string,
+                    ): boolean => {
                         let current = courses.find((c) => c.id === destId);
                         while (current) {
                             if (current.parentId === dragId) return true;
@@ -286,7 +296,8 @@ export function CourseSettings() {
 
     // Identify top-level courses (courses without valid parents present in the list)
     const rootCourses = courses.filter(
-        (c) => !c.parentId || !courses.some((parent) => parent.id === c.parentId),
+        (c) =>
+            !c.parentId || !courses.some((parent) => parent.id === c.parentId),
     );
 
     return (
@@ -350,7 +361,7 @@ export function CourseSettings() {
                                     color: "text.primary",
                                 }}
                             >
-                היררכיית מסלולים ומדריכים
+                                היררכיית מסלולים ומדריכים
                             </Typography>
                             <Typography
                                 sx={{
@@ -359,7 +370,7 @@ export function CourseSettings() {
                                     fontFamily: "Assistant, sans-serif",
                                 }}
                             >
-                הגדרת מבנה ההיררכיה ושיוך מדריכים למסלולים
+                                הגדרת מבנה ההיררכיה ושיוך מדריכים למסלולים
                             </Typography>
                         </Box>
                     </Box>
@@ -395,7 +406,8 @@ export function CourseSettings() {
                                     mt: 6,
                                 }}
                             >
-                לא הוגדרו מסלולים. לחץ על הכפתור למטה ליצירת מסלול.
+                                לא הוגדרו מסלולים. לחץ על הכפתור למטה ליצירת
+                                מסלול.
                             </Typography>
                         )}
                     </Box>
@@ -427,12 +439,13 @@ export function CourseSettings() {
                                 transition: "all 0.2s ease",
                                 "&:hover": {
                                     transform: "translateY(-1px)",
-                                    boxShadow: "0 6px 16px rgba(26, 60, 89, 0.2)",
+                                    boxShadow:
+                                        "0 6px 16px rgba(26, 60, 89, 0.2)",
                                 },
                             }}
                             variant="contained"
                         >
-              יצירת מסלול ראשי חדש
+                            יצירת מסלול ראשי חדש
                         </Button>
 
                         {/* Un-nest / Move to Root Droppable Area */}
@@ -455,7 +468,10 @@ export function CourseSettings() {
                             instructors={instructors}
                         />
                     ) : (
-                        <CourseDragOverlay activeId={activeDrag.id} courses={courses} />
+                        <CourseDragOverlay
+                            activeId={activeDrag.id}
+                            courses={courses}
+                        />
                     )
                 ) : null}
             </DragOverlay>

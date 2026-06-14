@@ -6,21 +6,21 @@ import { CalendarAction } from "@/components/schedule/calendar/calendar-provider
 import { Event, EventId } from "@/components/schedule/types/event";
 
 export type CalendarContextState = {
-  // State
-  events: Array<Event>;
-  startDate: Date | undefined;
-  endDate: Date | undefined;
+    // State
+    events: Array<Event>;
+    startDate: Date | undefined;
+    endDate: Date | undefined;
 
-  // Setters
-  setStartDate: Dispatch<SetStateAction<Date | undefined>>;
-  setEndDate: Dispatch<SetStateAction<Date | undefined>>;
+    // Setters
+    setStartDate: Dispatch<SetStateAction<Date | undefined>>;
+    setEndDate: Dispatch<SetStateAction<Date | undefined>>;
 
-  // Actions
-  saveEvent: (event: Partial<Event>) => void;
-  deleteEvent: (eventId: EventId) => void;
-  undo: () => void;
-  redo: () => void;
-  dispatch: (action: CalendarAction) => void;
+    // Actions
+    saveEvent: (event: Partial<Event>) => void;
+    deleteEvent: (eventId: EventId) => void;
+    undo: () => void;
+    redo: () => void;
+    dispatch: (action: CalendarAction) => void;
 };
 
 export const CalendarContext = createContext<CalendarContextState | undefined>(

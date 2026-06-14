@@ -25,16 +25,18 @@ export function ModuleRow({
     syllabusId,
     curriculumId: _curriculumId,
 }: {
-  moduleId: GanttModuleId;
-  syllabusId: GanttSyllabusId;
-  curriculumId: GanttCurriculumId;
+    moduleId: GanttModuleId;
+    syllabusId: GanttSyllabusId;
+    curriculumId: GanttCurriculumId;
 }) {
     const state = useCurriculumState();
     const { openModuleDialog } = useCurriculumProviderActions();
     const moduleDoc = useModule(moduleId);
     const minimumRequiredTime = useMemo(
         () =>
-            moduleDoc ? calculateMinimumRequiredTimeForModule(moduleDoc, state) : 0,
+            moduleDoc
+                ? calculateMinimumRequiredTimeForModule(moduleDoc, state)
+                : 0,
         [moduleDoc, state],
     );
 
@@ -72,7 +74,11 @@ export function ModuleRow({
             </TableCell>
             <TableCell>
                 <Tooltip placement="top" title="ערוך מערך">
-                    <IconButton color="primary" onClick={editClickHandler} size="small">
+                    <IconButton
+                        color="primary"
+                        onClick={editClickHandler}
+                        size="small"
+                    >
                         <EditIcon fontSize="small" />
                     </IconButton>
                 </Tooltip>

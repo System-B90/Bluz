@@ -9,16 +9,16 @@ import { GanttWeekId } from "@/api-shared/types/gantt/models";
 import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 
 export type WeekAccordionProps = {
-  weekId: GanttWeekId;
-  canEdit: boolean;
-  canAddDay: boolean;
-  onAddDay: (weekId: GanttWeekId) => Promise<void>;
-  onWeekCommentChange: (weekId: GanttWeekId, nextComment: string) => void;
-  onWeekCommentSave: (weekId: GanttWeekId) => Promise<void>;
-  onWeekCommentKeyDown: (
-    event: KeyboardEvent<HTMLInputElement>,
-    weekId: GanttWeekId,
-  ) => void;
+    weekId: GanttWeekId;
+    canEdit: boolean;
+    canAddDay: boolean;
+    onAddDay: (weekId: GanttWeekId) => Promise<void>;
+    onWeekCommentChange: (weekId: GanttWeekId, nextComment: string) => void;
+    onWeekCommentSave: (weekId: GanttWeekId) => Promise<void>;
+    onWeekCommentKeyDown: (
+        event: KeyboardEvent<HTMLInputElement>,
+        weekId: GanttWeekId,
+    ) => void;
 };
 
 export function WeekAccordion(props: WeekAccordionProps) {

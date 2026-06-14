@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 
 type ProgressiveItemCountOptions = {
-  batchSize?: number;
-  enabled?: boolean;
-  initialCount?: number;
-  resetKey?: number | string;
+    batchSize?: number;
+    enabled?: boolean;
+    initialCount?: number;
+    resetKey?: number | string;
 };
 type IdleWindow = Window &
-  typeof globalThis & {
-    cancelIdleCallback?: (handle: number) => void;
-    requestIdleCallback?: (
-      callback: () => void,
-      options?: { timeout: number },
-    ) => number;
-  };
+    typeof globalThis & {
+        cancelIdleCallback?: (handle: number) => void;
+        requestIdleCallback?: (
+            callback: () => void,
+            options?: { timeout: number },
+        ) => number;
+    };
 
 function scheduleProgressiveRender(callback: () => void) {
     if (typeof window === "undefined") {
@@ -23,7 +23,9 @@ function scheduleProgressiveRender(callback: () => void) {
     const idleWindow = window as IdleWindow;
 
     if (idleWindow.requestIdleCallback) {
-        const handle = idleWindow.requestIdleCallback(callback, { timeout: 120 });
+        const handle = idleWindow.requestIdleCallback(callback, {
+            timeout: 120,
+        });
 
         return () => idleWindow.cancelIdleCallback?.(handle);
     }
@@ -55,7 +57,9 @@ export function useProgressiveItemCount(
         }
 
         setVisibleCount((currentVisibleCount) => {
-            const nextInitialCount = enabled ? Math.min(initialCount, totalCount) : 0;
+            const nextInitialCount = enabled
+                ? Math.min(initialCount, totalCount)
+                : 0;
 
             if (resetKeyChanged) {
                 return nextInitialCount;

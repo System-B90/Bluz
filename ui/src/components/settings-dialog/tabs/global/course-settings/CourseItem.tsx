@@ -32,10 +32,10 @@ import {
 } from "@/components/settings-dialog/tabs/global/course-settings/dnd-types";
 
 type CourseItemProps = {
-  course: Course;
-  allCourses: Array<Course>;
-  depth?: number;
-  visited?: Set<string>;
+    course: Course;
+    allCourses: Array<Course>;
+    depth?: number;
+    visited?: Set<string>;
 };
 
 export function CourseItem({
@@ -188,8 +188,8 @@ export function CourseItem({
                         isOver
                             ? "action.selected"
                             : theme.palette.mode === "light"
-                                ? "rgba(103, 200, 221, 0.04)"
-                                : "rgba(255, 255, 255, 0.02)",
+                              ? "rgba(103, 200, 221, 0.04)"
+                              : "rgba(255, 255, 255, 0.02)",
                     borderRadius: "16px",
                     p: 1.5,
                     transition: "all 0.2s ease",
@@ -220,7 +220,13 @@ export function CourseItem({
                     </Box>
 
                     {/* Expand/Collapse Toggle */}
-                    <Box sx={{ width: 34, display: "flex", justifyContent: "center" }}>
+                    <Box
+                        sx={{
+                            width: 34,
+                            display: "flex",
+                            justifyContent: "center",
+                        }}
+                    >
                         {subCourses.length > 0 || assignedIds.length > 0 ? (
                             <Tooltip title={isExpanded ? "כווץ" : "הרחב"}>
                                 <IconButton
@@ -228,9 +234,13 @@ export function CourseItem({
                                     size="small"
                                 >
                                     {isExpanded ? (
-                                        <KeyboardArrowUpIcon sx={{ fontSize: 18 }} />
+                                        <KeyboardArrowUpIcon
+                                            sx={{ fontSize: 18 }}
+                                        />
                                     ) : (
-                                        <KeyboardArrowDownIcon sx={{ fontSize: 18 }} />
+                                        <KeyboardArrowDownIcon
+                                            sx={{ fontSize: 18 }}
+                                        />
                                     )}
                                 </IconButton>
                             </Tooltip>
@@ -259,7 +269,9 @@ export function CourseItem({
                                     borderRadius: "50%",
                                     overflow: "hidden",
                                     border: "none",
-                                    "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+                                    "& .MuiOutlinedInput-notchedOutline": {
+                                        border: "none",
+                                    },
                                     "& input": { display: "none" },
                                     "& .MuiInputAdornment-root": {
                                         m: 0,
@@ -313,7 +325,11 @@ export function CourseItem({
                                 alignItems="center"
                                 display="flex"
                                 gap={0.5}
-                                sx={{ flexGrow: 1, minWidth: 0, "&:hover svg": { opacity: 1 } }}
+                                sx={{
+                                    flexGrow: 1,
+                                    minWidth: 0,
+                                    "&:hover svg": { opacity: 1 },
+                                }}
                             >
                                 <Typography
                                     noWrap
@@ -344,7 +360,9 @@ export function CourseItem({
                     </Box>
 
                     {/* Quick Action Controls */}
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                    >
                         <Box
                             sx={{
                                 display: "flex",
@@ -372,7 +390,9 @@ export function CourseItem({
                             <Tooltip title="שייך מדריך">
                                 <IconButton
                                     color="secondary"
-                                    onClick={(e) => setAnchorEl(e.currentTarget)}
+                                    onClick={(e) =>
+                                        setAnchorEl(e.currentTarget)
+                                    }
                                     size="small"
                                 >
                                     <PersonAddIcon sx={{ fontSize: 18 }} />
@@ -484,21 +504,27 @@ export function CourseItem({
                 onClose={() => setAnchorEl(null)}
                 open={isMenuOpen}
             >
-                <MenuItem disabled sx={{ fontSize: "0.75rem", fontWeight: 700 }}>
-          בחר מדריך לשיוך
+                <MenuItem
+                    disabled
+                    sx={{ fontSize: "0.75rem", fontWeight: 700 }}
+                >
+                    בחר מדריך לשיוך
                 </MenuItem>
                 {unassignedInstructors.map((inst) => (
                     <MenuItem
                         key={inst.id}
                         onClick={() => handleAddInstructor(inst.id)}
-                        sx={{ fontSize: "0.8rem", fontFamily: "Assistant, sans-serif" }}
+                        sx={{
+                            fontSize: "0.8rem",
+                            fontFamily: "Assistant, sans-serif",
+                        }}
                     >
                         {inst.display_name}
                     </MenuItem>
                 ))}
                 {unassignedInstructors.length === 0 && (
                     <MenuItem disabled sx={{ fontSize: "0.8rem" }}>
-            כל המדריכים משוייכים
+                        כל המדריכים משוייכים
                     </MenuItem>
                 )}
             </Menu>

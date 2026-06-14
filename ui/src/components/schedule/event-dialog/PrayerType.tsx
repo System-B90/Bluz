@@ -13,8 +13,8 @@ import {
 } from "@/components/schedule/types/event";
 
 type PrayerTypeFieldProps = {
-  event?: Partial<Event>;
-  onEventChange: (updates: Partial<PrayerEvent>) => void;
+    event?: Partial<Event>;
+    onEventChange: (updates: Partial<PrayerEvent>) => void;
 };
 
 export function PrayerTypeField({

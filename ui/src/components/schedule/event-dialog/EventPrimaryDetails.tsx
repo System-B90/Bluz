@@ -19,8 +19,8 @@ export function EventPrimaryDetails({
     event,
     onUpdate,
 }: {
-  event: Partial<Event>;
-  onUpdate: (u: Partial<Event>) => void;
+    event: Partial<Event>;
+    onUpdate: (u: Partial<Event>) => void;
 }) {
     const isEmpty = !event.notes;
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -56,7 +56,9 @@ export function EventPrimaryDetails({
                 }, 2500);
             } else {
                 timer = setTimeout(() => {
-                    setCurrentText(currentWord.slice(0, currentText.length + 1));
+                    setCurrentText(
+                        currentWord.slice(0, currentText.length + 1),
+                    );
                 }, 85);
             }
         }

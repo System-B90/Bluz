@@ -73,8 +73,8 @@ export const apiUpdateEvent: ClientApiUpdateEvent = async (event, props) => {
 };
 
 type ClientApiDeleteEvent = ClientApi<
-  ApiEventDeletePayload,
-  ApiEventDeleteResponse
+    ApiEventDeletePayload,
+    ApiEventDeleteResponse
 >;
 export const apiDeleteEvent: ClientApiDeleteEvent = async (eventId, props) => {
     await safeApiFetcher<ApiEventDeleteResponse>("/api/event", {

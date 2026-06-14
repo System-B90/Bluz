@@ -9,9 +9,9 @@ import { useCallback } from "react";
 import { getHiveBaseUrl } from "@/api-shared/common";
 
 type LoginWithHiveProps = {
-  callbackUrl?: SignInOptions["callbackUrl"];
-  fontSize?: TypographyProps["fontSize"];
-  fontWeight?: TypographyProps["fontWeight"];
+    callbackUrl?: SignInOptions["callbackUrl"];
+    fontSize?: TypographyProps["fontSize"];
+    fontWeight?: TypographyProps["fontWeight"];
 } & ButtonProps;
 
 export function LoginWithHive({
@@ -48,8 +48,12 @@ export function LoginWithHive({
             variant={variant}
             {...props}
         >
-            <Typography color="inherit" fontSize={fontSize} fontWeight={fontWeight}>
-        התחברות עם הייב
+            <Typography
+                color="inherit"
+                fontSize={fontSize}
+                fontWeight={fontWeight}
+            >
+                התחברות עם הייב
             </Typography>
         </Button>
     );

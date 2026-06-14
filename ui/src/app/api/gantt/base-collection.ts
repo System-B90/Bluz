@@ -5,30 +5,32 @@ import { ApiT } from "@/api-shared/types/gantt/api-layer";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 
 export type BasicGantOperations<
-  TEntity extends BaseGantItem,
-  TCreatePayload = Omit<TEntity, "id">,
+    TEntity extends BaseGantItem,
+    TCreatePayload = Omit<TEntity, "id">,
 > = {
-  listItems: () => Promise<Record<TEntity["id"], TEntity["title"]>>;
-  getMultipleItems: (ids: Array<string>) => Promise<Array<TEntity>>;
-  getItem: (id: TEntity["id"]) => Promise<any>;
-  createNewItem: (payload: TCreatePayload) => Promise<ApiT<TEntity> | TEntity>; // TODO: This should always be ApiT<TEntity>
-  updateItem: (
-    id: TEntity["id"],
-    updates: Partial<TEntity>,
-  ) => Promise<TEntity>;
-  deleteItem: (id: TEntity["id"]) => Promise<void>;
+    listItems: () => Promise<Record<TEntity["id"], TEntity["title"]>>;
+    getMultipleItems: (ids: Array<string>) => Promise<Array<TEntity>>;
+    getItem: (id: TEntity["id"]) => Promise<any>;
+    createNewItem: (
+        payload: TCreatePayload,
+    ) => Promise<ApiT<TEntity> | TEntity>; // TODO: This should always be ApiT<TEntity>
+    updateItem: (
+        id: TEntity["id"],
+        updates: Partial<TEntity>,
+    ) => Promise<TEntity>;
+    deleteItem: (id: TEntity["id"]) => Promise<void>;
 };
 
 export type BuildGantCollectionRoutesProps<
-  TEntity extends BaseGantItem,
-  TCreatePayload = Omit<TEntity, "id">,
+    TEntity extends BaseGantItem,
+    TCreatePayload = Omit<TEntity, "id">,
 > = {
-  dbSet: BasicGantOperations<TEntity, TCreatePayload>;
+    dbSet: BasicGantOperations<TEntity, TCreatePayload>;
 };
 
 export function buildGantCollectionRoutes<
-  TEntity extends BaseGantItem,
-  TCreatePayload = Omit<TEntity, "id">,
+    TEntity extends BaseGantItem,
+    TCreatePayload = Omit<TEntity, "id">,
 >({ dbSet }: BuildGantCollectionRoutesProps<TEntity, TCreatePayload>) {
     async function GET(request: NextRequest) {
         try {
@@ -38,13 +40,15 @@ export function buildGantCollectionRoutes<
             if (requestedIds === null) {
                 items = await dbSet.listItems();
             } else {
-                const itemArray = await dbSet.getMultipleItems(requestedIds.split(","));
+                const itemArray = await dbSet.getMultipleItems(
+                    requestedIds.split(","),
+                );
                 items = itemArray.reduce(
                     (acc, doc) => {
                         acc[doc.id as TEntity["id"]] = doc;
                         return acc;
                     },
-          {} as Record<TEntity["id"], TEntity>,
+                    {} as Record<TEntity["id"], TEntity>,
                 );
             }
             return ApiSuccess(items);

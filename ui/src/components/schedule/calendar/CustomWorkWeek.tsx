@@ -27,12 +27,12 @@ function workWeekRange(
 
 function RawCustomWorkWeek(
     props: TimeGridProps & {
-    date: Date;
-    localizer: DateLocalizer;
-    min?: Date;
-    max?: Date;
-    scrollToTime?: Date;
-  },
+        date: Date;
+        localizer: DateLocalizer;
+        min?: Date;
+        max?: Date;
+        scrollToTime?: Date;
+    },
 ): React.JSX.Element {
     const {
         date,
@@ -70,8 +70,8 @@ RawCustomWorkWeek.navigate = (
 
 RawCustomWorkWeek.title = (date: Date, options: TitleOptions): string => {
     const { localizer }: { localizer: DateLocalizer } = options as unknown as {
-    localizer: DateLocalizer;
-  };
+        localizer: DateLocalizer;
+    };
     const range = workWeekRange(date, { localizer });
     const start = range[0];
     const end = range[range.length - 1];
@@ -80,8 +80,8 @@ RawCustomWorkWeek.title = (date: Date, options: TitleOptions): string => {
 };
 
 export const CustomWorkWeek: ((props: any) => ReactNode) &
-  ViewStatic & {
-    range: typeof workWeekRange;
-    title: typeof Week.title;
-    navigate: typeof Week.navigate;
-  } = RawCustomWorkWeek;
+    ViewStatic & {
+        range: typeof workWeekRange;
+        title: typeof Week.title;
+        navigate: typeof Week.navigate;
+    } = RawCustomWorkWeek;

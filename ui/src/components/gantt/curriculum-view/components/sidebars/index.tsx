@@ -5,8 +5,8 @@ export function CurriculumViewSidebar({
     selectedTabIndex,
     curriculumId,
 }: {
-  selectedTabIndex: number;
-  curriculumId: GanttCurriculumId | null;
+    selectedTabIndex: number;
+    curriculumId: GanttCurriculumId | null;
 }) {
     return (
         (selectedTabIndex >= 0 && selectedTabIndex <= 1 && (

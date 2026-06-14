@@ -16,8 +16,8 @@ export function InstructorCard({
     instructor,
     isOverlay = false,
 }: {
-  instructor: CourseUser;
-  isOverlay?: boolean;
+    instructor: CourseUser;
+    isOverlay?: boolean;
 }) {
     return (
         <Card
@@ -29,7 +29,9 @@ export function InstructorCard({
                 borderRadius: "10px",
                 border: "1px solid",
                 borderColor: isOverlay ? "secondary.main" : "divider",
-                boxShadow: isOverlay ? "0 8px 24px rgba(0, 0, 0, 0.15)" : "none",
+                boxShadow: isOverlay
+                    ? "0 8px 24px rgba(0, 0, 0, 0.15)"
+                    : "none",
                 bgcolor: (theme) =>
                     theme.palette.mode === "light"
                         ? "#ffffff"
@@ -44,8 +46,8 @@ export function InstructorCard({
                         isOverlay
                             ? undefined
                             : theme.palette.mode === "light"
-                                ? "0 4px 12px rgba(103, 200, 221, 0.1)"
-                                : "0 4px 12px rgba(0, 0, 0, 0.25)",
+                              ? "0 4px 12px rgba(103, 200, 221, 0.1)"
+                              : "0 4px 12px rgba(0, 0, 0, 0.25)",
                 },
             }}
         >
@@ -140,7 +142,7 @@ export function InstructorSourceList() {
                         mb: 0.5,
                     }}
                 >
-          מדריכים זמינים
+                    מדריכים זמינים
                 </Typography>
                 <Typography
                     sx={{
@@ -149,7 +151,7 @@ export function InstructorSourceList() {
                         fontFamily: "Assistant, sans-serif",
                     }}
                 >
-          גרור מדריך לתוך מסלול כדי לשייכו
+                    גרור מדריך לתוך מסלול כדי לשייכו
                 </Typography>
             </Box>
 
@@ -157,7 +159,9 @@ export function InstructorSourceList() {
                 InputProps={{
                     startAdornment: (
                         <InputAdornment position="start">
-                            <SearchIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+                            <SearchIcon
+                                sx={{ fontSize: 16, color: "text.secondary" }}
+                            />
                         </InputAdornment>
                     ),
                     sx: {
@@ -196,7 +200,7 @@ export function InstructorSourceList() {
                             mt: 4,
                         }}
                     >
-            לא נמצאו מדריכים
+                        לא נמצאו מדריכים
                     </Typography>
                 )}
             </Box>

@@ -5,7 +5,7 @@ import { SyllabusNamesProvider } from "@/components/gantt/state/providers/Syllab
 export default function GanttLayout({
     children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
     return <SyllabusNamesProvider>{children}</SyllabusNamesProvider>;
 }

@@ -21,7 +21,7 @@ import { ClientApiError } from "@/api-shared/errors";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 
 export type RouteContext = {
-  params: Promise<{ id: string }>;
+    params: Promise<{ id: string }>;
 };
 
 /**
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         }
 
         const constraints = await getConstraintsForCurriculum(
-      id as GanttCurriculumId,
+            id as GanttCurriculumId,
         );
         return ApiSuccess(constraints);
     } catch (error) {
@@ -84,12 +84,15 @@ export async function POST(
             createdAt: new Date(),
             updatedAt: new Date(),
             type: body.type,
-            ownerEventId: body.ownerType === "event" ? body.ownerEventId : undefined,
+            ownerEventId:
+                body.ownerType === "event" ? body.ownerEventId : undefined,
             ownerModuleId:
-        body.ownerType === "module" ? body.ownerModuleId : undefined,
+                body.ownerType === "module" ? body.ownerModuleId : undefined,
             relation: body.type === "RELATIONAL" ? body.relation : undefined,
-            minDelayDays: body.type === "RELATIONAL" ? body.minDelayDays : undefined,
-            maxDelayDays: body.type === "RELATIONAL" ? body.maxDelayDays : undefined,
+            minDelayDays:
+                body.type === "RELATIONAL" ? body.minDelayDays : undefined,
+            maxDelayDays:
+                body.type === "RELATIONAL" ? body.maxDelayDays : undefined,
         };
         if (body.type === "TEMPORAL") {
             creationData.allowedDays = body.allowedDays;

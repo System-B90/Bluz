@@ -20,7 +20,11 @@ function CreateModuleEventButton({ moduleId }: { moduleId: GanttModuleId }) {
     const { createEvent } = useModuleEventActions();
     const clickHandler = useCallback(() => {
         createEvent("מופע חדש", moduleId).catch((error) =>
-            enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת המופע נכשלה!", error),
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "יצירת המופע נכשלה!",
+                error,
+            ),
         );
     }, [moduleId, createEvent, enqueueSnackbar]);
 
@@ -35,13 +39,17 @@ export function ModuleEventsView({
     moduleId,
     eventIds,
 }: {
-  moduleId: GanttModuleId;
-  eventIds: Array<GanttEventId>;
+    moduleId: GanttModuleId;
+    eventIds: Array<GanttEventId>;
 }) {
     const eventItems = useMemo(
         () =>
             eventIds.map((eventId) => (
-                <ModuleEventView eventId={eventId} key={eventId} moduleId={moduleId} />
+                <ModuleEventView
+                    eventId={eventId}
+                    key={eventId}
+                    moduleId={moduleId}
+                />
             )),
         [moduleId, eventIds],
     );
@@ -65,7 +73,9 @@ export function ModuleEventsView({
                             <Typography variant="h6">סוג</Typography>
                         </TableCell>
                         <TableCell>
-                            <Typography variant="h6">זמן מינימלי (דק&apos;)</Typography>
+                            <Typography variant="h6">
+                                זמן מינימלי (דק&apos;)
+                            </Typography>
                         </TableCell>
                         <TableCell>
                             <CreateModuleEventButton moduleId={moduleId} />

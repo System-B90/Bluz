@@ -34,12 +34,12 @@ import { useCurriculumDay } from "@/components/gantt/state/hooks/UseDay";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type DayCapacityCellProps = {
-  dayId: GanttDayId;
-  isCompact?: boolean;
-  isMuted?: boolean;
-  scheduledMinutes: number;
-  startDate: null | string;
-  weekIndex: number;
+    dayId: GanttDayId;
+    isCompact?: boolean;
+    isMuted?: boolean;
+    scheduledMinutes: number;
+    startDate: null | string;
+    weekIndex: number;
 };
 
 function getStatusColor(
@@ -70,12 +70,13 @@ export function DayCapacityCell({
     const toggleWeekendDuty = useCallback(
         (checked: boolean) => {
             if (!day) return;
-            void updateWeek(day.weekId, { weekendDuty: checked }).catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "שמירת המידע של השבוע נכשלה!",
-                    error,
-                ),
+            void updateWeek(day.weekId, { weekendDuty: checked }).catch(
+                (error) =>
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "שמירת המידע של השבוע נכשלה!",
+                        error,
+                    ),
             );
         },
         [day, enqueueSnackbar, updateWeek],
@@ -89,7 +90,8 @@ export function DayCapacityCell({
     const [isCommentFocused, setIsCommentFocused] = useState(false);
 
     const status = useMemo(
-        () => getCapacityStatus(day?.totalWorkingMinutes ?? 0, scheduledMinutes),
+        () =>
+            getCapacityStatus(day?.totalWorkingMinutes ?? 0, scheduledMinutes),
         [day?.totalWorkingMinutes, scheduledMinutes],
     );
 
@@ -125,7 +127,11 @@ export function DayCapacityCell({
 
         void updateDay(dayId, { totalWorkingMinutes: parsedMinutes }).catch(
             (error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת שעות נכשלה!", error),
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "שמירת שעות נכשלה!",
+                    error,
+                ),
         );
     }, [day, dayId, enqueueSnackbar, localTime, updateDay]);
 
@@ -133,7 +139,11 @@ export function DayCapacityCell({
         if (!day || localComment === (day.comment ?? "")) return;
 
         void updateDay(dayId, { comment: localComment }).catch((error) =>
-            enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת הערת יום נכשלה!", error),
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "שמירת הערת יום נכשלה!",
+                error,
+            ),
         );
     }, [day, dayId, enqueueSnackbar, localComment, updateDay]);
 
@@ -148,7 +158,11 @@ export function DayCapacityCell({
             setLocalTime(formatMinutesAsTimeInput(nextMinutes));
             void updateDay(dayId, { totalWorkingMinutes: nextMinutes }).catch(
                 (error) =>
-                    enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת שעות נכשלה!", error),
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "שמירת שעות נכשלה!",
+                        error,
+                    ),
             );
         },
         [day, dayId, enqueueSnackbar, updateDay],
@@ -165,9 +179,11 @@ export function DayCapacityCell({
     );
 
     const backgroundColor = useMemo(() => {
-        if (isMuted) return alpha(theme.palette.action.disabledBackground, 0.45);
+        if (isMuted)
+            return alpha(theme.palette.action.disabledBackground, 0.45);
         if (status === "error") return alpha(theme.palette.error.main, 0.08);
-        if (status === "warning") return alpha(theme.palette.warning.main, 0.12);
+        if (status === "warning")
+            return alpha(theme.palette.warning.main, 0.12);
         if (status === "ok") return alpha(theme.palette.primary.main, 0.08);
 
         return theme.palette.background.paper;
@@ -225,11 +241,15 @@ export function DayCapacityCell({
                         {day?.dayIndex === GanttDayIndex.Saturday && (
                             <Tooltip
                                 arrow
-                                title={week?.weekendDuty ? "צא הביתה" : "סגור שבת"}
+                                title={
+                                    week?.weekendDuty ? "צא הביתה" : "סגור שבת"
+                                }
                             >
                                 <Switch
                                     checked={week?.weekendDuty ?? false}
-                                    onChange={(event) => toggleWeekendDuty(event.target.checked)}
+                                    onChange={(event) =>
+                                        toggleWeekendDuty(event.target.checked)
+                                    }
                                     size="small"
                                 />
                             </Tooltip>
@@ -243,7 +263,9 @@ export function DayCapacityCell({
                         justifyContent="center"
                         sx={{ py: 1, gap: 0.5 }}
                     >
-                        <EventAvailableIcon sx={{ fontSize: 18, color: "success.main" }} />
+                        <EventAvailableIcon
+                            sx={{ fontSize: 18, color: "success.main" }}
+                        />
                         <Typography
                             sx={{
                                 fontWeight: 700,
@@ -253,7 +275,7 @@ export function DayCapacityCell({
                             }}
                             variant="caption"
                         >
-              יוצאים שבת
+                            יוצאים שבת
                         </Typography>
                     </Box>
 
@@ -304,11 +326,15 @@ export function DayCapacityCell({
                         {day?.dayIndex === GanttDayIndex.Saturday && (
                             <Tooltip
                                 arrow
-                                title={week?.weekendDuty ? "צא הביתה" : "סגור שבת"}
+                                title={
+                                    week?.weekendDuty ? "צא הביתה" : "סגור שבת"
+                                }
                             >
                                 <Switch
                                     checked={week?.weekendDuty ?? false}
-                                    onChange={(event) => toggleWeekendDuty(event.target.checked)}
+                                    onChange={(event) =>
+                                        toggleWeekendDuty(event.target.checked)
+                                    }
                                     size="small"
                                 />
                             </Tooltip>
@@ -327,8 +353,11 @@ export function DayCapacityCell({
                             size="small"
                             sx={{
                                 opacity: isEditing ? 1 : 0,
-                                transform: isEditing ? "scale(1)" : "scale(0.8)",
-                                transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                                transform: isEditing
+                                    ? "scale(1)"
+                                    : "scale(0.8)",
+                                transition:
+                                    "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
                                 ".group\\/cell:hover &": {
                                     opacity: 1,
                                     transform: "scale(1)",
@@ -352,20 +381,28 @@ export function DayCapacityCell({
                                 commitTime();
                                 setIsTimeFocused(false);
                             }}
-                            onChange={(event) => setLocalTime(event.target.value)}
+                            onChange={(event) =>
+                                setLocalTime(event.target.value)
+                            }
                             onFocus={() => setIsTimeFocused(true)}
                             onKeyDown={handleTimeKeyDown}
                             size="small"
                             sx={{
                                 "& .MuiOutlinedInput-root": {
                                     transition: "all 0.2s ease",
-                                    bgcolor: isEditing ? "background.default" : "transparent",
+                                    bgcolor: isEditing
+                                        ? "background.default"
+                                        : "transparent",
                                 },
                                 "& .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: isEditing ? "primary.main" : "transparent",
+                                    borderColor: isEditing
+                                        ? "primary.main"
+                                        : "transparent",
                                 },
                                 "&:hover .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: isEditing ? "primary.main" : "divider",
+                                    borderColor: isEditing
+                                        ? "primary.main"
+                                        : "divider",
                                 },
                             }}
                             value={localTime}
@@ -376,8 +413,11 @@ export function DayCapacityCell({
                             size="small"
                             sx={{
                                 opacity: isEditing ? 1 : 0,
-                                transform: isEditing ? "scale(1)" : "scale(0.8)",
-                                transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                                transform: isEditing
+                                    ? "scale(1)"
+                                    : "scale(0.8)",
+                                transition:
+                                    "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
                                 ".group\\/cell:hover &": {
                                     opacity: 1,
                                     transform: "scale(1)",
@@ -430,7 +470,10 @@ export function DayCapacityCell({
                                 py: 0.25,
                                 "&:hover": {
                                     color: "primary.main",
-                                    bgcolor: alpha(theme.palette.primary.main, 0.04),
+                                    bgcolor: alpha(
+                                        theme.palette.primary.main,
+                                        0.04,
+                                    ),
                                     borderRadius: 0.5,
                                     px: 0.5,
                                 },
@@ -440,7 +483,7 @@ export function DayCapacityCell({
                             }}
                             variant="caption"
                         >
-              💬 {localComment}
+                            💬 {localComment}
                         </Typography>
                     ) : null}
 
@@ -452,11 +495,11 @@ export function DayCapacityCell({
                             },
                             ...(!hasComment && !isCommentFocused
                                 ? {
-                                    display: "none",
-                                    ".group\\/cell:hover &": {
-                                        display: "block",
-                                    },
-                                }
+                                      display: "none",
+                                      ".group\\/cell:hover &": {
+                                          display: "block",
+                                      },
+                                  }
                                 : {}),
                         }}
                     >
@@ -467,7 +510,9 @@ export function DayCapacityCell({
                                 commitComment();
                                 setIsCommentFocused(false);
                             }}
-                            onChange={(event) => setLocalComment(event.target.value)}
+                            onChange={(event) =>
+                                setLocalComment(event.target.value)
+                            }
                             onFocus={() => setIsCommentFocused(true)}
                             placeholder="שם / הערה..."
                             size="small"
@@ -483,7 +528,8 @@ export function DayCapacityCell({
                             }}
                             sx={{
                                 "& .MuiInput-root:hover::before": {
-                                    borderBottom: "1px solid rgba(0, 0, 0, 0.42) !important",
+                                    borderBottom:
+                                        "1px solid rgba(0, 0, 0, 0.42) !important",
                                 },
                             }}
                             value={localComment}

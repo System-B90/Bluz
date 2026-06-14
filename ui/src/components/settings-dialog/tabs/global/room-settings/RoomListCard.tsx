@@ -13,13 +13,13 @@ import { RoomListHeader } from "@/components/settings-dialog/tabs/global/room-se
 import { RoomListItem } from "@/components/settings-dialog/tabs/global/room-settings/RoomListItem";
 
 type RoomListCardProps = {
-  filteredRooms: Array<Room>;
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  selectedRoom: null | Room;
-  populateFormFromRoom: (room: Room) => void;
-  handleStartCreate: () => void;
-  handleDelete: (roomId: string) => Promise<void>;
+    filteredRooms: Array<Room>;
+    searchQuery: string;
+    setSearchQuery: (query: string) => void;
+    selectedRoom: null | Room;
+    populateFormFromRoom: (room: Room) => void;
+    handleStartCreate: () => void;
+    handleDelete: (roomId: string) => Promise<void>;
 };
 
 export function RoomListCard({
@@ -49,15 +49,17 @@ export function RoomListCard({
                         fontFamily: "Assistant, sans-serif",
                     }}
                 >
-                    {searchQuery ? "לא נמצאו חדרים התואמים את החיפוש" : "לא הוגדרו חדרים"}
+                    {searchQuery
+                        ? "לא נמצאו חדרים התואמים את החיפוש"
+                        : "לא הוגדרו חדרים"}
                 </Typography>
             </Box>
         ) : (
             <List disablePadding>
                 {filteredRooms.map((room) => {
                     const isActive =
-            selectedRoom?.id === room.id &&
-            selectedRoom?.source === room.source;
+                        selectedRoom?.id === room.id &&
+                        selectedRoom?.source === room.source;
 
                     return (
                         <RoomListItem
@@ -104,7 +106,10 @@ export function RoomListCard({
                 InputProps={{
                     startAdornment: (
                         <InputAdornment position="start">
-                            <SearchIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                            <SearchIcon
+                                fontSize="small"
+                                sx={{ color: "text.secondary" }}
+                            />
                         </InputAdornment>
                     ),
                 }}
@@ -153,7 +158,7 @@ export function RoomListCard({
                 }}
                 variant="contained"
             >
-        הוספת חדר מותאם אישית
+                הוספת חדר מותאם אישית
             </Button>
         </Box>
     );

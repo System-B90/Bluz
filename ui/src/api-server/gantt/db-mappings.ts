@@ -33,7 +33,9 @@ export async function getModuleDayMappingsForCurriculum(
     ];
 
     if (dayIds !== undefined && dayIds.length > 0) {
-        filters.push(inArray(ganttCurriculumEventDayMappingsSchema.dayId, dayIds));
+        filters.push(
+            inArray(ganttCurriculumEventDayMappingsSchema.dayId, dayIds),
+        );
     }
 
     // TODO: Implement
@@ -53,11 +55,11 @@ export async function getModuleDayMappingsForCurriculum(
  * 2) Creating a mapping.
  */
 export async function createCurriculumModuleDayMapping(data: {
-  curriculumId: GanttCurriculumId;
-  moduleId: GanttModuleId;
-  eventId?: GanttEventId | null;
-  dayId: GanttDayId;
-  sortOrder?: number;
+    curriculumId: GanttCurriculumId;
+    moduleId: GanttModuleId;
+    eventId?: GanttEventId | null;
+    dayId: GanttDayId;
+    sortOrder?: number;
 }) {
     const { eventId, moduleId, sortOrder, ...v } = { ...data };
 
@@ -88,12 +90,18 @@ export async function updateCurriculumModuleDayMapping(
         .set({ ...newValues, updatedAt: new Date() })
         .where(
             and(
-                eq(ganttCurriculumEventDayMappingsSchema.curriculumId, curriculumId),
+                eq(
+                    ganttCurriculumEventDayMappingsSchema.curriculumId,
+                    curriculumId,
+                ),
                 eq(ganttCurriculumEventDayMappingsSchema.moduleId, moduleId),
                 eventId
                     ? eq(ganttCurriculumEventDayMappingsSchema.eventId, eventId)
                     : isNull(ganttCurriculumEventDayMappingsSchema.eventId),
-                eq(ganttCurriculumEventDayMappingsSchema.dayId, oldMapping.dayId),
+                eq(
+                    ganttCurriculumEventDayMappingsSchema.dayId,
+                    oldMapping.dayId,
+                ),
             ),
         )
         .returning();
@@ -115,7 +123,10 @@ export async function reorderCurriculumModuleMappingInDay(
         .set({ sortOrder: newSortOrder, updatedAt: new Date() })
         .where(
             and(
-                eq(ganttCurriculumEventDayMappingsSchema.curriculumId, curriculumId),
+                eq(
+                    ganttCurriculumEventDayMappingsSchema.curriculumId,
+                    curriculumId,
+                ),
                 eq(ganttCurriculumEventDayMappingsSchema.moduleId, moduleId),
                 eventId
                     ? eq(ganttCurriculumEventDayMappingsSchema.eventId, eventId)
@@ -138,7 +149,10 @@ export async function deleteCurriculumModuleDayMapping(
         .delete(ganttCurriculumEventDayMappingsSchema)
         .where(
             and(
-                eq(ganttCurriculumEventDayMappingsSchema.curriculumId, curriculumId),
+                eq(
+                    ganttCurriculumEventDayMappingsSchema.curriculumId,
+                    curriculumId,
+                ),
                 eq(ganttCurriculumEventDayMappingsSchema.moduleId, moduleId),
                 eventId
                     ? eq(ganttCurriculumEventDayMappingsSchema.eventId, eventId)

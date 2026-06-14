@@ -9,14 +9,16 @@ import { CACHE_CONTROL_HTTP_HEADER, IMMUTABLE_CACHE_MAX_TTL } from "@/settings";
 
 export type ApiResponseHeaders = Record<string, string>;
 export type ApiResponseInit =
-  | (Omit<ResponseInit, "headers" | "status"> & { headers: ApiResponseHeaders })
-  | undefined;
+    | (Omit<ResponseInit, "headers" | "status"> & {
+          headers: ApiResponseHeaders;
+      })
+    | undefined;
 export type ApiCacheControl =
-  | "immutable"
-  | "must-revalidate"
-  | "no-cache"
-  | "no-store"
-  | number;
+    | "immutable"
+    | "must-revalidate"
+    | "no-cache"
+    | "no-store"
+    | number;
 export function ApiResponseMaker<T>(
     data: T,
     cacheControl?: ApiCacheControl,
@@ -25,20 +27,23 @@ export function ApiResponseMaker<T>(
     const additionalHeaders: ApiResponseHeaders = {};
     if (cacheControl !== undefined) {
         assert(
-            !init || !init.headers || !(CACHE_CONTROL_HTTP_HEADER in init.headers),
+            !init ||
+                !init.headers ||
+                !(CACHE_CONTROL_HTTP_HEADER in init.headers),
         );
         if (typeof cacheControl === "string") {
-            additionalHeaders[CACHE_CONTROL_HTTP_HEADER] = `public, ${cacheControl}`;
+            additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
+                `public, ${cacheControl}`;
             if (cacheControl === "immutable") {
                 additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
-          `public, max-age=${IMMUTABLE_CACHE_MAX_TTL}, immutable`;
+                    `public, max-age=${IMMUTABLE_CACHE_MAX_TTL}, immutable`;
             } else if (cacheControl === "must-revalidate") {
                 additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
-          `public, max-age=1, must-revalidate`;
+                    `public, max-age=1, must-revalidate`;
             }
         } else if (typeof cacheControl === "number") {
             additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
-        `public, max-age=${cacheControl}, immutable`;
+                `public, max-age=${cacheControl}, immutable`;
         }
     }
 
@@ -74,9 +79,12 @@ export function ApiErrorMaker(
     } else {
         errorPayload = e;
     }
-    return new NextResponse(JSON.stringify({ status: -1, error: errorPayload }), {
-        status: 200,
-    });
+    return new NextResponse(
+        JSON.stringify({ status: -1, error: errorPayload }),
+        {
+            status: 200,
+        },
+    );
 }
 
 export function ApiError(e: any) {
@@ -109,12 +117,12 @@ export function catchHandler<T extends NextRequest>(request: T, e: any) {
 }
 
 export type ServerApiRequest<T> = Omit<NextRequest, "json"> & {
-  json: () => Promise<T>;
+    json: () => Promise<T>;
 };
 export type ServerApi<PayloadT, ResponseT> = (
-  request: ServerApiRequest<PayloadT>,
+    request: ServerApiRequest<PayloadT>,
 ) => Promise<NextResponse<ResponseT> | Response>;
 export type ServerApiWithParams<PayloadT, ResponseT, ParamsT> = (
-  request: ServerApiRequest<PayloadT>,
-  context: { params: Promise<ParamsT> },
+    request: ServerApiRequest<PayloadT>,
+    context: { params: Promise<ParamsT> },
 ) => Promise<NextResponse<ResponseT> | Response>;

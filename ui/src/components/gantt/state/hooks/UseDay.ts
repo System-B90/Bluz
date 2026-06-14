@@ -7,7 +7,7 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useCurriculumDay(dayId: null): undefined;
 export function useCurriculumDay(
-  dayId: GanttDayId,
+    dayId: GanttDayId,
 ): (GanttDay & { id: GanttDayId; weekId: GanttWeekId }) | undefined;
 export function useCurriculumDay(
     dayId: GanttDayId | null,

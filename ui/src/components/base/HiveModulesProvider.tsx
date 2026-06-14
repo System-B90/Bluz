@@ -15,10 +15,10 @@ import { Module, ModuleLike } from "@/api-shared/types/module";
 import { SubjectLike } from "@/api-shared/types/subject";
 
 export type HiveModulesContextState = {
-  default: boolean;
-  modules: Array<Module>;
-  getModule: (id: ModuleLike) => Module | undefined;
-  getModulesOfSubject: (subject: SubjectLike) => Array<Module>;
+    default: boolean;
+    modules: Array<Module>;
+    getModule: (id: ModuleLike) => Module | undefined;
+    getModulesOfSubject: (subject: SubjectLike) => Array<Module>;
 };
 
 const HiveModulesContext = createContext<HiveModulesContextState | undefined>({
@@ -31,9 +31,11 @@ const HiveModulesContext = createContext<HiveModulesContextState | undefined>({
 export const HiveModulesProvider = ({
     children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) => {
-    const [moduleLookup, setModuleLookup] = useState<Record<string, Module>>({});
+    const [moduleLookup, setModuleLookup] = useState<Record<string, Module>>(
+        {},
+    );
 
     const modules = useMemo(() => Object.values(moduleLookup), [moduleLookup]);
     const getModule = useCallback(
@@ -47,7 +49,9 @@ export const HiveModulesProvider = ({
             modules.filter(
                 (module) =>
                     module.parent_subject ===
-          (subject instanceof Object ? subject.id : (subject as number)),
+                    (subject instanceof Object
+                        ? subject.id
+                        : (subject as number)),
             ),
         [modules],
     );
@@ -62,7 +66,11 @@ export const HiveModulesProvider = ({
                 setModuleLookup(modulesMap);
             })
             .catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת המערךים נכשלה.", error),
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "טעינת המערךים נכשלה.",
+                    error,
+                ),
             );
     }, [setModuleLookup]);
 

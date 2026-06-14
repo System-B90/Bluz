@@ -24,8 +24,8 @@ import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type WeekLengthMenuProps = {
-  curriculum: GanttCurriculum;
-  curriculumId: GanttCurriculumId;
+    curriculum: GanttCurriculum;
+    curriculumId: GanttCurriculumId;
 };
 
 export function WeekLengthMenu({
@@ -71,9 +71,19 @@ export function WeekLengthMenu({
             comment: "",
             weekendDuty: false,
         }).catch((error) =>
-            enqueueApiErrorSnackbar(enqueueSnackbar, "הוספת שבוע נכשלה!", error),
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "הוספת שבוע נכשלה!",
+                error,
+            ),
         );
-    }, [closeMenu, createWeek, curriculum.weeks, curriculumId, enqueueSnackbar]);
+    }, [
+        closeMenu,
+        createWeek,
+        curriculum.weeks,
+        curriculumId,
+        enqueueSnackbar,
+    ]);
 
     const removeLastWeek = useCallback(() => {
         closeMenu();
@@ -87,7 +97,11 @@ export function WeekLengthMenu({
         void deleteWeek(lastWeek.id, curriculumId)
             .then(() => refreshMappings())
             .catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "מחיקת שבוע נכשלה!", error),
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "מחיקת שבוע נכשלה!",
+                    error,
+                ),
             );
     }, [
         closeMenu,
@@ -106,7 +120,11 @@ export function WeekLengthMenu({
         void deleteWeek(lastWeek.id, curriculumId)
             .then(() => refreshMappings())
             .catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "מחיקת שבוע נכשלה!", error),
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "מחיקת שבוע נכשלה!",
+                    error,
+                ),
             );
     }, [curriculumId, deleteWeek, enqueueSnackbar, lastWeek, refreshMappings]);
 
@@ -118,9 +136,13 @@ export function WeekLengthMenu({
                 size="small"
                 variant="outlined"
             >
-        ניהול אורך קורס
+                ניהול אורך קורס
             </Button>
-            <Menu anchorEl={anchorEl} onClose={closeMenu} open={Boolean(anchorEl)}>
+            <Menu
+                anchorEl={anchorEl}
+                onClose={closeMenu}
+                open={Boolean(anchorEl)}
+            >
                 <MenuItem onClick={addWeek}>
                     <ListItemIcon>
                         <AddIcon fontSize="small" />
@@ -141,18 +163,20 @@ export function WeekLengthMenu({
                 <DialogTitle>מחיקת השבוע האחרון?</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-            בשבוע האחרון קיימים {mappedItemsInLastWeek} שיבוצים. מחיקת השבוע
-            תמחק גם את השיבוצים האלו.
+                        בשבוע האחרון קיימים {mappedItemsInLastWeek} שיבוצים.
+                        מחיקת השבוע תמחק גם את השיבוצים האלו.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setConfirmRemoveOpen(false)}>ביטול</Button>
+                    <Button onClick={() => setConfirmRemoveOpen(false)}>
+                        ביטול
+                    </Button>
                     <Button
                         color="error"
                         onClick={confirmRemoveLastWeek}
                         variant="contained"
                     >
-            מחיקה
+                        מחיקה
                     </Button>
                 </DialogActions>
             </Dialog>

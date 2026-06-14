@@ -11,19 +11,19 @@ import { Logo } from "@/components/header/logo";
 
 function getAuthenticationErrorMessage(error: null | string) {
     switch (error) {
-    case null:
-        return null;
-    case "AccessDenied":
-        return "למשתמש שלך אין הרשאה מתאימה לגישה למערכת.";
-    case "OAuthAccountNotLinked":
-        return "כתובת המייל משויכת לחשבון קיים. יש להתחבר באמצעות שיטת ההתחברות המקורית.";
-    case "OAuthCallback":
-    case "OAuthSignin":
-        return "לא ניתן היה להשלים את תהליך ההזדהות מול הייב.";
-    case "SessionRequired":
-        return "נדרשת התחברות מחדש כדי להמשיך.";
-    default:
-        return "אירעה שגיאה במהלך תהליך ההתחברות.";
+        case null:
+            return null;
+        case "AccessDenied":
+            return "למשתמש שלך אין הרשאה מתאימה לגישה למערכת.";
+        case "OAuthAccountNotLinked":
+            return "כתובת המייל משויכת לחשבון קיים. יש להתחבר באמצעות שיטת ההתחברות המקורית.";
+        case "OAuthCallback":
+        case "OAuthSignin":
+            return "לא ניתן היה להשלים את תהליך ההזדהות מול הייב.";
+        case "SessionRequired":
+            return "נדרשת התחברות מחדש כדי להמשיך.";
+        default:
+            return "אירעה שגיאה במהלך תהליך ההתחברות.";
     }
 }
 
@@ -32,9 +32,9 @@ function LoginWidget() {
     const authError = searchParams.get("error");
     const authErrorMessage = getAuthenticationErrorMessage(authError);
     const authErrorDetails =
-    searchParams.get("error_description") ??
-    searchParams.get("message") ??
-    authError;
+        searchParams.get("error_description") ??
+        searchParams.get("message") ??
+        authError;
 
     return (
         <Box
@@ -72,7 +72,7 @@ function LoginWidget() {
                     letterSpacing={"-0.02em"}
                     mt={1}
                 >
-          ברוכים הבאים לבלוז
+                    ברוכים הבאים לבלוז
                 </Typography>
 
                 <Typography
@@ -81,7 +81,7 @@ function LoginWidget() {
                     fontSize={14}
                     mt={0}
                 >
-          מתי אתם מבזרים?
+                    מתי אתם מבזרים?
                 </Typography>
             </Box>
 
@@ -92,7 +92,7 @@ function LoginWidget() {
                         {authErrorMessage}
                         {authErrorDetails ? (
                             <Typography component="p" fontSize={13} mt={1}>
-                קוד שגיאה: {authErrorDetails}
+                                קוד שגיאה: {authErrorDetails}
                             </Typography>
                         ) : null}
                     </Alert>

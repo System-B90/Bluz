@@ -7,7 +7,7 @@ import rtlPlugin from "stylis-plugin-rtl";
 export function MuiEmotionCacheProvider({
     children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
     return (
         <AppRouterCacheProvider

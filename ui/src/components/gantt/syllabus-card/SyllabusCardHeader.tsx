@@ -8,7 +8,7 @@ import { HoursBox } from "@/components/gantt/syllabus-card/HoursBox";
 import { SyllabusName } from "@/components/gantt/syllabus-card/SyllabusName";
 
 export type SyllabusCardHeaderProps = {
-  syllabusId: GanttSyllabusId;
+    syllabusId: GanttSyllabusId;
 } & Omit<CardHeaderProps, "title">;
 
 function InternalHeader({ syllabusId }: { syllabusId: GanttSyllabusId }) {
@@ -35,6 +35,9 @@ export function SyllabusCardHeader({
     ...props
 }: SyllabusCardHeaderProps) {
     return (
-        <CardHeader title={<InternalHeader syllabusId={syllabusId} />} {...props} />
+        <CardHeader
+            title={<InternalHeader syllabusId={syllabusId} />}
+            {...props}
+        />
     );
 }

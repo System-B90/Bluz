@@ -33,10 +33,16 @@ export function Filters({ ...props }: BoxProps) {
                 minWidth={200}
                 width={"auto"}
             />
-            <FilterCourses boxSizing={"border-box"} minWidth={200} width={"auto"} />
+            <FilterCourses
+                boxSizing={"border-box"}
+                minWidth={200}
+                width={"auto"}
+            />
 
             <Tooltip
-                title={showPAsFor !== null ? 'הסתר חלונות פ"א' : 'גלה חלונות פ"א'}
+                title={
+                    showPAsFor !== null ? 'הסתר חלונות פ"א' : 'גלה חלונות פ"א'
+                }
             >
                 <IconButton
                     color={showPAsFor !== null ? "primary" : "inherit"}
@@ -68,7 +74,9 @@ export function Filters({ ...props }: BoxProps) {
             </Tooltip>
 
             <Tooltip
-                title={showMisconfigurations ? "הסתר פערי איוש" : "הצג פערי איוש"}
+                title={
+                    showMisconfigurations ? "הסתר פערי איוש" : "הצג פערי איוש"
+                }
             >
                 <IconButton
                     color={showMisconfigurations ? "warning" : "inherit"}

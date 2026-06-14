@@ -9,7 +9,7 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 export default async function PostAuthLayout({
     children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
     const session = (await getServerSession(
         authOptions,

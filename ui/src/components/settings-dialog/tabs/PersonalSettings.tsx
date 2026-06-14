@@ -20,18 +20,18 @@ import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 
 type PersonalState = {
-  groups: Array<string>;
-  instructors: Array<string>;
-  favoriteOutsiders: Array<string>;
+    groups: Array<string>;
+    instructors: Array<string>;
+    favoriteOutsiders: Array<string>;
 };
 type PersonalAction =
-  | { type: "ADD_GROUP"; payload: string }
-  | { type: "ADD_INSTRUCTOR"; payload: string }
-  | { type: "ADD_OUTSIDER"; payload: string }
-  | { type: "INITIALIZE"; payload: PersonalState }
-  | { type: "REMOVE_GROUP"; payload: string }
-  | { type: "REMOVE_INSTRUCTOR"; payload: string }
-  | { type: "REMOVE_OUTSIDER"; payload: string };
+    | { type: "ADD_GROUP"; payload: string }
+    | { type: "ADD_INSTRUCTOR"; payload: string }
+    | { type: "ADD_OUTSIDER"; payload: string }
+    | { type: "INITIALIZE"; payload: PersonalState }
+    | { type: "REMOVE_GROUP"; payload: string }
+    | { type: "REMOVE_INSTRUCTOR"; payload: string }
+    | { type: "REMOVE_OUTSIDER"; payload: string };
 
 const ALL_GROUPS: ReadonlyArray<string> = [
     "Group A",
@@ -54,69 +54,79 @@ function personalSettingsReducer(
 ): PersonalState {
     let nextState = state;
     switch (action.type) {
-    case "INITIALIZE":
-        return action.payload;
-    case "ADD_GROUP":
-        if (state.groups.includes(action.payload)) return state;
-        nextState = { ...state, groups: [...state.groups, action.payload] };
-        break;
-    case "REMOVE_GROUP":
-        nextState = {
-            ...state,
-            groups: state.groups.filter((g) => g !== action.payload),
-        };
-        break;
-    case "ADD_INSTRUCTOR":
-        if (state.instructors.includes(action.payload)) return state;
-        nextState = {
-            ...state,
-            instructors: [...state.instructors, action.payload],
-        };
-        break;
-    case "REMOVE_INSTRUCTOR":
-        nextState = {
-            ...state,
-            instructors: state.instructors.filter((i) => i !== action.payload),
-        };
-        break;
-    case "ADD_OUTSIDER":
-        if (state.favoriteOutsiders.includes(action.payload)) return state;
-        nextState = {
-            ...state,
-            favoriteOutsiders: [...state.favoriteOutsiders, action.payload],
-        };
-        break;
-    case "REMOVE_OUTSIDER":
-        nextState = {
-            ...state,
-            favoriteOutsiders: state.favoriteOutsiders.filter(
-                (o) => o !== action.payload,
-            ),
-        };
-        break;
+        case "INITIALIZE":
+            return action.payload;
+        case "ADD_GROUP":
+            if (state.groups.includes(action.payload)) return state;
+            nextState = { ...state, groups: [...state.groups, action.payload] };
+            break;
+        case "REMOVE_GROUP":
+            nextState = {
+                ...state,
+                groups: state.groups.filter((g) => g !== action.payload),
+            };
+            break;
+        case "ADD_INSTRUCTOR":
+            if (state.instructors.includes(action.payload)) return state;
+            nextState = {
+                ...state,
+                instructors: [...state.instructors, action.payload],
+            };
+            break;
+        case "REMOVE_INSTRUCTOR":
+            nextState = {
+                ...state,
+                instructors: state.instructors.filter(
+                    (i) => i !== action.payload,
+                ),
+            };
+            break;
+        case "ADD_OUTSIDER":
+            if (state.favoriteOutsiders.includes(action.payload)) return state;
+            nextState = {
+                ...state,
+                favoriteOutsiders: [...state.favoriteOutsiders, action.payload],
+            };
+            break;
+        case "REMOVE_OUTSIDER":
+            nextState = {
+                ...state,
+                favoriteOutsiders: state.favoriteOutsiders.filter(
+                    (o) => o !== action.payload,
+                ),
+            };
+            break;
     }
 
     if (typeof window !== "undefined") {
-        localStorage.setItem("bluz_personal_settings", JSON.stringify(nextState));
+        localStorage.setItem(
+            "bluz_personal_settings",
+            JSON.stringify(nextState),
+        );
     }
     return nextState;
 }
 
 type SelectionItem = {
-  id: string;
-  label: string;
+    id: string;
+    label: string;
 };
 type SelectionCardProps = {
-  readonly title: string;
-  readonly description: string;
-  readonly icon: ReactNode;
-  readonly colorTheme: "info" | "primary" | "secondary" | "success" | "warning";
-  readonly availableOptions: ReadonlyArray<SelectionItem>;
-  readonly selectedItems: ReadonlyArray<SelectionItem>;
-  readonly emptyMessage: string;
-  readonly searchLabel: string;
-  readonly onAdd: (item: null | SelectionItem) => void;
-  readonly onRemove: (id: string) => void;
+    readonly title: string;
+    readonly description: string;
+    readonly icon: ReactNode;
+    readonly colorTheme:
+        | "info"
+        | "primary"
+        | "secondary"
+        | "success"
+        | "warning";
+    readonly availableOptions: ReadonlyArray<SelectionItem>;
+    readonly selectedItems: ReadonlyArray<SelectionItem>;
+    readonly emptyMessage: string;
+    readonly searchLabel: string;
+    readonly onAdd: (item: null | SelectionItem) => void;
+    readonly onRemove: (id: string) => void;
 };
 
 const SelectionCard = memo(function SelectionCard({
@@ -285,7 +295,7 @@ export function PersonalSettings() {
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
                         "כשל בטעינת העדפות אישיות",
-            e as Error,
+                        e as Error,
                     );
                 }
             }

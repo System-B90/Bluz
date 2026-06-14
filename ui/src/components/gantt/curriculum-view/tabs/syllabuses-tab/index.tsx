@@ -14,7 +14,7 @@ import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { SyllabusCard } from "@/components/gantt/syllabus-card";
 
 type SyllabusesTabProps = {
-  curriculumId: GanttCurriculumId;
+    curriculumId: GanttCurriculumId;
 };
 
 const INITIAL_SYLLABUS_CARD_COUNT = 2;
@@ -110,9 +110,14 @@ export const SyllabusesTab = memo(function SyllabusesTab({
                 >
                     {syllabusCards}
                     {Array.from({
-                        length: Math.min(hiddenSyllabusCount, MAX_SYLLABUS_CARD_SKELETONS),
+                        length: Math.min(
+                            hiddenSyllabusCount,
+                            MAX_SYLLABUS_CARD_SKELETONS,
+                        ),
                     }).map((_, index) => (
-                        <SyllabusCardSkeleton key={`syllabus-card-skeleton-${index}`} />
+                        <SyllabusCardSkeleton
+                            key={`syllabus-card-skeleton-${index}`}
+                        />
                     ))}
                 </Box>
             </Box>

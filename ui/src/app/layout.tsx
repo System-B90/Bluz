@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
     children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
     const wsHost = process.env.WEBSOCKET_SESSION_SERVER_HOST || "bluz.bis";
     const wsProtcol = WEBSOCKET_PROTOCOL || "wss";
@@ -22,13 +22,18 @@ export default function RootLayout({
 
     return (
         <html dir="rtl" lang="he" suppressHydrationWarning>
-            <body className="antialiased w-screen h-screen overflow-hidden" dir="rtl">
+            <body
+                className="antialiased w-screen h-screen overflow-hidden"
+                dir="rtl"
+            >
                 <WebSocketConfigProvider
                     host={wsHost}
                     portSuffix={wsPortSuffix}
                     protocol={wsProtcol}
                 >
-                    <MuiEmotionCacheProvider>{children}</MuiEmotionCacheProvider>
+                    <MuiEmotionCacheProvider>
+                        {children}
+                    </MuiEmotionCacheProvider>
                 </WebSocketConfigProvider>
             </body>
         </html>

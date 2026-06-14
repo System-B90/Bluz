@@ -10,8 +10,8 @@ import { CurriculumDescription } from "@/components/gantt/curriculum-view/compon
 import { CurriculumName } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumName";
 
 export type CurriculumCardProps = {
-  curriculumId: GanttCurriculumId | null;
-  curriculum: GanttCurriculumDocument | undefined;
+    curriculumId: GanttCurriculumId | null;
+    curriculum: GanttCurriculumDocument | undefined;
 } & Omit<CardProps, "sx">;
 
 export function CurriculumAboutCard({
@@ -21,14 +21,17 @@ export function CurriculumAboutCard({
 }: CurriculumCardProps) {
     return (
         <Card sx={{ padding: 2, minWidth: "14rem", flexShrink: 0 }} {...props}>
-            <CurriculumName curriculumId={curriculumId} title={curriculum?.title} />
+            <CurriculumName
+                curriculumId={curriculumId}
+                title={curriculum?.title}
+            />
             <CurriculumDescription
                 curriculumId={curriculumId}
                 description={curriculum?.description}
             />
             <Box color="textSecondary" display={"flex"} flexDirection={"row"}>
                 <Typography color="textSecondary" variant="body2">
-          עדכון אחרון:
+                    עדכון אחרון:
                 </Typography>
                 <Box width={"0.2rem"} />
                 {curriculum?.updatedAt ? (

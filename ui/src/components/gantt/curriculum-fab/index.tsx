@@ -27,10 +27,10 @@ import {
 } from "@/components/gantt/curriculum-fab/utils";
 
 export type CurriculumDrawerProps = {
-  open?: boolean;
-  setOpen?: Dispatch<SetStateAction<boolean>>;
-  setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
-  currentCurriculum?: GanttCurriculumId | null;
+    open?: boolean;
+    setOpen?: Dispatch<SetStateAction<boolean>>;
+    setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
+    currentCurriculum?: GanttCurriculumId | null;
 };
 
 const PANEL_WIDTH = 300;
@@ -41,8 +41,8 @@ export function CurriculumFab({
 }: CurriculumDrawerProps) {
     const { enqueueSnackbar } = useSnackbar();
     const [curriculumsData, setCurriculumsData] = useState<
-    Record<GanttCurriculumId, GanttCurriculumDocument>
-  >({} as Record<GanttCurriculumId, GanttCurriculumDocument>);
+        Record<GanttCurriculumId, GanttCurriculumDocument>
+    >({} as Record<GanttCurriculumId, GanttCurriculumDocument>);
     const [isFetchingDetails, setIsFetchingDetails] = useState<boolean>(true);
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
     const hasInitializedSelection = useRef(false);
@@ -68,8 +68,8 @@ export function CurriculumFab({
     useEffect(() => {
         if (
             !hasInitializedSelection.current &&
-      sortedIds.length > 0 &&
-      !currentCurriculum
+            sortedIds.length > 0 &&
+            !currentCurriculum
         ) {
             setCurrentCurriculum(sortedIds[0]);
             hasInitializedSelection.current = true;
@@ -154,7 +154,7 @@ export function CurriculumFab({
                     bottom: 16,
                     zIndex: (theme) => theme.zIndex.speedDial,
                     transition:
-            "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease",
+                        "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease",
                     "&:hover": {
                         transform: "scale(1.12) rotate(6deg)",
                         boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
@@ -181,7 +181,7 @@ export function CurriculumFab({
                             overflow: "hidden",
                             borderRadius: "12px",
                             boxShadow:
-                "0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
+                                "0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
                         },
                     },
                 }}
@@ -189,7 +189,7 @@ export function CurriculumFab({
             >
                 <Box sx={{ p: 1, pb: 0 }}>
                     <Typography align="center" variant="h6">
-            גאנטים
+                        גאנטים
                     </Typography>
                     <CurriculumActionItems
                         disabled={isFetchingDetails}
@@ -197,16 +197,29 @@ export function CurriculumFab({
                         onDelete={onDeleteCallback}
                         onUpdate={onUpdateCallback}
                         sourceCurriculum={
-                            currentCurriculum ? curriculumsData[currentCurriculum] : null
+                            currentCurriculum
+                                ? curriculumsData[currentCurriculum]
+                                : null
                         }
                     />
                 </Box>
                 <List
-                    sx={{ paddingX: 2, paddingY: 1, overflowY: "auto", maxHeight: 330 }}
+                    sx={{
+                        paddingX: 2,
+                        paddingY: 1,
+                        overflowY: "auto",
+                        maxHeight: 330,
+                    }}
                 >
-                    <ListSubheader sx={{ paddingY: 0.5, background: "transparent" }}>
-                        <Typography align="center" color="text.secondary" variant="body2">
-              רשימת גאנטים
+                    <ListSubheader
+                        sx={{ paddingY: 0.5, background: "transparent" }}
+                    >
+                        <Typography
+                            align="center"
+                            color="text.secondary"
+                            variant="body2"
+                        >
+                            רשימת גאנטים
                         </Typography>
                     </ListSubheader>
                     <CurriculumListItems

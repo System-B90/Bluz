@@ -48,7 +48,7 @@ function AccentDivider() {
                 height: "1px",
                 width: "100%",
                 background:
-          "linear-gradient(90deg, transparent 0%, var(--event-divider) 20%, var(--event-divider) 80%, transparent 100%)",
+                    "linear-gradient(90deg, transparent 0%, var(--event-divider) 20%, var(--event-divider) 80%, transparent 100%)",
                 my: 0.35,
                 flexShrink: 0,
             }}
@@ -63,8 +63,8 @@ export function UnifiedEvent({
     event,
     size,
 }: {
-  event: Event;
-  size: ContainerSize;
+    event: Event;
+    size: ContainerSize;
 }) {
     const { showMisconfigurations } = useCalendarFilters();
     const detail = getDetailLevel(size.height);
@@ -92,23 +92,28 @@ export function UnifiedEvent({
                 </Typography>
                 {/* Instructor name is the 2nd-most important element — always visible */}
                 {!isPrayer &&
-        (getPresentInstructors(event).length > 0 || showMisconfigurations) ? (
-                        <>
-                            <Box
-                                sx={{
-                                    width: "1px",
-                                    height: "60%",
-                                    bgcolor: "var(--event-border)",
-                                    flexShrink: 0,
-                                }}
-                            />
-                            <InstructorsList
-                                event={event}
-                                showCaption={false}
-                                sx={{ flexShrink: 1, minWidth: 0, overflow: "hidden" }}
-                            />
-                        </>
-                    ) : null}
+                (getPresentInstructors(event).length > 0 ||
+                    showMisconfigurations) ? (
+                    <>
+                        <Box
+                            sx={{
+                                width: "1px",
+                                height: "60%",
+                                bgcolor: "var(--event-border)",
+                                flexShrink: 0,
+                            }}
+                        />
+                        <InstructorsList
+                            event={event}
+                            showCaption={false}
+                            sx={{
+                                flexShrink: 1,
+                                minWidth: 0,
+                                overflow: "hidden",
+                            }}
+                        />
+                    </>
+                ) : null}
             </Box>
         );
     }
@@ -116,13 +121,13 @@ export function UnifiedEvent({
     /* ── COMPACT ──────────────────────────────────────────────── */
     if (detail === "compact") {
         const hasInstructors =
-      !isPrayer &&
-      (getPresentInstructors(event).length > 0 || showMisconfigurations);
+            !isPrayer &&
+            (getPresentInstructors(event).length > 0 || showMisconfigurations);
         const hasRooms =
-      !isPrayer &&
-      size.height >= 55 &&
-      !isBreak &&
-      (event.rooms.length > 0 || showMisconfigurations);
+            !isPrayer &&
+            size.height >= 55 &&
+            !isBreak &&
+            (event.rooms.length > 0 || showMisconfigurations);
         const showSecondRow = hasInstructors || hasRooms;
 
         return (
@@ -136,10 +141,22 @@ export function UnifiedEvent({
                 py={0.2}
             >
                 {/* Row 1: name | duration + status */}
-                <Box alignItems="center" display="flex" justifyContent="space-between">
-                    <Box alignItems="center" display="flex" gap={0.3} minWidth={0}>
+                <Box
+                    alignItems="center"
+                    display="flex"
+                    justifyContent="space-between"
+                >
+                    <Box
+                        alignItems="center"
+                        display="flex"
+                        gap={0.3}
+                        minWidth={0}
+                    >
                         {!isNarrow && (
-                            <EventTypeIcon event={event} sx={{ fontSize: "0.85rem" }} />
+                            <EventTypeIcon
+                                event={event}
+                                sx={{ fontSize: "0.85rem" }}
+                            />
                         )}
                         <Typography
                             noWrap
@@ -149,7 +166,12 @@ export function UnifiedEvent({
                             {event.name}
                         </Typography>
                     </Box>
-                    <Box alignItems="center" display="flex" flexShrink={0} gap={0.3}>
+                    <Box
+                        alignItems="center"
+                        display="flex"
+                        flexShrink={0}
+                        gap={0.3}
+                    >
                         <EventDurationLabel event={event} variant="text" />
                         <EventStatusIcons event={event} size="0.75rem" />
                     </Box>
@@ -159,9 +181,17 @@ export function UnifiedEvent({
                 {showSecondRow ? (
                     <>
                         <AccentDivider />
-                        <Box alignItems="center" display="flex" gap={0.6} overflow="hidden">
+                        <Box
+                            alignItems="center"
+                            display="flex"
+                            gap={0.6}
+                            overflow="hidden"
+                        >
                             {hasInstructors ? (
-                                <InstructorsList event={event} showCaption={false} />
+                                <InstructorsList
+                                    event={event}
+                                    showCaption={false}
+                                />
                             ) : null}
                             {hasInstructors && hasRooms ? (
                                 <Box
@@ -174,7 +204,10 @@ export function UnifiedEvent({
                                 />
                             ) : null}
                             {hasRooms ? (
-                                <RoomComponent roomIds={event.rooms} showCaption={false} />
+                                <RoomComponent
+                                    roomIds={event.rooms}
+                                    showCaption={false}
+                                />
                             ) : null}
                         </Box>
                     </>
@@ -192,7 +225,7 @@ export function UnifiedEvent({
 
     if (
         !isPrayer &&
-    (getPresentInstructors(event).length > 0 || showMisconfigurations)
+        (getPresentInstructors(event).length > 0 || showMisconfigurations)
     ) {
         rows.push(
             <InstructorsList
@@ -205,8 +238,8 @@ export function UnifiedEvent({
 
     if (
         !isPrayer &&
-    !isBreak &&
-    (event.rooms.length > 0 || showMisconfigurations)
+        !isBreak &&
+        (event.rooms.length > 0 || showMisconfigurations)
     ) {
         rows.push(
             <RoomComponent
@@ -244,7 +277,7 @@ export function UnifiedEvent({
                 {event.hiveModule ? (
                     <>
                         <Typography fontSize="0.75rem" fontWeight={300}>
-              /
+                            /
                         </Typography>
                         <ModuleComponent
                             fontSize="0.75rem"
@@ -279,10 +312,17 @@ export function UnifiedEvent({
             p={0.5}
         >
             {/* ── Header: icon + name | duration ─────────────── */}
-            <Box alignItems="center" display="flex" justifyContent="space-between">
+            <Box
+                alignItems="center"
+                display="flex"
+                justifyContent="space-between"
+            >
                 <Box alignItems="center" display="flex" gap={0.3} minWidth={0}>
                     {!isNarrow && (
-                        <EventTypeIcon event={event} sx={{ fontSize: "0.9rem" }} />
+                        <EventTypeIcon
+                            event={event}
+                            sx={{ fontSize: "0.9rem" }}
+                        />
                     )}
                     <Typography
                         noWrap

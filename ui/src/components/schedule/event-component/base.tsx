@@ -12,8 +12,8 @@ import { useElementSize } from "@/components/schedule/event-component/utils";
 import { Event, EventType } from "@/components/schedule/types/event";
 
 export type ContainerSize = {
-  width: number;
-  height: number;
+    width: number;
+    height: number;
 };
 
 export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
@@ -23,8 +23,8 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
 
     const subject = getSubject(event.subject);
     const bgColor =
-    (event.type === EventType.PRAYER ? "#e0f9fe" : subject?.color) ??
-    theme.palette.common.black;
+        (event.type === EventType.PRAYER ? "#e0f9fe" : subject?.color) ??
+        theme.palette.common.black;
     const textColor = theme.palette.getContrastText(bgColor);
 
     const { ref, size } = useElementSize<HTMLDivElement>();

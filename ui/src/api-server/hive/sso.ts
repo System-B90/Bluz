@@ -5,53 +5,53 @@ import { Clearance, GenderEnum } from "@/api-shared/types/hive";
 import { AuthSessionData } from "@/api-shared/types/sso";
 
 type JwtTokenData = {
-  user: HiveUser;
-  accessToken: string;
-  refreshToken: string;
-  expires_at: number;
+    user: HiveUser;
+    accessToken: string;
+    refreshToken: string;
+    expires_at: number;
 };
 type HiveSsoProfile = {
-  sub: string;
-  aud: string;
-  iat: number;
-  at_hash: string;
-  preferred_username: string;
-  gender: GenderEnum;
-  given_name: string;
-  family_name: string;
-  picture?: null | string;
-  number: null | number;
-  clearance: number;
-  program: null | number;
-  program_name: null | string;
-  is_teacher: boolean;
-  username: string;
-  display_name: string;
-  mentor: null | number;
-  email?: string;
-  iss: string;
-  exp: number;
-  auth_time: number;
-  jti: string;
-  api_token?: {
-    access_token: string;
-    refresh_token: string;
-    expires_at: number;
-  };
+    sub: string;
+    aud: string;
+    iat: number;
+    at_hash: string;
+    preferred_username: string;
+    gender: GenderEnum;
+    given_name: string;
+    family_name: string;
+    picture?: null | string;
+    number: null | number;
+    clearance: number;
+    program: null | number;
+    program_name: null | string;
+    is_teacher: boolean;
+    username: string;
+    display_name: string;
+    mentor: null | number;
+    email?: string;
+    iss: string;
+    exp: number;
+    auth_time: number;
+    jti: string;
+    api_token?: {
+        access_token: string;
+        refresh_token: string;
+        expires_at: number;
+    };
 } & Profile;
 type HiveUser = {
-  id: string;
-  name: string;
-  email: null | string;
-  username: string;
-  clearance: number;
-  program: null | number;
-  gender: GenderEnum;
-  display_name: string;
-  is_teacher: boolean;
-  temp_access_token?: string;
-  temp_refresh_token?: string;
-  temp_expires_at?: number;
+    id: string;
+    name: string;
+    email: null | string;
+    username: string;
+    clearance: number;
+    program: null | number;
+    gender: GenderEnum;
+    display_name: string;
+    is_teacher: boolean;
+    temp_access_token?: string;
+    temp_refresh_token?: string;
+    temp_expires_at?: number;
 };
 
 const NEXT_PUBLIC_HIVE_URL = process.env.NEXT_PUBLIC_HIVE_URL ?? "";
@@ -96,8 +96,8 @@ const signInCallback: CallbacksOptions["signIn"] = async ({ user }) => {
     const hiveUser = user as HiveUser;
 
     const isAuthorized =
-    hiveUser.clearance === Clearance.Segel ||
-    hiveUser.clearance === Clearance.Admin;
+        hiveUser.clearance === Clearance.Segel ||
+        hiveUser.clearance === Clearance.Admin;
 
     if (!isAuthorized) {
         return false;

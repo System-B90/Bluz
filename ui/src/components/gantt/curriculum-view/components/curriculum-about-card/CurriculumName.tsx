@@ -6,8 +6,8 @@ import { EditableCurriculumField } from "@/components/gantt/curriculum-view/comp
 import { useCurriculumActions } from "@/components/gantt/state/hooks/gantt-funcs/UseCurriculumActions";
 
 export type CurriculumNameProps = {
-  curriculumId: GanttCurriculumId | null;
-  title?: string;
+    curriculumId: GanttCurriculumId | null;
+    title?: string;
 };
 
 export function CurriculumName({ curriculumId, title }: CurriculumNameProps) {

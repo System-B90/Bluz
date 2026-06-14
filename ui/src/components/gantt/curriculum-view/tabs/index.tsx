@@ -22,17 +22,17 @@ import { SyllabusesTab } from "@/components/gantt/curriculum-view/tabs/syllabuse
 import { WeeksTab } from "@/components/gantt/curriculum-view/tabs/weeks-tab";
 
 type TabProps = {
-  selectedTabIndex: number;
-  setSelectedTabIndex: Dispatch<SetStateAction<number>>;
+    selectedTabIndex: number;
+    setSelectedTabIndex: Dispatch<SetStateAction<number>>;
 };
 
 const MemoizedCurriculumGanttView = memo(CurriculumGanttView);
 const MemoizedCurriculumViewBuilderTab = memo(CurriculumViewBuilderTab);
 
 export type CurriculumViewTabsProps = {
-  curriculumId: GanttCurriculumId | null;
+    curriculumId: GanttCurriculumId | null;
 } & BoxProps &
-  TabProps;
+    TabProps;
 
 function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
     return (
@@ -95,16 +95,18 @@ function TabContentFallback() {
 
 function renderTabContent(tabIndex: number, curriculumId: GanttCurriculumId) {
     switch (tabIndex) {
-    case 0:
-        return <SyllabusesTab curriculumId={curriculumId} />;
-    case 1:
-        return <WeeksTab curriculumId={curriculumId} />;
-    case 2:
-        return <MemoizedCurriculumViewBuilderTab curriculumId={curriculumId} />;
-    case 3:
-        return <MemoizedCurriculumGanttView curriculumId={curriculumId} />;
-    default:
-        return null;
+        case 0:
+            return <SyllabusesTab curriculumId={curriculumId} />;
+        case 1:
+            return <WeeksTab curriculumId={curriculumId} />;
+        case 2:
+            return (
+                <MemoizedCurriculumViewBuilderTab curriculumId={curriculumId} />
+            );
+        case 3:
+            return <MemoizedCurriculumGanttView curriculumId={curriculumId} />;
+        default:
+            return null;
     }
 }
 
@@ -112,8 +114,8 @@ function DeferredTabContent({
     curriculumId,
     selectedTabIndex,
 }: {
-  curriculumId: GanttCurriculumId;
-  selectedTabIndex: number;
+    curriculumId: GanttCurriculumId;
+    selectedTabIndex: number;
 }) {
     const [renderedTabIndex, setRenderedTabIndex] = useState(selectedTabIndex);
     const isPendingTabContent = renderedTabIndex !== selectedTabIndex;

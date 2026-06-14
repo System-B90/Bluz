@@ -16,33 +16,33 @@ export function ganttConstraintReducer(
     action: GanttConstraintAction,
 ): GanttConstraintState {
     switch (action.type) {
-    case "SET_CONSTRAINTS":
-        const newConstraints: Record<string, GanttConstraint> = {};
-        action.payload.forEach((c) => {
-            newConstraints[c.id] = c;
-        });
-        return { ...state, constraints: newConstraints, isLoading: false };
+        case "SET_CONSTRAINTS":
+            const newConstraints: Record<string, GanttConstraint> = {};
+            action.payload.forEach((c) => {
+                newConstraints[c.id] = c;
+            });
+            return { ...state, constraints: newConstraints, isLoading: false };
 
-    case "UPSERT_CONSTRAINT":
-        return {
-            ...state,
-            constraints: {
-                ...state.constraints,
-                [action.payload.id]: action.payload,
-            },
-        };
+        case "UPSERT_CONSTRAINT":
+            return {
+                ...state,
+                constraints: {
+                    ...state.constraints,
+                    [action.payload.id]: action.payload,
+                },
+            };
 
-    case "DELETE_CONSTRAINT":
-        // Micro-optimization: Object destructuring avoids the `delete` keyword,
-        // preventing the de-optimization of V8 hidden classes.
-        const { [action.payload.id]: _removedId, ...remainingConstraints } =
-        state.constraints;
-        return { ...state, constraints: remainingConstraints };
+        case "DELETE_CONSTRAINT":
+            // Micro-optimization: Object destructuring avoids the `delete` keyword,
+            // preventing the de-optimization of V8 hidden classes.
+            const { [action.payload.id]: _removedId, ...remainingConstraints } =
+                state.constraints;
+            return { ...state, constraints: remainingConstraints };
 
-    case "SET_LOADING":
-        return { ...state, isLoading: action.payload };
+        case "SET_LOADING":
+            return { ...state, isLoading: action.payload };
 
-    default:
-        return state;
+        default:
+            return state;
     }
 }

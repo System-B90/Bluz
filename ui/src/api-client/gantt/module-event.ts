@@ -9,11 +9,11 @@ import { GanttEvent } from "@/api-shared/types/gantt/models";
 export type ModuleEventDocument = GanttEvent & BaseDocument;
 
 const moduleEventApi = clientGantApiBuilder<
-  GanttEvent,
-  CreateGanttEventPayload
+    GanttEvent,
+    CreateGanttEventPayload
 >({ apiBaseUrl: "/api/gantt/events", dateFixup: baseDocumentFixup as any });
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =
-  moduleEventApi;
+    moduleEventApi;
 export {
     apiCreate as apiCreateModuleEvent,
     apiDelete as apiDeleteModuleEvent,

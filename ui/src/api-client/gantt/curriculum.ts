@@ -9,14 +9,14 @@ import { GanttCurriculum } from "@/api-shared/types/gantt/models";
 export type GanttCurriculumDocument = GanttCurriculum & BaseDocument;
 
 const curriculumApi = clientGantApiBuilder<
-  GanttCurriculum,
-  CreateGanttCurriculumPayload
+    GanttCurriculum,
+    CreateGanttCurriculumPayload
 >({
     apiBaseUrl: "/api/gantt/curriculums",
     dateFixup: baseDocumentFixup as any,
 });
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =
-  curriculumApi;
+    curriculumApi;
 export {
     apiCreate as apiCreateCurriculum,
     apiDelete as apiDeleteCurriculum,

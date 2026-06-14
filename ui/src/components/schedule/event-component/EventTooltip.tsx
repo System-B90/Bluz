@@ -47,11 +47,11 @@ export function EventTooltipContent({ event }: { event: Event }) {
     const hours = Math.floor(durationMinutes / 60);
     const minutes = durationMinutes % 60;
     const durationLabel =
-    hours && minutes
-        ? `${hours} ש׳ ${minutes} ד׳`
-        : hours
-            ? `${hours} ש׳`
-            : `${minutes} ד׳`;
+        hours && minutes
+            ? `${hours} ש׳ ${minutes} ד׳`
+            : hours
+              ? `${hours} ש׳`
+              : `${minutes} ד׳`;
 
     const subject = eventHasSubject(event.type)
         ? getSubject(event.subject)
@@ -63,13 +63,17 @@ export function EventTooltipContent({ event }: { event: Event }) {
         .map(getInstructor)
         .filter((v) => !!v);
     const hasOutsider =
-    event.type === EventType.LECTURE && event.lecturers?.includes("איש חוץ");
+        event.type === EventType.LECTURE &&
+        event.lecturers?.includes("איש חוץ");
     const isPrayer = event.type === EventType.PRAYER;
     const isBreak = event.type === EventType.BREAK;
 
     const statusFlags: Array<{ icon: React.ReactNode; label: string }> = [];
     if (event.locked)
-        statusFlags.push({ icon: <LockIcon fontSize="inherit" />, label: "מתואם" });
+        statusFlags.push({
+            icon: <LockIcon fontSize="inherit" />,
+            label: "מתואם",
+        });
     if (event.required)
         statusFlags.push({
             icon: <FmdBadIcon fontSize="inherit" />,
@@ -104,7 +108,9 @@ export function EventTooltipContent({ event }: { event: Event }) {
                 <TooltipRow
                     icon={<MenuBookIcon fontSize="inherit" />}
                     text={
-                        hiveModule ? `${subject.name} / ${hiveModule.name}` : subject.name
+                        hiveModule
+                            ? `${subject.name} / ${hiveModule.name}`
+                            : subject.name
                     }
                 />
             ) : null}
@@ -149,12 +155,21 @@ export function EventTooltipContent({ event }: { event: Event }) {
             {/* Status flags */}
             {statusFlags.length > 0 && (
                 <>
-                    <Divider sx={{ my: 0.5, borderColor: "rgba(255,255,255,0.2)" }} />
+                    <Divider
+                        sx={{ my: 0.5, borderColor: "rgba(255,255,255,0.2)" }}
+                    />
                     <Stack direction="row" flexWrap="wrap" gap={1}>
                         {statusFlags.map(({ icon, label }) => (
-                            <Stack alignItems="center" direction="row" gap={0.3} key={label}>
+                            <Stack
+                                alignItems="center"
+                                direction="row"
+                                gap={0.3}
+                                key={label}
+                            >
                                 {icon}
-                                <Typography variant="caption">{label}</Typography>
+                                <Typography variant="caption">
+                                    {label}
+                                </Typography>
                             </Stack>
                         ))}
                     </Stack>
@@ -164,7 +179,9 @@ export function EventTooltipContent({ event }: { event: Event }) {
             {/* Notes */}
             {event.notes ? (
                 <>
-                    <Divider sx={{ my: 0.5, borderColor: "rgba(255,255,255,0.2)" }} />
+                    <Divider
+                        sx={{ my: 0.5, borderColor: "rgba(255,255,255,0.2)" }}
+                    />
                     <Typography
                         sx={{ opacity: 0.85, whiteSpace: "pre-wrap" }}
                         variant="caption"

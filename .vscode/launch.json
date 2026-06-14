@@ -1,18 +1,18 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Next.js: Debug Full Stack",
-      "type": "node-terminal",
-      "request": "launch",
-      "command": "npm run dev"
-    },
-    {
-      "name": "Python: Current Script",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${file}",
-      "console": "integratedTerminal"
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Next.js: Debug Full Stack",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npm run dev"
+        },
+        {
+            "name": "Python: Current Script",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        }
+    ]
 }

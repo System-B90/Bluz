@@ -30,7 +30,10 @@ export function useModuleEventActions() {
                     minimumDuration,
                     allocatedDuration,
                 });
-                dispatch({ type: "ADD_EVENT", payload: { event: newEvent, moduleId } });
+                dispatch({
+                    type: "ADD_EVENT",
+                    payload: { event: newEvent, moduleId },
+                });
                 return newEvent;
             }, "Failed to create event:");
         },
@@ -40,7 +43,10 @@ export function useModuleEventActions() {
     const updateEvent = useCallback(
         async (id: GanttEventId, updates: Partial<GanttEvent>) => {
             return await withGantErrorHandling(async () => {
-                const updatedEvent = await ganttApi.event.apiUpdate({ id, ...updates });
+                const updatedEvent = await ganttApi.event.apiUpdate({
+                    id,
+                    ...updates,
+                });
                 dispatch({
                     type: "UPDATE_EVENT",
                     payload: { id, updates: updatedEvent },
@@ -55,7 +61,10 @@ export function useModuleEventActions() {
         async (moduleId: GanttModuleId, eventId: GanttEventId) => {
             return await withGantErrorHandling(async () => {
                 await ganttApi.event.apiDelete(eventId);
-                dispatch({ type: "REMOVE_EVENT", payload: { moduleId, eventId } });
+                dispatch({
+                    type: "REMOVE_EVENT",
+                    payload: { moduleId, eventId },
+                });
             }, `Failed to remove event (ID: ${eventId}):`);
         },
         [dispatch],
@@ -64,7 +73,10 @@ export function useModuleEventActions() {
     const linkEventToModule = useCallback(
         async (moduleId: GanttModuleId, eventId: GanttEventId) => {
             return await withGantErrorHandling(async () => {
-                const linkedEvent = await ganttApi.event.apiLink(eventId, moduleId);
+                const linkedEvent = await ganttApi.event.apiLink(
+                    eventId,
+                    moduleId,
+                );
                 dispatch({
                     type: "ADD_EVENT",
                     payload: { event: linkedEvent, moduleId },
@@ -79,7 +91,10 @@ export function useModuleEventActions() {
         async (moduleId: GanttModuleId, eventId: GanttEventId) => {
             return await withGantErrorHandling(async () => {
                 await ganttApi.event.apiUnlink(eventId, moduleId);
-                dispatch({ type: "REMOVE_EVENT", payload: { eventId, moduleId } });
+                dispatch({
+                    type: "REMOVE_EVENT",
+                    payload: { eventId, moduleId },
+                });
             }, `Failed to unlink event (ID: ${eventId}) from module (ID: ${moduleId}):`);
         },
         [dispatch],
@@ -99,7 +114,11 @@ export function useModuleEventActions() {
                 );
                 dispatch({
                     type: "ALLOCATE_TIME",
-                    payload: { eventId, curriculumId, duration: allocatedDuration },
+                    payload: {
+                        eventId,
+                        curriculumId,
+                        duration: allocatedDuration,
+                    },
                 });
             }, `Failed to allocate time to event (ID: ${eventId}):`);
         },

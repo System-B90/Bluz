@@ -32,9 +32,9 @@ export function CalendarToolbar({
     onToggleFullscreen,
     onToggleToolbar,
 }: ToolbarProps<any, any> & {
-  showToolbar: boolean;
-  onToggleFullscreen: () => void;
-  onToggleToolbar: () => void;
+    showToolbar: boolean;
+    onToggleFullscreen: () => void;
+    onToggleToolbar: () => void;
 }) {
     const [open, setOpen] = useState(false);
 
@@ -58,7 +58,7 @@ export function CalendarToolbar({
             const end = calendarDate.day(6).endOf("day");
             return (
                 (today.isSame(start) || today.isAfter(start)) &&
-        (today.isSame(end) || today.isBefore(end))
+                (today.isSame(end) || today.isBefore(end))
             );
         }
         if (view === "work_week") {
@@ -66,7 +66,7 @@ export function CalendarToolbar({
             const end = calendarDate.day(4).endOf("day");
             return (
                 (today.isSame(start) || today.isAfter(start)) &&
-        (today.isSame(end) || today.isBefore(end))
+                (today.isSame(end) || today.isBefore(end))
             );
         }
         return false;
@@ -92,7 +92,12 @@ export function CalendarToolbar({
                 }}
                 width="100%"
             >
-                <Box alignItems="center" display="flex" flexWrap="wrap" gap={1.5}>
+                <Box
+                    alignItems="center"
+                    display="flex"
+                    flexWrap="wrap"
+                    gap={1.5}
+                >
                     <ButtonGroup size="small" variant="outlined">
                         <Button onClick={() => onNavigate("PREV")}>
                             {CALENDAR_MESSAGES.previous}
@@ -167,7 +172,9 @@ export function CalendarToolbar({
                         </Button>
                         <Button
                             onClick={() => onView("work_week")}
-                            variant={view === "work_week" ? "contained" : "outlined"}
+                            variant={
+                                view === "work_week" ? "contained" : "outlined"
+                            }
                         >
                             {CALENDAR_MESSAGES.work_week}
                         </Button>
@@ -207,7 +214,8 @@ export function CalendarToolbar({
                                         color: "primary.main",
                                     },
                                     "&:hover .MuiSvgIcon-root": {
-                                        animation: "pulse-expand 1.2s infinite ease-in-out",
+                                        animation:
+                                            "pulse-expand 1.2s infinite ease-in-out",
                                     },
                                     "@keyframes pulse-expand": {
                                         "0%, 100%": {

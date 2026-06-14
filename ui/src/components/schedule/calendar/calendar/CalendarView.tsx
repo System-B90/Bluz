@@ -60,10 +60,16 @@ function CalendarHeader({ date }: { date: Date }) {
                     color: isToday ? "primary.main" : "text.primary",
                 }}
             >
-                <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
+                <Box
+                    component="span"
+                    sx={{ display: { xs: "none", sm: "inline" } }}
+                >
                     {dayFull}
                 </Box>
-                <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>
+                <Box
+                    component="span"
+                    sx={{ display: { xs: "inline", sm: "none" } }}
+                >
                     {dayShort}
                 </Box>
             </Typography>
@@ -88,19 +94,19 @@ function CalendarHeader({ date }: { date: Date }) {
 }
 
 type CalendarViewProps = {
-  events: Array<Event>;
-  rooms: Array<Room>;
-  currentView: View;
-  date: Date;
-  showToolbar: boolean;
-  onView: (view: View) => void;
-  onNavigate: CalendarProps["onNavigate"];
-  onSelectEvent: (event: Event) => void;
-  onDoubleClickEvent: (event: Event) => void;
-  onSelectSlot: (slotInfo: any) => void;
-  onEventDrop: (args: any) => void;
-  onToggleFullscreen: () => void;
-  onToggleToolbar: () => void;
+    events: Array<Event>;
+    rooms: Array<Room>;
+    currentView: View;
+    date: Date;
+    showToolbar: boolean;
+    onView: (view: View) => void;
+    onNavigate: CalendarProps["onNavigate"];
+    onSelectEvent: (event: Event) => void;
+    onDoubleClickEvent: (event: Event) => void;
+    onSelectSlot: (slotInfo: any) => void;
+    onEventDrop: (args: any) => void;
+    onToggleFullscreen: () => void;
+    onToggleToolbar: () => void;
 };
 
 export function CalendarView({
@@ -165,14 +171,21 @@ export function CalendarView({
             resourceAccessor={(event: Event) =>
                 event.rooms.length > 0
                     ? event.rooms.map((room) => JSON.stringify(room))
-                    : [JSON.stringify({ id: DUMMY_ROOM_ID, source: RoomSource.Custom })]
+                    : [
+                          JSON.stringify({
+                              id: DUMMY_ROOM_ID,
+                              source: RoomSource.Custom,
+                          }),
+                      ]
             }
             resourceIdAccessor={(room: Room) =>
                 JSON.stringify(roomToResolvable(room))
             }
             // Resource logic
             resources={
-                currentView === Views.DAY ? [NO_ROOM_RESOURCE, ...rooms] : undefined
+                currentView === Views.DAY
+                    ? [NO_ROOM_RESOURCE, ...rooms]
+                    : undefined
             }
             resourceTitleAccessor="name"
             rtl={true}

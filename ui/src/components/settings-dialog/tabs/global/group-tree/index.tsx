@@ -20,7 +20,7 @@ import { GroupMembersField } from "@/components/settings-dialog/tabs/global/grou
 
 function GroupItem({ group }: { group: Group }) {
     const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: group.id });
+        useSortable({ id: group.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -44,7 +44,7 @@ function GroupItem({ group }: { group: Group }) {
                     {group.subGroups?.length ? (
                         <Box mt={2}>
                             <Typography fontWeight={500} variant="body2">
-                Subgroups:
+                                Subgroups:
                             </Typography>
                             <Box mt={1}>
                                 {group.subGroups.map((g) => (
@@ -65,14 +65,16 @@ function GroupItem({ group }: { group: Group }) {
 export function GroupTreeViewer({
     initialGroups,
 }: {
-  initialGroups: Array<Group>;
+    initialGroups: Array<Group>;
 }) {
     const items = initialGroups.map((g) => <GroupItem group={g} key={g.id} />);
 
     return (
         <DndContext>
             <SortableContext
-                items={initialGroups.map((group: Group): string => group.id) ?? []}
+                items={
+                    initialGroups.map((group: Group): string => group.id) ?? []
+                }
                 strategy={verticalListSortingStrategy}
             >
                 <Box>{items}</Box>

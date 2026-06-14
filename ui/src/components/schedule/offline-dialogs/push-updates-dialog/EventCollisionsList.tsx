@@ -17,9 +17,9 @@ import { CollisionStates } from "@/components/schedule/offline-dialogs/push-upda
 import { EventId } from "@/components/schedule/types/event";
 
 type EventCollisionsListProps = {
-  collisionStates: CollisionStates;
-  selected: Array<EventId>;
-  setSelected: Dispatch<SetStateAction<Array<EventId>>>;
+    collisionStates: CollisionStates;
+    selected: Array<EventId>;
+    setSelected: Dispatch<SetStateAction<Array<EventId>>>;
 };
 
 export function EventCollisionsList({
@@ -77,14 +77,20 @@ export function EventCollisionsList({
                         </TableCell>
                         <TableCell>
                             <TableSortLabel>
-                                <Typography fontWeight={600}>קונפליקט?</Typography>
+                                <Typography fontWeight={600}>
+                                    קונפליקט?
+                                </Typography>
                             </TableSortLabel>
                         </TableCell>
                         <TableCell padding="checkbox">
                             <Checkbox
-                                checked={rowCount > 0 && numSelected === rowCount}
+                                checked={
+                                    rowCount > 0 && numSelected === rowCount
+                                }
                                 color="primary"
-                                indeterminate={numSelected > 0 && numSelected < rowCount}
+                                indeterminate={
+                                    numSelected > 0 && numSelected < rowCount
+                                }
                                 onChange={onSelectAllClick}
                                 slotProps={{
                                     input: {

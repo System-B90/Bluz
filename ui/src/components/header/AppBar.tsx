@@ -22,12 +22,12 @@ export function ScheduleAppBar({
     setOpenSettingsDialog,
     ...props
 }: {
-  setOpenSettingsDialog: (open: boolean) => void;
+    setOpenSettingsDialog: (open: boolean) => void;
 } & Exclude<AppBarProps, "position">) {
     const pathname = usePathname();
     const curriculumPage = pathname.includes("/curriculum");
     const [filtersVisible, setFiltersVisible] =
-    useState<boolean>(!curriculumPage);
+        useState<boolean>(!curriculumPage);
 
     return (
         <AppBar
@@ -39,7 +39,12 @@ export function ScheduleAppBar({
             {...props}
         >
             <Toolbar variant="dense">
-                <Box alignItems="center" display="flex" flexDirection={"row"} gap={1}>
+                <Box
+                    alignItems="center"
+                    display="flex"
+                    flexDirection={"row"}
+                    gap={1}
+                >
                     <Button
                         color="inherit"
                         component={Link}

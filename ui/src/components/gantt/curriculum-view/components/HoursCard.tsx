@@ -16,7 +16,7 @@ import { calculateMinimumRequiredTimeForCurriculum } from "@/components/gantt/ut
 export function HoursCard({
     curriculum,
 }: {
-  curriculum: GanttCurriculumDocument | undefined;
+    curriculum: GanttCurriculumDocument | undefined;
 }) {
     const theme = useTheme();
     const state = useCurriculumState();
@@ -29,10 +29,10 @@ export function HoursCard({
             if (!week) return total;
             return (
                 total +
-        (week.days ?? []).reduce((weekTotal: number, dayId) => {
-            const day = state.days[dayId];
-            return weekTotal + (day?.totalWorkingMinutes ?? 0) / 60;
-        }, 0)
+                (week.days ?? []).reduce((weekTotal: number, dayId) => {
+                    const day = state.days[dayId];
+                    return weekTotal + (day?.totalWorkingMinutes ?? 0) / 60;
+                }, 0)
             );
         }, 0);
     }, [curriculum?.weeks, state.weeks, state.days]);
@@ -40,14 +40,19 @@ export function HoursCard({
     const minimumHoursRequired = useMemo(
         () =>
             curriculum
-                ? calculateMinimumRequiredTimeForCurriculum(curriculum, state) / 60
+                ? calculateMinimumRequiredTimeForCurriculum(curriculum, state) /
+                  60
                 : 0,
         [curriculum, state],
     );
     const usedWorkingHours = useMemo(
         () =>
             curriculum
-                ? getCurriculumScheduledMinutes({ curriculum, mappings, state }) / 60
+                ? getCurriculumScheduledMinutes({
+                      curriculum,
+                      mappings,
+                      state,
+                  }) / 60
                 : 0,
         [curriculum, mappings, state],
     );
@@ -71,7 +76,7 @@ export function HoursCard({
     return (
         <Card sx={{ padding: 2, flexShrink: 0 }}>
             <Typography gutterBottom variant="subtitle1">
-        שעות
+                שעות
             </Typography>
             <Box alignItems="center" display="flex" flexDirection="row" gap={3}>
                 <Gauge
@@ -84,11 +89,11 @@ export function HoursCard({
                         },
                         [`& .${gaugeClasses.valueArc}`]: {
                             fill:
-                totalWorkingHours === 0
-                    ? "grey.200"
-                    : totalWorkingHours >= usedWorkingHours
-                        ? theme.palette.primary.main
-                        : theme.palette.warning.main,
+                                totalWorkingHours === 0
+                                    ? "grey.200"
+                                    : totalWorkingHours >= usedWorkingHours
+                                      ? theme.palette.primary.main
+                                      : theme.palette.warning.main,
                         },
                         [`& .${gaugeClasses.referenceArc}`]: {
                             fill: "grey.200",
@@ -105,25 +110,40 @@ export function HoursCard({
                     width={80}
                 />
                 <Stack spacing={0.5}>
-                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={1}>
+                    <Box
+                        alignItems="baseline"
+                        display="flex"
+                        flexDirection="row"
+                        gap={1}
+                    >
                         <Typography color="text.secondary" variant="body2">
-              ס&quot;ך:
+                            ס&quot;ך:
                         </Typography>
                         <Typography fontWeight="bold" variant="body2">
                             {totalWorkingHours.toFixed(2)}
                         </Typography>
                     </Box>
-                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={1}>
+                    <Box
+                        alignItems="baseline"
+                        display="flex"
+                        flexDirection="row"
+                        gap={1}
+                    >
                         <Typography color="text.secondary" variant="body2">
-              שובצו:
+                            שובצו:
                         </Typography>
                         <Typography fontWeight="bold" variant="body2">
                             {usedWorkingHours.toFixed(2)}
                         </Typography>
                     </Box>
-                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={1}>
+                    <Box
+                        alignItems="baseline"
+                        display="flex"
+                        flexDirection="row"
+                        gap={1}
+                    >
                         <Typography color="text.secondary" variant="body2">
-              מינימום דרוש:
+                            מינימום דרוש:
                         </Typography>
                         <Typography fontWeight="bold" variant="body2">
                             {minimumHoursRequired.toFixed(2)}

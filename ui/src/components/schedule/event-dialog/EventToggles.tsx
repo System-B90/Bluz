@@ -10,8 +10,8 @@ export function EventToggles({
     event,
     onUpdate,
 }: {
-  event: Partial<Event>;
-  onUpdate: (u: Partial<Event>) => void;
+    event: Partial<Event>;
+    onUpdate: (u: Partial<Event>) => void;
 }) {
     const toggles = [
         { label: "מתואם", key: "locked" },
@@ -26,7 +26,9 @@ export function EventToggles({
                     control={
                         <Switch
                             checked={!!event[key]}
-                            onChange={(e) => onUpdate({ [key]: e.target.checked })}
+                            onChange={(e) =>
+                                onUpdate({ [key]: e.target.checked })
+                            }
                         />
                     }
                     key={key}

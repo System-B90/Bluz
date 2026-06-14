@@ -51,14 +51,19 @@ const DAYS_OF_WEEK = [
 ] as const;
 
 type WeekDayVisualizerProps = {
-  validDays: Set<GanttDayIndex>;
+    validDays: Set<GanttDayIndex>;
 };
 
 export const WeekDayVisualizer: React.FC<WeekDayVisualizerProps> = ({
     validDays,
 }) => {
     return (
-        <Stack alignItems="center" direction="row" flexWrap="wrap" spacing={0.5}>
+        <Stack
+            alignItems="center"
+            direction="row"
+            flexWrap="wrap"
+            spacing={0.5}
+        >
             {DAYS_OF_WEEK.map((day) => {
                 const isValid = validDays.has(day.index as GanttDayIndex);
                 return (
@@ -71,8 +76,12 @@ export const WeekDayVisualizer: React.FC<WeekDayVisualizerProps> = ({
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            bgcolor: isValid ? "primary.main" : "action.disabledBackground",
-                            color: isValid ? "primary.contrastText" : "text.disabled",
+                            bgcolor: isValid
+                                ? "primary.main"
+                                : "action.disabledBackground",
+                            color: isValid
+                                ? "primary.contrastText"
+                                : "text.disabled",
                             typography: "caption",
                             fontWeight: "bold",
                             transition: "all 0.2s ease-in-out",
@@ -87,8 +96,8 @@ export const WeekDayVisualizer: React.FC<WeekDayVisualizerProps> = ({
 };
 
 type TemporalDraftFieldsProps = {
-  draft: TemporalDraft;
-  setDraft: (draft: TemporalDraft) => void;
+    draft: TemporalDraft;
+    setDraft: (draft: TemporalDraft) => void;
 };
 
 export function TemporalDraftFields({
@@ -97,9 +106,9 @@ export function TemporalDraftFields({
 }: TemporalDraftFieldsProps) {
     const validDays = useMemo(() => {
         const allowed =
-      draft.allowedDays && draft.allowedDays.length > 0
-          ? new Set(draft.allowedDays)
-          : new Set(DAYS_OF_WEEK.map((d) => d.index as GanttDayIndex));
+            draft.allowedDays && draft.allowedDays.length > 0
+                ? new Set(draft.allowedDays)
+                : new Set(DAYS_OF_WEEK.map((d) => d.index as GanttDayIndex));
 
         const forbidden = new Set(draft.forbiddenDays || []);
         const valid = new Set<GanttDayIndex>();
@@ -156,7 +165,9 @@ export function TemporalDraftFields({
             <Stack alignItems="flex-start" direction="row" spacing={2}>
                 <Autocomplete
                     getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={(option, value) => option.index === value.index}
+                    isOptionEqualToValue={(option, value) =>
+                        option.index === value.index
+                    }
                     multiple
                     onChange={handleAllowedChange}
                     options={DAYS_OF_WEEK}
@@ -173,7 +184,9 @@ export function TemporalDraftFields({
                 />
                 <Autocomplete
                     getOptionLabel={(option) => option.label}
-                    isOptionEqualToValue={(option, value) => option.index === value.index}
+                    isOptionEqualToValue={(option, value) =>
+                        option.index === value.index
+                    }
                     multiple
                     onChange={handleForbiddenChange}
                     options={DAYS_OF_WEEK}
@@ -194,7 +207,7 @@ export function TemporalDraftFields({
                 <WeekDayVisualizer validDays={validDays} />
                 <Collapse in={hasNoValidDays} orientation="vertical">
                     <Alert severity="warning" sx={{ py: 0, px: 2 }}>
-            לא קיים יום העונה על הדרישות
+                        לא קיים יום העונה על הדרישות
                     </Alert>
                 </Collapse>
             </Stack>

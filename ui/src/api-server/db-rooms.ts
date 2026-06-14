@@ -48,8 +48,8 @@ async function deleteDbRoom(roomId: CustomRoom["id"]) {
 }
 
 export namespace DbRooms {
-  export const get = getDbRooms;
-  export const set = setDbRoom;
-  export const create = createDbRoom;
-  export const del = deleteDbRoom;
+    export const get = getDbRooms;
+    export const set = setDbRoom;
+    export const create = createDbRoom;
+    export const del = deleteDbRoom;
 }

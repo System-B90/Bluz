@@ -26,42 +26,42 @@ export type { SvarGanttLink, SvarGanttScale, SvarGanttTask };
  * SVAR Gantt data update event (custom wrapper around SvarGanttTask)
  */
 export type SvarGanttDataUpdateEvent = {
-  action: string;
-  obj: SvarGanttTask;
+    action: string;
+    obj: SvarGanttTask;
 };
 
 /**
  * Gantt data return type from useGanttData hook
  */
 export type GanttDataResult = {
-  tasks: Array<SvarGanttTask>;
-  links: Array<SvarGanttLink>;
+    tasks: Array<SvarGanttTask>;
+    links: Array<SvarGanttLink>;
 };
 
 /**
  * Props for GanttEngine component
  */
 export type GanttEngineProps = {
-  readonly tasks: Array<SvarGanttTask>;
-  readonly links: Array<SvarGanttLink>;
-  readonly scales: Array<SvarGanttScale>;
-  readonly onDataUpdate: (event: SvarGanttDataUpdateEvent) => void;
+    readonly tasks: Array<SvarGanttTask>;
+    readonly links: Array<SvarGanttLink>;
+    readonly scales: Array<SvarGanttScale>;
+    readonly onDataUpdate: (event: SvarGanttDataUpdateEvent) => void;
 };
 
 /**
  * Props for MetricItem component
  */
 export type MetricItemProps = {
-  readonly label: string;
-  readonly value: string;
+    readonly label: string;
+    readonly value: string;
 };
 
 /**
  * Props for data source (used in useGanttData and CurriculumGanttViewInner)
  */
 export type GanttDataSourceProps = {
-  readonly curriculum: GanttCurriculum;
-  readonly syllabuses: Array<GanttSyllabus>;
-  readonly modules: Array<GanttModule>;
-  readonly events: Array<GanttEvent>;
+    readonly curriculum: GanttCurriculum;
+    readonly syllabuses: Array<GanttSyllabus>;
+    readonly modules: Array<GanttModule>;
+    readonly events: Array<GanttEvent>;
 };

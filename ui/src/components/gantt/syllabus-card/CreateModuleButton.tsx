@@ -17,7 +17,7 @@ import { useCurriculumProviderActions } from "@/components/gantt/state/provider"
 export function CreateModuleButton({
     syllabusId,
 }: {
-  syllabusId: GanttSyllabusId;
+    syllabusId: GanttSyllabusId;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const { createEvent } = useModuleEventActions();
@@ -41,7 +41,12 @@ export function CreateModuleButton({
                     ModuleEventType.Lecture,
                     60,
                 );
-                await createEvent('ע"ע', newModule.id, ModuleEventType.Exercise, 45);
+                await createEvent(
+                    'ע"ע',
+                    newModule.id,
+                    ModuleEventType.Exercise,
+                    45,
+                );
             } catch (error) {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -50,7 +55,11 @@ export function CreateModuleButton({
                 );
             }
         } catch (error) {
-            enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת המערך נכשלה!", error);
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "יצירת המערך נכשלה!",
+                error,
+            );
         } finally {
             setIsCreating(false);
         }

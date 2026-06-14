@@ -43,7 +43,11 @@ async function getDbEventsInRange(
     filter?: Filter<DbEventDocument>,
 ): Promise<Array<DbEventDocument>> {
     const cursor = databaseController.events.find(
-        { startTime: { $gte: startDate }, endTime: { $lte: endDate }, ...filter },
+        {
+            startTime: { $gte: startDate },
+            endTime: { $lte: endDate },
+            ...filter,
+        },
         options,
     );
     const data = await cursor.toArray();
@@ -163,10 +167,10 @@ async function deleteDbEvent(
 }
 
 export namespace DbEvent {
-  export const get = getDbEvent;
-  export const getMultiple = getDbEvents;
-  export const getInRange = getDbEventsInRange;
-  export const set = setDbEvent;
-  export const del = deleteDbEvent;
-  export const create = createDbEvent;
+    export const get = getDbEvent;
+    export const getMultiple = getDbEvents;
+    export const getInRange = getDbEventsInRange;
+    export const set = setDbEvent;
+    export const del = deleteDbEvent;
+    export const create = createDbEvent;
 }

@@ -23,7 +23,7 @@ import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type CurriculumGanttViewProps = {
-  readonly curriculumId: GanttCurriculumId;
+    readonly curriculumId: GanttCurriculumId;
 };
 
 export function CurriculumGanttView({
@@ -36,11 +36,15 @@ export function CurriculumGanttView({
         (): GanttDataSourceProps | null =>
             curriculum
                 ? {
-                    curriculum,
-                    syllabuses: Object.values(state.syllabuses) as Array<GanttSyllabus>,
-                    modules: Object.values(state.modules) as Array<GanttModule>,
-                    events: Object.values(state.events) as Array<GanttEvent>,
-                }
+                      curriculum,
+                      syllabuses: Object.values(
+                          state.syllabuses,
+                      ) as Array<GanttSyllabus>,
+                      modules: Object.values(
+                          state.modules,
+                      ) as Array<GanttModule>,
+                      events: Object.values(state.events) as Array<GanttEvent>,
+                  }
                 : null,
         [curriculum, state],
     );
@@ -49,8 +53,13 @@ export function CurriculumGanttView({
 
     return (
         <GanttMappingProvider curriculumId={curriculumId}>
-            <GanttConstraintProvider context={{ curriculumId, type: "curriculum" }}>
-                <CurriculumGanttViewInner curriculumId={curriculumId} {...innerProps} />
+            <GanttConstraintProvider
+                context={{ curriculumId, type: "curriculum" }}
+            >
+                <CurriculumGanttViewInner
+                    curriculumId={curriculumId}
+                    {...innerProps}
+                />
             </GanttConstraintProvider>
         </GanttMappingProvider>
     );

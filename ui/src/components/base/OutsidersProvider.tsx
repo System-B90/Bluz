@@ -22,12 +22,12 @@ import { MessageHandlerType } from "@/components/SessionWs";
 import { MessageTypes } from "@/settings";
 
 export type OutsidersContextState = {
-  default: boolean;
-  outsiders: Array<Outsider>;
-  getOutsider: (id: string) => null | Outsider;
-  addOutsider: (outsiderData: Omit<Outsider, "id">) => Promise<void>;
-  updateOutsider: (outsider: Outsider) => Promise<void>;
-  deleteOutsider: (outsiderId: string) => Promise<void>;
+    default: boolean;
+    outsiders: Array<Outsider>;
+    getOutsider: (id: string) => null | Outsider;
+    addOutsider: (outsiderData: Omit<Outsider, "id">) => Promise<void>;
+    updateOutsider: (outsider: Outsider) => Promise<void>;
+    deleteOutsider: (outsiderId: string) => Promise<void>;
 };
 
 const OutsidersContext = createContext<OutsidersContextState>({
@@ -40,68 +40,68 @@ const OutsidersContext = createContext<OutsidersContextState>({
 });
 
 type OutsidersState = {
-  outsiders: Record<string, Outsider>;
-  isLoading: boolean;
+    outsiders: Record<string, Outsider>;
+    isLoading: boolean;
 };
 type OutsidersAction =
-  | { type: "ADD_OUTSIDER"; payload: Outsider }
-  | { type: "DELETE_OUTSIDER"; payload: string }
-  | { type: "ROLLBACK_OUTSIDERS"; payload: Record<string, Outsider> }
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "SET_OUTSIDERS"; payload: Record<string, Outsider> }
-  | { type: "UPDATE_OUTSIDER"; payload: Outsider };
+    | { type: "ADD_OUTSIDER"; payload: Outsider }
+    | { type: "DELETE_OUTSIDER"; payload: string }
+    | { type: "ROLLBACK_OUTSIDERS"; payload: Record<string, Outsider> }
+    | { type: "SET_LOADING"; payload: boolean }
+    | { type: "SET_OUTSIDERS"; payload: Record<string, Outsider> }
+    | { type: "UPDATE_OUTSIDER"; payload: Outsider };
 
 function outsidersReducer(
     state: OutsidersState,
     action: OutsidersAction,
 ): OutsidersState {
     switch (action.type) {
-    case "SET_LOADING":
-        return { ...state, isLoading: action.payload };
-    case "SET_OUTSIDERS":
-        return {
-            ...state,
-            outsiders: action.payload,
-            isLoading: false,
-        };
-    case "ADD_OUTSIDER":
-        return {
-            ...state,
-            outsiders: {
-                ...state.outsiders,
-                [action.payload.id]: action.payload,
-            },
-        };
-    case "UPDATE_OUTSIDER":
-        return {
-            ...state,
-            outsiders: {
-                ...state.outsiders,
-                [action.payload.id]: action.payload,
-            },
-        };
-    case "DELETE_OUTSIDER": {
-        const next = { ...state.outsiders };
-        delete next[action.payload];
-        return {
-            ...state,
-            outsiders: next,
-        };
-    }
-    case "ROLLBACK_OUTSIDERS":
-        return {
-            ...state,
-            outsiders: action.payload,
-        };
-    default:
-        return state;
+        case "SET_LOADING":
+            return { ...state, isLoading: action.payload };
+        case "SET_OUTSIDERS":
+            return {
+                ...state,
+                outsiders: action.payload,
+                isLoading: false,
+            };
+        case "ADD_OUTSIDER":
+            return {
+                ...state,
+                outsiders: {
+                    ...state.outsiders,
+                    [action.payload.id]: action.payload,
+                },
+            };
+        case "UPDATE_OUTSIDER":
+            return {
+                ...state,
+                outsiders: {
+                    ...state.outsiders,
+                    [action.payload.id]: action.payload,
+                },
+            };
+        case "DELETE_OUTSIDER": {
+            const next = { ...state.outsiders };
+            delete next[action.payload];
+            return {
+                ...state,
+                outsiders: next,
+            };
+        }
+        case "ROLLBACK_OUTSIDERS":
+            return {
+                ...state,
+                outsiders: action.payload,
+            };
+        default:
+            return state;
     }
 }
 
 export const OutsidersProvider = ({
     children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) => {
     const { addMessageHandler } = useAuth();
     const [state, dispatch] = useReducer(outsidersReducer, {
@@ -157,9 +157,12 @@ export const OutsidersProvider = ({
 
             try {
                 const created = await apiCreateOutsider(outsider);
-                enqueueSnackbar(`יצירת איש חוץ ${outsiderData.name} הסתיימה בהצלחה.`, {
-                    variant: "success",
-                });
+                enqueueSnackbar(
+                    `יצירת איש חוץ ${outsiderData.name} הסתיימה בהצלחה.`,
+                    {
+                        variant: "success",
+                    },
+                );
                 dispatch({ type: "DELETE_OUTSIDER", payload: id });
                 dispatch({ type: "ADD_OUTSIDER", payload: created });
                 loadOutsiders();
@@ -186,9 +189,12 @@ export const OutsidersProvider = ({
 
             try {
                 const updated = await apiUpdateOutsider(outsider);
-                enqueueSnackbar(`עדכון איש חוץ ${outsider.name} הסתיים בהצלחה.`, {
-                    variant: "success",
-                });
+                enqueueSnackbar(
+                    `עדכון איש חוץ ${outsider.name} הסתיים בהצלחה.`,
+                    {
+                        variant: "success",
+                    },
+                );
                 dispatch({ type: "UPDATE_OUTSIDER", payload: updated });
                 loadOutsiders();
             } catch (error) {
@@ -275,7 +281,9 @@ export const useOutsiders = () => {
     const context = useContext(OutsidersContext);
 
     if (context === undefined || context.default) {
-        throw new Error("useOutsiders must be used within an OutsidersProvider");
+        throw new Error(
+            "useOutsiders must be used within an OutsidersProvider",
+        );
     }
 
     return context;

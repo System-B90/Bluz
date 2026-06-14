@@ -22,26 +22,29 @@ export const useEventWebsocket = (
             if (offlineMode) return;
 
             switch (messageType) {
-            case MessageTypes.EVENT_DATA_UPDATE: {
-                const msg = data as EventDataUpdateMessage<Event>;
-                const updatedEvents = Object.values(msg.events).map(
-                    (ev) => eventDateFixup(ev) as Event,
-                );
-                dispatch({ type: "UPSERT_MANY", payload: updatedEvents });
-                break;
-            }
-            case MessageTypes.EVENT_ADDED_OR_REMOVED: {
-                const msg = data as EventAddedOrRemovedMessage<Event>;
-                if (msg.action === "removed") {
-                    dispatch({ type: "DELETE_EVENT", payload: msg.eventId });
-                } else if (msg.action === "added") {
-                    dispatch({
-                        type: "UPSERT_EVENT",
-                        payload: eventDateFixup(msg.newData) as Event,
-                    });
+                case MessageTypes.EVENT_DATA_UPDATE: {
+                    const msg = data as EventDataUpdateMessage<Event>;
+                    const updatedEvents = Object.values(msg.events).map(
+                        (ev) => eventDateFixup(ev) as Event,
+                    );
+                    dispatch({ type: "UPSERT_MANY", payload: updatedEvents });
+                    break;
                 }
-                break;
-            }
+                case MessageTypes.EVENT_ADDED_OR_REMOVED: {
+                    const msg = data as EventAddedOrRemovedMessage<Event>;
+                    if (msg.action === "removed") {
+                        dispatch({
+                            type: "DELETE_EVENT",
+                            payload: msg.eventId,
+                        });
+                    } else if (msg.action === "added") {
+                        dispatch({
+                            type: "UPSERT_EVENT",
+                            payload: eventDateFixup(msg.newData) as Event,
+                        });
+                    }
+                    break;
+                }
             }
         },
         [offlineMode, dispatch],

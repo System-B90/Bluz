@@ -58,7 +58,10 @@ export function useModuleActions() {
         async (syllabusId: GanttSyllabusId, moduleId: GanttModuleId) => {
             return await withGantErrorHandling(async () => {
                 await ganttApi.module.apiDelete(moduleId);
-                dispatch({ type: "REMOVE_MODULE", payload: { syllabusId, moduleId } });
+                dispatch({
+                    type: "REMOVE_MODULE",
+                    payload: { syllabusId, moduleId },
+                });
             }, `Failed to remove module (ID: ${moduleId}):`);
         },
         [dispatch],
@@ -85,7 +88,10 @@ export function useModuleActions() {
         async (syllabusId: GanttSyllabusId, moduleId: GanttModuleId) => {
             return await withGantErrorHandling(async () => {
                 await ganttApi.module.apiUnlink(moduleId, syllabusId);
-                dispatch({ type: "REMOVE_MODULE", payload: { moduleId, syllabusId } });
+                dispatch({
+                    type: "REMOVE_MODULE",
+                    payload: { moduleId, syllabusId },
+                });
             }, `Failed to unlink module (ID: ${moduleId}) from syllabus (ID: ${syllabusId}):`);
         },
         [dispatch],
@@ -105,7 +111,11 @@ export function useModuleActions() {
                 );
                 dispatch({
                     type: "ALLOCATE_TIME_TO_MODULE",
-                    payload: { moduleId, curriculumId, duration: allocatedDuration },
+                    payload: {
+                        moduleId,
+                        curriculumId,
+                        duration: allocatedDuration,
+                    },
                 });
             }, `Failed to allocate time to module (ID: ${moduleId}):`);
         },

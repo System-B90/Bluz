@@ -18,7 +18,7 @@ import {
  * - Omit 'syllabuses': A new curriculum starts with an empty array of syllabuses.
  */
 export type CreateGanttCurriculumPayload = {
-  // Weeks are created separately, new curriculum starts with empty weeks
+    // Weeks are created separately, new curriculum starts with empty weeks
 } & Omit<GanttCurriculum, "id" | "syllabuses" | "weeks">;
 
 /**
@@ -29,7 +29,7 @@ export type CreateGanttCurriculumPayload = {
  * - Add 'curriculumId': The foreign key to link this week to its parent curriculum.
  */
 export type CreateGanttWeekPayload = {
-  curriculumId: GanttCurriculumId;
+    curriculumId: GanttCurriculumId;
 } & Omit<GanttWeek, "days" | "id" | "title">;
 
 /**
@@ -39,7 +39,7 @@ export type CreateGanttWeekPayload = {
  * - Add 'curriculumWeekId': The foreign key to link this day to its parent week.
  */
 export type CreateGanttDayPayload = {
-  weekId: GanttWeekId;
+    weekId: GanttWeekId;
 } & Omit<GanttDay, "id" | "title">;
 
 /**
@@ -49,7 +49,7 @@ export type CreateGanttDayPayload = {
  * - Add 'curriculumId': The foreign key to link this syllabus to its parent curriculum.
  */
 export type CreateGanttSyllabusPayload = {
-  curriculumId: GanttCurriculumId;
+    curriculumId: GanttCurriculumId;
 } & Omit<GanttSyllabus, "id" | "modules">;
 
 /**
@@ -59,7 +59,7 @@ export type CreateGanttSyllabusPayload = {
  * - Add 'syllabusId': The foreign key to link this module to its parent syllabus.
  */
 export type CreateGanttModulePayload = {
-  syllabusId: GanttSyllabusId;
+    syllabusId: GanttSyllabusId;
 } & Omit<GanttModule, "constraints" | "events" | "id">;
 
 /**
@@ -68,10 +68,10 @@ export type CreateGanttModulePayload = {
  * - Add 'moduleId': The foreign key to link this event to its parent module.
  */
 export type CreateGanttEventPayload = {
-  moduleId: GanttModuleId;
+    moduleId: GanttModuleId;
 } & Omit<GanttEvent, "constraints" | "id">;
 
 export type CreateGanttCurriculumEventDayMapping = {} & Omit<
-  GanttCurriculumModuleDayMapping,
-  "curriculumId" | "id"
+    GanttCurriculumModuleDayMapping,
+    "curriculumId" | "id"
 >;

@@ -28,9 +28,9 @@ import {
 } from "@/api-shared/types/gantt/models";
 
 const basicOperations = drizzleOperationsBuilder<
-  GanttModule,
-  typeof ganttModulesSchema,
-  CreateGanttModulePayload
+    GanttModule,
+    typeof ganttModulesSchema,
+    CreateGanttModulePayload
 >({
     table: ganttModulesSchema,
     typeName: "מערך",
@@ -85,11 +85,11 @@ async function addModuleToSyllabus(
         return await getFullModule(moduleId);
     } catch (error: any) {
         const cause = error.cause as {
-      name: string;
-      severity: string;
-      code: string;
-      detail: string;
-    };
+            name: string;
+            severity: string;
+            code: string;
+            detail: string;
+        };
 
         // Unique Violation: Module already linked
         if (cause?.code === UNIQUE_VIOLATION) {
@@ -118,7 +118,9 @@ async function removeModuleFromSyllabus(
                 eq(ganttSyllabus2ModulesSchema.moduleId, moduleId),
             ),
         )
-        .returning({ deletedSyllabusId: ganttSyllabus2ModulesSchema.syllabusId });
+        .returning({
+            deletedSyllabusId: ganttSyllabus2ModulesSchema.syllabusId,
+        });
 
     if (result.length === 0) {
         throw new ClientApiError(
@@ -133,13 +135,13 @@ async function setAllocatedTime(
     duration: number,
 ): Promise<void> {
     const moduleToEventsData =
-    await postgresDb.query.ganttModule2EventsSchema.findMany({
-        where: eq(ganttModule2EventsSchema.moduleId, moduleId),
-        with: {
-            event: { columns: { id: true, minimumDuration: true } },
-        },
-        orderBy: [asc(ganttModule2EventsSchema.eventId)],
-    });
+        await postgresDb.query.ganttModule2EventsSchema.findMany({
+            where: eq(ganttModule2EventsSchema.moduleId, moduleId),
+            with: {
+                event: { columns: { id: true, minimumDuration: true } },
+            },
+            orderBy: [asc(ganttModule2EventsSchema.eventId)],
+        });
 
     const callback: AllocateTimeToEventCallback = async ({
         eventId,
@@ -168,7 +170,7 @@ async function setAllocatedTime(
 
     const moduleEvents = moduleToEventsData.reduce(
         (prev, curr) => ({ ...prev, [curr.event.id]: curr.event }),
-    {} as AllocateTimeToModuleCallbackModuleEvents,
+        {} as AllocateTimeToModuleCallbackModuleEvents,
     );
 
     await allocateTimeToModule({

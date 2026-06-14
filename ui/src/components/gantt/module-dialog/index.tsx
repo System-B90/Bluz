@@ -39,10 +39,10 @@ import {
 } from "@/components/gantt/state/provider";
 
 export type ModuleDialogProps = {
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  moduleId: GanttModuleId | null;
-  syllabusId: GanttSyllabusId | null;
-  curriculumId: GanttCurriculumId | null;
+    setOpen: Dispatch<SetStateAction<boolean>>;
+    moduleId: GanttModuleId | null;
+    syllabusId: GanttSyllabusId | null;
+    curriculumId: GanttCurriculumId | null;
 } & DialogProps;
 
 function ModuleDialogInner({
@@ -54,7 +54,7 @@ function ModuleDialogInner({
 }: Omit<ModuleDialogProps, "curriculumId">) {
     const { enqueueSnackbar } = useSnackbar();
     const { closeModuleDialog, openModuleDialog } =
-    useCurriculumProviderActions();
+        useCurriculumProviderActions();
     const { createModule, deleteModule, updateModule } = useModuleActions();
     const { createEvent } = useModuleEventActions();
     const moduleDoc = useModule(moduleId ?? "");
@@ -65,7 +65,9 @@ function ModuleDialogInner({
     // Get sibling modules for fast navigation
     const siblingModules = useMemo(() => {
         if (!syllabus) return [];
-        return syllabus.modules.map((mId) => state.modules[mId]).filter((m) => !!m);
+        return syllabus.modules
+            .map((mId) => state.modules[mId])
+            .filter((m) => !!m);
     }, [syllabus, state.modules]);
 
     const handleNavigate = useCallback(
@@ -96,7 +98,12 @@ function ModuleDialogInner({
                     ModuleEventType.Lecture,
                     60,
                 );
-                await createEvent('ע"ע', newModule.id, ModuleEventType.Exercise, 45);
+                await createEvent(
+                    'ע"ע',
+                    newModule.id,
+                    ModuleEventType.Exercise,
+                    45,
+                );
             } catch (error) {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -105,11 +112,21 @@ function ModuleDialogInner({
                 );
             }
         } catch (error) {
-            enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת המערך נכשלה!", error);
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "יצירת המערך נכשלה!",
+                error,
+            );
         } finally {
             setIsCreatingNew(false);
         }
-    }, [syllabusId, createModule, createEvent, handleNavigate, enqueueSnackbar]);
+    }, [
+        syllabusId,
+        createModule,
+        createEvent,
+        handleNavigate,
+        enqueueSnackbar,
+    ]);
 
     // Local State Buffers
     const [localTitle, setLocalTitle] = useState(moduleDoc?.title ?? "");
@@ -138,7 +155,11 @@ function ModuleDialogInner({
             if (!hasChanges) return;
 
             updateModule(moduleId, changedUpdates).catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת המערך נכשלה!", error),
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "שמירת המערך נכשלה!",
+                    error,
+                ),
             );
         },
         [moduleId, syllabusId, moduleDoc, updateModule, enqueueSnackbar],
@@ -170,8 +191,12 @@ function ModuleDialogInner({
         >
             <DialogTitle sx={{ pb: 1 }}>
                 <Stack spacing={0.5}>
-                    <Typography component="span" sx={{ fontWeight: "bold" }} variant="h5">
-            עריכת מערך: {moduleDoc?.title}
+                    <Typography
+                        component="span"
+                        sx={{ fontWeight: "bold" }}
+                        variant="h5"
+                    >
+                        עריכת מערך: {moduleDoc?.title}
                     </Typography>
                     {!!syllabus && (
                         <Typography
@@ -179,7 +204,7 @@ function ModuleDialogInner({
                             sx={{ color: "text.secondary" }}
                             variant="caption"
                         >
-              סילבוס: {syllabus.title}
+                            סילבוס: {syllabus.title}
                         </Typography>
                     )}
                 </Stack>
@@ -206,7 +231,7 @@ function ModuleDialogInner({
                             }}
                             variant="body2"
                         >
-              מערכים בסילבוס זה:
+                            מערכים בסילבוס זה:
                         </Typography>
                         <Stack
                             direction="row"
@@ -231,7 +256,9 @@ function ModuleDialogInner({
                                         size="small"
                                         sx={{
                                             borderRadius: 2,
-                                            fontWeight: isActive ? "bold" : "normal",
+                                            fontWeight: isActive
+                                                ? "bold"
+                                                : "normal",
                                             minWidth: "auto",
                                             px: 2,
                                             py: 0.5,
@@ -243,7 +270,9 @@ function ModuleDialogInner({
                                                 transform: "translateY(-1px)",
                                             },
                                         }}
-                                        variant={isActive ? "contained" : "outlined"}
+                                        variant={
+                                            isActive ? "contained" : "outlined"
+                                        }
                                     >
                                         {m.title}
                                     </Button>
@@ -294,8 +323,12 @@ function ModuleDialogInner({
                             label="תיאור"
                             minRows={10}
                             multiline
-                            onBlur={() => handleCommit({ description: localDescription })}
-                            onChange={(e) => setLocalDescription(e.target.value)}
+                            onBlur={() =>
+                                handleCommit({ description: localDescription })
+                            }
+                            onChange={(e) =>
+                                setLocalDescription(e.target.value)
+                            }
                             sx={{
                                 flex: 1,
                                 "& .MuiInputBase-root": {
@@ -315,16 +348,23 @@ function ModuleDialogInner({
                             eventIds={moduleDoc?.events ?? []}
                             moduleId={moduleId}
                         />
-                        <HiveModulesView hiveModules={moduleDoc?.hiveIds ?? []} />
+                        <HiveModulesView
+                            hiveModules={moduleDoc?.hiveIds ?? []}
+                        />
                     </Stack>
                 </Box>
                 <Box height={"1rem"} />
-                <ModuleConstraintsView moduleId={moduleId} /> {/* <-- Injected Panel */}
+                <ModuleConstraintsView moduleId={moduleId} />{" "}
+                {/* <-- Injected Panel */}
             </DialogContent>
 
             <DialogActions>
-                <Button color="error" disabled={isActionLoading} onClick={handleDelete}>
-          מחיקה
+                <Button
+                    color="error"
+                    disabled={isActionLoading}
+                    onClick={handleDelete}
+                >
+                    מחיקה
                 </Button>
 
                 <Button
@@ -333,7 +373,7 @@ function ModuleDialogInner({
                     onClick={handleClose}
                     variant="contained"
                 >
-          סגירה
+                    סגירה
                 </Button>
             </DialogActions>
         </Dialog>

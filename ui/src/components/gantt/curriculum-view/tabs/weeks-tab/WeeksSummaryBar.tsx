@@ -17,8 +17,8 @@ import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { calculateMinimumRequiredTimeForCurriculum } from "@/components/gantt/utils";
 
 export type WeeksSummaryBarProps = {
-  curriculum: GanttCurriculum;
-  state: NormalizedStore;
+    curriculum: GanttCurriculum;
+    state: NormalizedStore;
 };
 
 function SummaryMetric({
@@ -26,9 +26,9 @@ function SummaryMetric({
     tone = "default",
     value,
 }: {
-  label: string;
-  tone?: "default" | "error" | "primary" | "warning";
-  value: string;
+    label: string;
+    tone?: "default" | "error" | "primary" | "warning";
+    value: string;
 }) {
     return (
         <Box
@@ -90,7 +90,8 @@ export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
             minimumMinutes: minimum,
             scheduledMinutes: scheduled,
             remainingMinutes: total - scheduled,
-            utilization: total > 0 ? Math.min((scheduled / total) * 100, 100) : 0,
+            utilization:
+                total > 0 ? Math.min((scheduled / total) * 100, 100) : 0,
         };
     }, [curriculum, state, mappings]);
 
@@ -124,7 +125,10 @@ export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
                 label="מינימום דרוש"
                 value={formatHoursLabel(minimumMinutes)}
             />
-            <SummaryMetric label="שובצו" value={formatHoursLabel(scheduledMinutes)} />
+            <SummaryMetric
+                label="שובצו"
+                value={formatHoursLabel(scheduledMinutes)}
+            />
             <SummaryMetric
                 label={remainingMinutes < 0 ? "חריגה" : "יתרה"}
                 tone={remainingTone}
@@ -149,13 +153,17 @@ export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
                     },
                 }}
             >
-                <Box alignItems="center" display="flex" justifyContent="space-between">
+                <Box
+                    alignItems="center"
+                    display="flex"
+                    justifyContent="space-between"
+                >
                     <Typography
                         color="text.secondary"
                         sx={{ fontWeight: 600 }}
                         variant="caption"
                     >
-            ניצול
+                        ניצול
                     </Typography>
                     <Chip
                         color={remainingMinutes < 0 ? "error" : "primary"}

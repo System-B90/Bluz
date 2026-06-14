@@ -121,7 +121,10 @@ export default defineConfig([
                 "error",
                 { type: "alphabetical" },
             ],
-            "perfectionist/sort-union-types": ["error", { type: "alphabetical" }],
+            "perfectionist/sort-union-types": [
+                "error",
+                { type: "alphabetical" },
+            ],
             "perfectionist/sort-jsx-props": ["error", { type: "alphabetical" }],
 
             // --- Structural Spacing ---

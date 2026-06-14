@@ -12,28 +12,30 @@ import { User } from "@/components/schedule/types/user";
 import { GroupMemberField } from "@/components/settings-dialog/tabs/global/group-tree/MemberField";
 
 type GroupMemberFieldProps = {
-  group: Group;
+    group: Group;
 };
 
 export function GroupMembersField({ group }: GroupMemberFieldProps) {
     return (
-    // <div>
-    //     {group.members?.length ? (
-    //         <Box mb={2}>
-    //             <Typography variant="body2" fontWeight={500}>Members:</Typography>
-    //             <Stack spacing={1} mt={1}>
-    //                 {group.members.map((user: User) => (
-    //                     <GroupMemberField user={user}/>
-    //                 ))}
-    //             </Stack>
-    //         </Box>
-    //     ) : (
-    //         <Typography variant="body2" color="text.secondary">No members</Typography>
-    //     )}
-    // </div>
+        // <div>
+        //     {group.members?.length ? (
+        //         <Box mb={2}>
+        //             <Typography variant="body2" fontWeight={500}>Members:</Typography>
+        //             <Stack spacing={1} mt={1}>
+        //                 {group.members.map((user: User) => (
+        //                     <GroupMemberField user={user}/>
+        //                 ))}
+        //             </Stack>
+        //         </Box>
+        //     ) : (
+        //         <Typography variant="body2" color="text.secondary">No members</Typography>
+        //     )}
+        // </div>
         <DndContext>
             <SortableContext
-                items={group.members?.map((user: User): string => user.id) ?? []}
+                items={
+                    group.members?.map((user: User): string => user.id) ?? []
+                }
                 strategy={verticalListSortingStrategy}
             >
                 <Stack spacing={1}>

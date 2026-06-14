@@ -14,7 +14,7 @@ import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/U
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type SyllabusesActionsBoxProps = {
-  curriculumId: GanttCurriculumId;
+    curriculumId: GanttCurriculumId;
 } & Omit<BoxProps, "display" | "justifyContent">;
 
 export function SyllabusesActionsBox({
@@ -47,8 +47,10 @@ export function SyllabusesActionsBox({
                                     return {
                                         title: eventDoc.title,
                                         type: eventDoc.type,
-                                        minimumDuration: eventDoc.minimumDuration,
-                                        allocatedDuration: eventDoc.allocatedDuration,
+                                        minimumDuration:
+                                            eventDoc.minimumDuration,
+                                        allocatedDuration:
+                                            eventDoc.allocatedDuration,
                                         constraints: eventDoc.constraints,
                                     };
                                 })
@@ -70,8 +72,8 @@ export function SyllabusesActionsBox({
                 .filter(Boolean);
 
             const dataStr =
-        "data:text/json;charset=utf-8," +
-        encodeURIComponent(JSON.stringify(syllabusesData, null, 2));
+                "data:text/json;charset=utf-8," +
+                encodeURIComponent(JSON.stringify(syllabusesData, null, 2));
             const downloadAnchor = document.createElement("a");
             downloadAnchor.setAttribute("href", dataStr);
             downloadAnchor.setAttribute(
@@ -95,12 +97,18 @@ export function SyllabusesActionsBox({
             const reader = new FileReader();
             reader.onload = async (event) => {
                 try {
-                    const importedSyllabuses = JSON.parse(event.target?.result as string);
+                    const importedSyllabuses = JSON.parse(
+                        event.target?.result as string,
+                    );
                     if (!Array.isArray(importedSyllabuses)) {
-                        throw new Error("Invalid format: expected an array of syllabuses");
+                        throw new Error(
+                            "Invalid format: expected an array of syllabuses",
+                        );
                     }
 
-                    enqueueSnackbar("מתחיל ייבוא סילבוסים...", { variant: "info" });
+                    enqueueSnackbar("מתחיל ייבוא סילבוסים...", {
+                        variant: "info",
+                    });
 
                     for (const syllabusData of importedSyllabuses) {
                         const newSyllabus = await createSyllabus(
@@ -148,7 +156,13 @@ export function SyllabusesActionsBox({
             };
             reader.readAsText(file);
         },
-        [curriculumId, createSyllabus, createModule, createEvent, enqueueSnackbar],
+        [
+            curriculumId,
+            createSyllabus,
+            createModule,
+            createEvent,
+            enqueueSnackbar,
+        ],
     );
 
     return (

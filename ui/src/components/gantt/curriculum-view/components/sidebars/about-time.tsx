@@ -8,7 +8,7 @@ import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 export function AboutTimeCurriculumViewSidebar({
     curriculumId,
 }: {
-  curriculumId: GanttCurriculumId | null;
+    curriculumId: GanttCurriculumId | null;
 }) {
     const curriculum = useCurriculum(curriculumId ?? "");
 

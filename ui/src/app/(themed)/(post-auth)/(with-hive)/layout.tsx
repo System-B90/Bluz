@@ -22,9 +22,9 @@ function LayoutContent({
     openSettingsDialog,
     setOpenSettingsDialog,
 }: {
-  children: React.ReactNode;
-  openSettingsDialog: boolean;
-  setOpenSettingsDialog: (open: boolean) => void;
+    children: React.ReactNode;
+    openSettingsDialog: boolean;
+    setOpenSettingsDialog: (open: boolean) => void;
 }) {
     const { offlineMode } = useOffline();
 
@@ -59,13 +59,16 @@ function LayoutContent({
                             bottom: 24,
                             left: 24,
                             zIndex: 1000,
-                            background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                            background:
+                                "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
                             color: "white",
                             boxShadow: "0px 6px 20px rgba(217, 119, 6, 0.4)",
                             transition: "all 0.2s ease-in-out",
                             "&:hover": {
-                                background: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
-                                boxShadow: "0px 8px 24px rgba(217, 119, 6, 0.6)",
+                                background:
+                                    "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+                                boxShadow:
+                                    "0px 8px 24px rgba(217, 119, 6, 0.6)",
                                 scale: "1.05",
                             },
                             "&:active": {
@@ -89,9 +92,10 @@ function LayoutContent({
 export default function PostAuthLayout({
     children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
-    const [openSettingsDialog, setOpenSettingsDialog] = useState<boolean>(false);
+    const [openSettingsDialog, setOpenSettingsDialog] =
+        useState<boolean>(false);
 
     return (
         <HiveUsersProvider>
@@ -104,8 +108,12 @@ export default function PostAuthLayout({
                                     <OfflineProvider>
                                         <CalendarProvider>
                                             <LayoutContent
-                                                openSettingsDialog={openSettingsDialog}
-                                                setOpenSettingsDialog={setOpenSettingsDialog}
+                                                openSettingsDialog={
+                                                    openSettingsDialog
+                                                }
+                                                setOpenSettingsDialog={
+                                                    setOpenSettingsDialog
+                                                }
                                             >
                                                 {children}
                                             </LayoutContent>

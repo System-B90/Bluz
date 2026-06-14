@@ -18,14 +18,14 @@ import {
 } from "@/api-shared/types/settings/settings";
 
 type ServerApiSettingGet = ServerApiWithParams<
-  ApiSettingGetPayload,
-  ApiSettingGetResponse,
-  { slug: string }
+    ApiSettingGetPayload,
+    ApiSettingGetResponse,
+    { slug: string }
 >;
 type ServerApiSettingUpdate = ServerApiWithParams<
-  ApiSettingUpdatePayload,
-  ApiSettingUpdateResponse,
-  { slug: string }
+    ApiSettingUpdatePayload,
+    ApiSettingUpdateResponse,
+    { slug: string }
 >;
 
 export const GET: ServerApiSettingGet = async (request, context) => {

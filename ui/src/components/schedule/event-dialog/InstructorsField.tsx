@@ -15,9 +15,9 @@ import { EventType } from "@/components/schedule/types/event";
 
 type InstructorsFieldProps = {} & EventFieldProps;
 type LecturerSelectionFieldProps = {
-  selectedInstructors?: Array<number>;
+    selectedInstructors?: Array<number>;
 } & InstructorsFieldProps &
-  BoxProps;
+    BoxProps;
 
 function LecturerSelectionField({
     event,
@@ -54,13 +54,13 @@ function LecturerSelectionField({
 
             // Handle potential string autofill values vs actual arrays
             const newIds =
-        typeof value === "string"
-            ? value.split(",").map((v) => {
-                if (v === "איש חוץ") return "איש חוץ";
-                if (v.startsWith("outsider-")) return v;
-                return Number(v);
-            })
-            : value;
+                typeof value === "string"
+                    ? value.split(",").map((v) => {
+                          if (v === "איש חוץ") return "איש חוץ";
+                          if (v.startsWith("outsider-")) return v;
+                          return Number(v);
+                      })
+                    : value;
 
             onBlurCallback({ ...event, lecturers: newIds });
         },
@@ -69,7 +69,9 @@ function LecturerSelectionField({
 
     const handleDelete = useCallback(
         (idToDelete: number | string) => {
-            const newIds = (event?.lecturers ?? []).filter((id) => id !== idToDelete);
+            const newIds = (event?.lecturers ?? []).filter(
+                (id) => id !== idToDelete,
+            );
             onBlurCallback({ ...event, lecturers: newIds });
         },
         [event, onBlurCallback],
@@ -85,19 +87,22 @@ function LecturerSelectionField({
                     multiple
                     onChange={handleChange}
                     renderValue={(selected) => (
-                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                        <Box
+                            sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
+                        >
                             {selected.map((id) => {
                                 // Look up instructor/outsider details by ID
                                 const outsider =
-                  typeof id === "string" && id.startsWith("outsider-")
-                      ? getOutsider(id)
-                      : null;
+                                    typeof id === "string" &&
+                                    id.startsWith("outsider-")
+                                        ? getOutsider(id)
+                                        : null;
                                 const lecturer =
-                  typeof id === "number"
-                      ? getInstructor(id)
-                      : outsider
-                          ? { id, display_name: outsider.name }
-                          : { id, display_name: id };
+                                    typeof id === "number"
+                                        ? getInstructor(id)
+                                        : outsider
+                                          ? { id, display_name: outsider.name }
+                                          : { id, display_name: id };
                                 return (
                                     <Chip
                                         key={id}
@@ -123,7 +128,7 @@ function LecturerSelectionField({
                         }}
                         value={"איש חוץ"}
                     >
-            איש חוץ
+                        איש חוץ
                     </MenuItem>
                 </InstructorSelect>
             </FormControl>
@@ -151,7 +156,9 @@ export function InstructorsField({
 
             // Handle potential string autofill values vs actual arrays
             const newIds =
-        typeof value === "string" ? value.split(",").map(Number) : value;
+                typeof value === "string"
+                    ? value.split(",").map(Number)
+                    : value;
 
             onBlurCallback({ ...event, instructors: newIds as Array<number> });
         },
@@ -184,17 +191,27 @@ export function InstructorsField({
                         multiple
                         onChange={handleChange}
                         renderValue={(selected) => (
-                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 0.5,
+                                }}
+                            >
                                 {selected.map((id) => {
                                     // Look up instructor details by ID
                                     const instructor = getInstructor(id);
                                     return (
                                         <Chip
                                             key={id}
-                                            label={instructor?.display_name ?? id}
+                                            label={
+                                                instructor?.display_name ?? id
+                                            }
                                             onDelete={() => handleDelete(id)}
                                             // Prevent menu from opening when deleting
-                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onMouseDown={(e) =>
+                                                e.stopPropagation()
+                                            }
                                             size="small"
                                         />
                                     );

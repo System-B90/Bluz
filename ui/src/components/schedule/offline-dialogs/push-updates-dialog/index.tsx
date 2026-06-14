@@ -55,12 +55,17 @@ export function PushOfflineUpdatesDialog() {
                 dispatch({ type: "DELETE_EVENT", payload: eventId });
             } else {
                 // Restore server version
-                dispatch({ type: "UPSERT_EVENT", payload: state.serverVersion });
+                dispatch({
+                    type: "UPSERT_EVENT",
+                    payload: state.serverVersion,
+                });
             }
         });
         purgeCapturedState();
         setPushDialogOpen(false);
-        enqueueSnackbar("כל השינויים הלוקליים שוחזרו בהצלחה.", { variant: "info" });
+        enqueueSnackbar("כל השינויים הלוקליים שוחזרו בהצלחה.", {
+            variant: "info",
+        });
     }, [
         collisionStates,
         dispatch,
@@ -99,14 +104,22 @@ export function PushOfflineUpdatesDialog() {
                     } else {
                         // Unselected -> Discard local edit and restore server state
                         if (state.serverVersion === undefined) {
-                            dispatch({ type: "DELETE_EVENT", payload: eventId });
+                            dispatch({
+                                type: "DELETE_EVENT",
+                                payload: eventId,
+                            });
                         } else {
-                            dispatch({ type: "UPSERT_EVENT", payload: state.serverVersion });
+                            dispatch({
+                                type: "UPSERT_EVENT",
+                                payload: state.serverVersion,
+                            });
                         }
                     }
                 }
 
-                enqueueSnackbar("השינויים סונכרנו בהצלחה!", { variant: "success" });
+                enqueueSnackbar("השינויים סונכרנו בהצלחה!", {
+                    variant: "success",
+                });
                 purgeCapturedState();
                 setPushDialogOpen(false);
             } catch (error) {
@@ -130,68 +143,68 @@ export function PushOfflineUpdatesDialog() {
     );
 
     const checkEventCollisionStates =
-    useCallback(async (): Promise<CollisionStates> => {
-        const states: CollisionStates = {};
+        useCallback(async (): Promise<CollisionStates> => {
+            const states: CollisionStates = {};
 
-        // Find all event IDs that are in localEvents or in the captured offline state
-        const allEventIds = Array.from(
-            new Set([
-                ...localEvents.map((ev) => ev.id),
-                ...Object.keys(getCapturedState()),
-            ]),
-        );
+            // Find all event IDs that are in localEvents or in the captured offline state
+            const allEventIds = Array.from(
+                new Set([
+                    ...localEvents.map((ev) => ev.id),
+                    ...Object.keys(getCapturedState()),
+                ]),
+            );
 
-        // Filter for events that actually have local edits (created, modified, or deleted)
-        const editedIds = allEventIds.filter((id) => {
-            const local = localEvents.find((ev) => ev.id === id);
-            const captured = getCapturedEvent(id) ?? undefined;
+            // Filter for events that actually have local edits (created, modified, or deleted)
+            const editedIds = allEventIds.filter((id) => {
+                const local = localEvents.find((ev) => ev.id === id);
+                const captured = getCapturedEvent(id) ?? undefined;
 
-            if (local === undefined || captured === undefined) {
-                if (local !== undefined) return true; // Created locally
-                if (captured !== undefined) return true; // Deleted locally
-                return false;
+                if (local === undefined || captured === undefined) {
+                    if (local !== undefined) return true; // Created locally
+                    if (captured !== undefined) return true; // Deleted locally
+                    return false;
+                }
+
+                return !areDiffValuesEqual(local, captured); // Modified locally
+            });
+
+            if (editedIds.length === 0) {
+                return {};
             }
 
-            return !areDiffValuesEqual(local, captured); // Modified locally
-        });
+            const serverEvents = await apiGetMultipleEvents(editedIds).catch(
+                (error) => {
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        `טעינת המצב העדכני בשרת נכשלה!`,
+                        error,
+                    );
+                    return null;
+                },
+            );
 
-        if (editedIds.length === 0) {
-            return {};
-        }
+            if (serverEvents === null) {
+                return {};
+            }
 
-        const serverEvents = await apiGetMultipleEvents(editedIds).catch(
-            (error) => {
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    `טעינת המצב העדכני בשרת נכשלה!`,
-                    error,
-                );
-                return null;
-            },
-        );
+            editedIds.forEach((id) => {
+                const local = localEvents.find((ev) => ev.id === id);
+                const captured = getCapturedEvent(id) ?? undefined;
+                const server = serverEvents[id] ?? undefined;
 
-        if (serverEvents === null) {
-            return {};
-        }
+                // Conflict if captured version differs from committed server version
+                const conflicting = !areDiffValuesEqual(captured, server);
 
-        editedIds.forEach((id) => {
-            const local = localEvents.find((ev) => ev.id === id);
-            const captured = getCapturedEvent(id) ?? undefined;
-            const server = serverEvents[id] ?? undefined;
+                states[id] = {
+                    localModifiedEvent: local,
+                    capturedVersion: captured,
+                    serverVersion: server,
+                    conflicting,
+                };
+            });
 
-            // Conflict if captured version differs from committed server version
-            const conflicting = !areDiffValuesEqual(captured, server);
-
-            states[id] = {
-                localModifiedEvent: local,
-                capturedVersion: captured,
-                serverVersion: server,
-                conflicting,
-            };
-        });
-
-        return states;
-    }, [localEvents, getCapturedEvent, getCapturedState, enqueueSnackbar]);
+            return states;
+        }, [localEvents, getCapturedEvent, getCapturedState, enqueueSnackbar]);
 
     useEffect(() => {
         if (!pushDialogOpen) {
@@ -203,9 +216,12 @@ export function PushOfflineUpdatesDialog() {
                 if (keys.length === 0) {
                     setPushDialogOpen(false);
                     purgeCapturedState();
-                    enqueueSnackbar("יצאת ממצב אופליין. לא בוצעו שינויים לסינכרון.", {
-                        variant: "info",
-                    });
+                    enqueueSnackbar(
+                        "יצאת ממצב אופליין. לא בוצעו שינויים לסינכרון.",
+                        {
+                            variant: "info",
+                        },
+                    );
                     return;
                 }
                 setCollisionStates(states);
@@ -231,7 +247,8 @@ export function PushOfflineUpdatesDialog() {
         () =>
             Object.values(collisionStates)
                 .map(
-                    (cs) => `${cs.localModifiedEvent?.id}-${cs.conflicting ? "1" : "0"}`,
+                    (cs) =>
+                        `${cs.localModifiedEvent?.id}-${cs.conflicting ? "1" : "0"}`,
                 )
                 .join("--"),
         [collisionStates],
@@ -246,16 +263,28 @@ export function PushOfflineUpdatesDialog() {
             onClose={handleCancel}
             open={pushDialogOpen}
         >
-            <DialogTitle sx={{ fontWeight: 600 }}>שמירת שינויים לוקליים</DialogTitle>
+            <DialogTitle sx={{ fontWeight: 600 }}>
+                שמירת שינויים לוקליים
+            </DialogTitle>
 
             <form onSubmit={submitHandler}>
                 <DialogContent sx={{ p: 3 }}>
                     {hasChanges ? (
-                        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                            <Typography color="text.secondary" sx={{ mb: 1 }} variant="body2">
-                להלן השינויים שביצעת בזמן שהיית במצב לוקלי. סמן את השינויים
-                שברצונך לשמור לשרת. שינויים שלא יסומנו ישוחזרו לגרסת השרת
-                הנוכחית.
+                        <Box
+                            sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 2,
+                            }}
+                        >
+                            <Typography
+                                color="text.secondary"
+                                sx={{ mb: 1 }}
+                                variant="body2"
+                            >
+                                להלן השינויים שביצעת בזמן שהיית במצב לוקלי. סמן
+                                את השינויים שברצונך לשמור לשרת. שינויים שלא
+                                יסומנו ישוחזרו לגרסת השרת הנוכחית.
                             </Typography>
                             <Box display={"flex"} gap={2} width={"100%"}>
                                 <EventCollisionsList
@@ -273,7 +302,7 @@ export function PushOfflineUpdatesDialog() {
                             textAlign="center"
                             variant="body1"
                         >
-              לא נמצאו שינויים לוקליים לסינכרון.
+                            לא נמצאו שינויים לוקליים לסינכרון.
                         </Typography>
                     )}
                 </DialogContent>
@@ -286,11 +315,15 @@ export function PushOfflineUpdatesDialog() {
                             onClick={handleRevert}
                             variant="outlined"
                         >
-              שחזר הכל
+                            שחזר הכל
                         </Button>
                     ) : null}
-                    <Button color="inherit" disabled={loading} onClick={handleCancel}>
-            ביטול (הישאר באופליין)
+                    <Button
+                        color="inherit"
+                        disabled={loading}
+                        onClick={handleCancel}
+                    >
+                        ביטול (הישאר באופליין)
                     </Button>
                     <Button
                         color="success"

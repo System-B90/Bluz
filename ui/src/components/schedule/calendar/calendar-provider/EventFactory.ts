@@ -18,7 +18,8 @@ export const createEventFactory = (
         courses: eventPartial.courses ?? [],
         rooms: eventPartial.rooms ?? [],
         instructors: eventPartial.instructors ?? [],
-        lecturers: type === EventType.LECTURE ? (eventPartial.lecturers ?? []) : [],
+        lecturers:
+            type === EventType.LECTURE ? (eventPartial.lecturers ?? []) : [],
         tags: eventPartial.tags ?? [],
         notes: eventPartial.notes ?? "",
         locked: eventPartial.locked ?? false,

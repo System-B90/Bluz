@@ -13,7 +13,7 @@ const moduleApi = clientGantApiBuilder<GanttModule, CreateGanttModulePayload>({
     dateFixup: baseDocumentFixup as any,
 });
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =
-  moduleApi;
+    moduleApi;
 export {
     apiCreate as apiCreateModule,
     apiDelete as apiDeleteModule,

@@ -14,8 +14,8 @@ import {
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 
 export type SyllabusCardActionsProps = {
-  curriculumId: GanttCurriculumId;
-  syllabusId: GanttSyllabusId;
+    curriculumId: GanttCurriculumId;
+    syllabusId: GanttSyllabusId;
 } & CardActionsProps;
 
 export function SyllabusCardActions({
@@ -34,12 +34,21 @@ export function SyllabusCardActions({
                 error,
             ),
         );
-    }, [curriculumId, syllabusId, unlinkSyllabusFromCurriculum, enqueueSnackbar]);
+    }, [
+        curriculumId,
+        syllabusId,
+        unlinkSyllabusFromCurriculum,
+        enqueueSnackbar,
+    ]);
 
     return (
         <CardActions {...props}>
             <Tooltip title="הסר סילבוס מהגאנט">
-                <IconButton color="warning" onClick={deleteHandler} size="small">
+                <IconButton
+                    color="warning"
+                    onClick={deleteHandler}
+                    size="small"
+                >
                     <LinkOffIcon fontSize="small" />
                 </IconButton>
             </Tooltip>

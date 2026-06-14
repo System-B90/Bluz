@@ -31,14 +31,17 @@ async function apiGetModuleDayMapping(
     if (dayId !== undefined) {
         Array.isArray(dayId)
             ? dayId.forEach((dayId) =>
-                url.searchParams.append("dayId", dayId.toString()),
-            )
+                  url.searchParams.append("dayId", dayId.toString()),
+              )
             : url.searchParams.append("dayId", dayId.toString());
     }
 
-    const rawData = await safeApiFetcher<Array<RawBaseDocument>>(url.toString(), {
-        ...options,
-    });
+    const rawData = await safeApiFetcher<Array<RawBaseDocument>>(
+        url.toString(),
+        {
+            ...options,
+        },
+    );
     return rawData.map(
         baseDocumentFixup,
     ) as unknown as Array<GanttCurriculumModuleDayMapping>;
@@ -61,7 +64,7 @@ async function apiCreateModuleDayMapping(
         },
     );
     return baseDocumentFixup(
-    rawData as RawBaseDocument,
+        rawData as RawBaseDocument,
     ) as unknown as GanttCurriculumModuleDayMapping;
 }
 
@@ -85,7 +88,7 @@ async function apiUpdateModuleDayMapping(
         },
     );
     return baseDocumentFixup(
-    rawData as RawBaseDocument,
+        rawData as RawBaseDocument,
     ) as unknown as GanttCurriculumModuleDayMapping;
 }
 

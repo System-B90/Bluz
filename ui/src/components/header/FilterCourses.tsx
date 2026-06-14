@@ -22,7 +22,7 @@ export function FilterCourses({ ...props }: BoxProps) {
 
         // Handle potential string autofill values vs actual arrays
         const newIds =
-      typeof value === "string" ? value.split(",").map(String) : value;
+            typeof value === "string" ? value.split(",").map(String) : value;
 
         setFilteredCourses(newIds);
     };

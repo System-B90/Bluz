@@ -46,7 +46,11 @@ export const useEventActions = (
                         dispatch({ type: "UPSERT_EVENT", payload: res });
                     })
                     .catch((error) => {
-                        enqueueApiErrorSnackbar(enqueueSnackbar, errorMsg, error);
+                        enqueueApiErrorSnackbar(
+                            enqueueSnackbar,
+                            errorMsg,
+                            error,
+                        );
                     });
             }
         },
@@ -60,7 +64,9 @@ export const useEventActions = (
             if (!offlineMode) {
                 apiDeleteEvent(eventId)
                     .then(() =>
-                        enqueueSnackbar("המופע נמחק בהצלחה.", { variant: "success" }),
+                        enqueueSnackbar("המופע נמחק בהצלחה.", {
+                            variant: "success",
+                        }),
                     )
                     .catch((error) =>
                         enqueueApiErrorSnackbar(

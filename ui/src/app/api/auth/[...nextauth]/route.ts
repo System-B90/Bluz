@@ -14,7 +14,7 @@ const customHandler = async (req: Request, context: any) => {
         const url = new URL(req.url);
         if (
             url.pathname.includes("/api/auth/session") ||
-      url.pathname.includes("/api/auth/_log")
+            url.pathname.includes("/api/auth/_log")
         ) {
             return NextResponse.json(
                 { error: "Authentication service unavailable." },

@@ -17,10 +17,10 @@ import "dayjs/locale/he";
 export const CalendarProvider = ({
     children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) => {
     const { offlineMode, captureEventBeforeEdit, captureInitialEvents } =
-    useOffline();
+        useOffline();
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
 
@@ -50,7 +50,11 @@ export const CalendarProvider = ({
                     dispatch({ type: "SET_EVENTS", payload: fetchedEvents });
                 })
                 .catch((error) =>
-                    enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת לו"ז נכשלה.', error),
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        'טעינת לו"ז נכשלה.',
+                        error,
+                    ),
                 );
         },
         [dispatch],

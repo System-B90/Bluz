@@ -33,7 +33,9 @@ export const ganttCurriculumEventDayMappingsSchema = pgTable(
             .$defaultFn(() => crypto.randomUUID()),
         curriculumId: text("curriculum_id")
             .notNull()
-            .references(() => ganttCurriculumsSchema.id, { onDelete: "cascade" }),
+            .references(() => ganttCurriculumsSchema.id, {
+                onDelete: "cascade",
+            }),
         moduleId: text("module_id")
             .notNull()
             .references(() => ganttModulesSchema.id, { onDelete: "cascade" }),
@@ -82,7 +84,9 @@ export const ganttCurriculumEventConfigurationsSchema = pgTable(
     {
         curriculumId: text("curriculum_id")
             .notNull()
-            .references(() => ganttCurriculumsSchema.id, { onDelete: "cascade" }),
+            .references(() => ganttCurriculumsSchema.id, {
+                onDelete: "cascade",
+            }),
         eventId: text("event_id")
             .notNull()
             .references(() => ganttEventsSchema.id, { onDelete: "cascade" }),

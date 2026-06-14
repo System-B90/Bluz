@@ -37,10 +37,10 @@ import { DayCapacityCell } from "@/components/gantt/curriculum-view/tabs/weeks-t
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 
 export type WeeksCapacityGridProps = {
-  curriculum: GanttCurriculum;
-  isCompact?: boolean;
-  mappings: Record<string, GanttCurriculumModuleDayMapping>;
-  state: NormalizedStore;
+    curriculum: GanttCurriculum;
+    isCompact?: boolean;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    state: NormalizedStore;
 };
 
 const DAY_COLUMNS: Array<GanttDayIndex> = [
@@ -69,12 +69,12 @@ function WeekRow({
     week,
     weekIndex,
 }: {
-  isCompact?: boolean;
-  mappings: Record<string, GanttCurriculumModuleDayMapping>;
-  startDate: null | string;
-  state: NormalizedStore;
-  week: NormalizedStore["weeks"][string];
-  weekIndex: number;
+    isCompact?: boolean;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    startDate: null | string;
+    state: NormalizedStore;
+    week: NormalizedStore["weeks"][string];
+    weekIndex: number;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const { updateWeek } = useWeekActions();
@@ -96,7 +96,11 @@ function WeekRow({
         if (localComment === (week.comment ?? "")) return;
 
         void updateWeek(week.id, { comment: localComment }).catch((error) =>
-            enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת הערת שבוע נכשלה!", error),
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "שמירת הערת שבוע נכשלה!",
+                error,
+            ),
         );
     }, [enqueueSnackbar, localComment, updateWeek, week.comment, week.id]);
 
@@ -131,7 +135,7 @@ function WeekRow({
                     sx={{ fontSize: "0.88rem", color: "text.primary" }}
                     variant="subtitle2"
                 >
-          שבוע {weekIndex + 1}
+                    שבוע {weekIndex + 1}
                 </Typography>
                 <Typography
                     color="text.secondary"
@@ -146,8 +150,8 @@ function WeekRow({
                             weekStatus === "error"
                                 ? "error"
                                 : weekStatus === "warning"
-                                    ? "warning"
-                                    : "primary"
+                                  ? "warning"
+                                  : "primary"
                         }
                         label={`${formatHoursLabel(scheduledMinutes)} / ${formatHoursLabel(weekTotalMinutes)}`}
                         size="smaller"
@@ -188,13 +192,19 @@ function WeekRow({
                     sx={{
                         "& .MuiOutlinedInput-root": {
                             transition: "all 0.2s ease",
-                            bgcolor: isCommentFocused ? "background.default" : "transparent",
+                            bgcolor: isCommentFocused
+                                ? "background.default"
+                                : "transparent",
                         },
                         "& .MuiOutlinedInput-notchedOutline": {
-                            borderColor: isCommentFocused ? "primary.main" : "transparent",
+                            borderColor: isCommentFocused
+                                ? "primary.main"
+                                : "transparent",
                         },
                         "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: isCommentFocused ? "primary.main" : "divider",
+                            borderColor: isCommentFocused
+                                ? "primary.main"
+                                : "divider",
                         },
                     }}
                     value={localComment}
@@ -211,7 +221,7 @@ function WeekRow({
                 const dayDate = getDayDate(startDate, weekIndex, dayIndex);
                 const day = state.days[dayId];
                 const isMutedSaturday =
-          dayIndex === GanttDayIndex.Saturday && !week.weekendDuty;
+                    dayIndex === GanttDayIndex.Saturday && !week.weekendDuty;
 
                 return (
                     <DayCapacityCell
@@ -238,9 +248,9 @@ function DayHeaderCell({
     curriculum,
     state,
 }: {
-  dayIndex: GanttDayIndex;
-  curriculum: GanttCurriculum;
-  state: NormalizedStore;
+    dayIndex: GanttDayIndex;
+    curriculum: GanttCurriculum;
+    state: NormalizedStore;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const { updateDay } = useWeekActions();
@@ -262,7 +272,9 @@ function DayHeaderCell({
             const parsed = parseFloat(stored);
             if (!isNaN(parsed) && parsed >= 0) {
                 // Handle legacy format (hours) vs minutes in localStorage
-                return parsed <= 24 ? Math.round(parsed * 60) : Math.round(parsed);
+                return parsed <= 24
+                    ? Math.round(parsed * 60)
+                    : Math.round(parsed);
             }
         }
         // Default fallbacks: Saturday is typically 0 (closed), others 8 hours (480 mins)
@@ -295,7 +307,10 @@ function DayHeaderCell({
                 );
                 if (dayId) {
                     const currentDay = state.days[dayId];
-                    if (currentDay && currentDay.totalWorkingMinutes !== parsedMinutes) {
+                    if (
+                        currentDay &&
+                        currentDay.totalWorkingMinutes !== parsedMinutes
+                    ) {
                         dayIdsToUpdate.push(dayId);
                     }
                 }
@@ -358,7 +373,12 @@ function DayHeaderCell({
                 fontSize: "0.85rem",
             }}
         >
-            <Box alignItems="center" display="flex" flexDirection="column" gap={0.5}>
+            <Box
+                alignItems="center"
+                display="flex"
+                flexDirection="column"
+                gap={0.5}
+            >
                 <Typography
                     sx={{ fontWeight: 700, fontSize: "0.82rem" }}
                     variant="subtitle2"
@@ -455,7 +475,7 @@ export function WeeksCapacityGrid({
                                 fontSize: "0.85rem",
                             }}
                         >
-              שבוע
+                            שבוע
                         </TableCell>
                         <TableCell
                             sx={{
@@ -470,7 +490,7 @@ export function WeeksCapacityGrid({
                                 fontSize: "0.85rem",
                             }}
                         >
-              שם / הערת שבוע
+                            שם / הערת שבוע
                         </TableCell>
 
                         {DAY_COLUMNS.map((dayIndex) => {
@@ -481,10 +501,12 @@ export function WeeksCapacityGrid({
                             const firstDayId = firstWeek?.days.find(
                                 (dId) => state.days[dId]?.dayIndex === dayIndex,
                             );
-                            const firstDay = firstDayId ? state.days[firstDayId] : undefined;
+                            const firstDay = firstDayId
+                                ? state.days[firstDayId]
+                                : undefined;
                             const currentMinutes =
-                firstDay?.totalWorkingMinutes ??
-                (dayIndex === GanttDayIndex.Saturday ? 0 : 480);
+                                firstDay?.totalWorkingMinutes ??
+                                (dayIndex === GanttDayIndex.Saturday ? 0 : 480);
                             return (
                                 <DayHeaderCell
                                     curriculum={curriculum}
@@ -511,9 +533,14 @@ export function WeeksCapacityGrid({
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell align="center" colSpan={10} sx={{ py: 5 }}>
+                            <TableCell
+                                align="center"
+                                colSpan={10}
+                                sx={{ py: 5 }}
+                            >
                                 <Typography color="text.secondary">
-                  אין עדיין שבועות בגאנט. הוסיפו שבוע דרך ניהול אורך קורס.
+                                    אין עדיין שבועות בגאנט. הוסיפו שבוע דרך
+                                    ניהול אורך קורס.
                                 </Typography>
                             </TableCell>
                         </TableRow>

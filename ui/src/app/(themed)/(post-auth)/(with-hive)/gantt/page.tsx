@@ -85,10 +85,10 @@ export default function GanttPage() {
     const searchParams = useSearchParams();
     const [drawerOpen, setDrawerOpen] = useState(true);
     const [currentCurriculum, setCurrentCurriculum] =
-    useState<GanttCurriculumId | null>(() => {
-        const cidFromUrl = searchParams.get("cid");
-        return cidFromUrl ? (cidFromUrl as GanttCurriculumId) : null;
-    });
+        useState<GanttCurriculumId | null>(() => {
+            const cidFromUrl = searchParams.get("cid");
+            return cidFromUrl ? (cidFromUrl as GanttCurriculumId) : null;
+        });
 
     const [initialData, setInitialData] = useState<ApiCurriculum | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -123,10 +123,15 @@ export default function GanttPage() {
 
         const fetchCurriculum = async () => {
             try {
-                const data = await ganttApi.curriculum.apiGet(currentCurriculum);
+                const data =
+                    await ganttApi.curriculum.apiGet(currentCurriculum);
                 if (isMounted) setInitialData(data);
             } catch (err: any) {
-                enqueueApiErrorSnackbar(enqueueSnackbar, `טעינת הגאנט נכשלה!`, err);
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    `טעינת הגאנט נכשלה!`,
+                    err,
+                );
                 if (isMounted) setError(err.message);
             } finally {
                 if (isMounted) setIsLoading(false);
@@ -169,7 +174,7 @@ export default function GanttPage() {
             >
                 {!currentCurriculum && !isLoading && (
                     <Typography color="textSecondary">
-            בחרו גאנט כדי להתחיל לעבוד
+                        בחרו גאנט כדי להתחיל לעבוד
                     </Typography>
                 )}
 

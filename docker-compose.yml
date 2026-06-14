@@ -1,85 +1,85 @@
 services:
-  ui:
-    image: ghcr.io/system-b15/bluz/ui:${BLUZ_VERSION:-latest}
-    build:
-      context: .
-      dockerfile: ui/Dockerfile
-    container_name: bluz-ui
-    restart: unless-stopped
-    env_file:
-      - .env
-    # extra_hosts:
-    # - "hive.org:host-gateway" # If running Hive locally
-    networks:
-      - bluz_net
-    depends_on:
-      - curriculum-db
-      - sessions
-      - mongodb
+    ui:
+        image: ghcr.io/system-b15/bluz/ui:${BLUZ_VERSION:-latest}
+        build:
+            context: .
+            dockerfile: ui/Dockerfile
+        container_name: bluz-ui
+        restart: unless-stopped
+        env_file:
+            - .env
+        # extra_hosts:
+        # - "hive.org:host-gateway" # If running Hive locally
+        networks:
+            - bluz_net
+        depends_on:
+            - curriculum-db
+            - sessions
+            - mongodb
 
-  curriculum-db:
-    image: postgres:15-alpine
-    container_name: bluz-curriculum-db
-    restart: always
-    env_file:
-      - .env
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    networks:
-      - bluz_net
+    curriculum-db:
+        image: postgres:15-alpine
+        container_name: bluz-curriculum-db
+        restart: always
+        env_file:
+            - .env
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        networks:
+            - bluz_net
 
-  mongodb:
-    image: mongodb/mongodb-community-server:8.0-ubuntu2204
-    container_name: bluz-mongodb
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-    volumes:
-      - mongodb_data:/data/db
-    networks:
-      - bluz_net
+    mongodb:
+        image: mongodb/mongodb-community-server:8.0-ubuntu2204
+        container_name: bluz-mongodb
+        restart: unless-stopped
+        env_file:
+            - .env
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+            MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+        volumes:
+            - mongodb_data:/data/db
+        networks:
+            - bluz_net
 
-  sessions:
-    image: ghcr.io/system-b15/bluz/sessions:${BLUZ_VERSION:-latest}
-    build:
-      context: session-server
-      dockerfile: Dockerfile.websocket
-    container_name: bluz-sessions
-    restart: unless-stopped
-    env_file:
-      - .env
-    networks:
-      - bluz_net
+    sessions:
+        image: ghcr.io/system-b15/bluz/sessions:${BLUZ_VERSION:-latest}
+        build:
+            context: session-server
+            dockerfile: Dockerfile.websocket
+        container_name: bluz-sessions
+        restart: unless-stopped
+        env_file:
+            - .env
+        networks:
+            - bluz_net
 
-  proxy:
-    image: ghcr.io/system-b15/bluz/proxy:${BLUZ_VERSION:-latest}
-    container_name: bluz-proxy
-    restart: unless-stopped
-    build:
-      context: nginx
-      dockerfile: Dockerfile.proxy
-    ports:
-      - "127.0.0.3:80:80"
-      - "127.0.0.3:443:443"
-    volumes:
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - ui
-      - sessions
-    networks:
-      - bluz_net
+    proxy:
+        image: ghcr.io/system-b15/bluz/proxy:${BLUZ_VERSION:-latest}
+        container_name: bluz-proxy
+        restart: unless-stopped
+        build:
+            context: nginx
+            dockerfile: Dockerfile.proxy
+        ports:
+            - "127.0.0.3:80:80"
+            - "127.0.0.3:443:443"
+        volumes:
+            - ./nginx/ssl:/etc/nginx/ssl:ro
+        depends_on:
+            - ui
+            - sessions
+        networks:
+            - bluz_net
 
 volumes:
-  pgdata:
-  mongodb_data:
+    pgdata:
+    mongodb_data:
 
 networks:
-  bluz_net:
-    driver: bridge
+    bluz_net:
+        driver: bridge

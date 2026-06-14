@@ -41,7 +41,7 @@ export const GanttHeader: React.FC = () => {
                     }}
                 >
                     <Typography fontWeight="bold" variant="subtitle2">
-            סילבוס / מערך
+                        סילבוס / מערך
                     </Typography>
                 </TableCell>
                 {timelineWeeks.map((week, weekIndex) => {
@@ -64,7 +64,10 @@ export const GanttHeader: React.FC = () => {
                                 {week.title}
                             </Typography>
                             {dateRangeLabel ? (
-                                <Typography color="text.secondary" variant="caption">
+                                <Typography
+                                    color="text.secondary"
+                                    variant="caption"
+                                >
                                     {dateRangeLabel}
                                 </Typography>
                             ) : null}
@@ -78,7 +81,11 @@ export const GanttHeader: React.FC = () => {
                         week.days.map((dayId) => {
                             const day = state.days[dayId];
                             if (!day) return null;
-                            const dayDate = getDayDate(startDate, weekIndex, day.dayIndex);
+                            const dayDate = getDayDate(
+                                startDate,
+                                weekIndex,
+                                day.dayIndex,
+                            );
                             return (
                                 <TableCell
                                     align="center"
@@ -88,7 +95,8 @@ export const GanttHeader: React.FC = () => {
                                         minWidth: 80,
                                         boxSizing: "border-box",
                                         borderLeft: `1px solid ${theme.palette.divider}`,
-                                        backgroundColor: theme.palette.background.paper,
+                                        backgroundColor:
+                                            theme.palette.background.paper,
                                         zIndex: 2,
                                     }}
                                 >

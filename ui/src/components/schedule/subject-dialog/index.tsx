@@ -20,10 +20,10 @@ import { Subject } from "@/api-shared/types/subject";
 const availableGroups = ["Group A", "Group B", "Group C"];
 
 type SubjectDialogProps = {
-  open: boolean;
-  subject: Partial<Subject>;
-  onClose: () => void;
-  onSave: (subject: Subject) => void;
+    open: boolean;
+    subject: Partial<Subject>;
+    onClose: () => void;
+    onSave: (subject: Subject) => void;
 };
 
 export function SubjectDialog({
@@ -79,9 +79,17 @@ export function SubjectDialog({
                     <Select
                         input={<OutlinedInput label="Assigned Groups" />}
                         multiple
-                        onChange={(e) => setGroups(e.target.value as Array<string>)}
+                        onChange={(e) =>
+                            setGroups(e.target.value as Array<string>)
+                        }
                         renderValue={(selected) => (
-                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 0.5,
+                                }}
+                            >
                                 {selected.map((value) => (
                                     <Chip key={value} label={value} />
                                 ))}
@@ -100,7 +108,7 @@ export function SubjectDialog({
             <DialogActions>
                 <Button onClick={onClose}>Cancel</Button>
                 <Button onClick={handleSave} variant="contained">
-          Save
+                    Save
                 </Button>
             </DialogActions>
         </Dialog>

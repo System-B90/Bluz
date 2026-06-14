@@ -5,22 +5,22 @@ import { HiveRoom, RoomSource } from "@/api-shared/types/room";
 import { Subject } from "@/api-shared/types/subject";
 
 type TimeoutError = {
-  name: "TypeError";
-  cause: {
-    name: string;
-    [key: string]: unknown;
-  };
+    name: "TypeError";
+    cause: {
+        name: string;
+        [key: string]: unknown;
+    };
 } & Error;
 
 export function isTimeoutError(e: unknown): e is TimeoutError {
     return (
         e instanceof Error &&
-    e.name === "TypeError" &&
-    "cause" in e &&
-    typeof e.cause === "object" &&
-    e.cause !== null &&
-    "name" in e.cause &&
-    typeof (e.cause as Record<string, unknown>).name === "string"
+        e.name === "TypeError" &&
+        "cause" in e &&
+        typeof e.cause === "object" &&
+        e.cause !== null &&
+        "name" in e.cause &&
+        typeof (e.cause as Record<string, unknown>).name === "string"
     );
 }
 
@@ -42,15 +42,18 @@ export class HiveClient {
             throw new HiveClientError("אין טוקן רפרש זמין, אנא התחבר מחדש");
         }
 
-        const response = await fetch(this.buildUrl("/api/core/token/refresh/"), {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
+        const response = await fetch(
+            this.buildUrl("/api/core/token/refresh/"),
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    refresh: this.refreshTokenValue,
+                }),
             },
-            body: JSON.stringify({
-                refresh: this.refreshTokenValue,
-            }),
-        });
+        );
 
         if (!response.ok) {
             throw new HiveClientError("עדכון הטוקן נכשל, אנא התחבר מחדש");
@@ -95,9 +98,9 @@ export class HiveClient {
     }
 
     /**
-   * Hive-hosted services such as Prometheus expect `Cookie: token=<access_token>`
-   * instead of (or in addition to) Bearer auth.
-   */
+     * Hive-hosted services such as Prometheus expect `Cookie: token=<access_token>`
+     * instead of (or in addition to) Bearer auth.
+     */
     async fetchWithTokenCookie(
         url: string,
         init: RequestInit = {},

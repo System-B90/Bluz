@@ -15,8 +15,8 @@ export async function createHiveClientFromSession(
     }
 
     const hiveClient = new HiveClient(
-    session.accessToken as string,
-    session.refreshToken as string,
+        session.accessToken as string,
+        session.refreshToken as string,
     );
 
     return hiveClient;
@@ -25,7 +25,9 @@ export async function createHiveClientFromSession(
 export async function createHiveClient(): Promise<HiveClient> {
     const session = await getServerSession(authOptions);
     if (!session) {
-        throw new UserNotLoggedInError("Unauthorized: No active session found.");
+        throw new UserNotLoggedInError(
+            "Unauthorized: No active session found.",
+        );
     }
     return await createHiveClientFromSession(session as AuthSessionData);
 }

@@ -16,46 +16,46 @@ import { HiveLogo } from "@/components/base/HiveLogo";
 import { LectureComfortSwitch } from "@/components/settings-dialog/tabs/global/LectureComfortSwitch";
 
 export type RoomFormCardProps = {
-  selectedRoom: null | Room;
-  isCreating: boolean;
-  name: string;
-  setName: (name: string) => void;
-  description: string;
-  setDescription: (desc: string) => void;
-  workstationCount: string;
-  setWorkstationCount: (count: string) => void;
-  lectureSeatCount: string;
-  setLectureSeatCount: (count: string) => void;
-  lectureComfortable: boolean;
-  setLectureComfortable: (comfortable: boolean) => void;
-  handleSave: (e: React.FormEvent) => Promise<void>;
-  handleCancelEdit: () => void;
+    selectedRoom: null | Room;
+    isCreating: boolean;
+    name: string;
+    setName: (name: string) => void;
+    description: string;
+    setDescription: (desc: string) => void;
+    workstationCount: string;
+    setWorkstationCount: (count: string) => void;
+    lectureSeatCount: string;
+    setLectureSeatCount: (count: string) => void;
+    lectureComfortable: boolean;
+    setLectureComfortable: (comfortable: boolean) => void;
+    handleSave: (e: React.FormEvent) => Promise<void>;
+    handleCancelEdit: () => void;
 };
 
 type RoomFormHeaderProps = {
-  isCreating: boolean;
-  isEditing: boolean;
-  isHiveSelected: boolean;
+    isCreating: boolean;
+    isEditing: boolean;
+    isHiveSelected: boolean;
 };
 type RoomBasicDetailsProps = {
-  isHiveSelected: boolean;
-  name: string;
-  setName: (name: string) => void;
-  description: string;
-  setDescription: (desc: string) => void;
+    isHiveSelected: boolean;
+    name: string;
+    setName: (name: string) => void;
+    description: string;
+    setDescription: (desc: string) => void;
 };
 type RoomExtendedDetailsProps = {
-  workstationCount: string;
-  setWorkstationCount: (count: string) => void;
-  lectureSeatCount: string;
-  setLectureSeatCount: (count: string) => void;
-  lectureComfortable: boolean;
-  setLectureComfortable: (comfortable: boolean) => void;
+    workstationCount: string;
+    setWorkstationCount: (count: string) => void;
+    lectureSeatCount: string;
+    setLectureSeatCount: (count: string) => void;
+    lectureComfortable: boolean;
+    setLectureComfortable: (comfortable: boolean) => void;
 };
 type RoomFormActionsProps = {
-  isCreating: boolean;
-  isHiveSelected: boolean;
-  handleCancelEdit: () => void;
+    isCreating: boolean;
+    isHiveSelected: boolean;
+    handleCancelEdit: () => void;
 };
 
 // --- Sub-components ---
@@ -71,7 +71,9 @@ function RoomFormHeader({
                 sx={{
                     p: 1,
                     borderRadius: "10px",
-                    bgcolor: isHiveSelected ? "warning.light" : "secondary.light",
+                    bgcolor: isHiveSelected
+                        ? "warning.light"
+                        : "secondary.light",
                     color: isHiveSelected
                         ? "warning.contrastText"
                         : "secondary.contrastText",
@@ -99,10 +101,10 @@ function RoomFormHeader({
                     {isCreating
                         ? "הוספת חדר חדש"
                         : isHiveSelected
-                            ? "עריכת חדר הייב"
-                            : isEditing
-                                ? "עריכת חדר"
-                                : "בחר חדר לעריכה"}
+                          ? "עריכת חדר הייב"
+                          : isEditing
+                            ? "עריכת חדר"
+                            : "בחר חדר לעריכה"}
                 </Typography>
                 <Typography
                     sx={{
@@ -114,10 +116,10 @@ function RoomFormHeader({
                     {isCreating
                         ? "יצירת חדר מותאם אישית חדש"
                         : isHiveSelected
-                            ? "שם ותיאור נשלטים ע״י הייב. ניתן לערוך פרטים מורחבים."
-                            : isEditing
-                                ? "עדכון כל פרטי החדר"
-                                : "לחץ על חדר מהרשימה כדי לערוך"}
+                          ? "שם ותיאור נשלטים ע״י הייב. ניתן לערוך פרטים מורחבים."
+                          : isEditing
+                            ? "עדכון כל פרטי החדר"
+                            : "לחץ על חדר מהרשימה כדי לערוך"}
                 </Typography>
             </Box>
         </Box>
@@ -144,12 +146,12 @@ function RoomBasicDetails({
                 slotProps={{
                     input: isHiveSelected
                         ? {
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <HiveLogo size={16} />
-                                </InputAdornment>
-                            ),
-                        }
+                              endAdornment: (
+                                  <InputAdornment position="end">
+                                      <HiveLogo size={16} />
+                                  </InputAdornment>
+                              ),
+                          }
                         : undefined,
                 }}
                 sx={{
@@ -198,7 +200,7 @@ function RoomExtendedDetails({
                         fontFamily: "Assistant, sans-serif",
                     }}
                 >
-          פרטים מורחבים
+                    פרטים מורחבים
                 </Typography>
             </Divider>
             <Box display="flex" flexDirection="column" gap={2.5}>
@@ -285,7 +287,7 @@ function RoomExtendedDetails({
                                 color: "text.primary",
                             }}
                         >
-              נוח להרצאה
+                            נוח להרצאה
                         </Typography>
                         <Typography
                             sx={{
@@ -332,8 +334,8 @@ function RoomFormActions({
                 {isCreating
                     ? "צור חדר"
                     : isHiveSelected
-                        ? "שמור פרטים מורחבים"
-                        : "עדכן חדר"}
+                      ? "שמור פרטים מורחבים"
+                      : "עדכן חדר"}
             </Button>
             <Button
                 color="inherit"
@@ -347,7 +349,7 @@ function RoomFormActions({
                 }}
                 variant="outlined"
             >
-        ביטול
+                ביטול
             </Button>
         </Box>
     );
@@ -412,7 +414,7 @@ export function RoomFormCard({
                             textAlign: "center",
                         }}
                     >
-            בחר חדר מהרשימה או צור חדר חדש
+                        בחר חדר מהרשימה או צור חדר חדש
                     </Typography>
                 </Box>
             ) : (

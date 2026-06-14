@@ -20,8 +20,8 @@ import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type WeekGroupPanelProps = {
-  group: Array<GanttWeekId>;
-  onExpandGroup: () => void;
+    group: Array<GanttWeekId>;
+    onExpandGroup: () => void;
 } & BoxProps;
 
 export function WeekGroupPanel({
@@ -86,7 +86,11 @@ export function WeekGroupPanel({
         return Object.values(mappings)
             .filter((x) => dayIds.includes(x.dayId))
             .map((x) => (
-                <ModuleItem dayId={x.dayId} key={x.moduleId} moduleId={x.moduleId} />
+                <ModuleItem
+                    dayId={x.dayId}
+                    key={x.moduleId}
+                    moduleId={x.moduleId}
+                />
             ));
     }, [mappings, dayIds]);
 

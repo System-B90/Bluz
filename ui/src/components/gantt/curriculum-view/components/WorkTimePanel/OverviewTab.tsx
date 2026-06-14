@@ -14,8 +14,8 @@ function WeekOverview({
     weekId,
     weekIndex,
 }: {
-  weekId: GanttWeekId;
-  weekIndex: number;
+    weekId: GanttWeekId;
+    weekIndex: number;
 }) {
     const week = useCurriculumWeek(weekId);
 
@@ -45,8 +45,8 @@ function WeekOverview({
 export function OverviewTab({
     weeks,
 }: {
-  curriculumId: GanttCurriculumId;
-  weeks: Array<GanttWeekId>;
+    curriculumId: GanttCurriculumId;
+    weeks: Array<GanttWeekId>;
 }) {
     const overviews = useMemo(
         () =>

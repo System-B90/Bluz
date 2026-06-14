@@ -20,20 +20,20 @@ import { getAllRooms } from "@/app/api/rooms/utils";
 
 type ServerApiRoomsGet = ServerApi<ApiRoomsGetPayload, ApiRoomsGetResponse>;
 type ServerApiRoomUpdate = ServerApi<
-  ApiRoomUpdatePayload,
-  ApiRoomUpdateResponse
+    ApiRoomUpdatePayload,
+    ApiRoomUpdateResponse
 >;
 type ServerApiRoomCreate = ServerApi<
-  ApiRoomCreatePayload,
-  ApiRoomCreateResponse
+    ApiRoomCreatePayload,
+    ApiRoomCreateResponse
 >;
 type ServerApiRoomDelete = ServerApi<
-  ApiRoomDeletePayload,
-  ApiRoomDeleteResponse
+    ApiRoomDeletePayload,
+    ApiRoomDeleteResponse
 >;
 type ServerApiRoomExtendedInfoUpdate = ServerApi<
-  ApiRoomExtendedInfoUpdatePayload,
-  ApiRoomExtendedInfoUpdateResponse
+    ApiRoomExtendedInfoUpdatePayload,
+    ApiRoomExtendedInfoUpdateResponse
 >;
 
 export const GET: ServerApiRoomsGet = async (request) => {
@@ -92,9 +92,9 @@ export const PATCH: ServerApiRoomExtendedInfoUpdate = async (request) => {
         const payload = await request.json();
         if (
             !payload ||
-      payload.roomId === undefined ||
-      payload.roomSource === undefined ||
-      !payload.extendedInfo
+            payload.roomId === undefined ||
+            payload.roomSource === undefined ||
+            !payload.extendedInfo
         ) {
             throw new ClientApiError(
                 "Invalid payload for room extended info update!",

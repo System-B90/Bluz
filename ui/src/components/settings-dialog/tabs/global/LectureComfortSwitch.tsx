@@ -5,9 +5,9 @@ import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 
 type LectureComfortSwitchProps = {
-  value: boolean;
-  onChange: (value: boolean) => void;
-  disabled?: boolean;
+    value: boolean;
+    onChange: (value: boolean) => void;
+    disabled?: boolean;
 };
 
 /**

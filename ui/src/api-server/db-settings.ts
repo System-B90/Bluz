@@ -7,8 +7,8 @@ import { Setting, SettingName } from "@/api-shared/types/settings/settings";
 import { MessageTypes } from "@/settings";
 
 type DbSetting = {
-  key: SettingName;
-  value: Setting;
+    key: SettingName;
+    value: Setting;
 };
 
 async function getDbSetting(
@@ -16,7 +16,7 @@ async function getDbSetting(
     options?: FindOptions,
 ): Promise<null | Setting> {
     const data: null | WithId<DbSetting> =
-    await databaseController.settings.findOne({ key: name }, options);
+        await databaseController.settings.findOne({ key: name }, options);
     return data ? data.value : null;
 }
 
@@ -42,17 +42,17 @@ async function initDbSettings() {
 
     await setDbSetting(
         PRAYER_TIMES_SETTING_KEY,
-    {
-        arvit: new Date(1970, 0, 1, 18, 0, 0, 0),
-        mincha: new Date(1970, 0, 1, 12, 0, 0, 0),
-        shacharit: new Date(1970, 0, 1, 6, 0, 0, 0),
-    } as Setting,
-    { upsert: true },
+        {
+            arvit: new Date(1970, 0, 1, 18, 0, 0, 0),
+            mincha: new Date(1970, 0, 1, 12, 0, 0, 0),
+            shacharit: new Date(1970, 0, 1, 6, 0, 0, 0),
+        } as Setting,
+        { upsert: true },
     );
 }
 
 export namespace DbSettings {
-  export const get = getDbSetting;
-  export const set = setDbSetting;
-  export const init = initDbSettings;
+    export const get = getDbSetting;
+    export const set = setDbSetting;
+    export const init = initDbSettings;
 }

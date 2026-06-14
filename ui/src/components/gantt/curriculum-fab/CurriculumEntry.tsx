@@ -6,9 +6,9 @@ import React from "react";
 import { GanttCurriculum } from "@/api-shared/types/gantt/models";
 
 type CurriculumEntryProps = {
-  curriculum: GanttCurriculum;
-  onClick: () => void;
-  selected: boolean;
+    curriculum: GanttCurriculum;
+    onClick: () => void;
+    selected: boolean;
 };
 
 // Visual distinction between Draft and Prod handled here
@@ -27,8 +27,8 @@ export const CurriculumEntry = React.memo(
                                     color: selected
                                         ? "text.action"
                                         : isDraft
-                                            ? "text.secondary"
-                                            : "text.primary",
+                                          ? "text.secondary"
+                                          : "text.primary",
                                     fontWeight: isDraft ? "normal" : "medium",
                                     fontStyle: isDraft ? "italic" : "normal",
                                 },

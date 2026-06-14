@@ -11,7 +11,8 @@ import { InstructorSelect } from "@/components/base/InstructorSelect";
 
 export function FilterInstructors({ ...props }: BoxProps) {
     const { getInstructor } = useHiveUsers();
-    const { filteredInstructors, setFilteredInstructors } = useCalendarFilters();
+    const { filteredInstructors, setFilteredInstructors } =
+        useCalendarFilters();
 
     const handleChange = (
         event: SelectChangeEvent<typeof filteredInstructors>,
@@ -22,18 +23,20 @@ export function FilterInstructors({ ...props }: BoxProps) {
 
         // Handle potential string autofill values vs actual arrays
         const newIds =
-      typeof value === "string"
-          ? value
-              .split(",")
-              .map(Number)
-              .filter((n) => !isNaN(n))
-          : value;
+            typeof value === "string"
+                ? value
+                      .split(",")
+                      .map(Number)
+                      .filter((n) => !isNaN(n))
+                : value;
 
         setFilteredInstructors(newIds);
     };
 
     const handleDelete = (idToDelete: number) => {
-        setFilteredInstructors((prev) => prev.filter((id) => id !== idToDelete));
+        setFilteredInstructors((prev) =>
+            prev.filter((id) => id !== idToDelete),
+        );
     };
 
     return (

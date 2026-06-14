@@ -16,8 +16,8 @@ import { RoomSettings } from "@/components/settings-dialog/tabs/global/room-sett
 import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
 
 type SettingsDialogProps = {
-  open: boolean;
-  onClose: () => void;
+    open: boolean;
+    onClose: () => void;
 };
 
 export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
@@ -76,7 +76,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 fontFamily: "Assistant, sans-serif",
                             }}
                         >
-              הגדרות
+                            הגדרות
                         </Typography>
                         <Typography
                             sx={{
@@ -85,7 +85,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 mt: 0.5,
                             }}
                         >
-              ניהול העדפות המערכת
+                            ניהול העדפות המערכת
                         </Typography>
                     </Box>
 
@@ -104,20 +104,35 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                     py: 1.5,
                                     borderRadius: "10px",
                                     cursor: "pointer",
-                                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                                    transition:
+                                        "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                                     position: "relative",
                                     userSelect: "none",
-                                    bgcolor: isActive ? "primary.main" : "transparent",
-                                    color: isActive ? "primary.contrastText" : "text.secondary",
-                                    borderRight: isActive ? "4px solid" : "0px solid",
-                                    borderRightColor: isActive ? "primary.dark" : "transparent",
+                                    bgcolor: isActive
+                                        ? "primary.main"
+                                        : "transparent",
+                                    color: isActive
+                                        ? "primary.contrastText"
+                                        : "text.secondary",
+                                    borderRight: isActive
+                                        ? "4px solid"
+                                        : "0px solid",
+                                    borderRightColor: isActive
+                                        ? "primary.dark"
+                                        : "transparent",
                                     boxShadow: isActive
                                         ? "0 4px 12px rgba(103, 200, 221, 0.25)"
                                         : "none",
                                     "&:hover": {
-                                        bgcolor: isActive ? "primary.main" : "action.hover",
-                                        color: isActive ? "primary.contrastText" : "text.primary",
-                                        transform: isActive ? "none" : "translateX(-4px)",
+                                        bgcolor: isActive
+                                            ? "primary.main"
+                                            : "action.hover",
+                                        color: isActive
+                                            ? "primary.contrastText"
+                                            : "text.primary",
+                                        transform: isActive
+                                            ? "none"
+                                            : "translateX(-4px)",
                                     },
                                 }}
                             >
@@ -166,7 +181,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 fontWeight: 600,
                             }}
                         >
-              מצב תצוגה
+                            מצב תצוגה
                         </Typography>
                         <ThemeSelectorIcon />
                     </Box>

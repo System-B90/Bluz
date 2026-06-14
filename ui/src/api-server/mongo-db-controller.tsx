@@ -19,12 +19,12 @@ import {
 import { Setting } from "@/api-shared/types/settings/settings";
 
 export type RoomExtendedInfoDocument = RoomExtendedInfo & {
-  roomId: RoomId;
-  roomSource: RoomSource;
+    roomId: RoomId;
+    roomSource: RoomSource;
 };
 
 const MONGO_CONNECTION_STRING =
-  process.env.MONGO_CONNECTION_STRING ?? "mongodb://127.0.0.1:27017/";
+    process.env.MONGO_CONNECTION_STRING ?? "mongodb://127.0.0.1:27017/";
 
 class DatabaseController {
     private mongoClient!: MongoClient;
@@ -91,7 +91,7 @@ const databaseController = new DatabaseController();
 export { databaseController };
 
 export type ProjectionMap<T> = {
-  [P in keyof T]: 1;
+    [P in keyof T]: 1;
 };
 
 export function createProjectionMap<T extends object>(

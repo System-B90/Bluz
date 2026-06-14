@@ -24,8 +24,8 @@ import { createFromPalette } from "@/components/theme/CreateFromPalette";
 export type ThemeMode = "dark" | "light" | "system";
 
 export type ThemeContextState = {
-  theme: ThemeMode;
-  setTheme: (theme: ThemeMode) => void;
+    theme: ThemeMode;
+    setTheme: (theme: ThemeMode) => void;
 };
 
 const ThemeContext = createContext<ThemeContextState | undefined>(undefined);
@@ -54,7 +54,8 @@ export function BluzThemeProvider({
                             background: "transparent",
                         },
                         "*::-webkit-scrollbar-thumb": {
-                            backgroundColor: theme.palette.action.disabledBackground,
+                            backgroundColor:
+                                theme.palette.action.disabledBackground,
                             borderRadius: "8px",
                         },
                         "*::-webkit-scrollbar-thumb:hover": {
@@ -79,7 +80,7 @@ function InnerThemeProvider({ children }: { children: ReactNode }) {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 

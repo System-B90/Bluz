@@ -33,11 +33,11 @@ import { getRangeForView } from "@/components/schedule/calendar/utils";
 import { Event } from "@/components/schedule/types/event";
 
 type BluzCalendarProps = {
-  handleSaveEvent: (event: Event) => void;
-  handleDeleteEvent: (eventId: Event["id"]) => void;
-  setOpenEventDialog: (open: boolean) => void;
-  setSelectedEvent: Dispatch<SetStateAction<Partial<Event> | undefined>>;
-  events: Array<Event>;
+    handleSaveEvent: (event: Event) => void;
+    handleDeleteEvent: (eventId: Event["id"]) => void;
+    setOpenEventDialog: (open: boolean) => void;
+    setSelectedEvent: Dispatch<SetStateAction<Partial<Event> | undefined>>;
+    events: Array<Event>;
 };
 
 export function BluzCalendar({
@@ -56,14 +56,14 @@ export function BluzCalendar({
     const { rooms } = useRooms();
     const { setStartDate, setEndDate } = useCalendar();
     const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
-    useCalendarFilters();
+        useCalendarFilters();
 
     const hasAnyFilter = useMemo(
         () =>
             hidePrayers ||
-      filteredCourses.length !== 0 ||
-      filteredInstructors.length !== 0 ||
-      showPAsFor !== null,
+            filteredCourses.length !== 0 ||
+            filteredInstructors.length !== 0 ||
+            showPAsFor !== null,
         [filteredCourses, filteredInstructors, showPAsFor, hidePrayers],
     );
 
@@ -78,17 +78,17 @@ export function BluzCalendar({
     }, [isFullscreen]);
 
     const { handleEventDrag, handleSlotSelect, setActiveEvent } =
-    useCalendarHandlers(
-        events,
-        handleSaveEvent,
-        handleDeleteEvent,
-        setSelectedEvent,
-        setOpenEventDialog,
-    );
+        useCalendarHandlers(
+            events,
+            handleSaveEvent,
+            handleDeleteEvent,
+            setSelectedEvent,
+            setOpenEventDialog,
+        );
 
     // Only render the calendar after the component has mounted on the client.
     useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 
@@ -144,40 +144,40 @@ export function BluzCalendar({
             sx={
                 isFullscreen
                     ? {
-                        position: "fixed",
-                        top: 0,
-                        left: 0,
-                        width: "100vw",
-                        height: "100vh",
-                        zIndex: 9999,
-                        bgcolor: "background.paper",
-                        p: 0,
-                        boxSizing: "border-box",
-                        display: "flex",
-                        flexDirection: "column",
-                        overflow: "hidden",
-                        animation:
-                "fullscreen-enter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
-                        "@keyframes fullscreen-enter": {
-                            "0%": {
-                                transform: "scale(0.95)",
-                                opacity: 0,
-                            },
-                            "100%": {
-                                transform: "scale(1)",
-                                opacity: 1,
-                            },
-                        },
-                    }
+                          position: "fixed",
+                          top: 0,
+                          left: 0,
+                          width: "100vw",
+                          height: "100vh",
+                          zIndex: 9999,
+                          bgcolor: "background.paper",
+                          p: 0,
+                          boxSizing: "border-box",
+                          display: "flex",
+                          flexDirection: "column",
+                          overflow: "hidden",
+                          animation:
+                              "fullscreen-enter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+                          "@keyframes fullscreen-enter": {
+                              "0%": {
+                                  transform: "scale(0.95)",
+                                  opacity: 0,
+                              },
+                              "100%": {
+                                  transform: "scale(1)",
+                                  opacity: 1,
+                              },
+                          },
+                      }
                     : {
-                        position: "relative",
-                        height: "100%",
-                        width: "100%",
-                        display: "flex",
-                        flexDirection: "column",
-                        overflow: "hidden",
-                        transition: "all 0.2s ease-in-out",
-                    }
+                          position: "relative",
+                          height: "100%",
+                          width: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          overflow: "hidden",
+                          transition: "all 0.2s ease-in-out",
+                      }
             }
         >
             {/* Floating controls in top-left corner (only when toolbar is hidden / in fullscreen) */}
@@ -217,7 +217,10 @@ export function BluzCalendar({
                                     px: 0.5,
                                 }}
                             >
-                                <FilterListIcon className="animate-pulse" fontSize="small" />
+                                <FilterListIcon
+                                    className="animate-pulse"
+                                    fontSize="small"
+                                />
                             </Box>
                         </Tooltip>
                     ) : null}
@@ -233,7 +236,8 @@ export function BluzCalendar({
                                         color: "primary.main",
                                     },
                                     "&:hover .MuiSvgIcon-root": {
-                                        animation: "pulse-expand 1.2s infinite ease-in-out",
+                                        animation:
+                                            "pulse-expand 1.2s infinite ease-in-out",
                                     },
                                     "@keyframes pulse-expand": {
                                         "0%, 100%": {
@@ -253,7 +257,13 @@ export function BluzCalendar({
                         </Tooltip>
                     ) : (
                         <>
-                            <Tooltip title={showToolbar ? "הסתר סרגל כלים" : "הצג סרגל כלים"}>
+                            <Tooltip
+                                title={
+                                    showToolbar
+                                        ? "הסתר סרגל כלים"
+                                        : "הצג סרגל כלים"
+                                }
+                            >
                                 <IconButton
                                     onClick={() => setShowToolbar(!showToolbar)}
                                     size="small"
@@ -285,7 +295,8 @@ export function BluzCalendar({
                                             color: "primary.main",
                                         },
                                         "&:hover .MuiSvgIcon-root": {
-                                            animation: "pulse-expand 1.2s infinite ease-in-out",
+                                            animation:
+                                                "pulse-expand 1.2s infinite ease-in-out",
                                         },
                                         "@keyframes pulse-expand": {
                                             "0%, 100%": {

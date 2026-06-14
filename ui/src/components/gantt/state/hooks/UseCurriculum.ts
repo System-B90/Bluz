@@ -4,7 +4,7 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useCurriculum(curriculumId: null): undefined;
 export function useCurriculum(
-  curriculumId: GanttCurriculumId,
+    curriculumId: GanttCurriculumId,
 ): GanttCurriculumDocument | undefined;
 export function useCurriculum(
     curriculumId: GanttCurriculumId | null,

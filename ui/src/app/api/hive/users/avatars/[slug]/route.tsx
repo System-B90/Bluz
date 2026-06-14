@@ -17,9 +17,12 @@ export async function GET(
 
     // 3. Verify authentication (we still need the token to authorize the fetch)
     if (!token || !token.data || !extraData || !extraData.accessToken) {
-        return new NextResponse("Unauthorized: Missing session or access token", {
-            status: 401,
-        });
+        return new NextResponse(
+            "Unauthorized: Missing session or access token",
+            {
+                status: 401,
+            },
+        );
     }
 
     const accessToken = extraData.accessToken;
@@ -57,8 +60,8 @@ export async function GET(
             headers: {
                 // Pass along the exact image type (image/jpeg, image/png, etc.) provided by Hive
                 "Content-Type":
-          hiveResponse.headers.get("Content-Type") ??
-          "application/octet-stream",
+                    hiveResponse.headers.get("Content-Type") ??
+                    "application/octet-stream",
                 // Cache the image in the browser for 1 hour to reduce load on the Django server
                 "Cache-Control": "private, max-age=3600",
             },

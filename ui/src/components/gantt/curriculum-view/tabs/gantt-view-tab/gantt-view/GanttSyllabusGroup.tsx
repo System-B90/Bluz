@@ -78,7 +78,9 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
 
         const weekIndices = new Set<number>();
         allMappedDays.forEach((dayId) => {
-            const weekIdx = timelineWeeks.findIndex((w) => w.days.includes(dayId));
+            const weekIdx = timelineWeeks.findIndex((w) =>
+                w.days.includes(dayId),
+            );
             if (weekIdx !== -1) weekIndices.add(weekIdx);
         });
 
@@ -98,14 +100,14 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
 
     const getSpanBorderRadius = (spanVariant: SpanVariant) => {
         switch (spanVariant) {
-        case "start":
-            return "4px 0 0 4px";
-        case "end":
-            return "0 4px 4px 0";
-        case "single":
-            return "4px";
-        default:
-            return "0";
+            case "start":
+                return "4px 0 0 4px";
+            case "end":
+                return "0 4px 4px 0";
+            case "single":
+                return "4px";
+            default:
+                return "0";
         }
     };
 
@@ -123,7 +125,10 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
     const renderCells = () => {
         if (weeklyView) {
             return timelineWeeks.map((week, weekIdx) => {
-                const spanVariant = computeSpanVariant(weekIdx, weekSpanIndices);
+                const spanVariant = computeSpanVariant(
+                    weekIdx,
+                    weekSpanIndices,
+                );
 
                 return (
                     <TableCell
@@ -146,17 +151,21 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                                     top: "50%",
                                     transform: "translateY(-50%)",
                                     left:
-                    spanVariant === "middle" || spanVariant === "end"
-                        ? "-1px"
-                        : "4px",
+                                        spanVariant === "middle" ||
+                                        spanVariant === "end"
+                                            ? "-1px"
+                                            : "4px",
                                     right:
-                    spanVariant === "middle" || spanVariant === "start"
-                        ? "-1px"
-                        : "4px",
+                                        spanVariant === "middle" ||
+                                        spanVariant === "start"
+                                            ? "-1px"
+                                            : "4px",
                                     height: "8px",
-                                    backgroundColor: theme.palette.text.secondary,
+                                    backgroundColor:
+                                        theme.palette.text.secondary,
                                     opacity: 0.2,
-                                    borderRadius: getSpanBorderRadius(spanVariant),
+                                    borderRadius:
+                                        getSpanBorderRadius(spanVariant),
                                     zIndex: 1,
                                 }}
                             />
@@ -192,17 +201,21 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                                     top: "50%",
                                     transform: "translateY(-50%)",
                                     left:
-                    spanVariant === "middle" || spanVariant === "end"
-                        ? "-1px"
-                        : "4px",
+                                        spanVariant === "middle" ||
+                                        spanVariant === "end"
+                                            ? "-1px"
+                                            : "4px",
                                     right:
-                    spanVariant === "middle" || spanVariant === "start"
-                        ? "-1px"
-                        : "4px",
+                                        spanVariant === "middle" ||
+                                        spanVariant === "start"
+                                            ? "-1px"
+                                            : "4px",
                                     height: "8px",
-                                    backgroundColor: theme.palette.text.secondary,
+                                    backgroundColor:
+                                        theme.palette.text.secondary,
                                     opacity: 0.2,
-                                    borderRadius: getSpanBorderRadius(spanVariant),
+                                    borderRadius:
+                                        getSpanBorderRadius(spanVariant),
                                     zIndex: 1,
                                 }}
                             />
@@ -238,7 +251,10 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                         sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         variant="subtitle2"
                     >
-                        <Box component="span" sx={{ fontSize: "0.8rem", width: 16 }}>
+                        <Box
+                            component="span"
+                            sx={{ fontSize: "0.8rem", width: 16 }}
+                        >
                             {isExpanded ? "▼" : "▶"}
                         </Box>
                         {syllabus.title}
@@ -250,8 +266,8 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
 
             {isExpanded
                 ? syllabus.modules.map((moduleId) => (
-                    <GanttModuleRow key={moduleId} moduleId={moduleId} />
-                ))
+                      <GanttModuleRow key={moduleId} moduleId={moduleId} />
+                  ))
                 : null}
         </React.Fragment>
     );

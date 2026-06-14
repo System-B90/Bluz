@@ -17,10 +17,10 @@ import { HiveLogo } from "@/components/base/HiveLogo";
 import { RoomExtendedInfoChip } from "@/components/settings-dialog/tabs/global/room-settings/RoomExtendedInfoChip";
 
 type RoomListItemProps = {
-  room: Room;
-  isActive: boolean;
-  onPopulateForm: (room: Room) => void;
-  onDelete: (roomId: string) => void;
+    room: Room;
+    isActive: boolean;
+    onPopulateForm: (room: Room) => void;
+    onDelete: (roomId: string) => void;
 };
 
 export function RoomListItem({
@@ -33,7 +33,8 @@ export function RoomListItem({
     const isHive = room.source === RoomSource.Hive;
     const ext = room.extendedInfo;
 
-    const hiveLogoColor = theme.palette.mode === "light" ? "#000000" : "#ffffff";
+    const hiveLogoColor =
+        theme.palette.mode === "light" ? "#000000" : "#ffffff";
     const hasSecondaryContent = Boolean(room.description || ext);
 
     const handlePopulate = useCallback(
@@ -111,8 +112,8 @@ export function RoomListItem({
                 bgcolor: isActive
                     ? "action.selected"
                     : theme.palette.mode === "light"
-                        ? "rgba(0,0,0,0.01)"
-                        : "rgba(255,255,255,0.01)",
+                      ? "rgba(0,0,0,0.01)"
+                      : "rgba(255,255,255,0.01)",
                 transition: "all 0.2s ease",
                 "&:hover": {
                     borderColor: isActive ? "primary.main" : "text.secondary",
@@ -148,10 +149,13 @@ export function RoomListItem({
                                     borderRadius: "6px",
                                     color: hiveLogoColor,
                                     borderColor:
-                    theme.palette.mode === "light"
-                        ? "rgba(0,0,0,0.2)"
-                        : "rgba(255,255,255,0.2)",
-                                    "& .MuiChip-icon": { ml: 0.3, color: hiveLogoColor },
+                                        theme.palette.mode === "light"
+                                            ? "rgba(0,0,0,0.2)"
+                                            : "rgba(255,255,255,0.2)",
+                                    "& .MuiChip-icon": {
+                                        ml: 0.3,
+                                        color: hiveLogoColor,
+                                    },
                                 }}
                                 variant="outlined"
                             />
@@ -160,7 +164,12 @@ export function RoomListItem({
                 }
                 secondary={
                     hasSecondaryContent ? (
-                        <Box display="flex" flexDirection="column" gap={0.5} mt={0.5}>
+                        <Box
+                            display="flex"
+                            flexDirection="column"
+                            gap={0.5}
+                            mt={0.5}
+                        >
                             {room.description ? (
                                 <Typography
                                     component="span"
@@ -178,7 +187,12 @@ export function RoomListItem({
                                     {ext.workstationCount !== null && (
                                         <RoomExtendedInfoChip
                                             iconNode={
-                                                <ComputerIcon sx={{ fontSize: "0.7rem !important" }} />
+                                                <ComputerIcon
+                                                    sx={{
+                                                        fontSize:
+                                                            "0.7rem !important",
+                                                    }}
+                                                />
                                             }
                                             label={`${ext.workstationCount} עמדות`}
                                         />
@@ -186,7 +200,12 @@ export function RoomListItem({
                                     {ext.lectureSeatCount !== null && (
                                         <RoomExtendedInfoChip
                                             iconNode={
-                                                <EventSeatIcon sx={{ fontSize: "0.7rem !important" }} />
+                                                <EventSeatIcon
+                                                    sx={{
+                                                        fontSize:
+                                                            "0.7rem !important",
+                                                    }}
+                                                />
                                             }
                                             label={`${ext.lectureSeatCount} כסאות`}
                                         />

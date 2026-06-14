@@ -42,7 +42,9 @@ export function CourseField({
     );
 
     const handleDelete = useCallback((courseIdToDelete: CourseId) => {
-        setCurrentCourseIds((p) => p.filter((id) => id !== courseIdToDelete) ?? []);
+        setCurrentCourseIds(
+            (p) => p.filter((id) => id !== courseIdToDelete) ?? [],
+        );
     }, []);
 
     const onClose = useCallback(() => {

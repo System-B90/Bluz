@@ -16,8 +16,8 @@ import { PrayerSettings as IPrayerSettings } from "@/api-shared/types/settings/p
 import { useSettings } from "@/components/base/SettingsProvider";
 
 type PrayerSettingsProps = {
-  isShrunk?: boolean;
-  onToggleShrink?: () => void;
+    isShrunk?: boolean;
+    onToggleShrink?: () => void;
 };
 
 export function PrayerSettings({
@@ -97,7 +97,10 @@ export function PrayerSettings({
                             <IconButton
                                 onClick={onToggleShrink}
                                 size="small"
-                                sx={{ border: "1px solid", borderColor: "divider" }}
+                                sx={{
+                                    border: "1px solid",
+                                    borderColor: "divider",
+                                }}
                             >
                                 <ChevronLeftIcon sx={{ fontSize: 18 }} />
                             </IconButton>
@@ -145,7 +148,7 @@ export function PrayerSettings({
                                     color: "text.primary",
                                 }}
                             >
-                זמני תפילות
+                                זמני תפילות
                             </Typography>
                             <Typography
                                 sx={{
@@ -154,7 +157,7 @@ export function PrayerSettings({
                                     fontFamily: "Assistant, sans-serif",
                                 }}
                             >
-                זמני תפילות קבועים המשתקפים ביומן
+                                זמני תפילות קבועים המשתקפים ביומן
                             </Typography>
                         </Box>
                     </Box>
@@ -163,7 +166,10 @@ export function PrayerSettings({
                             <IconButton
                                 onClick={onToggleShrink}
                                 size="small"
-                                sx={{ border: "1px solid", borderColor: "divider" }}
+                                sx={{
+                                    border: "1px solid",
+                                    borderColor: "divider",
+                                }}
                             >
                                 <ChevronRightIcon sx={{ fontSize: 18 }} />
                             </IconButton>
@@ -183,9 +189,15 @@ export function PrayerSettings({
                 >
                     {rows.map((row) => {
                         const val = prayerTimes?.[row.key];
-                        const timeStr = val ? dayjs(val).format("HH:mm") : "--:--";
+                        const timeStr = val
+                            ? dayjs(val).format("HH:mm")
+                            : "--:--";
                         return (
-                            <Tooltip key={row.key} placement="left" title={row.label}>
+                            <Tooltip
+                                key={row.key}
+                                placement="left"
+                                title={row.label}
+                            >
                                 <Box
                                     sx={{
                                         display: "flex",
@@ -277,7 +289,9 @@ export function PrayerSettings({
                             <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                                 <TimePicker
                                     label={row.label}
-                                    onChange={(newValue) => handleTimeChange(row.key, newValue)}
+                                    onChange={(newValue) =>
+                                        handleTimeChange(row.key, newValue)
+                                    }
                                     slotProps={{
                                         textField: {
                                             size: "small",
@@ -290,7 +304,9 @@ export function PrayerSettings({
                                             },
                                         },
                                     }}
-                                    value={getDayjsValue(prayerTimes?.[row.key])}
+                                    value={getDayjsValue(
+                                        prayerTimes?.[row.key],
+                                    )}
                                 />
                             </Box>
                         </Box>

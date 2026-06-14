@@ -11,11 +11,11 @@ import { useMemo } from "react";
 import { Event } from "@/components/schedule/types/event";
 
 type EventDurationLabelProps = {
-  event: Event;
-  /** "chip" renders as a Chip (default), "text" renders as plain Typography */
-  variant?: "chip" | "text";
-  size?: ChipProps["size"];
-  sx?: SxProps<Theme>;
+    event: Event;
+    /** "chip" renders as a Chip (default), "text" renders as plain Typography */
+    variant?: "chip" | "text";
+    size?: ChipProps["size"];
+    sx?: SxProps<Theme>;
 };
 
 export function EventDurationLabel({
@@ -36,11 +36,11 @@ export function EventDurationLabel({
     const minutes = durationMinutes % 60;
 
     const durationLabel =
-    hours && minutes
-        ? `${hours}:${String(minutes).padStart(2, "0")}`
-        : hours
-            ? `${hours} ש׳`
-            : `${minutes} ד׳`;
+        hours && minutes
+            ? `${hours}:${String(minutes).padStart(2, "0")}`
+            : hours
+              ? `${hours} ש׳`
+              : `${minutes} ד׳`;
 
     const timeRange = `${start.format("HH:mm")} - ${end.format("HH:mm")}`;
 

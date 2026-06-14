@@ -17,8 +17,8 @@ export function EventClassification({
     event,
     onUpdate,
 }: {
-  event: Partial<Event>;
-  onUpdate: (u: Partial<Event>) => void;
+    event: Partial<Event>;
+    onUpdate: (u: Partial<Event>) => void;
 }) {
     const isPrayer = event?.type === EventType.PRAYER;
 
@@ -43,7 +43,7 @@ export function EventClassification({
                     opacity: isPrayer ? 1 : 0,
                     transform: isPrayer ? "scale(1)" : "scale(0.95)",
                     transition:
-            "all 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                        "all 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     overflow: "hidden",
                     display: "flex",
                     alignItems: "flex-start",
@@ -67,7 +67,7 @@ export function EventClassification({
                     opacity: !isPrayer ? 1 : 0,
                     transform: !isPrayer ? "scale(1)" : "scale(0.95)",
                     transition:
-            "all 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                        "all 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     overflow: "hidden",
                     display: "flex",
                     gap: 2,
@@ -91,7 +91,11 @@ export function EventClassification({
             </Box>
 
             <Box display="flex" flexGrow={1} gap="inherit">
-                <CourseField event={event} fullWidth onBlurCallback={onUpdate} />
+                <CourseField
+                    event={event}
+                    fullWidth
+                    onBlurCallback={onUpdate}
+                />
                 <RoomField event={event} fullWidth onBlurCallback={onUpdate} />
             </Box>
         </Box>

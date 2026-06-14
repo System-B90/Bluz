@@ -113,11 +113,17 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 if (!c) return;
 
                 if (c.type === ConstraintType.Temporal) {
-                    if (c.allowedDays && !c.allowedDays.includes(myDay.dayIndex)) {
+                    if (
+                        c.allowedDays &&
+                        !c.allowedDays.includes(myDay.dayIndex)
+                    ) {
                         if (!v[entityId]) v[entityId] = [];
                         v[entityId].push("מפר ימי עבודה מותרים");
                     }
-                    if (c.forbiddenDays && c.forbiddenDays.includes(myDay.dayIndex)) {
+                    if (
+                        c.forbiddenDays &&
+                        c.forbiddenDays.includes(myDay.dayIndex)
+                    ) {
                         if (!v[entityId]) v[entityId] = [];
                         v[entityId].push("מפר ימי עבודה אסורים");
                     }
@@ -130,9 +136,15 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
 
                     if (c.relation === "after") {
                         if (delta <= 0) isViolated = true;
-                        if (c.minDelayDays !== undefined && delta < c.minDelayDays)
+                        if (
+                            c.minDelayDays !== undefined &&
+                            delta < c.minDelayDays
+                        )
                             isViolated = true;
-                        if (c.maxDelayDays !== undefined && delta > c.maxDelayDays)
+                        if (
+                            c.maxDelayDays !== undefined &&
+                            delta > c.maxDelayDays
+                        )
                             isViolated = true;
                     } else if (c.relation === "before") {
                         if (delta >= 0) isViolated = true;
@@ -277,7 +289,10 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             if (!payload || !target) return;
 
             if (target.targetType === "remove") {
-                if (payload.type === "module-move" || payload.type === "module-shift") {
+                if (
+                    payload.type === "module-move" ||
+                    payload.type === "module-shift"
+                ) {
                     const mDays = moduleMappings[payload.moduleId] || [];
                     const promises: Array<Promise<void>> = [];
 
@@ -317,16 +332,23 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 return;
             }
 
-            if (payload.type === "module-map" && target.targetType === "module") {
+            if (
+                payload.type === "module-map" &&
+                target.targetType === "module"
+            ) {
                 await handleMapModule(payload.moduleId, target.dayId);
             } else if (
                 payload.type === "event-map" &&
-        target.targetType === "event"
+                target.targetType === "event"
             ) {
-                await handleMapEvent(payload.moduleId, payload.eventId, target.dayId);
+                await handleMapEvent(
+                    payload.moduleId,
+                    payload.eventId,
+                    target.dayId,
+                );
             } else if (
                 payload.type === "module-move" &&
-        target.targetType === "module"
+                target.targetType === "module"
             ) {
                 if (payload.sourceDayId !== target.dayId) {
                     await handleMoveModule(
@@ -337,7 +359,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 }
             } else if (
                 payload.type === "module-shift" &&
-        target.targetType === "module"
+                target.targetType === "module"
             ) {
                 const sourceIdx = linearDays.indexOf(payload.sourceDayId);
                 const targetIdx = linearDays.indexOf(target.dayId);
@@ -348,7 +370,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 }
             } else if (
                 payload.type === "event-move" &&
-        target.targetType === "event"
+                target.targetType === "event"
             ) {
                 if (payload.sourceDayId !== target.dayId) {
                     await handleMoveEvent(
@@ -417,8 +439,13 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                             }}
                         >
                             <Box>
-                                <Typography variant="h6">{curriculum.title}</Typography>
-                                <Typography color="text.secondary" variant="body2">
+                                <Typography variant="h6">
+                                    {curriculum.title}
+                                </Typography>
+                                <Typography
+                                    color="text.secondary"
+                                    variant="body2"
+                                >
                                     {curriculum.description}
                                 </Typography>
                             </Box>
@@ -427,7 +454,9 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                     control={
                                         <Switch
                                             checked={weeklyView}
-                                            onChange={(e) => setWeeklyView(e.target.checked)}
+                                            onChange={(e) =>
+                                                setWeeklyView(e.target.checked)
+                                            }
                                         />
                                     }
                                     label="תצוגה שבועית"
@@ -436,7 +465,11 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                     control={
                                         <Switch
                                             checked={showConstraints}
-                                            onChange={(e) => setShowConstraints(e.target.checked)}
+                                            onChange={(e) =>
+                                                setShowConstraints(
+                                                    e.target.checked,
+                                                )
+                                            }
                                         />
                                     }
                                     label="הצג אילוצים"
@@ -444,10 +477,20 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                             </Box>
                         </Box>
 
-                        <Box sx={{ flexGrow: 1, position: "relative", overflow: "hidden" }}>
+                        <Box
+                            sx={{
+                                flexGrow: 1,
+                                position: "relative",
+                                overflow: "hidden",
+                            }}
+                        >
                             <TableContainer
                                 ref={containerRef}
-                                sx={{ width: "100%", height: "100%", overflow: "auto" }}
+                                sx={{
+                                    width: "100%",
+                                    height: "100%",
+                                    overflow: "auto",
+                                }}
                             >
                                 <Table
                                     size="small"
@@ -460,12 +503,14 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                 >
                                     <GanttHeader />
                                     <TableBody>
-                                        {curriculum.syllabuses.map((syllabusId) => (
-                                            <GanttSyllabusGroup
-                                                key={syllabusId}
-                                                syllabusId={syllabusId}
-                                            />
-                                        ))}
+                                        {curriculum.syllabuses.map(
+                                            (syllabusId) => (
+                                                <GanttSyllabusGroup
+                                                    key={syllabusId}
+                                                    syllabusId={syllabusId}
+                                                />
+                                            ),
+                                        )}
                                     </TableBody>
                                 </Table>
                             </TableContainer>

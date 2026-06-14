@@ -31,10 +31,10 @@ export function calculateTotalWorkingTimeForWeeks(
         const week = state.weeks[weekId];
         return (
             accWeek +
-      week.days.reduce((accDay, dayId) => {
-          const day = state.days[dayId];
-          return accDay + day.totalWorkingMinutes / 60;
-      }, 0)
+            week.days.reduce((accDay, dayId) => {
+                const day = state.days[dayId];
+                return accDay + day.totalWorkingMinutes / 60;
+            }, 0)
         );
     }, 0);
 }

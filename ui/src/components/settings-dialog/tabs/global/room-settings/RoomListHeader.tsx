@@ -26,7 +26,7 @@ export function RoomListHeader() {
                         color: "text.primary",
                     }}
                 >
-          כל החדרים
+                    כל החדרים
                 </Typography>
                 <Typography
                     sx={{
@@ -35,7 +35,7 @@ export function RoomListHeader() {
                         fontFamily: "Assistant, sans-serif",
                     }}
                 >
-          ניהול חדרים מהייב וחדרים מותאמים אישית
+                    ניהול חדרים מהייב וחדרים מותאמים אישית
                 </Typography>
             </Box>
         </Box>

@@ -24,17 +24,17 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 export function ModuleConstraintsView({
     moduleId,
 }: {
-  moduleId: GanttModuleId;
+    moduleId: GanttModuleId;
 }) {
     const targetOptions = useTargetOptions();
     const curriculumState = useCurriculumState();
     const { state, removeConstraint, createConstraint, updateConstraint } =
-    useGanttConstraints();
+        useGanttConstraints();
 
     const [draft, setDraft] = useState<DraftConstraint | null>(null);
-    const [editingConstraintId, setEditingConstraintId] = useState<null | string>(
-        null,
-    );
+    const [editingConstraintId, setEditingConstraintId] = useState<
+        null | string
+    >(null);
     const [editingDraft, setEditingDraft] = useState<DraftConstraint | null>(
         null,
     );
@@ -73,8 +73,12 @@ export function ModuleConstraintsView({
                 targetId: draft.targetId,
                 targetType: draft.targetType as "event" | "module",
                 relation: draft.relation,
-                minDelayDays: draft.minDelay ? Number(draft.minDelay) : undefined,
-                maxDelayDays: draft.maxDelay ? Number(draft.maxDelay) : undefined,
+                minDelayDays: draft.minDelay
+                    ? Number(draft.minDelay)
+                    : undefined,
+                maxDelayDays: draft.maxDelay
+                    ? Number(draft.maxDelay)
+                    : undefined,
             };
         } else {
             payload = {
@@ -86,15 +90,15 @@ export function ModuleConstraintsView({
                     ? Array.isArray(draft.allowedDays)
                         ? draft.allowedDays
                         : String(draft.allowedDays)
-                            .split(",")
-                            .map((d: string) => Number(d.trim()))
+                              .split(",")
+                              .map((d: string) => Number(d.trim()))
                     : undefined,
                 forbiddenDays: draft.forbiddenDays
                     ? Array.isArray(draft.forbiddenDays)
                         ? draft.forbiddenDays
                         : String(draft.forbiddenDays)
-                            .split(",")
-                            .map((d: string) => Number(d.trim()))
+                              .split(",")
+                              .map((d: string) => Number(d.trim()))
                     : undefined,
             };
         }
@@ -112,13 +116,13 @@ export function ModuleConstraintsView({
                 targetType: constraint.targetType,
                 relation: constraint.relation,
                 minDelay:
-          constraint.minDelayDays !== undefined
-              ? String(constraint.minDelayDays)
-              : "",
+                    constraint.minDelayDays !== undefined
+                        ? String(constraint.minDelayDays)
+                        : "",
                 maxDelay:
-          constraint.maxDelayDays !== undefined
-              ? String(constraint.maxDelayDays)
-              : "",
+                    constraint.maxDelayDays !== undefined
+                        ? String(constraint.maxDelayDays)
+                        : "",
             });
         } else {
             setEditingDraft({
@@ -159,15 +163,15 @@ export function ModuleConstraintsView({
                     ? Array.isArray(editingDraft.allowedDays)
                         ? editingDraft.allowedDays
                         : String(editingDraft.allowedDays)
-                            .split(",")
-                            .map((d: string) => Number(d.trim()))
+                              .split(",")
+                              .map((d: string) => Number(d.trim()))
                     : undefined,
                 forbiddenDays: editingDraft.forbiddenDays
                     ? Array.isArray(editingDraft.forbiddenDays)
                         ? editingDraft.forbiddenDays
                         : String(editingDraft.forbiddenDays)
-                            .split(",")
-                            .map((d: string) => Number(d.trim()))
+                              .split(",")
+                              .map((d: string) => Number(d.trim()))
                     : undefined,
             };
         }
@@ -194,7 +198,7 @@ export function ModuleConstraintsView({
                         size="small"
                         variant="outlined"
                     >
-            הוספת אילוץ
+                        הוספת אילוץ
                     </Button>
                 </Stack>
 
@@ -205,7 +209,8 @@ export function ModuleConstraintsView({
                 ) : (
                     <Stack spacing={1}>
                         {constraintsList.map((constraint) => {
-                            const isEditing = constraint.id === editingConstraintId;
+                            const isEditing =
+                                constraint.id === editingConstraintId;
                             if (isEditing && editingDraft) {
                                 return (
                                     <DraftConstraintForm
@@ -242,7 +247,7 @@ export function ModuleConstraintsView({
 
                         {constraintsList.length === 0 && !draft && (
                             <Typography color="text.secondary" variant="body2">
-                לא הוגדרו אילוצים למערך זה.
+                                לא הוגדרו אילוצים למערך זה.
                             </Typography>
                         )}
                     </Stack>

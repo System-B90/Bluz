@@ -13,9 +13,9 @@ import {
 } from "@/api-shared/types/gantt/models";
 
 const basicOperations = drizzleOperationsBuilder<
-  GanttCurriculum,
-  typeof ganttCurriculumsSchema,
-  CreateGanttCurriculumPayload
+    GanttCurriculum,
+    typeof ganttCurriculumsSchema,
+    CreateGanttCurriculumPayload
 >({
     table: ganttCurriculumsSchema,
     typeName: "גאנט",
@@ -47,7 +47,14 @@ async function getFullCurriculum(
                                                     event: {
                                                         with: {
                                                             cEC: {
-                                                                where: (c, { eq }) => eq(c.curriculumId, id),
+                                                                where: (
+                                                                    c,
+                                                                    { eq },
+                                                                ) =>
+                                                                    eq(
+                                                                        c.curriculumId,
+                                                                        id,
+                                                                    ),
                                                             },
                                                         },
                                                     },

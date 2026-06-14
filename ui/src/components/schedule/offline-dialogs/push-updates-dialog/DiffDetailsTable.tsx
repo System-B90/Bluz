@@ -18,10 +18,10 @@ import {
 import { Event, EventId } from "@/components/schedule/types/event";
 
 type DiffDetailsTableProps = {
-  eventId: EventId;
-  localModifiedEvent: Event | undefined;
-  capturedVersion: Event | undefined;
-  serverVersion: Event | undefined;
+    eventId: EventId;
+    localModifiedEvent: Event | undefined;
+    capturedVersion: Event | undefined;
+    serverVersion: Event | undefined;
 };
 
 export function DiffDetailsTable({
@@ -46,26 +46,38 @@ export function DiffDetailsTable({
         return allKeys
             .filter((key) => {
                 const hasLocalDiff =
-          (localModifiedEvent !== undefined &&
-            capturedVersion !== undefined &&
-            !areDiffValuesEqual(
-                localModifiedEvent[key],
-                capturedVersion[key],
-            )) ||
-          (localModifiedEvent !== undefined && capturedVersion === undefined) ||
-          (localModifiedEvent === undefined && capturedVersion !== undefined);
+                    (localModifiedEvent !== undefined &&
+                        capturedVersion !== undefined &&
+                        !areDiffValuesEqual(
+                            localModifiedEvent[key],
+                            capturedVersion[key],
+                        )) ||
+                    (localModifiedEvent !== undefined &&
+                        capturedVersion === undefined) ||
+                    (localModifiedEvent === undefined &&
+                        capturedVersion !== undefined);
                 const hasServerDiff =
-          (serverVersion !== undefined &&
-            capturedVersion !== undefined &&
-            !areDiffValuesEqual(serverVersion[key], capturedVersion[key])) ||
-          (serverVersion !== undefined && capturedVersion === undefined) ||
-          (serverVersion === undefined && capturedVersion !== undefined);
+                    (serverVersion !== undefined &&
+                        capturedVersion !== undefined &&
+                        !areDiffValuesEqual(
+                            serverVersion[key],
+                            capturedVersion[key],
+                        )) ||
+                    (serverVersion !== undefined &&
+                        capturedVersion === undefined) ||
+                    (serverVersion === undefined &&
+                        capturedVersion !== undefined);
                 const hasLocalServerDiff =
-          (localModifiedEvent !== undefined &&
-            serverVersion !== undefined &&
-            !areDiffValuesEqual(localModifiedEvent[key], serverVersion[key])) ||
-          (localModifiedEvent !== undefined && serverVersion === undefined) ||
-          (localModifiedEvent === undefined && serverVersion !== undefined);
+                    (localModifiedEvent !== undefined &&
+                        serverVersion !== undefined &&
+                        !areDiffValuesEqual(
+                            localModifiedEvent[key],
+                            serverVersion[key],
+                        )) ||
+                    (localModifiedEvent !== undefined &&
+                        serverVersion === undefined) ||
+                    (localModifiedEvent === undefined &&
+                        serverVersion !== undefined);
 
                 return hasLocalDiff || hasServerDiff || hasLocalServerDiff;
             })
@@ -76,8 +88,8 @@ export function DiffDetailsTable({
 
                 // A field has a conflict if server value differs from captured AND local value differs from captured
                 const isFieldConflicting =
-          !areDiffValuesEqual(serverValue, capturedValue) &&
-          !areDiffValuesEqual(localValue, capturedValue);
+                    !areDiffValuesEqual(serverValue, capturedValue) &&
+                    !areDiffValuesEqual(localValue, capturedValue);
 
                 return (
                     <TableRow
@@ -112,38 +124,40 @@ export function DiffDetailsTable({
                                             display: "inline-block",
                                         }}
                                     >
-                    קונפליקט
+                                        קונפליקט
                                     </Box>
                                 ) : null}
                             </Box>
                         </TableCell>
                         <TableCell>
                             {localModifiedEvent !== undefined &&
-              localModifiedEvent[key] !== undefined ? (
-                                    <Typography>
-                                        {formatValue(localModifiedEvent[key], key)}
-                                    </Typography>
-                                ) : (
-                                    <DeletedItemPlaceholder />
-                                )}
+                            localModifiedEvent[key] !== undefined ? (
+                                <Typography>
+                                    {formatValue(localModifiedEvent[key], key)}
+                                </Typography>
+                            ) : (
+                                <DeletedItemPlaceholder />
+                            )}
                         </TableCell>
                         <TableCell>
                             {capturedVersion !== undefined &&
-              capturedVersion[key] !== undefined ? (
-                                    <Typography color="text.secondary">
-                                        {formatValue(capturedVersion[key], key)}
-                                    </Typography>
-                                ) : (
-                                    <DeletedItemPlaceholder />
-                                )}
+                            capturedVersion[key] !== undefined ? (
+                                <Typography color="text.secondary">
+                                    {formatValue(capturedVersion[key], key)}
+                                </Typography>
+                            ) : (
+                                <DeletedItemPlaceholder />
+                            )}
                         </TableCell>
                         <TableCell>
                             {serverVersion !== undefined &&
-              serverVersion[key] !== undefined ? (
-                                    <Typography>{formatValue(serverVersion[key], key)}</Typography>
-                                ) : (
-                                    <DeletedItemPlaceholder />
-                                )}
+                            serverVersion[key] !== undefined ? (
+                                <Typography>
+                                    {formatValue(serverVersion[key], key)}
+                                </Typography>
+                            ) : (
+                                <DeletedItemPlaceholder />
+                            )}
                         </TableCell>
                     </TableRow>
                 );
@@ -158,7 +172,7 @@ export function DiffDetailsTable({
                 sx={{ fontWeight: 600 }}
                 variant="h6"
             >
-        פרטי השינויים
+                פרטי השינויים
             </Typography>
             <Table aria-label="changes-diff" size="small" sx={{ mb: 1 }}>
                 <TableHead>
@@ -170,10 +184,14 @@ export function DiffDetailsTable({
                             <Typography fontWeight={600}>השינוי שלך</Typography>
                         </TableCell>
                         <TableCell>
-                            <Typography fontWeight={600}>מה שראית לפני ששינית</Typography>
+                            <Typography fontWeight={600}>
+                                מה שראית לפני ששינית
+                            </Typography>
                         </TableCell>
                         <TableCell>
-                            <Typography fontWeight={600}>מה שיש כרגע בשרת</Typography>
+                            <Typography fontWeight={600}>
+                                מה שיש כרגע בשרת
+                            </Typography>
                         </TableCell>
                     </TableRow>
                 </TableHead>

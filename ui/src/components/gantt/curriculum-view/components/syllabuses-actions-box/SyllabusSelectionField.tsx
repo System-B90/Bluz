@@ -22,7 +22,7 @@ import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 
 export type SyllabusSelectionFieldProps = {
-  curriculumId: GanttCurriculumId;
+    curriculumId: GanttCurriculumId;
 } & BoxProps;
 
 export function SyllabusSelectionField({
@@ -34,7 +34,7 @@ export function SyllabusSelectionField({
     const { linkSyllabusToCurriculum } = useSyllabusActions();
     const { syllabusNames } = useSyllabusNames();
     const [currentSyllabusId, setCurrentSyllabusId] =
-    useState<GanttSyllabusId>("");
+        useState<GanttSyllabusId>("");
     const [isLinking, setIsLinking] = useState<boolean>(false);
 
     const onChange = useCallback((ev: SelectChangeEvent<GanttSyllabusId>) => {
@@ -72,7 +72,7 @@ export function SyllabusSelectionField({
                 .filter(
                     ([syllabusId]) =>
                         !curriculum?.syllabuses ||
-            !curriculum?.syllabuses.includes(syllabusId),
+                        !curriculum?.syllabuses.includes(syllabusId),
                 )
                 .map(([syllabusId, syllabusName]) => (
                     <MenuItem key={syllabusId} value={syllabusId}>
@@ -104,7 +104,11 @@ export function SyllabusSelectionField({
                         <CircularProgress color="inherit" size={24} />
                     ) : (
                         <LinkIcon
-                            color={currentSyllabusId.length > 0 ? "info" : "disabled"}
+                            color={
+                                currentSyllabusId.length > 0
+                                    ? "info"
+                                    : "disabled"
+                            }
                             fontSize="medium"
                         />
                     )}

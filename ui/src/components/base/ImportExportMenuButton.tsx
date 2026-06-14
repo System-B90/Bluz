@@ -9,22 +9,22 @@ import MenuItem from "@mui/material/MenuItem";
 import React, { useCallback, useState } from "react";
 
 export type ImportExportMenuButtonProps = {
-  onExport: () => void;
-  onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  importLabel?: string;
-  exportLabel?: string;
-  triggerLabel?: string;
-  accept?: string;
-  size?: "large" | "medium" | "small";
-  variant?: "contained" | "outlined" | "text";
-  color?:
-    | "error"
-    | "info"
-    | "inherit"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "warning";
+    onExport: () => void;
+    onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    importLabel?: string;
+    exportLabel?: string;
+    triggerLabel?: string;
+    accept?: string;
+    size?: "large" | "medium" | "small";
+    variant?: "contained" | "outlined" | "text";
+    color?:
+        | "error"
+        | "info"
+        | "inherit"
+        | "primary"
+        | "secondary"
+        | "success"
+        | "warning";
 };
 
 export function ImportExportMenuButton({

@@ -24,7 +24,7 @@ function ChipAvatar({ className, ...props }: AvatarProps) {
 
                 "& .hive-avatar": {
                     transition:
-            "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease",
+                        "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease",
                 },
 
                 "& .logout-icon": {
@@ -33,7 +33,7 @@ function ChipAvatar({ className, ...props }: AvatarProps) {
                     left: "50%",
                     transform: "translate(120%, -50%) rotate(-30deg)", // start off to the right
                     transition:
-            "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease",
+                        "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease",
                     opacity: 0,
                     pointerEvents: "none",
 

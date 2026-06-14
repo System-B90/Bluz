@@ -31,9 +31,9 @@ export async function getConstraintsForOwner(
     ownerType: EntityType,
 ) {
     const condition =
-    ownerType === "event"
-        ? eq(ganttConstraintsSchema.ownerEventId, ownerId)
-        : eq(ganttConstraintsSchema.ownerModuleId, ownerId);
+        ownerType === "event"
+            ? eq(ganttConstraintsSchema.ownerEventId, ownerId)
+            : eq(ganttConstraintsSchema.ownerModuleId, ownerId);
 
     return await postgresDb.query.ganttConstraintsSchema.findMany({
         where: condition,
@@ -49,9 +49,9 @@ export async function getConstraintsTargetingEntity(
     targetType: EntityType,
 ) {
     const condition =
-    targetType === "event"
-        ? eq(ganttConstraintsSchema.targetEventId, targetId)
-        : eq(ganttConstraintsSchema.targetModuleId, targetId);
+        targetType === "event"
+            ? eq(ganttConstraintsSchema.targetEventId, targetId)
+            : eq(ganttConstraintsSchema.targetModuleId, targetId);
 
     return await postgresDb.query.ganttConstraintsSchema.findMany({
         where: condition,
@@ -135,7 +135,10 @@ export async function getConstraintsForCurriculum(
         .from(ganttConstraintsSchema)
         .where(
             or(
-                inArray(ganttConstraintsSchema.ownerModuleId, moduleIdsSubquery),
+                inArray(
+                    ganttConstraintsSchema.ownerModuleId,
+                    moduleIdsSubquery,
+                ),
                 inArray(ganttConstraintsSchema.ownerEventId, eventIdsSubquery),
             ),
         );
@@ -172,7 +175,10 @@ export async function getConstraintsForSyllabus(syllabusId: string) {
         .from(ganttConstraintsSchema)
         .where(
             or(
-                inArray(ganttConstraintsSchema.ownerModuleId, moduleIdsSubquery),
+                inArray(
+                    ganttConstraintsSchema.ownerModuleId,
+                    moduleIdsSubquery,
+                ),
                 inArray(ganttConstraintsSchema.ownerEventId, eventIdsSubquery),
             ),
         );

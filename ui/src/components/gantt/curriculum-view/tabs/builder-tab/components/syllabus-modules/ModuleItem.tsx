@@ -24,8 +24,8 @@ import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNam
 import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
 export type ModuleItemProps = {
-  moduleId: GanttModuleId;
-  dayId?: GanttDayId;
+    moduleId: GanttModuleId;
+    dayId?: GanttDayId;
 } & PaperProps;
 
 export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
@@ -37,7 +37,11 @@ export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
     const color = useMemo(
         () =>
             syllabusId
-                ? hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2)
+                ? hashSyllabusToColor(
+                      syllabusId,
+                      theme.palette.primary.main,
+                      0.2,
+                  )
                 : undefined,
         [syllabusId, theme.palette.primary.main],
     );
@@ -47,14 +51,14 @@ export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
     );
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-        id: `module-${moduleId}`,
-        data: {
-            type: "MODULE",
-            moduleId,
-            dayId,
-        } as DndDragEventActiveData,
-    });
+        useDraggable({
+            id: `module-${moduleId}`,
+            data: {
+                type: "MODULE",
+                moduleId,
+                dayId,
+            } as DndDragEventActiveData,
+        });
 
     const style = {
         ...props.style,

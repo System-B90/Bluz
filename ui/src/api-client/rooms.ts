@@ -17,20 +17,20 @@ import {
 
 type ClientApiGetRooms = ClientApiNoPayload<ApiRoomsGetResponse>;
 type ClientApiCreateRoom = ClientApi<
-  ApiRoomCreatePayload,
-  ApiRoomCreateResponse
+    ApiRoomCreatePayload,
+    ApiRoomCreateResponse
 >;
 type ClientApiUpdateRoom = ClientApi<
-  ApiRoomUpdatePayload,
-  ApiRoomUpdateResponse
+    ApiRoomUpdatePayload,
+    ApiRoomUpdateResponse
 >;
 type ClientApiDeleteRoom = ClientApi<
-  ApiRoomDeletePayload,
-  ApiRoomDeleteResponse
+    ApiRoomDeletePayload,
+    ApiRoomDeleteResponse
 >;
 type ClientApiUpdateRoomExtendedInfo = ClientApi<
-  ApiRoomExtendedInfoUpdatePayload,
-  ApiRoomExtendedInfoUpdateResponse
+    ApiRoomExtendedInfoUpdatePayload,
+    ApiRoomExtendedInfoUpdateResponse
 >;
 
 export const apiGetRooms: ClientApiGetRooms = async (props) => {
@@ -62,10 +62,10 @@ export const apiDeleteRoom: ClientApiDeleteRoom = async (roomId, props) => {
 };
 
 export const apiUpdateRoomExtendedInfo: ClientApiUpdateRoomExtendedInfo =
-  async (payload, props) => {
-      await safeApiFetcher<ApiRoomExtendedInfoUpdateResponse>("/api/rooms", {
-          ...props,
-          method: "PATCH",
-          body: JSON.stringify(payload),
-      });
-  };
+    async (payload, props) => {
+        await safeApiFetcher<ApiRoomExtendedInfoUpdateResponse>("/api/rooms", {
+            ...props,
+            method: "PATCH",
+            body: JSON.stringify(payload),
+        });
+    };

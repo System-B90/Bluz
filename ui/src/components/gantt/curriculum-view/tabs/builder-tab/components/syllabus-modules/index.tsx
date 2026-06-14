@@ -20,7 +20,7 @@ import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 
 export type SidebarProps = {
-  curriculumId: GanttCurriculumId | null;
+    curriculumId: GanttCurriculumId | null;
 } & BoxProps;
 
 export function SyllabusModulesCurriculumViewSidebar({
@@ -34,7 +34,9 @@ export function SyllabusModulesCurriculumViewSidebar({
 
     const sortedSyllabusIds = useMemo(() => {
         return [...(syllabuses ?? [])].sort((a, b) => {
-            return (syllabusNames[a] ?? "").localeCompare(syllabusNames[b] ?? "");
+            return (syllabusNames[a] ?? "").localeCompare(
+                syllabusNames[b] ?? "",
+            );
         });
     }, [syllabuses, syllabusNames]);
 

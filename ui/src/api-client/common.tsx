@@ -40,7 +40,9 @@ export async function safeApiFetcher<T = unknown>(
                     return data.data;
                 }
 
-                throw constructErrorFromNetworkMessage(data.error as ClientApiError);
+                throw constructErrorFromNetworkMessage(
+                    data.error as ClientApiError,
+                );
             });
         })
         .catch((e: any) => {
@@ -132,9 +134,9 @@ export function enqueueApiErrorSnackbar(
 export type ClientApiProps = Omit<RequestInit, "body" | "method">;
 
 export type ClientApi<PayloadT, ResponseT> = (
-  payload: PayloadT,
-  props?: ClientApiProps,
+    payload: PayloadT,
+    props?: ClientApiProps,
 ) => Promise<ResponseT>;
 export type ClientApiNoPayload<ResponseT> = (
-  props?: ClientApiProps,
+    props?: ClientApiProps,
 ) => Promise<ResponseT>;

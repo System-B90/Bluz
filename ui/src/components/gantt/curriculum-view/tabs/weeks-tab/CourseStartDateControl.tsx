@@ -20,8 +20,8 @@ import {
 import { useCurriculumActions } from "@/components/gantt/state/hooks/gantt-funcs/UseCurriculumActions";
 
 export type CourseStartDateControlProps = {
-  curriculum: GanttCurriculum;
-  curriculumId: GanttCurriculumId;
+    curriculum: GanttCurriculum;
+    curriculumId: GanttCurriculumId;
 };
 
 export function CourseStartDateControl({
@@ -52,21 +52,22 @@ export function CourseStartDateControl({
             }
 
             const nextStartDate =
-        snappedValue && snappedValue.isValid()
-            ? snappedValue.format("YYYY-MM-DD")
-            : null;
+                snappedValue && snappedValue.isValid()
+                    ? snappedValue.format("YYYY-MM-DD")
+                    : null;
 
             if (nextStartDate === curriculum.startDate) {
                 return;
             }
 
-            void updateCurriculum(curriculumId, { startDate: nextStartDate }).catch(
-                (error) =>
-                    enqueueApiErrorSnackbar(
-                        enqueueSnackbar,
-                        "שמירת תאריך תחילת הגאנט נכשלה!",
-                        error,
-                    ),
+            void updateCurriculum(curriculumId, {
+                startDate: nextStartDate,
+            }).catch((error) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "שמירת תאריך תחילת הגאנט נכשלה!",
+                    error,
+                ),
             );
         },
         [curriculum.startDate, curriculumId, enqueueSnackbar, updateCurriculum],

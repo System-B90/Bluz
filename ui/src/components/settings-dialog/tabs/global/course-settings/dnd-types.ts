@@ -1,24 +1,24 @@
 import { CourseId } from "@/api-shared/types/course";
 
 export type DraggedInstructorData = {
-  type: "INSTRUCTOR";
-  instructorId: number;
+    type: "INSTRUCTOR";
+    instructorId: number;
 };
 
 export type DraggedCourseData = {
-  type: "COURSE";
-  courseId: CourseId;
+    type: "COURSE";
+    courseId: CourseId;
 };
 
 export type DraggedItemData = DraggedCourseData | DraggedInstructorData;
 
 export type DropTargetCourseData = {
-  type: "COURSE_DROP";
-  targetCourseId: CourseId;
+    type: "COURSE_DROP";
+    targetCourseId: CourseId;
 };
 
 export type DropTargetRootData = {
-  type: "ROOT_DROP";
+    type: "ROOT_DROP";
 };
 
 export type DropTargetData = DropTargetCourseData | DropTargetRootData;

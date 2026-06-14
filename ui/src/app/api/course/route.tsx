@@ -16,16 +16,16 @@ import {
 
 type ServerApiCourseGet = ServerApi<ApiCourseGetPayload, ApiCourseGetResponse>;
 type ServerApiCourseUpdate = ServerApi<
-  ApiCourseUpdatePayload,
-  ApiCourseUpdateResponse
+    ApiCourseUpdatePayload,
+    ApiCourseUpdateResponse
 >;
 type ServerApiCourseCreate = ServerApi<
-  ApiCourseCreatePayload,
-  ApiCourseCreateResponse
+    ApiCourseCreatePayload,
+    ApiCourseCreateResponse
 >;
 type ServerApiCourseDelete = ServerApi<
-  ApiCourseDeletePayload,
-  ApiCourseDeleteResponse
+    ApiCourseDeletePayload,
+    ApiCourseDeleteResponse
 >;
 
 export const GET: ServerApiCourseGet = async (request) => {

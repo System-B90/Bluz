@@ -1,7 +1,7 @@
 export type ApiResponseJson = {
-  status: number;
-  data?: any;
-  error?: any;
+    status: number;
+    data?: any;
+    error?: any;
 };
 
 export type Keys<T> = keyof T;

@@ -21,7 +21,7 @@ const DEFAULT_EXTENDED_INFO: RoomExtendedInfo = {
 
 export function RoomSettings() {
     const { rooms, addRoom, updateRoom, deleteRoom, updateRoomExtendedInfo } =
-    useRooms();
+        useRooms();
     const { enqueueSnackbar } = useSnackbar();
 
     const [searchQuery, setSearchQuery] = useState("");
@@ -39,7 +39,7 @@ export function RoomSettings() {
         return rooms.filter(
             (r) =>
                 r.name.toLowerCase().includes(query) ||
-        (r.description && r.description.toLowerCase().includes(query)),
+                (r.description && r.description.toLowerCase().includes(query)),
         );
     }, [rooms, searchQuery]);
 
@@ -98,7 +98,9 @@ export function RoomSettings() {
 
             if (isCreating) {
                 if (!trimmedName) {
-                    enqueueSnackbar("שם החדר הוא שדה חובה", { variant: "warning" });
+                    enqueueSnackbar("שם החדר הוא שדה חובה", {
+                        variant: "warning",
+                    });
                     return;
                 }
                 try {
@@ -122,7 +124,9 @@ export function RoomSettings() {
 
             if (selectedRoom.source === RoomSource.Custom) {
                 if (!trimmedName) {
-                    enqueueSnackbar("שם החדר הוא שדה חובה", { variant: "warning" });
+                    enqueueSnackbar("שם החדר הוא שדה חובה", {
+                        variant: "warning",
+                    });
                     return;
                 }
                 try {
@@ -185,7 +189,11 @@ export function RoomSettings() {
                     }
                     await deleteRoom(roomId);
                 } catch (err) {
-                    enqueueApiErrorSnackbar(enqueueSnackbar, "שגיאה במחיקת חדר", err);
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "שגיאה במחיקת חדר",
+                        err,
+                    );
                 }
             }
         },

@@ -18,21 +18,21 @@ import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-func
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export type UseWeekActionsReturn = {
-  createWeek: (payload: CreateGanttWeekPayload) => Promise<GanttWeek>;
-  updateWeek: (
-    weekId: GanttWeekId,
-    updates: Partial<{ comment?: string; weekendDuty?: boolean }>,
-  ) => Promise<GanttWeek>;
-  deleteWeek: (
-    weekId: GanttWeekId,
-    curriculumId: GanttCurriculumId,
-  ) => Promise<void>;
-  createDay: (payload: CreateGanttDayPayload) => Promise<GanttDay>;
-  updateDay: (
-    dayId: GanttDayId,
-    updates: Partial<GanttDay>,
-  ) => Promise<GanttDay>;
-  deleteDay: (dayId: GanttDayId) => Promise<void>;
+    createWeek: (payload: CreateGanttWeekPayload) => Promise<GanttWeek>;
+    updateWeek: (
+        weekId: GanttWeekId,
+        updates: Partial<{ comment?: string; weekendDuty?: boolean }>,
+    ) => Promise<GanttWeek>;
+    deleteWeek: (
+        weekId: GanttWeekId,
+        curriculumId: GanttCurriculumId,
+    ) => Promise<void>;
+    createDay: (payload: CreateGanttDayPayload) => Promise<GanttDay>;
+    updateDay: (
+        dayId: GanttDayId,
+        updates: Partial<GanttDay>,
+    ) => Promise<GanttDay>;
+    deleteDay: (dayId: GanttDayId) => Promise<void>;
 };
 
 export function useWeekActions(): UseWeekActionsReturn {
@@ -54,11 +54,12 @@ export function useWeekActions(): UseWeekActionsReturn {
                             day: {
                                 id: dayLink.day.id,
                                 title:
-                  DAY_NAME_DISPLAY[dayLink.day.dayIndex] ??
-                  `יום ${dayLink.day.dayIndex + 1}`,
+                                    DAY_NAME_DISPLAY[dayLink.day.dayIndex] ??
+                                    `יום ${dayLink.day.dayIndex + 1}`,
                                 weekId: dayLink.weekId,
                                 dayIndex: dayLink.day.dayIndex,
-                                totalWorkingMinutes: dayLink.day.totalWorkingMinutes,
+                                totalWorkingMinutes:
+                                    dayLink.day.totalWorkingMinutes,
                                 comment: dayLink.day.comment,
                             },
                         },
@@ -109,7 +110,10 @@ export function useWeekActions(): UseWeekActionsReturn {
         async (weekId: GanttWeekId, curriculumId: GanttCurriculumId) => {
             return await withGantErrorHandling(async () => {
                 await ganttApi.week.apiDelete(weekId);
-                dispatch({ type: "REMOVE_WEEK", payload: { weekId, curriculumId } });
+                dispatch({
+                    type: "REMOVE_WEEK",
+                    payload: { weekId, curriculumId },
+                });
             }, `Failed to delete week (ID: ${weekId}):`);
         },
         [dispatch],

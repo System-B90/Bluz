@@ -16,9 +16,9 @@ async function updatePrayerEvent({
     prayerEvent,
     newConfig,
 }: {
-  day: Date;
-  prayerEvent: Event;
-  newConfig: PrayerSettings;
+    day: Date;
+    prayerEvent: Event;
+    newConfig: PrayerSettings;
 }) {
     const updatedEvent: PrayerEvent = { ...prayerEvent } as PrayerEvent;
 
@@ -42,54 +42,60 @@ async function updatePrayerEventsInDay({
     day,
     newConfig,
 }: {
-  day: Date;
-  newConfig: PrayerSettings;
+    day: Date;
+    newConfig: PrayerSettings;
 }) {
     const endOfDay = new Date(day.getTime() + 24 * 60 * 60 * 1000 - 1);
     const prayerEvents: Array<PrayerEvent> = (await DbEvent.getInRange(
         day,
         endOfDay,
         undefined,
-    { type: EventType.PRAYER } as any,
+        { type: EventType.PRAYER } as any,
     )) as unknown as Array<PrayerEvent>;
 
     if (prayerEvents.length > 3) {
         throw new Error("Too many prayer events in a day");
     } else if (prayerEvents.length === 0) {
-    // No prayer events in this day, create them
-        const prayersToCreate: Array<PrayerEvent> = Object.values(PrayerType).map(
-            (prayerType) => {
-                const startTime = new Date(
-                    day.getFullYear(),
-                    day.getMonth(),
-                    day.getDate(),
-                    (newConfig[prayerType as keyof PrayerSettings] as Date).getHours(),
-                    (newConfig[prayerType as keyof PrayerSettings] as Date).getMinutes(),
-                    (newConfig[prayerType as keyof PrayerSettings] as Date).getSeconds(),
-                );
+        // No prayer events in this day, create them
+        const prayersToCreate: Array<PrayerEvent> = Object.values(
+            PrayerType,
+        ).map((prayerType) => {
+            const startTime = new Date(
+                day.getFullYear(),
+                day.getMonth(),
+                day.getDate(),
+                (
+                    newConfig[prayerType as keyof PrayerSettings] as Date
+                ).getHours(),
+                (
+                    newConfig[prayerType as keyof PrayerSettings] as Date
+                ).getMinutes(),
+                (
+                    newConfig[prayerType as keyof PrayerSettings] as Date
+                ).getSeconds(),
+            );
 
-                return {
-                    id: crypto.randomUUID(),
-                    name: prayerTypeToHebrew(prayerType),
-                    type: EventType.PRAYER,
-                    startTime,
-                    endTime: new Date(startTime.getTime() + 20 * 60 * 1000), // Add 20min
-                    prayerType: prayerType as PrayerEvent["prayerType"],
-                    subject: 0,
-                    hiveModule: 0,
-                    courses: [],
-                    rooms: [],
-                    instructors: [],
-                    lecturers: [],
-                    tags: [],
-                    notes: "",
-                    locked: true,
-                    required: false,
-                    hidden: false,
-                    personalTalk: false,
-                } as unknown as PrayerEvent;
-            },
-        );
+            return {
+                id: crypto.randomUUID(),
+                name: prayerTypeToHebrew(prayerType),
+                type: EventType.PRAYER,
+                startTime,
+                endTime: new Date(startTime.getTime() + 20 * 60 * 1000), // Add 20min
+                prayerType: prayerType as PrayerEvent["prayerType"],
+                subject: 0,
+                hiveModule: 0,
+                courses: [],
+                rooms: [],
+                instructors: [],
+                lecturers: [],
+                tags: [],
+                notes: "",
+                locked: true,
+                required: false,
+                hidden: false,
+                personalTalk: false,
+            } as unknown as PrayerEvent;
+        });
 
         for (const prayer of prayersToCreate) {
             prayer.id = (
@@ -115,8 +121,8 @@ export async function updatePrayerEvents({
     startDate,
     newConfig,
 }: {
-  startDate: Date;
-  newConfig: PrayerSettings;
+    startDate: Date;
+    newConfig: PrayerSettings;
 }) {
     startDate.setHours(0, 0, 0, 0);
     await Promise.all(

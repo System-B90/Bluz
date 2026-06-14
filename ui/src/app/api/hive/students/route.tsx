@@ -6,8 +6,8 @@ import {
 } from "@/api-shared/types/hive";
 
 type ServerApiHiveStudentsGet = ServerApi<
-  ApiHiveStudentsGetPayload,
-  ApiHiveStudentsGetResponse
+    ApiHiveStudentsGetPayload,
+    ApiHiveStudentsGetResponse
 >;
 
 export const GET: ServerApiHiveStudentsGet = async (request) => {

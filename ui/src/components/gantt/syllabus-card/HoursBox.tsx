@@ -15,7 +15,7 @@ import {
 } from "@/components/gantt/utils";
 
 export type HoursBoxProps = {
-  syllabusId: GanttSyllabusId;
+    syllabusId: GanttSyllabusId;
 } & BoxProps;
 
 export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
@@ -36,7 +36,8 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
         for (const mapping of Object.values(mappings)) {
             if (moduleIdsSet.has(mapping.moduleId)) {
                 if (mapping.eventId) {
-                    totalMinutes += state.events[mapping.eventId]?.minimumDuration ?? 0;
+                    totalMinutes +=
+                        state.events[mapping.eventId]?.minimumDuration ?? 0;
                 } else {
                     const moduleDoc = state.modules[mapping.moduleId];
                     if (moduleDoc) {
@@ -52,9 +53,9 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
     }, [syllabus, mappings, state]);
 
     const progressPercentage =
-    minimumRequiredHours > 0
-        ? Math.min((scheduledHours / minimumRequiredHours) * 100, 100)
-        : 0;
+        minimumRequiredHours > 0
+            ? Math.min((scheduledHours / minimumRequiredHours) * 100, 100)
+            : 0;
 
     return (
         <Box {...props}>
@@ -72,39 +73,66 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                     width={60}
                 />
                 <Stack spacing={0}>
-                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={1}>
+                    <Box
+                        alignItems="baseline"
+                        display="flex"
+                        flexDirection="row"
+                        gap={1}
+                    >
                         <Typography
                             color="text.secondary"
                             fontSize="0.8rem"
                             variant="body2"
                         >
-              שובצו:
+                            שובצו:
                         </Typography>
-                        <Typography fontSize="0.8rem" fontWeight="bold" variant="body2">
+                        <Typography
+                            fontSize="0.8rem"
+                            fontWeight="bold"
+                            variant="body2"
+                        >
                             {scheduledHours}
                         </Typography>
                     </Box>
-                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={1}>
+                    <Box
+                        alignItems="baseline"
+                        display="flex"
+                        flexDirection="row"
+                        gap={1}
+                    >
                         <Typography
                             color="text.secondary"
                             fontSize="0.8rem"
                             variant="body2"
                         >
-              מינימום:
+                            מינימום:
                         </Typography>
-                        <Typography fontSize="0.8rem" fontWeight="bold" variant="body2">
+                        <Typography
+                            fontSize="0.8rem"
+                            fontWeight="bold"
+                            variant="body2"
+                        >
                             {minimumRequiredHours}
                         </Typography>
                     </Box>
-                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={1}>
+                    <Box
+                        alignItems="baseline"
+                        display="flex"
+                        flexDirection="row"
+                        gap={1}
+                    >
                         <Typography
                             color="text.secondary"
                             fontSize="0.8rem"
                             variant="body2"
                         >
-              אידיאל:
+                            אידיאל:
                         </Typography>
-                        <Typography fontSize="0.8rem" fontWeight="bold" variant="body2">
+                        <Typography
+                            fontSize="0.8rem"
+                            fontWeight="bold"
+                            variant="body2"
+                        >
                             {wantedHours}
                         </Typography>
                     </Box>

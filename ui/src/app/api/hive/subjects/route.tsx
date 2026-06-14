@@ -6,8 +6,8 @@ import {
 } from "@/api-shared/types/subject";
 
 type ServerApiHiveSubjectsGet = ServerApi<
-  ApiHiveSubjectsGetPayload,
-  ApiHiveSubjectsGetResponse
+    ApiHiveSubjectsGetPayload,
+    ApiHiveSubjectsGetResponse
 >;
 
 export const GET: ServerApiHiveSubjectsGet = async (request) => {

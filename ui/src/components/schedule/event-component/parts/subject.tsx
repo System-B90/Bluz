@@ -14,7 +14,10 @@ export function SubjectComponent({
     ...props
 }: { subjectId: SubjectLike } & TypographyProps) {
     const { getSubject } = useHiveSubjects();
-    const subject = useMemo(() => getSubject(subjectId), [subjectId, getSubject]);
+    const subject = useMemo(
+        () => getSubject(subjectId),
+        [subjectId, getSubject],
+    );
 
     return (
         <Link
@@ -31,7 +34,10 @@ export function ModuleComponent({
     ...props
 }: { moduleId: ModuleLike } & TypographyProps) {
     const { getModule } = useHiveModules();
-    const hiveModule = useMemo(() => getModule(moduleId), [moduleId, getModule]);
+    const hiveModule = useMemo(
+        () => getModule(moduleId),
+        [moduleId, getModule],
+    );
 
     return (
         <Link

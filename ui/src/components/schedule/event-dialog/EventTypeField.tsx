@@ -20,18 +20,18 @@ import {
 
 function getEventTypeIcon(type: EventType, props = {}) {
     switch (type) {
-    case EventType.EXERCISE:
-        return <CoPresentIcon {...props} />;
-    case EventType.LECTURE:
-        return <SchoolIcon {...props} />;
-    case EventType.OTHER:
-        return <QuizIcon {...props} />;
-    case EventType.BREAK:
-        return <EmojiFoodBeverageIcon {...props} />;
-    case EventType.PRAYER:
-        return <SynagogueIcon {...props} />;
-    default:
-        return null;
+        case EventType.EXERCISE:
+            return <CoPresentIcon {...props} />;
+        case EventType.LECTURE:
+            return <SchoolIcon {...props} />;
+        case EventType.OTHER:
+            return <QuizIcon {...props} />;
+        case EventType.BREAK:
+            return <EmojiFoodBeverageIcon {...props} />;
+        case EventType.PRAYER:
+            return <SynagogueIcon {...props} />;
+        default:
+            return null;
     }
 }
 
@@ -65,7 +65,10 @@ export function EventTypeField({
 
     return (
         <Box alignItems="center" display="flex" gap={1.5} {...props}>
-            {getEventTypeIcon(currentType, { color: "action", sx: { fontSize: 26 } })}
+            {getEventTypeIcon(currentType, {
+                color: "action",
+                sx: { fontSize: 26 },
+            })}
             <FormControl fullWidth sx={{ flexGrow: 1 }}>
                 <InputLabel>סוג</InputLabel>
                 <Select
@@ -82,7 +85,10 @@ export function EventTypeField({
                     {eventTypes.map((type) => (
                         <MenuItem key={type} value={type}>
                             <Box alignItems="center" display="flex" gap={1}>
-                                {getEventTypeIcon(type, { fontSize: "small", color: "action" })}
+                                {getEventTypeIcon(type, {
+                                    fontSize: "small",
+                                    color: "action",
+                                })}
                                 {eventTypeToHebrew(type)}
                             </Box>
                         </MenuItem>

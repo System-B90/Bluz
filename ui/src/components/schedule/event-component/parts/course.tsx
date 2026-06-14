@@ -38,9 +38,9 @@ export function CourseComponent({
     chipSize: _chipSize,
     ...props
 }: {
-  courseIds: Array<CourseId>;
-  showCaption?: boolean;
-  chipSize?: ChipProps["size"];
+    courseIds: Array<CourseId>;
+    showCaption?: boolean;
+    chipSize?: ChipProps["size"];
 } & BoxProps) {
     const { getCourse } = useCourses();
     const courses = useMemo(

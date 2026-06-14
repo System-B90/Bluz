@@ -9,7 +9,7 @@ import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 
 export type DeleteCurriculumActionProps = {
-  onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
+    onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
 } & CurriculumAwareActionItemProps;
 
 export function DeleteCurriculumAction({
@@ -27,7 +27,11 @@ export function DeleteCurriculumAction({
             .apiDelete(sourceCurriculum.id)
             .then(() => onDelete(sourceCurriculum.id))
             .catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "מחיקת הגאנט נכשלה!", error),
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "מחיקת הגאנט נכשלה!",
+                    error,
+                ),
             )
             .finally(() => onProcessingChange(false));
     }, [enqueueSnackbar, onDelete, onProcessingChange, sourceCurriculum]);
@@ -39,7 +43,7 @@ export function DeleteCurriculumAction({
             startIcon={<DeleteOutlineIcon fontSize="small" />}
             {...props}
         >
-      מחיקה
+            מחיקה
         </ActionItemButton>
     );
 }

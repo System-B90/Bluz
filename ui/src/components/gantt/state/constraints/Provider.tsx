@@ -25,20 +25,20 @@ import { GanttConstraintContext } from "@/components/gantt/state/constraints/con
 import { ganttConstraintReducer } from "@/components/gantt/state/constraints/reducer";
 
 export type ProviderScope =
-  | { type: "curriculum"; curriculumId: GanttCurriculumId }
-  | {
-      type: "module";
-      curriculumId: GanttCurriculumId;
-      syllabusId: string;
-      moduleId: GanttModuleId;
-    };
+    | { type: "curriculum"; curriculumId: GanttCurriculumId }
+    | {
+          type: "module";
+          curriculumId: GanttCurriculumId;
+          syllabusId: string;
+          moduleId: GanttModuleId;
+      };
 
 export function GanttConstraintProvider({
     children,
     context,
 }: {
-  children: ReactNode;
-  context: ProviderScope;
+    children: ReactNode;
+    context: ProviderScope;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const [state, dispatch] = useReducer(ganttConstraintReducer, {
@@ -57,7 +57,7 @@ export function GanttConstraintProvider({
             // In module scope, we cannot modify constraints owned by a DIFFERENT module.
             if (
                 constraint.ownerModuleId &&
-        constraint.ownerModuleId !== context.moduleId
+                constraint.ownerModuleId !== context.moduleId
             ) {
                 return false;
             }
@@ -76,9 +76,12 @@ export function GanttConstraintProvider({
         dispatch({ type: "SET_LOADING", payload: true });
         try {
             const queryOptions =
-        context.type === "module"
-            ? { moduleId: context.moduleId, syllabusId: context.syllabusId }
-            : {};
+                context.type === "module"
+                    ? {
+                          moduleId: context.moduleId,
+                          syllabusId: context.syllabusId,
+                      }
+                    : {};
             const data = await ganttApi.constraints.apiGet(
                 curriculumId,
                 queryOptions,
@@ -86,7 +89,11 @@ export function GanttConstraintProvider({
 
             dispatch({ type: "SET_CONSTRAINTS", payload: data });
         } catch (error) {
-            enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת אילוצים נכשלה!", error);
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "טעינת אילוצים נכשלה!",
+                error,
+            );
             dispatch({ type: "SET_LOADING", payload: false });
         }
     }, [dispatch, curriculumId, context, enqueueSnackbar]);
@@ -115,13 +122,23 @@ export function GanttConstraintProvider({
                     constraint,
                 );
 
-                dispatch({ type: "DELETE_CONSTRAINT", payload: { id: constraintId } });
+                dispatch({
+                    type: "DELETE_CONSTRAINT",
+                    payload: { id: constraintId },
+                });
                 dispatch({ type: "UPSERT_CONSTRAINT", payload: result });
 
                 return result;
             } catch (e) {
-                dispatch({ type: "DELETE_CONSTRAINT", payload: { id: constraintId } });
-                enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת אילוץ נכשלה!", e);
+                dispatch({
+                    type: "DELETE_CONSTRAINT",
+                    payload: { id: constraintId },
+                });
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "יצירת אילוץ נכשלה!",
+                    e,
+                );
                 return undefined;
             }
         },
@@ -134,9 +151,12 @@ export function GanttConstraintProvider({
             if (!originalConstraint) return;
 
             if (!canModify(originalConstraint)) {
-                enqueueSnackbar("אינך יכול לערוך אילוץ המוגדר על ידי מודול אחר.", {
-                    variant: "warning",
-                });
+                enqueueSnackbar(
+                    "אינך יכול לערוך אילוץ המוגדר על ידי מודול אחר.",
+                    {
+                        variant: "warning",
+                    },
+                );
                 return;
             }
 
@@ -157,8 +177,15 @@ export function GanttConstraintProvider({
                     dispatch({ type: "UPSERT_CONSTRAINT", payload: result });
                 }
             } catch (e) {
-                dispatch({ type: "UPSERT_CONSTRAINT", payload: originalConstraint });
-                enqueueApiErrorSnackbar(enqueueSnackbar, "עדכון אילוץ נכשל!", e);
+                dispatch({
+                    type: "UPSERT_CONSTRAINT",
+                    payload: originalConstraint,
+                });
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "עדכון אילוץ נכשל!",
+                    e,
+                );
             }
         },
         [state.constraints, curriculumId, dispatch, canModify, enqueueSnackbar],
@@ -170,9 +197,12 @@ export function GanttConstraintProvider({
             if (!originalConstraint) return;
 
             if (!canModify(originalConstraint)) {
-                enqueueSnackbar("אינך יכול למחוק אילוץ המוגדר על ידי מודול אחר.", {
-                    variant: "error",
-                });
+                enqueueSnackbar(
+                    "אינך יכול למחוק אילוץ המוגדר על ידי מודול אחר.",
+                    {
+                        variant: "error",
+                    },
+                );
                 return;
             }
 
@@ -181,15 +211,22 @@ export function GanttConstraintProvider({
             try {
                 await ganttApi.constraints.apiDelete(curriculumId, id);
             } catch (e) {
-                dispatch({ type: "UPSERT_CONSTRAINT", payload: originalConstraint });
-                enqueueApiErrorSnackbar(enqueueSnackbar, "מחיקת אילוץ נכשלה!", e);
+                dispatch({
+                    type: "UPSERT_CONSTRAINT",
+                    payload: originalConstraint,
+                });
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "מחיקת אילוץ נכשלה!",
+                    e,
+                );
             }
         },
         [state.constraints, curriculumId, dispatch, canModify, enqueueSnackbar],
     );
 
     useEffect(() => {
-    // Error handling is done inside the refresh function
+        // Error handling is done inside the refresh function
         void refreshConstraints();
     }, [refreshConstraints]);
 

@@ -13,16 +13,16 @@ import { DiffDetailsTable } from "@/components/schedule/offline-dialogs/push-upd
 import { Event, EventId } from "@/components/schedule/types/event";
 
 type EventListEntryProps = {
-  isItemSelected: boolean;
-  handleEntryClick: (
-    event: React.MouseEvent<HTMLTableRowElement>,
-    entryId: EventId,
-  ) => void;
-  eventId: EventId;
-  localModifiedEvent: Event | undefined;
-  serverVersion: Event | undefined;
-  capturedVersion: Event | undefined;
-  conflicting: boolean;
+    isItemSelected: boolean;
+    handleEntryClick: (
+        event: React.MouseEvent<HTMLTableRowElement>,
+        entryId: EventId,
+    ) => void;
+    eventId: EventId;
+    localModifiedEvent: Event | undefined;
+    serverVersion: Event | undefined;
+    capturedVersion: Event | undefined;
+    conflicting: boolean;
 };
 
 export function EventListEntry({
@@ -56,7 +56,11 @@ export function EventListEntry({
                         }}
                         size="small"
                     >
-                        {expanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                        {expanded ? (
+                            <KeyboardArrowUpIcon />
+                        ) : (
+                            <KeyboardArrowDownIcon />
+                        )}
                     </IconButton>
                 </TableCell>
                 <TableCell component="th" scope="row">
@@ -65,9 +69,9 @@ export function EventListEntry({
                 <TableCell>
                     <Typography>
                         {localModifiedEvent?.name ??
-              serverVersion?.name ??
-              capturedVersion?.name ??
-              "מופע חדש"}
+                            serverVersion?.name ??
+                            capturedVersion?.name ??
+                            "מופע חדש"}
                     </Typography>
                 </TableCell>
                 <TableCell>
@@ -83,7 +87,10 @@ export function EventListEntry({
                 </TableCell>
             </TableRow>
             <TableRow>
-                <TableCell colSpan={5} style={{ paddingBottom: 0, paddingTop: 0 }}>
+                <TableCell
+                    colSpan={5}
+                    style={{ paddingBottom: 0, paddingTop: 0 }}
+                >
                     <Collapse in={expanded} timeout="auto" unmountOnExit>
                         <DiffDetailsTable
                             capturedVersion={capturedVersion}

@@ -1,11 +1,11 @@
 export type Outsider = {
-  id: string; // unique identifier (e.g. outsider-uuid)
-  name: string; // שם מלא
-  phone: string; // טלפון
-  personalNumber?: string; // מספר אישי (7 digits)
-  idNumber?: string; // ת.ז. (9 digits)
-  releaseDate?: string; // תאריך שחרור (ISO string)
-  comment?: string; // הערה
+    id: string; // unique identifier (e.g. outsider-uuid)
+    name: string; // שם מלא
+    phone: string; // טלפון
+    personalNumber?: string; // מספר אישי (7 digits)
+    idNumber?: string; // ת.ז. (9 digits)
+    releaseDate?: string; // תאריך שחרור (ISO string)
+    comment?: string; // הערה
 };
 
 export type ApiOutsidersGetPayload = void;

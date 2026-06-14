@@ -6,8 +6,8 @@ import { EditableCurriculumField } from "@/components/gantt/curriculum-view/comp
 import { useCurriculumActions } from "@/components/gantt/state/hooks/gantt-funcs/UseCurriculumActions";
 
 export type CurriculumDescriptionProps = {
-  curriculumId: GanttCurriculumId | null;
-  description?: string;
+    curriculumId: GanttCurriculumId | null;
+    description?: string;
 };
 
 export function CurriculumDescription({
@@ -20,7 +20,9 @@ export function CurriculumDescription({
             if (!curriculumId) {
                 return;
             }
-            await updateCurriculum(curriculumId, { description: nextDescription });
+            await updateCurriculum(curriculumId, {
+                description: nextDescription,
+            });
         },
         [curriculumId, updateCurriculum],
     );

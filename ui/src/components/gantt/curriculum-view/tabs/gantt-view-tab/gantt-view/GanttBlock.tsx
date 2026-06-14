@@ -20,24 +20,24 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
     const theme = useTheme();
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-        id,
-        data: payload,
-    });
+        useDraggable({
+            id,
+            data: payload,
+        });
 
     const style = transform
         ? {
-            transform: `translate3d(${transform.x}px, ${transform.y}px, 0)${isDragging ? " rotate(2.5deg) scale(1.02)" : ""}`,
-            zIndex: 9999,
-        }
+              transform: `translate3d(${transform.x}px, ${transform.y}px, 0)${isDragging ? " rotate(2.5deg) scale(1.02)" : ""}`,
+              zIndex: 9999,
+          }
         : undefined;
 
     const blockWidth =
-    spanLength > 1
-        ? `calc(${spanLength * 100}% - 8px)`
-        : isAbsolute
-            ? "calc(100% - 8px)"
-            : "100%";
+        spanLength > 1
+            ? `calc(${spanLength * 100}% - 8px)`
+            : isAbsolute
+              ? "calc(100% - 8px)"
+              : "100%";
 
     const isViolated = violations.length > 0;
 
@@ -56,10 +56,14 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
                 height: "24px",
                 backgroundColor: theme.palette.primary.main,
                 borderRadius: "4px",
-                border: isViolated ? `2px solid ${theme.palette.error.main}` : "none",
+                border: isViolated
+                    ? `2px solid ${theme.palette.error.main}`
+                    : "none",
                 cursor: isDragging ? "grabbing" : "grab",
                 opacity: isDragging ? 0.8 : isOpaque ? 0.5 : 1,
-                boxShadow: isDragging ? "0 10px 25px rgba(0, 0, 0, 0.2)" : "none",
+                boxShadow: isDragging
+                    ? "0 10px 25px rgba(0, 0, 0, 0.2)"
+                    : "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

@@ -9,7 +9,7 @@ import { CurriculumViewSidebar } from "@/components/gantt/curriculum-view/compon
 import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
 
 export type CurriculumViewProps = {
-  curriculumId: GanttCurriculumId | null;
+    curriculumId: GanttCurriculumId | null;
 } & BoxProps;
 
 export function CurriculumView({

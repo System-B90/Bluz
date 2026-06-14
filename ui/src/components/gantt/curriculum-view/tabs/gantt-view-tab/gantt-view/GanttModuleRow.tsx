@@ -27,10 +27,12 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
     } = useGanttContext();
     const [isExpanded, setIsExpanded] = useState(false);
 
-    const { isOver: isRemoveOver, setNodeRef: setRemoveNodeRef } = useDroppable({
-        id: `drop-remove-module-${moduleId}`,
-        data: { targetType: "remove", moduleId, eventId: null },
-    });
+    const { isOver: isRemoveOver, setNodeRef: setRemoveNodeRef } = useDroppable(
+        {
+            id: `drop-remove-module-${moduleId}`,
+            data: { targetType: "remove", moduleId, eventId: null },
+        },
+    );
 
     const hasEvents = useMemo(
         () => ganttModule?.events && ganttModule?.events.length > 0,
@@ -80,7 +82,9 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
 
         const weekIndices = new Set<number>();
         dayIds.forEach((dayId) => {
-            const weekIdx = timelineWeeks.findIndex((w) => w.days.includes(dayId));
+            const weekIdx = timelineWeeks.findIndex((w) =>
+                w.days.includes(dayId),
+            );
             if (weekIdx !== -1) weekIndices.add(weekIdx);
         });
 
@@ -104,8 +108,8 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
             ? weekSpanIndices.max - weekSpanIndices.min + 1
             : 1
         : spanIndices
-            ? spanIndices.max - spanIndices.min + 1
-            : 1;
+          ? spanIndices.max - spanIndices.min + 1
+          : 1;
 
     // Build cells depending on view mode
     const renderCells = () => {
@@ -120,7 +124,8 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                 const lastWeek = timelineWeeks[weekSpanIndices.max];
                 const firstDayLinear = linearDays[spanIndices.min];
                 const lastDayLinear = linearDays[spanIndices.max];
-                const firstDayPosInWeek = firstWeek.days.indexOf(firstDayLinear);
+                const firstDayPosInWeek =
+                    firstWeek.days.indexOf(firstDayLinear);
                 const lastDayPosInWeek = lastWeek.days.indexOf(lastDayLinear);
 
                 const startFrac = firstDayPosInWeek / firstWeek.days.length;
@@ -129,14 +134,16 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
 
                 blockLeftPx = Math.round(startFrac * CELL) + 2;
                 blockWidthPx =
-          Math.round(weekSpan * CELL + endFrac * CELL - startFrac * CELL) - 4;
+                    Math.round(
+                        weekSpan * CELL + endFrac * CELL - startFrac * CELL,
+                    ) - 4;
                 blockWidthPx = Math.max(blockWidthPx, 16); // minimum visible width
             }
 
             return timelineWeeks.map((week, weekIdx) => {
                 const firstDayId = week.days[0];
                 const isSpanStart =
-          weekSpanIndices !== null && weekIdx === weekSpanIndices.min;
+                    weekSpanIndices !== null && weekIdx === weekSpanIndices.min;
 
                 return (
                     <GanttCell
@@ -151,12 +158,18 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                         blockWidthPx={isSpanStart ? blockWidthPx : undefined}
                         dayId={firstDayId}
                         dropId={`drop-module-${moduleId}-${firstDayId}`}
-                        elementId={isSpanStart ? `block-module-${moduleId}` : undefined}
+                        elementId={
+                            isSpanStart ? `block-module-${moduleId}` : undefined
+                        }
                         hasBlock={isSpanStart}
                         isAbsoluteBlock={true}
                         isOpaque={hasEvents ? isExpanded : undefined}
                         key={`week-${week.id}-${moduleId}`}
-                        payloadData={{ targetType: "module", moduleId, dayId: firstDayId }}
+                        payloadData={{
+                            targetType: "module",
+                            moduleId,
+                            dayId: firstDayId,
+                        }}
                         spanLength={spanLength}
                         violations={isSpanStart ? myViolations : undefined}
                     />
@@ -168,7 +181,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
             week.days.map((dayId) => {
                 const dayIndex = linearDays.indexOf(dayId);
                 const isSpanStart =
-          spanIndices !== null && dayIndex === spanIndices.min;
+                    spanIndices !== null && dayIndex === spanIndices.min;
 
                 return (
                     <GanttCell
@@ -181,7 +194,9 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                         blockTitle={ganttModule?.title}
                         dayId={dayId}
                         dropId={`drop-module-${moduleId}-${dayId}`}
-                        elementId={isSpanStart ? `block-module-${moduleId}` : undefined}
+                        elementId={
+                            isSpanStart ? `block-module-${moduleId}` : undefined
+                        }
                         hasBlock={isSpanStart}
                         isAbsoluteBlock={true}
                         isOpaque={hasEvents ? isExpanded : undefined}
@@ -233,7 +248,9 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                             {isExpanded ? "▼" : "▶"}
                         </Box>
                     ) : null}
-                    {!hasEvents && <Box sx={{ width: 20, display: "inline-block" }} />}
+                    {!hasEvents && (
+                        <Box sx={{ width: 20, display: "inline-block" }} />
+                    )}
 
                     <Box sx={{ flexGrow: 1, position: "relative" }}>
                         {isUnmapped ? (
@@ -247,7 +264,11 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                                 violations={myViolations}
                             />
                         ) : (
-                            <Typography noWrap sx={{ lineHeight: "24px" }} variant="body2">
+                            <Typography
+                                noWrap
+                                sx={{ lineHeight: "24px" }}
+                                variant="body2"
+                            >
                                 {ganttModule?.title}
                             </Typography>
                         )}
@@ -259,12 +280,12 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
 
             {isExpanded && hasEvents
                 ? ganttModule?.events?.map((eventId) => (
-                    <GanttEventRow
-                        eventId={eventId}
-                        key={eventId}
-                        moduleId={moduleId}
-                    />
-                ))
+                      <GanttEventRow
+                          eventId={eventId}
+                          key={eventId}
+                          moduleId={moduleId}
+                      />
+                  ))
                 : null}
         </React.Fragment>
     );

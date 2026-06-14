@@ -16,11 +16,11 @@ import { Event, EventId } from "@/components/schedule/types/event";
 
 type EventOrPartial = Event | Omit<Event, "id"> | Partial<Event>;
 type EventDialogProps = {
-  open: boolean;
-  event: EventOrPartial;
-  onClose: () => void;
-  onSave: (event: EventOrPartial) => void;
-  onDelete: (eventId: EventId) => void;
+    open: boolean;
+    event: EventOrPartial;
+    onClose: () => void;
+    onSave: (event: EventOrPartial) => void;
+    onDelete: (eventId: EventId) => void;
 };
 
 export function EventDialog({
@@ -67,12 +67,28 @@ export function EventDialog({
 
             <form onSubmit={handleSubmit}>
                 <DialogContent>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
-                        <EventPrimaryDetails event={event} onUpdate={handleUpdate} />
+                    <Box
+                        sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 3,
+                            mt: 1,
+                        }}
+                    >
+                        <EventPrimaryDetails
+                            event={event}
+                            onUpdate={handleUpdate}
+                        />
 
-                        <EventClassification event={event} onUpdate={handleUpdate} />
+                        <EventClassification
+                            event={event}
+                            onUpdate={handleUpdate}
+                        />
 
-                        <InstructorsField event={event} onBlurCallback={handleUpdate} />
+                        <InstructorsField
+                            event={event}
+                            onBlurCallback={handleUpdate}
+                        />
 
                         <EventToggles event={event} onUpdate={handleUpdate} />
                     </Box>
@@ -82,9 +98,11 @@ export function EventDialog({
                     <Button
                         color="error"
                         disabled={!("id" in event) || !event?.id}
-                        onClick={() => ("id" in event ? onDelete(event.id as string) : {})}
+                        onClick={() =>
+                            "id" in event ? onDelete(event.id as string) : {}
+                        }
                     >
-            מחק
+                        מחק
                     </Button>
                     <Button onClick={onClose}>ביטול</Button>
                     <Button
@@ -92,7 +110,7 @@ export function EventDialog({
                         type="submit"
                         variant="contained"
                     >
-            שמור
+                        שמור
                     </Button>
                 </DialogActions>
             </form>

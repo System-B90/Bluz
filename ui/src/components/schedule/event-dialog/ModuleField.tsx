@@ -9,8 +9,8 @@ import { useHiveModules } from "@/components/base/HiveModulesProvider";
 import { Event, eventHasSubject } from "@/components/schedule/types/event";
 
 type ModuleFieldProps = {
-  event?: Partial<Event>;
-  onEventChange: (updates: Partial<Event>) => void;
+    event?: Partial<Event>;
+    onEventChange: (updates: Partial<Event>) => void;
 };
 
 export function ModuleField({
@@ -34,7 +34,7 @@ export function ModuleField({
         <FormControl
             disabled={
                 (event?.type ? !eventHasSubject(event?.type) : false) ||
-        modules.length === 0
+                modules.length === 0
             }
             fullWidth={false}
             {...props}

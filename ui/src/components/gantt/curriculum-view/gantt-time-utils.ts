@@ -137,15 +137,17 @@ export function getScheduledMinutesForDay({
     mappings,
     state,
 }: {
-  dayId: GanttDayId;
-  mappings: Record<string, GanttCurriculumModuleDayMapping>;
-  state: NormalizedStore;
+    dayId: GanttDayId;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    state: NormalizedStore;
 }): number {
     return Object.values(mappings).reduce((total, mapping) => {
         if (mapping.dayId !== dayId) return total;
 
         if (mapping.eventId) {
-            return total + (state.events[mapping.eventId]?.minimumDuration ?? 0);
+            return (
+                total + (state.events[mapping.eventId]?.minimumDuration ?? 0)
+            );
         }
 
         const moduleDoc = state.modules[mapping.moduleId];
@@ -160,9 +162,9 @@ export function getWeekScheduledMinutes({
     mappings,
     state,
 }: {
-  mappings: Record<string, GanttCurriculumModuleDayMapping>;
-  state: NormalizedStore;
-  week: GanttWeek | undefined;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    state: NormalizedStore;
+    week: GanttWeek | undefined;
 }): number {
     return (week?.days ?? []).reduce(
         (total, dayId) =>
@@ -176,9 +178,9 @@ export function getCurriculumScheduledMinutes({
     mappings,
     state,
 }: {
-  curriculum: GanttCurriculum | undefined;
-  mappings: Record<string, GanttCurriculumModuleDayMapping>;
-  state: NormalizedStore;
+    curriculum: GanttCurriculum | undefined;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    state: NormalizedStore;
 }): number {
     if (!curriculum) return 0;
     return (curriculum.weeks ?? []).reduce((total, weekId) => {

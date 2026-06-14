@@ -10,31 +10,31 @@ import { KeyboardEvent } from "react";
 import { GanttDay } from "@/api-shared/types/gantt/models";
 
 export type DaysTableProps = {
-  days: Array<GanttDay>;
-  canEdit: boolean;
-  weekIndex: number;
-  onHoursChange: (
-    weekIndex: number,
-    dayIndex: number,
-    nextValueRaw: string,
-  ) => void;
-  onHoursSave: (weekIndex: number, dayIndex: number) => Promise<void>;
-  onHoursKeyDown: (
-    event: KeyboardEvent<HTMLInputElement>,
-    weekIndex: number,
-    dayIndex: number,
-  ) => void;
-  onDayCommentChange: (
-    weekIndex: number,
-    dayIndex: number,
-    nextComment: string,
-  ) => void;
-  onDayCommentSave: (weekIndex: number, dayIndex: number) => Promise<void>;
-  onDayCommentKeyDown: (
-    event: KeyboardEvent<HTMLInputElement>,
-    weekIndex: number,
-    dayIndex: number,
-  ) => void;
+    days: Array<GanttDay>;
+    canEdit: boolean;
+    weekIndex: number;
+    onHoursChange: (
+        weekIndex: number,
+        dayIndex: number,
+        nextValueRaw: string,
+    ) => void;
+    onHoursSave: (weekIndex: number, dayIndex: number) => Promise<void>;
+    onHoursKeyDown: (
+        event: KeyboardEvent<HTMLInputElement>,
+        weekIndex: number,
+        dayIndex: number,
+    ) => void;
+    onDayCommentChange: (
+        weekIndex: number,
+        dayIndex: number,
+        nextComment: string,
+    ) => void;
+    onDayCommentSave: (weekIndex: number, dayIndex: number) => Promise<void>;
+    onDayCommentKeyDown: (
+        event: KeyboardEvent<HTMLInputElement>,
+        weekIndex: number,
+        dayIndex: number,
+    ) => void;
 };
 
 export function DaysTable({
@@ -67,13 +67,19 @@ export function DaysTable({
                             <TextField
                                 disabled={!canEdit}
                                 inputProps={{ min: 0, step: 0.5 }}
-                                onBlur={() => void onHoursSave(weekIndex, dayIndex)}
+                                onBlur={() =>
+                                    void onHoursSave(weekIndex, dayIndex)
+                                }
                                 onChange={(event) =>
-                                    onHoursChange(weekIndex, dayIndex, event.target.value)
+                                    onHoursChange(
+                                        weekIndex,
+                                        dayIndex,
+                                        event.target.value,
+                                    )
                                 }
-                                onKeyDown={(event: KeyboardEvent<HTMLInputElement>) =>
-                                    onHoursKeyDown(event, weekIndex, dayIndex)
-                                }
+                                onKeyDown={(
+                                    event: KeyboardEvent<HTMLInputElement>,
+                                ) => onHoursKeyDown(event, weekIndex, dayIndex)}
                                 size="small"
                                 sx={{ width: "8rem" }}
                                 type="number"
@@ -84,12 +90,24 @@ export function DaysTable({
                             <TextField
                                 disabled={!canEdit}
                                 fullWidth
-                                onBlur={() => void onDayCommentSave(weekIndex, dayIndex)}
-                                onChange={(event) =>
-                                    onDayCommentChange(weekIndex, dayIndex, event.target.value)
+                                onBlur={() =>
+                                    void onDayCommentSave(weekIndex, dayIndex)
                                 }
-                                onKeyDown={(event: KeyboardEvent<HTMLInputElement>) =>
-                                    onDayCommentKeyDown(event, weekIndex, dayIndex)
+                                onChange={(event) =>
+                                    onDayCommentChange(
+                                        weekIndex,
+                                        dayIndex,
+                                        event.target.value,
+                                    )
+                                }
+                                onKeyDown={(
+                                    event: KeyboardEvent<HTMLInputElement>,
+                                ) =>
+                                    onDayCommentKeyDown(
+                                        event,
+                                        weekIndex,
+                                        dayIndex,
+                                    )
                                 }
                                 placeholder="הערת יום"
                                 size="small"

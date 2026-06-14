@@ -12,9 +12,9 @@ import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 
 type CustomInstructorSelectProps<T> = {
-  showOutsiders?: boolean;
-  favoriteOutsiders?: Array<string>;
-  excludeTeachers?: boolean;
+    showOutsiders?: boolean;
+    favoriteOutsiders?: Array<string>;
+    excludeTeachers?: boolean;
 } & SelectProps<T>;
 
 const sortHe = (a: string, b: string) => a.localeCompare(b, "he");
@@ -85,19 +85,23 @@ function useInstructorData(
         });
 
         const filterInst = (inst: CourseUser) => {
-            const matchesSearch = inst.display_name.toLowerCase().includes(query);
+            const matchesSearch = inst.display_name
+                .toLowerCase()
+                .includes(query);
             const matchesRole = !excludeTeachers || !inst.teacher;
             return matchesSearch && matchesRole;
         };
 
         const courseGroups: Array<{
-      course: Course;
-      instructors: Array<CourseUser>;
-    }> = [];
+            course: Course;
+            instructors: Array<CourseUser>;
+        }> = [];
 
         const traverse = (parentId: null | string) => {
             const siblings =
-        parentId === null ? rootCourses : coursesByParent[parentId] || [];
+                parentId === null
+                    ? rootCourses
+                    : coursesByParent[parentId] || [];
             const sortedSiblings = [...siblings].sort((a, b) =>
                 sortHe(a.name, b.name),
             );
@@ -156,7 +160,10 @@ export function InstructorSelect<T = unknown>({
     );
 
     const handleSearchEvent = (e: React.KeyboardEvent | React.MouseEvent) => {
-        if (e.type === "keydown" && (e as React.KeyboardEvent).key === "Escape") {
+        if (
+            e.type === "keydown" &&
+            (e as React.KeyboardEvent).key === "Escape"
+        ) {
             return;
         }
         e.stopPropagation();
@@ -197,7 +204,9 @@ export function InstructorSelect<T = unknown>({
                     autoFocus
                     fullWidth
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={excludeTeachers ? "חיפוש מדריך..." : "חיפוש..."}
+                    placeholder={
+                        excludeTeachers ? "חיפוש מדריך..." : "חיפוש..."
+                    }
                     size="small"
                     value={searchQuery}
                 />
@@ -207,19 +216,19 @@ export function InstructorSelect<T = unknown>({
 
             {showOutsiders && favorites.length > 0
                 ? [
-                    <ListSubheader
-                        disableSticky
-                        key="group-favs"
-                        sx={styles.subheaderWarning}
-                    >
-              אנשי חוץ מועדפים
-                    </ListSubheader>,
-                    ...favorites.map((o) => (
-                        <MenuItem key={`outsider-${o.id}`} value={o.id}>
-                            {o.name}
-                        </MenuItem>
-                    )),
-                ]
+                      <ListSubheader
+                          disableSticky
+                          key="group-favs"
+                          sx={styles.subheaderWarning}
+                      >
+                          אנשי חוץ מועדפים
+                      </ListSubheader>,
+                      ...favorites.map((o) => (
+                          <MenuItem key={`outsider-${o.id}`} value={o.id}>
+                              {o.name}
+                          </MenuItem>
+                      )),
+                  ]
                 : null}
 
             {courseGroups.flatMap(({ course, instructors }) => [
@@ -231,7 +240,10 @@ export function InstructorSelect<T = unknown>({
                     {course.name}
                 </ListSubheader>,
                 ...instructors.map((inst) => (
-                    <MenuItem key={`course-${course.id}-${inst.id}`} value={inst.id}>
+                    <MenuItem
+                        key={`course-${course.id}-${inst.id}`}
+                        value={inst.id}
+                    >
                         {inst.display_name}
                     </MenuItem>
                 )),
@@ -239,36 +251,39 @@ export function InstructorSelect<T = unknown>({
 
             {unassigned.length > 0
                 ? [
-                    <ListSubheader
-                        disableSticky
-                        key="group-unassigned"
-                        sx={styles.subheaderDefault}
-                    >
-              ללא מסלול
-                    </ListSubheader>,
-                    ...unassigned.map((inst) => (
-                        <MenuItem key={`unassigned-${inst.id}`} value={inst.id}>
-                            {inst.display_name}
-                        </MenuItem>
-                    )),
-                ]
+                      <ListSubheader
+                          disableSticky
+                          key="group-unassigned"
+                          sx={styles.subheaderDefault}
+                      >
+                          ללא מסלול
+                      </ListSubheader>,
+                      ...unassigned.map((inst) => (
+                          <MenuItem
+                              key={`unassigned-${inst.id}`}
+                              value={inst.id}
+                          >
+                              {inst.display_name}
+                          </MenuItem>
+                      )),
+                  ]
                 : null}
 
             {showOutsiders && others.length > 0
                 ? [
-                    <ListSubheader
-                        disableSticky
-                        key="group-others"
-                        sx={styles.subheaderDefault}
-                    >
-              אנשי חוץ נוספים
-                    </ListSubheader>,
-                    ...others.map((o) => (
-                        <MenuItem key={`outsider-${o.id}`} value={o.id}>
-                            {o.name}
-                        </MenuItem>
-                    )),
-                ]
+                      <ListSubheader
+                          disableSticky
+                          key="group-others"
+                          sx={styles.subheaderDefault}
+                      >
+                          אנשי חוץ נוספים
+                      </ListSubheader>,
+                      ...others.map((o) => (
+                          <MenuItem key={`outsider-${o.id}`} value={o.id}>
+                              {o.name}
+                          </MenuItem>
+                      )),
+                  ]
                 : null}
         </Select>
     );

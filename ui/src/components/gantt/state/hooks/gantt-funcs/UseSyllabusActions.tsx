@@ -52,7 +52,10 @@ export function useSyllabusActions() {
     );
 
     const deleteSyllabus = useCallback(
-        async (curriculumId: GanttCurriculumId, syllabusId: GanttSyllabusId) => {
+        async (
+            curriculumId: GanttCurriculumId,
+            syllabusId: GanttSyllabusId,
+        ) => {
             return await withGantErrorHandling(async () => {
                 await ganttApi.syllabus.apiDelete(syllabusId);
                 dispatch({
@@ -65,7 +68,10 @@ export function useSyllabusActions() {
     );
 
     const linkSyllabusToCurriculum = useCallback(
-        async (curriculumId: GanttCurriculumId, syllabusId: GanttSyllabusId) => {
+        async (
+            curriculumId: GanttCurriculumId,
+            syllabusId: GanttSyllabusId,
+        ) => {
             return await withGantErrorHandling(async () => {
                 const linkedSyllabus = await ganttApi.syllabus.apiLink(
                     syllabusId,
@@ -82,7 +88,10 @@ export function useSyllabusActions() {
     );
 
     const unlinkSyllabusFromCurriculum = useCallback(
-        async (curriculumId: GanttCurriculumId, syllabusId: GanttSyllabusId) => {
+        async (
+            curriculumId: GanttCurriculumId,
+            syllabusId: GanttSyllabusId,
+        ) => {
             return await withGantErrorHandling(async () => {
                 await ganttApi.syllabus.apiUnlink(syllabusId, curriculumId);
                 dispatch({

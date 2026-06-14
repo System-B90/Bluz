@@ -19,9 +19,9 @@ import {
 } from "@/api-shared/types/gantt/models";
 
 const basicOperations = drizzleOperationsBuilder<
-  GanttWeek,
-  typeof ganttWeeksSchema,
-  CreateGanttWeekPayload
+    GanttWeek,
+    typeof ganttWeeksSchema,
+    CreateGanttWeekPayload
 >({
     table: ganttWeeksSchema,
     typeName: "שבוע",

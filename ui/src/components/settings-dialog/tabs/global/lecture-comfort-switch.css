@@ -1,175 +1,175 @@
 /* Lecture Comfort Slider — mirrors the ThemeSelector slider pattern */
 
 .lecture-slider {
-  position: relative;
-  width: 68px;
-  height: 34px;
-  border-radius: 34px;
-  border: none;
-  cursor: pointer;
-  overflow: hidden;
-  transition: background-color 0.4s ease;
-  padding: 0;
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+    position: relative;
+    width: 68px;
+    height: 34px;
+    border-radius: 34px;
+    border: none;
+    cursor: pointer;
+    overflow: hidden;
+    transition: background-color 0.4s ease;
+    padding: 0;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .lecture-slider.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* Track colors */
 .lecture-slider.comfortable {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+    background: linear-gradient(135deg, #22c55e, #16a34a);
 }
 
 .lecture-slider.uncomfortable {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+    background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
 /* Background layers */
 .slider-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  transition: opacity 0.4s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.4s ease;
 }
 
 /* Comfortable BG: sparkles */
 .lecture-slider.uncomfortable .comfort-bg {
-  opacity: 0;
+    opacity: 0;
 }
 
 .lecture-slider.comfortable .comfort-bg {
-  opacity: 1;
+    opacity: 1;
 }
 
 .sparkle {
-  position: absolute;
-  background-color: rgba(255, 255, 255, 0.7);
-  border-radius: 50%;
-  animation: sparkle-pulse 2s infinite ease-in-out;
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    animation: sparkle-pulse 2s infinite ease-in-out;
 }
 
 .sparkle-1 {
-  top: 7px;
-  left: 12px;
-  width: 3px;
-  height: 3px;
-  animation-delay: 0s;
+    top: 7px;
+    left: 12px;
+    width: 3px;
+    height: 3px;
+    animation-delay: 0s;
 }
 
 .sparkle-2 {
-  top: 22px;
-  left: 22px;
-  width: 2px;
-  height: 2px;
-  animation-delay: 0.8s;
+    top: 22px;
+    left: 22px;
+    width: 2px;
+    height: 2px;
+    animation-delay: 0.8s;
 }
 
 @keyframes sparkle-pulse {
-  0%,
-  100% {
-    opacity: 0.4;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.5);
-  }
+    0%,
+    100% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.5);
+    }
 }
 
 /* Uncomfortable BG: dust */
 .lecture-slider.comfortable .discomfort-bg {
-  opacity: 0;
+    opacity: 0;
 }
 
 .lecture-slider.uncomfortable .discomfort-bg {
-  opacity: 1;
+    opacity: 1;
 }
 
 .dust {
-  position: absolute;
-  background-color: rgba(0, 0, 0, 0.15);
-  border-radius: 50%;
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 50%;
 }
 
 .dust-1 {
-  top: 10px;
-  right: 8px;
-  width: 6px;
-  height: 4px;
-  border-radius: 50%;
+    top: 10px;
+    right: 8px;
+    width: 6px;
+    height: 4px;
+    border-radius: 50%;
 }
 
 .dust-2 {
-  top: 20px;
-  right: 16px;
-  width: 4px;
-  height: 3px;
-  border-radius: 50%;
+    top: 20px;
+    right: 16px;
+    width: 4px;
+    height: 3px;
+    border-radius: 50%;
 }
 
 /* Sliding knob */
 .lecture-slider .slider-head {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    background-color 0.5s ease;
-  z-index: 10;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 0.5s ease;
+    z-index: 10;
 }
 
 .lecture-slider.comfortable .slider-head {
-  background-color: #15803d;
-  transform: translateX(0);
-  box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+    background-color: #15803d;
+    transform: translateX(0);
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
 }
 
 .lecture-slider.uncomfortable .slider-head {
-  background-color: #b91c1c;
-  transform: translateX(34px);
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+    background-color: #b91c1c;
+    transform: translateX(34px);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
 }
 
 /* Icon transitions */
 .lecture-slider .icon {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    opacity 0.5s ease,
-    transform 0.5s ease;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        opacity 0.5s ease,
+        transform 0.5s ease;
 }
 
 /* ThumbUp visible when comfortable */
 .lecture-slider.uncomfortable .thumbup-icon {
-  opacity: 0;
-  transform: rotate(-90deg);
+    opacity: 0;
+    transform: rotate(-90deg);
 }
 
 .lecture-slider.comfortable .thumbup-icon {
-  opacity: 1;
-  transform: rotate(0deg);
+    opacity: 1;
+    transform: rotate(0deg);
 }
 
 /* ThumbDown visible when uncomfortable */
 .lecture-slider.uncomfortable .thumbdown-icon {
-  opacity: 1;
-  transform: rotate(0deg);
+    opacity: 1;
+    transform: rotate(0deg);
 }
 
 .lecture-slider.comfortable .thumbdown-icon {
-  opacity: 0;
-  transform: rotate(90deg);
+    opacity: 0;
+    transform: rotate(90deg);
 }

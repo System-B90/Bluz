@@ -21,8 +21,8 @@ import {
 
 // Matches the Omit type used in the Provider context
 export type CreateConstraintPayload =
-  | Omit<RelationalConstraint, "createdAt" | "updatedAt">
-  | Omit<TemporalConstraint, "createdAt" | "updatedAt">;
+    | Omit<RelationalConstraint, "createdAt" | "updatedAt">
+    | Omit<TemporalConstraint, "createdAt" | "updatedAt">;
 
 function normalizeConstraintObject(serverConstraint: any): GanttConstraint {
     console.log("serverConstraint", serverConstraint);
@@ -56,7 +56,8 @@ function normalizeConstraintObject(serverConstraint: any): GanttConstraint {
             targetType,
         };
     } else if (serverConstraint.type === ConstraintType.Temporal) {
-        const { ownerEventId, ownerModuleId, ...otherParams } = serverConstraint;
+        const { ownerEventId, ownerModuleId, ...otherParams } =
+            serverConstraint;
         const ownerType = ownerModuleId ? "module" : "event";
         if (ownerType === "event" && !ownerEventId) {
             throw Error(
@@ -95,9 +96,12 @@ async function apiGetConstraints(
     if (syllabusId) url.searchParams.append("syllabusId", syllabusId);
     if (moduleId) url.searchParams.append("moduleId", moduleId);
 
-    const rawData = await safeApiFetcher<Array<RawBaseDocument>>(url.toString(), {
-        ...options,
-    });
+    const rawData = await safeApiFetcher<Array<RawBaseDocument>>(
+        url.toString(),
+        {
+            ...options,
+        },
+    );
 
     return rawData
         .map(baseDocumentFixup)

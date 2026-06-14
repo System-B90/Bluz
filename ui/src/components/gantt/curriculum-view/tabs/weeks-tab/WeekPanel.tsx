@@ -22,8 +22,8 @@ import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 type WeekPanelProps = {
-  curriculumId: GanttCurriculumId;
-  weekId: GanttWeekId;
+    curriculumId: GanttCurriculumId;
+    weekId: GanttWeekId;
 };
 
 export function WorkTimeChip({ totalHours }: { totalHours: number }) {
@@ -84,7 +84,11 @@ export function WeekPanel({ weekId }: WeekPanelProps) {
             const newValue = e.target.value;
             if (newValue !== week?.comment) {
                 updateWeek(weekId, { comment: newValue }).catch((error) =>
-                    enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת הערה נכשלה!", error),
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "שמירת הערה נכשלה!",
+                        error,
+                    ),
                 );
             }
         },
@@ -132,7 +136,7 @@ export function WeekPanel({ weekId }: WeekPanelProps) {
                         className="text-slate-400 font-bold leading-none"
                         variant="overline"
                     >
-            שבוע {weekNumber}
+                        שבוע {weekNumber}
                     </Typography>
                     <InputBase
                         className="text-sm font-bold text-slate-800"

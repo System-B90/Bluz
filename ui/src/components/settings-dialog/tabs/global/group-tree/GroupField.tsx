@@ -10,9 +10,9 @@ import { Group } from "@/components/schedule/types/group";
 import { groupColors } from "@/components/schedule/types/types";
 
 type GroupFieldProps = {
-  group: Group;
-  attributes: DraggableAttributes;
-  listeners?: SyntheticListenerMap;
+    group: Group;
+    attributes: DraggableAttributes;
+    listeners?: SyntheticListenerMap;
 };
 
 export function GroupField({ group, attributes, listeners }: GroupFieldProps) {
@@ -33,7 +33,10 @@ export function GroupField({ group, attributes, listeners }: GroupFieldProps) {
             <Chip
                 label={group.groupType}
                 size="small"
-                sx={{ backgroundColor: groupColors[group.groupType], color: "#fff" }}
+                sx={{
+                    backgroundColor: groupColors[group.groupType],
+                    color: "#fff",
+                }}
             />
         </Stack>
     );

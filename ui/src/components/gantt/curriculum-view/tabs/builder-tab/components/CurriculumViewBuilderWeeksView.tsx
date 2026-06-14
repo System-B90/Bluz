@@ -23,16 +23,16 @@ export function CurriculumViewBuilderWeeksView({
     groupCount,
     setSelectedWeekGroup,
 }: {
-  curriculumId: GanttCurriculumId;
-  groupCount: number;
-  weeks: Array<GanttWeekId>;
-  setSelectedWeekGroup: Dispatch<
-    SetStateAction<{ start: number; length: number }>
-  >;
+    curriculumId: GanttCurriculumId;
+    groupCount: number;
+    weeks: Array<GanttWeekId>;
+    setSelectedWeekGroup: Dispatch<
+        SetStateAction<{ start: number; length: number }>
+    >;
 }) {
     const { weeks: weeksState } = useCurriculumState();
     const [animationSelectedGroupIndex, setAnimationSelectedGroupIndex] =
-    useState<null | number>(null);
+        useState<null | number>(null);
     const groupedWeeks = useMemo(
         () => partitionWeeks(weeks, groupCount),
         [weeks, groupCount],
@@ -57,7 +57,9 @@ export function CurriculumViewBuilderWeeksView({
                 const groupKey = `group-${firstWeek.id}`;
                 const firstWeekIndex = weeks.indexOf(group[0]);
                 const firstWeekNumber =
-          firstWeekIndex !== -1 ? firstWeekIndex + 1 : (firstWeek?.number ?? 1);
+                    firstWeekIndex !== -1
+                        ? firstWeekIndex + 1
+                        : (firstWeek?.number ?? 1);
 
                 return (
                     <Fragment key={`frag-${groupKey}`}>
@@ -67,20 +69,24 @@ export function CurriculumViewBuilderWeeksView({
                                 animationSelectedGroupIndex === null
                                     ? 1
                                     : animationSelectedGroupIndex === index
-                                        ? 1
-                                        : 0
+                                      ? 1
+                                      : 0
                             }
                             flexShrink={
                                 animationSelectedGroupIndex === null
                                     ? undefined
                                     : animationSelectedGroupIndex === index
-                                        ? 0
-                                        : 1
+                                      ? 0
+                                      : 1
                             }
                             group={group}
                             key={groupKey}
                             onExpandGroup={() =>
-                                onGroupClick(index, firstWeekNumber, group.length)
+                                onGroupClick(
+                                    index,
+                                    firstWeekNumber,
+                                    group.length,
+                                )
                             }
                         />
                         {!isLast && (

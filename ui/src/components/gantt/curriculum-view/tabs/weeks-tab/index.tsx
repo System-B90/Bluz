@@ -21,7 +21,7 @@ import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 type WeeksTabProps = {
-  curriculumId: GanttCurriculumId;
+    curriculumId: GanttCurriculumId;
 };
 
 function WeeksTabInner({ curriculumId }: WeeksTabProps) {
@@ -62,8 +62,8 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                 .filter(Boolean);
 
             const dataStr =
-        "data:text/json;charset=utf-8," +
-        encodeURIComponent(JSON.stringify(weeksData, null, 2));
+                "data:text/json;charset=utf-8," +
+                encodeURIComponent(JSON.stringify(weeksData, null, 2));
             const downloadAnchor = document.createElement("a");
             downloadAnchor.setAttribute("href", dataStr);
             downloadAnchor.setAttribute(
@@ -73,7 +73,9 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
-            enqueueSnackbar("שבועות הגאנט יוצאו בהצלחה!", { variant: "success" });
+            enqueueSnackbar("שבועות הגאנט יוצאו בהצלחה!", {
+                variant: "success",
+            });
         } catch {
             enqueueSnackbar("ייצוא שבועות הגאנט נכשל!", { variant: "error" });
         }
@@ -88,12 +90,18 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
             const reader = new FileReader();
             reader.onload = async (event) => {
                 try {
-                    const importedWeeks = JSON.parse(event.target?.result as string);
+                    const importedWeeks = JSON.parse(
+                        event.target?.result as string,
+                    );
                     if (!Array.isArray(importedWeeks)) {
-                        throw new Error("Invalid format: expected an array of weeks");
+                        throw new Error(
+                            "Invalid format: expected an array of weeks",
+                        );
                     }
 
-                    enqueueSnackbar("מתחיל ייבוא שבועות...", { variant: "info" });
+                    enqueueSnackbar("מתחיל ייבוא שבועות...", {
+                        variant: "info",
+                    });
 
                     const currentWeekIds = [...curriculum.weeks];
                     const finalWeekIds: Array<string> = [];
@@ -109,7 +117,11 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                     }
 
                     // 2. Create missing weeks
-                    for (let i = currentWeekIds.length; i < importedWeeks.length; i++) {
+                    for (
+                        let i = currentWeekIds.length;
+                        i < importedWeeks.length;
+                        i++
+                    ) {
                         const newWeek = await createWeek({
                             curriculumId,
                             number: i + 1,
@@ -130,14 +142,17 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                         const existingWeek = state.weeks[weekId];
                         if (
                             existingWeek &&
-              existingWeek.days &&
-              existingWeek.days.length > 0
+                            existingWeek.days &&
+                            existingWeek.days.length > 0
                         ) {
                             dayIds = existingWeek.days;
                         } else {
-                            const newlyCreatedWeek = createdWeeksMap.get(weekId);
+                            const newlyCreatedWeek =
+                                createdWeeksMap.get(weekId);
                             if (newlyCreatedWeek && newlyCreatedWeek.w2d) {
-                                dayIds = newlyCreatedWeek.w2d.map((link: any) => link.dayId);
+                                dayIds = newlyCreatedWeek.w2d.map(
+                                    (link: any) => link.dayId,
+                                );
                             }
                         }
 
@@ -151,11 +166,13 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                         if (Array.isArray(importedWeek.days)) {
                             for (const dId of dayIds) {
                                 let currentDayIndex: number | undefined =
-                  state.days[dId]?.dayIndex;
+                                    state.days[dId]?.dayIndex;
                                 if (currentDayIndex === undefined) {
                                     const link = createdWeeksMap
                                         .get(weekId)
-                                        ?.w2d?.find((l: any) => l.dayId === dId);
+                                        ?.w2d?.find(
+                                            (l: any) => l.dayId === dId,
+                                        );
                                     if (link) {
                                         currentDayIndex = link.day.dayIndex;
                                     }
@@ -166,7 +183,9 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                                 );
                                 if (importedDay) {
                                     await updateDay(dId, {
-                                        totalWorkingMinutes: importedDay.totalWorkingMinutes ?? 0,
+                                        totalWorkingMinutes:
+                                            importedDay.totalWorkingMinutes ??
+                                            0,
                                         comment: importedDay.comment ?? "",
                                     });
                                 }
@@ -204,7 +223,12 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
 
     if (!curriculum) {
         return (
-            <Box alignItems="center" display="flex" flex={1} justifyContent="center">
+            <Box
+                alignItems="center"
+                display="flex"
+                flex={1}
+                justifyContent="center"
+            >
                 <CircularProgress size={28} />
             </Box>
         );
@@ -244,10 +268,10 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                     >
                         <Box>
                             <Typography fontWeight={700} variant="h6">
-                שבועות
+                                שבועות
                             </Typography>
                             <Typography color="text.secondary" variant="body2">
-                אורך הקורס, תאריכים, שעות זמינות ושבתות בבסיס
+                                אורך הקורס, תאריכים, שעות זמינות ושבתות בבסיס
                             </Typography>
                         </Box>
                         <Stack alignItems="center" direction="row" spacing={1}>
@@ -282,7 +306,9 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                             control={
                                 <Switch
                                     checked={isCompact}
-                                    onChange={(e) => setIsCompact(e.target.checked)}
+                                    onChange={(e) =>
+                                        setIsCompact(e.target.checked)
+                                    }
                                     size="small"
                                 />
                             }
@@ -294,7 +320,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                                         color: "text.secondary",
                                     }}
                                 >
-                  תצוגה מצומצמת
+                                    תצוגה מצומצמת
                                 </Typography>
                             }
                             sx={{ m: 0 }}
@@ -303,7 +329,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                     <WeeksSummaryBar curriculum={curriculum} state={state} />
                     {isLoading ? (
                         <Typography color="text.secondary" variant="caption">
-              טוען שיבוצים קיימים...
+                            טוען שיבוצים קיימים...
                         </Typography>
                     ) : null}
                 </Stack>

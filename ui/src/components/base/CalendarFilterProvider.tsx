@@ -13,23 +13,23 @@ import { CourseId } from "@/api-shared/types/course";
 import { Event, EventType } from "@/components/schedule/types/event";
 
 export type CalendarFiltersContextState = {
-  default: boolean;
-  filteredInstructors: Array<number>;
-  setFilteredInstructors: Dispatch<SetStateAction<Array<number>>>;
-  filteredCourses: Array<CourseId>;
-  setFilteredCourses: Dispatch<SetStateAction<Array<CourseId>>>;
-  showPAsFor: null | number;
-  setShowPAsFor: Dispatch<SetStateAction<null | number>>;
-  hidePrayers: boolean;
-  setHidePrayers: Dispatch<SetStateAction<boolean>>;
-  showMisconfigurations: boolean;
-  setShowMisconfigurations: Dispatch<SetStateAction<boolean>>;
+    default: boolean;
+    filteredInstructors: Array<number>;
+    setFilteredInstructors: Dispatch<SetStateAction<Array<number>>>;
+    filteredCourses: Array<CourseId>;
+    setFilteredCourses: Dispatch<SetStateAction<Array<CourseId>>>;
+    showPAsFor: null | number;
+    setShowPAsFor: Dispatch<SetStateAction<null | number>>;
+    hidePrayers: boolean;
+    setHidePrayers: Dispatch<SetStateAction<boolean>>;
+    showMisconfigurations: boolean;
+    setShowMisconfigurations: Dispatch<SetStateAction<boolean>>;
 
-  eventFilteredOpacity: (event: Event) => number;
+    eventFilteredOpacity: (event: Event) => number;
 };
 
 const CalendarFiltersContext = createContext<
-  CalendarFiltersContextState | undefined
+    CalendarFiltersContextState | undefined
 >({
     default: true,
     filteredInstructors: [],
@@ -54,17 +54,17 @@ export function isInstructorBusy(instructor: number, event: Event): boolean {
 export const CalendarFiltersProvider = ({
     children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) => {
     const [hidePrayers, setHidePrayers] = useState<boolean>(false);
     const [showMisconfigurations, setShowMisconfigurations] =
-    useState<boolean>(true);
+        useState<boolean>(true);
     const [showPAsFor, setShowPAsFor] = useState<null | number>(
         null /** ID of instructor */,
     ); // פ"א
-    const [filteredInstructors, setFilteredInstructors] = useState<Array<number>>(
-        [],
-    );
+    const [filteredInstructors, setFilteredInstructors] = useState<
+        Array<number>
+    >([]);
     const [filteredCourses, setFilteredCourses] = useState<Array<CourseId>>([]);
 
     const eventFilteredOpacity = useCallback(
@@ -77,8 +77,8 @@ export const CalendarFiltersProvider = ({
             // Quick no filter exit check
             if (
                 filteredInstructors.length === 0 &&
-        filteredCourses.length === 0 &&
-        showPAsFor === null
+                filteredCourses.length === 0 &&
+                showPAsFor === null
             ) {
                 return 1;
             }
@@ -87,19 +87,19 @@ export const CalendarFiltersProvider = ({
                 filteredCourses.includes(courseId),
             );
             const noCourse =
-        filteredCourses.length === 0 || event.courses.length === 0;
+                filteredCourses.length === 0 || event.courses.length === 0;
 
             if (showPAsFor === null) {
                 const hasMatchingInstructor =
-          event.instructors.some((instructorId) =>
-              filteredInstructors.includes(instructorId),
-          ) ||
-          (event.lecturers?.some(
-              (lecturerId) =>
-                  typeof lecturerId === "number" &&
-              filteredInstructors.includes(lecturerId),
-          ) ??
-            false);
+                    event.instructors.some((instructorId) =>
+                        filteredInstructors.includes(instructorId),
+                    ) ||
+                    (event.lecturers?.some(
+                        (lecturerId) =>
+                            typeof lecturerId === "number" &&
+                            filteredInstructors.includes(lecturerId),
+                    ) ??
+                        false);
 
                 return hasMatchingInstructor || hasMatchingCourse ? 1 : 0.2;
             }
@@ -112,8 +112,8 @@ export const CalendarFiltersProvider = ({
             let paState: PotentialPA = event.personalTalk
                 ? PotentialPA.YesRecommended
                 : event.required
-                    ? PotentialPA.No
-                    : PotentialPA.YesNotRecommended;
+                  ? PotentialPA.No
+                  : PotentialPA.YesNotRecommended;
             if (paState === PotentialPA.YesRecommended) {
                 // Check if busy
                 if (isInstructorBusy(showPAsFor, event)) {
@@ -122,14 +122,14 @@ export const CalendarFiltersProvider = ({
             }
 
             switch (paState) {
-            case PotentialPA.YesRecommended:
-                return 1;
-            case PotentialPA.YesNotRecommended:
-                return 0.6;
-            case PotentialPA.No:
-                return 0.1;
-            case PotentialPA.NoRecommendedButBusy:
-                return 0.3;
+                case PotentialPA.YesRecommended:
+                    return 1;
+                case PotentialPA.YesNotRecommended:
+                    return 0.6;
+                case PotentialPA.No:
+                    return 0.1;
+                case PotentialPA.NoRecommendedButBusy:
+                    return 0.3;
             }
 
             return 1;

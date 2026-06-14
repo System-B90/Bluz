@@ -24,8 +24,8 @@ import { SyllabusCardActions } from "@/components/gantt/syllabus-card/SyllabusCa
 import { SyllabusCardHeader } from "@/components/gantt/syllabus-card/SyllabusCardHeader";
 
 export type SyllabusCardProps = {
-  curriculumId: GanttCurriculumId;
-  syllabusId: GanttSyllabusId;
+    curriculumId: GanttCurriculumId;
+    syllabusId: GanttSyllabusId;
 } & Omit<CardProps, "sx">;
 
 const ExpandMore = styled((props: { _expand: boolean } & any) => {
@@ -61,12 +61,12 @@ export function SyllabusCard({
                 maxHeight: expanded ? "90%" : "fit-content",
                 overflow: "hidden",
                 transition:
-          "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease",
+                    "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease",
                 border: "1px solid transparent",
                 "&:hover": {
                     transform: "translateY(-4px)",
                     boxShadow:
-            "0 12px 24px -10px rgba(0, 0, 0, 0.15), 0 8px 16px -8px rgba(0, 0, 0, 0.1)",
+                        "0 12px 24px -10px rgba(0, 0, 0, 0.15), 0 8px 16px -8px rgba(0, 0, 0, 0.1)",
                     borderColor: "primary.light",
                 },
             }}
