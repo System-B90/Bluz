@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
     outputFileTracingIncludes: {
         "/*": ["./node_modules/drizzle-orm/**/*", "./node_modules/pg/**/*"],
     },
+    experimental: {
+        optimizePackageImports: ["@mui/x-date-pickers"],
+    },
 };
 
 export default nextConfig;

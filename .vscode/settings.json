@@ -29,5 +29,11 @@
     },
     "[typescript]": {
         "editor.defaultFormatter": "vscode.typescript-language-features"
-    }
+    },
+    "typescript.preferences.autoImportSpecifierExcludeRegexes": [
+        "^@mui/[^/]+$"
+    ],
+    "javascript.preferences.autoImportSpecifierExcludeRegexes": [
+        "^@mui/[^/]+$"
+    ]
 }
