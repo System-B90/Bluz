@@ -2,8 +2,8 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
+import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import useTheme from "@mui/material/useTheme";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { useMemo } from "react";
 
@@ -41,7 +41,7 @@ export function HoursCard({
         () =>
             curriculum
                 ? calculateMinimumRequiredTimeForCurriculum(curriculum, state) /
-                  60
+                60
                 : 0,
         [curriculum, state],
     );

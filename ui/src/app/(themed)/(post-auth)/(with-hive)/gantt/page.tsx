@@ -2,8 +2,8 @@
 "use client";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import keyframes from "@mui/material/keyframes";
 import Typography from "@mui/material/Typography";
+import { keyframes } from '@mui/styled-engine';
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";

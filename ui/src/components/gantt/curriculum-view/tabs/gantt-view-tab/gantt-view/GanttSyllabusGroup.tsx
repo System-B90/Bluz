@@ -1,8 +1,8 @@
 import Box from "@mui/material/Box";
+import { useTheme } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import useTheme from "@mui/material/useTheme";
 import React, { useMemo, useState } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
@@ -152,12 +152,12 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                                     transform: "translateY(-50%)",
                                     left:
                                         spanVariant === "middle" ||
-                                        spanVariant === "end"
+                                            spanVariant === "end"
                                             ? "-1px"
                                             : "4px",
                                     right:
                                         spanVariant === "middle" ||
-                                        spanVariant === "start"
+                                            spanVariant === "start"
                                             ? "-1px"
                                             : "4px",
                                     height: "8px",
@@ -202,12 +202,12 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                                     transform: "translateY(-50%)",
                                     left:
                                         spanVariant === "middle" ||
-                                        spanVariant === "end"
+                                            spanVariant === "end"
                                             ? "-1px"
                                             : "4px",
                                     right:
                                         spanVariant === "middle" ||
-                                        spanVariant === "start"
+                                            spanVariant === "start"
                                             ? "-1px"
                                             : "4px",
                                     height: "8px",

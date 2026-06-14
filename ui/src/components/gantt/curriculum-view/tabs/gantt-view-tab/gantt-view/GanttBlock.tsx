@@ -1,8 +1,8 @@
 import { useDraggable } from "@dnd-kit/core";
 import Box from "@mui/material/Box";
+import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import useTheme from "@mui/material/useTheme";
 import React from "react";
 
 import { GanttBlockProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";

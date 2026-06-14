@@ -9,8 +9,7 @@ import { useDroppable } from "@dnd-kit/core";
 import Box from "@mui/material/Box";
 import BoxProps from "@mui/material/BoxProps";
 import Divider from "@mui/material/Divider";
-import { alpha } from "@mui/material/styles";
-import useTheme from "@mui/material/useTheme";
+import { alpha, useTheme } from "@mui/material/styles";
 import React, { useMemo } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";

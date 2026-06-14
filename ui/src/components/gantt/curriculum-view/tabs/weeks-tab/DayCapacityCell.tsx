@@ -1,24 +1,23 @@
 import AddIcon from "@mui/icons-material/Add";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import RemoveIcon from "@mui/icons-material/Remove";
-import alpha from "@mui/material/alpha";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
+import { alpha, useTheme } from "@mui/material/styles";
 import Switch from "@mui/material/Switch";
 import TableCell from "@mui/material/TableCell";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import useTheme from "@mui/material/useTheme";
 import { useSnackbar } from "notistack";
 import { KeyboardEvent, useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     GanttDayId,
-    getDayNameDisplay,
     GanttDayIndex,
+    getDayNameDisplay,
 } from "@/api-shared/types/gantt/models";
 import {
     CapacityStatus,

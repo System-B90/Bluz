@@ -1,10 +1,9 @@
 import { useDroppable } from "@dnd-kit/core";
-import alpha from "@mui/material/alpha";
 import Box from "@mui/material/Box";
+import { alpha, useTheme } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import useTheme from "@mui/material/useTheme";
 import React, { useMemo, useState } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";

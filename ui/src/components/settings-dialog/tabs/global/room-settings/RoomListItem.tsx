@@ -7,9 +7,9 @@ import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
+import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import useTheme from "@mui/material/useTheme";
 import { useCallback } from "react";
 
 import { Room, RoomSource } from "@/api-shared/types/room";

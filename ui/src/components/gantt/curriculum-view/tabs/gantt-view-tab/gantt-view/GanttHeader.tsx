@@ -1,8 +1,8 @@
+import { useTheme } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import useTheme from "@mui/material/useTheme";
 import React from "react";
 
 import { getDayNameDisplay } from "@/api-shared/types/gantt/models";

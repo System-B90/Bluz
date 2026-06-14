@@ -1,4 +1,4 @@
-import useTheme from "@mui/material/useTheme";
+import { useTheme } from "@mui/material/styles";
 import React, { useCallback, useEffect, useState } from "react";
 
 import { ConstraintLink } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
