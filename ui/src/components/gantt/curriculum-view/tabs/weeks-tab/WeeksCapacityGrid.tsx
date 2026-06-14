@@ -306,8 +306,8 @@ function DayHeaderCell({
                 minWidth: "90px",
                 bgcolor: (theme) =>
                     theme.palette.mode === "light"
-                        ? "rgba(244, 250, 252, 0.95)"
-                        : "rgba(12, 34, 55, 0.95)",
+                        ? "rgb(244, 250, 252)"
+                        : "rgb(12, 34, 55)",
                 fontWeight: 800,
                 py: 1,
                 fontSize: "0.85rem",
@@ -334,7 +334,7 @@ function DayHeaderCell({
                         }
                     }}
                     sx={{
-                        width: "54px",
+                        width: "64px",
                         "& .MuiOutlinedInput-root": {
                             borderRadius: "4px",
                             bgcolor: "background.paper",
