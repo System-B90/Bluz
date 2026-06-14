@@ -86,6 +86,9 @@ export default defineConfig([
                             message: "Use absolute paths.",
                             allowTypeImports: true,
                         },
+                        {
+                            regex: "^@mui/[^/]+$",
+                        },
                     ],
                 },
             ],
