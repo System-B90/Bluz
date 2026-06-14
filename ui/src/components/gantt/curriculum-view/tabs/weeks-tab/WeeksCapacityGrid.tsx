@@ -323,7 +323,7 @@ function DayHeaderCell({
                     onKeyDown={handleKeyDown}
                     size="small"
                     slotProps={{
-                        input: {
+                        htmlInput: {
                             style: {
                                 textAlign: "center",
                                 fontSize: "0.72rem",
