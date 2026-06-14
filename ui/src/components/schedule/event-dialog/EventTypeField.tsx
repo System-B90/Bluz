@@ -13,10 +13,10 @@ import { useCallback, useRef, useState } from "react";
 
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import
-    {
-        EventType,
-        eventTypeToHebrew,
-    } from "@/components/schedule/types/event";
+{
+    EventType,
+    eventTypeToHebrew,
+} from "@/components/schedule/types/event";
 
 function getEventTypeIcon(type: EventType, props = {}) {
     switch (type) {

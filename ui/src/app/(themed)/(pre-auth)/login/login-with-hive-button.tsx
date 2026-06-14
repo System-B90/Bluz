@@ -1,7 +1,7 @@
 import Button, { ButtonProps } from "@mui/material/Button";
 import Typography, { TypographyProps } from "@mui/material/Typography";
-import { signIn, SignInOptions } from "next-auth/react";
 import Image from "next/image";
+import { signIn, SignInOptions } from "next-auth/react";
 import { useCallback } from "react";
 
 import { getHiveBaseUrl } from "@/api-shared/common";

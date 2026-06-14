@@ -5,15 +5,15 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import
-    {
-        Dispatch,
-        Fragment,
-        SetStateAction,
-        memo,
-        startTransition,
-        useEffect,
-        useState,
-    } from "react";
+{
+    Dispatch,
+    Fragment,
+    SetStateAction,
+    memo,
+    startTransition,
+    useEffect,
+    useState,
+} from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumViewBuilderTab } from "@/components/gantt/curriculum-view/tabs/builder-tab";

@@ -12,11 +12,11 @@ import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { shortenInstructorName } from "@/components/schedule/event-component/NameUtils";
 import
-    {
-        Event,
-        EventType,
-        getPresentInstructors,
-    } from "@/components/schedule/types/event";
+{
+    Event,
+    EventType,
+    getPresentInstructors,
+} from "@/components/schedule/types/event";
 
 /** Lightweight tag style — replaces MUI Chip for a more compact, professional look. */
 const tagSx = (isLecturer: boolean) => ({

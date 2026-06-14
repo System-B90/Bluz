@@ -7,10 +7,10 @@ import { Room, RoomSource, roomToResolvable } from "@/api-shared/types/room"; //
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
 import
-    {
-        DnDCalendar,
-        localizer,
-    } from "@/components/schedule/calendar/calendar/DndLocalizer";
+{
+    DnDCalendar,
+    localizer,
+} from "@/components/schedule/calendar/calendar/DndLocalizer";
 import { CustomWorkWeek } from "@/components/schedule/calendar/CustomWorkWeek";
 import { BluzEventComponent } from "@/components/schedule/event-component/base";
 import { Event } from "@/components/schedule/types/event";

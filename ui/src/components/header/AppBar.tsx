@@ -37,7 +37,7 @@ export function ScheduleAppBar({
             sx={ { ...props.sx, zIndex: (theme) => theme.zIndex.drawer + 1 } }
             { ...props }
         >
-            <Toolbar variant="dense" sx={ { direction: 'rtl' } }>
+            <Toolbar sx={ { direction: 'rtl' } } variant="dense">
                 <Box
                     alignItems="center"
                     display="flex"

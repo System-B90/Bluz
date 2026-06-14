@@ -9,10 +9,10 @@ import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 import
-    {
-        calculateMinimumRequiredTimeForModule,
-        calculateMinimumRequiredTimeForSyllabus,
-    } from "@/components/gantt/utils";
+{
+    calculateMinimumRequiredTimeForModule,
+    calculateMinimumRequiredTimeForSyllabus,
+} from "@/components/gantt/utils";
 
 export type HoursBoxProps = {
     syllabusId: GanttSyllabusId;

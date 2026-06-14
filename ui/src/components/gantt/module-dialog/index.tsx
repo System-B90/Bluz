@@ -10,23 +10,23 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import
-    {
-        Dispatch,
-        SetStateAction,
-        useCallback,
-        useMemo,
-        useState,
-    } from "react";
+{
+    Dispatch,
+    SetStateAction,
+    useCallback,
+    useMemo,
+    useState,
+} from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
-    {
-        GanttCurriculumId,
-        GanttModule,
-        GanttModuleId,
-        GanttSyllabusId,
-        ModuleEventType,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttModule,
+    GanttModuleId,
+    GanttSyllabusId,
+    ModuleEventType,
+} from "@/api-shared/types/gantt/models";
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView"; // <-- Added Import
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import { HiveModulesView } from "@/components/gantt/module-dialog/utils";
@@ -35,10 +35,10 @@ import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/Use
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import
-    {
-        useCurriculumProviderActions,
-        useCurriculumState,
-    } from "@/components/gantt/state/provider";
+{
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 
 export type ModuleDialogProps = {
     setOpen: Dispatch<SetStateAction<boolean>>;

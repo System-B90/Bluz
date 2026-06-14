@@ -7,10 +7,10 @@ import { useCallback } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
-    {
-        GanttCurriculumId,
-        GanttSyllabusId,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttSyllabusId,
+} from "@/api-shared/types/gantt/models";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 
 export type SyllabusCardActionsProps = {

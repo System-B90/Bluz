@@ -4,13 +4,13 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 
 import
-    {
-        Event,
-        EventType,
-        PrayerEvent,
-        PrayerType,
-        prayerTypeToHebrew,
-    } from "@/components/schedule/types/event";
+{
+    Event,
+    EventType,
+    PrayerEvent,
+    PrayerType,
+    prayerTypeToHebrew,
+} from "@/components/schedule/types/event";
 
 type PrayerTypeFieldProps = {
     event?: Partial<Event>;

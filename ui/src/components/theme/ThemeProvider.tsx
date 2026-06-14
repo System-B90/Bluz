@@ -2,23 +2,23 @@
 import CssBaseline from "@mui/material/CssBaseline";
 import GlobalStyles from "@mui/material/GlobalStyles";
 import
-    {
-        ThemeProvider as MUIThemeProvider,
-        createTheme,
-    } from "@mui/material/styles";
+{
+    ThemeProvider as MUIThemeProvider,
+    createTheme,
+} from "@mui/material/styles";
 import type { ThemeProviderProps } from "next-themes";
 import
-    {
-        ThemeProvider as NextThemesProvider,
-        useTheme as nextUseTheme,
-    } from "next-themes";
+{
+    ThemeProvider as NextThemesProvider,
+    useTheme as nextUseTheme,
+} from "next-themes";
 import
-    {
-        createContext,
-        useContext,
-        useMemo,
-        type ReactNode,
-    } from "react";
+{
+    createContext,
+    useContext,
+    useMemo,
+    type ReactNode,
+} from "react";
 
 import { createThemeOptions } from "@/components/theme/CreateFromPalette";
 

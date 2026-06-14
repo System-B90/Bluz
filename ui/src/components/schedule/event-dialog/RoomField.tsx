@@ -7,12 +7,12 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { useCallback, useState } from "react";
 
 import
-    {
-        areRoomsEqual,
-        ResolvableRoom,
-        roomToKey,
-        roomToResolvable,
-    } from "@/api-shared/types/room";
+{
+    areRoomsEqual,
+    ResolvableRoom,
+    roomToKey,
+    roomToResolvable,
+} from "@/api-shared/types/room";
 import { useRooms } from "@/components/base/RoomsProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import { eventHasRoom } from "@/components/schedule/types/event";
