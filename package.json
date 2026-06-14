@@ -3,7 +3,8 @@
     "version": "0.2.0",
     "private": true,
     "scripts": {
-        "dev": "next dev ui --turbopack",
+        "next:dev": "next dev ui --turbopack -H 0.0.0.0",
+        "dev": "node -e \"const fs = require('fs'); fs.copyFileSync(fs.existsSync('.env-mks-srvu') ? '.env-mks-srvu' : '.env', 'ui/.env')\" && docker compose -f docker-compose.local.yml up proxy -d && npm run next:dev",
         "build": "next build ui",
         "start": "next start ui",
         "lint": "eslint --config ./ui/eslint.config.mts ui/",
