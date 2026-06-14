@@ -3,7 +3,8 @@
     "version": "0.2.0",
     "private": true,
     "scripts": {
-        "dev": "next dev ui --turbopack",
+        "next:dev": "next dev ui --turbopack -H 0.0.0.0",
+        "dev": "node -e \"const fs = require('fs'); fs.copyFileSync(fs.existsSync('.env-mks-srvu') ? '.env-mks-srvu' : '.env', 'ui/.env')\" && docker compose -f docker-compose.local.yml up proxy -d && npm run next:dev",
         "build": "next build ui",
         "start": "next start ui",
         "lint": "eslint --config ./ui/eslint.config.mts ui/",
@@ -20,7 +21,8 @@
         "docker:test": "docker compose -f docker-compose.yml -f docker-compose.test.yml up -d --build",
         "docker:test:down": "docker compose -f docker-compose.yml -f docker-compose.test.yml down -v",
         "test:e2e": "npx playwright test",
-        "test:e2e:ui": "npx playwright test --ui"
+        "test:e2e:ui": "npx playwright test --ui",
+        "session:start": "cd session-server && npm install && npm start"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": "eslint --config ./ui/eslint.config.mts",
@@ -65,7 +67,7 @@
         "react-dom": "^19.2.0",
         "rimraf": "^6.1.0",
         "sass": "^1.93.3",
-        "stylis": "^4.3.6",
+        "stylis": "^4.4.0",
         "stylis-plugin-rtl": "^2.1.1",
         "tsx": "^4.21.0",
         "uuid": "^13.0.0",
