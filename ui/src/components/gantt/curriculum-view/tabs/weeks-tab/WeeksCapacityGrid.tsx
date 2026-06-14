@@ -338,6 +338,7 @@ function DayHeaderCell({
                         "& .MuiOutlinedInput-root": {
                             borderRadius: "4px",
                             bgcolor: "background.paper",
+                            textAlign: 'center',
                         }
                     }}
                     value={inputValue}
