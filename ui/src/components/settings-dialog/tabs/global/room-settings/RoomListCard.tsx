@@ -103,19 +103,21 @@ export function RoomListCard({
             <RoomListHeader />
 
             <TextField
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <SearchIcon
-                                fontSize="small"
-                                sx={{ color: "text.secondary" }}
-                            />
-                        </InputAdornment>
-                    ),
-                }}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="חפש חדר..."
                 size="small"
+                slotProps={{
+                    input: {
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon
+                                    fontSize="small"
+                                    sx={{ color: "text.secondary" }}
+                                />
+                            </InputAdornment>
+                        ),
+                    },
+                }}
                 sx={{
                     "& .MuiOutlinedInput-root": {
                         borderRadius: "10px",
