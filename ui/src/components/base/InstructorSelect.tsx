@@ -164,6 +164,7 @@ export function InstructorSelect<T = unknown>({
                 key="search-container"
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
+                onKeyUp={(e) => e.stopPropagation()}
                 sx={{
                     p: 1.5,
                     position: "sticky",
