@@ -50,8 +50,8 @@ export function EventTooltipContent({ event }: { event: Event }) {
         hours && minutes
             ? `${hours} ש׳ ${minutes} ד׳`
             : hours
-              ? `${hours} ש׳`
-              : `${minutes} ד׳`;
+                ? `${hours} ש׳`
+                : `${minutes} ד׳`;
 
     const subject = eventHasSubject(event.type)
         ? getSubject(event.subject)

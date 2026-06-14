@@ -108,8 +108,8 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
             ? weekSpanIndices.max - weekSpanIndices.min + 1
             : 1
         : spanIndices
-          ? spanIndices.max - spanIndices.min + 1
-          : 1;
+            ? spanIndices.max - spanIndices.min + 1
+            : 1;
 
     // Build cells depending on view mode
     const renderCells = () => {
@@ -280,12 +280,12 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
 
             {isExpanded && hasEvents
                 ? ganttModule?.events?.map((eventId) => (
-                      <GanttEventRow
-                          eventId={eventId}
-                          key={eventId}
-                          moduleId={moduleId}
-                      />
-                  ))
+                    <GanttEventRow
+                        eventId={eventId}
+                        key={eventId}
+                        moduleId={moduleId}
+                    />
+                ))
                 : null}
         </React.Fragment>
     );

@@ -94,26 +94,26 @@ export function UnifiedEvent({
                 {!isPrayer &&
                 (getPresentInstructors(event).length > 0 ||
                     showMisconfigurations) ? (
-                    <>
-                        <Box
-                            sx={{
-                                width: "1px",
-                                height: "60%",
-                                bgcolor: "var(--event-border)",
-                                flexShrink: 0,
-                            }}
-                        />
-                        <InstructorsList
-                            event={event}
-                            showCaption={false}
-                            sx={{
-                                flexShrink: 1,
-                                minWidth: 0,
-                                overflow: "hidden",
-                            }}
-                        />
-                    </>
-                ) : null}
+                        <>
+                            <Box
+                                sx={{
+                                    width: "1px",
+                                    height: "60%",
+                                    bgcolor: "var(--event-border)",
+                                    flexShrink: 0,
+                                }}
+                            />
+                            <InstructorsList
+                                event={event}
+                                showCaption={false}
+                                sx={{
+                                    flexShrink: 1,
+                                    minWidth: 0,
+                                    overflow: "hidden",
+                                }}
+                            />
+                        </>
+                    ) : null}
             </Box>
         );
     }

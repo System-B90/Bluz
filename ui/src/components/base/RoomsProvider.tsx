@@ -89,73 +89,73 @@ type RoomsAction =
 
 function roomsReducer(state: RoomsState, action: RoomsAction): RoomsState {
     switch (action.type) {
-        case "SET_LOADING":
-            return { ...state, isLoading: action.payload };
-        case "SET_ROOMS":
-            return {
-                ...state,
-                customRooms: action.payload.custom,
-                hiveRooms: action.payload.hive,
-                isLoading: false,
-            };
-        case "ADD_CUSTOM_ROOM":
+    case "SET_LOADING":
+        return { ...state, isLoading: action.payload };
+    case "SET_ROOMS":
+        return {
+            ...state,
+            customRooms: action.payload.custom,
+            hiveRooms: action.payload.hive,
+            isLoading: false,
+        };
+    case "ADD_CUSTOM_ROOM":
+        return {
+            ...state,
+            customRooms: {
+                ...state.customRooms,
+                [action.payload.id]: action.payload,
+            },
+        };
+    case "UPDATE_CUSTOM_ROOM":
+        return {
+            ...state,
+            customRooms: {
+                ...state.customRooms,
+                [action.payload.id]: action.payload,
+            },
+        };
+    case "DELETE_CUSTOM_ROOM": {
+        const nextCustom = { ...state.customRooms };
+        delete nextCustom[action.payload];
+        return {
+            ...state,
+            customRooms: nextCustom,
+        };
+    }
+    case "ROLLBACK_ROOMS":
+        return {
+            ...state,
+            customRooms: action.payload.custom,
+            hiveRooms: action.payload.hive,
+        };
+    case "UPDATE_EXTENDED_INFO": {
+        const { roomId, roomSource, extendedInfo } = action.payload;
+        if (roomSource === RoomSource.Custom) {
+            const room = state.customRooms[roomId as string];
+            if (!room) return state;
             return {
                 ...state,
                 customRooms: {
                     ...state.customRooms,
-                    [action.payload.id]: action.payload,
+                    [roomId]: { ...room, extendedInfo },
                 },
             };
-        case "UPDATE_CUSTOM_ROOM":
+        }
+        if (roomSource === RoomSource.Hive) {
+            const room = state.hiveRooms[roomId as number];
+            if (!room) return state;
             return {
                 ...state,
-                customRooms: {
-                    ...state.customRooms,
-                    [action.payload.id]: action.payload,
+                hiveRooms: {
+                    ...state.hiveRooms,
+                    [roomId]: { ...room, extendedInfo },
                 },
             };
-        case "DELETE_CUSTOM_ROOM": {
-            const nextCustom = { ...state.customRooms };
-            delete nextCustom[action.payload];
-            return {
-                ...state,
-                customRooms: nextCustom,
-            };
         }
-        case "ROLLBACK_ROOMS":
-            return {
-                ...state,
-                customRooms: action.payload.custom,
-                hiveRooms: action.payload.hive,
-            };
-        case "UPDATE_EXTENDED_INFO": {
-            const { roomId, roomSource, extendedInfo } = action.payload;
-            if (roomSource === RoomSource.Custom) {
-                const room = state.customRooms[roomId as string];
-                if (!room) return state;
-                return {
-                    ...state,
-                    customRooms: {
-                        ...state.customRooms,
-                        [roomId]: { ...room, extendedInfo },
-                    },
-                };
-            }
-            if (roomSource === RoomSource.Hive) {
-                const room = state.hiveRooms[roomId as number];
-                if (!room) return state;
-                return {
-                    ...state,
-                    hiveRooms: {
-                        ...state.hiveRooms,
-                        [roomId]: { ...room, extendedInfo },
-                    },
-                };
-            }
-            return state;
-        }
-        default:
-            return state;
+        return state;
+    }
+    default:
+        return state;
     }
 }
 
@@ -181,12 +181,12 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
                 return null;
             }
             switch (id.source) {
-                case RoomSource.Custom:
-                    return state.customRooms[id.id];
-                case RoomSource.Hive:
-                    return state.hiveRooms[id.id];
-                default:
-                    return null;
+            case RoomSource.Custom:
+                return state.customRooms[id.id];
+            case RoomSource.Hive:
+                return state.hiveRooms[id.id];
+            default:
+                return null;
             }
         },
         [state.customRooms, state.hiveRooms],
@@ -200,12 +200,12 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
                 const hiveRoomsMap: Record<number, HiveRoom> = {};
                 fetchedRooms.forEach((room) => {
                     switch (room.source) {
-                        case RoomSource.Custom:
-                            customRoomsMap[room.id] = room;
-                            break;
-                        case RoomSource.Hive:
-                            hiveRoomsMap[room.id] = room;
-                            break;
+                    case RoomSource.Custom:
+                        customRoomsMap[room.id] = room;
+                        break;
+                    case RoomSource.Hive:
+                        hiveRoomsMap[room.id] = room;
+                        break;
                     }
                 });
                 dispatch({

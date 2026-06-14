@@ -14,24 +14,24 @@ export const calendarReducer = (
     action: CalendarAction,
 ): Array<Event> => {
     switch (action.type) {
-        case "SET_EVENTS":
-            return action.payload;
-        case "UPSERT_EVENT":
-            return [
-                ...state.filter((e) => e.id !== action.payload.id),
-                action.payload,
-            ];
-        case "UPSERT_MANY": {
-            const newIds = new Set(action.payload.map((e) => e.id));
-            return [
-                ...state.filter((e) => !newIds.has(e.id)),
-                ...action.payload,
-            ];
-        }
-        case "DELETE_EVENT":
-            return state.filter((e) => e.id !== action.payload);
-        default:
-            return state;
+    case "SET_EVENTS":
+        return action.payload;
+    case "UPSERT_EVENT":
+        return [
+            ...state.filter((e) => e.id !== action.payload.id),
+            action.payload,
+        ];
+    case "UPSERT_MANY": {
+        const newIds = new Set(action.payload.map((e) => e.id));
+        return [
+            ...state.filter((e) => !newIds.has(e.id)),
+            ...action.payload,
+        ];
+    }
+    case "DELETE_EVENT":
+        return state.filter((e) => e.id !== action.payload);
+    default:
+        return state;
     }
 };
 

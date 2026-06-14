@@ -56,45 +56,45 @@ function outsidersReducer(
     action: OutsidersAction,
 ): OutsidersState {
     switch (action.type) {
-        case "SET_LOADING":
-            return { ...state, isLoading: action.payload };
-        case "SET_OUTSIDERS":
-            return {
-                ...state,
-                outsiders: action.payload,
-                isLoading: false,
-            };
-        case "ADD_OUTSIDER":
-            return {
-                ...state,
-                outsiders: {
-                    ...state.outsiders,
-                    [action.payload.id]: action.payload,
-                },
-            };
-        case "UPDATE_OUTSIDER":
-            return {
-                ...state,
-                outsiders: {
-                    ...state.outsiders,
-                    [action.payload.id]: action.payload,
-                },
-            };
-        case "DELETE_OUTSIDER": {
-            const next = { ...state.outsiders };
-            delete next[action.payload];
-            return {
-                ...state,
-                outsiders: next,
-            };
-        }
-        case "ROLLBACK_OUTSIDERS":
-            return {
-                ...state,
-                outsiders: action.payload,
-            };
-        default:
-            return state;
+    case "SET_LOADING":
+        return { ...state, isLoading: action.payload };
+    case "SET_OUTSIDERS":
+        return {
+            ...state,
+            outsiders: action.payload,
+            isLoading: false,
+        };
+    case "ADD_OUTSIDER":
+        return {
+            ...state,
+            outsiders: {
+                ...state.outsiders,
+                [action.payload.id]: action.payload,
+            },
+        };
+    case "UPDATE_OUTSIDER":
+        return {
+            ...state,
+            outsiders: {
+                ...state.outsiders,
+                [action.payload.id]: action.payload,
+            },
+        };
+    case "DELETE_OUTSIDER": {
+        const next = { ...state.outsiders };
+        delete next[action.payload];
+        return {
+            ...state,
+            outsiders: next,
+        };
+    }
+    case "ROLLBACK_OUTSIDERS":
+        return {
+            ...state,
+            outsiders: action.payload,
+        };
+    default:
+        return state;
     }
 }
 

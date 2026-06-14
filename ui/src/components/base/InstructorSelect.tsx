@@ -216,19 +216,19 @@ export function InstructorSelect<T = unknown>({
 
             {showOutsiders && favorites.length > 0
                 ? [
-                      <ListSubheader
-                          disableSticky
-                          key="group-favs"
-                          sx={styles.subheaderWarning}
-                      >
+                    <ListSubheader
+                        disableSticky
+                        key="group-favs"
+                        sx={styles.subheaderWarning}
+                    >
                           אנשי חוץ מועדפים
-                      </ListSubheader>,
-                      ...favorites.map((o) => (
-                          <MenuItem key={`outsider-${o.id}`} value={o.id}>
-                              {o.name}
-                          </MenuItem>
-                      )),
-                  ]
+                    </ListSubheader>,
+                    ...favorites.map((o) => (
+                        <MenuItem key={`outsider-${o.id}`} value={o.id}>
+                            {o.name}
+                        </MenuItem>
+                    )),
+                ]
                 : null}
 
             {courseGroups.flatMap(({ course, instructors }) => [
@@ -251,39 +251,39 @@ export function InstructorSelect<T = unknown>({
 
             {unassigned.length > 0
                 ? [
-                      <ListSubheader
-                          disableSticky
-                          key="group-unassigned"
-                          sx={styles.subheaderDefault}
-                      >
+                    <ListSubheader
+                        disableSticky
+                        key="group-unassigned"
+                        sx={styles.subheaderDefault}
+                    >
                           ללא מסלול
-                      </ListSubheader>,
-                      ...unassigned.map((inst) => (
-                          <MenuItem
-                              key={`unassigned-${inst.id}`}
-                              value={inst.id}
-                          >
-                              {inst.display_name}
-                          </MenuItem>
-                      )),
-                  ]
+                    </ListSubheader>,
+                    ...unassigned.map((inst) => (
+                        <MenuItem
+                            key={`unassigned-${inst.id}`}
+                            value={inst.id}
+                        >
+                            {inst.display_name}
+                        </MenuItem>
+                    )),
+                ]
                 : null}
 
             {showOutsiders && others.length > 0
                 ? [
-                      <ListSubheader
-                          disableSticky
-                          key="group-others"
-                          sx={styles.subheaderDefault}
-                      >
+                    <ListSubheader
+                        disableSticky
+                        key="group-others"
+                        sx={styles.subheaderDefault}
+                    >
                           אנשי חוץ נוספים
-                      </ListSubheader>,
-                      ...others.map((o) => (
-                          <MenuItem key={`outsider-${o.id}`} value={o.id}>
-                              {o.name}
-                          </MenuItem>
-                      )),
-                  ]
+                    </ListSubheader>,
+                    ...others.map((o) => (
+                        <MenuItem key={`outsider-${o.id}`} value={o.id}>
+                            {o.name}
+                        </MenuItem>
+                    )),
+                ]
                 : null}
         </Select>
     );

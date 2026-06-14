@@ -123,343 +123,343 @@ export function curriculumReducer(
     action: Action,
 ): NormalizedStore {
     switch (action.type) {
-        case "SET_DATA":
-            return normalizeCurriculumData(action.payload);
+    case "SET_DATA":
+        return normalizeCurriculumData(action.payload);
 
-        case "UPDATE_CURRICULUM": {
-            const existing = state.curriculums[action.payload.id];
-            if (!existing) return state;
-            return {
-                ...state,
-                curriculums: {
-                    ...state.curriculums,
-                    [action.payload.id]: {
-                        ...existing,
-                        ...action.payload.updates,
-                    },
+    case "UPDATE_CURRICULUM": {
+        const existing = state.curriculums[action.payload.id];
+        if (!existing) return state;
+        return {
+            ...state,
+            curriculums: {
+                ...state.curriculums,
+                [action.payload.id]: {
+                    ...existing,
+                    ...action.payload.updates,
                 },
+            },
+        };
+    }
+
+    case "UPDATE_SYLLABUS": {
+        const existing = state.syllabuses[action.payload.id];
+        if (!existing) return state;
+        return {
+            ...state,
+            syllabuses: {
+                ...state.syllabuses,
+                [action.payload.id]: {
+                    ...existing,
+                    ...action.payload.updates,
+                },
+            },
+        };
+    }
+
+    case "UPDATE_MODULE": {
+        const existing = state.modules[action.payload.id];
+        if (!existing) return state;
+        return {
+            ...state,
+            modules: {
+                ...state.modules,
+                [action.payload.id]: {
+                    ...existing,
+                    ...action.payload.updates,
+                },
+            },
+        };
+    }
+
+    case "UPDATE_EVENT": {
+        const existing = state.events[action.payload.id];
+        if (!existing) return state;
+        return {
+            ...state,
+            events: {
+                ...state.events,
+                [action.payload.id]: {
+                    ...existing,
+                    ...action.payload.updates,
+                },
+            },
+        };
+    }
+
+    case "UPDATE_WEEK": {
+        const existing = state.weeks[action.payload.id];
+        if (!existing) return state;
+        return {
+            ...state,
+            weeks: {
+                ...state.weeks,
+                [action.payload.id]: {
+                    ...existing,
+                    ...action.payload.updates,
+                },
+            },
+        };
+    }
+
+    case "UPDATE_DAY": {
+        const existing = state.days[action.payload.id];
+        if (!existing) return state;
+        return {
+            ...state,
+            days: {
+                ...state.days,
+                [action.payload.id]: {
+                    ...existing,
+                    ...action.payload.updates,
+                },
+            },
+        };
+    }
+
+    case "ALLOCATE_TIME": {
+        const existing = state.events[action.payload.eventId];
+        if (!existing) return state;
+        return {
+            ...state,
+            events: {
+                ...state.events,
+                [action.payload.eventId]: {
+                    ...existing,
+                    allocatedDuration: action.payload.duration,
+                },
+            },
+        };
+    }
+
+    case "ALLOCATE_TIME_TO_MODULE": {
+        const moduleDoc = state.modules[action.payload.moduleId];
+        if (!moduleDoc) return state;
+
+        const updatedEvents = state.events;
+
+        const updateModuleEvent: AllocateTimeToEventCallback = ({
+            eventId,
+            duration,
+        }) => {
+            const eventDoc = state.events[eventId];
+            if (!eventDoc) return;
+            updatedEvents[eventId] = {
+                ...eventDoc,
+                allocatedDuration: duration,
             };
-        }
+        };
 
-        case "UPDATE_SYLLABUS": {
-            const existing = state.syllabuses[action.payload.id];
-            if (!existing) return state;
-            return {
-                ...state,
-                syllabuses: {
-                    ...state.syllabuses,
-                    [action.payload.id]: {
-                        ...existing,
-                        ...action.payload.updates,
-                    },
+        allocateTimeToModule({
+            module: moduleDoc,
+            totalDuration: action.payload.duration,
+            curriculumId: action.payload.curriculumId,
+            moduleEvents: state.events,
+            allocateToEventCallback: updateModuleEvent,
+        });
+
+        return { ...state, events: updatedEvents };
+    }
+
+    case "ADD_SYLLABUS": {
+        const parent = state.curriculums[action.payload.curriculumId];
+        if (!parent) return state;
+        return {
+            ...state,
+            syllabuses: {
+                ...state.syllabuses,
+                [action.payload.syllabus.id]: injectDocumentTimes({
+                    ...action.payload.syllabus,
+                    curriculumId: parent.id,
+                }),
+            },
+            curriculums: {
+                ...state.curriculums,
+                [parent.id]: {
+                    ...parent,
+                    syllabuses: [
+                        ...parent.syllabuses,
+                        action.payload.syllabus.id,
+                    ],
                 },
-            };
-        }
+            },
+        };
+    }
 
-        case "UPDATE_MODULE": {
-            const existing = state.modules[action.payload.id];
-            if (!existing) return state;
-            return {
-                ...state,
-                modules: {
-                    ...state.modules,
-                    [action.payload.id]: {
-                        ...existing,
-                        ...action.payload.updates,
-                    },
+    case "ADD_MODULE": {
+        const parent = state.syllabuses[action.payload.syllabusId];
+        if (!parent) return state;
+        return {
+            ...state,
+            modules: {
+                ...state.modules,
+                [action.payload.module.id]: injectDocumentTimes({
+                    ...action.payload.module,
+                    syllabusId: parent.id,
+                }),
+            },
+            syllabuses: {
+                ...state.syllabuses,
+                [parent.id]: {
+                    ...parent,
+                    modules: [...parent.modules, action.payload.module.id],
                 },
-            };
-        }
+            },
+        };
+    }
 
-        case "UPDATE_EVENT": {
-            const existing = state.events[action.payload.id];
-            if (!existing) return state;
-            return {
-                ...state,
-                events: {
-                    ...state.events,
-                    [action.payload.id]: {
-                        ...existing,
-                        ...action.payload.updates,
-                    },
+    case "ADD_EVENT": {
+        const parent = state.modules[action.payload.moduleId];
+        if (!parent) return state;
+        return {
+            ...state,
+            events: {
+                ...state.events,
+                [action.payload.event.id]: injectDocumentTimes({
+                    ...action.payload.event,
+                    moduleId: parent.id,
+                }),
+            },
+            modules: {
+                ...state.modules,
+                [parent.id]: {
+                    ...parent,
+                    events: [...parent.events, action.payload.event.id],
                 },
-            };
-        }
+            },
+        };
+    }
 
-        case "UPDATE_WEEK": {
-            const existing = state.weeks[action.payload.id];
-            if (!existing) return state;
-            return {
-                ...state,
-                weeks: {
-                    ...state.weeks,
-                    [action.payload.id]: {
-                        ...existing,
-                        ...action.payload.updates,
-                    },
+    case "REMOVE_SYLLABUS": {
+        const parent = state.curriculums[action.payload.curriculumId];
+        if (!parent) return state;
+        return {
+            ...state,
+            curriculums: {
+                ...state.curriculums,
+                [parent.id]: {
+                    ...parent,
+                    syllabuses: parent.syllabuses.filter(
+                        (id) => id !== action.payload.syllabusId,
+                    ),
                 },
-            };
-        }
+            },
+        };
+    }
 
-        case "UPDATE_DAY": {
-            const existing = state.days[action.payload.id];
-            if (!existing) return state;
-            return {
-                ...state,
-                days: {
-                    ...state.days,
-                    [action.payload.id]: {
-                        ...existing,
-                        ...action.payload.updates,
-                    },
+    case "REMOVE_MODULE": {
+        const parent = state.syllabuses[action.payload.syllabusId];
+        if (!parent) return state;
+        return {
+            ...state,
+            syllabuses: {
+                ...state.syllabuses,
+                [parent.id]: {
+                    ...parent,
+                    modules: parent.modules.filter(
+                        (id) => id !== action.payload.moduleId,
+                    ),
                 },
-            };
-        }
+            },
+        };
+    }
 
-        case "ALLOCATE_TIME": {
-            const existing = state.events[action.payload.eventId];
-            if (!existing) return state;
-            return {
-                ...state,
-                events: {
-                    ...state.events,
-                    [action.payload.eventId]: {
-                        ...existing,
-                        allocatedDuration: action.payload.duration,
-                    },
+    case "REMOVE_EVENT": {
+        const parent = state.modules[action.payload.moduleId];
+        if (!parent) return state;
+        return {
+            ...state,
+            modules: {
+                ...state.modules,
+                [parent.id]: {
+                    ...parent,
+                    events: parent.events.filter(
+                        (id) => id !== action.payload.eventId,
+                    ),
                 },
-            };
-        }
+            },
+        };
+    }
 
-        case "ALLOCATE_TIME_TO_MODULE": {
-            const moduleDoc = state.modules[action.payload.moduleId];
-            if (!moduleDoc) return state;
-
-            const updatedEvents = state.events;
-
-            const updateModuleEvent: AllocateTimeToEventCallback = ({
-                eventId,
-                duration,
-            }) => {
-                const eventDoc = state.events[eventId];
-                if (!eventDoc) return;
-                updatedEvents[eventId] = {
-                    ...eventDoc,
-                    allocatedDuration: duration,
-                };
-            };
-
-            allocateTimeToModule({
-                module: moduleDoc,
-                totalDuration: action.payload.duration,
-                curriculumId: action.payload.curriculumId,
-                moduleEvents: state.events,
-                allocateToEventCallback: updateModuleEvent,
-            });
-
-            return { ...state, events: updatedEvents };
-        }
-
-        case "ADD_SYLLABUS": {
-            const parent = state.curriculums[action.payload.curriculumId];
-            if (!parent) return state;
-            return {
-                ...state,
-                syllabuses: {
-                    ...state.syllabuses,
-                    [action.payload.syllabus.id]: injectDocumentTimes({
-                        ...action.payload.syllabus,
-                        curriculumId: parent.id,
-                    }),
+    case "ADD_WEEK": {
+        const weeksRecord = state.weeks;
+        return {
+            ...state,
+            weeks: {
+                ...weeksRecord,
+                [action.payload.week.id]: injectDocumentTimes({
+                    ...action.payload.week,
+                    curriculumId: action.payload.curriculumId,
+                }) as any,
+            },
+            curriculums: {
+                ...state.curriculums,
+                [action.payload.curriculumId]: {
+                    ...state.curriculums[action.payload.curriculumId],
+                    weeks: [
+                        ...state.curriculums[action.payload.curriculumId]
+                            .weeks,
+                        action.payload.week.id,
+                    ],
                 },
-                curriculums: {
-                    ...state.curriculums,
-                    [parent.id]: {
-                        ...parent,
-                        syllabuses: [
-                            ...parent.syllabuses,
-                            action.payload.syllabus.id,
-                        ],
-                    },
-                },
-            };
-        }
+            },
+        };
+    }
 
-        case "ADD_MODULE": {
-            const parent = state.syllabuses[action.payload.syllabusId];
-            if (!parent) return state;
-            return {
-                ...state,
-                modules: {
-                    ...state.modules,
-                    [action.payload.module.id]: injectDocumentTimes({
-                        ...action.payload.module,
-                        syllabusId: parent.id,
-                    }),
-                },
-                syllabuses: {
-                    ...state.syllabuses,
-                    [parent.id]: {
-                        ...parent,
-                        modules: [...parent.modules, action.payload.module.id],
-                    },
-                },
-            };
-        }
-
-        case "ADD_EVENT": {
-            const parent = state.modules[action.payload.moduleId];
-            if (!parent) return state;
-            return {
-                ...state,
-                events: {
-                    ...state.events,
-                    [action.payload.event.id]: injectDocumentTimes({
-                        ...action.payload.event,
-                        moduleId: parent.id,
-                    }),
-                },
-                modules: {
-                    ...state.modules,
-                    [parent.id]: {
-                        ...parent,
-                        events: [...parent.events, action.payload.event.id],
-                    },
-                },
-            };
-        }
-
-        case "REMOVE_SYLLABUS": {
-            const parent = state.curriculums[action.payload.curriculumId];
-            if (!parent) return state;
-            return {
-                ...state,
-                curriculums: {
-                    ...state.curriculums,
-                    [parent.id]: {
-                        ...parent,
-                        syllabuses: parent.syllabuses.filter(
-                            (id) => id !== action.payload.syllabusId,
-                        ),
-                    },
-                },
-            };
-        }
-
-        case "REMOVE_MODULE": {
-            const parent = state.syllabuses[action.payload.syllabusId];
-            if (!parent) return state;
-            return {
-                ...state,
-                syllabuses: {
-                    ...state.syllabuses,
-                    [parent.id]: {
-                        ...parent,
-                        modules: parent.modules.filter(
-                            (id) => id !== action.payload.moduleId,
-                        ),
-                    },
-                },
-            };
-        }
-
-        case "REMOVE_EVENT": {
-            const parent = state.modules[action.payload.moduleId];
-            if (!parent) return state;
-            return {
-                ...state,
-                modules: {
-                    ...state.modules,
-                    [parent.id]: {
-                        ...parent,
-                        events: parent.events.filter(
-                            (id) => id !== action.payload.eventId,
-                        ),
-                    },
-                },
-            };
-        }
-
-        case "ADD_WEEK": {
-            const weeksRecord = state.weeks;
-            return {
-                ...state,
-                weeks: {
-                    ...weeksRecord,
-                    [action.payload.week.id]: injectDocumentTimes({
-                        ...action.payload.week,
-                        curriculumId: action.payload.curriculumId,
-                    }) as any,
-                },
-                curriculums: {
-                    ...state.curriculums,
-                    [action.payload.curriculumId]: {
-                        ...state.curriculums[action.payload.curriculumId],
-                        weeks: [
-                            ...state.curriculums[action.payload.curriculumId]
-                                .weeks,
-                            action.payload.week.id,
-                        ],
-                    },
-                },
-            };
-        }
-
-        case "REMOVE_WEEK": {
-            const existingWeek = state.weeks[action.payload.weekId];
-            const { [action.payload.weekId]: _, ...remainingWeeks } =
+    case "REMOVE_WEEK": {
+        const existingWeek = state.weeks[action.payload.weekId];
+        const { [action.payload.weekId]: _, ...remainingWeeks } =
                 state.weeks;
-            const remainingDays = { ...state.days };
+        const remainingDays = { ...state.days };
 
-            for (const dayId of existingWeek?.days ?? []) {
-                delete remainingDays[dayId];
-            }
-
-            const parent = state.curriculums[action.payload.curriculumId];
-
-            return {
-                ...state,
-                weeks: remainingWeeks,
-                days: remainingDays,
-                curriculums: parent
-                    ? {
-                          ...state.curriculums,
-                          [parent.id]: {
-                              ...parent,
-                              weeks: parent.weeks.filter(
-                                  (weekId) => weekId !== action.payload.weekId,
-                              ),
-                          },
-                      }
-                    : state.curriculums,
-            };
+        for (const dayId of existingWeek?.days ?? []) {
+            delete remainingDays[dayId];
         }
 
-        case "ADD_DAY": {
-            const daysRecord = state.days as Record<
+        const parent = state.curriculums[action.payload.curriculumId];
+
+        return {
+            ...state,
+            weeks: remainingWeeks,
+            days: remainingDays,
+            curriculums: parent
+                ? {
+                    ...state.curriculums,
+                    [parent.id]: {
+                        ...parent,
+                        weeks: parent.weeks.filter(
+                            (weekId) => weekId !== action.payload.weekId,
+                        ),
+                    },
+                }
+                : state.curriculums,
+        };
+    }
+
+    case "ADD_DAY": {
+        const daysRecord = state.days as Record<
                 GanttDayId,
                 GanttDay & { id: GanttDayId }
             >;
-            return {
-                ...state,
-                days: {
-                    ...daysRecord,
-                    [action.payload.day.id]: injectDocumentTimes(
-                        action.payload.day,
-                    ) as any,
-                } as typeof state.days,
-            };
-        }
+        return {
+            ...state,
+            days: {
+                ...daysRecord,
+                [action.payload.day.id]: injectDocumentTimes(
+                    action.payload.day,
+                ) as any,
+            } as typeof state.days,
+        };
+    }
 
-        case "REMOVE_DAY": {
-            const { [action.payload.dayId]: _, ...remainingDays } = state.days;
-            return {
-                ...state,
-                days: remainingDays,
-            };
-        }
+    case "REMOVE_DAY": {
+        const { [action.payload.dayId]: _, ...remainingDays } = state.days;
+        return {
+            ...state,
+            days: remainingDays,
+        };
+    }
 
-        default:
-            return state;
+    default:
+        return state;
     }
 }

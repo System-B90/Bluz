@@ -56,10 +56,10 @@ function LecturerSelectionField({
             const newIds =
                 typeof value === "string"
                     ? value.split(",").map((v) => {
-                          if (v === "איש חוץ") return "איש חוץ";
-                          if (v.startsWith("outsider-")) return v;
-                          return Number(v);
-                      })
+                        if (v === "איש חוץ") return "איש חוץ";
+                        if (v.startsWith("outsider-")) return v;
+                        return Number(v);
+                    })
                     : value;
 
             onBlurCallback({ ...event, lecturers: newIds });
@@ -101,8 +101,8 @@ function LecturerSelectionField({
                                     typeof id === "number"
                                         ? getInstructor(id)
                                         : outsider
-                                          ? { id, display_name: outsider.name }
-                                          : { id, display_name: id };
+                                            ? { id, display_name: outsider.name }
+                                            : { id, display_name: id };
                                 return (
                                     <Chip
                                         key={id}

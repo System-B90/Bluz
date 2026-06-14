@@ -132,32 +132,32 @@ export function DiffDetailsTable({
                         <TableCell>
                             {localModifiedEvent !== undefined &&
                             localModifiedEvent[key] !== undefined ? (
-                                <Typography>
-                                    {formatValue(localModifiedEvent[key], key)}
-                                </Typography>
-                            ) : (
-                                <DeletedItemPlaceholder />
-                            )}
+                                    <Typography>
+                                        {formatValue(localModifiedEvent[key], key)}
+                                    </Typography>
+                                ) : (
+                                    <DeletedItemPlaceholder />
+                                )}
                         </TableCell>
                         <TableCell>
                             {capturedVersion !== undefined &&
                             capturedVersion[key] !== undefined ? (
-                                <Typography color="text.secondary">
-                                    {formatValue(capturedVersion[key], key)}
-                                </Typography>
-                            ) : (
-                                <DeletedItemPlaceholder />
-                            )}
+                                    <Typography color="text.secondary">
+                                        {formatValue(capturedVersion[key], key)}
+                                    </Typography>
+                                ) : (
+                                    <DeletedItemPlaceholder />
+                                )}
                         </TableCell>
                         <TableCell>
                             {serverVersion !== undefined &&
                             serverVersion[key] !== undefined ? (
-                                <Typography>
-                                    {formatValue(serverVersion[key], key)}
-                                </Typography>
-                            ) : (
-                                <DeletedItemPlaceholder />
-                            )}
+                                    <Typography>
+                                        {formatValue(serverVersion[key], key)}
+                                    </Typography>
+                                ) : (
+                                    <DeletedItemPlaceholder />
+                                )}
                         </TableCell>
                     </TableRow>
                 );

@@ -49,10 +49,10 @@ export function HoursCard({
         () =>
             curriculum
                 ? getCurriculumScheduledMinutes({
-                      curriculum,
-                      mappings,
-                      state,
-                  }) / 60
+                    curriculum,
+                    mappings,
+                    state,
+                }) / 60
                 : 0,
         [curriculum, mappings, state],
     );
@@ -92,8 +92,8 @@ export function HoursCard({
                                 totalWorkingHours === 0
                                     ? "grey.200"
                                     : totalWorkingHours >= usedWorkingHours
-                                      ? theme.palette.primary.main
-                                      : theme.palette.warning.main,
+                                        ? theme.palette.primary.main
+                                        : theme.palette.warning.main,
                         },
                         [`& .${gaugeClasses.referenceArc}`]: {
                             fill: "grey.200",

@@ -69,15 +69,15 @@ export function CurriculumViewBuilderWeeksView({
                                 animationSelectedGroupIndex === null
                                     ? 1
                                     : animationSelectedGroupIndex === index
-                                      ? 1
-                                      : 0
+                                        ? 1
+                                        : 0
                             }
                             flexShrink={
                                 animationSelectedGroupIndex === null
                                     ? undefined
                                     : animationSelectedGroupIndex === index
-                                      ? 0
-                                      : 1
+                                        ? 0
+                                        : 1
                             }
                             group={group}
                             key={groupKey}

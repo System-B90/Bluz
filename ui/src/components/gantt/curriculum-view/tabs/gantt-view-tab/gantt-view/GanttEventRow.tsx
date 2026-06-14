@@ -89,11 +89,11 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
 
                 const blockPayload = isExplicitlyMappedHere
                     ? {
-                          type: "event-move",
-                          moduleId,
-                          eventId,
-                          sourceDayId: currentDayId,
-                      }
+                        type: "event-move",
+                        moduleId,
+                        eventId,
+                        sourceDayId: currentDayId,
+                    }
                     : { type: "event-map", moduleId, eventId };
 
                 const blockId = isExplicitlyMappedHere
@@ -158,11 +158,11 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
 
                 const blockPayload = isExplicitlyMappedHere
                     ? {
-                          type: "event-move",
-                          moduleId,
-                          eventId,
-                          sourceDayId: dayId,
-                      }
+                        type: "event-move",
+                        moduleId,
+                        eventId,
+                        sourceDayId: dayId,
+                    }
                     : { type: "event-map", moduleId, eventId };
 
                 const blockId = isExplicitlyMappedHere

@@ -22,51 +22,51 @@ export function createFromPalette(paletteMode: "dark" | "light"): ThemeOptions {
             mode: paletteMode ?? "light",
             ...(paletteMode === "light"
                 ? {
-                      // LIGHT MODE
-                      primary: {
-                          main: "#67C8DD", // The specific Turquoise provided
-                          light: "#9BF0FF",
-                          dark: "#3397AB",
-                          contrastText: "#002633", // Dark text for readability on bright turquoise
-                      },
-                      secondary: {
-                          main: "#1A3C59", // "Academic" Deep Navy (School/Bis vibe)
-                          light: "#466685",
-                          dark: "#001730",
-                          contrastText: "#ffffff",
-                      },
-                      background: {
-                          default: "#F4FAFC", // Very subtle turquoise tint to reduce glare
-                          paper: "#FFFFFF",
-                      },
-                      text: {
-                          primary: "#0D2336", // Soft black (deep blue-gray)
-                          secondary: "#587389",
-                      },
-                  }
+                    // LIGHT MODE
+                    primary: {
+                        main: "#67C8DD", // The specific Turquoise provided
+                        light: "#9BF0FF",
+                        dark: "#3397AB",
+                        contrastText: "#002633", // Dark text for readability on bright turquoise
+                    },
+                    secondary: {
+                        main: "#1A3C59", // "Academic" Deep Navy (School/Bis vibe)
+                        light: "#466685",
+                        dark: "#001730",
+                        contrastText: "#ffffff",
+                    },
+                    background: {
+                        default: "#F4FAFC", // Very subtle turquoise tint to reduce glare
+                        paper: "#FFFFFF",
+                    },
+                    text: {
+                        primary: "#0D2336", // Soft black (deep blue-gray)
+                        secondary: "#587389",
+                    },
+                }
                 : {
-                      // DARK MODE
-                      primary: {
-                          main: "#67C8DD", // Keep brand color
-                          light: "#9BF0FF",
-                          dark: "#3397AB",
-                          contrastText: "#001E29",
-                      },
-                      secondary: {
-                          main: "#4FB0C6", // Lighter variation of secondary for dark contrast
-                          light: "#83E2F9",
-                          dark: "#0F8096",
-                          contrastText: "#000000",
-                      },
-                      background: {
-                          default: "#071624", // Deep Midnight Blue (not pure black)
-                          paper: "#0C2237", // Slightly lighter midnight for cards
-                      },
-                      text: {
-                          primary: "#EBF7FA", // Off-white with slight cyan tint
-                          secondary: "#8DA6B5",
-                      },
-                  }),
+                    // DARK MODE
+                    primary: {
+                        main: "#67C8DD", // Keep brand color
+                        light: "#9BF0FF",
+                        dark: "#3397AB",
+                        contrastText: "#001E29",
+                    },
+                    secondary: {
+                        main: "#4FB0C6", // Lighter variation of secondary for dark contrast
+                        light: "#83E2F9",
+                        dark: "#0F8096",
+                        contrastText: "#000000",
+                    },
+                    background: {
+                        default: "#071624", // Deep Midnight Blue (not pure black)
+                        paper: "#0C2237", // Slightly lighter midnight for cards
+                    },
+                    text: {
+                        primary: "#EBF7FA", // Off-white with slight cyan tint
+                        secondary: "#8DA6B5",
+                    },
+                }),
         },
         components: {
             MuiChip: {

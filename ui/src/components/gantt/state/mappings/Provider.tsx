@@ -50,14 +50,14 @@ export function GanttMappingProvider({
             const tempSortOrder = Date.now();
             const optimisticMapping: GanttCurriculumModuleDayMapping &
                 BaseDbDocument = {
-                curriculumId,
-                moduleId,
-                eventId,
-                dayId,
-                sortOrder: tempSortOrder,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            };
+                    curriculumId,
+                    moduleId,
+                    eventId,
+                    dayId,
+                    sortOrder: tempSortOrder,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                };
 
             // Optimistic UI Update
             dispatch({ type: "UPSERT_MAPPING", payload: optimisticMapping });

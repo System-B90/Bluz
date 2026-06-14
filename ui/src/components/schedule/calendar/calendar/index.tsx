@@ -144,40 +144,40 @@ export function BluzCalendar({
             sx={
                 isFullscreen
                     ? {
-                          position: "fixed",
-                          top: 0,
-                          left: 0,
-                          width: "100vw",
-                          height: "100vh",
-                          zIndex: 9999,
-                          bgcolor: "background.paper",
-                          p: 0,
-                          boxSizing: "border-box",
-                          display: "flex",
-                          flexDirection: "column",
-                          overflow: "hidden",
-                          animation:
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        width: "100vw",
+                        height: "100vh",
+                        zIndex: 9999,
+                        bgcolor: "background.paper",
+                        p: 0,
+                        boxSizing: "border-box",
+                        display: "flex",
+                        flexDirection: "column",
+                        overflow: "hidden",
+                        animation:
                               "fullscreen-enter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
-                          "@keyframes fullscreen-enter": {
-                              "0%": {
-                                  transform: "scale(0.95)",
-                                  opacity: 0,
-                              },
-                              "100%": {
-                                  transform: "scale(1)",
-                                  opacity: 1,
-                              },
-                          },
-                      }
+                        "@keyframes fullscreen-enter": {
+                            "0%": {
+                                transform: "scale(0.95)",
+                                opacity: 0,
+                            },
+                            "100%": {
+                                transform: "scale(1)",
+                                opacity: 1,
+                            },
+                        },
+                    }
                     : {
-                          position: "relative",
-                          height: "100%",
-                          width: "100%",
-                          display: "flex",
-                          flexDirection: "column",
-                          overflow: "hidden",
-                          transition: "all 0.2s ease-in-out",
-                      }
+                        position: "relative",
+                        height: "100%",
+                        width: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        overflow: "hidden",
+                        transition: "all 0.2s ease-in-out",
+                    }
             }
         >
             {/* Floating controls in top-left corner (only when toolbar is hidden / in fullscreen) */}

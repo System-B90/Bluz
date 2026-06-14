@@ -38,10 +38,10 @@ export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
         () =>
             syllabusId
                 ? hashSyllabusToColor(
-                      syllabusId,
-                      theme.palette.primary.main,
-                      0.2,
-                  )
+                    syllabusId,
+                    theme.palette.primary.main,
+                    0.2,
+                )
                 : undefined,
         [syllabusId, theme.palette.primary.main],
     );

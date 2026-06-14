@@ -44,10 +44,10 @@ export function ClosingSaturdayChip({
                 className={`
                     transition-all duration-300 ease-in-out cursor-pointer font-bold
                     ${
-                        weekendDuty
-                            ? "bg-amber-600 text-white hover:bg-amber-700 shadow-md ring-2 ring-amber-200"
-                            : "bg-slate-200 text-slate-600 hover:bg-slate-300"
-                    }
+        weekendDuty
+            ? "bg-amber-600 text-white hover:bg-amber-700 shadow-md ring-2 ring-amber-200"
+            : "bg-slate-200 text-slate-600 hover:bg-slate-300"
+        }
                 `}
                 icon={
                     weekendDuty ? (

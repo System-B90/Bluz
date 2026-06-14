@@ -172,11 +172,11 @@ export function CalendarView({
                 event.rooms.length > 0
                     ? event.rooms.map((room) => JSON.stringify(room))
                     : [
-                          JSON.stringify({
-                              id: DUMMY_ROOM_ID,
-                              source: RoomSource.Custom,
-                          }),
-                      ]
+                        JSON.stringify({
+                            id: DUMMY_ROOM_ID,
+                            source: RoomSource.Custom,
+                        }),
+                    ]
             }
             resourceIdAccessor={(room: Room) =>
                 JSON.stringify(roomToResolvable(room))

@@ -437,8 +437,8 @@ export function OutsiderSettings() {
                                                     ? "action.selected"
                                                     : theme.palette.mode ===
                                                         "light"
-                                                      ? "rgba(0,0,0,0.01)"
-                                                      : "rgba(255,255,255,0.01)",
+                                                        ? "rgba(0,0,0,0.01)"
+                                                        : "rgba(255,255,255,0.01)",
                                             transition: "all 0.2s ease",
                                             "&:hover": {
                                                 borderColor: isActive
@@ -523,19 +523,19 @@ export function OutsiderSettings() {
                                                         </span>
                                                         {outsider.personalNumber ||
                                                         outsider.idNumber ? (
-                                                            <span>
-                                                                {outsider.personalNumber
-                                                                    ? `מ.א. ${outsider.personalNumber}`
-                                                                    : ""}
-                                                                {outsider.personalNumber &&
+                                                                <span>
+                                                                    {outsider.personalNumber
+                                                                        ? `מ.א. ${outsider.personalNumber}`
+                                                                        : ""}
+                                                                    {outsider.personalNumber &&
                                                                 outsider.idNumber
-                                                                    ? " | "
-                                                                    : ""}
-                                                                {outsider.idNumber
-                                                                    ? `ת.ז. ${outsider.idNumber}`
-                                                                    : ""}
-                                                            </span>
-                                                        ) : null}
+                                                                        ? " | "
+                                                                        : ""}
+                                                                    {outsider.idNumber
+                                                                        ? `ת.ז. ${outsider.idNumber}`
+                                                                        : ""}
+                                                                </span>
+                                                            ) : null}
                                                     </Box>
                                                 </Typography>
                                             }
@@ -624,8 +624,8 @@ export function OutsiderSettings() {
                             {isCreating
                                 ? "הוספת איש חוץ חדש"
                                 : selectedOutsider
-                                  ? "עריכת פרטי איש חוץ"
-                                  : "פרטי איש חוץ"}
+                                    ? "עריכת פרטי איש חוץ"
+                                    : "פרטי איש חוץ"}
                         </Typography>
                         <Typography
                             sx={{
@@ -637,8 +637,8 @@ export function OutsiderSettings() {
                             {isCreating
                                 ? "מלא את הטופס ליצירת איש חוץ חדש"
                                 : selectedOutsider
-                                  ? "עדכן את פרטי איש החוץ הנוכחי"
-                                  : "בחר איש חוץ מהרשימה לעריכה"}
+                                    ? "עדכן את פרטי איש החוץ הנוכחי"
+                                    : "בחר איש חוץ מהרשימה לעריכה"}
                         </Typography>
                     </Box>
                 </Box>
@@ -858,23 +858,23 @@ export function OutsiderSettings() {
                                 {releaseDate &&
                                 releaseDate.isValid() &&
                                 releaseDate.isBefore(dayjs(), "day") ? (
-                                    <Box
-                                        alignItems="center"
-                                        display="flex"
-                                        gap={0.5}
-                                        sx={{ color: "success.main" }}
-                                    >
-                                        <CheckCircleIcon
-                                            sx={{ fontSize: 16 }}
-                                        />
-                                        <Typography
-                                            sx={{ fontWeight: 700 }}
-                                            variant="caption"
+                                        <Box
+                                            alignItems="center"
+                                            display="flex"
+                                            gap={0.5}
+                                            sx={{ color: "success.main" }}
                                         >
+                                            <CheckCircleIcon
+                                                sx={{ fontSize: 16 }}
+                                            />
+                                            <Typography
+                                                sx={{ fontWeight: 700 }}
+                                                variant="caption"
+                                            >
                                             סטטוס: משוחרר
-                                        </Typography>
-                                    </Box>
-                                ) : null}
+                                            </Typography>
+                                        </Box>
+                                    ) : null}
                             </Box>
 
                             {/* Comment */}

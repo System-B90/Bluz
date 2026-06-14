@@ -52,8 +52,8 @@ export const AuthProvider = ({
                 typeof args[0] === "string"
                     ? args[0]
                     : args[0] instanceof Request
-                      ? args[0].url
-                      : "";
+                        ? args[0].url
+                        : "";
 
             if (url.includes("/api/auth/_log")) {
                 try {

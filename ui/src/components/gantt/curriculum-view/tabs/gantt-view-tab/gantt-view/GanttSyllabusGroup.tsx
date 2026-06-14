@@ -100,14 +100,14 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
 
     const getSpanBorderRadius = (spanVariant: SpanVariant) => {
         switch (spanVariant) {
-            case "start":
-                return "4px 0 0 4px";
-            case "end":
-                return "0 4px 4px 0";
-            case "single":
-                return "4px";
-            default:
-                return "0";
+        case "start":
+            return "4px 0 0 4px";
+        case "end":
+            return "0 4px 4px 0";
+        case "single":
+            return "4px";
+        default:
+            return "0";
         }
     };
 
@@ -266,8 +266,8 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
 
             {isExpanded
                 ? syllabus.modules.map((moduleId) => (
-                      <GanttModuleRow key={moduleId} moduleId={moduleId} />
-                  ))
+                    <GanttModuleRow key={moduleId} moduleId={moduleId} />
+                ))
                 : null}
         </React.Fragment>
     );

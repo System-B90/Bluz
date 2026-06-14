@@ -23,14 +23,14 @@ export enum Clearance {
 
 export const clearanceName = (clearance: Clearance) => {
     switch (clearance) {
-        case Clearance.Hanich:
-            return "Hanich" as const;
-        case Clearance.Checker:
-            return "Checker" as const;
-        case Clearance.Segel:
-            return "Segel" as const;
-        case Clearance.Admin:
-            return "Admin" as const;
+    case Clearance.Hanich:
+        return "Hanich" as const;
+    case Clearance.Checker:
+        return "Checker" as const;
+    case Clearance.Segel:
+        return "Segel" as const;
+    case Clearance.Admin:
+        return "Admin" as const;
     }
 };
 

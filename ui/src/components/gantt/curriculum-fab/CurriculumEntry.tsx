@@ -27,8 +27,8 @@ export const CurriculumEntry = React.memo(
                                     color: selected
                                         ? "text.action"
                                         : isDraft
-                                          ? "text.secondary"
-                                          : "text.primary",
+                                            ? "text.secondary"
+                                            : "text.primary",
                                     fontWeight: isDraft ? "normal" : "medium",
                                     fontStyle: isDraft ? "italic" : "normal",
                                 },

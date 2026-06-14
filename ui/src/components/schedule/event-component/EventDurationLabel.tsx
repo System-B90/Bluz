@@ -39,8 +39,8 @@ export function EventDurationLabel({
         hours && minutes
             ? `${hours}:${String(minutes).padStart(2, "0")}`
             : hours
-              ? `${hours} ש׳`
-              : `${minutes} ד׳`;
+                ? `${hours} ש׳`
+                : `${minutes} ד׳`;
 
     const timeRange = `${start.format("HH:mm")} - ${end.format("HH:mm")}`;
 

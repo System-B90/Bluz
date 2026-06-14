@@ -112,8 +112,8 @@ export const CalendarFiltersProvider = ({
             let paState: PotentialPA = event.personalTalk
                 ? PotentialPA.YesRecommended
                 : event.required
-                  ? PotentialPA.No
-                  : PotentialPA.YesNotRecommended;
+                    ? PotentialPA.No
+                    : PotentialPA.YesNotRecommended;
             if (paState === PotentialPA.YesRecommended) {
                 // Check if busy
                 if (isInstructorBusy(showPAsFor, event)) {
@@ -122,14 +122,14 @@ export const CalendarFiltersProvider = ({
             }
 
             switch (paState) {
-                case PotentialPA.YesRecommended:
-                    return 1;
-                case PotentialPA.YesNotRecommended:
-                    return 0.6;
-                case PotentialPA.No:
-                    return 0.1;
-                case PotentialPA.NoRecommendedButBusy:
-                    return 0.3;
+            case PotentialPA.YesRecommended:
+                return 1;
+            case PotentialPA.YesNotRecommended:
+                return 0.6;
+            case PotentialPA.No:
+                return 0.1;
+            case PotentialPA.NoRecommendedButBusy:
+                return 0.3;
             }
 
             return 1;

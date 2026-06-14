@@ -118,8 +118,8 @@ function CurriculumViewBuilderTabInner({
                 overData.type === "DAY"
                     ? overData.dayId
                     : overData.type === "WEEK"
-                      ? overData.firstDayId
-                      : null;
+                        ? overData.firstDayId
+                        : null;
             if (!targetDayId) {
                 return;
             } // Should not happen

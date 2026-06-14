@@ -31,8 +31,8 @@ async function apiGetModuleDayMapping(
     if (dayId !== undefined) {
         Array.isArray(dayId)
             ? dayId.forEach((dayId) =>
-                  url.searchParams.append("dayId", dayId.toString()),
-              )
+                url.searchParams.append("dayId", dayId.toString()),
+            )
             : url.searchParams.append("dayId", dayId.toString());
     }
 

@@ -101,10 +101,10 @@ function RoomFormHeader({
                     {isCreating
                         ? "הוספת חדר חדש"
                         : isHiveSelected
-                          ? "עריכת חדר הייב"
-                          : isEditing
-                            ? "עריכת חדר"
-                            : "בחר חדר לעריכה"}
+                            ? "עריכת חדר הייב"
+                            : isEditing
+                                ? "עריכת חדר"
+                                : "בחר חדר לעריכה"}
                 </Typography>
                 <Typography
                     sx={{
@@ -116,10 +116,10 @@ function RoomFormHeader({
                     {isCreating
                         ? "יצירת חדר מותאם אישית חדש"
                         : isHiveSelected
-                          ? "שם ותיאור נשלטים ע״י הייב. ניתן לערוך פרטים מורחבים."
-                          : isEditing
-                            ? "עדכון כל פרטי החדר"
-                            : "לחץ על חדר מהרשימה כדי לערוך"}
+                            ? "שם ותיאור נשלטים ע״י הייב. ניתן לערוך פרטים מורחבים."
+                            : isEditing
+                                ? "עדכון כל פרטי החדר"
+                                : "לחץ על חדר מהרשימה כדי לערוך"}
                 </Typography>
             </Box>
         </Box>
@@ -146,12 +146,12 @@ function RoomBasicDetails({
                 slotProps={{
                     input: isHiveSelected
                         ? {
-                              endAdornment: (
-                                  <InputAdornment position="end">
-                                      <HiveLogo size={16} />
-                                  </InputAdornment>
-                              ),
-                          }
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <HiveLogo size={16} />
+                                </InputAdornment>
+                            ),
+                        }
                         : undefined,
                 }}
                 sx={{
@@ -334,8 +334,8 @@ function RoomFormActions({
                 {isCreating
                     ? "צור חדר"
                     : isHiveSelected
-                      ? "שמור פרטים מורחבים"
-                      : "עדכן חדר"}
+                        ? "שמור פרטים מורחבים"
+                        : "עדכן חדר"}
             </Button>
             <Button
                 color="inherit"

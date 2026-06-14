@@ -150,8 +150,8 @@ function WeekRow({
                             weekStatus === "error"
                                 ? "error"
                                 : weekStatus === "warning"
-                                  ? "warning"
-                                  : "primary"
+                                    ? "warning"
+                                    : "primary"
                         }
                         label={`${formatHoursLabel(scheduledMinutes)} / ${formatHoursLabel(weekTotalMinutes)}`}
                         size="smaller"

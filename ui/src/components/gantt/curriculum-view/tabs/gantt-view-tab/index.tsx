@@ -36,15 +36,15 @@ export function CurriculumGanttView({
         (): GanttDataSourceProps | null =>
             curriculum
                 ? {
-                      curriculum,
-                      syllabuses: Object.values(
-                          state.syllabuses,
-                      ) as Array<GanttSyllabus>,
-                      modules: Object.values(
-                          state.modules,
-                      ) as Array<GanttModule>,
-                      events: Object.values(state.events) as Array<GanttEvent>,
-                  }
+                    curriculum,
+                    syllabuses: Object.values(
+                        state.syllabuses,
+                    ) as Array<GanttSyllabus>,
+                    modules: Object.values(
+                        state.modules,
+                    ) as Array<GanttModule>,
+                    events: Object.values(state.events) as Array<GanttEvent>,
+                }
                 : null,
         [curriculum, state],
     );

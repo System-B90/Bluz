@@ -25,9 +25,9 @@ export function FilterInstructors({ ...props }: BoxProps) {
         const newIds =
             typeof value === "string"
                 ? value
-                      .split(",")
-                      .map(Number)
-                      .filter((n) => !isNaN(n))
+                    .split(",")
+                    .map(Number)
+                    .filter((n) => !isNaN(n))
                 : value;
 
         setFilteredInstructors(newIds);

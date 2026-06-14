@@ -95,18 +95,18 @@ function TabContentFallback() {
 
 function renderTabContent(tabIndex: number, curriculumId: GanttCurriculumId) {
     switch (tabIndex) {
-        case 0:
-            return <SyllabusesTab curriculumId={curriculumId} />;
-        case 1:
-            return <WeeksTab curriculumId={curriculumId} />;
-        case 2:
-            return (
-                <MemoizedCurriculumViewBuilderTab curriculumId={curriculumId} />
-            );
-        case 3:
-            return <MemoizedCurriculumGanttView curriculumId={curriculumId} />;
-        default:
-            return null;
+    case 0:
+        return <SyllabusesTab curriculumId={curriculumId} />;
+    case 1:
+        return <WeeksTab curriculumId={curriculumId} />;
+    case 2:
+        return (
+            <MemoizedCurriculumViewBuilderTab curriculumId={curriculumId} />
+        );
+    case 3:
+        return <MemoizedCurriculumGanttView curriculumId={curriculumId} />;
+    default:
+        return null;
     }
 }
 

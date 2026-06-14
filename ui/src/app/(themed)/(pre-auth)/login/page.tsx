@@ -11,19 +11,19 @@ import { Logo } from "@/components/header/logo";
 
 function getAuthenticationErrorMessage(error: null | string) {
     switch (error) {
-        case null:
-            return null;
-        case "AccessDenied":
-            return "למשתמש שלך אין הרשאה מתאימה לגישה למערכת.";
-        case "OAuthAccountNotLinked":
-            return "כתובת המייל משויכת לחשבון קיים. יש להתחבר באמצעות שיטת ההתחברות המקורית.";
-        case "OAuthCallback":
-        case "OAuthSignin":
-            return "לא ניתן היה להשלים את תהליך ההזדהות מול הייב.";
-        case "SessionRequired":
-            return "נדרשת התחברות מחדש כדי להמשיך.";
-        default:
-            return "אירעה שגיאה במהלך תהליך ההתחברות.";
+    case null:
+        return null;
+    case "AccessDenied":
+        return "למשתמש שלך אין הרשאה מתאימה לגישה למערכת.";
+    case "OAuthAccountNotLinked":
+        return "כתובת המייל משויכת לחשבון קיים. יש להתחבר באמצעות שיטת ההתחברות המקורית.";
+    case "OAuthCallback":
+    case "OAuthSignin":
+        return "לא ניתן היה להשלים את תהליך ההזדהות מול הייב.";
+    case "SessionRequired":
+        return "נדרשת התחברות מחדש כדי להמשיך.";
+    default:
+        return "אירעה שגיאה במהלך תהליך ההתחברות.";
     }
 }
 

@@ -495,11 +495,11 @@ export function DayCapacityCell({
                             },
                             ...(!hasComment && !isCommentFocused
                                 ? {
-                                      display: "none",
-                                      ".group\\/cell:hover &": {
-                                          display: "block",
-                                      },
-                                  }
+                                    display: "none",
+                                    ".group\\/cell:hover &": {
+                                        display: "block",
+                                    },
+                                }
                                 : {}),
                         }}
                     >

@@ -84,24 +84,24 @@ export function RelationalDraftFields({
                                             sx={
                                                 isModule
                                                     ? {
-                                                          fontWeight: "medium",
-                                                          color: "primary.main",
-                                                          display: "flex",
-                                                          alignItems: "center",
-                                                          gap: 1,
-                                                          pt: 1.2,
-                                                          pb: 1.2,
-                                                      }
+                                                        fontWeight: "medium",
+                                                        color: "primary.main",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: 1,
+                                                        pt: 1.2,
+                                                        pb: 1.2,
+                                                    }
                                                     : {
-                                                          pl: 4,
-                                                          fontSize: "0.875rem",
-                                                          color: "text.secondary",
-                                                          display: "flex",
-                                                          alignItems: "center",
-                                                          gap: 1,
-                                                          pt: 0.8,
-                                                          pb: 0.8,
-                                                      }
+                                                        pl: 4,
+                                                        fontSize: "0.875rem",
+                                                        color: "text.secondary",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: 1,
+                                                        pt: 0.8,
+                                                        pb: 0.8,
+                                                    }
                                             }
                                             value={option.id}
                                         >

@@ -20,18 +20,18 @@ import {
 
 function getEventTypeIcon(type: EventType, props = {}) {
     switch (type) {
-        case EventType.EXERCISE:
-            return <CoPresentIcon {...props} />;
-        case EventType.LECTURE:
-            return <SchoolIcon {...props} />;
-        case EventType.OTHER:
-            return <QuizIcon {...props} />;
-        case EventType.BREAK:
-            return <EmojiFoodBeverageIcon {...props} />;
-        case EventType.PRAYER:
-            return <SynagogueIcon {...props} />;
-        default:
-            return null;
+    case EventType.EXERCISE:
+        return <CoPresentIcon {...props} />;
+    case EventType.LECTURE:
+        return <SchoolIcon {...props} />;
+    case EventType.OTHER:
+        return <QuizIcon {...props} />;
+    case EventType.BREAK:
+        return <EmojiFoodBeverageIcon {...props} />;
+    case EventType.PRAYER:
+        return <SynagogueIcon {...props} />;
+    default:
+        return null;
     }
 }
 

@@ -54,48 +54,48 @@ function personalSettingsReducer(
 ): PersonalState {
     let nextState = state;
     switch (action.type) {
-        case "INITIALIZE":
-            return action.payload;
-        case "ADD_GROUP":
-            if (state.groups.includes(action.payload)) return state;
-            nextState = { ...state, groups: [...state.groups, action.payload] };
-            break;
-        case "REMOVE_GROUP":
-            nextState = {
-                ...state,
-                groups: state.groups.filter((g) => g !== action.payload),
-            };
-            break;
-        case "ADD_INSTRUCTOR":
-            if (state.instructors.includes(action.payload)) return state;
-            nextState = {
-                ...state,
-                instructors: [...state.instructors, action.payload],
-            };
-            break;
-        case "REMOVE_INSTRUCTOR":
-            nextState = {
-                ...state,
-                instructors: state.instructors.filter(
-                    (i) => i !== action.payload,
-                ),
-            };
-            break;
-        case "ADD_OUTSIDER":
-            if (state.favoriteOutsiders.includes(action.payload)) return state;
-            nextState = {
-                ...state,
-                favoriteOutsiders: [...state.favoriteOutsiders, action.payload],
-            };
-            break;
-        case "REMOVE_OUTSIDER":
-            nextState = {
-                ...state,
-                favoriteOutsiders: state.favoriteOutsiders.filter(
-                    (o) => o !== action.payload,
-                ),
-            };
-            break;
+    case "INITIALIZE":
+        return action.payload;
+    case "ADD_GROUP":
+        if (state.groups.includes(action.payload)) return state;
+        nextState = { ...state, groups: [...state.groups, action.payload] };
+        break;
+    case "REMOVE_GROUP":
+        nextState = {
+            ...state,
+            groups: state.groups.filter((g) => g !== action.payload),
+        };
+        break;
+    case "ADD_INSTRUCTOR":
+        if (state.instructors.includes(action.payload)) return state;
+        nextState = {
+            ...state,
+            instructors: [...state.instructors, action.payload],
+        };
+        break;
+    case "REMOVE_INSTRUCTOR":
+        nextState = {
+            ...state,
+            instructors: state.instructors.filter(
+                (i) => i !== action.payload,
+            ),
+        };
+        break;
+    case "ADD_OUTSIDER":
+        if (state.favoriteOutsiders.includes(action.payload)) return state;
+        nextState = {
+            ...state,
+            favoriteOutsiders: [...state.favoriteOutsiders, action.payload],
+        };
+        break;
+    case "REMOVE_OUTSIDER":
+        nextState = {
+            ...state,
+            favoriteOutsiders: state.favoriteOutsiders.filter(
+                (o) => o !== action.payload,
+            ),
+        };
+        break;
     }
 
     if (typeof window !== "undefined") {

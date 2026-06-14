@@ -90,15 +90,15 @@ export function ModuleConstraintsView({
                     ? Array.isArray(draft.allowedDays)
                         ? draft.allowedDays
                         : String(draft.allowedDays)
-                              .split(",")
-                              .map((d: string) => Number(d.trim()))
+                            .split(",")
+                            .map((d: string) => Number(d.trim()))
                     : undefined,
                 forbiddenDays: draft.forbiddenDays
                     ? Array.isArray(draft.forbiddenDays)
                         ? draft.forbiddenDays
                         : String(draft.forbiddenDays)
-                              .split(",")
-                              .map((d: string) => Number(d.trim()))
+                            .split(",")
+                            .map((d: string) => Number(d.trim()))
                     : undefined,
             };
         }
@@ -163,15 +163,15 @@ export function ModuleConstraintsView({
                     ? Array.isArray(editingDraft.allowedDays)
                         ? editingDraft.allowedDays
                         : String(editingDraft.allowedDays)
-                              .split(",")
-                              .map((d: string) => Number(d.trim()))
+                            .split(",")
+                            .map((d: string) => Number(d.trim()))
                     : undefined,
                 forbiddenDays: editingDraft.forbiddenDays
                     ? Array.isArray(editingDraft.forbiddenDays)
                         ? editingDraft.forbiddenDays
                         : String(editingDraft.forbiddenDays)
-                              .split(",")
-                              .map((d: string) => Number(d.trim()))
+                            .split(",")
+                            .map((d: string) => Number(d.trim()))
                     : undefined,
             };
         }

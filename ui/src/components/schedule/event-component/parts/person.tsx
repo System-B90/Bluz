@@ -66,9 +66,9 @@ export function PersonChip({
         () =>
             typeof fullName === "string"
                 ? shortenInstructorName(
-                      fullName,
-                      instructors.map((x) => x.display_name),
-                  )
+                    fullName,
+                    instructors.map((x) => x.display_name),
+                )
                 : fullName,
         [fullName, instructors],
     );
@@ -136,8 +136,8 @@ export function InstructorsList({
             ) : null}
             {event.type === EventType.LECTURE &&
             event.lecturers?.includes("איש חוץ") ? (
-                <PersonChip event={event} key="איש חוץ" personData="איש חוץ" />
-            ) : null}
+                    <PersonChip event={event} key="איש חוץ" personData="איש חוץ" />
+                ) : null}
             {presentInstructors.map((instructor) => (
                 <PersonChip
                     event={event}

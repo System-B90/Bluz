@@ -27,17 +27,17 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
 
     const style = transform
         ? {
-              transform: `translate3d(${transform.x}px, ${transform.y}px, 0)${isDragging ? " rotate(2.5deg) scale(1.02)" : ""}`,
-              zIndex: 9999,
-          }
+            transform: `translate3d(${transform.x}px, ${transform.y}px, 0)${isDragging ? " rotate(2.5deg) scale(1.02)" : ""}`,
+            zIndex: 9999,
+        }
         : undefined;
 
     const blockWidth =
         spanLength > 1
             ? `calc(${spanLength * 100}% - 8px)`
             : isAbsolute
-              ? "calc(100% - 8px)"
-              : "100%";
+                ? "calc(100% - 8px)"
+                : "100%";
 
     const isViolated = violations.length > 0;
 

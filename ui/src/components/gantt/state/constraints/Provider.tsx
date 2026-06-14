@@ -78,9 +78,9 @@ export function GanttConstraintProvider({
             const queryOptions =
                 context.type === "module"
                     ? {
-                          moduleId: context.moduleId,
-                          syllabusId: context.syllabusId,
-                      }
+                        moduleId: context.moduleId,
+                        syllabusId: context.syllabusId,
+                    }
                     : {};
             const data = await ganttApi.constraints.apiGet(
                 curriculumId,

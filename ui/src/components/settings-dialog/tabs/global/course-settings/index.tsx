@@ -141,8 +141,8 @@ function RootDropZone() {
                     isOver
                         ? "action.selected"
                         : theme.palette.mode === "light"
-                          ? "rgba(0, 0, 0, 0.01)"
-                          : "rgba(255, 255, 255, 0.01)",
+                            ? "rgba(0, 0, 0, 0.01)"
+                            : "rgba(255, 255, 255, 0.01)",
                 transition: "all 0.25s ease",
             }}
         >
