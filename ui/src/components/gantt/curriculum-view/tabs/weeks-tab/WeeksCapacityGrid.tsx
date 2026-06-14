@@ -232,17 +232,29 @@ function DayHeaderCell({
     const { enqueueSnackbar } = useSnackbar();
     const { updateDay } = useWeekActions();
 
+    const firstWeekId = curriculum.weeks[0];
+    const firstWeek = firstWeekId ? state.weeks[firstWeekId] : undefined;
+    const firstDayId = firstWeek?.days.find(
+        (dId) => state.days[dId]?.dayIndex === dayIndex
+    );
+    const firstDay = firstDayId ? state.days[firstDayId] : undefined;
+    const currentMinutes = firstDay ? firstDay.totalWorkingMinutes : null;
+
     // Load default hours from localStorage, fallback to 8 hours (480 minutes)
     const localStorageKey = `bluz_gantt_default_hours_${dayIndex}`;
     const initialMinutes = useMemo(() => {
+        if (currentMinutes !== null) return currentMinutes;
         const stored = localStorage.getItem(localStorageKey);
         if (stored !== null) {
-            const parsed = parseInt(stored, 10);
-            if (!isNaN(parsed)) return parsed;
+            const parsed = parseFloat(stored);
+            if (!isNaN(parsed) && parsed >= 0) {
+                // Handle legacy format (hours) vs minutes in localStorage
+                return parsed <= 24 ? Math.round(parsed * 60) : Math.round(parsed);
+            }
         }
         // Default fallbacks: Saturday is typically 0 (closed), others 8 hours (480 mins)
         return dayIndex === GanttDayIndex.Saturday ? 0 : 480;
-    }, [dayIndex, localStorageKey]);
+    }, [currentMinutes, dayIndex, localStorageKey]);
 
     const [inputValue, setInputValue] = useState(() =>
         formatMinutesAsTimeInput(initialMinutes)
@@ -258,6 +270,7 @@ function DayHeaderCell({
 
         // Save to localStorage
         localStorage.setItem(localStorageKey, parsedMinutes.toString());
+        setInputValue(formatMinutesAsTimeInput(parsedMinutes));
 
         // Perform bulk update on all weeks for that day in the current curriculum
         const dayIdsToUpdate: Array<string> = [];
@@ -424,14 +437,23 @@ export function WeeksCapacityGrid({
                             שם / הערת שבוע
                         </TableCell>
 
-                        {DAY_COLUMNS.map((dayIndex) => (
-                            <DayHeaderCell
-                                curriculum={curriculum}
-                                dayIndex={dayIndex}
-                                key={dayIndex}
-                                state={state}
-                            />
-                        ))}
+                        {DAY_COLUMNS.map((dayIndex) => {
+                            const firstWeekId = curriculum.weeks[0];
+                            const firstWeek = firstWeekId ? state.weeks[firstWeekId] : undefined;
+                            const firstDayId = firstWeek?.days.find(
+                                (dId) => state.days[dId]?.dayIndex === dayIndex
+                            );
+                            const firstDay = firstDayId ? state.days[firstDayId] : undefined;
+                            const currentMinutes = firstDay?.totalWorkingMinutes ?? (dayIndex === GanttDayIndex.Saturday ? 0 : 480);
+                            return (
+                                <DayHeaderCell
+                                    curriculum={curriculum}
+                                    dayIndex={dayIndex}
+                                    key={`${dayIndex}-${currentMinutes}`}
+                                    state={state}
+                                />
+                            );
+                        })}
                     </TableRow>
                 </TableHead>
                 <TableBody>
