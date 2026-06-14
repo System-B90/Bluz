@@ -207,6 +207,7 @@ export default defineConfig([
             "session-server/session-server.ts",
             "scripts/**",
             "tests/**",
+            ".agents/**",
         ],
     },
 ]);
