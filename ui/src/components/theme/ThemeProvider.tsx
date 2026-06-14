@@ -2,23 +2,25 @@
 import CssBaseline from "@mui/material/CssBaseline";
 import GlobalStyles from "@mui/material/GlobalStyles";
 import
-{
-    ThemeProvider as MUIThemeProvider,
-    createTheme,
-} from "@mui/material/styles";
+    {
+        ThemeProvider as MUIThemeProvider,
+        createTheme,
+    } from "@mui/material/styles";
 import type { ThemeProviderProps } from "next-themes";
 import
-{
-    ThemeProvider as NextThemesProvider,
-    useTheme as nextUseTheme,
-} from "next-themes";
+    {
+        ThemeProvider as NextThemesProvider,
+        useTheme as nextUseTheme,
+    } from "next-themes";
 import
-{
-    createContext,
-    useContext,
-    useMemo,
-    type ReactNode,
-} from "react";
+    {
+        createContext,
+        useContext,
+        useEffect,
+        useMemo,
+        useState,
+        type ReactNode,
+    } from "react";
 
 import { createThemeOptions } from "@/components/theme/CreateFromPalette";
 
@@ -30,8 +32,6 @@ export type ThemeContextState = {
 };
 
 const ThemeContext = createContext<ThemeContextState | undefined>(undefined);
-
-const muiTheme = createTheme(createThemeOptions());
 
 export function BluzThemeProvider({
     children,
@@ -59,11 +59,14 @@ export function BluzThemeProvider({
                         },
                         "*::-webkit-scrollbar-thumb": {
                             backgroundColor:
-                                theme.vars?.palette.action.disabledBackground ?? theme.palette.action.disabledBackground,
+                                theme.vars?.palette.action.disabledBackground ??
+                                theme.palette.action.disabledBackground,
                             borderRadius: "8px",
                         },
                         "*::-webkit-scrollbar-thumb:hover": {
-                            backgroundColor: theme.vars?.palette.primary.main ?? theme.palette.primary.main,
+                            backgroundColor:
+                                theme.vars?.palette.primary.main ??
+                                theme.palette.primary.main,
                         },
                         "*::-webkit-scrollbar-corner": {
                             backgroundColor: "transparent",
@@ -81,14 +84,35 @@ export function BluzThemeProvider({
 
 function InnerThemeProvider({ children }: { children: ReactNode; })
 {
-    const { theme, setTheme } = nextUseTheme();
+    const { theme, resolvedTheme, setTheme } = nextUseTheme();
+    const [ mounted, setMounted ] = useState(false);
+
+    useEffect(() =>
+    {
+        setMounted(true);
+    }, []);
+
+    const muiTheme = useMemo(() =>
+    {
+        const currentMode = mounted && resolvedTheme === "dark" ? "dark" : "light";
+        const baseOptions = createThemeOptions();
+
+        return createTheme({
+            ...baseOptions,
+            direction: "rtl",
+            palette: {
+                ...baseOptions.palette,
+                mode: currentMode,
+            },
+        });
+    }, [ resolvedTheme, mounted ]);
 
     const contextValue = useMemo(
         () => ({
             theme: (theme as ThemeMode) ?? "system",
-            setTheme: setTheme as (theme: ThemeMode) => void,
+            setTheme: setTheme,
         }),
-        [ theme, setTheme ],
+        [ theme, setTheme ]
     );
 
     return (

@@ -23,18 +23,18 @@ export default function RootLayout({
     const wsPortSuffix = WEBSOCKET_PORT_SUFFIX || "";
 
     return (
-        <html lang="he" suppressHydrationWarning>
+        <html dir="rtl" lang="he" suppressHydrationWarning>
             <body className="antialiased w-screen h-screen overflow-hidden">
-                <InitColorSchemeScript attribute="class" />
-                <WebSocketConfigProvider
-                    host={ wsHost }
-                    portSuffix={ wsPortSuffix }
-                    protocol={ wsProtcol }
-                >
-                    <MuiEmotionCacheProvider>
+                <MuiEmotionCacheProvider>
+                    <InitColorSchemeScript attribute="class" />
+                    <WebSocketConfigProvider
+                        host={ wsHost }
+                        portSuffix={ wsPortSuffix }
+                        protocol={ wsProtcol }
+                    >
                         { children }
-                    </MuiEmotionCacheProvider>
-                </WebSocketConfigProvider>
+                    </WebSocketConfigProvider>
+                </MuiEmotionCacheProvider>
             </body>
         </html>
     );

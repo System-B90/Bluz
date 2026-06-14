@@ -191,7 +191,7 @@ export function InstructorSelect<T = unknown>({
                 autoFocus: false,
                 ...props.MenuProps,
                 PaperProps: {
-                    ...props.MenuProps?.PaperProps,
+                    ...props.MenuProps?.slotProps?.paper,
                     sx: {
                         maxHeight: 400,
                         ...props.MenuProps?.PaperProps?.sx,

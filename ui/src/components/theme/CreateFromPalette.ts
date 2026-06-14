@@ -2,13 +2,15 @@ import { ThemeOptions } from "@mui/material/styles";
 
 declare module "@mui/material/Chip" {
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-    interface ChipPropsSizeOverrides {
+    interface ChipPropsSizeOverrides
+    {
         smaller: true;
         smallest: true;
     }
 }
 
-export function createThemeOptions(): ThemeOptions {
+export function createThemeOptions(): ThemeOptions
+{
     return {
         direction: "rtl",
         cssVariables: {
@@ -65,13 +67,18 @@ export function createThemeOptions(): ThemeOptions {
             },
         },
         typography: {
-            fontFamily: ['"Assistant"', "sans-serif"].join(","),
+            fontFamily: [ '"Assistant"', "sans-serif" ].join(","),
             h1: { fontWeight: 700 },
             h2: { fontWeight: 700 },
             h3: { fontWeight: 600 },
             button: { fontWeight: 600 },
         },
         components: {
+            MuiToggleButtonGroup: {
+                defaultProps: {
+                    // dir: 'rtl',
+                },
+            },
             MuiChip: {
                 variants: [
                     {
@@ -110,7 +117,6 @@ export function createThemeOptions(): ThemeOptions {
                     },
                 ],
             },
-            // Optional: Round corners slightly to match the "Fluid/Musical" feel of the icon
             MuiButton: {
                 styleOverrides: {
                     root: {
