@@ -25,11 +25,11 @@ const fadeInOut = keyframes`
 `;
 
 const LOADING_STRINGS = [
-    "Loading Gantt data...",
-    "Mapping Syllabuses...",
-    "Synchronizing nodes...",
-    "Optimizing timeline layout...",
-    "Almost there...",
+    "טוען נתוני גאנט...",
+    "ממפה סילבוסים...",
+    "מסנכרן שבועות...",
+    "סופר ימים לשחרור...",
+    "רק עוד רגע...",
 ];
 
 /**
@@ -82,10 +82,10 @@ export default function GanttPage() {
     const searchParams = useSearchParams();
     const [drawerOpen, setDrawerOpen] = useState(true);
     const [currentCurriculum, setCurrentCurriculum] =
-    useState<GanttCurriculumId | null>(() => {
-        const cidFromUrl = searchParams.get("cid");
-        return cidFromUrl ? (cidFromUrl as GanttCurriculumId) : null;
-    });
+        useState<GanttCurriculumId | null>(() => {
+            const cidFromUrl = searchParams.get("cid");
+            return cidFromUrl ? (cidFromUrl as GanttCurriculumId) : null;
+        });
 
     const [initialData, setInitialData] = useState<ApiCurriculum | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -166,7 +166,7 @@ export default function GanttPage() {
             >
                 {!currentCurriculum && !isLoading && (
                     <Typography color="textSecondary">
-            בחרו גאנט כדי להתחיל לעבוד
+                        בחרו גאנט כדי להתחיל לעבוד
                     </Typography>
                 )}
 
