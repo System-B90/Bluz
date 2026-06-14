@@ -19,7 +19,7 @@ import {
     type ReactNode,
 } from "react";
 
-import { createFromPalette } from "@/components/theme/CreateFromPalette";
+import { createThemeOptions } from "@/components/theme/CreateFromPalette";
 
 export type ThemeMode = "dark" | "light" | "system";
 
@@ -55,11 +55,14 @@ export function BluzThemeProvider({
                         },
                         "*::-webkit-scrollbar-thumb": {
                             backgroundColor:
+                                theme.vars?.palette.action.disabledBackground ??
                                 theme.palette.action.disabledBackground,
                             borderRadius: "8px",
                         },
                         "*::-webkit-scrollbar-thumb:hover": {
-                            backgroundColor: theme.palette.primary.main,
+                            backgroundColor:
+                                theme.vars?.palette.primary.main ??
+                                theme.palette.primary.main,
                         },
                         "*::-webkit-scrollbar-corner": {
                             backgroundColor: "transparent",
@@ -84,12 +87,20 @@ function InnerThemeProvider({ children }: { children: ReactNode }) {
         setMounted(true);
     }, []);
 
-    const paletteMode = mounted && resolvedTheme === "dark" ? "dark" : "light";
+    const muiTheme = useMemo(() => {
+        const currentMode = mounted && resolvedTheme === "dark" ? "dark" : "light";
+        const baseOptions = createThemeOptions();
+        const activePalette = baseOptions.colorSchemes?.[currentMode]?.palette;
 
-    const muiTheme = useMemo(
-        () => createTheme(createFromPalette(paletteMode)),
-        [paletteMode],
-    );
+        return createTheme({
+            ...baseOptions,
+            direction: "rtl",
+            palette: {
+                ...activePalette,
+                mode: currentMode,
+            },
+        });
+    }, [resolvedTheme, mounted]);
 
     const contextValue = useMemo(
         () => ({

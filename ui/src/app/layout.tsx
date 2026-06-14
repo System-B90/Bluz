@@ -1,3 +1,4 @@
+import InitColorSchemeScript from "@mui/material/InitColorSchemeScript";
 import type { Metadata } from "next";
 
 import { MuiEmotionCacheProvider } from "@/components/theme/MuiEmotionCacheProvider";
@@ -26,15 +27,16 @@ export default function RootLayout({
                 className="antialiased w-screen h-screen overflow-hidden"
                 dir="rtl"
             >
-                <WebSocketConfigProvider
-                    host={wsHost}
-                    portSuffix={wsPortSuffix}
-                    protocol={wsProtcol}
-                >
-                    <MuiEmotionCacheProvider>
+                <MuiEmotionCacheProvider>
+                    <InitColorSchemeScript attribute="class" />
+                    <WebSocketConfigProvider
+                        host={wsHost}
+                        portSuffix={wsPortSuffix}
+                        protocol={wsProtcol}
+                    >
                         {children}
-                    </MuiEmotionCacheProvider>
-                </WebSocketConfigProvider>
+                    </WebSocketConfigProvider>
+                </MuiEmotionCacheProvider>
             </body>
         </html>
     );
