@@ -1,4 +1,5 @@
-import { Avatar, AvatarProps } from "@mui/material";
+import Avatar from "@mui/material/Avatar";
+import AvatarProps from "@mui/material/AvatarProps";
 
 export function HiveAvatar({
     hiveId,

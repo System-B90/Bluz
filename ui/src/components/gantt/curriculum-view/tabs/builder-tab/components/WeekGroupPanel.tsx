@@ -6,7 +6,9 @@
  */
 
 import { useDroppable } from "@dnd-kit/core";
-import { Box, BoxProps, Divider } from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import Divider from "@mui/material/Divider";
 import { useMemo } from "react";
 
 import { GanttWeekId } from "@/api-shared/types/gantt/models";

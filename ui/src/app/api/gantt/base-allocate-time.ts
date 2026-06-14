@@ -16,23 +16,23 @@ import {
 } from "@/api-shared/types/gantt/models";
 
 export type BasicGantAllocateTimeOperations<_TEntity extends BaseGantItem> = {
-    getAllocatedTime: (
-        eventId: GanttEventId,
-        containerId: GanttCurriculumId,
-    ) => Promise<number>;
-    setAllocatedTime: (
-        eventId: GanttEventId,
-        containerId: GanttCurriculumId,
-        duration: number,
-    ) => Promise<void>;
+  getAllocatedTime: (
+    eventId: GanttEventId,
+    containerId: GanttCurriculumId,
+  ) => Promise<number>;
+  setAllocatedTime: (
+    eventId: GanttEventId,
+    containerId: GanttCurriculumId,
+    duration: number,
+  ) => Promise<void>;
 };
 
 export type BuildGantAllocateTimeRoutesProps<TEntity extends BaseGantItem> = {
-    dbSet: BasicGantAllocateTimeOperations<TEntity>;
+  dbSet: BasicGantAllocateTimeOperations<TEntity>;
 };
 
 export type RouteContext = {
-    params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 };
 
 export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
@@ -49,8 +49,8 @@ export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
             }
 
             const duration = await dbSet.getAllocatedTime(
-                id as GanttEventId,
-                containerId,
+        id as GanttEventId,
+        containerId,
             );
 
             return ApiSuccess(duration);
@@ -68,9 +68,9 @@ export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
 
             const body = await request.json(); // Use .json() instead of parsing .text()
             const { containerId, duration } = body as {
-                containerId: BaseGantItem["id"];
-                duration: number;
-            };
+        containerId: BaseGantItem["id"];
+        duration: number;
+      };
 
             if (!containerId || typeof duration !== "number") {
                 throw new ClientApiError(

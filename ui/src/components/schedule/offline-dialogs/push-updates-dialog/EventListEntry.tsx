@@ -1,32 +1,29 @@
 "use client";
-
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import {
-    Checkbox,
-    Collapse,
-    IconButton,
-    TableCell,
-    TableRow,
-    Typography,
-} from "@mui/material";
+import Checkbox from "@mui/material/Checkbox";
+import Collapse from "@mui/material/Collapse";
+import IconButton from "@mui/material/IconButton";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import { Fragment, useState } from "react";
 
 import { DiffDetailsTable } from "@/components/schedule/offline-dialogs/push-updates-dialog/DiffDetailsTable";
 import { Event, EventId } from "@/components/schedule/types/event";
 
 type EventListEntryProps = {
-    isItemSelected: boolean;
-    handleEntryClick: (
-        event: React.MouseEvent<HTMLTableRowElement>,
-        entryId: EventId,
-    ) => void;
-    eventId: EventId;
-    localModifiedEvent: Event | undefined;
-    serverVersion: Event | undefined;
-    capturedVersion: Event | undefined;
-    conflicting: boolean;
-}
+  isItemSelected: boolean;
+  handleEntryClick: (
+    event: React.MouseEvent<HTMLTableRowElement>,
+    entryId: EventId,
+  ) => void;
+  eventId: EventId;
+  localModifiedEvent: Event | undefined;
+  serverVersion: Event | undefined;
+  capturedVersion: Event | undefined;
+  conflicting: boolean;
+};
 
 export function EventListEntry({
     isItemSelected,
@@ -68,9 +65,9 @@ export function EventListEntry({
                 <TableCell>
                     <Typography>
                         {localModifiedEvent?.name ??
-                            serverVersion?.name ??
-                            capturedVersion?.name ??
-                            "מופע חדש"}
+              serverVersion?.name ??
+              capturedVersion?.name ??
+              "מופע חדש"}
                     </Typography>
                 </TableCell>
                 <TableCell>

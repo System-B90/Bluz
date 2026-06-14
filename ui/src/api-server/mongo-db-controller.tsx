@@ -10,12 +10,17 @@ import {
     GanttSyllabus,
 } from "@/api-shared/types/gantt/models";
 import { Outsider } from "@/api-shared/types/outsider";
-import { CustomRoom, RoomExtendedInfo, RoomId, RoomSource } from "@/api-shared/types/room";
+import {
+    CustomRoom,
+    RoomExtendedInfo,
+    RoomId,
+    RoomSource,
+} from "@/api-shared/types/room";
 import { Setting } from "@/api-shared/types/settings/settings";
 
 export type RoomExtendedInfoDocument = RoomExtendedInfo & {
-    roomId: RoomId;
-    roomSource: RoomSource;
+  roomId: RoomId;
+  roomSource: RoomSource;
 };
 
 const MONGO_CONNECTION_STRING =

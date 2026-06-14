@@ -1,4 +1,8 @@
-import { Box, Chip, Divider, LinearProgress, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Divider from "@mui/material/Divider";
+import LinearProgress from "@mui/material/LinearProgress";
+import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
@@ -10,9 +14,7 @@ import {
     getCurriculumTotalWorkingMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import {
-    calculateMinimumRequiredTimeForCurriculum,
-} from "@/components/gantt/utils";
+import { calculateMinimumRequiredTimeForCurriculum } from "@/components/gantt/utils";
 
 export type WeeksSummaryBarProps = {
   curriculum: GanttCurriculum;
@@ -29,17 +31,17 @@ function SummaryMetric({
   value: string;
 }) {
     return (
-        <Box 
+        <Box
             minWidth={112}
             sx={{
                 transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": {
                     transform: "translateY(-1px)",
-                }
+                },
             }}
         >
-            <Typography 
-                color="text.secondary" 
+            <Typography
+                color="text.secondary"
                 sx={{ fontWeight: 600, letterSpacing: "0.01em" }}
                 variant="caption"
             >
@@ -61,10 +63,7 @@ function SummaryMetric({
     );
 }
 
-export function WeeksSummaryBar({
-    curriculum,
-    state,
-}: WeeksSummaryBarProps) {
+export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
     const { state: mappingState } = useGanttMappings();
     const mappings = mappingState.mappings;
 
@@ -76,8 +75,15 @@ export function WeeksSummaryBar({
         utilization,
     } = useMemo(() => {
         const total = getCurriculumTotalWorkingMinutes(curriculum, state);
-        const minimum = calculateMinimumRequiredTimeForCurriculum(curriculum, state);
-        const scheduled = getCurriculumScheduledMinutes({ curriculum, mappings, state });
+        const minimum = calculateMinimumRequiredTimeForCurriculum(
+            curriculum,
+            state,
+        );
+        const scheduled = getCurriculumScheduledMinutes({
+            curriculum,
+            mappings,
+            state,
+        });
 
         return {
             totalWorkingMinutes: total,
@@ -105,18 +111,27 @@ export function WeeksSummaryBar({
                 boxShadow: "0 2px 12px rgba(0, 0, 0, 0.02)",
             }}
         >
-            <SummaryMetric label="משך הקורס" value={`${curriculum.weeks.length} שבועות`} />
+            <SummaryMetric
+                label="משך הקורס"
+                value={`${curriculum.weeks.length} שבועות`}
+            />
             <Divider flexItem orientation="vertical" />
-            <SummaryMetric label="שעות זמינות" value={formatHoursLabel(totalWorkingMinutes)} />
-            <SummaryMetric label="מינימום דרוש" value={formatHoursLabel(minimumMinutes)} />
+            <SummaryMetric
+                label="שעות זמינות"
+                value={formatHoursLabel(totalWorkingMinutes)}
+            />
+            <SummaryMetric
+                label="מינימום דרוש"
+                value={formatHoursLabel(minimumMinutes)}
+            />
             <SummaryMetric label="שובצו" value={formatHoursLabel(scheduledMinutes)} />
             <SummaryMetric
                 label={remainingMinutes < 0 ? "חריגה" : "יתרה"}
                 tone={remainingTone}
                 value={formatHoursLabel(Math.abs(remainingMinutes))}
             />
-            <Box 
-                flex={1} 
+            <Box
+                flex={1}
                 minWidth={180}
                 sx={{
                     bgcolor: (theme) =>
@@ -131,22 +146,26 @@ export function WeeksSummaryBar({
                     "&:hover": {
                         borderColor: "primary.main",
                         boxShadow: "0 4px 12px rgba(103, 200, 221, 0.08)",
-                    }
+                    },
                 }}
             >
                 <Box alignItems="center" display="flex" justifyContent="space-between">
-                    <Typography color="text.secondary" sx={{ fontWeight: 600 }} variant="caption">
+                    <Typography
+                        color="text.secondary"
+                        sx={{ fontWeight: 600 }}
+                        variant="caption"
+                    >
             ניצול
                     </Typography>
                     <Chip
                         color={remainingMinutes < 0 ? "error" : "primary"}
                         label={`${formatHours(scheduledMinutes)} / ${formatHours(totalWorkingMinutes)} ש׳`}
                         size="small"
-                        sx={{ 
+                        sx={{
                             fontWeight: 700,
                             borderRadius: "6px",
                             fontSize: "0.75rem",
-                            bgcolor: "background.paper"
+                            bgcolor: "background.paper",
                         }}
                         variant="outlined"
                     />

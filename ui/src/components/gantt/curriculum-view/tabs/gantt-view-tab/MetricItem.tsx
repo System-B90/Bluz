@@ -7,7 +7,8 @@
 
 "use client";
 
-import { Box, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 
 import { MetricItemProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/types";
 

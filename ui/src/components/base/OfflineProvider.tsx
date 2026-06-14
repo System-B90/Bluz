@@ -103,12 +103,9 @@ export const OfflineProvider = ({
         [capturedStateBeforeOffline],
     );
 
-    const getCapturedState = useCallback(
-        (): Record<EventId, Event> => {
-            return capturedStateBeforeOffline;
-        },
-        [capturedStateBeforeOffline],
-    );
+    const getCapturedState = useCallback((): Record<EventId, Event> => {
+        return capturedStateBeforeOffline;
+    }, [capturedStateBeforeOffline]);
 
     return (
         <OfflineContext.Provider

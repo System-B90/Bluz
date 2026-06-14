@@ -1,4 +1,6 @@
-import { Box, Stack, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
 
 import {
@@ -8,7 +10,13 @@ import {
 import { WeekWorkTimeChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 
-function WeekOverview({ weekId, weekIndex }: { weekId: GanttWeekId; weekIndex: number }) {
+function WeekOverview({
+    weekId,
+    weekIndex,
+}: {
+  weekId: GanttWeekId;
+  weekIndex: number;
+}) {
     const week = useCurriculumWeek(weekId);
 
     if (!week) return null;
@@ -41,7 +49,10 @@ export function OverviewTab({
   weeks: Array<GanttWeekId>;
 }) {
     const overviews = useMemo(
-        () => weeks.map((weekId, index) => <WeekOverview key={weekId} weekId={weekId} weekIndex={index} />),
+        () =>
+            weeks.map((weekId, index) => (
+                <WeekOverview key={weekId} weekId={weekId} weekIndex={index} />
+            )),
         [weeks],
     );
 

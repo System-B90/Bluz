@@ -14,11 +14,15 @@ import { useEventWebsocket } from "@/components/schedule/calendar/calendar-provi
 
 import "dayjs/locale/he";
 
-export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =>
-{
-    const { offlineMode, captureEventBeforeEdit, captureInitialEvents } = useOffline();
-    const [ startDate, setStartDate ] = useState<Date>();
-    const [ endDate, setEndDate ] = useState<Date>();
+export const CalendarProvider = ({
+    children,
+}: {
+  children: React.ReactNode;
+}) => {
+    const { offlineMode, captureEventBeforeEdit, captureInitialEvents } =
+    useOffline();
+    const [startDate, setStartDate] = useState<Date>();
+    const [endDate, setEndDate] = useState<Date>();
 
     const { events, dispatch, undo, redo } = useEventState();
 
@@ -34,30 +38,32 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
         events,
         offlineMode,
         captureEventBeforeEdit,
-        dispatch
+        dispatch,
     );
 
-    const loadEvents = useCallback((s?: Date, e?: Date) =>
-    {
-        if (!s || !e) return;
+    const loadEvents = useCallback(
+        (s?: Date, e?: Date) => {
+            if (!s || !e) return;
 
-        apiGetEvents({ startDate: s, endDate: e })
-            .then((fetchedEvents) =>
-            {
-                dispatch({ type: "SET_EVENTS", payload: fetchedEvents });
-            })
-            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת לו"ז נכשלה.', error));
-    }, [ dispatch ]);
+            apiGetEvents({ startDate: s, endDate: e })
+                .then((fetchedEvents) => {
+                    dispatch({ type: "SET_EVENTS", payload: fetchedEvents });
+                })
+                .catch((error) =>
+                    enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת לו"ז נכשלה.', error),
+                );
+        },
+        [dispatch],
+    );
 
-    useEffect(() =>
-    {
+    useEffect(() => {
         loadEvents(startDate, endDate);
-    }, [ startDate, endDate, loadEvents ]);
+    }, [startDate, endDate, loadEvents]);
 
     return (
         <CalendarFiltersProvider>
             <CalendarContext.Provider
-                value={ {
+                value={{
                     events,
                     startDate,
                     endDate,
@@ -68,9 +74,9 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode; }) =
                     undo,
                     redo,
                     dispatch,
-                } }
+                }}
             >
-                { children }
+                {children}
             </CalendarContext.Provider>
         </CalendarFiltersProvider>
     );

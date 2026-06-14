@@ -1,4 +1,4 @@
-import { Typography } from "@mui/material";
+import Typography from "@mui/material/Typography";
 import { EnqueueSnackbar, OptionsObject, VariantType } from "notistack";
 import React from "react";
 
@@ -131,5 +131,10 @@ export function enqueueApiErrorSnackbar(
 
 export type ClientApiProps = Omit<RequestInit, "body" | "method">;
 
-export type ClientApi<PayloadT, ResponseT> = (payload: PayloadT, props?: ClientApiProps) => Promise<ResponseT>;
-export type ClientApiNoPayload<ResponseT> = (props?: ClientApiProps) => Promise<ResponseT>;
+export type ClientApi<PayloadT, ResponseT> = (
+  payload: PayloadT,
+  props?: ClientApiProps,
+) => Promise<ResponseT>;
+export type ClientApiNoPayload<ResponseT> = (
+  props?: ClientApiProps,
+) => Promise<ResponseT>;

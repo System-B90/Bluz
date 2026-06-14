@@ -3,12 +3,10 @@ import CloseIcon from "@mui/icons-material/Close";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
-import {
-    Box,
-    Dialog,
-    IconButton,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Dialog from "@mui/material/Dialog";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
 import { useState } from "react";
 
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
@@ -18,8 +16,8 @@ import { RoomSettings } from "@/components/settings-dialog/tabs/global/room-sett
 import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
 
 type SettingsDialogProps = {
-    open: boolean;
-    onClose: () => void;
+  open: boolean;
+  onClose: () => void;
 };
 
 export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
@@ -51,7 +49,6 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
         >
             {/* Main Flex Container */}
             <Box display="flex" flexDirection="row" sx={{ minHeight: 480 }}>
-
                 {/* Sidebar Navigation */}
                 <Box
                     sx={{
@@ -79,7 +76,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 fontFamily: "Assistant, sans-serif",
                             }}
                         >
-                            הגדרות
+              הגדרות
                         </Typography>
                         <Typography
                             sx={{
@@ -88,7 +85,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 mt: 0.5,
                             }}
                         >
-                            ניהול העדפות המערכת
+              ניהול העדפות המערכת
                         </Typography>
                     </Box>
 
@@ -110,12 +107,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                     transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                                     position: "relative",
                                     userSelect: "none",
-                                    bgcolor: isActive
-                                        ? "primary.main"
-                                        : "transparent",
-                                    color: isActive
-                                        ? "primary.contrastText"
-                                        : "text.secondary",
+                                    bgcolor: isActive ? "primary.main" : "transparent",
+                                    color: isActive ? "primary.contrastText" : "text.secondary",
                                     borderRight: isActive ? "4px solid" : "0px solid",
                                     borderRightColor: isActive ? "primary.dark" : "transparent",
                                     boxShadow: isActive
@@ -173,7 +166,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 fontWeight: 600,
                             }}
                         >
-                            מצב תצוגה
+              מצב תצוגה
                         </Typography>
                         <ThemeSelectorIcon />
                     </Box>

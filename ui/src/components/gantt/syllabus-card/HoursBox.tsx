@@ -1,4 +1,7 @@
-import { Box, BoxProps, Stack, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { useMemo } from "react";
 
@@ -37,7 +40,10 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                 } else {
                     const moduleDoc = state.modules[mapping.moduleId];
                     if (moduleDoc) {
-                        totalMinutes += calculateMinimumRequiredTimeForModule(moduleDoc, state);
+                        totalMinutes += calculateMinimumRequiredTimeForModule(
+                            moduleDoc,
+                            state,
+                        );
                     }
                 }
             }

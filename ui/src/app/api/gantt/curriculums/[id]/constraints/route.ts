@@ -21,7 +21,7 @@ import { ClientApiError } from "@/api-shared/errors";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 
 export type RouteContext = {
-    params: Promise<{ id: string; }>;
+  params: Promise<{ id: string }>;
 };
 
 /**
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         }
 
         const constraints = await getConstraintsForCurriculum(
-            id as GanttCurriculumId,
+      id as GanttCurriculumId,
         );
         return ApiSuccess(constraints);
     } catch (error) {
@@ -86,7 +86,7 @@ export async function POST(
             type: body.type,
             ownerEventId: body.ownerType === "event" ? body.ownerEventId : undefined,
             ownerModuleId:
-                body.ownerType === "module" ? body.ownerModuleId : undefined,
+        body.ownerType === "module" ? body.ownerModuleId : undefined,
             relation: body.type === "RELATIONAL" ? body.relation : undefined,
             minDelayDays: body.type === "RELATIONAL" ? body.minDelayDays : undefined,
             maxDelayDays: body.type === "RELATIONAL" ? body.maxDelayDays : undefined,
@@ -94,9 +94,10 @@ export async function POST(
         if (body.type === "TEMPORAL") {
             creationData.allowedDays = body.allowedDays;
             creationData.forbiddenDays = body.forbiddenDays;
-        }
-        else {
-            creationData[body.targetType === "event" ? "targetEventId" : "targetModuleId"] = body.targetId;
+        } else {
+            creationData[
+                body.targetType === "event" ? "targetEventId" : "targetModuleId"
+            ] = body.targetId;
         }
 
         const constraint = await createConstraint(creationData);
@@ -122,11 +123,16 @@ export async function PATCH(request: NextRequest, _context: RouteContext) {
 
         const updateData: any = {};
         if (newValues.type !== undefined) updateData.type = newValues.type;
-        if (newValues.relation !== undefined) updateData.relation = newValues.relation;
-        if (newValues.minDelayDays !== undefined) updateData.minDelayDays = newValues.minDelayDays;
-        if (newValues.maxDelayDays !== undefined) updateData.maxDelayDays = newValues.maxDelayDays;
-        if (newValues.allowedDays !== undefined) updateData.allowedDays = newValues.allowedDays;
-        if (newValues.forbiddenDays !== undefined) updateData.forbiddenDays = newValues.forbiddenDays;
+        if (newValues.relation !== undefined)
+            updateData.relation = newValues.relation;
+        if (newValues.minDelayDays !== undefined)
+            updateData.minDelayDays = newValues.minDelayDays;
+        if (newValues.maxDelayDays !== undefined)
+            updateData.maxDelayDays = newValues.maxDelayDays;
+        if (newValues.allowedDays !== undefined)
+            updateData.allowedDays = newValues.allowedDays;
+        if (newValues.forbiddenDays !== undefined)
+            updateData.forbiddenDays = newValues.forbiddenDays;
 
         if (newValues.type === "RELATIONAL") {
             // Nullify both to clear previous relations properly
@@ -145,7 +151,7 @@ export async function PATCH(request: NextRequest, _context: RouteContext) {
         if (!updated || updated.length === 0) {
             throw new ClientApiError("Failed to update constraint.");
         }
-        return ApiSuccess(updated[ 0 ]);
+        return ApiSuccess(updated[0]);
     } catch (error) {
         return catchHandler(request, error);
     }

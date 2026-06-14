@@ -1,5 +1,9 @@
 import EditIcon from "@mui/icons-material/Edit";
-import { Box, IconButton, Skeleton, TextField, Tooltip } from "@mui/material";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Skeleton from "@mui/material/Skeleton";
+import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import { KeyboardEvent, ReactNode, useCallback, useState } from "react";
 
 export type EditableCurriculumFieldProps = {

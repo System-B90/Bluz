@@ -1,14 +1,12 @@
 "use client";
 import SettingsIcon from "@mui/icons-material/Settings";
-import {
-    AppBar,
-    AppBarProps,
-    Box,
-    Button,
-    IconButton,
-    Toolbar,
-    Typography,
-} from "@mui/material";
+import AppBar from "@mui/material/AppBar";
+import AppBarProps from "@mui/material/AppBarProps";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -24,12 +22,12 @@ export function ScheduleAppBar({
     setOpenSettingsDialog,
     ...props
 }: {
-    setOpenSettingsDialog: (open: boolean) => void;
+  setOpenSettingsDialog: (open: boolean) => void;
 } & Exclude<AppBarProps, "position">) {
     const pathname = usePathname();
     const curriculumPage = pathname.includes("/curriculum");
     const [filtersVisible, setFiltersVisible] =
-        useState<boolean>(!curriculumPage);
+    useState<boolean>(!curriculumPage);
 
     return (
         <AppBar

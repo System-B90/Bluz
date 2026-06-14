@@ -1,5 +1,4 @@
 "use client";
-
 import AddIcon from "@mui/icons-material/Add";
 import BadgeIcon from "@mui/icons-material/Badge";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -11,20 +10,18 @@ import PersonIcon from "@mui/icons-material/Person";
 import PhoneIcon from "@mui/icons-material/Phone";
 import SearchIcon from "@mui/icons-material/Search";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import {
-    Box,
-    Button,
-    Divider,
-    IconButton,
-    InputAdornment,
-    List,
-    ListItem,
-    ListItemText,
-    TextField,
-    Typography,
-    Tooltip,
-    Chip,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
 import { useSnackbar } from "notistack";
@@ -35,11 +32,14 @@ import { Outsider } from "@/api-shared/types/outsider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 
 export function OutsiderSettings() {
-    const { outsiders, addOutsider, updateOutsider, deleteOutsider } = useOutsiders();
+    const { outsiders, addOutsider, updateOutsider, deleteOutsider } =
+    useOutsiders();
     const { enqueueSnackbar } = useSnackbar();
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedOutsider, setSelectedOutsider] = useState<null | Outsider>(null);
+    const [selectedOutsider, setSelectedOutsider] = useState<null | Outsider>(
+        null,
+    );
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [personalNumber, setPersonalNumber] = useState("");
@@ -54,9 +54,9 @@ export function OutsiderSettings() {
         return outsiders.filter(
             (o) =>
                 o.name.toLowerCase().includes(query) ||
-                o.phone.includes(query) ||
-                (o.personalNumber && o.personalNumber.includes(query)) ||
-                (o.idNumber && o.idNumber.includes(query))
+        o.phone.includes(query) ||
+        (o.personalNumber && o.personalNumber.includes(query)) ||
+        (o.idNumber && o.idNumber.includes(query)),
         );
     }, [outsiders, searchQuery]);
 
@@ -144,7 +144,10 @@ export function OutsiderSettings() {
                 phone: trimmedPhone,
                 personalNumber: personalNumber.trim() || undefined,
                 idNumber: idNumber.trim() || undefined,
-                releaseDate: releaseDate && releaseDate.isValid() ? releaseDate.toISOString() : undefined,
+                releaseDate:
+          releaseDate && releaseDate.isValid()
+              ? releaseDate.toISOString()
+              : undefined,
                 comment: comment.trim() || undefined,
             };
 
@@ -181,13 +184,17 @@ export function OutsiderSettings() {
             updateOutsider,
             handleCancelEdit,
             enqueueSnackbar,
-        ]
+        ],
     );
 
     const handleDelete = useCallback(
         async (id: string) => {
             const outsiderName = outsiders.find((o) => o.id === id)?.name || id;
-            if (window.confirm(`האם אתה בטוח שברצונך למחוק את איש החוץ ${outsiderName}?`)) {
+            if (
+                window.confirm(
+                    `האם אתה בטוח שברצונך למחוק את איש החוץ ${outsiderName}?`,
+                )
+            ) {
                 try {
                     if (selectedOutsider && selectedOutsider.id === id) {
                         handleCancelEdit();
@@ -198,7 +205,13 @@ export function OutsiderSettings() {
                 }
             }
         },
-        [selectedOutsider, handleCancelEdit, deleteOutsider, outsiders, enqueueSnackbar]
+        [
+            selectedOutsider,
+            handleCancelEdit,
+            deleteOutsider,
+            outsiders,
+            enqueueSnackbar,
+        ],
     );
 
     const showForm = isCreating || selectedOutsider !== null;
@@ -255,7 +268,7 @@ export function OutsiderSettings() {
                                 color: "text.primary",
                             }}
                         >
-                            אנשי חוץ
+              אנשי חוץ
                         </Typography>
                         <Typography
                             sx={{
@@ -264,7 +277,7 @@ export function OutsiderSettings() {
                                 fontFamily: "Assistant, sans-serif",
                             }}
                         >
-                            ניהול רשימת אנשי חוץ ומרצים חיצוניים במערכת
+              ניהול רשימת אנשי חוץ ומרצים חיצוניים במערכת
                         </Typography>
                     </Box>
                 </Box>
@@ -302,16 +315,34 @@ export function OutsiderSettings() {
                     }}
                 >
                     {filteredOutsiders.length === 0 ? (
-                        <Box sx={{ m: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                            <Typography sx={{ color: "text.secondary", fontSize: "0.85rem", fontFamily: "Assistant, sans-serif" }}>
-                                {searchQuery ? "לא נמצאו אנשי חוץ התואמים את החיפוש" : "לא הוגדרו אנשי חוץ"}
+                        <Box
+                            sx={{
+                                m: "auto",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                gap: 1,
+                            }}
+                        >
+                            <Typography
+                                sx={{
+                                    color: "text.secondary",
+                                    fontSize: "0.85rem",
+                                    fontFamily: "Assistant, sans-serif",
+                                }}
+                            >
+                                {searchQuery
+                                    ? "לא נמצאו אנשי חוץ התואמים את החיפוש"
+                                    : "לא הוגדרו אנשי חוץ"}
                             </Typography>
                         </Box>
                     ) : (
                         <List disablePadding>
                             {filteredOutsiders.map((outsider) => {
                                 const isActive = selectedOutsider?.id === outsider.id;
-                                const isReleased = outsider.releaseDate && dayjs(outsider.releaseDate).isBefore(dayjs(), "day");
+                                const isReleased =
+                  outsider.releaseDate &&
+                  dayjs(outsider.releaseDate).isBefore(dayjs(), "day");
 
                                 return (
                                     <ListItem
@@ -327,7 +358,10 @@ export function OutsiderSettings() {
                                                             populateFormFromOutsider(outsider);
                                                         }}
                                                         size="small"
-                                                        sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}
+                                                        sx={{
+                                                            color: "text.secondary",
+                                                            "&:hover": { color: "primary.main" },
+                                                        }}
                                                     >
                                                         <EditIcon fontSize="small" />
                                                     </IconButton>
@@ -340,7 +374,10 @@ export function OutsiderSettings() {
                                                             void handleDelete(outsider.id);
                                                         }}
                                                         size="small"
-                                                        sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
+                                                        sx={{
+                                                            color: "text.secondary",
+                                                            "&:hover": { color: "error.main" },
+                                                        }}
                                                     >
                                                         <DeleteIcon fontSize="small" />
                                                     </IconButton>
@@ -362,7 +399,9 @@ export function OutsiderSettings() {
                                                         : "rgba(255,255,255,0.01)",
                                             transition: "all 0.2s ease",
                                             "&:hover": {
-                                                borderColor: isActive ? "primary.main" : "text.secondary",
+                                                borderColor: isActive
+                                                    ? "primary.main"
+                                                    : "text.secondary",
                                                 transform: "translateY(-1px)",
                                                 boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
                                             },
@@ -386,7 +425,14 @@ export function OutsiderSettings() {
                                                             <Tooltip title="משוחרר">
                                                                 <Chip
                                                                     color="success"
-                                                                    icon={<CheckCircleIcon sx={{ fontSize: "14px !important", color: "success.main" }} />}
+                                                                    icon={
+                                                                        <CheckCircleIcon
+                                                                            sx={{
+                                                                                fontSize: "14px !important",
+                                                                                color: "success.main",
+                                                                            }}
+                                                                        />
+                                                                    }
                                                                     label="משוחרר"
                                                                     size="small"
                                                                     sx={{
@@ -416,9 +462,15 @@ export function OutsiderSettings() {
                                                         <span>טלפון: {outsider.phone}</span>
                                                         {outsider.personalNumber || outsider.idNumber ? (
                                                             <span>
-                                                                {outsider.personalNumber ? `מ.א. ${outsider.personalNumber}` : ""}
-                                                                {outsider.personalNumber && outsider.idNumber ? " | " : ""}
-                                                                {outsider.idNumber ? `ת.ז. ${outsider.idNumber}` : ""}
+                                                                {outsider.personalNumber
+                                                                    ? `מ.א. ${outsider.personalNumber}`
+                                                                    : ""}
+                                                                {outsider.personalNumber && outsider.idNumber
+                                                                    ? " | "
+                                                                    : ""}
+                                                                {outsider.idNumber
+                                                                    ? `ת.ז. ${outsider.idNumber}`
+                                                                    : ""}
                                                             </span>
                                                         ) : null}
                                                     </Box>
@@ -450,10 +502,9 @@ export function OutsiderSettings() {
                     }}
                     variant="contained"
                 >
-                    הוספת איש חוץ
+          הוספת איש חוץ
                 </Button>
             </Box>
-
             {/* Form Panel */}
             <Box
                 component="form"
@@ -483,12 +534,18 @@ export function OutsiderSettings() {
                             p: 1,
                             borderRadius: "10px",
                             bgcolor: isCreating ? "secondary.light" : "primary.light",
-                            color: isCreating ? "secondary.contrastText" : "primary.contrastText",
+                            color: isCreating
+                                ? "secondary.contrastText"
+                                : "primary.contrastText",
                             display: "flex",
                             alignItems: "center",
                         }}
                     >
-                        {isCreating ? <AddIcon sx={{ fontSize: 20 }} /> : <EditIcon sx={{ fontSize: 20 }} />}
+                        {isCreating ? (
+                            <AddIcon sx={{ fontSize: 20 }} />
+                        ) : (
+                            <EditIcon sx={{ fontSize: 20 }} />
+                        )}
                     </Box>
                     <Box>
                         <Typography
@@ -499,7 +556,11 @@ export function OutsiderSettings() {
                                 color: "text.primary",
                             }}
                         >
-                            {isCreating ? "הוספת איש חוץ חדש" : selectedOutsider ? "עריכת פרטי איש חוץ" : "פרטי איש חוץ"}
+                            {isCreating
+                                ? "הוספת איש חוץ חדש"
+                                : selectedOutsider
+                                    ? "עריכת פרטי איש חוץ"
+                                    : "פרטי איש חוץ"}
                         </Typography>
                         <Typography
                             sx={{
@@ -508,7 +569,11 @@ export function OutsiderSettings() {
                                 fontFamily: "Assistant, sans-serif",
                             }}
                         >
-                            {isCreating ? "מלא את הטופס ליצירת איש חוץ חדש" : selectedOutsider ? "עדכן את פרטי איש החוץ הנוכחי" : "בחר איש חוץ מהרשימה לעריכה"}
+                            {isCreating
+                                ? "מלא את הטופס ליצירת איש חוץ חדש"
+                                : selectedOutsider
+                                    ? "עדכן את פרטי איש החוץ הנוכחי"
+                                    : "בחר איש חוץ מהרשימה לעריכה"}
                         </Typography>
                     </Box>
                 </Box>
@@ -523,7 +588,7 @@ export function OutsiderSettings() {
                                 textAlign: "center",
                             }}
                         >
-                            בחר איש חוץ מהרשימה או לחץ על הוספת איש חוץ
+              בחר איש חוץ מהרשימה או לחץ על הוספת איש חוץ
                         </Typography>
                     </Box>
                 ) : (
@@ -555,7 +620,10 @@ export function OutsiderSettings() {
                                     input: {
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <PhoneIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                                                <PhoneIcon
+                                                    fontSize="small"
+                                                    sx={{ color: "text.secondary" }}
+                                                />
                                             </InputAdornment>
                                         ),
                                     },
@@ -565,32 +633,53 @@ export function OutsiderSettings() {
                             />
 
                             <Divider sx={{ my: 0.5 }}>
-                                <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "text.secondary" }}>
-                                    פרטים מזהים ושחרור
+                                <Typography
+                                    sx={{
+                                        fontSize: "0.72rem",
+                                        fontWeight: 700,
+                                        color: "text.secondary",
+                                    }}
+                                >
+                  פרטים מזהים ושחרור
                                 </Typography>
                             </Divider>
 
                             {/* Personal Number */}
                             <TextField
-                                error={!!personalNumberWarning && personalNumberWarning !== "שימו לב: מספר אישי לא הוגדר"}
+                                error={
+                                    !!personalNumberWarning &&
+                  personalNumberWarning !== "שימו לב: מספר אישי לא הוגדר"
+                                }
                                 fullWidth
                                 helperText={
                                     personalNumberWarning ? (
-                                        <Box alignItems="center" display="flex" gap={0.5} sx={{ color: "warning.main", mt: 0.2 }}>
+                                        <Box
+                                            alignItems="center"
+                                            display="flex"
+                                            gap={0.5}
+                                            sx={{ color: "warning.main", mt: 0.2 }}
+                                        >
                                             <WarningAmberIcon sx={{ fontSize: "14px" }} />
                                             <span>{personalNumberWarning}</span>
                                         </Box>
-                                    ) : ""
+                                    ) : (
+                                        ""
+                                    )
                                 }
                                 label="מספר אישי (7 ספרות)"
-                                onChange={(e) => setPersonalNumber(e.target.value.replace(/\D/g, ""))}
+                                onChange={(e) =>
+                                    setPersonalNumber(e.target.value.replace(/\D/g, ""))
+                                }
                                 placeholder="לדוגמה: 9876543"
                                 size="small"
                                 slotProps={{
                                     input: {
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <BadgeIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                                                <BadgeIcon
+                                                    fontSize="small"
+                                                    sx={{ color: "text.secondary" }}
+                                                />
                                             </InputAdornment>
                                         ),
                                     },
@@ -601,15 +690,25 @@ export function OutsiderSettings() {
 
                             {/* ID Number */}
                             <TextField
-                                error={!!idNumberWarning && idNumberWarning !== "שימו לב: ת.ז. לא הוגדרה"}
+                                error={
+                                    !!idNumberWarning &&
+                  idNumberWarning !== "שימו לב: ת.ז. לא הוגדרה"
+                                }
                                 fullWidth
                                 helperText={
                                     idNumberWarning ? (
-                                        <Box alignItems="center" display="flex" gap={0.5} sx={{ color: "warning.main", mt: 0.2 }}>
+                                        <Box
+                                            alignItems="center"
+                                            display="flex"
+                                            gap={0.5}
+                                            sx={{ color: "warning.main", mt: 0.2 }}
+                                        >
                                             <WarningAmberIcon sx={{ fontSize: "14px" }} />
                                             <span>{idNumberWarning}</span>
                                         </Box>
-                                    ) : ""
+                                    ) : (
+                                        ""
+                                    )
                                 }
                                 label="תעודת זהות (9 ספרות)"
                                 onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, ""))}
@@ -619,7 +718,10 @@ export function OutsiderSettings() {
                                     input: {
                                         startAdornment: (
                                             <InputAdornment position="start">
-                                                <BadgeIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                                                <BadgeIcon
+                                                    fontSize="small"
+                                                    sx={{ color: "text.secondary" }}
+                                                />
                                             </InputAdornment>
                                         ),
                                     },
@@ -637,19 +739,28 @@ export function OutsiderSettings() {
                                     slotProps={{
                                         textField: {
                                             size: "small",
-                                            sx: { "& .MuiOutlinedInput-root": { borderRadius: "10px" } },
+                                            sx: {
+                                                "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+                                            },
                                         },
                                     }}
                                     value={releaseDate}
                                 />
-                                {releaseDate && releaseDate.isValid() && releaseDate.isBefore(dayjs(), "day") ? (
-                                    <Box alignItems="center" display="flex" gap={0.5} sx={{ color: "success.main" }}>
-                                        <CheckCircleIcon sx={{ fontSize: 16 }} />
-                                        <Typography sx={{ fontWeight: 700 }} variant="caption">
-                                            סטטוס: משוחרר
-                                        </Typography>
-                                    </Box>
-                                ) : null}
+                                {releaseDate &&
+                releaseDate.isValid() &&
+                releaseDate.isBefore(dayjs(), "day") ? (
+                                        <Box
+                                            alignItems="center"
+                                            display="flex"
+                                            gap={0.5}
+                                            sx={{ color: "success.main" }}
+                                        >
+                                            <CheckCircleIcon sx={{ fontSize: 16 }} />
+                                            <Typography sx={{ fontWeight: 700 }} variant="caption">
+                      סטטוס: משוחרר
+                                            </Typography>
+                                        </Box>
+                                    ) : null}
                             </Box>
 
                             {/* Comment */}
@@ -664,8 +775,14 @@ export function OutsiderSettings() {
                                 slotProps={{
                                     input: {
                                         startAdornment: (
-                                            <InputAdornment position="start" sx={{ alignSelf: "flex-start", mt: 1 }}>
-                                                <CommentIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                                            <InputAdornment
+                                                position="start"
+                                                sx={{ alignSelf: "flex-start", mt: 1 }}
+                                            >
+                                                <CommentIcon
+                                                    fontSize="small"
+                                                    sx={{ color: "text.secondary" }}
+                                                />
                                             </InputAdornment>
                                         ),
                                     },
@@ -704,7 +821,7 @@ export function OutsiderSettings() {
                                 }}
                                 variant="outlined"
                             >
-                                ביטול
+                ביטול
                             </Button>
                         </Box>
                     </>

@@ -3,7 +3,9 @@ import {
     SortableContext,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Box, Button, Stack } from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
 
 import { Group } from "@/components/schedule/types/group";
 import { User } from "@/components/schedule/types/user";

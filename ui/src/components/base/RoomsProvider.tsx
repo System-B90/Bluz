@@ -1,7 +1,6 @@
 "use client";
 import { enqueueSnackbar } from "notistack";
-import
-{
+import {
     createContext,
     useCallback,
     useContext,
@@ -11,36 +10,38 @@ import
 } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import
-{
+import {
     apiCreateRoom,
     apiDeleteRoom,
     apiGetRooms,
     apiUpdateRoom,
     apiUpdateRoomExtendedInfo,
 } from "@/api-client/rooms";
-import
-{
+import {
     CustomRoom,
     HiveRoom,
     Room,
     RoomExtendedInfo,
     RoomId,
     RoomLike,
-    RoomSource
+    RoomSource,
 } from "@/api-shared/types/room";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { MessageHandlerType } from "@/components/SessionWs";
 import { MessageTypes } from "@/settings";
 
 export type RoomsContextState = {
-    default: boolean;
-    rooms: Array<Room>;
-    getRoom: (id: RoomLike) => null | Room;
-    addRoom: (roomData: Omit<CustomRoom, "id" | "source">) => Promise<void>;
-    updateRoom: (room: CustomRoom) => Promise<void>;
-    deleteRoom: (roomId: string) => Promise<void>;
-    updateRoomExtendedInfo: (roomId: RoomId, roomSource: RoomSource, extendedInfo: RoomExtendedInfo) => Promise<void>;
+  default: boolean;
+  rooms: Array<Room>;
+  getRoom: (id: RoomLike) => null | Room;
+  addRoom: (roomData: Omit<CustomRoom, "id" | "source">) => Promise<void>;
+  updateRoom: (room: CustomRoom) => Promise<void>;
+  deleteRoom: (roomId: string) => Promise<void>;
+  updateRoomExtendedInfo: (
+    roomId: RoomId,
+    roomSource: RoomSource,
+    extendedInfo: RoomExtendedInfo,
+  ) => Promise<void>;
 };
 
 const RoomsContext = createContext<RoomsContextState>({
@@ -54,18 +55,37 @@ const RoomsContext = createContext<RoomsContextState>({
 });
 
 type RoomsState = {
-    customRooms: Record<string, CustomRoom>;
-    hiveRooms: Record<number, HiveRoom>;
-    isLoading: boolean;
+  customRooms: Record<string, CustomRoom>;
+  hiveRooms: Record<number, HiveRoom>;
+  isLoading: boolean;
 };
 type RoomsAction =
-    | { type: "ADD_CUSTOM_ROOM"; payload: CustomRoom }
-    | { type: "DELETE_CUSTOM_ROOM"; payload: string }
-    | { type: "ROLLBACK_ROOMS"; payload: { custom: Record<string, CustomRoom>; hive: Record<number, HiveRoom> } }
-    | { type: "SET_LOADING"; payload: boolean }
-    | { type: "SET_ROOMS"; payload: { custom: Record<string, CustomRoom>; hive: Record<number, HiveRoom> } }
-    | { type: "UPDATE_CUSTOM_ROOM"; payload: CustomRoom }
-    | { type: "UPDATE_EXTENDED_INFO"; payload: { roomId: RoomId; roomSource: RoomSource; extendedInfo: RoomExtendedInfo } };
+  | { type: "ADD_CUSTOM_ROOM"; payload: CustomRoom }
+  | { type: "DELETE_CUSTOM_ROOM"; payload: string }
+  | {
+      type: "ROLLBACK_ROOMS";
+      payload: {
+        custom: Record<string, CustomRoom>;
+        hive: Record<number, HiveRoom>;
+      };
+    }
+  | { type: "SET_LOADING"; payload: boolean }
+  | {
+      type: "SET_ROOMS";
+      payload: {
+        custom: Record<string, CustomRoom>;
+        hive: Record<number, HiveRoom>;
+      };
+    }
+  | { type: "UPDATE_CUSTOM_ROOM"; payload: CustomRoom }
+  | {
+      type: "UPDATE_EXTENDED_INFO";
+      payload: {
+        roomId: RoomId;
+        roomSource: RoomSource;
+        extendedInfo: RoomExtendedInfo;
+      };
+    };
 
 function roomsReducer(state: RoomsState, action: RoomsAction): RoomsState {
     switch (action.type) {
@@ -294,21 +314,31 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     const updateRoomExtendedInfo = useCallback(
-        async (roomId: RoomId, roomSource: RoomSource, extendedInfo: RoomExtendedInfo) => {
+        async (
+            roomId: RoomId,
+            roomSource: RoomSource,
+            extendedInfo: RoomExtendedInfo,
+        ) => {
             const previousCustom = { ...state.customRooms };
             const previousHive = { ...state.hiveRooms };
             const roomName =
-                roomSource === RoomSource.Custom
-                    ? state.customRooms[roomId as string]?.name
-                    : state.hiveRooms[roomId as number]?.name;
+        roomSource === RoomSource.Custom
+            ? state.customRooms[roomId as string]?.name
+            : state.hiveRooms[roomId as number]?.name;
 
-            dispatch({ type: "UPDATE_EXTENDED_INFO", payload: { roomId, roomSource, extendedInfo } });
+            dispatch({
+                type: "UPDATE_EXTENDED_INFO",
+                payload: { roomId, roomSource, extendedInfo },
+            });
 
             try {
                 await apiUpdateRoomExtendedInfo({ roomId, roomSource, extendedInfo });
-                enqueueSnackbar(`פרטים מורחבים של ${roomName || "חדר"} עודכנו בהצלחה.`, {
-                    variant: "success",
-                });
+                enqueueSnackbar(
+                    `פרטים מורחבים של ${roomName || "חדר"} עודכנו בהצלחה.`,
+                    {
+                        variant: "success",
+                    },
+                );
                 loadRooms();
             } catch (error) {
                 dispatch({

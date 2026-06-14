@@ -1,12 +1,10 @@
-import {
-    Box,
-    BoxProps,
-    Chip,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    SelectChangeEvent,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import Chip from "@mui/material/Chip";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import SelectChangeEvent from "@mui/material/SelectChangeEvent";
 import { useCallback, useMemo, useState } from "react";
 
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
@@ -17,8 +15,9 @@ import { EventType } from "@/components/schedule/types/event";
 
 type InstructorsFieldProps = {} & EventFieldProps;
 type LecturerSelectionFieldProps = {
-    selectedInstructors?: Array<number>;
-} & InstructorsFieldProps & BoxProps;
+  selectedInstructors?: Array<number>;
+} & InstructorsFieldProps &
+  BoxProps;
 
 function LecturerSelectionField({
     event,
@@ -55,25 +54,26 @@ function LecturerSelectionField({
 
             // Handle potential string autofill values vs actual arrays
             const newIds =
-                typeof value === "string"
-                    ? value
-                        .split(",")
-                        .map((v) => {
-                            if (v === "איש חוץ") return "איש חוץ";
-                            if (v.startsWith("outsider-")) return v;
-                            return Number(v);
-                        })
-                    : value;
+        typeof value === "string"
+            ? value.split(",").map((v) => {
+                if (v === "איש חוץ") return "איש חוץ";
+                if (v.startsWith("outsider-")) return v;
+                return Number(v);
+            })
+            : value;
 
             onBlurCallback({ ...event, lecturers: newIds });
         },
         [event, onBlurCallback],
     );
 
-    const handleDelete = useCallback((idToDelete: number | string) => {
-        const newIds = (event?.lecturers ?? []).filter((id) => id !== idToDelete);
-        onBlurCallback({ ...event, lecturers: newIds });
-    }, [event, onBlurCallback]);
+    const handleDelete = useCallback(
+        (idToDelete: number | string) => {
+            const newIds = (event?.lecturers ?? []).filter((id) => id !== idToDelete);
+            onBlurCallback({ ...event, lecturers: newIds });
+        },
+        [event, onBlurCallback],
+    );
 
     return (
         <Box {...props}>
@@ -88,13 +88,16 @@ function LecturerSelectionField({
                         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                             {selected.map((id) => {
                                 // Look up instructor/outsider details by ID
-                                const outsider = typeof id === "string" && id.startsWith("outsider-") ? getOutsider(id) : null;
+                                const outsider =
+                  typeof id === "string" && id.startsWith("outsider-")
+                      ? getOutsider(id)
+                      : null;
                                 const lecturer =
-                                    typeof id === "number"
-                                        ? getInstructor(id)
-                                        : outsider
-                                            ? { id, display_name: outsider.name }
-                                            : { id, display_name: id };
+                  typeof id === "number"
+                      ? getInstructor(id)
+                      : outsider
+                          ? { id, display_name: outsider.name }
+                          : { id, display_name: id };
                                 return (
                                     <Chip
                                         key={id}
@@ -120,7 +123,7 @@ function LecturerSelectionField({
                         }}
                         value={"איש חוץ"}
                     >
-                        איש חוץ
+            איש חוץ
                     </MenuItem>
                 </InstructorSelect>
             </FormControl>
@@ -148,20 +151,31 @@ export function InstructorsField({
 
             // Handle potential string autofill values vs actual arrays
             const newIds =
-                typeof value === "string" ? value.split(",").map(Number) : value;
+        typeof value === "string" ? value.split(",").map(Number) : value;
 
             onBlurCallback({ ...event, instructors: newIds as Array<number> });
         },
         [event, onBlurCallback],
     );
 
-    const handleDelete = useCallback((idToDelete: number) => {
-        const newIds = (event?.instructors ?? []).filter((id) => id !== idToDelete);
-        onBlurCallback({ ...event, instructors: newIds });
-    }, [event, onBlurCallback]);
+    const handleDelete = useCallback(
+        (idToDelete: number) => {
+            const newIds = (event?.instructors ?? []).filter(
+                (id) => id !== idToDelete,
+            );
+            onBlurCallback({ ...event, instructors: newIds });
+        },
+        [event, onBlurCallback],
+    );
 
     return (
-        <Box alignItems={"flex-start"} display={"flex"} flexDirection={'row'} flexWrap={'nowrap'} width={"100%"}>
+        <Box
+            alignItems={"flex-start"}
+            display={"flex"}
+            flexDirection={"row"}
+            flexWrap={"nowrap"}
+            width={"100%"}
+        >
             <Box flexGrow={1}>
                 <FormControl fullWidth={true}>
                     <InputLabel>מבוזרים</InputLabel>

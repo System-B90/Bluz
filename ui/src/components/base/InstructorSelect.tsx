@@ -1,10 +1,8 @@
-import {
-    ListSubheader,
-    MenuItem,
-    Select,
-    SelectProps,
-    TextField
-} from "@mui/material";
+import ListSubheader from "@mui/material/ListSubheader";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import SelectProps from "@mui/material/SelectProps";
+import TextField from "@mui/material/TextField";
 import React, { useMemo, useState } from "react";
 
 import { Course } from "@/api-shared/types/course";
@@ -14,9 +12,9 @@ import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 
 type CustomInstructorSelectProps<T> = {
-    showOutsiders?: boolean;
-    favoriteOutsiders?: Array<string>;
-    excludeTeachers?: boolean;
+  showOutsiders?: boolean;
+  favoriteOutsiders?: Array<string>;
+  excludeTeachers?: boolean;
 } & SelectProps<T>;
 
 const sortHe = (a: string, b: string) => a.localeCompare(b, "he");
@@ -36,7 +34,11 @@ const styles = {
     },
 };
 
-function useOutsiderData(outsiders: Array<any>, searchQuery: string, favoriteIds: Array<string>) {
+function useOutsiderData(
+    outsiders: Array<any>,
+    searchQuery: string,
+    favoriteIds: Array<string>,
+) {
     return useMemo(() => {
         const query = searchQuery.trim().toLowerCase();
         const filtered = query
@@ -63,7 +65,7 @@ function useInstructorData(
     instructors: Array<CourseUser>,
     getInstructor: (id: number) => CourseUser | undefined,
     excludeTeachers: boolean,
-    searchQuery: string
+    searchQuery: string,
 ) {
     return useMemo(() => {
         const query = searchQuery.trim().toLowerCase();
@@ -88,16 +90,25 @@ function useInstructorData(
             return matchesSearch && matchesRole;
         };
 
-        const courseGroups: Array<{ course: Course; instructors: Array<CourseUser> }> = [];
+        const courseGroups: Array<{
+      course: Course;
+      instructors: Array<CourseUser>;
+    }> = [];
 
         const traverse = (parentId: null | string) => {
-            const siblings = parentId === null ? rootCourses : coursesByParent[parentId] || [];
-            const sortedSiblings = [...siblings].sort((a, b) => sortHe(a.name, b.name));
+            const siblings =
+        parentId === null ? rootCourses : coursesByParent[parentId] || [];
+            const sortedSiblings = [...siblings].sort((a, b) =>
+                sortHe(a.name, b.name),
+            );
 
             for (const course of sortedSiblings) {
                 const resolved = (course.instructorIds || [])
                     .map(getInstructor)
-                    .filter((inst): inst is CourseUser => inst !== undefined && filterInst(inst))
+                    .filter(
+                        (inst): inst is CourseUser =>
+                            inst !== undefined && filterInst(inst),
+                    )
                     .sort((a, b) => sortHe(a.display_name, b.display_name));
 
                 if (resolved.length > 0) {
@@ -135,10 +146,14 @@ export function InstructorSelect<T = unknown>({
         instructors,
         getInstructor,
         excludeTeachers,
-        searchQuery
+        searchQuery,
     );
 
-    const { favorites, others } = useOutsiderData(outsiders, searchQuery, favoriteOutsiders);
+    const { favorites, others } = useOutsiderData(
+        outsiders,
+        searchQuery,
+        favoriteOutsiders,
+    );
 
     const handleSearchEvent = (e: React.KeyboardEvent | React.MouseEvent) => {
         if (e.type === "keydown" && (e as React.KeyboardEvent).key === "Escape") {
@@ -190,49 +205,71 @@ export function InstructorSelect<T = unknown>({
 
             {children}
 
-            {showOutsiders && favorites.length > 0 ? [
-                <ListSubheader disableSticky key="group-favs" sx={styles.subheaderWarning}>
-                    אנשי חוץ מועדפים
-                </ListSubheader>,
-                ...favorites.map((o) => (
-                    <MenuItem key={`outsider-${o.id}`} value={o.id}>
-                        {o.name}
-                    </MenuItem>
-                ))
-            ] : null}
+            {showOutsiders && favorites.length > 0
+                ? [
+                    <ListSubheader
+                        disableSticky
+                        key="group-favs"
+                        sx={styles.subheaderWarning}
+                    >
+              אנשי חוץ מועדפים
+                    </ListSubheader>,
+                    ...favorites.map((o) => (
+                        <MenuItem key={`outsider-${o.id}`} value={o.id}>
+                            {o.name}
+                        </MenuItem>
+                    )),
+                ]
+                : null}
 
             {courseGroups.flatMap(({ course, instructors }) => [
-                <ListSubheader disableSticky key={`group-${course.id}`} sx={styles.subheaderDefault}>
+                <ListSubheader
+                    disableSticky
+                    key={`group-${course.id}`}
+                    sx={styles.subheaderDefault}
+                >
                     {course.name}
                 </ListSubheader>,
                 ...instructors.map((inst) => (
                     <MenuItem key={`course-${course.id}-${inst.id}`} value={inst.id}>
                         {inst.display_name}
                     </MenuItem>
-                ))
+                )),
             ])}
 
-            {unassigned.length > 0 ? [
-                <ListSubheader disableSticky key="group-unassigned" sx={styles.subheaderDefault}>
-                    ללא מסלול
-                </ListSubheader>,
-                ...unassigned.map((inst) => (
-                    <MenuItem key={`unassigned-${inst.id}`} value={inst.id}>
-                        {inst.display_name}
-                    </MenuItem>
-                ))
-            ] : null}
+            {unassigned.length > 0
+                ? [
+                    <ListSubheader
+                        disableSticky
+                        key="group-unassigned"
+                        sx={styles.subheaderDefault}
+                    >
+              ללא מסלול
+                    </ListSubheader>,
+                    ...unassigned.map((inst) => (
+                        <MenuItem key={`unassigned-${inst.id}`} value={inst.id}>
+                            {inst.display_name}
+                        </MenuItem>
+                    )),
+                ]
+                : null}
 
-            {showOutsiders && others.length > 0 ? [
-                <ListSubheader disableSticky key="group-others" sx={styles.subheaderDefault}>
-                    אנשי חוץ נוספים
-                </ListSubheader>,
-                ...others.map((o) => (
-                    <MenuItem key={`outsider-${o.id}`} value={o.id}>
-                        {o.name}
-                    </MenuItem>
-                ))
-            ] : null}
+            {showOutsiders && others.length > 0
+                ? [
+                    <ListSubheader
+                        disableSticky
+                        key="group-others"
+                        sx={styles.subheaderDefault}
+                    >
+              אנשי חוץ נוספים
+                    </ListSubheader>,
+                    ...others.map((o) => (
+                        <MenuItem key={`outsider-${o.id}`} value={o.id}>
+                            {o.name}
+                        </MenuItem>
+                    )),
+                ]
+                : null}
         </Select>
     );
 }

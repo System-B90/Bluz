@@ -1,6 +1,10 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Box, BoxProps, Stack, Typography, useTheme } from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import useTheme from "@mui/material/useTheme";
 import { useMemo } from "react";
 
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";

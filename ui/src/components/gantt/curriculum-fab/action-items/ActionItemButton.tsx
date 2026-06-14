@@ -1,4 +1,5 @@
-import { Button, ButtonProps } from "@mui/material";
+import Button from "@mui/material/Button";
+import ButtonProps from "@mui/material/ButtonProps";
 
 export type ActionItemButtonProps = Omit<
   ButtonProps,

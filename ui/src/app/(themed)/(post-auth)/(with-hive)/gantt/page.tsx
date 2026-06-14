@@ -1,6 +1,9 @@
-"use client"; // TODO: This should be a server component to better performance
-
-import { Box, CircularProgress, Typography, keyframes } from "@mui/material";
+// TODO: This should be a server component to better performance
+"use client";
+import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
+import keyframes from "@mui/material/keyframes";
+import Typography from "@mui/material/Typography";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
@@ -82,10 +85,10 @@ export default function GanttPage() {
     const searchParams = useSearchParams();
     const [drawerOpen, setDrawerOpen] = useState(true);
     const [currentCurriculum, setCurrentCurriculum] =
-        useState<GanttCurriculumId | null>(() => {
-            const cidFromUrl = searchParams.get("cid");
-            return cidFromUrl ? (cidFromUrl as GanttCurriculumId) : null;
-        });
+    useState<GanttCurriculumId | null>(() => {
+        const cidFromUrl = searchParams.get("cid");
+        return cidFromUrl ? (cidFromUrl as GanttCurriculumId) : null;
+    });
 
     const [initialData, setInitialData] = useState<ApiCurriculum | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -166,7 +169,7 @@ export default function GanttPage() {
             >
                 {!currentCurriculum && !isLoading && (
                     <Typography color="textSecondary">
-                        בחרו גאנט כדי להתחיל לעבוד
+            בחרו גאנט כדי להתחיל לעבוד
                     </Typography>
                 )}
 

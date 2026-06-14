@@ -12,44 +12,68 @@ import {
     GanttModuleId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
-import { ConstraintType, GanttConstraint, RelationalConstraint, TemporalConstraint } from "@/api-shared/types/gantt/models/constraint";
+import {
+    ConstraintType,
+    GanttConstraint,
+    RelationalConstraint,
+    TemporalConstraint,
+} from "@/api-shared/types/gantt/models/constraint";
 
 // Matches the Omit type used in the Provider context
-export type CreateConstraintPayload = Omit<
-    RelationalConstraint,
-    "createdAt" | "updatedAt"
-> | Omit<TemporalConstraint, "createdAt" | "updatedAt">;
+export type CreateConstraintPayload =
+  | Omit<RelationalConstraint, "createdAt" | "updatedAt">
+  | Omit<TemporalConstraint, "createdAt" | "updatedAt">;
 
 function normalizeConstraintObject(serverConstraint: any): GanttConstraint {
-    console.log('serverConstraint', serverConstraint);
+    console.log("serverConstraint", serverConstraint);
     if (serverConstraint.type === ConstraintType.Relational) {
-        const { ownerEventId, ownerModuleId, targetEventId, targetModuleId, ...otherParams } = serverConstraint;
-        const targetType = targetModuleId ? 'module' : 'event';
-        if (targetType === 'event' && !targetEventId) { throw Error(`Malformed constraint! Target type is "event" but no targetEventId was provided.`); }
-        const ownerType = ownerModuleId ? 'module' : 'event';
-        if (ownerType === 'event' && !ownerEventId) { throw Error(`Malformed constraint! Owner type is "event" but no ownerEventId was provided.`); }
+        const {
+            ownerEventId,
+            ownerModuleId,
+            targetEventId,
+            targetModuleId,
+            ...otherParams
+        } = serverConstraint;
+        const targetType = targetModuleId ? "module" : "event";
+        if (targetType === "event" && !targetEventId) {
+            throw Error(
+                `Malformed constraint! Target type is "event" but no targetEventId was provided.`,
+            );
+        }
+        const ownerType = ownerModuleId ? "module" : "event";
+        if (ownerType === "event" && !ownerEventId) {
+            throw Error(
+                `Malformed constraint! Owner type is "event" but no ownerEventId was provided.`,
+            );
+        }
 
-        return ({
+        return {
             ...otherParams,
             ownerEventId,
             ownerModuleId,
             ownerType,
             targetId: targetEventId ?? targetModuleId,
             targetType,
-        });
-    }
-    else if (serverConstraint.type === ConstraintType.Temporal) {
+        };
+    } else if (serverConstraint.type === ConstraintType.Temporal) {
         const { ownerEventId, ownerModuleId, ...otherParams } = serverConstraint;
-        const ownerType = ownerModuleId ? 'module' : 'event';
-        if (ownerType === 'event' && !ownerEventId) { throw Error(`Malformed constraint! Owner type is "event" but no ownerEventId was provided.`); }
-        return ({
+        const ownerType = ownerModuleId ? "module" : "event";
+        if (ownerType === "event" && !ownerEventId) {
+            throw Error(
+                `Malformed constraint! Owner type is "event" but no ownerEventId was provided.`,
+            );
+        }
+        return {
             ...otherParams,
             ownerEventId,
             ownerModuleId,
             ownerType,
-        });
+        };
+    } else {
+        throw Error(
+            `Malformed constraint! Unknown constraint type "${serverConstraint.type}"`,
+        );
     }
-    else { throw Error(`Malformed constraint! Unknown constraint type "${serverConstraint.type}"`); }
 }
 
 /**
@@ -60,7 +84,7 @@ async function apiGetConstraints(
     {
         syllabusId,
         moduleId,
-    }: { syllabusId?: GanttSyllabusId; moduleId?: GanttModuleId; },
+    }: { syllabusId?: GanttSyllabusId; moduleId?: GanttModuleId },
     options?: ClientApiProps,
 ): Promise<Array<GanttConstraint>> {
     const url = new URL(
@@ -75,7 +99,9 @@ async function apiGetConstraints(
         ...options,
     });
 
-    return rawData.map(baseDocumentFixup).map(normalizeConstraintObject) as Array<GanttConstraint>;
+    return rawData
+        .map(baseDocumentFixup)
+        .map(normalizeConstraintObject) as Array<GanttConstraint>;
 }
 
 /**
@@ -95,10 +121,10 @@ async function apiCreateConstraint(
             body: JSON.stringify(payload),
         },
     );
-    console.log('rawData', rawData);
-    return normalizeConstraintObject(baseDocumentFixup(
-        rawData as RawBaseDocument,
-    ));
+    console.log("rawData", rawData);
+    return normalizeConstraintObject(
+        baseDocumentFixup(rawData as RawBaseDocument),
+    );
 }
 
 /**
@@ -118,9 +144,9 @@ async function apiUpdateConstraint(
             body: JSON.stringify({ id, ...payload }),
         },
     );
-    return normalizeConstraintObject(baseDocumentFixup(
-        rawData as RawBaseDocument,
-    ));
+    return normalizeConstraintObject(
+        baseDocumentFixup(rawData as RawBaseDocument),
+    );
 }
 
 /**
@@ -131,11 +157,14 @@ async function apiDeleteConstraint(
     id: string,
     options?: ClientApiProps,
 ): Promise<void> {
-    await safeApiFetcher<void>(`/api/gantt/curriculums/${curriculumId}/constraints`, {
-        ...options,
-        method: "DELETE",
-        body: JSON.stringify({ id }),
-    });
+    await safeApiFetcher<void>(
+        `/api/gantt/curriculums/${curriculumId}/constraints`,
+        {
+            ...options,
+            method: "DELETE",
+            body: JSON.stringify({ id }),
+        },
+    );
 }
 
 export const ganttConstraintsApi = {

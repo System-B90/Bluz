@@ -49,7 +49,10 @@ export function parseTimeInputToMinutes(value: string): null | number {
     return clampWorkingMinutes(decimalHours * 60);
 }
 
-export function formatHours(minutes: number, maximumFractionDigits = 1): string {
+export function formatHours(
+    minutes: number,
+    maximumFractionDigits = 1,
+): string {
     return new Intl.NumberFormat("he-IL", {
         maximumFractionDigits,
         minimumFractionDigits: 0,

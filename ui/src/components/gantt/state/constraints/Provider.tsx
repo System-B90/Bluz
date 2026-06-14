@@ -21,26 +21,24 @@ import {
     ConstraintType,
     GanttConstraint,
 } from "@/api-shared/types/gantt/models/constraint";
-import {
-    GanttConstraintContext,
-} from "@/components/gantt/state/constraints/context";
+import { GanttConstraintContext } from "@/components/gantt/state/constraints/context";
 import { ganttConstraintReducer } from "@/components/gantt/state/constraints/reducer";
 
 export type ProviderScope =
-    | { type: "curriculum"; curriculumId: GanttCurriculumId; }
-    | {
-        type: "module";
-        curriculumId: GanttCurriculumId;
-        syllabusId: string;
-        moduleId: GanttModuleId;
+  | { type: "curriculum"; curriculumId: GanttCurriculumId }
+  | {
+      type: "module";
+      curriculumId: GanttCurriculumId;
+      syllabusId: string;
+      moduleId: GanttModuleId;
     };
 
 export function GanttConstraintProvider({
     children,
     context,
 }: {
-    children: ReactNode;
-    context: ProviderScope;
+  children: ReactNode;
+  context: ProviderScope;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const [state, dispatch] = useReducer(ganttConstraintReducer, {
@@ -52,14 +50,14 @@ export function GanttConstraintProvider({
 
     // Helper to determine if the current scope has mutation rights over a constraint
     const canModify = useCallback(
-        (constraint: GanttConstraint | Omit<CreateConstraintPayload, 'id'>) => {
+        (constraint: GanttConstraint | Omit<CreateConstraintPayload, "id">) => {
             if (context.type === "curriculum") return true;
             if (constraint.type === ConstraintType.Temporal) return true;
 
             // In module scope, we cannot modify constraints owned by a DIFFERENT module.
             if (
                 constraint.ownerModuleId &&
-                constraint.ownerModuleId !== context.moduleId
+        constraint.ownerModuleId !== context.moduleId
             ) {
                 return false;
             }
@@ -78,9 +76,9 @@ export function GanttConstraintProvider({
         dispatch({ type: "SET_LOADING", payload: true });
         try {
             const queryOptions =
-                context.type === "module"
-                    ? { moduleId: context.moduleId, syllabusId: context.syllabusId }
-                    : {};
+        context.type === "module"
+            ? { moduleId: context.moduleId, syllabusId: context.syllabusId }
+            : {};
             const data = await ganttApi.constraints.apiGet(
                 curriculumId,
                 queryOptions,
@@ -94,7 +92,7 @@ export function GanttConstraintProvider({
     }, [dispatch, curriculumId, context, enqueueSnackbar]);
 
     const createConstraint = useCallback(
-        async (payload: Omit<CreateConstraintPayload, 'id'>) => {
+        async (payload: Omit<CreateConstraintPayload, "id">) => {
             if (!canModify(payload)) {
                 enqueueSnackbar("אין לך הרשאה ליצור אילוץ זה מהקשר הנוכחי.", {
                     variant: "error",
@@ -150,7 +148,11 @@ export function GanttConstraintProvider({
             dispatch({ type: "UPSERT_CONSTRAINT", payload: updatedConstraint });
 
             try {
-                const result = await ganttApi.constraints.apiUpdate(curriculumId, id, payload);
+                const result = await ganttApi.constraints.apiUpdate(
+                    curriculumId,
+                    id,
+                    payload,
+                );
                 if (result) {
                     dispatch({ type: "UPSERT_CONSTRAINT", payload: result });
                 }
@@ -187,7 +189,7 @@ export function GanttConstraintProvider({
     );
 
     useEffect(() => {
-        // Error handling is done inside the refresh function
+    // Error handling is done inside the refresh function
         void refreshConstraints();
     }, [refreshConstraints]);
 

@@ -1,7 +1,10 @@
 import { DraggableAttributes } from "@dnd-kit/core";
 import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 
 import { Group } from "@/components/schedule/types/group";
 import { groupColors } from "@/components/schedule/types/types";

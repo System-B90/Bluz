@@ -19,16 +19,16 @@ import {
 import { MessageTypes } from "@/settings";
 
 export type WebSocketSessionMessage = {
-    type: MessageTypes;
-    [key: string]: unknown;
+  type: MessageTypes;
+  [key: string]: unknown;
 };
 
 export type AuthContextState = {
-    userData: AuthSessionUser;
-    logout: () => void;
-    canEdit: boolean;
-    addMessageHandler: (handler: MessageHandlerType) => () => void;
-    sendMessage: (data: WebSocketSessionMessage) => void;
+  userData: AuthSessionUser;
+  logout: () => void;
+  canEdit: boolean;
+  addMessageHandler: (handler: MessageHandlerType) => () => void;
+  sendMessage: (data: WebSocketSessionMessage) => void;
 };
 
 const AuthContext = createContext<AuthContextState | undefined>(undefined);
@@ -37,8 +37,8 @@ export const AuthProvider = ({
     children,
     userData,
 }: {
-    children: React.ReactNode;
-    userData: AuthSessionUser;
+  children: React.ReactNode;
+  userData: AuthSessionUser;
 }) => {
     const { ws, addMessageHandler } = useSessionWebSocketContext();
     const { enqueueSnackbar } = useSnackbar();
@@ -48,7 +48,12 @@ export const AuthProvider = ({
     useEffect(() => {
         const originalFetch = window.fetch;
         window.fetch = async (...args) => {
-            const url = typeof args[0] === "string" ? args[0] : (args[0] instanceof Request ? args[0].url : "");
+            const url =
+        typeof args[0] === "string"
+            ? args[0]
+            : args[0] instanceof Request
+                ? args[0].url
+                : "";
 
             if (url.includes("/api/auth/_log")) {
                 try {
@@ -56,10 +61,13 @@ export const AuthProvider = ({
                     if (init && init.body && typeof init.body === "string") {
                         const body = JSON.parse(init.body);
                         if (body.code === "CLIENT_FETCH_ERROR") {
-                            enqueueSnackbar("שגיאת תקשורת עם שרת ההזדהות. ייתכנו שיבושים בפעילות המערכת.", {
-                                variant: "error",
-                                preventDuplicate: true,
-                            });
+                            enqueueSnackbar(
+                                "שגיאת תקשורת עם שרת ההזדהות. ייתכנו שיבושים בפעילות המערכת.",
+                                {
+                                    variant: "error",
+                                    preventDuplicate: true,
+                                },
+                            );
                         }
                     }
                 } catch {
@@ -81,7 +89,9 @@ export const AuthProvider = ({
 
     useEffect(() => {
         if (session && (session as any).error === "TokenExpiredError") {
-            enqueueSnackbar("ההתחברות שלך פגה. אנא התחבר מחדש.", { variant: "warning" });
+            enqueueSnackbar("ההתחברות שלך פגה. אנא התחבר מחדש.", {
+                variant: "warning",
+            });
             logout();
         }
     }, [session, logout, enqueueSnackbar]);

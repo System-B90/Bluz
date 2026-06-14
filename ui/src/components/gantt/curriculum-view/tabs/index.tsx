@@ -1,6 +1,10 @@
 import KeyboardArrowLeft from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRight from "@mui/icons-material/KeyboardArrowRight";
-import { Box, BoxProps, CircularProgress, Tab, Tabs } from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import CircularProgress from "@mui/material/CircularProgress";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import {
     Dispatch,
     Fragment,
@@ -89,10 +93,7 @@ function TabContentFallback() {
     );
 }
 
-function renderTabContent(
-    tabIndex: number,
-    curriculumId: GanttCurriculumId,
-) {
+function renderTabContent(tabIndex: number, curriculumId: GanttCurriculumId) {
     switch (tabIndex) {
     case 0:
         return <SyllabusesTab curriculumId={curriculumId} />;

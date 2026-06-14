@@ -1,6 +1,5 @@
 "use client";
-
-import { Box } from "@mui/material";
+import Box from "@mui/material/Box";
 import { useCallback, useEffect, useState } from "react";
 
 import { BluzCalendar } from "@/components/schedule/calendar/calendar";
@@ -9,33 +8,27 @@ import { EventDialog } from "@/components/schedule/event-dialog";
 import { PushOfflineUpdatesDialog } from "@/components/schedule/offline-dialogs/push-updates-dialog";
 import { Event, EventId } from "@/components/schedule/types/event";
 
-export default function SchedulePage()
-{
+export default function SchedulePage() {
     const { events, saveEvent, deleteEvent, undo, redo } = useCalendar();
 
-    const [ selectedEvent, setSelectedEvent ] = useState<Partial<Event>>();
-    const [ openEventDialog, setOpenEventDialog ] = useState<boolean>(false);
+    const [selectedEvent, setSelectedEvent] = useState<Partial<Event>>();
+    const [openEventDialog, setOpenEventDialog] = useState<boolean>(false);
 
-    useEffect(() =>
-    {
-        const handleKeyDown = (e: KeyboardEvent) =>
-        {
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
             // Guard: Don't trigger undo/redo if the user is typing inside an input/textarea
             const activeTag = document.activeElement?.tagName.toLowerCase();
             const isInput = activeTag === "input" || activeTag === "textarea";
 
-            if (!isInput && e.ctrlKey && e.key === "z")
-            {
+            if (!isInput && e.ctrlKey && e.key === "z") {
                 e.preventDefault();
                 undo();
             }
-            if (!isInput && e.ctrlKey && e.key === "y")
-            {
+            if (!isInput && e.ctrlKey && e.key === "y") {
                 e.preventDefault();
                 redo();
             }
-            if (!isInput && e.key === "Delete" && selectedEvent?.id !== undefined)
-            {
+            if (!isInput && e.key === "Delete" && selectedEvent?.id !== undefined) {
                 e.preventDefault();
                 deleteEvent(selectedEvent.id);
                 setSelectedEvent(undefined);
@@ -44,49 +37,46 @@ export default function SchedulePage()
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [ undo, redo, deleteEvent, selectedEvent ]);
+    }, [undo, redo, deleteEvent, selectedEvent]);
 
-    const handleCloseEventDialog = useCallback(() =>
-    {
+    const handleCloseEventDialog = useCallback(() => {
         setOpenEventDialog(false);
         setSelectedEvent(undefined);
     }, []);
 
     const handleSave = useCallback(
-        (event: Partial<Event>) =>
-        {
+        (event: Partial<Event>) => {
             saveEvent(event); // Provider handles API, offline, and history tracking
             handleCloseEventDialog();
         },
-        [ saveEvent, handleCloseEventDialog ],
+        [saveEvent, handleCloseEventDialog],
     );
 
     const handleDelete = useCallback(
-        (eventId: EventId) =>
-        {
+        (eventId: EventId) => {
             deleteEvent(eventId); // Provider handles API, offline, and history tracking
             handleCloseEventDialog();
         },
-        [ deleteEvent, handleCloseEventDialog ],
+        [deleteEvent, handleCloseEventDialog],
     );
 
     return (
-        <Box display={ "flex" } flexDirection={ "column" } height={ "100%" }>
+        <Box display={"flex"} flexDirection={"column"} height={"100%"}>
             <BluzCalendar
-                events={ events }
-                handleDeleteEvent={ handleDelete }
-                handleSaveEvent={ handleSave }
-                setOpenEventDialog={ setOpenEventDialog }
-                setSelectedEvent={ setSelectedEvent }
+                events={events}
+                handleDeleteEvent={handleDelete}
+                handleSaveEvent={handleSave}
+                setOpenEventDialog={setOpenEventDialog}
+                setSelectedEvent={setSelectedEvent}
             />
 
             <EventDialog
-                event={ selectedEvent ?? {} }
-                key={ selectedEvent?.id }
-                onClose={ handleCloseEventDialog }
-                onDelete={ handleDelete }
-                onSave={ handleSave }
-                open={ openEventDialog }
+                event={selectedEvent ?? {}}
+                key={selectedEvent?.id}
+                onClose={handleCloseEventDialog}
+                onDelete={handleDelete}
+                onSave={handleSave}
+                open={openEventDialog}
             />
 
             <PushOfflineUpdatesDialog />

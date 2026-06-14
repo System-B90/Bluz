@@ -1,4 +1,5 @@
-import { Typography, TypographyProps } from "@mui/material";
+import Typography from "@mui/material/Typography";
+import TypographyProps from "@mui/material/TypographyProps";
 import Link from "next/link";
 import { useMemo } from "react";
 

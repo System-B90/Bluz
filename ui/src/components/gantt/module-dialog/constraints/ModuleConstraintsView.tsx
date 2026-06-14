@@ -1,19 +1,19 @@
 "use client";
-
-import {
-    Box,
-    Button,
-    Card,
-    CardContent,
-    CircularProgress,
-    Stack,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CircularProgress from "@mui/material/CircularProgress";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useCallback, useMemo, useState } from "react";
 
 import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
 import { GanttModuleId } from "@/api-shared/types/gantt/models";
-import { ConstraintType, GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
+import {
+    ConstraintType,
+    GanttConstraint,
+} from "@/api-shared/types/gantt/models/constraint";
 import { ConstraintListItem } from "@/components/gantt/module-dialog/constraints/ConstraintListItem";
 import { DraftConstraintForm } from "@/components/gantt/module-dialog/constraints/DraftConstraintForm";
 import { DraftConstraint } from "@/components/gantt/module-dialog/constraints/types";
@@ -24,19 +24,24 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 export function ModuleConstraintsView({
     moduleId,
 }: {
-    moduleId: GanttModuleId;
+  moduleId: GanttModuleId;
 }) {
     const targetOptions = useTargetOptions();
     const curriculumState = useCurriculumState();
-    const { state, removeConstraint, createConstraint, updateConstraint } = useGanttConstraints();
+    const { state, removeConstraint, createConstraint, updateConstraint } =
+    useGanttConstraints();
 
     const [draft, setDraft] = useState<DraftConstraint | null>(null);
-    const [editingConstraintId, setEditingConstraintId] = useState<null | string>(null);
-    const [editingDraft, setEditingDraft] = useState<DraftConstraint | null>(null);
+    const [editingConstraintId, setEditingConstraintId] = useState<null | string>(
+        null,
+    );
+    const [editingDraft, setEditingDraft] = useState<DraftConstraint | null>(
+        null,
+    );
 
     const constraintsList = useMemo(
         () => Object.values(state.constraints),
-        [state.constraints]
+        [state.constraints],
     );
 
     const handleStartCreate = useCallback(() => {
@@ -57,7 +62,7 @@ export function ModuleConstraintsView({
     const handleSubmitCreate = useCallback(async () => {
         if (!draft) return;
 
-        let payload: Omit<CreateConstraintPayload, 'id'>;
+        let payload: Omit<CreateConstraintPayload, "id">;
 
         if (draft.type === ConstraintType.Relational) {
             payload = {
@@ -78,10 +83,18 @@ export function ModuleConstraintsView({
                 ownerModuleId: moduleId,
                 // @ts-ignore: TS doesn't narrow correctly
                 allowedDays: draft.allowedDays
-                    ? (Array.isArray(draft.allowedDays) ? draft.allowedDays : String(draft.allowedDays).split(",").map((d: string) => Number(d.trim())))
+                    ? Array.isArray(draft.allowedDays)
+                        ? draft.allowedDays
+                        : String(draft.allowedDays)
+                            .split(",")
+                            .map((d: string) => Number(d.trim()))
                     : undefined,
                 forbiddenDays: draft.forbiddenDays
-                    ? (Array.isArray(draft.forbiddenDays) ? draft.forbiddenDays : String(draft.forbiddenDays).split(",").map((d: string) => Number(d.trim())))
+                    ? Array.isArray(draft.forbiddenDays)
+                        ? draft.forbiddenDays
+                        : String(draft.forbiddenDays)
+                            .split(",")
+                            .map((d: string) => Number(d.trim()))
                     : undefined,
             };
         }
@@ -98,8 +111,14 @@ export function ModuleConstraintsView({
                 targetId: constraint.targetId,
                 targetType: constraint.targetType,
                 relation: constraint.relation,
-                minDelay: constraint.minDelayDays !== undefined ? String(constraint.minDelayDays) : "",
-                maxDelay: constraint.maxDelayDays !== undefined ? String(constraint.maxDelayDays) : "",
+                minDelay:
+          constraint.minDelayDays !== undefined
+              ? String(constraint.minDelayDays)
+              : "",
+                maxDelay:
+          constraint.maxDelayDays !== undefined
+              ? String(constraint.maxDelayDays)
+              : "",
             });
         } else {
             setEditingDraft({
@@ -126,17 +145,29 @@ export function ModuleConstraintsView({
                 targetId: editingDraft.targetId,
                 targetType: editingDraft.targetType as "event" | "module",
                 relation: editingDraft.relation,
-                minDelayDays: editingDraft.minDelay ? Number(editingDraft.minDelay) : undefined,
-                maxDelayDays: editingDraft.maxDelay ? Number(editingDraft.maxDelay) : undefined,
+                minDelayDays: editingDraft.minDelay
+                    ? Number(editingDraft.minDelay)
+                    : undefined,
+                maxDelayDays: editingDraft.maxDelay
+                    ? Number(editingDraft.maxDelay)
+                    : undefined,
             };
         } else {
             payload = {
                 type: ConstraintType.Temporal,
                 allowedDays: editingDraft.allowedDays
-                    ? (Array.isArray(editingDraft.allowedDays) ? editingDraft.allowedDays : String(editingDraft.allowedDays).split(",").map((d: string) => Number(d.trim())))
+                    ? Array.isArray(editingDraft.allowedDays)
+                        ? editingDraft.allowedDays
+                        : String(editingDraft.allowedDays)
+                            .split(",")
+                            .map((d: string) => Number(d.trim()))
                     : undefined,
                 forbiddenDays: editingDraft.forbiddenDays
-                    ? (Array.isArray(editingDraft.forbiddenDays) ? editingDraft.forbiddenDays : String(editingDraft.forbiddenDays).split(",").map((d: string) => Number(d.trim())))
+                    ? Array.isArray(editingDraft.forbiddenDays)
+                        ? editingDraft.forbiddenDays
+                        : String(editingDraft.forbiddenDays)
+                            .split(",")
+                            .map((d: string) => Number(d.trim()))
                     : undefined,
             };
         }
@@ -163,7 +194,7 @@ export function ModuleConstraintsView({
                         size="small"
                         variant="outlined"
                     >
-                        הוספת אילוץ
+            הוספת אילוץ
                     </Button>
                 </Stack>
 
@@ -198,18 +229,20 @@ export function ModuleConstraintsView({
                             );
                         })}
 
-                        {draft ? <DraftConstraintForm
-                            curriculumState={curriculumState}
-                            draft={draft}
-                            onCancel={handleCancelCreate}
-                            onSubmit={handleSubmitCreate}
-                            setDraft={setDraft}
-                            targetOptions={targetOptions}
-                        /> : null}
+                        {draft ? (
+                            <DraftConstraintForm
+                                curriculumState={curriculumState}
+                                draft={draft}
+                                onCancel={handleCancelCreate}
+                                onSubmit={handleSubmitCreate}
+                                setDraft={setDraft}
+                                targetOptions={targetOptions}
+                            />
+                        ) : null}
 
                         {constraintsList.length === 0 && !draft && (
                             <Typography color="text.secondary" variant="body2">
-                                לא הוגדרו אילוצים למערך זה.
+                לא הוגדרו אילוצים למערך זה.
                             </Typography>
                         )}
                     </Stack>

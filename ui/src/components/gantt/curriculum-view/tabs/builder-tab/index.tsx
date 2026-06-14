@@ -18,7 +18,8 @@ import {
     useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { Box, BoxProps } from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 

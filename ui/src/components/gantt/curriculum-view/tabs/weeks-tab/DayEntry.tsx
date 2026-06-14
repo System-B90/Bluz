@@ -1,12 +1,8 @@
-/**
- * Name: DayEntry.tsx
- * Purpose: Professional time-masked input with focus-based sync and key-reset.
- * Created: 2026-04-15
- * Author: Michael K. Steinberg
- */
-
-import { Add, Remove } from "@mui/icons-material";
-import { IconButton, TextField, Typography } from "@mui/material";
+import Add from "@mui/icons-material/Add";
+import Remove from "@mui/icons-material/Remove";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import React, { useCallback, useState } from "react";
 
@@ -40,8 +36,9 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
         }
 
         if (parsedMinutes !== day?.totalWorkingMinutes) {
-            void updateDay(dayId, { totalWorkingMinutes: parsedMinutes }).catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת שעות נכשלה!", error),
+            void updateDay(dayId, { totalWorkingMinutes: parsedMinutes }).catch(
+                (error) =>
+                    enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת שעות נכשלה!", error),
             );
         }
     }, [localTime, day?.totalWorkingMinutes, updateDay, dayId, enqueueSnackbar]);
@@ -54,8 +51,9 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
             );
             const formatted = formatMinutesAsTimeInput(newMinutes);
             setLocalTime(formatted); // Update local UI immediately
-            void updateDay(dayId, { totalWorkingMinutes: newMinutes }).catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת שעות נכשלה!", error),
+            void updateDay(dayId, { totalWorkingMinutes: newMinutes }).catch(
+                (error) =>
+                    enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת שעות נכשלה!", error),
             );
         },
         [dayId, updateDay, day?.totalWorkingMinutes, enqueueSnackbar],

@@ -3,8 +3,8 @@
 import { getHiveBaseUrl } from "@/api-shared/common";
 
 type HiveLogoProps = {
-    size?: number;
-    className?: string;
+  size?: number;
+  className?: string;
 };
 
 /**

@@ -1,11 +1,9 @@
-import {
-    Box,
-    BoxProps,
-    Chip,
-    FormControl,
-    InputLabel,
-    SelectChangeEvent,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import Chip from "@mui/material/Chip";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import SelectChangeEvent from "@mui/material/SelectChangeEvent";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
@@ -24,7 +22,12 @@ export function FilterInstructors({ ...props }: BoxProps) {
 
         // Handle potential string autofill values vs actual arrays
         const newIds =
-            typeof value === "string" ? value.split(",").map(Number).filter((n) => !isNaN(n)) : value;
+      typeof value === "string"
+          ? value
+              .split(",")
+              .map(Number)
+              .filter((n) => !isNaN(n))
+          : value;
 
         setFilteredInstructors(newIds);
     };

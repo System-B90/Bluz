@@ -8,7 +8,13 @@
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { Box, Button, ButtonGroup, Collapse, IconButton, Tooltip, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import ButtonGroup from "@mui/material/ButtonGroup";
+import Collapse from "@mui/material/Collapse";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import { useCallback, useMemo, useState } from "react";
@@ -26,17 +32,20 @@ export function CalendarToolbar({
     onToggleFullscreen,
     onToggleToolbar,
 }: ToolbarProps<any, any> & {
-    showToolbar: boolean;
-    onToggleFullscreen: () => void;
-    onToggleToolbar: () => void;
+  showToolbar: boolean;
+  onToggleFullscreen: () => void;
+  onToggleToolbar: () => void;
 }) {
     const [open, setOpen] = useState(false);
 
-    const handleDateChange = useCallback((val: dayjs.Dayjs | null) => {
-        if (val && val.isValid()) {
-            onNavigate("DATE", val.toDate());
-        }
-    }, [onNavigate]);
+    const handleDateChange = useCallback(
+        (val: dayjs.Dayjs | null) => {
+            if (val && val.isValid()) {
+                onNavigate("DATE", val.toDate());
+            }
+        },
+        [onNavigate],
+    );
 
     const isTodayShown = useMemo(() => {
         const today = dayjs();
@@ -47,12 +56,18 @@ export function CalendarToolbar({
         if (view === "week") {
             const start = calendarDate.day(0).startOf("day");
             const end = calendarDate.day(6).endOf("day");
-            return (today.isSame(start) || today.isAfter(start)) && (today.isSame(end) || today.isBefore(end));
+            return (
+                (today.isSame(start) || today.isAfter(start)) &&
+        (today.isSame(end) || today.isBefore(end))
+            );
         }
         if (view === "work_week") {
             const start = calendarDate.day(0).startOf("day");
             const end = calendarDate.day(4).endOf("day");
-            return (today.isSame(start) || today.isAfter(start)) && (today.isSame(end) || today.isBefore(end));
+            return (
+                (today.isSame(start) || today.isAfter(start)) &&
+        (today.isSame(end) || today.isBefore(end))
+            );
         }
         return false;
     }, [date, view]);
@@ -71,7 +86,9 @@ export function CalendarToolbar({
                     borderBottom: "1px solid",
                     borderColor: "divider",
                     bgcolor: (theme) =>
-                        theme.palette.mode === "dark" ? "background.default" : "transparent",
+                        theme.palette.mode === "dark"
+                            ? "background.default"
+                            : "transparent",
                 }}
                 width="100%"
             >
@@ -93,7 +110,11 @@ export function CalendarToolbar({
                 </Box>
 
                 <Box alignItems="center" display="flex" gap={1}>
-                    <Typography fontWeight="bold" sx={{ color: "text.primary" }} variant="h6">
+                    <Typography
+                        fontWeight="bold"
+                        sx={{ color: "text.primary" }}
+                        variant="h6"
+                    >
                         {label}
                     </Typography>
                     <IconButton
@@ -108,7 +129,7 @@ export function CalendarToolbar({
                             },
                             "&:active": {
                                 transform: "scale(0.95)",
-                            }
+                            },
                         }}
                     >
                         <CalendarTodayIcon fontSize="small" />
@@ -170,7 +191,7 @@ export function CalendarToolbar({
                                     },
                                     "&:active": {
                                         transform: "scale(0.95)",
-                                    }
+                                    },
                                 }}
                             >
                                 <VisibilityOffIcon fontSize="small" />
@@ -194,11 +215,11 @@ export function CalendarToolbar({
                                         },
                                         "50%": {
                                             transform: "scale(1.25)",
-                                        }
+                                        },
                                     },
                                     "&:active": {
                                         transform: "scale(0.95)",
-                                    }
+                                    },
                                 }}
                             >
                                 <FullscreenIcon fontSize="small" />

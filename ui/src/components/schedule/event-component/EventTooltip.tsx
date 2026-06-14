@@ -6,7 +6,10 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import WarningIcon from "@mui/icons-material/Warning";
-import { Box, Divider, Stack, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Divider from "@mui/material/Divider";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { Dayjs } from "dayjs";
 import moment from "moment";
 import { useMemo } from "react";
@@ -44,11 +47,11 @@ export function EventTooltipContent({ event }: { event: Event }) {
     const hours = Math.floor(durationMinutes / 60);
     const minutes = durationMinutes % 60;
     const durationLabel =
-        hours && minutes
-            ? `${hours} ש׳ ${minutes} ד׳`
-            : hours
-                ? `${hours} ש׳`
-                : `${minutes} ד׳`;
+    hours && minutes
+        ? `${hours} ש׳ ${minutes} ד׳`
+        : hours
+            ? `${hours} ש׳`
+            : `${minutes} ד׳`;
 
     const subject = eventHasSubject(event.type)
         ? getSubject(event.subject)
@@ -56,10 +59,11 @@ export function EventTooltipContent({ event }: { event: Event }) {
     const hiveModule = event.hiveModule ? getModule(event.hiveModule) : null;
     const courses = event.courses.map(getCourse).filter((v) => !!v);
     const rooms = event.rooms.map(getRoom).filter((v) => !!v);
-    const instructors = getPresentInstructors(event).map(getInstructor).filter((v) => !!v);
+    const instructors = getPresentInstructors(event)
+        .map(getInstructor)
+        .filter((v) => !!v);
     const hasOutsider =
-        event.type === EventType.LECTURE &&
-        event.lecturers?.includes("איש חוץ");
+    event.type === EventType.LECTURE && event.lecturers?.includes("איש חוץ");
     const isPrayer = event.type === EventType.PRAYER;
     const isBreak = event.type === EventType.BREAK;
 
@@ -67,9 +71,15 @@ export function EventTooltipContent({ event }: { event: Event }) {
     if (event.locked)
         statusFlags.push({ icon: <LockIcon fontSize="inherit" />, label: "מתואם" });
     if (event.required)
-        statusFlags.push({ icon: <FmdBadIcon fontSize="inherit" />, label: "קריטי" });
+        statusFlags.push({
+            icon: <FmdBadIcon fontSize="inherit" />,
+            label: "קריטי",
+        });
     if (event.personalTalk)
-        statusFlags.push({ icon: <ChatIcon fontSize="inherit" />, label: "חלון פ\"א" });
+        statusFlags.push({
+            icon: <ChatIcon fontSize="inherit" />,
+            label: 'חלון פ"א',
+        });
 
     return (
         <Box sx={{ p: 0.5, minWidth: 180, maxWidth: 300 }}>
@@ -90,14 +100,14 @@ export function EventTooltipContent({ event }: { event: Event }) {
             />
 
             {/* Subject / Module */}
-            {subject ? <TooltipRow
-                icon={<MenuBookIcon fontSize="inherit" />}
-                text={
-                    hiveModule
-                        ? `${subject.name} / ${hiveModule.name}`
-                        : subject.name
-                }
-            /> : null}
+            {subject ? (
+                <TooltipRow
+                    icon={<MenuBookIcon fontSize="inherit" />}
+                    text={
+                        hiveModule ? `${subject.name} / ${hiveModule.name}` : subject.name
+                    }
+                />
+            ) : null}
 
             {/* Courses */}
             {courses.length > 0 && (
@@ -113,17 +123,15 @@ export function EventTooltipContent({ event }: { event: Event }) {
                     icon={<MeetingRoomIcon fontSize="inherit" />}
                     text={rooms.map((r) => r.name).join(", ")}
                 />
-            ) : (
-                !isPrayer && !isBreak ? (
-                    <TooltipRow
-                        icon={<WarningIcon color="error" fontSize="inherit" />}
-                        text="אין חדר"
-                    />
-                ) : null
-            )}
+            ) : !isPrayer && !isBreak ? (
+                <TooltipRow
+                    icon={<WarningIcon color="error" fontSize="inherit" />}
+                    text="אין חדר"
+                />
+            ) : null}
 
             {/* Instructors */}
-            {(instructors.length > 0 || hasOutsider) ? (
+            {instructors.length > 0 || hasOutsider ? (
                 <TooltipRow
                     icon={<PersonOutlinedIcon fontSize="inherit" />}
                     text={[
@@ -131,14 +139,12 @@ export function EventTooltipContent({ event }: { event: Event }) {
                         ...instructors.map((i) => i.display_name),
                     ].join(", ")}
                 />
-            ) : (
-                !isPrayer ? (
-                    <TooltipRow
-                        icon={<WarningIcon color="error" fontSize="inherit" />}
-                        text="אין מבוזרים"
-                    />
-                ) : null
-            )}
+            ) : !isPrayer ? (
+                <TooltipRow
+                    icon={<WarningIcon color="error" fontSize="inherit" />}
+                    text="אין מבוזרים"
+                />
+            ) : null}
 
             {/* Status flags */}
             {statusFlags.length > 0 && (
@@ -146,12 +152,7 @@ export function EventTooltipContent({ event }: { event: Event }) {
                     <Divider sx={{ my: 0.5, borderColor: "rgba(255,255,255,0.2)" }} />
                     <Stack direction="row" flexWrap="wrap" gap={1}>
                         {statusFlags.map(({ icon, label }) => (
-                            <Stack
-                                alignItems="center"
-                                direction="row"
-                                gap={0.3}
-                                key={label}
-                            >
+                            <Stack alignItems="center" direction="row" gap={0.3} key={label}>
                                 {icon}
                                 <Typography variant="caption">{label}</Typography>
                             </Stack>
@@ -161,26 +162,22 @@ export function EventTooltipContent({ event }: { event: Event }) {
             )}
 
             {/* Notes */}
-            {event.notes ? <>
-                <Divider sx={{ my: 0.5, borderColor: "rgba(255,255,255,0.2)" }} />
-                <Typography
-                    sx={{ opacity: 0.85, whiteSpace: "pre-wrap" }}
-                    variant="caption"
-                >
-                    {event.notes}
-                </Typography>
-            </> : null}
+            {event.notes ? (
+                <>
+                    <Divider sx={{ my: 0.5, borderColor: "rgba(255,255,255,0.2)" }} />
+                    <Typography
+                        sx={{ opacity: 0.85, whiteSpace: "pre-wrap" }}
+                        variant="caption"
+                    >
+                        {event.notes}
+                    </Typography>
+                </>
+            ) : null}
         </Box>
     );
 }
 
-function TooltipRow({
-    icon,
-    text,
-}: {
-  icon: React.ReactNode;
-  text: string;
-}) {
+function TooltipRow({ icon, text }: { icon: React.ReactNode; text: string }) {
     return (
         <Stack alignItems="center" direction="row" gap={0.5} mb={0.3}>
             <Box sx={{ fontSize: "0.9rem", display: "flex", opacity: 0.7 }}>

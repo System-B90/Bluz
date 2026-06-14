@@ -16,26 +16,44 @@ type ClientApiGetHiveUsers = ClientApiNoPayload<ApiHiveUsersGetResponse>;
 type ClientApiGetModules = ClientApiNoPayload<ApiHiveModulesGetResponse>;
 
 export const apiGetStudents: ClientApiGetStudents = async (props) => {
-    return await safeApiFetcher<ApiHiveStudentsGetResponse>("/api/hive/students", props);
+    return await safeApiFetcher<ApiHiveStudentsGetResponse>(
+        "/api/hive/students",
+        props,
+    );
 };
 
 export const apiGetClasses: ClientApiGetClasses = async (props) => {
-    return await safeApiFetcher<ApiHiveClassesGetResponse>("/api/hive/classes", props);
+    return await safeApiFetcher<ApiHiveClassesGetResponse>(
+        "/api/hive/classes",
+        props,
+    );
 };
 
 export const apiGetSubjects: ClientApiGetSubjects = async (props) => {
-    return await safeApiFetcher<ApiHiveSubjectsGetResponse>("/api/hive/subjects", props);
+    return await safeApiFetcher<ApiHiveSubjectsGetResponse>(
+        "/api/hive/subjects",
+        props,
+    );
 };
 
 // TODO: Is this function actually needed? Rooms are a subtype of class in Hive
 export const apiGetHiveRooms: ClientApiGetHiveRooms = async (props) => {
-    return await safeApiFetcher<ApiHiveRoomsGetResponse>("/api/hive/rooms", props);
+    return await safeApiFetcher<ApiHiveRoomsGetResponse>(
+        "/api/hive/rooms",
+        props,
+    );
 };
 
 export const getHiveUsers: ClientApiGetHiveUsers = async (props) => {
-    return await safeApiFetcher<ApiHiveUsersGetResponse>("/api/hive/users", props);
+    return await safeApiFetcher<ApiHiveUsersGetResponse>(
+        "/api/hive/users",
+        props,
+    );
 };
 
 export const apiGetModules: ClientApiGetModules = async (props) => {
-    return await safeApiFetcher<ApiHiveModulesGetResponse>("/api/hive/modules", props);
+    return await safeApiFetcher<ApiHiveModulesGetResponse>(
+        "/api/hive/modules",
+        props,
+    );
 };

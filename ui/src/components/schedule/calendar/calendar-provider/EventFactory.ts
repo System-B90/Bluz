@@ -2,10 +2,13 @@ import dayjs from "dayjs";
 
 import { Event, EventType } from "@/components/schedule/types/event";
 
-export const createEventFactory = (eventPartial: Partial<Event>, isNewEvent: boolean): Event => {
+export const createEventFactory = (
+    eventPartial: Partial<Event>,
+    isNewEvent: boolean,
+): Event => {
     const type = eventPartial.type ?? EventType.EXERCISE;
     return {
-        id: isNewEvent ? crypto.randomUUID() : eventPartial.id as string,
+        id: isNewEvent ? crypto.randomUUID() : (eventPartial.id as string),
         name: eventPartial.name ?? "",
         subject: eventPartial.subject ?? 0,
         hiveModule: eventPartial.hiveModule ?? 0,

@@ -19,10 +19,22 @@ import {
 import { getAllRooms } from "@/app/api/rooms/utils";
 
 type ServerApiRoomsGet = ServerApi<ApiRoomsGetPayload, ApiRoomsGetResponse>;
-type ServerApiRoomUpdate = ServerApi<ApiRoomUpdatePayload, ApiRoomUpdateResponse>;
-type ServerApiRoomCreate = ServerApi<ApiRoomCreatePayload, ApiRoomCreateResponse>;
-type ServerApiRoomDelete = ServerApi<ApiRoomDeletePayload, ApiRoomDeleteResponse>;
-type ServerApiRoomExtendedInfoUpdate = ServerApi<ApiRoomExtendedInfoUpdatePayload, ApiRoomExtendedInfoUpdateResponse>;
+type ServerApiRoomUpdate = ServerApi<
+  ApiRoomUpdatePayload,
+  ApiRoomUpdateResponse
+>;
+type ServerApiRoomCreate = ServerApi<
+  ApiRoomCreatePayload,
+  ApiRoomCreateResponse
+>;
+type ServerApiRoomDelete = ServerApi<
+  ApiRoomDeletePayload,
+  ApiRoomDeleteResponse
+>;
+type ServerApiRoomExtendedInfoUpdate = ServerApi<
+  ApiRoomExtendedInfoUpdatePayload,
+  ApiRoomExtendedInfoUpdateResponse
+>;
 
 export const GET: ServerApiRoomsGet = async (request) => {
     try {
@@ -78,10 +90,21 @@ export const DELETE: ServerApiRoomDelete = async (request) => {
 export const PATCH: ServerApiRoomExtendedInfoUpdate = async (request) => {
     try {
         const payload = await request.json();
-        if (!payload || payload.roomId === undefined || payload.roomSource === undefined || !payload.extendedInfo) {
-            throw new ClientApiError("Invalid payload for room extended info update!");
+        if (
+            !payload ||
+      payload.roomId === undefined ||
+      payload.roomSource === undefined ||
+      !payload.extendedInfo
+        ) {
+            throw new ClientApiError(
+                "Invalid payload for room extended info update!",
+            );
         }
-        await DbRoomExtendedInfo.upsert(payload.roomId, payload.roomSource, payload.extendedInfo);
+        await DbRoomExtendedInfo.upsert(
+            payload.roomId,
+            payload.roomSource,
+            payload.extendedInfo,
+        );
         return ApiSuccess();
     } catch (e) {
         return catchHandler(request, e);

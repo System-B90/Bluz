@@ -1,6 +1,10 @@
 import { useDraggable } from "@dnd-kit/core";
 import SearchIcon from "@mui/icons-material/Search";
-import { Box, Card, InputAdornment, TextField, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import InputAdornment from "@mui/material/InputAdornment";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useMemo, useState } from "react";
 
 import { CourseUser } from "@/api-shared/types/hive";
@@ -8,7 +12,13 @@ import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { HiveAvatar } from "@/components/header/HiveAvatarImage";
 import { DraggedInstructorData } from "@/components/settings-dialog/tabs/global/course-settings/dnd-types";
 
-export function InstructorCard({ instructor, isOverlay = false }: { instructor: CourseUser; isOverlay?: boolean; }) {
+export function InstructorCard({
+    instructor,
+    isOverlay = false,
+}: {
+  instructor: CourseUser;
+  isOverlay?: boolean;
+}) {
     return (
         <Card
             sx={{
@@ -21,7 +31,9 @@ export function InstructorCard({ instructor, isOverlay = false }: { instructor: 
                 borderColor: isOverlay ? "secondary.main" : "divider",
                 boxShadow: isOverlay ? "0 8px 24px rgba(0, 0, 0, 0.15)" : "none",
                 bgcolor: (theme) =>
-                    theme.palette.mode === "light" ? "#ffffff" : "rgba(255, 255, 255, 0.03)",
+                    theme.palette.mode === "light"
+                        ? "#ffffff"
+                        : "rgba(255, 255, 255, 0.03)",
                 transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                 cursor: isOverlay ? "grabbing" : "grab",
                 "&:hover": {
@@ -64,7 +76,7 @@ export function InstructorCard({ instructor, isOverlay = false }: { instructor: 
     );
 }
 
-function DraggableInstructorItem({ instructor }: { instructor: CourseUser; }) {
+function DraggableInstructorItem({ instructor }: { instructor: CourseUser }) {
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id: `instructor-${instructor.id}`,
         data: {
@@ -128,7 +140,7 @@ export function InstructorSourceList() {
                         mb: 0.5,
                     }}
                 >
-                    מדריכים זמינים
+          מדריכים זמינים
                 </Typography>
                 <Typography
                     sx={{
@@ -137,7 +149,7 @@ export function InstructorSourceList() {
                         fontFamily: "Assistant, sans-serif",
                     }}
                 >
-                    גרור מדריך לתוך מסלול כדי לשייכו
+          גרור מדריך לתוך מסלול כדי לשייכו
                 </Typography>
             </Box>
 
@@ -184,7 +196,7 @@ export function InstructorSourceList() {
                             mt: 4,
                         }}
                     >
-                        לא נמצאו מדריכים
+            לא נמצאו מדריכים
                     </Typography>
                 )}
             </Box>

@@ -1,16 +1,34 @@
-import { defaultDropAnimationSideEffects, DndContext, DragEndEvent, DragOverlay, DragStartEvent, Modifier, useDroppable } from "@dnd-kit/core";
+import {
+    defaultDropAnimationSideEffects,
+    DndContext,
+    DragEndEvent,
+    DragOverlay,
+    DragStartEvent,
+    Modifier,
+    useDroppable,
+} from "@dnd-kit/core";
 import AddIcon from "@mui/icons-material/Add";
 import LayersIcon from "@mui/icons-material/Layers";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
-import { Box, Button, Card, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { CourseItem } from "@/components/settings-dialog/tabs/global/course-settings/CourseItem";
-import { DraggedItemData, DropTargetCourseData, DropTargetRootData } from "@/components/settings-dialog/tabs/global/course-settings/dnd-types";
-import { InstructorCard, InstructorSourceList } from "@/components/settings-dialog/tabs/global/course-settings/InstructorSourceList";
+import {
+    DraggedItemData,
+    DropTargetCourseData,
+    DropTargetRootData,
+} from "@/components/settings-dialog/tabs/global/course-settings/dnd-types";
+import {
+    InstructorCard,
+    InstructorSourceList,
+} from "@/components/settings-dialog/tabs/global/course-settings/InstructorSourceList";
 
 const dropAnimation = {
     sideEffects: defaultDropAnimationSideEffects({
@@ -24,7 +42,7 @@ const dropAnimation = {
 
 const dialogOffsetModifier: Modifier = ({ transform }) => {
     if (typeof window !== "undefined") {
-        // Find the nearest Dialog containing block to compensate for the fixed positioning offset it introduces
+    // Find the nearest Dialog containing block to compensate for the fixed positioning offset it introduces
         const dialog = document.querySelector(".MuiDialog-paper");
         if (dialog) {
             const rect = dialog.getBoundingClientRect();
@@ -38,13 +56,25 @@ const dialogOffsetModifier: Modifier = ({ transform }) => {
     return transform;
 };
 
-function InstructorDragOverlay({ activeId, instructors }: { activeId: string; instructors: Array<any> }) {
+function InstructorDragOverlay({
+    activeId,
+    instructors,
+}: {
+  activeId: string;
+  instructors: Array<any>;
+}) {
     const inst = instructors.find((i) => `instructor-${i.id}` === activeId);
     if (!inst) return null;
     return <InstructorCard instructor={inst} isOverlay />;
 }
 
-function CourseDragOverlay({ activeId, courses }: { activeId: string; courses: Array<any> }) {
+function CourseDragOverlay({
+    activeId,
+    courses,
+}: {
+  activeId: string;
+  courses: Array<any>;
+}) {
     const course = courses.find((c) => `course-${c.id}` === activeId);
     if (!course) return null;
     return (
@@ -59,7 +89,9 @@ function CourseDragOverlay({ activeId, courses }: { activeId: string; courses: A
                 borderColor: "secondary.main",
                 boxShadow: "0 8px 24px rgba(0, 0, 0, 0.15)",
                 bgcolor: (theme) =>
-                    theme.palette.mode === "light" ? "#ffffff" : "rgba(255, 255, 255, 0.05)",
+                    theme.palette.mode === "light"
+                        ? "#ffffff"
+                        : "rgba(255, 255, 255, 0.05)",
                 cursor: "grabbing",
             }}
         >
@@ -114,7 +146,12 @@ function RootDropZone() {
                 transition: "all 0.25s ease",
             }}
         >
-            <SwapHorizIcon sx={{ color: isOver ? "secondary.main" : "text.secondary", fontSize: 20 }} />
+            <SwapHorizIcon
+                sx={{
+                    color: isOver ? "secondary.main" : "text.secondary",
+                    fontSize: 20,
+                }}
+            />
             <Typography
                 sx={{
                     fontSize: "0.78rem",
@@ -135,7 +172,11 @@ export function CourseSettings() {
     const { instructors } = useHiveUsers();
     const { enqueueSnackbar } = useSnackbar();
 
-    const [activeDrag, setActiveDrag] = useState<{ id: string; type: "COURSE" | "INSTRUCTOR"; data: any } | null>(null);
+    const [activeDrag, setActiveDrag] = useState<{
+    id: string;
+    type: "COURSE" | "INSTRUCTOR";
+    data: any;
+  } | null>(null);
 
     const handleCreate = useCallback(() => {
         void addCourse({
@@ -169,7 +210,10 @@ export function CourseSettings() {
             if (!over) return;
 
             const activeData = active.data.current as DraggedItemData | undefined;
-            const overData = over.data.current as DropTargetCourseData | DropTargetRootData | undefined;
+            const overData = over.data.current as
+        | DropTargetCourseData
+        | DropTargetRootData
+        | undefined;
 
             if (!activeData || !overData) return;
 
@@ -214,16 +258,21 @@ export function CourseSettings() {
                         while (current) {
                             if (current.parentId === dragId) return true;
                             const parentId = current.parentId;
-                            current = parentId ? courses.find((c) => c.id === parentId) : undefined;
+                            current = parentId
+                                ? courses.find((c) => c.id === parentId)
+                                : undefined;
                         }
                         return false;
                     };
 
                     if (hasCycle(draggedId, targetId)) {
-                        enqueueSnackbar("שגיאה: לא ניתן להכניס מסלול אב לתוך אחד מצאצאיו!", {
-                            variant: "error",
-                            autoHideDuration: 4000,
-                        });
+                        enqueueSnackbar(
+                            "שגיאה: לא ניתן להכניס מסלול אב לתוך אחד מצאצאיו!",
+                            {
+                                variant: "error",
+                                autoHideDuration: 4000,
+                            },
+                        );
                         return;
                     }
 
@@ -301,7 +350,7 @@ export function CourseSettings() {
                                     color: "text.primary",
                                 }}
                             >
-                                היררכיית מסלולים ומדריכים
+                היררכיית מסלולים ומדריכים
                             </Typography>
                             <Typography
                                 sx={{
@@ -310,7 +359,7 @@ export function CourseSettings() {
                                     fontFamily: "Assistant, sans-serif",
                                 }}
                             >
-                                הגדרת מבנה ההיררכיה ושיוך מדריכים למסלולים
+                הגדרת מבנה ההיררכיה ושיוך מדריכים למסלולים
                             </Typography>
                         </Box>
                     </Box>
@@ -329,7 +378,11 @@ export function CourseSettings() {
                         }}
                     >
                         {rootCourses.map((course) => (
-                            <CourseItem allCourses={courses} course={course} key={course.id} />
+                            <CourseItem
+                                allCourses={courses}
+                                course={course}
+                                key={course.id}
+                            />
                         ))}
 
                         {courses.length === 0 && (
@@ -342,7 +395,7 @@ export function CourseSettings() {
                                     mt: 6,
                                 }}
                             >
-                                לא הוגדרו מסלולים. לחץ על הכפתור למטה ליצירת מסלול.
+                לא הוגדרו מסלולים. לחץ על הכפתור למטה ליצירת מסלול.
                             </Typography>
                         )}
                     </Box>
@@ -379,7 +432,7 @@ export function CourseSettings() {
                             }}
                             variant="contained"
                         >
-                            יצירת מסלול ראשי חדש
+              יצירת מסלול ראשי חדש
                         </Button>
 
                         {/* Un-nest / Move to Root Droppable Area */}
@@ -391,10 +444,16 @@ export function CourseSettings() {
                     </Box>
                 </Box>
             </Box>
-            <DragOverlay dropAnimation={dropAnimation} modifiers={[dialogOffsetModifier]}>
+            <DragOverlay
+                dropAnimation={dropAnimation}
+                modifiers={[dialogOffsetModifier]}
+            >
                 {activeDrag ? (
                     activeDrag.type === "INSTRUCTOR" ? (
-                        <InstructorDragOverlay activeId={activeDrag.id} instructors={instructors} />
+                        <InstructorDragOverlay
+                            activeId={activeDrag.id}
+                            instructors={instructors}
+                        />
                     ) : (
                         <CourseDragOverlay activeId={activeDrag.id} courses={courses} />
                     )

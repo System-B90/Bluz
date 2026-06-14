@@ -15,9 +15,18 @@ import {
 } from "@/api-shared/types/course";
 
 type ServerApiCourseGet = ServerApi<ApiCourseGetPayload, ApiCourseGetResponse>;
-type ServerApiCourseUpdate = ServerApi<ApiCourseUpdatePayload, ApiCourseUpdateResponse>;
-type ServerApiCourseCreate = ServerApi<ApiCourseCreatePayload, ApiCourseCreateResponse>;
-type ServerApiCourseDelete = ServerApi<ApiCourseDeletePayload, ApiCourseDeleteResponse>;
+type ServerApiCourseUpdate = ServerApi<
+  ApiCourseUpdatePayload,
+  ApiCourseUpdateResponse
+>;
+type ServerApiCourseCreate = ServerApi<
+  ApiCourseCreatePayload,
+  ApiCourseCreateResponse
+>;
+type ServerApiCourseDelete = ServerApi<
+  ApiCourseDeletePayload,
+  ApiCourseDeleteResponse
+>;
 
 export const GET: ServerApiCourseGet = async (request) => {
     try {

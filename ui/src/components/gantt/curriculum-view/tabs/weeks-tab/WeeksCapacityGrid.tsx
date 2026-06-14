@@ -1,15 +1,13 @@
-import {
-    Box,
-    Chip,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    TextField,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { KeyboardEvent, useCallback, useMemo, useState } from "react";
 
@@ -39,10 +37,10 @@ import { DayCapacityCell } from "@/components/gantt/curriculum-view/tabs/weeks-t
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 
 export type WeeksCapacityGridProps = {
-    curriculum: GanttCurriculum;
-    isCompact?: boolean;
-    mappings: Record<string, GanttCurriculumModuleDayMapping>;
-    state: NormalizedStore;
+  curriculum: GanttCurriculum;
+  isCompact?: boolean;
+  mappings: Record<string, GanttCurriculumModuleDayMapping>;
+  state: NormalizedStore;
 };
 
 const DAY_COLUMNS: Array<GanttDayIndex> = [
@@ -71,12 +69,12 @@ function WeekRow({
     week,
     weekIndex,
 }: {
-    isCompact?: boolean;
-    mappings: Record<string, GanttCurriculumModuleDayMapping>;
-    startDate: null | string;
-    state: NormalizedStore;
-    week: NormalizedStore["weeks"][string];
-    weekIndex: number;
+  isCompact?: boolean;
+  mappings: Record<string, GanttCurriculumModuleDayMapping>;
+  startDate: null | string;
+  state: NormalizedStore;
+  week: NormalizedStore["weeks"][string];
+  weekIndex: number;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const { updateWeek } = useWeekActions();
@@ -128,10 +126,18 @@ function WeekRow({
                     px: 1.25,
                 }}
             >
-                <Typography fontWeight={800} sx={{ fontSize: "0.88rem", color: "text.primary" }} variant="subtitle2">
-                    שבוע {weekIndex + 1}
+                <Typography
+                    fontWeight={800}
+                    sx={{ fontSize: "0.88rem", color: "text.primary" }}
+                    variant="subtitle2"
+                >
+          שבוע {weekIndex + 1}
                 </Typography>
-                <Typography color="text.secondary" sx={{ fontSize: "0.72rem" }} variant="caption">
+                <Typography
+                    color="text.secondary"
+                    sx={{ fontSize: "0.72rem" }}
+                    variant="caption"
+                >
                     {formatWeekDateRange(weekDateRange) || "ללא תאריך"}
                 </Typography>
                 <Box mt={0.75}>
@@ -150,7 +156,14 @@ function WeekRow({
                     />
                 </Box>
             </TableCell>
-            <TableCell sx={{ verticalAlign: "top", pt: isCompact ? 0.35 : 1.25, pb: isCompact ? 0.15 : 0.75, px: isCompact ? 0.5 : 1.25 }}>
+            <TableCell
+                sx={{
+                    verticalAlign: "top",
+                    pt: isCompact ? 0.35 : 1.25,
+                    pb: isCompact ? 0.15 : 0.75,
+                    px: isCompact ? 0.5 : 1.25,
+                }}
+            >
                 <TextField
                     fullWidth
                     minRows={2}
@@ -169,8 +182,8 @@ function WeekRow({
                             style: {
                                 fontSize: "0.82rem",
                                 fontWeight: 500,
-                            }
-                        }
+                            },
+                        },
                     }}
                     sx={{
                         "& .MuiOutlinedInput-root": {
@@ -198,7 +211,7 @@ function WeekRow({
                 const dayDate = getDayDate(startDate, weekIndex, dayIndex);
                 const day = state.days[dayId];
                 const isMutedSaturday =
-                    dayIndex === GanttDayIndex.Saturday && !week.weekendDuty;
+          dayIndex === GanttDayIndex.Saturday && !week.weekendDuty;
 
                 return (
                     <DayCapacityCell
@@ -225,9 +238,9 @@ function DayHeaderCell({
     curriculum,
     state,
 }: {
-    dayIndex: GanttDayIndex;
-    curriculum: GanttCurriculum;
-    state: NormalizedStore;
+  dayIndex: GanttDayIndex;
+  curriculum: GanttCurriculum;
+  state: NormalizedStore;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const { updateDay } = useWeekActions();
@@ -235,7 +248,7 @@ function DayHeaderCell({
     const firstWeekId = curriculum.weeks[0];
     const firstWeek = firstWeekId ? state.weeks[firstWeekId] : undefined;
     const firstDayId = firstWeek?.days.find(
-        (dId) => state.days[dId]?.dayIndex === dayIndex
+        (dId) => state.days[dId]?.dayIndex === dayIndex,
     );
     const firstDay = firstDayId ? state.days[firstDayId] : undefined;
     const currentMinutes = firstDay ? firstDay.totalWorkingMinutes : null;
@@ -257,7 +270,7 @@ function DayHeaderCell({
     }, [currentMinutes, dayIndex, localStorageKey]);
 
     const [inputValue, setInputValue] = useState(() =>
-        formatMinutesAsTimeInput(initialMinutes)
+        formatMinutesAsTimeInput(initialMinutes),
     );
 
     const handleBlur = useCallback(async () => {
@@ -278,7 +291,7 @@ function DayHeaderCell({
             const week = state.weeks[weekId];
             if (week) {
                 const dayId = week.days.find(
-                    (dId) => state.days[dId]?.dayIndex === dayIndex
+                    (dId) => state.days[dId]?.dayIndex === dayIndex,
                 );
                 if (dayId) {
                     const currentDay = state.days[dayId];
@@ -294,22 +307,41 @@ function DayHeaderCell({
         try {
             await Promise.all(
                 dayIdsToUpdate.map((dayId) =>
-                    updateDay(dayId, { totalWorkingMinutes: parsedMinutes })
-                )
+                    updateDay(dayId, { totalWorkingMinutes: parsedMinutes }),
+                ),
             );
-            enqueueSnackbar("שעות העבודה עודכנו בהצלחה לכל השבועות!", { variant: "success" });
+            enqueueSnackbar("שעות העבודה עודכנו בהצלחה לכל השבועות!", {
+                variant: "success",
+            });
         } catch (error) {
-            enqueueApiErrorSnackbar(enqueueSnackbar, "עדכון שעות העבודה נכשל!", error);
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "עדכון שעות העבודה נכשל!",
+                error,
+            );
         }
-    }, [inputValue, initialMinutes, localStorageKey, curriculum.weeks, state.weeks, state.days, dayIndex, updateDay, enqueueSnackbar]);
+    }, [
+        inputValue,
+        initialMinutes,
+        localStorageKey,
+        curriculum.weeks,
+        state.weeks,
+        state.days,
+        dayIndex,
+        updateDay,
+        enqueueSnackbar,
+    ]);
 
-    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            void handleBlur();
-            e.currentTarget.blur();
-        }
-    }, [handleBlur]);
+    const handleKeyDown = useCallback(
+        (e: KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                void handleBlur();
+                e.currentTarget.blur();
+            }
+        },
+        [handleBlur],
+    );
 
     return (
         <TableCell
@@ -327,7 +359,10 @@ function DayHeaderCell({
             }}
         >
             <Box alignItems="center" display="flex" flexDirection="column" gap={0.5}>
-                <Typography sx={{ fontWeight: 700, fontSize: "0.82rem" }} variant="subtitle2">
+                <Typography
+                    sx={{ fontWeight: 700, fontSize: "0.82rem" }}
+                    variant="subtitle2"
+                >
                     {getDayNameDisplay(dayIndex)}
                 </Typography>
                 <TextField
@@ -343,16 +378,16 @@ function DayHeaderCell({
                                 padding: "2px 4px",
                                 fontFamily: "monospace",
                                 fontWeight: 700,
-                            }
-                        }
+                            },
+                        },
                     }}
                     sx={{
                         width: "auto",
                         "& .MuiOutlinedInput-root": {
                             borderRadius: "4px",
                             bgcolor: "background.paper",
-                            textAlign: 'center',
-                        }
+                            textAlign: "center",
+                        },
                     }}
                     value={inputValue}
                 />
@@ -367,21 +402,18 @@ export function WeeksCapacityGrid({
     mappings,
     state,
 }: WeeksCapacityGridProps) {
-    const weeks = useMemo(
-        () => {
-            const nextWeeks: Array<NormalizedStore["weeks"][string]> = [];
+    const weeks = useMemo(() => {
+        const nextWeeks: Array<NormalizedStore["weeks"][string]> = [];
 
-            for (const weekId of curriculum.weeks) {
-                const week = state.weeks[weekId];
-                if (week) {
-                    nextWeeks.push(week);
-                }
+        for (const weekId of curriculum.weeks) {
+            const week = state.weeks[weekId];
+            if (week) {
+                nextWeeks.push(week);
             }
+        }
 
-            return nextWeeks;
-        },
-        [curriculum.weeks, state.weeks],
-    );
+        return nextWeeks;
+    }, [curriculum.weeks, state.weeks]);
 
     return (
         <TableContainer
@@ -398,7 +430,11 @@ export function WeeksCapacityGrid({
                 clipPath: "inset(0 round 16px)",
             }}
         >
-            <Table size="small" stickyHeader sx={{ width: "100%", tableLayout: "fixed" }}>
+            <Table
+                size="small"
+                stickyHeader
+                sx={{ width: "100%", tableLayout: "fixed" }}
+            >
                 <TableHead>
                     <TableRow>
                         <TableCell
@@ -419,7 +455,7 @@ export function WeeksCapacityGrid({
                                 fontSize: "0.85rem",
                             }}
                         >
-                            שבוע
+              שבוע
                         </TableCell>
                         <TableCell
                             sx={{
@@ -434,17 +470,21 @@ export function WeeksCapacityGrid({
                                 fontSize: "0.85rem",
                             }}
                         >
-                            שם / הערת שבוע
+              שם / הערת שבוע
                         </TableCell>
 
                         {DAY_COLUMNS.map((dayIndex) => {
                             const firstWeekId = curriculum.weeks[0];
-                            const firstWeek = firstWeekId ? state.weeks[firstWeekId] : undefined;
+                            const firstWeek = firstWeekId
+                                ? state.weeks[firstWeekId]
+                                : undefined;
                             const firstDayId = firstWeek?.days.find(
-                                (dId) => state.days[dId]?.dayIndex === dayIndex
+                                (dId) => state.days[dId]?.dayIndex === dayIndex,
                             );
                             const firstDay = firstDayId ? state.days[firstDayId] : undefined;
-                            const currentMinutes = firstDay?.totalWorkingMinutes ?? (dayIndex === GanttDayIndex.Saturday ? 0 : 480);
+                            const currentMinutes =
+                firstDay?.totalWorkingMinutes ??
+                (dayIndex === GanttDayIndex.Saturday ? 0 : 480);
                             return (
                                 <DayHeaderCell
                                     curriculum={curriculum}
@@ -473,7 +513,7 @@ export function WeeksCapacityGrid({
                         <TableRow>
                             <TableCell align="center" colSpan={10} sx={{ py: 5 }}>
                                 <Typography color="text.secondary">
-                                    אין עדיין שבועות בגאנט. הוסיפו שבוע דרך ניהול אורך קורס.
+                  אין עדיין שבועות בגאנט. הוסיפו שבוע דרך ניהול אורך קורס.
                                 </Typography>
                             </TableCell>
                         </TableRow>

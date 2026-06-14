@@ -1,4 +1,5 @@
-import { Box, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import React from "react";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
@@ -47,7 +48,7 @@ function AccentDivider() {
                 height: "1px",
                 width: "100%",
                 background:
-                    "linear-gradient(90deg, transparent 0%, var(--event-divider) 20%, var(--event-divider) 80%, transparent 100%)",
+          "linear-gradient(90deg, transparent 0%, var(--event-divider) 20%, var(--event-divider) 80%, transparent 100%)",
                 my: 0.35,
                 flexShrink: 0,
             }}
@@ -90,31 +91,38 @@ export function UnifiedEvent({
                     {event.name}
                 </Typography>
                 {/* Instructor name is the 2nd-most important element — always visible */}
-                {!isPrayer && (getPresentInstructors(event).length > 0 || showMisconfigurations) ? (
-                    <>
-                        <Box
-                            sx={{
-                                width: "1px",
-                                height: "60%",
-                                bgcolor: "var(--event-border)",
-                                flexShrink: 0,
-                            }}
-                        />
-                        <InstructorsList
-                            event={event}
-                            showCaption={false}
-                            sx={{ flexShrink: 1, minWidth: 0, overflow: "hidden" }}
-                        />
-                    </>
-                ) : null}
+                {!isPrayer &&
+        (getPresentInstructors(event).length > 0 || showMisconfigurations) ? (
+                        <>
+                            <Box
+                                sx={{
+                                    width: "1px",
+                                    height: "60%",
+                                    bgcolor: "var(--event-border)",
+                                    flexShrink: 0,
+                                }}
+                            />
+                            <InstructorsList
+                                event={event}
+                                showCaption={false}
+                                sx={{ flexShrink: 1, minWidth: 0, overflow: "hidden" }}
+                            />
+                        </>
+                    ) : null}
             </Box>
         );
     }
 
     /* ── COMPACT ──────────────────────────────────────────────── */
     if (detail === "compact") {
-        const hasInstructors = !isPrayer && (getPresentInstructors(event).length > 0 || showMisconfigurations);
-        const hasRooms = !isPrayer && size.height >= 55 && !isBreak && (event.rooms.length > 0 || showMisconfigurations);
+        const hasInstructors =
+      !isPrayer &&
+      (getPresentInstructors(event).length > 0 || showMisconfigurations);
+        const hasRooms =
+      !isPrayer &&
+      size.height >= 55 &&
+      !isBreak &&
+      (event.rooms.length > 0 || showMisconfigurations);
         const showSecondRow = hasInstructors || hasRooms;
 
         return (
@@ -128,11 +136,7 @@ export function UnifiedEvent({
                 py={0.2}
             >
                 {/* Row 1: name | duration + status */}
-                <Box
-                    alignItems="center"
-                    display="flex"
-                    justifyContent="space-between"
-                >
+                <Box alignItems="center" display="flex" justifyContent="space-between">
                     <Box alignItems="center" display="flex" gap={0.3} minWidth={0}>
                         {!isNarrow && (
                             <EventTypeIcon event={event} sx={{ fontSize: "0.85rem" }} />
@@ -155,17 +159,9 @@ export function UnifiedEvent({
                 {showSecondRow ? (
                     <>
                         <AccentDivider />
-                        <Box
-                            alignItems="center"
-                            display="flex"
-                            gap={0.6}
-                            overflow="hidden"
-                        >
+                        <Box alignItems="center" display="flex" gap={0.6} overflow="hidden">
                             {hasInstructors ? (
-                                <InstructorsList
-                                    event={event}
-                                    showCaption={false}
-                                />
+                                <InstructorsList event={event} showCaption={false} />
                             ) : null}
                             {hasInstructors && hasRooms ? (
                                 <Box
@@ -178,10 +174,7 @@ export function UnifiedEvent({
                                 />
                             ) : null}
                             {hasRooms ? (
-                                <RoomComponent
-                                    roomIds={event.rooms}
-                                    showCaption={false}
-                                />
+                                <RoomComponent roomIds={event.rooms} showCaption={false} />
                             ) : null}
                         </Box>
                     </>
@@ -197,23 +190,30 @@ export function UnifiedEvent({
 
     const rows: Array<React.ReactNode> = [];
 
-    if (!isPrayer && (getPresentInstructors(event).length > 0 || showMisconfigurations)) {
+    if (
+        !isPrayer &&
+    (getPresentInstructors(event).length > 0 || showMisconfigurations)
+    ) {
         rows.push(
             <InstructorsList
                 event={event}
                 key="instructors"
                 showCaption={showCaptions}
-            />
+            />,
         );
     }
 
-    if (!isPrayer && !isBreak && (event.rooms.length > 0 || showMisconfigurations)) {
+    if (
+        !isPrayer &&
+    !isBreak &&
+    (event.rooms.length > 0 || showMisconfigurations)
+    ) {
         rows.push(
             <RoomComponent
                 key="rooms"
                 roomIds={event.rooms}
                 showCaption={showCaptions}
-            />
+            />,
         );
     }
 
@@ -223,7 +223,7 @@ export function UnifiedEvent({
                 courseIds={event.courses}
                 key="courses"
                 showCaption={showCaptions}
-            />
+            />,
         );
     }
 
@@ -244,7 +244,7 @@ export function UnifiedEvent({
                 {event.hiveModule ? (
                     <>
                         <Typography fontSize="0.75rem" fontWeight={300}>
-                                /
+              /
                         </Typography>
                         <ModuleComponent
                             fontSize="0.75rem"
@@ -253,7 +253,7 @@ export function UnifiedEvent({
                         />
                     </>
                 ) : null}
-            </Box>
+            </Box>,
         );
     }
 
@@ -266,7 +266,7 @@ export function UnifiedEvent({
                 variant="caption"
             >
                 {event.notes}
-            </Typography>
+            </Typography>,
         );
     }
 
@@ -279,11 +279,7 @@ export function UnifiedEvent({
             p={0.5}
         >
             {/* ── Header: icon + name | duration ─────────────── */}
-            <Box
-                alignItems="center"
-                display="flex"
-                justifyContent="space-between"
-            >
+            <Box alignItems="center" display="flex" justifyContent="space-between">
                 <Box alignItems="center" display="flex" gap={0.3} minWidth={0}>
                     {!isNarrow && (
                         <EventTypeIcon event={event} sx={{ fontSize: "0.9rem" }} />

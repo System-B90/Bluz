@@ -357,12 +357,10 @@ export function curriculumReducer(
             ...state,
             weeks: {
                 ...weeksRecord,
-                [action.payload.week.id]: injectDocumentTimes(
-                    {
-                        ...action.payload.week,
-                        curriculumId: action.payload.curriculumId,
-                    },
-                ) as any,
+                [action.payload.week.id]: injectDocumentTimes({
+                    ...action.payload.week,
+                    curriculumId: action.payload.curriculumId,
+                }) as any,
             },
             curriculums: {
                 ...state.curriculums,

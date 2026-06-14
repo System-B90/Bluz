@@ -18,9 +18,18 @@ import {
 } from "@/api-shared/types/event";
 
 type ServerApiEventGet = ServerApi<ApiEventGetPayload, ApiEventGetResponse>;
-type ServerApiEventUpdate = ServerApi<ApiEventUpdatePayload, ApiEventUpdateResponse>;
-type ServerApiEventCreate = ServerApi<ApiEventCreatePayload, ApiEventCreateResponse>;
-type ServerApiEventDelete = ServerApi<ApiEventDeletePayload, ApiEventDeleteResponse>;
+type ServerApiEventUpdate = ServerApi<
+  ApiEventUpdatePayload,
+  ApiEventUpdateResponse
+>;
+type ServerApiEventCreate = ServerApi<
+  ApiEventCreatePayload,
+  ApiEventCreateResponse
+>;
+type ServerApiEventDelete = ServerApi<
+  ApiEventDeletePayload,
+  ApiEventDeleteResponse
+>;
 
 export const GET: ServerApiEventGet = async (request) => {
     try {
@@ -46,7 +55,10 @@ export const GET: ServerApiEventGet = async (request) => {
             return ApiSuccess(eventRecord);
         } else {
             return ApiSuccess(
-                await DbEvent.getInRange(new Date(rawStartDate!), new Date(rawEndDate!)),
+                await DbEvent.getInRange(
+                    new Date(rawStartDate!),
+                    new Date(rawEndDate!),
+                ),
             );
         }
     } catch (e) {

@@ -1,11 +1,9 @@
-import {
-    Box,
-    Card,
-    CircularProgress,
-    Stack,
-    Typography,
-    useTheme,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CircularProgress from "@mui/material/CircularProgress";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import useTheme from "@mui/material/useTheme";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { useMemo } from "react";
 
@@ -13,9 +11,7 @@ import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { getCurriculumScheduledMinutes } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
-import {
-    calculateMinimumRequiredTimeForCurriculum,
-} from "@/components/gantt/utils";
+import { calculateMinimumRequiredTimeForCurriculum } from "@/components/gantt/utils";
 
 export function HoursCard({
     curriculum,

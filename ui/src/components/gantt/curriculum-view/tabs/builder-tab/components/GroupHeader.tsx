@@ -1,5 +1,8 @@
 import ExpandIcon from "@mui/icons-material/Expand";
-import { Box, BoxProps, IconButton, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
 
 import { WorkTimeChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
 

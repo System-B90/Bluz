@@ -1,4 +1,4 @@
-import { ButtonProps } from "@mui/material";
+import ButtonProps from "@mui/material/ButtonProps";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 

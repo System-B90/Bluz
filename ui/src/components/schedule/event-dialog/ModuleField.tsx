@@ -1,10 +1,8 @@
-import {
-    FormControl,
-    FormControlProps,
-    InputLabel,
-    MenuItem,
-    Select,
-} from "@mui/material";
+import FormControl from "@mui/material/FormControl";
+import FormControlProps from "@mui/material/FormControlProps";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import { useMemo } from "react";
 
 import { useHiveModules } from "@/components/base/HiveModulesProvider";

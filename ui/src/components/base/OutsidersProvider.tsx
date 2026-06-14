@@ -22,12 +22,12 @@ import { MessageHandlerType } from "@/components/SessionWs";
 import { MessageTypes } from "@/settings";
 
 export type OutsidersContextState = {
-    default: boolean;
-    outsiders: Array<Outsider>;
-    getOutsider: (id: string) => null | Outsider;
-    addOutsider: (outsiderData: Omit<Outsider, "id">) => Promise<void>;
-    updateOutsider: (outsider: Outsider) => Promise<void>;
-    deleteOutsider: (outsiderId: string) => Promise<void>;
+  default: boolean;
+  outsiders: Array<Outsider>;
+  getOutsider: (id: string) => null | Outsider;
+  addOutsider: (outsiderData: Omit<Outsider, "id">) => Promise<void>;
+  updateOutsider: (outsider: Outsider) => Promise<void>;
+  deleteOutsider: (outsiderId: string) => Promise<void>;
 };
 
 const OutsidersContext = createContext<OutsidersContextState>({
@@ -40,18 +40,21 @@ const OutsidersContext = createContext<OutsidersContextState>({
 });
 
 type OutsidersState = {
-    outsiders: Record<string, Outsider>;
-    isLoading: boolean;
+  outsiders: Record<string, Outsider>;
+  isLoading: boolean;
 };
 type OutsidersAction =
-    | { type: "ADD_OUTSIDER"; payload: Outsider }
-    | { type: "DELETE_OUTSIDER"; payload: string }
-    | { type: "ROLLBACK_OUTSIDERS"; payload: Record<string, Outsider> }
-    | { type: "SET_LOADING"; payload: boolean }
-    | { type: "SET_OUTSIDERS"; payload: Record<string, Outsider> }
-    | { type: "UPDATE_OUTSIDER"; payload: Outsider };
+  | { type: "ADD_OUTSIDER"; payload: Outsider }
+  | { type: "DELETE_OUTSIDER"; payload: string }
+  | { type: "ROLLBACK_OUTSIDERS"; payload: Record<string, Outsider> }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_OUTSIDERS"; payload: Record<string, Outsider> }
+  | { type: "UPDATE_OUTSIDER"; payload: Outsider };
 
-function outsidersReducer(state: OutsidersState, action: OutsidersAction): OutsidersState {
+function outsidersReducer(
+    state: OutsidersState,
+    action: OutsidersAction,
+): OutsidersState {
     switch (action.type) {
     case "SET_LOADING":
         return { ...state, isLoading: action.payload };
@@ -95,7 +98,11 @@ function outsidersReducer(state: OutsidersState, action: OutsidersAction): Outsi
     }
 }
 
-export const OutsidersProvider = ({ children }: { children: React.ReactNode }) => {
+export const OutsidersProvider = ({
+    children,
+}: {
+  children: React.ReactNode;
+}) => {
     const { addMessageHandler } = useAuth();
     const [state, dispatch] = useReducer(outsidersReducer, {
         outsiders: {},
@@ -129,7 +136,11 @@ export const OutsidersProvider = ({ children }: { children: React.ReactNode }) =
             })
             .catch((error) => {
                 dispatch({ type: "SET_LOADING", payload: false });
-                enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת אנשי חוץ נכשלה.", error);
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "טעינת אנשי חוץ נכשלה.",
+                    error,
+                );
             });
     }, []);
 

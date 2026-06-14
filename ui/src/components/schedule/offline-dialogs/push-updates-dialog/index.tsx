@@ -1,14 +1,11 @@
 "use client";
-
-import {
-    Box,
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -64,7 +61,13 @@ export function PushOfflineUpdatesDialog() {
         purgeCapturedState();
         setPushDialogOpen(false);
         enqueueSnackbar("כל השינויים הלוקליים שוחזרו בהצלחה.", { variant: "info" });
-    }, [collisionStates, dispatch, purgeCapturedState, setPushDialogOpen, enqueueSnackbar]);
+    }, [
+        collisionStates,
+        dispatch,
+        purgeCapturedState,
+        setPushDialogOpen,
+        enqueueSnackbar,
+    ]);
 
     // Save: commit selected events to server, revert unselected ones
     const submitHandler = useCallback(
@@ -107,15 +110,27 @@ export function PushOfflineUpdatesDialog() {
                 purgeCapturedState();
                 setPushDialogOpen(false);
             } catch (error) {
-                enqueueApiErrorSnackbar(enqueueSnackbar, "סנכרון השינויים לשרת נכשל!", error);
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "סנכרון השינויים לשרת נכשל!",
+                    error,
+                );
             } finally {
                 setLoading(false);
             }
         },
-        [collisionStates, selectedIds, dispatch, purgeCapturedState, setPushDialogOpen, enqueueSnackbar],
+        [
+            collisionStates,
+            selectedIds,
+            dispatch,
+            purgeCapturedState,
+            setPushDialogOpen,
+            enqueueSnackbar,
+        ],
     );
 
-    const checkEventCollisionStates = useCallback(async (): Promise<CollisionStates> => {
+    const checkEventCollisionStates =
+    useCallback(async (): Promise<CollisionStates> => {
         const states: CollisionStates = {};
 
         // Find all event IDs that are in localEvents or in the captured offline state
@@ -144,14 +159,16 @@ export function PushOfflineUpdatesDialog() {
             return {};
         }
 
-        const serverEvents = await apiGetMultipleEvents(editedIds).catch((error) => {
-            enqueueApiErrorSnackbar(
-                enqueueSnackbar,
-                `טעינת המצב העדכני בשרת נכשלה!`,
-                error,
-            );
-            return null;
-        });
+        const serverEvents = await apiGetMultipleEvents(editedIds).catch(
+            (error) => {
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    `טעינת המצב העדכני בשרת נכשלה!`,
+                    error,
+                );
+                return null;
+            },
+        );
 
         if (serverEvents === null) {
             return {};
@@ -186,14 +203,14 @@ export function PushOfflineUpdatesDialog() {
                 if (keys.length === 0) {
                     setPushDialogOpen(false);
                     purgeCapturedState();
-                    enqueueSnackbar("יצאת ממצב אופליין. לא בוצעו שינויים לסינכרון.", { variant: "info" });
+                    enqueueSnackbar("יצאת ממצב אופליין. לא בוצעו שינויים לסינכרון.", {
+                        variant: "info",
+                    });
                     return;
                 }
                 setCollisionStates(states);
                 // Pre-select only non-conflicting edits by default
-                setSelectedIds(
-                    keys.filter((id) => !states[id].conflicting),
-                );
+                setSelectedIds(keys.filter((id) => !states[id].conflicting));
             })
             .catch((error) =>
                 enqueueApiErrorSnackbar(
@@ -202,7 +219,13 @@ export function PushOfflineUpdatesDialog() {
                     error,
                 ),
             );
-    }, [pushDialogOpen, checkEventCollisionStates, purgeCapturedState, setPushDialogOpen, enqueueSnackbar]);
+    }, [
+        pushDialogOpen,
+        checkEventCollisionStates,
+        purgeCapturedState,
+        setPushDialogOpen,
+        enqueueSnackbar,
+    ]);
 
     const collisionListKey = useMemo(
         () =>
@@ -217,7 +240,12 @@ export function PushOfflineUpdatesDialog() {
     const hasChanges = Object.keys(collisionStates).length > 0;
 
     return (
-        <Dialog fullWidth maxWidth="lg" onClose={handleCancel} open={pushDialogOpen}>
+        <Dialog
+            fullWidth
+            maxWidth="lg"
+            onClose={handleCancel}
+            open={pushDialogOpen}
+        >
             <DialogTitle sx={{ fontWeight: 600 }}>שמירת שינויים לוקליים</DialogTitle>
 
             <form onSubmit={submitHandler}>
@@ -225,8 +253,9 @@ export function PushOfflineUpdatesDialog() {
                     {hasChanges ? (
                         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                             <Typography color="text.secondary" sx={{ mb: 1 }} variant="body2">
-                                להלן השינויים שביצעת בזמן שהיית במצב לוקלי. סמן את השינויים שברצונך לשמור לשרת.
-                                שינויים שלא יסומנו ישוחזרו לגרסת השרת הנוכחית.
+                להלן השינויים שביצעת בזמן שהיית במצב לוקלי. סמן את השינויים
+                שברצונך לשמור לשרת. שינויים שלא יסומנו ישוחזרו לגרסת השרת
+                הנוכחית.
                             </Typography>
                             <Box display={"flex"} gap={2} width={"100%"}>
                                 <EventCollisionsList
@@ -238,18 +267,30 @@ export function PushOfflineUpdatesDialog() {
                             </Box>
                         </Box>
                     ) : (
-                        <Typography color="text.secondary" sx={{ py: 4 }} textAlign="center" variant="body1">
-                            לא נמצאו שינויים לוקליים לסינכרון.
+                        <Typography
+                            color="text.secondary"
+                            sx={{ py: 4 }}
+                            textAlign="center"
+                            variant="body1"
+                        >
+              לא נמצאו שינויים לוקליים לסינכרון.
                         </Typography>
                     )}
                 </DialogContent>
 
                 <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-                    {hasChanges ? <Button color="error" disabled={loading} onClick={handleRevert} variant="outlined">
-                        שחזר הכל
-                    </Button> : null}
+                    {hasChanges ? (
+                        <Button
+                            color="error"
+                            disabled={loading}
+                            onClick={handleRevert}
+                            variant="outlined"
+                        >
+              שחזר הכל
+                        </Button>
+                    ) : null}
                     <Button color="inherit" disabled={loading} onClick={handleCancel}>
-                        ביטול (הישאר באופליין)
+            ביטול (הישאר באופליין)
                     </Button>
                     <Button
                         color="success"

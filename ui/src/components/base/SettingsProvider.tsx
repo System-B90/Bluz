@@ -39,9 +39,15 @@ type PrayerSettingsAction =
   | { type: "ROLLBACK_PRAYER_TIMES"; payload: PrayerSettings }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_PRAYER_TIMES"; payload: PrayerSettings }
-  | { type: "UPDATE_PRAYER_TIME"; payload: { key: keyof PrayerSettings; value: Date | Dayjs } };
+  | {
+      type: "UPDATE_PRAYER_TIME";
+      payload: { key: keyof PrayerSettings; value: Date | Dayjs };
+    };
 
-function prayerSettingsReducer(state: PrayerSettingsState, action: PrayerSettingsAction): PrayerSettingsState {
+function prayerSettingsReducer(
+    state: PrayerSettingsState,
+    action: PrayerSettingsAction,
+): PrayerSettingsState {
     switch (action.type) {
     case "SET_LOADING":
         return { ...state, isLoading: action.payload };
@@ -100,7 +106,10 @@ export const SettingsProvider = ({
                 await apiSetPrayerSettings(newPrayerTimes);
                 enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", { variant: "success" });
             } catch (error) {
-                dispatch({ type: "ROLLBACK_PRAYER_TIMES", payload: previousPrayerTimes });
+                dispatch({
+                    type: "ROLLBACK_PRAYER_TIMES",
+                    payload: previousPrayerTimes,
+                });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "עדכון שעות תפילה נכשל!",
@@ -125,7 +134,10 @@ export const SettingsProvider = ({
                 await apiSetPrayerSettings(updatedTimes);
                 enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", { variant: "success" });
             } catch (error) {
-                dispatch({ type: "ROLLBACK_PRAYER_TIMES", payload: previousPrayerTimes });
+                dispatch({
+                    type: "ROLLBACK_PRAYER_TIMES",
+                    payload: previousPrayerTimes,
+                });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "עדכון שעות תפילה נכשל!",

@@ -1,4 +1,6 @@
-import { ListItem, ListItemButton, Skeleton } from "@mui/material";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import Skeleton from "@mui/material/Skeleton";
 import { Dispatch, SetStateAction } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";

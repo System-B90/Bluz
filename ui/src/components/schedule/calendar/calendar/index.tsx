@@ -6,13 +6,14 @@
  */
 
 "use client";
-
 import FilterListIcon from "@mui/icons-material/FilterList";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 import {
     Dispatch,
     SetStateAction,
@@ -32,11 +33,11 @@ import { getRangeForView } from "@/components/schedule/calendar/utils";
 import { Event } from "@/components/schedule/types/event";
 
 type BluzCalendarProps = {
-    handleSaveEvent: (event: Event) => void;
-    handleDeleteEvent: (eventId: Event["id"]) => void;
-    setOpenEventDialog: (open: boolean) => void;
-    setSelectedEvent: Dispatch<SetStateAction<Partial<Event> | undefined>>;
-    events: Array<Event>;
+  handleSaveEvent: (event: Event) => void;
+  handleDeleteEvent: (eventId: Event["id"]) => void;
+  setOpenEventDialog: (open: boolean) => void;
+  setSelectedEvent: Dispatch<SetStateAction<Partial<Event> | undefined>>;
+  events: Array<Event>;
 };
 
 export function BluzCalendar({
@@ -54,14 +55,15 @@ export function BluzCalendar({
 
     const { rooms } = useRooms();
     const { setStartDate, setEndDate } = useCalendar();
-    const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } = useCalendarFilters();
+    const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
+    useCalendarFilters();
 
     const hasAnyFilter = useMemo(
         () =>
             hidePrayers ||
-            filteredCourses.length !== 0 ||
-            filteredInstructors.length !== 0 ||
-            showPAsFor !== null,
+      filteredCourses.length !== 0 ||
+      filteredInstructors.length !== 0 ||
+      showPAsFor !== null,
         [filteredCourses, filteredInstructors, showPAsFor, hidePrayers],
     );
 
@@ -76,29 +78,40 @@ export function BluzCalendar({
     }, [isFullscreen]);
 
     const { handleEventDrag, handleSlotSelect, setActiveEvent } =
-        useCalendarHandlers(
-            events,
-            handleSaveEvent,
-            handleDeleteEvent,
-            setSelectedEvent,
-            setOpenEventDialog,
-        );
+    useCalendarHandlers(
+        events,
+        handleSaveEvent,
+        handleDeleteEvent,
+        setSelectedEvent,
+        setOpenEventDialog,
+    );
 
     // Only render the calendar after the component has mounted on the client.
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 
-    const updateDateRange = useCallback((date: Date, view: View) => {
-        const { start, end } = getRangeForView(date, view);
-        console.log('Updating date range:', start, end, 'for view:', view, ' from: ', date);
-        setStartDate(start);
-        setEndDate(end);
-    }, [setStartDate, setEndDate]);
+    const updateDateRange = useCallback(
+        (date: Date, view: View) => {
+            const { start, end } = getRangeForView(date, view);
+            console.log(
+                "Updating date range:",
+                start,
+                end,
+                "for view:",
+                view,
+                " from: ",
+                date,
+            );
+            setStartDate(start);
+            setEndDate(end);
+        },
+        [setStartDate, setEndDate],
+    );
 
     const onNavigate = useCallback((newDate: Date) => {
-        console.log('newDate: ', newDate);
+        console.log("newDate: ", newDate);
         setCurrentDate(newDate);
     }, []);
 
@@ -114,55 +127,61 @@ export function BluzCalendar({
         [setSelectedEvent, setOpenEventDialog],
     );
 
-    const handleSelectEvent = useCallback((event: Event) => {
-        setActiveEvent(event);
-        setSelectedEvent(event);
-    }, [setSelectedEvent, setActiveEvent]);
+    const handleSelectEvent = useCallback(
+        (event: Event) => {
+            setActiveEvent(event);
+            setSelectedEvent(event);
+        },
+        [setSelectedEvent, setActiveEvent],
+    );
 
     if (!mounted) {
-        return (
-            <div className="grow h-full bg-slate-50/50 animate-pulse" />
-        );
+        return <div className="grow h-full bg-slate-50/50 animate-pulse" />;
     }
 
     return (
         <Box
-            sx={isFullscreen ? {
-                position: "fixed",
-                top: 0,
-                left: 0,
-                width: "100vw",
-                height: "100vh",
-                zIndex: 9999,
-                bgcolor: "background.paper",
-                p: 0,
-                boxSizing: "border-box",
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-                animation: "fullscreen-enter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
-                "@keyframes fullscreen-enter": {
-                    "0%": {
-                        transform: "scale(0.95)",
-                        opacity: 0,
-                    },
-                    "100%": {
-                        transform: "scale(1)",
-                        opacity: 1,
+            sx={
+                isFullscreen
+                    ? {
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        width: "100vw",
+                        height: "100vh",
+                        zIndex: 9999,
+                        bgcolor: "background.paper",
+                        p: 0,
+                        boxSizing: "border-box",
+                        display: "flex",
+                        flexDirection: "column",
+                        overflow: "hidden",
+                        animation:
+                "fullscreen-enter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+                        "@keyframes fullscreen-enter": {
+                            "0%": {
+                                transform: "scale(0.95)",
+                                opacity: 0,
+                            },
+                            "100%": {
+                                transform: "scale(1)",
+                                opacity: 1,
+                            },
+                        },
                     }
-                }
-            } : {
-                position: "relative",
-                height: "100%",
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-                transition: "all 0.2s ease-in-out",
-            }}
+                    : {
+                        position: "relative",
+                        height: "100%",
+                        width: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        overflow: "hidden",
+                        transition: "all 0.2s ease-in-out",
+                    }
+            }
         >
             {/* Floating controls in top-left corner (only when toolbar is hidden / in fullscreen) */}
-            {(isFullscreen || !showToolbar) ? (
+            {isFullscreen || !showToolbar ? (
                 <Box
                     style={{
                         position: "absolute",
@@ -190,7 +209,14 @@ export function BluzCalendar({
                     {/* Filter indicator */}
                     {hasAnyFilter && (isFullscreen || !showToolbar) ? (
                         <Tooltip title="יש סננים פעילים">
-                            <Box sx={{ display: "flex", alignItems: "center", color: "info.main", px: 0.5 }}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    color: "info.main",
+                                    px: 0.5,
+                                }}
+                            >
                                 <FilterListIcon className="animate-pulse" fontSize="small" />
                             </Box>
                         </Tooltip>
@@ -215,11 +241,11 @@ export function BluzCalendar({
                                         },
                                         "50%": {
                                             transform: "scale(1.25)",
-                                        }
+                                        },
                                     },
                                     "&:active": {
                                         transform: "scale(0.95)",
-                                    }
+                                    },
                                 }}
                             >
                                 <FullscreenExitIcon fontSize="small" />
@@ -239,10 +265,14 @@ export function BluzCalendar({
                                         },
                                         "&:active": {
                                             transform: "scale(0.95)",
-                                        }
+                                        },
                                     }}
                                 >
-                                    {showToolbar ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                                    {showToolbar ? (
+                                        <VisibilityOffIcon fontSize="small" />
+                                    ) : (
+                                        <VisibilityIcon fontSize="small" />
+                                    )}
                                 </IconButton>
                             </Tooltip>
                             <Tooltip title="מסך מלא">
@@ -263,11 +293,11 @@ export function BluzCalendar({
                                             },
                                             "50%": {
                                                 transform: "scale(1.25)",
-                                            }
+                                            },
                                         },
                                         "&:active": {
                                             transform: "scale(0.95)",
-                                        }
+                                        },
                                     }}
                                 >
                                     <FullscreenIcon fontSize="small" />
@@ -275,7 +305,6 @@ export function BluzCalendar({
                             </Tooltip>
                         </>
                     )}
-
                 </Box>
             ) : null}
 

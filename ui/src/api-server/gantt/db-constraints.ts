@@ -8,15 +8,13 @@
 import { eq, inArray, or } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
-import
-{
+import {
     ganttCurriculum2SyllabusesSchema,
     ganttModule2EventsSchema,
     ganttSyllabus2ModulesSchema,
 } from "@/api-server/gantt/schema";
 import { ganttConstraintsSchema } from "@/api-server/gantt/schema/constraints";
-import
-{
+import {
     GanttCurriculumId,
     GanttEventId,
     GanttModuleId,
@@ -31,12 +29,11 @@ export type EntityType = "event" | "module";
 export async function getConstraintsForOwner(
     ownerId: GanttEventId | GanttModuleId,
     ownerType: EntityType,
-)
-{
+) {
     const condition =
-        ownerType === "event"
-            ? eq(ganttConstraintsSchema.ownerEventId, ownerId)
-            : eq(ganttConstraintsSchema.ownerModuleId, ownerId);
+    ownerType === "event"
+        ? eq(ganttConstraintsSchema.ownerEventId, ownerId)
+        : eq(ganttConstraintsSchema.ownerModuleId, ownerId);
 
     return await postgresDb.query.ganttConstraintsSchema.findMany({
         where: condition,
@@ -50,12 +47,11 @@ export async function getConstraintsForOwner(
 export async function getConstraintsTargetingEntity(
     targetId: GanttEventId | GanttModuleId,
     targetType: EntityType,
-)
-{
+) {
     const condition =
-        targetType === "event"
-            ? eq(ganttConstraintsSchema.targetEventId, targetId)
-            : eq(ganttConstraintsSchema.targetModuleId, targetId);
+    targetType === "event"
+        ? eq(ganttConstraintsSchema.targetEventId, targetId)
+        : eq(ganttConstraintsSchema.targetModuleId, targetId);
 
     return await postgresDb.query.ganttConstraintsSchema.findMany({
         where: condition,
@@ -67,12 +63,10 @@ export async function getConstraintsTargetingEntity(
  */
 export async function createConstraint(
     data: typeof ganttConstraintsSchema.$inferInsert,
-)
-{
-    return (await postgresDb
-        .insert(ganttConstraintsSchema)
-        .values(data)
-        .returning())[ 0 ];
+) {
+    return (
+        await postgresDb.insert(ganttConstraintsSchema).values(data).returning()
+    )[0];
 }
 
 /**
@@ -81,8 +75,7 @@ export async function createConstraint(
 export async function updateConstraint(
     constraintId: string,
     newValues: Partial<typeof ganttConstraintsSchema.$inferInsert>,
-)
-{
+) {
     return await postgresDb
         .update(ganttConstraintsSchema)
         .set({ ...newValues, updatedAt: new Date() })
@@ -93,8 +86,7 @@ export async function updateConstraint(
 /**
  * 5) Delete a constraint.
  */
-export async function deleteConstraint(constraintId: string)
-{
+export async function deleteConstraint(constraintId: string) {
     return await postgresDb
         .delete(ganttConstraintsSchema)
         .where(eq(ganttConstraintsSchema.id, constraintId))
@@ -103,8 +95,7 @@ export async function deleteConstraint(constraintId: string)
 
 export async function getConstraintsForCurriculum(
     curriculumId: GanttCurriculumId,
-)
-{
+) {
     // Subquery 1: Resolve all module IDs mapped to the curriculum
     const moduleIdsSubquery = postgresDb
         .select({ moduleId: ganttSyllabus2ModulesSchema.moduleId })
@@ -155,8 +146,7 @@ export async function getConstraintsForCurriculum(
  * Created: 2026-04-19
  * Author: Michael K. Steinberg
  */
-export async function getConstraintsForSyllabus(syllabusId: string)
-{
+export async function getConstraintsForSyllabus(syllabusId: string) {
     // Subquery 1: Resolve all module IDs mapped directly to the syllabus
     const moduleIdsSubquery = postgresDb
         .select({ moduleId: ganttSyllabus2ModulesSchema.moduleId })
@@ -194,8 +184,7 @@ export async function getConstraintsForSyllabus(syllabusId: string)
  * Created: 2026-04-19
  * Author: Michael K. Steinberg
  */
-export async function getConstraintsForModule(moduleId: GanttModuleId)
-{
+export async function getConstraintsForModule(moduleId: GanttModuleId) {
     // Subquery: Resolve all event IDs mapped directly to the module
     const eventIdsSubquery = postgresDb
         .select({ eventId: ganttModule2EventsSchema.eventId })

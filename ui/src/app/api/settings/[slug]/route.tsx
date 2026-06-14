@@ -1,6 +1,10 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, catchHandler, ServerApiWithParams } from "@/api-server/common";
+import {
+    ApiSuccess,
+    catchHandler,
+    ServerApiWithParams,
+} from "@/api-server/common";
 import { DbSettings } from "@/api-server/db-settings";
 import { updatePrayerEvents } from "@/api-server/prayer";
 import { inplaceDateFixup } from "@/api-shared/date-fixer";
@@ -13,8 +17,16 @@ import {
     SettingName,
 } from "@/api-shared/types/settings/settings";
 
-type ServerApiSettingGet = ServerApiWithParams<ApiSettingGetPayload, ApiSettingGetResponse, { slug: string }>;
-type ServerApiSettingUpdate = ServerApiWithParams<ApiSettingUpdatePayload, ApiSettingUpdateResponse, { slug: string }>;
+type ServerApiSettingGet = ServerApiWithParams<
+  ApiSettingGetPayload,
+  ApiSettingGetResponse,
+  { slug: string }
+>;
+type ServerApiSettingUpdate = ServerApiWithParams<
+  ApiSettingUpdatePayload,
+  ApiSettingUpdateResponse,
+  { slug: string }
+>;
 
 export const GET: ServerApiSettingGet = async (request, context) => {
     try {

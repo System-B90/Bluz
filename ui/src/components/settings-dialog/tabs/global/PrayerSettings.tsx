@@ -4,7 +4,10 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import WbTwilightIcon from "@mui/icons-material/WbTwilight";
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs, { Dayjs } from "dayjs";
 import { useCallback } from "react";
@@ -13,11 +16,14 @@ import { PrayerSettings as IPrayerSettings } from "@/api-shared/types/settings/p
 import { useSettings } from "@/components/base/SettingsProvider";
 
 type PrayerSettingsProps = {
-    isShrunk?: boolean;
-    onToggleShrink?: () => void;
-}
+  isShrunk?: boolean;
+  onToggleShrink?: () => void;
+};
 
-export function PrayerSettings({ isShrunk = false, onToggleShrink }: PrayerSettingsProps) {
+export function PrayerSettings({
+    isShrunk = false,
+    onToggleShrink,
+}: PrayerSettingsProps) {
     const { prayerTimes, updatePrayerTime } = useSettings();
 
     const handleTimeChange = useCallback(
@@ -79,10 +85,20 @@ export function PrayerSettings({ isShrunk = false, onToggleShrink }: PrayerSetti
         >
             {/* Section Header */}
             {isShrunk ? (
-                <Box alignItems="center" display="flex" flexDirection="column" gap={2} width="100%">
+                <Box
+                    alignItems="center"
+                    display="flex"
+                    flexDirection="column"
+                    gap={2}
+                    width="100%"
+                >
                     {!!onToggleShrink && (
                         <Tooltip placement="left" title="הרחב פאנל">
-                            <IconButton onClick={onToggleShrink} size="small" sx={{ border: "1px solid", borderColor: "divider" }}>
+                            <IconButton
+                                onClick={onToggleShrink}
+                                size="small"
+                                sx={{ border: "1px solid", borderColor: "divider" }}
+                            >
                                 <ChevronLeftIcon sx={{ fontSize: 18 }} />
                             </IconButton>
                         </Tooltip>
@@ -101,7 +117,12 @@ export function PrayerSettings({ isShrunk = false, onToggleShrink }: PrayerSetti
                     </Box>
                 </Box>
             ) : (
-                <Box alignItems="center" display="flex" justifyContent="space-between" width="100%">
+                <Box
+                    alignItems="center"
+                    display="flex"
+                    justifyContent="space-between"
+                    width="100%"
+                >
                     <Box alignItems="center" display="flex" gap={1.5}>
                         <Box
                             sx={{
@@ -124,7 +145,7 @@ export function PrayerSettings({ isShrunk = false, onToggleShrink }: PrayerSetti
                                     color: "text.primary",
                                 }}
                             >
-                                זמני תפילות
+                זמני תפילות
                             </Typography>
                             <Typography
                                 sx={{
@@ -133,13 +154,17 @@ export function PrayerSettings({ isShrunk = false, onToggleShrink }: PrayerSetti
                                     fontFamily: "Assistant, sans-serif",
                                 }}
                             >
-                                זמני תפילות קבועים המשתקפים ביומן
+                זמני תפילות קבועים המשתקפים ביומן
                             </Typography>
                         </Box>
                     </Box>
                     {!!onToggleShrink && (
                         <Tooltip placement="left" title="כווץ פאנל">
-                            <IconButton onClick={onToggleShrink} size="small" sx={{ border: "1px solid", borderColor: "divider" }}>
+                            <IconButton
+                                onClick={onToggleShrink}
+                                size="small"
+                                sx={{ border: "1px solid", borderColor: "divider" }}
+                            >
                                 <ChevronRightIcon sx={{ fontSize: 18 }} />
                             </IconButton>
                         </Tooltip>
@@ -149,7 +174,13 @@ export function PrayerSettings({ isShrunk = false, onToggleShrink }: PrayerSetti
 
             {/* TimePickers List */}
             {isShrunk ? (
-                <Box alignItems="center" display="flex" flexDirection="column" gap={2} width="100%">
+                <Box
+                    alignItems="center"
+                    display="flex"
+                    flexDirection="column"
+                    gap={2}
+                    width="100%"
+                >
                     {rows.map((row) => {
                         const val = prayerTimes?.[row.key];
                         const timeStr = val ? dayjs(val).format("HH:mm") : "--:--";

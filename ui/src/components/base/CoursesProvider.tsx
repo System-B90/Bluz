@@ -26,7 +26,10 @@ export type CoursesContextState = {
     getCourse: (id: CourseId) => Course | undefined;
     addCourse: (course: Omit<Course, "id">) => Promise<void>;
     updateCourse: (course: Course) => Promise<void>;
-    updateCoursePartial: (id: CourseId, changes: Partial<Course>) => Promise<void>;
+    updateCoursePartial: (
+        id: CourseId,
+        changes: Partial<Course>,
+    ) => Promise<void>;
     deleteCourse: (courseId: CourseId) => Promise<void>;
 };
 
@@ -52,40 +55,43 @@ type CoursesAction =
     | { type: "SET_LOADING"; payload: boolean }
     | { type: "UPDATE_COURSE"; payload: Partial<Course> & { id: CourseId } };
 
-function coursesReducer(state: CoursesState, action: CoursesAction): CoursesState {
+function coursesReducer(
+    state: CoursesState,
+    action: CoursesAction,
+): CoursesState {
     switch (action.type) {
-    case "SET_LOADING":
-        return { ...state, isLoading: action.payload };
-    case "SET_COURSES":
-        return { ...state, courses: action.payload, isLoading: false };
-    case "ADD_COURSE":
-        return {
-            ...state,
-            courses: {
-                ...state.courses,
-                [action.payload.id]: action.payload,
-            },
-        };
-    case "UPDATE_COURSE":
-        return {
-            ...state,
-            courses: {
-                ...state.courses,
-                [action.payload.id]: {
-                    ...state.courses[action.payload.id],
-                    ...action.payload,
-                } as Course,
-            },
-        };
-    case "DELETE_COURSE": {
-        const next = { ...state.courses };
-        delete next[action.payload];
-        return { ...state, courses: next };
-    }
-    case "ROLLBACK_COURSES":
-        return { ...state, courses: action.payload };
-    default:
-        return state;
+        case "SET_LOADING":
+            return { ...state, isLoading: action.payload };
+        case "SET_COURSES":
+            return { ...state, courses: action.payload, isLoading: false };
+        case "ADD_COURSE":
+            return {
+                ...state,
+                courses: {
+                    ...state.courses,
+                    [action.payload.id]: action.payload,
+                },
+            };
+        case "UPDATE_COURSE":
+            return {
+                ...state,
+                courses: {
+                    ...state.courses,
+                    [action.payload.id]: {
+                        ...state.courses[action.payload.id],
+                        ...action.payload,
+                    } as Course,
+                },
+            };
+        case "DELETE_COURSE": {
+            const next = { ...state.courses };
+            delete next[action.payload];
+            return { ...state, courses: next };
+        }
+        case "ROLLBACK_COURSES":
+            return { ...state, courses: action.payload };
+        default:
+            return state;
     }
 }
 
@@ -102,7 +108,10 @@ export const CoursesProvider = ({
         isLoading: true,
     });
 
-    const coursesArray = useMemo(() => Object.values(state.courses), [state.courses]);
+    const coursesArray = useMemo(
+        () => Object.values(state.courses),
+        [state.courses],
+    );
 
     const getCourse = useCallback(
         (id: CourseId): Course | undefined => {
@@ -191,7 +200,10 @@ export const CoursesProvider = ({
             dispatch({ type: "UPDATE_COURSE", payload: { ...changes, id } });
 
             try {
-                const updatedCourse = await apiSetCourse({ ...originalCourse, ...changes });
+                const updatedCourse = await apiSetCourse({
+                    ...originalCourse,
+                    ...changes,
+                });
                 enqueueSnackbar(`עדכון מסלול ${updatedCourse.name} הסתיים בהצלחה.`, {
                     variant: "success",
                 });

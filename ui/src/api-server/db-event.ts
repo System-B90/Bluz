@@ -4,8 +4,7 @@ import { databaseController } from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
-import
-{
+import {
     EventAddedOrRemovedMessage,
     EventDataUpdateMessage,
 } from "@/api-shared/types";
@@ -17,8 +16,7 @@ export type { DbEventDocument };
 async function getDbEvent(
     eventId: EventId,
     options?: FindOptions,
-): Promise<DbEventDocument | null>
-{
+): Promise<DbEventDocument | null> {
     const data = await databaseController.events.findOne(
         { id: eventId },
         options,
@@ -29,8 +27,7 @@ async function getDbEvent(
 async function getDbEvents(
     eventIds: Array<EventId>,
     options?: FindOptions,
-): Promise<Array<DbEventDocument>>
-{
+): Promise<Array<DbEventDocument>> {
     const cursor = databaseController.events.find(
         { id: { $in: eventIds } },
         options,
@@ -44,8 +41,7 @@ async function getDbEventsInRange(
     endDate: Date,
     options?: FindOptions,
     filter?: Filter<DbEventDocument>,
-): Promise<Array<DbEventDocument>>
-{
+): Promise<Array<DbEventDocument>> {
     const cursor = databaseController.events.find(
         { startTime: { $gte: startDate }, endTime: { $lte: endDate }, ...filter },
         options,
@@ -70,10 +66,8 @@ async function getDbEventsInRange(
 async function setDbEvent(
     eventData: DbEventDocument,
     options?: FindOptions,
-): Promise<DbEventDocument>
-{
-    if (!eventData.id)
-    {
+): Promise<DbEventDocument> {
+    if (!eventData.id) {
         throw new ClientApiError(
             "Event id is missing! Client must provide a UUID.",
         );
@@ -92,13 +86,12 @@ async function setDbEvent(
 
     // Verify the document exists in MongoDB. Using matchedCount ensures we don't throw an
     // error if the user clicks Save without changing any fields (modifiedCount would be 0).
-    if (updateResult.matchedCount === 0)
-    {
+    if (updateResult.matchedCount === 0) {
         throw new ClientApiError(`Event ${eventId} not found!`);
     }
 
     SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
-        events: { [ eventId ]: fixedEvent },
+        events: { [eventId]: fixedEvent },
     } as EventDataUpdateMessage<DbEventDocument>);
 
     return fixedEvent;
@@ -120,10 +113,8 @@ async function setDbEvent(
 async function createDbEvent(
     eventData: DbEventDocument,
     options?: FindOptions,
-): Promise<DbEventDocument>
-{
-    if (!eventData.id)
-    {
+): Promise<DbEventDocument> {
+    if (!eventData.id) {
         throw new ClientApiError(
             "Event id is missing! Client must provide a UUID.",
         );
@@ -151,10 +142,8 @@ async function createDbEvent(
 async function deleteDbEvent(
     eventId: string,
     options?: FindOptions,
-): Promise<void>
-{
-    if (!eventId)
-    {
+): Promise<void> {
+    if (!eventId) {
         throw new ClientApiError("Event id is missing!");
     }
 
@@ -163,8 +152,7 @@ async function deleteDbEvent(
         options,
     );
 
-    if (data.deletedCount === 0)
-    {
+    if (data.deletedCount === 0) {
         throw new ClientApiError("Failed to delete event!");
     }
 
@@ -174,12 +162,11 @@ async function deleteDbEvent(
     } as EventAddedOrRemovedMessage<DbEventDocument>);
 }
 
-export namespace DbEvent
-{
-    export const get = getDbEvent;
-    export const getMultiple = getDbEvents;
-    export const getInRange = getDbEventsInRange;
-    export const set = setDbEvent;
-    export const del = deleteDbEvent;
-    export const create = createDbEvent;
+export namespace DbEvent {
+  export const get = getDbEvent;
+  export const getMultiple = getDbEvents;
+  export const getInRange = getDbEventsInRange;
+  export const set = setDbEvent;
+  export const del = deleteDbEvent;
+  export const create = createDbEvent;
 }

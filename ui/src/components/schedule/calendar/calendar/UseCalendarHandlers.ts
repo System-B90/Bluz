@@ -28,9 +28,9 @@ export function useCalendarHandlers(
     const [activeEvent, setActiveEvent] = useState<Event | null>(null);
     const [copiedEvent, setCopiedEvent] = useState<Event | null>(null);
     const [selectedSlotInfo, setSelectedSlotInfo] = useState<{
-        start: Date;
-        resourceId?: any;
-    } | null>(null);
+    start: Date;
+    resourceId?: any;
+  } | null>(null);
 
     const copyPasteData = useRef({ activeEvent, copiedEvent, selectedSlotInfo });
 
@@ -94,7 +94,12 @@ export function useCalendarHandlers(
             setSelectedEvent(newEvent);
             setOpenEventDialog(true);
         },
-        [setSelectedEvent, setOpenEventDialog, filteredInstructors, filteredCourses],
+        [
+            setSelectedEvent,
+            setOpenEventDialog,
+            filteredInstructors,
+            filteredCourses,
+        ],
     );
 
     const handleKeyDown = useCallback(

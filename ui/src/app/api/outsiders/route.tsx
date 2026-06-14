@@ -14,10 +14,22 @@ import {
     ApiOutsiderUpdateResponse,
 } from "@/api-shared/types/outsider";
 
-type ServerApiOutsidersGet = ServerApi<ApiOutsidersGetPayload, ApiOutsidersGetResponse>;
-type ServerApiOutsiderUpdate = ServerApi<ApiOutsiderUpdatePayload, ApiOutsiderUpdateResponse>;
-type ServerApiOutsiderCreate = ServerApi<ApiOutsiderCreatePayload, ApiOutsiderCreateResponse>;
-type ServerApiOutsiderDelete = ServerApi<ApiOutsiderDeletePayload, ApiOutsiderDeleteResponse>;
+type ServerApiOutsidersGet = ServerApi<
+  ApiOutsidersGetPayload,
+  ApiOutsidersGetResponse
+>;
+type ServerApiOutsiderUpdate = ServerApi<
+  ApiOutsiderUpdatePayload,
+  ApiOutsiderUpdateResponse
+>;
+type ServerApiOutsiderCreate = ServerApi<
+  ApiOutsiderCreatePayload,
+  ApiOutsiderCreateResponse
+>;
+type ServerApiOutsiderDelete = ServerApi<
+  ApiOutsiderDeletePayload,
+  ApiOutsiderDeleteResponse
+>;
 
 export const GET: ServerApiOutsidersGet = async (request) => {
     try {

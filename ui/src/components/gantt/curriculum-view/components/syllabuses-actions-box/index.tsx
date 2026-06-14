@@ -1,4 +1,5 @@
-import { Box, BoxProps } from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
 import { useSnackbar } from "notistack";
 import React, { useCallback } from "react";
 
@@ -31,41 +32,52 @@ export function SyllabusesActionsBox({
     const handleExport = useCallback(() => {
         if (!curriculum) return;
         try {
-            const syllabusesData = curriculum.syllabuses.map((syllabusId) => {
-                const syllabus = state.syllabuses[syllabusId];
-                if (!syllabus) return null;
-                const modules = (syllabus.modules ?? []).map((moduleId) => {
-                    const moduleDoc = state.modules[moduleId];
-                    if (!moduleDoc) return null;
-                    const events = (moduleDoc.events ?? []).map((eventId) => {
-                        const eventDoc = state.events[eventId];
-                        if (!eventDoc) return null;
-                        return {
-                            title: eventDoc.title,
-                            type: eventDoc.type,
-                            minimumDuration: eventDoc.minimumDuration,
-                            allocatedDuration: eventDoc.allocatedDuration,
-                            constraints: eventDoc.constraints,
-                        };
-                    }).filter(Boolean);
+            const syllabusesData = curriculum.syllabuses
+                .map((syllabusId) => {
+                    const syllabus = state.syllabuses[syllabusId];
+                    if (!syllabus) return null;
+                    const modules = (syllabus.modules ?? [])
+                        .map((moduleId) => {
+                            const moduleDoc = state.modules[moduleId];
+                            if (!moduleDoc) return null;
+                            const events = (moduleDoc.events ?? [])
+                                .map((eventId) => {
+                                    const eventDoc = state.events[eventId];
+                                    if (!eventDoc) return null;
+                                    return {
+                                        title: eventDoc.title,
+                                        type: eventDoc.type,
+                                        minimumDuration: eventDoc.minimumDuration,
+                                        allocatedDuration: eventDoc.allocatedDuration,
+                                        constraints: eventDoc.constraints,
+                                    };
+                                })
+                                .filter(Boolean);
+                            return {
+                                title: moduleDoc.title,
+                                description: moduleDoc.description,
+                                hiveIds: moduleDoc.hiveIds,
+                                events,
+                            };
+                        })
+                        .filter(Boolean);
                     return {
-                        title: moduleDoc.title,
-                        description: moduleDoc.description,
-                        hiveIds: moduleDoc.hiveIds,
-                        events,
+                        title: syllabus.title,
+                        hiveIds: syllabus.hiveIds,
+                        modules,
                     };
-                }).filter(Boolean);
-                return {
-                    title: syllabus.title,
-                    hiveIds: syllabus.hiveIds,
-                    modules,
-                };
-            }).filter(Boolean);
+                })
+                .filter(Boolean);
 
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(syllabusesData, null, 2));
+            const dataStr =
+        "data:text/json;charset=utf-8," +
+        encodeURIComponent(JSON.stringify(syllabusesData, null, 2));
             const downloadAnchor = document.createElement("a");
             downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `bluz-syllabuses-${curriculumId}.json`);
+            downloadAnchor.setAttribute(
+                "download",
+                `bluz-syllabuses-${curriculumId}.json`,
+            );
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
@@ -75,63 +87,79 @@ export function SyllabusesActionsBox({
         }
     }, [curriculum, state, curriculumId, enqueueSnackbar]);
 
-    const handleImport = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    const handleImport = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const importedSyllabuses = JSON.parse(event.target?.result as string);
-                if (!Array.isArray(importedSyllabuses)) {
-                    throw new Error("Invalid format: expected an array of syllabuses");
-                }
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const importedSyllabuses = JSON.parse(event.target?.result as string);
+                    if (!Array.isArray(importedSyllabuses)) {
+                        throw new Error("Invalid format: expected an array of syllabuses");
+                    }
 
-                enqueueSnackbar("מתחיל ייבוא סילבוסים...", { variant: "info" });
+                    enqueueSnackbar("מתחיל ייבוא סילבוסים...", { variant: "info" });
 
-                for (const syllabusData of importedSyllabuses) {
-                    const newSyllabus = await createSyllabus(
-                        syllabusData.title || "סילבוס מיובא",
-                        curriculumId,
-                        syllabusData.hiveIds || []
-                    );
+                    for (const syllabusData of importedSyllabuses) {
+                        const newSyllabus = await createSyllabus(
+                            syllabusData.title || "סילבוס מיובא",
+                            curriculumId,
+                            syllabusData.hiveIds || [],
+                        );
 
-                    if (Array.isArray(syllabusData.modules)) {
-                        for (const moduleData of syllabusData.modules) {
-                            const newModule = await createModule(
-                                moduleData.title || "מערך מיובא",
-                                newSyllabus.id,
-                                moduleData.description || "",
-                                moduleData.hiveIds || []
-                            );
+                        if (Array.isArray(syllabusData.modules)) {
+                            for (const moduleData of syllabusData.modules) {
+                                const newModule = await createModule(
+                                    moduleData.title || "מערך מיובא",
+                                    newSyllabus.id,
+                                    moduleData.description || "",
+                                    moduleData.hiveIds || [],
+                                );
 
-                            if (Array.isArray(moduleData.events)) {
-                                for (const eventData of moduleData.events) {
-                                    await createEvent(
-                                        eventData.title || "מופע מיובא",
-                                        newModule.id,
-                                        eventData.type,
-                                        eventData.minimumDuration || 0,
-                                        eventData.allocatedDuration || 0
-                                    );
+                                if (Array.isArray(moduleData.events)) {
+                                    for (const eventData of moduleData.events) {
+                                        await createEvent(
+                                            eventData.title || "מופע מיובא",
+                                            newModule.id,
+                                            eventData.type,
+                                            eventData.minimumDuration || 0,
+                                            eventData.allocatedDuration || 0,
+                                        );
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                enqueueSnackbar("ייבוא הסילבוסים הושלם בהצלחה!", { variant: "success" });
-            } catch (error: any) {
-                enqueueApiErrorSnackbar(enqueueSnackbar, "ייבוא הסילבוסים נכשל!", error);
-            } finally {
-                e.target.value = "";
-            }
-        };
-        reader.readAsText(file);
-    }, [curriculumId, createSyllabus, createModule, createEvent, enqueueSnackbar]);
+                    enqueueSnackbar("ייבוא הסילבוסים הושלם בהצלחה!", {
+                        variant: "success",
+                    });
+                } catch (error: any) {
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "ייבוא הסילבוסים נכשל!",
+                        error,
+                    );
+                } finally {
+                    e.target.value = "";
+                }
+            };
+            reader.readAsText(file);
+        },
+        [curriculumId, createSyllabus, createModule, createEvent, enqueueSnackbar],
+    );
 
     return (
-        <Box alignItems="center" display="flex" gap={2} justifyContent="flex-start" {...props} width="100%">
+        <Box
+            alignItems="center"
+            display="flex"
+            gap={2}
+            justifyContent="flex-start"
+            {...props}
+            width="100%"
+        >
             <CreateSyllabusButton curriculumId={curriculumId} />
             <SyllabusSelectionField
                 alignItems={"center"}

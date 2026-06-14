@@ -1,4 +1,8 @@
-import { ClientApi, ClientApiNoPayload, safeApiFetcher } from "@/api-client/common";
+import {
+    ClientApi,
+    ClientApiNoPayload,
+    safeApiFetcher,
+} from "@/api-client/common";
 import {
     ApiRoomCreatePayload,
     ApiRoomCreateResponse,
@@ -12,10 +16,22 @@ import {
 } from "@/api-shared/types/room";
 
 type ClientApiGetRooms = ClientApiNoPayload<ApiRoomsGetResponse>;
-type ClientApiCreateRoom = ClientApi<ApiRoomCreatePayload, ApiRoomCreateResponse>;
-type ClientApiUpdateRoom = ClientApi<ApiRoomUpdatePayload, ApiRoomUpdateResponse>;
-type ClientApiDeleteRoom = ClientApi<ApiRoomDeletePayload, ApiRoomDeleteResponse>;
-type ClientApiUpdateRoomExtendedInfo = ClientApi<ApiRoomExtendedInfoUpdatePayload, ApiRoomExtendedInfoUpdateResponse>;
+type ClientApiCreateRoom = ClientApi<
+  ApiRoomCreatePayload,
+  ApiRoomCreateResponse
+>;
+type ClientApiUpdateRoom = ClientApi<
+  ApiRoomUpdatePayload,
+  ApiRoomUpdateResponse
+>;
+type ClientApiDeleteRoom = ClientApi<
+  ApiRoomDeletePayload,
+  ApiRoomDeleteResponse
+>;
+type ClientApiUpdateRoomExtendedInfo = ClientApi<
+  ApiRoomExtendedInfoUpdatePayload,
+  ApiRoomExtendedInfoUpdateResponse
+>;
 
 export const apiGetRooms: ClientApiGetRooms = async (props) => {
     return await safeApiFetcher<ApiRoomsGetResponse>("/api/rooms", props);
@@ -45,10 +61,11 @@ export const apiDeleteRoom: ClientApiDeleteRoom = async (roomId, props) => {
     });
 };
 
-export const apiUpdateRoomExtendedInfo: ClientApiUpdateRoomExtendedInfo = async (payload, props) => {
-    await safeApiFetcher<ApiRoomExtendedInfoUpdateResponse>("/api/rooms", {
-        ...props,
-        method: "PATCH",
-        body: JSON.stringify(payload),
-    });
-};
+export const apiUpdateRoomExtendedInfo: ClientApiUpdateRoomExtendedInfo =
+  async (payload, props) => {
+      await safeApiFetcher<ApiRoomExtendedInfoUpdateResponse>("/api/rooms", {
+          ...props,
+          method: "PATCH",
+          body: JSON.stringify(payload),
+      });
+  };

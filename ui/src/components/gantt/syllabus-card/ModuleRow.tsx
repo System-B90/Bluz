@@ -1,13 +1,11 @@
 import EditIcon from "@mui/icons-material/Edit";
-import {
-    CircularProgress,
-    IconButton,
-    Skeleton,
-    TableCell,
-    TableRow,
-    Tooltip,
-    Typography,
-} from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import Skeleton from "@mui/material/Skeleton";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { useCallback, useMemo } from "react";
 
 import {
@@ -20,9 +18,7 @@ import {
     useCurriculumProviderActions,
     useCurriculumState,
 } from "@/components/gantt/state/provider";
-import {
-    calculateMinimumRequiredTimeForModule,
-} from "@/components/gantt/utils";
+import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
 export function ModuleRow({
     moduleId,

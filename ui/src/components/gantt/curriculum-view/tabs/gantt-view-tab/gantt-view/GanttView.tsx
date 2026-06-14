@@ -1,15 +1,13 @@
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
-import {
-    Box,
-    FormControlLabel,
-    Paper,
-    Switch,
-    Table,
-    TableBody,
-    TableContainer,
-    Typography,
-    useTheme,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Paper from "@mui/material/Paper";
+import Switch from "@mui/material/Switch";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableContainer from "@mui/material/TableContainer";
+import Typography from "@mui/material/Typography";
+import useTheme from "@mui/material/useTheme";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 
 import { ConstraintType } from "@/api-shared/types/gantt/models/constraint";
@@ -454,7 +452,11 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                 <Table
                                     size="small"
                                     stickyHeader
-                                    sx={{ width: "max-content", minWidth: "100%", tableLayout: "fixed" }}
+                                    sx={{
+                                        width: "max-content",
+                                        minWidth: "100%",
+                                        tableLayout: "fixed",
+                                    }}
                                 >
                                     <GanttHeader />
                                     <TableBody>

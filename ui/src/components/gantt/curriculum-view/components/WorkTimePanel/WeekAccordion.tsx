@@ -1,5 +1,8 @@
 import AddIcon from "@mui/icons-material/Add";
-import { Box, IconButton, TextField, Tooltip } from "@mui/material";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import { KeyboardEvent } from "react";
 
 import { GanttWeekId } from "@/api-shared/types/gantt/models";

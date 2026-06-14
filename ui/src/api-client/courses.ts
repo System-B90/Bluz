@@ -1,4 +1,8 @@
-import { ClientApi, ClientApiNoPayload, safeApiFetcher } from "@/api-client/common";
+import {
+    ClientApi,
+    ClientApiNoPayload,
+    safeApiFetcher,
+} from "@/api-client/common";
 import {
     ApiCourseCreatePayload,
     ApiCourseCreateResponse,
@@ -10,9 +14,18 @@ import {
 } from "@/api-shared/types/course";
 
 type ClientApiGetCourses = ClientApiNoPayload<ApiCourseGetResponse>;
-type ClientApiSetCourse = ClientApi<ApiCourseUpdatePayload, ApiCourseUpdateResponse>;
-type ClientApiCreateCourse = ClientApi<ApiCourseCreatePayload, ApiCourseCreateResponse>;
-type ClientApiDeleteCourse = ClientApi<ApiCourseDeletePayload, ApiCourseDeleteResponse>;
+type ClientApiSetCourse = ClientApi<
+  ApiCourseUpdatePayload,
+  ApiCourseUpdateResponse
+>;
+type ClientApiCreateCourse = ClientApi<
+  ApiCourseCreatePayload,
+  ApiCourseCreateResponse
+>;
+type ClientApiDeleteCourse = ClientApi<
+  ApiCourseDeletePayload,
+  ApiCourseDeleteResponse
+>;
 
 export const apiGetCourses: ClientApiGetCourses = async (props) => {
     return await safeApiFetcher<ApiCourseGetResponse>("/api/course", props);
@@ -34,7 +47,10 @@ export const apiCreateCourse: ClientApiCreateCourse = async (course, props) => {
     });
 };
 
-export const apiDeleteCourse: ClientApiDeleteCourse = async (courseId, props) => {
+export const apiDeleteCourse: ClientApiDeleteCourse = async (
+    courseId,
+    props,
+) => {
     await safeApiFetcher<ApiCourseDeleteResponse>("/api/course", {
         ...props,
         method: "DELETE",

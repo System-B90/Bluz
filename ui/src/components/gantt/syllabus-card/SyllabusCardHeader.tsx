@@ -1,4 +1,6 @@
-import { Box, CardHeader, CardHeaderProps } from "@mui/material";
+import Box from "@mui/material/Box";
+import CardHeader from "@mui/material/CardHeader";
+import CardHeaderProps from "@mui/material/CardHeaderProps";
 
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";

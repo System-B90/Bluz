@@ -1,13 +1,11 @@
-import {
-    Box,
-    Chip,
-    FormControl,
-    FormControlProps,
-    InputLabel,
-    MenuItem,
-    Select,
-    SelectChangeEvent,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import FormControl from "@mui/material/FormControl";
+import FormControlProps from "@mui/material/FormControlProps";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import SelectChangeEvent from "@mui/material/SelectChangeEvent";
 import { useCallback, useState } from "react";
 
 import {

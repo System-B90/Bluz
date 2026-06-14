@@ -1,9 +1,7 @@
-import {
-    Button,
-    ButtonProps,
-    Typography,
-    TypographyProps,
-} from "@mui/material";
+import Button from "@mui/material/Button";
+import ButtonProps from "@mui/material/ButtonProps";
+import Typography from "@mui/material/Typography";
+import TypographyProps from "@mui/material/TypographyProps";
 import Image from "next/image";
 import { signIn, SignInOptions } from "next-auth/react";
 import { useCallback } from "react";
@@ -50,11 +48,7 @@ export function LoginWithHive({
             variant={variant}
             {...props}
         >
-            <Typography
-                color="inherit"
-                fontSize={fontSize}
-                fontWeight={fontWeight}
-            >
+            <Typography color="inherit" fontSize={fontSize} fontWeight={fontWeight}>
         התחברות עם הייב
             </Typography>
         </Button>

@@ -1,23 +1,25 @@
-import
-{
-    Box,
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogProps,
-    DialogTitle,
-    Divider,
-    Stack,
-    TextField,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogProps from "@mui/material/DialogProps";
+import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { Dispatch, SetStateAction, useCallback, useMemo, useState } from "react";
+import {
+    Dispatch,
+    SetStateAction,
+    useCallback,
+    useMemo,
+    useState,
+} from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import
-{
+import {
     GanttCurriculumId,
     GanttModule,
     GanttModuleId,
@@ -31,13 +33,16 @@ import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Pr
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
-import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/provider";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 
 export type ModuleDialogProps = {
-    setOpen: Dispatch<SetStateAction<boolean>>;
-    moduleId: GanttModuleId | null;
-    syllabusId: GanttSyllabusId | null;
-    curriculumId: GanttCurriculumId | null;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  moduleId: GanttModuleId | null;
+  syllabusId: GanttSyllabusId | null;
+  curriculumId: GanttCurriculumId | null;
 } & DialogProps;
 
 function ModuleDialogInner({
@@ -46,34 +51,33 @@ function ModuleDialogInner({
     syllabusId,
     moduleId,
     ...props
-}: Omit<ModuleDialogProps, "curriculumId">)
-{
+}: Omit<ModuleDialogProps, "curriculumId">) {
     const { enqueueSnackbar } = useSnackbar();
-    const { closeModuleDialog, openModuleDialog } = useCurriculumProviderActions();
+    const { closeModuleDialog, openModuleDialog } =
+    useCurriculumProviderActions();
     const { createModule, deleteModule, updateModule } = useModuleActions();
     const { createEvent } = useModuleEventActions();
     const moduleDoc = useModule(moduleId ?? "");
 
     const state = useCurriculumState();
-    const syllabus = syllabusId ? state.syllabuses[ syllabusId ] : null;
+    const syllabus = syllabusId ? state.syllabuses[syllabusId] : null;
 
     // Get sibling modules for fast navigation
-    const siblingModules = useMemo(() =>
-    {
+    const siblingModules = useMemo(() => {
         if (!syllabus) return [];
-        return syllabus.modules
-            .map((mId) => state.modules[ mId ])
-            .filter((m) => !!m);
-    }, [ syllabus, state.modules ]);
+        return syllabus.modules.map((mId) => state.modules[mId]).filter((m) => !!m);
+    }, [syllabus, state.modules]);
 
-    const handleNavigate = useCallback((mId: string) =>
-    {
-        if (!syllabusId) return;
-        openModuleDialog(syllabusId, mId);
-    }, [ syllabusId, openModuleDialog ]);
+    const handleNavigate = useCallback(
+        (mId: string) => {
+            if (!syllabusId) return;
+            openModuleDialog(syllabusId, mId);
+        },
+        [syllabusId, openModuleDialog],
+    );
 
-    const [ isActionLoading, setIsActionLoading ] = useState<boolean>(false);
-    const [ isCreatingNew, setIsCreatingNew ] = useState<boolean>(false);
+    const [isActionLoading, setIsActionLoading] = useState<boolean>(false);
+    const [isCreatingNew, setIsCreatingNew] = useState<boolean>(false);
 
     const handleCreateNew = useCallback(async () => {
         if (!syllabusId) return;
@@ -108,29 +112,25 @@ function ModuleDialogInner({
     }, [syllabusId, createModule, createEvent, handleNavigate, enqueueSnackbar]);
 
     // Local State Buffers
-    const [ localTitle, setLocalTitle ] = useState(moduleDoc?.title ?? "");
-    const [ localDescription, setLocalDescription ] = useState(
+    const [localTitle, setLocalTitle] = useState(moduleDoc?.title ?? "");
+    const [localDescription, setLocalDescription] = useState(
         moduleDoc?.description ?? "",
     );
 
-    const handleClose = useCallback(() =>
-    {
+    const handleClose = useCallback(() => {
         setOpen(false);
-    }, [ setOpen ]);
+    }, [setOpen]);
 
     const handleCommit = useCallback(
-        (updates: Partial<GanttModule>) =>
-        {
+        (updates: Partial<GanttModule>) => {
             if (!syllabusId || !moduleId || !moduleDoc) return;
 
             const changedUpdates: Partial<GanttModule> = {};
             let hasChanges = false;
 
-            for (const [ key, value ] of Object.entries(updates))
-            {
-                if (moduleDoc[ key as keyof GanttModule ] !== value)
-                {
-                    (changedUpdates as any)[ key ] = value;
+            for (const [key, value] of Object.entries(updates)) {
+                if (moduleDoc[key as keyof GanttModule] !== value) {
+                    (changedUpdates as any)[key] = value;
                     hasChanges = true;
                 }
             }
@@ -141,23 +141,21 @@ function ModuleDialogInner({
                 enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת המערך נכשלה!", error),
             );
         },
-        [ moduleId, syllabusId, moduleDoc, updateModule, enqueueSnackbar ],
+        [moduleId, syllabusId, moduleDoc, updateModule, enqueueSnackbar],
     );
 
-    const handleDelete = useCallback(() =>
-    {
+    const handleDelete = useCallback(() => {
         if (!syllabusId || !moduleId) return;
 
         setIsActionLoading(true);
         deleteModule(syllabusId, moduleId)
-            .then(() =>
-            {
+            .then(() => {
                 closeModuleDialog();
                 setIsActionLoading(false);
                 setOpen(false);
             })
             .catch(() => setIsActionLoading(false));
-    }, [ syllabusId, moduleId, deleteModule, closeModuleDialog, setOpen ]);
+    }, [syllabusId, moduleId, deleteModule, closeModuleDialog, setOpen]);
 
     // Ensure hooks are called before this check
     if (syllabusId === null || moduleId === null) return null;
@@ -166,27 +164,31 @@ function ModuleDialogInner({
         <Dialog
             fullWidth
             maxWidth="xl"
-            onClose={ handleClose }
-            open={ open }
-            { ...props }
+            onClose={handleClose}
+            open={open}
+            {...props}
         >
-            <DialogTitle sx={ { pb: 1 } }>
-                <Stack spacing={ 0.5 }>
-                    <Typography component="span" sx={ { fontWeight: "bold" } } variant="h5">
-                        עריכת מערך: { moduleDoc?.title }
+            <DialogTitle sx={{ pb: 1 }}>
+                <Stack spacing={0.5}>
+                    <Typography component="span" sx={{ fontWeight: "bold" }} variant="h5">
+            עריכת מערך: {moduleDoc?.title}
                     </Typography>
-                    { !!syllabus && (
-                        <Typography component="span" sx={ { color: "text.secondary" } } variant="caption">
-                            סילבוס: { syllabus.title }
+                    {!!syllabus && (
+                        <Typography
+                            component="span"
+                            sx={{ color: "text.secondary" }}
+                            variant="caption"
+                        >
+              סילבוס: {syllabus.title}
                         </Typography>
-                    ) }
+                    )}
                 </Stack>
             </DialogTitle>
 
             <DialogContent>
-                { !!syllabus && siblingModules.length > 0 && (
+                {!!syllabus && siblingModules.length > 0 && (
                     <Box
-                        sx={ {
+                        sx={{
                             alignItems: "center",
                             borderBottom: 1,
                             borderColor: "divider",
@@ -194,22 +196,22 @@ function ModuleDialogInner({
                             gap: 2,
                             mb: 2,
                             pb: 2,
-                        } }
+                        }}
                     >
                         <Typography
-                            sx={ {
+                            sx={{
                                 color: "text.secondary",
                                 fontWeight: "bold",
                                 whiteSpace: "nowrap",
-                            } }
+                            }}
                             variant="body2"
                         >
-                            מערכים בסילבוס זה:
+              מערכים בסילבוס זה:
                         </Typography>
                         <Stack
                             direction="row"
-                            spacing={ 1 }
-                            sx={ {
+                            spacing={1}
+                            sx={{
                                 flexGrow: 1,
                                 overflowX: "auto",
                                 pb: 0.5,
@@ -218,16 +220,16 @@ function ModuleDialogInner({
                                     bgcolor: "action.selected",
                                     borderRadius: 2,
                                 },
-                            } }
+                            }}
                         >
-                            { siblingModules.map((m) => {
+                            {siblingModules.map((m) => {
                                 const isActive = m.id === moduleId;
                                 return (
                                     <Button
-                                        key={ m.id }
-                                        onClick={ () => handleNavigate(m.id) }
+                                        key={m.id}
+                                        onClick={() => handleNavigate(m.id)}
                                         size="small"
-                                        sx={ {
+                                        sx={{
                                             borderRadius: 2,
                                             fontWeight: isActive ? "bold" : "normal",
                                             minWidth: "auto",
@@ -240,19 +242,19 @@ function ModuleDialogInner({
                                                 boxShadow: isActive ? 2 : 1,
                                                 transform: "translateY(-1px)",
                                             },
-                                        } }
-                                        variant={ isActive ? "contained" : "outlined" }
+                                        }}
+                                        variant={isActive ? "contained" : "outlined"}
                                     >
-                                        { m.title }
+                                        {m.title}
                                     </Button>
                                 );
-                            }) }
+                            })}
                             <Button
                                 color="secondary"
-                                disabled={ isCreatingNew }
-                                onClick={ handleCreateNew }
+                                disabled={isCreatingNew}
+                                onClick={handleCreateNew}
                                 size="small"
-                                sx={ {
+                                sx={{
                                     borderRadius: 2,
                                     minWidth: "auto",
                                     px: 2,
@@ -263,76 +265,75 @@ function ModuleDialogInner({
                                         boxShadow: 1,
                                         transform: "translateY(-1px)",
                                     },
-                                } }
+                                }}
                                 variant="outlined"
                             >
-                                { isCreatingNew ? "מייצר..." : "+ חדש" }
+                                {isCreatingNew ? "מייצר..." : "+ חדש"}
                             </Button>
                         </Stack>
                     </Box>
-                ) }
-
+                )}
                 <Box
                     alignItems="flex-start"
                     display="flex"
                     flexDirection="row"
-                    gap={ 2 }
-                    mt={ 1 }
+                    gap={2}
+                    mt={1}
                 >
-                    <Stack spacing={ 2 } width="30%">
+                    <Stack spacing={2} width="30%">
                         <TextField
                             fullWidth
                             label="כותרת"
-                            onBlur={ () => handleCommit({ title: localTitle }) }
-                            onChange={ (e) => setLocalTitle(e.target.value) }
-                            value={ localTitle }
+                            onBlur={() => handleCommit({ title: localTitle })}
+                            onChange={(e) => setLocalTitle(e.target.value)}
+                            value={localTitle}
                         />
 
                         <TextField
                             fullWidth
                             label="תיאור"
-                            minRows={ 10 }
+                            minRows={10}
                             multiline
-                            onBlur={ () => handleCommit({ description: localDescription }) }
-                            onChange={ (e) => setLocalDescription(e.target.value) }
-                            sx={ {
+                            onBlur={() => handleCommit({ description: localDescription })}
+                            onChange={(e) => setLocalDescription(e.target.value)}
+                            sx={{
                                 flex: 1,
                                 "& .MuiInputBase-root": {
                                     height: "100%",
                                     alignItems: "stretch",
                                 },
                                 "& textarea": { height: "100% !important" },
-                            } }
-                            value={ localDescription }
+                            }}
+                            value={localDescription}
                         />
                     </Stack>
 
                     <Divider flexItem orientation="vertical" />
 
-                    <Stack flexGrow={ 1 } mt={ 1 } spacing={ 2 }>
+                    <Stack flexGrow={1} mt={1} spacing={2}>
                         <ModuleEventsView
-                            eventIds={ moduleDoc?.events ?? [] }
-                            moduleId={ moduleId }
+                            eventIds={moduleDoc?.events ?? []}
+                            moduleId={moduleId}
                         />
-                        <HiveModulesView hiveModules={ moduleDoc?.hiveIds ?? [] } />
+                        <HiveModulesView hiveModules={moduleDoc?.hiveIds ?? []} />
                     </Stack>
                 </Box>
-                <Box height={ "1rem" } />
-                <ModuleConstraintsView moduleId={ moduleId } /> {/* <-- Injected Panel */ }
+                <Box height={"1rem"} />
+                <ModuleConstraintsView moduleId={moduleId} /> {/* <-- Injected Panel */}
             </DialogContent>
 
             <DialogActions>
-                <Button color="error" disabled={ isActionLoading } onClick={ handleDelete }>
-                    מחיקה
+                <Button color="error" disabled={isActionLoading} onClick={handleDelete}>
+          מחיקה
                 </Button>
 
                 <Button
                     color="primary"
-                    disabled={ isActionLoading }
-                    onClick={ handleClose }
+                    disabled={isActionLoading}
+                    onClick={handleClose}
                     variant="contained"
                 >
-                    סגירה
+          סגירה
                 </Button>
             </DialogActions>
         </Dialog>
@@ -344,32 +345,30 @@ export function ModuleDialog({
     syllabusId,
     moduleId,
     ...props
-}: ModuleDialogProps)
-{
-    if (!syllabusId || !moduleId || !curriculumId)
-    {
+}: ModuleDialogProps) {
+    if (!syllabusId || !moduleId || !curriculumId) {
         return (
             <ModuleDialogInner
-                moduleId={ moduleId }
-                syllabusId={ syllabusId }
-                { ...props }
+                moduleId={moduleId}
+                syllabusId={syllabusId}
+                {...props}
             />
         );
     }
 
     return (
         <GanttConstraintProvider
-            context={ {
+            context={{
                 type: "module",
                 curriculumId,
                 syllabusId,
                 moduleId,
-            } }
+            }}
         >
             <ModuleDialogInner
-                moduleId={ moduleId }
-                syllabusId={ syllabusId }
-                { ...props }
+                moduleId={moduleId}
+                syllabusId={syllabusId}
+                {...props}
             />
         </GanttConstraintProvider>
     );

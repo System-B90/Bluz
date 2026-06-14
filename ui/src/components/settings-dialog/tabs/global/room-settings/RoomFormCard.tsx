@@ -3,14 +3,12 @@ import ClearIcon from "@mui/icons-material/Clear";
 import ComputerIcon from "@mui/icons-material/Computer";
 import EditIcon from "@mui/icons-material/Edit";
 import EventSeatIcon from "@mui/icons-material/EventSeat";
-import {
-    Box,
-    Button,
-    Divider,
-    InputAdornment,
-    TextField,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
+import InputAdornment from "@mui/material/InputAdornment";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import React from "react";
 
 import { Room, RoomSource } from "@/api-shared/types/room";
@@ -18,48 +16,55 @@ import { HiveLogo } from "@/components/base/HiveLogo";
 import { LectureComfortSwitch } from "@/components/settings-dialog/tabs/global/LectureComfortSwitch";
 
 export type RoomFormCardProps = {
-    selectedRoom: null | Room;
-    isCreating: boolean;
-    name: string;
-    setName: (name: string) => void;
-    description: string;
-    setDescription: (desc: string) => void;
-    workstationCount: string;
-    setWorkstationCount: (count: string) => void;
-    lectureSeatCount: string;
-    setLectureSeatCount: (count: string) => void;
-    lectureComfortable: boolean;
-    setLectureComfortable: (comfortable: boolean) => void;
-    handleSave: (e: React.FormEvent) => Promise<void>;
-    handleCancelEdit: () => void;
+  selectedRoom: null | Room;
+  isCreating: boolean;
+  name: string;
+  setName: (name: string) => void;
+  description: string;
+  setDescription: (desc: string) => void;
+  workstationCount: string;
+  setWorkstationCount: (count: string) => void;
+  lectureSeatCount: string;
+  setLectureSeatCount: (count: string) => void;
+  lectureComfortable: boolean;
+  setLectureComfortable: (comfortable: boolean) => void;
+  handleSave: (e: React.FormEvent) => Promise<void>;
+  handleCancelEdit: () => void;
 };
 
 type RoomFormHeaderProps = {
-    isCreating: boolean;
-    isEditing: boolean;
-    isHiveSelected: boolean;
-};type RoomBasicDetailsProps = {
-    isHiveSelected: boolean;
-    name: string;
-    setName: (name: string) => void;
-    description: string;
-    setDescription: (desc: string) => void;
-};type RoomExtendedDetailsProps = {
-    workstationCount: string;
-    setWorkstationCount: (count: string) => void;
-    lectureSeatCount: string;
-    setLectureSeatCount: (count: string) => void;
-    lectureComfortable: boolean;
-    setLectureComfortable: (comfortable: boolean) => void;
-};type RoomFormActionsProps = {
-    isCreating: boolean;
-    isHiveSelected: boolean;
-    handleCancelEdit: () => void;
+  isCreating: boolean;
+  isEditing: boolean;
+  isHiveSelected: boolean;
+};
+type RoomBasicDetailsProps = {
+  isHiveSelected: boolean;
+  name: string;
+  setName: (name: string) => void;
+  description: string;
+  setDescription: (desc: string) => void;
+};
+type RoomExtendedDetailsProps = {
+  workstationCount: string;
+  setWorkstationCount: (count: string) => void;
+  lectureSeatCount: string;
+  setLectureSeatCount: (count: string) => void;
+  lectureComfortable: boolean;
+  setLectureComfortable: (comfortable: boolean) => void;
+};
+type RoomFormActionsProps = {
+  isCreating: boolean;
+  isHiveSelected: boolean;
+  handleCancelEdit: () => void;
 };
 
 // --- Sub-components ---
 
-function RoomFormHeader({ isCreating, isEditing, isHiveSelected }: RoomFormHeaderProps) {
+function RoomFormHeader({
+    isCreating,
+    isEditing,
+    isHiveSelected,
+}: RoomFormHeaderProps) {
     return (
         <Box alignItems="center" display="flex" gap={1.5}>
             <Box
@@ -67,7 +72,9 @@ function RoomFormHeader({ isCreating, isEditing, isHiveSelected }: RoomFormHeade
                     p: 1,
                     borderRadius: "10px",
                     bgcolor: isHiveSelected ? "warning.light" : "secondary.light",
-                    color: isHiveSelected ? "warning.contrastText" : "secondary.contrastText",
+                    color: isHiveSelected
+                        ? "warning.contrastText"
+                        : "secondary.contrastText",
                     display: "flex",
                     alignItems: "center",
                 }}
@@ -191,23 +198,27 @@ function RoomExtendedDetails({
                         fontFamily: "Assistant, sans-serif",
                     }}
                 >
-                    פרטים מורחבים
+          פרטים מורחבים
                 </Typography>
             </Divider>
-
             <Box display="flex" flexDirection="column" gap={2.5}>
                 <TextField
                     fullWidth
                     inputMode="numeric"
                     label="כמות עמדות עבודה"
-                    onChange={(e) => setWorkstationCount(e.target.value.replace(/\D/g, ""))}
+                    onChange={(e) =>
+                        setWorkstationCount(e.target.value.replace(/\D/g, ""))
+                    }
                     placeholder="0"
                     size="small"
                     slotProps={{
                         input: {
                             startAdornment: (
                                 <InputAdornment position="start">
-                                    <ComputerIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                                    <ComputerIcon
+                                        fontSize="small"
+                                        sx={{ color: "text.secondary" }}
+                                    />
                                 </InputAdornment>
                             ),
                         },
@@ -224,14 +235,19 @@ function RoomExtendedDetails({
                     fullWidth
                     inputMode="numeric"
                     label="מספר כסאות להרצאה"
-                    onChange={(e) => setLectureSeatCount(e.target.value.replace(/\D/g, ""))}
+                    onChange={(e) =>
+                        setLectureSeatCount(e.target.value.replace(/\D/g, ""))
+                    }
                     placeholder="0"
                     size="small"
                     slotProps={{
                         input: {
                             startAdornment: (
                                 <InputAdornment position="start">
-                                    <EventSeatIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                                    <EventSeatIcon
+                                        fontSize="small"
+                                        sx={{ color: "text.secondary" }}
+                                    />
                                 </InputAdornment>
                             ),
                         },
@@ -269,7 +285,7 @@ function RoomExtendedDetails({
                                 color: "text.primary",
                             }}
                         >
-                            נוח להרצאה
+              נוח להרצאה
                         </Typography>
                         <Typography
                             sx={{
@@ -278,17 +294,26 @@ function RoomExtendedDetails({
                                 color: "text.secondary",
                             }}
                         >
-                            {lectureComfortable ? "החדר מתאים להרצאות" : "החדר אינו מתאים להרצאות"}
+                            {lectureComfortable
+                                ? "החדר מתאים להרצאות"
+                                : "החדר אינו מתאים להרצאות"}
                         </Typography>
                     </Box>
-                    <LectureComfortSwitch onChange={setLectureComfortable} value={lectureComfortable} />
+                    <LectureComfortSwitch
+                        onChange={setLectureComfortable}
+                        value={lectureComfortable}
+                    />
                 </Box>
             </Box>
         </>
     );
 }
 
-function RoomFormActions({ isCreating, isHiveSelected, handleCancelEdit }: RoomFormActionsProps) {
+function RoomFormActions({
+    isCreating,
+    isHiveSelected,
+    handleCancelEdit,
+}: RoomFormActionsProps) {
     return (
         <Box display="flex" gap={1.5} mt={1}>
             <Button
@@ -304,7 +329,11 @@ function RoomFormActions({ isCreating, isHiveSelected, handleCancelEdit }: RoomF
                 type="submit"
                 variant="contained"
             >
-                {isCreating ? "צור חדר" : isHiveSelected ? "שמור פרטים מורחבים" : "עדכן חדר"}
+                {isCreating
+                    ? "צור חדר"
+                    : isHiveSelected
+                        ? "שמור פרטים מורחבים"
+                        : "עדכן חדר"}
             </Button>
             <Button
                 color="inherit"
@@ -318,7 +347,7 @@ function RoomFormActions({ isCreating, isHiveSelected, handleCancelEdit }: RoomF
                 }}
                 variant="outlined"
             >
-                ביטול
+        ביטול
             </Button>
         </Box>
     );
@@ -383,7 +412,7 @@ export function RoomFormCard({
                             textAlign: "center",
                         }}
                     >
-                        בחר חדר מהרשימה או צור חדר חדש
+            בחר חדר מהרשימה או צור חדר חדש
                     </Typography>
                 </Box>
             ) : (

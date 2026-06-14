@@ -1,12 +1,10 @@
 import { useDroppable } from "@dnd-kit/core";
-import {
-    alpha,
-    Box,
-    TableCell,
-    TableRow,
-    Typography,
-    useTheme,
-} from "@mui/material";
+import alpha from "@mui/material/alpha";
+import Box from "@mui/material/Box";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
+import useTheme from "@mui/material/useTheme";
 import React, { useMemo, useState } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
@@ -89,12 +87,25 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
         if (weekIndices.size === 0) return null;
         const arr = Array.from(weekIndices);
         return { min: Math.min(...arr), max: Math.max(...arr) };
-    }, [weeklyView, mappedDays, hasEvents, ganttModule?.events, eventMappings, timelineWeeks]);
+    }, [
+        weeklyView,
+        mappedDays,
+        hasEvents,
+        ganttModule?.events,
+        eventMappings,
+        timelineWeeks,
+    ]);
 
-    const isUnmapped = weeklyView ? weekSpanIndices === null : spanIndices === null;
+    const isUnmapped = weeklyView
+        ? weekSpanIndices === null
+        : spanIndices === null;
     const spanLength = weeklyView
-        ? (weekSpanIndices ? weekSpanIndices.max - weekSpanIndices.min + 1 : 1)
-        : (spanIndices ? spanIndices.max - spanIndices.min + 1 : 1);
+        ? weekSpanIndices
+            ? weekSpanIndices.max - weekSpanIndices.min + 1
+            : 1
+        : spanIndices
+            ? spanIndices.max - spanIndices.min + 1
+            : 1;
 
     // Build cells depending on view mode
     const renderCells = () => {
@@ -117,14 +128,15 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                 const weekSpan = weekSpanIndices.max - weekSpanIndices.min;
 
                 blockLeftPx = Math.round(startFrac * CELL) + 2;
-                blockWidthPx = Math.round(weekSpan * CELL + endFrac * CELL - startFrac * CELL) - 4;
+                blockWidthPx =
+          Math.round(weekSpan * CELL + endFrac * CELL - startFrac * CELL) - 4;
                 blockWidthPx = Math.max(blockWidthPx, 16); // minimum visible width
             }
 
             return timelineWeeks.map((week, weekIdx) => {
                 const firstDayId = week.days[0];
                 const isSpanStart =
-                    weekSpanIndices !== null && weekIdx === weekSpanIndices.min;
+          weekSpanIndices !== null && weekIdx === weekSpanIndices.min;
 
                 return (
                     <GanttCell
@@ -156,7 +168,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
             week.days.map((dayId) => {
                 const dayIndex = linearDays.indexOf(dayId);
                 const isSpanStart =
-                    spanIndices !== null && dayIndex === spanIndices.min;
+          spanIndices !== null && dayIndex === spanIndices.min;
 
                 return (
                     <GanttCell

@@ -1,4 +1,5 @@
-import { Box, ButtonProps } from "@mui/material";
+import Box from "@mui/material/Box";
+import ButtonProps from "@mui/material/ButtonProps";
 import { useState } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";

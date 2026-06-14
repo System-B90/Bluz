@@ -1,12 +1,10 @@
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import {
-    Box,
-    Fab,
-    List,
-    ListSubheader,
-    Popover,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Fab from "@mui/material/Fab";
+import List from "@mui/material/List";
+import ListSubheader from "@mui/material/ListSubheader";
+import Popover from "@mui/material/Popover";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import {
     Dispatch,
@@ -155,14 +153,15 @@ export function CurriculumFab({
                     right: 16,
                     bottom: 16,
                     zIndex: (theme) => theme.zIndex.speedDial,
-                    transition: "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease",
+                    transition:
+            "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease",
                     "&:hover": {
                         transform: "scale(1.12) rotate(6deg)",
                         boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
                     },
                     "&:active": {
                         transform: "scale(0.92)",
-                    }
+                    },
                 }}
             >
                 <MenuBookIcon />
@@ -181,7 +180,8 @@ export function CurriculumFab({
                             maxHeight: 420,
                             overflow: "hidden",
                             borderRadius: "12px",
-                            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
+                            boxShadow:
+                "0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
                         },
                     },
                 }}

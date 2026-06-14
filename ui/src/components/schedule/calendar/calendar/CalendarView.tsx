@@ -1,11 +1,5 @@
-/**
- * Name: CalendarView.tsx
- * Purpose: Presentation layer for the Big Calendar with corrected generic types.
- * Created: 2026-04-18
- * Author: Michael K. Steinberg
- */
-
-import { Box, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import dayjs, { Dayjs } from "dayjs";
 import { CalendarProps, View, Views } from "react-big-calendar";
 
@@ -27,7 +21,15 @@ const NO_ROOM_RESOURCE: Room = {
     source: RoomSource.Custom,
 };
 
-const HEBREW_DAYS_FULL = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+const HEBREW_DAYS_FULL = [
+    "ראשון",
+    "שני",
+    "שלישי",
+    "רביעי",
+    "חמישי",
+    "שישי",
+    "שבת",
+];
 const HEBREW_DAYS_SHORT = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
 
 function CalendarHeader({ date }: { date: Date }) {
@@ -86,19 +88,19 @@ function CalendarHeader({ date }: { date: Date }) {
 }
 
 type CalendarViewProps = {
-    events: Array<Event>;
-    rooms: Array<Room>;
-    currentView: View;
-    date: Date;
-    showToolbar: boolean;
-    onView: (view: View) => void;
-    onNavigate: CalendarProps["onNavigate"];
-    onSelectEvent: (event: Event) => void;
-    onDoubleClickEvent: (event: Event) => void;
-    onSelectSlot: (slotInfo: any) => void;
-    onEventDrop: (args: any) => void;
-    onToggleFullscreen: () => void;
-    onToggleToolbar: () => void;
+  events: Array<Event>;
+  rooms: Array<Room>;
+  currentView: View;
+  date: Date;
+  showToolbar: boolean;
+  onView: (view: View) => void;
+  onNavigate: CalendarProps["onNavigate"];
+  onSelectEvent: (event: Event) => void;
+  onDoubleClickEvent: (event: Event) => void;
+  onSelectSlot: (slotInfo: any) => void;
+  onEventDrop: (args: any) => void;
+  onToggleFullscreen: () => void;
+  onToggleToolbar: () => void;
 };
 
 export function CalendarView({
@@ -119,17 +121,17 @@ export function CalendarView({
     return (
         <DnDCalendar
             className="relative grow h-full"
-            components={{ 
-                event: BluzEventComponent, 
+            components={{
+                event: BluzEventComponent,
                 toolbar: (props: any) => (
-                    <CalendarToolbar 
-                        {...props} 
-                        onToggleFullscreen={onToggleFullscreen} 
-                        onToggleToolbar={onToggleToolbar} 
+                    <CalendarToolbar
+                        {...props}
+                        onToggleFullscreen={onToggleFullscreen}
+                        onToggleToolbar={onToggleToolbar}
                         showToolbar={showToolbar}
                     />
                 ),
-                header: CalendarHeader
+                header: CalendarHeader,
             }}
             date={date}
             defaultView={Views.WEEK}
@@ -146,7 +148,7 @@ export function CalendarView({
                     } else {
                         return `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")} ${e.format("YYYY")}`;
                     }
-                }
+                },
             }}
             localizer={localizer}
             max={new Date(2025, 0, 1, 22, 0)}
@@ -165,9 +167,13 @@ export function CalendarView({
                     ? event.rooms.map((room) => JSON.stringify(room))
                     : [JSON.stringify({ id: DUMMY_ROOM_ID, source: RoomSource.Custom })]
             }
-            resourceIdAccessor={(room: Room) => JSON.stringify(roomToResolvable(room))}
+            resourceIdAccessor={(room: Room) =>
+                JSON.stringify(roomToResolvable(room))
+            }
             // Resource logic
-            resources={currentView === Views.DAY ? [NO_ROOM_RESOURCE, ...rooms] : undefined}
+            resources={
+                currentView === Views.DAY ? [NO_ROOM_RESOURCE, ...rooms] : undefined
+            }
             resourceTitleAccessor="name"
             rtl={true}
             selectable

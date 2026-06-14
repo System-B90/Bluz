@@ -1,11 +1,9 @@
 import AssistantIcon from "@mui/icons-material/Assistant";
-import {
-    IconButton,
-    IconButtonProps,
-    Menu,
-    MenuItem,
-    Tooltip,
-} from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import IconButtonProps from "@mui/material/IconButtonProps";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Tooltip from "@mui/material/Tooltip";
 import { useState } from "react";
 
 export function InstructorToolsIcon({

@@ -1,4 +1,4 @@
-import { Typography } from "@mui/material";
+import Typography from "@mui/material/Typography";
 import { useCallback } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";

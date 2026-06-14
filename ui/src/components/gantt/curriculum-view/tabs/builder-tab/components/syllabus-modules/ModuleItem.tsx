@@ -7,7 +7,11 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Box, Paper, PaperProps, Typography, useTheme } from "@mui/material";
+import Box from "@mui/material/Box";
+import Paper from "@mui/material/Paper";
+import PaperProps from "@mui/material/PaperProps";
+import Typography from "@mui/material/Typography";
+import useTheme from "@mui/material/useTheme";
 import { useMemo } from "react";
 
 import { GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/models";

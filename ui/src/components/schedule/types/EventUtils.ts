@@ -39,8 +39,14 @@ export function areValuesEqual(a: any, b: any): boolean {
     }
 
     // Handle Date / Dayjs / ISO string-based dates
-    const isDateA = a instanceof Date || dayjs.isDayjs(a) || (typeof a === "string" && dayjs(a).isValid() && !isNaN(Date.parse(a)));
-    const isDateB = b instanceof Date || dayjs.isDayjs(b) || (typeof b === "string" && dayjs(b).isValid() && !isNaN(Date.parse(b)));
+    const isDateA =
+    a instanceof Date ||
+    dayjs.isDayjs(a) ||
+    (typeof a === "string" && dayjs(a).isValid() && !isNaN(Date.parse(a)));
+    const isDateB =
+    b instanceof Date ||
+    dayjs.isDayjs(b) ||
+    (typeof b === "string" && dayjs(b).isValid() && !isNaN(Date.parse(b)));
     if (isDateA && isDateB) {
         return dayjs(a).valueOf() === dayjs(b).valueOf();
     }

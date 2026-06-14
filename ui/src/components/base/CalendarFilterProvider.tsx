@@ -57,7 +57,8 @@ export const CalendarFiltersProvider = ({
   children: React.ReactNode;
 }) => {
     const [hidePrayers, setHidePrayers] = useState<boolean>(false);
-    const [showMisconfigurations, setShowMisconfigurations] = useState<boolean>(true);
+    const [showMisconfigurations, setShowMisconfigurations] =
+    useState<boolean>(true);
     const [showPAsFor, setShowPAsFor] = useState<null | number>(
         null /** ID of instructor */,
     ); // פ"א
@@ -89,11 +90,16 @@ export const CalendarFiltersProvider = ({
         filteredCourses.length === 0 || event.courses.length === 0;
 
             if (showPAsFor === null) {
-                const hasMatchingInstructor = event.instructors.some(
-                    (instructorId) => filteredInstructors.includes(instructorId),
-                ) || (event.lecturers?.some(
-                    (lecturerId) => typeof lecturerId === "number" && filteredInstructors.includes(lecturerId),
-                ) ?? false);
+                const hasMatchingInstructor =
+          event.instructors.some((instructorId) =>
+              filteredInstructors.includes(instructorId),
+          ) ||
+          (event.lecturers?.some(
+              (lecturerId) =>
+                  typeof lecturerId === "number" &&
+              filteredInstructors.includes(lecturerId),
+          ) ??
+            false);
 
                 return hasMatchingInstructor || hasMatchingCourse ? 1 : 0.2;
             }

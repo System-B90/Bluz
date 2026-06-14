@@ -1,5 +1,8 @@
 import { useDraggable } from "@dnd-kit/core";
-import { Box, Tooltip, Typography, useTheme } from "@mui/material";
+import Box from "@mui/material/Box";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import useTheme from "@mui/material/useTheme";
 import React from "react";
 
 import { GanttBlockProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
@@ -13,15 +16,14 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
     isAbsolute = true,
     elementId,
     violations = [],
-}) =>
-{
+}) => {
     const theme = useTheme();
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
-        useDraggable({
-            id,
-            data: payload,
-        });
+    useDraggable({
+        id,
+        data: payload,
+    });
 
     const style = transform
         ? {
@@ -31,21 +33,21 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
         : undefined;
 
     const blockWidth =
-        spanLength > 1
-            ? `calc(${spanLength * 100}% - 8px)`
-            : isAbsolute
-                ? "calc(100% - 8px)"
-                : "100%";
+    spanLength > 1
+        ? `calc(${spanLength * 100}% - 8px)`
+        : isAbsolute
+            ? "calc(100% - 8px)"
+            : "100%";
 
     const isViolated = violations.length > 0;
 
     const block = (
         <Box
-            id={ elementId }
-            ref={ setNodeRef }
-            { ...listeners }
-            { ...attributes }
-            sx={ {
+            id={elementId}
+            ref={setNodeRef}
+            {...listeners}
+            {...attributes}
+            sx={{
                 position: isAbsolute ? "absolute" : "relative",
                 top: isAbsolute ? "5px" : "auto",
                 bottom: isAbsolute ? "5px" : "auto",
@@ -66,31 +68,31 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
                 boxSizing: "border-box",
                 zIndex: isDragging ? 9999 : 1,
                 ...style,
-            } }
+            }}
         >
-            { title ? (
+            {title ? (
                 <Typography
-                    sx={ {
+                    sx={{
                         color: "primary.contrastText",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
-                    } }
+                    }}
                     variant="caption"
                 >
-                    { title }
+                    {title}
                 </Typography>
-            ) : null }
+            ) : null}
         </Box>
     );
 
     const tooltipContent = isViolated
         ? `${title ?? ""}\n${violations.join("\n")}`.trim()
-        : title ?? "";
+        : (title ?? "");
 
     return tooltipContent ? (
-        <Tooltip arrow placement="top" title={ tooltipContent }>
-            { block }
+        <Tooltip arrow placement="top" title={tooltipContent}>
+            {block}
         </Tooltip>
     ) : (
         block

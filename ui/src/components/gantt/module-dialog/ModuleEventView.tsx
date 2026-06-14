@@ -1,13 +1,11 @@
 import DeleteIcon from "@mui/icons-material/Delete";
-import {
-    FormControl,
-    IconButton,
-    MenuItem,
-    Select,
-    TableCell,
-    TableRow,
-    TextField,
-} from "@mui/material";
+import FormControl from "@mui/material/FormControl";
+import IconButton from "@mui/material/IconButton";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import TextField from "@mui/material/TextField";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 

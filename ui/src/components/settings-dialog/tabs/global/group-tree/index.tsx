@@ -1,5 +1,4 @@
 "use client";
-
 import { DndContext } from "@dnd-kit/core";
 import {
     SortableContext,
@@ -8,14 +7,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    Box,
-    Button,
-    Typography,
-} from "@mui/material";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
 import { Group } from "@/components/schedule/types/group";
 import { GroupField } from "@/components/settings-dialog/tabs/global/group-tree/GroupField";

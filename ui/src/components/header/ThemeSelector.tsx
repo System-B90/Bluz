@@ -1,4 +1,5 @@
 import "@/components/header/theme-selector.css";
+
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 const SunIcon = () => (

@@ -11,7 +11,9 @@ export default async function PostAuthLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-    const session = await getServerSession(authOptions) as AuthSessionData | null;
+    const session = (await getServerSession(
+        authOptions,
+    )) as AuthSessionData | null;
 
     if (!session || !session.user || session.error === "TokenExpiredError") {
         redirect("/login");

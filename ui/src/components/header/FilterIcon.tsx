@@ -1,6 +1,7 @@
 import FilterListIcon from "@mui/icons-material/FilterList";
 import InfoIcon from "@mui/icons-material/Info";
-import { IconButton, Tooltip } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 import { Dispatch, SetStateAction, useMemo } from "react";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
@@ -9,17 +10,17 @@ export function FilterIcon({
     filtersVisible,
     setFiltersVisible,
 }: {
-    filtersVisible: boolean;
-    setFiltersVisible: Dispatch<SetStateAction<boolean>>;
+  filtersVisible: boolean;
+  setFiltersVisible: Dispatch<SetStateAction<boolean>>;
 }) {
     const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
-        useCalendarFilters();
+    useCalendarFilters();
     const hasAnyFilter = useMemo(
         () =>
             hidePrayers ||
-            filteredCourses.length !== 0 ||
-            filteredInstructors.length !== 0 ||
-            showPAsFor !== null,
+      filteredCourses.length !== 0 ||
+      filteredInstructors.length !== 0 ||
+      showPAsFor !== null,
         [filteredCourses, filteredInstructors, showPAsFor, hidePrayers],
     );
     return (

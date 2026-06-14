@@ -1,4 +1,9 @@
-import { Chip, ChipProps, SxProps, Theme, Tooltip, Typography } from "@mui/material";
+import Chip from "@mui/material/Chip";
+import ChipProps from "@mui/material/ChipProps";
+import SxProps from "@mui/material/SxProps";
+import Theme from "@mui/material/Theme";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { Dayjs } from "dayjs";
 import moment from "moment";
 import { useMemo } from "react";
@@ -6,11 +11,11 @@ import { useMemo } from "react";
 import { Event } from "@/components/schedule/types/event";
 
 type EventDurationLabelProps = {
-    event: Event;
-    /** "chip" renders as a Chip (default), "text" renders as plain Typography */
-    variant?: "chip" | "text";
-    size?: ChipProps["size"];
-    sx?: SxProps<Theme>;
+  event: Event;
+  /** "chip" renders as a Chip (default), "text" renders as plain Typography */
+  variant?: "chip" | "text";
+  size?: ChipProps["size"];
+  sx?: SxProps<Theme>;
 };
 
 export function EventDurationLabel({

@@ -1,4 +1,4 @@
-import { Divider } from "@mui/material";
+import Divider from "@mui/material/Divider";
 import {
     Dispatch,
     SetStateAction,
@@ -56,7 +56,8 @@ export function CurriculumViewBuilderWeeksView({
                 const firstWeek = weeksState[group[0]];
                 const groupKey = `group-${firstWeek.id}`;
                 const firstWeekIndex = weeks.indexOf(group[0]);
-                const firstWeekNumber = firstWeekIndex !== -1 ? firstWeekIndex + 1 : (firstWeek?.number ?? 1);
+                const firstWeekNumber =
+          firstWeekIndex !== -1 ? firstWeekIndex + 1 : (firstWeek?.number ?? 1);
 
                 return (
                     <Fragment key={`frag-${groupKey}`}>
@@ -93,7 +94,13 @@ export function CurriculumViewBuilderWeeksView({
                     </Fragment>
                 );
             }),
-        [animationSelectedGroupIndex, groupedWeeks, onGroupClick, weeksState, weeks],
+        [
+            animationSelectedGroupIndex,
+            groupedWeeks,
+            onGroupClick,
+            weeksState,
+            weeks,
+        ],
     );
 
     return (

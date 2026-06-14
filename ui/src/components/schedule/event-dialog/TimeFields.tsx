@@ -1,4 +1,5 @@
-import { Box, BoxProps } from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
 import { TimePicker } from "@mui/x-date-pickers";
 import { PickerValue } from "@mui/x-date-pickers/internals";
 import dayjs, { Dayjs } from "dayjs";

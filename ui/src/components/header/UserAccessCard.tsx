@@ -1,5 +1,9 @@
 import LogoutIcon from "@mui/icons-material/Logout";
-import { AvatarProps, Box, Chip, IconButton, Tooltip } from "@mui/material";
+import AvatarProps from "@mui/material/AvatarProps";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { HiveAvatar } from "@/components/header/HiveAvatarImage";

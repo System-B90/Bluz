@@ -1,39 +1,57 @@
 "use client";
-
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
-import {
-    Autocomplete,
-    Box,
-    Chip,
-    TextField,
-    Typography,
-} from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { memo, useCallback, useEffect, useReducer, type ReactNode } from "react";
+import {
+    memo,
+    useCallback,
+    useEffect,
+    useReducer,
+    type ReactNode,
+} from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 
 type PersonalState = {
-    groups: Array<string>;
-    instructors: Array<string>;
-    favoriteOutsiders: Array<string>;
+  groups: Array<string>;
+  instructors: Array<string>;
+  favoriteOutsiders: Array<string>;
 };
 type PersonalAction =
-    | { type: "ADD_GROUP"; payload: string }
-    | { type: "ADD_INSTRUCTOR"; payload: string }
-    | { type: "ADD_OUTSIDER"; payload: string }
-    | { type: "INITIALIZE"; payload: PersonalState }
-    | { type: "REMOVE_GROUP"; payload: string }
-    | { type: "REMOVE_INSTRUCTOR"; payload: string }
-    | { type: "REMOVE_OUTSIDER"; payload: string };
+  | { type: "ADD_GROUP"; payload: string }
+  | { type: "ADD_INSTRUCTOR"; payload: string }
+  | { type: "ADD_OUTSIDER"; payload: string }
+  | { type: "INITIALIZE"; payload: PersonalState }
+  | { type: "REMOVE_GROUP"; payload: string }
+  | { type: "REMOVE_INSTRUCTOR"; payload: string }
+  | { type: "REMOVE_OUTSIDER"; payload: string };
 
-const ALL_GROUPS: ReadonlyArray<string> = ["Group A", "Group B", "Group C", "Group D", "Group E"];
-const ALL_INSTRUCTORS: ReadonlyArray<string> = ["Alice", "Bob", "Charlie", "David", "Emma"];
+const ALL_GROUPS: ReadonlyArray<string> = [
+    "Group A",
+    "Group B",
+    "Group C",
+    "Group D",
+    "Group E",
+];
+const ALL_INSTRUCTORS: ReadonlyArray<string> = [
+    "Alice",
+    "Bob",
+    "Charlie",
+    "David",
+    "Emma",
+];
 
-function personalSettingsReducer(state: PersonalState, action: PersonalAction): PersonalState {
+function personalSettingsReducer(
+    state: PersonalState,
+    action: PersonalAction,
+): PersonalState {
     let nextState = state;
     switch (action.type) {
     case "INITIALIZE":
@@ -43,21 +61,38 @@ function personalSettingsReducer(state: PersonalState, action: PersonalAction): 
         nextState = { ...state, groups: [...state.groups, action.payload] };
         break;
     case "REMOVE_GROUP":
-        nextState = { ...state, groups: state.groups.filter((g) => g !== action.payload) };
+        nextState = {
+            ...state,
+            groups: state.groups.filter((g) => g !== action.payload),
+        };
         break;
     case "ADD_INSTRUCTOR":
         if (state.instructors.includes(action.payload)) return state;
-        nextState = { ...state, instructors: [...state.instructors, action.payload] };
+        nextState = {
+            ...state,
+            instructors: [...state.instructors, action.payload],
+        };
         break;
     case "REMOVE_INSTRUCTOR":
-        nextState = { ...state, instructors: state.instructors.filter((i) => i !== action.payload) };
+        nextState = {
+            ...state,
+            instructors: state.instructors.filter((i) => i !== action.payload),
+        };
         break;
     case "ADD_OUTSIDER":
         if (state.favoriteOutsiders.includes(action.payload)) return state;
-        nextState = { ...state, favoriteOutsiders: [...state.favoriteOutsiders, action.payload] };
+        nextState = {
+            ...state,
+            favoriteOutsiders: [...state.favoriteOutsiders, action.payload],
+        };
         break;
     case "REMOVE_OUTSIDER":
-        nextState = { ...state, favoriteOutsiders: state.favoriteOutsiders.filter((o) => o !== action.payload) };
+        nextState = {
+            ...state,
+            favoriteOutsiders: state.favoriteOutsiders.filter(
+                (o) => o !== action.payload,
+            ),
+        };
         break;
     }
 
@@ -68,21 +103,21 @@ function personalSettingsReducer(state: PersonalState, action: PersonalAction): 
 }
 
 type SelectionItem = {
-    id: string;
-    label: string;
+  id: string;
+  label: string;
 };
 type SelectionCardProps = {
-    readonly title: string;
-    readonly description: string;
-    readonly icon: ReactNode;
-    readonly colorTheme: "info" | "primary" | "secondary" | "success" | "warning";
-    readonly availableOptions: ReadonlyArray<SelectionItem>;
-    readonly selectedItems: ReadonlyArray<SelectionItem>;
-    readonly emptyMessage: string;
-    readonly searchLabel: string;
-    readonly onAdd: (item: null | SelectionItem) => void;
-    readonly onRemove: (id: string) => void;
-}
+  readonly title: string;
+  readonly description: string;
+  readonly icon: ReactNode;
+  readonly colorTheme: "info" | "primary" | "secondary" | "success" | "warning";
+  readonly availableOptions: ReadonlyArray<SelectionItem>;
+  readonly selectedItems: ReadonlyArray<SelectionItem>;
+  readonly emptyMessage: string;
+  readonly searchLabel: string;
+  readonly onAdd: (item: null | SelectionItem) => void;
+  readonly onRemove: (id: string) => void;
+};
 
 const SelectionCard = memo(function SelectionCard({
     title,
@@ -188,7 +223,14 @@ const SelectionCard = memo(function SelectionCard({
                 }}
             >
                 {selectedItems.length === 0 ? (
-                    <Typography sx={{ color: "text.secondary", fontSize: "0.85rem", m: "auto", fontFamily: "Assistant, sans-serif" }}>
+                    <Typography
+                        sx={{
+                            color: "text.secondary",
+                            fontSize: "0.85rem",
+                            m: "auto",
+                            fontFamily: "Assistant, sans-serif",
+                        }}
+                    >
                         {emptyMessage}
                     </Typography>
                 ) : (
@@ -240,7 +282,11 @@ export function PersonalSettings() {
                         },
                     });
                 } catch (e) {
-                    enqueueApiErrorSnackbar(enqueueSnackbar, "כשל בטעינת העדפות אישיות", e as Error);
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "כשל בטעינת העדפות אישיות",
+            e as Error,
+                    );
                 }
             }
         }
@@ -252,7 +298,7 @@ export function PersonalSettings() {
             dispatch({ type: "ADD_GROUP", payload: group.id });
             enqueueSnackbar("הקבוצה התווספה בהצלחה.", { variant: "success" });
         },
-        [enqueueSnackbar]
+        [enqueueSnackbar],
     );
 
     const handleRemoveGroup = useCallback(
@@ -260,7 +306,7 @@ export function PersonalSettings() {
             dispatch({ type: "REMOVE_GROUP", payload: id });
             enqueueSnackbar("הקבוצה הוסרה בהצלחה.", { variant: "success" });
         },
-        [enqueueSnackbar]
+        [enqueueSnackbar],
     );
 
     const handleAddInstructor = useCallback(
@@ -269,7 +315,7 @@ export function PersonalSettings() {
             dispatch({ type: "ADD_INSTRUCTOR", payload: instructor.id });
             enqueueSnackbar("המרצה התווסף בהצלחה.", { variant: "success" });
         },
-        [enqueueSnackbar]
+        [enqueueSnackbar],
     );
 
     const handleRemoveInstructor = useCallback(
@@ -277,33 +323,46 @@ export function PersonalSettings() {
             dispatch({ type: "REMOVE_INSTRUCTOR", payload: id });
             enqueueSnackbar("המרצה הוסר בהצלחה.", { variant: "success" });
         },
-        [enqueueSnackbar]
+        [enqueueSnackbar],
     );
 
     const handleAddOutsider = useCallback(
         (outsider: null | SelectionItem) => {
             if (!outsider) return;
             dispatch({ type: "ADD_OUTSIDER", payload: outsider.id });
-            enqueueSnackbar("איש החוץ התווסף למועדפים בהצלחה.", { variant: "success" });
+            enqueueSnackbar("איש החוץ התווסף למועדפים בהצלחה.", {
+                variant: "success",
+            });
         },
-        [enqueueSnackbar]
+        [enqueueSnackbar],
     );
 
     const handleRemoveOutsider = useCallback(
         (id: string) => {
             dispatch({ type: "REMOVE_OUTSIDER", payload: id });
-            enqueueSnackbar("איש החוץ הוסר מהמועדפים בהצלחה.", { variant: "success" });
+            enqueueSnackbar("איש החוץ הוסר מהמועדפים בהצלחה.", {
+                variant: "success",
+            });
         },
-        [enqueueSnackbar]
+        [enqueueSnackbar],
     );
 
-    const availableGroups = ALL_GROUPS.filter((g) => !state.groups.includes(g)).map((g) => ({ id: g, label: g }));
+    const availableGroups = ALL_GROUPS.filter(
+        (g) => !state.groups.includes(g),
+    ).map((g) => ({ id: g, label: g }));
     const selectedGroups = state.groups.map((g) => ({ id: g, label: g }));
 
-    const availableInstructors = ALL_INSTRUCTORS.filter((i) => !state.instructors.includes(i)).map((i) => ({ id: i, label: i }));
-    const selectedInstructors = state.instructors.map((i) => ({ id: i, label: i }));
+    const availableInstructors = ALL_INSTRUCTORS.filter(
+        (i) => !state.instructors.includes(i),
+    ).map((i) => ({ id: i, label: i }));
+    const selectedInstructors = state.instructors.map((i) => ({
+        id: i,
+        label: i,
+    }));
 
-    const availableOutsiders = outsiders.filter((o) => !state.favoriteOutsiders.includes(o.id)).map((o) => ({ id: o.id, label: o.name }));
+    const availableOutsiders = outsiders
+        .filter((o) => !state.favoriteOutsiders.includes(o.id))
+        .map((o) => ({ id: o.id, label: o.name }));
     const selectedOutsiders = state.favoriteOutsiders.map((id) => {
         const o = getOutsider(id);
         return { id, label: o ? o.name : id };

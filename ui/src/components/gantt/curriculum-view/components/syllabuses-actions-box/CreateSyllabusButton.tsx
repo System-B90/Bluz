@@ -1,5 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
-import { Button } from "@mui/material";
+import Button from "@mui/material/Button";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 

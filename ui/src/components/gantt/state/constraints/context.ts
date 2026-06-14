@@ -14,7 +14,7 @@ import { GanttConstraintState } from "@/components/gantt/state/constraints/types
 export type RefreshConstraints = () => Promise<void>;
 
 export type CreateConstraint = (
-  payload: Omit<CreateConstraintPayload, 'id'>,
+  payload: Omit<CreateConstraintPayload, "id">,
 ) => Promise<GanttConstraint | undefined>;
 
 export type UpdateConstraint = (

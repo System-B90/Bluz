@@ -1,10 +1,8 @@
 import LinkOffIcon from "@mui/icons-material/LinkOff";
-import {
-    CardActions,
-    CardActionsProps,
-    IconButton,
-    Tooltip,
-} from "@mui/material";
+import CardActions from "@mui/material/CardActions";
+import CardActionsProps from "@mui/material/CardActionsProps";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 

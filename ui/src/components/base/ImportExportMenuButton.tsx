@@ -1,7 +1,11 @@
 import DownloadIcon from "@mui/icons-material/Download";
 import ImportExportIcon from "@mui/icons-material/ImportExport";
 import UploadIcon from "@mui/icons-material/Upload";
-import { Button, Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
+import Button from "@mui/material/Button";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import React, { useCallback, useState } from "react";
 
 export type ImportExportMenuButtonProps = {
@@ -13,7 +17,14 @@ export type ImportExportMenuButtonProps = {
   accept?: string;
   size?: "large" | "medium" | "small";
   variant?: "contained" | "outlined" | "text";
-  color?: "error" | "info" | "inherit" | "primary" | "secondary" | "success" | "warning";
+  color?:
+    | "error"
+    | "info"
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "warning";
 };
 
 export function ImportExportMenuButton({
@@ -30,9 +41,12 @@ export function ImportExportMenuButton({
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const open = Boolean(anchorEl);
 
-    const handleClick = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
-        setAnchorEl(event.currentTarget);
-    }, []);
+    const handleClick = useCallback(
+        (event: React.MouseEvent<HTMLButtonElement>) => {
+            setAnchorEl(event.currentTarget);
+        },
+        [],
+    );
 
     const handleClose = useCallback(() => {
         setAnchorEl(null);
@@ -43,10 +57,13 @@ export function ImportExportMenuButton({
         handleClose();
     }, [onExport, handleClose]);
 
-    const handleImportChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        onImport(e);
-        handleClose();
-    }, [onImport, handleClose]);
+    const handleImportChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            onImport(e);
+            handleClose();
+        },
+        [onImport, handleClose],
+    );
 
     return (
         <>

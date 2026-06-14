@@ -1,10 +1,8 @@
-import {
-    TableCell,
-    TableHead,
-    TableRow,
-    Typography,
-    useTheme,
-} from "@mui/material";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
+import useTheme from "@mui/material/useTheme";
 import React from "react";
 
 import { getDayNameDisplay } from "@/api-shared/types/gantt/models";
@@ -80,11 +78,7 @@ export const GanttHeader: React.FC = () => {
                         week.days.map((dayId) => {
                             const day = state.days[dayId];
                             if (!day) return null;
-                            const dayDate = getDayDate(
-                                startDate,
-                                weekIndex,
-                                day.dayIndex,
-                            );
+                            const dayDate = getDayDate(startDate, weekIndex, day.dayIndex);
                             return (
                                 <TableCell
                                     align="center"

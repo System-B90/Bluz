@@ -1,12 +1,10 @@
 import { useDroppable } from "@dnd-kit/core";
-import {
-    alpha,
-    Box,
-    TableCell,
-    TableRow,
-    Typography,
-    useTheme,
-} from "@mui/material";
+import alpha from "@mui/material/alpha";
+import Box from "@mui/material/Box";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
+import useTheme from "@mui/material/useTheme";
 import React, { useMemo } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
@@ -79,9 +77,8 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
                     ? week.days.includes(currentDayId)
                     : false;
                 const isWaitingInModuleStartColumn =
-                    isEventUnmapped && isModuleMapped && weekIdx === moduleStartWeekIdx;
-                const hasBlock =
-                    isExplicitlyMappedHere || isWaitingInModuleStartColumn;
+          isEventUnmapped && isModuleMapped && weekIdx === moduleStartWeekIdx;
+                const hasBlock = isExplicitlyMappedHere || isWaitingInModuleStartColumn;
 
                 const blockPayload = isExplicitlyMappedHere
                     ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId }
@@ -100,7 +97,10 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
                     const startFrac = dayPosInWeek / week.days.length;
                     const endFrac = (dayPosInWeek + 1) / week.days.length;
                     eventLeftPx = Math.round(startFrac * CELL) + 2;
-                    eventWidthPx = Math.max(Math.round((endFrac - startFrac) * CELL) - 4, 16);
+                    eventWidthPx = Math.max(
+                        Math.round((endFrac - startFrac) * CELL) - 4,
+                        16,
+                    );
                 }
 
                 return (
@@ -128,9 +128,8 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
             week.days.map((dayId) => {
                 const isExplicitlyMappedHere = currentDayId === dayId;
                 const isWaitingInModuleStartColumn =
-                    isEventUnmapped && isModuleMapped && moduleStartDayId === dayId;
-                const hasBlock =
-                    isExplicitlyMappedHere || isWaitingInModuleStartColumn;
+          isEventUnmapped && isModuleMapped && moduleStartDayId === dayId;
+                const hasBlock = isExplicitlyMappedHere || isWaitingInModuleStartColumn;
 
                 const blockPayload = isExplicitlyMappedHere
                     ? { type: "event-move", moduleId, eventId, sourceDayId: dayId }

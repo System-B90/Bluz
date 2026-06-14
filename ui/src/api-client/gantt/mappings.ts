@@ -99,11 +99,14 @@ async function apiDeleteModuleDayMapping(
     dayId: GanttDayId,
     options?: ClientApiProps,
 ): Promise<void> {
-    await safeApiFetcher<void>(`/api/gantt/curriculums/${curriculumId}/mappings`, {
-        ...options,
-        method: "DELETE",
-        body: JSON.stringify({ moduleId, eventId, dayId }),
-    });
+    await safeApiFetcher<void>(
+        `/api/gantt/curriculums/${curriculumId}/mappings`,
+        {
+            ...options,
+            method: "DELETE",
+            body: JSON.stringify({ moduleId, eventId, dayId }),
+        },
+    );
 }
 
 export const curriculumModuleDayMappingApi = {

@@ -1,11 +1,16 @@
-import { Chip, ChipProps } from "@mui/material";
+import Chip from "@mui/material/Chip";
+import ChipProps from "@mui/material/ChipProps";
 
 type RoomExtendedInfoChipProps = ChipProps & {
-    iconNode?: React.ReactElement;
-    label: string;
+  iconNode?: React.ReactElement;
+  label: string;
 };
 
-export function RoomExtendedInfoChip({ iconNode, label, ...props }: RoomExtendedInfoChipProps) {
+export function RoomExtendedInfoChip({
+    iconNode,
+    label,
+    ...props
+}: RoomExtendedInfoChipProps) {
     return (
         <Chip
             icon={iconNode}

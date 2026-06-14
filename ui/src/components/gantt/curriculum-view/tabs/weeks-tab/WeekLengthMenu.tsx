@@ -1,18 +1,16 @@
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    ListItemIcon,
-    ListItemText,
-    Menu,
-    MenuItem,
-} from "@mui/material";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import { useSnackbar } from "notistack";
 import { MouseEvent, useCallback, useMemo, useState } from "react";
 
@@ -75,13 +73,7 @@ export function WeekLengthMenu({
         }).catch((error) =>
             enqueueApiErrorSnackbar(enqueueSnackbar, "הוספת שבוע נכשלה!", error),
         );
-    }, [
-        closeMenu,
-        createWeek,
-        curriculum.weeks,
-        curriculumId,
-        enqueueSnackbar,
-    ]);
+    }, [closeMenu, createWeek, curriculum.weeks, curriculumId, enqueueSnackbar]);
 
     const removeLastWeek = useCallback(() => {
         closeMenu();
@@ -149,13 +141,17 @@ export function WeekLengthMenu({
                 <DialogTitle>מחיקת השבוע האחרון?</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-            בשבוע האחרון קיימים {mappedItemsInLastWeek} שיבוצים. מחיקת השבוע תמחק
-            גם את השיבוצים האלו.
+            בשבוע האחרון קיימים {mappedItemsInLastWeek} שיבוצים. מחיקת השבוע
+            תמחק גם את השיבוצים האלו.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setConfirmRemoveOpen(false)}>ביטול</Button>
-                    <Button color="error" onClick={confirmRemoveLastWeek} variant="contained">
+                    <Button
+                        color="error"
+                        onClick={confirmRemoveLastWeek}
+                        variant="contained"
+                    >
             מחיקה
                     </Button>
                 </DialogActions>

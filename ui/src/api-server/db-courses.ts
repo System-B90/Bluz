@@ -48,8 +48,8 @@ async function deleteDbCourse(courseId: Course["id"]) {
 }
 
 export namespace DbCourses {
-    export const get = getDbCourses;
-    export const set = setDbCourse;
-    export const create = createDbCourse;
-    export const del = deleteDbCourse;
+  export const get = getDbCourses;
+  export const set = setDbCourse;
+  export const create = createDbCourse;
+  export const del = deleteDbCourse;
 }

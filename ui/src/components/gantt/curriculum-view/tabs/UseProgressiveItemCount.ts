@@ -55,9 +55,7 @@ export function useProgressiveItemCount(
         }
 
         setVisibleCount((currentVisibleCount) => {
-            const nextInitialCount = enabled
-                ? Math.min(initialCount, totalCount)
-                : 0;
+            const nextInitialCount = enabled ? Math.min(initialCount, totalCount) : 0;
 
             if (resetKeyChanged) {
                 return nextInitialCount;

@@ -23,6 +23,6 @@ async function upsertExtendedInfo(
 }
 
 export namespace DbRoomExtendedInfo {
-    export const getAll = getAllExtendedInfo;
-    export const upsert = upsertExtendedInfo;
+  export const getAll = getAllExtendedInfo;
+  export const upsert = upsertExtendedInfo;
 }

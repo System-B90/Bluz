@@ -45,8 +45,8 @@ async function deleteDbOutsider(outsiderId: Outsider["id"]) {
 }
 
 export namespace DbOutsiders {
-    export const get = getDbOutsiders;
-    export const set = setDbOutsider;
-    export const create = createDbOutsider;
-    export const del = deleteDbOutsider;
+  export const get = getDbOutsiders;
+  export const set = setDbOutsider;
+  export const create = createDbOutsider;
+  export const del = deleteDbOutsider;
 }
