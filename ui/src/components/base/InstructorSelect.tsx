@@ -1,10 +1,9 @@
 import {
-    Box,
     ListSubheader,
     MenuItem,
     Select,
     SelectProps,
-    TextField,
+    TextField
 } from "@mui/material";
 import React, { useMemo, useState } from "react";
 
@@ -193,7 +192,7 @@ export function InstructorSelect<T = unknown>({
 
             {showOutsiders && favorites.length > 0 ? [
                 <ListSubheader key="group-favs" disableSticky sx={styles.subheaderWarning}>
-                        אנשי חוץ מועדפים
+                    אנשי חוץ מועדפים
                 </ListSubheader>,
                 ...favorites.map((o) => (
                     <MenuItem key={`outsider-${o.id}`} value={o.id}>
@@ -226,7 +225,7 @@ export function InstructorSelect<T = unknown>({
 
             {showOutsiders && others.length > 0 ? [
                 <ListSubheader key="group-others" disableSticky sx={styles.subheaderDefault}>
-                        אנשי חוץ נוספים
+                    אנשי חוץ נוספים
                 </ListSubheader>,
                 ...others.map((o) => (
                     <MenuItem key={`outsider-${o.id}`} value={o.id}>
