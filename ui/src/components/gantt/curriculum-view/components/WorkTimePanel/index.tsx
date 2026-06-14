@@ -69,13 +69,7 @@ export function WorkTimePanel({
     if (!curriculum) {
         return (
             <Card
-                sx={{
-                    padding: 2,
-                    minHeight: 150,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                }}
+                className="p-4 min-h-[150px] flex items-center justify-center"
             >
                 <CircularProgress />
             </Card>
@@ -84,15 +78,7 @@ export function WorkTimePanel({
 
     return (
         <Card
-            sx={{
-                padding: 2,
-                width: "100%",
-                maxWidth: "22rem",
-                display: "flex",
-                flexDirection: "column",
-                height: "100%",
-                flexGrow: 1,
-            }}
+            className="p-4 w-full max-w-[22rem] flex flex-col h-full flex-grow"
         >
             <Box
                 alignItems="center"

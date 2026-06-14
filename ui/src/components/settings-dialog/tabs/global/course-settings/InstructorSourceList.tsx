@@ -156,23 +156,25 @@ export function InstructorSourceList() {
             </Box>
 
             <TextField
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <SearchIcon
-                                sx={{ fontSize: 16, color: "text.secondary" }}
-                            />
-                        </InputAdornment>
-                    ),
-                    sx: {
-                        borderRadius: "10px",
-                        fontSize: "0.8rem",
-                        bgcolor: "background.paper",
-                    },
-                }}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="חיפוש מדריך..."
                 size="small"
+                slotProps={{
+                    input: {
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon
+                                    sx={{ fontSize: 16, color: "text.secondary" }}
+                                />
+                            </InputAdornment>
+                        ),
+                        sx: {
+                            borderRadius: "10px",
+                            fontSize: "0.8rem",
+                            bgcolor: "background.paper",
+                        },
+                    },
+                }}
                 value={search}
                 variant="outlined"
             />

@@ -366,16 +366,6 @@ export function DayCapacityCell({
                             <RemoveIcon fontSize="inherit" />
                         </IconButton>
                         <TextField
-                            inputProps={{
-                                inputMode: "numeric",
-                                style: {
-                                    fontFamily: "monospace",
-                                    textAlign: "center",
-                                    fontWeight: 700,
-                                    fontSize: isCompact ? "0.75rem" : "0.85rem",
-                                    padding: isCompact ? "0px 4px" : "4px 8px",
-                                },
-                            }}
                             onBlur={() => {
                                 commitTime();
                                 setIsTimeFocused(false);
@@ -386,6 +376,18 @@ export function DayCapacityCell({
                             onFocus={() => setIsTimeFocused(true)}
                             onKeyDown={handleTimeKeyDown}
                             size="small"
+                            slotProps={{
+                                htmlInput: {
+                                    inputMode: "numeric",
+                                    style: {
+                                        fontFamily: "monospace",
+                                        textAlign: "center",
+                                        fontWeight: 700,
+                                        fontSize: isCompact ? "0.75rem" : "0.85rem",
+                                        padding: isCompact ? "0px 4px" : "4px 8px",
+                                    },
+                                },
+                            }}
                             sx={{
                                 "& .MuiOutlinedInput-root": {
                                     transition: "all 0.2s ease",

@@ -1,6 +1,5 @@
+import InitColorSchemeScript from "@mui/material/InitColorSchemeScript";
 import type { Metadata } from "next";
-
-import { InitColorSchemeScript } from "@mui/material/InitColorSchemeScript";
 
 import { MuiEmotionCacheProvider } from "@/components/theme/MuiEmotionCacheProvider";
 import { WebSocketConfigProvider } from "@/components/WebsocketConfigProvider";

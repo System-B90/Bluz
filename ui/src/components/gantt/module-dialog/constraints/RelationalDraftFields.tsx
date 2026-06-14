@@ -148,38 +148,42 @@ export function RelationalDraftFields({
                 <Stack flexGrow={0}>
                     <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
                         <TextField
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        ימים
-                                    </InputAdornment>
-                                ),
-                                inputProps: { min: 0 },
-                            }}
                             label="מינימום"
                             onChange={(e) =>
                                 setDraft({ ...draft, minDelay: e.target.value })
                             }
                             size="small"
+                            slotProps={{
+                                input: {
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            ימים
+                                        </InputAdornment>
+                                    ),
+                                },
+                                htmlInput: { min: 0 },
+                            }}
                             sx={{ width: 120 }}
                             type="number"
                             value={draft.minDelay || ""}
                         />
 
                         <TextField
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        ימים
-                                    </InputAdornment>
-                                ),
-                                inputProps: { min: 0 },
-                            }}
                             label="מקסימום"
                             onChange={(e) =>
                                 setDraft({ ...draft, maxDelay: e.target.value })
                             }
                             size="small"
+                            slotProps={{
+                                input: {
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            ימים
+                                        </InputAdornment>
+                                    ),
+                                },
+                                htmlInput: { min: 0 },
+                            }}
                             sx={{ width: 120 }}
                             type="number"
                             value={draft.maxDelay || ""}

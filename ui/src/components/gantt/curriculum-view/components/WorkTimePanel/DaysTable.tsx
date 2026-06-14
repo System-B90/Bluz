@@ -66,7 +66,6 @@ export function DaysTable({
                         <TableCell align="right">
                             <TextField
                                 disabled={!canEdit}
-                                slotProps={{ htmlInput: { min: 0, step: 0.5 } }}
                                 onBlur={() =>
                                     void onHoursSave(weekIndex, dayIndex)
                                 }
@@ -81,6 +80,7 @@ export function DaysTable({
                                     event: KeyboardEvent<HTMLInputElement>,
                                 ) => onHoursKeyDown(event, weekIndex, dayIndex)}
                                 size="small"
+                                slotProps={{ htmlInput: { min: 0, step: 0.5 } }}
                                 sx={{ width: "8rem" }}
                                 type="number"
                                 value={day.totalWorkingMinutes}
