@@ -5,14 +5,13 @@
  * Author: Michael K. Steinberg
  */
 
-import DownloadIcon from "@mui/icons-material/Download";
-import UploadIcon from "@mui/icons-material/Upload";
-import { Box, Button, CircularProgress, FormControlLabel, Paper, Stack, Switch, Typography } from "@mui/material";
+import { Box, CircularProgress, FormControlLabel, Paper, Stack, Switch, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import React, { memo, useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CourseStartDateControl } from "@/components/gantt/curriculum-view/tabs/weeks-tab/CourseStartDateControl";
 import { WeekLengthMenu } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekLengthMenu";
 import { WeeksCapacityGrid } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeeksCapacityGrid";
@@ -62,7 +61,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(weeksData, null, 2));
             const downloadAnchor = document.createElement("a");
             downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `weeks_${curriculumId}.json`);
+            downloadAnchor.setAttribute("download", `bluz-weeks-${curriculumId}.json`);
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
@@ -216,30 +215,16 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                             </Typography>
                         </Box>
                         <Stack alignItems="center" direction="row" spacing={1}>
-                            <Button
+                            <ImportExportMenuButton
                                 color="primary"
-                                onClick={handleExportWeeks}
+                                exportLabel="ייצוא שבועות"
+                                importLabel="ייבוא שבועות"
+                                onExport={handleExportWeeks}
+                                onImport={handleImportWeeks}
                                 size="small"
-                                startIcon={<DownloadIcon />}
+                                triggerLabel="ייבוא / ייצוא שבועות"
                                 variant="outlined"
-                            >
-                                ייצוא שבועות
-                            </Button>
-                            <Button
-                                color="secondary"
-                                component="label"
-                                size="small"
-                                startIcon={<UploadIcon />}
-                                variant="outlined"
-                            >
-                                ייבוא שבועות
-                                <input
-                                    accept=".json"
-                                    hidden
-                                    onChange={handleImportWeeks}
-                                    type="file"
-                                />
-                            </Button>
+                            />
                             <WeekLengthMenu curriculum={curriculum} curriculumId={curriculumId} />
                         </Stack>
                     </Box>

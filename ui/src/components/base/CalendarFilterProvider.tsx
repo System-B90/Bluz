@@ -92,7 +92,7 @@ export const CalendarFiltersProvider = ({
                 const hasMatchingInstructor = event.instructors.some(
                     (instructorId) => filteredInstructors.includes(instructorId),
                 ) || (event.lecturers?.some(
-                    (lecturerId) => filteredInstructors.includes(lecturerId),
+                    (lecturerId) => typeof lecturerId === "number" && filteredInstructors.includes(lecturerId),
                 ) ?? false);
 
                 return hasMatchingInstructor || hasMatchingCourse ? 1 : 0.2;

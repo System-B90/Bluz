@@ -1,11 +1,10 @@
-import DownloadIcon from "@mui/icons-material/Download";
-import UploadIcon from "@mui/icons-material/Upload";
-import { Box, BoxProps, Button } from "@mui/material";
+import { Box, BoxProps } from "@mui/material";
 import { useSnackbar } from "notistack";
 import React, { useCallback } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CreateSyllabusButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/CreateSyllabusButton";
 import { SyllabusSelectionField } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/SyllabusSelectionField";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
@@ -66,7 +65,7 @@ export function SyllabusesActionsBox({
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(syllabusesData, null, 2));
             const downloadAnchor = document.createElement("a");
             downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `syllabuses_${curriculumId}.json`);
+            downloadAnchor.setAttribute("download", `bluz-syllabuses-${curriculumId}.json`);
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
@@ -143,32 +142,16 @@ export function SyllabusesActionsBox({
                 gap={1}
             />
             <Box flexGrow={1} />
-            <Button
+            <ImportExportMenuButton
                 color="primary"
-                onClick={handleExport}
+                exportLabel="ייצוא סילבוסים"
+                importLabel="ייבוא סילבוסים"
+                onExport={handleExport}
+                onImport={handleImport}
                 size="small"
-                startIcon={<DownloadIcon />}
-                sx={{ whiteSpace: "nowrap" }}
+                triggerLabel="ייבוא / ייצוא סילבוסים"
                 variant="outlined"
-            >
-                ייצוא סילבוסים
-            </Button>
-            <Button
-                color="secondary"
-                component="label"
-                size="small"
-                startIcon={<UploadIcon />}
-                sx={{ whiteSpace: "nowrap" }}
-                variant="outlined"
-            >
-                ייבוא סילבוסים
-                <input
-                    accept=".json"
-                    hidden
-                    onChange={handleImport}
-                    type="file"
-                />
-            </Button>
+            />
         </Box>
     );
 }

@@ -191,7 +191,7 @@ export function InstructorSelect<T = unknown>({
             {children}
 
             {showOutsiders && favorites.length > 0 ? [
-                <ListSubheader key="group-favs" disableSticky sx={styles.subheaderWarning}>
+                <ListSubheader disableSticky key="group-favs" sx={styles.subheaderWarning}>
                     אנשי חוץ מועדפים
                 </ListSubheader>,
                 ...favorites.map((o) => (
@@ -202,7 +202,7 @@ export function InstructorSelect<T = unknown>({
             ] : null}
 
             {courseGroups.flatMap(({ course, instructors }) => [
-                <ListSubheader key={`group-${course.id}`} disableSticky sx={styles.subheaderDefault}>
+                <ListSubheader disableSticky key={`group-${course.id}`} sx={styles.subheaderDefault}>
                     {course.name}
                 </ListSubheader>,
                 ...instructors.map((inst) => (
@@ -213,7 +213,7 @@ export function InstructorSelect<T = unknown>({
             ])}
 
             {unassigned.length > 0 ? [
-                <ListSubheader key="group-unassigned" disableSticky sx={styles.subheaderDefault}>
+                <ListSubheader disableSticky key="group-unassigned" sx={styles.subheaderDefault}>
                     ללא מסלול
                 </ListSubheader>,
                 ...unassigned.map((inst) => (
@@ -224,7 +224,7 @@ export function InstructorSelect<T = unknown>({
             ] : null}
 
             {showOutsiders && others.length > 0 ? [
-                <ListSubheader key="group-others" disableSticky sx={styles.subheaderDefault}>
+                <ListSubheader disableSticky key="group-others" sx={styles.subheaderDefault}>
                     אנשי חוץ נוספים
                 </ListSubheader>,
                 ...others.map((o) => (
