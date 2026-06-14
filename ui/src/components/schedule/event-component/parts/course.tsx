@@ -1,7 +1,6 @@
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
-import ChipProps from "@mui/material/ChipProps";
+import Box, { BoxProps } from "@mui/material/Box";
+import { ChipProps } from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
 import { useMemo } from "react";
 
@@ -24,10 +23,11 @@ const tagSx = (color?: string) => ({
     color: color ?? "inherit",
 });
 
-function SingleCourseTag({ course }: { course: Course }) {
+function SingleCourseTag({ course }: { course: Course; })
+{
     return (
-        <Box component="span" sx={tagSx(course.color ?? undefined)}>
-            {course.name}
+        <Box component="span" sx={ tagSx(course.color ?? undefined) }>
+            { course.name }
         </Box>
     );
 }
@@ -40,12 +40,13 @@ export function CourseComponent({
 }: {
     courseIds: Array<CourseId>;
     showCaption?: boolean;
-    chipSize?: ChipProps["size"];
-} & BoxProps) {
+    chipSize?: ChipProps[ "size" ];
+} & BoxProps)
+{
     const { getCourse } = useCourses();
     const courses = useMemo(
         () => courseIds.map(getCourse).filter((v) => !!v),
-        [courseIds, getCourse],
+        [ courseIds, getCourse ],
     );
 
     return (
@@ -54,17 +55,17 @@ export function CourseComponent({
             display="flex"
             flexDirection="row"
             flexWrap="wrap"
-            gap={0.4}
-            {...props}
+            gap={ 0.4 }
+            { ...props }
         >
-            {showCaption !== false && (
-                <Tooltip title={courseIds.length === 1 ? "מסלול" : "מסלולים"}>
-                    <MenuBookIcon sx={{ fontSize: "0.85rem", opacity: 0.6 }} />
+            { showCaption !== false && (
+                <Tooltip title={ courseIds.length === 1 ? "מסלול" : "מסלולים" }>
+                    <MenuBookIcon sx={ { fontSize: "0.85rem", opacity: 0.6 } } />
                 </Tooltip>
-            )}
-            {courses.map((course) => (
-                <SingleCourseTag course={course} key={course.id} />
-            ))}
+            ) }
+            { courses.map((course) => (
+                <SingleCourseTag course={ course } key={ course.id } />
+            )) }
         </Box>
     );
 }

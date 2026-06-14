@@ -1,22 +1,23 @@
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
+import Box, { BoxProps } from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
-import SelectChangeEvent from "@mui/material/SelectChangeEvent";
+import { SelectChangeEvent } from "@mui/material/Select";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
 
-export function FilterInstructors({ ...props }: BoxProps) {
+export function FilterInstructors({ ...props }: BoxProps)
+{
     const { getInstructor } = useHiveUsers();
     const { filteredInstructors, setFilteredInstructors } =
         useCalendarFilters();
 
     const handleChange = (
         event: SelectChangeEvent<typeof filteredInstructors>,
-    ) => {
+    ) =>
+    {
         const {
             target: { value },
         } = event;
@@ -33,44 +34,46 @@ export function FilterInstructors({ ...props }: BoxProps) {
         setFilteredInstructors(newIds);
     };
 
-    const handleDelete = (idToDelete: number) => {
+    const handleDelete = (idToDelete: number) =>
+    {
         setFilteredInstructors((prev) =>
             prev.filter((id) => id !== idToDelete),
         );
     };
 
     return (
-        <Box {...props}>
-            <FormControl fullWidth={true} size="small">
+        <Box { ...props }>
+            <FormControl fullWidth={ true } size="small">
                 <InputLabel size="small">סינון לפי מדריכים</InputLabel>
                 <InstructorSelect
-                    excludeTeachers={true}
+                    excludeTeachers={ true }
                     label="סינון לפי מדריכים"
                     multiple
-                    onChange={handleChange}
-                    renderValue={(selected) => (
+                    onChange={ handleChange }
+                    renderValue={ (selected) => (
                         <Box
-                            fontSize={"inherit"}
-                            sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
+                            fontSize={ "inherit" }
+                            sx={ { display: "flex", flexWrap: "wrap", gap: 0.5 } }
                         >
-                            {selected.map((id) => {
+                            { selected.map((id) =>
+                            {
                                 // Look up instructor details by ID
                                 const instructor = getInstructor(id);
                                 return (
                                     <Chip
-                                        key={id}
-                                        label={instructor?.display_name || id}
-                                        onDelete={() => handleDelete(id)}
+                                        key={ id }
+                                        label={ instructor?.display_name || id }
+                                        onDelete={ () => handleDelete(id) }
                                         // Prevent menu from opening when deleting
-                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onMouseDown={ (e) => e.stopPropagation() }
                                         size="small"
                                     />
                                 );
-                            })}
+                            }) }
                         </Box>
-                    )}
+                    ) }
                     size="small"
-                    value={filteredInstructors}
+                    value={ filteredInstructors }
                 />
             </FormControl>
         </Box>

@@ -1,7 +1,5 @@
-import Chip from "@mui/material/Chip";
-import ChipProps from "@mui/material/ChipProps";
-import SxProps from "@mui/material/SxProps";
-import Theme from "@mui/material/Theme";
+import Chip, { ChipProps } from "@mui/material/Chip";
+import { SxProps, Theme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { Dayjs } from "dayjs";
@@ -14,7 +12,7 @@ type EventDurationLabelProps = {
     event: Event;
     /** "chip" renders as a Chip (default), "text" renders as plain Typography */
     variant?: "chip" | "text";
-    size?: ChipProps["size"];
+    size?: ChipProps[ "size" ];
     sx?: SxProps<Theme>;
 };
 
@@ -23,13 +21,14 @@ export function EventDurationLabel({
     variant = "chip",
     sx,
     size,
-}: EventDurationLabelProps) {
+}: EventDurationLabelProps)
+{
     const start = moment((event.startTime as Dayjs).toDate());
     const end = moment((event.endTime as Dayjs).toDate());
 
     const durationMinutes = useMemo(
         () => Math.max(0, end.diff(start, "minutes")),
-        [start, end],
+        [ start, end ],
     );
 
     const hours = Math.floor(durationMinutes / 60);
@@ -44,26 +43,27 @@ export function EventDurationLabel({
 
     const timeRange = `${start.format("HH:mm")} - ${end.format("HH:mm")}`;
 
-    if (variant === "text") {
+    if (variant === "text")
+    {
         return (
-            <Tooltip title={timeRange}>
+            <Tooltip title={ timeRange }>
                 <Typography
                     noWrap
-                    sx={{ ...sx, color: "inherit", opacity: 0.85 }}
+                    sx={ { ...sx, color: "inherit", opacity: 0.85 } }
                     variant="caption"
                 >
-                    {durationLabel}
+                    { durationLabel }
                 </Typography>
             </Tooltip>
         );
     }
 
     return (
-        <Tooltip title={timeRange}>
+        <Tooltip title={ timeRange }>
             <Chip
-                label={durationLabel}
-                size={size ?? "small"}
-                sx={{ ...sx, color: "inherit" }}
+                label={ durationLabel }
+                size={ size ?? "small" }
+                sx={ { ...sx, color: "inherit" } }
             />
         </Tooltip>
     );

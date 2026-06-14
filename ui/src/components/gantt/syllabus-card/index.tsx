@@ -6,18 +6,18 @@
  */
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import Card from "@mui/material/Card";
+import Card, { CardProps } from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import CardProps from "@mui/material/CardProps";
 import Collapse from "@mui/material/Collapse";
 import IconButton from "@mui/material/IconButton";
 import { styled } from "@mui/material/styles";
 import { useState } from "react";
 
-import {
-    GanttCurriculumId,
-    GanttSyllabusId,
-} from "@/api-shared/types/gantt/models";
+import
+    {
+        GanttCurriculumId,
+        GanttSyllabusId,
+    } from "@/api-shared/types/gantt/models";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { ModulesTable } from "@/components/gantt/syllabus-card/ModulesTable";
 import { SyllabusCardActions } from "@/components/gantt/syllabus-card/SyllabusCardActions";
@@ -28,9 +28,10 @@ export type SyllabusCardProps = {
     syllabusId: GanttSyllabusId;
 } & Omit<CardProps, "sx">;
 
-const ExpandMore = styled((props: { _expand: boolean } & any) => {
+const ExpandMore = styled((props: { _expand: boolean; } & any) =>
+{
     const { expand: _expand, ...other } = props;
-    return <IconButton {...other} />;
+    return <IconButton { ...other } />;
 })(({ theme, expand }) => ({
     transform: !expand ? "rotate(0deg)" : "rotate(180deg)",
     marginLeft: "auto",
@@ -43,17 +44,19 @@ export function SyllabusCard({
     curriculumId,
     syllabusId,
     ...props
-}: SyllabusCardProps) {
+}: SyllabusCardProps)
+{
     const syllabus = useSyllabus(syllabusId);
-    const [expanded, setExpanded] = useState<boolean>(true);
+    const [ expanded, setExpanded ] = useState<boolean>(true);
 
-    const handleExpandClick = () => {
+    const handleExpandClick = () =>
+    {
         setExpanded(!expanded);
     };
 
     return (
         <Card
-            sx={{
+            sx={ {
                 display: "flex",
                 flexDirection: "column",
                 width: "30%",
@@ -69,43 +72,43 @@ export function SyllabusCard({
                         "0 12px 24px -10px rgba(0, 0, 0, 0.15), 0 8px 16px -8px rgba(0, 0, 0, 0.1)",
                     borderColor: "primary.light",
                 },
-            }}
-            {...props}
+            } }
+            { ...props }
         >
             <SyllabusCardHeader
                 action={
                     <ExpandMore
-                        aria-expanded={expanded}
+                        aria-expanded={ expanded }
                         aria-label="show more"
-                        expand={expanded}
-                        onClick={handleExpandClick}
+                        expand={ expanded }
+                        onClick={ handleExpandClick }
                     >
                         <ExpandMoreIcon />
                     </ExpandMore>
                 }
-                sx={{ pb: 0, pt: 1.5, px: 2 }}
-                syllabusId={syllabusId}
+                sx={ { pb: 0, pt: 1.5, px: 2 } }
+                syllabusId={ syllabusId }
             />
 
-            <Collapse in={expanded} timeout="auto" unmountOnExit>
+            <Collapse in={ expanded } timeout="auto" unmountOnExit>
                 <CardContent
-                    sx={{
+                    sx={ {
                         display: "flex",
                         flexDirection: "column",
                         paddingY: 1,
                         flex: 1,
                         overflow: "hidden",
-                    }}
+                    } }
                 >
                     <ModulesTable
-                        curriculumId={curriculumId}
-                        syllabusId={syllabusId}
-                        syllabusModules={syllabus?.modules ?? []}
+                        curriculumId={ curriculumId }
+                        syllabusId={ syllabusId }
+                        syllabusModules={ syllabus?.modules ?? [] }
                     />
                 </CardContent>
                 <SyllabusCardActions
-                    curriculumId={curriculumId}
-                    syllabusId={syllabusId}
+                    curriculumId={ curriculumId }
+                    syllabusId={ syllabusId }
                 />
             </Collapse>
         </Card>

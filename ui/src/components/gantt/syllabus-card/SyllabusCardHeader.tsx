@@ -1,6 +1,5 @@
 import Box from "@mui/material/Box";
-import CardHeader from "@mui/material/CardHeader";
-import CardHeaderProps from "@mui/material/CardHeaderProps";
+import CardHeader, { CardHeaderProps } from "@mui/material/CardHeader";
 
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
@@ -11,21 +10,22 @@ export type SyllabusCardHeaderProps = {
     syllabusId: GanttSyllabusId;
 } & Omit<CardHeaderProps, "title">;
 
-function InternalHeader({ syllabusId }: { syllabusId: GanttSyllabusId }) {
+function InternalHeader({ syllabusId }: { syllabusId: GanttSyllabusId; })
+{
     const syllabus = useSyllabus(syllabusId);
 
     return (
         <Box
-            alignItems={"center"}
-            display={"flex"}
-            flexDirection={"row"}
-            flexWrap={"nowrap"}
+            alignItems={ "center" }
+            display={ "flex" }
+            flexDirection={ "row" }
+            flexWrap={ "nowrap" }
         >
             <SyllabusName
-                key={`${syllabus?.title ?? "-syllabus-title"}`}
-                syllabusId={syllabusId}
+                key={ `${syllabus?.title ?? "-syllabus-title"}` }
+                syllabusId={ syllabusId }
             />
-            <HoursBox syllabusId={syllabusId} />
+            <HoursBox syllabusId={ syllabusId } />
         </Box>
     );
 }
@@ -33,11 +33,12 @@ function InternalHeader({ syllabusId }: { syllabusId: GanttSyllabusId }) {
 export function SyllabusCardHeader({
     syllabusId,
     ...props
-}: SyllabusCardHeaderProps) {
+}: SyllabusCardHeaderProps)
+{
     return (
         <CardHeader
-            title={<InternalHeader syllabusId={syllabusId} />}
-            {...props}
+            title={ <InternalHeader syllabusId={ syllabusId } /> }
+            { ...props }
         />
     );
 }

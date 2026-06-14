@@ -1,5 +1,5 @@
 import Box from "@mui/material/Box";
-import ButtonProps from "@mui/material/ButtonProps";
+import { ButtonProps } from "@mui/material/Button";
 import { useState } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
@@ -24,44 +24,45 @@ export function CurriculumActionItems({
     disabled,
     sourceCurriculum,
     ...props
-}: CreateNewCurriculumProps) {
-    const [isProcessing, setIsProcessing] = useState(false);
+}: CreateNewCurriculumProps)
+{
+    const [ isProcessing, setIsProcessing ] = useState(false);
     const isDisabled = disabled || isProcessing;
 
     return (
         <Box
-            alignItems={"center"}
+            alignItems={ "center" }
             display="flex"
             flexDirection="row"
-            flexWrap={"wrap"}
-            gap={0.5}
-            justifyContent={"center"}
-            justifyItems={"center"}
-            sx={{ mt: 1, mb: 0.5 }}
+            flexWrap={ "wrap" }
+            gap={ 0.5 }
+            justifyContent={ "center" }
+            justifyItems={ "center" }
+            sx={ { mt: 1, mb: 0.5 } }
         >
             <CreateDraftAction
-                disabled={isDisabled}
-                onCreate={onCreate}
-                onProcessingChange={setIsProcessing}
-                {...props}
+                disabled={ isDisabled }
+                onCreate={ onCreate }
+                onProcessingChange={ setIsProcessing }
+                { ...props }
             />
             <DuplicateCurriculumAction
-                disabled={isDisabled || !sourceCurriculum}
-                onCreate={onCreate}
-                onProcessingChange={setIsProcessing}
-                sourceCurriculum={sourceCurriculum}
+                disabled={ isDisabled || !sourceCurriculum }
+                onCreate={ onCreate }
+                onProcessingChange={ setIsProcessing }
+                sourceCurriculum={ sourceCurriculum }
             />
             <ToggleDraftAction
-                disabled={isDisabled || !sourceCurriculum}
-                onProcessingChange={setIsProcessing}
-                onUpdate={onUpdate}
-                sourceCurriculum={sourceCurriculum}
+                disabled={ isDisabled || !sourceCurriculum }
+                onProcessingChange={ setIsProcessing }
+                onUpdate={ onUpdate }
+                sourceCurriculum={ sourceCurriculum }
             />
             <DeleteCurriculumAction
-                disabled={isDisabled || !sourceCurriculum}
-                onDelete={onDelete}
-                onProcessingChange={setIsProcessing}
-                sourceCurriculum={sourceCurriculum}
+                disabled={ isDisabled || !sourceCurriculum }
+                onDelete={ onDelete }
+                onProcessingChange={ setIsProcessing }
+                sourceCurriculum={ sourceCurriculum }
             />
         </Box>
     );

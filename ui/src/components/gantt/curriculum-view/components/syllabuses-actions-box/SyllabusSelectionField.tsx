@@ -1,22 +1,21 @@
 import LinkIcon from "@mui/icons-material/Link";
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
+import Box, { BoxProps } from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import SelectChangeEvent from "@mui/material/SelectChangeEvent";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Tooltip from "@mui/material/Tooltip";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import {
-    GanttCurriculumId,
-    GanttSyllabusId,
-} from "@/api-shared/types/gantt/models";
+import
+    {
+        GanttCurriculumId,
+        GanttSyllabusId,
+    } from "@/api-shared/types/gantt/models";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";

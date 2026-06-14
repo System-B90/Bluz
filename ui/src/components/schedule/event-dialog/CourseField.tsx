@@ -1,11 +1,9 @@
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
-import FormControl from "@mui/material/FormControl";
-import FormControlProps from "@mui/material/FormControlProps";
+import FormControl, { FormControlProps } from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import SelectChangeEvent from "@mui/material/SelectChangeEvent";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { useCallback, useState } from "react";
 
 import { CourseId } from "@/api-shared/types/course";
@@ -19,14 +17,16 @@ export function CourseField({
     event,
     onBlurCallback,
     ...props
-}: CourseFieldProps & FormControlProps) {
+}: CourseFieldProps & FormControlProps)
+{
     const { courses, getCourse } = useCourses();
-    const [currentCourseIds, setCurrentCourseIds] = useState(
+    const [ currentCourseIds, setCurrentCourseIds ] = useState(
         Array.isArray(event?.courses) ? event.courses : [],
     );
 
     const handleChange = useCallback(
-        (event: SelectChangeEvent<typeof currentCourseIds>) => {
+        (event: SelectChangeEvent<typeof currentCourseIds>) =>
+        {
             const {
                 target: { value },
             } = event;
@@ -41,52 +41,54 @@ export function CourseField({
         [],
     );
 
-    const handleDelete = useCallback((courseIdToDelete: CourseId) => {
+    const handleDelete = useCallback((courseIdToDelete: CourseId) =>
+    {
         setCurrentCourseIds(
             (p) => p.filter((id) => id !== courseIdToDelete) ?? [],
         );
     }, []);
 
-    const onClose = useCallback(() => {
+    const onClose = useCallback(() =>
+    {
         onBlurCallback({ courses: currentCourseIds });
-    }, [currentCourseIds, onBlurCallback]);
+    }, [ currentCourseIds, onBlurCallback ]);
 
     return (
         <FormControl
-            fullWidth={false}
-            {...props}
-            disabled={event?.type ? !eventHasRoom(event.type) : false}
+            fullWidth={ false }
+            { ...props }
+            disabled={ event?.type ? !eventHasRoom(event.type) : false }
         >
             <InputLabel>מסלולים</InputLabel>
             <Select
                 label="מסלולים"
                 multiple
-                onChange={handleChange}
-                onClose={onClose}
-                renderValue={(selected: Array<CourseId>) => (
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                        {selected.map((value) => (
+                onChange={ handleChange }
+                onClose={ onClose }
+                renderValue={ (selected: Array<CourseId>) => (
+                    <Box sx={ { display: "flex", flexWrap: "wrap", gap: 0.5 } }>
+                        { selected.map((value) => (
                             <Chip
-                                key={value}
-                                label={getCourse(value)?.name ?? value}
-                                onDelete={() => handleDelete(value)}
-                                onMouseDown={(event) => event.stopPropagation()}
+                                key={ value }
+                                label={ getCourse(value)?.name ?? value }
+                                onDelete={ () => handleDelete(value) }
+                                onMouseDown={ (event) => event.stopPropagation() }
                                 size="small" // Optional: makes them fit better
                             />
-                        ))}
+                        )) }
                     </Box>
-                )}
-                value={currentCourseIds}
+                ) }
+                value={ currentCourseIds }
             >
-                {courses.map((course) => (
+                { courses.map((course) => (
                     <MenuItem
-                        color={course.color ?? undefined}
-                        key={course.id}
-                        value={course.id}
+                        color={ course.color ?? undefined }
+                        key={ course.id }
+                        value={ course.id }
                     >
-                        {course.name}
+                        { course.name }
                     </MenuItem>
-                ))}
+                )) }
             </Select>
         </FormControl>
     );

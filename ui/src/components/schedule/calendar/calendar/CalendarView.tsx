@@ -6,10 +6,11 @@ import { CalendarProps, View, Views } from "react-big-calendar";
 import { Room, RoomSource, roomToResolvable } from "@/api-shared/types/room"; // Import the full Room type and roomToResolvable
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
-import {
-    DnDCalendar,
-    localizer,
-} from "@/components/schedule/calendar/calendar/DndLocalizer";
+import
+    {
+        DnDCalendar,
+        localizer,
+    } from "@/components/schedule/calendar/calendar/DndLocalizer";
 import { CustomWorkWeek } from "@/components/schedule/calendar/CustomWorkWeek";
 import { BluzEventComponent } from "@/components/schedule/event-component/base";
 import { Event } from "@/components/schedule/types/event";
@@ -30,12 +31,13 @@ const HEBREW_DAYS_FULL = [
     "שישי",
     "שבת",
 ];
-const HEBREW_DAYS_SHORT = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
+const HEBREW_DAYS_SHORT = [ "א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'" ];
 
-function CalendarHeader({ date }: { date: Date }) {
+function CalendarHeader({ date }: { date: Date; })
+{
     const dayIndex = date.getDay();
-    const dayFull = HEBREW_DAYS_FULL[dayIndex];
-    const dayShort = HEBREW_DAYS_SHORT[dayIndex];
+    const dayFull = HEBREW_DAYS_FULL[ dayIndex ];
+    const dayShort = HEBREW_DAYS_SHORT[ dayIndex ];
     const dayjsDate = dayjs(date);
     const dateStr = dayjsDate.format("DD/MM");
     const isToday = dayjsDate.isSame(dayjs(), "day");
@@ -44,37 +46,37 @@ function CalendarHeader({ date }: { date: Date }) {
         <Box
             alignItems="center"
             display="flex"
-            gap={1}
+            gap={ 1 }
             justifyContent="center"
-            py={0.75}
-            sx={{
+            py={ 0.75 }
+            sx={ {
                 width: "100%",
                 minHeight: 38,
-            }}
+            } }
         >
             <Typography
                 component="span"
-                sx={{
+                sx={ {
                     fontSize: "0.875rem",
                     fontWeight: isToday ? "bold" : 600,
                     color: isToday ? "primary.main" : "text.primary",
-                }}
+                } }
             >
                 <Box
                     component="span"
-                    sx={{ display: { xs: "none", sm: "inline" } }}
+                    sx={ { display: { xs: "none", sm: "inline" } } }
                 >
-                    {dayFull}
+                    { dayFull }
                 </Box>
                 <Box
                     component="span"
-                    sx={{ display: { xs: "inline", sm: "none" } }}
+                    sx={ { display: { xs: "inline", sm: "none" } } }
                 >
-                    {dayShort}
+                    { dayShort }
                 </Box>
             </Typography>
             <Box
-                sx={{
+                sx={ {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -85,9 +87,9 @@ function CalendarHeader({ date }: { date: Date }) {
                     color: isToday ? "primary.contrastText" : "text.secondary",
                     px: 1,
                     py: 0.25,
-                }}
+                } }
             >
-                {dateStr}
+                { dateStr }
             </Box>
         </Box>
     );
@@ -100,7 +102,7 @@ type CalendarViewProps = {
     date: Date;
     showToolbar: boolean;
     onView: (view: View) => void;
-    onNavigate: CalendarProps["onNavigate"];
+    onNavigate: CalendarProps[ "onNavigate" ];
     onSelectEvent: (event: Event) => void;
     onDoubleClickEvent: (event: Event) => void;
     onSelectSlot: (slotInfo: any) => void;
@@ -123,52 +125,56 @@ export function CalendarView({
     onEventDrop,
     onToggleFullscreen,
     onToggleToolbar,
-}: CalendarViewProps) {
+}: CalendarViewProps)
+{
     return (
         <DnDCalendar
             className="relative grow h-full"
-            components={{
+            components={ {
                 event: BluzEventComponent,
                 toolbar: (props: any) => (
                     <CalendarToolbar
-                        {...props}
-                        onToggleFullscreen={onToggleFullscreen}
-                        onToggleToolbar={onToggleToolbar}
-                        showToolbar={showToolbar}
+                        { ...props }
+                        onToggleFullscreen={ onToggleFullscreen }
+                        onToggleToolbar={ onToggleToolbar }
+                        showToolbar={ showToolbar }
                     />
                 ),
                 header: CalendarHeader,
-            }}
-            date={date}
-            defaultView={Views.WEEK}
-            draggableAccessor={(e) => !e.locked}
-            endAccessor={(e) => (e.endTime as Dayjs).toDate()}
-            events={events}
-            formats={{
+            } }
+            date={ date }
+            defaultView={ Views.WEEK }
+            draggableAccessor={ (e) => !e.locked }
+            endAccessor={ (e) => (e.endTime as Dayjs).toDate() }
+            events={ events }
+            formats={ {
                 timeGutterFormat: "HH:mm",
-                dayRangeHeaderFormat: ({ start, end }) => {
+                dayRangeHeaderFormat: ({ start, end }) =>
+                {
                     const s = dayjs(start).locale("he");
                     const e = dayjs(end).locale("he");
-                    if (s.month() === e.month()) {
+                    if (s.month() === e.month())
+                    {
                         return `${s.format("DD")} - ${e.format("DD")} ב${s.format("MMMM")} ${s.format("YYYY")}`;
-                    } else {
+                    } else
+                    {
                         return `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")} ${e.format("YYYY")}`;
                     }
                 },
-            }}
-            localizer={localizer}
-            max={new Date(2025, 0, 1, 22, 0)}
-            messages={CALENDAR_MESSAGES}
-            min={new Date(2025, 0, 1, 7, 0)}
-            onDoubleClickEvent={onDoubleClickEvent}
-            onEventDrop={onEventDrop}
-            onEventResize={onEventDrop}
-            onNavigate={onNavigate}
-            onSelectEvent={onSelectEvent}
-            onSelectSlot={onSelectSlot}
-            onView={onView}
-            resizableAccessor={(e) => !e.locked}
-            resourceAccessor={(event: Event) =>
+            } }
+            localizer={ localizer }
+            max={ new Date(2025, 0, 1, 22, 0) }
+            messages={ CALENDAR_MESSAGES }
+            min={ new Date(2025, 0, 1, 7, 0) }
+            onDoubleClickEvent={ onDoubleClickEvent }
+            onEventDrop={ onEventDrop }
+            onEventResize={ onEventDrop }
+            onNavigate={ onNavigate }
+            onSelectEvent={ onSelectEvent }
+            onSelectSlot={ onSelectSlot }
+            onView={ onView }
+            resizableAccessor={ (e) => !e.locked }
+            resourceAccessor={ (event: Event) =>
                 event.rooms.length > 0
                     ? event.rooms.map((room) => JSON.stringify(room))
                     : [
@@ -178,24 +184,24 @@ export function CalendarView({
                         }),
                     ]
             }
-            resourceIdAccessor={(room: Room) =>
+            resourceIdAccessor={ (room: Room) =>
                 JSON.stringify(roomToResolvable(room))
             }
             // Resource logic
             resources={
                 currentView === Views.DAY
-                    ? [NO_ROOM_RESOURCE, ...rooms]
+                    ? [ NO_ROOM_RESOURCE, ...rooms ]
                     : undefined
             }
             resourceTitleAccessor="name"
-            rtl={true}
+            rtl={ true }
             selectable
-            startAccessor={(e) => (e.startTime as Dayjs).toDate()}
-            step={5}
-            style={{ height: "100%" }}
-            timeslots={12}
-            view={currentView}
-            views={{ day: true, week: true, work_week: CustomWorkWeek }}
+            startAccessor={ (e) => (e.startTime as Dayjs).toDate() }
+            step={ 5 }
+            style={ { height: "100%" } }
+            timeslots={ 12 }
+            view={ currentView }
+            views={ { day: true, week: true, work_week: CustomWorkWeek } }
         />
     );
 }

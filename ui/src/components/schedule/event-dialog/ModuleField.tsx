@@ -1,5 +1,4 @@
-import FormControl from "@mui/material/FormControl";
-import FormControlProps from "@mui/material/FormControlProps";
+import FormControl, { FormControlProps } from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
@@ -17,16 +16,17 @@ export function ModuleField({
     event,
     onEventChange,
     ...props
-}: ModuleFieldProps & FormControlProps) {
+}: ModuleFieldProps & FormControlProps)
+{
     const { getModulesOfSubject } = useHiveModules();
     const modules = useMemo(
         () => (event?.subject ? getModulesOfSubject(event?.subject) : []),
-        [event?.subject, getModulesOfSubject],
+        [ event?.subject, getModulesOfSubject ],
     );
 
     const moduleMenuItems = modules.map((module) => (
-        <MenuItem key={module.id} value={module.id}>
-            {module.name}
+        <MenuItem key={ module.id } value={ module.id }>
+            { module.name }
         </MenuItem>
     ));
 
@@ -36,16 +36,16 @@ export function ModuleField({
                 (event?.type ? !eventHasSubject(event?.type) : false) ||
                 modules.length === 0
             }
-            fullWidth={false}
-            {...props}
+            fullWidth={ false }
+            { ...props }
         >
             <InputLabel>מערך</InputLabel>
             <Select
                 label="מערך"
-                onChange={(e) => onEventChange({ hiveModule: e.target.value })}
-                value={event?.hiveModule ?? ""}
+                onChange={ (e) => onEventChange({ hiveModule: e.target.value }) }
+                value={ event?.hiveModule ?? "" }
             >
-                {moduleMenuItems}
+                { moduleMenuItems }
             </Select>
         </FormControl>
     );

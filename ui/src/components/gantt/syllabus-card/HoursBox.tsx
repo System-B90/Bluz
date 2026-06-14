@@ -1,5 +1,4 @@
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
+import Box, { BoxProps } from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
@@ -9,10 +8,11 @@ import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
-import {
-    calculateMinimumRequiredTimeForModule,
-    calculateMinimumRequiredTimeForSyllabus,
-} from "@/components/gantt/utils";
+import
+    {
+        calculateMinimumRequiredTimeForModule,
+        calculateMinimumRequiredTimeForSyllabus,
+    } from "@/components/gantt/utils";
 
 export type HoursBoxProps = {
     syllabusId: GanttSyllabusId;

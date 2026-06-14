@@ -1,7 +1,6 @@
 "use client";
 import SettingsIcon from "@mui/icons-material/Settings";
-import AppBar from "@mui/material/AppBar";
-import AppBarProps from "@mui/material/AppBarProps";
+import AppBar, { AppBarProps } from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
@@ -23,86 +22,86 @@ export function ScheduleAppBar({
     ...props
 }: {
     setOpenSettingsDialog: (open: boolean) => void;
-} & Exclude<AppBarProps, "position">) {
+} & Exclude<AppBarProps, "position">)
+{
     const pathname = usePathname();
     const curriculumPage = pathname.includes("/curriculum");
-    const [filtersVisible, setFiltersVisible] =
-        useState<boolean>(!curriculumPage);
+    const [ filtersVisible, setFiltersVisible ] = useState<boolean>(!curriculumPage);
 
     return (
         <AppBar
             className="flex justify-center py-0 h-14"
             color="default"
-            enableColorOnDark={false}
+            enableColorOnDark={ false }
             position="sticky"
-            sx={{ ...props.sx, zIndex: (theme) => theme.zIndex.drawer + 1 }}
-            {...props}
+            sx={ { ...props.sx, zIndex: (theme) => theme.zIndex.drawer + 1 } }
+            { ...props }
         >
-            <Toolbar variant="dense">
+            <Toolbar variant="dense" sx={ { direction: 'rtl' } }>
                 <Box
                     alignItems="center"
                     display="flex"
-                    flexDirection={"row"}
-                    gap={1}
+                    flexDirection={ "row" }
+                    gap={ 1 }
                 >
                     <Button
                         color="inherit"
-                        component={Link}
+                        component={ Link }
                         href="/"
-                        startIcon={<Logo height={"2rem"} width={"2rem"} />}
+                        startIcon={ <Logo height={ "2rem" } width={ "2rem" } /> }
                         variant="text"
                     >
                         <Typography variant="h6">בלוז</Typography>
                     </Button>
 
-                    <Box width={"0.3rem"} />
+                    <Box width={ "0.3rem" } />
 
                     <UserAccessCard />
                 </Box>
 
                 <Box
-                    alignItems={"center"}
-                    display={"flex"}
-                    flexDirection={"row"}
-                    flexGrow={1}
-                    justifyContent={"center"}
+                    alignItems={ "center" }
+                    display={ "flex" }
+                    flexDirection={ "row" }
+                    flexGrow={ 1 }
+                    justifyContent={ "center" }
                 >
-                    {filtersVisible ? (
+                    { filtersVisible ? (
                         <Filters
-                            alignItems={"center"}
-                            boxSizing={"border-box"}
-                            display={"flex"}
-                            flex={1}
-                            gap={1}
-                            justifyContent={"center"}
-                            paddingBlockEnd={1}
-                            paddingBlockStart={1}
+                            alignItems={ "center" }
+                            boxSizing={ "border-box" }
+                            display={ "flex" }
+                            flex={ 1 }
+                            gap={ 1 }
+                            justifyContent={ "center" }
+                            paddingBlockEnd={ 1 }
+                            paddingBlockStart={ 1 }
                         />
-                    ) : null}
+                    ) : null }
                 </Box>
 
                 <Box
-                    alignContent={"center"}
-                    alignItems={"center"}
-                    display={"flex"}
-                    gap={1}
-                    justifyContent={"flex-end"}
+                    alignContent={ "center" }
+                    alignItems={ "center" }
+                    display={ "flex" }
+                    gap={ 1 }
+                    justifyContent={ "flex-end" }
                 >
-                    {!curriculumPage && (
+                    { !curriculumPage && (
                         <FilterIcon
-                            filtersVisible={filtersVisible}
-                            setFiltersVisible={setFiltersVisible}
+                            filtersVisible={ filtersVisible }
+                            setFiltersVisible={ setFiltersVisible }
                         />
-                    )}
-                    {!curriculumPage && <OfflineModeIcon />}
+                    ) }
+                    { !curriculumPage && <OfflineModeIcon /> }
                     <CurriculumIcon />
 
-                    {/* <InstructorToolsIcon /> */}
+                    {/* <InstructorToolsIcon /> */ }
 
                     <IconButton
                         className="hover-rotate-subtle transition-all duration-200 hover:scale-110 active:scale-95"
                         color="inherit"
-                        onClick={() => setOpenSettingsDialog(true)}
+                        onClick={ () => setOpenSettingsDialog(true) }
                         size="small"
                     >
                         <SettingsIcon color="inherit" fontSize="small" />

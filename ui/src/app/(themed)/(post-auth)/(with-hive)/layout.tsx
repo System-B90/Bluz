@@ -25,7 +25,8 @@ function LayoutContent({
     children: React.ReactNode;
     openSettingsDialog: boolean;
     setOpenSettingsDialog: (open: boolean) => void;
-}) {
+})
+{
     const { offlineMode } = useOffline();
 
     return (
@@ -34,27 +35,27 @@ function LayoutContent({
             display="flex"
             flexDirection="column"
             height="100vh"
-            overflow={"hidden"}
-            sx={{ p: 0 }}
+            overflow={ "hidden" }
+            sx={ { p: 0 } }
             width="100vw"
         >
-            <ScheduleAppBar setOpenSettingsDialog={setOpenSettingsDialog} />
+            <ScheduleAppBar setOpenSettingsDialog={ setOpenSettingsDialog } />
 
             <Box
                 height="calc(100vh - 56px)"
-                sx={{
+                sx={ {
                     position: "relative",
-                }}
+                } }
             >
-                {children}
+                { children }
             </Box>
 
-            {offlineMode ? (
+            { offlineMode ? (
                 <Tooltip placement="right" title="מצב עריכה לוקלי פעיל">
                     <Fab
                         aria-label="offline-status"
                         color="warning"
-                        sx={{
+                        sx={ {
                             position: "fixed",
                             bottom: 24,
                             left: 24,
@@ -74,16 +75,16 @@ function LayoutContent({
                             "&:active": {
                                 scale: "0.95",
                             },
-                        }}
+                        } }
                     >
-                        <WifiTetheringOffIcon sx={{ fontSize: "1.3rem" }} />
+                        <WifiTetheringOffIcon sx={ { fontSize: "1.3rem" } } />
                     </Fab>
                 </Tooltip>
-            ) : null}
+            ) : null }
 
             <SettingsDialog
-                onClose={() => setOpenSettingsDialog(false)}
-                open={openSettingsDialog}
+                onClose={ () => setOpenSettingsDialog(false) }
+                open={ openSettingsDialog }
             />
         </Box>
     );
@@ -93,8 +94,9 @@ export default function PostAuthLayout({
     children,
 }: {
     children: React.ReactNode;
-}) {
-    const [openSettingsDialog, setOpenSettingsDialog] =
+})
+{
+    const [ openSettingsDialog, setOpenSettingsDialog ] =
         useState<boolean>(false);
 
     return (
@@ -115,7 +117,7 @@ export default function PostAuthLayout({
                                                     setOpenSettingsDialog
                                                 }
                                             >
-                                                {children}
+                                                { children }
                                             </LayoutContent>
                                         </CalendarProvider>
                                     </OfflineProvider>

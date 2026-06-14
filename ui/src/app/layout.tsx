@@ -16,25 +16,23 @@ export default function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
-}>) {
+}>)
+{
     const wsHost = process.env.WEBSOCKET_SESSION_SERVER_HOST || "bluz.bis";
     const wsProtcol = WEBSOCKET_PROTOCOL || "wss";
     const wsPortSuffix = WEBSOCKET_PORT_SUFFIX || "";
 
     return (
-        <html dir="rtl" lang="he" suppressHydrationWarning>
-            <body
-                className="antialiased w-screen h-screen overflow-hidden"
-                dir="rtl"
-            >
+        <html lang="he" suppressHydrationWarning>
+            <body className="antialiased w-screen h-screen overflow-hidden">
                 <InitColorSchemeScript attribute="class" />
                 <WebSocketConfigProvider
-                    host={wsHost}
-                    portSuffix={wsPortSuffix}
-                    protocol={wsProtcol}
+                    host={ wsHost }
+                    portSuffix={ wsPortSuffix }
+                    protocol={ wsProtcol }
                 >
                     <MuiEmotionCacheProvider>
-                        {children}
+                        { children }
                     </MuiEmotionCacheProvider>
                 </WebSocketConfigProvider>
             </body>

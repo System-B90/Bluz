@@ -1,6 +1,5 @@
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import CardProps from "@mui/material/CardProps";
+import Card, { CardProps } from "@mui/material/Card";
 import Skeleton from "@mui/material/Skeleton";
 import Typography from "@mui/material/Typography";
 
@@ -18,29 +17,30 @@ export function CurriculumAboutCard({
     curriculumId,
     curriculum,
     ...props
-}: CurriculumCardProps) {
+}: CurriculumCardProps)
+{
     return (
-        <Card sx={{ padding: 2, minWidth: "14rem", flexShrink: 0 }} {...props}>
+        <Card sx={ { padding: 2, minWidth: "14rem", flexShrink: 0 } } { ...props }>
             <CurriculumName
-                curriculumId={curriculumId}
-                title={curriculum?.title}
+                curriculumId={ curriculumId }
+                title={ curriculum?.title }
             />
             <CurriculumDescription
-                curriculumId={curriculumId}
-                description={curriculum?.description}
+                curriculumId={ curriculumId }
+                description={ curriculum?.description }
             />
-            <Box color="textSecondary" display={"flex"} flexDirection={"row"}>
+            <Box color="textSecondary" display={ "flex" } flexDirection={ "row" }>
                 <Typography color="textSecondary" variant="body2">
                     עדכון אחרון:
                 </Typography>
-                <Box width={"0.2rem"} />
-                {curriculum?.updatedAt ? (
+                <Box width={ "0.2rem" } />
+                { curriculum?.updatedAt ? (
                     <Typography color="textSecondary">
-                        {curriculum.updatedAt.format("DD/MM/YYYY")}
+                        { curriculum.updatedAt.format("DD/MM/YYYY") }
                     </Typography>
                 ) : (
-                    <Skeleton variant="text" width={80} />
-                )}
+                    <Skeleton variant="text" width={ 80 } />
+                ) }
             </Box>
         </Card>
     );

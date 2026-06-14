@@ -8,15 +8,15 @@ import Box from "@mui/material/Box";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import SelectChangeEvent from "@mui/material/SelectChangeEvent";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { useCallback, useRef, useState } from "react";
 
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
-import {
-    EventType,
-    eventTypeToHebrew,
-} from "@/components/schedule/types/event";
+import
+    {
+        EventType,
+        eventTypeToHebrew,
+    } from "@/components/schedule/types/event";
 
 function getEventTypeIcon(type: EventType, props = {}) {
     switch (type) {

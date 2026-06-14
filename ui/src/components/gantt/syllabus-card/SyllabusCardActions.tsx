@@ -1,16 +1,16 @@
 import LinkOffIcon from "@mui/icons-material/LinkOff";
-import CardActions from "@mui/material/CardActions";
-import CardActionsProps from "@mui/material/CardActionsProps";
+import CardActions, { CardActionsProps } from "@mui/material/CardActions";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import {
-    GanttCurriculumId,
-    GanttSyllabusId,
-} from "@/api-shared/types/gantt/models";
+import
+    {
+        GanttCurriculumId,
+        GanttSyllabusId,
+    } from "@/api-shared/types/gantt/models";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 
 export type SyllabusCardActionsProps = {
@@ -22,11 +22,13 @@ export function SyllabusCardActions({
     curriculumId,
     syllabusId,
     ...props
-}: SyllabusCardActionsProps) {
+}: SyllabusCardActionsProps)
+{
     const { enqueueSnackbar } = useSnackbar();
     const { unlinkSyllabusFromCurriculum } = useSyllabusActions();
 
-    const deleteHandler = useCallback(() => {
+    const deleteHandler = useCallback(() =>
+    {
         unlinkSyllabusFromCurriculum(curriculumId, syllabusId).catch((error) =>
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
@@ -42,11 +44,11 @@ export function SyllabusCardActions({
     ]);
 
     return (
-        <CardActions {...props}>
+        <CardActions { ...props }>
             <Tooltip title="הסר סילבוס מהגאנט">
                 <IconButton
                     color="warning"
-                    onClick={deleteHandler}
+                    onClick={ deleteHandler }
                     size="small"
                 >
                     <LinkOffIcon fontSize="small" />

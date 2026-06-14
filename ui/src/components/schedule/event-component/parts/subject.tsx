@@ -1,5 +1,4 @@
-import Typography from "@mui/material/Typography";
-import TypographyProps from "@mui/material/TypographyProps";
+import Typography, { TypographyProps } from "@mui/material/Typography";
 import Link from "next/link";
 import { useMemo } from "react";
 
@@ -12,19 +11,20 @@ import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 export function SubjectComponent({
     subjectId,
     ...props
-}: { subjectId: SubjectLike } & TypographyProps) {
+}: { subjectId: SubjectLike; } & TypographyProps)
+{
     const { getSubject } = useHiveSubjects();
     const subject = useMemo(
         () => getSubject(subjectId),
-        [subjectId, getSubject],
+        [ subjectId, getSubject ],
     );
 
     return (
         <Link
             className="hover:underline"
-            href={`${getHiveBaseUrl()}/course/${subject?.id}`}
+            href={ `${getHiveBaseUrl()}/course/${subject?.id}` }
         >
-            <Typography {...props}>{subject?.name}</Typography>
+            <Typography { ...props }>{ subject?.name }</Typography>
         </Link>
     );
 }
@@ -32,19 +32,20 @@ export function SubjectComponent({
 export function ModuleComponent({
     moduleId,
     ...props
-}: { moduleId: ModuleLike } & TypographyProps) {
+}: { moduleId: ModuleLike; } & TypographyProps)
+{
     const { getModule } = useHiveModules();
     const hiveModule = useMemo(
         () => getModule(moduleId),
-        [moduleId, getModule],
+        [ moduleId, getModule ],
     );
 
     return (
         <Link
             className="hover:underline"
-            href={`${getHiveBaseUrl()}/course/${hiveModule?.parent_subject}/${hiveModule?.id}`}
+            href={ `${getHiveBaseUrl()}/course/${hiveModule?.parent_subject}/${hiveModule?.id}` }
         >
-            <Typography {...props}>{hiveModule?.name}</Typography>
+            <Typography { ...props }>{ hiveModule?.name }</Typography>
         </Link>
     );
 }

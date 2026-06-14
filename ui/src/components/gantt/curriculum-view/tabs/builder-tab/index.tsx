@@ -5,31 +5,32 @@
  * Author: Michael K. Steinberg
  */
 
-import {
-    DndContext,
-    DragEndEvent,
-    DragOverlay,
-    DragStartEvent,
-    KeyboardSensor,
-    PointerSensor,
-    closestCenter,
-    defaultDropAnimationSideEffects,
-    useSensor,
-    useSensors,
-} from "@dnd-kit/core";
+import
+    {
+        DndContext,
+        DragEndEvent,
+        DragOverlay,
+        DragStartEvent,
+        KeyboardSensor,
+        PointerSensor,
+        closestCenter,
+        defaultDropAnimationSideEffects,
+        useSensor,
+        useSensors,
+    } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
+import Box, { BoxProps } from "@mui/material/Box";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/models";
 import { CurriculumViewBuilderWeeksView } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumViewBuilderWeeksView";
-import {
-    DndDragEventActiveData,
-    DndDragEventOverData,
-} from "@/components/gantt/curriculum-view/tabs/builder-tab/components/dnd-types";
+import
+    {
+        DndDragEventActiveData,
+        DndDragEventOverData,
+    } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/dnd-types";
 import { ModuleItem } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";

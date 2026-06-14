@@ -1,14 +1,14 @@
-import SvgIcon from "@mui/material/SvgIcon";
-import SvgIconProps from "@mui/material/SvgIconProps";
+import SvgIcon, { SvgIconProps } from "@mui/material/SvgIcon";
 
-export function OpenHandsIcon(props: SvgIconProps) {
+export function OpenHandsIcon(props: SvgIconProps)
+{
     return (
         <SvgIcon
-            {...props}
-            sx={{
+            { ...props }
+            sx={ {
                 fill: "none",
                 ...props.sx,
-            }}
+            } }
             viewBox="0 0 50 50"
         >
             <path

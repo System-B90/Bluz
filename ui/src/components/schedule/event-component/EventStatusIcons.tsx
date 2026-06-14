@@ -1,8 +1,7 @@
 import ChatIcon from "@mui/icons-material/Chat";
 import FmdBadIcon from "@mui/icons-material/FmdBad";
 import LockIcon from "@mui/icons-material/Lock";
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
+import Box, { BoxProps } from "@mui/material/Box";
 import Tooltip from "@mui/material/Tooltip";
 
 import { Event } from "@/components/schedule/types/event";
