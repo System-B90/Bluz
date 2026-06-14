@@ -96,12 +96,13 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
     {
         const currentMode = mounted && resolvedTheme === "dark" ? "dark" : "light";
         const baseOptions = createThemeOptions();
+        const activePalette = baseOptions.colorSchemes?.[currentMode]?.palette;
 
         return createTheme({
             ...baseOptions,
             direction: "rtl",
             palette: {
-                ...baseOptions.palette,
+                ...activePalette,
                 mode: currentMode,
             },
         });
