@@ -66,7 +66,7 @@ export function DaysTable({
                         <TableCell align="right">
                             <TextField
                                 disabled={!canEdit}
-                                inputProps={{ min: 0, step: 0.5 }}
+                                slotProps={{ htmlInput: { min: 0, step: 0.5 } }}
                                 onBlur={() =>
                                     void onHoursSave(weekIndex, dayIndex)
                                 }

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { InitColorSchemeScript } from "@mui/material/InitColorSchemeScript";
+
 import { MuiEmotionCacheProvider } from "@/components/theme/MuiEmotionCacheProvider";
 import { WebSocketConfigProvider } from "@/components/WebsocketConfigProvider";
 import { WEBSOCKET_PORT_SUFFIX, WEBSOCKET_PROTOCOL } from "@/settings";
@@ -26,6 +28,7 @@ export default function RootLayout({
                 className="antialiased w-screen h-screen overflow-hidden"
                 dir="rtl"
             >
+                <InitColorSchemeScript attribute="class" />
                 <WebSocketConfigProvider
                     host={wsHost}
                     portSuffix={wsPortSuffix}

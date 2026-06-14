@@ -1,3 +1,4 @@
+@layer theme, base, mui, components, utilities;
 @import url("./fonts.css");
 @import "tailwindcss";
 
@@ -26,32 +27,32 @@
         "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
         "Noto Color Emoji";
 
-    --color-border: hsl(var(--border));
-    --color-input: hsl(var(--input));
-    --color-ring: hsl(var(--ring));
-    --color-background: hsl(var(--background));
-    --color-foreground: hsl(var(--foreground));
+    --color-border: var(--mui-palette-divider);
+    --color-input: var(--mui-palette-divider);
+    --color-ring: var(--mui-palette-primary-main);
+    --color-background: var(--mui-palette-background-default);
+    --color-foreground: var(--mui-palette-text-primary);
 
-    --color-primary: hsl(var(--primary));
-    --color-primary-foreground: hsl(var(--primary-foreground));
+    --color-primary: var(--mui-palette-primary-main);
+    --color-primary-foreground: var(--mui-palette-primary-contrastText);
 
-    --color-secondary: hsl(var(--secondary));
-    --color-secondary-foreground: hsl(var(--secondary-foreground));
+    --color-secondary: var(--mui-palette-secondary-main);
+    --color-secondary-foreground: var(--mui-palette-secondary-contrastText);
 
-    --color-destructive: hsl(var(--destructive));
-    --color-destructive-foreground: hsl(var(--destructive-foreground));
+    --color-destructive: var(--mui-palette-error-main);
+    --color-destructive-foreground: var(--mui-palette-error-contrastText);
 
-    --color-muted: hsl(var(--muted));
-    --color-muted-foreground: hsl(var(--muted-foreground));
+    --color-muted: var(--mui-palette-background-default);
+    --color-muted-foreground: var(--mui-palette-text-secondary);
 
-    --color-accent: hsl(var(--accent));
-    --color-accent-foreground: hsl(var(--accent-foreground));
+    --color-accent: var(--mui-palette-primary-light);
+    --color-accent-foreground: var(--mui-palette-primary-contrastText);
 
-    --color-popover: hsl(var(--popover));
-    --color-popover-foreground: hsl(var(--popover-foreground));
+    --color-popover: var(--mui-palette-background-paper);
+    --color-popover-foreground: var(--mui-palette-text-primary);
 
-    --color-card: hsl(var(--card));
-    --color-card-foreground: hsl(var(--card-foreground));
+    --color-card: var(--mui-palette-background-paper);
+    --color-card-foreground: var(--mui-palette-text-primary);
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);

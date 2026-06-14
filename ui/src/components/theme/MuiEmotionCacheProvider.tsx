@@ -13,6 +13,7 @@ export function MuiEmotionCacheProvider({
         <AppRouterCacheProvider
             options={{
                 key: "muirtl",
+                enableCssLayer: true,
                 stylisPlugins: [prefixer, rtlPlugin],
             }}
         >
