@@ -196,9 +196,9 @@ export function OutsiderForm({
                         }}
                     >
                         {isCreating ? (
-                            <AddIcon sx={{ fontSize: 20 }} />
+                            <AddIcon className="text-[20px]" />
                         ) : (
-                            <EditIcon sx={{ fontSize: 20 }} />
+                            <EditIcon className="text-[20px]" />
                         )}
                     </Box>
                     <Box>
@@ -243,7 +243,7 @@ export function OutsiderForm({
             </Box>
 
             {!showForm ? (
-                <Box sx={{ m: "auto", py: 6 }}>
+                <Box className="m-auto py-12">
                     <Typography
                         sx={{
                             color: "text.secondary",
@@ -318,7 +318,7 @@ export function OutsiderForm({
                             value={phone}
                         />
 
-                        <Divider sx={{ my: 0.5 }}>
+                        <Divider className="my-1">
                             <Typography
                                 sx={{
                                     fontSize: "0.72rem",
@@ -472,7 +472,7 @@ export function OutsiderForm({
                                         gap={0.5}
                                         sx={{ color: "success.main" }}
                                     >
-                                        <CheckCircleIcon sx={{ fontSize: 16 }} />
+                                        <CheckCircleIcon className="text-[16px]" />
                                         <Typography
                                             sx={{ fontWeight: 700 }}
                                             variant="caption"

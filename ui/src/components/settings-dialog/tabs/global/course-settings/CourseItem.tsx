@@ -216,7 +216,7 @@ export function CourseItem({
                             "&:hover": { color: "text.primary" },
                         }}
                     >
-                        <DragIndicatorIcon sx={{ fontSize: 18 }} />
+                        <DragIndicatorIcon className="text-[18px]" />
                     </Box>
 
                     {/* Expand/Collapse Toggle */}
@@ -235,11 +235,11 @@ export function CourseItem({
                                 >
                                     {isExpanded ? (
                                         <KeyboardArrowUpIcon
-                                            sx={{ fontSize: 18 }}
+                                            className="text-[18px]"
                                         />
                                     ) : (
                                         <KeyboardArrowDownIcon
-                                            sx={{ fontSize: 18 }}
+                                            className="text-[18px]"
                                         />
                                     )}
                                 </IconButton>
@@ -382,7 +382,7 @@ export function CourseItem({
                                     onClick={handleCreateSubCourse}
                                     size="small"
                                 >
-                                    <AddIcon sx={{ fontSize: 18 }} />
+                                    <AddIcon className="text-[18px]" />
                                 </IconButton>
                             </Tooltip>
 
@@ -395,7 +395,7 @@ export function CourseItem({
                                     }
                                     size="small"
                                 >
-                                    <PersonAddIcon sx={{ fontSize: 18 }} />
+                                    <PersonAddIcon className="text-[18px]" />
                                 </IconButton>
                             </Tooltip>
 
@@ -406,7 +406,7 @@ export function CourseItem({
                                     onClick={() => deleteCourse(course.id)}
                                     size="small"
                                 >
-                                    <DeleteIcon sx={{ fontSize: 16 }} />
+                                    <DeleteIcon className="text-[16px]" />
                                 </IconButton>
                             </Tooltip>
                         </Box>

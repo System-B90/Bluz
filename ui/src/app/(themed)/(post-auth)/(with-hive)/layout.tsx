@@ -76,7 +76,7 @@ function LayoutContent({
                             },
                         }}
                     >
-                        <WifiTetheringOffIcon sx={{ fontSize: "1.3rem" }} />
+                        <WifiTetheringOffIcon className="text-[1.3rem]" />
                     </Fab>
                 </Tooltip>
             ) : null}

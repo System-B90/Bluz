@@ -402,7 +402,7 @@ export function PersonalSettings() {
                     colorTheme="primary"
                     description="בחירת קבוצות להצגה מותאמת ביומן"
                     emptyMessage="טרם נבחרו קבוצות"
-                    icon={<PeopleIcon sx={{ fontSize: 20 }} />}
+                    icon={<PeopleIcon className="text-[20px]" />}
                     onAdd={handleAddGroup}
                     onRemove={handleRemoveGroup}
                     searchLabel="חפש והוסף קבוצה..."
@@ -414,7 +414,7 @@ export function PersonalSettings() {
                     colorTheme="secondary"
                     description="מעקב אחר מרצים מבוקשים ביומן"
                     emptyMessage="טרם נבחרו מרצים"
-                    icon={<SchoolIcon sx={{ fontSize: 20 }} />}
+                    icon={<SchoolIcon className="text-[20px]" />}
                     onAdd={handleAddInstructor}
                     onRemove={handleRemoveInstructor}
                     searchLabel="חפש והוסף מרצה..."
@@ -433,7 +433,7 @@ export function PersonalSettings() {
                     colorTheme="warning"
                     description="בחירת אנשי חוץ מועדפים שיופיעו בראש הרשימה ביומן"
                     emptyMessage="טרם נבחרו אנשי חוץ מועדפים"
-                    icon={<AssignmentIndIcon sx={{ fontSize: 20 }} />}
+                    icon={<AssignmentIndIcon className="text-[20px]" />}
                     onAdd={handleAddOutsider}
                     onRemove={handleRemoveOutsider}
                     searchLabel="חפש והוסף איש חוץ..."

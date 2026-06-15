@@ -48,7 +48,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
             }}
         >
             {/* Main Flex Container */}
-            <Box display="flex" flexDirection="row" sx={{ minHeight: 480 }}>
+            <Box className="min-h-[480px]" display="flex" flexDirection="row">
                 {/* Sidebar Navigation */}
                 <Box
                     sx={{
@@ -67,7 +67,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                     }}
                 >
                     {/* Header Title */}
-                    <Box sx={{ mb: 2 }}>
+                    <Box className="mb-4">
                         <Typography
                             sx={{
                                 fontWeight: 800,
@@ -159,7 +159,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                         );
                     })}
 
-                    <Box sx={{ flexGrow: 1 }} />
+                    <Box className="grow" />
 
                     {/* Theme Selector Container */}
                     <Box
@@ -220,15 +220,14 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 },
                             }}
                         >
-                            <CloseIcon sx={{ fontSize: 18 }} />
+                            <CloseIcon className="text-[18px]" />
                         </IconButton>
                     </Box>
 
                     {/* Active Tab Panel with Entry Animation */}
                     <Box
-                        className="animate-slide-up-fade"
+                        className="animate-slide-up-fade grow h-full"
                         key={tab}
-                        sx={{ flexGrow: 1, height: "100%" }}
                     >
                         {tab === 0 && <PersonalSettings />}
                         {tab === 1 && <GlobalSettings />}

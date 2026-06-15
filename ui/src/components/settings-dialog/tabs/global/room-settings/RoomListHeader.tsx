@@ -15,7 +15,7 @@ export function RoomListHeader() {
                     alignItems: "center",
                 }}
             >
-                <MeetingRoomIcon sx={{ fontSize: 20 }} />
+                <MeetingRoomIcon className="text-[20px]" />
             </Box>
             <Box>
                 <Typography

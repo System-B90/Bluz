@@ -79,7 +79,7 @@ export function OutsidersList({
                         alignItems: "center",
                     }}
                 >
-                    <PersonIcon sx={{ fontSize: 20 }} />
+                    <PersonIcon className="text-[20px]" />
                 </Box>
                 <Box>
                     <Typography
@@ -346,7 +346,7 @@ export function OutsidersList({
             <Button
                 color="secondary"
                 onClick={onStartCreate}
-                startIcon={<AddIcon sx={{ ml: 0.5 }} />}
+                startIcon={<AddIcon className="ml-1" />}
                 sx={{
                     borderRadius: "10px",
                     py: 1,

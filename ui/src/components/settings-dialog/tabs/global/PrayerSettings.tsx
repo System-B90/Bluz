@@ -46,19 +46,19 @@ export function PrayerSettings({
         {
             key: "shacharit" as keyof IPrayerSettings,
             label: "שחרית",
-            icon: <WbTwilightIcon sx={{ color: "#FF9F43" }} />,
+            icon: <WbTwilightIcon className="text-[#FF9F43]" />,
             bgColor: "rgba(255, 159, 67, 0.12)",
         },
         {
             key: "mincha" as keyof IPrayerSettings,
             label: "מנחה",
-            icon: <WbSunnyIcon sx={{ color: "#FFC107" }} />,
+            icon: <WbSunnyIcon className="text-[#FFC107]" />,
             bgColor: "rgba(255, 193, 7, 0.12)",
         },
         {
             key: "arvit" as keyof IPrayerSettings,
             label: "ערבית",
-            icon: <BedtimeIcon sx={{ color: "#9B5DE5" }} />,
+            icon: <BedtimeIcon className="text-[#9B5DE5]" />,
             bgColor: "rgba(155, 93, 229, 0.12)",
         },
     ];
@@ -102,7 +102,7 @@ export function PrayerSettings({
                                     borderColor: "divider",
                                 }}
                             >
-                                <ChevronLeftIcon sx={{ fontSize: 18 }} />
+                                <ChevronLeftIcon className="text-[18px]" />
                             </IconButton>
                         </Tooltip>
                     )}
@@ -116,7 +116,7 @@ export function PrayerSettings({
                             alignItems: "center",
                         }}
                     >
-                        <AccessTimeIcon sx={{ fontSize: 20 }} />
+                        <AccessTimeIcon className="text-[20px]" />
                     </Box>
                 </Box>
             ) : (
@@ -137,7 +137,7 @@ export function PrayerSettings({
                                 alignItems: "center",
                             }}
                         >
-                            <AccessTimeIcon sx={{ fontSize: 20 }} />
+                            <AccessTimeIcon className="text-[20px]" />
                         </Box>
                         <Box>
                             <Typography
@@ -171,7 +171,7 @@ export function PrayerSettings({
                                     borderColor: "divider",
                                 }}
                             >
-                                <ChevronRightIcon sx={{ fontSize: 18 }} />
+                                <ChevronRightIcon className="text-[18px]" />
                             </IconButton>
                         </Tooltip>
                     )}
@@ -286,7 +286,7 @@ export function PrayerSettings({
                             </Box>
 
                             {/* Picker Control */}
-                            <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                            <Box className="grow min-w-0">
                                 <TimePicker
                                     label={row.label}
                                     onChange={(newValue) =>
