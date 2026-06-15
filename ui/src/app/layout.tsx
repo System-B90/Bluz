@@ -3,8 +3,7 @@ import type { Metadata } from "next";
 import { MuiEmotionCacheProvider } from "@/components/theme/MuiEmotionCacheProvider";
 import { WebSocketConfigProvider } from "@/components/WebsocketConfigProvider";
 import { WEBSOCKET_PORT_SUFFIX, WEBSOCKET_PROTOCOL } from "@/settings";
-
-import "@/style/globals.css";
+import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 
 export const metadata: Metadata = {
     title: "Bluz",
@@ -28,6 +27,7 @@ export default function RootLayout({
                 dir="rtl"
             >
                 <MuiEmotionCacheProvider>
+                    <InitColorSchemeScript attribute="data" />
                     <WebSocketConfigProvider
                         host={ wsHost }
                         portSuffix={ wsPortSuffix }
