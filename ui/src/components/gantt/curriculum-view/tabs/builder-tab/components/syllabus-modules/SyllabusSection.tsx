@@ -80,7 +80,23 @@ export function SyllabusSection({
                 </Typography>
             </Box>
 
-            <Stack className="px-2" spacing={1}>
+            <Stack
+                className="px-2 overflow-y-auto"
+                spacing={1}
+                sx={{
+                    maxHeight: 242,
+                    "&::-webkit-scrollbar": {
+                        width: "6px",
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                        backgroundColor: "rgba(0, 0, 0, 0.1)",
+                        borderRadius: "4px",
+                    },
+                    "&::-webkit-scrollbar-thumb:hover": {
+                        backgroundColor: "rgba(0, 0, 0, 0.2)",
+                    },
+                }}
+            >
                 {moduleItems}
             </Stack>
         </Box>
