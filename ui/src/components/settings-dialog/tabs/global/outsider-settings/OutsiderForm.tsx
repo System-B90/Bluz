@@ -332,7 +332,8 @@ export function OutsiderForm({
                                 personalNumberWarning ? (
                                     <Box
                                         alignItems="center"
-                                        display="flex"
+                                        component="span"
+                                        display="inline-flex"
                                         gap={0.5}
                                         sx={{
                                             color: "warning.main",
@@ -389,7 +390,8 @@ export function OutsiderForm({
                                 idNumberWarning ? (
                                     <Box
                                         alignItems="center"
-                                        display="flex"
+                                        component="span"
+                                        display="inline-flex"
                                         gap={0.5}
                                         sx={{
                                             color: "warning.main",
