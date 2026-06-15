@@ -25,6 +25,8 @@ export type ImportExportMenuButtonProps = {
         | "secondary"
         | "success"
         | "warning";
+    exportDisabled?: boolean;
+    importDisabled?: boolean;
 };
 
 export function ImportExportMenuButton({
@@ -37,6 +39,8 @@ export function ImportExportMenuButton({
     size = "small",
     variant = "outlined",
     color = "primary",
+    exportDisabled = false,
+    importDisabled = false,
 }: ImportExportMenuButtonProps) {
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const open = Boolean(anchorEl);
@@ -86,19 +90,20 @@ export function ImportExportMenuButton({
                 onClose={handleClose}
                 open={open}
             >
-                <MenuItem onClick={handleExportClick}>
+                <MenuItem disabled={exportDisabled} onClick={handleExportClick}>
                     <ListItemIcon>
                         <DownloadIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText>{exportLabel}</ListItemText>
                 </MenuItem>
-                <MenuItem component="label">
+                <MenuItem component="label" disabled={importDisabled}>
                     <ListItemIcon>
                         <UploadIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText>{importLabel}</ListItemText>
                     <input
                         accept={accept}
+                        disabled={importDisabled}
                         hidden
                         onChange={handleImportChange}
                         type="file"

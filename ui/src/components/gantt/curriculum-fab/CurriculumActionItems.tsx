@@ -1,9 +1,16 @@
 import Box from "@mui/material/Box";
 import ButtonProps from "@mui/material/ButtonProps";
-import { useState } from "react";
+import { useSnackbar } from "notistack";
+import { useCallback, useState } from "react";
 
-import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import {
+    GanttCurriculumDocument,
+    apiExportCurriculum,
+    apiImportCurriculum,
+} from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CreateDraftAction } from "@/components/gantt/curriculum-fab/action-items/CreateDraftAction";
 import { DeleteCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DeleteCurriculumAction";
 import { DuplicateCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DuplicateCurriculumAction";
@@ -25,8 +32,60 @@ export function CurriculumActionItems({
     sourceCurriculum,
     ...props
 }: CreateNewCurriculumProps) {
+    const { enqueueSnackbar } = useSnackbar();
     const [isProcessing, setIsProcessing] = useState(false);
     const isDisabled = disabled || isProcessing;
+
+    const handleExport = useCallback(async () => {
+        if (!sourceCurriculum) return;
+        setIsProcessing(true);
+        try {
+            const data = await apiExportCurriculum(sourceCurriculum.id);
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            const cleanTitle = (sourceCurriculum.title || "gantt")
+                .replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")
+                .trim();
+            const filename = `bluz-gantt-${cleanTitle}.json`;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            enqueueSnackbar("הגאנט יוצא בהצלחה!", { variant: "success" });
+        } catch (error) {
+            enqueueApiErrorSnackbar(enqueueSnackbar, "ייצוא הגאנט נכשל!", error);
+        } finally {
+            setIsProcessing(false);
+        }
+    }, [sourceCurriculum, enqueueSnackbar]);
+
+    const handleImport = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const json = JSON.parse(event.target?.result as string);
+                    setIsProcessing(true);
+                    const newCurriculum = await apiImportCurriculum(json);
+                    onCreate(newCurriculum);
+                    enqueueSnackbar("הגאנט יובא בהצלחה!", { variant: "success" });
+                } catch (err) {
+                    enqueueApiErrorSnackbar(enqueueSnackbar, "ייבוא הגאנט נכשל!", err);
+                } finally {
+                    setIsProcessing(false);
+                }
+            };
+            reader.readAsText(file);
+        },
+        [onCreate, enqueueSnackbar],
+    );
 
     return (
         <Box
@@ -56,6 +115,13 @@ export function CurriculumActionItems({
                 onProcessingChange={setIsProcessing}
                 onUpdate={onUpdate}
                 sourceCurriculum={sourceCurriculum}
+            />
+            <ImportExportMenuButton
+                exportDisabled={isDisabled || !sourceCurriculum}
+                importDisabled={isDisabled}
+                onExport={handleExport}
+                onImport={handleImport}
+                variant="outlined"
             />
             <DeleteCurriculumAction
                 disabled={isDisabled || !sourceCurriculum}
