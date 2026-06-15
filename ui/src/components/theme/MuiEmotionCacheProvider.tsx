@@ -1,8 +1,9 @@
 "use client";
 
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
-import { prefixer } from "stylis";
+// eslint-disable-next-line no-restricted-imports
 import rtlPlugin from "@mui/stylis-plugin-rtl";
+import { prefixer } from "stylis";
 
 export function MuiEmotionCacheProvider({
     children,
