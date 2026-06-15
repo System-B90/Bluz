@@ -1,4 +1,3 @@
-import InitColorSchemeScript from "@mui/material/InitColorSchemeScript";
 import type { Metadata } from "next";
 
 import { MuiEmotionCacheProvider } from "@/components/theme/MuiEmotionCacheProvider";
@@ -16,7 +15,8 @@ export default function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
-}>) {
+}>)
+{
     const wsHost = process.env.WEBSOCKET_SESSION_SERVER_HOST || "bluz.bis";
     const wsProtcol = WEBSOCKET_PROTOCOL || "wss";
     const wsPortSuffix = WEBSOCKET_PORT_SUFFIX || "";
@@ -28,13 +28,12 @@ export default function RootLayout({
                 dir="rtl"
             >
                 <MuiEmotionCacheProvider>
-                    <InitColorSchemeScript attribute="class" />
                     <WebSocketConfigProvider
-                        host={wsHost}
-                        portSuffix={wsPortSuffix}
-                        protocol={wsProtcol}
+                        host={ wsHost }
+                        portSuffix={ wsPortSuffix }
+                        protocol={ wsProtcol }
                     >
-                        {children}
+                        { children }
                     </WebSocketConfigProvider>
                 </MuiEmotionCacheProvider>
             </body>
