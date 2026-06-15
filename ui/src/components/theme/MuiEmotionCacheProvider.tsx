@@ -8,16 +8,17 @@ export function MuiEmotionCacheProvider({
     children,
 }: Readonly<{
     children: React.ReactNode;
-}>) {
+}>)
+{
     return (
         <AppRouterCacheProvider
-            options={{
+            options={ {
                 key: "muirtl",
-                enableCssLayer: true,
-                stylisPlugins: [prefixer, rtlPlugin],
-            }}
+                // enableCssLayer: true,
+                stylisPlugins: [ prefixer, rtlPlugin ],
+            } }
         >
-            {children}
+            { children }
         </AppRouterCacheProvider>
     );
 }

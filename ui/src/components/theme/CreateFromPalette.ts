@@ -2,15 +2,18 @@ import { ThemeOptions } from "@mui/material/styles";
 
 declare module "@mui/material/Chip" {
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-    interface ChipPropsSizeOverrides {
+    interface ChipPropsSizeOverrides
+    {
         smaller: true;
         smallest: true;
     }
 }
 
-export function createThemeOptions(): ThemeOptions {
+export function createThemeOptions(): ThemeOptions
+{
     return {
         direction: "rtl",
+        // modularCssLayers: '@layer theme, base, mui, muirtl, components, utilities;',
         cssVariables: {
             colorSchemeSelector: "class",
         },
@@ -65,7 +68,7 @@ export function createThemeOptions(): ThemeOptions {
             },
         },
         typography: {
-            fontFamily: ['"Assistant"', "sans-serif"].join(","),
+            fontFamily: [ '"Assistant"', "sans-serif" ].join(","),
             h1: { fontWeight: 700 },
             h2: { fontWeight: 700 },
             h3: { fontWeight: 600 },

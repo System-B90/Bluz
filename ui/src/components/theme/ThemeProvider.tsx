@@ -1,16 +1,19 @@
 "use client";
 import CssBaseline from "@mui/material/CssBaseline";
 import GlobalStyles from "@mui/material/GlobalStyles";
-import {
+import
+{
     ThemeProvider as MUIThemeProvider,
     createTheme,
 } from "@mui/material/styles";
 import type { ThemeProviderProps } from "next-themes";
-import {
+import
+{
     ThemeProvider as NextThemesProvider,
     useTheme as nextUseTheme,
 } from "next-themes";
-import {
+import
+{
     createContext,
     useContext,
     useEffect,
@@ -33,19 +36,20 @@ const ThemeContext = createContext<ThemeContextState | undefined>(undefined);
 export function BluzThemeProvider({
     children,
     ...props
-}: ThemeProviderProps & { children: ReactNode }) {
+}: ThemeProviderProps & { children: ReactNode; })
+{
     return (
         <NextThemesProvider
-            {...props}
+            { ...props }
             attribute="class"
             defaultTheme="system"
-            disableTransitionOnChange={false}
+            disableTransitionOnChange={ false }
             enableSystem
         >
             <InnerThemeProvider>
                 <CssBaseline />
                 <GlobalStyles
-                    styles={(theme) => ({
+                    styles={ (theme) => ({
                         "*::-webkit-scrollbar": {
                             width: "8px",
                             height: "8px",
@@ -70,27 +74,30 @@ export function BluzThemeProvider({
                         "*::-webkit-scrollbar-button": {
                             display: "none",
                         },
-                    })}
+                    }) }
                 />
-                {children}
+                { children }
             </InnerThemeProvider>
         </NextThemesProvider>
     );
 }
 
-function InnerThemeProvider({ children }: { children: ReactNode }) {
+function InnerThemeProvider({ children }: { children: ReactNode; })
+{
     const { theme, setTheme, resolvedTheme } = nextUseTheme();
-    const [mounted, setMounted] = useState(false);
+    const [ mounted, setMounted ] = useState(false);
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 
-    const muiTheme = useMemo(() => {
+    const muiTheme = useMemo(() =>
+    {
         const currentMode = mounted && resolvedTheme === "dark" ? "dark" : "light";
         const baseOptions = createThemeOptions();
-        const activePalette = baseOptions.colorSchemes?.[currentMode]?.palette;
+        const activePalette = baseOptions.colorSchemes?.[ currentMode ]?.palette;
 
         return createTheme({
             ...baseOptions,
@@ -100,26 +107,28 @@ function InnerThemeProvider({ children }: { children: ReactNode }) {
                 mode: currentMode,
             },
         });
-    }, [resolvedTheme, mounted]);
+    }, [ resolvedTheme, mounted ]);
 
     const contextValue = useMemo(
         () => ({
             theme: (theme as ThemeMode) ?? "system",
             setTheme: setTheme as (theme: ThemeMode) => void,
         }),
-        [theme, setTheme],
+        [ theme, setTheme ],
     );
 
     return (
-        <ThemeContext.Provider value={contextValue}>
-            <MUIThemeProvider theme={muiTheme}>{children}</MUIThemeProvider>
+        <ThemeContext.Provider value={ contextValue }>
+            <MUIThemeProvider theme={ muiTheme }>{ children }</MUIThemeProvider>
         </ThemeContext.Provider>
     );
 }
 
-export const useTheme = () => {
+export const useTheme = () =>
+{
     const context = useContext(ThemeContext);
-    if (!context) {
+    if (!context)
+    {
         throw new Error("useTheme must be used within a BluzThemeProvider");
     }
     return context;
