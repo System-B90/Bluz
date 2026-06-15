@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
 import {
@@ -8,6 +8,7 @@ import {
 } from "@/api-server/gantt/db-base";
 import {
     ganttCurriculum2SyllabusesSchema,
+    ganttModule2EventsSchema,
     ganttSyllabus2ModulesSchema,
     ganttSyllabusesSchema,
 } from "@/api-server/gantt/schema";
@@ -46,10 +47,12 @@ async function getFullSyllabus(id: GanttSyllabusId): Promise<ApiSyllabus> {
         where: eq(ganttSyllabusesSchema.id, id),
         with: {
             s2m: {
+                orderBy: [asc(ganttSyllabus2ModulesSchema.sortOrder)],
                 with: {
                     module: {
                         with: {
                             m2e: {
+                                orderBy: [asc(ganttModule2EventsSchema.sortOrder)],
                                 with: {
                                     event: {
                                         with: {
@@ -130,9 +133,29 @@ async function removeSyllabusFromCurriculum(
     }
 }
 
+async function reorderModules(
+    syllabusId: GanttSyllabusId,
+    moduleIds: Array<GanttModuleId>,
+): Promise<void> {
+    await postgresDb.transaction(async (tx) => {
+        for (let i = 0; i < moduleIds.length; i++) {
+            await tx
+                .update(ganttSyllabus2ModulesSchema)
+                .set({ sortOrder: i })
+                .where(
+                    and(
+                        eq(ganttSyllabus2ModulesSchema.syllabusId, syllabusId),
+                        eq(ganttSyllabus2ModulesSchema.moduleId, moduleIds[i]),
+                    ),
+                );
+        }
+    });
+}
+
 export const DbSyllabus = {
     getItem: getFullSyllabus,
     ...basicOperations,
     linkItem: addSyllabusToCurriculum,
     unlinkItem: removeSyllabusFromCurriculum,
+    reorderModules,
 } as const;

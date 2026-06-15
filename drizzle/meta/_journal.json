@@ -15,6 +15,13 @@
       "when": 1781869848116,
       "tag": "0001_special_umar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781524435371,
+      "tag": "0002_glossy_boomerang",
+      "breakpoints": true
     }
   ]
 }

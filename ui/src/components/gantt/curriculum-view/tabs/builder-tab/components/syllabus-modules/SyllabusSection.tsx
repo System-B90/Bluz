@@ -1,5 +1,7 @@
-import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import Box from "@mui/material/Box";
 import BoxProps from "@mui/material/BoxProps";
 import Stack from "@mui/material/Stack";
@@ -8,7 +10,6 @@ import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
 
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
-import { DndDragEventActiveData } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/dnd-types";
 import { ModuleItem } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/syllabus-modules/ModuleItem";
 import { hashSyllabusToColor } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/utils";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
@@ -32,39 +33,17 @@ export function SyllabusSection({
         [syllabusId, theme.palette.primary.main],
     );
 
-    const { attributes, listeners, setNodeRef, transform, isDragging } =
-        useDraggable({
-            id: `syllabus-${syllabusId}`,
-            data: { type: "SYLLABUS", syllabusId } as DndDragEventActiveData,
-        });
-
-    const style = {
-        ...props.style,
-        transform: CSS.Translate.toString(transform),
-        transition: isDragging ? undefined : "transform 200ms ease",
-    };
-
-    const moduleItems = useMemo(
+    const unmappedModuleIds = useMemo(
         () =>
-            (syllabus?.modules ?? [])
-                .filter(
-                    (m) =>
-                        !Object.values(mappings).some((x) => x.moduleId === m),
-                )
-                .map((m) => <ModuleItem key={m} moduleId={m} />),
+            (syllabus?.modules ?? []).filter(
+                (m) => !Object.values(mappings).some((x) => x.moduleId === m),
+            ),
         [syllabus?.modules, mappings],
     );
 
     return (
-        <Box
-            {...props}
-            className="flex flex-col pb-4"
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-        >
-            {/* Sticky Header: Visible until the entire section scrolls out */}
+        <Box {...props} className="flex flex-col pb-4">
+            {/* Sticky Header */}
             <Box
                 bgcolor={color}
                 className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm py-2 mb-2 shadow-sm"
@@ -80,25 +59,36 @@ export function SyllabusSection({
                 </Typography>
             </Box>
 
-            <Stack
-                className="px-2 overflow-y-auto"
-                spacing={1}
-                sx={{
-                    maxHeight: 242,
-                    "&::-webkit-scrollbar": {
-                        width: "6px",
-                    },
-                    "&::-webkit-scrollbar-thumb": {
-                        backgroundColor: "rgba(0, 0, 0, 0.1)",
-                        borderRadius: "4px",
-                    },
-                    "&::-webkit-scrollbar-thumb:hover": {
-                        backgroundColor: "rgba(0, 0, 0, 0.2)",
-                    },
-                }}
+            <SortableContext
+                items={unmappedModuleIds}
+                strategy={verticalListSortingStrategy}
             >
-                {moduleItems}
-            </Stack>
+                <Stack
+                    className="px-2 overflow-y-auto"
+                    spacing={1}
+                    sx={{
+                        maxHeight: 242,
+                        "&::-webkit-scrollbar": {
+                            width: "6px",
+                        },
+                        "&::-webkit-scrollbar-thumb": {
+                            backgroundColor: "rgba(0, 0, 0, 0.1)",
+                            borderRadius: "4px",
+                        },
+                        "&::-webkit-scrollbar-thumb:hover": {
+                            backgroundColor: "rgba(0, 0, 0, 0.2)",
+                        },
+                    }}
+                >
+                    {unmappedModuleIds.map((m) => (
+                        <ModuleItem
+                            key={m}
+                            moduleId={m}
+                            syllabusId={syllabusId}
+                        />
+                    ))}
+                </Stack>
+            </SortableContext>
         </Box>
     );
 }
