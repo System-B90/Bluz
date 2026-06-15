@@ -1,5 +1,5 @@
 import Box from "@mui/material/Box";
-import ButtonProps from "@mui/material/ButtonProps";
+import { ButtonProps } from "@mui/material/Button";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 

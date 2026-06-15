@@ -1,13 +1,12 @@
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
-import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items/ActionItemButton";
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
+import { useAsyncAction } from "@/components/gantt/curriculum-fab/action-items/use-async-action";
 
 export type ToggleDraftActionProps = {
     onUpdate: (updatedCurriculum: GanttCurriculumDocument) => void;
@@ -19,26 +18,17 @@ export function ToggleDraftAction({
     onProcessingChange,
     ...props
 }: ToggleDraftActionProps) {
-    const { enqueueSnackbar } = useSnackbar();
+    const runAction = useAsyncAction(onProcessingChange);
 
     const clickHandler = useCallback(() => {
         if (!sourceCurriculum) return;
-        onProcessingChange(true);
         const nextDraftState = !sourceCurriculum.isDraft;
-        ganttApi.curriculum
-            .apiUpdate({ id: sourceCurriculum.id, isDraft: nextDraftState })
-            .then((updatedCurriculum) => onUpdate(updatedCurriculum))
-            .catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    sourceCurriculum.isDraft
-                        ? "פרסום הגאנט נכשל!"
-                        : "העברה לדראפט נכשלה!",
-                    error,
-                ),
-            )
-            .finally(() => onProcessingChange(false));
-    }, [enqueueSnackbar, onProcessingChange, onUpdate, sourceCurriculum]);
+        runAction(
+            () => ganttApi.curriculum.apiUpdate({ id: sourceCurriculum.id, isDraft: nextDraftState }),
+            (updatedCurriculum) => onUpdate(updatedCurriculum),
+            sourceCurriculum.isDraft ? "פרסום הגאנט נכשל!" : "העברה לדראפט נכשלה!",
+        );
+    }, [onUpdate, runAction, sourceCurriculum]);
 
     return (
         <ActionItemButton

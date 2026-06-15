@@ -25,7 +25,8 @@ import Typography from "@mui/material/Typography";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import { useSnackbar } from "notistack";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import QRCode from "qrcode";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { Outsider } from "@/api-shared/types/outsider";
@@ -47,6 +48,53 @@ export function OutsiderSettings() {
     const [releaseDate, setReleaseDate] = useState<Dayjs | null>(null);
     const [comment, setComment] = useState("");
     const [isCreating, setIsCreating] = useState(false);
+
+    const [qrCodeUrl, setQrCodeUrl] = useState("");
+
+    // Generate vCard string dynamically
+    const vCardString = useMemo(() => {
+        if (isCreating || !selectedOutsider) return "";
+        const notes: string[] = [];
+        if (personalNumber.trim()) {
+            notes.push(`מ.א.: ${personalNumber.trim()}`);
+        }
+        if (idNumber.trim()) {
+            notes.push(`ת.ז.: ${idNumber.trim()}`);
+        }
+        if (comment.trim()) {
+            notes.push(`הערה: ${comment.trim()}`);
+        }
+        const noteValue = notes.join("\\n");
+        return [
+            "BEGIN:VCARD",
+            "VERSION:3.0",
+            `FN:${name.trim()}`,
+            `N:;${name.trim()};;;`,
+            `TEL;TYPE=CELL:${phone.trim()}`,
+            noteValue ? `NOTE:${noteValue}` : "",
+            "END:VCARD",
+        ]
+            .filter(Boolean)
+            .join("\r\n");
+    }, [isCreating, selectedOutsider, name, phone, personalNumber, idNumber, comment]);
+
+    useEffect(() => {
+        if (!vCardString) {
+            setQrCodeUrl("");
+            return;
+        }
+        let active = true;
+        QRCode.toDataURL(vCardString, { width: 160, margin: 1, errorCorrectionLevel: "M" })
+            .then((url) => {
+                if (active) setQrCodeUrl(url);
+            })
+            .catch((err) => {
+                console.error("Failed to generate QR code", err);
+            });
+        return () => {
+            active = false;
+        };
+    }, [vCardString]);
 
     const filteredOutsiders = useMemo(() => {
         const query = searchQuery.trim().toLowerCase();
@@ -593,56 +641,97 @@ export function OutsiderSettings() {
                     transition: "opacity 0.3s ease",
                 }}
             >
-                <Box alignItems="center" display="flex" gap={1.5}>
-                    <Box
-                        sx={{
-                            p: 1,
-                            borderRadius: "10px",
-                            bgcolor: isCreating
-                                ? "secondary.light"
-                                : "primary.light",
-                            color: isCreating
-                                ? "secondary.contrastText"
-                                : "primary.contrastText",
-                            display: "flex",
-                            alignItems: "center",
-                        }}
-                    >
-                        {isCreating ? (
-                            <AddIcon sx={{ fontSize: 20 }} />
-                        ) : (
-                            <EditIcon sx={{ fontSize: 20 }} />
-                        )}
-                    </Box>
-                    <Box>
-                        <Typography
+                <Box
+                    sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        width: "100%",
+                        gap: 2,
+                    }}
+                >
+                    <Box alignItems="center" display="flex" gap={1.5}>
+                        <Box
                             sx={{
-                                fontWeight: 800,
-                                fontSize: "1.1rem",
-                                fontFamily: "Assistant, sans-serif",
-                                color: "text.primary",
+                                p: 1,
+                                borderRadius: "10px",
+                                bgcolor: isCreating
+                                    ? "secondary.light"
+                                    : "primary.light",
+                                color: isCreating
+                                    ? "secondary.contrastText"
+                                    : "primary.contrastText",
+                                display: "flex",
+                                alignItems: "center",
                             }}
                         >
-                            {isCreating
-                                ? "הוספת איש חוץ חדש"
-                                : selectedOutsider
-                                    ? "עריכת פרטי איש חוץ"
-                                    : "פרטי איש חוץ"}
-                        </Typography>
-                        <Typography
-                            sx={{
-                                fontSize: "0.75rem",
-                                color: "text.secondary",
-                                fontFamily: "Assistant, sans-serif",
-                            }}
-                        >
-                            {isCreating
-                                ? "מלא את הטופס ליצירת איש חוץ חדש"
-                                : selectedOutsider
-                                    ? "עדכן את פרטי איש החוץ הנוכחי"
-                                    : "בחר איש חוץ מהרשימה לעריכה"}
-                        </Typography>
+                            {isCreating ? (
+                                <AddIcon sx={{ fontSize: 20 }} />
+                            ) : (
+                                <EditIcon sx={{ fontSize: 20 }} />
+                            )}
+                        </Box>
+                        <Box>
+                            <Typography
+                                sx={{
+                                    fontWeight: 800,
+                                    fontSize: "1.1rem",
+                                    fontFamily: "Assistant, sans-serif",
+                                    color: "text.primary",
+                                }}
+                            >
+                                {isCreating
+                                    ? "הוספת איש חוץ חדש"
+                                    : selectedOutsider
+                                        ? "עריכת פרטי איש חוץ"
+                                        : "פרטי איש חוץ"}
+                            </Typography>
+                            <Typography
+                                sx={{
+                                    fontSize: "0.75rem",
+                                    color: "text.secondary",
+                                    fontFamily: "Assistant, sans-serif",
+                                }}
+                            >
+                                {isCreating
+                                    ? "מלא את הטופס ליצירת איש חוץ חדש"
+                                    : selectedOutsider
+                                        ? "עדכן את פרטי איש החוץ הנוכחי"
+                                        : "בחר איש חוץ מהרשימה לעריכה"}
+                            </Typography>
+                        </Box>
                     </Box>
+                    {!isCreating && selectedOutsider && qrCodeUrl && (
+                        <Tooltip title="סרוק לשמירת איש הקשר בטלפון" arrow>
+                            <Box
+                                sx={{
+                                    border: "1px solid",
+                                    borderColor: "divider",
+                                    borderRadius: "12px",
+                                    p: 0.5,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    bgcolor: "white",
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                                    transition: "transform 0.2s",
+                                    "&:hover": {
+                                        transform: "scale(1.05)",
+                                    },
+                                }}
+                            >
+                                <img
+                                    src={qrCodeUrl}
+                                    alt="vCard QR Code"
+                                    style={{
+                                        width: 64,
+                                        height: 64,
+                                        display: "block",
+                                    }}
+                                />
+                            </Box>
+                        </Tooltip>
+                    )}
                 </Box>
 
                 {!showForm ? (

@@ -1,4 +1,4 @@
-import ButtonProps from "@mui/material/ButtonProps";
+import { ButtonProps } from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 

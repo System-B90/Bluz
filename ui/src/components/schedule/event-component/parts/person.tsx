@@ -12,29 +12,12 @@ import { useMemo } from "react";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { shortenInstructorName } from "@/components/schedule/event-component/NameUtils";
+import { tagSx } from "@/components/schedule/event-component/parts/tag-sx";
 import {
     Event,
     EventType,
     getPresentInstructors,
 } from "@/components/schedule/types/event";
-
-/** Lightweight tag style — replaces MUI Chip for a more compact, professional look. */
-const tagSx = (isLecturer: boolean) => ({
-    display: "inline-flex",
-    alignItems: "center",
-    px: 0.6,
-    py: 0.1,
-    borderRadius: "4px",
-    fontSize: "0.72rem",
-    lineHeight: 1.4,
-    fontWeight: isLecturer ? 600 : 400,
-    whiteSpace: "nowrap" as const,
-    border: "1px solid",
-    borderColor: isLecturer ? "currentColor" : "var(--event-border)",
-    backgroundColor: isLecturer ? "var(--event-emphasis-bg)" : "transparent",
-    order: isLecturer ? 1 : 2,
-    color: "inherit",
-});
 
 export function PersonChip({
     instructorId,
@@ -75,7 +58,7 @@ export function PersonChip({
 
     return (
         <Tooltip title={fullName}>
-            <Box component="span" sx={tagSx(!!isLecturer)}>
+            <Box component="span" sx={tagSx({ isLecturer: !!isLecturer })}>
                 <Link color="inherit" href="a" underline="hover">
                     {shortName}
                 </Link>

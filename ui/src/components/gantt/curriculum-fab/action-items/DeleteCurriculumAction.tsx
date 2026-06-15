@@ -1,12 +1,11 @@
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items/ActionItemButton";
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
+import { useAsyncAction } from "@/components/gantt/curriculum-fab/action-items/use-async-action";
 
 export type DeleteCurriculumActionProps = {
     onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
@@ -18,23 +17,16 @@ export function DeleteCurriculumAction({
     onProcessingChange,
     ...props
 }: DeleteCurriculumActionProps) {
-    const { enqueueSnackbar } = useSnackbar();
+    const runAction = useAsyncAction(onProcessingChange);
 
     const clickHandler = useCallback(() => {
         if (!sourceCurriculum) return;
-        onProcessingChange(true);
-        ganttApi.curriculum
-            .apiDelete(sourceCurriculum.id)
-            .then(() => onDelete(sourceCurriculum.id))
-            .catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "מחיקת הגאנט נכשלה!",
-                    error,
-                ),
-            )
-            .finally(() => onProcessingChange(false));
-    }, [enqueueSnackbar, onDelete, onProcessingChange, sourceCurriculum]);
+        runAction(
+            () => ganttApi.curriculum.apiDelete(sourceCurriculum.id),
+            () => onDelete(sourceCurriculum.id),
+            "מחיקת הגאנט נכשלה!",
+        );
+    }, [onDelete, runAction, sourceCurriculum]);
 
     return (
         <ActionItemButton

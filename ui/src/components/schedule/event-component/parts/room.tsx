@@ -12,22 +12,7 @@ import { getHiveBaseUrl } from "@/api-shared/common";
 import { Room, RoomLike, RoomSource } from "@/api-shared/types/room";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
-
-/** Lightweight tag — matching the unified tag style. */
-const tagSx = (overcrowded: boolean) => ({
-    display: "inline-flex",
-    alignItems: "center",
-    px: 0.6,
-    py: 0.1,
-    borderRadius: "4px",
-    fontSize: "0.72rem",
-    lineHeight: 1.4,
-    fontWeight: 400,
-    whiteSpace: "nowrap" as const,
-    border: "1px solid",
-    borderColor: overcrowded ? "warning.main" : "var(--event-border)",
-    color: "inherit",
-});
+import { tagSx } from "@/components/schedule/event-component/parts/tag-sx";
 
 function SingleRoomTag({
     room,
@@ -47,7 +32,7 @@ function SingleRoomTag({
         <Tooltip
             title={overcrowded ? `עומס יתר: ${occupancy}/${roomCapacity}` : ""}
         >
-            <Box component="span" sx={tagSx(overcrowded)}>
+            <Box component="span" sx={tagSx({ overcrowded })}>
                 {overcrowded ? (
                     <WarningIcon
                         color="warning"
