@@ -13,7 +13,7 @@ export function createThemeOptions(): ThemeOptions
 {
     return {
         direction: "rtl",
-        // modularCssLayers: '@layer theme, base, mui, muirtl, components, utilities;',
+        modularCssLayers: '@layer theme, base, mui, components, utilities;',
         cssVariables: {
             colorSchemeSelector: "class",
         },

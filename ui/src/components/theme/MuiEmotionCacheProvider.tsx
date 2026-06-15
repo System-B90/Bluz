@@ -2,7 +2,7 @@
 
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import { prefixer } from "stylis";
-import rtlPlugin from "stylis-plugin-rtl";
+import rtlPlugin from "@mui/stylis-plugin-rtl";
 
 export function MuiEmotionCacheProvider({
     children,
@@ -14,7 +14,7 @@ export function MuiEmotionCacheProvider({
         <AppRouterCacheProvider
             options={ {
                 key: "muirtl",
-                // enableCssLayer: true,
+                enableCssLayer: true,
                 stylisPlugins: [ prefixer, rtlPlugin ],
             } }
         >

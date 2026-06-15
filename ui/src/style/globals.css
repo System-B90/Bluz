@@ -1,4 +1,4 @@
-@layer theme, base, mui, muirtl, components, utilities;
+@layer theme, base, mui, components, utilities;
 @import url("./fonts.css");
 @import "tailwindcss";
 

@@ -27,7 +27,7 @@ export default function RootLayout({
                 dir="rtl"
             >
                 <MuiEmotionCacheProvider>
-                    <InitColorSchemeScript attribute="data" />
+                    <InitColorSchemeScript attribute="class" />
                     <WebSocketConfigProvider
                         host={ wsHost }
                         portSuffix={ wsPortSuffix }
