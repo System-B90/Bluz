@@ -257,7 +257,17 @@ export function OutsiderForm({
                 </Box>
             ) : (
                 <>
-                    <Box display="flex" flexDirection="column" gap={2.5}>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 2.5,
+                            maxHeight: 340,
+                            overflowY: "auto",
+                            pl: 0.5,
+                            pr: 0.5,
+                        }}
+                    >
                         {/* Full Name */}
                         <TextField
                             fullWidth
