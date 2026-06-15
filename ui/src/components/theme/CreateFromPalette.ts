@@ -75,11 +75,6 @@ export function createThemeOptions(): ThemeOptions
             button: { fontWeight: 600 },
         },
         components: {
-            MuiToggleButtonGroup: {
-                defaultProps: {
-                    // dir: 'rtl',
-                },
-            },
             MuiChip: {
                 variants: [
                     {
@@ -118,11 +113,9 @@ export function createThemeOptions(): ThemeOptions
                     },
                 ],
             },
-            // Optional: Round corners slightly to match the "Fluid/Musical" feel of the icon
             MuiButton: {
                 styleOverrides: {
                     root: {
-                        borderRadius: 8,
                         textTransform: "none", // Modern look
                         fontWeight: 600,
                     },

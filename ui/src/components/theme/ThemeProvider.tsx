@@ -97,7 +97,8 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
     {
         const currentMode = mounted && resolvedTheme === "dark" ? "dark" : "light";
         const baseOptions = createThemeOptions();
-        const activePalette = baseOptions.colorSchemes?.[ currentMode ]?.palette;
+        const colorScheme = baseOptions.colorSchemes?.[ currentMode ];
+        const activePalette = typeof colorScheme === 'object' ? colorScheme.palette : undefined;
 
         return createTheme({
             ...baseOptions,
