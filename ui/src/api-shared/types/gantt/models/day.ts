@@ -2,13 +2,13 @@ import { BaseGantItem } from "@/api-shared/types/gantt/models/shared";
 import { GanttWeekId } from "@/api-shared/types/gantt/models/week";
 
 export enum GanttDayIndex {
-  Sunday = 0,
-  Monday = 1,
-  Tuesday = 2,
-  Wednesday = 3,
-  Thursday = 4,
-  Friday = 5,
-  Saturday = 6,
+    Sunday = 0,
+    Monday = 1,
+    Tuesday = 2,
+    Wednesday = 3,
+    Thursday = 4,
+    Friday = 5,
+    Saturday = 6,
 }
 
 export const DAY_NAME_DISPLAY: Record<GanttDayIndex, string> = {
@@ -25,10 +25,10 @@ export function getDayNameDisplay(day: GanttDayIndex): string {
     return DAY_NAME_DISPLAY[day] ?? "";
 }
 export type GanttDay = {
-  readonly title: string; // Generated from day name
-  weekId: GanttWeekId;
-  dayIndex: GanttDayIndex;
-  totalWorkingMinutes: number;
-  comment?: string;
+    readonly title: string; // Generated from day name
+    weekId: GanttWeekId;
+    dayIndex: GanttDayIndex;
+    totalWorkingMinutes: number;
+    comment?: string;
 } & BaseGantItem;
 export type GanttDayId = string;

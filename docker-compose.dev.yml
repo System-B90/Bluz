@@ -1,33 +1,33 @@
 services:
-  ui:
-    build:
-      target: dev
-    command: npm run dev
-    environment:
-      - NODE_ENV=development
-    develop:
-      watch:
-        - action: sync
-          path: .
-          target: /app/
-          ignore:
-            - node_modules/
-            - .next/
-            - ui/.next/
-        - action: rebuild
-          path: package.json
-        - action: rebuild
-          path: package-lock.json
+    ui:
+        build:
+            target: dev
+        command: npm run dev
+        environment:
+            - NODE_ENV=development
+        develop:
+            watch:
+                - action: sync
+                  path: .
+                  target: /app/
+                  ignore:
+                      - node_modules/
+                      - .next/
+                      - ui/.next/
+                - action: rebuild
+                  path: package.json
+                - action: rebuild
+                  path: package-lock.json
 
-  proxy:
-    ports: !override
-      - "127.0.0.3:80:80"
-      - "127.0.0.3:443:443"
+    proxy:
+        ports: !override
+            - "127.0.0.3:80:80"
+            - "127.0.0.3:443:443"
 
-  curriculum-db:
-    ports:
-      - "127.0.0.3:5432:5432"
+    curriculum-db:
+        ports:
+            - "127.0.0.3:5432:5432"
 
-  mongodb:
-    ports:
-      - "127.0.0.3:27018:27017"
+    mongodb:
+        ports:
+            - "127.0.0.3:27018:27017"

@@ -6,8 +6,10 @@
  */
 
 import { useDroppable } from "@dnd-kit/core";
-import { Box, BoxProps, Divider, useTheme } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import Divider from "@mui/material/Divider";
+import { alpha, useTheme } from "@mui/material/styles";
 import React, { useMemo } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
@@ -17,7 +19,7 @@ import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 
 export type SidebarProps = {
-  curriculumId: GanttCurriculumId | null;
+    curriculumId: GanttCurriculumId | null;
 } & BoxProps;
 
 export function SyllabusModulesCurriculumViewSidebar({
@@ -31,7 +33,9 @@ export function SyllabusModulesCurriculumViewSidebar({
 
     const sortedSyllabusIds = useMemo(() => {
         return [...(syllabuses ?? [])].sort((a, b) => {
-            return (syllabusNames[a] ?? "").localeCompare(syllabusNames[b] ?? "");
+            return (syllabusNames[a] ?? "").localeCompare(
+                syllabusNames[b] ?? "",
+            );
         });
     }, [syllabuses, syllabusNames]);
 

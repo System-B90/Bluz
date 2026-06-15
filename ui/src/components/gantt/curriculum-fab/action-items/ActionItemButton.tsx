@@ -1,8 +1,9 @@
-import { Button, ButtonProps } from "@mui/material";
+import Button from "@mui/material/Button";
+import ButtonProps from "@mui/material/ButtonProps";
 
 export type ActionItemButtonProps = Omit<
-  ButtonProps,
-  "size" | "sx" | "variant"
+    ButtonProps,
+    "size" | "sx" | "variant"
 >;
 
 export function ActionItemButton(props: ActionItemButtonProps) {

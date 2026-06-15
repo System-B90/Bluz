@@ -6,15 +6,30 @@ import EditIcon from "@mui/icons-material/Edit";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { Box, Chip, Collapse, IconButton, InputBase, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
-import { MuiColorInput, MuiColorInputColors, MuiColorInputProps } from "mui-color-input";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Collapse from "@mui/material/Collapse";
+import IconButton from "@mui/material/IconButton";
+import InputBase from "@mui/material/InputBase";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import {
+    MuiColorInput,
+    MuiColorInputColors,
+    MuiColorInputProps,
+} from "mui-color-input";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Course } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { HiveAvatar } from "@/components/header/HiveAvatarImage";
-import { DraggedCourseData, DropTargetCourseData } from "@/components/settings-dialog/tabs/global/course-settings/dnd-types";
+import {
+    DraggedCourseData,
+    DropTargetCourseData,
+} from "@/components/settings-dialog/tabs/global/course-settings/dnd-types";
 
 type CourseItemProps = {
     course: Course;
@@ -23,7 +38,12 @@ type CourseItemProps = {
     visited?: Set<string>;
 };
 
-export function CourseItem({ course, allCourses, depth = 0, visited = new Set<string>() }: CourseItemProps) {
+export function CourseItem({
+    course,
+    allCourses,
+    depth = 0,
+    visited = new Set<string>(),
+}: CourseItemProps) {
     const hasVisited = visited.has(course.id);
 
     const nextVisited = new Set(visited);
@@ -40,13 +60,16 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
     // Instructor Quick-Add Menu State
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const isMenuOpen = Boolean(anchorEl);
-    
+
     // Debounce for color picker to avoid server commits on every pixel change
     const colorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Filter children courses
     const subCourses = allCourses.filter((c) => c.parentId === course.id);
-    const assignedIds = useMemo(() => course.instructorIds ?? [], [course.instructorIds]);
+    const assignedIds = useMemo(
+        () => course.instructorIds ?? [],
+        [course.instructorIds],
+    );
 
     // setup dnd-kit draggable & droppable
     const {
@@ -197,14 +220,27 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
                     </Box>
 
                     {/* Expand/Collapse Toggle */}
-                    <Box sx={{ width: 34, display: "flex", justifyContent: "center" }}>
-                        {(subCourses.length > 0 || assignedIds.length > 0) ? (
+                    <Box
+                        sx={{
+                            width: 34,
+                            display: "flex",
+                            justifyContent: "center",
+                        }}
+                    >
+                        {subCourses.length > 0 || assignedIds.length > 0 ? (
                             <Tooltip title={isExpanded ? "כווץ" : "הרחב"}>
-                                <IconButton onClick={() => setIsExpanded(!isExpanded)} size="small">
+                                <IconButton
+                                    onClick={() => setIsExpanded(!isExpanded)}
+                                    size="small"
+                                >
                                     {isExpanded ? (
-                                        <KeyboardArrowUpIcon sx={{ fontSize: 18 }} />
+                                        <KeyboardArrowUpIcon
+                                            sx={{ fontSize: 18 }}
+                                        />
                                     ) : (
-                                        <KeyboardArrowDownIcon sx={{ fontSize: 18 }} />
+                                        <KeyboardArrowDownIcon
+                                            sx={{ fontSize: 18 }}
+                                        />
                                     )}
                                 </IconButton>
                             </Tooltip>
@@ -233,9 +269,15 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
                                     borderRadius: "50%",
                                     overflow: "hidden",
                                     border: "none",
-                                    "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+                                    "& .MuiOutlinedInput-notchedOutline": {
+                                        border: "none",
+                                    },
                                     "& input": { display: "none" },
-                                    "& .MuiInputAdornment-root": { m: 0, width: "100%", height: "100%" },
+                                    "& .MuiInputAdornment-root": {
+                                        m: 0,
+                                        width: "100%",
+                                        height: "100%",
+                                    },
                                     "& .MuiButtonBase-root": {
                                         width: "100%",
                                         height: "100%",
@@ -283,7 +325,11 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
                                 alignItems="center"
                                 display="flex"
                                 gap={0.5}
-                                sx={{ flexGrow: 1, minWidth: 0, "&:hover svg": { opacity: 1 } }}
+                                sx={{
+                                    flexGrow: 1,
+                                    minWidth: 0,
+                                    "&:hover svg": { opacity: 1 },
+                                }}
                             >
                                 <Typography
                                     noWrap
@@ -314,7 +360,9 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
                     </Box>
 
                     {/* Quick Action Controls */}
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                    >
                         <Box
                             sx={{
                                 display: "flex",
@@ -329,7 +377,11 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
                         >
                             {/* Add Sub-course */}
                             <Tooltip title="הוסף תת-מסלול">
-                                <IconButton color="secondary" onClick={handleCreateSubCourse} size="small">
+                                <IconButton
+                                    color="secondary"
+                                    onClick={handleCreateSubCourse}
+                                    size="small"
+                                >
                                     <AddIcon sx={{ fontSize: 18 }} />
                                 </IconButton>
                             </Tooltip>
@@ -338,7 +390,9 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
                             <Tooltip title="שייך מדריך">
                                 <IconButton
                                     color="secondary"
-                                    onClick={(e) => setAnchorEl(e.currentTarget)}
+                                    onClick={(e) =>
+                                        setAnchorEl(e.currentTarget)
+                                    }
                                     size="small"
                                 >
                                     <PersonAddIcon sx={{ fontSize: 18 }} />
@@ -347,7 +401,11 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
 
                             {/* Delete Course */}
                             <Tooltip title="מחק מסלול">
-                                <IconButton color="error" onClick={() => deleteCourse(course.id)} size="small">
+                                <IconButton
+                                    color="error"
+                                    onClick={() => deleteCourse(course.id)}
+                                    size="small"
+                                >
                                     <DeleteIcon sx={{ fontSize: 16 }} />
                                 </IconButton>
                             </Tooltip>
@@ -356,7 +414,11 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
                 </Box>
 
                 {/* Assigned Instructors Chips List */}
-                <Collapse in={isExpanded ? assignedIds.length > 0 : false} timeout="auto" unmountOnExit>
+                <Collapse
+                    in={isExpanded ? assignedIds.length > 0 : false}
+                    timeout="auto"
+                    unmountOnExit
+                >
                     <Box
                         sx={{
                             display: "flex",
@@ -407,7 +469,11 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
             </Box>
 
             {/* Recursively Render Sub-courses */}
-            <Collapse in={isExpanded ? subCourses.length > 0 : false} timeout="auto" unmountOnExit>
+            <Collapse
+                in={isExpanded ? subCourses.length > 0 : false}
+                timeout="auto"
+                unmountOnExit
+            >
                 <Box
                     sx={{
                         display: "flex",
@@ -433,15 +499,25 @@ export function CourseItem({ course, allCourses, depth = 0, visited = new Set<st
             </Collapse>
 
             {/* Inline Instructor Selection Menu */}
-            <Menu anchorEl={anchorEl} onClose={() => setAnchorEl(null)} open={isMenuOpen}>
-                <MenuItem disabled sx={{ fontSize: "0.75rem", fontWeight: 700 }}>
+            <Menu
+                anchorEl={anchorEl}
+                onClose={() => setAnchorEl(null)}
+                open={isMenuOpen}
+            >
+                <MenuItem
+                    disabled
+                    sx={{ fontSize: "0.75rem", fontWeight: 700 }}
+                >
                     בחר מדריך לשיוך
                 </MenuItem>
                 {unassignedInstructors.map((inst) => (
                     <MenuItem
                         key={inst.id}
                         onClick={() => handleAddInstructor(inst.id)}
-                        sx={{ fontSize: "0.8rem", fontFamily: "Assistant, sans-serif" }}
+                        sx={{
+                            fontSize: "0.8rem",
+                            fontFamily: "Assistant, sans-serif",
+                        }}
                     >
                         {inst.display_name}
                     </MenuItem>

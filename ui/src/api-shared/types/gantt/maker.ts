@@ -2,7 +2,7 @@ import { GanttCurriculum } from "@/api-shared/types/gantt/models";
 import { BaseGantItem } from "@/api-shared/types/gantt/models/shared";
 
 type MakerReturnType<T extends BaseGantItem> = Omit<T, "id"> & {
-  id: T["id"] | undefined;
+    id: T["id"] | undefined;
 };
 
 export function makeCurriculum(

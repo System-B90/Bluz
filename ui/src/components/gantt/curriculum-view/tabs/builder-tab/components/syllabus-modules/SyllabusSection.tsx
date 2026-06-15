@@ -1,6 +1,10 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Box, BoxProps, Stack, Typography, useTheme } from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import Stack from "@mui/material/Stack";
+import { useTheme } from "@mui/material/styles";
+import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
 
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
@@ -11,7 +15,7 @@ import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 
 export type SyllabusSectionProps = {
-  syllabusId: GanttSyllabusId;
+    syllabusId: GanttSyllabusId;
 } & BoxProps;
 
 export function SyllabusSection({
@@ -29,10 +33,10 @@ export function SyllabusSection({
     );
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-        id: `syllabus-${syllabusId}`,
-        data: { type: "SYLLABUS", syllabusId } as DndDragEventActiveData,
-    });
+        useDraggable({
+            id: `syllabus-${syllabusId}`,
+            data: { type: "SYLLABUS", syllabusId } as DndDragEventActiveData,
+        });
 
     const style = {
         ...props.style,
@@ -43,7 +47,10 @@ export function SyllabusSection({
     const moduleItems = useMemo(
         () =>
             (syllabus?.modules ?? [])
-                .filter((m) => !Object.values(mappings).some((x) => x.moduleId === m))
+                .filter(
+                    (m) =>
+                        !Object.values(mappings).some((x) => x.moduleId === m),
+                )
                 .map((m) => <ModuleItem key={m} moduleId={m} />),
         [syllabus?.modules, mappings],
     );

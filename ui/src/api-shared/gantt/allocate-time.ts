@@ -6,37 +6,37 @@ import {
 } from "@/api-shared/types/gantt/models";
 
 type AllocateTimeToEventCallbackSync = (props: {
-  eventId: GanttEventId;
-  curriculumId: string;
-  duration: number;
+    eventId: GanttEventId;
+    curriculumId: string;
+    duration: number;
 }) => void;
 type AllocateTimeToEventCallbackAsync = (props: {
-  eventId: GanttEventId;
-  curriculumId: string;
-  duration: number;
+    eventId: GanttEventId;
+    curriculumId: string;
+    duration: number;
 }) => Promise<void>;
 export type AllocateTimeToEventCallback =
-  | AllocateTimeToEventCallbackAsync
-  | AllocateTimeToEventCallbackSync;
+    | AllocateTimeToEventCallbackAsync
+    | AllocateTimeToEventCallbackSync;
 
 export type AllocateTimeToModuleCallbackModuleEvents = Record<
-  GanttEventId,
-  Pick<GanttEvent, "id" | "minimumDuration">
+    GanttEventId,
+    Pick<GanttEvent, "id" | "minimumDuration">
 >;
 
 export type AllocateTimeToModuleProps<T extends AllocateTimeToEventCallback> = {
-  module: Pick<GanttModule, "events" | "id">;
-  totalDuration: number;
-  moduleEvents: AllocateTimeToModuleCallbackModuleEvents;
-  curriculumId: GanttCurriculumId;
-  allocateToEventCallback: T;
+    module: Pick<GanttModule, "events" | "id">;
+    totalDuration: number;
+    moduleEvents: AllocateTimeToModuleCallbackModuleEvents;
+    curriculumId: GanttCurriculumId;
+    allocateToEventCallback: T;
 };
 
 export function allocateTimeToModule(
-  props: AllocateTimeToModuleProps<AllocateTimeToEventCallbackAsync>,
+    props: AllocateTimeToModuleProps<AllocateTimeToEventCallbackAsync>,
 ): Promise<void>;
 export function allocateTimeToModule(
-  props: AllocateTimeToModuleProps<AllocateTimeToEventCallbackSync>,
+    props: AllocateTimeToModuleProps<AllocateTimeToEventCallbackSync>,
 ): void;
 
 // Implementation

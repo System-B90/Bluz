@@ -1,17 +1,15 @@
 "use client";
 
-import {
-    Checkbox,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    TableSortLabel,
-    Typography,
-} from "@mui/material";
+import Checkbox from "@mui/material/Checkbox";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
+import Typography from "@mui/material/Typography";
 import { Dispatch, SetStateAction, useCallback } from "react";
 
 import { EventListEntry } from "@/components/schedule/offline-dialogs/push-updates-dialog/EventListEntry";
@@ -22,7 +20,7 @@ type EventCollisionsListProps = {
     collisionStates: CollisionStates;
     selected: Array<EventId>;
     setSelected: Dispatch<SetStateAction<Array<EventId>>>;
-}
+};
 
 export function EventCollisionsList({
     collisionStates,
@@ -79,14 +77,20 @@ export function EventCollisionsList({
                         </TableCell>
                         <TableCell>
                             <TableSortLabel>
-                                <Typography fontWeight={600}>קונפליקט?</Typography>
+                                <Typography fontWeight={600}>
+                                    קונפליקט?
+                                </Typography>
                             </TableSortLabel>
                         </TableCell>
                         <TableCell padding="checkbox">
                             <Checkbox
-                                checked={rowCount > 0 && numSelected === rowCount}
+                                checked={
+                                    rowCount > 0 && numSelected === rowCount
+                                }
                                 color="primary"
-                                indeterminate={numSelected > 0 && numSelected < rowCount}
+                                indeterminate={
+                                    numSelected > 0 && numSelected < rowCount
+                                }
                                 onChange={onSelectAllClick}
                                 slotProps={{
                                     input: {

@@ -4,7 +4,7 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useSyllabus(syllabusId: null): undefined;
 export function useSyllabus(
-  syllabusId: GanttSyllabusId,
+    syllabusId: GanttSyllabusId,
 ): SyllabusDocument | undefined;
 export function useSyllabus(
     syllabusId: GanttSyllabusId | null,

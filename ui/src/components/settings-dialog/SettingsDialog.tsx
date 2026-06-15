@@ -3,12 +3,10 @@ import CloseIcon from "@mui/icons-material/Close";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
-import {
-    Box,
-    Dialog,
-    IconButton,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Dialog from "@mui/material/Dialog";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
 import { useState } from "react";
 
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
@@ -51,7 +49,6 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
         >
             {/* Main Flex Container */}
             <Box display="flex" flexDirection="row" sx={{ minHeight: 480 }}>
-
                 {/* Sidebar Navigation */}
                 <Box
                     sx={{
@@ -107,7 +104,8 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                     py: 1.5,
                                     borderRadius: "10px",
                                     cursor: "pointer",
-                                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                                    transition:
+                                        "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                                     position: "relative",
                                     userSelect: "none",
                                     bgcolor: isActive
@@ -116,15 +114,25 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                     color: isActive
                                         ? "primary.contrastText"
                                         : "text.secondary",
-                                    borderRight: isActive ? "4px solid" : "0px solid",
-                                    borderRightColor: isActive ? "primary.dark" : "transparent",
+                                    borderRight: isActive
+                                        ? "4px solid"
+                                        : "0px solid",
+                                    borderRightColor: isActive
+                                        ? "primary.dark"
+                                        : "transparent",
                                     boxShadow: isActive
                                         ? "0 4px 12px rgba(103, 200, 221, 0.25)"
                                         : "none",
                                     "&:hover": {
-                                        bgcolor: isActive ? "primary.main" : "action.hover",
-                                        color: isActive ? "primary.contrastText" : "text.primary",
-                                        transform: isActive ? "none" : "translateX(-4px)",
+                                        bgcolor: isActive
+                                            ? "primary.main"
+                                            : "action.hover",
+                                        color: isActive
+                                            ? "primary.contrastText"
+                                            : "text.primary",
+                                        transform: isActive
+                                            ? "none"
+                                            : "translateX(-4px)",
                                     },
                                 }}
                             >

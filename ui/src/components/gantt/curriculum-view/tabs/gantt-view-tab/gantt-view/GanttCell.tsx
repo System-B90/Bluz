@@ -1,5 +1,7 @@
 import { useDroppable } from "@dnd-kit/core";
-import { Box, TableCell, useTheme } from "@mui/material";
+import Box from "@mui/material/Box";
+import { useTheme } from "@mui/material/styles";
+import TableCell from "@mui/material/TableCell";
 import React from "react";
 
 import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
@@ -38,7 +40,9 @@ export const GanttCell: React.FC<GanttCellProps> = ({
                 width: 80,
                 minWidth: 80,
                 boxSizing: "border-box",
-                backgroundColor: isOver ? theme.palette.action.hover : "inherit",
+                backgroundColor: isOver
+                    ? theme.palette.action.hover
+                    : "inherit",
                 transition: "background-color 0.2s",
             }}
         >

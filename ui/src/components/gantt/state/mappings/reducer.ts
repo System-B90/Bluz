@@ -14,7 +14,8 @@ export function ganttMappingReducer(
 ): GanttMappingState {
     switch (action.type) {
     case "SET_MAPPINGS":
-        const newMappings: Record<string, GanttCurriculumModuleDayMapping> = {};
+        const newMappings: Record<string, GanttCurriculumModuleDayMapping> =
+                {};
         action.payload.forEach((m) => {
             newMappings[getGanttMappingKey(m)] = m;
         });

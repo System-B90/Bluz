@@ -10,7 +10,7 @@ import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items
 import { BaseActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 
 export type CreateDraftActionProps = {
-  onCreate: (newCurriculum: GanttCurriculumDocument) => void;
+    onCreate: (newCurriculum: GanttCurriculumDocument) => void;
 } & BaseActionItemProps;
 
 export function CreateDraftAction({
@@ -26,7 +26,11 @@ export function CreateDraftAction({
             .apiCreate(makeCurriculum())
             .then((newCurriculum) => onCreate(newCurriculum))
             .catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת הגאנט נשלכה!", error),
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "יצירת הגאנט נשלכה!",
+                    error,
+                ),
             )
             .finally(() => onProcessingChange(false));
     }, [enqueueSnackbar, onCreate, onProcessingChange]);
@@ -37,7 +41,7 @@ export function CreateDraftAction({
             startIcon={<AddCircleOutlineIcon fontSize="small" />}
             {...props}
         >
-      דראפט חדש
+            דראפט חדש
         </ActionItemButton>
     );
 }

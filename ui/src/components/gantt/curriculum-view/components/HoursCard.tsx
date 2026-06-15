@@ -1,28 +1,27 @@
-import {
-    Box,
-    Card,
-    CircularProgress,
-    Stack,
-    Typography,
-    useTheme,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CircularProgress from "@mui/material/CircularProgress";
+import Stack from "@mui/material/Stack";
+import { useTheme } from "@mui/material/styles";
+import Typography from "@mui/material/Typography";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { useMemo } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
+import { getCurriculumScheduledMinutes } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
-import {
-    calculateAllocatedTimeForCurriculum,
-    calculateMinimumRequiredTimeForCurriculum,
-} from "@/components/gantt/utils";
+import { calculateMinimumRequiredTimeForCurriculum } from "@/components/gantt/utils";
 
 export function HoursCard({
     curriculum,
 }: {
-  curriculum: GanttCurriculumDocument | undefined;
+    curriculum: GanttCurriculumDocument | undefined;
 }) {
     const theme = useTheme();
     const state = useCurriculumState();
+    const { state: mappingState } = useGanttMappings();
+    const mappings = mappingState.mappings;
 
     const totalWorkingHours = useMemo(() => {
         return (curriculum?.weeks ?? []).reduce((total: number, weekId) => {
@@ -30,10 +29,10 @@ export function HoursCard({
             if (!week) return total;
             return (
                 total +
-        (week.days ?? []).reduce((weekTotal: number, dayId) => {
-            const day = state.days[dayId];
-            return weekTotal + (day?.totalWorkingMinutes ?? 0) / 60;
-        }, 0)
+                (week.days ?? []).reduce((weekTotal: number, dayId) => {
+                    const day = state.days[dayId];
+                    return weekTotal + (day?.totalWorkingMinutes ?? 0) / 60;
+                }, 0)
             );
         }, 0);
     }, [curriculum?.weeks, state.weeks, state.days]);
@@ -41,16 +40,21 @@ export function HoursCard({
     const minimumHoursRequired = useMemo(
         () =>
             curriculum
-                ? calculateMinimumRequiredTimeForCurriculum(curriculum, state) / 60
+                ? calculateMinimumRequiredTimeForCurriculum(curriculum, state) /
+                60
                 : 0,
         [curriculum, state],
     );
     const usedWorkingHours = useMemo(
         () =>
             curriculum
-                ? calculateAllocatedTimeForCurriculum(curriculum, state) / 60
+                ? getCurriculumScheduledMinutes({
+                    curriculum,
+                    mappings,
+                    state,
+                }) / 60
                 : 0,
-        [curriculum, state],
+        [curriculum, mappings, state],
     );
 
     if (!curriculum) {
@@ -72,7 +76,7 @@ export function HoursCard({
     return (
         <Card sx={{ padding: 2, flexShrink: 0 }}>
             <Typography gutterBottom variant="subtitle1">
-        שעות
+                שעות
             </Typography>
             <Box alignItems="center" display="flex" flexDirection="row" gap={3}>
                 <Gauge
@@ -85,11 +89,11 @@ export function HoursCard({
                         },
                         [`& .${gaugeClasses.valueArc}`]: {
                             fill:
-                totalWorkingHours === 0
-                    ? "grey.200"
-                    : totalWorkingHours >= usedWorkingHours
-                        ? theme.palette.primary.main
-                        : theme.palette.warning.main,
+                                totalWorkingHours === 0
+                                    ? "grey.200"
+                                    : totalWorkingHours >= usedWorkingHours
+                                        ? theme.palette.primary.main
+                                        : theme.palette.warning.main,
                         },
                         [`& .${gaugeClasses.referenceArc}`]: {
                             fill: "grey.200",
@@ -106,25 +110,40 @@ export function HoursCard({
                     width={80}
                 />
                 <Stack spacing={0.5}>
-                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={1}>
+                    <Box
+                        alignItems="baseline"
+                        display="flex"
+                        flexDirection="row"
+                        gap={1}
+                    >
                         <Typography color="text.secondary" variant="body2">
-              ס&quot;ך:
+                            ס&quot;ך:
                         </Typography>
                         <Typography fontWeight="bold" variant="body2">
                             {totalWorkingHours.toFixed(2)}
                         </Typography>
                     </Box>
-                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={1}>
+                    <Box
+                        alignItems="baseline"
+                        display="flex"
+                        flexDirection="row"
+                        gap={1}
+                    >
                         <Typography color="text.secondary" variant="body2">
-              שנוצלו:
+                            שובצו:
                         </Typography>
                         <Typography fontWeight="bold" variant="body2">
                             {usedWorkingHours.toFixed(2)}
                         </Typography>
                     </Box>
-                    <Box alignItems="baseline" display="flex" flexDirection="row" gap={1}>
+                    <Box
+                        alignItems="baseline"
+                        display="flex"
+                        flexDirection="row"
+                        gap={1}
+                    >
                         <Typography color="text.secondary" variant="body2">
-              מינימום דרוש:
+                            מינימום דרוש:
                         </Typography>
                         <Typography fontWeight="bold" variant="body2">
                             {minimumHoursRequired.toFixed(2)}

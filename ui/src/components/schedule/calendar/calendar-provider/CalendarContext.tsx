@@ -27,11 +27,9 @@ export const CalendarContext = createContext<CalendarContextState | undefined>(
     undefined,
 );
 
-export const useCalendar = () =>
-{
+export const useCalendar = () => {
     const context = useContext(CalendarContext);
-    if (context === undefined)
-    {
+    if (context === undefined) {
         throw new Error("useCalendar must be used within a CalendarProvider");
     }
     return context;

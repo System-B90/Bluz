@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import Box from "@mui/material/Box";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumAboutCard } from "@/components/gantt/curriculum-view/components/curriculum-about-card";
@@ -8,7 +8,7 @@ import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 export function AboutTimeCurriculumViewSidebar({
     curriculumId,
 }: {
-  curriculumId: GanttCurriculumId | null;
+    curriculumId: GanttCurriculumId | null;
 }) {
     const curriculum = useCurriculum(curriculumId ?? "");
 

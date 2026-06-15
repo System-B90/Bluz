@@ -6,7 +6,9 @@
  */
 
 import { useDroppable } from "@dnd-kit/core";
-import { Box, BoxProps, Divider } from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import Divider from "@mui/material/Divider";
 import { useMemo } from "react";
 
 import { GanttWeekId } from "@/api-shared/types/gantt/models";
@@ -18,8 +20,8 @@ import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type WeekGroupPanelProps = {
-  group: Array<GanttWeekId>;
-  onExpandGroup: () => void;
+    group: Array<GanttWeekId>;
+    onExpandGroup: () => void;
 } & BoxProps;
 
 export function WeekGroupPanel({
@@ -35,17 +37,23 @@ export function WeekGroupPanel({
 
     const weeksState = useMemo(() => state.weeks, [state.weeks]);
 
+    const curriculum = useMemo(() => {
+        return Object.values(state.curriculums).find((c) =>
+            c.weeks.includes(group[0]),
+        );
+    }, [state.curriculums, group]);
+
     const startWeek = useMemo(() => {
-        const firstWeekId = group[0];
-        const week = weeksState[firstWeekId];
-        return week?.number ?? 1;
-    }, [group, weeksState]);
+        if (!curriculum) return 1;
+        const idx = curriculum.weeks.indexOf(group[0]);
+        return idx !== -1 ? idx + 1 : 1;
+    }, [group, curriculum]);
 
     const endWeek = useMemo(() => {
-        const lastWeekId = group[group.length - 1];
-        const week = weeksState[lastWeekId];
-        return week?.number ?? group.length;
-    }, [group, weeksState]);
+        if (!curriculum) return group.length;
+        const idx = curriculum.weeks.indexOf(group[group.length - 1]);
+        return idx !== -1 ? idx + 1 : group.length;
+    }, [group, curriculum]);
     const dropId = `group-${group[0]}`;
 
     const firstDayId = useMemo(
@@ -78,7 +86,11 @@ export function WeekGroupPanel({
         return Object.values(mappings)
             .filter((x) => dayIds.includes(x.dayId))
             .map((x) => (
-                <ModuleItem dayId={x.dayId} key={x.moduleId} moduleId={x.moduleId} />
+                <ModuleItem
+                    dayId={x.dayId}
+                    key={x.moduleId}
+                    moduleId={x.moduleId}
+                />
             ));
     }, [mappings, dayIds]);
 

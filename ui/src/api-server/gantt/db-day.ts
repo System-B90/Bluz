@@ -12,9 +12,9 @@ import { CreateGanttDayPayload } from "@/api-shared/types/gantt/create-payloads"
 import { GanttDay, GanttDayId } from "@/api-shared/types/gantt/models";
 
 const basicOperations = drizzleOperationsBuilder<
-  GanttDay,
-  typeof ganttDaysSchema,
-  CreateGanttDayPayload
+    GanttDay,
+    typeof ganttDaysSchema,
+    CreateGanttDayPayload
 >({
     table: ganttDaysSchema,
     typeName: "יום",

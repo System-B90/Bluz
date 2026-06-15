@@ -21,9 +21,9 @@ import {
 } from "@/api-shared/types/gantt/models";
 
 const basicOperations = drizzleOperationsBuilder<
-  GanttSyllabus,
-  typeof ganttSyllabusesSchema,
-  CreateGanttSyllabusPayload
+    GanttSyllabus,
+    typeof ganttSyllabusesSchema,
+    CreateGanttSyllabusPayload
 >({
     table: ganttSyllabusesSchema,
     typeName: "סילבוס",
@@ -54,7 +54,8 @@ async function getFullSyllabus(id: GanttSyllabusId): Promise<ApiSyllabus> {
                                     event: {
                                         with: {
                                             cEC: {
-                                                where: (c, { eq }) => eq(c.curriculumId, id),
+                                                where: (c, { eq }) =>
+                                                    eq(c.curriculumId, id),
                                             },
                                         },
                                     },
@@ -87,11 +88,11 @@ async function addSyllabusToCurriculum(
         return await getFullSyllabus(syllabusId);
     } catch (error: any) {
         const cause = error.cause as {
-      name: string;
-      severity: string;
-      code: string;
-      detail: string;
-    };
+            name: string;
+            severity: string;
+            code: string;
+            detail: string;
+        };
 
         if (cause?.code === UNIQUE_VIOLATION) {
             throw new ClientApiError(`הסילבוס כבר משויך לגאנט זה`);

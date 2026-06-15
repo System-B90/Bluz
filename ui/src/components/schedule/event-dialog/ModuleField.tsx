@@ -1,18 +1,16 @@
-import {
-    FormControl,
-    FormControlProps,
-    InputLabel,
-    MenuItem,
-    Select,
-} from "@mui/material";
+import FormControl from "@mui/material/FormControl";
+import FormControlProps from "@mui/material/FormControlProps";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import { useMemo } from "react";
 
 import { useHiveModules } from "@/components/base/HiveModulesProvider";
 import { Event, eventHasSubject } from "@/components/schedule/types/event";
 
 type ModuleFieldProps = {
-  event?: Partial<Event>;
-  onEventChange: (updates: Partial<Event>) => void;
+    event?: Partial<Event>;
+    onEventChange: (updates: Partial<Event>) => void;
 };
 
 export function ModuleField({
@@ -36,7 +34,7 @@ export function ModuleField({
         <FormControl
             disabled={
                 (event?.type ? !eventHasSubject(event?.type) : false) ||
-        modules.length === 0
+                modules.length === 0
             }
             fullWidth={false}
             {...props}

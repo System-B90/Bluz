@@ -1,5 +1,6 @@
-import { Box, Tooltip } from "@mui/material";
+import Box from "@mui/material/Box";
 import { alpha, useTheme } from "@mui/material/styles";
+import Tooltip from "@mui/material/Tooltip";
 import { useMemo } from "react";
 import { EventProps } from "react-big-calendar";
 
@@ -8,19 +9,14 @@ import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { EventTooltipContent } from "@/components/schedule/event-component/EventTooltip";
 import { UnifiedEvent } from "@/components/schedule/event-component/UnifiedEvent";
 import { useElementSize } from "@/components/schedule/event-component/utils";
-import
-{
-    Event,
-    EventType,
-} from "@/components/schedule/types/event";
+import { Event, EventType } from "@/components/schedule/types/event";
 
 export type ContainerSize = {
     width: number;
     height: number;
 };
 
-export function BluzEventComponent({ event, ..._props }: EventProps<Event>)
-{
+export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
     const theme = useTheme();
     const { getSubject } = useHiveSubjects();
     const { eventFilteredOpacity } = useCalendarFilters();
@@ -35,26 +31,29 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>)
 
     const filterOpacity = useMemo(
         () => eventFilteredOpacity(event),
-        [ event, eventFilteredOpacity ],
+        [event, eventFilteredOpacity],
     );
 
     return (
         <Tooltip
             arrow
-            enterDelay={ 800 }
-            enterNextDelay={ 500 }
+            enterDelay={800}
+            enterNextDelay={500}
             placement="top"
-            title={ <EventTooltipContent event={ event } /> }
+            title={<EventTooltipContent event={event} />}
         >
             <Box
-                data-filtered-out={ filterOpacity }
-                ref={ ref }
-                sx={ {
+                data-filtered-out={filterOpacity}
+                ref={ref}
+                sx={{
                     textAlign: "left",
                     p: 0.2,
                     bgcolor: bgColor,
                     color: textColor,
-                    transition: theme.transitions.create([ "background-color", "transform" ]),
+                    transition: theme.transitions.create([
+                        "background-color",
+                        "transform",
+                    ]),
                     "&:hover": {
                         bgcolor: alpha(bgColor, 0.9),
                     },
@@ -67,12 +66,9 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>)
                     "--event-divider": alpha(textColor, 0.18),
                     "--event-subtle-bg": alpha(textColor, 0.1),
                     "--event-emphasis-bg": alpha(textColor, 0.15),
-                } }
+                }}
             >
-                <UnifiedEvent
-                    event={ event }
-                    size={ size }
-                />
+                <UnifiedEvent event={event} size={size} />
             </Box>
         </Tooltip>
     );

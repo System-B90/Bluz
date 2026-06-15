@@ -27,87 +27,90 @@ import {
 } from "@/api-shared/types/gantt/models";
 
 export type Action =
-  | { type: "ADD_DAY"; payload: { day: GanttDay & { id: GanttDayId } } }
+    | { type: "ADD_DAY"; payload: { day: GanttDay & { id: GanttDayId } } }
 
-  // Updates
-  | {
-      type: "ADD_EVENT";
-      payload: { moduleId: GanttModuleId; event: GanttEvent };
-    }
-  | {
-      type: "ADD_MODULE";
-      payload: { syllabusId: GanttSyllabusId; module: GanttModule };
-    }
-  | {
-      type: "ADD_SYLLABUS";
-      payload: { curriculumId: GanttCurriculumId; syllabus: GanttSyllabus };
-    }
-  | {
-      type: "ADD_WEEK";
-      payload: {
-        week: GanttWeek & { id: GanttWeekId };
-        curriculumId: GanttCurriculumId;
-      };
-    }
+    // Updates
+    | {
+          type: "ADD_EVENT";
+          payload: { moduleId: GanttModuleId; event: GanttEvent };
+      }
+    | {
+          type: "ADD_MODULE";
+          payload: { syllabusId: GanttSyllabusId; module: GanttModule };
+      }
+    | {
+          type: "ADD_SYLLABUS";
+          payload: { curriculumId: GanttCurriculumId; syllabus: GanttSyllabus };
+      }
+    | {
+          type: "ADD_WEEK";
+          payload: {
+              week: GanttWeek & { id: GanttWeekId };
+              curriculumId: GanttCurriculumId;
+          };
+      }
 
-  // Adds
-  | {
-      type: "ALLOCATE_TIME_TO_MODULE";
-      payload: {
-        curriculumId: GanttCurriculumId;
-        moduleId: GanttModuleId;
-        duration: number;
-      };
-    }
-  | {
-      type: "ALLOCATE_TIME";
-      payload: {
-        curriculumId: GanttCurriculumId;
-        eventId: GanttEventId;
-        duration: number;
-      };
-    }
-  | { type: "REMOVE_DAY"; payload: { dayId: GanttDayId } }
+    // Adds
+    | {
+          type: "ALLOCATE_TIME_TO_MODULE";
+          payload: {
+              curriculumId: GanttCurriculumId;
+              moduleId: GanttModuleId;
+              duration: number;
+          };
+      }
+    | {
+          type: "ALLOCATE_TIME";
+          payload: {
+              curriculumId: GanttCurriculumId;
+              eventId: GanttEventId;
+              duration: number;
+          };
+      }
+    | { type: "REMOVE_DAY"; payload: { dayId: GanttDayId } }
 
-  // Removes
-  | {
-      type: "REMOVE_EVENT";
-      payload: { moduleId: GanttModuleId; eventId: GanttEventId };
-    }
-  | {
-      type: "REMOVE_MODULE";
-      payload: { syllabusId: GanttSyllabusId; moduleId: GanttModuleId };
-    }
-  | {
-      type: "REMOVE_SYLLABUS";
-      payload: { curriculumId: GanttCurriculumId; syllabusId: GanttSyllabusId };
-    }
-  | {
-      type: "REMOVE_WEEK";
-      payload: { weekId: GanttWeekId; curriculumId: GanttCurriculumId };
-    }
-  | { type: "SET_DATA"; payload: ApiCurriculum }
-  | {
-      type: "UPDATE_CURRICULUM";
-      payload: { id: GanttCurriculumId; updates: Partial<GanttCurriculum> };
-    }
-  | {
-      type: "UPDATE_DAY";
-      payload: { id: GanttDayId; updates: Partial<GanttDay> };
-    }
-  | {
-      type: "UPDATE_EVENT";
-      payload: { id: GanttEventId; updates: Partial<GanttEvent> };
-    }
-  | {
-      type: "UPDATE_MODULE";
-      payload: { id: GanttModuleId; updates: Partial<GanttModule> };
-    }
-  | {
-      type: "UPDATE_SYLLABUS";
-      payload: { id: GanttSyllabusId; updates: Partial<GanttSyllabus> };
-    }
-  | { type: "UPDATE_WEEK"; payload: { id: GanttWeekId; updates: any } };
+    // Removes
+    | {
+          type: "REMOVE_EVENT";
+          payload: { moduleId: GanttModuleId; eventId: GanttEventId };
+      }
+    | {
+          type: "REMOVE_MODULE";
+          payload: { syllabusId: GanttSyllabusId; moduleId: GanttModuleId };
+      }
+    | {
+          type: "REMOVE_SYLLABUS";
+          payload: {
+              curriculumId: GanttCurriculumId;
+              syllabusId: GanttSyllabusId;
+          };
+      }
+    | {
+          type: "REMOVE_WEEK";
+          payload: { weekId: GanttWeekId; curriculumId: GanttCurriculumId };
+      }
+    | { type: "SET_DATA"; payload: ApiCurriculum }
+    | {
+          type: "UPDATE_CURRICULUM";
+          payload: { id: GanttCurriculumId; updates: Partial<GanttCurriculum> };
+      }
+    | {
+          type: "UPDATE_DAY";
+          payload: { id: GanttDayId; updates: Partial<GanttDay> };
+      }
+    | {
+          type: "UPDATE_EVENT";
+          payload: { id: GanttEventId; updates: Partial<GanttEvent> };
+      }
+    | {
+          type: "UPDATE_MODULE";
+          payload: { id: GanttModuleId; updates: Partial<GanttModule> };
+      }
+    | {
+          type: "UPDATE_SYLLABUS";
+          payload: { id: GanttSyllabusId; updates: Partial<GanttSyllabus> };
+      }
+    | { type: "UPDATE_WEEK"; payload: { id: GanttWeekId; updates: any } };
 
 function injectDocumentTimes<T extends BaseGantItem>(
     rawDoc: T,
@@ -130,7 +133,10 @@ export function curriculumReducer(
             ...state,
             curriculums: {
                 ...state.curriculums,
-                [action.payload.id]: { ...existing, ...action.payload.updates },
+                [action.payload.id]: {
+                    ...existing,
+                    ...action.payload.updates,
+                },
             },
         };
     }
@@ -142,7 +148,10 @@ export function curriculumReducer(
             ...state,
             syllabuses: {
                 ...state.syllabuses,
-                [action.payload.id]: { ...existing, ...action.payload.updates },
+                [action.payload.id]: {
+                    ...existing,
+                    ...action.payload.updates,
+                },
             },
         };
     }
@@ -154,7 +163,10 @@ export function curriculumReducer(
             ...state,
             modules: {
                 ...state.modules,
-                [action.payload.id]: { ...existing, ...action.payload.updates },
+                [action.payload.id]: {
+                    ...existing,
+                    ...action.payload.updates,
+                },
             },
         };
     }
@@ -166,7 +178,10 @@ export function curriculumReducer(
             ...state,
             events: {
                 ...state.events,
-                [action.payload.id]: { ...existing, ...action.payload.updates },
+                [action.payload.id]: {
+                    ...existing,
+                    ...action.payload.updates,
+                },
             },
         };
     }
@@ -178,7 +193,10 @@ export function curriculumReducer(
             ...state,
             weeks: {
                 ...state.weeks,
-                [action.payload.id]: { ...existing, ...action.payload.updates },
+                [action.payload.id]: {
+                    ...existing,
+                    ...action.payload.updates,
+                },
             },
         };
     }
@@ -190,7 +208,10 @@ export function curriculumReducer(
             ...state,
             days: {
                 ...state.days,
-                [action.payload.id]: { ...existing, ...action.payload.updates },
+                [action.payload.id]: {
+                    ...existing,
+                    ...action.payload.updates,
+                },
             },
         };
     }
@@ -222,7 +243,10 @@ export function curriculumReducer(
         }) => {
             const eventDoc = state.events[eventId];
             if (!eventDoc) return;
-            updatedEvents[eventId] = { ...eventDoc, allocatedDuration: duration };
+            updatedEvents[eventId] = {
+                ...eventDoc,
+                allocatedDuration: duration,
+            };
         };
 
         allocateTimeToModule({
@@ -252,7 +276,10 @@ export function curriculumReducer(
                 ...state.curriculums,
                 [parent.id]: {
                     ...parent,
-                    syllabuses: [...parent.syllabuses, action.payload.syllabus.id],
+                    syllabuses: [
+                        ...parent.syllabuses,
+                        action.payload.syllabus.id,
+                    ],
                 },
             },
         };
@@ -345,7 +372,9 @@ export function curriculumReducer(
                 ...state.modules,
                 [parent.id]: {
                     ...parent,
-                    events: parent.events.filter((id) => id !== action.payload.eventId),
+                    events: parent.events.filter(
+                        (id) => id !== action.payload.eventId,
+                    ),
                 },
             },
         };
@@ -357,19 +386,18 @@ export function curriculumReducer(
             ...state,
             weeks: {
                 ...weeksRecord,
-                [action.payload.week.id]: injectDocumentTimes(
-                    {
-                        ...action.payload.week,
-                        curriculumId: action.payload.curriculumId,
-                    },
-                ) as any,
+                [action.payload.week.id]: injectDocumentTimes({
+                    ...action.payload.week,
+                    curriculumId: action.payload.curriculumId,
+                }) as any,
             },
             curriculums: {
                 ...state.curriculums,
                 [action.payload.curriculumId]: {
                     ...state.curriculums[action.payload.curriculumId],
                     weeks: [
-                        ...state.curriculums[action.payload.curriculumId].weeks,
+                        ...state.curriculums[action.payload.curriculumId]
+                            .weeks,
                         action.payload.week.id,
                     ],
                 },
@@ -379,7 +407,8 @@ export function curriculumReducer(
 
     case "REMOVE_WEEK": {
         const existingWeek = state.weeks[action.payload.weekId];
-        const { [action.payload.weekId]: _, ...remainingWeeks } = state.weeks;
+        const { [action.payload.weekId]: _, ...remainingWeeks } =
+                state.weeks;
         const remainingDays = { ...state.days };
 
         for (const dayId of existingWeek?.days ?? []) {
@@ -408,9 +437,9 @@ export function curriculumReducer(
 
     case "ADD_DAY": {
         const daysRecord = state.days as Record<
-        GanttDayId,
-        GanttDay & { id: GanttDayId }
-      >;
+                GanttDayId,
+                GanttDay & { id: GanttDayId }
+            >;
         return {
             ...state,
             days: {

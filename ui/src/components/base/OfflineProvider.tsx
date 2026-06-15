@@ -12,16 +12,16 @@ import { Event, EventId } from "@/components/schedule/types/event";
 import { deepCopyEvent } from "@/components/schedule/types/EventUtils";
 
 export type OfflineContextState = {
-  default: boolean;
-  offlineMode: boolean;
-  setOfflineMode: Dispatch<SetStateAction<boolean>>;
-  pushDialogOpen: boolean;
-  setPushDialogOpen: Dispatch<SetStateAction<boolean>>;
-  captureEventBeforeEdit: (event: Event) => void;
-  captureInitialEvents: (events: Array<Event>) => void;
-  purgeCapturedState: () => void;
-  getCapturedEvent: (eventId: EventId) => Event | null;
-  getCapturedState: () => Record<EventId, Event>;
+    default: boolean;
+    offlineMode: boolean;
+    setOfflineMode: Dispatch<SetStateAction<boolean>>;
+    pushDialogOpen: boolean;
+    setPushDialogOpen: Dispatch<SetStateAction<boolean>>;
+    captureEventBeforeEdit: (event: Event) => void;
+    captureInitialEvents: (events: Array<Event>) => void;
+    purgeCapturedState: () => void;
+    getCapturedEvent: (eventId: EventId) => Event | null;
+    getCapturedState: () => Record<EventId, Event>;
 };
 
 const OfflineContext = createContext<OfflineContextState | undefined>({
@@ -40,15 +40,16 @@ const OfflineContext = createContext<OfflineContextState | undefined>({
 export const OfflineProvider = ({
     children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) => {
-    const [capturedStateBeforeOffline, setCapturedStateBeforeOffline] = useState<
-    Record<EventId, Event>
-  >({});
+    const [capturedStateBeforeOffline, setCapturedStateBeforeOffline] =
+        useState<Record<EventId, Event>>({});
     const [offlineMode, setOfflineMode] = useState<boolean>(false);
     const [pushDialogOpen, setPushDialogOpen] = useState<boolean>(false);
 
-    const setOfflineModeWrapper = useCallback<Dispatch<SetStateAction<boolean>>>(
+    const setOfflineModeWrapper = useCallback<
+        Dispatch<SetStateAction<boolean>>
+    >(
         (value) => {
             setOfflineMode((prev) => {
                 const next = typeof value === "function" ? value(prev) : value;
@@ -103,12 +104,9 @@ export const OfflineProvider = ({
         [capturedStateBeforeOffline],
     );
 
-    const getCapturedState = useCallback(
-        (): Record<EventId, Event> => {
-            return capturedStateBeforeOffline;
-        },
-        [capturedStateBeforeOffline],
-    );
+    const getCapturedState = useCallback((): Record<EventId, Event> => {
+        return capturedStateBeforeOffline;
+    }, [capturedStateBeforeOffline]);
 
     return (
         <OfflineContext.Provider

@@ -1,6 +1,8 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { Box, IconButton, Stack } from "@mui/material";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
 
 import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 import { ConstraintHumanReadableEntry } from "@/components/gantt/module-dialog/constraints/ConstraintHumanReadableEntry";
@@ -40,11 +42,7 @@ export function ConstraintListItem({
                 >
                     <DeleteIcon fontSize="small" />
                 </IconButton>
-                <IconButton
-                    color="primary"
-                    onClick={onEdit}
-                    size="small"
-                >
+                <IconButton color="primary" onClick={onEdit} size="small">
                     <EditIcon fontSize="small" />
                 </IconButton>
             </Stack>

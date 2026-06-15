@@ -36,20 +36,20 @@ export function useWorkTimePanelLogic(
     );
 
     const saveDayHours = useCallback(async () => {
-    // With normalized store, changes are tracked separately for each day
-    // This is called when user updates day hours
+        // With normalized store, changes are tracked separately for each day
+        // This is called when user updates day hours
         await persistWeeks(cloneWeeks(localWeekIds));
     }, [localWeekIds, persistWeeks]);
 
     const saveDayComment = useCallback(async () => {
-    // With normalized store, changes are tracked separately for each day
-    // This is called when user updates day comment
+        // With normalized store, changes are tracked separately for each day
+        // This is called when user updates day comment
         await persistWeeks(cloneWeeks(localWeekIds));
     }, [localWeekIds, persistWeeks]);
 
     const saveWeekComment = useCallback(async () => {
-    // With normalized store, changes are tracked separately for each week
-    // This is called when user updates week comment
+        // With normalized store, changes are tracked separately for each week
+        // This is called when user updates week comment
         await persistWeeks(cloneWeeks(localWeekIds));
     }, [localWeekIds, persistWeeks]);
 

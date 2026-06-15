@@ -1,12 +1,9 @@
 import { useDroppable } from "@dnd-kit/core";
-import {
-    alpha,
-    Box,
-    TableCell,
-    TableRow,
-    Typography,
-    useTheme,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import { alpha, useTheme } from "@mui/material/styles";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import React, { useMemo } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
@@ -30,10 +27,12 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
         violations,
     } = useGanttContext();
 
-    const { isOver: isRemoveOver, setNodeRef: setRemoveNodeRef } = useDroppable({
-        id: `drop-remove-event-${eventId}`,
-        data: { targetType: "remove", moduleId, eventId },
-    });
+    const { isOver: isRemoveOver, setNodeRef: setRemoveNodeRef } = useDroppable(
+        {
+            id: `drop-remove-event-${eventId}`,
+            data: { targetType: "remove", moduleId, eventId },
+        },
+    );
 
     const event = state.events[eventId];
 
@@ -64,7 +63,9 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
     // In weekly mode, find which week the module start falls in
     const moduleStartWeekIdx = useMemo(() => {
         if (!weeklyView || !moduleStartDayId) return -1;
-        return timelineWeeks.findIndex((w) => w.days.includes(moduleStartDayId));
+        return timelineWeeks.findIndex((w) =>
+            w.days.includes(moduleStartDayId),
+        );
     }, [weeklyView, moduleStartDayId, timelineWeeks]);
 
     if (!event) return null;
@@ -79,12 +80,19 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
                     ? week.days.includes(currentDayId)
                     : false;
                 const isWaitingInModuleStartColumn =
-                    isEventUnmapped && isModuleMapped && weekIdx === moduleStartWeekIdx;
+                    isEventUnmapped &&
+                    isModuleMapped &&
+                    weekIdx === moduleStartWeekIdx;
                 const hasBlock =
                     isExplicitlyMappedHere || isWaitingInModuleStartColumn;
 
                 const blockPayload = isExplicitlyMappedHere
-                    ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId }
+                    ? {
+                        type: "event-move",
+                        moduleId,
+                        eventId,
+                        sourceDayId: currentDayId,
+                    }
                     : { type: "event-map", moduleId, eventId };
 
                 const blockId = isExplicitlyMappedHere
@@ -100,24 +108,37 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
                     const startFrac = dayPosInWeek / week.days.length;
                     const endFrac = (dayPosInWeek + 1) / week.days.length;
                     eventLeftPx = Math.round(startFrac * CELL) + 2;
-                    eventWidthPx = Math.max(Math.round((endFrac - startFrac) * CELL) - 4, 16);
+                    eventWidthPx = Math.max(
+                        Math.round((endFrac - startFrac) * CELL) - 4,
+                        16,
+                    );
                 }
 
                 return (
                     <GanttCell
                         blockId={blockId}
-                        blockLeftPx={isExplicitlyMappedHere ? eventLeftPx : undefined}
+                        blockLeftPx={
+                            isExplicitlyMappedHere ? eventLeftPx : undefined
+                        }
                         blockPayload={blockPayload}
                         blockTitle={event.title}
-                        blockWidthPx={isExplicitlyMappedHere ? eventWidthPx : undefined}
+                        blockWidthPx={
+                            isExplicitlyMappedHere ? eventWidthPx : undefined
+                        }
                         dayId={firstDayId}
                         dropId={`drop-event-${eventId}-${firstDayId}`}
-                        elementId={hasBlock ? `block-event-${eventId}` : undefined}
+                        elementId={
+                            hasBlock ? `block-event-${eventId}` : undefined
+                        }
                         hasBlock={hasBlock}
                         isAbsoluteBlock={true}
                         isOpaque={isWaitingInModuleStartColumn}
                         key={`week-${week.id}-${eventId}`}
-                        payloadData={{ targetType: "event", eventId, dayId: firstDayId }}
+                        payloadData={{
+                            targetType: "event",
+                            eventId,
+                            dayId: firstDayId,
+                        }}
                         violations={hasBlock ? myViolations : undefined}
                     />
                 );
@@ -128,12 +149,19 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
             week.days.map((dayId) => {
                 const isExplicitlyMappedHere = currentDayId === dayId;
                 const isWaitingInModuleStartColumn =
-                    isEventUnmapped && isModuleMapped && moduleStartDayId === dayId;
+                    isEventUnmapped &&
+                    isModuleMapped &&
+                    moduleStartDayId === dayId;
                 const hasBlock =
                     isExplicitlyMappedHere || isWaitingInModuleStartColumn;
 
                 const blockPayload = isExplicitlyMappedHere
-                    ? { type: "event-move", moduleId, eventId, sourceDayId: dayId }
+                    ? {
+                        type: "event-move",
+                        moduleId,
+                        eventId,
+                        sourceDayId: dayId,
+                    }
                     : { type: "event-map", moduleId, eventId };
 
                 const blockId = isExplicitlyMappedHere
@@ -147,7 +175,9 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
                         blockTitle={event.title}
                         dayId={dayId}
                         dropId={`drop-event-${eventId}-${dayId}`}
-                        elementId={hasBlock ? `block-event-${eventId}` : undefined}
+                        elementId={
+                            hasBlock ? `block-event-${eventId}` : undefined
+                        }
                         hasBlock={hasBlock}
                         isAbsoluteBlock={true}
                         isOpaque={isWaitingInModuleStartColumn}
@@ -189,12 +219,17 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
                     sx={{ display: "block" }}
                     variant="caption"
                 >
-          ↳ {event.title}
+                    ↳ {event.title}
                 </Typography>
 
                 {isEventUnmapped && !isModuleMapped ? (
                     <Box
-                        sx={{ flexGrow: 1, position: "relative", ml: 1, height: "24px" }}
+                        sx={{
+                            flexGrow: 1,
+                            position: "relative",
+                            ml: 1,
+                            height: "24px",
+                        }}
                     >
                         <GanttBlock
                             elementId={`block-event-${eventId}`}

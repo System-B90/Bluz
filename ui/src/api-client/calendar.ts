@@ -20,12 +20,15 @@ export async function apiGetEvents({
     const endpoint = new URL("/api/event", window.location.origin);
     endpoint.searchParams.set("sd", startDate?.toISOString() ?? "");
     endpoint.searchParams.set("ed", endDate?.toISOString() ?? "");
-    const rawData = await safeApiFetcher<Array<DbEventDocument>>(endpoint.toString(), {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
+    const rawData = await safeApiFetcher<Array<DbEventDocument>>(
+        endpoint.toString(),
+        {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
         },
-    });
+    );
     return rawData.map(eventDateFixup) as unknown as Array<Event>;
 }
 
@@ -69,7 +72,10 @@ export const apiUpdateEvent: ClientApiUpdateEvent = async (event, props) => {
     return eventDateFixup(rawData) as unknown as Event;
 };
 
-type ClientApiDeleteEvent = ClientApi<ApiEventDeletePayload, ApiEventDeleteResponse>;
+type ClientApiDeleteEvent = ClientApi<
+    ApiEventDeletePayload,
+    ApiEventDeleteResponse
+>;
 export const apiDeleteEvent: ClientApiDeleteEvent = async (eventId, props) => {
     await safeApiFetcher<ApiEventDeleteResponse>("/api/event", {
         ...props,

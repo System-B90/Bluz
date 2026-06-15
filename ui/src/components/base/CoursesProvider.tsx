@@ -26,7 +26,10 @@ export type CoursesContextState = {
     getCourse: (id: CourseId) => Course | undefined;
     addCourse: (course: Omit<Course, "id">) => Promise<void>;
     updateCourse: (course: Course) => Promise<void>;
-    updateCoursePartial: (id: CourseId, changes: Partial<Course>) => Promise<void>;
+    updateCoursePartial: (
+        id: CourseId,
+        changes: Partial<Course>,
+    ) => Promise<void>;
     deleteCourse: (courseId: CourseId) => Promise<void>;
 };
 
@@ -52,7 +55,10 @@ type CoursesAction =
     | { type: "SET_LOADING"; payload: boolean }
     | { type: "UPDATE_COURSE"; payload: Partial<Course> & { id: CourseId } };
 
-function coursesReducer(state: CoursesState, action: CoursesAction): CoursesState {
+function coursesReducer(
+    state: CoursesState,
+    action: CoursesAction,
+): CoursesState {
     switch (action.type) {
     case "SET_LOADING":
         return { ...state, isLoading: action.payload };
@@ -102,7 +108,10 @@ export const CoursesProvider = ({
         isLoading: true,
     });
 
-    const coursesArray = useMemo(() => Object.values(state.courses), [state.courses]);
+    const coursesArray = useMemo(
+        () => Object.values(state.courses),
+        [state.courses],
+    );
 
     const getCourse = useCallback(
         (id: CourseId): Course | undefined => {
@@ -123,7 +132,11 @@ export const CoursesProvider = ({
             })
             .catch((error) => {
                 dispatch({ type: "SET_LOADING", payload: false });
-                enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת קורסים נכשלה.", error);
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "טעינת קורסים נכשלה.",
+                    error,
+                );
             });
     }, [dispatch, enqueueSnackbar]);
 
@@ -140,14 +153,20 @@ export const CoursesProvider = ({
 
             try {
                 const createdCourse = await apiCreateCourse(course);
-                enqueueSnackbar(`יצירת מסלול ${courseData.name} הסתיימה בהצלחה.`, {
-                    variant: "success",
-                });
+                enqueueSnackbar(
+                    `יצירת מסלול ${courseData.name} הסתיימה בהצלחה.`,
+                    {
+                        variant: "success",
+                    },
+                );
                 dispatch({ type: "DELETE_COURSE", payload: courseId });
                 dispatch({ type: "ADD_COURSE", payload: createdCourse });
                 loadCourses();
             } catch (error) {
-                dispatch({ type: "ROLLBACK_COURSES", payload: previousCourses });
+                dispatch({
+                    type: "ROLLBACK_COURSES",
+                    payload: previousCourses,
+                });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     `יצירת המסלול ${courseData.name} נכשלה!`,
@@ -171,7 +190,10 @@ export const CoursesProvider = ({
                 dispatch({ type: "UPDATE_COURSE", payload: updatedCourse });
                 loadCourses();
             } catch (error) {
-                dispatch({ type: "ROLLBACK_COURSES", payload: previousCourses });
+                dispatch({
+                    type: "ROLLBACK_COURSES",
+                    payload: previousCourses,
+                });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     `עדכון המסלול ${course.name} נכשל!`,
@@ -191,14 +213,23 @@ export const CoursesProvider = ({
             dispatch({ type: "UPDATE_COURSE", payload: { ...changes, id } });
 
             try {
-                const updatedCourse = await apiSetCourse({ ...originalCourse, ...changes });
-                enqueueSnackbar(`עדכון מסלול ${updatedCourse.name} הסתיים בהצלחה.`, {
-                    variant: "success",
+                const updatedCourse = await apiSetCourse({
+                    ...originalCourse,
+                    ...changes,
                 });
+                enqueueSnackbar(
+                    `עדכון מסלול ${updatedCourse.name} הסתיים בהצלחה.`,
+                    {
+                        variant: "success",
+                    },
+                );
                 dispatch({ type: "UPDATE_COURSE", payload: updatedCourse });
                 loadCourses();
             } catch (error) {
-                dispatch({ type: "ROLLBACK_COURSES", payload: previousCourses });
+                dispatch({
+                    type: "ROLLBACK_COURSES",
+                    payload: previousCourses,
+                });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     `עדכון המסלול ${originalCourse.name} נכשל!`,
@@ -218,12 +249,18 @@ export const CoursesProvider = ({
 
             try {
                 await apiDeleteCourse(courseId);
-                enqueueSnackbar(`מחיקת מסלול ${deletedCourseName} הסתיימה בהצלחה.`, {
-                    variant: "success",
-                });
+                enqueueSnackbar(
+                    `מחיקת מסלול ${deletedCourseName} הסתיימה בהצלחה.`,
+                    {
+                        variant: "success",
+                    },
+                );
                 loadCourses();
             } catch (error) {
-                dispatch({ type: "ROLLBACK_COURSES", payload: previousCourses });
+                dispatch({
+                    type: "ROLLBACK_COURSES",
+                    payload: previousCourses,
+                });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     `מחיקת המסלול ${deletedCourseName} נכשלה!`,

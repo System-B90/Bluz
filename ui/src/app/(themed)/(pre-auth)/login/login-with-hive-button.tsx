@@ -1,9 +1,7 @@
-import {
-    Button,
-    ButtonProps,
-    Typography,
-    TypographyProps,
-} from "@mui/material";
+import Button from "@mui/material/Button";
+import ButtonProps from "@mui/material/ButtonProps";
+import Typography from "@mui/material/Typography";
+import TypographyProps from "@mui/material/TypographyProps";
 import Image from "next/image";
 import { signIn, SignInOptions } from "next-auth/react";
 import { useCallback } from "react";
@@ -11,9 +9,9 @@ import { useCallback } from "react";
 import { getHiveBaseUrl } from "@/api-shared/common";
 
 type LoginWithHiveProps = {
-  callbackUrl?: SignInOptions["callbackUrl"];
-  fontSize?: TypographyProps["fontSize"];
-  fontWeight?: TypographyProps["fontWeight"];
+    callbackUrl?: SignInOptions["callbackUrl"];
+    fontSize?: TypographyProps["fontSize"];
+    fontWeight?: TypographyProps["fontWeight"];
 } & ButtonProps;
 
 export function LoginWithHive({
@@ -51,11 +49,11 @@ export function LoginWithHive({
             {...props}
         >
             <Typography
-                color="textPrimary"
+                color="inherit"
                 fontSize={fontSize}
                 fontWeight={fontWeight}
             >
-        התחברות עם הייב
+                התחברות עם הייב
             </Typography>
         </Button>
     );

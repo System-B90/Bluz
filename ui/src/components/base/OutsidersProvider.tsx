@@ -51,7 +51,10 @@ type OutsidersAction =
     | { type: "SET_OUTSIDERS"; payload: Record<string, Outsider> }
     | { type: "UPDATE_OUTSIDER"; payload: Outsider };
 
-function outsidersReducer(state: OutsidersState, action: OutsidersAction): OutsidersState {
+function outsidersReducer(
+    state: OutsidersState,
+    action: OutsidersAction,
+): OutsidersState {
     switch (action.type) {
     case "SET_LOADING":
         return { ...state, isLoading: action.payload };
@@ -95,7 +98,11 @@ function outsidersReducer(state: OutsidersState, action: OutsidersAction): Outsi
     }
 }
 
-export const OutsidersProvider = ({ children }: { children: React.ReactNode }) => {
+export const OutsidersProvider = ({
+    children,
+}: {
+    children: React.ReactNode;
+}) => {
     const { addMessageHandler } = useAuth();
     const [state, dispatch] = useReducer(outsidersReducer, {
         outsiders: {},
@@ -129,7 +136,11 @@ export const OutsidersProvider = ({ children }: { children: React.ReactNode }) =
             })
             .catch((error) => {
                 dispatch({ type: "SET_LOADING", payload: false });
-                enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת אנשי חוץ נכשלה.", error);
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "טעינת אנשי חוץ נכשלה.",
+                    error,
+                );
             });
     }, []);
 
@@ -146,9 +157,12 @@ export const OutsidersProvider = ({ children }: { children: React.ReactNode }) =
 
             try {
                 const created = await apiCreateOutsider(outsider);
-                enqueueSnackbar(`יצירת איש חוץ ${outsiderData.name} הסתיימה בהצלחה.`, {
-                    variant: "success",
-                });
+                enqueueSnackbar(
+                    `יצירת איש חוץ ${outsiderData.name} הסתיימה בהצלחה.`,
+                    {
+                        variant: "success",
+                    },
+                );
                 dispatch({ type: "DELETE_OUTSIDER", payload: id });
                 dispatch({ type: "ADD_OUTSIDER", payload: created });
                 loadOutsiders();
@@ -175,9 +189,12 @@ export const OutsidersProvider = ({ children }: { children: React.ReactNode }) =
 
             try {
                 const updated = await apiUpdateOutsider(outsider);
-                enqueueSnackbar(`עדכון איש חוץ ${outsider.name} הסתיים בהצלחה.`, {
-                    variant: "success",
-                });
+                enqueueSnackbar(
+                    `עדכון איש חוץ ${outsider.name} הסתיים בהצלחה.`,
+                    {
+                        variant: "success",
+                    },
+                );
                 dispatch({ type: "UPDATE_OUTSIDER", payload: updated });
                 loadOutsiders();
             } catch (error) {
@@ -264,7 +281,9 @@ export const useOutsiders = () => {
     const context = useContext(OutsidersContext);
 
     if (context === undefined || context.default) {
-        throw new Error("useOutsiders must be used within an OutsidersProvider");
+        throw new Error(
+            "useOutsiders must be used within an OutsidersProvider",
+        );
     }
 
     return context;

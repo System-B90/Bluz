@@ -14,9 +14,9 @@ export function NumberSpinner({
     size = "medium",
     ...other
 }: BaseNumberField.Root.Props & {
-  _label?: never;
-  size?: "medium" | "small";
-  error?: boolean;
+    _label?: never;
+    size?: "medium" | "small";
+    error?: boolean;
 }) {
     let id = React.useId();
     if (idProp) {
@@ -83,10 +83,11 @@ export function NumberSpinner({
                                 input: {
                                     ...props,
                                     size:
-                    Math.max(
-                        (other.min?.toString() || "").length,
-                        state.inputValue.length || 1,
-                    ) + 1,
+                                        Math.max(
+                                            (other.min?.toString() || "")
+                                                .length,
+                                            state.inputValue.length || 1,
+                                        ) + 1,
                                     sx: {
                                         textAlign: "center",
                                     },

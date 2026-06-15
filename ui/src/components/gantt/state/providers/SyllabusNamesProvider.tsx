@@ -16,10 +16,10 @@ import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 export type SyllabusDictionary = Record<GanttSyllabusId, string>;
 
 export type SyllabusProviderState = {
-  syllabusNames: SyllabusDictionary;
-  isLoading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
+    syllabusNames: SyllabusDictionary;
+    isLoading: boolean;
+    error: Error | null;
+    refetch: () => Promise<void>;
 };
 
 const SyllabusContext = createContext<SyllabusProviderState | undefined>(
@@ -29,7 +29,7 @@ const SyllabusContext = createContext<SyllabusProviderState | undefined>(
 export function SyllabusNamesProvider({
     children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const [syllabusNames, setSyllabuses] = useState<SyllabusDictionary>({});
@@ -44,7 +44,9 @@ export function SyllabusNamesProvider({
             setSyllabuses(data);
         } catch (err) {
             setError(
-                err instanceof Error ? err : new Error("Failed to fetch syllabuses"),
+                err instanceof Error
+                    ? err
+                    : new Error("Failed to fetch syllabuses"),
             );
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
@@ -57,7 +59,7 @@ export function SyllabusNamesProvider({
     }, [enqueueSnackbar]);
 
     useEffect(() => {
-    // Error handling is in fetchSyllabuses
+        // Error handling is in fetchSyllabuses
         void fetchSyllabuses();
     }, [fetchSyllabuses]);
 

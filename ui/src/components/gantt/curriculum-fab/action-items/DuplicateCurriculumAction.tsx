@@ -10,7 +10,7 @@ import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 
 export type DuplicateCurriculumActionProps = {
-  onCreate: (newCurriculum: GanttCurriculumDocument) => void;
+    onCreate: (newCurriculum: GanttCurriculumDocument) => void;
 } & CurriculumAwareActionItemProps;
 
 export function DuplicateCurriculumAction({
@@ -25,20 +25,24 @@ export function DuplicateCurriculumAction({
         if (!sourceCurriculum) return;
         onProcessingChange(true);
         const payload: Omit<CreateGanttCurriculumPayload, "weeks"> & {
-      weeks: typeof sourceCurriculum.weeks;
-    } = {
-        title: `${sourceCurriculum.title} (Copy)`,
-        description: sourceCurriculum.description,
-        startDate: sourceCurriculum.startDate,
-        isDraft: true,
-        weeks: sourceCurriculum.weeks,
-    };
+            weeks: typeof sourceCurriculum.weeks;
+        } = {
+            title: `${sourceCurriculum.title} (Copy)`,
+            description: sourceCurriculum.description,
+            startDate: sourceCurriculum.startDate,
+            isDraft: true,
+            weeks: sourceCurriculum.weeks,
+        };
         // Cast to proper type - duplication uses the same week IDs structure
         ganttApi.curriculum
             .apiCreate(payload as CreateGanttCurriculumPayload)
             .then((newCurriculum) => onCreate(newCurriculum))
             .catch((error: unknown) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "שכפול הגאנט נכשל!", error),
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "שכפול הגאנט נכשל!",
+                    error,
+                ),
             )
             .finally(() => onProcessingChange(false));
     }, [enqueueSnackbar, onCreate, onProcessingChange, sourceCurriculum]);
@@ -49,7 +53,7 @@ export function DuplicateCurriculumAction({
             startIcon={<ContentCopyIcon fontSize="small" />}
             {...props}
         >
-      שכפול
+            שכפול
         </ActionItemButton>
     );
 }

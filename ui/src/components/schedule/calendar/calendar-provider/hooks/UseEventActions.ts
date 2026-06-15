@@ -1,7 +1,11 @@
 import { enqueueSnackbar } from "notistack";
 import { useCallback } from "react";
 
-import { apiCreateEvent, apiDeleteEvent, apiUpdateEvent } from "@/api-client/calendar";
+import {
+    apiCreateEvent,
+    apiDeleteEvent,
+    apiUpdateEvent,
+} from "@/api-client/calendar";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { createEventFactory } from "@/components/schedule/calendar/calendar-provider/EventFactory";
 import { CalendarAction } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
@@ -11,7 +15,7 @@ export const useEventActions = (
     events: Array<Event>,
     offlineMode: boolean,
     captureEventBeforeEdit: (ev: Event) => void,
-    dispatch: (action: CalendarAction) => void
+    dispatch: (action: CalendarAction) => void,
 ) => {
     const saveEvent = useCallback(
         (eventPartial: Partial<Event>) => {
@@ -29,8 +33,12 @@ export const useEventActions = (
 
             if (!offlineMode) {
                 const apiCall = isNewEvent ? apiCreateEvent : apiUpdateEvent;
-                const successMsg = isNewEvent ? `המופע "${newEvent.name}" נוצר בהצלחה!` : `המופע "${newEvent.name}" נשמר בהצלחה!`;
-                const errorMsg = isNewEvent ? "יצירת המופע נכשלה!" : "שמירת המופע נכשלה!";
+                const successMsg = isNewEvent
+                    ? `המופע "${newEvent.name}" נוצר בהצלחה!`
+                    : `המופע "${newEvent.name}" נשמר בהצלחה!`;
+                const errorMsg = isNewEvent
+                    ? "יצירת המופע נכשלה!"
+                    : "שמירת המופע נכשלה!";
 
                 apiCall(newEvent)
                     .then((res) => {
@@ -38,11 +46,15 @@ export const useEventActions = (
                         dispatch({ type: "UPSERT_EVENT", payload: res });
                     })
                     .catch((error) => {
-                        enqueueApiErrorSnackbar(enqueueSnackbar, errorMsg, error);
+                        enqueueApiErrorSnackbar(
+                            enqueueSnackbar,
+                            errorMsg,
+                            error,
+                        );
                     });
             }
         },
-        [events, offlineMode, captureEventBeforeEdit, dispatch]
+        [events, offlineMode, captureEventBeforeEdit, dispatch],
     );
 
     const deleteEvent = useCallback(
@@ -51,11 +63,21 @@ export const useEventActions = (
 
             if (!offlineMode) {
                 apiDeleteEvent(eventId)
-                    .then(() => enqueueSnackbar("המופע נמחק בהצלחה.", { variant: "success" }))
-                    .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, "מחיקת המופע נכשלה!", error));
+                    .then(() =>
+                        enqueueSnackbar("המופע נמחק בהצלחה.", {
+                            variant: "success",
+                        }),
+                    )
+                    .catch((error) =>
+                        enqueueApiErrorSnackbar(
+                            enqueueSnackbar,
+                            "מחיקת המופע נכשלה!",
+                            error,
+                        ),
+                    );
             }
         },
-        [offlineMode, dispatch]
+        [offlineMode, dispatch],
     );
 
     return { saveEvent, deleteEvent };

@@ -21,19 +21,17 @@ import {
     ConstraintType,
     GanttConstraint,
 } from "@/api-shared/types/gantt/models/constraint";
-import {
-    GanttConstraintContext,
-} from "@/components/gantt/state/constraints/context";
+import { GanttConstraintContext } from "@/components/gantt/state/constraints/context";
 import { ganttConstraintReducer } from "@/components/gantt/state/constraints/reducer";
 
 export type ProviderScope =
-    | { type: "curriculum"; curriculumId: GanttCurriculumId; }
+    | { type: "curriculum"; curriculumId: GanttCurriculumId }
     | {
-        type: "module";
-        curriculumId: GanttCurriculumId;
-        syllabusId: string;
-        moduleId: GanttModuleId;
-    };
+          type: "module";
+          curriculumId: GanttCurriculumId;
+          syllabusId: string;
+          moduleId: GanttModuleId;
+      };
 
 export function GanttConstraintProvider({
     children,
@@ -52,7 +50,7 @@ export function GanttConstraintProvider({
 
     // Helper to determine if the current scope has mutation rights over a constraint
     const canModify = useCallback(
-        (constraint: GanttConstraint | Omit<CreateConstraintPayload, 'id'>) => {
+        (constraint: GanttConstraint | Omit<CreateConstraintPayload, "id">) => {
             if (context.type === "curriculum") return true;
             if (constraint.type === ConstraintType.Temporal) return true;
 
@@ -79,7 +77,10 @@ export function GanttConstraintProvider({
         try {
             const queryOptions =
                 context.type === "module"
-                    ? { moduleId: context.moduleId, syllabusId: context.syllabusId }
+                    ? {
+                        moduleId: context.moduleId,
+                        syllabusId: context.syllabusId,
+                    }
                     : {};
             const data = await ganttApi.constraints.apiGet(
                 curriculumId,
@@ -88,13 +89,17 @@ export function GanttConstraintProvider({
 
             dispatch({ type: "SET_CONSTRAINTS", payload: data });
         } catch (error) {
-            enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת אילוצים נכשלה!", error);
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "טעינת אילוצים נכשלה!",
+                error,
+            );
             dispatch({ type: "SET_LOADING", payload: false });
         }
     }, [dispatch, curriculumId, context, enqueueSnackbar]);
 
     const createConstraint = useCallback(
-        async (payload: Omit<CreateConstraintPayload, 'id'>) => {
+        async (payload: Omit<CreateConstraintPayload, "id">) => {
             if (!canModify(payload)) {
                 enqueueSnackbar("אין לך הרשאה ליצור אילוץ זה מהקשר הנוכחי.", {
                     variant: "error",
@@ -117,13 +122,23 @@ export function GanttConstraintProvider({
                     constraint,
                 );
 
-                dispatch({ type: "DELETE_CONSTRAINT", payload: { id: constraintId } });
+                dispatch({
+                    type: "DELETE_CONSTRAINT",
+                    payload: { id: constraintId },
+                });
                 dispatch({ type: "UPSERT_CONSTRAINT", payload: result });
 
                 return result;
             } catch (e) {
-                dispatch({ type: "DELETE_CONSTRAINT", payload: { id: constraintId } });
-                enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת אילוץ נכשלה!", e);
+                dispatch({
+                    type: "DELETE_CONSTRAINT",
+                    payload: { id: constraintId },
+                });
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "יצירת אילוץ נכשלה!",
+                    e,
+                );
                 return undefined;
             }
         },
@@ -136,9 +151,12 @@ export function GanttConstraintProvider({
             if (!originalConstraint) return;
 
             if (!canModify(originalConstraint)) {
-                enqueueSnackbar("אינך יכול לערוך אילוץ המוגדר על ידי מודול אחר.", {
-                    variant: "warning",
-                });
+                enqueueSnackbar(
+                    "אינך יכול לערוך אילוץ המוגדר על ידי מודול אחר.",
+                    {
+                        variant: "warning",
+                    },
+                );
                 return;
             }
 
@@ -150,13 +168,24 @@ export function GanttConstraintProvider({
             dispatch({ type: "UPSERT_CONSTRAINT", payload: updatedConstraint });
 
             try {
-                const result = await ganttApi.constraints.apiUpdate(curriculumId, id, payload);
+                const result = await ganttApi.constraints.apiUpdate(
+                    curriculumId,
+                    id,
+                    payload,
+                );
                 if (result) {
                     dispatch({ type: "UPSERT_CONSTRAINT", payload: result });
                 }
             } catch (e) {
-                dispatch({ type: "UPSERT_CONSTRAINT", payload: originalConstraint });
-                enqueueApiErrorSnackbar(enqueueSnackbar, "עדכון אילוץ נכשל!", e);
+                dispatch({
+                    type: "UPSERT_CONSTRAINT",
+                    payload: originalConstraint,
+                });
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "עדכון אילוץ נכשל!",
+                    e,
+                );
             }
         },
         [state.constraints, curriculumId, dispatch, canModify, enqueueSnackbar],
@@ -168,9 +197,12 @@ export function GanttConstraintProvider({
             if (!originalConstraint) return;
 
             if (!canModify(originalConstraint)) {
-                enqueueSnackbar("אינך יכול למחוק אילוץ המוגדר על ידי מודול אחר.", {
-                    variant: "error",
-                });
+                enqueueSnackbar(
+                    "אינך יכול למחוק אילוץ המוגדר על ידי מודול אחר.",
+                    {
+                        variant: "error",
+                    },
+                );
                 return;
             }
 
@@ -179,8 +211,15 @@ export function GanttConstraintProvider({
             try {
                 await ganttApi.constraints.apiDelete(curriculumId, id);
             } catch (e) {
-                dispatch({ type: "UPSERT_CONSTRAINT", payload: originalConstraint });
-                enqueueApiErrorSnackbar(enqueueSnackbar, "מחיקת אילוץ נכשלה!", e);
+                dispatch({
+                    type: "UPSERT_CONSTRAINT",
+                    payload: originalConstraint,
+                });
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "מחיקת אילוץ נכשלה!",
+                    e,
+                );
             }
         },
         [state.constraints, curriculumId, dispatch, canModify, enqueueSnackbar],

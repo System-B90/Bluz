@@ -1,11 +1,11 @@
-import { useTheme } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import React, { useCallback, useEffect, useState } from "react";
 
 import { ConstraintLink } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 
 type ConstraintLinesProps = {
-  links: Array<ConstraintLink>;
-  containerRef: React.RefObject<HTMLDivElement | null>;
+    links: Array<ConstraintLink>;
+    containerRef: React.RefObject<HTMLDivElement | null>;
 };
 
 export const ConstraintLines: React.FC<ConstraintLinesProps> = ({

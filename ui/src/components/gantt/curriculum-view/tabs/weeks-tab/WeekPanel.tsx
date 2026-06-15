@@ -1,13 +1,11 @@
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import {
-    Box,
-    Chip,
-    Divider,
-    InputBase,
-    Paper,
-    Stack,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Divider from "@mui/material/Divider";
+import InputBase from "@mui/material/InputBase";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from "react";
 
@@ -24,8 +22,8 @@ import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 type WeekPanelProps = {
-  curriculumId: GanttCurriculumId;
-  weekId: GanttWeekId;
+    curriculumId: GanttCurriculumId;
+    weekId: GanttWeekId;
 };
 
 export function WorkTimeChip({ totalHours }: { totalHours: number }) {
@@ -69,12 +67,28 @@ export function WeekPanel({ weekId }: WeekPanelProps) {
     const state = useCurriculumState();
     const { updateWeek } = useWeekActions();
 
+    const curriculum = useMemo(() => {
+        return Object.values(state.curriculums).find((c) =>
+            c.weeks.includes(weekId),
+        );
+    }, [state.curriculums, weekId]);
+
+    const weekIndex = useMemo(() => {
+        return curriculum ? curriculum.weeks.indexOf(weekId) : -1;
+    }, [curriculum, weekId]);
+
+    const weekNumber = weekIndex !== -1 ? weekIndex + 1 : (week?.number ?? 1);
+
     const handleCommentBlur = useCallback(
         (e: React.FocusEvent<HTMLTextAreaElement>) => {
             const newValue = e.target.value;
             if (newValue !== week?.comment) {
                 updateWeek(weekId, { comment: newValue }).catch((error) =>
-                    enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת הערה נכשלה!", error),
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "שמירת הערה נכשלה!",
+                        error,
+                    ),
                 );
             }
         },
@@ -122,7 +136,7 @@ export function WeekPanel({ weekId }: WeekPanelProps) {
                         className="text-slate-400 font-bold leading-none"
                         variant="overline"
                     >
-            שבוע {week?.number}
+                        שבוע {weekNumber}
                     </Typography>
                     <InputBase
                         className="text-sm font-bold text-slate-800"

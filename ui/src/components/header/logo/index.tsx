@@ -4,8 +4,8 @@ export function Logo({
     width,
     height,
 }: {
-  width: number | string;
-  height: number | string;
+    width: number | string;
+    height: number | string;
 }) {
     return (
         <svg

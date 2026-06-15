@@ -1,6 +1,7 @@
 "use client";
 
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
+import { useSnackbar } from "notistack";
 import React, {
     createContext,
     useCallback,
@@ -18,16 +19,16 @@ import {
 import { MessageTypes } from "@/settings";
 
 export type WebSocketSessionMessage = {
-  type: MessageTypes;
-  [key: string]: unknown;
+    type: MessageTypes;
+    [key: string]: unknown;
 };
 
 export type AuthContextState = {
-  userData: AuthSessionUser;
-  logout: () => void;
-  canEdit: boolean;
-  addMessageHandler: (handler: MessageHandlerType) => () => void;
-  sendMessage: (data: WebSocketSessionMessage) => void;
+    userData: AuthSessionUser;
+    logout: () => void;
+    canEdit: boolean;
+    addMessageHandler: (handler: MessageHandlerType) => () => void;
+    sendMessage: (data: WebSocketSessionMessage) => void;
 };
 
 const AuthContext = createContext<AuthContextState | undefined>(undefined);
@@ -36,11 +37,64 @@ export const AuthProvider = ({
     children,
     userData,
 }: {
-  children: React.ReactNode;
-  userData: AuthSessionUser;
+    children: React.ReactNode;
+    userData: AuthSessionUser;
 }) => {
     const { ws, addMessageHandler } = useSessionWebSocketContext();
+    const { enqueueSnackbar } = useSnackbar();
     const messageQueue = useRef<Array<WebSocketSessionMessage>>([]);
+    const { data: session } = useSession();
+
+    useEffect(() => {
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            const url =
+                typeof args[0] === "string"
+                    ? args[0]
+                    : args[0] instanceof Request
+                        ? args[0].url
+                        : "";
+
+            if (url.includes("/api/auth/_log")) {
+                try {
+                    const init = args[1];
+                    if (init && init.body && typeof init.body === "string") {
+                        const body = JSON.parse(init.body);
+                        if (body.code === "CLIENT_FETCH_ERROR") {
+                            enqueueSnackbar(
+                                "שגיאת תקשורת עם שרת ההזדהות. ייתכנו שיבושים בפעילות המערכת.",
+                                {
+                                    variant: "error",
+                                    preventDuplicate: true,
+                                },
+                            );
+                        }
+                    }
+                } catch {
+                    // Ignore parse errors
+                }
+            }
+
+            return await originalFetch(...args);
+        };
+
+        return () => {
+            window.fetch = originalFetch;
+        };
+    }, [enqueueSnackbar]);
+
+    const logout = useCallback(() => {
+        void signOut({ callbackUrl: "/login" });
+    }, []);
+
+    useEffect(() => {
+        if (session && (session as any).error === "TokenExpiredError") {
+            enqueueSnackbar("ההתחברות שלך פגה. אנא התחבר מחדש.", {
+                variant: "warning",
+            });
+            logout();
+        }
+    }, [session, logout, enqueueSnackbar]);
 
     const canEdit: boolean = !!userData;
 
@@ -89,11 +143,6 @@ export const AuthProvider = ({
         };
     }, [ws]);
 
-    const logout = useCallback(() => {
-    // No return from this function
-        void signOut({ callbackUrl: "/login" });
-    }, []);
-
     const contextValue = useMemo<AuthContextState>(
         () => ({
             userData,
@@ -106,7 +155,9 @@ export const AuthProvider = ({
     );
 
     return (
-        <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+        <AuthContext.Provider value={contextValue}>
+            {children}
+        </AuthContext.Provider>
     );
 };
 

@@ -14,9 +14,9 @@ export type CreateMapping = ({
     eventId,
     dayId,
 }: {
-  moduleId: GanttModuleId;
-  eventId: GanttEventId | null;
-  dayId: GanttDayId;
+    moduleId: GanttModuleId;
+    eventId: GanttEventId | null;
+    dayId: GanttDayId;
 }) => Promise<GanttCurriculumModuleDayMapping | undefined>;
 export type MoveMapping = ({
     moduleId,
@@ -24,29 +24,29 @@ export type MoveMapping = ({
     from,
     to,
 }: {
-  moduleId: GanttModuleId;
-  eventId: GanttEventId | null;
-  from: { d: GanttDayId };
-  to: { d: GanttDayId };
+    moduleId: GanttModuleId;
+    eventId: GanttEventId | null;
+    from: { d: GanttDayId };
+    to: { d: GanttDayId };
 }) => Promise<void>;
 export type RemoveMapping = ({
     moduleId,
     eventId,
     dayId,
 }: {
-  moduleId: GanttModuleId;
-  eventId: GanttEventId | null;
-  dayId: GanttDayId;
+    moduleId: GanttModuleId;
+    eventId: GanttEventId | null;
+    dayId: GanttDayId;
 }) => Promise<void>;
 
 export type GanttMappingContextType = {
-  state: GanttMappingState;
-  refreshMappings: RefreshMappings;
-  createMapping: CreateMapping;
-  moveMapping: MoveMapping;
-  removeMapping: RemoveMapping;
+    state: GanttMappingState;
+    refreshMappings: RefreshMappings;
+    createMapping: CreateMapping;
+    moveMapping: MoveMapping;
+    removeMapping: RemoveMapping;
 };
 
 export const GanttMappingContext = createContext<
-  GanttMappingContextType | undefined
+    GanttMappingContextType | undefined
 >(undefined);

@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import Box from "@mui/material/Box";
 import { useState } from "react";
 
 import { CourseSettings } from "@/components/settings-dialog/tabs/global/course-settings";
@@ -28,7 +28,10 @@ export function GlobalSettings() {
                     flexDirection: "column",
                 }}
             >
-                <PrayerSettings isShrunk={isPrayerShrunk} onToggleShrink={() => setIsPrayerShrunk(!isPrayerShrunk)} />
+                <PrayerSettings
+                    isShrunk={isPrayerShrunk}
+                    onToggleShrink={() => setIsPrayerShrunk(!isPrayerShrunk)}
+                />
             </Box>
             <Box
                 sx={{

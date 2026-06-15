@@ -1,10 +1,8 @@
-import {
-    TableCell,
-    TableHead,
-    TableRow,
-    Typography,
-    useTheme,
-} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import React from "react";
 
 import { getDayNameDisplay } from "@/api-shared/types/gantt/models";
@@ -43,7 +41,7 @@ export const GanttHeader: React.FC = () => {
                     }}
                 >
                     <Typography fontWeight="bold" variant="subtitle2">
-            Syllabus / Module
+                        סילבוס / מערך
                     </Typography>
                 </TableCell>
                 {timelineWeeks.map((week, weekIndex) => {
@@ -66,7 +64,10 @@ export const GanttHeader: React.FC = () => {
                                 {week.title}
                             </Typography>
                             {dateRangeLabel ? (
-                                <Typography color="text.secondary" variant="caption">
+                                <Typography
+                                    color="text.secondary"
+                                    variant="caption"
+                                >
                                     {dateRangeLabel}
                                 </Typography>
                             ) : null}
@@ -94,7 +95,8 @@ export const GanttHeader: React.FC = () => {
                                         minWidth: 80,
                                         boxSizing: "border-box",
                                         borderLeft: `1px solid ${theme.palette.divider}`,
-                                        backgroundColor: theme.palette.background.paper,
+                                        backgroundColor:
+                                            theme.palette.background.paper,
                                         zIndex: 2,
                                     }}
                                 >

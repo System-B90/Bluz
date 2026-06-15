@@ -1,4 +1,6 @@
-import { Box, Stack, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
 
 import {
@@ -8,14 +10,20 @@ import {
 import { WeekWorkTimeChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekPanel";
 import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 
-function WeekOverview({ weekId }: { weekId: GanttWeekId }) {
+function WeekOverview({
+    weekId,
+    weekIndex,
+}: {
+    weekId: GanttWeekId;
+    weekIndex: number;
+}) {
     const week = useCurriculumWeek(weekId);
 
     if (!week) return null;
 
     return (
         <Box
-            key={week.number}
+            key={weekId}
             sx={{ border: 1, borderColor: "divider", borderRadius: 1, p: 1 }}
         >
             <Box
@@ -24,7 +32,7 @@ function WeekOverview({ weekId }: { weekId: GanttWeekId }) {
                 justifyContent="space-between"
                 mb={0.5}
             >
-                <Typography variant="subtitle2">{`שבוע ${week.number}`}</Typography>
+                <Typography variant="subtitle2">{`שבוע ${weekIndex + 1}`}</Typography>
                 <WeekWorkTimeChip weekId={weekId} />
             </Box>
             <Typography color="text.secondary" variant="body2">
@@ -37,11 +45,14 @@ function WeekOverview({ weekId }: { weekId: GanttWeekId }) {
 export function OverviewTab({
     weeks,
 }: {
-  curriculumId: GanttCurriculumId;
-  weeks: Array<GanttWeekId>;
+    curriculumId: GanttCurriculumId;
+    weeks: Array<GanttWeekId>;
 }) {
     const overviews = useMemo(
-        () => weeks.map((weekId) => <WeekOverview key={weekId} weekId={weekId} />),
+        () =>
+            weeks.map((weekId, index) => (
+                <WeekOverview key={weekId} weekId={weekId} weekIndex={index} />
+            )),
         [weeks],
     );
 

@@ -17,9 +17,12 @@ export const ganttConstraintsSchema = pgTable("cntrs", {
     id: text("id").primaryKey(),
     type: constraintTypeEnumSchema("type").notNull(),
 
-    ownerEventId: text("owner_event_id").references(() => ganttEventsSchema.id, {
-        onDelete: "cascade",
-    }),
+    ownerEventId: text("owner_event_id").references(
+        () => ganttEventsSchema.id,
+        {
+            onDelete: "cascade",
+        },
+    ),
     ownerModuleId: text("owner_module_id").references(
         () => ganttModulesSchema.id,
         { onDelete: "cascade" },

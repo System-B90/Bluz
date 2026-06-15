@@ -32,7 +32,11 @@ export function useCalendarHandlers(
         resourceId?: any;
     } | null>(null);
 
-    const copyPasteData = useRef({ activeEvent, copiedEvent, selectedSlotInfo });
+    const copyPasteData = useRef({
+        activeEvent,
+        copiedEvent,
+        selectedSlotInfo,
+    });
 
     useEffect(() => {
         copyPasteData.current = { activeEvent, copiedEvent, selectedSlotInfo };
@@ -81,7 +85,8 @@ export function useCalendarHandlers(
                 ? JSON.parse(slotInfo.resourceId.toString())
                 : null;
 
-            const newRooms = roomId && roomId.id !== DUMMY_ROOM_ID ? [roomId] : [];
+            const newRooms =
+                roomId && roomId.id !== DUMMY_ROOM_ID ? [roomId] : [];
 
             const newEvent = {
                 startTime: dayjs(slotInfo.start),
@@ -94,12 +99,21 @@ export function useCalendarHandlers(
             setSelectedEvent(newEvent);
             setOpenEventDialog(true);
         },
-        [setSelectedEvent, setOpenEventDialog, filteredInstructors, filteredCourses],
+        [
+            setSelectedEvent,
+            setOpenEventDialog,
+            filteredInstructors,
+            filteredCourses,
+        ],
     );
 
     const handleKeyDown = useCallback(
         (e: KeyboardEvent) => {
-            if (["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).tagName))
+            if (
+                ["INPUT", "TEXTAREA"].includes(
+                    (e.target as HTMLElement).tagName,
+                )
+            )
                 return;
 
             const {
@@ -130,8 +144,11 @@ export function useCalendarHandlers(
 
                 let newRooms = currentCopied.rooms;
                 if (currentSlot?.resourceId) {
-                    const parsedRoomId = JSON.parse(currentSlot.resourceId.toString());
-                    newRooms = parsedRoomId.id === DUMMY_ROOM_ID ? [] : [parsedRoomId];
+                    const parsedRoomId = JSON.parse(
+                        currentSlot.resourceId.toString(),
+                    );
+                    newRooms =
+                        parsedRoomId.id === DUMMY_ROOM_ID ? [] : [parsedRoomId];
                 }
 
                 const { id: _, ...rest } = currentCopied as any;

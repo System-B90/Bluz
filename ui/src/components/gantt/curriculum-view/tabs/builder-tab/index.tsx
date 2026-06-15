@@ -18,7 +18,8 @@ import {
     useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { Box, BoxProps } from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
@@ -35,8 +36,8 @@ import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
 
 export type CurriculumViewBuilderTabProps = {
-  curriculumId: string;
-  groupCount?: number;
+    curriculumId: string;
+    groupCount?: number;
 } & Omit<BoxProps, "className">;
 
 function CurriculumViewBuilderTabInner({
@@ -50,7 +51,7 @@ function CurriculumViewBuilderTabInner({
     const [activeDayId, setActiveDayId] = useState<GanttDayId>();
 
     function handleDragStart(event: DragStartEvent) {
-    // Extract the ID from 'module-{moduleId}'
+        // Extract the ID from 'module-{moduleId}'
         const activeData = event.active.data.current as DndDragEventActiveData;
         setActiveId(activeData.moduleId);
         setActiveDayId(activeData.dayId ?? undefined);
@@ -99,23 +100,26 @@ function CurriculumViewBuilderTabInner({
             const originDayId = activeData.dayId;
 
             if (overData.type === "SIDEBAR" && originDayId) {
-                removeMapping({ moduleId, eventId: null, dayId: originDayId }).catch(
-                    (error) =>
-                        enqueueApiErrorSnackbar(
-                            enqueueSnackbar,
-                            "הסרת המערך נכשלה!",
-                            error,
-                        ),
+                removeMapping({
+                    moduleId,
+                    eventId: null,
+                    dayId: originDayId,
+                }).catch((error) =>
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "הסרת המערך נכשלה!",
+                        error,
+                    ),
                 );
                 return;
             }
 
             const targetDayId =
-        overData.type === "DAY"
-            ? overData.dayId
-            : overData.type === "WEEK"
-                ? overData.firstDayId
-                : null;
+                overData.type === "DAY"
+                    ? overData.dayId
+                    : overData.type === "WEEK"
+                        ? overData.firstDayId
+                        : null;
             if (!targetDayId) {
                 return;
             } // Should not happen
@@ -127,16 +131,23 @@ function CurriculumViewBuilderTabInner({
                     from: { d: originDayId },
                     to: { d: targetDayId },
                 }).catch((error) =>
-                    enqueueApiErrorSnackbar(enqueueSnackbar, "הזזת המערך נכשלה!", error),
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "הזזת המערך נכשלה!",
+                        error,
+                    ),
                 );
             } else {
-                createMapping({ moduleId, eventId: null, dayId: targetDayId }).catch(
-                    (error) =>
-                        enqueueApiErrorSnackbar(
-                            enqueueSnackbar,
-                            "הזזת המערך נכשלה!",
-                            error,
-                        ),
+                createMapping({
+                    moduleId,
+                    eventId: null,
+                    dayId: targetDayId,
+                }).catch((error) =>
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "הזזת המערך נכשלה!",
+                        error,
+                    ),
                 );
             }
         },
@@ -144,14 +155,15 @@ function CurriculumViewBuilderTabInner({
     );
 
     const [selectedWeekGroupIndicies, setSelectedWeekGroup] = useState<{
-    start: number;
-    length: number;
-  }>({ start: 0, length: weeks?.length ?? 0 });
+        start: number;
+        length: number;
+    }>({ start: 0, length: weeks?.length ?? 0 });
     const selectedWeekGroup = useMemo(
         () =>
             weeks?.slice(
                 selectedWeekGroupIndicies.start,
-                selectedWeekGroupIndicies.start + selectedWeekGroupIndicies.length,
+                selectedWeekGroupIndicies.start +
+                    selectedWeekGroupIndicies.length,
             ),
         [selectedWeekGroupIndicies, weeks],
     );

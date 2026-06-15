@@ -1,18 +1,13 @@
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import {
-    Box,
-    Chip,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    TextField,
-    Tooltip,
-    Typography,
-    Switch,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { KeyboardEvent, useCallback, useMemo, useState } from "react";
 
@@ -28,23 +23,24 @@ import {
 } from "@/api-shared/types/gantt/models";
 import {
     formatHoursLabel,
+    formatMinutesAsTimeInput,
     formatWeekDateRange,
     getCapacityStatus,
     getDayDate,
-    getSaturdayForWeek,
     getScheduledMinutesForDay,
     getWeekDateRange,
     getWeekScheduledMinutes,
     getWeekTotalMinutes,
+    parseTimeInputToMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { DayCapacityCell } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DayCapacityCell";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 
 export type WeeksCapacityGridProps = {
-  curriculum: GanttCurriculum;
-  isCompact?: boolean;
-  mappings: Record<string, GanttCurriculumModuleDayMapping>;
-  state: NormalizedStore;
+    curriculum: GanttCurriculum;
+    isCompact?: boolean;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    state: NormalizedStore;
 };
 
 const DAY_COLUMNS: Array<GanttDayIndex> = [
@@ -73,12 +69,12 @@ function WeekRow({
     week,
     weekIndex,
 }: {
-  isCompact?: boolean;
-  mappings: Record<string, GanttCurriculumModuleDayMapping>;
-  startDate: null | string;
-  state: NormalizedStore;
-  week: NormalizedStore["weeks"][string];
-  weekIndex: number;
+    isCompact?: boolean;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    startDate: null | string;
+    state: NormalizedStore;
+    week: NormalizedStore["weeks"][string];
+    weekIndex: number;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const { updateWeek } = useWeekActions();
@@ -94,16 +90,17 @@ function WeekRow({
         [mappings, state, week],
     );
     const weekStatus = getCapacityStatus(weekTotalMinutes, scheduledMinutes);
-    const saturday = getSaturdayForWeek(week, state);
-    const saturdayMismatch =
-    !week.weekendDuty && (saturday?.totalWorkingMinutes ?? 0) > 0;
     const weekDateRange = getWeekDateRange(startDate, weekIndex);
 
     const commitComment = useCallback(() => {
         if (localComment === (week.comment ?? "")) return;
 
         void updateWeek(week.id, { comment: localComment }).catch((error) =>
-            enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת הערת שבוע נכשלה!", error),
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "שמירת הערת שבוע נכשלה!",
+                error,
+            ),
         );
     }, [enqueueSnackbar, localComment, updateWeek, week.comment, week.id]);
 
@@ -115,19 +112,6 @@ function WeekRow({
             event.currentTarget.blur();
         },
         [commitComment],
-    );
-
-    const toggleWeekendDuty = useCallback(
-        (checked: boolean) => {
-            void updateWeek(week.id, { weekendDuty: checked }).catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "שמירת המידע של השבוע נכשלה!",
-                    error,
-                ),
-            );
-        },
-        [enqueueSnackbar, updateWeek, week.id],
     );
 
     return (
@@ -146,10 +130,18 @@ function WeekRow({
                     px: 1.25,
                 }}
             >
-                <Typography fontWeight={800} sx={{ fontSize: "0.88rem", color: "text.primary" }} variant="subtitle2">
-          שבוע {week.number}
+                <Typography
+                    fontWeight={800}
+                    sx={{ fontSize: "0.88rem", color: "text.primary" }}
+                    variant="subtitle2"
+                >
+                    שבוע {weekIndex + 1}
                 </Typography>
-                <Typography color="text.secondary" sx={{ fontSize: "0.72rem" }} variant="caption">
+                <Typography
+                    color="text.secondary"
+                    sx={{ fontSize: "0.72rem" }}
+                    variant="caption"
+                >
                     {formatWeekDateRange(weekDateRange) || "ללא תאריך"}
                 </Typography>
                 <Box mt={0.75}>
@@ -168,7 +160,14 @@ function WeekRow({
                     />
                 </Box>
             </TableCell>
-            <TableCell sx={{ verticalAlign: "top", pt: isCompact ? 0.35 : 1.25, pb: isCompact ? 0.15 : 0.75, px: isCompact ? 0.5 : 1.25 }}>
+            <TableCell
+                sx={{
+                    verticalAlign: "top",
+                    pt: isCompact ? 0.35 : 1.25,
+                    pb: isCompact ? 0.15 : 0.75,
+                    px: isCompact ? 0.5 : 1.25,
+                }}
+            >
                 <TextField
                     fullWidth
                     minRows={2}
@@ -187,104 +186,31 @@ function WeekRow({
                             style: {
                                 fontSize: "0.82rem",
                                 fontWeight: 500,
-                            }
-                        }
+                            },
+                        },
                     }}
                     sx={{
                         "& .MuiOutlinedInput-root": {
                             transition: "all 0.2s ease",
-                            bgcolor: isCommentFocused ? "background.default" : "transparent",
+                            bgcolor: isCommentFocused
+                                ? "background.default"
+                                : "transparent",
                         },
                         "& .MuiOutlinedInput-notchedOutline": {
-                            borderColor: isCommentFocused ? "primary.main" : "transparent",
+                            borderColor: isCommentFocused
+                                ? "primary.main"
+                                : "transparent",
                         },
                         "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: isCommentFocused ? "primary.main" : "divider",
+                            borderColor: isCommentFocused
+                                ? "primary.main"
+                                : "divider",
                         },
                     }}
                     value={localComment}
                 />
             </TableCell>
-            <TableCell sx={{ verticalAlign: "top", pt: isCompact ? 0.35 : 1.25, pb: isCompact ? 0.15 : 0.75, px: isCompact ? 0.5 : 1.25, textAlign: "center" }}>
-                <Box alignItems="center" display="flex" flexDirection="column" gap={0.75}>
-                    <Tooltip arrow title={week.weekendDuty ? "צא הביתה" : "סגור שבת"}>
-                        <Switch
-                            checked={week.weekendDuty}
-                            onChange={(event) => toggleWeekendDuty(event.target.checked)}
-                            sx={{
-                                width: 52,
-                                height: 28,
-                                padding: 0,
-                                "& .MuiSwitch-switchBase": {
-                                    padding: "2px",
-                                    transition: "transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)",
-                                    "&.Mui-checked": {
-                                        transform: "translateX(24px)",
-                                        "& + .MuiSwitch-track": {
-                                            bgcolor: (theme) => theme.palette.mode === "light" ? "rgba(237, 108, 2, 0.2)" : "rgba(237, 108, 2, 0.3)",
-                                            opacity: 1,
-                                        }
-                                    }
-                                },
-                                "& .MuiSwitch-thumb": {
-                                    width: 24,
-                                    height: 24,
-                                    bgcolor: "success.main",
-                                    boxShadow: "0 1px 4px rgba(46, 125, 50, 0.3)",
-                                    position: "relative",
-                                    transition: "background-color 300ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-                                    "&::before": {
-                                        content: '"🏠"',
-                                        position: "absolute",
-                                        top: 0,
-                                        left: 0,
-                                        width: "100%",
-                                        height: "100%",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        fontSize: 13,
-                                        transition: "opacity 200ms ease",
-                                    },
-                                },
-                                "& .MuiSwitch-switchBase:hover .MuiSwitch-thumb": {
-                                    transform: "scale(1.08)",
-                                    transition: "background-color 300ms ease, box-shadow 300ms ease, transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)",
-                                },
-                                "& .MuiSwitch-switchBase.Mui-checked .MuiSwitch-thumb": {
-                                    bgcolor: "warning.main",
-                                    boxShadow: "0 1px 4px rgba(237, 108, 2, 0.3)",
-                                    "&::before": {
-                                        content: '"🛏️"',
-                                    },
-                                },
-                                "& .MuiSwitch-track": {
-                                    borderRadius: 14,
-                                    bgcolor: (theme) => theme.palette.mode === "light" ? "rgba(46, 125, 50, 0.15)" : "rgba(46, 125, 50, 0.25)",
-                                    opacity: 1,
-                                    transition: "background-color 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-                                }
-                            }}
-                        />
-                    </Tooltip>
-                    {saturdayMismatch ? (
-                        <Tooltip title="השבוע מסומן כיוצאים, אך לשבת הוגדרו שעות עבודה">
-                            <Chip
-                                color="warning"
-                                icon={<WarningAmberIcon />}
-                                label="שבת עם שעות"
-                                size="smaller"
-                                sx={{ 
-                                    fontWeight: 600,
-                                    mt: 0.5,
-                                    fontSize: "0.7rem",
-                                }}
-                                variant="outlined"
-                            />
-                        </Tooltip>
-                    ) : null}
-                </Box>
-            </TableCell>
+
             {DAY_COLUMNS.map((dayIndex) => {
                 const dayId = getDayIdByIndex(week, state, dayIndex);
 
@@ -295,7 +221,7 @@ function WeekRow({
                 const dayDate = getDayDate(startDate, weekIndex, dayIndex);
                 const day = state.days[dayId];
                 const isMutedSaturday =
-          dayIndex === GanttDayIndex.Saturday && !week.weekendDuty;
+                    dayIndex === GanttDayIndex.Saturday && !week.weekendDuty;
 
                 return (
                     <DayCapacityCell
@@ -317,27 +243,197 @@ function WeekRow({
     );
 }
 
+function DayHeaderCell({
+    dayIndex,
+    curriculum,
+    state,
+}: {
+    dayIndex: GanttDayIndex;
+    curriculum: GanttCurriculum;
+    state: NormalizedStore;
+}) {
+    const { enqueueSnackbar } = useSnackbar();
+    const { updateDay } = useWeekActions();
+
+    const firstWeekId = curriculum.weeks[0];
+    const firstWeek = firstWeekId ? state.weeks[firstWeekId] : undefined;
+    const firstDayId = firstWeek?.days.find(
+        (dId) => state.days[dId]?.dayIndex === dayIndex,
+    );
+    const firstDay = firstDayId ? state.days[firstDayId] : undefined;
+    const currentMinutes = firstDay ? firstDay.totalWorkingMinutes : null;
+
+    // Load default hours from localStorage, fallback to 8 hours (480 minutes)
+    const localStorageKey = `bluz_gantt_default_hours_${dayIndex}`;
+    const initialMinutes = useMemo(() => {
+        if (currentMinutes !== null) return currentMinutes;
+        const stored = localStorage.getItem(localStorageKey);
+        if (stored !== null) {
+            const parsed = parseFloat(stored);
+            if (!isNaN(parsed) && parsed >= 0) {
+                // Handle legacy format (hours) vs minutes in localStorage
+                return parsed <= 24
+                    ? Math.round(parsed * 60)
+                    : Math.round(parsed);
+            }
+        }
+        // Default fallbacks: Saturday is typically 0 (closed), others 8 hours (480 mins)
+        return dayIndex === GanttDayIndex.Saturday ? 0 : 480;
+    }, [currentMinutes, dayIndex, localStorageKey]);
+
+    const [inputValue, setInputValue] = useState(() =>
+        formatMinutesAsTimeInput(initialMinutes),
+    );
+
+    const handleBlur = useCallback(async () => {
+        const parsedMinutes = parseTimeInputToMinutes(inputValue);
+        if (parsedMinutes === null) {
+            // Revert on invalid input
+            setInputValue(formatMinutesAsTimeInput(initialMinutes));
+            return;
+        }
+
+        // Save to localStorage
+        localStorage.setItem(localStorageKey, parsedMinutes.toString());
+        setInputValue(formatMinutesAsTimeInput(parsedMinutes));
+
+        // Perform bulk update on all weeks for that day in the current curriculum
+        const dayIdsToUpdate: Array<string> = [];
+        for (const weekId of curriculum.weeks) {
+            const week = state.weeks[weekId];
+            if (week) {
+                const dayId = week.days.find(
+                    (dId) => state.days[dId]?.dayIndex === dayIndex,
+                );
+                if (dayId) {
+                    const currentDay = state.days[dayId];
+                    if (
+                        currentDay &&
+                        currentDay.totalWorkingMinutes !== parsedMinutes
+                    ) {
+                        dayIdsToUpdate.push(dayId);
+                    }
+                }
+            }
+        }
+
+        if (dayIdsToUpdate.length === 0) return;
+
+        try {
+            await Promise.all(
+                dayIdsToUpdate.map((dayId) =>
+                    updateDay(dayId, { totalWorkingMinutes: parsedMinutes }),
+                ),
+            );
+            enqueueSnackbar("שעות העבודה עודכנו בהצלחה לכל השבועות!", {
+                variant: "success",
+            });
+        } catch (error) {
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "עדכון שעות העבודה נכשל!",
+                error,
+            );
+        }
+    }, [
+        inputValue,
+        initialMinutes,
+        localStorageKey,
+        curriculum.weeks,
+        state.weeks,
+        state.days,
+        dayIndex,
+        updateDay,
+        enqueueSnackbar,
+    ]);
+
+    const handleKeyDown = useCallback(
+        (e: KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                void handleBlur();
+                e.currentTarget.blur();
+            }
+        },
+        [handleBlur],
+    );
+
+    return (
+        <TableCell
+            align="center"
+            sx={{
+                width: "9.7%",
+                minWidth: "90px",
+                bgcolor: (theme) =>
+                    theme.palette.mode === "light"
+                        ? "rgb(244, 250, 252)"
+                        : "rgb(12, 34, 55)",
+                fontWeight: 800,
+                py: 1,
+                fontSize: "0.85rem",
+            }}
+        >
+            <Box
+                alignItems="center"
+                display="flex"
+                flexDirection="column"
+                gap={0.5}
+            >
+                <Typography
+                    sx={{ fontWeight: 700, fontSize: "0.82rem" }}
+                    variant="subtitle2"
+                >
+                    {getDayNameDisplay(dayIndex)}
+                </Typography>
+                <TextField
+                    onBlur={handleBlur}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    size="small"
+                    slotProps={{
+                        htmlInput: {
+                            style: {
+                                textAlign: "center",
+                                fontSize: "0.72rem",
+                                padding: "2px 4px",
+                                fontFamily: "monospace",
+                                fontWeight: 700,
+                            },
+                        },
+                    }}
+                    sx={{
+                        width: "auto",
+                        "& .MuiOutlinedInput-root": {
+                            borderRadius: "4px",
+                            bgcolor: "background.paper",
+                            textAlign: "center",
+                        },
+                    }}
+                    value={inputValue}
+                />
+            </Box>
+        </TableCell>
+    );
+}
+
 export function WeeksCapacityGrid({
     curriculum,
     isCompact = false,
     mappings,
     state,
 }: WeeksCapacityGridProps) {
-    const weeks = useMemo(
-        () => {
-            const nextWeeks: Array<NormalizedStore["weeks"][string]> = [];
+    const weeks = useMemo(() => {
+        const nextWeeks: Array<NormalizedStore["weeks"][string]> = [];
 
-            for (const weekId of curriculum.weeks) {
-                const week = state.weeks[weekId];
-                if (week) {
-                    nextWeeks.push(week);
-                }
+        for (const weekId of curriculum.weeks) {
+            const week = state.weeks[weekId];
+            if (week) {
+                nextWeeks.push(week);
             }
+        }
 
-            return nextWeeks;
-        },
-        [curriculum.weeks, state.weeks],
-    );
+        return nextWeeks;
+    }, [curriculum.weeks, state.weeks]);
 
     return (
         <TableContainer
@@ -354,7 +450,11 @@ export function WeeksCapacityGrid({
                 clipPath: "inset(0 round 16px)",
             }}
         >
-            <Table size="small" stickyHeader sx={{ width: "100%", tableLayout: "fixed" }}>
+            <Table
+                size="small"
+                stickyHeader
+                sx={{ width: "100%", tableLayout: "fixed" }}
+            >
                 <TableHead>
                     <TableRow>
                         <TableCell
@@ -375,10 +475,10 @@ export function WeeksCapacityGrid({
                                 fontSize: "0.85rem",
                             }}
                         >
-              שבוע
+                            שבוע
                         </TableCell>
-                        <TableCell 
-                            sx={{ 
+                        <TableCell
+                            sx={{
                                 width: "11%",
                                 minWidth: "100px",
                                 bgcolor: (theme) =>
@@ -392,41 +492,30 @@ export function WeeksCapacityGrid({
                         >
                             שם / הערת שבוע
                         </TableCell>
-                        <TableCell 
-                            align="center"
-                            sx={{ 
-                                width: "8%",
-                                minWidth: "80px",
-                                bgcolor: (theme) =>
-                                    theme.palette.mode === "light"
-                                        ? "rgb(244, 250, 252)"
-                                        : "rgb(12, 34, 55)",
-                                fontWeight: 800,
-                                py: 1.5,
-                                fontSize: "0.85rem",
-                            }}
-                        >
-                            שבת בבסיס
-                        </TableCell>
-                        {DAY_COLUMNS.map((dayIndex) => (
-                            <TableCell 
-                                align="center" 
-                                key={dayIndex} 
-                                sx={{ 
-                                    width: "9.7%",
-                                    minWidth: "90px",
-                                    bgcolor: (theme) =>
-                                        theme.palette.mode === "light"
-                                            ? "rgba(244, 250, 252, 0.95)"
-                                            : "rgba(12, 34, 55, 0.95)",
-                                    fontWeight: 800,
-                                    py: 1.5,
-                                    fontSize: "0.85rem",
-                                }}
-                            >
-                                {getDayNameDisplay(dayIndex)}
-                            </TableCell>
-                        ))}
+
+                        {DAY_COLUMNS.map((dayIndex) => {
+                            const firstWeekId = curriculum.weeks[0];
+                            const firstWeek = firstWeekId
+                                ? state.weeks[firstWeekId]
+                                : undefined;
+                            const firstDayId = firstWeek?.days.find(
+                                (dId) => state.days[dId]?.dayIndex === dayIndex,
+                            );
+                            const firstDay = firstDayId
+                                ? state.days[firstDayId]
+                                : undefined;
+                            const currentMinutes =
+                                firstDay?.totalWorkingMinutes ??
+                                (dayIndex === GanttDayIndex.Saturday ? 0 : 480);
+                            return (
+                                <DayHeaderCell
+                                    curriculum={curriculum}
+                                    dayIndex={dayIndex}
+                                    key={`${dayIndex}-${currentMinutes}`}
+                                    state={state}
+                                />
+                            );
+                        })}
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -444,9 +533,14 @@ export function WeeksCapacityGrid({
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell align="center" colSpan={10} sx={{ py: 5 }}>
+                            <TableCell
+                                align="center"
+                                colSpan={10}
+                                sx={{ py: 5 }}
+                            >
                                 <Typography color="text.secondary">
-                  אין עדיין שבועות בגאנט. הוסיפו שבוע דרך ניהול אורך קורס.
+                                    אין עדיין שבועות בגאנט. הוסיפו שבוע דרך
+                                    ניהול אורך קורס.
                                 </Typography>
                             </TableCell>
                         </TableRow>

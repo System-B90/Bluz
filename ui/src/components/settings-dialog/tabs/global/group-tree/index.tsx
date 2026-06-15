@@ -1,5 +1,4 @@
 "use client";
-
 import { DndContext } from "@dnd-kit/core";
 import {
     SortableContext,
@@ -8,14 +7,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    Box,
-    Button,
-    Typography,
-} from "@mui/material";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
 import { Group } from "@/components/schedule/types/group";
 import { GroupField } from "@/components/settings-dialog/tabs/global/group-tree/GroupField";
@@ -23,7 +20,7 @@ import { GroupMembersField } from "@/components/settings-dialog/tabs/global/grou
 
 function GroupItem({ group }: { group: Group }) {
     const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: group.id });
+        useSortable({ id: group.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -47,7 +44,7 @@ function GroupItem({ group }: { group: Group }) {
                     {group.subGroups?.length ? (
                         <Box mt={2}>
                             <Typography fontWeight={500} variant="body2">
-                Subgroups:
+                                Subgroups:
                             </Typography>
                             <Box mt={1}>
                                 {group.subGroups.map((g) => (
@@ -68,14 +65,16 @@ function GroupItem({ group }: { group: Group }) {
 export function GroupTreeViewer({
     initialGroups,
 }: {
-  initialGroups: Array<Group>;
+    initialGroups: Array<Group>;
 }) {
     const items = initialGroups.map((g) => <GroupItem group={g} key={g.id} />);
 
     return (
         <DndContext>
             <SortableContext
-                items={initialGroups.map((group: Group): string => group.id) ?? []}
+                items={
+                    initialGroups.map((group: Group): string => group.id) ?? []
+                }
                 strategy={verticalListSortingStrategy}
             >
                 <Box>{items}</Box>

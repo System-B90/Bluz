@@ -18,9 +18,18 @@ import {
 } from "@/api-shared/types/event";
 
 type ServerApiEventGet = ServerApi<ApiEventGetPayload, ApiEventGetResponse>;
-type ServerApiEventUpdate = ServerApi<ApiEventUpdatePayload, ApiEventUpdateResponse>;
-type ServerApiEventCreate = ServerApi<ApiEventCreatePayload, ApiEventCreateResponse>;
-type ServerApiEventDelete = ServerApi<ApiEventDeletePayload, ApiEventDeleteResponse>;
+type ServerApiEventUpdate = ServerApi<
+    ApiEventUpdatePayload,
+    ApiEventUpdateResponse
+>;
+type ServerApiEventCreate = ServerApi<
+    ApiEventCreatePayload,
+    ApiEventCreateResponse
+>;
+type ServerApiEventDelete = ServerApi<
+    ApiEventDeletePayload,
+    ApiEventDeleteResponse
+>;
 
 export const GET: ServerApiEventGet = async (request) => {
     try {
@@ -41,12 +50,15 @@ export const GET: ServerApiEventGet = async (request) => {
             const eventArray = await DbEvent.getMultiple(parsedIds);
             const eventRecord = eventArray.reduce(
                 (prev, ev) => ({ ...prev, [ev.id]: ev }),
-        {} as Record<EventId, Partial<DbEventDocument>>,
+                {} as Record<EventId, Partial<DbEventDocument>>,
             );
             return ApiSuccess(eventRecord);
         } else {
             return ApiSuccess(
-                await DbEvent.getInRange(new Date(rawStartDate!), new Date(rawEndDate!)),
+                await DbEvent.getInRange(
+                    new Date(rawStartDate!),
+                    new Date(rawEndDate!),
+                ),
             );
         }
     } catch (e) {
@@ -56,7 +68,9 @@ export const GET: ServerApiEventGet = async (request) => {
 
 export const POST: ServerApiEventUpdate = async (request) => {
     try {
-        const event: ApiEventUpdatePayload = eventDateFixup(await request.json());
+        const event: ApiEventUpdatePayload = eventDateFixup(
+            await request.json(),
+        );
         if (!event) {
             throw new ClientApiError("No data provided!");
         }
@@ -68,7 +82,9 @@ export const POST: ServerApiEventUpdate = async (request) => {
 
 export const PUT: ServerApiEventCreate = async (request) => {
     try {
-        const event: ApiEventCreatePayload = eventDateFixup(await request.json());
+        const event: ApiEventCreatePayload = eventDateFixup(
+            await request.json(),
+        );
         if (!event) {
             throw new ClientApiError("No data provided!");
         }

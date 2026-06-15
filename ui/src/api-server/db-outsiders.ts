@@ -35,7 +35,9 @@ async function createDbOutsider(outsider: Outsider) {
 }
 
 async function deleteDbOutsider(outsiderId: Outsider["id"]) {
-    const data = await databaseController.outsiders.deleteOne({ id: outsiderId });
+    const data = await databaseController.outsiders.deleteOne({
+        id: outsiderId,
+    });
     if (data.deletedCount === 0) {
         throw new ClientApiError(`No outsider by id ${outsiderId} found!`);
     }

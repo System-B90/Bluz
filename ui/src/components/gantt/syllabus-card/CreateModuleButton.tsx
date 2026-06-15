@@ -1,5 +1,7 @@
 import AddIcon from "@mui/icons-material/Add";
-import { CircularProgress, IconButton, Tooltip } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
@@ -15,7 +17,7 @@ import { useCurriculumProviderActions } from "@/components/gantt/state/provider"
 export function CreateModuleButton({
     syllabusId,
 }: {
-  syllabusId: GanttSyllabusId;
+    syllabusId: GanttSyllabusId;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const { createEvent } = useModuleEventActions();
@@ -39,7 +41,12 @@ export function CreateModuleButton({
                     ModuleEventType.Lecture,
                     60,
                 );
-                await createEvent('ע"ע', newModule.id, ModuleEventType.Exercise, 45);
+                await createEvent(
+                    'ע"ע',
+                    newModule.id,
+                    ModuleEventType.Exercise,
+                    45,
+                );
             } catch (error) {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -48,11 +55,21 @@ export function CreateModuleButton({
                 );
             }
         } catch (error) {
-            enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת המערך נכשלה!", error);
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "יצירת המערך נכשלה!",
+                error,
+            );
         } finally {
             setIsCreating(false);
         }
-    }, [syllabusId, enqueueSnackbar, createModule, createEvent, openModuleDialog]);
+    }, [
+        syllabusId,
+        enqueueSnackbar,
+        createModule,
+        createEvent,
+        openModuleDialog,
+    ]);
 
     return (
         <Tooltip placement="top" title="צור מערך חדש">

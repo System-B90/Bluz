@@ -1,6 +1,7 @@
 /**
  * Wraps asynchronous Gantt API calls with standardized error handling and logging.
  */
+
 export async function withGantErrorHandling<T>(
     operation: () => Promise<T>,
     errorMessage: string,

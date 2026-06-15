@@ -7,7 +7,7 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useModule(moduleId: null): undefined;
 export function useModule(
-  moduleId: GanttModuleId,
+    moduleId: GanttModuleId,
 ): (ModuleDocument & { syllabusId: GanttSyllabusId }) | undefined;
 export function useModule(
     moduleId: GanttModuleId | null,

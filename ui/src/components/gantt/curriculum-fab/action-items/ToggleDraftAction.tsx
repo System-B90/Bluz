@@ -10,7 +10,7 @@ import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 
 export type ToggleDraftActionProps = {
-  onUpdate: (updatedCurriculum: GanttCurriculumDocument) => void;
+    onUpdate: (updatedCurriculum: GanttCurriculumDocument) => void;
 } & CurriculumAwareActionItemProps;
 
 export function ToggleDraftAction({

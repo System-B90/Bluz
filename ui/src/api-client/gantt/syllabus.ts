@@ -9,12 +9,12 @@ import { GanttSyllabus } from "@/api-shared/types/gantt/models";
 export type SyllabusDocument = GanttSyllabus & BaseDocument;
 
 const syllabusApi = clientGantApiBuilder<
-  GanttSyllabus,
-  CreateGanttSyllabusPayload
+    GanttSyllabus,
+    CreateGanttSyllabusPayload
 >({ apiBaseUrl: "/api/gantt/syllabuses", dateFixup: baseDocumentFixup as any });
 
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =
-  syllabusApi;
+    syllabusApi;
 export {
     apiCreate as apiCreateSyllabus,
     apiDelete as apiDeleteSyllabus,

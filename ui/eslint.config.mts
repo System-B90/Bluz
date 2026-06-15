@@ -23,7 +23,13 @@ export default defineConfig([
         languageOptions: {
             parser: tseslint.parser,
             parserOptions: {
-                projectService: true,
+                projectService: {
+                    allowDefaultProject: [
+                        "../playwright.config.ts",
+                        "../tests/*.ts",
+                        "../tests/*.tsx",
+                    ],
+                },
                 tsconfigRootDir: import.meta.dirname,
             },
         },
@@ -80,6 +86,9 @@ export default defineConfig([
                             message: "Use absolute paths.",
                             allowTypeImports: true,
                         },
+                        {
+                            regex: "^@mui/[^/]+$",
+                        },
                     ],
                 },
             ],
@@ -112,7 +121,10 @@ export default defineConfig([
                 "error",
                 { type: "alphabetical" },
             ],
-            "perfectionist/sort-union-types": ["error", { type: "alphabetical" }],
+            "perfectionist/sort-union-types": [
+                "error",
+                { type: "alphabetical" },
+            ],
             "perfectionist/sort-jsx-props": ["error", { type: "alphabetical" }],
 
             // --- Structural Spacing ---
@@ -200,6 +212,8 @@ export default defineConfig([
             "session-server/session-common.ts",
             "session-server/session-server.ts",
             "scripts/**",
+            "tests/**",
+            ".agents/**",
         ],
     },
 ]);

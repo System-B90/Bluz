@@ -10,7 +10,12 @@ import {
     GanttSyllabus,
 } from "@/api-shared/types/gantt/models";
 import { Outsider } from "@/api-shared/types/outsider";
-import { CustomRoom, RoomExtendedInfo, RoomId, RoomSource } from "@/api-shared/types/room";
+import {
+    CustomRoom,
+    RoomExtendedInfo,
+    RoomId,
+    RoomSource,
+} from "@/api-shared/types/room";
 import { Setting } from "@/api-shared/types/settings/settings";
 
 export type RoomExtendedInfoDocument = RoomExtendedInfo & {
@@ -19,7 +24,7 @@ export type RoomExtendedInfoDocument = RoomExtendedInfo & {
 };
 
 const MONGO_CONNECTION_STRING =
-  process.env.MONGO_CONNECTION_STRING ?? "mongodb://127.0.0.1:27017/";
+    process.env.MONGO_CONNECTION_STRING ?? "mongodb://127.0.0.1:27017/";
 
 class DatabaseController {
     private mongoClient!: MongoClient;
@@ -86,7 +91,7 @@ const databaseController = new DatabaseController();
 export { databaseController };
 
 export type ProjectionMap<T> = {
-  [P in keyof T]: 1;
+    [P in keyof T]: 1;
 };
 
 export function createProjectionMap<T extends object>(

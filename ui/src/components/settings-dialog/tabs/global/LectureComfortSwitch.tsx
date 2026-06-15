@@ -1,5 +1,4 @@
 "use client";
-
 import "@/components/settings-dialog/tabs/global/lecture-comfort-switch.css";
 
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
@@ -16,7 +15,11 @@ type LectureComfortSwitchProps = {
  * Uses the same slider track + sliding knob pattern as the ThemeSelector,
  * with ThumbUp (comfortable) and ThumbDown (not comfortable) icons.
  */
-export function LectureComfortSwitch({ value, onChange, disabled }: LectureComfortSwitchProps) {
+export function LectureComfortSwitch({
+    value,
+    onChange,
+    disabled,
+}: LectureComfortSwitchProps) {
     return (
         <button
             aria-label="Toggle lecture comfort"

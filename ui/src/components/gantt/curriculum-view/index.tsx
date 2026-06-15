@@ -1,5 +1,6 @@
 "use client";
-import { Box, BoxProps } from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -8,7 +9,7 @@ import { CurriculumViewSidebar } from "@/components/gantt/curriculum-view/compon
 import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
 
 export type CurriculumViewProps = {
-  curriculumId: GanttCurriculumId | null;
+    curriculumId: GanttCurriculumId | null;
 } & BoxProps;
 
 export function CurriculumView({

@@ -45,7 +45,9 @@ export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
             const containerId = searchParams.get("containerId");
 
             if (!id || !containerId) {
-                throw new ClientApiError("Both event id and containerId are required.");
+                throw new ClientApiError(
+                    "Both event id and containerId are required.",
+                );
             }
 
             const duration = await dbSet.getAllocatedTime(
@@ -78,7 +80,11 @@ export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
                 );
             }
 
-            await dbSet.setAllocatedTime(id as GanttEventId, containerId, duration);
+            await dbSet.setAllocatedTime(
+                id as GanttEventId,
+                containerId,
+                duration,
+            );
 
             return ApiSuccess({ success: true });
         } catch (error) {

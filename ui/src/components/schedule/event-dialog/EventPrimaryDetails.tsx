@@ -1,6 +1,7 @@
 "use client";
 
-import { Box, TextField } from "@mui/material";
+import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
 import { useEffect, useState } from "react";
 
 import { EventTimeField } from "@/components/schedule/event-dialog/TimeFields";
@@ -10,8 +11,8 @@ const PROMPTS = [
     "המצגת נמצאת בתיקייה של המורים",
     "צריך לקשט את הכיתה חצי שעה מראש",
     "לתאם שאיש חוץ יביא גיטרה באמצע ההרצאה",
-    "יש חותכים בזמן הע\"ע?",
-    "צריך לשלוח למרצה מ\"י בסוף היום"
+    'יש חותכים בזמן הע"ע?',
+    'צריך לשלוח למרצה מ"י בסוף היום',
 ];
 
 export function EventPrimaryDetails({
@@ -55,7 +56,9 @@ export function EventPrimaryDetails({
                 }, 2500);
             } else {
                 timer = setTimeout(() => {
-                    setCurrentText(currentWord.slice(0, currentText.length + 1));
+                    setCurrentText(
+                        currentWord.slice(0, currentText.length + 1),
+                    );
                 }, 85);
             }
         }

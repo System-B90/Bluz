@@ -14,10 +14,10 @@ import { getHiveUsers } from "@/api-client/hive";
 import { Clearance, CourseUser } from "@/api-shared/types/hive";
 
 export type HiveUsersContextState = {
-  default: boolean;
-  users: Record<number, CourseUser>;
-  instructors: Array<CourseUser>;
-  getInstructor: (id: number) => CourseUser | undefined;
+    default: boolean;
+    users: Record<number, CourseUser>;
+    instructors: Array<CourseUser>;
+    getInstructor: (id: number) => CourseUser | undefined;
 };
 
 const HiveUsersContext = createContext<HiveUsersContextState>({
@@ -30,13 +30,15 @@ const HiveUsersContext = createContext<HiveUsersContextState>({
 export const HiveUsersProvider = ({
     children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) => {
     const [users, setUsers] = useState<Record<string, CourseUser>>({});
 
     const instructors = useMemo(
         () =>
-            Object.values(users).filter((user) => user.clearance >= Clearance.Segel),
+            Object.values(users).filter(
+                (user) => user.clearance >= Clearance.Segel,
+            ),
         [users],
     );
     const getInstructor = useCallback(
@@ -57,7 +59,11 @@ export const HiveUsersProvider = ({
                 setUsers(usersMap);
             })
             .catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת משתמשים נכשלה.", error),
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "טעינת משתמשים נכשלה.",
+                    error,
+                ),
             );
     }, [setUsers]);
 
@@ -83,7 +89,9 @@ export const useHiveUsers = () => {
     const context = useContext(HiveUsersContext);
 
     if (context === undefined || context.default) {
-        throw new Error("useHiveUsers must be used within an HiveUsersProvider");
+        throw new Error(
+            "useHiveUsers must be used within an HiveUsersProvider",
+        );
     }
 
     return context;

@@ -1,17 +1,21 @@
 import EditIcon from "@mui/icons-material/Edit";
-import { Box, IconButton, Skeleton, TextField, Tooltip } from "@mui/material";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Skeleton from "@mui/material/Skeleton";
+import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import { KeyboardEvent, ReactNode, useCallback, useState } from "react";
 
 export type EditableCurriculumFieldProps = {
-  value?: string;
-  canEdit: boolean;
-  editTooltip: string;
-  skeletonWidth: number | string;
-  multiline?: boolean;
-  minRows?: number;
-  allowEmpty: boolean;
-  onSave: (nextValue: string) => Promise<void>;
-  renderDisplay: (value: string) => ReactNode;
+    value?: string;
+    canEdit: boolean;
+    editTooltip: string;
+    skeletonWidth: number | string;
+    multiline?: boolean;
+    minRows?: number;
+    allowEmpty: boolean;
+    onSave: (nextValue: string) => Promise<void>;
+    renderDisplay: (value: string) => ReactNode;
 };
 
 function EditableCurriculumFieldInner({
@@ -43,7 +47,10 @@ function EditableCurriculumFieldInner({
         }
 
         const trimmedValue = localValue.trim();
-        if ((!allowEmpty && trimmedValue.length === 0) || trimmedValue === value) {
+        if (
+            (!allowEmpty && trimmedValue.length === 0) ||
+            trimmedValue === value
+        ) {
             setLocalValue(value);
             setIsEditing(false);
             return;
@@ -96,7 +103,11 @@ function EditableCurriculumFieldInner({
         >
             <Box flexGrow={1}>{renderDisplay(value)}</Box>
             <Tooltip title={editTooltip}>
-                <IconButton color="primary" onClick={beginEditHandler} size="small">
+                <IconButton
+                    color="primary"
+                    onClick={beginEditHandler}
+                    size="small"
+                >
                     <EditIcon fontSize="small" />
                 </IconButton>
             </Tooltip>

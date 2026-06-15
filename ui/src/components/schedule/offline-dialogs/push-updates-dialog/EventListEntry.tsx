@@ -1,15 +1,12 @@
 "use client";
-
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import {
-    Checkbox,
-    Collapse,
-    IconButton,
-    TableCell,
-    TableRow,
-    Typography,
-} from "@mui/material";
+import Checkbox from "@mui/material/Checkbox";
+import Collapse from "@mui/material/Collapse";
+import IconButton from "@mui/material/IconButton";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import { Fragment, useState } from "react";
 
 import { DiffDetailsTable } from "@/components/schedule/offline-dialogs/push-updates-dialog/DiffDetailsTable";
@@ -26,7 +23,7 @@ type EventListEntryProps = {
     serverVersion: Event | undefined;
     capturedVersion: Event | undefined;
     conflicting: boolean;
-}
+};
 
 export function EventListEntry({
     isItemSelected,
@@ -59,7 +56,11 @@ export function EventListEntry({
                         }}
                         size="small"
                     >
-                        {expanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                        {expanded ? (
+                            <KeyboardArrowUpIcon />
+                        ) : (
+                            <KeyboardArrowDownIcon />
+                        )}
                     </IconButton>
                 </TableCell>
                 <TableCell component="th" scope="row">
@@ -86,7 +87,10 @@ export function EventListEntry({
                 </TableCell>
             </TableRow>
             <TableRow>
-                <TableCell colSpan={5} style={{ paddingBottom: 0, paddingTop: 0 }}>
+                <TableCell
+                    colSpan={5}
+                    style={{ paddingBottom: 0, paddingTop: 0 }}
+                >
                     <Collapse in={expanded} timeout="auto" unmountOnExit>
                         <DiffDetailsTable
                             capturedVersion={capturedVersion}

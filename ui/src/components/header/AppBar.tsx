@@ -1,14 +1,13 @@
 "use client";
 import SettingsIcon from "@mui/icons-material/Settings";
-import {
-    AppBar,
-    AppBarProps,
-    Box,
-    Button,
-    IconButton,
-    Toolbar,
-    Typography,
-} from "@mui/material";
+import AppBar from "@mui/material/AppBar";
+import AppBarProps from "@mui/material/AppBarProps";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -40,9 +39,16 @@ export function ScheduleAppBar({
             {...props}
         >
             <Toolbar variant="dense">
-                <Box alignItems="center" display="flex" flexDirection={"row"} gap={1}>
+                <Box
+                    alignItems="center"
+                    display="flex"
+                    flexDirection={"row"}
+                    gap={1}
+                >
                     <Button
                         color="inherit"
+                        component={Link}
+                        href="/"
                         startIcon={<Logo height={"2rem"} width={"2rem"} />}
                         variant="text"
                     >

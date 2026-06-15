@@ -1,12 +1,7 @@
-/**
- * Name: ClosingSaturdayChip.tsx
- * Purpose: Interactive toggle for weekend/Saturday status with high visual clarity.
- * Created: 2026-04-15
- * Author: Michael K. Steinberg
- */
-
-import { EventAvailable, EventBusy } from "@mui/icons-material";
-import { Chip, Tooltip } from "@mui/material";
+import EventAvailable from "@mui/icons-material/EventAvailable";
+import EventBusy from "@mui/icons-material/EventBusy";
+import Chip from "@mui/material/Chip";
+import Tooltip from "@mui/material/Tooltip";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
@@ -16,8 +11,8 @@ import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWe
 import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 
 type ClosingSaturdayChipProps = {
-  weekId: GanttWeekId;
-  weekendDuty: boolean;
+    weekId: GanttWeekId;
+    weekendDuty: boolean;
 };
 
 export function ClosingSaturdayChip({

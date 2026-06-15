@@ -7,7 +7,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 
 type NumberFieldKeys<T> = {
-  [K in keyof T]: T[K] extends null | number | undefined ? K : never;
+    [K in keyof T]: T[K] extends null | number | undefined ? K : never;
 }[keyof T];
 
 function calculateSumValueForModuleByField(
@@ -34,7 +34,11 @@ export function calculateAllocatedTimeForModule(
     module: GanttModule,
     state: NormalizedStore,
 ): number {
-    return calculateSumValueForModuleByField(module, "allocatedDuration", state);
+    return calculateSumValueForModuleByField(
+        module,
+        "allocatedDuration",
+        state,
+    );
 }
 
 type CallbackFunc<T> = (item: T, state: NormalizedStore) => number;

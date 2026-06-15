@@ -1,13 +1,11 @@
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import NoMeetingRoomIcon from "@mui/icons-material/NoMeetingRoom";
 import WarningIcon from "@mui/icons-material/Warning";
-import {
-    Box,
-    BoxProps,
-    ChipProps,
-    Link,
-    Tooltip,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import ChipProps from "@mui/material/ChipProps";
+import Link from "@mui/material/Link";
+import Tooltip from "@mui/material/Tooltip";
 import { useMemo } from "react";
 
 import { getHiveBaseUrl } from "@/api-shared/common";
@@ -34,21 +32,28 @@ const tagSx = (overcrowded: boolean) => ({
 function SingleRoomTag({
     room,
     occupancy,
-}: { room: Room; occupancy?: number }) {
+}: {
+    room: Room;
+    occupancy?: number;
+}) {
     const roomCapacity =
-    room.source === RoomSource.Hive ? (room?.users.length ?? -1) : -1;
+        room.source === RoomSource.Hive ? (room?.users.length ?? -1) : -1;
     const overcrowded =
-    occupancy !== undefined && roomCapacity >= 0 && occupancy > roomCapacity;
+        occupancy !== undefined &&
+        roomCapacity >= 0 &&
+        occupancy > roomCapacity;
 
     return (
         <Tooltip
             title={overcrowded ? `עומס יתר: ${occupancy}/${roomCapacity}` : ""}
         >
             <Box component="span" sx={tagSx(overcrowded)}>
-                {overcrowded ? <WarningIcon
-                    color="warning"
-                    sx={{ fontSize: "0.7rem", mr: 0.3 }}
-                /> : null}
+                {overcrowded ? (
+                    <WarningIcon
+                        color="warning"
+                        sx={{ fontSize: "0.7rem", mr: 0.3 }}
+                    />
+                ) : null}
                 {room.source === RoomSource.Hive ? (
                     <Link
                         color="inherit"
@@ -72,10 +77,10 @@ export function RoomComponent({
     chipSize: _chipSize,
     ...props
 }: {
-  roomIds: Array<RoomLike>;
-  occupancy?: number;
-  showCaption?: boolean;
-  chipSize?: ChipProps["size"];
+    roomIds: Array<RoomLike>;
+    occupancy?: number;
+    showCaption?: boolean;
+    chipSize?: ChipProps["size"];
 } & BoxProps) {
     const { getRoom } = useRooms();
     const { showMisconfigurations } = useCalendarFilters();

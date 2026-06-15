@@ -1,18 +1,15 @@
 "use client";
-
 import CoPresentIcon from "@mui/icons-material/CoPresent";
 import EmojiFoodBeverageIcon from "@mui/icons-material/EmojiFoodBeverage";
 import QuizIcon from "@mui/icons-material/Quiz";
 import SchoolIcon from "@mui/icons-material/School";
 import SynagogueIcon from "@mui/icons-material/Synagogue";
-import {
-    Box,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    Select,
-    SelectChangeEvent,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import SelectChangeEvent from "@mui/material/SelectChangeEvent";
 import { useCallback, useRef, useState } from "react";
 
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
@@ -68,7 +65,10 @@ export function EventTypeField({
 
     return (
         <Box alignItems="center" display="flex" gap={1.5} {...props}>
-            {getEventTypeIcon(currentType, { color: "action", sx: { fontSize: 26 } })}
+            {getEventTypeIcon(currentType, {
+                color: "action",
+                sx: { fontSize: 26 },
+            })}
             <FormControl fullWidth sx={{ flexGrow: 1 }}>
                 <InputLabel>סוג</InputLabel>
                 <Select
@@ -85,7 +85,10 @@ export function EventTypeField({
                     {eventTypes.map((type) => (
                         <MenuItem key={type} value={type}>
                             <Box alignItems="center" display="flex" gap={1}>
-                                {getEventTypeIcon(type, { fontSize: "small", color: "action" })}
+                                {getEventTypeIcon(type, {
+                                    fontSize: "small",
+                                    color: "action",
+                                })}
                                 {eventTypeToHebrew(type)}
                             </Box>
                         </MenuItem>

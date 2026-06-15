@@ -36,9 +36,12 @@ async function apiGetModuleDayMapping(
             : url.searchParams.append("dayId", dayId.toString());
     }
 
-    const rawData = await safeApiFetcher<Array<RawBaseDocument>>(url.toString(), {
-        ...options,
-    });
+    const rawData = await safeApiFetcher<Array<RawBaseDocument>>(
+        url.toString(),
+        {
+            ...options,
+        },
+    );
     return rawData.map(
         baseDocumentFixup,
     ) as unknown as Array<GanttCurriculumModuleDayMapping>;
@@ -61,7 +64,7 @@ async function apiCreateModuleDayMapping(
         },
     );
     return baseDocumentFixup(
-    rawData as RawBaseDocument,
+        rawData as RawBaseDocument,
     ) as unknown as GanttCurriculumModuleDayMapping;
 }
 
@@ -85,7 +88,7 @@ async function apiUpdateModuleDayMapping(
         },
     );
     return baseDocumentFixup(
-    rawData as RawBaseDocument,
+        rawData as RawBaseDocument,
     ) as unknown as GanttCurriculumModuleDayMapping;
 }
 
@@ -99,11 +102,14 @@ async function apiDeleteModuleDayMapping(
     dayId: GanttDayId,
     options?: ClientApiProps,
 ): Promise<void> {
-    await safeApiFetcher<void>(`/api/gantt/curriculums/${curriculumId}/mappings`, {
-        ...options,
-        method: "DELETE",
-        body: JSON.stringify({ moduleId, eventId, dayId }),
-    });
+    await safeApiFetcher<void>(
+        `/api/gantt/curriculums/${curriculumId}/mappings`,
+        {
+            ...options,
+            method: "DELETE",
+            body: JSON.stringify({ moduleId, eventId, dayId }),
+        },
+    );
 }
 
 export const curriculumModuleDayMappingApi = {

@@ -7,8 +7,7 @@ import { ResolvableRoom } from "@/api-shared/types/room";
  * Standardized Hebrew event types for the calendar engine,
  * fully aligning with the Gantt engine event types.
  */
-export enum EventType
-{
+export enum EventType {
     EXERCISE = 'ע"ע',
     LECTURE = "הרצאה",
     BREAK = "הפסקה",
@@ -53,8 +52,7 @@ export type Event = {
 /**
  * Standardized types of prayers.
  */
-export enum PrayerType
-{
+export enum PrayerType {
     SHACHARIT = "shacharit",
     MINCHA = "mincha",
     ARVIT = "arvit",
@@ -79,8 +77,7 @@ export type PrayerEvent = {
  * }
  * ```
  */
-export function eventHasSubject(type: EventType): boolean
-{
+export function eventHasSubject(type: EventType): boolean {
     return type === EventType.EXERCISE || type === EventType.LECTURE;
 }
 
@@ -95,8 +92,7 @@ export function eventHasSubject(type: EventType): boolean
  * }
  * ```
  */
-export function eventHasRoom(type: EventType): boolean
-{
+export function eventHasRoom(type: EventType): boolean {
     return type !== EventType.PRAYER;
 }
 
@@ -109,14 +105,13 @@ export function eventHasRoom(type: EventType): boolean
  * const label = prayerTypeToHebrew(PrayerType.SHACHARIT); // "שחרית"
  * ```
  */
-export function prayerTypeToHebrew(prayerType: PrayerType): string
-{
+export function prayerTypeToHebrew(prayerType: PrayerType): string {
     const LOOKUP: Record<PrayerType, string> = {
-        [ PrayerType.SHACHARIT ]: "שחרית",
-        [ PrayerType.MINCHA ]: "מנחה",
-        [ PrayerType.ARVIT ]: "ערבית",
+        [PrayerType.SHACHARIT]: "שחרית",
+        [PrayerType.MINCHA]: "מנחה",
+        [PrayerType.ARVIT]: "ערבית",
     };
-    return LOOKUP[ prayerType ] ?? prayerType;
+    return LOOKUP[prayerType] ?? prayerType;
 }
 
 /**
@@ -129,8 +124,7 @@ export function prayerTypeToHebrew(prayerType: PrayerType): string
  * const label = eventTypeToHebrew(event.type); // "הרצאה", "תפילה", etc.
  * ```
  */
-export function eventTypeToHebrew(type: EventType): string
-{
+export function eventTypeToHebrew(type: EventType): string {
     return type;
 }
 
@@ -148,8 +142,7 @@ export function getPresentInstructors(event: Event): Array<number>;
 export function getPresentInstructors(
     event: Event,
     includeOutsiders: boolean = false,
-): Array<PersonId>
-{
+): Array<PersonId> {
     const reduced = new Set<PersonId>([
         ...event.instructors,
         ...(event.lecturers?.filter(
@@ -165,7 +158,11 @@ export type DbEventDocument = Omit<Event, "endTime" | "startTime"> & {
 };
 
 export type ApiEventGetPayload = void;
-export type ApiEventGetResponse = Array<DbEventDocument> | DbEventDocument | null | Record<EventId, Partial<DbEventDocument>>;
+export type ApiEventGetResponse =
+    | Array<DbEventDocument>
+    | DbEventDocument
+    | null
+    | Record<EventId, Partial<DbEventDocument>>;
 
 export type ApiEventUpdatePayload = DbEventDocument;
 export type ApiEventUpdateResponse = DbEventDocument;

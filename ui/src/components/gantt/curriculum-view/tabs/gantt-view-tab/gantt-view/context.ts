@@ -7,6 +7,8 @@ export const GanttContext = createContext<GanttContextType | null>(null);
 export const useGanttContext = () => {
     const ctx = useContext(GanttContext);
     if (!ctx)
-        throw new Error("useGanttContext must be used within GanttContextProvider");
+        throw new Error(
+            "useGanttContext must be used within GanttContextProvider",
+        );
     return ctx;
 };

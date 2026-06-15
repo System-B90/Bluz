@@ -64,9 +64,8 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult => {
                 );
 
                 moduleMappings.forEach((mapping): void => {
-                    const { start: startDate, end: endDate } = calculateTaskDate(
-                        mapping.dayId,
-                    );
+                    const { start: startDate, end: endDate } =
+                        calculateTaskDate(mapping.dayId);
 
                     if (!syllabusMinDate || startDate < syllabusMinDate) {
                         syllabusMinDate = startDate;
@@ -103,7 +102,8 @@ export const useGanttData = (props: GanttDataSourceProps): GanttDataResult => {
                 type: "project",
                 open: true,
                 start: syllabusDates.start,
-                duration: syllabusDates.end.getDate() - syllabusDates.start.getDate(),
+                duration:
+                    syllabusDates.end.getDate() - syllabusDates.start.getDate(),
             });
 
             // Add all children tasks

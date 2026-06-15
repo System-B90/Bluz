@@ -1,0 +1,91 @@
+name: E2E Tests
+
+on:
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    e2e-tests:
+        name: Playwright E2E Tests
+        runs-on: ubuntu-24.04
+        timeout-minutes: 30
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js 24
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "24"
+                  cache: "npm"
+
+            - name: Install Dependencies
+              run: npm ci
+
+            - name: Install Playwright Browsers
+              run: npx playwright install chromium --with-deps
+
+            # ── Orchestrate dedicated test containers ──────────────────────────
+            - name: Start Test Docker Composition
+              run: |
+                  docker compose -f docker-compose.yml -f docker-compose.test.yml up -d --build
+              env:
+                  BLUZ_VERSION: latest
+
+            - name: Wait for Services
+              run: |
+                  echo "Waiting for Bluz to be ready..."
+                  for i in $(seq 1 60); do
+                    if curl -ks https://bluz.bis/login > /dev/null 2>&1; then
+                      echo "Bluz is ready!"
+                      break
+                    fi
+                    echo "Attempt $i/60 - waiting 5s..."
+                    sleep 5
+                  done
+
+            # ── Authentication ────────────────────────────────────────────────
+            # TODO: Inject auth state or automate Hive SSO login for CI.
+            # For now, the setup project will attempt to log in via the Hive
+            # instance. Ensure the CI runner can reach https://hive.org and
+            # that the admin:Password1 credentials are valid.
+            #
+            # To use pre-baked auth state from a secret:
+            #   - name: Inject Auth State
+            #     run: |
+            #       mkdir -p .auth
+            #       echo '${{ secrets.E2E_AUTH_STATE }}' > .auth/user.json
+
+            # ── Run Tests ─────────────────────────────────────────────────────
+            - name: Run Playwright Tests
+              run: npm run test:e2e
+              env:
+                  BASE_URL: https://bluz.bis
+                  CI: true
+
+            # ── Artifacts ─────────────────────────────────────────────────────
+            - name: Upload Playwright Report
+              uses: actions/upload-artifact@v4
+              if: ${{ !cancelled() }}
+              with:
+                  name: playwright-report
+                  path: playwright-report/
+                  retention-days: 14
+
+            - name: Upload Test Results
+              uses: actions/upload-artifact@v4
+              if: ${{ !cancelled() }}
+              with:
+                  name: test-results
+                  path: test-results/
+                  retention-days: 7
+
+            # ── Teardown ──────────────────────────────────────────────────────
+            - name: Tear Down Test Containers
+              if: always()
+              run: |
+                  docker compose -f docker-compose.yml -f docker-compose.test.yml down -v

@@ -1,6 +1,7 @@
 import FilterListIcon from "@mui/icons-material/FilterList";
 import InfoIcon from "@mui/icons-material/Info";
-import { IconButton, Tooltip } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 import { Dispatch, SetStateAction, useMemo } from "react";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";

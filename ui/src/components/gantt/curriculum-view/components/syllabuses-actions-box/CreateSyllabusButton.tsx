@@ -1,5 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
-import { Button } from "@mui/material";
+import Button from "@mui/material/Button";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
@@ -10,20 +10,28 @@ import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/U
 export function CreateSyllabusButton({
     curriculumId,
 }: {
-  curriculumId: GanttCurriculumId;
+    curriculumId: GanttCurriculumId;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const { createSyllabus } = useSyllabusActions();
 
     const clickHandler = useCallback(() => {
         createSyllabus("סילבוס חדש", curriculumId).catch((error) =>
-            enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת הסילבוס נכשלה!", error),
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "יצירת הסילבוס נכשלה!",
+                error,
+            ),
         );
     }, [curriculumId, createSyllabus, enqueueSnackbar]);
 
     return (
-        <Button onClick={clickHandler} startIcon={<AddIcon />} variant="contained">
-      סילבוס חדש
+        <Button
+            onClick={clickHandler}
+            startIcon={<AddIcon />}
+            variant="contained"
+        >
+            סילבוס חדש
         </Button>
     );
 }

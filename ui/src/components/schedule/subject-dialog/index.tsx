@@ -1,20 +1,18 @@
 "use client";
 
-import {
-    Box,
-    Button,
-    Chip,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    OutlinedInput,
-    Select,
-    TextField,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import Select from "@mui/material/Select";
+import TextField from "@mui/material/TextField";
 import { useState } from "react";
 
 import { Subject } from "@/api-shared/types/subject";
@@ -22,10 +20,10 @@ import { Subject } from "@/api-shared/types/subject";
 const availableGroups = ["Group A", "Group B", "Group C"];
 
 type SubjectDialogProps = {
-  open: boolean;
-  subject: Partial<Subject>;
-  onClose: () => void;
-  onSave: (subject: Subject) => void;
+    open: boolean;
+    subject: Partial<Subject>;
+    onClose: () => void;
+    onSave: (subject: Subject) => void;
 };
 
 export function SubjectDialog({
@@ -81,9 +79,17 @@ export function SubjectDialog({
                     <Select
                         input={<OutlinedInput label="Assigned Groups" />}
                         multiple
-                        onChange={(e) => setGroups(e.target.value as Array<string>)}
+                        onChange={(e) =>
+                            setGroups(e.target.value as Array<string>)
+                        }
                         renderValue={(selected) => (
-                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 0.5,
+                                }}
+                            >
                                 {selected.map((value) => (
                                     <Chip key={value} label={value} />
                                 ))}
@@ -102,7 +108,7 @@ export function SubjectDialog({
             <DialogActions>
                 <Button onClick={onClose}>Cancel</Button>
                 <Button onClick={handleSave} variant="contained">
-          Save
+                    Save
                 </Button>
             </DialogActions>
         </Dialog>

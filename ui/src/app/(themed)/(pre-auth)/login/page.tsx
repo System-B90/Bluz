@@ -1,6 +1,8 @@
 "use client";
-
-import { Alert, AlertTitle, Box, Typography } from "@mui/material";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -30,18 +32,21 @@ function LoginWidget() {
     const authError = searchParams.get("error");
     const authErrorMessage = getAuthenticationErrorMessage(authError);
     const authErrorDetails =
-    searchParams.get("error_description") ??
-    searchParams.get("message") ??
-    authError;
+        searchParams.get("error_description") ??
+        searchParams.get("message") ??
+        authError;
 
     return (
         <Box
-            bgcolor={"hsl(var(--background))"}
-            border={"1px solid hsl(var(--border))"}
-            borderRadius={"12px"}
-            boxShadow={
-                "0 20px 25px -5px hsl(var(--foreground) / 0.1), 0 10px 10px -5px hsl(var(--foreground) / 0.04)"
+            bgcolor={"background.paper"}
+            border={"1px solid"}
+            borderColor={(theme) =>
+                theme.palette.mode === "light"
+                    ? "rgba(0,0,0,0.08)"
+                    : "rgba(255,255,255,0.08)"
             }
+            borderRadius={"20px"}
+            boxShadow={"0 24px 50px rgba(0,0,0,0.15)"}
             display={"flex"}
             flexDirection={"column"}
             gap={4}
@@ -67,7 +72,7 @@ function LoginWidget() {
                     letterSpacing={"-0.02em"}
                     mt={1}
                 >
-          ברוכים הבאים לבלוז
+                    ברוכים הבאים לבלוז
                 </Typography>
 
                 <Typography
@@ -76,7 +81,7 @@ function LoginWidget() {
                     fontSize={14}
                     mt={0}
                 >
-          מתי אתם מבזרים?
+                    מתי אתם מבזרים?
                 </Typography>
             </Box>
 
@@ -87,7 +92,7 @@ function LoginWidget() {
                         {authErrorMessage}
                         {authErrorDetails ? (
                             <Typography component="p" fontSize={13} mt={1}>
-                קוד שגיאה: {authErrorDetails}
+                                קוד שגיאה: {authErrorDetails}
                             </Typography>
                         ) : null}
                     </Alert>
@@ -103,7 +108,7 @@ export default function LoginPage() {
         <Box
             alignContent={"flex-start"}
             alignItems={"flex-start"}
-            bgcolor={"hsl(var(--background))"}
+            bgcolor={"background.default"}
             display={"flex"}
             height={"100vh"}
             justifyContent={"center"}

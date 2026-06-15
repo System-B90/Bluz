@@ -1,22 +1,22 @@
 import AddIcon from "@mui/icons-material/Add";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import RemoveIcon from "@mui/icons-material/Remove";
-import {
-    Box,
-    Chip,
-    IconButton,
-    TableCell,
-    TextField,
-    Typography,
-    alpha,
-    useTheme,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import { alpha, useTheme } from "@mui/material/styles";
+import Switch from "@mui/material/Switch";
+import TableCell from "@mui/material/TableCell";
+import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { KeyboardEvent, useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     GanttDayId,
+    GanttDayIndex,
     getDayNameDisplay,
 } from "@/api-shared/types/gantt/models";
 import {
@@ -30,17 +30,20 @@ import {
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gantt/state/hooks/UseDay";
+import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type DayCapacityCellProps = {
-  dayId: GanttDayId;
-  isCompact?: boolean;
-  isMuted?: boolean;
-  scheduledMinutes: number;
-  startDate: null | string;
-  weekIndex: number;
+    dayId: GanttDayId;
+    isCompact?: boolean;
+    isMuted?: boolean;
+    scheduledMinutes: number;
+    startDate: null | string;
+    weekIndex: number;
 };
 
-function getStatusColor(status: CapacityStatus): "default" | "error" | "primary" | "warning" {
+function getStatusColor(
+    status: CapacityStatus,
+): "default" | "error" | "primary" | "warning" {
     if (status === "error") return "error";
     if (status === "warning") return "warning";
     if (status === "ok") return "primary";
@@ -58,8 +61,25 @@ export function DayCapacityCell({
 }: DayCapacityCellProps) {
     const theme = useTheme();
     const { enqueueSnackbar } = useSnackbar();
+    const state = useCurriculumState();
     const day = useCurriculumDay(dayId);
-    const { updateDay } = useWeekActions();
+    const { updateDay, updateWeek } = useWeekActions();
+    const week = day ? state.weeks[day.weekId] : undefined;
+
+    const toggleWeekendDuty = useCallback(
+        (checked: boolean) => {
+            if (!day) return;
+            void updateWeek(day.weekId, { weekendDuty: checked }).catch(
+                (error) =>
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "שמירת המידע של השבוע נכשלה!",
+                        error,
+                    ),
+            );
+        },
+        [day, enqueueSnackbar, updateWeek],
+    );
 
     const [localTime, setLocalTime] = useState(() =>
         formatMinutesAsTimeInput(day?.totalWorkingMinutes ?? 0),
@@ -69,7 +89,8 @@ export function DayCapacityCell({
     const [isCommentFocused, setIsCommentFocused] = useState(false);
 
     const status = useMemo(
-        () => getCapacityStatus(day?.totalWorkingMinutes ?? 0, scheduledMinutes),
+        () =>
+            getCapacityStatus(day?.totalWorkingMinutes ?? 0, scheduledMinutes),
         [day?.totalWorkingMinutes, scheduledMinutes],
     );
 
@@ -103,8 +124,13 @@ export function DayCapacityCell({
 
         if (parsedMinutes === day.totalWorkingMinutes) return;
 
-        void updateDay(dayId, { totalWorkingMinutes: parsedMinutes }).catch((error) =>
-            enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת שעות נכשלה!", error),
+        void updateDay(dayId, { totalWorkingMinutes: parsedMinutes }).catch(
+            (error) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "שמירת שעות נכשלה!",
+                    error,
+                ),
         );
     }, [day, dayId, enqueueSnackbar, localTime, updateDay]);
 
@@ -112,7 +138,11 @@ export function DayCapacityCell({
         if (!day || localComment === (day.comment ?? "")) return;
 
         void updateDay(dayId, { comment: localComment }).catch((error) =>
-            enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת הערת יום נכשלה!", error),
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "שמירת הערת יום נכשלה!",
+                error,
+            ),
         );
     }, [day, dayId, enqueueSnackbar, localComment, updateDay]);
 
@@ -125,8 +155,13 @@ export function DayCapacityCell({
                 Math.min(24 * 60, day.totalWorkingMinutes + deltaMinutes),
             );
             setLocalTime(formatMinutesAsTimeInput(nextMinutes));
-            void updateDay(dayId, { totalWorkingMinutes: nextMinutes }).catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת שעות נכשלה!", error),
+            void updateDay(dayId, { totalWorkingMinutes: nextMinutes }).catch(
+                (error) =>
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "שמירת שעות נכשלה!",
+                        error,
+                    ),
             );
         },
         [day, dayId, enqueueSnackbar, updateDay],
@@ -143,9 +178,11 @@ export function DayCapacityCell({
     );
 
     const backgroundColor = useMemo(() => {
-        if (isMuted) return alpha(theme.palette.action.disabledBackground, 0.45);
+        if (isMuted)
+            return alpha(theme.palette.action.disabledBackground, 0.45);
         if (status === "error") return alpha(theme.palette.error.main, 0.08);
-        if (status === "warning") return alpha(theme.palette.warning.main, 0.12);
+        if (status === "warning")
+            return alpha(theme.palette.warning.main, 0.12);
         if (status === "ok") return alpha(theme.palette.primary.main, 0.08);
 
         return theme.palette.background.paper;
@@ -183,9 +220,13 @@ export function DayCapacityCell({
                 }}
             >
                 <Box sx={cellBoxStyles}>
-                    <Box>
-                        <Typography 
-                            fontWeight={700} 
+                    <Box
+                        alignItems="center"
+                        display="flex"
+                        justifyContent="space-between"
+                    >
+                        <Typography
+                            fontWeight={700}
                             sx={{
                                 color: "text.secondary",
                                 letterSpacing: "0.01em",
@@ -196,29 +237,47 @@ export function DayCapacityCell({
                             {dayName}
                             {dateLabel ? ` (${dateLabel})` : ""}
                         </Typography>
+                        {day?.dayIndex === GanttDayIndex.Saturday && (
+                            <Tooltip
+                                arrow
+                                title={
+                                    week?.weekendDuty ? "צא הביתה" : "סגור שבת"
+                                }
+                            >
+                                <Switch
+                                    checked={week?.weekendDuty ?? false}
+                                    onChange={(event) =>
+                                        toggleWeekendDuty(event.target.checked)
+                                    }
+                                    size="small"
+                                />
+                            </Tooltip>
+                        )}
                     </Box>
-                    
-                    <Box 
-                        alignItems="center" 
-                        display="flex" 
-                        flexDirection="column" 
+
+                    <Box
+                        alignItems="center"
+                        display="flex"
+                        flexDirection="column"
                         justifyContent="center"
                         sx={{ py: 1, gap: 0.5 }}
                     >
-                        <EventAvailableIcon sx={{ fontSize: 18, color: "success.main" }} />
-                        <Typography 
-                            sx={{ 
-                                fontWeight: 700, 
+                        <EventAvailableIcon
+                            sx={{ fontSize: 18, color: "success.main" }}
+                        />
+                        <Typography
+                            sx={{
+                                fontWeight: 700,
                                 color: "success.main",
                                 fontSize: "0.72rem",
-                                letterSpacing: "0.02em"
-                            }} 
+                                letterSpacing: "0.02em",
+                            }}
                             variant="caption"
                         >
-              יוצאים שבת
+                            יוצאים שבת
                         </Typography>
                     </Box>
-                    
+
                     {/* Consistent bottom spacing matching comment field height in active cells */}
                     <Box sx={{ height: 18 }} />
                 </Box>
@@ -246,9 +305,13 @@ export function DayCapacityCell({
         >
             <Box sx={cellBoxStyles}>
                 <Box display="flex" flexDirection="column" gap={0.75}>
-                    <Box alignItems="center" display="flex" justifyContent="space-between">
-                        <Typography 
-                            fontWeight={700} 
+                    <Box
+                        alignItems="center"
+                        display="flex"
+                        justifyContent="space-between"
+                    >
+                        <Typography
+                            fontWeight={700}
                             sx={{
                                 color: "text.primary",
                                 letterSpacing: "0.01em",
@@ -259,6 +322,22 @@ export function DayCapacityCell({
                             {dayName}
                             {dateLabel ? ` (${dateLabel})` : ""}
                         </Typography>
+                        {day?.dayIndex === GanttDayIndex.Saturday && (
+                            <Tooltip
+                                arrow
+                                title={
+                                    week?.weekendDuty ? "צא הביתה" : "סגור שבת"
+                                }
+                            >
+                                <Switch
+                                    checked={week?.weekendDuty ?? false}
+                                    onChange={(event) =>
+                                        toggleWeekendDuty(event.target.checked)
+                                    }
+                                    size="small"
+                                />
+                            </Tooltip>
+                        )}
                     </Box>
                     <Box
                         alignItems="center"
@@ -267,67 +346,83 @@ export function DayCapacityCell({
                         gridTemplateColumns="24px 1fr 24px"
                         sx={{ position: "relative" }}
                     >
-                        <IconButton 
-                            className="cell-control-btn" 
+                        <IconButton
+                            className="cell-control-btn"
                             onClick={() => adjustMinutes(-60)}
                             size="small"
                             sx={{
                                 opacity: isEditing ? 1 : 0,
-                                transform: isEditing ? "scale(1)" : "scale(0.8)",
-                                transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                                transform: isEditing
+                                    ? "scale(1)"
+                                    : "scale(0.8)",
+                                transition:
+                                    "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
                                 ".group\\/cell:hover &": {
                                     opacity: 1,
                                     transform: "scale(1)",
-                                }
+                                },
                             }}
                         >
                             <RemoveIcon fontSize="inherit" />
                         </IconButton>
                         <TextField
-                            inputProps={{
-                                inputMode: "numeric",
-                                style: { 
-                                    fontFamily: "monospace", 
-                                    textAlign: "center",
-                                    fontWeight: 700,
-                                    fontSize: isCompact ? "0.75rem" : "0.85rem",
-                                    padding: isCompact ? "0px 4px" : "4px 8px",
-                                },
-                            }}
                             onBlur={() => {
                                 commitTime();
                                 setIsTimeFocused(false);
                             }}
-                            onChange={(event) => setLocalTime(event.target.value)}
+                            onChange={(event) =>
+                                setLocalTime(event.target.value)
+                            }
                             onFocus={() => setIsTimeFocused(true)}
                             onKeyDown={handleTimeKeyDown}
                             size="small"
+                            slotProps={{
+                                htmlInput: {
+                                    inputMode: "numeric",
+                                    style: {
+                                        fontFamily: "monospace",
+                                        textAlign: "center",
+                                        fontWeight: 700,
+                                        fontSize: isCompact ? "0.75rem" : "0.85rem",
+                                        padding: isCompact ? "0px 4px" : "4px 8px",
+                                    },
+                                },
+                            }}
                             sx={{
                                 "& .MuiOutlinedInput-root": {
                                     transition: "all 0.2s ease",
-                                    bgcolor: isEditing ? "background.default" : "transparent",
+                                    bgcolor: isEditing
+                                        ? "background.default"
+                                        : "transparent",
                                 },
                                 "& .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: isEditing ? "primary.main" : "transparent",
+                                    borderColor: isEditing
+                                        ? "primary.main"
+                                        : "transparent",
                                 },
                                 "&:hover .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: isEditing ? "primary.main" : "divider",
+                                    borderColor: isEditing
+                                        ? "primary.main"
+                                        : "divider",
                                 },
                             }}
                             value={localTime}
                         />
-                        <IconButton 
-                            className="cell-control-btn" 
+                        <IconButton
+                            className="cell-control-btn"
                             onClick={() => adjustMinutes(60)}
                             size="small"
                             sx={{
                                 opacity: isEditing ? 1 : 0,
-                                transform: isEditing ? "scale(1)" : "scale(0.8)",
-                                transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                                transform: isEditing
+                                    ? "scale(1)"
+                                    : "scale(0.8)",
+                                transition:
+                                    "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
                                 ".group\\/cell:hover &": {
                                     opacity: 1,
                                     transform: "scale(1)",
-                                }
+                                },
                             }}
                         >
                             <AddIcon fontSize="inherit" />
@@ -337,22 +432,22 @@ export function DayCapacityCell({
                         color={getStatusColor(status)}
                         label={`${formatHoursLabel(scheduledMinutes)} משובץ | ${statusLabel}`}
                         size="smaller"
-                        sx={{ 
+                        sx={{
                             maxWidth: "100%",
                             fontWeight: 600,
                             borderWidth: 1,
                             bgcolor: "background.paper",
                             transition: "all 0.2s ease",
-                            "& .MuiChip-label": { px: 1 }
+                            "& .MuiChip-label": { px: 1 },
                         }}
                         variant="outlined"
                     />
                 </Box>
-                
-                <Box 
-                    sx={{ 
-                        minHeight: 18, 
-                        display: "flex", 
+
+                <Box
+                    sx={{
+                        minHeight: 18,
+                        display: "flex",
                         flexDirection: "column",
                         position: "relative",
                         mt: 0.5,
@@ -376,7 +471,10 @@ export function DayCapacityCell({
                                 py: 0.25,
                                 "&:hover": {
                                     color: "primary.main",
-                                    bgcolor: alpha(theme.palette.primary.main, 0.04),
+                                    bgcolor: alpha(
+                                        theme.palette.primary.main,
+                                        0.04,
+                                    ),
                                     borderRadius: 0.5,
                                     px: 0.5,
                                 },
@@ -396,12 +494,14 @@ export function DayCapacityCell({
                             ".group\\/cell:hover &": {
                                 display: "block",
                             },
-                            ...(!hasComment && !isCommentFocused ? {
-                                display: "none",
-                                ".group\\/cell:hover &": {
-                                    display: "block",
+                            ...(!hasComment && !isCommentFocused
+                                ? {
+                                    display: "none",
+                                    ".group\\/cell:hover &": {
+                                        display: "block",
+                                    },
                                 }
-                            } : {})
+                                : {}),
                         }}
                     >
                         <TextField
@@ -411,7 +511,9 @@ export function DayCapacityCell({
                                 commitComment();
                                 setIsCommentFocused(false);
                             }}
-                            onChange={(event) => setLocalComment(event.target.value)}
+                            onChange={(event) =>
+                                setLocalComment(event.target.value)
+                            }
                             onFocus={() => setIsCommentFocused(true)}
                             placeholder="שם / הערה..."
                             size="small"
@@ -422,12 +524,13 @@ export function DayCapacityCell({
                                         fontSize: "0.72rem",
                                         color: theme.palette.text.primary,
                                         padding: "2px 0",
-                                    }
-                                }
+                                    },
+                                },
                             }}
                             sx={{
                                 "& .MuiInput-root:hover::before": {
-                                    borderBottom: "1px solid rgba(0, 0, 0, 0.42) !important",
+                                    borderBottom:
+                                        "1px solid rgba(0, 0, 0, 0.42) !important",
                                 },
                             }}
                             value={localComment}

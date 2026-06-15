@@ -6,16 +6,19 @@ import { ApiT } from "@/api-shared/types/gantt/api-layer";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 
 export type BasicGantLinkOperations<TEntity extends BaseGantItem> = {
-  linkItem: (newParentId: string, id: TEntity["id"]) => Promise<ApiT<TEntity>>;
-  unlinkItem: (oldParentId: string, id: TEntity["id"]) => Promise<void>;
+    linkItem: (
+        newParentId: string,
+        id: TEntity["id"],
+    ) => Promise<ApiT<TEntity>>;
+    unlinkItem: (oldParentId: string, id: TEntity["id"]) => Promise<void>;
 };
 
 export type BuildGantLinkRoutesProps<TEntity extends BaseGantItem> = {
-  dbSet: BasicGantLinkOperations<TEntity>;
+    dbSet: BasicGantLinkOperations<TEntity>;
 };
 
 export type RouteContext = {
-  params: Promise<{ id: string }>;
+    params: Promise<{ id: string }>;
 };
 
 export function buildGantLinkRoutes<TEntity extends BaseGantItem>({
@@ -35,8 +38,13 @@ export function buildGantLinkRoutes<TEntity extends BaseGantItem>({
                 throw new ClientApiError("Payload cannot be empty.");
             }
 
-            const { newParentId } = JSON.parse(textBody) as { newParentId: string };
-            const linkedItem = await dbSet.linkItem(newParentId, id as TEntity["id"]);
+            const { newParentId } = JSON.parse(textBody) as {
+                newParentId: string;
+            };
+            const linkedItem = await dbSet.linkItem(
+                newParentId,
+                id as TEntity["id"],
+            );
 
             return ApiSuccess(linkedItem);
         } catch (error) {
@@ -58,7 +66,9 @@ export function buildGantLinkRoutes<TEntity extends BaseGantItem>({
                 throw new ClientApiError("Payload cannot be empty.");
             }
 
-            const { oldParentId } = JSON.parse(textBody) as { oldParentId: string };
+            const { oldParentId } = JSON.parse(textBody) as {
+                oldParentId: string;
+            };
             await dbSet.unlinkItem(oldParentId, id as TEntity["id"]);
 
             return ApiSuccess({ unlinked: true, id: id });

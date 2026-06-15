@@ -1,7 +1,8 @@
 "use client";
-
 import WifiTetheringOffIcon from "@mui/icons-material/WifiTetheringOff";
-import { Box, Fab, Tooltip } from "@mui/material";
+import Box from "@mui/material/Box";
+import Fab from "@mui/material/Fab";
+import Tooltip from "@mui/material/Tooltip";
 import React, { useState } from "react";
 
 import { CoursesProvider } from "@/components/base/CoursesProvider";
@@ -29,7 +30,7 @@ function LayoutContent({
 
     return (
         <Box
-            bgcolor={"Background"}
+            bgcolor="background.default"
             display="flex"
             flexDirection="column"
             height="100vh"
@@ -48,32 +49,37 @@ function LayoutContent({
                 {children}
             </Box>
 
-            {offlineMode ? <Tooltip placement="right" title="מצב עריכה לוקלי פעיל">
-                <Fab
-                    aria-label="offline-status"
-                    color="warning"
-                    sx={{
-                        position: "fixed",
-                        bottom: 24,
-                        left: 24,
-                        zIndex: 1000,
-                        background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-                        color: "white",
-                        boxShadow: "0px 6px 20px rgba(217, 119, 6, 0.4)",
-                        transition: "all 0.2s ease-in-out",
-                        "&:hover": {
-                            background: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
-                            boxShadow: "0px 8px 24px rgba(217, 119, 6, 0.6)",
-                            scale: "1.05",
-                        },
-                        "&:active": {
-                            scale: "0.95",
-                        },
-                    }}
-                >
-                    <WifiTetheringOffIcon sx={{ fontSize: "1.3rem" }} />
-                </Fab>
-            </Tooltip> : null}
+            {offlineMode ? (
+                <Tooltip placement="right" title="מצב עריכה לוקלי פעיל">
+                    <Fab
+                        aria-label="offline-status"
+                        color="warning"
+                        sx={{
+                            position: "fixed",
+                            bottom: 24,
+                            left: 24,
+                            zIndex: 1000,
+                            background:
+                                "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                            color: "white",
+                            boxShadow: "0px 6px 20px rgba(217, 119, 6, 0.4)",
+                            transition: "all 0.2s ease-in-out",
+                            "&:hover": {
+                                background:
+                                    "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+                                boxShadow:
+                                    "0px 8px 24px rgba(217, 119, 6, 0.6)",
+                                scale: "1.05",
+                            },
+                            "&:active": {
+                                scale: "0.95",
+                            },
+                        }}
+                    >
+                        <WifiTetheringOffIcon sx={{ fontSize: "1.3rem" }} />
+                    </Fab>
+                </Tooltip>
+            ) : null}
 
             <SettingsDialog
                 onClose={() => setOpenSettingsDialog(false)}
@@ -88,7 +94,8 @@ export default function PostAuthLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const [openSettingsDialog, setOpenSettingsDialog] = useState<boolean>(false);
+    const [openSettingsDialog, setOpenSettingsDialog] =
+        useState<boolean>(false);
 
     return (
         <HiveUsersProvider>
@@ -101,8 +108,12 @@ export default function PostAuthLayout({
                                     <OfflineProvider>
                                         <CalendarProvider>
                                             <LayoutContent
-                                                openSettingsDialog={openSettingsDialog}
-                                                setOpenSettingsDialog={setOpenSettingsDialog}
+                                                openSettingsDialog={
+                                                    openSettingsDialog
+                                                }
+                                                setOpenSettingsDialog={
+                                                    setOpenSettingsDialog
+                                                }
                                             >
                                                 {children}
                                             </LayoutContent>

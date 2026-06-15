@@ -12,7 +12,11 @@
  * shortenInstructorName("אבי כץ", allNames)  // "אבי כץ"
  * shortenInstructorName("איש חוץ", allNames) // "איש חוץ"
  */
-export function shortenInstructorName(fullName: string, allInstructors: ReadonlyArray<string>): string {
+
+export function shortenInstructorName(
+    fullName: string,
+    allInstructors: ReadonlyArray<string>,
+): string {
     if (fullName === "איש חוץ") {
         return fullName;
     }
@@ -20,7 +24,7 @@ export function shortenInstructorName(fullName: string, allInstructors: Readonly
     const firstName = fullName.split(" ")[0];
 
     const collisions = allInstructors.filter(
-        (name) => name !== fullName && name.startsWith(firstName + " ")
+        (name) => name !== fullName && name.startsWith(firstName + " "),
     );
 
     if (collisions.length === 0) {
@@ -30,7 +34,9 @@ export function shortenInstructorName(fullName: string, allInstructors: Readonly
     for (let i = firstName.length + 2; i <= fullName.length; i++) {
         const prefix = fullName.substring(0, i);
 
-        const isUnique = !collisions.some((otherName) => otherName.startsWith(prefix));
+        const isUnique = !collisions.some((otherName) =>
+            otherName.startsWith(prefix),
+        );
 
         if (isUnique) {
             return prefix;

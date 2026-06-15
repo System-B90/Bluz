@@ -1,4 +1,4 @@
-import { Divider } from "@mui/material";
+import Divider from "@mui/material/Divider";
 import {
     Dispatch,
     SetStateAction,
@@ -23,16 +23,16 @@ export function CurriculumViewBuilderWeeksView({
     groupCount,
     setSelectedWeekGroup,
 }: {
-  curriculumId: GanttCurriculumId;
-  groupCount: number;
-  weeks: Array<GanttWeekId>;
-  setSelectedWeekGroup: Dispatch<
-    SetStateAction<{ start: number; length: number }>
-  >;
+    curriculumId: GanttCurriculumId;
+    groupCount: number;
+    weeks: Array<GanttWeekId>;
+    setSelectedWeekGroup: Dispatch<
+        SetStateAction<{ start: number; length: number }>
+    >;
 }) {
     const { weeks: weeksState } = useCurriculumState();
     const [animationSelectedGroupIndex, setAnimationSelectedGroupIndex] =
-    useState<null | number>(null);
+        useState<null | number>(null);
     const groupedWeeks = useMemo(
         () => partitionWeeks(weeks, groupCount),
         [weeks, groupCount],
@@ -55,6 +55,11 @@ export function CurriculumViewBuilderWeeksView({
                 const isLast = index === groupedWeeks.length - 1;
                 const firstWeek = weeksState[group[0]];
                 const groupKey = `group-${firstWeek.id}`;
+                const firstWeekIndex = weeks.indexOf(group[0]);
+                const firstWeekNumber =
+                    firstWeekIndex !== -1
+                        ? firstWeekIndex + 1
+                        : (firstWeek?.number ?? 1);
 
                 return (
                     <Fragment key={`frag-${groupKey}`}>
@@ -77,7 +82,11 @@ export function CurriculumViewBuilderWeeksView({
                             group={group}
                             key={groupKey}
                             onExpandGroup={() =>
-                                onGroupClick(index, firstWeek.number, group.length)
+                                onGroupClick(
+                                    index,
+                                    firstWeekNumber,
+                                    group.length,
+                                )
                             }
                         />
                         {!isLast && (
@@ -91,7 +100,13 @@ export function CurriculumViewBuilderWeeksView({
                     </Fragment>
                 );
             }),
-        [animationSelectedGroupIndex, groupedWeeks, onGroupClick, weeksState],
+        [
+            animationSelectedGroupIndex,
+            groupedWeeks,
+            onGroupClick,
+            weeksState,
+            weeks,
+        ],
     );
 
     return (

@@ -1,8 +1,14 @@
 import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
 import { createHiveClient } from "@/api-server/hive/session-client";
-import { ApiHiveClassesGetPayload, ApiHiveClassesGetResponse } from "@/api-shared/types/hive";
+import {
+    ApiHiveClassesGetPayload,
+    ApiHiveClassesGetResponse,
+} from "@/api-shared/types/hive";
 
-type ServerApiHiveClassesGet = ServerApi<ApiHiveClassesGetPayload, ApiHiveClassesGetResponse>;
+type ServerApiHiveClassesGet = ServerApi<
+    ApiHiveClassesGetPayload,
+    ApiHiveClassesGetResponse
+>;
 
 export const GET: ServerApiHiveClassesGet = async (request) => {
     try {

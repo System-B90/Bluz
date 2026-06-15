@@ -1,13 +1,11 @@
-import {
-    Box,
-    Chip,
-    FormControl,
-    FormControlProps,
-    InputLabel,
-    MenuItem,
-    Select,
-    SelectChangeEvent,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import FormControl from "@mui/material/FormControl";
+import FormControlProps from "@mui/material/FormControlProps";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import SelectChangeEvent from "@mui/material/SelectChangeEvent";
 import { useCallback, useState } from "react";
 
 import {
@@ -41,7 +39,8 @@ export function RoomField({
             } = event;
 
             // On autofill we get a stringified value.
-            const newRooms = typeof value === "string" ? value.split(",") : value;
+            const newRooms =
+                typeof value === "string" ? value.split(",") : value;
 
             setEncodedSelectedRoomIds(newRooms);
         },
@@ -53,14 +52,19 @@ export function RoomField({
             (p) =>
                 p.filter(
                     (id) =>
-                        !areRoomsEqual(JSON.parse(id) as ResolvableRoom, roomIdToDelete),
+                        !areRoomsEqual(
+                            JSON.parse(id) as ResolvableRoom,
+                            roomIdToDelete,
+                        ),
                 ) ?? [],
         );
     }, []);
 
     const onClose = useCallback(() => {
         onBlurCallback({
-            rooms: encodedSelectedRoomIds.map((v) => JSON.parse(v) as ResolvableRoom),
+            rooms: encodedSelectedRoomIds.map(
+                (v) => JSON.parse(v) as ResolvableRoom,
+            ),
         });
     }, [encodedSelectedRoomIds, onBlurCallback]);
 
@@ -79,13 +83,18 @@ export function RoomField({
                 renderValue={(selected: Array<string>) => (
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                         {selected
-                            .map((encodedValue) => JSON.parse(encodedValue) as ResolvableRoom)
+                            .map(
+                                (encodedValue) =>
+                                    JSON.parse(encodedValue) as ResolvableRoom,
+                            )
                             .map((value) => (
                                 <Chip
                                     key={roomToKey(value)}
                                     label={getRoom(value)?.name || value.id}
                                     onDelete={() => handleDelete(value)}
-                                    onMouseDown={(event) => event.stopPropagation()}
+                                    onMouseDown={(event) =>
+                                        event.stopPropagation()
+                                    }
                                     size="small" // Optional: makes them fit better
                                 />
                             ))}

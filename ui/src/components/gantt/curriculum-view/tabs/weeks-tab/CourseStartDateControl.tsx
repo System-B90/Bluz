@@ -1,6 +1,9 @@
 import ClearIcon from "@mui/icons-material/Clear";
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { Dayjs } from "dayjs";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from "react";
@@ -17,8 +20,8 @@ import {
 import { useCurriculumActions } from "@/components/gantt/state/hooks/gantt-funcs/UseCurriculumActions";
 
 export type CourseStartDateControlProps = {
-  curriculum: GanttCurriculum;
-  curriculumId: GanttCurriculumId;
+    curriculum: GanttCurriculum;
+    curriculumId: GanttCurriculumId;
 };
 
 export function CourseStartDateControl({
@@ -49,21 +52,22 @@ export function CourseStartDateControl({
             }
 
             const nextStartDate =
-        snappedValue && snappedValue.isValid()
-            ? snappedValue.format("YYYY-MM-DD")
-            : null;
+                snappedValue && snappedValue.isValid()
+                    ? snappedValue.format("YYYY-MM-DD")
+                    : null;
 
             if (nextStartDate === curriculum.startDate) {
                 return;
             }
 
-            void updateCurriculum(curriculumId, { startDate: nextStartDate }).catch(
-                (error) =>
-                    enqueueApiErrorSnackbar(
-                        enqueueSnackbar,
-                        "שמירת תאריך תחילת הגאנט נכשלה!",
-                        error,
-                    ),
+            void updateCurriculum(curriculumId, {
+                startDate: nextStartDate,
+            }).catch((error) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "שמירת תאריך תחילת הגאנט נכשלה!",
+                    error,
+                ),
             );
         },
         [curriculum.startDate, curriculumId, enqueueSnackbar, updateCurriculum],

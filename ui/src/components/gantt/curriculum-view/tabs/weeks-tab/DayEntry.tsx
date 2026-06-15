@@ -1,12 +1,8 @@
-/**
- * Name: DayEntry.tsx
- * Purpose: Professional time-masked input with focus-based sync and key-reset.
- * Created: 2026-04-15
- * Author: Michael K. Steinberg
- */
-
-import { Add, Remove } from "@mui/icons-material";
-import { IconButton, TextField, Typography } from "@mui/material";
+import Add from "@mui/icons-material/Add";
+import Remove from "@mui/icons-material/Remove";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import React, { useCallback, useState } from "react";
 
@@ -20,7 +16,7 @@ import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWe
 import { useCurriculumDay } from "@/components/gantt/state/hooks/UseDay";
 
 type DayEntryProps = {
-  dayId: GanttDayId;
+    dayId: GanttDayId;
 };
 
 export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
@@ -35,27 +31,48 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
     const handleSync = useCallback(() => {
         const parsedMinutes = parseTimeInputToMinutes(localTime);
         if (parsedMinutes === null) {
-            setLocalTime(formatMinutesAsTimeInput(day?.totalWorkingMinutes ?? 0));
+            setLocalTime(
+                formatMinutesAsTimeInput(day?.totalWorkingMinutes ?? 0),
+            );
             return;
         }
 
         if (parsedMinutes !== day?.totalWorkingMinutes) {
-            void updateDay(dayId, { totalWorkingMinutes: parsedMinutes }).catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת שעות נכשלה!", error),
+            void updateDay(dayId, { totalWorkingMinutes: parsedMinutes }).catch(
+                (error) =>
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "שמירת שעות נכשלה!",
+                        error,
+                    ),
             );
         }
-    }, [localTime, day?.totalWorkingMinutes, updateDay, dayId, enqueueSnackbar]);
+    }, [
+        localTime,
+        day?.totalWorkingMinutes,
+        updateDay,
+        dayId,
+        enqueueSnackbar,
+    ]);
 
     const adjustHours = useCallback(
         (amount: number) => {
             const newMinutes = Math.max(
                 0,
-                Math.min(24 * 60, (day?.totalWorkingMinutes ?? 0) + amount * 60),
+                Math.min(
+                    24 * 60,
+                    (day?.totalWorkingMinutes ?? 0) + amount * 60,
+                ),
             );
             const formatted = formatMinutesAsTimeInput(newMinutes);
             setLocalTime(formatted); // Update local UI immediately
-            void updateDay(dayId, { totalWorkingMinutes: newMinutes }).catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת שעות נכשלה!", error),
+            void updateDay(dayId, { totalWorkingMinutes: newMinutes }).catch(
+                (error) =>
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "שמירת שעות נכשלה!",
+                        error,
+                    ),
             );
         },
         [dayId, updateDay, day?.totalWorkingMinutes, enqueueSnackbar],
@@ -120,7 +137,7 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
                     input: {
                         disableUnderline: true,
                         className:
-              "text-[0.7rem] text-slate-500 hover:text-slate-800 transition-colors",
+                            "text-[0.7rem] text-slate-500 hover:text-slate-800 transition-colors",
                     },
                 }}
                 variant="standard"

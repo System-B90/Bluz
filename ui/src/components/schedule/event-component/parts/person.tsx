@@ -2,13 +2,11 @@ import assert from "assert";
 
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
-import {
-    Box,
-    BoxProps,
-    ChipProps,
-    Link,
-    Tooltip,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import ChipProps from "@mui/material/ChipProps";
+import Link from "@mui/material/Link";
+import Tooltip from "@mui/material/Tooltip";
 import { useMemo } from "react";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
@@ -42,7 +40,11 @@ export function PersonChip({
     instructorId,
     personData,
     event,
-}: { instructorId?: number; personData?: any; event: Event; }) {
+}: {
+    instructorId?: number;
+    personData?: any;
+    event: Event;
+}) {
     const { getInstructor, instructors } = useHiveUsers();
     const instructor = useMemo(
         () => (instructorId ? getInstructor(instructorId) : personData),
@@ -60,16 +62,20 @@ export function PersonChip({
 
     const fullName: string =
         instructor?.display_name ?? personData ?? instructorId;
-    const shortName = useMemo(() => typeof fullName === "string"
-        ? shortenInstructorName(fullName, instructors.map((x) => x.display_name))
-        : fullName, [fullName, instructors]);
+    const shortName = useMemo(
+        () =>
+            typeof fullName === "string"
+                ? shortenInstructorName(
+                    fullName,
+                    instructors.map((x) => x.display_name),
+                )
+                : fullName,
+        [fullName, instructors],
+    );
 
     return (
         <Tooltip title={fullName}>
-            <Box
-                component="span"
-                sx={tagSx(!!isLecturer)}
-            >
+            <Box component="span" sx={tagSx(!!isLecturer)}>
                 <Link color="inherit" href="a" underline="hover">
                     {shortName}
                 </Link>
@@ -104,10 +110,7 @@ export function InstructorsList({
                     gap={0.4}
                     {...props}
                 >
-                    <PersonOffIcon
-                        color="error"
-                        sx={{ fontSize: "1.1rem" }}
-                    />
+                    <PersonOffIcon color="error" sx={{ fontSize: "1.1rem" }} />
                 </Box>
             </Tooltip>
         );
@@ -122,18 +125,18 @@ export function InstructorsList({
             gap={0.4}
             {...props}
         >
-            {showCaption ? <Tooltip title={event.instructors.length === 1 ? "מבוזר" : "מבוזרים"}>
-                <PersonOutlinedIcon
-                    sx={{ fontSize: "0.85rem", opacity: 0.6 }}
-                />
-            </Tooltip> : null}
-            {event.type === EventType.LECTURE &&
-                event.lecturers?.includes("איש חוץ") ? (
-                    <PersonChip
-                        event={event}
-                        key="איש חוץ"
-                        personData="איש חוץ"
+            {showCaption ? (
+                <Tooltip
+                    title={event.instructors.length === 1 ? "מבוזר" : "מבוזרים"}
+                >
+                    <PersonOutlinedIcon
+                        sx={{ fontSize: "0.85rem", opacity: 0.6 }}
                     />
+                </Tooltip>
+            ) : null}
+            {event.type === EventType.LECTURE &&
+            event.lecturers?.includes("איש חוץ") ? (
+                    <PersonChip event={event} key="איש חוץ" personData="איש חוץ" />
                 ) : null}
             {presentInstructors.map((instructor) => (
                 <PersonChip

@@ -4,7 +4,7 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export function useEvent(eventId: null): undefined;
 export function useEvent(
-  eventId: GanttEventId,
+    eventId: GanttEventId,
 ): ModuleEventDocument | undefined;
 export function useEvent(
     eventId: GanttEventId | null,

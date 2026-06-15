@@ -1,11 +1,9 @@
-import {
-    Box,
-    BoxProps,
-    Chip,
-    FormControl,
-    InputLabel,
-    SelectChangeEvent,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import Chip from "@mui/material/Chip";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import SelectChangeEvent from "@mui/material/SelectChangeEvent";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
@@ -13,7 +11,8 @@ import { InstructorSelect } from "@/components/base/InstructorSelect";
 
 export function FilterInstructors({ ...props }: BoxProps) {
     const { getInstructor } = useHiveUsers();
-    const { filteredInstructors, setFilteredInstructors } = useCalendarFilters();
+    const { filteredInstructors, setFilteredInstructors } =
+        useCalendarFilters();
 
     const handleChange = (
         event: SelectChangeEvent<typeof filteredInstructors>,
@@ -24,13 +23,20 @@ export function FilterInstructors({ ...props }: BoxProps) {
 
         // Handle potential string autofill values vs actual arrays
         const newIds =
-      typeof value === "string" ? value.split(",").map(Number) : value;
+            typeof value === "string"
+                ? value
+                    .split(",")
+                    .map(Number)
+                    .filter((n) => !isNaN(n))
+                : value;
 
         setFilteredInstructors(newIds);
     };
 
     const handleDelete = (idToDelete: number) => {
-        setFilteredInstructors((prev) => prev.filter((id) => id !== idToDelete));
+        setFilteredInstructors((prev) =>
+            prev.filter((id) => id !== idToDelete),
+        );
     };
 
     return (
@@ -38,6 +44,7 @@ export function FilterInstructors({ ...props }: BoxProps) {
             <FormControl fullWidth={true} size="small">
                 <InputLabel size="small">סינון לפי מדריכים</InputLabel>
                 <InstructorSelect
+                    excludeTeachers={true}
                     label="סינון לפי מדריכים"
                     multiple
                     onChange={handleChange}

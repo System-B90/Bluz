@@ -1,12 +1,14 @@
-import { ListItem, ListItemButton, ListItemText } from "@mui/material";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
 import React from "react";
 
 import { GanttCurriculum } from "@/api-shared/types/gantt/models";
 
 type CurriculumEntryProps = {
-  curriculum: GanttCurriculum;
-  onClick: () => void;
-  selected: boolean;
+    curriculum: GanttCurriculum;
+    onClick: () => void;
+    selected: boolean;
 };
 
 // Visual distinction between Draft and Prod handled here

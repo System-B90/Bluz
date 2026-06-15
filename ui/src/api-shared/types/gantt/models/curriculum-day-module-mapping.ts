@@ -13,9 +13,9 @@ import { GanttDayId } from "@/api-shared/types/gantt/models/day";
  * This is used when zooming in and out of views.
  */
 export type GanttCurriculumEventDayMapping = {
-  moduleId: GanttModuleId;
-  eventId?: GanttEventId | null;
-  dayId: GanttDayId;
-  curriculumId: GanttCurriculumId;
-  sortOrder: number;
+    moduleId: GanttModuleId;
+    eventId?: GanttEventId | null;
+    dayId: GanttDayId;
+    curriculumId: GanttCurriculumId;
+    sortOrder: number;
 };

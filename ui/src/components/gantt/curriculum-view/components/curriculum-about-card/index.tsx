@@ -1,4 +1,8 @@
-import { Box, Card, CardProps, Skeleton, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardProps from "@mui/material/CardProps";
+import Skeleton from "@mui/material/Skeleton";
+import Typography from "@mui/material/Typography";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
@@ -6,8 +10,8 @@ import { CurriculumDescription } from "@/components/gantt/curriculum-view/compon
 import { CurriculumName } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumName";
 
 export type CurriculumCardProps = {
-  curriculumId: GanttCurriculumId | null;
-  curriculum: GanttCurriculumDocument | undefined;
+    curriculumId: GanttCurriculumId | null;
+    curriculum: GanttCurriculumDocument | undefined;
 } & Omit<CardProps, "sx">;
 
 export function CurriculumAboutCard({
@@ -17,14 +21,17 @@ export function CurriculumAboutCard({
 }: CurriculumCardProps) {
     return (
         <Card sx={{ padding: 2, minWidth: "14rem", flexShrink: 0 }} {...props}>
-            <CurriculumName curriculumId={curriculumId} title={curriculum?.title} />
+            <CurriculumName
+                curriculumId={curriculumId}
+                title={curriculum?.title}
+            />
             <CurriculumDescription
                 curriculumId={curriculumId}
                 description={curriculum?.description}
             />
             <Box color="textSecondary" display={"flex"} flexDirection={"row"}>
                 <Typography color="textSecondary" variant="body2">
-          עדכון אחרון:
+                    עדכון אחרון:
                 </Typography>
                 <Box width={"0.2rem"} />
                 {curriculum?.updatedAt ? (

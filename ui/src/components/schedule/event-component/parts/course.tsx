@@ -1,10 +1,8 @@
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import {
-    Box,
-    BoxProps,
-    ChipProps,
-    Tooltip,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import BoxProps from "@mui/material/BoxProps";
+import ChipProps from "@mui/material/ChipProps";
+import Tooltip from "@mui/material/Tooltip";
 import { useMemo } from "react";
 
 import { Course, CourseId } from "@/api-shared/types/course";
@@ -28,10 +26,7 @@ const tagSx = (color?: string) => ({
 
 function SingleCourseTag({ course }: { course: Course }) {
     return (
-        <Box
-            component="span"
-            sx={tagSx(course.color ?? undefined)}
-        >
+        <Box component="span" sx={tagSx(course.color ?? undefined)}>
             {course.name}
         </Box>
     );
@@ -43,9 +38,9 @@ export function CourseComponent({
     chipSize: _chipSize,
     ...props
 }: {
-  courseIds: Array<CourseId>;
-  showCaption?: boolean;
-  chipSize?: ChipProps["size"];
+    courseIds: Array<CourseId>;
+    showCaption?: boolean;
+    chipSize?: ChipProps["size"];
 } & BoxProps) {
     const { getCourse } = useCourses();
     const courses = useMemo(
@@ -64,9 +59,7 @@ export function CourseComponent({
         >
             {showCaption !== false && (
                 <Tooltip title={courseIds.length === 1 ? "מסלול" : "מסלולים"}>
-                    <MenuBookIcon
-                        sx={{ fontSize: "0.85rem", opacity: 0.6 }}
-                    />
+                    <MenuBookIcon sx={{ fontSize: "0.85rem", opacity: 0.6 }} />
                 </Tooltip>
             )}
             {courses.map((course) => (

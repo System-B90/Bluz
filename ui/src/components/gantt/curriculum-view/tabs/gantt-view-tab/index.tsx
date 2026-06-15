@@ -6,7 +6,6 @@
  */
 
 "use client";
-
 import React, { useMemo } from "react";
 
 import {
@@ -24,7 +23,7 @@ import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type CurriculumGanttViewProps = {
-  readonly curriculumId: GanttCurriculumId;
+    readonly curriculumId: GanttCurriculumId;
 };
 
 export function CurriculumGanttView({
@@ -38,8 +37,12 @@ export function CurriculumGanttView({
             curriculum
                 ? {
                     curriculum,
-                    syllabuses: Object.values(state.syllabuses) as Array<GanttSyllabus>,
-                    modules: Object.values(state.modules) as Array<GanttModule>,
+                    syllabuses: Object.values(
+                        state.syllabuses,
+                    ) as Array<GanttSyllabus>,
+                    modules: Object.values(
+                        state.modules,
+                    ) as Array<GanttModule>,
                     events: Object.values(state.events) as Array<GanttEvent>,
                 }
                 : null,
@@ -50,8 +53,13 @@ export function CurriculumGanttView({
 
     return (
         <GanttMappingProvider curriculumId={curriculumId}>
-            <GanttConstraintProvider context={{ curriculumId, type: "curriculum" }}>
-                <CurriculumGanttViewInner curriculumId={curriculumId} {...innerProps} />
+            <GanttConstraintProvider
+                context={{ curriculumId, type: "curriculum" }}
+            >
+                <CurriculumGanttViewInner
+                    curriculumId={curriculumId}
+                    {...innerProps}
+                />
             </GanttConstraintProvider>
         </GanttMappingProvider>
     );

@@ -1,4 +1,5 @@
-import { Box, ButtonProps } from "@mui/material";
+import Box from "@mui/material/Box";
+import ButtonProps from "@mui/material/ButtonProps";
 import { useState } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
@@ -9,11 +10,11 @@ import { DuplicateCurriculumAction } from "@/components/gantt/curriculum-fab/act
 import { ToggleDraftAction } from "@/components/gantt/curriculum-fab/action-items/ToggleDraftAction";
 
 export type CreateNewCurriculumProps = {
-  disabled: boolean;
-  onCreate: (newCurriculum: GanttCurriculumDocument) => void;
-  onUpdate: (updatedCurriculum: GanttCurriculumDocument) => void;
-  onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
-  sourceCurriculum?: GanttCurriculumDocument | null;
+    disabled: boolean;
+    onCreate: (newCurriculum: GanttCurriculumDocument) => void;
+    onUpdate: (updatedCurriculum: GanttCurriculumDocument) => void;
+    onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
+    sourceCurriculum?: GanttCurriculumDocument | null;
 } & Omit<ButtonProps, "onClick" | "sx">;
 
 export function CurriculumActionItems({

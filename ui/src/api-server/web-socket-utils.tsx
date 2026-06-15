@@ -1,10 +1,9 @@
 import { WebSocket } from "ws";
 
-import
-{
+import {
     MessageTypes,
     WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY,
-    WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC
+    WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
 } from "@/settings";
 
 const INTERNAL_SESSION_SERVER_URI = "ws://bluz-sessions:28199/";
@@ -28,11 +27,9 @@ const INTERNAL_SESSION_SERVER_URI = "ws://bluz-sessions:28199/";
 export function SendServerRequestToSessionServer(
     type: MessageTypes,
     data?: any,
-)
-{
+) {
     const ws = new WebSocket(INTERNAL_SESSION_SERVER_URI);
-    ws.onopen = () =>
-    {
+    ws.onopen = () => {
         ws.send(
             JSON.stringify({
                 sender: WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
@@ -44,8 +41,7 @@ export function SendServerRequestToSessionServer(
         // Cleanly close the socket after sending
         ws.close();
     };
-    ws.onerror = (err) =>
-    {
+    ws.onerror = (err) => {
         console.error(
             "[WS Server Sender] Error dispatching message to session server:",
             err,

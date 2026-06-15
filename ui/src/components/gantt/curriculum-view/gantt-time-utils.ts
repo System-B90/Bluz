@@ -10,7 +10,7 @@ import {
     GanttWeek,
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
-import { calculateAllocatedTimeForModule } from "@/components/gantt/utils";
+import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
 export type CapacityStatus = "empty" | "error" | "ok" | "warning";
 
@@ -49,7 +49,10 @@ export function parseTimeInputToMinutes(value: string): null | number {
     return clampWorkingMinutes(decimalHours * 60);
 }
 
-export function formatHours(minutes: number, maximumFractionDigits = 1): string {
+export function formatHours(
+    minutes: number,
+    maximumFractionDigits = 1,
+): string {
     return new Intl.NumberFormat("he-IL", {
         maximumFractionDigits,
         minimumFractionDigits: 0,
@@ -134,21 +137,23 @@ export function getScheduledMinutesForDay({
     mappings,
     state,
 }: {
-  dayId: GanttDayId;
-  mappings: Record<string, GanttCurriculumModuleDayMapping>;
-  state: NormalizedStore;
+    dayId: GanttDayId;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    state: NormalizedStore;
 }): number {
     return Object.values(mappings).reduce((total, mapping) => {
         if (mapping.dayId !== dayId) return total;
 
         if (mapping.eventId) {
-            return total + (state.events[mapping.eventId]?.allocatedDuration ?? 0);
+            return (
+                total + (state.events[mapping.eventId]?.minimumDuration ?? 0)
+            );
         }
 
         const moduleDoc = state.modules[mapping.moduleId];
         if (!moduleDoc) return total;
 
-        return total + calculateAllocatedTimeForModule(moduleDoc, state);
+        return total + calculateMinimumRequiredTimeForModule(moduleDoc, state);
     }, 0);
 }
 
@@ -157,15 +162,31 @@ export function getWeekScheduledMinutes({
     mappings,
     state,
 }: {
-  mappings: Record<string, GanttCurriculumModuleDayMapping>;
-  state: NormalizedStore;
-  week: GanttWeek | undefined;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    state: NormalizedStore;
+    week: GanttWeek | undefined;
 }): number {
     return (week?.days ?? []).reduce(
         (total, dayId) =>
             total + getScheduledMinutesForDay({ dayId, mappings, state }),
         0,
     );
+}
+
+export function getCurriculumScheduledMinutes({
+    curriculum,
+    mappings,
+    state,
+}: {
+    curriculum: GanttCurriculum | undefined;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    state: NormalizedStore;
+}): number {
+    if (!curriculum) return 0;
+    return (curriculum.weeks ?? []).reduce((total, weekId) => {
+        const week = state.weeks[weekId];
+        return total + getWeekScheduledMinutes({ week, mappings, state });
+    }, 0);
 }
 
 export function getCapacityStatus(

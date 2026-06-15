@@ -1,13 +1,11 @@
-import {
-    Box,
-    Table,
-    TableBody,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableRow,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableFooter from "@mui/material/TableFooter";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
 
 import {
@@ -19,9 +17,9 @@ import { CreateModuleButton } from "@/components/gantt/syllabus-card/CreateModul
 import { ModuleRow } from "@/components/gantt/syllabus-card/ModuleRow";
 
 export type ModulesTableProps = {
-  syllabusId: GanttSyllabusId;
-  curriculumId: GanttCurriculumId;
-  syllabusModules: GanttSyllabus["modules"];
+    syllabusId: GanttSyllabusId;
+    curriculumId: GanttCurriculumId;
+    syllabusModules: GanttSyllabus["modules"];
 };
 export function ModulesTable({
     syllabusId,
@@ -52,9 +50,12 @@ export function ModulesTable({
             <Table size="small" stickyHeader>
                 <TableHead>
                     <TableRow>
-                        <TableCell sx={{ fontWeight: "bold" }}>שם המערך</TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>זמן רצוי</TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>זמן מוקצב</TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                            שם המערך
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: "bold" }}>
+                            זמן רצוי
+                        </TableCell>
                         <TableCell align="center" width="1rem">
                             <CreateModuleButton syllabusId={syllabusId} />
                         </TableCell>
@@ -65,9 +66,12 @@ export function ModulesTable({
                         moduleRows
                     ) : (
                         <TableRow>
-                            <TableCell align="center" colSpan={4}>
-                                <Typography color="textSecondary" variant="caption">
-                  לא נמצאו מערכים. לחצו על הוסף כדי להתחיל.
+                            <TableCell align="center" colSpan={3}>
+                                <Typography
+                                    color="textSecondary"
+                                    variant="caption"
+                                >
+                                    לא נמצאו מערכים. לחצו על הוסף כדי להתחיל.
                                 </Typography>
                             </TableCell>
                         </TableRow>

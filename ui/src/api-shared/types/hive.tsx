@@ -7,18 +7,18 @@ import { HiveRoom } from "@/api-shared/types/room";
  */
 
 export enum QueueType {
-  User = 1,
-  Program,
-  Subject,
-  Module,
+    User = 1,
+    Program,
+    Subject,
+    Module,
 }
 
 export enum Clearance {
-  Logged_Out = 0,
-  Hanich = 1,
-  Checker = 2,
-  Segel = 3,
-  Admin = 5,
+    Logged_Out = 0,
+    Hanich = 1,
+    Checker = 2,
+    Segel = 3,
+    Admin = 5,
 }
 
 export const clearanceName = (clearance: Clearance) => {
@@ -35,8 +35,8 @@ export const clearanceName = (clearance: Clearance) => {
 };
 
 export enum ClassTypeEnum {
-  Room = "Room",
-  Student_Group = "Student Group",
+    Room = "Room",
+    Student_Group = "Student Group",
 }
 
 /**
@@ -80,73 +80,73 @@ export const StatusEnum = {
 } as const;
 
 export type CourseUser = {
-  avatar_filename?: string;
-  checkers_brief?: string;
-  classes?: Array<number>;
-  /**
-   * @minimum -2147483648
-   * @maximum 2147483647
-   */
-  clearance: Clearance;
-  confirmed?: boolean;
-  /** @nullable */
-  readonly current_assignment: null | number;
-  readonly current_assignment_options: ReadonlyArray<number>;
-  disable_queue?: boolean;
-  disable_user_queue?: boolean;
-  readonly display_name: string;
-  /** @maxLength 150 */
-  first_name?: string;
-  gender: GenderEnum;
-  /** @maxLength 255 */
-  hostname?: string;
-  readonly id: number;
-  /** @maxLength 150 */
-  last_name?: string;
-  mentees: Array<number>;
-  /** @nullable */
-  mentor?: null | number;
-  /**
-   * @minimum -2147483648
-   * @maximum 2147483647
-   * @nullable
-   */
-  number?: null | number;
-  /** @nullable */
-  override_queue?: null | number;
-  /** @nullable */
-  program?: null | number;
-  /** @nullable */
-  queue?: null | number;
-  status: StatusEnum;
-  readonly status_date: string;
-  teacher?: boolean;
-  /** @nullable */
-  user_queue?: null | number;
-  /**
-   * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
-   * @maxLength 150
-   * @pattern ^[\w.@+-]+$
-   */
-  username: string;
+    avatar_filename?: string;
+    checkers_brief?: string;
+    classes?: Array<number>;
+    /**
+     * @minimum -2147483648
+     * @maximum 2147483647
+     */
+    clearance: Clearance;
+    confirmed?: boolean;
+    /** @nullable */
+    readonly current_assignment: null | number;
+    readonly current_assignment_options: ReadonlyArray<number>;
+    disable_queue?: boolean;
+    disable_user_queue?: boolean;
+    readonly display_name: string;
+    /** @maxLength 150 */
+    first_name?: string;
+    gender: GenderEnum;
+    /** @maxLength 255 */
+    hostname?: string;
+    readonly id: number;
+    /** @maxLength 150 */
+    last_name?: string;
+    mentees: Array<number>;
+    /** @nullable */
+    mentor?: null | number;
+    /**
+     * @minimum -2147483648
+     * @maximum 2147483647
+     * @nullable
+     */
+    number?: null | number;
+    /** @nullable */
+    override_queue?: null | number;
+    /** @nullable */
+    program?: null | number;
+    /** @nullable */
+    queue?: null | number;
+    status: StatusEnum;
+    readonly status_date: string;
+    teacher?: boolean;
+    /** @nullable */
+    user_queue?: null | number;
+    /**
+     * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+     * @maxLength 150
+     * @pattern ^[\w.@+-]+$
+     */
+    username: string;
 };
 
 export type Class = {
-  /**
-   * @maxLength 100
-   * @nullable
-   */
-  description?: null | string;
-  readonly display_name: string;
-  /** @maxLength 254 */
-  email?: string;
-  readonly id: number;
-  /** @maxLength 100 */
-  name: string;
-  program: number;
-  readonly program__name: string;
-  type?: ClassTypeEnum;
-  users: Array<number>;
+    /**
+     * @maxLength 100
+     * @nullable
+     */
+    description?: null | string;
+    readonly display_name: string;
+    /** @maxLength 254 */
+    email?: string;
+    readonly id: number;
+    /** @maxLength 100 */
+    name: string;
+    program: number;
+    readonly program__name: string;
+    type?: ClassTypeEnum;
+    users: Array<number>;
 };
 
 export type ApiHiveStudentsGetPayload = void;

@@ -14,9 +14,9 @@ import { apiGetSubjects } from "@/api-client/hive";
 import { Subject, SubjectLike } from "@/api-shared/types/subject";
 
 export type HiveSubjectsContextState = {
-  default: boolean;
-  subjects: Array<Subject>;
-  getSubject: (id: SubjectLike) => Subject | undefined;
+    default: boolean;
+    subjects: Array<Subject>;
+    getSubject: (id: SubjectLike) => Subject | undefined;
 };
 
 const HiveSubjectsContext = createContext<HiveSubjectsContextState | undefined>(
@@ -30,13 +30,16 @@ const HiveSubjectsContext = createContext<HiveSubjectsContextState | undefined>(
 export const HiveSubjectsProvider = ({
     children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) => {
     const [subjectLookup, setSubjectLookup] = useState<Record<string, Subject>>(
         {},
     );
 
-    const subjects = useMemo(() => Object.values(subjectLookup), [subjectLookup]);
+    const subjects = useMemo(
+        () => Object.values(subjectLookup),
+        [subjectLookup],
+    );
     const getSubject = useCallback(
         (id: SubjectLike) =>
             id instanceof Object ? id : subjectLookup[id as number],
@@ -53,7 +56,11 @@ export const HiveSubjectsProvider = ({
                 setSubjectLookup(subjectsMap);
             })
             .catch((error) =>
-                enqueueApiErrorSnackbar(enqueueSnackbar, "טעינת מקצועות נכשלה.", error),
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "טעינת מקצועות נכשלה.",
+                    error,
+                ),
             );
     }, [setSubjectLookup]);
 

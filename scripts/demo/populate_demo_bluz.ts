@@ -14,7 +14,7 @@ if (fs.existsSync(rootEnvPath)) {
     try {
         process.loadEnvFile(rootEnvPath);
         console.log(`Loaded environment variables from ${rootEnvPath}`);
-        
+
         // Parse .env manually to get the local MONGO_CONNECTION_STRING in case it's overridden in the system env
         const envContent = fs.readFileSync(rootEnvPath, "utf-8");
         for (const line of envContent.split(/\r?\n/)) {
@@ -25,7 +25,10 @@ if (fs.existsSync(rootEnvPath)) {
                     const key = trimmed.substring(0, index).trim();
                     let value = trimmed.substring(index + 1).trim();
                     // Remove quotes if present
-                    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                    if (
+                        (value.startsWith('"') && value.endsWith('"')) ||
+                        (value.startsWith("'") && value.endsWith("'"))
+                    ) {
                         value = value.substring(1, value.length - 1);
                     }
                     if (key === "MONGO_CONNECTION_STRING") {
@@ -52,7 +55,9 @@ async function main() {
     // 1. Read Hive metadata exported by python script
     const hiveDataPath = path.resolve(__dirname, "hive_data.json");
     if (!fs.existsSync(hiveDataPath)) {
-        console.error("Error: hive_data.json not found! You must run populate_demo_hive.py first.");
+        console.error(
+            "Error: hive_data.json not found! You must run populate_demo_hive.py first.",
+        );
         process.exit(1);
     }
 
@@ -67,17 +72,28 @@ async function main() {
         process.exit(1);
     }
 
-    let connectionString = localConnectionString || process.env.MONGO_CONNECTION_STRING || "mongodb://127.0.0.1:27017/";
-    
+    let connectionString =
+        localConnectionString ||
+        process.env.MONGO_CONNECTION_STRING ||
+        "mongodb://127.0.0.1:27017/";
+
     // If running on host machine outside Docker, translate Docker service/remote hostnames to local port-mapping
-    const isRunningInDocker = fs.existsSync("/.dockerenv") || process.env.IS_DOCKER === "true";
+    const isRunningInDocker =
+        fs.existsSync("/.dockerenv") || process.env.IS_DOCKER === "true";
     if (!isRunningInDocker) {
-        console.log("Running on host machine. Translating MongoDB connection to local port-mapping (127.0.0.3:27018)...");
-        connectionString = connectionString.replace(/@([^/:]+)(:\d+)?/, "@127.0.0.3:27018");
+        console.log(
+            "Running on host machine. Translating MongoDB connection to local port-mapping (127.0.0.3:27018)...",
+        );
+        connectionString = connectionString.replace(
+            /@([^/:]+)(:\d+)?/,
+            "@127.0.0.3:27018",
+        );
     }
 
-    console.log(`Connecting to MongoDB at: ${connectionString.replace(/:([^:@]+)@/, ":****@")}`);
-    
+    console.log(
+        `Connecting to MongoDB at: ${connectionString.replace(/:([^:@]+)@/, ":****@")}`,
+    );
+
     const client = new MongoClient(connectionString);
     try {
         await client.connect();
@@ -101,7 +117,7 @@ async function main() {
             name: "קורס סייבר",
             color: "#4f46e5",
             parentId: null,
-            instructorIds: getRandomSegel(2)
+            instructorIds: getRandomSegel(2),
         };
 
         const subCourseA = {
@@ -109,7 +125,7 @@ async function main() {
             name: "סייבר - תת קורס א'",
             color: "#06b6d4",
             parentId: "cyber-main",
-            instructorIds: getRandomSegel(2)
+            instructorIds: getRandomSegel(2),
         };
 
         const subCourseB = {
@@ -117,7 +133,7 @@ async function main() {
             name: "סייבר - תת קורס ב'",
             color: "#10b981",
             parentId: "cyber-main",
-            instructorIds: getRandomSegel(2)
+            instructorIds: getRandomSegel(2),
         };
 
         const subCourseC = {
@@ -125,15 +141,21 @@ async function main() {
             name: "סייבר - תת קורס ג'",
             color: "#f59e0b",
             parentId: "cyber-main",
-            instructorIds: getRandomSegel(2)
+            instructorIds: getRandomSegel(2),
         };
 
         const coursesList = [mainCourse, subCourseA, subCourseB, subCourseC];
         await db.collection("courses").insertMany(coursesList);
-        console.log(`Successfully created ${coursesList.length} courses (1 main and 3 sub-courses).`);
+        console.log(
+            `Successfully created ${coursesList.length} courses (1 main and 3 sub-courses).`,
+        );
 
         // Helper to construct Date objects relative to today
-        const getFutureDate = (dayOffset: number, hours: number, minutes: number): Date => {
+        const getFutureDate = (
+            dayOffset: number,
+            hours: number,
+            minutes: number,
+        ): Date => {
             const d = new Date();
             d.setDate(d.getDate() + dayOffset);
             d.setHours(hours, minutes, 0, 0);
@@ -168,7 +190,7 @@ async function main() {
                 locked: false,
                 hidden: false,
                 required: true,
-                personalTalk: false
+                personalTalk: false,
             });
 
             // B: Break - Breakfast (08:45 - 09:15)
@@ -188,27 +210,39 @@ async function main() {
                 locked: false,
                 hidden: false,
                 required: false,
-                personalTalk: false
+                personalTalk: false,
             });
 
             // C: Morning Lecture (09:15 - 12:00)
             if (subjects.length > 0) {
                 // Select random subject
-                const subject = subjects[Math.floor(Math.random() * subjects.length)];
+                const subject =
+                    subjects[Math.floor(Math.random() * subjects.length)];
                 // Find modules of this subject
-                const subjectModules = modules.filter((m: any) => m.parent_subject_id === subject.id);
-                const module = subjectModules.length > 0 
-                    ? subjectModules[Math.floor(Math.random() * subjectModules.length)] 
-                    : { id: 0 };
+                const subjectModules = modules.filter(
+                    (m: any) => m.parent_subject_id === subject.id,
+                );
+                const module =
+                    subjectModules.length > 0
+                        ? subjectModules[
+                              Math.floor(Math.random() * subjectModules.length)
+                          ]
+                        : { id: 0 };
 
                 // Select a room
-                const room = rooms.length > 0 ? rooms[Math.floor(Math.random() * rooms.length)] : null;
+                const room =
+                    rooms.length > 0
+                        ? rooms[Math.floor(Math.random() * rooms.length)]
+                        : null;
                 const roomResolvable = room ? [{ id: room.id, source: 1 }] : [];
 
                 // Instructors
                 const instructors = getRandomSegel(1);
                 // Lecturer is a person ID (either number or "איש חוץ")
-                const lecturer = Math.random() > 0.3 && instructors.length > 0 ? instructors[0] : "איש חוץ";
+                const lecturer =
+                    Math.random() > 0.3 && instructors.length > 0
+                        ? instructors[0]
+                        : "איש חוץ";
 
                 eventsList.push({
                     id: uuidv4(),
@@ -227,19 +261,28 @@ async function main() {
                     locked: false,
                     hidden: false,
                     required: true,
-                    personalTalk: false
+                    personalTalk: false,
                 });
             }
 
             // D: Midday Exercise / Practice (12:00 - 13:00)
             if (subjects.length > 0) {
-                const subject = subjects[Math.floor(Math.random() * subjects.length)];
-                const subjectModules = modules.filter((m: any) => m.parent_subject_id === subject.id);
-                const module = subjectModules.length > 0 
-                    ? subjectModules[Math.floor(Math.random() * subjectModules.length)] 
-                    : { id: 0 };
+                const subject =
+                    subjects[Math.floor(Math.random() * subjects.length)];
+                const subjectModules = modules.filter(
+                    (m: any) => m.parent_subject_id === subject.id,
+                );
+                const module =
+                    subjectModules.length > 0
+                        ? subjectModules[
+                              Math.floor(Math.random() * subjectModules.length)
+                          ]
+                        : { id: 0 };
 
-                const room = rooms.length > 0 ? rooms[Math.floor(Math.random() * rooms.length)] : null;
+                const room =
+                    rooms.length > 0
+                        ? rooms[Math.floor(Math.random() * rooms.length)]
+                        : null;
                 const roomResolvable = room ? [{ id: room.id, source: 1 }] : [];
 
                 eventsList.push({
@@ -258,7 +301,7 @@ async function main() {
                     locked: false,
                     hidden: false,
                     required: true,
-                    personalTalk: false
+                    personalTalk: false,
                 });
             }
 
@@ -279,7 +322,7 @@ async function main() {
                 locked: false,
                 hidden: false,
                 required: false,
-                personalTalk: false
+                personalTalk: false,
             });
 
             // F: Prayer - Mincha (14:00 - 14:30)
@@ -300,42 +343,61 @@ async function main() {
                 locked: false,
                 hidden: false,
                 required: true,
-                personalTalk: false
+                personalTalk: false,
             });
 
             // G: Afternoon Class/Session (14:30 - 17:00) - alternating type
-            const afternoonType = dayOffset % 2 === 0 ? EventType.LECTURE : EventType.EXERCISE;
+            const afternoonType =
+                dayOffset % 2 === 0 ? EventType.LECTURE : EventType.EXERCISE;
             if (subjects.length > 0) {
-                const subject = subjects[Math.floor(Math.random() * subjects.length)];
-                const subjectModules = modules.filter((m: any) => m.parent_subject_id === subject.id);
-                const module = subjectModules.length > 0 
-                    ? subjectModules[Math.floor(Math.random() * subjectModules.length)] 
-                    : { id: 0 };
+                const subject =
+                    subjects[Math.floor(Math.random() * subjects.length)];
+                const subjectModules = modules.filter(
+                    (m: any) => m.parent_subject_id === subject.id,
+                );
+                const module =
+                    subjectModules.length > 0
+                        ? subjectModules[
+                              Math.floor(Math.random() * subjectModules.length)
+                          ]
+                        : { id: 0 };
 
-                const room = rooms.length > 0 ? rooms[Math.floor(Math.random() * rooms.length)] : null;
+                const room =
+                    rooms.length > 0
+                        ? rooms[Math.floor(Math.random() * rooms.length)]
+                        : null;
                 const roomResolvable = room ? [{ id: room.id, source: 1 }] : [];
 
                 const instructors = getRandomSegel(1);
-                const lecturer = instructors.length > 0 ? instructors[0] : "איש חוץ";
+                const lecturer =
+                    instructors.length > 0 ? instructors[0] : "איש חוץ";
 
                 eventsList.push({
                     id: uuidv4(),
-                    name: afternoonType === EventType.LECTURE ? `הרצאת אחה"צ: ${subject.name}` : `תרגול מעשי: ${subject.name}`,
+                    name:
+                        afternoonType === EventType.LECTURE
+                            ? `הרצאת אחה"צ: ${subject.name}`
+                            : `תרגול מעשי: ${subject.name}`,
                     subject: subject.id,
                     hiveModule: module.id,
                     startTime: getFutureDate(dayOffset, 14, 30),
                     endTime: getFutureDate(dayOffset, 17, 0),
                     type: afternoonType,
-                    courses: [subCourseIds[(dayOffset + 1) % subCourseIds.length]],
+                    courses: [
+                        subCourseIds[(dayOffset + 1) % subCourseIds.length],
+                    ],
                     rooms: roomResolvable,
                     instructors: instructors,
-                    lecturers: afternoonType === EventType.LECTURE ? [lecturer] : undefined,
+                    lecturers:
+                        afternoonType === EventType.LECTURE
+                            ? [lecturer]
+                            : undefined,
                     tags: [],
                     notes: "סשן למידה אינטנסיבי",
                     locked: false,
                     hidden: false,
                     required: true,
-                    personalTalk: false
+                    personalTalk: false,
                 });
             }
 
@@ -357,11 +419,14 @@ async function main() {
                 locked: false,
                 hidden: false,
                 required: true,
-                personalTalk: false
+                personalTalk: false,
             });
 
             // I: Other - Daily Summary (17:30 - 18:30)
-            const room = rooms.length > 0 ? rooms[Math.floor(Math.random() * rooms.length)] : null;
+            const room =
+                rooms.length > 0
+                    ? rooms[Math.floor(Math.random() * rooms.length)]
+                    : null;
             const roomResolvable = room ? [{ id: room.id, source: 1 }] : [];
 
             eventsList.push({
@@ -380,16 +445,17 @@ async function main() {
                 locked: false,
                 hidden: false,
                 required: true,
-                personalTalk: false
+                personalTalk: false,
             });
         }
 
         // Write events to DB
         await db.collection("events").insertMany(eventsList);
-        console.log(`Successfully created ${eventsList.length} calendar events in MongoDB.`);
+        console.log(
+            `Successfully created ${eventsList.length} calendar events in MongoDB.`,
+        );
 
         console.log("Database seeding completed successfully!");
-
     } catch (err) {
         console.error("An error occurred during database seeding:", err);
     } finally {

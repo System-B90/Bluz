@@ -1,5 +1,9 @@
 import LogoutIcon from "@mui/icons-material/Logout";
-import { AvatarProps, Box, Chip, IconButton, Tooltip } from "@mui/material";
+import AvatarProps from "@mui/material/AvatarProps";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { HiveAvatar } from "@/components/header/HiveAvatarImage";
@@ -20,7 +24,7 @@ function ChipAvatar({ className, ...props }: AvatarProps) {
 
                 "& .hive-avatar": {
                     transition:
-            "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease",
+                        "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease",
                 },
 
                 "& .logout-icon": {
@@ -29,7 +33,7 @@ function ChipAvatar({ className, ...props }: AvatarProps) {
                     left: "50%",
                     transform: "translate(120%, -50%) rotate(-30deg)", // start off to the right
                     transition:
-            "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease",
+                        "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease",
                     opacity: 0,
                     pointerEvents: "none",
 

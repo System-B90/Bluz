@@ -7,7 +7,10 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Box, Paper, PaperProps, Typography, useTheme } from "@mui/material";
+import Box from "@mui/material/Box";
+import Paper, { PaperProps } from "@mui/material/Paper";
+import { useTheme } from "@mui/material/styles";
+import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
 
 import { GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/models";
@@ -20,8 +23,8 @@ import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNam
 import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
 export type ModuleItemProps = {
-  moduleId: GanttModuleId;
-  dayId?: GanttDayId;
+    moduleId: GanttModuleId;
+    dayId?: GanttDayId;
 } & PaperProps;
 
 export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
@@ -33,7 +36,11 @@ export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
     const color = useMemo(
         () =>
             syllabusId
-                ? hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2)
+                ? hashSyllabusToColor(
+                    syllabusId,
+                    theme.palette.primary.main,
+                    0.2,
+                )
                 : undefined,
         [syllabusId, theme.palette.primary.main],
     );
@@ -43,14 +50,14 @@ export function ModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
     );
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-        id: `module-${moduleId}`,
-        data: {
-            type: "MODULE",
-            moduleId,
-            dayId,
-        } as DndDragEventActiveData,
-    });
+        useDraggable({
+            id: `module-${moduleId}`,
+            data: {
+                type: "MODULE",
+                moduleId,
+                dayId,
+            } as DndDragEventActiveData,
+        });
 
     const style = {
         ...props.style,

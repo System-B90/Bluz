@@ -1,10 +1,8 @@
-import {
-    FormControl,
-    FormControlProps,
-    InputLabel,
-    MenuItem,
-    Select,
-} from "@mui/material";
+import FormControl from "@mui/material/FormControl";
+import FormControlProps from "@mui/material/FormControlProps";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 
 import {
     Event,
@@ -15,8 +13,8 @@ import {
 } from "@/components/schedule/types/event";
 
 type PrayerTypeFieldProps = {
-  event?: Partial<Event>;
-  onEventChange: (updates: Partial<PrayerEvent>) => void;
+    event?: Partial<Event>;
+    onEventChange: (updates: Partial<PrayerEvent>) => void;
 };
 
 export function PrayerTypeField({

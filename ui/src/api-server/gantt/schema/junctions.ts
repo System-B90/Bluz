@@ -19,10 +19,14 @@ export const ganttCurriculum2SyllabusesSchema = pgTable(
     {
         curriculumId: text("curriculum_id")
             .notNull()
-            .references(() => ganttCurriculumsSchema.id, { onDelete: "cascade" }),
+            .references(() => ganttCurriculumsSchema.id, {
+                onDelete: "cascade",
+            }),
         syllabusId: text("syllabus_id")
             .notNull()
-            .references(() => ganttSyllabusesSchema.id, { onDelete: "cascade" }),
+            .references(() => ganttSyllabusesSchema.id, {
+                onDelete: "cascade",
+            }),
     },
     (t) => ({
         pk: primaryKey({ columns: [t.curriculumId, t.syllabusId] }),
@@ -48,7 +52,9 @@ export const ganttSyllabus2ModulesSchema = pgTable(
     {
         syllabusId: text("syllabus_id")
             .notNull()
-            .references(() => ganttSyllabusesSchema.id, { onDelete: "cascade" }),
+            .references(() => ganttSyllabusesSchema.id, {
+                onDelete: "cascade",
+            }),
         moduleId: text("module_id")
             .notNull()
             .references(() => ganttModulesSchema.id, { onDelete: "cascade" }),
@@ -106,7 +112,9 @@ export const ganttCurriculum2WeeksSchema = pgTable(
     {
         curriculumId: text("c_id")
             .notNull()
-            .references(() => ganttCurriculumsSchema.id, { onDelete: "cascade" }),
+            .references(() => ganttCurriculumsSchema.id, {
+                onDelete: "cascade",
+            }),
         weekId: text("w_id")
             .notNull()
             .references(() => ganttWeeksSchema.id, { onDelete: "cascade" }),

@@ -1,28 +1,25 @@
 import { ThemeOptions } from "@mui/material/styles";
 
 declare module "@mui/material/Chip" {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-  interface ChipPropsSizeOverrides {
-    smaller: true;
-    smallest: true;
-  }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+    interface ChipPropsSizeOverrides
+    {
+        smaller: true;
+        smallest: true;
+    }
 }
 
-export function createFromPalette(paletteMode: "dark" | "light"): ThemeOptions {
+export function createThemeOptions(): ThemeOptions
+{
     return {
         direction: "rtl",
-        typography: {
-            fontFamily: ['"Assistant"', "sans-serif"].join(","),
-            h1: { fontWeight: 700 },
-            h2: { fontWeight: 700 },
-            h3: { fontWeight: 600 },
-            button: { fontWeight: 600 },
+        modularCssLayers: '@layer theme, base, mui, components, utilities;',
+        cssVariables: {
+            colorSchemeSelector: "class",
         },
-        palette: {
-            mode: paletteMode ?? "light",
-            ...(paletteMode === "light"
-                ? {
-                    // LIGHT MODE
+        colorSchemes: {
+            light: {
+                palette: {
                     primary: {
                         main: "#67C8DD", // The specific Turquoise provided
                         light: "#9BF0FF",
@@ -43,9 +40,10 @@ export function createFromPalette(paletteMode: "dark" | "light"): ThemeOptions {
                         primary: "#0D2336", // Soft black (deep blue-gray)
                         secondary: "#587389",
                     },
-                }
-                : {
-                    // DARK MODE
+                },
+            },
+            dark: {
+                palette: {
                     primary: {
                         main: "#67C8DD", // Keep brand color
                         light: "#9BF0FF",
@@ -66,7 +64,15 @@ export function createFromPalette(paletteMode: "dark" | "light"): ThemeOptions {
                         primary: "#EBF7FA", // Off-white with slight cyan tint
                         secondary: "#8DA6B5",
                     },
-                }),
+                },
+            },
+        },
+        typography: {
+            fontFamily: [ '"Assistant"', "sans-serif" ].join(","),
+            h1: { fontWeight: 700 },
+            h2: { fontWeight: 700 },
+            h3: { fontWeight: 600 },
+            button: { fontWeight: 600 },
         },
         components: {
             MuiChip: {
@@ -107,11 +113,9 @@ export function createFromPalette(paletteMode: "dark" | "light"): ThemeOptions {
                     },
                 ],
             },
-            // Optional: Round corners slightly to match the "Fluid/Musical" feel of the icon
             MuiButton: {
                 styleOverrides: {
                     root: {
-                        borderRadius: 8,
                         textTransform: "none", // Modern look
                         fontWeight: 600,
                     },
@@ -124,12 +128,37 @@ export function createFromPalette(paletteMode: "dark" | "light"): ThemeOptions {
                     },
                 },
             },
+            MuiDialog: {
+                styleOverrides: {
+                    paper: ({ theme }) => ({
+                        borderRadius: "20px",
+                        overflow: "hidden",
+                        backgroundColor: theme.vars.palette.background.paper,
+                        backgroundImage: "none",
+                        boxShadow: "0 24px 50px rgba(0,0,0,0.15)",
+                        border: "1px solid",
+                        borderColor: "rgba(0,0,0,0.08)",
+                        ...theme.applyStyles("dark", {
+                            borderColor: "rgba(255,255,255,0.08)",
+                        }),
+                    }),
+                },
+            },
             MuiAppBar: {
                 styleOverrides: {
-                    colorDefault: {
-                        backgroundColor:
-              paletteMode === "light" ? "rgba(173,226,238,0.29)" : undefined,
-                    },
+                    root: ({ theme }) => ({
+                        backgroundColor: "rgba(173,226,238,0.29)",
+                        backgroundImage: "none",
+                        boxShadow: "none",
+                        borderBottom: "1px solid",
+                        borderColor: "rgba(0,0,0,0.08)",
+                        color: "#0D2336",
+                        ...theme.applyStyles("dark", {
+                            backgroundColor: "#0C2237",
+                            borderColor: "rgba(255,255,255,0.08)",
+                            color: "#EBF7FA",
+                        }),
+                    }),
                 },
             },
         },

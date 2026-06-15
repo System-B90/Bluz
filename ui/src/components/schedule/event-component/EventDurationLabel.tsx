@@ -1,4 +1,9 @@
-import { Chip, ChipProps, SxProps, Theme, Tooltip, Typography } from "@mui/material";
+import Chip from "@mui/material/Chip";
+import ChipProps from "@mui/material/ChipProps";
+import SxProps from "@mui/material/SxProps";
+import Theme from "@mui/material/Theme";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { Dayjs } from "dayjs";
 import moment from "moment";
 import { useMemo } from "react";
@@ -31,11 +36,11 @@ export function EventDurationLabel({
     const minutes = durationMinutes % 60;
 
     const durationLabel =
-    hours && minutes
-        ? `${hours}:${String(minutes).padStart(2, "0")}`
-        : hours
-            ? `${hours} ש׳`
-            : `${minutes} ד׳`;
+        hours && minutes
+            ? `${hours}:${String(minutes).padStart(2, "0")}`
+            : hours
+                ? `${hours} ש׳`
+                : `${minutes} ד׳`;
 
     const timeRange = `${start.format("HH:mm")} - ${end.format("HH:mm")}`;
 

@@ -1,11 +1,6 @@
-/**
- * Name: CalendarView.tsx
- * Purpose: Presentation layer for the Big Calendar with corrected generic types.
- * Created: 2026-04-18
- * Author: Michael K. Steinberg
- */
-
-import { Dayjs } from "dayjs";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import dayjs, { Dayjs } from "dayjs";
 import { CalendarProps, View, Views } from "react-big-calendar";
 
 import { Room, RoomSource, roomToResolvable } from "@/api-shared/types/room"; // Import the full Room type and roomToResolvable
@@ -25,6 +20,78 @@ const NO_ROOM_RESOURCE: Room = {
     name: "ללא כיתה",
     source: RoomSource.Custom,
 };
+
+const HEBREW_DAYS_FULL = [
+    "ראשון",
+    "שני",
+    "שלישי",
+    "רביעי",
+    "חמישי",
+    "שישי",
+    "שבת",
+];
+const HEBREW_DAYS_SHORT = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
+
+function CalendarHeader({ date }: { date: Date }) {
+    const dayIndex = date.getDay();
+    const dayFull = HEBREW_DAYS_FULL[dayIndex];
+    const dayShort = HEBREW_DAYS_SHORT[dayIndex];
+    const dayjsDate = dayjs(date);
+    const dateStr = dayjsDate.format("DD/MM");
+    const isToday = dayjsDate.isSame(dayjs(), "day");
+
+    return (
+        <Box
+            alignItems="center"
+            display="flex"
+            gap={1}
+            justifyContent="center"
+            py={0.75}
+            sx={{
+                width: "100%",
+                minHeight: 38,
+            }}
+        >
+            <Typography
+                component="span"
+                sx={{
+                    fontSize: "0.875rem",
+                    fontWeight: isToday ? "bold" : 600,
+                    color: isToday ? "primary.main" : "text.primary",
+                }}
+            >
+                <Box
+                    component="span"
+                    sx={{ display: { xs: "none", sm: "inline" } }}
+                >
+                    {dayFull}
+                </Box>
+                <Box
+                    component="span"
+                    sx={{ display: { xs: "inline", sm: "none" } }}
+                >
+                    {dayShort}
+                </Box>
+            </Typography>
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "6px",
+                    fontSize: "0.85rem",
+                    fontWeight: isToday ? "bold" : 500,
+                    bgcolor: isToday ? "primary.main" : "action.hover",
+                    color: isToday ? "primary.contrastText" : "text.secondary",
+                    px: 1,
+                    py: 0.25,
+                }}
+            >
+                {dateStr}
+            </Box>
+        </Box>
+    );
+}
 
 type CalendarViewProps = {
     events: Array<Event>;
@@ -60,23 +127,35 @@ export function CalendarView({
     return (
         <DnDCalendar
             className="relative grow h-full"
-            components={{ 
-                event: BluzEventComponent, 
+            components={{
+                event: BluzEventComponent,
                 toolbar: (props: any) => (
-                    <CalendarToolbar 
-                        {...props} 
-                        onToggleFullscreen={onToggleFullscreen} 
-                        onToggleToolbar={onToggleToolbar} 
+                    <CalendarToolbar
+                        {...props}
+                        onToggleFullscreen={onToggleFullscreen}
+                        onToggleToolbar={onToggleToolbar}
                         showToolbar={showToolbar}
                     />
-                )
+                ),
+                header: CalendarHeader,
             }}
             date={date}
             defaultView={Views.WEEK}
             draggableAccessor={(e) => !e.locked}
             endAccessor={(e) => (e.endTime as Dayjs).toDate()}
             events={events}
-            formats={{ timeGutterFormat: "HH:mm" }}
+            formats={{
+                timeGutterFormat: "HH:mm",
+                dayRangeHeaderFormat: ({ start, end }) => {
+                    const s = dayjs(start).locale("he");
+                    const e = dayjs(end).locale("he");
+                    if (s.month() === e.month()) {
+                        return `${s.format("DD")} - ${e.format("DD")} ב${s.format("MMMM")} ${s.format("YYYY")}`;
+                    } else {
+                        return `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")} ${e.format("YYYY")}`;
+                    }
+                },
+            }}
             localizer={localizer}
             max={new Date(2025, 0, 1, 22, 0)}
             messages={CALENDAR_MESSAGES}
@@ -92,11 +171,22 @@ export function CalendarView({
             resourceAccessor={(event: Event) =>
                 event.rooms.length > 0
                     ? event.rooms.map((room) => JSON.stringify(room))
-                    : [JSON.stringify({ id: DUMMY_ROOM_ID, source: RoomSource.Custom })]
+                    : [
+                        JSON.stringify({
+                            id: DUMMY_ROOM_ID,
+                            source: RoomSource.Custom,
+                        }),
+                    ]
             }
-            resourceIdAccessor={(room: Room) => JSON.stringify(roomToResolvable(room))}
+            resourceIdAccessor={(room: Room) =>
+                JSON.stringify(roomToResolvable(room))
+            }
             // Resource logic
-            resources={currentView === Views.DAY ? [NO_ROOM_RESOURCE, ...rooms] : undefined}
+            resources={
+                currentView === Views.DAY
+                    ? [NO_ROOM_RESOURCE, ...rooms]
+                    : undefined
+            }
             resourceTitleAccessor="name"
             rtl={true}
             selectable

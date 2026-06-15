@@ -6,14 +6,12 @@
  */
 
 import AddIcon from "@mui/icons-material/Add";
-import {
-    Box,
-    Card,
-    CircularProgress,
-    IconButton,
-    Tooltip,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
@@ -60,7 +58,11 @@ export function WorkTimePanel({
             comment: "",
             weekendDuty: false,
         }).catch((error) =>
-            enqueueApiErrorSnackbar(enqueueSnackbar, "הוספת שבוע נכשלה!", error),
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "הוספת שבוע נכשלה!",
+                error,
+            ),
         );
     }, [curriculumId, curriculumWeekIds, createWeek, enqueueSnackbar]);
 
@@ -99,7 +101,7 @@ export function WorkTimePanel({
                 mb={0.5}
             >
                 <Typography gutterBottom variant="subtitle1">
-          שעות עבודה לשיבוץ
+                    שעות עבודה לשיבוץ
                 </Typography>
                 <Tooltip title="הוסף שבוע">
                     <span>
@@ -115,7 +117,10 @@ export function WorkTimePanel({
                 </Tooltip>
             </Box>
 
-            <OverviewTab curriculumId={curriculumId ?? ""} weeks={localWeekIds} />
+            <OverviewTab
+                curriculumId={curriculumId ?? ""}
+                weeks={localWeekIds}
+            />
         </Card>
     );
 }

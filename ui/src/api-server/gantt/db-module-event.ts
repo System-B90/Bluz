@@ -26,9 +26,9 @@ import {
  * Note: This entity does not have a downstream junction table in the current hierarchy.
  */
 const basicOperations = drizzleOperationsBuilder<
-  GanttEvent,
-  typeof ganttEventsSchema,
-  CreateGanttEventPayload
+    GanttEvent,
+    typeof ganttEventsSchema,
+    CreateGanttEventPayload
 >({
     table: ganttEventsSchema,
     typeName: "מופע",
@@ -72,11 +72,11 @@ async function addEventToModule(
         return await getFullModuleEvent(eventId);
     } catch (error: any) {
         const cause = error.cause as {
-      name: string;
-      severity: string;
-      code: string;
-      detail: string;
-    };
+            name: string;
+            severity: string;
+            code: string;
+            detail: string;
+        };
 
         // Unique Violation: Event already linked to this module
         if (cause?.code === UNIQUE_VIOLATION) {
@@ -125,15 +125,23 @@ async function getAllocatedTime(
     curriculumId: GanttCurriculumId,
 ): Promise<number> {
     const result =
-    await postgresDb.query.ganttCurriculumEventConfigurationsSchema.findFirst({
-        where: and(
-            eq(ganttCurriculumEventConfigurationsSchema.curriculumId, curriculumId),
-            eq(ganttCurriculumEventConfigurationsSchema.eventId, eventId),
-        ),
-        columns: {
-            allocatedDuration: true,
-        },
-    });
+        await postgresDb.query.ganttCurriculumEventConfigurationsSchema.findFirst(
+            {
+                where: and(
+                    eq(
+                        ganttCurriculumEventConfigurationsSchema.curriculumId,
+                        curriculumId,
+                    ),
+                    eq(
+                        ganttCurriculumEventConfigurationsSchema.eventId,
+                        eventId,
+                    ),
+                ),
+                columns: {
+                    allocatedDuration: true,
+                },
+            },
+        );
 
     return result?.allocatedDuration ?? 0;
 }

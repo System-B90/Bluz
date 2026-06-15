@@ -23,7 +23,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 
 export type RouteContext = {
-  params: Promise<{ id: string }>;
+    params: Promise<{ id: string }>;
 };
 
 /**
@@ -36,7 +36,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
         const dayIds = request.nextUrl.searchParams.getAll("dayId");
 
-        const mappings = await getModuleDayMappingsForCurriculum(id, { dayIds });
+        const mappings = await getModuleDayMappingsForCurriculum(id, {
+            dayIds,
+        });
         return ApiSuccess(mappings);
     } catch (error) {
         return catchHandler(request, error);
@@ -53,7 +55,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         // Validate required fields for creation
         if (!body.moduleId || !body.dayId) {
-            throw new ClientApiError("Missing required fields: moduleId or dayId.");
+            throw new ClientApiError(
+                "Missing required fields: moduleId or dayId.",
+            );
         }
 
         const mapping = await createCurriculumModuleDayMapping({
@@ -79,11 +83,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         const body = await request.json();
 
         const { eventId, moduleId, oldMapping, newValues } = body as {
-      moduleId: GanttModuleId;
-      eventId?: GanttEventId | null;
-      oldMapping: { dayId: GanttDayId };
-      newValues: { dayId?: GanttDayId; sortOrder?: number };
-    };
+            moduleId: GanttModuleId;
+            eventId?: GanttEventId | null;
+            oldMapping: { dayId: GanttDayId };
+            newValues: { dayId?: GanttDayId; sortOrder?: number };
+        };
         if (!moduleId || !oldMapping.dayId) {
             throw new ClientApiError(
                 "Missing oldMapping or eventId identifiers to locate the record.",
@@ -112,10 +116,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         const body = await request.json();
 
         const { moduleId, eventId, dayId } = body as {
-      moduleId: GanttModuleId;
-      eventId: GanttEventId;
-      dayId: GanttDayId;
-    };
+            moduleId: GanttModuleId;
+            eventId: GanttEventId;
+            dayId: GanttDayId;
+        };
         if (!moduleId || !dayId) {
             throw new ClientApiError(
                 "Missing identifiers (moduleId or dayIndex) for deletion.",

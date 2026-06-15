@@ -60,7 +60,10 @@ export function buildGantItemRoutes<
                 throw new ClientApiError("Payload must be a JSON object.");
             }
 
-            const updatedItem = await dbSet.updateItem(id as TEntity["id"], payload);
+            const updatedItem = await dbSet.updateItem(
+                id as TEntity["id"],
+                payload,
+            );
             return ApiSuccess(updatedItem);
         } catch (error) {
             return catchHandler(request, error);

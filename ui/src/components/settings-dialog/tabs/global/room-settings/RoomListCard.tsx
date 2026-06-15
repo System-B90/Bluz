@@ -1,6 +1,12 @@
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
-import { Box, Button, InputAdornment, List, TextField, Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import InputAdornment from "@mui/material/InputAdornment";
+import List from "@mui/material/List";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { useMemo } from "react";
 
 import { Room } from "@/api-shared/types/room";
 import { RoomListHeader } from "@/components/settings-dialog/tabs/global/room-settings/RoomListHeader";
@@ -25,6 +31,56 @@ export function RoomListCard({
     handleStartCreate,
     handleDelete,
 }: RoomListCardProps) {
+    const roomItems = useMemo(() => {
+        return filteredRooms.length === 0 ? (
+            <Box
+                sx={{
+                    m: "auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 1,
+                }}
+            >
+                <Typography
+                    sx={{
+                        color: "text.secondary",
+                        fontSize: "0.85rem",
+                        fontFamily: "Assistant, sans-serif",
+                    }}
+                >
+                    {searchQuery
+                        ? "לא נמצאו חדרים התואמים את החיפוש"
+                        : "לא הוגדרו חדרים"}
+                </Typography>
+            </Box>
+        ) : (
+            <List disablePadding>
+                {filteredRooms.map((room) => {
+                    const isActive =
+                        selectedRoom?.id === room.id &&
+                        selectedRoom?.source === room.source;
+
+                    return (
+                        <RoomListItem
+                            isActive={isActive}
+                            key={`${room.source}-${room.id}`}
+                            onDelete={handleDelete}
+                            onPopulateForm={populateFormFromRoom}
+                            room={room}
+                        />
+                    );
+                })}
+            </List>
+        );
+    }, [
+        filteredRooms,
+        selectedRoom,
+        handleDelete,
+        populateFormFromRoom,
+        searchQuery,
+    ]);
+
     return (
         <Box
             sx={{
@@ -47,16 +103,21 @@ export function RoomListCard({
             <RoomListHeader />
 
             <TextField
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <SearchIcon fontSize="small" sx={{ color: "text.secondary" }} />
-                        </InputAdornment>
-                    ),
-                }}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="חפש חדר..."
                 size="small"
+                slotProps={{
+                    input: {
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon
+                                    fontSize="small"
+                                    sx={{ color: "text.secondary" }}
+                                />
+                            </InputAdornment>
+                        ),
+                    },
+                }}
                 sx={{
                     "& .MuiOutlinedInput-root": {
                         borderRadius: "10px",
@@ -78,29 +139,7 @@ export function RoomListCard({
                     minHeight: 180,
                 }}
             >
-                {filteredRooms.length === 0 ? (
-                    <Box sx={{ m: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                        <Typography sx={{ color: "text.secondary", fontSize: "0.85rem", fontFamily: "Assistant, sans-serif" }}>
-                            {searchQuery ? "לא נמצאו חדרים התואמים את החיפוש" : "לא הוגדרו חדרים"}
-                        </Typography>
-                    </Box>
-                ) : (
-                    <List disablePadding>
-                        {filteredRooms.map((room) => {
-                            const isActive = selectedRoom?.id === room.id && selectedRoom?.source === room.source;
-
-                            return (
-                                <RoomListItem
-                                    isActive={isActive}
-                                    key={`${room.source}-${room.id}`}
-                                    onDelete={handleDelete}
-                                    onPopulateForm={populateFormFromRoom}
-                                    room={room}
-                                />
-                            );
-                        })}
-                    </List>
-                )}
+                {roomItems}
             </Box>
 
             <Button

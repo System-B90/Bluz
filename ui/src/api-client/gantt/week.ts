@@ -14,7 +14,7 @@ const weekApi = clientGantApiBuilder<GanttWeek, CreateGanttWeekPayload>({
 });
 
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =
-  weekApi;
+    weekApi;
 
 export {
     apiCreate as apiCreateWeek,

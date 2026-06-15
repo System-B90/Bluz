@@ -3,10 +3,10 @@
 import { createContext, ReactNode, useContext, useMemo } from "react";
 
 type WebSocketConfigContextType = {
-  host: string;
-  protocol: string;
-  portSuffix: string;
-  connectionString: string;
+    host: string;
+    protocol: string;
+    portSuffix: string;
+    connectionString: string;
 };
 
 const WebSocketConfigContext = createContext<WebSocketConfigContextType>({
@@ -17,10 +17,10 @@ const WebSocketConfigContext = createContext<WebSocketConfigContextType>({
 });
 
 type WebSocketConfigProviderProps = {
-  host: string;
-  protocol: string;
-  portSuffix: string;
-  children: ReactNode;
+    host: string;
+    protocol: string;
+    portSuffix: string;
+    children: ReactNode;
 };
 
 export function WebSocketConfigProvider({

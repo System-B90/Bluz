@@ -52,7 +52,11 @@ export function LogoGraphic() {
                             strokeWidth="4"
                         ></path>
                     </g>
-                    <path d="M1013 586.093V1013" stroke="#28C2E6" strokeWidth="4"></path>
+                    <path
+                        d="M1013 586.093V1013"
+                        stroke="#28C2E6"
+                        strokeWidth="4"
+                    ></path>
                     <path
                         d="M1013 586.093c103.9 0 188.13-84.228 188.13-188.129S1116.9 209.836 1013 209.836c-103.901 0-188.129 84.228-188.129 188.128 0 103.901 84.228 188.129 188.129 188.129"
                         fill="#28C2E6"

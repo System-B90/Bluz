@@ -19,8 +19,8 @@ export function GanttMappingProvider({
     children,
     curriculumId,
 }: {
-  children: ReactNode;
-  curriculumId: GanttCurriculumId;
+    children: ReactNode;
+    curriculumId: GanttCurriculumId;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const [state, dispatch] = useReducer(ganttMappingReducer, {
@@ -35,29 +35,29 @@ export function GanttMappingProvider({
     }, [dispatch, curriculumId]);
 
     /**
-   * createMapping: Handles assigning a module to a day for the first time.
-   */
+     * createMapping: Handles assigning a module to a day for the first time.
+     */
     const createMapping = useCallback(
         async ({
             moduleId,
             eventId,
             dayId,
         }: {
-      moduleId: GanttModuleId;
-      eventId: GanttEventId | null;
-      dayId: GanttDayId;
-    }) => {
+            moduleId: GanttModuleId;
+            eventId: GanttEventId | null;
+            dayId: GanttDayId;
+        }) => {
             const tempSortOrder = Date.now();
             const optimisticMapping: GanttCurriculumModuleDayMapping &
-        BaseDbDocument = {
-            curriculumId,
-            moduleId,
-            eventId,
-            dayId,
-            sortOrder: tempSortOrder,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
+                BaseDbDocument = {
+                    curriculumId,
+                    moduleId,
+                    eventId,
+                    dayId,
+                    sortOrder: tempSortOrder,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                };
 
             // Optimistic UI Update
             dispatch({ type: "UPSERT_MAPPING", payload: optimisticMapping });
@@ -79,7 +79,11 @@ export function GanttMappingProvider({
                     type: "DELETE_MAPPING",
                     payload: { dayId, moduleId, eventId },
                 });
-                enqueueApiErrorSnackbar(enqueueSnackbar, "יצירת המיפוי נכשלה!", e);
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "יצירת המיפוי נכשלה!",
+                    e,
+                );
             }
         },
         [dispatch, curriculumId, enqueueSnackbar],
@@ -92,13 +96,17 @@ export function GanttMappingProvider({
             from,
             to,
         }: {
-      moduleId: GanttModuleId;
-      eventId: GanttEventId | null;
-      from: { d: GanttDayId };
-      to: { d: GanttDayId };
-    }) => {
+            moduleId: GanttModuleId;
+            eventId: GanttEventId | null;
+            from: { d: GanttDayId };
+            to: { d: GanttDayId };
+        }) => {
             // Optimistic UI Update
-            const oldKey = getGanttMappingKey({ dayId: from.d, moduleId, eventId });
+            const oldKey = getGanttMappingKey({
+                dayId: from.d,
+                moduleId,
+                eventId,
+            });
             const originalMapping = state.mappings[oldKey];
 
             if (!originalMapping) return;
@@ -127,7 +135,11 @@ export function GanttMappingProvider({
                 });
                 dispatch({ type: "UPSERT_MAPPING", payload: originalMapping });
 
-                enqueueApiErrorSnackbar(enqueueSnackbar, "עדכון המיפוי נכשל!", e);
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "עדכון המיפוי נכשל!",
+                    e,
+                );
             }
         },
         [state.mappings, curriculumId, dispatch, enqueueSnackbar],
@@ -139,10 +151,10 @@ export function GanttMappingProvider({
             eventId,
             dayId,
         }: {
-      moduleId: GanttModuleId;
-      eventId: GanttEventId | null;
-      dayId: GanttDayId;
-    }) => {
+            moduleId: GanttModuleId;
+            eventId: GanttEventId | null;
+            dayId: GanttDayId;
+        }) => {
             dispatch({
                 type: "DELETE_MAPPING",
                 payload: { dayId, moduleId, eventId },
@@ -156,7 +168,11 @@ export function GanttMappingProvider({
                 );
             } catch (e) {
                 await refreshMappings(); // Re-sync on failure
-                enqueueApiErrorSnackbar(enqueueSnackbar, "מחיקת המיפוי נכשלה!", e);
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "מחיקת המיפוי נכשלה!",
+                    e,
+                );
             }
         },
         [refreshMappings, dispatch, curriculumId, enqueueSnackbar],

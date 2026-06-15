@@ -1,4 +1,8 @@
-import { ClientApi, ClientApiNoPayload, safeApiFetcher } from "@/api-client/common";
+import {
+    ClientApi,
+    ClientApiNoPayload,
+    safeApiFetcher,
+} from "@/api-client/common";
 import {
     ApiOutsiderCreatePayload,
     ApiOutsiderCreateResponse,
@@ -10,15 +14,30 @@ import {
 } from "@/api-shared/types/outsider";
 
 type ClientApiGetOutsiders = ClientApiNoPayload<ApiOutsidersGetResponse>;
-type ClientApiCreateOutsider = ClientApi<ApiOutsiderCreatePayload, ApiOutsiderCreateResponse>;
-type ClientApiUpdateOutsider = ClientApi<ApiOutsiderUpdatePayload, ApiOutsiderUpdateResponse>;
-type ClientApiDeleteOutsider = ClientApi<ApiOutsiderDeletePayload, ApiOutsiderDeleteResponse>;
+type ClientApiCreateOutsider = ClientApi<
+    ApiOutsiderCreatePayload,
+    ApiOutsiderCreateResponse
+>;
+type ClientApiUpdateOutsider = ClientApi<
+    ApiOutsiderUpdatePayload,
+    ApiOutsiderUpdateResponse
+>;
+type ClientApiDeleteOutsider = ClientApi<
+    ApiOutsiderDeletePayload,
+    ApiOutsiderDeleteResponse
+>;
 
 export const apiGetOutsiders: ClientApiGetOutsiders = async (props) => {
-    return await safeApiFetcher<ApiOutsidersGetResponse>("/api/outsiders", props);
+    return await safeApiFetcher<ApiOutsidersGetResponse>(
+        "/api/outsiders",
+        props,
+    );
 };
 
-export const apiCreateOutsider: ClientApiCreateOutsider = async (outsider, props) => {
+export const apiCreateOutsider: ClientApiCreateOutsider = async (
+    outsider,
+    props,
+) => {
     return await safeApiFetcher<ApiOutsiderCreateResponse>("/api/outsiders", {
         ...props,
         method: "PUT",
@@ -26,7 +45,10 @@ export const apiCreateOutsider: ClientApiCreateOutsider = async (outsider, props
     });
 };
 
-export const apiUpdateOutsider: ClientApiUpdateOutsider = async (outsider, props) => {
+export const apiUpdateOutsider: ClientApiUpdateOutsider = async (
+    outsider,
+    props,
+) => {
     return await safeApiFetcher<ApiOutsiderUpdateResponse>("/api/outsiders", {
         ...props,
         method: "POST",
@@ -34,7 +56,10 @@ export const apiUpdateOutsider: ClientApiUpdateOutsider = async (outsider, props
     });
 };
 
-export const apiDeleteOutsider: ClientApiDeleteOutsider = async (outsiderId, props) => {
+export const apiDeleteOutsider: ClientApiDeleteOutsider = async (
+    outsiderId,
+    props,
+) => {
     await safeApiFetcher<ApiOutsiderDeleteResponse>("/api/outsiders", {
         ...props,
         method: "DELETE",

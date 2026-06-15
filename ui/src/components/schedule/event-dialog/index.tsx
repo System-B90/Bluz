@@ -1,14 +1,11 @@
 "use client";
 
-import
-{
-    Box,
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import { FormEvent, useCallback, useState } from "react";
 
 import { EventClassification } from "@/components/schedule/event-dialog/EventClassification";
@@ -32,29 +29,24 @@ export function EventDialog({
     onClose,
     onSave,
     onDelete,
-}: EventDialogProps)
-{
-    const [ event, setEventRaw ] = useState<EventOrPartial>({ ...inputEvent });
-    const [ prevOpen, setPrevOpen ] = useState(open);
-    const [ prevInputEvent, setPrevInputEvent ] = useState(inputEvent);
+}: EventDialogProps) {
+    const [event, setEventRaw] = useState<EventOrPartial>({ ...inputEvent });
+    const [prevOpen, setPrevOpen] = useState(open);
+    const [prevInputEvent, setPrevInputEvent] = useState(inputEvent);
 
-    if (open !== prevOpen || inputEvent !== prevInputEvent)
-    {
+    if (open !== prevOpen || inputEvent !== prevInputEvent) {
         setPrevOpen(open);
         setPrevInputEvent(inputEvent);
-        if (open)
-        {
+        if (open) {
             setEventRaw({ ...inputEvent });
         }
     }
 
-    const handleUpdate = useCallback((update: Partial<Event>) =>
-    {
+    const handleUpdate = useCallback((update: Partial<Event>) => {
         setEventRaw((prev) => ({ ...prev, ...update }));
     }, []);
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) =>
-    {
+    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         onSave(event);
     };
@@ -63,40 +55,58 @@ export function EventDialog({
         <Dialog
             fullWidth
             maxWidth="lg"
-            onClose={ onClose }
-            open={ open }
+            onClose={onClose}
+            open={open}
             PaperProps={{
                 sx: {
                     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                }
+                },
             }}
         >
             <DialogTitle>ערוך מופע</DialogTitle>
 
-            <form onSubmit={ handleSubmit }>
+            <form onSubmit={handleSubmit}>
                 <DialogContent>
-                    <Box sx={ { display: "flex", flexDirection: "column", gap: 3, mt: 1 } }>
-                        <EventPrimaryDetails event={ event } onUpdate={ handleUpdate } />
+                    <Box
+                        sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 3,
+                            mt: 1,
+                        }}
+                    >
+                        <EventPrimaryDetails
+                            event={event}
+                            onUpdate={handleUpdate}
+                        />
 
-                        <EventClassification event={ event } onUpdate={ handleUpdate } />
+                        <EventClassification
+                            event={event}
+                            onUpdate={handleUpdate}
+                        />
 
-                        <InstructorsField event={ event } onBlurCallback={ handleUpdate } />
+                        <InstructorsField
+                            event={event}
+                            onBlurCallback={handleUpdate}
+                        />
 
-                        <EventToggles event={ event } onUpdate={ handleUpdate } />
+                        <EventToggles event={event} onUpdate={handleUpdate} />
                     </Box>
                 </DialogContent>
 
                 <DialogActions>
                     <Button
                         color="error"
-                        disabled={ (!('id' in event)) || !event?.id }
-                        onClick={ () => ('id' in event) ? onDelete(event.id as string) : {} }
+                        disabled={!("id" in event) || !event?.id}
+                        onClick={() =>
+                            "id" in event ? onDelete(event.id as string) : {}
+                        }
                     >
                         מחק
                     </Button>
-                    <Button onClick={ onClose }>ביטול</Button>
+                    <Button onClick={onClose}>ביטול</Button>
                     <Button
-                        disabled={ !event?.name?.trim() }
+                        disabled={!event?.name?.trim()}
                         type="submit"
                         variant="contained"
                     >

@@ -8,18 +8,20 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 export function sortCurriculumsByDraftAndUpdatedAt(
     curriculums: Record<GanttCurriculumId, GanttCurriculumDocument>,
 ): Array<GanttCurriculumId> {
-    return (Object.keys(curriculums) as Array<GanttCurriculumId>).sort((a, b) => {
-        const dataA = curriculums[a];
-        const dataB = curriculums[b];
+    return (Object.keys(curriculums) as Array<GanttCurriculumId>).sort(
+        (a, b) => {
+            const dataA = curriculums[a];
+            const dataB = curriculums[b];
 
-        if (!dataA || !dataB) return 0;
+            if (!dataA || !dataB) return 0;
 
-        if (dataA.isDraft === dataB.isDraft) {
-            // Assuming Dayjs objects. If they are raw dates, use dataB.updatedAt.getTime() - dataA.updatedAt.getTime()
-            return dataB.updatedAt.diff(dataA.updatedAt);
-        }
-        return dataA.isDraft ? 1 : -1;
-    });
+            if (dataA.isDraft === dataB.isDraft) {
+                // Assuming Dayjs objects. If they are raw dates, use dataB.updatedAt.getTime() - dataA.updatedAt.getTime()
+                return dataB.updatedAt.diff(dataA.updatedAt);
+            }
+            return dataA.isDraft ? 1 : -1;
+        },
+    );
 }
 
 export async function fetchDrawerData({
@@ -28,12 +30,12 @@ export async function fetchDrawerData({
     setCurriculumsData,
     setIsFetchingDetails,
 }: {
-  isMounted: boolean;
-  enqueueSnackbar: EnqueueSnackbar;
-  setCurriculumsData: React.Dispatch<
-    React.SetStateAction<Record<GanttCurriculumId, GanttCurriculumDocument>>
-  >;
-  setIsFetchingDetails: React.Dispatch<React.SetStateAction<boolean>>;
+    isMounted: boolean;
+    enqueueSnackbar: EnqueueSnackbar;
+    setCurriculumsData: React.Dispatch<
+        React.SetStateAction<Record<GanttCurriculumId, GanttCurriculumDocument>>
+    >;
+    setIsFetchingDetails: React.Dispatch<React.SetStateAction<boolean>>;
 }): Promise<void> {
     try {
         const listData = await ganttApi.curriculum.apiList();
@@ -42,7 +44,7 @@ export async function fetchDrawerData({
         if (keys.length === 0) {
             if (isMounted) {
                 setCurriculumsData(
-          {} as Record<GanttCurriculumId, GanttCurriculumDocument>,
+                    {} as Record<GanttCurriculumId, GanttCurriculumDocument>,
                 );
                 setIsFetchingDetails(false);
             }
@@ -53,7 +55,10 @@ export async function fetchDrawerData({
 
         if (isMounted) {
             setCurriculumsData(
-        detailedData as Record<GanttCurriculumId, GanttCurriculumDocument>,
+                detailedData as Record<
+                    GanttCurriculumId,
+                    GanttCurriculumDocument
+                >,
             );
         }
     } catch (error) {

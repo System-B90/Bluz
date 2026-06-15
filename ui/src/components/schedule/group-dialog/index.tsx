@@ -1,28 +1,26 @@
 "use client";
 
-import {
-    Box,
-    Button,
-    Chip,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControl,
-    InputLabel,
-    OutlinedInput,
-    Select,
-    TextField,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import Select from "@mui/material/Select";
+import TextField from "@mui/material/TextField";
 import { useState } from "react";
 
 import { Group } from "@/components/schedule/types/group";
 
 type GroupDialogProps = {
-  open: boolean;
-  group: Partial<Group>;
-  onClose: () => void;
-  onSave: (group: Group) => void;
+    open: boolean;
+    group: Partial<Group>;
+    onClose: () => void;
+    onSave: (group: Group) => void;
 };
 
 export function GroupDialog({
@@ -37,7 +35,7 @@ export function GroupDialog({
     const [groups, setGroups] = useState<Array<string>>([]);
 
     const handleSave = () => {
-    // onSave({id: "", name, displayName, defaultGroupIDs: groups });
+        // onSave({id: "", name, displayName, defaultGroupIDs: groups });
         setName("");
         setDisplayName("");
         setColor("#1976d2");
@@ -78,9 +76,17 @@ export function GroupDialog({
                     <Select
                         input={<OutlinedInput label="Assigned Groups" />}
                         multiple
-                        onChange={(e) => setGroups(e.target.value as Array<string>)}
+                        onChange={(e) =>
+                            setGroups(e.target.value as Array<string>)
+                        }
                         renderValue={(selected) => (
-                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 0.5,
+                                }}
+                            >
                                 {selected.map((value) => (
                                     <Chip key={value} label={value} />
                                 ))}
@@ -99,7 +105,7 @@ export function GroupDialog({
             <DialogActions>
                 <Button onClick={onClose}>Cancel</Button>
                 <Button onClick={handleSave} variant="contained">
-          Save
+                    Save
                 </Button>
             </DialogActions>
         </Dialog>

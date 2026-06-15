@@ -1,4 +1,8 @@
-import { Box, TableCell, TableRow, Typography, useTheme } from "@mui/material";
+import Box from "@mui/material/Box";
+import { useTheme } from "@mui/material/styles";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import React, { useMemo, useState } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
@@ -14,8 +18,13 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
 }) => {
     const theme = useTheme();
     const state = useCurriculumState();
-    const { weeklyView, timelineWeeks, linearDays, moduleMappings, eventMappings } =
-    useGanttContext();
+    const {
+        weeklyView,
+        timelineWeeks,
+        linearDays,
+        moduleMappings,
+        eventMappings,
+    } = useGanttContext();
     const [isExpanded, setIsExpanded] = useState(true);
 
     const syllabus = state.syllabuses[syllabusId];
@@ -69,14 +78,23 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
 
         const weekIndices = new Set<number>();
         allMappedDays.forEach((dayId) => {
-            const weekIdx = timelineWeeks.findIndex((w) => w.days.includes(dayId));
+            const weekIdx = timelineWeeks.findIndex((w) =>
+                w.days.includes(dayId),
+            );
             if (weekIdx !== -1) weekIndices.add(weekIdx);
         });
 
         if (weekIndices.size === 0) return null;
         const arr = Array.from(weekIndices);
         return { min: Math.min(...arr), max: Math.max(...arr) };
-    }, [weeklyView, syllabus, state.modules, moduleMappings, eventMappings, timelineWeeks]);
+    }, [
+        weeklyView,
+        syllabus,
+        state.modules,
+        moduleMappings,
+        eventMappings,
+        timelineWeeks,
+    ]);
 
     if (!syllabus) return null;
 
@@ -107,7 +125,10 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
     const renderCells = () => {
         if (weeklyView) {
             return timelineWeeks.map((week, weekIdx) => {
-                const spanVariant = computeSpanVariant(weekIdx, weekSpanIndices);
+                const spanVariant = computeSpanVariant(
+                    weekIdx,
+                    weekSpanIndices,
+                );
 
                 return (
                     <TableCell
@@ -130,17 +151,21 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                                     top: "50%",
                                     transform: "translateY(-50%)",
                                     left:
-                                        spanVariant === "middle" || spanVariant === "end"
+                                        spanVariant === "middle" ||
+                                            spanVariant === "end"
                                             ? "-1px"
                                             : "4px",
                                     right:
-                                        spanVariant === "middle" || spanVariant === "start"
+                                        spanVariant === "middle" ||
+                                            spanVariant === "start"
                                             ? "-1px"
                                             : "4px",
                                     height: "8px",
-                                    backgroundColor: theme.palette.text.secondary,
+                                    backgroundColor:
+                                        theme.palette.text.secondary,
                                     opacity: 0.2,
-                                    borderRadius: getSpanBorderRadius(spanVariant),
+                                    borderRadius:
+                                        getSpanBorderRadius(spanVariant),
                                     zIndex: 1,
                                 }}
                             />
@@ -176,17 +201,21 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                                     top: "50%",
                                     transform: "translateY(-50%)",
                                     left:
-                                        spanVariant === "middle" || spanVariant === "end"
+                                        spanVariant === "middle" ||
+                                            spanVariant === "end"
                                             ? "-1px"
                                             : "4px",
                                     right:
-                                        spanVariant === "middle" || spanVariant === "start"
+                                        spanVariant === "middle" ||
+                                            spanVariant === "start"
                                             ? "-1px"
                                             : "4px",
                                     height: "8px",
-                                    backgroundColor: theme.palette.text.secondary,
+                                    backgroundColor:
+                                        theme.palette.text.secondary,
                                     opacity: 0.2,
-                                    borderRadius: getSpanBorderRadius(spanVariant),
+                                    borderRadius:
+                                        getSpanBorderRadius(spanVariant),
                                     zIndex: 1,
                                 }}
                             />
@@ -222,7 +251,10 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                         sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         variant="subtitle2"
                     >
-                        <Box component="span" sx={{ fontSize: "0.8rem", width: 16 }}>
+                        <Box
+                            component="span"
+                            sx={{ fontSize: "0.8rem", width: 16 }}
+                        >
                             {isExpanded ? "▼" : "▶"}
                         </Box>
                         {syllabus.title}

@@ -1,27 +1,27 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Bluz: Full Stack Up",
-      "type": "shell",
-      "command": "docker-compose up -d",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "group": "build"
-    },
-    {
-      "label": "Bluz: Run Migrations",
-      "type": "shell",
-      "command": "docker-compose exec app npm run migrate",
-      "problemMatcher": []
-    },
-    {
-      "label": "Bluz: Build NextJS",
-      "type": "shell",
-      "command": "npm run build",
-      "group": "build"
-    }
-  ]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Bluz: Full Stack Up",
+            "type": "shell",
+            "command": "docker-compose up -d",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "group": "build"
+        },
+        {
+            "label": "Bluz: Run Migrations",
+            "type": "shell",
+            "command": "docker-compose exec app npm run migrate",
+            "problemMatcher": []
+        },
+        {
+            "label": "Bluz: Build NextJS",
+            "type": "shell",
+            "command": "npm run build",
+            "group": "build"
+        }
+    ]
 }

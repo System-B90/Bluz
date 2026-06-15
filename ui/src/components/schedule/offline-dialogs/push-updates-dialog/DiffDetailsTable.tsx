@@ -1,18 +1,20 @@
 "use client";
 
-import {
-    Box,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
 
 import { DeletedItemPlaceholder } from "@/components/schedule/offline-dialogs/push-updates-dialog/DeletedItemPlaceholder";
-import { areDiffValuesEqual, formatValue, KEY_TRANSLATIONS } from "@/components/schedule/offline-dialogs/push-updates-dialog/utils";
+import {
+    areDiffValuesEqual,
+    formatValue,
+    KEY_TRANSLATIONS,
+} from "@/components/schedule/offline-dialogs/push-updates-dialog/utils";
 import { Event, EventId } from "@/components/schedule/types/event";
 
 type DiffDetailsTableProps = {
@@ -20,7 +22,7 @@ type DiffDetailsTableProps = {
     localModifiedEvent: Event | undefined;
     capturedVersion: Event | undefined;
     serverVersion: Event | undefined;
-}
+};
 
 export function DiffDetailsTable({
     eventId,
@@ -43,15 +45,39 @@ export function DiffDetailsTable({
     const changeItems = useMemo(() => {
         return allKeys
             .filter((key) => {
-                const hasLocalDiff = (localModifiedEvent !== undefined && capturedVersion !== undefined && !areDiffValuesEqual(localModifiedEvent[key], capturedVersion[key])) ||
-                    (localModifiedEvent !== undefined && capturedVersion === undefined) ||
-                    (localModifiedEvent === undefined && capturedVersion !== undefined);
-                const hasServerDiff = (serverVersion !== undefined && capturedVersion !== undefined && !areDiffValuesEqual(serverVersion[key], capturedVersion[key])) ||
-                    (serverVersion !== undefined && capturedVersion === undefined) ||
-                    (serverVersion === undefined && capturedVersion !== undefined);
-                const hasLocalServerDiff = (localModifiedEvent !== undefined && serverVersion !== undefined && !areDiffValuesEqual(localModifiedEvent[key], serverVersion[key])) ||
-                    (localModifiedEvent !== undefined && serverVersion === undefined) ||
-                    (localModifiedEvent === undefined && serverVersion !== undefined);
+                const hasLocalDiff =
+                    (localModifiedEvent !== undefined &&
+                        capturedVersion !== undefined &&
+                        !areDiffValuesEqual(
+                            localModifiedEvent[key],
+                            capturedVersion[key],
+                        )) ||
+                    (localModifiedEvent !== undefined &&
+                        capturedVersion === undefined) ||
+                    (localModifiedEvent === undefined &&
+                        capturedVersion !== undefined);
+                const hasServerDiff =
+                    (serverVersion !== undefined &&
+                        capturedVersion !== undefined &&
+                        !areDiffValuesEqual(
+                            serverVersion[key],
+                            capturedVersion[key],
+                        )) ||
+                    (serverVersion !== undefined &&
+                        capturedVersion === undefined) ||
+                    (serverVersion === undefined &&
+                        capturedVersion !== undefined);
+                const hasLocalServerDiff =
+                    (localModifiedEvent !== undefined &&
+                        serverVersion !== undefined &&
+                        !areDiffValuesEqual(
+                            localModifiedEvent[key],
+                            serverVersion[key],
+                        )) ||
+                    (localModifiedEvent !== undefined &&
+                        serverVersion === undefined) ||
+                    (localModifiedEvent === undefined &&
+                        serverVersion !== undefined);
 
                 return hasLocalDiff || hasServerDiff || hasLocalServerDiff;
             })
@@ -61,15 +87,21 @@ export function DiffDetailsTable({
                 const serverValue = serverVersion?.[key];
 
                 // A field has a conflict if server value differs from captured AND local value differs from captured
-                const isFieldConflicting = !areDiffValuesEqual(serverValue, capturedValue) && !areDiffValuesEqual(localValue, capturedValue);
+                const isFieldConflicting =
+                    !areDiffValuesEqual(serverValue, capturedValue) &&
+                    !areDiffValuesEqual(localValue, capturedValue);
 
                 return (
                     <TableRow
                         key={`${eventId}-${key}`}
                         sx={{
-                            bgcolor: isFieldConflicting ? "rgba(239, 68, 68, 0.04)" : "inherit",
+                            bgcolor: isFieldConflicting
+                                ? "rgba(239, 68, 68, 0.04)"
+                                : "inherit",
                             "&:hover": {
-                                bgcolor: isFieldConflicting ? "rgba(239, 68, 68, 0.08) !important" : "action.hover",
+                                bgcolor: isFieldConflicting
+                                    ? "rgba(239, 68, 68, 0.08) !important"
+                                    : "action.hover",
                             },
                         }}
                     >
@@ -78,45 +110,54 @@ export function DiffDetailsTable({
                                 <Typography fontWeight={500}>
                                     {KEY_TRANSLATIONS[key] ?? key}
                                 </Typography>
-                                {isFieldConflicting ? <Box
-                                    sx={{
-                                        bgcolor: "error.light",
-                                        color: "error.contrastText",
-                                        px: 1,
-                                        py: 0.25,
-                                        borderRadius: 1,
-                                        fontSize: "0.7rem",
-                                        fontWeight: 600,
-                                        userSelect: "none",
-                                        display: "inline-block",
-                                    }}
-                                >
+                                {isFieldConflicting ? (
+                                    <Box
+                                        sx={{
+                                            bgcolor: "error.light",
+                                            color: "error.contrastText",
+                                            px: 1,
+                                            py: 0.25,
+                                            borderRadius: 1,
+                                            fontSize: "0.7rem",
+                                            fontWeight: 600,
+                                            userSelect: "none",
+                                            display: "inline-block",
+                                        }}
+                                    >
                                         קונפליקט
-                                </Box> : null}
+                                    </Box>
+                                ) : null}
                             </Box>
                         </TableCell>
                         <TableCell>
-                            {localModifiedEvent !== undefined && localModifiedEvent[key] !== undefined ? (
-                                <Typography>{formatValue(localModifiedEvent[key], key)}</Typography>
-                            ) : (
-                                <DeletedItemPlaceholder />
-                            )}
+                            {localModifiedEvent !== undefined &&
+                            localModifiedEvent[key] !== undefined ? (
+                                    <Typography>
+                                        {formatValue(localModifiedEvent[key], key)}
+                                    </Typography>
+                                ) : (
+                                    <DeletedItemPlaceholder />
+                                )}
                         </TableCell>
                         <TableCell>
-                            {capturedVersion !== undefined && capturedVersion[key] !== undefined ? (
-                                <Typography color="text.secondary">
-                                    {formatValue(capturedVersion[key], key)}
-                                </Typography>
-                            ) : (
-                                <DeletedItemPlaceholder />
-                            )}
+                            {capturedVersion !== undefined &&
+                            capturedVersion[key] !== undefined ? (
+                                    <Typography color="text.secondary">
+                                        {formatValue(capturedVersion[key], key)}
+                                    </Typography>
+                                ) : (
+                                    <DeletedItemPlaceholder />
+                                )}
                         </TableCell>
                         <TableCell>
-                            {serverVersion !== undefined && serverVersion[key] !== undefined ? (
-                                <Typography>{formatValue(serverVersion[key], key)}</Typography>
-                            ) : (
-                                <DeletedItemPlaceholder />
-                            )}
+                            {serverVersion !== undefined &&
+                            serverVersion[key] !== undefined ? (
+                                    <Typography>
+                                        {formatValue(serverVersion[key], key)}
+                                    </Typography>
+                                ) : (
+                                    <DeletedItemPlaceholder />
+                                )}
                         </TableCell>
                     </TableRow>
                 );
@@ -125,7 +166,12 @@ export function DiffDetailsTable({
 
     return (
         <Box sx={{ margin: 1 }}>
-            <Typography component="div" gutterBottom sx={{ fontWeight: 600 }} variant="h6">
+            <Typography
+                component="div"
+                gutterBottom
+                sx={{ fontWeight: 600 }}
+                variant="h6"
+            >
                 פרטי השינויים
             </Typography>
             <Table aria-label="changes-diff" size="small" sx={{ mb: 1 }}>
@@ -143,7 +189,9 @@ export function DiffDetailsTable({
                             </Typography>
                         </TableCell>
                         <TableCell>
-                            <Typography fontWeight={600}>מה שיש כרגע בשרת</Typography>
+                            <Typography fontWeight={600}>
+                                מה שיש כרגע בשרת
+                            </Typography>
                         </TableCell>
                     </TableRow>
                 </TableHead>
