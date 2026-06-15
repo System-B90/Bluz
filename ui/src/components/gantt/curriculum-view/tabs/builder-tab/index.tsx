@@ -17,14 +17,15 @@ import {
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import Box from "@mui/material/Box";
 import BoxProps from "@mui/material/BoxProps";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { GanttDayId, GanttModuleId } from "@/api-shared/types/gantt/models";
+import { ganttApi } from "@/api-client/gantt";
+import { GanttDayId, GanttModuleId, GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { CurriculumViewBuilderWeeksView } from "@/components/gantt/curriculum-view/tabs/builder-tab/components/CurriculumViewBuilderWeeksView";
 import {
     DndDragEventActiveData,
@@ -46,15 +47,18 @@ function CurriculumViewBuilderTabInner({
 }: Pick<CurriculumViewBuilderTabProps, "curriculumId" | "groupCount">) {
     const { enqueueSnackbar } = useSnackbar();
     const { moveMapping, createMapping, removeMapping } = useGanttMappings();
+    const { dispatch } = useCurriculumProviderActions();
     const weeks = useCurriculum(curriculumId)?.weeks;
     const [activeId, setActiveId] = useState<GanttModuleId>();
     const [activeDayId, setActiveDayId] = useState<GanttDayId>();
+    const [activeSyllabusId, setActiveSyllabusId] = useState<GanttSyllabusId>();
 
     function handleDragStart(event: DragStartEvent) {
         // Extract the ID from 'module-{moduleId}'
         const activeData = event.active.data.current as DndDragEventActiveData;
         setActiveId(activeData.moduleId);
         setActiveDayId(activeData.dayId ?? undefined);
+        setActiveSyllabusId(activeData.syllabusId ?? undefined);
     }
 
     const dropAnimation = {
@@ -82,12 +86,63 @@ function CurriculumViewBuilderTabInner({
         (event: DragEndEvent) => {
             setActiveId(undefined);
             setActiveDayId(undefined);
+            setActiveSyllabusId(undefined);
 
             const { active, over } = event;
             if (!over) return;
 
             const activeData = active.data.current as DndDragEventActiveData;
             const overData = over.data.current as DndDragEventOverData;
+
+            // ── Sort modules within a syllabus ──────────────────────────────
+            if (activeData.type === "SORT_MODULE") {
+                const syllabusId = activeData.syllabusId;
+                const overId = over.id as GanttModuleId;
+                if (active.id === overId) return;
+
+                // The SortableContext items are the syllabus's unmapped module ids.
+                // We receive active.id and over.id — use them to compute the new order.
+                // The full ordered list is stored in the reducer; fetch it via the
+                // container SortableContext. Since we don't have direct access here,
+                // we pass the sortable items array via useSortable's container and
+                // use arrayMove on it.
+                //
+                // Simpler pattern: store the reordered ids on the SortableContext items
+                // and derive new order from active/over positions.
+                // dnd-kit provides this via event.active.data.current and over positions.
+                // We compute arrayMove server-side using the over.data.current sortable info.
+                const overSortable = over.data.current?.sortable as
+                    | { items: Array<GanttModuleId>; index: number }
+                    | undefined;
+                const activeSortable = active.data.current?.sortable as
+                    | { items: Array<GanttModuleId>; index: number }
+                    | undefined;
+
+                if (!overSortable || !activeSortable) return;
+
+                const newOrder = arrayMove(
+                    overSortable.items,
+                    activeSortable.index,
+                    overSortable.index,
+                );
+
+                dispatch({
+                    type: "REORDER_MODULES",
+                    payload: { syllabusId, moduleIds: newOrder },
+                });
+
+                // Persist asynchronously
+                ganttApi
+                    .reorderModules(syllabusId, newOrder)
+                    .catch((error) =>
+                        enqueueApiErrorSnackbar(
+                            enqueueSnackbar,
+                            "שמירת סדר המערכים נכשלה!",
+                            error,
+                        ),
+                    );
+                return;
+            }
 
             if (activeData.type !== "MODULE") {
                 // TODO: Implement
@@ -151,7 +206,7 @@ function CurriculumViewBuilderTabInner({
                 );
             }
         },
-        [createMapping, moveMapping, removeMapping, enqueueSnackbar],
+        [createMapping, dispatch, moveMapping, removeMapping, enqueueSnackbar],
     );
 
     const [selectedWeekGroupIndicies, setSelectedWeekGroup] = useState<{
@@ -188,6 +243,7 @@ function CurriculumViewBuilderTabInner({
                         className="w-70 shadow-2xl rotate-3 cursor-grabbing"
                         dayId={activeDayId}
                         moduleId={activeId}
+                        syllabusId={activeSyllabusId}
                     />
                 ) : null}
             </DragOverlay>

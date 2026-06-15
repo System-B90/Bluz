@@ -13,6 +13,12 @@ export type DndDragEventActiveData =
           moduleId: GanttModuleId;
       }
     | {
+          type: "SORT_MODULE";
+          syllabusId: GanttSyllabusId;
+          moduleId: GanttModuleId;
+          dayId?: undefined;
+      }
+    | {
           type: "SYLLABUS";
           syllabusId: GanttSyllabusId;
           dayId?: GanttDayId | undefined;

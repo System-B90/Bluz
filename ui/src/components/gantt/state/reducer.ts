@@ -89,6 +89,14 @@ export type Action =
           type: "REMOVE_WEEK";
           payload: { weekId: GanttWeekId; curriculumId: GanttCurriculumId };
       }
+    | {
+          type: "REORDER_EVENTS";
+          payload: { moduleId: GanttModuleId; eventIds: Array<GanttEventId> };
+      }
+    | {
+          type: "REORDER_MODULES";
+          payload: { syllabusId: GanttSyllabusId; moduleIds: Array<GanttModuleId> };
+      }
     | { type: "SET_DATA"; payload: ApiCurriculum }
     | {
           type: "UPDATE_CURRICULUM";
@@ -456,6 +464,36 @@ export function curriculumReducer(
         return {
             ...state,
             days: remainingDays,
+        };
+    }
+
+    case "REORDER_MODULES": {
+        const syllabus = state.syllabuses[action.payload.syllabusId];
+        if (!syllabus) return state;
+        return {
+            ...state,
+            syllabuses: {
+                ...state.syllabuses,
+                [syllabus.id]: {
+                    ...syllabus,
+                    modules: action.payload.moduleIds,
+                },
+            },
+        };
+    }
+
+    case "REORDER_EVENTS": {
+        const module = state.modules[action.payload.moduleId];
+        if (!module) return state;
+        return {
+            ...state,
+            modules: {
+                ...state.modules,
+                [module.id]: {
+                    ...module,
+                    events: action.payload.eventIds,
+                },
+            },
         };
     }
 

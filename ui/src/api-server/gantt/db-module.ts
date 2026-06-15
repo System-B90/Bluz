@@ -22,6 +22,7 @@ import { ApiModule } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttModulePayload } from "@/api-shared/types/gantt/create-payloads";
 import {
     GanttCurriculumId,
+    GanttEventId,
     GanttModule,
     GanttModuleId,
     GanttSyllabusId,
@@ -53,6 +54,7 @@ async function getFullModule(id: GanttModuleId): Promise<ApiModule> {
         where: eq(ganttModulesSchema.id, id),
         with: {
             m2e: {
+                orderBy: [asc(ganttModule2EventsSchema.sortOrder)],
                 with: {
                     event: {
                         with: {
@@ -223,6 +225,25 @@ async function getAllocatedTime(
     return total;
 }
 
+async function reorderEvents(
+    moduleId: GanttModuleId,
+    eventIds: Array<GanttEventId>,
+): Promise<void> {
+    await postgresDb.transaction(async (tx) => {
+        for (let i = 0; i < eventIds.length; i++) {
+            await tx
+                .update(ganttModule2EventsSchema)
+                .set({ sortOrder: i })
+                .where(
+                    and(
+                        eq(ganttModule2EventsSchema.moduleId, moduleId),
+                        eq(ganttModule2EventsSchema.eventId, eventIds[i]),
+                    ),
+                );
+        }
+    });
+}
+
 export const DbModule = {
     getItem: getFullModule,
     ...basicOperations,
@@ -230,4 +251,5 @@ export const DbModule = {
     unlinkItem: removeModuleFromSyllabus,
     setAllocatedTime,
     getAllocatedTime,
+    reorderEvents,
 } as const;
