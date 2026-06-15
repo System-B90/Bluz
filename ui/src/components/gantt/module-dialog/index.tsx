@@ -44,7 +44,7 @@ export type ModuleDialogProps = {
     curriculumId: GanttCurriculumId | null;
 } & DialogProps;
 
-interface ModuleDialogHeaderProps {
+type ModuleDialogHeaderProps = {
     moduleTitle?: string;
     syllabusTitle?: string;
 }
@@ -70,8 +70,8 @@ function ModuleDialogHeader({ moduleTitle, syllabusTitle }: ModuleDialogHeaderPr
     );
 }
 
-interface SiblingModuleNavProps {
-    modules: GanttModule[];
+type SiblingModuleNavProps = {
+    modules: Array<GanttModule>;
     currentModuleId: string;
     isCreatingNew: boolean;
     onNavigate: (moduleId: string) => void;
@@ -178,7 +178,7 @@ function SiblingModuleNav({
     );
 }
 
-interface ModuleDetailsFormProps {
+type ModuleDetailsFormProps = {
     localTitle: string;
     localDescription: string;
     setLocalTitle: (val: string) => void;
