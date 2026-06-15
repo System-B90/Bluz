@@ -420,9 +420,10 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             >
                 <Box sx={{ width: "100%", overflow: "hidden", mt: 2 }}>
                     <Paper
+                        elevation={0}
                         sx={{
                             width: "100%",
-                            maxHeight: "calc(100vh - 100px)",
+                            maxHeight: "calc(100vh - 180px)",
                             display: "flex",
                             flexDirection: "column",
                             overflow: "hidden",
@@ -482,6 +483,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                 flexGrow: 1,
                                 position: "relative",
                                 overflow: "hidden",
+                                display: "flex",
+                                flexDirection: "column",
                             }}
                         >
                             <TableContainer
@@ -490,6 +493,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                     width: "100%",
                                     height: "100%",
                                     overflow: "auto",
+                                    pb: 3,
                                 }}
                             >
                                 <Table

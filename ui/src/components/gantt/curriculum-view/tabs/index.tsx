@@ -152,7 +152,7 @@ export function CurriculumViewTabs({
                 setSelectedTabIndex={setSelectedTabIndex}
             />
             {curriculumId !== null && (
-                <Box flexGrow={1} height="80%">
+                <Box flexGrow={1} height="100%" minHeight={0}>
                     <DeferredTabContent
                         curriculumId={curriculumId}
                         selectedTabIndex={selectedTabIndex}
