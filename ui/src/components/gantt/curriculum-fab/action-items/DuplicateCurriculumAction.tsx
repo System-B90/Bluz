@@ -51,9 +51,8 @@ export function DuplicateCurriculumAction({
         <ActionItemButton
             onClick={clickHandler}
             startIcon={<ContentCopyIcon fontSize="small" />}
+            tooltipTitle="שכפול"
             {...props}
-        >
-            שכפול
-        </ActionItemButton>
+        />
     );
 }

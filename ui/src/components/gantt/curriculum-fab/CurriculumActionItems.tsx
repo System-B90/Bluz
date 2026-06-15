@@ -37,31 +37,20 @@ export function CurriculumActionItems({
     const isDisabled = disabled || isProcessing;
 
     const handleExport = useCallback(async () => {
-        if (!sourceCurriculum) return;
-        setIsProcessing(true);
-        try {
-            const data = await apiExportCurriculum(sourceCurriculum.id);
-            const jsonString = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonString], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            const cleanTitle = (sourceCurriculum.title || "gantt")
-                .replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")
-                .trim();
-            const filename = `bluz-gantt-${cleanTitle}.json`;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            enqueueSnackbar("הגאנט יוצא בהצלחה!", { variant: "success" });
-        } catch (error) {
+        if (!sourceCurriculum) return null;
+        return await apiExportCurriculum(sourceCurriculum.id);
+    }, [sourceCurriculum]);
+
+    const handleExportSuccess = useCallback(() => {
+        enqueueSnackbar("הגאנט יוצא בהצלחה!", { variant: "success" });
+    }, [enqueueSnackbar]);
+
+    const handleExportError = useCallback(
+        (error: any) => {
             enqueueApiErrorSnackbar(enqueueSnackbar, "ייצוא הגאנט נכשל!", error);
-        } finally {
-            setIsProcessing(false);
-        }
-    }, [sourceCurriculum, enqueueSnackbar]);
+        },
+        [enqueueSnackbar],
+    );
 
     const handleImport = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,8 +107,13 @@ export function CurriculumActionItems({
             />
             <ImportExportMenuButton
                 exportDisabled={isDisabled || !sourceCurriculum}
+                exportFilenamePrefix="bluz-gantt-"
+                exportTitle={sourceCurriculum?.title}
+                iconOnly
                 importDisabled={isDisabled}
                 onExport={handleExport}
+                onExportError={handleExportError}
+                onExportSuccess={handleExportSuccess}
                 onImport={handleImport}
                 variant="outlined"
             />

@@ -51,9 +51,8 @@ export function ToggleDraftAction({
                     <EditNoteIcon fontSize="small" />
                 )
             }
+            tooltipTitle={sourceCurriculum?.isDraft ? "פיבלוש" : "החזרה לדראפט"}
             {...props}
-        >
-            {sourceCurriculum?.isDraft ? "פיבלוש" : "החזרה לדראפט"}
-        </ActionItemButton>
+        />
     );
 }

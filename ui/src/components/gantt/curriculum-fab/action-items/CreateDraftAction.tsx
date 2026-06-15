@@ -39,9 +39,8 @@ export function CreateDraftAction({
         <ActionItemButton
             onClick={clickHandler}
             startIcon={<AddCircleOutlineIcon fontSize="small" />}
+            tooltipTitle="דראפט חדש"
             {...props}
-        >
-            דראפט חדש
-        </ActionItemButton>
+        />
     );
 }

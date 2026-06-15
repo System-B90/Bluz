@@ -1,18 +1,47 @@
-import Button from "@mui/material/Button";
 import ButtonProps from "@mui/material/ButtonProps";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 
-export type ActionItemButtonProps = Omit<
-    ButtonProps,
-    "size" | "sx" | "variant"
->;
+export type ActionItemButtonProps = {
+    tooltipTitle: string;
+    startIcon?: React.ReactNode;
+} & Omit<ButtonProps, "size" | "sx" | "variant">;
 
-export function ActionItemButton(props: ActionItemButtonProps) {
+export function ActionItemButton({
+    tooltipTitle,
+    startIcon,
+    children: _children,
+    ...props
+}: ActionItemButtonProps) {
     return (
-        <Button
-            size="small"
-            sx={{ minHeight: 28, px: 1.25, py: 0.25, fontSize: "0.75rem" }}
-            variant="outlined"
-            {...props}
-        />
+        <Tooltip title={tooltipTitle}>
+            <span>
+                <IconButton
+                    color={props.color as any}
+                    disabled={props.disabled}
+                    onClick={props.onClick as any}
+                    sx={{
+                        border: "1px solid",
+                        borderColor: (theme) => {
+                            if (props.color === "success") return theme.palette.success.light;
+                            if (props.color === "warning") return theme.palette.warning.light;
+                            if (props.color === "error") return theme.palette.error.light;
+                            return theme.palette.primary.light;
+                        },
+                        color: (theme) => {
+                            if (props.color === "success") return theme.palette.success.main;
+                            if (props.color === "warning") return theme.palette.warning.main;
+                            if (props.color === "error") return theme.palette.error.main;
+                            return theme.palette.primary.main;
+                        },
+                        width: 32,
+                        height: 32,
+                        borderRadius: "8px",
+                    }}
+                >
+                    {startIcon}
+                </IconButton>
+            </span>
+        </Tooltip>
     );
 }

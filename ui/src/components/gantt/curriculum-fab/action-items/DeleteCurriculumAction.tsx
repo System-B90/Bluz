@@ -41,9 +41,8 @@ export function DeleteCurriculumAction({
             color="error"
             onClick={clickHandler}
             startIcon={<DeleteOutlineIcon fontSize="small" />}
+            tooltipTitle="מחיקה"
             {...props}
-        >
-            מחיקה
-        </ActionItemButton>
+        />
     );
 }
