@@ -10,7 +10,6 @@ import { BluzThemeProvider } from "@/components/theme/ThemeProvider";
 
 import "@/style/globals.css";
 
-
 export default function ThemedLayout({
     children,
 }: {

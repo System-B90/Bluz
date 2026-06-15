@@ -1,9 +1,9 @@
+import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import type { Metadata } from "next";
 
 import { MuiEmotionCacheProvider } from "@/components/theme/MuiEmotionCacheProvider";
 import { WebSocketConfigProvider } from "@/components/WebsocketConfigProvider";
 import { WEBSOCKET_PORT_SUFFIX, WEBSOCKET_PROTOCOL } from "@/settings";
-import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 
 export const metadata: Metadata = {
     title: "Bluz",
