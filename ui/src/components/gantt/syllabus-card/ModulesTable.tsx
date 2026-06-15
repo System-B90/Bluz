@@ -45,6 +45,17 @@ export function ModulesTable({
                 border: 1,
                 borderColor: "divider",
                 borderRadius: 1,
+                maxHeight: 225,
+                "&::-webkit-scrollbar": {
+                    width: "6px",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                    backgroundColor: "rgba(0, 0, 0, 0.1)",
+                    borderRadius: "4px",
+                },
+                "&::-webkit-scrollbar-thumb:hover": {
+                    backgroundColor: "rgba(0, 0, 0, 0.2)",
+                },
             }}
         >
             <Table size="small" stickyHeader>
