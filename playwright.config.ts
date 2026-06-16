@@ -12,11 +12,11 @@ import { defineConfig, devices } from "@playwright/test";
  * The test suite:
  * - Authenticates via Hive SSO (admin:Password1) in the setup project
  * - Saves auth state to .auth/user.json for test reuse
- * - Requires a running Bluz dev instance at BASE_URL (default: https://bluz.bis)
+ * - Requires a running Bluz dev instance at BASE_URL (default: https://bluz.dev)
  * - Runs in Hebrew locale (he-IL) with Jerusalem timezone
  *
  * Environment Variables:
- * - BASE_URL: Override default Bluz URL (default: "https://bluz.bis")
+ * - BASE_URL: Override default Bluz URL (default: "https://bluz.dev")
  */
 export default defineConfig({
     testDir: "./tests",
@@ -28,7 +28,7 @@ export default defineConfig({
     reporter: process.env.CI ? [["html"], ["github"]] : [["html"], ["list"]],
 
     use: {
-        baseURL: process.env.BASE_URL ?? "https://bluz.bis",
+        baseURL: process.env.BASE_URL ?? "https://bluz.dev",
         ignoreHTTPSErrors: true,
         screenshot: "only-on-failure",
         video: "on-first-retry",

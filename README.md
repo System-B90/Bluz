@@ -17,7 +17,7 @@
 
 ## Dev Setup
 
-Route "127.0.0.3" to "bluz.bis" in your hosts file.
+Route "127.0.0.3" to "bluz.dev" in your hosts file.
 
 ```pwsh
 pip install typer InquirerPy python-dotenv

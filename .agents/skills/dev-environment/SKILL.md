@@ -14,30 +14,32 @@ tags:
 
 ## Environment Setup & Spinning
 
-Always route `127.0.0.3` to `bluz.bis` in Windows hosts file (`C:\Windows\System32\drivers\etc\hosts`).
+Always route `127.0.0.3` to `bluz.dev` in Windows hosts file (`C:\Windows\System32\drivers\etc\hosts`).
 Generate environment file once: `python setup.py`
 
-### 1. Docker-Based Development (Recommended)
+### 1. Host-Based Development (Recommended for Coding Agents)
+Runs Next.js on Windows host with fast frontend Hot Module Replacement (HMR).
+- **Start:** `npm run dev`
+  *(Note: Copies `.env` to `ui/.env` and starts proxy container + Next.js host server)*
+- **Database Backend:** Can run database containers locally in Docker, OR use remote instances on `mks-srvu`.
+- **Recommendation:** Use this fast HMR mode unless the task explicitly requires altering local Nginx configurations.
+
+### 2. Docker-Based Development
 Runs everything (frontend + backend) in containers.
 - **Start:** `npm run docker:dev`
 - **Stop:** `npm run docker:down`
 - **Reset Database Volumes:** `npm run docker:nuke`
 
-### 2. Host-Based Development (Fast Frontend HMR)
-Runs Next.js on Windows host; runs proxy and databases in Docker.
-- **Start:** `npm run dev`
-  *(Note: Copies `.env` to `ui/.env` and starts proxy container + Next.js host server)*
-- **Important:** Ensure database containers are running (`curriculum-db`, `mongodb`) before running host dev.
-
 ---
 
 ## Database Management & Seeding
 
-Databases are mapped to host on loopback IP `127.0.0.3`:
+Databases can run locally or on a remote server (e.g., `mks-srvu`). If local, they map to:
 - PostgreSQL: `127.0.0.3:5432`
 - MongoDB: `127.0.0.3:27018`
 
 ### Drizzle Schema Commands
+Schema generation and push can run safely against either local or remote postgres database instances.
 - **Generate Migrations:** `npm run db:generate`
 - **Direct Schema Push (No migration file):** `npm run db:push`
 - **Database Studio GUI:** `npm run db:studio`

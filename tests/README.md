@@ -48,7 +48,7 @@ tests/
 ### Prerequisites
 
 - Docker installed
-- `bluz.bis` mapped to `127.0.0.3` in your hosts file
+- `bluz.dev` mapped to `127.0.0.3` in your hosts file
 - Node.js 22+
 - Hive instance running at `https://hive.org` with credentials `admin:Password1`
 
@@ -112,7 +112,7 @@ Tests run against a **dedicated test docker composition** (`docker-compose.test.
 
 The `auth.setup.ts` test project authenticates automatically against the Hive SSO instance:
 
-1. Navigates to `https://bluz.bis/login`
+1. Navigates to `https://bluz.dev/login`
 2. Clicks "התחברות עם הייב" to start the OAuth flow
 3. Fills `admin` / `Password1` on the Hive login page
 4. Handles any OAuth consent screen
@@ -138,5 +138,5 @@ See `.github/workflows/e2e.yml`. The CI job:
 
 | Environment Variable | Default            | Description                                                            |
 | -------------------- | ------------------ | ---------------------------------------------------------------------- |
-| `BASE_URL`           | `https://bluz.bis` | The Bluz instance URL to test against                                  |
+| `BASE_URL`           | `https://bluz.dev` | The Bluz instance URL to test against                                  |
 | `CI`                 | _(unset)_          | Set automatically by GitHub Actions; enables retries and stricter mode |
