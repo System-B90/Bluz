@@ -1,5 +1,5 @@
 import LinkIcon from "@mui/icons-material/Link";
-import { SelectChangeEvent } from "@mui/material";
+import { SelectChangeEvent } from "@mui/material/Select";
 import Box, { BoxProps } from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import FormControl from "@mui/material/FormControl";
