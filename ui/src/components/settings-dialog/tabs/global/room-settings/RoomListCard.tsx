@@ -145,7 +145,7 @@ export function RoomListCard({
             <Button
                 color="secondary"
                 onClick={handleStartCreate}
-                startIcon={<AddIcon sx={{ ml: 0.5 }} />}
+                startIcon={<AddIcon className="ml-1" />}
                 sx={{
                     borderRadius: "10px",
                     py: 1,

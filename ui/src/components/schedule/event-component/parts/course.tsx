@@ -1,7 +1,7 @@
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
-import ChipProps from "@mui/material/ChipProps";
+import Box, { BoxProps } from "@mui/material/Box";
+
+import { ChipProps } from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
 import { useMemo } from "react";
 

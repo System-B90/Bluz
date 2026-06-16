@@ -1,9 +1,9 @@
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
+import Box, { BoxProps } from "@mui/material/Box";
+
 import Chip from "@mui/material/Chip";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
-import SelectChangeEvent from "@mui/material/SelectChangeEvent";
+import { SelectChangeEvent } from "@mui/material";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";

@@ -41,10 +41,10 @@ export function LectureComfortSwitch({
             {/* Sliding knob */}
             <div className="slider-head">
                 <span className="icon thumbup-icon">
-                    <ThumbUpIcon sx={{ fontSize: 16, color: "#fff" }} />
+                    <ThumbUpIcon className="text-[16px] text-white" />
                 </span>
                 <span className="icon thumbdown-icon">
-                    <ThumbDownIcon sx={{ fontSize: 16, color: "#fff" }} />
+                    <ThumbDownIcon className="text-[16px] text-white" />
                 </span>
             </div>
         </button>

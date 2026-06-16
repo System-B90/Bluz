@@ -1,5 +1,4 @@
-import SvgIcon from "@mui/material/SvgIcon";
-import SvgIconProps from "@mui/material/SvgIconProps";
+import SvgIcon, { SvgIconProps } from "@mui/material/SvgIcon";
 
 export function OpenHandsIcon(props: SvgIconProps) {
     return (

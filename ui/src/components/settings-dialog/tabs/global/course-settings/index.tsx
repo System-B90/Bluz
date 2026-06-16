@@ -350,7 +350,7 @@ export function CourseSettings() {
                                 alignItems: "center",
                             }}
                         >
-                            <LayersIcon sx={{ fontSize: 20 }} />
+                            <LayersIcon className="text-[20px]" />
                         </Box>
                         <Box>
                             <Typography
@@ -428,7 +428,7 @@ export function CourseSettings() {
                         <Button
                             color="secondary"
                             onClick={handleCreate}
-                            startIcon={<AddIcon sx={{ ml: 0.5 }} />}
+                            startIcon={<AddIcon className="ml-1" />}
                             sx={{
                                 flex: 1,
                                 borderRadius: "10px",

@@ -82,11 +82,11 @@ function RoomFormHeader({
                 }}
             >
                 {isCreating ? (
-                    <AddIcon sx={{ fontSize: 20 }} />
+                    <AddIcon className="text-[20px]" />
                 ) : isHiveSelected ? (
                     <HiveLogo size={20} />
                 ) : (
-                    <EditIcon sx={{ fontSize: 20 }} />
+                    <EditIcon className="text-[20px]" />
                 )}
             </Box>
             <Box>
@@ -191,7 +191,7 @@ function RoomExtendedDetails({
 }: RoomExtendedDetailsProps) {
     return (
         <>
-            <Divider sx={{ my: 0.5 }}>
+            <Divider className="my-1">
                 <Typography
                     sx={{
                         fontSize: "0.72rem",
@@ -405,7 +405,7 @@ export function RoomFormCard({
             />
 
             {!showForm ? (
-                <Box sx={{ m: "auto", py: 6 }}>
+                <Box className="m-auto py-12">
                     <Typography
                         sx={{
                             color: "text.secondary",

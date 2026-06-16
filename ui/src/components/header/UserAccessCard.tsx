@@ -1,5 +1,5 @@
 import LogoutIcon from "@mui/icons-material/Logout";
-import AvatarProps from "@mui/material/AvatarProps";
+import { AvatarProps } from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";

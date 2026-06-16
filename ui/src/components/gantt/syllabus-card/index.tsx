@@ -6,9 +6,9 @@
  */
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import Card from "@mui/material/Card";
+import Card, { CardProps } from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import CardProps from "@mui/material/CardProps";
+
 import Collapse from "@mui/material/Collapse";
 import IconButton from "@mui/material/IconButton";
 import { styled } from "@mui/material/styles";

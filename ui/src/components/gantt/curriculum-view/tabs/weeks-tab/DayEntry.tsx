@@ -104,7 +104,7 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
                         size="small"
                         sx={{ p: 0.25 }}
                     >
-                        <Remove sx={{ fontSize: "1rem" }} />
+                        <Remove className="text-[1rem]" />
                     </IconButton>
 
                     <input
@@ -121,7 +121,7 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
                         size="small"
                         sx={{ p: 0.25 }}
                     >
-                        <Add sx={{ fontSize: "1rem" }} />
+                        <Add className="text-[1rem]" />
                     </IconButton>
                 </div>
             </div>

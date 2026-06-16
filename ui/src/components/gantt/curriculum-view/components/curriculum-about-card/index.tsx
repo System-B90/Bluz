@@ -1,6 +1,6 @@
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import CardProps from "@mui/material/CardProps";
+import Card, { CardProps } from "@mui/material/Card";
+
 import Skeleton from "@mui/material/Skeleton";
 import Typography from "@mui/material/Typography";
 

@@ -1,7 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
+import Box, { BoxProps } from "@mui/material/Box";
+
 import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
@@ -80,7 +80,23 @@ export function SyllabusSection({
                 </Typography>
             </Box>
 
-            <Stack className="px-2" spacing={1}>
+            <Stack
+                className="px-2 overflow-y-auto"
+                spacing={1}
+                sx={{
+                    maxHeight: 242,
+                    "&::-webkit-scrollbar": {
+                        width: "6px",
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                        backgroundColor: "rgba(0, 0, 0, 0.1)",
+                        borderRadius: "4px",
+                    },
+                    "&::-webkit-scrollbar-thumb:hover": {
+                        backgroundColor: "rgba(0, 0, 0, 0.2)",
+                    },
+                }}
+            >
                 {moduleItems}
             </Stack>
         </Box>

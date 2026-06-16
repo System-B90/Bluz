@@ -1,6 +1,6 @@
 import ExpandIcon from "@mui/icons-material/Expand";
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
+import Box, { BoxProps } from "@mui/material/Box";
+
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 

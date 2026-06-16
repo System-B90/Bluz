@@ -2,9 +2,9 @@ import assert from "assert";
 
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
-import ChipProps from "@mui/material/ChipProps";
+import Box, { BoxProps } from "@mui/material/Box";
+
+import { ChipProps } from "@mui/material/Chip";
 import Link from "@mui/material/Link";
 import Tooltip from "@mui/material/Tooltip";
 import { useMemo } from "react";
