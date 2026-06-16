@@ -2,8 +2,8 @@ import ChatIcon from "@mui/icons-material/Chat";
 import DoNotDisturbAltIcon from "@mui/icons-material/DoNotDisturbAlt";
 import SynagogueIcon from "@mui/icons-material/Synagogue";
 import WarningIcon from "@mui/icons-material/Warning";
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
+import Box, { BoxProps } from "@mui/material/Box";
+
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { useCallback } from "react";

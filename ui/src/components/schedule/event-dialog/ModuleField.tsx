@@ -1,5 +1,5 @@
-import FormControl from "@mui/material/FormControl";
-import FormControlProps from "@mui/material/FormControlProps";
+import FormControl, { FormControlProps } from "@mui/material/FormControl";
+
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";

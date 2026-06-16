@@ -1,5 +1,4 @@
-import Chip from "@mui/material/Chip";
-import ChipProps from "@mui/material/ChipProps";
+import Chip, { ChipProps } from "@mui/material/Chip";
 
 type RoomExtendedInfoChipProps = ChipProps & {
     iconNode?: React.ReactElement;

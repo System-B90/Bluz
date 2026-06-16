@@ -28,6 +28,8 @@ export {
     ganttCurriculumEventConfigurationsSchema,
     ganttCurriculumEventDayMappingsRelationsSchema as ganttCurriculumModuleDayMappingsRelationsSchema,
     ganttCurriculumEventDayMappingsSchema as ganttCurriculumModuleDayMappingsSchema,
+    ganttCurriculumEventDayMappingsRelationsSchema,
+    ganttCurriculumEventDayMappingsSchema,
 } from "./mappings";
 export { ganttModuleRelationsSchema, ganttModulesSchema } from "./modules";
 export {

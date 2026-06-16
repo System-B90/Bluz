@@ -1,5 +1,5 @@
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
+import Box, { BoxProps } from "@mui/material/Box";
+
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";

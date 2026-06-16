@@ -1,7 +1,6 @@
-import Chip from "@mui/material/Chip";
-import ChipProps from "@mui/material/ChipProps";
-import SxProps from "@mui/material/SxProps";
-import Theme from "@mui/material/Theme";
+import Chip, { ChipProps } from "@mui/material/Chip";
+
+import { SxProps, Theme } from "@mui/material";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { Dayjs } from "dayjs";

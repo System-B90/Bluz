@@ -4,7 +4,7 @@ import QuizIcon from "@mui/icons-material/Quiz";
 import SchoolIcon from "@mui/icons-material/School";
 import SynagogueIcon from "@mui/icons-material/Synagogue";
 import Box from "@mui/material/Box";
-import SvgIconProps from "@mui/material/SvgIconProps";
+import { SvgIconProps } from "@mui/material/SvgIcon";
 import Tooltip from "@mui/material/Tooltip";
 import { ReactNode } from "react";
 
