@@ -27,6 +27,7 @@ import { createThemeOptions } from "@/components/theme/CreateFromPalette";
 export type ThemeMode = "dark" | "light" | "system";
 
 export type ThemeContextState = {
+    resolvedTheme: "dark" | "light";
     theme: ThemeMode;
     setTheme: (theme: ThemeMode) => void;
 };
@@ -110,12 +111,15 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
         });
     }, [ resolvedTheme, mounted ]);
 
+    const currentMode = muiTheme.palette.mode ?? "light";
+
     const contextValue = useMemo(
         () => ({
+            resolvedTheme: currentMode,
             theme: (theme as ThemeMode) ?? "system",
             setTheme: setTheme as (theme: ThemeMode) => void,
         }),
-        [ theme, setTheme ],
+        [ currentMode, theme, setTheme ],
     );
 
     return (
