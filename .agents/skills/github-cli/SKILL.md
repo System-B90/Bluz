@@ -72,3 +72,45 @@ Use `gh issue` to track, view, and comment on project tasks.
 * **Repository Status/Readme:** `gh repo view`
 * **Search Issues/PRs:** `gh search issues "<query>"`
 * **Check CI Runs:** `gh run list` or `gh run view <run-id>`
+
+---
+
+## 4. Feature Branch & CI Pipeline Workflow
+
+Follow these steps when developing features, checking pipeline status, and merging PRs:
+
+### Step 1: Create a Feature Branch
+Create a descriptive feature branch from `dev`:
+```powershell
+git checkout dev
+git pull
+git checkout -b feature/your-feature-name
+```
+
+### Step 2: Open PR to `dev`
+Push the branch and open a PR targeting `dev`:
+```powershell
+git push --set-upstream origin feature/your-feature-name
+gh pr create --base dev --title "feat: summary" --body "description"
+```
+
+### Step 3: Verify CI Pipeline Status
+Check the status of the pipeline checks for your PR branch:
+```powershell
+gh pr checks
+```
+Wait for the pipeline runs to finish.
+
+### Step 4: Handle Pipeline Failures
+If the pipeline checks fail, execute the log parser script to quickly locate the errors:
+```powershell
+python scripts/parse_pipeline_logs.py
+```
+*Review the clean log output, debug the issues, apply fixes, commit, and push again.*
+
+### Step 5: Merge PR & Clean Up
+**Only if the ENTIRE pipeline passes successfully (all checks green):**
+Merge the PR and delete the branch:
+```powershell
+gh pr merge --squash --delete-branch
+```

@@ -8,7 +8,6 @@ Author: Michael K. Steinberg
 
 import socket
 import subprocess
-from typing import List
 import typer
 from InquirerPy import inquirer
 
