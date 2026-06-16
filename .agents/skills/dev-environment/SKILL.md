@@ -38,6 +38,13 @@ Databases can run locally or on a remote server (e.g., `mks-srvu`). If local, th
 - PostgreSQL: `127.0.0.3:5432`
 - MongoDB: `127.0.0.3:27018`
 
+### Remote Host (mks-srvu) Verification
+If using remote databases/services on `mks-srvu`, check their status using the remote checker script:
+```powershell
+ssh john@mks-srvu "/home/john/Bluz/.agents/remote_check.py"
+```
+*(Credentials: john / a. Checks database ports 5432, 5433, 27017, and processes.)*
+
 ### Drizzle Schema Commands
 Schema generation and push can run safely against either local or remote postgres database instances.
 - **Generate Migrations:** `npm run db:generate`
