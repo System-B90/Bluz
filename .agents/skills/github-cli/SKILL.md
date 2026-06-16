@@ -14,20 +14,12 @@ tags:
 
 This skill guides the agent on how to use the GitHub CLI (`gh.exe`) to manage pull requests, issues, and branches.
 
-## Execution Path on Windows
+## Execution Environment
 
-On Windows, the `gh` executable might not be in the default shell `PATH`.
-* **Path:** `C:\Program Files\GitHub CLI\gh.exe`
-* **Invocation:**
-  If raw `gh` fails, prepend to path for the session:
-  ```powershell
-  $env:PATH += ";C:\Program Files\GitHub CLI"
-  gh --version
-  ```
-  Or invoke directly:
-  ```powershell
-  & "C:\Program Files\GitHub CLI\gh.exe" --version
-  ```
+The `gh` command-line tool is available globally in the system `PATH`. Run it directly:
+```powershell
+gh --version
+```
 
 ---
 
