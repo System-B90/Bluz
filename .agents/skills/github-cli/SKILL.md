@@ -37,7 +37,7 @@ Use `gh pr` to handle PR review, creation, and branch checkouts.
 ### Create & Merge PRs
 * **Create PR (Interactive):** `gh pr create`
 * **Create PR (Automatic/Non-interactive):** `gh pr create --fill` (uses commit messages for title and body)
-* **Create PR with specific metadata:** `gh pr create --title "feat: add feature" --body "description of changes" --draft`
+* **Create PR with specific metadata:** `gh pr create --title "Vibe-Added feature" --body "description of changes" --draft`
 * **Merge PR:** `gh pr merge <number> --squash --delete-branch` (supports `--merge`, `--squash`, `--rebase`)
 
 ### Review & Approve PRs
@@ -91,7 +91,7 @@ git checkout -b feature/your-feature-name
 Push the branch and open a PR targeting `dev`:
 ```powershell
 git push --set-upstream origin feature/your-feature-name
-gh pr create --base dev --title "feat: summary" --body "description"
+gh pr create --base dev --title "Vibe-Added summary" --body "description"
 ```
 
 ### Step 3: Verify CI Pipeline Status
