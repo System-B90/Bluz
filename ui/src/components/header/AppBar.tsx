@@ -1,7 +1,6 @@
 "use client";
 import SettingsIcon from "@mui/icons-material/Settings";
 import AppBar, { AppBarProps } from "@mui/material/AppBar";
-
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";

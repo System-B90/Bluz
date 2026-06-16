@@ -1,6 +1,5 @@
 "use client";
 import Box, { BoxProps } from "@mui/material/Box";
-
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 

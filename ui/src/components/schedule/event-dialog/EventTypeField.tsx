@@ -4,12 +4,12 @@ import EmojiFoodBeverageIcon from "@mui/icons-material/EmojiFoodBeverage";
 import QuizIcon from "@mui/icons-material/Quiz";
 import SchoolIcon from "@mui/icons-material/School";
 import SynagogueIcon from "@mui/icons-material/Synagogue";
+import { SelectChangeEvent } from "@mui/material";
 import Box from "@mui/material/Box";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
-import { SelectChangeEvent } from "@mui/material";
 import { useCallback, useRef, useState } from "react";
 
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";

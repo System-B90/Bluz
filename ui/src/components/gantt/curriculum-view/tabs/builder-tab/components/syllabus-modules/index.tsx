@@ -7,7 +7,6 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import Box, { BoxProps } from "@mui/material/Box";
-
 import Divider from "@mui/material/Divider";
 import { alpha, useTheme } from "@mui/material/styles";
 import React, { useMemo } from "react";

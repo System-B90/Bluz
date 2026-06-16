@@ -2,7 +2,6 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import NoMeetingRoomIcon from "@mui/icons-material/NoMeetingRoom";
 import WarningIcon from "@mui/icons-material/Warning";
 import Box, { BoxProps } from "@mui/material/Box";
-
 import { ChipProps } from "@mui/material/Chip";
 import Link from "@mui/material/Link";
 import Tooltip from "@mui/material/Tooltip";

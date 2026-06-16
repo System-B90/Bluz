@@ -1,11 +1,10 @@
+import { SelectChangeEvent } from "@mui/material";
 import Box, { BoxProps } from "@mui/material/Box";
-
 import Chip from "@mui/material/Chip";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
-import { SelectChangeEvent } from "@mui/material";
 
 import { CourseId } from "@/api-shared/types/course";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";

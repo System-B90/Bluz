@@ -3,7 +3,6 @@ import DoNotDisturbAltIcon from "@mui/icons-material/DoNotDisturbAlt";
 import SynagogueIcon from "@mui/icons-material/Synagogue";
 import WarningIcon from "@mui/icons-material/Warning";
 import Box, { BoxProps } from "@mui/material/Box";
-
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { useCallback } from "react";
