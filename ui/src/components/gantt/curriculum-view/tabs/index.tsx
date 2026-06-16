@@ -15,7 +15,6 @@ import {
 } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
-import { CurriculumViewBuilderTab } from "@/components/gantt/curriculum-view/tabs/builder-tab";
 import { CurriculumGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab";
 import { SyllabusesTab } from "@/components/gantt/curriculum-view/tabs/syllabuses-tab";
 import { WeeksTab } from "@/components/gantt/curriculum-view/tabs/weeks-tab";
@@ -26,7 +25,6 @@ type TabProps = {
 };
 
 const MemoizedCurriculumGanttView = memo(CurriculumGanttView);
-const MemoizedCurriculumViewBuilderTab = memo(CurriculumViewBuilderTab);
 
 export type CurriculumViewTabsProps = {
     curriculumId: GanttCurriculumId | null;
@@ -36,7 +34,6 @@ export type CurriculumViewTabsProps = {
 function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
     return (
         <Fragment>
-            <Box width={selectedTabIndex === 2 ? "14rem" : 0} />
             <Tabs
                 onChange={(_, v) => setSelectedTabIndex(v)}
                 slots={{
@@ -59,7 +56,6 @@ function TabLabels({ selectedTabIndex, setSelectedTabIndex }: TabProps) {
             >
                 <Tab label="סילבוסים" />
                 <Tab label="שבועות" />
-                <Tab label="בנייה" />
                 <Tab label="רצף זמן" />
             </Tabs>
         </Fragment>
@@ -99,10 +95,6 @@ function renderTabContent(tabIndex: number, curriculumId: GanttCurriculumId) {
     case 1:
         return <WeeksTab curriculumId={curriculumId} />;
     case 2:
-        return (
-            <MemoizedCurriculumViewBuilderTab curriculumId={curriculumId} />
-        );
-    case 3:
         return <MemoizedCurriculumGanttView curriculumId={curriculumId} />;
     default:
         return null;
