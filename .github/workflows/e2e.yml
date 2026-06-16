@@ -40,7 +40,7 @@ jobs:
               run: |
                   echo "Waiting for Bluz to be ready..."
                   for i in $(seq 1 60); do
-                    if curl -ks https://bluz.bis/login > /dev/null 2>&1; then
+                    if curl -ks https://bluz.dev/login > /dev/null 2>&1; then
                       echo "Bluz is ready!"
                       break
                     fi
@@ -64,7 +64,7 @@ jobs:
             - name: Run Playwright Tests
               run: npm run test:e2e
               env:
-                  BASE_URL: https://bluz.bis
+                  BASE_URL: https://bluz.dev
                   CI: true
 
             # ── Artifacts ─────────────────────────────────────────────────────

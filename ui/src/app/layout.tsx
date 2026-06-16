@@ -16,7 +16,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>)
 {
-    const wsHost = process.env.WEBSOCKET_SESSION_SERVER_HOST || "bluz.bis";
+    const wsHost = process.env.WEBSOCKET_SESSION_SERVER_HOST || "bluz.dev";
     const wsProtcol = WEBSOCKET_PROTOCOL || "wss";
     const wsPortSuffix = WEBSOCKET_PORT_SUFFIX || "";
 

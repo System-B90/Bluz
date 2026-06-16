@@ -51,7 +51,7 @@ Ensure the following variables are configured inside your `.env` file:
 - `NEXT_PUBLIC_HIVE_URL` (must match the hostname of the identity provider)
 - `HIVE_CLIENT_ID` & `HIVE_CLIENT_SECRET` (matching registered OAuth applications)
 - `NEXTAUTH_SECRET` (used for encrypting JWT cookies)
-- `NEXTAUTH_URL` (usually set to `https://bluz.bis` or the absolute local address)
+- `NEXTAUTH_URL` (usually set to `https://bluz.dev` or the absolute local address)
 
 To check env variables in PWSH 7:
 ```powershell

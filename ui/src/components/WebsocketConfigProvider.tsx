@@ -10,10 +10,10 @@ type WebSocketConfigContextType = {
 };
 
 const WebSocketConfigContext = createContext<WebSocketConfigContextType>({
-    host: "bluz.biz",
+    host: "bluz.dev",
     protocol: "ws",
     portSuffix: "",
-    connectionString: "wss://bluz.bis/ws/",
+    connectionString: "wss://bluz.dev/ws/",
 });
 
 type WebSocketConfigProviderProps = {
