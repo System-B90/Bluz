@@ -6,6 +6,10 @@ import Typography from "@mui/material/Typography";
 import React from "react";
 
 import { GanttBlockProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 
 export const GanttBlock: React.FC<GanttBlockProps> = ({
     id,
@@ -18,12 +22,25 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
     violations = [],
 }) => {
     const theme = useTheme();
+    const state = useCurriculumState();
+    const { openModuleDialog } = useCurriculumProviderActions();
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
         useDraggable({
             id,
             data: payload,
         });
+
+    const handleDoubleClick = (e: React.MouseEvent) => {
+        if (payload && payload.moduleId && !payload.eventId) {
+            e.stopPropagation();
+            e.preventDefault();
+            const moduleObj = state.modules[payload.moduleId];
+            if (moduleObj?.syllabusId) {
+                openModuleDialog(moduleObj.syllabusId, payload.moduleId);
+            }
+        }
+    };
 
     const style = transform
         ? {
@@ -47,6 +64,7 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
             ref={setNodeRef}
             {...listeners}
             {...attributes}
+            onDoubleClick={handleDoubleClick}
             sx={{
                 position: isAbsolute ? "absolute" : "relative",
                 top: isAbsolute ? "5px" : "auto",
