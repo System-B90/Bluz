@@ -1,9 +1,9 @@
-import { SelectChangeEvent } from "@mui/material/Select";
 import Box, { BoxProps } from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
+import { SelectChangeEvent } from "@mui/material/Select";
 import { useCallback, useMemo, useState } from "react";
 
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
