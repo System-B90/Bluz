@@ -23,6 +23,7 @@ SERVICES = {
     "SSL Proxy Nginx (Port 443)": {"port": 443, "proc": "nginx"},
 }
 
+
 def check_port(port: int, host: str = "127.0.0.1", timeout: float = 1.0) -> bool:
     """Check if TCP port is open."""
     try:
@@ -31,24 +32,25 @@ def check_port(port: int, host: str = "127.0.0.1", timeout: float = 1.0) -> bool
     except (socket.timeout, ConnectionRefusedError, OSError):
         return False
 
+
 def get_pids(proc_name: str) -> str:
     """Get PIDs of a process by name using pgrep."""
     try:
         result = subprocess.run(
-            ["pgrep", "-f", proc_name],
-            capture_output=True,
-            text=True,
-            check=False
+            ["pgrep", "-f", proc_name], capture_output=True, text=True, check=False
         )
         pids = result.stdout.strip().replace("\n", ", ")
         return pids if pids else "Not Found"
     except Exception:
         return "Unknown"
 
+
 @app.command()
 def check(
     host: str = typer.Option("127.0.0.1", help="Target hostname to check ports on."),
-    interactive: bool = typer.Option(False, "--interactive", "-i", help="Select services interactively."),
+    interactive: bool = typer.Option(
+        False, "--interactive", "-i", help="Select services interactively."
+    ),
 ):
     """Check the status of services on the host."""
     selected_names = list(SERVICES.keys())
@@ -64,8 +66,10 @@ def check(
         typer.secho("No services selected. Exiting.", fg=typer.colors.YELLOW)
         raise typer.Exit()
 
-    typer.secho("\n=== Service Verification Results ===", fg=typer.colors.CYAN, bold=True)
-    
+    typer.secho(
+        "\n=== Service Verification Results ===", fg=typer.colors.CYAN, bold=True
+    )
+
     # Table headers
     headers = f"{'Service Name':<30} | {'Port':<6} | {'Port Status':<12} | {'PIDs':<15}"
     typer.echo("-" * len(headers))
@@ -76,19 +80,20 @@ def check(
         cfg = SERVICES[name]
         port = cfg["port"]
         proc = cfg["proc"]
-        
+
         is_up = check_port(port, host=host)
         status_color = typer.colors.GREEN if is_up else typer.colors.RED
         status_text = "UP (Open)" if is_up else "DOWN (Closed)"
-        
+
         pids = get_pids(proc)
-        
+
         # Format and display row
         colored_status = typer.style(f"{status_text:<12}", fg=status_color)
         typer.echo(f"{name:<30} | {port:<6} | {colored_status} | {pids:<15}")
 
     typer.echo("-" * len(headers))
     typer.echo("")
+
 
 if __name__ == "__main__":
     app()
