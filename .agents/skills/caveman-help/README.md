@@ -24,7 +24,7 @@ Modes:
   /caveman wenyan       classical Chinese
 
 Skills:
-  /caveman-commit       terse Conventional Commits
+  /caveman-commit       terse Vibe-prefixed commits
   /caveman-review       one-line PR comments
   /caveman-stats        session token savings
 

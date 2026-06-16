@@ -7,17 +7,15 @@ description: >
   "/commit", or invokes /caveman-commit. Auto-triggers when staging changes.
 ---
 
-Write commit messages terse and exact. Conventional Commits format. No fluff. Why over what.
+Write commit messages terse and exact. All messages must strictly start with the word "Vibe" followed by a hyphen and a past-tense verb (e.g., `Vibe-Implemented <description>`, `Vibe-Fixed <description>`, `Vibe-Added <description>`). This format replaces conventional prefixes like `chore:`, `feat:`, `fix:`, etc. No fluff. Why over what.
 
 ## Rules
 
 **Subject line:**
-- `<type>(<scope>): <imperative summary>` — `<scope>` optional
-- Types: `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `chore`, `build`, `ci`, `style`, `revert`
-- Imperative mood: "add", "fix", "remove" — not "added", "adds", "adding"
+- Must strictly start with `Vibe-<PastTenseVerb>`
+- Keep descriptions terse and exact
 - ≤50 chars when possible, hard cap 72
 - No trailing period
-- Match project convention for capitalization after the colon
 
 **Body (only if needed):**
 - Skip entirely when subject is self-explanatory
@@ -39,7 +37,7 @@ Diff: new endpoint for user profile with body explaining the why
 - ❌ "feat: add a new endpoint to get user profile information from the database"
 - ✅
   ```
-  feat(api): add GET /users/:id/profile
+  Vibe-Added GET /users/:id/profile endpoint
 
   Mobile client needs profile data without the full user payload
   to reduce LTE bandwidth on cold-launch screens.
@@ -50,7 +48,7 @@ Diff: new endpoint for user profile with body explaining the why
 Diff: breaking API change
 - ✅
   ```
-  feat(api)!: rename /v1/orders to /v1/checkout
+  Vibe-Renamed /v1/orders to /v1/checkout
 
   BREAKING CHANGE: clients on /v1/orders must migrate to /v1/checkout
   before 2026-06-01. Old route returns 410 after that date.
