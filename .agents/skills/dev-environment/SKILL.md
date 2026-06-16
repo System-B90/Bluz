@@ -41,9 +41,10 @@ Databases can run locally or on a remote server (e.g., `mks-srvu`). If local, th
 ### Remote Host (mks-srvu) Verification
 If using remote databases/services on `mks-srvu`, check their status using the remote checker script:
 ```powershell
-ssh john@mks-srvu "/home/john/Bluz/.agents/remote_check.py"
+ssh john@mks-srvu "/home/john/Bluz/.venv/bin/python /home/john/Bluz/.agents/remote_check.py"
 ```
-*(Credentials: john / a. Checks database ports 5432, 5433, 27017, and processes.)*
+*(Credentials: john / a. Checks database ports 5432, 5433, 27017, and processes. Use `-i` or `--interactive` to choose specific services interactively.)*
+
 
 ### Drizzle Schema Commands
 Schema generation and push can run safely against either local or remote postgres database instances.

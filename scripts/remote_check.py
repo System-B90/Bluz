@@ -1,43 +1,39 @@
 #!/usr/bin/env python3
 """
 Name: remote_check.py
-Purpose: CLI tool to check status of services running on mks-srvu.
+Purpose: CLI tool to check status of services running on mks-srvu using Typer and InquirerPy.
 Created: 2026-06-16
 Author: Michael K. Steinberg
 """
 
-import argparse
 import socket
 import subprocess
-import sys
+from typing import List
+import typer
+from InquirerPy import inquirer
 
-# Color codes
-GREEN = "\033[92m"
-RED = "\033[91m"
-YELLOW = "\033[93m"
-CYAN = "\033[96m"
-BOLD = "\033[1m"
-RESET = "\033[0m"
+app = typer.Typer(help="mks-srvu service status checker CLI.")
 
-SERVICES = [
-    {"name": "Hive Postgres", "port": 5432, "type": "Database"},
-    {"name": "System Postgres", "port": 5433, "type": "Database"},
-    {"name": "System MongoDB", "port": 27017, "type": "Database"},
-    {"name": "Hive Core API", "port": 3000, "type": "App/API"},
-    {"name": "Web Proxy (Nginx)", "port": 80, "type": "Proxy"},
-    {"name": "SSL Proxy (Nginx)", "port": 443, "type": "Proxy"},
-]
+# Services configuration
+SERVICES = {
+    "Hive Postgres (Port 5432)": {"port": 5432, "proc": "postgres"},
+    "System Postgres (Port 5433)": {"port": 5433, "proc": "postgres"},
+    "System MongoDB (Port 27017)": {"port": 27017, "proc": "mongod"},
+    "Hive Core API (Port 3000)": {"port": 3000, "proc": "node"},
+    "Web Proxy Nginx (Port 80)": {"port": 80, "proc": "nginx"},
+    "SSL Proxy Nginx (Port 443)": {"port": 443, "proc": "nginx"},
+}
 
 def check_port(port: int, host: str = "127.0.0.1", timeout: float = 1.0) -> bool:
-    """Check if a TCP port is open and accepting connections."""
+    """Check if TCP port is open."""
     try:
         with socket.create_connection((host, port), timeout=timeout):
             return True
     except (socket.timeout, ConnectionRefusedError, OSError):
         return False
 
-def get_process_info(proc_name: str) -> str:
-    """Find process IDs running on the machine for a given name."""
+def get_pids(proc_name: str) -> str:
+    """Get PIDs of a process by name using pgrep."""
     try:
         result = subprocess.run(
             ["pgrep", "-f", proc_name],
@@ -50,50 +46,50 @@ def get_process_info(proc_name: str) -> str:
     except Exception:
         return "Unknown"
 
-def main():
-    parser = argparse.ArgumentParser(description="Check services running on mks-srvu remote host.")
-    parser.add_argument("--host", default="127.0.0.1", help="Target hostname to check ports on.")
-    parser.add_argument("--json", action="store_true", help="Output status in JSON format.")
-    args = parser.parse_args()
+@app.command()
+def check(
+    host: str = typer.Option("127.0.0.1", help="Target hostname to check ports on."),
+    interactive: bool = typer.Option(False, "--interactive", "-i", help="Select services interactively."),
+):
+    """Check the status of services on the host."""
+    selected_names = list(SERVICES.keys())
 
-    if args.json:
-        import json
-        results = []
-        for svc in SERVICES:
-            is_up = check_port(svc["port"], host=args.host)
-            results.append({
-                "service": svc["name"],
-                "port": svc["port"],
-                "type": svc["type"],
-                "status": "UP" if is_up else "DOWN"
-            })
-        print(json.dumps(results, indent=2))
-        return
+    if interactive:
+        selected_names = inquirer.checkbox(
+            message="Select services to verify:",
+            choices=selected_names,
+            default=selected_names,
+        ).execute()
 
-    print(f"\n{BOLD}{CYAN}=== mks-srvu Service Status Checker ==={RESET}\n")
-    print(f"{BOLD}{'Service Name':<25} | {'Port':<6} | {'Type':<10} | {'Port Status':<12} | {'PIDs':<15}{RESET}")
-    print("-" * 75)
+    if not selected_names:
+        typer.secho("No services selected. Exiting.", fg=typer.colors.YELLOW)
+        raise typer.Exit()
 
-    for svc in SERVICES:
-        is_up = check_port(svc["port"], host=args.host)
-        status_str = f"{GREEN}UP (Open){RESET}" if is_up else f"{RED}DOWN (Closed){RESET}"
-        
-        # Determine process search string
-        search_str = svc["name"].lower()
-        if "postgres" in search_str:
-            pids = get_process_info("postgres")
-        elif "mongo" in search_str:
-            pids = get_process_info("mongod")
-        elif "nginx" in search_str:
-            pids = get_process_info("nginx")
-        elif "core" in search_str:
-            pids = get_process_info("node")
-        else:
-            pids = "N/A"
-
-        print(f"{svc['name']:<25} | {svc['port']:<6} | {svc['type']:<10} | {status_str:<21} | {pids:<15}")
+    typer.secho("\n=== Service Verification Results ===", fg=typer.colors.CYAN, bold=True)
     
-    print()
+    # Table headers
+    headers = f"{'Service Name':<30} | {'Port':<6} | {'Port Status':<12} | {'PIDs':<15}"
+    typer.echo("-" * len(headers))
+    typer.echo(headers)
+    typer.echo("-" * len(headers))
+
+    for name in selected_names:
+        cfg = SERVICES[name]
+        port = cfg["port"]
+        proc = cfg["proc"]
+        
+        is_up = check_port(port, host=host)
+        status_color = typer.colors.GREEN if is_up else typer.colors.RED
+        status_text = "UP (Open)" if is_up else "DOWN (Closed)"
+        
+        pids = get_pids(proc)
+        
+        # Format and display row
+        colored_status = typer.style(f"{status_text:<12}", fg=status_color)
+        typer.echo(f"{name:<30} | {port:<6} | {colored_status} | {pids:<15}")
+
+    typer.echo("-" * len(headers))
+    typer.echo("")
 
 if __name__ == "__main__":
-    main()
+    app()
