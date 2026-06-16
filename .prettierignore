@@ -1,2 +1,10 @@
-.agents/**
-.agent/**
+node_modules/
+.next/
+ui/.next/
+playwright-report/
+test-results/
+coverage/
+dist/
+build/
+.agents/
+.agent/
