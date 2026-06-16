@@ -1,5 +1,5 @@
-import { useTheme } from "@/components/theme/ThemeProvider";
 import "@/components/header/theme-selector.css";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 const SunIcon = () => (
     <svg

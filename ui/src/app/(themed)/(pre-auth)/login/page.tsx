@@ -46,13 +46,13 @@ function LoginWidget() {
             gap={4}
             maxWidth={"448px"}
             p={5}
-            sx={{
-                borderColor: (theme) =>
-                    theme.palette.mode === "light"
-                        ? "rgba(0,0,0,0.08)"
-                        : "rgba(255,255,255,0.08)",
+            sx={(theme) => ({
+                borderColor: "rgba(0,0,0,0.08)",
                 boxShadow: "0 24px 50px rgba(0,0,0,0.15)",
-            }}
+                ...theme.applyStyles("dark", {
+                    borderColor: "rgba(255,255,255,0.08)",
+                }),
+            })}
             width={"100%"}
         >
             {/* Header Section */}
