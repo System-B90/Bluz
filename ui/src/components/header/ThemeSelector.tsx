@@ -34,9 +34,9 @@ const MoonIcon = () => (
 );
 
 export function ThemeSelectorIcon() {
-    const { theme, setTheme } = useTheme();
+    const { resolvedTheme, setTheme } = useTheme();
 
-    const isDark = theme === "dark";
+    const isDark = resolvedTheme === "dark";
 
     const toggleTheme = () => {
         setTheme(isDark ? "light" : "dark");
