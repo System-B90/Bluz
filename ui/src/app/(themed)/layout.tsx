@@ -6,8 +6,6 @@ import { SessionProvider } from "next-auth/react";
 import { SnackbarProvider } from "notistack";
 import React from "react";
 
-
-
 import "@/style/globals.css";
 
 export default function ThemedLayout({

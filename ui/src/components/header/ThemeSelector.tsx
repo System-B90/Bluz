@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 import { useTheme } from "@/components/theme/ThemeProvider";
 import "@/components/header/theme-selector.css";
 
@@ -36,23 +34,15 @@ const MoonIcon = () => (
 
 export function ThemeSelectorIcon() {
     const { setTheme, resolvedTheme } = useTheme();
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setMounted(true);
-    }, []);
-
-    const isDark = mounted && resolvedTheme === "dark";
 
     const toggleTheme = () => {
-        setTheme(isDark ? "light" : "dark");
+        setTheme(resolvedTheme === "dark" ? "light" : "dark");
     };
 
     return (
         <button
             aria-label="Toggle theme"
-            className={`theme-slider ${isDark ? "dark" : "light"}`}
+            className="theme-slider"
             onClick={toggleTheme}
         >
             <div className="slider-bg starry-bg">
