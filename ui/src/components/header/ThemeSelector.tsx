@@ -1,6 +1,7 @@
-import "@/components/header/theme-selector.css";
+import { useEffect, useState } from "react";
 
 import { useTheme } from "@/components/theme/ThemeProvider";
+import "@/components/header/theme-selector.css";
 
 const SunIcon = () => (
     <svg
@@ -34,9 +35,15 @@ const MoonIcon = () => (
 );
 
 export function ThemeSelectorIcon() {
-    const { resolvedTheme, setTheme } = useTheme();
+    const { setTheme, resolvedTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
 
-    const isDark = resolvedTheme === "dark";
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMounted(true);
+    }, []);
+
+    const isDark = mounted && resolvedTheme === "dark";
 
     const toggleTheme = () => {
         setTheme(isDark ? "light" : "dark");

@@ -1,7 +1,7 @@
-import InitColorSchemeScript from '@mui/material/InitColorSchemeScript';
 import type { Metadata } from "next";
 
 import { MuiEmotionCacheProvider } from "@/components/theme/MuiEmotionCacheProvider";
+import { BluzThemeProvider } from "@/components/theme/ThemeProvider";
 import { WebSocketConfigProvider } from "@/components/WebsocketConfigProvider";
 import { WEBSOCKET_PORT_SUFFIX, WEBSOCKET_PROTOCOL } from "@/settings";
 
@@ -27,14 +27,15 @@ export default function RootLayout({
                 dir="rtl"
             >
                 <MuiEmotionCacheProvider>
-                    <InitColorSchemeScript attribute="class" />
-                    <WebSocketConfigProvider
-                        host={ wsHost }
-                        portSuffix={ wsPortSuffix }
-                        protocol={ wsProtcol }
-                    >
-                        { children }
-                    </WebSocketConfigProvider>
+                    <BluzThemeProvider>
+                        <WebSocketConfigProvider
+                            host={ wsHost }
+                            portSuffix={ wsPortSuffix }
+                            protocol={ wsProtcol }
+                        >
+                            { children }
+                        </WebSocketConfigProvider>
+                    </BluzThemeProvider>
                 </MuiEmotionCacheProvider>
             </body>
         </html>

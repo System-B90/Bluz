@@ -6,7 +6,7 @@ import { SessionProvider } from "next-auth/react";
 import { SnackbarProvider } from "notistack";
 import React from "react";
 
-import { BluzThemeProvider } from "@/components/theme/ThemeProvider";
+
 
 import "@/style/globals.css";
 
@@ -17,14 +17,12 @@ export default function ThemedLayout({
 })
 {
     return (
-        <BluzThemeProvider>
-            <LocalizationProvider adapterLocale="he" dateAdapter={ AdapterDayjs }>
-                <SnackbarProvider
-                    anchorOrigin={ { horizontal: "right", vertical: "bottom" } }
-                >
-                    <SessionProvider>{ children }</SessionProvider>
-                </SnackbarProvider>
-            </LocalizationProvider>
-        </BluzThemeProvider>
+        <LocalizationProvider adapterLocale="he" dateAdapter={ AdapterDayjs }>
+            <SnackbarProvider
+                anchorOrigin={ { horizontal: "right", vertical: "bottom" } }
+            >
+                <SessionProvider>{ children }</SessionProvider>
+            </SnackbarProvider>
+        </LocalizationProvider>
     );
 }
