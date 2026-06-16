@@ -40,18 +40,19 @@ function LoginWidget() {
         <Box
             bgcolor={"background.paper"}
             border={"1px solid"}
-            borderColor={(theme) =>
-                theme.palette.mode === "light"
-                    ? "rgba(0,0,0,0.08)"
-                    : "rgba(255,255,255,0.08)"
-            }
             borderRadius={"20px"}
-            boxShadow={"0 24px 50px rgba(0,0,0,0.15)"}
             display={"flex"}
             flexDirection={"column"}
             gap={4}
             maxWidth={"448px"}
             p={5}
+            sx={{
+                borderColor: (theme) =>
+                    theme.palette.mode === "light"
+                        ? "rgba(0,0,0,0.08)"
+                        : "rgba(255,255,255,0.08)",
+                boxShadow: "0 24px 50px rgba(0,0,0,0.15)",
+            }}
             width={"100%"}
         >
             {/* Header Section */}
