@@ -9,7 +9,6 @@ import os
 import socket
 import ssl
 import subprocess
-import sys
 import time
 import urllib.request
 
@@ -207,20 +206,29 @@ def main(
 
         # Register temporary SSO client app with Hive
         hive_url = root_env.get("NEXT_PUBLIC_HIVE_URL", "https://hive.org")
-        typer.secho("Registering temporary SSO client with Hive...", fg=typer.colors.CYAN)
+        typer.secho(
+            "Registering temporary SSO client with Hive...", fg=typer.colors.CYAN
+        )
         client_id = None
         client_secret = None
         try:
-            with HiveClient("admin", "Password1", hive_url, verify=False, timeout=10) as client:
+            with HiveClient(
+                "admin", "Password1", hive_url, verify=False, timeout=10
+            ) as client:
                 sso_credentials = client.register_sso_service(
                     service_name=f"Bluz Test {slug}",
                     redirect_uris=f"https://127.0.0.3:{ports['https']}/api/auth/callback/hive",
                 )
                 client_id = sso_credentials.get("client_id")
                 client_secret = sso_credentials.get("client_secret")
-                typer.secho(f"SSO registered successfully. ID: {client_id}", fg=typer.colors.GREEN)
+                typer.secho(
+                    f"SSO registered successfully. ID: {client_id}",
+                    fg=typer.colors.GREEN,
+                )
         except Exception as e:
-            typer.secho(f"Failed to register SSO client with Hive: {e}", fg=typer.colors.RED)
+            typer.secho(
+                f"Failed to register SSO client with Hive: {e}", fg=typer.colors.RED
+            )
             raise RuntimeError(f"SSO registration failed: {e}")
 
         # Set environment for docker compose
@@ -281,12 +289,20 @@ def main(
     # 3. Drizzle Schema Generate/Push
     typer.secho("Syncing database schema (drizzle-kit)...", fg=typer.colors.CYAN)
     # Generate migrations first
-    subprocess.run(["npm", "run", "db:generate"], env=test_env, shell=True, check=True, timeout=60)
+    subprocess.run(
+        ["npm", "run", "db:generate"], env=test_env, shell=True, check=True, timeout=60
+    )
     # Push schema directly (retry to wait for PostgreSQL container to be fully ready)
     max_retries = 15
     for attempt in range(1, max_retries + 1):
         try:
-            subprocess.run(["npm", "run", "db:push"], env=test_env, shell=True, check=True, timeout=60)
+            subprocess.run(
+                ["npm", "run", "db:push"],
+                env=test_env,
+                shell=True,
+                check=True,
+                timeout=60,
+            )
             break
         except subprocess.CalledProcessError as e:
             if attempt == max_retries:
@@ -301,7 +317,10 @@ def main(
     typer.secho("Seeding databases...", fg=typer.colors.CYAN)
     # Hive populate (runs Python populate script)
     subprocess.run(
-        ["python", "scripts/demo/populate_demo_hive.py"], env=test_env, check=True, timeout=120
+        ["python", "scripts/demo/populate_demo_hive.py"],
+        env=test_env,
+        check=True,
+        timeout=120,
     )
     typer.secho("Populated demo hive.")
     # Bluz populate (runs TS populate script)
@@ -346,7 +365,9 @@ def main(
     if result.returncode == 0:
         typer.secho("All tests passed!", fg=typer.colors.GREEN, bold=True)
     else:
-        raise RuntimeError(f"Playwright tests failed with exit code {result.returncode}.")
+        raise RuntimeError(
+            f"Playwright tests failed with exit code {result.returncode}."
+        )
 
 
 if __name__ == "__main__":
