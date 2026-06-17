@@ -1,6 +1,4 @@
-import { test, expect } from "@playwright/test";
-
-import { SELECTORS, gotoAppHome, waitForAppLoad } from "./fixtures";
+import { test, expect, SELECTORS, gotoAppHome, waitForAppLoad } from "./fixtures";
 
 /**
  * Gantt page integration tests.
@@ -12,6 +10,28 @@ test.describe("Gantt Page", () => {
     test.beforeEach(async ({ page }) => {
         await page.goto("/gantt");
         await waitForAppLoad(page);
+
+        // Ensure at least one curriculum exists so selection and view tests work
+        const fab = page.getByRole("button", { name: "גאנטים" });
+        await fab.click();
+        await page.waitForTimeout(500);
+
+        // Wait for skeleton loaders to disappear (indicates details are fetched and buttons enabled)
+        await page.locator(".MuiSkeleton-root").waitFor({ state: "hidden", timeout: 10_000 });
+
+        const listItems = page.locator("[role='presentation'] [role='listitem'], [role='presentation'] li");
+        const count = await listItems.count();
+        if (count === 0) {
+            const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
+            await draftButton.click();
+            
+            // Wait for the newly created curriculum to appear in the list
+            await expect(page.getByText("הגאנט שלי")).toBeVisible({ timeout: 10_000 });
+        }
+        
+        // Close the FAB popover
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(300);
     });
 
     // ─── Page Load ──────────────────────────────────────────────────────────
@@ -31,54 +51,36 @@ test.describe("Gantt Page", () => {
     // ─── Curriculum Drawer (FAB) ────────────────────────────────────────────
 
     test("displays the curriculum FAB/drawer", async ({ page }) => {
-        // The CurriculumFab is a sidebar/drawer component
-        // It should be initially open (drawerOpen defaults to true)
-        // Look for the drawer container or a list of curricula
-
-        // The drawer should contain curriculum entries or action buttons
-        const fabArea = page.locator(
-            "[role='navigation'], [class*='Drawer'], [class*='drawer']",
-        );
-
-        // Alternatively, check for the FAB toggle or the sidebar
-        // The CurriculumFab renders a sidebar with curriculum list items
-        const hasFab =
-            (await fabArea.count()) > 0 ||
-            (await page
-                .locator(
-                    "button:has(svg[data-testid='MenuIcon']), button:has(svg[data-testid='ChevronLeftIcon']), button:has(svg[data-testid='ChevronRightIcon'])",
-                )
-                .count()) > 0;
-
-        // There should be some sidebar/drawer mechanism visible
-        expect(hasFab || true).toBeTruthy(); // Soft check since drawer layout varies
+        const fab = page.getByRole("button", { name: "גאנטים" });
+        await expect(fab).toBeVisible();
     });
 
     test("toggles the curriculum drawer open and closed", async ({ page }) => {
-        // Look for the toggle button for the drawer
-        const toggleButton = page.locator(
-            "button:has(svg[data-testid='ChevronLeftIcon']), button:has(svg[data-testid='ChevronRightIcon']), button:has(svg[data-testid='MenuOpenIcon']), button:has(svg[data-testid='MenuIcon'])",
-        );
+        const fab = page.getByRole("button", { name: "גאנטים" });
+        await expect(fab).toBeVisible();
 
-        if ((await toggleButton.count()) > 0) {
-            // Click to toggle
-            await toggleButton.first().click();
-            await page.waitForTimeout(500);
+        const heading = page.getByRole("heading", { name: "גאנטים", exact: true });
+        await expect(heading).not.toBeVisible();
 
-            // Click again to restore
-            const restoreButton = page.locator(
-                "button:has(svg[data-testid='ChevronLeftIcon']), button:has(svg[data-testid='ChevronRightIcon']), button:has(svg[data-testid='MenuOpenIcon']), button:has(svg[data-testid='MenuIcon'])",
-            );
-            if ((await restoreButton.count()) > 0) {
-                await restoreButton.first().click();
-                await page.waitForTimeout(500);
-            }
-        }
+        // Click to open
+        await fab.click();
+        await expect(heading).toBeVisible();
+
+        // Press Escape to close
+        await page.keyboard.press("Escape");
+        await expect(heading).not.toBeVisible();
     });
 
     // ─── Curriculum Selection ───────────────────────────────────────────────
 
     test("selects a curriculum and shows loading/content", async ({ page }) => {
+        // Open FAB first
+        const fab = page.getByRole("button", { name: "גאנטים" });
+        await fab.click();
+        
+        // Wait for the curriculum entries to load (replaces skeleton loader)
+        await expect(page.getByText("הגאנט שלי")).toBeVisible({ timeout: 10_000 });
+
         // Look for curriculum list items in the sidebar
         const curriculumItems = page
             .locator("[role='listitem'], li, [class*='CurriculumEntry']")
@@ -110,6 +112,13 @@ test.describe("Gantt Page", () => {
     test("URL cid parameter syncs with selected curriculum", async ({
         page,
     }) => {
+        // Open FAB first
+        const fab = page.getByRole("button", { name: "גאנטים" });
+        await fab.click();
+        
+        // Wait for the curriculum entries to load
+        await expect(page.getByText("הגאנט שלי")).toBeVisible({ timeout: 10_000 });
+
         // Navigate with a cid parameter
         const curriculumItems = page
             .locator("[role='listitem'], li, [class*='CurriculumEntry']")
@@ -135,6 +144,13 @@ test.describe("Gantt Page", () => {
     // ─── Tab Navigation (Curriculum View) ───────────────────────────────────
 
     test("switches between curriculum view tabs", async ({ page }) => {
+        // Open FAB first
+        const fab = page.getByRole("button", { name: "גאנטים" });
+        await fab.click();
+        
+        // Wait for the curriculum entries to load
+        await expect(page.getByText("הגאנט שלי")).toBeVisible({ timeout: 10_000 });
+
         // Select a curriculum first
         const curriculumItems = page
             .locator("[role='listitem'], li, [class*='CurriculumEntry']")
@@ -171,6 +187,13 @@ test.describe("Gantt Page", () => {
     test("curriculum view sidebar renders when curriculum is selected", async ({
         page,
     }) => {
+        // Open FAB first
+        const fab = page.getByRole("button", { name: "גאנטים" });
+        await fab.click();
+        
+        // Wait for the curriculum entries to load
+        await expect(page.getByText("הגאנט שלי")).toBeVisible({ timeout: 10_000 });
+
         const curriculumItems = page
             .locator("[role='listitem'], li, [class*='CurriculumEntry']")
             .filter({
@@ -193,24 +216,14 @@ test.describe("Gantt Page", () => {
     test("curriculum action buttons are available in the FAB", async ({
         page,
     }) => {
-        // The CurriculumFab should have action items like create/delete curriculum
-        const addButton = page.locator(
-            "button:has(svg[data-testid='AddIcon']), button:has(svg[data-testid='CreateIcon'])",
-        );
+        const fab = page.getByRole("button", { name: "גאנטים" });
+        await fab.click();
+        await page.waitForTimeout(500);
 
-        // There should be at least a way to create/manage curricula
-        // This is a soft check since the FAB structure may vary
-        const hasActions =
-            (await addButton.count()) > 0 ||
-            (await page.getByText("יצירת גאנט חדש").count()) > 0 ||
-            (await page.getByText("צור גאנט").count()) > 0;
+        const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
+        await expect(draftButton).toBeVisible();
 
-        // Log for debugging
-        if (!hasActions) {
-            console.log(
-                "No curriculum action buttons found — curriculum FAB may have a different structure",
-            );
-        }
+        await page.keyboard.press("Escape");
     });
 
     // ─── Navigation ─────────────────────────────────────────────────────────
@@ -220,9 +233,7 @@ test.describe("Gantt Page", () => {
     }) => {
         const appBar = page.locator(SELECTORS.appBar);
 
-        const scheduleButton = appBar.locator(
-            "button:has(svg[data-testid='CalendarMonthIcon'])",
-        );
+        const scheduleButton = appBar.getByRole("button", { name: 'חזור ללו"ז' });
         await expect(scheduleButton).toBeVisible();
         await scheduleButton.click();
         await expect(page.locator(SELECTORS.calendarRoot)).toBeVisible({

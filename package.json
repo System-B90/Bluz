@@ -21,6 +21,7 @@
         "docker:test": "docker compose -f docker-compose.yml -f docker-compose.test.yml up -d --build",
         "docker:test:down": "docker compose -f docker-compose.yml -f docker-compose.test.yml down -v",
         "test": "python scripts/run_tests.py",
+        "test:unit": "vitest run",
         "test:e2e": "npx playwright test",
         "test:e2e:ui": "npx playwright test --ui",
         "session:start": "cd session-server && npm install && npm start"
@@ -103,6 +104,8 @@
         "prettier": "3.8.3",
         "tailwindcss": "^4.1.17",
         "typescript": "^5.9.3",
-        "typescript-eslint": "^8.58.2"
+        "typescript-eslint": "^8.58.2",
+        "vite-tsconfig-paths": "^6.1.1",
+        "vitest": "^4.1.9"
     }
 }

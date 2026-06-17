@@ -1,6 +1,6 @@
-import { test, expect } from "@playwright/test";
-
 import {
+    test,
+    expect,
     SELECTORS,
     openSettingsDialog,
     closeSettingsDialog,
@@ -226,10 +226,8 @@ test.describe("Settings Dialog", () => {
 
         const dialog = page.locator(SELECTORS.settingsDialog).first();
 
-        // Find the "add room" button (AddIcon or plus button)
-        const addButton = dialog.locator(
-            "button:has(svg[data-testid='AddIcon'])",
-        );
+        // Find the "add room" button
+        const addButton = dialog.getByRole("button", { name: "הוספת חדר מותאם אישית" });
 
         if ((await addButton.count()) > 0) {
             await addButton.first().click();
@@ -262,9 +260,7 @@ test.describe("Settings Dialog", () => {
                         await roomItem.first().click();
                         await page.waitForTimeout(300);
 
-                        const deleteButton = dialog.locator(
-                            "button:has(svg[data-testid='DeleteIcon'])",
-                        );
+                        const deleteButton = dialog.locator("li").filter({ hasText: roomName }).getByRole("button", { name: "מחק" });
                         if ((await deleteButton.count()) > 0) {
                             // Handle confirmation dialog
                             page.on("dialog", (d) => d.accept());
@@ -337,14 +333,8 @@ test.describe("Settings Dialog", () => {
         const themeLabel = dialog.getByText("מצב תצוגה");
         await expect(themeLabel).toBeVisible();
 
-        // Find the theme toggle buttons/icons (near the "מצב תצוגה" label)
-        const themeSection = dialog
-            .locator("button, [role='radiogroup'], [role='button']")
-            .filter({
-                has: page.locator(
-                    "svg[data-testid='LightModeIcon'], svg[data-testid='DarkModeIcon'], svg[data-testid='Brightness4Icon']",
-                ),
-            });
+        // Find the theme toggle button
+        const themeSection = dialog.locator("button.theme-slider, button[aria-label='Toggle theme']");
 
         if ((await themeSection.count()) > 0) {
             // Record current theme

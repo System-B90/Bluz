@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
-
 import {
+    expect,
+    test,
     SELECTORS,
     getEventDialog,
     gotoAppHome,
@@ -94,7 +94,7 @@ test.describe("Calendar Page", () => {
 
     test("navigates to next period", async ({ page }) => {
         // Get initial header label text - the visible range header
-        const headerLabel = page.locator("h6").filter({ hasText: "–" }).first();
+        const headerLabel = page.locator("h6").filter({ hasText: /-|–/ }).first();
         const initialText = await headerLabel.textContent();
 
         // Click "next"
@@ -108,7 +108,7 @@ test.describe("Calendar Page", () => {
 
     test("navigates to previous period", async ({ page }) => {
         // Get initial header label text - the visible range header
-        const headerLabel = page.locator("h6").filter({ hasText: "–" }).first();
+        const headerLabel = page.locator("h6").filter({ hasText: /-|–/ }).first();
         const initialText = await headerLabel.textContent();
 
         await page.getByRole("button", { name: "קודם" }).click();
@@ -137,10 +137,8 @@ test.describe("Calendar Page", () => {
     // ─── Toolbar Toggle ─────────────────────────────────────────────────────
 
     test("hides and shows the toolbar", async ({ page }) => {
-        // Find the hide-toolbar button (VisibilityOffIcon inside the toolbar area)
-        const hideToolbarButton = page.locator(
-            "button:has(svg[data-testid='VisibilityOffIcon'])",
-        );
+        // Find the hide-toolbar button
+        const hideToolbarButton = page.getByRole("button", { name: "הסתר סרגל כלים" });
 
         // Toolbar should be visible initially
         await expect(page.getByRole("button", { name: "היום" })).toBeVisible();
@@ -154,10 +152,8 @@ test.describe("Calendar Page", () => {
             page.getByRole("button", { name: "היום" }),
         ).not.toBeVisible();
 
-        // The floating controls should appear with a show button (VisibilityIcon)
-        const showButton = page.locator(
-            "button:has(svg[data-testid='VisibilityIcon'])",
-        );
+        // The floating controls should appear with a show button
+        const showButton = page.getByRole("button", { name: "הצג סרגל כלים" });
         await expect(showButton).toBeVisible();
 
         // Click show
@@ -171,17 +167,13 @@ test.describe("Calendar Page", () => {
     // ─── Fullscreen Mode ────────────────────────────────────────────────────
 
     test("enters and exits fullscreen mode", async ({ page }) => {
-        // Find the fullscreen button (FullscreenIcon)
-        const fullscreenButton = page.locator(
-            "button:has(svg[data-testid='FullscreenIcon'])",
-        );
+        // Find the fullscreen button
+        const fullscreenButton = page.getByRole("button", { name: "מסך מלא" });
         await fullscreenButton.first().click();
         await page.waitForTimeout(500);
 
-        // In fullscreen, the exit button (FullscreenExitIcon) should appear
-        const exitFullscreenButton = page.locator(
-            "button:has(svg[data-testid='FullscreenExitIcon'])",
-        );
+        // In fullscreen, the exit button should appear
+        const exitFullscreenButton = page.getByRole("button", { name: "צא ממסך מלא (Esc)" });
         await expect(exitFullscreenButton).toBeVisible();
 
         // Press Escape to exit
@@ -293,15 +285,11 @@ test.describe("Calendar Page", () => {
     // ─── Keyboard Shortcuts ─────────────────────────────────────────────────
 
     test("Escape key exits fullscreen mode", async ({ page }) => {
-        const fullscreenButton = page.locator(
-            "button:has(svg[data-testid='FullscreenIcon'])",
-        );
+        const fullscreenButton = page.getByRole("button", { name: "מסך מלא" });
         await fullscreenButton.first().click();
         await page.waitForTimeout(500);
 
-        const exitButton = page.locator(
-            "button:has(svg[data-testid='FullscreenExitIcon'])",
-        );
+        const exitButton = page.getByRole("button", { name: "צא ממסך מלא (Esc)" });
         await expect(exitButton).toBeVisible();
 
         await page.keyboard.press("Escape");

@@ -1,4 +1,37 @@
-import { expect, Locator, Page } from "@playwright/test";
+import { test as baseTest, expect as baseExpect, Locator, Page, BrowserContext } from "@playwright/test";
+
+// Shared page and context for visual mode (single-window reuse)
+let sharedContext: BrowserContext | null = null;
+let sharedPage: Page | null = null;
+
+export const test = baseTest.extend({
+    context: async ({ browser, contextOptions }, use) => {
+        if (process.env.TEST_VISUAL === "1") {
+            if (!sharedContext) {
+                sharedContext = await browser.newContext(contextOptions);
+            }
+            await use(sharedContext);
+        } else {
+            const context = await browser.newContext(contextOptions);
+            await use(context);
+            await context.close();
+        }
+    },
+    page: async ({ context }, use) => {
+        if (process.env.TEST_VISUAL === "1") {
+            if (!sharedPage) {
+                sharedPage = await context.newPage();
+            }
+            await use(sharedPage);
+        } else {
+            const page = await context.newPage();
+            await use(page);
+            await page.close();
+        }
+    }
+});
+
+export const expect = baseExpect;
 
 /**
  * Shared test fixtures and helper utilities for Bluz integration tests.
@@ -63,10 +96,8 @@ export async function clickIconButton(button: Locator): Promise<void> {
  * Opens the settings dialog by clicking the gear icon in the AppBar.
  */
 export async function openSettingsDialog(page: Page): Promise<void> {
-    // The settings icon is an IconButton in the AppBar with a SettingsIcon child
-    const settingsButton = page.locator(`${SELECTORS.appBar} button`).filter({
-        has: page.locator("svg[data-testid='SettingsIcon']"),
-    });
+    // The settings icon is an IconButton in the AppBar with class hover-rotate-subtle
+    const settingsButton = page.locator(`${SELECTORS.appBar} button.hover-rotate-subtle`);
     for (let attempt = 0; attempt < 3; attempt++) {
         await settingsButton.click();
         try {
@@ -87,9 +118,7 @@ export async function openSettingsDialog(page: Page): Promise<void> {
  */
 export async function closeSettingsDialog(page: Page): Promise<void> {
     const dialog = page.locator(SELECTORS.settingsDialog).first();
-    const closeButton = dialog.locator("button").filter({
-        has: page.locator("svg[data-testid='CloseIcon']"),
-    });
+    const closeButton = dialog.locator("button.hover-rotate-90");
     await closeButton.click();
     await page.waitForSelector(SELECTORS.settingsDialog, { state: "hidden" });
 }
@@ -176,9 +205,7 @@ export function getEventDialog(page: Page) {
  * Calendar filter strip in the AppBar (prayer/PA/misconfig icons live here).
  */
 export function getHeaderFilters(page: Page) {
-    return page
-        .locator(SELECTORS.appBar)
-        .locator("button:has(svg[data-testid='ChatIcon'])");
+    return page.getByRole("button", { name: /גלה חלונות פ"א|הסתר חלונות פ"א/ });
 }
 
 /**

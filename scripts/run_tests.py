@@ -111,8 +111,11 @@ def main(
     ui: bool = typer.Option(
         False, "--ui", help="Run Playwright tests with interactive UI."
     ),
-    headed: bool = typer.Option(
-        False, "--headed", help="Run Playwright tests in headed mode."
+    visual: bool = typer.Option(
+        False, "--visual", help="Run Playwright tests in visual mode (headed + single window)."
+    ),
+    seed_hive: bool = typer.Option(
+        False, "--seed-hive", help="Clear and reseed the Hive database."
     ),
     rebuild: bool = typer.Option(
         False, "--rebuild", help="Force rebuild and restart of Docker containers."
@@ -138,6 +141,20 @@ def main(
     typer.secho(
         "Initializing Bluz Testing Pipeline...", fg=typer.colors.CYAN, bold=True
     )
+
+    # 0. Run Backend Unit Tests (fail fast)
+    if not seed_only:
+        typer.secho("Running Backend Unit Tests...", fg=typer.colors.CYAN, bold=True)
+        try:
+            subprocess.run(
+                ["npm", "run", "test:unit"],
+                shell=True,
+                check=True,
+            )
+            typer.secho("Backend Unit Tests Passed!", fg=typer.colors.GREEN, bold=True)
+        except subprocess.CalledProcessError as e:
+            typer.secho("Backend Unit Tests Failed!", fg=typer.colors.RED, bold=True)
+            raise RuntimeError("Backend Unit Tests failed.")
 
     # 1. Determine Project Name and Environment
     slug = get_worktree_slug()
@@ -315,14 +332,19 @@ def main(
 
     # 4. Run database seeding
     typer.secho("Seeding databases...", fg=typer.colors.CYAN)
-    # Hive populate (runs Python populate script)
-    subprocess.run(
-        ["python", "scripts/demo/populate_demo_hive.py"],
-        env=test_env,
-        check=True,
-        timeout=120,
-    )
-    typer.secho("Populated demo hive.")
+    
+    # Hive populate (runs Python populate script) only if requested or metadata missing
+    hive_data_path = os.path.join("scripts", "demo", "hive_data.json")
+    if seed_hive or not os.path.exists(hive_data_path):
+        subprocess.run(
+            ["python", "scripts/demo/populate_demo_hive.py"],
+            env=test_env,
+            check=True,
+            timeout=120,
+        )
+        typer.secho("Populated demo hive.")
+    else:
+        typer.secho("Skipping Hive database seeding (reusing existing data).", fg=typer.colors.YELLOW)
     # Bluz populate (runs TS populate script)
     subprocess.run(
         ["npx", "tsx", "scripts/demo/populate_demo_bluz.ts"],
@@ -351,8 +373,9 @@ def main(
     playwright_cmd = ["npx", "playwright", "test"]
     if ui:
         playwright_cmd.append("--ui")
-    elif headed:
+    elif visual:
         playwright_cmd.append("--headed")
+        test_env["TEST_VISUAL"] = "1"
 
     if grep:
         playwright_cmd.extend(["--grep", grep])

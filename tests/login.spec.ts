@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 /**
  * Login page tests — run WITHOUT auth state to verify the unauthenticated flow.

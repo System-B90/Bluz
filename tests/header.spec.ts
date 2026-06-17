@@ -1,6 +1,6 @@
-import { test, expect } from "@playwright/test";
-
 import {
+    test,
+    expect,
     SELECTORS,
     clickIconButton,
     gotoAppHome,
@@ -35,15 +35,11 @@ test.describe("Header / AppBar", () => {
     });
 
     test("displays filter controls in the header", async ({ page }) => {
-        const filterToggle = page.locator(
-            "button:has(svg[data-testid='FilterListIcon'])",
-        );
+        const filterToggle = page.getByRole("button", { name: /הצג סננים|הסתר סננים/ });
         await expect(filterToggle).toBeVisible();
 
         // Filters should not be visible initially
-        const prayerToggle = page.locator(
-            "button:has(svg[data-testid='SynagogueIcon'])",
-        );
+        const prayerToggle = page.getByRole("button", { name: /הסתר תפילות|הצג תפילות/ });
         await expect(prayerToggle).not.toBeVisible();
 
         // Click to open menu
@@ -52,22 +48,16 @@ test.describe("Header / AppBar", () => {
         // Now they should be visible
         await expect(prayerToggle).toBeVisible();
 
-        const paToggle = page.locator(
-            "button:has(svg[data-testid='ChatIcon'])",
-        );
+        const paToggle = page.getByRole("button", { name: /גלה חלונות פ"א|הסתר חלונות פ"א/ });
         await expect(paToggle).toBeVisible();
 
-        const misconfigToggle = page.locator(
-            "button:has(svg[data-testid='WarningIcon'])",
-        );
+        const misconfigToggle = page.getByRole("button", { name: /הצג פערי איוש|הסתר פערי איוש/ });
         await expect(misconfigToggle).toBeVisible();
     });
 
     test("toggles filter visibility via the filter icon", async ({ page }) => {
-        // Find the filter toggle button (FilterListIcon or similar)
-        const filterToggle = page.locator(
-            "button:has(svg[data-testid='FilterListIcon'])",
-        );
+        // Find the filter toggle button
+        const filterToggle = page.getByRole("button", { name: /הצג סננים|הסתר סננים/ });
 
         const instructorFilter = page.getByText("סינון לפי מדריכים").first();
         await expect(instructorFilter).not.toBeVisible();
@@ -82,14 +72,10 @@ test.describe("Header / AppBar", () => {
     });
 
     test("toggles prayer filter on click", async ({ page }) => {
-        const filterToggle = page.locator(
-            "button:has(svg[data-testid='FilterListIcon'])",
-        );
+        const filterToggle = page.getByRole("button", { name: /הצג סננים|הסתר סננים/ });
         await filterToggle.click();
 
-        const prayerToggle = page.locator(
-            "button:has(svg[data-testid='SynagogueIcon'])",
-        );
+        const prayerToggle = page.getByRole("button", { name: /הסתר תפילות|הצג תפילות/ });
         await expect(prayerToggle).toBeVisible();
 
         // Click to toggle prayer filter
@@ -97,9 +83,7 @@ test.describe("Header / AppBar", () => {
         await page.waitForTimeout(300);
 
         // The DoNotDisturbAlt overlay icon should become visible
-        const overlayIcon = page.locator(
-            "svg[data-testid='DoNotDisturbAltIcon']",
-        );
+        const overlayIcon = prayerToggle.locator("svg.absolute");
         await expect(overlayIcon).toBeVisible();
 
         // Toggle back
@@ -108,24 +92,20 @@ test.describe("Header / AppBar", () => {
     });
 
     test("toggles PA windows filter on click", async ({ page }) => {
-        const filterToggle = page.locator(
-            "button:has(svg[data-testid='FilterListIcon'])",
-        );
+        const filterToggle = page.getByRole("button", { name: /הצג סננים|הסתר סננים/ });
         await filterToggle.click();
 
-        const paToggle = page.locator(
-            "button:has(svg[data-testid='ChatIcon'])",
-        );
+        const paToggle = page.getByRole("button", { name: /גלה חלונות פ"א|הסתר חלונות פ"א/ });
         await expect(paToggle).toBeVisible();
 
         await paToggle.click();
         await expect
-            .poll(async () => paToggle.getAttribute("aria-label"))
+            .poll(async () => (await paToggle.getAttribute("title")) || (await paToggle.getAttribute("aria-label")))
             .toMatch(/הסתר חלונות/, { timeout: 10_000 });
 
         await paToggle.click();
         await expect
-            .poll(async () => paToggle.getAttribute("aria-label"))
+            .poll(async () => (await paToggle.getAttribute("title")) || (await paToggle.getAttribute("aria-label")))
             .toMatch(/גלה חלונות/, { timeout: 10_000 });
     });
 
@@ -134,9 +114,7 @@ test.describe("Header / AppBar", () => {
     }) => {
         const appBar = page.locator(SELECTORS.appBar);
 
-        const ganttButton = appBar.locator(
-            "button:has(svg[data-testid='AutoStoriesIcon'])",
-        );
+        const ganttButton = appBar.getByRole("button", { name: "עבור לבניית גאנט" });
         await expect(ganttButton).toBeVisible();
         for (let attempt = 0; attempt < 3; attempt++) {
             await ganttButton.click();
@@ -165,19 +143,15 @@ test.describe("Header / AppBar", () => {
         const appBar = page.locator(SELECTORS.appBar);
 
         // Find the offline mode toggle
-        const offlineToggle = appBar.locator(
-            "button:has(svg[data-testid='WifiTetheringIcon']), button:has(svg[data-testid='WifiTetheringOffIcon']), button:has(svg[data-testid='CloudOffIcon'])",
-        );
+        const offlineToggle = appBar.getByRole("button", { name: /חזור למצב מקוון|עבור למצב לוקלי/ });
 
         if ((await offlineToggle.count()) > 0) {
-            await offlineToggle.first().click();
-            await expect(offlineToggle.first()).toHaveAttribute(
-                "aria-label",
-                "חזור למצב מקוון",
-                { timeout: 15_000 },
-            );
+            const toggleBtn = offlineToggle.first();
+            await toggleBtn.click();
+            await expect(toggleBtn).toHaveClass(/animate-pulse-soft/);
 
-            await offlineToggle.first().click();
+            await toggleBtn.click();
+            await expect(toggleBtn).not.toHaveClass(/animate-pulse-soft/);
             await page.waitForTimeout(500);
         }
     });
@@ -185,34 +159,30 @@ test.describe("Header / AppBar", () => {
     test("displays misconfigurations toggle in warning color when active", async ({
         page,
     }) => {
-        const filterToggle = page.locator(
-            "button:has(svg[data-testid='FilterListIcon'])",
-        );
+        const filterToggle = page.getByRole("button", { name: /הצג סננים|הסתר סננים/ });
         await filterToggle.click();
 
-        const misconfigToggle = page.locator(
-            "button:has(svg[data-testid='WarningIcon'])",
-        );
+        const misconfigToggle = page.getByRole("button", { name: /הצג פערי איוש|הסתר פערי איוש/ });
         await expect(misconfigToggle).toBeVisible();
 
         const initialMisconfigLabel =
-            await misconfigToggle.getAttribute("aria-label");
+            (await misconfigToggle.getAttribute("title")) || (await misconfigToggle.getAttribute("aria-label"));
 
         if (initialMisconfigLabel?.includes("הסתר")) {
             await misconfigToggle.click();
             await expect
-                .poll(async () => misconfigToggle.getAttribute("aria-label"))
+                .poll(async () => (await misconfigToggle.getAttribute("title")) || (await misconfigToggle.getAttribute("aria-label")))
                 .toMatch(/הצג פערי/, { timeout: 10_000 });
         }
 
         await misconfigToggle.click();
         await expect
-            .poll(async () => misconfigToggle.getAttribute("aria-label"))
+            .poll(async () => (await misconfigToggle.getAttribute("title")) || (await misconfigToggle.getAttribute("aria-label")))
             .toMatch(/הסתר פערי/, { timeout: 10_000 });
 
         await misconfigToggle.click();
         await expect
-            .poll(async () => misconfigToggle.getAttribute("aria-label"))
+            .poll(async () => (await misconfigToggle.getAttribute("title")) || (await misconfigToggle.getAttribute("aria-label")))
             .toMatch(/הצג פערי/, { timeout: 10_000 });
     });
 });
