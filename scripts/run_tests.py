@@ -15,6 +15,7 @@ import urllib.request
 
 import typer
 from dotenv import dotenv_values
+from pyhive import HiveClient
 
 app = typer.Typer(help="Bluz E2E testing pipeline utility.")
 
@@ -97,7 +98,7 @@ def wait_for_ui_ready(port: int, timeout: int = 120) -> bool:
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
-            with urllib.request.urlopen(url, context=ctx, timeout=2) as response:
+            with urllib.request.urlopen(url, context=ctx, timeout=15) as response:
                 if response.status == 200:
                     return True
         except Exception:
@@ -204,6 +205,24 @@ def main(
             f"Assigned ports: Postgres={ports['postgres']}, Mongo={ports['mongo']}, HTTP={ports['http']}, HTTPS={ports['https']}"
         )
 
+        # Register temporary SSO client app with Hive
+        hive_url = root_env.get("NEXT_PUBLIC_HIVE_URL", "https://hive.org")
+        typer.secho("Registering temporary SSO client with Hive...", fg=typer.colors.CYAN)
+        client_id = None
+        client_secret = None
+        try:
+            with HiveClient("admin", "Password1", hive_url, verify=False, timeout=10) as client:
+                sso_credentials = client.register_sso_service(
+                    service_name=f"Bluz Test {slug}",
+                    redirect_uris=f"https://127.0.0.3:{ports['https']}/api/auth/callback/hive",
+                )
+                client_id = sso_credentials.get("client_id")
+                client_secret = sso_credentials.get("client_secret")
+                typer.secho(f"SSO registered successfully. ID: {client_id}", fg=typer.colors.GREEN)
+        except Exception as e:
+            typer.secho(f"Failed to register SSO client with Hive: {e}", fg=typer.colors.RED)
+            raise RuntimeError(f"SSO registration failed: {e}")
+
         # Set environment for docker compose
         compose_env = {
             **os.environ,
@@ -212,6 +231,9 @@ def main(
             "TEST_MONGO_PORT": str(ports["mongo"]),
             "TEST_PROXY_PORT_HTTP": str(ports["http"]),
             "TEST_PROXY_PORT_HTTPS": str(ports["https"]),
+            "TEST_HIVE_CLIENT_ID": client_id,
+            "TEST_HIVE_CLIENT_SECRET": client_secret,
+            "NEXT_PUBLIC_HIVE_URL": hive_url,
             "BLUZ_VERSION": "latest",
         }
 
@@ -260,8 +282,20 @@ def main(
     typer.secho("Syncing database schema (drizzle-kit)...", fg=typer.colors.CYAN)
     # Generate migrations first
     subprocess.run(["npm", "run", "db:generate"], env=test_env, shell=True, check=True, timeout=60)
-    # Push schema directly
-    subprocess.run(["npm", "run", "db:push"], env=test_env, shell=True, check=True, timeout=60)
+    # Push schema directly (retry to wait for PostgreSQL container to be fully ready)
+    max_retries = 15
+    for attempt in range(1, max_retries + 1):
+        try:
+            subprocess.run(["npm", "run", "db:push"], env=test_env, shell=True, check=True, timeout=60)
+            break
+        except subprocess.CalledProcessError as e:
+            if attempt == max_retries:
+                raise e
+            typer.secho(
+                f"Database not ready yet. Retrying db:push ({attempt}/{max_retries})...",
+                fg=typer.colors.YELLOW,
+            )
+            time.sleep(3)
 
     # 4. Run database seeding
     typer.secho("Seeding databases...", fg=typer.colors.CYAN)
