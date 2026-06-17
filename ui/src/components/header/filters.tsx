@@ -30,60 +30,69 @@ export function Filters({ ...props }: BoxProps) {
             <FilterInstructors
                 boxSizing={"border-box"}
                 minWidth={200}
-                width={"auto"}
+                width={"100%"}
             />
             <FilterCourses
                 boxSizing={"border-box"}
                 minWidth={200}
-                width={"auto"}
+                width={"100%"}
             />
 
-            <Tooltip
-                title={
-                    showPAsFor !== null ? 'הסתר חלונות פ"א' : 'גלה חלונות פ"א'
-                }
+            <Box
+                alignItems="center"
+                display="flex"
+                flexDirection="row"
+                gap={2}
+                justifyContent="center"
+                mt={0.5}
             >
-                <IconButton
-                    color={showPAsFor !== null ? "primary" : "inherit"}
-                    onClick={handleShowPA}
+                <Tooltip
+                    title={
+                        showPAsFor !== null ? 'הסתר חלונות פ"א' : 'גלה חלונות פ"א'
+                    }
                 >
-                    <ChatIcon />
-                </IconButton>
-            </Tooltip>
+                    <IconButton
+                        color={showPAsFor !== null ? "primary" : "inherit"}
+                        onClick={handleShowPA}
+                    >
+                        <ChatIcon />
+                    </IconButton>
+                </Tooltip>
 
-            <Tooltip title={hidePrayers ? "הצג תפילות" : "הסתר תפילות"}>
-                <IconButton
-                    className="relative"
-                    color="inherit"
-                    onClick={() => setHidePrayers((v) => !v)}
-                >
-                    <SynagogueIcon
-                        sx={{
-                            opacity: hidePrayers ? 0.7 : 1,
-                            padding: hidePrayers ? 0.3 : 0,
-                        }}
-                    />
-                    <DoNotDisturbAltIcon
-                        className="absolute"
-                        color="secondary"
-                        fontSize="large"
-                        sx={{ opacity: hidePrayers ? 1 : 0 }}
-                    />
-                </IconButton>
-            </Tooltip>
+                <Tooltip title={hidePrayers ? "הצג תפילות" : "הסתר תפילות"}>
+                    <IconButton
+                        className="relative"
+                        color="inherit"
+                        onClick={() => setHidePrayers((v) => !v)}
+                    >
+                        <SynagogueIcon
+                            sx={{
+                                opacity: hidePrayers ? 0.7 : 1,
+                                padding: hidePrayers ? 0.3 : 0,
+                            }}
+                        />
+                        <DoNotDisturbAltIcon
+                            className="absolute"
+                            color="secondary"
+                            fontSize="large"
+                            sx={{ opacity: hidePrayers ? 1 : 0 }}
+                        />
+                    </IconButton>
+                </Tooltip>
 
-            <Tooltip
-                title={
-                    showMisconfigurations ? "הסתר פערי איוש" : "הצג פערי איוש"
-                }
-            >
-                <IconButton
-                    color={showMisconfigurations ? "warning" : "inherit"}
-                    onClick={() => setShowMisconfigurations((v) => !v)}
+                <Tooltip
+                    title={
+                        showMisconfigurations ? "הסתר פערי איוש" : "הצג פערי איוש"
+                    }
                 >
-                    <WarningIcon />
-                </IconButton>
-            </Tooltip>
+                    <IconButton
+                        color={showMisconfigurations ? "warning" : "inherit"}
+                        onClick={() => setShowMisconfigurations((v) => !v)}
+                    >
+                        <WarningIcon />
+                    </IconButton>
+                </Tooltip>
+            </Box>
         </Box>
     );
 }
