@@ -4,11 +4,11 @@ events {
 
 http {
     upstream bluz_frontend {
-        server bluz-test-ui:3000;
+        server ui:3000;
     }
 
     upstream bluz_websocket {
-        server bluz-test-sessions:28199;
+        server sessions:28199;
     }
 
     # Redirect all HTTP traffic to HTTPS

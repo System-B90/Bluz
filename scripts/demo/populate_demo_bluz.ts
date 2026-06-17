@@ -81,12 +81,13 @@ async function main() {
     const isRunningInDocker =
         fs.existsSync("/.dockerenv") || process.env.IS_DOCKER === "true";
     if (!isRunningInDocker) {
+        const mongoPort = process.env.MONGO_PORT || "27018";
         console.log(
-            "Running on host machine. Translating MongoDB connection to local port-mapping (127.0.0.3:27018)...",
+            `Running on host machine. Translating MongoDB connection to local port-mapping (127.0.0.3:${mongoPort})...`
         );
         connectionString = connectionString.replace(
             /@([^/:]+)(:\d+)?/,
-            "@127.0.0.3:27018",
+            `@127.0.0.3:${mongoPort}`
         );
     }
 

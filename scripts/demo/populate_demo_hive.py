@@ -371,8 +371,8 @@ def main():
     root_dir = Path(__file__).resolve().parents[2]
     load_dotenv(dotenv_path=root_dir / ".env")
     hive_url = os.getenv("NEXT_PUBLIC_HIVE_URL", "https://hive.org/")
-
-    with HiveClient.from_sso(hive_url, verify=False, timeout=10) as client:
+    # Use direct password authentication to avoid interactive browser SSO in headless testing
+    with HiveClient("admin", "Password1", hive_url, verify=False, timeout=10) as client:
         clean_existing_data(client)
 
         try:

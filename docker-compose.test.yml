@@ -12,31 +12,37 @@ services:
             context: .
             dockerfile: ui/Dockerfile
             target: dev
-        container_name: bluz-test-ui
-        command: npm run dev
+        container_name: ${TEST_PROJECT_NAME}-ui
+        command: npm run next:dev
         environment:
             - NODE_ENV=development
-            - MONGO_CONNECTION_STRING=mongodb://mongo_admin:4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP@bluz-test-mongodb:27017/
-            - DATABASE_URL=postgres://admin:lCqoKrgSLSGmZH98gvV15Kz6yaDUw8w2@bluz-test-curriculum-db:5432/curriculum_db
+            - MONGO_CONNECTION_STRING=mongodb://mongo_admin:4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP@mongodb:27017/
+            - DATABASE_URL=postgres://admin:lCqoKrgSLSGmZH98gvV15Kz6yaDUw8w2@curriculum-db:5432/curriculum_db
         depends_on:
             - curriculum-db
             - sessions
             - mongodb
 
     curriculum-db:
-        container_name: bluz-test-curriculum-db
+        container_name: ${TEST_PROJECT_NAME}-curriculum-db
+        ports:
+            - "127.0.0.3:${TEST_POSTGRES_PORT}:5432"
 
     mongodb:
-        container_name: bluz-test-mongodb
+        container_name: ${TEST_PROJECT_NAME}-mongodb
+        ports:
+            - "127.0.0.3:${TEST_MONGO_PORT}:27017"
 
     sessions:
-        container_name: bluz-test-sessions
+        container_name: ${TEST_PROJECT_NAME}-sessions
 
     proxy:
-        container_name: bluz-test-proxy
+        container_name: ${TEST_PROJECT_NAME}-proxy
         ports: !override
-            - "127.0.0.3:80:80"
-            - "127.0.0.3:443:443"
+            - "127.0.0.3:${TEST_PROXY_PORT_HTTP}:80"
+            - "127.0.0.3:${TEST_PROXY_PORT_HTTPS}:443"
         volumes: !override
             - ./nginx/nginx.conf.test:/etc/nginx/nginx.conf:ro
             - ./nginx/ssl:/etc/nginx/ssl:ro
+
+
