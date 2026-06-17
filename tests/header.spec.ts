@@ -35,57 +35,69 @@ test.describe("Header / AppBar", () => {
     });
 
     test("displays filter controls in the header", async ({ page }) => {
-        const appBar = page.locator(SELECTORS.appBar);
+        const filterToggle = page.locator(
+            "button:has(svg[data-testid='FilterListIcon'])",
+        );
+        await expect(filterToggle).toBeVisible();
 
-        // The prayer toggle (SynagogueIcon) should be visible
-        const prayerToggle = appBar.locator(
+        // Filters should not be visible initially
+        const prayerToggle = page.locator(
             "button:has(svg[data-testid='SynagogueIcon'])",
         );
+        await expect(prayerToggle).not.toBeVisible();
+
+        // Click to open menu
+        await filterToggle.click();
+
+        // Now they should be visible
         await expect(prayerToggle).toBeVisible();
 
-        // The PA windows toggle (ChatIcon) should be visible
-        const paToggle = appBar.locator(
+        const paToggle = page.locator(
             "button:has(svg[data-testid='ChatIcon'])",
         );
         await expect(paToggle).toBeVisible();
 
-        // The misconfigurations toggle (WarningIcon) should be visible
-        const misconfigToggle = appBar.locator(
+        const misconfigToggle = page.locator(
             "button:has(svg[data-testid='WarningIcon'])",
         );
         await expect(misconfigToggle).toBeVisible();
     });
 
     test("toggles filter visibility via the filter icon", async ({ page }) => {
-        const appBar = page.locator(SELECTORS.appBar);
-
         // Find the filter toggle button (FilterListIcon or similar)
-        const filterToggle = appBar.locator(
+        const filterToggle = page.locator(
             "button:has(svg[data-testid='FilterListIcon'])",
         );
 
         const instructorFilter = page.getByText("סינון לפי מדריכים").first();
-        await expect(instructorFilter).toBeVisible();
+        await expect(instructorFilter).not.toBeVisible();
 
-        await filterToggle.click();
-        await expect(instructorFilter).not.toBeVisible({ timeout: 10_000 });
-
+        // Open menu
         await filterToggle.click();
         await expect(instructorFilter).toBeVisible({ timeout: 10_000 });
+
+        // Close menu
+        await page.keyboard.press("Escape");
+        await expect(instructorFilter).not.toBeVisible({ timeout: 10_000 });
     });
 
     test("toggles prayer filter on click", async ({ page }) => {
-        const appBar = page.locator(SELECTORS.appBar);
-        const prayerToggle = appBar.locator(
+        const filterToggle = page.locator(
+            "button:has(svg[data-testid='FilterListIcon'])",
+        );
+        await filterToggle.click();
+
+        const prayerToggle = page.locator(
             "button:has(svg[data-testid='SynagogueIcon'])",
         );
+        await expect(prayerToggle).toBeVisible();
 
         // Click to toggle prayer filter
         await prayerToggle.click();
         await page.waitForTimeout(300);
 
         // The DoNotDisturbAlt overlay icon should become visible
-        const overlayIcon = appBar.locator(
+        const overlayIcon = page.locator(
             "svg[data-testid='DoNotDisturbAltIcon']",
         );
         await expect(overlayIcon).toBeVisible();
@@ -96,10 +108,15 @@ test.describe("Header / AppBar", () => {
     });
 
     test("toggles PA windows filter on click", async ({ page }) => {
-        const appBar = page.locator(SELECTORS.appBar);
-        const paToggle = appBar.locator(
+        const filterToggle = page.locator(
+            "button:has(svg[data-testid='FilterListIcon'])",
+        );
+        await filterToggle.click();
+
+        const paToggle = page.locator(
             "button:has(svg[data-testid='ChatIcon'])",
         );
+        await expect(paToggle).toBeVisible();
 
         await paToggle.click();
         await expect
@@ -168,10 +185,15 @@ test.describe("Header / AppBar", () => {
     test("displays misconfigurations toggle in warning color when active", async ({
         page,
     }) => {
-        const appBar = page.locator(SELECTORS.appBar);
-        const misconfigToggle = appBar.locator(
+        const filterToggle = page.locator(
+            "button:has(svg[data-testid='FilterListIcon'])",
+        );
+        await filterToggle.click();
+
+        const misconfigToggle = page.locator(
             "button:has(svg[data-testid='WarningIcon'])",
         );
+        await expect(misconfigToggle).toBeVisible();
 
         const initialMisconfigLabel =
             await misconfigToggle.getAttribute("aria-label");

@@ -8,11 +8,9 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 import { CurriculumIcon } from "@/components/header/CurriculumIcon";
 import { FilterIcon } from "@/components/header/FilterIcon";
-import { Filters } from "@/components/header/filters";
 import { Logo } from "@/components/header/logo";
 import { OfflineModeIcon } from "@/components/header/OfflineModeIcon";
 import { UserAccessCard } from "@/components/header/UserAccessCard";
@@ -25,8 +23,6 @@ export function ScheduleAppBar({
 } & Exclude<AppBarProps, "position">) {
     const pathname = usePathname();
     const curriculumPage = pathname.includes("/curriculum");
-    const [filtersVisible, setFiltersVisible] =
-        useState<boolean>(!curriculumPage);
 
     return (
         <AppBar
@@ -59,26 +55,7 @@ export function ScheduleAppBar({
                     <UserAccessCard />
                 </Box>
 
-                <Box
-                    alignItems={"center"}
-                    display={"flex"}
-                    flexDirection={"row"}
-                    flexGrow={1}
-                    justifyContent={"center"}
-                >
-                    {filtersVisible ? (
-                        <Filters
-                            alignItems={"center"}
-                            boxSizing={"border-box"}
-                            display={"flex"}
-                            flex={1}
-                            gap={1}
-                            justifyContent={"center"}
-                            paddingBlockEnd={1}
-                            paddingBlockStart={1}
-                        />
-                    ) : null}
-                </Box>
+                <Box flexGrow={1} />
 
                 <Box
                     alignContent={"center"}
@@ -87,12 +64,7 @@ export function ScheduleAppBar({
                     gap={1}
                     justifyContent={"flex-end"}
                 >
-                    {!curriculumPage && (
-                        <FilterIcon
-                            filtersVisible={filtersVisible}
-                            setFiltersVisible={setFiltersVisible}
-                        />
-                    )}
+                    {!curriculumPage && <FilterIcon />}
                     {!curriculumPage && <OfflineModeIcon />}
                     <CurriculumIcon />
 
