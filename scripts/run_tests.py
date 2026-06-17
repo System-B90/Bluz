@@ -152,7 +152,7 @@ def main(
                 check=True,
             )
             typer.secho("Backend Unit Tests Passed!", fg=typer.colors.GREEN, bold=True)
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             typer.secho("Backend Unit Tests Failed!", fg=typer.colors.RED, bold=True)
             raise RuntimeError("Backend Unit Tests failed.")
 
