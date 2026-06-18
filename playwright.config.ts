@@ -20,7 +20,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
     testDir: "./tests",
-    testIgnore: "tests/backend/**",
+    testMatch: "**/*.spec.ts",
     timeout: 15_000,
     fullyParallel: false,
     forbidOnly: !!process.env.CI,
@@ -54,7 +54,7 @@ export default defineConfig({
         },
         {
             name: "chromium",
-            testIgnore: [/login\.spec\.ts/, /auth\.setup\.ts/],
+            testIgnore: [/login\.spec\.ts/, /auth\.setup\.ts/, /backend/],
             use: {
                 ...devices["Desktop Chrome"],
                 storageState: ".auth/user.json",

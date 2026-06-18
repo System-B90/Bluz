@@ -112,7 +112,9 @@ def main(
         False, "--ui", help="Run Playwright tests with interactive UI."
     ),
     visual: bool = typer.Option(
-        False, "--visual", help="Run Playwright tests in visual mode (headed + single window)."
+        False,
+        "--visual",
+        help="Run Playwright tests in visual mode (headed + single window).",
     ),
     seed_hive: bool = typer.Option(
         False, "--seed-hive", help="Clear and reseed the Hive database."
@@ -332,7 +334,7 @@ def main(
 
     # 4. Run database seeding
     typer.secho("Seeding databases...", fg=typer.colors.CYAN)
-    
+
     # Hive populate (runs Python populate script) only if requested or metadata missing
     hive_data_path = os.path.join("scripts", "demo", "hive_data.json")
     if seed_hive or not os.path.exists(hive_data_path):
@@ -344,7 +346,10 @@ def main(
         )
         typer.secho("Populated demo hive.")
     else:
-        typer.secho("Skipping Hive database seeding (reusing existing data).", fg=typer.colors.YELLOW)
+        typer.secho(
+            "Skipping Hive database seeding (reusing existing data).",
+            fg=typer.colors.YELLOW,
+        )
     # Bluz populate (runs TS populate script)
     subprocess.run(
         ["npx", "tsx", "scripts/demo/populate_demo_bluz.ts"],
