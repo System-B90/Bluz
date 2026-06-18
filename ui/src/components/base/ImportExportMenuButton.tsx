@@ -1,5 +1,6 @@
 import DownloadIcon from "@mui/icons-material/Download";
 import ImportExportIcon from "@mui/icons-material/ImportExport";
+import TableChartIcon from "@mui/icons-material/TableChart";
 import UploadIcon from "@mui/icons-material/Upload";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
@@ -38,6 +39,8 @@ export type ImportExportMenuButtonProps = {
     exportTitle?: string;
     onExportSuccess?: () => void;
     onExportError?: (error: any) => void;
+    onExportExcel?: () => void | Promise<void>;
+    exportExcelLabel?: string;
 };
 
 export function ImportExportMenuButton({
@@ -57,6 +60,8 @@ export function ImportExportMenuButton({
     exportTitle = "data",
     onExportSuccess,
     onExportError,
+    onExportExcel,
+    exportExcelLabel = "ייצוא לאקסל",
 }: ImportExportMenuButtonProps) {
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const open = Boolean(anchorEl);
@@ -104,6 +109,18 @@ export function ImportExportMenuButton({
         onExportError,
         handleClose,
     ]);
+
+    const handleExportExcelClick = useCallback(async () => {
+        try {
+            if (onExportExcel) {
+                await onExportExcel();
+            }
+            if (onExportSuccess) onExportSuccess();
+        } catch (error) {
+            if (onExportError) onExportError(error);
+        }
+        handleClose();
+    }, [onExportExcel, onExportSuccess, onExportError, handleClose]);
 
     const handleImportChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,6 +184,14 @@ export function ImportExportMenuButton({
                     </ListItemIcon>
                     <ListItemText>{exportLabel}</ListItemText>
                 </MenuItem>
+                {onExportExcel && (
+                    <MenuItem disabled={exportDisabled} onClick={handleExportExcelClick}>
+                        <ListItemIcon>
+                            <TableChartIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{exportExcelLabel}</ListItemText>
+                    </MenuItem>
+                )}
                 <MenuItem component="label" disabled={importDisabled}>
                     <ListItemIcon>
                         <UploadIcon fontSize="small" />

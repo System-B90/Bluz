@@ -41,6 +41,11 @@ export function CurriculumActionItems({
         return await apiExportCurriculum(sourceCurriculum.id);
     }, [sourceCurriculum]);
 
+    const handleExportExcel = useCallback(() => {
+        if (!sourceCurriculum) return;
+        window.open(`/api/gantt/curriculums/${sourceCurriculum.id}/export/excel`, "_blank");
+    }, [sourceCurriculum]);
+
     const handleExportSuccess = useCallback(() => {
         enqueueSnackbar("הגאנט יוצא בהצלחה!", { variant: "success" });
     }, [enqueueSnackbar]);
@@ -105,13 +110,14 @@ export function CurriculumActionItems({
                 onUpdate={onUpdate}
                 sourceCurriculum={sourceCurriculum}
             />
-            <ImportExportMenuButton
+             <ImportExportMenuButton
                 exportDisabled={isDisabled || !sourceCurriculum}
                 exportFilenamePrefix="bluz-gantt-"
                 exportTitle={sourceCurriculum?.title}
                 iconOnly
                 importDisabled={isDisabled}
                 onExport={handleExport}
+                onExportExcel={handleExportExcel}
                 onExportError={handleExportError}
                 onExportSuccess={handleExportSuccess}
                 onImport={handleImport}
