@@ -243,7 +243,6 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
                 });
                 dispatch({ type: "DELETE_CUSTOM_ROOM", payload: roomId });
                 dispatch({ type: "ADD_CUSTOM_ROOM", payload: createdRoom });
-                loadRooms();
             } catch (error) {
                 dispatch({
                     type: "ROLLBACK_ROOMS",
@@ -256,7 +255,7 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
                 );
             }
         },
-        [state.customRooms, state.hiveRooms, loadRooms],
+        [state.customRooms, state.hiveRooms],
     );
 
     const updateRoom = useCallback(
@@ -272,7 +271,6 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
                     variant: "success",
                 });
                 dispatch({ type: "UPDATE_CUSTOM_ROOM", payload: updatedRoom });
-                loadRooms();
             } catch (error) {
                 dispatch({
                     type: "ROLLBACK_ROOMS",
@@ -285,7 +283,7 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
                 );
             }
         },
-        [state.customRooms, state.hiveRooms, loadRooms],
+        [state.customRooms, state.hiveRooms],
     );
 
     const deleteRoom = useCallback(
@@ -304,7 +302,6 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
                         variant: "success",
                     },
                 );
-                loadRooms();
             } catch (error) {
                 dispatch({
                     type: "ROLLBACK_ROOMS",
@@ -317,7 +314,7 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
                 );
             }
         },
-        [state.customRooms, state.hiveRooms, loadRooms],
+        [state.customRooms, state.hiveRooms],
     );
 
     const updateRoomExtendedInfo = useCallback(
@@ -350,7 +347,6 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
                         variant: "success",
                     },
                 );
-                loadRooms();
             } catch (error) {
                 dispatch({
                     type: "ROLLBACK_ROOMS",
@@ -363,7 +359,7 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
                 );
             }
         },
-        [state.customRooms, state.hiveRooms, loadRooms],
+        [state.customRooms, state.hiveRooms],
     );
 
     useEffect(() => {
@@ -371,8 +367,24 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
     }, [loadRooms]);
 
     const onWebSocketMessage: MessageHandlerType = useCallback(
-        (messageType: MessageTypes, _data: any) => {
-            if (messageType === MessageTypes.ROOMS_UPDATE) {
+        (messageType: MessageTypes, data: any) => {
+            if (messageType !== MessageTypes.ROOMS_UPDATE) return;
+
+            if (data?.rooms) {
+                // Incremental update — apply payload without a full reload
+                const roomMap: Record<string, CustomRoom | null> = data.rooms;
+                Object.entries(roomMap).forEach(([roomId, room]) => {
+                    if (room === null) {
+                        dispatch({ type: "DELETE_CUSTOM_ROOM", payload: roomId });
+                    } else {
+                        dispatch({
+                            type: "UPDATE_CUSTOM_ROOM",
+                            payload: room as CustomRoom,
+                        });
+                    }
+                });
+            } else {
+                // Extended-info or unknown payload — fall back to full reload
                 loadRooms();
             }
         },

@@ -161,7 +161,6 @@ export const CoursesProvider = ({
                 );
                 dispatch({ type: "DELETE_COURSE", payload: courseId });
                 dispatch({ type: "ADD_COURSE", payload: createdCourse });
-                loadCourses();
             } catch (error) {
                 dispatch({
                     type: "ROLLBACK_COURSES",
@@ -174,7 +173,7 @@ export const CoursesProvider = ({
                 );
             }
         },
-        [state.courses, loadCourses, enqueueSnackbar],
+        [state.courses, enqueueSnackbar],
     );
 
     const updateCourse = useCallback(
@@ -188,7 +187,6 @@ export const CoursesProvider = ({
                     variant: "success",
                 });
                 dispatch({ type: "UPDATE_COURSE", payload: updatedCourse });
-                loadCourses();
             } catch (error) {
                 dispatch({
                     type: "ROLLBACK_COURSES",
@@ -201,7 +199,7 @@ export const CoursesProvider = ({
                 );
             }
         },
-        [state.courses, loadCourses, enqueueSnackbar],
+        [state.courses, enqueueSnackbar],
     );
 
     const updateCoursePartial = useCallback(
@@ -224,7 +222,6 @@ export const CoursesProvider = ({
                     },
                 );
                 dispatch({ type: "UPDATE_COURSE", payload: updatedCourse });
-                loadCourses();
             } catch (error) {
                 dispatch({
                     type: "ROLLBACK_COURSES",
@@ -237,7 +234,7 @@ export const CoursesProvider = ({
                 );
             }
         },
-        [state.courses, loadCourses, enqueueSnackbar],
+        [state.courses, enqueueSnackbar],
     );
 
     const deleteCourse = useCallback(
@@ -255,7 +252,6 @@ export const CoursesProvider = ({
                         variant: "success",
                     },
                 );
-                loadCourses();
             } catch (error) {
                 dispatch({
                     type: "ROLLBACK_COURSES",
@@ -268,7 +264,7 @@ export const CoursesProvider = ({
                 );
             }
         },
-        [state.courses, loadCourses, enqueueSnackbar],
+        [state.courses, enqueueSnackbar],
     );
 
     useEffect(() => {
@@ -276,8 +272,25 @@ export const CoursesProvider = ({
     }, [loadCourses]);
 
     const onWebSocketMessage: MessageHandlerType = useCallback(
-        (messageType: MessageTypes, _data: any) => {
-            if (messageType === MessageTypes.COURSES_UPDATE) {
+        (messageType: MessageTypes, data: any) => {
+            if (messageType !== MessageTypes.COURSES_UPDATE) return;
+
+            if (data?.courses) {
+                const courseMap: Record<string, Course | null> = data.courses;
+                Object.entries(courseMap).forEach(([courseId, course]) => {
+                    if (course === null) {
+                        dispatch({
+                            type: "DELETE_COURSE",
+                            payload: courseId as CourseId,
+                        });
+                    } else {
+                        dispatch({
+                            type: "UPDATE_COURSE",
+                            payload: course as Course,
+                        });
+                    }
+                });
+            } else {
                 loadCourses();
             }
         },

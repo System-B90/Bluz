@@ -21,9 +21,6 @@ async function setDbCourse(course: Course, options?: UpdateOptions) {
     if (data.matchedCount === 0 && !options?.upsert) {
         throw new ClientApiError(`No course by id ${courseId} found!`);
     }
-    if (data.modifiedCount === 0) {
-        throw new ClientApiError(`Course ${courseId} data not modified!`);
-    }
     SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, {
         courses: { [courseId]: course },
     });
