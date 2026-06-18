@@ -235,7 +235,7 @@ export function curriculumReducer(
         const moduleDoc = state.modules[action.payload.moduleId];
         if (!moduleDoc) return state;
 
-        const updatedEvents = state.events;
+        const updatedEvents = { ...state.events };
 
         const updateModuleEvent: AllocateTimeToEventCallback = ({
             eventId,

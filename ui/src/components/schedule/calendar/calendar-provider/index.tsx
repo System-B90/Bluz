@@ -1,7 +1,7 @@
 "use client";
 
 import { enqueueSnackbar } from "notistack";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { apiGetEvents } from "@/api-client/calendar";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
@@ -63,6 +63,16 @@ export const CalendarProvider = ({
     useEffect(() => {
         loadEvents(startDate, endDate);
     }, [startDate, endDate, loadEvents]);
+
+    // Force a full refetch when returning from offline mode so concurrent
+    // changes made by other users while we were offline are not lost.
+    const prevOfflineModeRef = useRef(offlineMode);
+    useEffect(() => {
+        if (prevOfflineModeRef.current && !offlineMode) {
+            loadEvents(startDate, endDate);
+        }
+        prevOfflineModeRef.current = offlineMode;
+    }, [offlineMode, loadEvents, startDate, endDate]);
 
     return (
         <CalendarFiltersProvider>

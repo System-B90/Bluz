@@ -163,17 +163,34 @@ wss.on("connection", (ws) => {
     ws.on("message", (dataString) => {
         console.log(`[WebSocket] : Data: ${dataString}`);
 
-        const data = JSON.parse(dataString.toString());
+        let data: Record<string, unknown>;
+        try {
+            data = JSON.parse(dataString.toString());
+        } catch {
+            console.error("[WebSocket] : Received malformed frame, ignoring");
+            return;
+        }
 
-        if (data["sender"] === WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC) {
+        const msgType = data["type"];
+        const validTypes: unknown[] = Object.values(MessageTypes);
+        const isSenderMessage =
+            data["sender"] === WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC;
+        if (!isSenderMessage && !validTypes.includes(msgType)) {
+            console.error(
+                `[WebSocket] : Unknown message type "${msgType}", ignoring`,
+            );
+            return;
+        }
+
+        if (isSenderMessage) {
             handleServerMessage(data);
         }
 
         if (data["type"] === MessageTypes.REGISTER_SESSION) {
-            registerSession(ws, data["initiatorKey"]);
+            registerSession(ws, data["initiatorKey"] as string);
             return;
         } else if (data["type"] === MessageTypes.REGISTER_SYNC_PROVIDER) {
-            registerSyncObjectConnection(ws, data["syncObjectId"]);
+            registerSyncObjectConnection(ws, data["syncObjectId"] as string);
             return;
         }
     });
