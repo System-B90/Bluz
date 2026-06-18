@@ -24,7 +24,7 @@ export const CalendarProvider = ({
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
 
-    const { events, dispatch, undo, redo } = useEventState();
+    const { events, dispatch, remoteDispatch, undo, redo } = useEventState();
 
     useEffect(() => {
         if (offlineMode && events.length > 0) {
@@ -32,13 +32,15 @@ export const CalendarProvider = ({
         }
     }, [offlineMode, events, captureInitialEvents]);
 
-    useEventWebsocket(offlineMode, dispatch);
+    // WS updates go through remoteDispatch so they don't pollute the undo stack.
+    useEventWebsocket(offlineMode, remoteDispatch);
 
     const { saveEvent, deleteEvent } = useEventActions(
         events,
         offlineMode,
         captureEventBeforeEdit,
         dispatch,
+        remoteDispatch,
     );
 
     const loadEvents = useCallback(
@@ -47,7 +49,10 @@ export const CalendarProvider = ({
 
             apiGetEvents({ startDate: s, endDate: e })
                 .then((fetchedEvents) => {
-                    dispatch({ type: "SET_EVENTS", payload: fetchedEvents });
+                    remoteDispatch({
+                        type: "SET_EVENTS",
+                        payload: fetchedEvents,
+                    });
                 })
                 .catch((error) =>
                     enqueueApiErrorSnackbar(
@@ -57,7 +62,7 @@ export const CalendarProvider = ({
                     ),
                 );
         },
-        [dispatch],
+        [remoteDispatch],
     );
 
     useEffect(() => {

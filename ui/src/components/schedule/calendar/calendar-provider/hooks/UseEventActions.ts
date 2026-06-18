@@ -16,6 +16,7 @@ export const useEventActions = (
     offlineMode: boolean,
     captureEventBeforeEdit: (ev: Event) => void,
     dispatch: (action: CalendarAction) => void,
+    remoteDispatch: (action: CalendarAction) => void,
 ) => {
     const saveEvent = useCallback(
         (eventPartial: Partial<Event>) => {
@@ -29,6 +30,7 @@ export const useEventActions = (
                 if (oldEvent) captureEventBeforeEdit(oldEvent);
             }
 
+            // Optimistic local update — pushed to undo history
             dispatch({ type: "UPSERT_EVENT", payload: newEvent });
 
             if (!offlineMode) {
@@ -43,7 +45,8 @@ export const useEventActions = (
                 apiCall(newEvent)
                     .then((res) => {
                         enqueueSnackbar(successMsg, { variant: "success" });
-                        dispatch({ type: "UPSERT_EVENT", payload: res });
+                        // Server confirmation — update without polluting undo history
+                        remoteDispatch({ type: "UPSERT_EVENT", payload: res });
                     })
                     .catch((error) => {
                         enqueueApiErrorSnackbar(
@@ -54,7 +57,7 @@ export const useEventActions = (
                     });
             }
         },
-        [events, offlineMode, captureEventBeforeEdit, dispatch],
+        [events, offlineMode, captureEventBeforeEdit, dispatch, remoteDispatch],
     );
 
     const deleteEvent = useCallback(
