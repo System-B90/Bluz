@@ -110,7 +110,10 @@ export type Action =
           type: "UPDATE_SYLLABUS";
           payload: { id: GanttSyllabusId; updates: Partial<GanttSyllabus> };
       }
-    | { type: "UPDATE_WEEK"; payload: { id: GanttWeekId; updates: any } };
+    | {
+          type: "UPDATE_WEEK";
+          payload: { id: GanttWeekId; updates: Partial<GanttWeek> };
+      };
 
 function injectDocumentTimes<T extends BaseGantItem>(
     rawDoc: T,
