@@ -17,6 +17,8 @@ import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
+import { Course } from "@/api-shared/types/course";
+import { CourseUser } from "@/api-shared/types/hive";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { CourseItem } from "@/components/settings-dialog/tabs/global/course-settings/CourseItem";
@@ -61,7 +63,7 @@ function InstructorDragOverlay({
     instructors,
 }: {
     activeId: string;
-    instructors: Array<any>;
+    instructors: Array<CourseUser>;
 }) {
     const inst = instructors.find((i) => `instructor-${i.id}` === activeId);
     if (!inst) return null;
@@ -73,7 +75,7 @@ function CourseDragOverlay({
     courses,
 }: {
     activeId: string;
-    courses: Array<any>;
+    courses: Array<Course>;
 }) {
     const course = courses.find((c) => `course-${c.id}` === activeId);
     if (!course) return null;
