@@ -1,0 +1,77 @@
+import { NextRequest } from "next/server";
+
+import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { ApiT } from "@/api-shared/types/gantt/api-layer";
+import { BaseGantItem } from "@/api-shared/types/gantt/models";
+
+export type BasicGantOperations<
+    TEntity extends BaseGantItem,
+    TCreatePayload = Omit<TEntity, "id">,
+> = {
+    listItems: () => Promise<Record<TEntity["id"], TEntity["title"]>>;
+    getMultipleItems: (ids: Array<string>) => Promise<Array<TEntity>>;
+    getItem: (id: TEntity["id"]) => Promise<any>;
+    createNewItem: (
+        payload: TCreatePayload,
+    ) => Promise<ApiT<TEntity> | TEntity>; // TODO: This should always be ApiT<TEntity>
+    updateItem: (
+        id: TEntity["id"],
+        updates: Partial<TEntity>,
+    ) => Promise<TEntity>;
+    deleteItem: (id: TEntity["id"]) => Promise<void>;
+};
+
+export type BuildGantCollectionRoutesProps<
+    TEntity extends BaseGantItem,
+    TCreatePayload = Omit<TEntity, "id">,
+> = {
+    dbSet: BasicGantOperations<TEntity, TCreatePayload>;
+};
+
+export function buildGantCollectionRoutes<
+    TEntity extends BaseGantItem,
+    TCreatePayload = Omit<TEntity, "id">,
+>({ dbSet }: BuildGantCollectionRoutesProps<TEntity, TCreatePayload>) {
+    async function GET(request: NextRequest) {
+        try {
+            const requestedIds = request.nextUrl.searchParams.get("ids");
+            let items: Record<TEntity["id"], TEntity | TEntity["title"]>;
+
+            if (requestedIds === null) {
+                items = await dbSet.listItems();
+            } else {
+                const itemArray = await dbSet.getMultipleItems(
+                    requestedIds.split(","),
+                );
+                items = itemArray.reduce(
+                    (acc, doc) => {
+                        acc[doc.id as TEntity["id"]] = doc;
+                        return acc;
+                    },
+                    {} as Record<TEntity["id"], TEntity>,
+                );
+            }
+            return ApiSuccess(items);
+        } catch (error) {
+            return catchHandler(request, error);
+        }
+    }
+
+    async function POST(request: NextRequest) {
+        try {
+            // Strongly typed as TCreatePayload, allowing relational IDs to flow into the DB layer
+            const payload: TCreatePayload = await request.json();
+
+            // The DB layer handles extracting the foreign keys and returning the clean TEntity
+            const newItem = await dbSet.createNewItem(payload);
+            return ApiSuccess(newItem);
+        } catch (error) {
+            return catchHandler(request, error);
+        }
+    }
+
+    return {
+        GET,
+        POST,
+    } as const;
+}

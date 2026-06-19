@@ -1,0 +1,64 @@
+export const dynamic = "force-dynamic";
+
+import {
+    ApiSuccess,
+    catchHandler,
+    ServerApiWithParams,
+} from "@/api-server/common";
+import { DbSettings } from "@/api-server/db-settings";
+import { updatePrayerEvents } from "@/api-server/prayer";
+import { inplaceDateFixup } from "@/api-shared/date-fixer";
+import { PrayerSettings } from "@/api-shared/types/settings/prayer";
+import {
+    ApiSettingGetPayload,
+    ApiSettingGetResponse,
+    ApiSettingUpdatePayload,
+    ApiSettingUpdateResponse,
+    SettingName,
+} from "@/api-shared/types/settings/settings";
+
+type ServerApiSettingGet = ServerApiWithParams<
+    ApiSettingGetPayload,
+    ApiSettingGetResponse,
+    { slug: string }
+>;
+type ServerApiSettingUpdate = ServerApiWithParams<
+    ApiSettingUpdatePayload,
+    ApiSettingUpdateResponse,
+    { slug: string }
+>;
+
+export const GET: ServerApiSettingGet = async (request, context) => {
+    try {
+        const { slug } = await context.params;
+
+        const data = await DbSettings.get(slug as SettingName);
+
+        return ApiSuccess(data);
+    } catch (e) {
+        return catchHandler(request, e);
+    }
+};
+
+export const POST: ServerApiSettingUpdate = async (request, context) => {
+    try {
+        const { slug } = await context.params;
+        const value: ApiSettingUpdatePayload = await request.json();
+
+        if (slug === "prayerTimes") {
+            inplaceDateFixup(value, "shacharit");
+            inplaceDateFixup(value, "mincha");
+            inplaceDateFixup(value, "arvit");
+            await DbSettings.set(slug as SettingName, value);
+
+            await updatePrayerEvents({
+                startDate: new Date(Date.now()),
+                newConfig: value as PrayerSettings,
+            });
+        }
+
+        return ApiSuccess();
+    } catch (e) {
+        return catchHandler(request, e);
+    }
+};

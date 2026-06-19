@@ -1,0 +1,47 @@
+{
+    "folders": [
+        {
+            "name": "🖥️ UI",
+            "path": "../ui",
+        },
+        {
+            "name": "⚙️ Session Server",
+            "path": "../session-server",
+        },
+        {
+            "name": "🛡️ Proxy (Nginx)",
+            "path": "../nginx",
+        },
+        {
+            "name": "📜 Scripts & Tools",
+            "path": "../scripts",
+        },
+        {
+            "name": "🗄️ Database (Drizzle)",
+            "path": "../drizzle",
+        },
+        {
+            "name": "Root",
+            "path": "../.",
+        },
+    ],
+    "settings": {
+        "files.exclude": {
+            "**/.git": true,
+            "**/node_modules": true,
+        },
+        "editor.formatOnSave": true,
+        "python.analysis.extraPaths": ["${workspaceFolder}"],
+        "[python]": {
+            "editor.defaultFormatter": "charliermarsh.ruff",
+            "editor.codeActionsOnSave": {
+                "source.fixAll": "explicit",
+                "source.organizeImports": "explicit",
+            },
+        },
+        "[json][jsonc][yaml]": {
+            "editor.defaultFormatter": "esbenp.prettier-vscode",
+        },
+        "python.analysis.autoImportCompletions": true,
+    },
+}

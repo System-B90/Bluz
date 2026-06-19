@@ -1,0 +1,28 @@
+{
+    "name": "Bluz Workspace",
+    "dockerComposeFile": ["../docker-compose.yml"],
+    "service": "app", // Your NextJS/Node service
+    "workspaceFolder": "/workspaces/bluz/bluz.code-workspace",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "charliermarsh.ruff",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "mongodb.mongodb-vscode",
+                "ckotzbauer.vscode-pg-client",
+                "ms-azuretools.vscode-docker",
+                "dsznajder.es7-react-js-snippets"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "editor.defaultFormatter": "esbenp.prettier-vscode",
+                "editor.formatOnSave": true,
+                "[python]": {
+                    "editor.defaultFormatter": "charliermarsh.ruff"
+                }
+            }
+        }
+    },
+    "remoteUser": "node"
+}

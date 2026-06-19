@@ -2,6 +2,13 @@
 .idea
 # dependencies
 /node_modules
+/ui/node_modules
+src/session-server/node_modules
+src/session-server/.next
+src/session-server/dist
+/session-server/node_modules
+/session-server/dist
+/session-server/.next
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,13 +19,19 @@
 
 # testing
 /coverage
+/.auth/
+/test-results/
+/playwright-report/
+/blob-report/
 
 # next.js
 /.next/
-/out/
+/ui/.next/
+/ui/out/
 
 # production
 /build
+/ui/build
 
 # misc
 .DS_Store
@@ -41,3 +54,5 @@ yarn-error.log*
 next-env.d.ts
 
 *.tar
+.vscode/PythonImportHelper-v2-Completion.json
+ssl/
