@@ -1,6 +1,6 @@
 {
     "name": "bluz",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "private": true,
     "scripts": {
         "next:dev": "next dev ui --turbopack -H 0.0.0.0",
@@ -109,3 +109,4 @@
         "vitest": "^4.1.9"
     }
 }
+

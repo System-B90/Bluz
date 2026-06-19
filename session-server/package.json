@@ -1,6 +1,6 @@
 {
     "name": "bluz-session-server",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "private": true,
     "scripts": {
         "dev": "tsx watch session-server.ts",
@@ -26,3 +26,4 @@
         "prettier": "^3.2.5"
     }
 }
+
