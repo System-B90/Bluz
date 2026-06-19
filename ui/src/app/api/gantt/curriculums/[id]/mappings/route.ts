@@ -88,7 +88,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             oldMapping: { dayId: GanttDayId };
             newValues: { dayId?: GanttDayId; sortOrder?: number };
         };
-        if (!moduleId || !oldMapping.dayId) {
+        if (!moduleId || !oldMapping || !oldMapping.dayId) {
             throw new ClientApiError(
                 "Missing oldMapping or eventId identifiers to locate the record.",
             );
