@@ -2,7 +2,7 @@ services:
     ui:
         build:
             target: dev
-        command: npm run dev
+        command: npm run next:dev
         environment:
             - NODE_ENV=development
         develop:
