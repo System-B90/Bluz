@@ -10,3 +10,4 @@ export function register()
         console.error('No session server object!');
     }
 }
+
