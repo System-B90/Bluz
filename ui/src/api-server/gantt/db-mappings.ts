@@ -8,29 +8,49 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
+import { ganttWeek2DaysSchema } from "@/api-server/gantt/schema/junctions";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
 import {
     GanttCurriculumId,
     GanttDayId,
     GanttEventId,
     GanttModuleId,
+    GanttWeekId,
 } from "@/api-shared/types/gantt/models";
 
 /**
  * 1) Getting mappings for a specific curriculum.
- * Can be filtered by weekId if needed for partial loading.
+ * Can be filtered by dayIds and/or weekIds for partial loading.
+ * weekIds are resolved to dayIds via the week->day junction table (w2d),
+ * then combined with any explicit dayIds using AND logic.
  */
 export async function getModuleDayMappingsForCurriculum(
     curriculumId: GanttCurriculumId,
-    { dayIds }: { dayIds?: Array<GanttDayId> },
+    { dayIds, weekIds }: { dayIds?: Array<GanttDayId>; weekIds?: Array<GanttWeekId> },
 ) {
     const filters = [
         eq(ganttCurriculumEventDayMappingsSchema.curriculumId, curriculumId),
     ];
 
-    if (dayIds !== undefined && dayIds.length > 0) {
+    let resolvedDayIds = dayIds;
+
+    if (weekIds !== undefined && weekIds.length > 0) {
+        const w2dRows = await postgresDb
+            .select({ dayId: ganttWeek2DaysSchema.dayId })
+            .from(ganttWeek2DaysSchema)
+            .where(inArray(ganttWeek2DaysSchema.weekId, weekIds));
+
+        const weekDayIds = w2dRows.map((r) => r.dayId) as Array<GanttDayId>;
+
+        resolvedDayIds =
+            resolvedDayIds !== undefined && resolvedDayIds.length > 0
+                ? resolvedDayIds.filter((id) => weekDayIds.includes(id))
+                : weekDayIds;
+    }
+
+    if (resolvedDayIds !== undefined && resolvedDayIds.length > 0) {
         filters.push(
-            inArray(ganttCurriculumEventDayMappingsSchema.dayId, dayIds),
+            inArray(ganttCurriculumEventDayMappingsSchema.dayId, resolvedDayIds),
         );
     }
 
