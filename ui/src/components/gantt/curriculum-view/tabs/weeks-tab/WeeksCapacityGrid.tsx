@@ -26,7 +26,6 @@ import {
     formatMinutesAsTimeInput,
     formatWeekDateRange,
     getCapacityStatus,
-    getDayDate,
     getScheduledMinutesForDay,
     getWeekDateRange,
     getWeekScheduledMinutes,
@@ -218,8 +217,6 @@ function WeekRow({
                     return <TableCell key={dayIndex} sx={{ minWidth: 160 }} />;
                 }
 
-                const dayDate = getDayDate(startDate, weekIndex, dayIndex);
-                const day = state.days[dayId];
                 const isMutedSaturday =
                     dayIndex === GanttDayIndex.Saturday && !week.weekendDuty;
 
@@ -228,7 +225,7 @@ function WeekRow({
                         dayId={dayId}
                         isCompact={isCompact}
                         isMuted={isMutedSaturday}
-                        key={`${week.id}-${dayIndex}-${day?.totalWorkingMinutes ?? 0}-${day?.comment ?? ""}-${dayDate?.format("YYYY-MM-DD") ?? ""}`}
+                        key={dayId}
                         scheduledMinutes={getScheduledMinutesForDay({
                             dayId,
                             mappings,
@@ -523,7 +520,7 @@ export function WeeksCapacityGrid({
                         weeks.map((week, weekIndex) => (
                             <WeekRow
                                 isCompact={isCompact}
-                                key={`${week.id}-${week.comment ?? ""}-${week.weekendDuty}`}
+                                key={week.id}
                                 mappings={mappings}
                                 startDate={curriculum.startDate}
                                 state={state}
