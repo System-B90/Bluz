@@ -5,12 +5,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { apiGetEvents } from "@/api-client/calendar";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { EventLockMessage } from "@/api-shared/types";
 import { CalendarFiltersProvider } from "@/components/base/CalendarFilterProvider";
 import { useOffline } from "@/components/base/OfflineProvider";
 import { CalendarContext } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { useEventActions } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventActions";
 import { useEventState } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { useEventWebsocket } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventWebsocket";
+import { EventId } from "@/components/schedule/types/event";
 
 import "dayjs/locale/he";
 
@@ -23,6 +25,9 @@ export const CalendarProvider = ({
         useOffline();
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
+    const [eventLocks, setEventLocks] = useState<
+        Record<EventId, EventLockMessage>
+    >({});
 
     const { events, dispatch, remoteDispatch, undo, redo } = useEventState();
 
@@ -32,8 +37,28 @@ export const CalendarProvider = ({
         }
     }, [offlineMode, events, captureInitialEvents]);
 
+    const setEventLock = useCallback(
+        (eventId: EventId, lock: EventLockMessage | null) => {
+            setEventLocks((prev) => {
+                const next = { ...prev };
+                if (lock === null) {
+                    delete next[eventId];
+                } else {
+                    next[eventId] = lock;
+                }
+                return next;
+            });
+        },
+        [],
+    );
+
+    // TODO(#12): emit EVENT_LOCK WS message to session server so other clients see the lock.
+    // Requires adding a client→server send path (currently only server→client via session server).
+    const lockEvent = useCallback((_eventId: EventId) => {}, []);
+    const unlockEvent = useCallback((_eventId: EventId) => {}, []);
+
     // WS updates go through remoteDispatch so they don't pollute the undo stack.
-    useEventWebsocket(offlineMode, remoteDispatch);
+    useEventWebsocket(offlineMode, remoteDispatch, setEventLock);
 
     const { saveEvent, deleteEvent } = useEventActions(
         events,
@@ -86,6 +111,7 @@ export const CalendarProvider = ({
                     events,
                     startDate,
                     endDate,
+                    eventLocks,
                     setStartDate,
                     setEndDate,
                     saveEvent,
@@ -93,6 +119,8 @@ export const CalendarProvider = ({
                     undo,
                     redo,
                     dispatch,
+                    lockEvent,
+                    unlockEvent,
                 }}
             >
                 {children}
