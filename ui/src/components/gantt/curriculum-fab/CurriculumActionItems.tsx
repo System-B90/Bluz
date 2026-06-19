@@ -110,15 +110,15 @@ export function CurriculumActionItems({
                 onUpdate={onUpdate}
                 sourceCurriculum={sourceCurriculum}
             />
-             <ImportExportMenuButton
+            <ImportExportMenuButton
                 exportDisabled={isDisabled || !sourceCurriculum}
                 exportFilenamePrefix="bluz-gantt-"
                 exportTitle={sourceCurriculum?.title}
                 iconOnly
                 importDisabled={isDisabled}
                 onExport={handleExport}
-                onExportExcel={handleExportExcel}
                 onExportError={handleExportError}
+                onExportExcel={handleExportExcel}
                 onExportSuccess={handleExportSuccess}
                 onImport={handleImport}
                 variant="outlined"

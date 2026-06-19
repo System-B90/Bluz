@@ -1,8 +1,9 @@
-import { eq } from "drizzle-orm";
-import { NextRequest } from "next/server";
 import dayjs from "dayjs";
+import { eq } from "drizzle-orm";
 import ExcelJS from "exceljs";
+import { NextRequest } from "next/server";
 
+import { catchHandler } from "@/api-server/common";
 import { postgresDb } from "@/api-server/gantt";
 import { getConstraintsForCurriculum } from "@/api-server/gantt/db-constraints";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         // 4. Map modules and events for easy lookup
         const moduleMap = new Map<string, { moduleTitle: string; syllabusTitle: string }>();
         const eventMap = new Map<string, { eventTitle: string; allocatedDuration: number }>();
-        const syllabusTitles: string[] = [];
+        const syllabusTitles: Array<string> = [];
 
         if (curriculum.c2s) {
             for (const c2sItem of curriculum.c2s) {
@@ -58,12 +59,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
                 const syllabusTitle = syllabus.title;
                 if (syllabus.s2m) {
                     for (const s2mItem of syllabus.s2m) {
-                        const module = s2mItem.module;
-                        if (!module) continue;
-                        const moduleTitle = module.title;
-                        moduleMap.set(module.id, { moduleTitle, syllabusTitle });
-                        if (module.m2e) {
-                            for (const m2eItem of module.m2e) {
+                        const ganttModule = s2mItem.module;
+                        if (!ganttModule) continue;
+                        const moduleTitle = ganttModule.title;
+                        moduleMap.set(ganttModule.id, { moduleTitle, syllabusTitle });
+                        if (ganttModule.m2e) {
+                            for (const m2eItem of ganttModule.m2e) {
                                 const event = m2eItem.event;
                                 if (!event) continue;
                                 const eventTitle = event.title;
@@ -277,7 +278,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
             if (rowIdx === 1) return; // Skip header
 
             const weekCell = row.getCell(1);
-            const weekText = weekCell.value ? weekCell.value.toString() : "";
+            const weekText = weekCell.text ?? "";
             if (weekText !== currentWeekText) {
                 currentWeekText = weekText;
                 weekColorIndex = (weekColorIndex + 1) % 2;

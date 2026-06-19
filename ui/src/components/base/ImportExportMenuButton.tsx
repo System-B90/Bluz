@@ -39,7 +39,7 @@ export type ImportExportMenuButtonProps = {
     exportTitle?: string;
     onExportSuccess?: () => void;
     onExportError?: (error: any) => void;
-    onExportExcel?: () => void | Promise<void>;
+    onExportExcel?: () => Promise<void> | void;
     exportExcelLabel?: string;
 };
 
@@ -184,14 +184,14 @@ export function ImportExportMenuButton({
                     </ListItemIcon>
                     <ListItemText>{exportLabel}</ListItemText>
                 </MenuItem>
-                {onExportExcel && (
+                {onExportExcel ? (
                     <MenuItem disabled={exportDisabled} onClick={handleExportExcelClick}>
                         <ListItemIcon>
                             <TableChartIcon fontSize="small" />
                         </ListItemIcon>
                         <ListItemText>{exportExcelLabel}</ListItemText>
                     </MenuItem>
-                )}
+                ) : null}
                 <MenuItem component="label" disabled={importDisabled}>
                     <ListItemIcon>
                         <UploadIcon fontSize="small" />
