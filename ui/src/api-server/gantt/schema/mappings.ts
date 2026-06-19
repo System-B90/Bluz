@@ -6,6 +6,7 @@
  */
 import { relations } from "drizzle-orm";
 import {
+    index,
     integer,
     pgTable,
     primaryKey,
@@ -51,6 +52,8 @@ export const ganttCurriculumEventDayMappingsSchema = pgTable(
     },
     (t) => ({
         unq: unique().on(t.curriculumId, t.moduleId, t.eventId, t.dayId),
+        idxCurriculum: index("cMDA_curriculum_id_idx").on(t.curriculumId),
+        idxDay: index("cMDA_day_id_idx").on(t.dayId),
     }),
 );
 
