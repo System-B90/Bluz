@@ -86,7 +86,6 @@ export function OutsidersList({
                         sx={{
                             fontWeight: 800,
                             fontSize: "1.1rem",
-                            fontFamily: "Assistant, sans-serif",
                             color: "text.primary",
                         }}
                     >
@@ -96,7 +95,6 @@ export function OutsidersList({
                         sx={{
                             fontSize: "0.75rem",
                             color: "text.secondary",
-                            fontFamily: "Assistant, sans-serif",
                         }}
                     >
                         ניהול רשימת אנשי חוץ ומרצים חיצוניים במערכת
@@ -155,7 +153,6 @@ export function OutsidersList({
                             sx={{
                                 color: "text.secondary",
                                 fontSize: "0.85rem",
-                                fontFamily: "Assistant, sans-serif",
                             }}
                         >
                             {searchQuery

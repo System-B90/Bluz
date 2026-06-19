@@ -94,7 +94,6 @@ function RoomFormHeader({
                     sx={{
                         fontWeight: 800,
                         fontSize: "1.1rem",
-                        fontFamily: "Assistant, sans-serif",
                         color: "text.primary",
                     }}
                 >
@@ -110,7 +109,6 @@ function RoomFormHeader({
                     sx={{
                         fontSize: "0.75rem",
                         color: "text.secondary",
-                        fontFamily: "Assistant, sans-serif",
                     }}
                 >
                     {isCreating
@@ -197,7 +195,6 @@ function RoomExtendedDetails({
                         fontSize: "0.72rem",
                         fontWeight: 700,
                         color: "text.secondary",
-                        fontFamily: "Assistant, sans-serif",
                     }}
                 >
                     פרטים מורחבים
@@ -283,7 +280,6 @@ function RoomExtendedDetails({
                             sx={{
                                 fontWeight: 700,
                                 fontSize: "0.85rem",
-                                fontFamily: "Assistant, sans-serif",
                                 color: "text.primary",
                             }}
                         >
@@ -292,7 +288,6 @@ function RoomExtendedDetails({
                         <Typography
                             sx={{
                                 fontSize: "0.7rem",
-                                fontFamily: "Assistant, sans-serif",
                                 color: "text.secondary",
                             }}
                         >
@@ -410,7 +405,6 @@ export function RoomFormCard({
                         sx={{
                             color: "text.secondary",
                             fontSize: "0.85rem",
-                            fontFamily: "Assistant, sans-serif",
                             textAlign: "center",
                         }}
                     >

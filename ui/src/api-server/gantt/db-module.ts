@@ -56,9 +56,7 @@ async function getFullModule(id: GanttModuleId): Promise<ApiModule> {
                 with: {
                     event: {
                         with: {
-                            cEC: {
-                                where: (c, { eq }) => eq(c.curriculumId, id),
-                            },
+                            cEC: true,
                         },
                     },
                 },

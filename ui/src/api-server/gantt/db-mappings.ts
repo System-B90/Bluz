@@ -14,7 +14,6 @@ import {
     GanttDayId,
     GanttEventId,
     GanttModuleId,
-    GanttWeekId,
 } from "@/api-shared/types/gantt/models";
 
 /**
@@ -23,10 +22,7 @@ import {
  */
 export async function getModuleDayMappingsForCurriculum(
     curriculumId: GanttCurriculumId,
-    {
-        _weekIds,
-        dayIds,
-    }: { _weekIds?: Array<GanttWeekId>; dayIds?: Array<GanttDayId> },
+    { dayIds }: { dayIds?: Array<GanttDayId> },
 ) {
     const filters = [
         eq(ganttCurriculumEventDayMappingsSchema.curriculumId, curriculumId),
@@ -38,13 +34,7 @@ export async function getModuleDayMappingsForCurriculum(
         );
     }
 
-    // TODO: Implement
-    // if (weekIds !== undefined)
-    // {
-    //     filters.push(inArray(ganttCurriculumModuleDayMappingsSchema.weekId, weekIds));
-    // }
-
-    return await postgresDb.query.ganttCurriculumModuleDayMappingsSchema.findMany(
+    return await postgresDb.query.ganttCurriculumEventDayMappingsSchema.findMany(
         {
             where: and(...filters),
         },

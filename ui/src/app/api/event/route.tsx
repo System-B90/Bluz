@@ -54,12 +54,22 @@ export const GET: ServerApiEventGet = async (request) => {
             );
             return ApiSuccess(eventRecord);
         } else {
-            return ApiSuccess(
-                await DbEvent.getInRange(
-                    new Date(rawStartDate!),
-                    new Date(rawEndDate!),
-                ),
-            );
+            const start = new Date(rawStartDate!);
+            const end = new Date(rawEndDate!);
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                throw new ClientApiError(
+                    "תאריך לא תקין — יש לספק startDate ו-endDate תקינים",
+                );
+            }
+            const MAX_RANGE_DAYS = 366;
+            const rangeDays =
+                (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+            if (rangeDays > MAX_RANGE_DAYS || rangeDays < 0) {
+                throw new ClientApiError(
+                    `טווח התאריכים חייב להיות בין 0 ל-${MAX_RANGE_DAYS} ימים`,
+                );
+            }
+            return ApiSuccess(await DbEvent.getInRange(start, end));
         }
     } catch (e) {
         return catchHandler(request, e);

@@ -29,7 +29,18 @@ export function SendServerRequestToSessionServer(
     data?: any,
 ) {
     const ws = new WebSocket(INTERNAL_SESSION_SERVER_URI);
+
+    const timeout = setTimeout(() => {
+        if (ws.readyState !== WebSocket.OPEN) {
+            console.error(
+                `[WS Server Sender] Timeout connecting to session server for message type "${type}"`,
+            );
+            ws.close();
+        }
+    }, 5000);
+
     ws.onopen = () => {
+        clearTimeout(timeout);
         ws.send(
             JSON.stringify({
                 sender: WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
@@ -38,13 +49,23 @@ export function SendServerRequestToSessionServer(
                 data,
             }),
         );
-        // Cleanly close the socket after sending
         ws.close();
     };
+
     ws.onerror = (err) => {
+        clearTimeout(timeout);
         console.error(
-            "[WS Server Sender] Error dispatching message to session server:",
-            err,
+            `[WS Server Sender] Error dispatching message type "${type}" to session server:`,
+            err.message,
         );
+    };
+
+    ws.onclose = (event) => {
+        clearTimeout(timeout);
+        if (!event.wasClean && event.code !== 1000) {
+            console.error(
+                `[WS Server Sender] Connection closed unexpectedly for message type "${type}" (code=${event.code})`,
+            );
+        }
     };
 }

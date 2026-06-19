@@ -158,6 +158,5 @@ export function normalizeCurriculumData(
         syllabuses: curriculumSyllabusIds,
     };
 
-    console.log(store);
     return store;
 }

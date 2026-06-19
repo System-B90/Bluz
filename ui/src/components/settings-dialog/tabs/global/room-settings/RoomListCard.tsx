@@ -46,7 +46,6 @@ export function RoomListCard({
                     sx={{
                         color: "text.secondary",
                         fontSize: "0.85rem",
-                        fontFamily: "Assistant, sans-serif",
                     }}
                 >
                     {searchQuery

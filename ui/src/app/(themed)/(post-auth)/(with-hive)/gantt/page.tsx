@@ -6,7 +6,7 @@ import { keyframes } from '@mui/material/styles';
 import Typography from "@mui/material/Typography";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
@@ -81,7 +81,15 @@ const WindowsLoadingScreen = () =>
     );
 };
 
-export default function GanttPage()
+export default function GanttPage() {
+    return (
+        <Suspense>
+            <GanttPageInner />
+        </Suspense>
+    );
+}
+
+function GanttPageInner()
 {
     const { enqueueSnackbar } = useSnackbar();
     const router = useRouter();

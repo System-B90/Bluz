@@ -19,7 +19,7 @@ async function updatePrayerEvent({
     day: Date;
     prayerEvent: Event;
     newConfig: PrayerSettings;
-}) {
+}): Promise<PrayerEvent> {
     const updatedEvent: PrayerEvent = { ...prayerEvent } as PrayerEvent;
 
     const startTime = new Date(
@@ -36,6 +36,7 @@ async function updatePrayerEvent({
     (updatedEvent.endTime as unknown as Date) = endTime;
 
     await DbEvent.set(updatedEvent as unknown as DbEventDocument);
+    return updatedEvent;
 }
 
 async function updatePrayerEventsInDay({
@@ -45,25 +46,34 @@ async function updatePrayerEventsInDay({
     day: Date;
     newConfig: PrayerSettings;
 }) {
-    const endOfDay = new Date(day.getTime() + 24 * 60 * 60 * 1000 - 1);
-    const prayerEvents: Array<PrayerEvent> = (await DbEvent.getInRange(
-        day,
-        endOfDay,
-        undefined,
-        { type: EventType.PRAYER } as any,
-    )) as unknown as Array<PrayerEvent>;
+    // Clone day to avoid mutating caller's date
+    const dayStart = new Date(day);
+    dayStart.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
 
-    if (prayerEvents.length > 3) {
+    const existingPrayerEvents: Array<PrayerEvent> =
+        (await DbEvent.getInRange(
+            dayStart,
+            endOfDay,
+            undefined,
+            { type: EventType.PRAYER } as any,
+        )) as unknown as Array<PrayerEvent>;
+
+    if (existingPrayerEvents.length > 3) {
         throw new Error("Too many prayer events in a day");
-    } else if (prayerEvents.length === 0) {
-        // No prayer events in this day, create them
+    }
+
+    let broadcastEvents: Array<PrayerEvent>;
+
+    if (existingPrayerEvents.length === 0) {
+        // First-time creation — create all prayer types and broadcast the created events
         const prayersToCreate: Array<PrayerEvent> = Object.values(
             PrayerType,
         ).map((prayerType) => {
             const startTime = new Date(
-                day.getFullYear(),
-                day.getMonth(),
-                day.getDate(),
+                dayStart.getFullYear(),
+                dayStart.getMonth(),
+                dayStart.getDate(),
                 (
                     newConfig[prayerType as keyof PrayerSettings] as Date
                 ).getHours(),
@@ -80,7 +90,7 @@ async function updatePrayerEventsInDay({
                 name: prayerTypeToHebrew(prayerType),
                 type: EventType.PRAYER,
                 startTime,
-                endTime: new Date(startTime.getTime() + 20 * 60 * 1000), // Add 20min
+                endTime: new Date(startTime.getTime() + 20 * 60 * 1000),
                 prayerType: prayerType as PrayerEvent["prayerType"],
                 subject: 0,
                 hiveModule: 0,
@@ -102,15 +112,18 @@ async function updatePrayerEventsInDay({
                 await DbEvent.create(prayer as unknown as DbEventDocument)
             ).id;
         }
+        broadcastEvents = prayersToCreate;
+    } else {
+        // Update existing prayer events and broadcast the updated versions
+        broadcastEvents = await Promise.all(
+            existingPrayerEvents.map((prayerEvent) =>
+                updatePrayerEvent({ day: dayStart, prayerEvent, newConfig }),
+            ),
+        );
     }
-    await Promise.all(
-        prayerEvents.map(
-            async (prayerEvent) =>
-                await updatePrayerEvent({ day, prayerEvent, newConfig }),
-        ),
-    );
+
     SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
-        events: prayerEvents.reduce(
+        events: broadcastEvents.reduce(
             (acc, event) => ({ ...acc, [event.id]: event }),
             {},
         ),
@@ -124,10 +137,13 @@ export async function updatePrayerEvents({
     startDate: Date;
     newConfig: PrayerSettings;
 }) {
-    startDate.setHours(0, 0, 0, 0);
+    // Clone to avoid mutating the caller's Date
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+
     await Promise.all(
         Array.from({ length: 7 }, async (_, i) => {
-            const day = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+            const day = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
             await updatePrayerEventsInDay({ day, newConfig });
         }),
     );
