@@ -1,3 +1,4 @@
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ComputerIcon from "@mui/icons-material/Computer";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -10,7 +11,9 @@ import ListItemText from "@mui/material/ListItemText";
 import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+
+import { ReservationDialog } from "@/components/settings-dialog/tabs/global/room-settings/reservations/ReservationDialog";
 
 import { Room, RoomSource } from "@/api-shared/types/room";
 import { HiveLogo } from "@/components/base/HiveLogo";
@@ -32,6 +35,7 @@ export function RoomListItem({
     const theme = useTheme();
     const isHive = room.source === RoomSource.Hive;
     const ext = room.extendedInfo;
+    const [reservationOpen, setReservationOpen] = useState(false);
 
     const hiveLogoColor =
         theme.palette.mode === "light" ? "#000000" : "#ffffff";
@@ -54,10 +58,32 @@ export function RoomListItem({
     );
 
     return (
+        <>
+        <ReservationDialog
+            onClose={() => setReservationOpen(false)}
+            open={reservationOpen}
+            room={room}
+        />
         <ListItem
             onClick={() => onPopulateForm(room)}
             secondaryAction={
                 <Box alignItems="center" display="flex" gap={0.5}>
+                    <Tooltip title="הזמנות חדר">
+                        <IconButton
+                            edge="end"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setReservationOpen(true);
+                            }}
+                            size="small"
+                            sx={{
+                                color: "text.secondary",
+                                "&:hover": { color: "primary.main" },
+                            }}
+                        >
+                            <CalendarMonthIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
                     <Tooltip title="ערוך פרטים מורחבים">
                         <IconButton
                             edge="end"
@@ -214,6 +240,13 @@ export function RoomListItem({
                                             label="נוח להרצאה ✓"
                                         />
                                     ) : null}
+                                    {ext.peAyin ? (
+                                        <RoomExtendedInfoChip
+                                            color="warning"
+                                            label='פ"ע'
+                                            sx={{ fontWeight: 800 }}
+                                        />
+                                    ) : null}
                                 </Box>
                             ) : null}
                         </Box>
@@ -222,5 +255,6 @@ export function RoomListItem({
                 sx={{ my: 0 }}
             />
         </ListItem>
+        </>
     );
 }
