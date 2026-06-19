@@ -38,15 +38,18 @@ export function areValuesEqual(a: any, b: any): boolean {
         return a === b;
     }
 
-    // Handle Date / Dayjs / ISO string-based dates
+    // Handle Date / Dayjs / ISO string-based dates.
+    // Only recognise strings that look like ISO 8601 to avoid treating plain
+    // strings (ids, names, "5") as dates via dayjs's permissive parser.
+    const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}(T[\d:.Z+\-]+)?$/;
     const isDateA =
         a instanceof Date ||
         dayjs.isDayjs(a) ||
-        (typeof a === "string" && dayjs(a).isValid() && !isNaN(Date.parse(a)));
+        (typeof a === "string" && ISO_DATE_RE.test(a));
     const isDateB =
         b instanceof Date ||
         dayjs.isDayjs(b) ||
-        (typeof b === "string" && dayjs(b).isValid() && !isNaN(Date.parse(b)));
+        (typeof b === "string" && ISO_DATE_RE.test(b));
     if (isDateA && isDateB) {
         return dayjs(a).valueOf() === dayjs(b).valueOf();
     }

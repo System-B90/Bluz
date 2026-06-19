@@ -267,7 +267,7 @@ function DayHeaderCell({
     const localStorageKey = `bluz_gantt_default_hours_${dayIndex}`;
     const initialMinutes = useMemo(() => {
         if (currentMinutes !== null) return currentMinutes;
-        const stored = localStorage.getItem(localStorageKey);
+        const stored = typeof window !== "undefined" ? localStorage.getItem(localStorageKey) : null;
         if (stored !== null) {
             const parsed = parseFloat(stored);
             if (!isNaN(parsed) && parsed >= 0) {
