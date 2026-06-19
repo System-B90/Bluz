@@ -223,6 +223,17 @@ wss.on("connection", (ws) =>
             case MessageTypes.REGISTER_SYNC_PROVIDER:
                 registerSyncObjectConnection(ws, data[ "syncObjectId" ] as string);
                 break;
+            // Period locking: relay ephemeral lock/unlock presence from one client
+            // to all connected clients. Not persisted — pure presence signalling.
+            // The sender receives its own lock back and filters it out client-side.
+            case MessageTypes.EVENT_LOCK:
+            case MessageTypes.EVENT_UNLOCK:
+                dispatchMessageToEveryone(
+                    data[ "type" ] as MessageTypes,
+                    undefined,
+                    data[ "data" ] as { [ x: string ]: any; },
+                );
+                break;
         }
     });
 });

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiGetEvents } from "@/api-client/calendar";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { EventLockMessage } from "@/api-shared/types";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { CalendarFiltersProvider } from "@/components/base/CalendarFilterProvider";
 import { useOffline } from "@/components/base/OfflineProvider";
 import { CalendarContext } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
@@ -13,6 +14,7 @@ import { useEventActions } from "@/components/schedule/calendar/calendar-provide
 import { useEventState } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { useEventWebsocket } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventWebsocket";
 import { EventId } from "@/components/schedule/types/event";
+import { MessageTypes } from "@/settings";
 
 import "dayjs/locale/he";
 
@@ -23,6 +25,7 @@ export const CalendarProvider = ({
 }) => {
     const { offlineMode, captureEventBeforeEdit, captureInitialEvents } =
         useOffline();
+    const { userData, sendMessage } = useAuth();
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
     const [eventLocks, setEventLocks] = useState<
@@ -39,6 +42,9 @@ export const CalendarProvider = ({
 
     const setEventLock = useCallback(
         (eventId: EventId, lock: EventLockMessage | null) => {
+            // Ignore our own lock echoes — we know what we're editing.
+            if (lock !== null && lock.lockedById === userData.id) return;
+
             setEventLocks((prev) => {
                 const next = { ...prev };
                 if (lock === null) {
@@ -49,13 +55,34 @@ export const CalendarProvider = ({
                 return next;
             });
         },
-        [],
+        [userData.id],
     );
 
-    // TODO(#12): emit EVENT_LOCK WS message to session server so other clients see the lock.
-    // Requires adding a client→server send path (currently only server→client via session server).
-    const lockEvent = useCallback((_eventId: EventId) => {}, []);
-    const unlockEvent = useCallback((_eventId: EventId) => {}, []);
+    // Broadcast that we have opened an event for editing so other clients can
+    // show a "dirty" indicator. Relayed through the session server (ephemeral).
+    const lockEvent = useCallback(
+        (eventId: EventId) => {
+            sendMessage({
+                type: MessageTypes.EVENT_LOCK,
+                data: {
+                    eventId,
+                    lockedById: userData.id,
+                    lockedByName: userData.display_name || userData.name,
+                },
+            });
+        },
+        [sendMessage, userData.id, userData.display_name, userData.name],
+    );
+
+    const unlockEvent = useCallback(
+        (eventId: EventId) => {
+            sendMessage({
+                type: MessageTypes.EVENT_UNLOCK,
+                data: { eventId },
+            });
+        },
+        [sendMessage],
+    );
 
     // WS updates go through remoteDispatch so they don't pollute the undo stack.
     useEventWebsocket(offlineMode, remoteDispatch, setEventLock);

@@ -1,5 +1,6 @@
 "use client";
 
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -18,6 +19,8 @@ type EventOrPartial = Event | Omit<Event, "id"> | Partial<Event>;
 type EventDialogProps = {
     open: boolean;
     event: EventOrPartial;
+    // Display name of another user currently editing this event, if any.
+    lockedByName?: string;
     onClose: () => void;
     onSave: (event: EventOrPartial) => void;
     onDelete: (eventId: EventId) => void;
@@ -26,6 +29,7 @@ type EventDialogProps = {
 export function EventDialog({
     open,
     event: inputEvent,
+    lockedByName,
     onClose,
     onSave,
     onDelete,
@@ -75,6 +79,12 @@ export function EventDialog({
                             mt: 1,
                         }}
                     >
+                        {lockedByName ? (
+                            <Alert severity="warning" variant="outlined">
+                                {`משתמש אחר (${lockedByName}) עורך כעת מופע זה. שמירה תדרוס את שינוייו.`}
+                            </Alert>
+                        ) : null}
+
                         <EventPrimaryDetails
                             event={event}
                             onUpdate={handleUpdate}
