@@ -75,7 +75,7 @@ export function SyllabusCard({
                 action={
                     <ExpandMore
                         aria-expanded={expanded}
-                        aria-label="show more"
+                        aria-label="הצג עוד"
                         expand={expanded}
                         onClick={handleExpandClick}
                     >
