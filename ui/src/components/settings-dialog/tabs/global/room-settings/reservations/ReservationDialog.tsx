@@ -52,7 +52,7 @@ export function ReservationDialog({
     const [reservations, setReservations] = useState<Array<Reservation>>([]);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<null | string>(null);
     const [form, setForm] = useState(EMPTY_FORM);
 
     const fetchReservations = useCallback(async () => {
@@ -74,7 +74,7 @@ export function ReservationDialog({
     useEffect(() => {
         if (open) {
             setForm(EMPTY_FORM);
-            fetchReservations();
+            void fetchReservations();
         }
     }, [open, fetchReservations]);
 
@@ -151,8 +151,8 @@ export function ReservationDialog({
                     </Typography>
                     <Box display="flex" gap={2}>
                         <TextField
-                            InputLabelProps={{ shrink: true }}
                             fullWidth
+                            InputLabelProps={{ shrink: true }}
                             label="התחלה"
                             onChange={(e) =>
                                 setForm((f) => ({
@@ -167,8 +167,8 @@ export function ReservationDialog({
                             value={form.start}
                         />
                         <TextField
-                            InputLabelProps={{ shrink: true }}
                             fullWidth
+                            InputLabelProps={{ shrink: true }}
                             label="סיום"
                             onChange={(e) =>
                                 setForm((f) => ({
@@ -230,11 +230,9 @@ export function ReservationDialog({
                         sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                         value={form.note}
                     />
-                    {error && (
-                        <Typography color="error" sx={{ fontSize: "0.8rem" }}>
-                            {error}
-                        </Typography>
-                    )}
+                    {error ? <Typography color="error" sx={{ fontSize: "0.8rem" }}>
+                        {error}
+                    </Typography> : null}
                     <Button
                         disabled={submitting}
                         startIcon={

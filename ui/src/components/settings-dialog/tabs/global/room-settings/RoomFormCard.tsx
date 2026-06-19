@@ -320,9 +320,9 @@ function RoomExtendedDetails({
                         bgcolor: peAyin
                             ? "warning.light"
                             : (theme) =>
-                                  theme.palette.mode === "light"
-                                      ? "rgba(0,0,0,0.01)"
-                                      : "rgba(255,255,255,0.02)",
+                                theme.palette.mode === "light"
+                                    ? "rgba(0,0,0,0.01)"
+                                    : "rgba(255,255,255,0.02)",
                     }}
                 >
                     <Box>

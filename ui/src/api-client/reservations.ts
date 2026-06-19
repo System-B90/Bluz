@@ -1,6 +1,5 @@
 import {
     ClientApi,
-    ClientApiNoPayload,
     safeApiFetcher,
 } from "@/api-client/common";
 import {
@@ -11,7 +10,6 @@ import {
     ApiReservationsGetPayload,
     ApiReservationsGetResponse,
 } from "@/api-shared/types/reservation";
-import { RoomSource } from "@/api-shared/types/room";
 
 type ClientApiGetReservations = ClientApi<
     ApiReservationsGetPayload,
