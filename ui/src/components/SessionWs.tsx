@@ -87,7 +87,6 @@ export function useSessionWebSocketContext() {
         ws.current = socket;
 
         socket.onopen = () => {
-            console.log("[WS] Connection established");
             reconnectAttempt.current = 0;
             registerCurrentSession(socket);
         };
@@ -102,7 +101,6 @@ export function useSessionWebSocketContext() {
                 RECONNECT_MAX_MS,
             );
             reconnectAttempt.current += 1;
-            console.log(`[WS] Connection closed, reconnecting in ${delay}ms`);
             reconnectTimer.current = setTimeout(
                 () => connectRef.current(),
                 delay,
