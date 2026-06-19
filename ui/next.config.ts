@@ -1,4 +1,3 @@
-import path from "path";
 
 import type { NextConfig } from "next";
 
@@ -9,9 +8,6 @@ const nextConfig: NextConfig = {
     allowedDevOrigins: [ "bluz.dev" ],
     outputFileTracingIncludes: {
         "/*": [ "./node_modules/drizzle-orm/**/*", "./node_modules/pg/**/*" ],
-    },
-    turbopack: {
-        root: path.resolve(__dirname),
     },
     experimental: {
         optimizePackageImports: [ "@mui/x-date-pickers" ],
