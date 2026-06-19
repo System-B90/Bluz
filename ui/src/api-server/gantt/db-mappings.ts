@@ -34,7 +34,7 @@ export async function getModuleDayMappingsForCurriculum(
         );
     }
 
-    return await postgresDb.query.ganttCurriculumModuleDayMappingsSchema.findMany(
+    return await postgresDb.query.ganttCurriculumEventDayMappingsSchema.findMany(
         {
             where: and(...filters),
         },
