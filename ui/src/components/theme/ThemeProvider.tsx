@@ -16,13 +16,15 @@ import
 {
     createContext,
     useContext,
-    useEffect,
     useMemo,
-    useState,
     type ReactNode,
 } from "react";
 
 import { createThemeOptions } from "@/components/theme/CreateFromPalette";
+
+// Build both color schemes once at module level — MUI CSS variables + the
+// "class" selector switch the active palette without any JS re-render.
+const muiTheme = createTheme({ ...createThemeOptions(), direction: "rtl" });
 
 export type ThemeMode = "dark" | "light" | "system";
 
@@ -86,40 +88,14 @@ export function BluzThemeProvider({
 function InnerThemeProvider({ children }: { children: ReactNode; })
 {
     const { theme, setTheme, resolvedTheme } = nextUseTheme();
-    const [ mounted, setMounted ] = useState(false);
-
-    useEffect(() =>
-    {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setMounted(true);
-    }, []);
-
-    const muiTheme = useMemo(() =>
-    {
-        const currentMode = mounted && resolvedTheme === "dark" ? "dark" : "light";
-        const baseOptions = createThemeOptions();
-        const colorScheme = baseOptions.colorSchemes?.[ currentMode ];
-        const activePalette = typeof colorScheme === 'object' ? colorScheme.palette : undefined;
-
-        return createTheme({
-            ...baseOptions,
-            direction: "rtl",
-            palette: {
-                ...activePalette,
-                mode: currentMode,
-            },
-        });
-    }, [ resolvedTheme, mounted ]);
-
-    const currentMode = muiTheme.palette.mode ?? "light";
 
     const contextValue = useMemo(
         () => ({
-            resolvedTheme: currentMode,
+            resolvedTheme: (resolvedTheme ?? "light") as "dark" | "light",
             theme: (theme as ThemeMode) ?? "system",
             setTheme: setTheme as (theme: ThemeMode) => void,
         }),
-        [ currentMode, theme, setTheme ],
+        [ resolvedTheme, theme, setTheme ],
     );
 
     return (
