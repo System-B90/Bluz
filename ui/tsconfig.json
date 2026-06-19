@@ -28,7 +28,7 @@
         "**/*.tsx",
         ".next/types/**/*.ts",
         ".next/dev/types/**/*.ts",
-        "playwright.config.ts",
+        "../tests/playwright.config.ts",
         "tests/**/*.ts"
     ],
     "exclude": ["node_modules"]

@@ -19,7 +19,7 @@ import { defineConfig, devices } from "@playwright/test";
  * - BASE_URL: Override default Bluz URL (default: "https://bluz.dev")
  */
 export default defineConfig({
-    testDir: "./tests",
+    testDir: ".",
     testMatch: "**/*.spec.ts",
     timeout: 15_000,
     fullyParallel: false,
@@ -57,7 +57,7 @@ export default defineConfig({
             testIgnore: [/login\.spec\.ts/, /auth\.setup\.ts/, /backend/],
             use: {
                 ...devices["Desktop Chrome"],
-                storageState: ".auth/user.json",
+                storageState: "../.auth/user.json",
             },
             dependencies: ["setup"],
         },

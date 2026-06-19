@@ -4,7 +4,7 @@
         {
             "label": "Bluz: Full Stack Up",
             "type": "shell",
-            "command": "docker-compose up -d",
+            "command": "docker compose -f deploy/docker-compose.yml up -d",
             "presentation": {
                 "reveal": "always",
                 "panel": "new"
@@ -14,7 +14,7 @@
         {
             "label": "Bluz: Run Migrations",
             "type": "shell",
-            "command": "docker-compose exec app npm run migrate",
+            "command": "docker compose -f deploy/docker-compose.yml exec app npm run migrate",
             "problemMatcher": []
         },
         {
