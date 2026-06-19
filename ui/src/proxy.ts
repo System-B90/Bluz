@@ -3,7 +3,7 @@ import { getToken } from "next-auth/jwt";
 
 const PROTECTED_API_PREFIXES = ["/api/gantt/", "/api/hive/"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     const isProtectedApi = PROTECTED_API_PREFIXES.some((prefix) =>
