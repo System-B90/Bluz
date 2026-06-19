@@ -11,7 +11,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { KeyboardEvent, useCallback, useMemo, useState } from "react";
+import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
@@ -87,6 +87,21 @@ export function DayCapacityCell({
     const [localComment, setLocalComment] = useState(day?.comment ?? "");
     const [isTimeFocused, setIsTimeFocused] = useState(false);
     const [isCommentFocused, setIsCommentFocused] = useState(false);
+
+    // Sync local state when the server value changes and the field is not focused
+    useEffect(() => {
+        if (!isTimeFocused) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setLocalTime(formatMinutesAsTimeInput(day?.totalWorkingMinutes ?? 0));
+        }
+    }, [day?.totalWorkingMinutes, isTimeFocused]);
+
+    useEffect(() => {
+        if (!isCommentFocused) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setLocalComment(day?.comment ?? "");
+        }
+    }, [day?.comment, isCommentFocused]);
 
     const status = useMemo(
         () =>
