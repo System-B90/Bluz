@@ -144,6 +144,16 @@ def main(
         "Initializing Bluz Testing Pipeline...", fg=typer.colors.CYAN, bold=True
     )
 
+    # Load root .env variables to inherit configurations
+    typer.secho(
+        "Importing environment configurations...", fg=typer.colors.CYAN, bold=True
+    )
+
+    root_env = dotenv_values(".env")
+
+    merged_env: dict[str, str] = os.environ.copy()
+    merged_env.update({k: str(v) for k, v in root_env.items() if v is not None})
+
     # 0. Run Backend Unit Tests (fail fast)
     if not seed_only:
         typer.secho("Running Backend Unit Tests...", fg=typer.colors.CYAN, bold=True)
@@ -152,6 +162,7 @@ def main(
                 ["npm", "run", "test:unit"],
                 shell=True,
                 check=True,
+                env=merged_env,
             )
             typer.secho("Backend Unit Tests Passed!", fg=typer.colors.GREEN, bold=True)
         except subprocess.CalledProcessError:
@@ -163,9 +174,6 @@ def main(
     project_name = f"bluz-test-{slug}"
     typer.echo(f"Worktree Slug: {slug}")
     typer.echo(f"Docker Project: {project_name}")
-
-    # Load root .env variables to inherit configurations
-    root_env = dotenv_values(".env")
 
     # 2. Check if Docker Compose is running
     is_running = check_project_running(project_name)
@@ -196,22 +204,27 @@ def main(
                 "Force rebuild requested. Tearing down existing containers...",
                 fg=typer.colors.YELLOW,
             )
-            subprocess.run(
-                [
-                    "docker",
-                    "compose",
-                    "-p",
-                    project_name,
-                    "-f",
-                    "docker-compose.yml",
-                    "-f",
-                    "docker-compose.test.yml",
-                    "down",
-                    "-v",
-                ],
-                check=False,
-                timeout=60,
+        else:
+            typer.secho(
+                "No running containers detected. Starting fresh with new volumes...",
+                fg=typer.colors.CYAN,
             )
+        subprocess.run(
+            [
+                "docker",
+                "compose",
+                "-p",
+                project_name,
+                "-f",
+                "docker-compose.yml",
+                "-f",
+                "docker-compose.test.yml",
+                "down",
+                "-v",
+            ],
+            check=False,
+            timeout=60,
+        )
 
         typer.secho("Allocating free host ports...", fg=typer.colors.CYAN)
         ports["postgres"] = find_free_port()
@@ -252,7 +265,7 @@ def main(
 
         # Set environment for docker compose
         compose_env = {
-            **os.environ,
+            **merged_env,
             "TEST_PROJECT_NAME": project_name,
             "TEST_POSTGRES_PORT": str(ports["postgres"]),
             "TEST_MONGO_PORT": str(ports["mongo"]),
@@ -293,7 +306,7 @@ def main(
     db_url = f"postgres://admin:{db_pass}@127.0.0.3:{ports['postgres']}/curriculum_db"
 
     test_env = {
-        **os.environ,
+        **merged_env,
         "DATABASE_URL": db_url,
         "POSTGRES_PASSWORD": db_pass,
         "MONGO_PORT": str(ports["mongo"]),
@@ -307,6 +320,7 @@ def main(
 
     # 3. Drizzle Schema Generate/Push
     typer.secho("Syncing database schema (drizzle-kit)...", fg=typer.colors.CYAN)
+    typer.secho(f"Postgres DB URL: {db_url}")
     # Generate migrations first
     subprocess.run(
         ["npm", "run", "db:generate"], env=test_env, shell=True, check=True, timeout=60
