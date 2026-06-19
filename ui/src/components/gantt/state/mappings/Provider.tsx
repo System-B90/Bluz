@@ -1,5 +1,12 @@
 import { useSnackbar } from "notistack";
-import { ReactNode, useCallback, useEffect, useMemo, useReducer } from "react";
+import {
+    ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+    useReducer,
+    useRef,
+} from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
@@ -28,9 +35,15 @@ export function GanttMappingProvider({
         isLoading: true,
     });
 
-    const refreshMappings = useCallback(async () => {
+    const mappingsRef = useRef(state.mappings);
+    useEffect(() => {
+        mappingsRef.current = state.mappings;
+    }, [state.mappings]);
+
+    const refreshMappings = useCallback(async (signal?: AbortSignal) => {
         dispatch({ type: "SET_LOADING", payload: true });
         const data = await ganttApi.mappings.apiGet(curriculumId);
+        if (signal?.aborted) return;
         dispatch({ type: "SET_MAPPINGS", payload: data }); // Internally sets loading state to false
     }, [dispatch, curriculumId]);
 
@@ -107,7 +120,7 @@ export function GanttMappingProvider({
                 moduleId,
                 eventId,
             });
-            const originalMapping = state.mappings[oldKey];
+            const originalMapping = mappingsRef.current[oldKey];
 
             if (!originalMapping) return;
 
@@ -142,7 +155,7 @@ export function GanttMappingProvider({
                 );
             }
         },
-        [state.mappings, curriculumId, dispatch, enqueueSnackbar],
+        [curriculumId, dispatch, enqueueSnackbar],
     );
 
     const removeMapping = useCallback(
@@ -179,13 +192,16 @@ export function GanttMappingProvider({
     );
 
     useEffect(() => {
-        refreshMappings().catch((error) =>
+        const controller = new AbortController();
+        refreshMappings(controller.signal).catch((error) => {
+            if (controller.signal.aborted) return;
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
                 "טעינת מיפויי מערכים ומופעים נכשלה!",
                 error,
-            ),
-        );
+            );
+        });
+        return () => controller.abort();
     }, [enqueueSnackbar, refreshMappings]); // Initial load
 
     const value = useMemo(
