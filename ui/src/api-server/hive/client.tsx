@@ -67,7 +67,11 @@ export class HiveClient {
         }
     }
 
-    private async _get<T>(url: string, isRetry = false): Promise<T> {
+    private async _get<T>(
+        url: string,
+        isRetry = false,
+        retryCount = 0,
+    ): Promise<T> {
         const response = await fetch(url, {
             headers: {
                 Authorization: `Bearer ${this.accessToken}`,
@@ -78,14 +82,21 @@ export class HiveClient {
         if (response.status === 401) {
             if (!isRetry && this.refreshTokenValue) {
                 await this.refreshAccessToken();
-                return await this._get<T>(url, true);
+                return await this._get<T>(url, true, 0);
             }
             throw new HiveClientError("הטוקן אינו תקף, אנא התחבר מחדש");
         }
 
         if (response.status === 500) {
-            await new Promise((resolve) => setTimeout(resolve, 200));
-            return await this._get<T>(url, isRetry);
+            if (retryCount >= 3) {
+                throw new HiveClientError(
+                    `שגיאה בשרת הייב לאחר ${retryCount} ניסיונות: ${response.statusText}`,
+                );
+            }
+            await new Promise((resolve) =>
+                setTimeout(resolve, 200 * Math.pow(2, retryCount)),
+            );
+            return await this._get<T>(url, isRetry, retryCount + 1);
         }
 
         if (!response.ok) {

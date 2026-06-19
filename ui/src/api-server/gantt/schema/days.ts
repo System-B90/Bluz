@@ -7,7 +7,7 @@ export const ganttDaysSchema = pgTable("d", {
     id: text("id").primaryKey(),
     dayIndex: integer("day_index").notNull(),
     totalWorkingMinutes: integer("total_working_min").notNull().default(0),
-    comment: text("comment"),
+    comment: text("comment").notNull().default(""),
     createdAt: timestamp("ca").defaultNow().notNull(),
     updatedAt: timestamp("ua").defaultNow().notNull(),
 });

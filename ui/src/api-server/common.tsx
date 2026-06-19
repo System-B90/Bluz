@@ -63,6 +63,7 @@ export function ApiResponseMaker<T>(
 }
 export function ApiErrorMaker(
     e: any,
+    httpStatus = 400,
 ): NextResponse<{ status: number; error: any }> {
     let errorPayload: any = {};
     if (e instanceof Error) {
@@ -81,18 +82,16 @@ export function ApiErrorMaker(
     }
     return new NextResponse(
         JSON.stringify({ status: -1, error: errorPayload }),
-        {
-            status: 200,
-        },
+        { status: httpStatus },
     );
 }
 
 export function ApiError(e: any) {
-    return ApiErrorMaker(e);
+    return ApiErrorMaker(e, 500);
 }
 
 export function ApiAccessError(e: any) {
-    return ApiErrorMaker(e);
+    return ApiErrorMaker(e, 403);
 }
 
 export function ApiSuccess<T>(
@@ -105,15 +104,21 @@ export function ApiSuccess<T>(
 
 export function catchHandler<T extends NextRequest>(request: T, e: any) {
     if (e instanceof UserNotLoggedInError) {
-        return NextResponse.error();
+        return NextResponse.json(
+            { status: -1, error: { name: "UserNotLoggedInError", message: "אינך מחובר" } },
+            { status: 401 },
+        );
     }
 
     if (e instanceof ClientApiError) {
-        return ApiErrorMaker(e);
+        return ApiErrorMaker(e, 400);
     }
 
-    console.log("catchHandler", e);
-    return ApiError(e);
+    console.error("catchHandler unexpected error", e);
+    return ApiErrorMaker(
+        { name: "InternalServerError", message: "שגיאה פנימית בשרת" },
+        500,
+    );
 }
 
 export type ServerApiRequest<T> = Omit<NextRequest, "json"> & {

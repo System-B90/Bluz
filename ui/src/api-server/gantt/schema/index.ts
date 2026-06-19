@@ -26,8 +26,6 @@ export {
 export {
     ganttCurriculumEventConfigurationsRelationsSchema,
     ganttCurriculumEventConfigurationsSchema,
-    ganttCurriculumEventDayMappingsRelationsSchema as ganttCurriculumModuleDayMappingsRelationsSchema,
-    ganttCurriculumEventDayMappingsSchema as ganttCurriculumModuleDayMappingsSchema,
     ganttCurriculumEventDayMappingsRelationsSchema,
     ganttCurriculumEventDayMappingsSchema,
 } from "./mappings";

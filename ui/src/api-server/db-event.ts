@@ -36,20 +36,24 @@ async function getDbEvents(
     return data;
 }
 
+const EVENT_RANGE_LIMIT = 10_000;
+
 async function getDbEventsInRange(
     startDate: Date,
     endDate: Date,
     options?: FindOptions,
     filter?: Filter<DbEventDocument>,
 ): Promise<Array<DbEventDocument>> {
-    const cursor = databaseController.events.find(
-        {
-            startTime: { $gte: startDate },
-            endTime: { $lte: endDate },
-            ...filter,
-        },
-        options,
-    );
+    const cursor = databaseController.events
+        .find(
+            {
+                startTime: { $gte: startDate },
+                endTime: { $lte: endDate },
+                ...filter,
+            },
+            options,
+        )
+        .limit(EVENT_RANGE_LIMIT);
     const data = await cursor.toArray();
     return data;
 }

@@ -18,3 +18,5 @@ out/
 
 # Debugging
 npm-debug.log*
+playwright-report/
+**/playwright-report/playwright-report

@@ -170,7 +170,9 @@ export function CalendarView({
             resizableAccessor={(e) => !e.locked}
             resourceAccessor={(event: Event) =>
                 event.rooms.length > 0
-                    ? event.rooms.map((room) => JSON.stringify(room))
+                    ? event.rooms.map((room) =>
+                        JSON.stringify({ id: room.id, source: room.source }),
+                    )
                     : [
                         JSON.stringify({
                             id: DUMMY_ROOM_ID,

@@ -21,9 +21,6 @@ async function setDbRoom(room: CustomRoom, options?: UpdateOptions) {
     if (data.matchedCount === 0 && !options?.upsert) {
         throw new ClientApiError(`No room by id ${roomId} found!`);
     }
-    if (data.modifiedCount === 0) {
-        throw new ClientApiError(`Room ${roomId} data not modified!`);
-    }
     SendServerRequestToSessionServer(MessageTypes.ROOMS_UPDATE, {
         rooms: { [roomId]: room },
     });

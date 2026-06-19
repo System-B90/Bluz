@@ -13,10 +13,14 @@ import {
     useCallback,
     useEffect,
     useReducer,
+    useState,
     type ReactNode,
 } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { apiGetClasses } from "@/api-client/hive";
+import { Class, ClassTypeEnum } from "@/api-shared/types/hive";
+import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 
 type PersonalState = {
@@ -33,78 +37,48 @@ type PersonalAction =
     | { type: "REMOVE_INSTRUCTOR"; payload: string }
     | { type: "REMOVE_OUTSIDER"; payload: string };
 
-const ALL_GROUPS: ReadonlyArray<string> = [
-    "Group A",
-    "Group B",
-    "Group C",
-    "Group D",
-    "Group E",
-];
-const ALL_INSTRUCTORS: ReadonlyArray<string> = [
-    "Alice",
-    "Bob",
-    "Charlie",
-    "David",
-    "Emma",
-];
-
 function personalSettingsReducer(
     state: PersonalState,
     action: PersonalAction,
 ): PersonalState {
-    let nextState = state;
     switch (action.type) {
     case "INITIALIZE":
         return action.payload;
     case "ADD_GROUP":
         if (state.groups.includes(action.payload)) return state;
-        nextState = { ...state, groups: [...state.groups, action.payload] };
-        break;
+        return { ...state, groups: [...state.groups, action.payload] };
     case "REMOVE_GROUP":
-        nextState = {
+        return {
             ...state,
             groups: state.groups.filter((g) => g !== action.payload),
         };
-        break;
     case "ADD_INSTRUCTOR":
         if (state.instructors.includes(action.payload)) return state;
-        nextState = {
+        return {
             ...state,
             instructors: [...state.instructors, action.payload],
         };
-        break;
     case "REMOVE_INSTRUCTOR":
-        nextState = {
+        return {
             ...state,
             instructors: state.instructors.filter(
                 (i) => i !== action.payload,
             ),
         };
-        break;
     case "ADD_OUTSIDER":
         if (state.favoriteOutsiders.includes(action.payload)) return state;
-        nextState = {
+        return {
             ...state,
             favoriteOutsiders: [...state.favoriteOutsiders, action.payload],
         };
-        break;
     case "REMOVE_OUTSIDER":
-        nextState = {
+        return {
             ...state,
             favoriteOutsiders: state.favoriteOutsiders.filter(
                 (o) => o !== action.payload,
             ),
         };
-        break;
     }
-
-    if (typeof window !== "undefined") {
-        localStorage.setItem(
-            "bluz_personal_settings",
-            JSON.stringify(nextState),
-        );
-    }
-    return nextState;
 }
 
 type SelectionItem = {
@@ -179,7 +153,6 @@ const SelectionCard = memo(function SelectionCard({
                         sx={{
                             fontWeight: 800,
                             fontSize: "1.1rem",
-                            fontFamily: "Assistant, sans-serif",
                             color: "text.primary",
                         }}
                     >
@@ -189,7 +162,6 @@ const SelectionCard = memo(function SelectionCard({
                         sx={{
                             fontSize: "0.75rem",
                             color: "text.secondary",
-                            fontFamily: "Assistant, sans-serif",
                         }}
                     >
                         {description}
@@ -238,7 +210,6 @@ const SelectionCard = memo(function SelectionCard({
                             color: "text.secondary",
                             fontSize: "0.85rem",
                             m: "auto",
-                            fontFamily: "Assistant, sans-serif",
                         }}
                     >
                         {emptyMessage}
@@ -246,7 +217,7 @@ const SelectionCard = memo(function SelectionCard({
                 ) : (
                     selectedItems.map((item) => (
                         <Chip
-                            color={colorTheme as any}
+                            color={colorTheme}
                             key={item.id}
                             label={item.label}
                             onDelete={() => onRemove(item.id)}
@@ -270,6 +241,8 @@ const SelectionCard = memo(function SelectionCard({
 export function PersonalSettings() {
     const { enqueueSnackbar } = useSnackbar();
     const { outsiders, getOutsider } = useOutsiders();
+    const { instructors: hiveInstructors } = useHiveUsers();
+    const [hiveClasses, setHiveClasses] = useState<Array<Class>>([]);
 
     const [state, dispatch] = useReducer(personalSettingsReducer, {
         groups: [],
@@ -277,29 +250,54 @@ export function PersonalSettings() {
         favoriteOutsiders: [],
     });
 
+    // Load saved preferences from localStorage (once on mount)
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("bluz_personal_settings");
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    dispatch({
-                        type: "INITIALIZE",
-                        payload: {
-                            groups: parsed.groups || [],
-                            instructors: parsed.instructors || [],
-                            favoriteOutsiders: parsed.favoriteOutsiders || [],
-                        },
-                    });
-                } catch (e) {
-                    enqueueApiErrorSnackbar(
-                        enqueueSnackbar,
-                        "כשל בטעינת העדפות אישיות",
-                        e as Error,
-                    );
-                }
+        if (typeof window === "undefined") return;
+        const saved = localStorage.getItem("bluz_personal_settings");
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                dispatch({
+                    type: "INITIALIZE",
+                    payload: {
+                        groups: parsed.groups || [],
+                        instructors: parsed.instructors || [],
+                        favoriteOutsiders: parsed.favoriteOutsiders || [],
+                    },
+                });
+            } catch (e) {
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "כשל בטעינת העדפות אישיות",
+                    e as Error,
+                );
             }
         }
+    }, [enqueueSnackbar]);
+
+    // Persist preferences whenever state changes
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        localStorage.setItem("bluz_personal_settings", JSON.stringify(state));
+    }, [state]);
+
+    // Load student groups from Hive
+    useEffect(() => {
+        apiGetClasses({})
+            .then((classes) =>
+                setHiveClasses(
+                    classes.filter(
+                        (c) => c.type === ClassTypeEnum.Student_Group,
+                    ),
+                ),
+            )
+            .catch((e) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "כשל בטעינת קבוצות",
+                    e,
+                ),
+            );
     }, [enqueueSnackbar]);
 
     const handleAddGroup = useCallback(
@@ -357,18 +355,21 @@ export function PersonalSettings() {
         [enqueueSnackbar],
     );
 
-    const availableGroups = ALL_GROUPS.filter(
-        (g) => !state.groups.includes(g),
-    ).map((g) => ({ id: g, label: g }));
-    const selectedGroups = state.groups.map((g) => ({ id: g, label: g }));
+    const availableGroups = hiveClasses
+        .filter((c) => !state.groups.includes(String(c.id)))
+        .map((c) => ({ id: String(c.id), label: c.display_name }));
+    const selectedGroups = state.groups.map((id) => {
+        const c = hiveClasses.find((g) => String(g.id) === id);
+        return { id, label: c ? c.display_name : id };
+    });
 
-    const availableInstructors = ALL_INSTRUCTORS.filter(
-        (i) => !state.instructors.includes(i),
-    ).map((i) => ({ id: i, label: i }));
-    const selectedInstructors = state.instructors.map((i) => ({
-        id: i,
-        label: i,
-    }));
+    const availableInstructors = hiveInstructors
+        .filter((i) => !state.instructors.includes(String(i.id)))
+        .map((i) => ({ id: String(i.id), label: i.display_name }));
+    const selectedInstructors = state.instructors.map((id) => {
+        const i = hiveInstructors.find((u) => String(u.id) === id);
+        return { id, label: i ? i.display_name : id };
+    });
 
     const availableOutsiders = outsiders
         .filter((o) => !state.favoriteOutsiders.includes(o.id))

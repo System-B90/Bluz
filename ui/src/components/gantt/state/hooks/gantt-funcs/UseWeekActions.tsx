@@ -96,9 +96,10 @@ export function useWeekActions(): UseWeekActionsReturn {
                     id: weekId,
                     ...updates,
                 });
+                const { comment, weekendDuty } = updatedWeek;
                 dispatch({
                     type: "UPDATE_WEEK",
-                    payload: { id: weekId, updates: updatedWeek },
+                    payload: { id: weekId, updates: { comment, weekendDuty } },
                 });
                 return updatedWeek;
             }, `Failed to update week (ID: ${weekId}):`);

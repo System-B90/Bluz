@@ -55,23 +55,8 @@ export function OutsiderForm({
     );
     const [comment, setComment] = useState(selectedOutsider?.comment ?? "");
 
-    const [prevOutsiderId, setPrevOutsiderId] = useState<null | string>(
-        selectedOutsider?.id ?? null,
-    );
-
-    if ((selectedOutsider?.id ?? null) !== prevOutsiderId) {
-        setPrevOutsiderId(selectedOutsider?.id ?? null);
-        setName(selectedOutsider?.name ?? "");
-        setPhone(selectedOutsider?.phone ?? "");
-        setPersonalNumber(selectedOutsider?.personalNumber ?? "");
-        setIdNumber(selectedOutsider?.idNumber ?? "");
-        setReleaseDate(
-            selectedOutsider?.releaseDate
-                ? dayjs(selectedOutsider.releaseDate)
-                : null,
-        );
-        setComment(selectedOutsider?.comment ?? "");
-    }
+    // State resets are handled by the parent via key={selectedOutsider?.id}
+    // which remounts this component when the selection changes.
 
     const isPhoneValid = useMemo(() => {
         if (!phone) return true;
@@ -206,7 +191,6 @@ export function OutsiderForm({
                             sx={{
                                 fontWeight: 800,
                                 fontSize: "1.1rem",
-                                fontFamily: "Assistant, sans-serif",
                                 color: "text.primary",
                             }}
                         >
@@ -220,7 +204,6 @@ export function OutsiderForm({
                             sx={{
                                 fontSize: "0.75rem",
                                 color: "text.secondary",
-                                fontFamily: "Assistant, sans-serif",
                             }}
                         >
                             {isCreating
@@ -248,7 +231,6 @@ export function OutsiderForm({
                         sx={{
                             color: "text.secondary",
                             fontSize: "0.85rem",
-                            fontFamily: "Assistant, sans-serif",
                             textAlign: "center",
                         }}
                     >

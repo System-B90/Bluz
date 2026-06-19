@@ -28,7 +28,7 @@ export default defineConfig([
                         "../playwright.config.ts",
                         "../tests/*.ts",
                         "../tests/*.tsx",
-                        "../vitest.config.ts"
+                        "../vitest.config.ts",
                     ],
                 },
                 tsconfigRootDir: import.meta.dirname,
@@ -213,8 +213,9 @@ export default defineConfig([
             "session-server/session-common.ts",
             "session-server/session-server.ts",
             "scripts/**",
-            "tests/**",
             ".agents/**",
+            "tests/**",
+            "playwright-report/",
         ],
     },
 ]);
