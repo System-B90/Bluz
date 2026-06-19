@@ -153,7 +153,6 @@ const SelectionCard = memo(function SelectionCard({
                         sx={{
                             fontWeight: 800,
                             fontSize: "1.1rem",
-                            fontFamily: "Assistant, sans-serif",
                             color: "text.primary",
                         }}
                     >
@@ -163,7 +162,6 @@ const SelectionCard = memo(function SelectionCard({
                         sx={{
                             fontSize: "0.75rem",
                             color: "text.secondary",
-                            fontFamily: "Assistant, sans-serif",
                         }}
                     >
                         {description}
@@ -212,7 +210,6 @@ const SelectionCard = memo(function SelectionCard({
                             color: "text.secondary",
                             fontSize: "0.85rem",
                             m: "auto",
-                            fontFamily: "Assistant, sans-serif",
                         }}
                     >
                         {emptyMessage}

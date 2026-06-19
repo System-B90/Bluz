@@ -316,7 +316,6 @@ export function CourseItem({
                                 sx={{
                                     fontSize: "0.88rem",
                                     fontWeight: 700,
-                                    fontFamily: "Assistant, sans-serif",
                                     width: "100%",
                                     borderBottom: "1px solid",
                                     borderColor: "primary.main",
@@ -339,7 +338,6 @@ export function CourseItem({
                                     sx={{
                                         fontWeight: 700,
                                         fontSize: "0.88rem",
-                                        fontFamily: "Assistant, sans-serif",
                                         userSelect: "none",
                                         color: "text.primary",
                                         overflow: "hidden",
@@ -455,7 +453,6 @@ export function CourseItem({
                                     sx={{
                                         fontSize: "0.72rem",
                                         fontWeight: 700,
-                                        fontFamily: "Assistant, sans-serif",
                                         borderRadius: "8px",
                                         bgcolor: (theme) =>
                                             theme.palette.mode === "light"
@@ -519,7 +516,6 @@ export function CourseItem({
                         onClick={() => handleAddInstructor(inst.id)}
                         sx={{
                             fontSize: "0.8rem",
-                            fontFamily: "Assistant, sans-serif",
                         }}
                     >
                         {inst.display_name}

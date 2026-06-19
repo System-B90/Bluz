@@ -110,7 +110,6 @@ function CourseDragOverlay({
                 sx={{
                     fontWeight: 700,
                     fontSize: "0.88rem",
-                    fontFamily: "Assistant, sans-serif",
                     color: "text.primary",
                 }}
             >
@@ -159,7 +158,6 @@ function RootDropZone() {
                     fontSize: "0.78rem",
                     fontWeight: 700,
                     color: isOver ? "secondary.main" : "text.secondary",
-                    fontFamily: "Assistant, sans-serif",
                     whiteSpace: "nowrap",
                 }}
             >
@@ -359,7 +357,6 @@ export function CourseSettings() {
                                 sx={{
                                     fontWeight: 800,
                                     fontSize: "1.1rem",
-                                    fontFamily: "Assistant, sans-serif",
                                     color: "text.primary",
                                 }}
                             >
@@ -369,7 +366,6 @@ export function CourseSettings() {
                                 sx={{
                                     fontSize: "0.75rem",
                                     color: "text.secondary",
-                                    fontFamily: "Assistant, sans-serif",
                                 }}
                             >
                                 הגדרת מבנה ההיררכיה ושיוך מדריכים למסלולים
@@ -404,7 +400,6 @@ export function CourseSettings() {
                                 sx={{
                                     color: "text.secondary",
                                     fontSize: "0.85rem",
-                                    fontFamily: "Assistant, sans-serif",
                                     mt: 6,
                                 }}
                             >

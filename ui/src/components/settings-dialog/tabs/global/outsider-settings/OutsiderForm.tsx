@@ -191,7 +191,6 @@ export function OutsiderForm({
                             sx={{
                                 fontWeight: 800,
                                 fontSize: "1.1rem",
-                                fontFamily: "Assistant, sans-serif",
                                 color: "text.primary",
                             }}
                         >
@@ -205,7 +204,6 @@ export function OutsiderForm({
                             sx={{
                                 fontSize: "0.75rem",
                                 color: "text.secondary",
-                                fontFamily: "Assistant, sans-serif",
                             }}
                         >
                             {isCreating
@@ -233,7 +231,6 @@ export function OutsiderForm({
                         sx={{
                             color: "text.secondary",
                             fontSize: "0.85rem",
-                            fontFamily: "Assistant, sans-serif",
                             textAlign: "center",
                         }}
                     >

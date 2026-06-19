@@ -131,7 +131,6 @@ export function RoomListItem({
                             sx={{
                                 fontWeight: 700,
                                 fontSize: "0.9rem",
-                                fontFamily: "Assistant, sans-serif",
                                 color: "text.primary",
                             }}
                         >
@@ -175,7 +174,6 @@ export function RoomListItem({
                                     component="span"
                                     sx={{
                                         fontSize: "0.75rem",
-                                        fontFamily: "Assistant, sans-serif",
                                         color: "text.secondary",
                                     }}
                                 >

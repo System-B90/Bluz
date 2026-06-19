@@ -22,7 +22,6 @@ export function RoomListHeader() {
                     sx={{
                         fontWeight: 800,
                         fontSize: "1.1rem",
-                        fontFamily: "Assistant, sans-serif",
                         color: "text.primary",
                     }}
                 >
@@ -32,7 +31,6 @@ export function RoomListHeader() {
                     sx={{
                         fontSize: "0.75rem",
                         color: "text.secondary",
-                        fontFamily: "Assistant, sans-serif",
                     }}
                 >
                     ניהול חדרים מהייב וחדרים מותאמים אישית
