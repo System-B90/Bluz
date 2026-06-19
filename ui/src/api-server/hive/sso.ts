@@ -191,7 +191,7 @@ const sessionCallback: CallbacksOptions["session"] = async ({
 };
 
 export const authOptions: AuthOptions = {
-    debug: true,
+    debug: process.env.NODE_ENV !== "production",
     // 2. Override the logger to intercept metadata
     logger: {
         error(code, metadata) {
