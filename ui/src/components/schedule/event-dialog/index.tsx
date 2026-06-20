@@ -1,8 +1,10 @@
 "use client";
 
+import LockPersonIcon from "@mui/icons-material/LockPerson";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Collapse from "@mui/material/Collapse";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -46,6 +48,14 @@ export function EventDialog({
         }
     }
 
+    // Retain the last known editor name so the warning text stays intact while
+    // the banner animates closed (e.g. when the other user releases the lock).
+    const [retainedLockName, setRetainedLockName] = useState(lockedByName);
+    if (lockedByName && lockedByName !== retainedLockName) {
+        setRetainedLockName(lockedByName);
+    }
+    const shownLockName = lockedByName ?? retainedLockName;
+
     const handleUpdate = useCallback((update: Partial<Event>) => {
         setEventRaw((prev) => ({ ...prev, ...update }));
     }, []);
@@ -79,11 +89,15 @@ export function EventDialog({
                             mt: 1,
                         }}
                     >
-                        {lockedByName ? (
-                            <Alert severity="warning" variant="outlined">
-                                {`משתמש אחר (${lockedByName}) עורך כעת מופע זה. שמירה תדרוס את שינוייו.`}
+                        <Collapse in={Boolean(lockedByName)} unmountOnExit>
+                            <Alert
+                                icon={<LockPersonIcon fontSize="inherit" />}
+                                severity="warning"
+                                variant="outlined"
+                            >
+                                {`משתמש אחר (${shownLockName}) עורך כעת מופע זה. שמירה תדרוס את שינוייו.`}
                             </Alert>
-                        ) : null}
+                        </Collapse>
 
                         <EventPrimaryDetails
                             event={event}

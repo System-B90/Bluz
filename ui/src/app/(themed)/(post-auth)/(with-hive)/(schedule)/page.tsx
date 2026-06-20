@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { BluzCalendar } from "@/components/schedule/calendar/calendar";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
+import { LOCK_HEARTBEAT_MS } from "@/components/schedule/calendar/calendar-provider/lock-state";
 import { EventDialog } from "@/components/schedule/event-dialog";
 import { PushOfflineUpdatesDialog } from "@/components/schedule/offline-dialogs/push-updates-dialog";
 import { Event, EventId } from "@/components/schedule/types/event";
@@ -42,13 +43,35 @@ export default function SchedulePage() {
         lockedEventIdRef.current = openId;
     }, [openEventDialog, selectedEvent, lockEvent, unlockEvent]);
 
-    // Release any held lock when leaving the page.
+    // Heartbeat: while a lock is held, re-emit it periodically. This refreshes
+    // the TTL on other clients and lets clients that connected after the dialog
+    // opened still learn about the lock.
     useEffect(() => {
-        return () => {
+        const openId =
+            openEventDialog && selectedEvent?.id ? selectedEvent.id : null;
+        if (openId === null) return;
+
+        const interval = setInterval(() => {
+            lockEvent(openId);
+        }, LOCK_HEARTBEAT_MS);
+        return () => clearInterval(interval);
+    }, [openEventDialog, selectedEvent, lockEvent]);
+
+    // Release any held lock when leaving the page, and make a best-effort
+    // release if the tab is closed outright. The TTL sweep is the real safety
+    // net for crashes where neither fires.
+    useEffect(() => {
+        const releaseHeldLock = () => {
             if (lockedEventIdRef.current !== null) {
                 unlockEvent(lockedEventIdRef.current);
                 lockedEventIdRef.current = null;
             }
+        };
+
+        window.addEventListener("beforeunload", releaseHeldLock);
+        return () => {
+            window.removeEventListener("beforeunload", releaseHeldLock);
+            releaseHeldLock();
         };
     }, [unlockEvent]);
 

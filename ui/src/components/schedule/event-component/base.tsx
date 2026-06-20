@@ -90,11 +90,41 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
                                 alignItems: "center",
                                 justifyContent: "center",
                                 borderRadius: "50%",
-                                bgcolor: alpha(theme.palette.warning.main, 0.9),
+                                bgcolor: alpha(theme.palette.warning.main, 0.92),
                                 color: theme.palette.warning.contrastText,
                                 p: 0.15,
                                 lineHeight: 0,
-                                boxShadow: 1,
+                                cursor: "default",
+                                transformOrigin: "center",
+                                /* Pop in on appearance, then breathe a soft ring
+                                   to signal that someone is actively editing. */
+                                animation:
+                                    "lock-badge-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), lock-badge-pulse 2.6s ease-in-out 0.22s infinite",
+                                "@keyframes lock-badge-in": {
+                                    from: {
+                                        transform: "scale(0)",
+                                        opacity: 0,
+                                    },
+                                    to: {
+                                        transform: "scale(1)",
+                                        opacity: 1,
+                                    },
+                                },
+                                "@keyframes lock-badge-pulse": {
+                                    "0%, 100%": {
+                                        boxShadow: `0 0 0 0 ${alpha(theme.palette.warning.main, 0.5)}`,
+                                    },
+                                    "50%": {
+                                        boxShadow: `0 0 0 4px ${alpha(theme.palette.warning.main, 0)}`,
+                                    },
+                                },
+                                "@media (prefers-reduced-motion: reduce)": {
+                                    animation: "none",
+                                },
+                                transition: "transform 0.15s ease-in-out",
+                                "&:hover": {
+                                    transform: "scale(1.15)",
+                                },
                             }}
                         >
                             <LockPersonIcon sx={{ fontSize: "0.85rem" }} />

@@ -1,7 +1,7 @@
 "use client";
 
 import { enqueueSnackbar } from "notistack";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { apiGetEvents } from "@/api-client/calendar";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
@@ -13,6 +13,13 @@ import { CalendarContext } from "@/components/schedule/calendar/calendar-provide
 import { useEventActions } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventActions";
 import { useEventState } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { useEventWebsocket } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventWebsocket";
+import {
+    applyLockUpdate,
+    LOCK_SWEEP_MS,
+    LockState,
+    pruneExpiredLocks,
+    toPublicLocks,
+} from "@/components/schedule/calendar/calendar-provider/lock-state";
 import { EventId } from "@/components/schedule/types/event";
 import { MessageTypes } from "@/settings";
 
@@ -28,9 +35,9 @@ export const CalendarProvider = ({
     const { userData, sendMessage } = useAuth();
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
-    const [eventLocks, setEventLocks] = useState<
-        Record<EventId, EventLockMessage>
-    >({});
+    // Internal lock state carries per-lock expiry; the public `eventLocks` map
+    // (below) strips that bookkeeping for consumers.
+    const [lockState, setLockState] = useState<LockState>({});
 
     const { events, dispatch, remoteDispatch, undo, redo } = useEventState();
 
@@ -42,24 +49,32 @@ export const CalendarProvider = ({
 
     const setEventLock = useCallback(
         (eventId: EventId, lock: EventLockMessage | null) => {
-            // Ignore our own lock echoes — we know what we're editing.
-            if (lock !== null && lock.lockedById === userData.id) return;
-
-            setEventLocks((prev) => {
-                const next = { ...prev };
-                if (lock === null) {
-                    delete next[eventId];
-                } else {
-                    next[eventId] = lock;
-                }
-                return next;
-            });
+            setLockState((prev) =>
+                applyLockUpdate(prev, eventId, lock, {
+                    selfId: userData.id,
+                    now: Date.now(),
+                }),
+            );
         },
         [userData.id],
     );
 
+    // Self-healing presence: prune locks whose heartbeat has lapsed. This clears
+    // locks left behind by clients that crashed or disconnected without sending
+    // an explicit unlock.
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setLockState((prev) => pruneExpiredLocks(prev, Date.now()));
+        }, LOCK_SWEEP_MS);
+        return () => clearInterval(interval);
+    }, []);
+
+    const eventLocks = useMemo(() => toPublicLocks(lockState), [lockState]);
+
     // Broadcast that we have opened an event for editing so other clients can
     // show a "dirty" indicator. Relayed through the session server (ephemeral).
+    // Re-emitting this on a heartbeat both refreshes the TTL on existing
+    // listeners and informs clients that connected after the lock was taken.
     const lockEvent = useCallback(
         (eventId: EventId) => {
             sendMessage({
