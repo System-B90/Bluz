@@ -1,12 +1,14 @@
 import { WebSocket } from "ws";
 
-import {
+import
+{
     MessageTypes,
     WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY,
     WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
 } from "@/settings";
 
-const INTERNAL_SESSION_SERVER_URI = "ws://bluz-sessions:28199/";
+const INTERNAL_SESSION_SERVER_URI =
+    process.env.INTERNAL_SESSION_SERVER_URI ?? "ws://bluz-sessions:28199/";
 
 /**
  * Dispatch an asynchronous server-to-server request over WebSocket to the Session Server.
@@ -27,11 +29,14 @@ const INTERNAL_SESSION_SERVER_URI = "ws://bluz-sessions:28199/";
 export function SendServerRequestToSessionServer(
     type: MessageTypes,
     data?: any,
-) {
+)
+{
     const ws = new WebSocket(INTERNAL_SESSION_SERVER_URI);
 
-    const timeout = setTimeout(() => {
-        if (ws.readyState !== WebSocket.OPEN) {
+    const timeout = setTimeout(() =>
+    {
+        if (ws.readyState !== WebSocket.OPEN)
+        {
             console.error(
                 `[WS Server Sender] Timeout connecting to session server for message type "${type}"`,
             );
@@ -39,7 +44,8 @@ export function SendServerRequestToSessionServer(
         }
     }, 5000);
 
-    ws.onopen = () => {
+    ws.onopen = () =>
+    {
         clearTimeout(timeout);
         ws.send(
             JSON.stringify({
@@ -52,7 +58,8 @@ export function SendServerRequestToSessionServer(
         ws.close();
     };
 
-    ws.onerror = (err) => {
+    ws.onerror = (err) =>
+    {
         clearTimeout(timeout);
         console.error(
             `[WS Server Sender] Error dispatching message type "${type}" to session server:`,
@@ -60,9 +67,11 @@ export function SendServerRequestToSessionServer(
         );
     };
 
-    ws.onclose = (event) => {
+    ws.onclose = (event) =>
+    {
         clearTimeout(timeout);
-        if (!event.wasClean && event.code !== 1000) {
+        if (!event.wasClean && event.code !== 1000)
+        {
             console.error(
                 `[WS Server Sender] Connection closed unexpectedly for message type "${type}" (code=${event.code})`,
             );

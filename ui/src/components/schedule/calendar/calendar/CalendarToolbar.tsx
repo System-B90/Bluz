@@ -248,12 +248,12 @@ export function CalendarToolbar({
                                 transition: "all 0.2s ease-in-out",
                                 ...(filterOpen || hasAnyFilter
                                     ? {
-                                          bgcolor: "primary.main",
-                                          color: "primary.contrastText",
-                                          "&:hover": {
-                                              bgcolor: "primary.dark",
-                                          },
-                                      }
+                                        bgcolor: "primary.main",
+                                        color: "primary.contrastText",
+                                        "&:hover": {
+                                            bgcolor: "primary.dark",
+                                        },
+                                    }
                                     : {}),
                                 "&:active": { transform: "scale(0.95)" },
                             }}

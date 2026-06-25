@@ -103,9 +103,19 @@ const dispatchMessageToEveryone = (
         {
             return;
         }
+        if (session.ws.readyState !== WebSocket.OPEN)
+        {
+            return;
+        }
         console.log(`Sending ${messageType} to user ${session.initiatorKey}`);
-        session.ws.send(buildMessage(messageType, undefined, data));
-        updateSessionLastContact(session);
+        try
+        {
+            session.ws.send(buildMessage(messageType, undefined, data));
+            updateSessionLastContact(session);
+        } catch (e)
+        {
+            console.error(`[WS] Failed to send ${messageType} to ${session.initiatorKey}:`, e);
+        }
     });
 
     if (typeof targets === "string")
@@ -182,6 +192,26 @@ wss.on("connection", (ws) =>
 {
     console.log(`[WebSocket] : New connection!`);
     ws.on("error", () => console.error("[WebSocket] : connection error!"));
+
+    ws.on("close", () =>
+    {
+        const idx = connectedSessions.findIndex((s) => s.ws === ws);
+        if (idx !== -1)
+        {
+            console.log(`[WebSocket] : Session ${connectedSessions[ idx ].initiatorKey} disconnected, removing`);
+            connectedSessions.splice(idx, 1);
+        }
+        for (const syncId in registeredSyncObjectConnections)
+        {
+            registeredSyncObjectConnections[ syncId ] = registeredSyncObjectConnections[ syncId ].filter(
+                (s) => s.ws !== ws,
+            );
+            if (registeredSyncObjectConnections[ syncId ].length === 0)
+            {
+                delete registeredSyncObjectConnections[ syncId ];
+            }
+        }
+    });
 
     ws.on("message", (dataString) =>
     {
