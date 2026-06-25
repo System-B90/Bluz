@@ -29,8 +29,6 @@ import {
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
-
-
 type Props = {
     curriculum: GanttCurriculum;
     curriculumId: GanttCurriculumId;
