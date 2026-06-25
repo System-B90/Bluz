@@ -1,6 +1,7 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import dayjs, { Dayjs } from "dayjs";
+import { useMemo } from "react";
 import { CalendarProps, View, Views } from "react-big-calendar";
 
 import { GanttDayIndex, getDayNameDisplay } from "@/api-shared/types/gantt/models/day";
@@ -116,21 +117,26 @@ export function CalendarView({
     onToggleFullscreen,
     onToggleToolbar,
 }: CalendarViewProps) {
+    const components = useMemo(
+        () => ({
+            event: BluzEventComponent,
+            toolbar: (props: any) => (
+                <CalendarToolbar
+                    {...props}
+                    onToggleFullscreen={onToggleFullscreen}
+                    onToggleToolbar={onToggleToolbar}
+                    showToolbar={showToolbar}
+                />
+            ),
+            header: CalendarHeader,
+        }),
+        [onToggleFullscreen, onToggleToolbar, showToolbar],
+    );
+
     return (
         <DnDCalendar
             className="relative grow h-full"
-            components={{
-                event: BluzEventComponent,
-                toolbar: (props: any) => (
-                    <CalendarToolbar
-                        {...props}
-                        onToggleFullscreen={onToggleFullscreen}
-                        onToggleToolbar={onToggleToolbar}
-                        showToolbar={showToolbar}
-                    />
-                ),
-                header: CalendarHeader,
-            }}
+            components={components}
             date={date}
             defaultView={Views.WEEK}
             draggableAccessor={(e) => !e.locked}
