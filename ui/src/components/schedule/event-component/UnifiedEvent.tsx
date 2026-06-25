@@ -11,6 +11,7 @@ import { CourseComponent } from "@/components/schedule/event-component/parts/cou
 import { InstructorsList } from "@/components/schedule/event-component/parts/person";
 import { RoomComponent } from "@/components/schedule/event-component/parts/room";
 import {
+    LessonComponent,
     ModuleComponent,
     SubjectComponent,
 } from "@/components/schedule/event-component/parts/subject";
@@ -284,6 +285,18 @@ export function UnifiedEvent({
                             fontWeight={400}
                             moduleId={event.hiveModule}
                         />
+                        {event.hiveLesson ? (
+                            <>
+                                <Typography fontSize="0.75rem" fontWeight={300}>
+                                    /
+                                </Typography>
+                                <LessonComponent
+                                    fontSize="0.75rem"
+                                    fontWeight={400}
+                                    lessonId={event.hiveLesson}
+                                />
+                            </>
+                        ) : null}
                     </>
                 ) : null}
             </Box>,

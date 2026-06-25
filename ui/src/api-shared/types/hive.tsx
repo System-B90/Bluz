@@ -212,3 +212,9 @@ export type LessonRuleRequest = {
     student_groups?: Array<number>;
     queue?: null | number;
 };
+
+export type ApiHiveLessonsGetPayload = {
+    module__id?: number;
+    module__parent_subject__parent_program_id__in?: string | number[];
+} | void;
+export type ApiHiveLessonsGetResponse = Array<Lesson>;

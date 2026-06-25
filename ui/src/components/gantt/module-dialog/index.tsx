@@ -27,7 +27,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
-import { HiveModulesView } from "@/components/gantt/module-dialog/utils";
+import { HiveLessonsView, HiveModulesView } from "@/components/gantt/module-dialog/utils";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
@@ -226,6 +226,7 @@ function ModuleDetailsForm({
             />
 
             <HiveModulesView hiveModules={hiveModules} />
+            <HiveLessonsView hiveModules={hiveModules} />
         </Stack>
     );
 }
