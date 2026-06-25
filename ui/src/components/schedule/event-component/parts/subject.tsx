@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { getHiveBaseUrl } from "@/api-shared/common";
 import { ModuleLike } from "@/api-shared/types/module";
 import { SubjectLike } from "@/api-shared/types/subject";
+import { useHiveLessons } from "@/components/base/HiveLessonsProvider";
 import { useHiveModules } from "@/components/base/HiveModulesProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 
@@ -45,5 +46,20 @@ export function ModuleComponent({
         >
             <Typography {...props}>{hiveModule?.name}</Typography>
         </Link>
+    );
+}
+
+export function LessonComponent({
+    lessonId,
+    ...props
+}: { lessonId: number } & TypographyProps) {
+    const { getLesson } = useHiveLessons();
+    const lesson = useMemo(
+        () => getLesson(lessonId),
+        [lessonId, getLesson],
+    );
+
+    return (
+        <Typography {...props}>{lesson?.name ?? `#${lessonId}`}</Typography>
     );
 }

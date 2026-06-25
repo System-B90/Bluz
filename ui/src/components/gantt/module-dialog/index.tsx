@@ -27,7 +27,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
-import { HiveModulesView } from "@/components/gantt/module-dialog/utils";
+import { HiveLessonsView, HiveModulesView } from "@/components/gantt/module-dialog/utils";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
@@ -181,6 +181,7 @@ function SiblingModuleNav({
 type ModuleDetailsFormProps = {
     localTitle: string;
     localDescription: string;
+    hiveModules: Array<number>;
     setLocalTitle: (val: string) => void;
     setLocalDescription: (val: string) => void;
     onCommitTitle: () => void;
@@ -190,6 +191,7 @@ type ModuleDetailsFormProps = {
 function ModuleDetailsForm({
     localTitle,
     localDescription,
+    hiveModules,
     setLocalTitle,
     setLocalDescription,
     onCommitTitle,
@@ -222,6 +224,9 @@ function ModuleDetailsForm({
                 }}
                 value={localDescription}
             />
+
+            <HiveModulesView hiveModules={hiveModules} />
+            <HiveLessonsView hiveModules={hiveModules} />
         </Stack>
     );
 }
@@ -342,6 +347,7 @@ function ModuleDialogInner({
 
                 <Box alignItems="flex-start" display="flex" flexDirection="row" gap={2} mt={1}>
                     <ModuleDetailsForm
+                        hiveModules={moduleDoc?.hiveIds ?? []}
                         localDescription={localDescription}
                         localTitle={localTitle}
                         onCommitDescription={() => handleCommit({ description: localDescription })}
@@ -357,7 +363,6 @@ function ModuleDialogInner({
                             eventIds={moduleDoc?.events ?? []}
                             moduleId={moduleId}
                         />
-                        <HiveModulesView hiveModules={moduleDoc?.hiveIds ?? []} />
                     </Stack>
                 </Box>
 

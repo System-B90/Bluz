@@ -36,6 +36,7 @@ export function FilterCourses({ ...props }: BoxProps) {
                 <InputLabel size="small">סינון לפי מסלולים</InputLabel>
                 <Select
                     label="סינון לפי מסלולים"
+                    MenuProps={{ disablePortal: true }}
                     multiple
                     onChange={handleChange}
                     renderValue={(selected) => (

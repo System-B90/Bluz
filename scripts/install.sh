@@ -43,7 +43,7 @@ if ls images/*.tar 1> /dev/null 2>&1; then
         LOAD_OUT=$(docker load -i "$img")
         
         # Extract the version tag from the docker load output (e.g., "Loaded image: ...:v1.0.0")
-        if [[ "$LOAD_OUT" =~ :([a-zA-Z0-9.-]+)$ ]]; then
+        if [[ "$LOAD_OUT" =~ :(v[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             DETECTED_TAG="${BASH_REMATCH[1]}"
         fi
     done

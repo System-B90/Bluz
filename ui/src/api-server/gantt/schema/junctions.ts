@@ -5,7 +5,7 @@
  * Author: Michael K. Steinberg
  */
 import { relations } from "drizzle-orm";
-import { pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+import { integer, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
 
 import { ganttCurriculumsSchema } from "./curriculums";
 import { ganttDaysSchema } from "./days";
@@ -58,6 +58,7 @@ export const ganttSyllabus2ModulesSchema = pgTable(
         moduleId: text("module_id")
             .notNull()
             .references(() => ganttModulesSchema.id, { onDelete: "cascade" }),
+        sortOrder: integer("sort_order").notNull().default(0),
     },
     (t) => ({
         pk: primaryKey({ columns: [t.syllabusId, t.moduleId] }),
@@ -87,6 +88,7 @@ export const ganttModule2EventsSchema = pgTable(
         eventId: text("event_id")
             .notNull()
             .references(() => ganttEventsSchema.id, { onDelete: "cascade" }),
+        sortOrder: integer("sort_order").notNull().default(0),
     },
     (t) => ({
         pk: primaryKey({ columns: [t.moduleId, t.eventId] }),

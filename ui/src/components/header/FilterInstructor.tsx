@@ -45,6 +45,7 @@ export function FilterInstructors({ ...props }: BoxProps) {
                 <InstructorSelect
                     excludeTeachers={true}
                     label="סינון לפי מדריכים"
+                    MenuProps={{ disablePortal: true }}
                     multiple
                     onChange={handleChange}
                     renderValue={(selected) => (

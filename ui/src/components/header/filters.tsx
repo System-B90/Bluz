@@ -11,7 +11,8 @@ import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { FilterCourses } from "@/components/header/FilterCourses";
 import { FilterInstructors } from "@/components/header/FilterInstructor";
 
-export function Filters({ ...props }: BoxProps) {
+export function Filters({ ...props }: BoxProps)
+{
     const {
         showPAsFor,
         setShowPAsFor,
@@ -21,30 +22,31 @@ export function Filters({ ...props }: BoxProps) {
         setShowMisconfigurations,
     } = useCalendarFilters();
 
-    const handleShowPA = useCallback(() => {
+    const handleShowPA = useCallback(() =>
+    {
         setShowPAsFor((v) => (v === null ? 365 : null));
-    }, [setShowPAsFor]);
+    }, [ setShowPAsFor ]);
 
     return (
-        <Box {...props}>
+        <Box { ...props }>
             <FilterInstructors
-                boxSizing={"border-box"}
-                minWidth={200}
-                width={"100%"}
+                boxSizing={ "border-box" }
+                minWidth={ 200 }
+                width={ "100%" }
             />
             <FilterCourses
-                boxSizing={"border-box"}
-                minWidth={200}
-                width={"100%"}
+                boxSizing={ "border-box" }
+                minWidth={ 200 }
+                width={ "100%" }
             />
 
             <Box
                 alignItems="center"
                 display="flex"
                 flexDirection="row"
-                gap={2}
+                gap={ 2 }
                 justifyContent="center"
-                mt={0.5}
+                mt={ 0.5 }
             >
                 <Tooltip
                     title={
@@ -52,30 +54,30 @@ export function Filters({ ...props }: BoxProps) {
                     }
                 >
                     <IconButton
-                        color={showPAsFor !== null ? "primary" : "inherit"}
-                        onClick={handleShowPA}
+                        color={ showPAsFor !== null ? "primary" : "inherit" }
+                        onClick={ handleShowPA }
                     >
                         <ChatIcon />
                     </IconButton>
                 </Tooltip>
 
-                <Tooltip title={hidePrayers ? "הצג תפילות" : "הסתר תפילות"}>
+                <Tooltip title={ hidePrayers ? "הצג תפילות" : "הסתר תפילות" }>
                     <IconButton
                         className="relative"
                         color="inherit"
-                        onClick={() => setHidePrayers((v) => !v)}
+                        onClick={ () => setHidePrayers((v) => !v) }
                     >
                         <SynagogueIcon
-                            sx={{
+                            sx={ {
                                 opacity: hidePrayers ? 0.7 : 1,
                                 padding: hidePrayers ? 0.3 : 0,
-                            }}
+                            } }
                         />
                         <DoNotDisturbAltIcon
                             className="absolute"
                             color="secondary"
                             fontSize="large"
-                            sx={{ opacity: hidePrayers ? 1 : 0 }}
+                            sx={ { opacity: hidePrayers ? 1 : 0 } }
                         />
                     </IconButton>
                 </Tooltip>
@@ -86,8 +88,8 @@ export function Filters({ ...props }: BoxProps) {
                     }
                 >
                     <IconButton
-                        color={showMisconfigurations ? "warning" : "inherit"}
-                        onClick={() => setShowMisconfigurations((v) => !v)}
+                        color={ showMisconfigurations ? "warning" : "inherit" }
+                        onClick={ () => setShowMisconfigurations((v) => !v) }
                     >
                         <WarningIcon />
                     </IconButton>

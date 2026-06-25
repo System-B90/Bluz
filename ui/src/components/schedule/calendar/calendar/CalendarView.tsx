@@ -1,8 +1,10 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import dayjs, { Dayjs } from "dayjs";
+import { useMemo } from "react";
 import { CalendarProps, View, Views } from "react-big-calendar";
 
+import { GanttDayIndex, getDayNameDisplay } from "@/api-shared/types/gantt/models/day";
 import { Room, RoomSource, roomToResolvable } from "@/api-shared/types/room"; // Import the full Room type and roomToResolvable
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
@@ -21,20 +23,11 @@ const NO_ROOM_RESOURCE: Room = {
     source: RoomSource.Custom,
 };
 
-const HEBREW_DAYS_FULL = [
-    "ראשון",
-    "שני",
-    "שלישי",
-    "רביעי",
-    "חמישי",
-    "שישי",
-    "שבת",
-];
 const HEBREW_DAYS_SHORT = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
 
 function CalendarHeader({ date }: { date: Date }) {
     const dayIndex = date.getDay();
-    const dayFull = HEBREW_DAYS_FULL[dayIndex];
+    const dayFull = getDayNameDisplay(dayIndex as GanttDayIndex);
     const dayShort = HEBREW_DAYS_SHORT[dayIndex];
     const dayjsDate = dayjs(date);
     const dateStr = dayjsDate.format("DD/MM");
@@ -124,21 +117,26 @@ export function CalendarView({
     onToggleFullscreen,
     onToggleToolbar,
 }: CalendarViewProps) {
+    const components = useMemo(
+        () => ({
+            event: BluzEventComponent,
+            toolbar: (props: any) => (
+                <CalendarToolbar
+                    {...props}
+                    onToggleFullscreen={onToggleFullscreen}
+                    onToggleToolbar={onToggleToolbar}
+                    showToolbar={showToolbar}
+                />
+            ),
+            header: CalendarHeader,
+        }),
+        [onToggleFullscreen, onToggleToolbar, showToolbar],
+    );
+
     return (
         <DnDCalendar
             className="relative grow h-full"
-            components={{
-                event: BluzEventComponent,
-                toolbar: (props: any) => (
-                    <CalendarToolbar
-                        {...props}
-                        onToggleFullscreen={onToggleFullscreen}
-                        onToggleToolbar={onToggleToolbar}
-                        showToolbar={showToolbar}
-                    />
-                ),
-                header: CalendarHeader,
-            }}
+            components={components}
             date={date}
             defaultView={Views.WEEK}
             draggableAccessor={(e) => !e.locked}

@@ -34,6 +34,7 @@ export type Event = {
     name: string;
     subject: number; // Subject ID
     hiveModule: number; // Module ID
+    hiveLesson?: null | number; // Lesson ID
     startTime: Dayjs;
     endTime: Dayjs;
     type: EventType;

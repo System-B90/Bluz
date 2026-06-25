@@ -1,3 +1,6 @@
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import EditIcon from "@mui/icons-material/Edit";
 import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
@@ -40,6 +43,15 @@ export function ModuleRow({
         [moduleDoc, state],
     );
 
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: moduleId });
+
     const editClickHandler = useCallback(() => {
         openModuleDialog(syllabusId, moduleId);
     }, [moduleId, syllabusId, openModuleDialog]);
@@ -47,6 +59,7 @@ export function ModuleRow({
     if (!moduleDoc) {
         return (
             <TableRow>
+                <TableCell sx={{ width: "1rem" }} />
                 <TableCell>
                     <Skeleton variant="text" width="80%" />
                 </TableCell>
@@ -61,7 +74,18 @@ export function ModuleRow({
     }
 
     return (
-        <TableRow hover>
+        <TableRow
+            hover
+            ref={setNodeRef}
+            style={{
+                transform: CSS.Transform.toString(transform),
+                transition,
+                opacity: isDragging ? 0.4 : 1,
+            }}
+        >
+            <TableCell sx={{ width: "1rem", pr: 0, cursor: "grab" }} {...attributes} {...listeners}>
+                <DragIndicatorIcon fontSize="small" sx={{ color: "text.disabled", display: "block" }} />
+            </TableCell>
             <TableCell>
                 <Typography variant="body2">{moduleDoc.title}</Typography>
             </TableCell>

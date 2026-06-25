@@ -1,3 +1,18 @@
+import {
+    closestCenter,
+    DndContext,
+    DragEndEvent,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from "@dnd-kit/core";
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -6,13 +21,18 @@ import TableFooter from "@mui/material/TableFooter";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import { useMemo } from "react";
+import { useSnackbar } from "notistack";
+import { useCallback } from "react";
 
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { ganttApi } from "@/api-client/gantt";
 import {
     GanttCurriculumId,
+    GanttModuleId,
     GanttSyllabus,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 import { CreateModuleButton } from "@/components/gantt/syllabus-card/CreateModuleButton";
 import { ModuleRow } from "@/components/gantt/syllabus-card/ModuleRow";
 
@@ -21,21 +41,41 @@ export type ModulesTableProps = {
     curriculumId: GanttCurriculumId;
     syllabusModules: GanttSyllabus["modules"];
 };
+
 export function ModulesTable({
     syllabusId,
     syllabusModules,
     curriculumId,
 }: ModulesTableProps) {
-    const moduleRows = useMemo(() => {
-        return syllabusModules.map((moduleId) => (
-            <ModuleRow
-                curriculumId={curriculumId}
-                key={moduleId}
-                moduleId={moduleId}
-                syllabusId={syllabusId}
-            />
-        ));
-    }, [syllabusId, syllabusModules, curriculumId]);
+    const { enqueueSnackbar } = useSnackbar();
+    const { dispatch } = useCurriculumProviderActions();
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    );
+
+    const handleDragEnd = useCallback(
+        (event: DragEndEvent) => {
+            const { active, over } = event;
+            if (!over || active.id === over.id) return;
+
+            const oldIndex = syllabusModules.indexOf(active.id as GanttModuleId);
+            const newIndex = syllabusModules.indexOf(over.id as GanttModuleId);
+            if (oldIndex === -1 || newIndex === -1) return;
+
+            const newOrder = arrayMove(syllabusModules, oldIndex, newIndex);
+
+            dispatch({ type: "REORDER_MODULES", payload: { syllabusId, moduleIds: newOrder } });
+
+            ganttApi
+                .reorderModules(syllabusId, newOrder)
+                .catch((error) =>
+                    enqueueApiErrorSnackbar(enqueueSnackbar, "שמירת סדר המערכים נכשלה!", error),
+                );
+        },
+        [dispatch, syllabusId, syllabusModules, enqueueSnackbar],
+    );
 
     return (
         <Box
@@ -58,38 +98,54 @@ export function ModulesTable({
                 },
             }}
         >
-            <Table size="small" stickyHeader>
-                <TableHead>
-                    <TableRow>
-                        <TableCell sx={{ fontWeight: "bold" }}>
-                            שם המערך
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: "bold" }}>
-                            זמן רצוי
-                        </TableCell>
-                        <TableCell align="center" width="1rem">
-                            <CreateModuleButton syllabusId={syllabusId} />
-                        </TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {moduleRows.length > 0 ? (
-                        moduleRows
-                    ) : (
+            <DndContext
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+                sensors={sensors}
+            >
+                <Table size="small" stickyHeader>
+                    <TableHead>
                         <TableRow>
-                            <TableCell align="center" colSpan={3}>
-                                <Typography
-                                    color="textSecondary"
-                                    variant="caption"
-                                >
-                                    לא נמצאו מערכים. לחצו על הוסף כדי להתחיל.
-                                </Typography>
+                            <TableCell sx={{ width: "1rem" }} />
+                            <TableCell sx={{ fontWeight: "bold" }}>
+                                שם המערך
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: "bold" }}>
+                                זמן רצוי
+                            </TableCell>
+                            <TableCell align="center" width="1rem">
+                                <CreateModuleButton syllabusId={syllabusId} />
                             </TableCell>
                         </TableRow>
-                    )}
-                </TableBody>
-                <TableFooter />
-            </Table>
+                    </TableHead>
+                    <TableBody>
+                        <SortableContext items={syllabusModules} strategy={verticalListSortingStrategy}>
+                            {syllabusModules.length > 0 ? (
+                                syllabusModules.map((moduleId) => (
+                                    <ModuleRow
+                                        curriculumId={curriculumId}
+                                        key={moduleId}
+                                        moduleId={moduleId}
+                                        syllabusId={syllabusId}
+                                    />
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell align="center" colSpan={4}>
+                                        <Typography
+                                            color="textSecondary"
+                                            variant="caption"
+                                        >
+                                            לא נמצאו מערכים. לחצו על הוסף כדי להתחיל.
+                                        </Typography>
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </SortableContext>
+                    </TableBody>
+                    <TableFooter />
+                </Table>
+            </DndContext>
         </Box>
     );
 }

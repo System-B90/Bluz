@@ -1,7 +1,8 @@
-import { ClientApiNoPayload, safeApiFetcher } from "@/api-client/common";
+import { ClientApi, ClientApiNoPayload, safeApiFetcher } from "@/api-client/common";
 import {
     ApiHiveClassesGetResponse,
-    ApiHiveRoomsGetResponse,
+    ApiHiveLessonsGetPayload,
+    ApiHiveLessonsGetResponse,
     ApiHiveStudentsGetResponse,
     ApiHiveUsersGetResponse,
 } from "@/api-shared/types/hive";
@@ -11,9 +12,9 @@ import { ApiHiveSubjectsGetResponse } from "@/api-shared/types/subject";
 type ClientApiGetStudents = ClientApiNoPayload<ApiHiveStudentsGetResponse>;
 type ClientApiGetClasses = ClientApiNoPayload<ApiHiveClassesGetResponse>;
 type ClientApiGetSubjects = ClientApiNoPayload<ApiHiveSubjectsGetResponse>;
-type ClientApiGetHiveRooms = ClientApiNoPayload<ApiHiveRoomsGetResponse>;
 type ClientApiGetHiveUsers = ClientApiNoPayload<ApiHiveUsersGetResponse>;
 type ClientApiGetModules = ClientApiNoPayload<ApiHiveModulesGetResponse>;
+type ClientApiGetLessons = ClientApi<ApiHiveLessonsGetPayload, ApiHiveLessonsGetResponse>;
 
 export const apiGetStudents: ClientApiGetStudents = async (props) => {
     return await safeApiFetcher<ApiHiveStudentsGetResponse>(
@@ -36,14 +37,6 @@ export const apiGetSubjects: ClientApiGetSubjects = async (props) => {
     );
 };
 
-// TODO: Is this function actually needed? Rooms are a subtype of class in Hive
-export const apiGetHiveRooms: ClientApiGetHiveRooms = async (props) => {
-    return await safeApiFetcher<ApiHiveRoomsGetResponse>(
-        "/api/hive/rooms",
-        props,
-    );
-};
-
 export const getHiveUsers: ClientApiGetHiveUsers = async (props) => {
     return await safeApiFetcher<ApiHiveUsersGetResponse>(
         "/api/hive/users",
@@ -54,6 +47,27 @@ export const getHiveUsers: ClientApiGetHiveUsers = async (props) => {
 export const apiGetModules: ClientApiGetModules = async (props) => {
     return await safeApiFetcher<ApiHiveModulesGetResponse>(
         "/api/hive/modules",
+        props,
+    );
+};
+
+export const apiGetLessons: ClientApiGetLessons = async (payload, props) => {
+    const params = new URLSearchParams();
+    if (payload) {
+        if (payload.module__id !== undefined) {
+            params.set("module__id", String(payload.module__id));
+        }
+        if (payload.module__parent_subject__parent_program_id__in !== undefined) {
+            const val = payload.module__parent_subject__parent_program_id__in;
+            params.set(
+                "module__parent_subject__parent_program_id__in",
+                Array.isArray(val) ? val.join(",") : String(val),
+            );
+        }
+    }
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return await safeApiFetcher<ApiHiveLessonsGetResponse>(
+        `/api/hive/lessons${query}`,
         props,
     );
 };

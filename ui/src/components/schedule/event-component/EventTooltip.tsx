@@ -15,6 +15,7 @@ import moment from "moment";
 import { useMemo } from "react";
 
 import { useCourses } from "@/components/base/CoursesProvider";
+import { useHiveLessons } from "@/components/base/HiveLessonsProvider";
 import { useHiveModules } from "@/components/base/HiveModulesProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
@@ -56,7 +57,9 @@ export function EventTooltipContent({ event }: { event: Event }) {
     const subject = eventHasSubject(event.type)
         ? getSubject(event.subject)
         : null;
+    const { getLesson } = useHiveLessons();
     const hiveModule = event.hiveModule ? getModule(event.hiveModule) : null;
+    const hiveLesson = event.hiveLesson ? getLesson(event.hiveLesson) : null;
     const courses = event.courses.map(getCourse).filter((v) => !!v);
     const rooms = event.rooms.map(getRoom).filter((v) => !!v);
     const instructors = getPresentInstructors(event)
@@ -103,13 +106,13 @@ export function EventTooltipContent({ event }: { event: Event }) {
                 text={`${start.format("HH:mm")} – ${end.format("HH:mm")}  (${durationLabel})`}
             />
 
-            {/* Subject / Module */}
+            {/* Subject / Module / Lesson */}
             {subject ? (
                 <TooltipRow
                     icon={<MenuBookIcon fontSize="inherit" />}
                     text={
                         hiveModule
-                            ? `${subject.name} / ${hiveModule.name}`
+                            ? `${subject.name} / ${hiveModule.name}${hiveLesson ? ` / ${hiveLesson.name}` : ""}`
                             : subject.name
                     }
                 />
