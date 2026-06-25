@@ -458,10 +458,7 @@ export function WeeksCapacityGrid({
                                 zIndex: 5,
                                 width: "8%",
                                 minWidth: "80px",
-                                bgcolor: (theme) =>
-                                    theme.palette.mode === "light"
-                                        ? "rgb(244, 250, 252)"
-                                        : "rgb(12, 34, 55)",
+                                bgcolor: "background.default",
                                 borderInlineEnd: "1px solid",
                                 borderColor: "divider",
                                 fontWeight: 800,
@@ -475,10 +472,7 @@ export function WeeksCapacityGrid({
                             sx={{
                                 width: "11%",
                                 minWidth: "100px",
-                                bgcolor: (theme) =>
-                                    theme.palette.mode === "light"
-                                        ? "rgb(244, 250, 252)"
-                                        : "rgb(12, 34, 55)",
+                                bgcolor: "background.default",
                                 fontWeight: 800,
                                 py: 1.5,
                                 fontSize: "0.85rem",
