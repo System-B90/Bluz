@@ -73,10 +73,10 @@ export function HiveLessonsView({
             <Stack direction="row" flexWrap="wrap" gap={1}>
                 {lessons.map((lesson) => (
                     <Chip
+                        color="primary"
                         key={lesson.id}
                         label={lesson.name}
                         size="small"
-                        color="primary"
                         variant="outlined"
                     />
                 ))}

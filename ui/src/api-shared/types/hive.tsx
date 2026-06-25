@@ -215,6 +215,6 @@ export type LessonRuleRequest = {
 
 export type ApiHiveLessonsGetPayload = {
     module__id?: number;
-    module__parent_subject__parent_program_id__in?: string | number[];
+    module__parent_subject__parent_program_id__in?: Array<number> | string;
 } | void;
 export type ApiHiveLessonsGetResponse = Array<Lesson>;

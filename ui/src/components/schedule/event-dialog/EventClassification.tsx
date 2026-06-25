@@ -3,8 +3,8 @@ import Box from "@mui/material/Box";
 
 import { CourseField } from "@/components/schedule/event-dialog/CourseField";
 import { EventTypeField } from "@/components/schedule/event-dialog/EventTypeField";
-import { ModuleField } from "@/components/schedule/event-dialog/ModuleField";
 import { LessonField } from "@/components/schedule/event-dialog/LessonField";
+import { ModuleField } from "@/components/schedule/event-dialog/ModuleField";
 import { PrayerTypeField } from "@/components/schedule/event-dialog/PrayerType";
 import { RoomField } from "@/components/schedule/event-dialog/RoomField";
 import { SubjectField } from "@/components/schedule/event-dialog/SubjectField";

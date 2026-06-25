@@ -6,8 +6,8 @@ import Tooltip from "@mui/material/Tooltip";
 import React, { useState } from "react";
 
 import { CoursesProvider } from "@/components/base/CoursesProvider";
-import { HiveModulesProvider } from "@/components/base/HiveModulesProvider";
 import { HiveLessonsProvider } from "@/components/base/HiveLessonsProvider";
+import { HiveModulesProvider } from "@/components/base/HiveModulesProvider";
 import { HiveSubjectsProvider } from "@/components/base/HiveSubjectsProvider";
 import { HiveUsersProvider } from "@/components/base/HiveUsersProvider";
 import { OfflineProvider, useOffline } from "@/components/base/OfflineProvider";

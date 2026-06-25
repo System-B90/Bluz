@@ -20,7 +20,7 @@ export function LessonField({
     const { getLessonsOfModule } = useHiveLessons();
     const lessons = useMemo(
         () => (event?.hiveModule ? getLessonsOfModule(Number(event.hiveModule)) : []),
-        [event?.hiveModule, getLessonsOfModule],
+        [event, getLessonsOfModule],
     );
 
     const lessonMenuItems = lessons.map((lesson) => (
