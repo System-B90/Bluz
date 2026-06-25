@@ -1,8 +1,12 @@
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
 import { drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
-import { ganttCurriculum2SyllabusesSchema } from "@/api-server/gantt/schema";
+import {
+    ganttCurriculum2SyllabusesSchema,
+    ganttModule2EventsSchema,
+    ganttSyllabus2ModulesSchema,
+} from "@/api-server/gantt/schema";
 import { ganttCurriculumsSchema } from "@/api-server/gantt/schema/curriculums";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
@@ -39,10 +43,12 @@ async function getFullCurriculum(
                     syllabus: {
                         with: {
                             s2m: {
+                                orderBy: [asc(ganttSyllabus2ModulesSchema.sortOrder)],
                                 with: {
                                     module: {
                                         with: {
                                             m2e: {
+                                                orderBy: [asc(ganttModule2EventsSchema.sortOrder)],
                                                 with: {
                                                     event: {
                                                         with: {

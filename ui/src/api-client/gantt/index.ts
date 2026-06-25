@@ -4,6 +4,7 @@ import { dayApi } from "@/api-client/gantt/day";
 import { curriculumModuleDayMappingApi } from "@/api-client/gantt/mappings";
 import { moduleApi } from "@/api-client/gantt/module";
 import { moduleEventApi } from "@/api-client/gantt/module-event";
+import { apiReorderEvents, apiReorderModules } from "@/api-client/gantt/reorder";
 import { syllabusApi } from "@/api-client/gantt/syllabus";
 import { weekApi } from "@/api-client/gantt/week";
 
@@ -16,6 +17,8 @@ const ganttApi = {
     week: weekApi,
     mappings: curriculumModuleDayMappingApi,
     constraints: ganttConstraintsApi,
+    reorderModules: apiReorderModules,
+    reorderEvents: apiReorderEvents,
 } as const;
 export { ganttApi };
 export type GanttApi = typeof ganttApi;

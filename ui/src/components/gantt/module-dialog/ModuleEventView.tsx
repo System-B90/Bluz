@@ -1,4 +1,7 @@
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
@@ -52,6 +55,15 @@ export function ModuleEventView({
     const moduleEvent = useEvent(eventId);
     const { deleteEvent, updateEvent } = useModuleEventActions();
 
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: eventId });
+
     const handleCommit = useCallback(
         (updates: Partial<GanttEvent>) => {
             updateEvent(eventId, updates).catch((error) =>
@@ -76,7 +88,17 @@ export function ModuleEventView({
     }, [eventId, moduleId, deleteEvent, enqueueSnackbar]);
 
     return (
-        <TableRow>
+        <TableRow
+            ref={setNodeRef}
+            style={{
+                transform: CSS.Transform.toString(transform),
+                transition,
+                opacity: isDragging ? 0.4 : 1,
+            }}
+        >
+            <TableCell sx={{ width: "1rem", pr: 0, cursor: "grab" }} {...attributes} {...listeners}>
+                <DragIndicatorIcon fontSize="small" sx={{ color: "text.disabled", display: "block" }} />
+            </TableCell>
             <TableCell>
                 <ModuleEventTitle
                     handleCommit={handleCommit}

@@ -200,7 +200,7 @@ export function DayCapacityCell({
             return alpha(theme.palette.warning.main, 0.12);
         if (status === "ok") return alpha(theme.palette.primary.main, 0.08);
 
-        return theme.palette.background.paper;
+        return undefined;
     }, [isMuted, status, theme]);
 
     if (!day) {
@@ -227,7 +227,7 @@ export function DayCapacityCell({
                     pt: isCompact ? 0.35 : 1.25,
                     pb: isCompact ? 0.15 : 0.75,
                     px: isCompact ? 0.5 : 1.25,
-                    bgcolor: backgroundColor,
+                    bgcolor: backgroundColor ?? "background.paper",
                     borderInlineStart: "1px solid",
                     borderColor: "divider",
                     opacity: 0.72,
@@ -307,14 +307,14 @@ export function DayCapacityCell({
                 pt: isCompact ? 0.35 : 1.25,
                 pb: isCompact ? 0.15 : 0.75,
                 px: isCompact ? 0.5 : 1.25,
-                bgcolor: backgroundColor,
+                bgcolor: backgroundColor ?? "background.paper",
                 borderInlineStart: "1px solid",
                 borderColor: "divider",
                 verticalAlign: "top",
                 position: "relative",
                 transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": {
-                    bgcolor: alpha(backgroundColor, 0.18),
+                    bgcolor: backgroundColor ? alpha(backgroundColor, 0.18) : "action.hover",
                 },
             }}
         >
