@@ -11,6 +11,7 @@ import React, { memo, useCallback, useState } from "react";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
+import { ApplyTemplateButton } from "@/components/gantt/curriculum-view/tabs/weeks-tab/ApplyTemplateButton";
 import { CourseStartDateControl } from "@/components/gantt/curriculum-view/tabs/weeks-tab/CourseStartDateControl";
 import { WeekLengthMenu } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeekLengthMenu";
 import { WeeksCapacityGrid } from "@/components/gantt/curriculum-view/tabs/weeks-tab/WeeksCapacityGrid";
@@ -275,6 +276,10 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                             </Typography>
                         </Box>
                         <Stack alignItems="center" direction="row" spacing={1}>
+                            <ApplyTemplateButton
+                                curriculum={curriculum}
+                                curriculumId={curriculumId}
+                            />
                             <ImportExportMenuButton
                                 color="primary"
                                 exportLabel="ייצוא שבועות"
