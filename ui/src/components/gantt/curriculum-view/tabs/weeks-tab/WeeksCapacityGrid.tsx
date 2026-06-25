@@ -361,10 +361,7 @@ function DayHeaderCell({
             sx={{
                 width: "9.7%",
                 minWidth: "90px",
-                bgcolor: (theme) =>
-                    theme.palette.mode === "light"
-                        ? "rgb(244, 250, 252)"
-                        : "rgb(12, 34, 55)",
+                bgcolor: "background.default",
                 fontWeight: 800,
                 py: 1,
                 fontSize: "0.85rem",
