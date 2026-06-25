@@ -1,5 +1,12 @@
 import { HiveClientError } from "@/api-shared/errors";
-import { Class, CourseUser } from "@/api-shared/types/hive";
+import {
+    Class,
+    CourseUser,
+    Lesson,
+    LessonRequest,
+    LessonRule,
+    LessonRuleRequest,
+} from "@/api-shared/types/hive";
 import { Module } from "@/api-shared/types/module";
 import { HiveRoom, RoomSource } from "@/api-shared/types/room";
 import { Subject } from "@/api-shared/types/subject";
@@ -67,22 +74,26 @@ export class HiveClient {
         }
     }
 
-    private async _get<T>(
+    private async _request<T>(
         url: string,
+        method: "DELETE" | "GET" | "PATCH" | "POST" | "PUT",
+        body?: unknown,
         isRetry = false,
         retryCount = 0,
     ): Promise<T> {
         const response = await fetch(url, {
+            method,
             headers: {
                 Authorization: `Bearer ${this.accessToken}`,
                 "Content-Type": "application/json",
             },
+            body: body !== undefined ? JSON.stringify(body) : undefined,
         });
 
         if (response.status === 401) {
             if (!isRetry && this.refreshTokenValue) {
                 await this.refreshAccessToken();
-                return await this._get<T>(url, true, 0);
+                return await this._request<T>(url, method, body, true, 0);
             }
             throw new HiveClientError("הטוקן אינו תקף, אנא התחבר מחדש");
         }
@@ -96,16 +107,29 @@ export class HiveClient {
             await new Promise((resolve) =>
                 setTimeout(resolve, 200 * Math.pow(2, retryCount)),
             );
-            return await this._get<T>(url, isRetry, retryCount + 1);
+            return await this._request<T>(url, method, body, isRetry, retryCount + 1);
         }
 
         if (!response.ok) {
             throw new HiveClientError(
-                `טעינת מידע מהייב נכשלה: ${response.statusText}`,
+                `פעולה מול הייב נכשלה: ${response.statusText}`,
             );
         }
 
-        return await response.json();
+        if (response.status === 204) {
+            return undefined as T;
+        }
+
+        const text = await response.text();
+        return text ? JSON.parse(text) : (undefined as T);
+    }
+
+    private async _get<T>(
+        url: string,
+        isRetry = false,
+        retryCount = 0,
+    ): Promise<T> {
+        return await this._request<T>(url, "GET", undefined, isRetry, retryCount);
     }
 
     /**
@@ -165,6 +189,113 @@ export class HiveClient {
     async getModules(): Promise<Array<Module>> {
         return await this._get<Array<Module>>(
             this.buildUrl("/api/core/course/modules/"),
+        );
+    }
+
+    async getLessons(params?: Record<string, any>): Promise<Array<Lesson>> {
+        const queryString = new URLSearchParams(params).toString();
+        return await this._request<Array<Lesson>>(
+            this.buildUrl(`/api/core/schedule/lessons/?${queryString}`),
+            "GET",
+        );
+    }
+
+    async getLesson(id: number): Promise<Lesson> {
+        return await this._request<Lesson>(
+            this.buildUrl(`/api/core/schedule/lessons/${id}/`),
+            "GET",
+        );
+    }
+
+    async createLesson(data: LessonRequest): Promise<Lesson> {
+        return await this._request<Lesson>(
+            this.buildUrl("/api/core/schedule/lessons/"),
+            "POST",
+            data,
+        );
+    }
+
+    async updateLesson(id: number, data: LessonRequest): Promise<Lesson> {
+        return await this._request<Lesson>(
+            this.buildUrl(`/api/core/schedule/lessons/${id}/`),
+            "PUT",
+            data,
+        );
+    }
+
+    async patchLesson(id: number, data: Partial<LessonRequest>): Promise<Lesson> {
+        return await this._request<Lesson>(
+            this.buildUrl(`/api/core/schedule/lessons/${id}/`),
+            "PATCH",
+            data,
+        );
+    }
+
+    async deleteLesson(id: number): Promise<void> {
+        return await this._request<void>(
+            this.buildUrl(`/api/core/schedule/lessons/${id}/`),
+            "DELETE",
+        );
+    }
+
+    async setLessonForClass(classId: number, lessonId: null | number): Promise<void> {
+        return await this._request<void>(
+            this.buildUrl(`/api/core/management/classes/${classId}/lesson/`),
+            "POST",
+            { lesson: lessonId },
+        );
+    }
+
+    async getLessonRules(parentId: number): Promise<Array<LessonRule>> {
+        return await this._request<Array<LessonRule>>(
+            this.buildUrl(`/api/core/schedule/lessons/${parentId}/rules/`),
+            "GET",
+        );
+    }
+
+    async getLessonRule(parentId: number, id: number): Promise<LessonRule> {
+        return await this._request<LessonRule>(
+            this.buildUrl(`/api/core/schedule/lessons/${parentId}/rules/${id}/`),
+            "GET",
+        );
+    }
+
+    async createLessonRule(parentId: number, data: LessonRuleRequest): Promise<LessonRule> {
+        return await this._request<LessonRule>(
+            this.buildUrl(`/api/core/schedule/lessons/${parentId}/rules/`),
+            "POST",
+            data,
+        );
+    }
+
+    async updateLessonRule(
+        parentId: number,
+        id: number,
+        data: LessonRuleRequest,
+    ): Promise<LessonRule> {
+        return await this._request<LessonRule>(
+            this.buildUrl(`/api/core/schedule/lessons/${parentId}/rules/${id}/`),
+            "PUT",
+            data,
+        );
+    }
+
+    async patchLessonRule(
+        parentId: number,
+        id: number,
+        data: Partial<LessonRuleRequest>,
+    ): Promise<LessonRule> {
+        return await this._request<LessonRule>(
+            this.buildUrl(`/api/core/schedule/lessons/${parentId}/rules/${id}/`),
+            "PATCH",
+            data,
+        );
+    }
+
+    async deleteLessonRule(parentId: number, id: number): Promise<void> {
+        return await this._request<void>(
+            this.buildUrl(`/api/core/schedule/lessons/${parentId}/rules/${id}/`),
+            "DELETE",
         );
     }
 }
