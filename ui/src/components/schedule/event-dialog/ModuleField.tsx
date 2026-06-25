@@ -41,7 +41,7 @@ export function ModuleField({
             <InputLabel>מערך</InputLabel>
             <Select
                 label="מערך"
-                onChange={(e) => onEventChange({ hiveModule: e.target.value })}
+                onChange={(e) => onEventChange({ hiveModule: e.target.value, hiveLesson: null })}
                 value={event?.hiveModule ?? ""}
             >
                 {moduleMenuItems}

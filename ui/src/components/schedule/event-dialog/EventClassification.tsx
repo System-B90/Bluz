@@ -3,6 +3,7 @@ import Box from "@mui/material/Box";
 
 import { CourseField } from "@/components/schedule/event-dialog/CourseField";
 import { EventTypeField } from "@/components/schedule/event-dialog/EventTypeField";
+import { LessonField } from "@/components/schedule/event-dialog/LessonField";
 import { ModuleField } from "@/components/schedule/event-dialog/ModuleField";
 import { PrayerTypeField } from "@/components/schedule/event-dialog/PrayerType";
 import { RoomField } from "@/components/schedule/event-dialog/RoomField";
@@ -60,10 +61,10 @@ export function EventClassification({
                 />
             </Box>
 
-            {/* Subject and Module fields with transition */}
+            {/* Subject, Module and Lesson fields with transition */}
             <Box
                 sx={{
-                    width: !isPrayer ? "35%" : 0,
+                    width: !isPrayer ? "52%" : 0,
                     opacity: !isPrayer ? 1 : 0,
                     transform: !isPrayer ? "scale(1)" : "scale(0.95)",
                     transition:
@@ -81,12 +82,17 @@ export function EventClassification({
                 <SubjectField
                     event={event}
                     onEventChange={onUpdate}
-                    sx={{ width: "50%", minWidth: "80px" }}
+                    sx={{ width: "33%", minWidth: "80px" }}
                 />
                 <ModuleField
                     event={event}
                     onEventChange={onUpdate}
-                    sx={{ width: "50%", minWidth: "80px" }}
+                    sx={{ width: "33%", minWidth: "80px" }}
+                />
+                <LessonField
+                    event={event}
+                    onEventChange={onUpdate}
+                    sx={{ width: "33%", minWidth: "80px" }}
                 />
             </Box>
 

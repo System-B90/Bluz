@@ -12,6 +12,7 @@ export const createEventFactory = (
         name: eventPartial.name ?? "",
         subject: eventPartial.subject ?? 0,
         hiveModule: eventPartial.hiveModule ?? 0,
+        hiveLesson: eventPartial.hiveLesson ?? null,
         startTime: eventPartial.startTime ?? dayjs(),
         endTime: eventPartial.endTime ?? dayjs(),
         type,

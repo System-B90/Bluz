@@ -160,3 +160,61 @@ export type ApiHiveUsersGetResponse = Array<CourseUser>;
 
 export type ApiHiveRoomsGetPayload = void;
 export type ApiHiveRoomsGetResponse = Array<HiveRoom>;
+
+export type Queue = {
+    readonly id: number;
+    name: string;
+    description?: string;
+    module?: null | number;
+    user?: null | number;
+    readonly user_id: null | number;
+    readonly user_name: null | string;
+    readonly subject_id: null | number;
+    readonly subject_name: null | string;
+    readonly subject_color: null | string;
+    readonly subject_symbol: null | string;
+    readonly module_id: null | number;
+    readonly module_name: null | string;
+    readonly module_order: null | string;
+    readonly program_id: number;
+    readonly program_name: string;
+};
+
+export type Lesson = {
+    readonly id: number;
+    name: string;
+    module: number;
+    readonly module_order: string;
+    readonly module_name: string;
+    readonly subject_symbol: string;
+    readonly subject_name: string;
+    readonly program_name: string;
+    description?: string;
+};
+
+export type LessonRequest = {
+    name: string;
+    module: number;
+    description?: string;
+};
+
+export type LessonRule = {
+    readonly id: number;
+    parent_rule: null | number;
+    student_groups: Array<number>;
+    queue: null | number;
+    readonly queue_data: null | Queue;
+    readonly student_groups_data: Array<Class> | null;
+};
+
+export type LessonRuleRequest = {
+    parent_rule?: null | number;
+    student_groups?: Array<number>;
+    queue?: null | number;
+};
+
+export type ApiHiveLessonsGetPayload = {
+    module__id?: number;
+    module__parent_subject__parent_program_id__in?: Array<number> | string;
+} | void;
+export type ApiHiveLessonsGetResponse = Array<Lesson>;

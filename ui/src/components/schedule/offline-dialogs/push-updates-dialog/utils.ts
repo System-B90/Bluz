@@ -10,6 +10,7 @@ export const KEY_TRANSLATIONS: Record<string, string> = {
     name: "שם המופע",
     subject: "נושא",
     hiveModule: "מודול",
+    hiveLesson: "שיעור",
     startTime: "זמן התחלה",
     endTime: "זמן סיום",
     type: "סוג",

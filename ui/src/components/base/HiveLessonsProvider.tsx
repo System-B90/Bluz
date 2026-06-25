@@ -1,0 +1,98 @@
+"use client";
+import { enqueueSnackbar } from "notistack";
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { apiGetLessons } from "@/api-client/hive";
+import { Lesson } from "@/api-shared/types/hive";
+
+export type HiveLessonsContextState = {
+    default: boolean;
+    lessons: Array<Lesson>;
+    getLesson: (id: number) => Lesson | undefined;
+    getLessonsOfModule: (moduleId: number) => Array<Lesson>;
+};
+
+const HiveLessonsContext = createContext<HiveLessonsContextState | undefined>({
+    default: true,
+    lessons: [],
+    getLesson: (_id: number) => undefined,
+    getLessonsOfModule: (_moduleId: number) => [],
+});
+
+export const HiveLessonsProvider = ({
+    children,
+}: {
+    children: React.ReactNode;
+}) => {
+    const [lessonLookup, setLessonLookup] = useState<Record<number, Lesson>>(
+        {},
+    );
+
+    const lessons = useMemo(() => Object.values(lessonLookup), [lessonLookup]);
+
+    const getLesson = useCallback(
+        (id: number) => lessonLookup[id],
+        [lessonLookup],
+    );
+
+    const getLessonsOfModule = useCallback(
+        (moduleId: number) =>
+            lessons.filter((lesson) => lesson.module === moduleId),
+        [lessons],
+    );
+
+    const loadLessons = useCallback(() => {
+        apiGetLessons()
+            .then((fetchedLessons) => {
+                const lessonsMap: Record<number, Lesson> = {};
+                fetchedLessons.forEach((lesson) => {
+                    lessonsMap[lesson.id] = lesson;
+                });
+                setLessonLookup(lessonsMap);
+            })
+            .catch((error) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "טעינת השיעורים נכשלה.",
+                    error,
+                ),
+            );
+    }, [setLessonLookup]);
+
+    useEffect(() => {
+        loadLessons();
+    }, [loadLessons]);
+
+    return (
+        <HiveLessonsContext.Provider
+            value={{
+                default: false,
+                lessons,
+                getLesson,
+                getLessonsOfModule,
+            }}
+        >
+            {children}
+        </HiveLessonsContext.Provider>
+    );
+};
+
+export const useHiveLessons = () => {
+    const context = useContext(HiveLessonsContext);
+
+    if (context === undefined || context.default) {
+        throw new Error(
+            "useHiveLessons must be used within an HiveLessonsProvider",
+        );
+    }
+
+    return context;
+};
