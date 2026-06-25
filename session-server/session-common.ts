@@ -35,5 +35,9 @@ export enum MessageTypes {
     COURSES_UPDATE = "cu",
     ROOMS_UPDATE = "ru",
     OUTSIDERS_UPDATE = "ou",
+
+    // Period locking: broadcast that a user has started/finished editing an event
+    EVENT_LOCK = "el",
+    EVENT_UNLOCK = "eu",
 }
 export const COMBO_DATA_KEY = "combo-data";

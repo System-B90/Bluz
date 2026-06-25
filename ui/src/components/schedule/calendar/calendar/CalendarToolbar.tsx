@@ -7,6 +7,8 @@
 
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
+import SyncIcon from "@mui/icons-material/Sync";
+import SyncDisabledIcon from "@mui/icons-material/SyncDisabled";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -20,6 +22,7 @@ import dayjs from "dayjs";
 import { useCallback, useMemo, useState } from "react";
 import { ToolbarProps } from "react-big-calendar";
 
+import { useOffline } from "@/components/base/OfflineProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 
 export function CalendarToolbar({
@@ -36,6 +39,7 @@ export function CalendarToolbar({
     onToggleFullscreen: () => void;
     onToggleToolbar: () => void;
 }) {
+    const { offlineMode, setOfflineMode } = useOffline();
     const [open, setOpen] = useState(false);
 
     const handleDateChange = useCallback(
@@ -185,6 +189,37 @@ export function CalendarToolbar({
                             {CALENDAR_MESSAGES.week}
                         </Button>
                     </ButtonGroup>
+
+                    <Tooltip
+                        title={
+                            offlineMode
+                                ? "סנכרון אוטומטי מושבת — לחץ לחזרה למצב מקוון"
+                                : "השבת סנכרון אוטומטי"
+                        }
+                    >
+                        <Button
+                            color={offlineMode ? "warning" : "inherit"}
+                            onClick={() => setOfflineMode((v) => !v)}
+                            size="small"
+                            sx={{
+                                minWidth: 38,
+                                transition: "all 0.2s ease-in-out",
+                                "&:hover": {
+                                    color: offlineMode
+                                        ? "warning.main"
+                                        : "primary.main",
+                                },
+                                "&:active": { transform: "scale(0.95)" },
+                            }}
+                            variant={offlineMode ? "contained" : "outlined"}
+                        >
+                            {offlineMode ? (
+                                <SyncDisabledIcon fontSize="small" />
+                            ) : (
+                                <SyncIcon fontSize="small" />
+                            )}
+                        </Button>
+                    </Tooltip>
 
                     <ButtonGroup size="small" variant="outlined">
                         <Tooltip title="הסתר סרגל כלים">

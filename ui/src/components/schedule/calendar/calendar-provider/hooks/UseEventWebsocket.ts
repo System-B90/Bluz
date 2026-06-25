@@ -4,21 +4,39 @@ import { eventDateFixup } from "@/api-shared/calendar";
 import {
     EventAddedOrRemovedMessage,
     EventDataUpdateMessage,
+    EventLockMessage,
+    EventUnlockMessage,
 } from "@/api-shared/types";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { CalendarAction } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
-import { Event } from "@/components/schedule/types/event";
+import { Event, EventId } from "@/components/schedule/types/event";
 import { MessageHandlerType } from "@/components/SessionWs";
 import { MessageTypes } from "@/settings";
 
 export const useEventWebsocket = (
     offlineMode: boolean,
     dispatch: (action: CalendarAction) => void,
+    setEventLock: (eventId: EventId, lock: EventLockMessage | null) => void,
 ) => {
     const { addMessageHandler } = useAuth();
 
     const onWebSocketMessage: MessageHandlerType = useCallback(
         (messageType: MessageTypes, data: any) => {
+            switch (messageType) {
+            // Lock/unlock messages are handled even in offline mode so the UI
+            // always reflects what other users are editing.
+            case MessageTypes.EVENT_LOCK: {
+                const msg = data as EventLockMessage;
+                setEventLock(msg.eventId, msg);
+                break;
+            }
+            case MessageTypes.EVENT_UNLOCK: {
+                const msg = data as EventUnlockMessage;
+                setEventLock(msg.eventId, null);
+                break;
+            }
+            }
+
             if (offlineMode) return;
 
             switch (messageType) {
@@ -47,7 +65,7 @@ export const useEventWebsocket = (
             }
             }
         },
-        [offlineMode, dispatch],
+        [offlineMode, dispatch, setEventLock],
     );
 
     useEffect(() => {
