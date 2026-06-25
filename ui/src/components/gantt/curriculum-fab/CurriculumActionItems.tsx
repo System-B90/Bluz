@@ -41,6 +41,11 @@ export function CurriculumActionItems({
         return await apiExportCurriculum(sourceCurriculum.id);
     }, [sourceCurriculum]);
 
+    const handleExportExcel = useCallback(() => {
+        if (!sourceCurriculum) return;
+        window.open(`/api/gantt/curriculums/${sourceCurriculum.id}/export/excel`, "_blank");
+    }, [sourceCurriculum]);
+
     const handleExportSuccess = useCallback(() => {
         enqueueSnackbar("הגאנט יוצא בהצלחה!", { variant: "success" });
     }, [enqueueSnackbar]);
@@ -113,6 +118,7 @@ export function CurriculumActionItems({
                 importDisabled={isDisabled}
                 onExport={handleExport}
                 onExportError={handleExportError}
+                onExportExcel={handleExportExcel}
                 onExportSuccess={handleExportSuccess}
                 onImport={handleImport}
                 variant="outlined"

@@ -13,8 +13,9 @@ type ServerApiHiveRoomsGet = ServerApi<
 export const GET: ServerApiHiveRoomsGet = async (request) => {
     try {
         const hiveClient = await createHiveClient();
-        const rooms = await hiveClient.getRooms();
-        return ApiSuccess(rooms);
+        const data = await hiveClient.getRooms();
+
+        return ApiSuccess(data);
     } catch (e) {
         return catchHandler(request, e);
     }

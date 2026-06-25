@@ -1,7 +1,8 @@
 import DownloadIcon from "@mui/icons-material/Download";
 import ImportExportIcon from "@mui/icons-material/ImportExport";
+import TableChartIcon from "@mui/icons-material/TableChart";
 import UploadIcon from "@mui/icons-material/Upload";
-import Button from "@mui/material/Button";
+import Button, { ButtonProps } from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -15,29 +16,24 @@ export function sanitizeFilename(name: string): string {
 }
 
 export type ImportExportMenuButtonProps = {
-    onExport: () => any | Promise<any>;
+    onExport: () => Promise<unknown> | unknown;
     onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
     importLabel?: string;
     exportLabel?: string;
     triggerLabel?: string;
     accept?: string;
-    size?: "large" | "medium" | "small";
-    variant?: "contained" | "outlined" | "text";
-    color?:
-        | "error"
-        | "info"
-        | "inherit"
-        | "primary"
-        | "secondary"
-        | "success"
-        | "warning";
+    size?: ButtonProps["size"];
+    variant?: ButtonProps["variant"];
+    color?: ButtonProps["color"];
     exportDisabled?: boolean;
     importDisabled?: boolean;
     iconOnly?: boolean;
     exportFilenamePrefix?: string;
     exportTitle?: string;
     onExportSuccess?: () => void;
-    onExportError?: (error: any) => void;
+    onExportError?: (error: unknown) => void;
+    onExportExcel?: () => Promise<void> | void;
+    exportExcelLabel?: string;
 };
 
 export function ImportExportMenuButton({
@@ -57,6 +53,8 @@ export function ImportExportMenuButton({
     exportTitle = "data",
     onExportSuccess,
     onExportError,
+    onExportExcel,
+    exportExcelLabel = "ייצוא לאקסל",
 }: ImportExportMenuButtonProps) {
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const open = Boolean(anchorEl);
@@ -104,6 +102,18 @@ export function ImportExportMenuButton({
         onExportError,
         handleClose,
     ]);
+
+    const handleExportExcelClick = useCallback(async () => {
+        try {
+            if (onExportExcel) {
+                await onExportExcel();
+            }
+            if (onExportSuccess) onExportSuccess();
+        } catch (error) {
+            if (onExportError) onExportError(error);
+        }
+        handleClose();
+    }, [onExportExcel, onExportSuccess, onExportError, handleClose]);
 
     const handleImportChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,6 +177,14 @@ export function ImportExportMenuButton({
                     </ListItemIcon>
                     <ListItemText>{exportLabel}</ListItemText>
                 </MenuItem>
+                {onExportExcel ? (
+                    <MenuItem disabled={exportDisabled} onClick={handleExportExcelClick}>
+                        <ListItemIcon>
+                            <TableChartIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>{exportExcelLabel}</ListItemText>
+                    </MenuItem>
+                ) : null}
                 <MenuItem component="label" disabled={importDisabled}>
                     <ListItemIcon>
                         <UploadIcon fontSize="small" />
