@@ -34,7 +34,7 @@ export function SubjectField({
             <Select
                 label="מקצוע"
                 onChange={(e) => onEventChange({ subject: e.target.value })}
-                value={event?.subject ?? ""}
+                value={event?.subject || ""}
             >
                 {subjectMenuItems}
             </Select>
