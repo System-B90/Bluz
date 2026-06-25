@@ -6,13 +6,18 @@
  */
 
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
+import InfoIcon from "@mui/icons-material/Info";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import WifiTetheringIcon from "@mui/icons-material/WifiTethering";
+import WifiTetheringOffIcon from "@mui/icons-material/WifiTetheringOff";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Collapse from "@mui/material/Collapse";
 import IconButton from "@mui/material/IconButton";
+import Popover from "@mui/material/Popover";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -20,7 +25,10 @@ import dayjs from "dayjs";
 import { useCallback, useMemo, useState } from "react";
 import { ToolbarProps } from "react-big-calendar";
 
+import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
+import { useOffline } from "@/components/base/OfflineProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
+import { Filters } from "@/components/header/filters";
 
 export function CalendarToolbar({
     date,
@@ -36,7 +44,22 @@ export function CalendarToolbar({
     onToggleFullscreen: () => void;
     onToggleToolbar: () => void;
 }) {
+    const { offlineMode, setOfflineMode } = useOffline();
+    const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
+        useCalendarFilters();
     const [open, setOpen] = useState(false);
+    const [filterAnchorEl, setFilterAnchorEl] =
+        useState<HTMLButtonElement | null>(null);
+    const filterOpen = Boolean(filterAnchorEl);
+
+    const hasAnyFilter = useMemo(
+        () =>
+            hidePrayers ||
+            filteredCourses.length !== 0 ||
+            filteredInstructors.length !== 0 ||
+            showPAsFor !== null,
+        [filteredCourses, filteredInstructors, showPAsFor, hidePrayers],
+    );
 
     const handleDateChange = useCallback(
         (val: dayjs.Dayjs | null) => {
@@ -185,6 +208,107 @@ export function CalendarToolbar({
                             {CALENDAR_MESSAGES.week}
                         </Button>
                     </ButtonGroup>
+
+                    <Tooltip
+                        title={
+                            offlineMode ? "חזור למצב מקוון" : "עבור למצב לוקלי"
+                        }
+                    >
+                        <Button
+                            color={offlineMode ? "warning" : "inherit"}
+                            onClick={() => setOfflineMode((v) => !v)}
+                            size="small"
+                            sx={{
+                                minWidth: 38,
+                                transition: "all 0.2s ease-in-out",
+                                "&:hover": {
+                                    color: offlineMode
+                                        ? "warning.main"
+                                        : "primary.main",
+                                },
+                                "&:active": { transform: "scale(0.95)" },
+                            }}
+                            variant={offlineMode ? "contained" : "outlined"}
+                        >
+                            {offlineMode ? (
+                                <WifiTetheringOffIcon fontSize="small" />
+                            ) : (
+                                <WifiTetheringIcon fontSize="small" />
+                            )}
+                        </Button>
+                    </Tooltip>
+
+                    <Tooltip
+                        title={filterOpen ? "הסתר סננים" : "הצג סננים"}
+                    >
+                        <Button
+                            color={
+                                filterOpen || hasAnyFilter ? "primary" : "inherit"
+                            }
+                            onClick={(e) =>
+                                setFilterAnchorEl(e.currentTarget)
+                            }
+                            size="small"
+                            sx={{
+                                minWidth: 38,
+                                position: "relative",
+                                transition: "all 0.2s ease-in-out",
+                                "&:hover": { color: "primary.main" },
+                                "&:active": { transform: "scale(0.95)" },
+                            }}
+                            variant={
+                                filterOpen || hasAnyFilter
+                                    ? "contained"
+                                    : "outlined"
+                            }
+                        >
+                            <FilterListIcon fontSize="small" />
+                            {!filterOpen && hasAnyFilter ? (
+                                <InfoIcon
+                                    color="info"
+                                    fontSize="inherit"
+                                    sx={{
+                                        position: "absolute",
+                                        top: 2,
+                                        right: 2,
+                                        fontSize: "0.8rem",
+                                    }}
+                                />
+                            ) : null}
+                        </Button>
+                    </Tooltip>
+                    <Popover
+                        anchorEl={filterAnchorEl}
+                        anchorOrigin={{
+                            vertical: "bottom",
+                            horizontal: "left",
+                        }}
+                        onClose={() => setFilterAnchorEl(null)}
+                        open={filterOpen}
+                        slotProps={{
+                            paper: {
+                                sx: {
+                                    p: 2,
+                                    mt: 1,
+                                    borderRadius: "12px",
+                                    boxShadow:
+                                        "0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
+                                    direction: "rtl",
+                                },
+                            },
+                        }}
+                        transformOrigin={{
+                            vertical: "top",
+                            horizontal: "left",
+                        }}
+                    >
+                        <Filters
+                            display="flex"
+                            flexDirection="column"
+                            gap={2}
+                            sx={{ minWidth: 240 }}
+                        />
+                    </Popover>
 
                     <ButtonGroup size="small" variant="outlined">
                         <Tooltip title="הסתר סרגל כלים">

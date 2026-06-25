@@ -7,12 +7,9 @@ import IconButton from "@mui/material/IconButton";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 import { CurriculumIcon } from "@/components/header/CurriculumIcon";
-import { FilterIcon } from "@/components/header/FilterIcon";
 import { Logo } from "@/components/header/logo";
-import { OfflineModeIcon } from "@/components/header/OfflineModeIcon";
 import { UserAccessCard } from "@/components/header/UserAccessCard";
 
 export function ScheduleAppBar({
@@ -21,9 +18,6 @@ export function ScheduleAppBar({
 }: {
     setOpenSettingsDialog: (open: boolean) => void;
 } & Exclude<AppBarProps, "position">) {
-    const pathname = usePathname();
-    const curriculumPage = pathname.includes("/curriculum");
-
     return (
         <AppBar
             className="flex justify-center py-0 h-14"
@@ -64,8 +58,6 @@ export function ScheduleAppBar({
                     gap={1}
                     justifyContent={"flex-end"}
                 >
-                    {!curriculumPage && <FilterIcon />}
-                    {!curriculumPage && <OfflineModeIcon />}
                     <CurriculumIcon />
 
                     {/* <InstructorToolsIcon /> */}
