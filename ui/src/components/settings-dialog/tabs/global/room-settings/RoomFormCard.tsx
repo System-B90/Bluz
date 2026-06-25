@@ -76,20 +76,14 @@ function RoomFormHeader({
                 sx={{
                     p: 1,
                     borderRadius: "10px",
-                    bgcolor: isHiveSelected
-                        ? "warning.light"
-                        : "secondary.light",
-                    color: isHiveSelected
-                        ? "warning.contrastText"
-                        : "secondary.contrastText",
+                    bgcolor: "secondary.light",
+                    color: "secondary.contrastText",
                     display: "flex",
                     alignItems: "center",
                 }}
             >
                 {isCreating ? (
                     <AddIcon className="text-[20px]" />
-                ) : isHiveSelected ? (
-                    <HiveLogo size={20} />
                 ) : (
                     <EditIcon className="text-[20px]" />
                 )}
@@ -317,13 +311,11 @@ function RoomExtendedDetails({
                         p: 1.5,
                         borderRadius: "10px",
                         border: "1px solid",
-                        borderColor: peAyin ? "warning.main" : "divider",
-                        bgcolor: peAyin
-                            ? "warning.light"
-                            : (theme) =>
-                                theme.palette.mode === "light"
-                                    ? "rgba(0,0,0,0.01)"
-                                    : "rgba(255,255,255,0.02)",
+                        borderColor: "divider",
+                        bgcolor: (theme) =>
+                            theme.palette.mode === "light"
+                                ? "rgba(0,0,0,0.01)"
+                                : "rgba(255,255,255,0.02)",
                     }}
                 >
                     <Box>
@@ -331,9 +323,7 @@ function RoomExtendedDetails({
                             sx={{
                                 fontWeight: 700,
                                 fontSize: "0.85rem",
-                                color: peAyin
-                                    ? "warning.contrastText"
-                                    : "text.primary",
+                                color: "text.primary",
                             }}
                         >
                             {'פ"ע — פגישת עבודה'}
@@ -341,9 +331,7 @@ function RoomExtendedDetails({
                         <Typography
                             sx={{
                                 fontSize: "0.7rem",
-                                color: peAyin
-                                    ? "warning.contrastText"
-                                    : "text.secondary",
+                                color: "text.secondary",
                             }}
                         >
                             {peAyin
