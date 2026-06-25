@@ -1,3 +1,5 @@
+import dayjs, { Dayjs } from "dayjs";
+
 import { RoomId, RoomSource } from "@/api-shared/types/room";
 
 export type ReserverType = "instructor" | "outsider";
@@ -6,23 +8,35 @@ export type Reservation = {
     _id?: string;
     roomId: RoomId;
     roomSource: RoomSource;
-    start: string; // ISO string
-    end: string; // ISO string
+    start: Dayjs;
+    end: Dayjs;
     reserverType: ReserverType;
     reserverId: string;
     note?: string;
 };
 
+export type DbReservation = Omit<Reservation, "start" | "end"> & {
+    start: string;
+    end: string;
+};
+
+export function reservationDateFixup(reservation: DbReservation): Reservation {
+    const result = { ...reservation } as unknown as Reservation;
+    result.start = dayjs(reservation.start);
+    result.end = dayjs(reservation.end);
+    return result;
+}
+
 export type ApiReservationsGetPayload = {
     roomId?: RoomId;
     roomSource?: RoomSource;
-    from?: string; // ISO string
-    to?: string; // ISO string
+    from?: string;
+    to?: string;
 };
-export type ApiReservationsGetResponse = Array<Reservation>;
+export type ApiReservationsGetResponse = Array<DbReservation>;
 
-export type ApiReservationCreatePayload = Omit<Reservation, "_id">;
-export type ApiReservationCreateResponse = Reservation;
+export type ApiReservationCreatePayload = Omit<DbReservation, "_id">;
+export type ApiReservationCreateResponse = DbReservation;
 
-export type ApiReservationDeletePayload = string; // _id
+export type ApiReservationDeletePayload = string;
 export type ApiReservationDeleteResponse = void;

@@ -324,13 +324,13 @@ export function ReservationDialog({
                                                     fontSize: "0.82rem",
                                                 }}
                                             >
-                                                {new Date(
-                                                    r.start,
-                                                ).toLocaleString("he-IL")}
+                                                {r.start
+                                                    .toDate()
+                                                    .toLocaleString("he-IL")}
                                                 {" – "}
-                                                {new Date(
-                                                    r.end,
-                                                ).toLocaleString("he-IL")}
+                                                {r.end
+                                                    .toDate()
+                                                    .toLocaleString("he-IL")}
                                             </Typography>
                                             <Chip
                                                 label={

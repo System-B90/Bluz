@@ -9,25 +9,14 @@ import {
     ApiReservationDeleteResponse,
     ApiReservationsGetPayload,
     ApiReservationsGetResponse,
+    Reservation,
+    reservationDateFixup,
 } from "@/api-shared/types/reservation";
 
-type ClientApiGetReservations = ClientApi<
-    ApiReservationsGetPayload,
-    ApiReservationsGetResponse
->;
-type ClientApiCreateReservation = ClientApi<
-    ApiReservationCreatePayload,
-    ApiReservationCreateResponse
->;
-type ClientApiDeleteReservation = ClientApi<
-    ApiReservationDeletePayload,
-    ApiReservationDeleteResponse
->;
-
-export const apiGetReservations: ClientApiGetReservations = async (
-    payload,
-    props,
-) => {
+export async function apiGetReservations(
+    payload?: ApiReservationsGetPayload,
+    props?: RequestInit,
+): Promise<Array<Reservation>> {
     const params = new URLSearchParams();
     if (payload?.roomId !== undefined)
         params.set("roomId", String(payload.roomId));
@@ -36,17 +25,27 @@ export const apiGetReservations: ClientApiGetReservations = async (
     if (payload?.from) params.set("from", payload.from);
     if (payload?.to) params.set("to", payload.to);
     const query = params.toString() ? `?${params.toString()}` : "";
-    return await safeApiFetcher<ApiReservationsGetResponse>(
+    const rawData = await safeApiFetcher<ApiReservationsGetResponse>(
         `/api/reservations${query}`,
         props,
     );
-};
+    return rawData.map(reservationDateFixup);
+}
+
+type ClientApiCreateReservation = ClientApi<
+    ApiReservationCreatePayload,
+    Reservation
+>;
+type ClientApiDeleteReservation = ClientApi<
+    ApiReservationDeletePayload,
+    ApiReservationDeleteResponse
+>;
 
 export const apiCreateReservation: ClientApiCreateReservation = async (
     reservation,
     props,
 ) => {
-    return await safeApiFetcher<ApiReservationCreateResponse>(
+    const rawData = await safeApiFetcher<ApiReservationCreateResponse>(
         "/api/reservations",
         {
             ...props,
@@ -54,6 +53,7 @@ export const apiCreateReservation: ClientApiCreateReservation = async (
             body: JSON.stringify(reservation),
         },
     );
+    return reservationDateFixup(rawData);
 };
 
 export const apiCancelReservation: ClientApiDeleteReservation = async (

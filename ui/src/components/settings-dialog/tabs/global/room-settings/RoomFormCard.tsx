@@ -14,6 +14,7 @@ import React from "react";
 import { Room, RoomSource } from "@/api-shared/types/room";
 import { HiveLogo } from "@/components/base/HiveLogo";
 import { LectureComfortSwitch } from "@/components/settings-dialog/tabs/global/LectureComfortSwitch";
+import { RoomBooleanSwitch } from "@/components/settings-dialog/tabs/global/RoomBooleanSwitch";
 
 export type RoomFormCardProps = {
     selectedRoom: null | Room;
@@ -350,7 +351,7 @@ function RoomExtendedDetails({
                                 : 'החדר אינו מסומן כפ"ע'}
                         </Typography>
                     </Box>
-                    <LectureComfortSwitch
+                    <RoomBooleanSwitch
                         onChange={setPeAyin}
                         value={peAyin}
                     />
