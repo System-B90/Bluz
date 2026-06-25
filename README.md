@@ -18,8 +18,12 @@ Fresh Ubuntu/Debian server? Run this:
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y python3.12 python3.12-venv python3-pip openssl curl git ca-certificates gnupg
+```
 
-# Docker
+<details>
+<summary>Install Docker (click to expand)</summary>
+
+```bash
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
@@ -28,7 +32,11 @@ sudo apt update
 sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 sudo usermod -aG docker $USER
 newgrp docker
+```
 
+</details>
+
+```bash
 mkdir bluz
 tar -xvf bluz-offline-vX.Y.Z.tar.gz -C bluz
 cd bluz
