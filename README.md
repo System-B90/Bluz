@@ -11,6 +11,56 @@ rooms, instructors) from an external **Hive** service that also provides SSO.
 
 ---
 
+## New to Linux?
+
+Fresh Ubuntu/Debian server? Run this:
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y python3.12 python3.12-venv python3-pip openssl curl git ca-certificates gnupg
+
+# Docker
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo usermod -aG docker $USER
+newgrp docker
+
+mkdir bluz
+tar -xvf bluz-offline-vX.Y.Z.tar.gz -C bluz
+cd bluz
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+sudo chmod +x ./install.sh
+python setup.py
+./install.sh
+```
+
+---
+
+## Production setup
+
+**Prerequisites**
+
+- Python packages (install via `pip install -r requirements.txt`):
+  - `InquirerPy>=0.3.4`
+  - `prompt-toolkit>=3.0.36`
+  - `python-dotenv==1.2.2`
+  - `typer==0.20.0`
+- `openssl` must be available on `PATH` (used by `setup.py` to generate secrets)
+
+```pwsh
+python -m pip install -r requirements.txt
+python setup.py
+./install.sh
+```
+
+---
+
 ## Features
 
 - **Calendar / Schedule** — interactive class scheduling with drag-and-drop, rooms,
@@ -34,14 +84,14 @@ Browser → ui/src/api-client (fetch) → ui/src/app/api (routes) → ui/src/api
                                    ui/src/api-shared (types & contracts shared by both ends)
 ```
 
-| Directory | Role |
-| --- | --- |
-| `ui/` | The Next.js application |
+| Directory                                                     | Role                                    |
+| ------------------------------------------------------------- | --------------------------------------- |
+| `ui/`                                                         | The Next.js application                 |
 | `ui/src/api-client` · `app/api` · `api-server` · `api-shared` | The four API layers (each has a README) |
-| `ui/src/components` | React components, hooks, theme |
-| `drizzle/` | PostgreSQL migrations |
-| `session-server/` | Standalone real-time WebSocket server |
-| `scripts/` · `tests/` | Tooling, seeding, and the test suite |
+| `ui/src/components`                                           | React components, hooks, theme          |
+| `drizzle/`                                                    | PostgreSQL migrations                   |
+| `session-server/`                                             | Standalone real-time WebSocket server   |
+| `scripts/` · `tests/`                                         | Tooling, seeding, and the test suite    |
 
 ## Environment variables
 
