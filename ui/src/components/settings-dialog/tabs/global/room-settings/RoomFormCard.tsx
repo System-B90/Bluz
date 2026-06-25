@@ -14,7 +14,6 @@ import React from "react";
 import { Room, RoomSource } from "@/api-shared/types/room";
 import { HiveLogo } from "@/components/base/HiveLogo";
 import { LectureComfortSwitch } from "@/components/settings-dialog/tabs/global/LectureComfortSwitch";
-import { RoomBooleanSwitch } from "@/components/settings-dialog/tabs/global/RoomBooleanSwitch";
 
 export type RoomFormCardProps = {
     selectedRoom: null | Room;
@@ -29,8 +28,6 @@ export type RoomFormCardProps = {
     setLectureSeatCount: (count: string) => void;
     lectureComfortable: boolean;
     setLectureComfortable: (comfortable: boolean) => void;
-    peAyin: boolean;
-    setPeAyin: (peAyin: boolean) => void;
     handleSave: (e: React.FormEvent) => Promise<void>;
     handleCancelEdit: () => void;
 };
@@ -54,8 +51,6 @@ type RoomExtendedDetailsProps = {
     setLectureSeatCount: (count: string) => void;
     lectureComfortable: boolean;
     setLectureComfortable: (comfortable: boolean) => void;
-    peAyin: boolean;
-    setPeAyin: (peAyin: boolean) => void;
 };
 type RoomFormActionsProps = {
     isCreating: boolean;
@@ -191,8 +186,6 @@ function RoomExtendedDetails({
     setLectureSeatCount,
     lectureComfortable,
     setLectureComfortable,
-    peAyin,
-    setPeAyin,
 }: RoomExtendedDetailsProps) {
     return (
         <>
@@ -308,54 +301,6 @@ function RoomExtendedDetails({
                         value={lectureComfortable}
                     />
                 </Box>
-
-                <Box
-                    alignItems="center"
-                    display="flex"
-                    justifyContent="space-between"
-                    sx={{
-                        p: 1.5,
-                        borderRadius: "10px",
-                        border: "1px solid",
-                        borderColor: peAyin ? "warning.main" : "divider",
-                        bgcolor: peAyin
-                            ? "warning.light"
-                            : (theme) =>
-                                theme.palette.mode === "light"
-                                    ? "rgba(0,0,0,0.01)"
-                                    : "rgba(255,255,255,0.02)",
-                    }}
-                >
-                    <Box>
-                        <Typography
-                            sx={{
-                                fontWeight: 700,
-                                fontSize: "0.85rem",
-                                color: peAyin
-                                    ? "warning.contrastText"
-                                    : "text.primary",
-                            }}
-                        >
-                            {'פ"ע — פעולה עצמאית'}
-                        </Typography>
-                        <Typography
-                            sx={{
-                                fontSize: "0.7rem",
-                                color: peAyin
-                                    ? "warning.contrastText"
-                                    : "text.secondary",
-                            }}
-                        >
-                            {peAyin
-                                ? 'החדר מסומן כפ"ע'
-                                : 'החדר אינו מסומן כפ"ע'}
-                        </Typography>
-                    </Box>
-                    <RoomBooleanSwitch
-                        onChange={setPeAyin}
-                        value={peAyin}
-                    />
-                </Box>
             </Box>
         </>
     );
@@ -418,8 +363,6 @@ export function RoomFormCard({
     setLectureSeatCount,
     lectureComfortable,
     setLectureComfortable,
-    peAyin,
-    setPeAyin,
     handleSave,
     handleCancelEdit,
 }: RoomFormCardProps) {
@@ -480,10 +423,8 @@ export function RoomFormCard({
                     <RoomExtendedDetails
                         lectureComfortable={lectureComfortable}
                         lectureSeatCount={lectureSeatCount}
-                        peAyin={peAyin}
                         setLectureComfortable={setLectureComfortable}
                         setLectureSeatCount={setLectureSeatCount}
-                        setPeAyin={setPeAyin}
                         setWorkstationCount={setWorkstationCount}
                         workstationCount={workstationCount}
                     />

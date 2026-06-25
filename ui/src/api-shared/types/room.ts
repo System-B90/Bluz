@@ -11,7 +11,6 @@ export type RoomExtendedInfo = {
     workstationCount: null | number;
     lectureSeatCount: null | number;
     lectureComfortable: boolean;
-    peAyin: boolean;
 };
 
 type BaseRoom = {
