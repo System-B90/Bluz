@@ -34,7 +34,7 @@ export function InstructorCard({
                     : "none",
                 bgcolor: (theme) =>
                     theme.palette.mode === "light"
-                        ? "#ffffff"
+                        ? "background.paper"
                         : "rgba(255, 255, 255, 0.03)",
                 transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                 cursor: isOverlay ? "grabbing" : "grab",
