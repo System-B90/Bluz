@@ -61,7 +61,9 @@ export function ModuleEventsView({
             flexGrow={1}
             flexWrap={"wrap"}
             gap={2}
-            maxHeight={"100%"}
+            maxHeight={400}
+            overflow={"auto"}
+            sx={{ "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "action.selected", borderRadius: 2 } }}
         >
             <Table size="small" stickyHeader={true} sx={{ flexGrow: 1 }}>
                 <TableHead>

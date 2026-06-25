@@ -181,6 +181,7 @@ function SiblingModuleNav({
 type ModuleDetailsFormProps = {
     localTitle: string;
     localDescription: string;
+    hiveModules: Array<string>;
     setLocalTitle: (val: string) => void;
     setLocalDescription: (val: string) => void;
     onCommitTitle: () => void;
@@ -190,6 +191,7 @@ type ModuleDetailsFormProps = {
 function ModuleDetailsForm({
     localTitle,
     localDescription,
+    hiveModules,
     setLocalTitle,
     setLocalDescription,
     onCommitTitle,
@@ -222,6 +224,8 @@ function ModuleDetailsForm({
                 }}
                 value={localDescription}
             />
+
+            <HiveModulesView hiveModules={hiveModules} />
         </Stack>
     );
 }
@@ -342,6 +346,7 @@ function ModuleDialogInner({
 
                 <Box alignItems="flex-start" display="flex" flexDirection="row" gap={2} mt={1}>
                     <ModuleDetailsForm
+                        hiveModules={moduleDoc?.hiveIds ?? []}
                         localDescription={localDescription}
                         localTitle={localTitle}
                         onCommitDescription={() => handleCommit({ description: localDescription })}
@@ -357,7 +362,6 @@ function ModuleDialogInner({
                             eventIds={moduleDoc?.events ?? []}
                             moduleId={moduleId}
                         />
-                        <HiveModulesView hiveModules={moduleDoc?.hiveIds ?? []} />
                     </Stack>
                 </Box>
 

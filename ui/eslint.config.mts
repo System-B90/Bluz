@@ -214,6 +214,7 @@ export default defineConfig([
             "session-server/session-server.ts",
             "scripts/**",
             ".agents/**",
+            ".claude/**",
             "tests/**",
             "playwright-report/",
         ],

@@ -336,7 +336,7 @@ function RoomExtendedDetails({
                                     : "text.primary",
                             }}
                         >
-                            {'פ"ע — פעולה עצמאית'}
+                            {'פ"ע — פגישת עבודה'}
                         </Typography>
                         <Typography
                             sx={{
