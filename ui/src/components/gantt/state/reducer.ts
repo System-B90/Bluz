@@ -110,7 +110,10 @@ export type Action =
           type: "UPDATE_SYLLABUS";
           payload: { id: GanttSyllabusId; updates: Partial<GanttSyllabus> };
       }
-    | { type: "UPDATE_WEEK"; payload: { id: GanttWeekId; updates: any } };
+    | {
+          type: "UPDATE_WEEK";
+          payload: { id: GanttWeekId; updates: Partial<GanttWeek> };
+      };
 
 function injectDocumentTimes<T extends BaseGantItem>(
     rawDoc: T,
@@ -235,7 +238,7 @@ export function curriculumReducer(
         const moduleDoc = state.modules[action.payload.moduleId];
         if (!moduleDoc) return state;
 
-        const updatedEvents = state.events;
+        const updatedEvents = { ...state.events };
 
         const updateModuleEvent: AllocateTimeToEventCallback = ({
             eventId,
@@ -381,11 +384,13 @@ export function curriculumReducer(
     }
 
     case "ADD_WEEK": {
-        const weeksRecord = state.weeks;
+        const parentCurriculum =
+            state.curriculums[action.payload.curriculumId];
+        if (!parentCurriculum) return state;
         return {
             ...state,
             weeks: {
-                ...weeksRecord,
+                ...state.weeks,
                 [action.payload.week.id]: injectDocumentTimes({
                     ...action.payload.week,
                     curriculumId: action.payload.curriculumId,
@@ -394,10 +399,9 @@ export function curriculumReducer(
             curriculums: {
                 ...state.curriculums,
                 [action.payload.curriculumId]: {
-                    ...state.curriculums[action.payload.curriculumId],
+                    ...parentCurriculum,
                     weeks: [
-                        ...state.curriculums[action.payload.curriculumId]
-                            .weeks,
+                        ...parentCurriculum.weeks,
                         action.payload.week.id,
                     ],
                 },

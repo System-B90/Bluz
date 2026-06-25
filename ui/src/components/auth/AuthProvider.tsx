@@ -99,8 +99,8 @@ export const AuthProvider = ({
     const canEdit: boolean = !!userData;
 
     const onWebSocketMessage: MessageHandlerType = useCallback(
-        (messageType: MessageTypes, data: unknown) => {
-            console.log(`[onWebSocketMessage] ${messageType}`, data);
+        (_messageType: MessageTypes, _data: unknown) => {
+            // no-op: auth provider does not handle WS messages
         },
         [],
     );

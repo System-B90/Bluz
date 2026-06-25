@@ -44,9 +44,7 @@ async function getFullModuleEvent(id: GanttModuleId): Promise<ApiModuleEvent> {
     const result = await postgresDb.query.ganttEventsSchema.findFirst({
         where: eq(ganttEventsSchema.id, id),
         with: {
-            cEC: {
-                where: (c, { eq }) => eq(c.curriculumId, id),
-            },
+            cEC: true,
         },
     });
 

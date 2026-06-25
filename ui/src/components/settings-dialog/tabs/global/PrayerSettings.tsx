@@ -144,7 +144,6 @@ export function PrayerSettings({
                                 sx={{
                                     fontWeight: 800,
                                     fontSize: "1.1rem",
-                                    fontFamily: "Assistant, sans-serif",
                                     color: "text.primary",
                                 }}
                             >
@@ -154,7 +153,6 @@ export function PrayerSettings({
                                 sx={{
                                     fontSize: "0.75rem",
                                     color: "text.secondary",
-                                    fontFamily: "Assistant, sans-serif",
                                 }}
                             >
                                 זמני תפילות קבועים המשתקפים ביומן
@@ -237,7 +235,6 @@ export function PrayerSettings({
                                         sx={{
                                             fontSize: "0.72rem",
                                             fontWeight: 700,
-                                            fontFamily: "Assistant, sans-serif",
                                             color: "text.primary",
                                         }}
                                     >

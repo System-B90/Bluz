@@ -19,14 +19,18 @@ test.describe("Gantt Page", () => {
         // Wait for skeleton loaders to disappear (indicates details are fetched and buttons enabled)
         await page.locator(".MuiSkeleton-root").waitFor({ state: "hidden", timeout: 10_000 });
 
-        const listItems = page.locator("[role='presentation'] [role='listitem'], [role='presentation'] li");
+        const listItems = page.locator("[role='presentation'] ul li").filter({ has: page.getByRole("button") });
         const count = await listItems.count();
         if (count === 0) {
             const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
             await draftButton.click();
             
             // Wait for the newly created curriculum to appear in the list
-            await expect(page.getByText("הגאנט שלי")).toBeVisible({ timeout: 10_000 });
+            await expect(page.getByText("הגאנט שלי").first()).toBeVisible({ timeout: 10_000 });
+
+            // Go back to /gantt to clear the selected curriculum from URL for a clean starting state
+            await page.goto("/gantt");
+            await waitForAppLoad(page);
         }
         
         // Close the FAB popover
@@ -37,6 +41,21 @@ test.describe("Gantt Page", () => {
     // ─── Page Load ──────────────────────────────────────────────────────────
 
     test("renders the Gantt page with placeholder text", async ({ page }) => {
+        // Open FAB first
+        const fab = page.getByRole("button", { name: "גאנטים" });
+        await fab.click();
+
+        // Check if there is a selected curriculum to delete to show placeholder
+        const deleteButton = page.locator('span[title="מחיקה"] button, span[aria-label="מחיקה"] button');
+        if (await deleteButton.isVisible()) {
+            await deleteButton.click();
+            await page.waitForTimeout(1000);
+        } else {
+            // Close the FAB popover if not deleting
+            await page.keyboard.press("Escape");
+            await page.waitForTimeout(300);
+        }
+
         // Without a selected curriculum, the placeholder should be visible
         await expect(
             page.getByText("בחרו גאנט כדי להתחיל לעבוד"),
@@ -73,20 +92,32 @@ test.describe("Gantt Page", () => {
 
     // ─── Curriculum Selection ───────────────────────────────────────────────
 
+    test("creates a new curriculum", async ({ page }) => {
+        // Open FAB first
+        const fab = page.getByRole("button", { name: "גאנטים" });
+        await fab.click();
+
+        // Click "דראפט חדש" button
+        const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
+        await expect(draftButton).toBeVisible();
+        await draftButton.click();
+
+        // Wait for the newly created curriculum to appear in the list
+        await expect(page.getByText("הגאנט שלי").first()).toBeVisible({ timeout: 10_000 });
+    });
+
     test("selects a curriculum and shows loading/content", async ({ page }) => {
         // Open FAB first
         const fab = page.getByRole("button", { name: "גאנטים" });
         await fab.click();
         
         // Wait for the curriculum entries to load (replaces skeleton loader)
-        await expect(page.getByText("הגאנט שלי")).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByText("הגאנט שלי").first()).toBeVisible({ timeout: 10_000 });
 
         // Look for curriculum list items in the sidebar
         const curriculumItems = page
-            .locator("[role='listitem'], li, [class*='CurriculumEntry']")
-            .filter({
-                has: page.locator("span, p, div"),
-            });
+            .locator("[role='presentation'] ul li")
+            .filter({ has: page.getByRole("button") });
 
         if ((await curriculumItems.count()) > 0) {
             // Click the first curriculum
@@ -117,14 +148,12 @@ test.describe("Gantt Page", () => {
         await fab.click();
         
         // Wait for the curriculum entries to load
-        await expect(page.getByText("הגאנט שלי")).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByText("הגאנט שלי").first()).toBeVisible({ timeout: 10_000 });
 
         // Navigate with a cid parameter
         const curriculumItems = page
-            .locator("[role='listitem'], li, [class*='CurriculumEntry']")
-            .filter({
-                has: page.locator("span, p, div"),
-            });
+            .locator("[role='presentation'] ul li")
+            .filter({ has: page.getByRole("button") });
 
         if ((await curriculumItems.count()) > 0) {
             await curriculumItems.first().click();
@@ -149,14 +178,12 @@ test.describe("Gantt Page", () => {
         await fab.click();
         
         // Wait for the curriculum entries to load
-        await expect(page.getByText("הגאנט שלי")).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByText("הגאנט שלי").first()).toBeVisible({ timeout: 10_000 });
 
         // Select a curriculum first
         const curriculumItems = page
-            .locator("[role='listitem'], li, [class*='CurriculumEntry']")
-            .filter({
-                has: page.locator("span, p, div"),
-            });
+            .locator("[role='presentation'] ul li")
+            .filter({ has: page.getByRole("button") });
 
         if ((await curriculumItems.count()) > 0) {
             await curriculumItems.first().click();
@@ -192,13 +219,11 @@ test.describe("Gantt Page", () => {
         await fab.click();
         
         // Wait for the curriculum entries to load
-        await expect(page.getByText("הגאנט שלי")).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByText("הגאנט שלי").first()).toBeVisible({ timeout: 10_000 });
 
         const curriculumItems = page
-            .locator("[role='listitem'], li, [class*='CurriculumEntry']")
-            .filter({
-                has: page.locator("span, p, div"),
-            });
+            .locator("[role='presentation'] ul li")
+            .filter({ has: page.getByRole("button") });
 
         if ((await curriculumItems.count()) > 0) {
             await curriculumItems.first().click();

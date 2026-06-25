@@ -67,7 +67,6 @@ export function InstructorCard({
                 sx={{
                     fontWeight: 700,
                     fontSize: "0.8rem",
-                    fontFamily: "Assistant, sans-serif",
                     color: "text.primary",
                     userSelect: "none",
                 }}
@@ -137,7 +136,6 @@ export function InstructorSourceList() {
                     sx={{
                         fontWeight: 800,
                         fontSize: "0.95rem",
-                        fontFamily: "Assistant, sans-serif",
                         color: "text.primary",
                         mb: 0.5,
                     }}
@@ -148,7 +146,6 @@ export function InstructorSourceList() {
                     sx={{
                         fontSize: "0.72rem",
                         color: "text.secondary",
-                        fontFamily: "Assistant, sans-serif",
                     }}
                 >
                     גרור מדריך לתוך מסלול כדי לשייכו
@@ -198,7 +195,6 @@ export function InstructorSourceList() {
                         sx={{
                             color: "text.secondary",
                             fontSize: "0.78rem",
-                            fontFamily: "Assistant, sans-serif",
                             mt: 4,
                         }}
                     >

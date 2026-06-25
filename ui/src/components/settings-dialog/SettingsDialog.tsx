@@ -73,7 +73,6 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                 fontWeight: 800,
                                 fontSize: "1.3rem",
                                 color: "text.primary",
-                                fontFamily: "Assistant, sans-serif",
                             }}
                         >
                             הגדרות
@@ -150,7 +149,6 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                                     sx={{
                                         fontWeight: isActive ? 700 : 600,
                                         fontSize: "0.95rem",
-                                        fontFamily: "Assistant, sans-serif",
                                     }}
                                 >
                                     {t.label}
@@ -177,7 +175,6 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                             sx={{
                                 fontSize: "0.78rem",
                                 color: "text.secondary",
-                                fontFamily: "Assistant, sans-serif",
                                 fontWeight: 600,
                             }}
                         >

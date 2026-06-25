@@ -30,7 +30,7 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Setup Node.js 24
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                   node-version: "24"
                   cache: "npm"
@@ -55,9 +55,30 @@ jobs:
             - name: Run Ruff (Python Formatter Check)
               run: ruff format --check .
 
+    test:
+        name: Unit Tests
+        runs-on: ubuntu-24.04
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js 24
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "24"
+                  cache: "npm"
+
+            - name: Install Dependencies
+              run: npm ci
+
+            - name: Run Unit Tests
+              run: npm run test:unit
+              env:
+                  NEXTAUTH_SECRET: ci_test_secret_key
+
     build-ui:
         name: Build UI Image
-        needs: lint
+        needs: [lint, test]
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
         runs-on: ubuntu-24.04
         permissions:
@@ -69,11 +90,11 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@v4
 
             - name: Log in to GitHub Container Registry
               if: startsWith(github.ref, 'refs/tags/v')
-              uses: docker/login-action@v3
+              uses: docker/login-action@v4
               with:
                   registry: ${{ env.REGISTRY }}
                   username: ${{ github.actor }}
@@ -81,7 +102,7 @@ jobs:
 
             - name: Extract metadata for UI Image
               id: meta
-              uses: docker/metadata-action@v5
+              uses: docker/metadata-action@v6
               with:
                   images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_UI }}
                   tags: |
@@ -90,7 +111,7 @@ jobs:
                       type=sha,format=short
 
             - name: Build and push UI Image
-              uses: docker/build-push-action@v5
+              uses: docker/build-push-action@v7
               with:
                   context: .
                   file: ui/Dockerfile
@@ -104,7 +125,7 @@ jobs:
 
     build-sessions:
         name: Build Sessions Image
-        needs: lint
+        needs: [lint, test]
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
         runs-on: ubuntu-24.04
         permissions:
@@ -116,11 +137,11 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@v4
 
             - name: Log in to GitHub Container Registry
               if: startsWith(github.ref, 'refs/tags/v')
-              uses: docker/login-action@v3
+              uses: docker/login-action@v4
               with:
                   registry: ${{ env.REGISTRY }}
                   username: ${{ github.actor }}
@@ -128,7 +149,7 @@ jobs:
 
             - name: Extract metadata for Sessions Image
               id: meta
-              uses: docker/metadata-action@v5
+              uses: docker/metadata-action@v6
               with:
                   images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SESSIONS }}
                   tags: |
@@ -137,7 +158,7 @@ jobs:
                       type=sha,format=short
 
             - name: Build and push Sessions Image
-              uses: docker/build-push-action@v5
+              uses: docker/build-push-action@v7
               with:
                   context: session-server/
                   file: session-server/Dockerfile.websocket
@@ -149,7 +170,6 @@ jobs:
 
     build-proxy:
         name: Build Proxy Image
-        needs: lint
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
         runs-on: ubuntu-24.04
         permissions:
@@ -161,11 +181,11 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@v4
 
             - name: Log in to GitHub Container Registry
               if: startsWith(github.ref, 'refs/tags/v')
-              uses: docker/login-action@v3
+              uses: docker/login-action@v4
               with:
                   registry: ${{ env.REGISTRY }}
                   username: ${{ github.actor }}
@@ -173,7 +193,7 @@ jobs:
 
             - name: Extract metadata for Proxy Image
               id: meta
-              uses: docker/metadata-action@v5
+              uses: docker/metadata-action@v6
               with:
                   images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PROXY }}
                   tags: |
@@ -182,7 +202,7 @@ jobs:
                       type=sha,format=short
 
             - name: Build and push Proxy Image
-              uses: docker/build-push-action@v5
+              uses: docker/build-push-action@v7
               with:
                   context: nginx/
                   file: nginx/Dockerfile.proxy
@@ -206,7 +226,7 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Log in to GitHub Container Registry
-              uses: docker/login-action@v3
+              uses: docker/login-action@v4
               with:
                   registry: ${{ env.REGISTRY }}
                   username: ${{ github.actor }}
@@ -218,8 +238,8 @@ jobs:
                   mkdir -p release-offline/images
 
                   # Copy deployment scripts into both bundles
-                  cp ./scripts/install.sh docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-online/
-                  cp ./scripts/install.sh docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-offline/
+                  cp ./scripts/install.sh deploy/docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-online/
+                  cp ./scripts/install.sh deploy/docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-offline/
 
             - name: Export Offline Images
               run: |
@@ -249,7 +269,7 @@ jobs:
                   tar -czvf bluz-offline-${{ github.ref_name }}.tar.gz -C release-offline .
 
             - name: Publish GitHub Release
-              uses: softprops/action-gh-release@v2
+              uses: softprops/action-gh-release@v3
               with:
                   files: |
                       bluz-online-${{ github.ref_name }}.tar.gz

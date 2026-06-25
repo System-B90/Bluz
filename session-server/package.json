@@ -1,6 +1,6 @@
 {
     "name": "bluz-session-server",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "private": true,
     "scripts": {
         "dev": "tsx watch session-server.ts",
@@ -10,7 +10,6 @@
         "prepare": "husky"
     },
     "lint-staged": {
-        "*.{js,jsx,ts,tsx}": "eslint --fix",
         "*.{json,css,md}": "prettier --write"
     },
     "dependencies": {

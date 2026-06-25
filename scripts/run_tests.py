@@ -45,9 +45,9 @@ def get_running_port(project_name: str, service: str, internal_port: int) -> int
                 "-p",
                 project_name,
                 "-f",
-                "docker-compose.yml",
+                "deploy/docker-compose.yml",
                 "-f",
-                "docker-compose.test.yml",
+                "deploy/docker-compose.test.yml",
                 "port",
                 service,
                 str(internal_port),
@@ -144,7 +144,17 @@ def main(
         "Initializing Bluz Testing Pipeline...", fg=typer.colors.CYAN, bold=True
     )
 
-    # 0. Run Backend Unit Tests (fail fast)
+    # Load root .env variables to inherit configurations
+    typer.secho(
+        "Importing environment configurations...", fg=typer.colors.CYAN, bold=True
+    )
+
+    root_env = dotenv_values(".env")
+
+    merged_env: dict[str, str] = os.environ.copy()
+    merged_env.update({k: str(v) for k, v in root_env.items() if v is not None})
+
+    # Run Backend Unit Tests (fail fast)
     if not seed_only:
         typer.secho("Running Backend Unit Tests...", fg=typer.colors.CYAN, bold=True)
         try:
@@ -152,24 +162,28 @@ def main(
                 ["npm", "run", "test:unit"],
                 shell=True,
                 check=True,
+                env=merged_env,
             )
             typer.secho("Backend Unit Tests Passed!", fg=typer.colors.GREEN, bold=True)
         except subprocess.CalledProcessError:
             typer.secho("Backend Unit Tests Failed!", fg=typer.colors.RED, bold=True)
             raise RuntimeError("Backend Unit Tests failed.")
 
-    # 1. Determine Project Name and Environment
+    # Determine Project Name and Environment
     slug = get_worktree_slug()
     project_name = f"bluz-test-{slug}"
     typer.echo(f"Worktree Slug: {slug}")
     typer.echo(f"Docker Project: {project_name}")
 
-    # Load root .env variables to inherit configurations
-    root_env = dotenv_values(".env")
-
-    # 2. Check if Docker Compose is running
+    # Check if Docker Compose is running
     is_running = check_project_running(project_name)
-    ports = {}
+    ports: dict[str, int] = {}
+
+    compose_env: dict[str, str] = {
+        **merged_env,
+        "TEST_PROJECT_NAME": project_name,
+        "BLUZ_VERSION": "latest",
+    }
 
     if is_running and not rebuild:
         typer.secho(
@@ -196,22 +210,28 @@ def main(
                 "Force rebuild requested. Tearing down existing containers...",
                 fg=typer.colors.YELLOW,
             )
-            subprocess.run(
-                [
-                    "docker",
-                    "compose",
-                    "-p",
-                    project_name,
-                    "-f",
-                    "docker-compose.yml",
-                    "-f",
-                    "docker-compose.test.yml",
-                    "down",
-                    "-v",
-                ],
-                check=False,
-                timeout=60,
+        else:
+            typer.secho(
+                "No running containers detected. Starting fresh with new volumes...",
+                fg=typer.colors.CYAN,
             )
+        subprocess.run(
+            [
+                "docker",
+                "compose",
+                "-p",
+                project_name,
+                "-f",
+                "deploy/docker-compose.yml",
+                "-f",
+                "deploy/docker-compose.test.yml",
+                "down",
+                "-v",
+            ],
+            check=False,
+            timeout=60,
+            env=compose_env,
+        )
 
         typer.secho("Allocating free host ports...", fg=typer.colors.CYAN)
         ports["postgres"] = find_free_port()
@@ -223,8 +243,20 @@ def main(
             f"Assigned ports: Postgres={ports['postgres']}, Mongo={ports['mongo']}, HTTP={ports['http']}, HTTPS={ports['https']}"
         )
 
+        compose_env.update(
+            {
+                "TEST_POSTGRES_PORT": str(ports["postgres"]),
+                "TEST_MONGO_PORT": str(ports["mongo"]),
+                "TEST_PROXY_PORT_HTTP": str(ports["http"]),
+                "TEST_PROXY_PORT_HTTPS": str(ports["https"]),
+            }
+        )
+
         # Register temporary SSO client app with Hive
         hive_url = root_env.get("NEXT_PUBLIC_HIVE_URL", "https://hive.org")
+        if not hive_url:
+            typer.secho("Hive URL not found. Aborting!")
+            return
         typer.secho(
             "Registering temporary SSO client with Hive...", fg=typer.colors.CYAN
         )
@@ -251,18 +283,15 @@ def main(
             raise RuntimeError(f"SSO registration failed: {e}")
 
         # Set environment for docker compose
-        compose_env = {
-            **os.environ,
-            "TEST_PROJECT_NAME": project_name,
-            "TEST_POSTGRES_PORT": str(ports["postgres"]),
-            "TEST_MONGO_PORT": str(ports["mongo"]),
-            "TEST_PROXY_PORT_HTTP": str(ports["http"]),
-            "TEST_PROXY_PORT_HTTPS": str(ports["https"]),
-            "TEST_HIVE_CLIENT_ID": client_id,
-            "TEST_HIVE_CLIENT_SECRET": client_secret,
-            "NEXT_PUBLIC_HIVE_URL": hive_url,
-            "BLUZ_VERSION": "latest",
-        }
+        assert client_id is not None and client_secret is not None, (
+            "Hive SSO creds are unset!"
+        )
+        compose_env.update(
+            {
+                "TEST_HIVE_CLIENT_ID": client_id,
+                "TEST_HIVE_CLIENT_SECRET": client_secret,
+            }
+        )
 
         typer.secho("Starting Docker Compose...", fg=typer.colors.CYAN)
         compose_cmd = [
@@ -271,9 +300,9 @@ def main(
             "-p",
             project_name,
             "-f",
-            "docker-compose.yml",
+            "deploy/docker-compose.yml",
             "-f",
-            "docker-compose.test.yml",
+            "deploy/docker-compose.test.yml",
             "up",
             "-d",
         ]
@@ -292,8 +321,9 @@ def main(
     db_pass = root_env.get("POSTGRES_PASSWORD", "lCqoKrgSLSGmZH98gvV15Kz6yaDUw8w2")
     db_url = f"postgres://admin:{db_pass}@127.0.0.3:{ports['postgres']}/curriculum_db"
 
-    test_env = {
-        **os.environ,
+    assert db_pass is not None, "Postgres DB password is unset!"
+    test_env: dict[str, str] = {
+        **merged_env,
         "DATABASE_URL": db_url,
         "POSTGRES_PASSWORD": db_pass,
         "MONGO_PORT": str(ports["mongo"]),
@@ -305,8 +335,9 @@ def main(
         "TEST_PROXY_PORT_HTTPS": str(ports["https"]),
     }
 
-    # 3. Drizzle Schema Generate/Push
+    # Drizzle Schema Generate/Push
     typer.secho("Syncing database schema (drizzle-kit)...", fg=typer.colors.CYAN)
+    typer.secho(f"Postgres DB URL: {db_url}")
     # Generate migrations first
     subprocess.run(
         ["npm", "run", "db:generate"], env=test_env, shell=True, check=True, timeout=60
@@ -332,7 +363,7 @@ def main(
             )
             time.sleep(3)
 
-    # 4. Run database seeding
+    # Run database seeding
     typer.secho("Seeding databases...", fg=typer.colors.CYAN)
 
     # Hive populate (runs Python populate script) only if requested or metadata missing
@@ -373,7 +404,7 @@ def main(
         typer.echo(f"  MongoDB:        127.0.0.3:{ports['mongo']}")
         return
 
-    # 5. Run tests via Playwright
+    # Run tests via Playwright
     typer.secho("Running Playwright tests...", fg=typer.colors.CYAN)
     playwright_cmd = ["npx", "playwright", "test"]
     if ui:

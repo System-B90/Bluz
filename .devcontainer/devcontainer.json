@@ -1,6 +1,6 @@
 {
     "name": "Bluz Workspace",
-    "dockerComposeFile": ["../docker-compose.yml"],
+    "dockerComposeFile": ["../deploy/docker-compose.yml"],
     "service": "app", // Your NextJS/Node service
     "workspaceFolder": "/workspaces/bluz/bluz.code-workspace",
     "customizations": {

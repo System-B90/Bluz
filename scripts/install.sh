@@ -5,7 +5,7 @@ echo -e "\033[1;36m=========================================\033[0m"
 echo -e "\033[1;36m      Bluz Linux Bootstrapper          \033[0m"
 echo -e "\033[1;36m=========================================\033[0m"
 
-# 1. Validate Prerequisites
+# Validate Prerequisites
 if ! command -v docker &> /dev/null; then
     echo -e "\033[1;31m[ERROR] Docker is not installed or not in PATH.\033[0m"
     exit 1
@@ -16,7 +16,7 @@ if ! command -v python3 &> /dev/null || ! command -v pip3 &> /dev/null; then
     exit 1
 fi
 
-# 2. Environment Configuration (setup.py)
+# Environment Configuration (setup.py)
 if [ ! -f ".env" ]; then
     echo -e "\n\033[1;33m[WAIT] Initializing environment configuration wizard...\033[0m"
     python3 -m venv .venv
@@ -29,7 +29,7 @@ else
     echo -e "\n\033[1;32m[OK] Existing .env found. Skipping configuration wizard.\033[0m"
 fi
 
-# 3. Image Resolution & Versioning (Offline vs Online)
+# Image Resolution & Versioning (Offline vs Online)
 DETECTED_TAG="latest"
 IS_OFFLINE=false
 
@@ -52,14 +52,14 @@ else
     echo -e "\033[1;34m>> No local images found. Assuming Online Mode.\033[0m"
 fi
 
-# 4. Inject Version Tag into .env
+# Inject Version Tag into .env
 if grep -q "^BLUZ_VERSION=" .env; then
     sed -i "s/^BLUZ_VERSION=.*/BLUZ_VERSION=$DETECTED_TAG/" .env
 else
     echo "BLUZ_VERSION=$DETECTED_TAG" >> .env
 fi
 
-# 5. Boot Application
+# Boot Application
 if [ "$IS_OFFLINE" = false ]; then
     echo -e "\n\033[1;33m[WAIT] Pulling latest containers from GHCR...\033[0m"
     docker compose pull

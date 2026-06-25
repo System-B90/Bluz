@@ -13,9 +13,12 @@ services:
         networks:
             - bluz_net
         depends_on:
-            - curriculum-db
-            - sessions
-            - mongodb
+            curriculum-db:
+                condition: service_healthy
+            mongodb:
+                condition: service_healthy
+            sessions:
+                condition: service_started
 
     curriculum-db:
         image: postgres:15-alpine
@@ -31,6 +34,13 @@ services:
             - pgdata:/var/lib/postgresql/data
         networks:
             - bluz_net
+        healthcheck:
+            test:
+                ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
 
     mongodb:
         image: mongodb/mongodb-community-server:8.0-ubuntu2204
@@ -45,6 +55,19 @@ services:
             - mongodb_data:/data/db
         networks:
             - bluz_net
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "mongosh",
+                    "--eval",
+                    "db.adminCommand('ping')",
+                    "--quiet",
+                ]
+            interval: 10s
+            timeout: 10s
+            retries: 5
+            start_period: 20s
 
     sessions:
         image: ghcr.io/system-b15/bluz/sessions:${BLUZ_VERSION:-latest}

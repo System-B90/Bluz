@@ -53,10 +53,7 @@ async function getFullSyllabus(id: GanttSyllabusId): Promise<ApiSyllabus> {
                                 with: {
                                     event: {
                                         with: {
-                                            cEC: {
-                                                where: (c, { eq }) =>
-                                                    eq(c.curriculumId, id),
-                                            },
+                                            cEC: true,
                                         },
                                     },
                                 },

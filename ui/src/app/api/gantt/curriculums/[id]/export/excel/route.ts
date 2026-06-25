@@ -10,21 +10,12 @@ import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
 import { ClientApiError } from "@/api-shared/errors";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { DAY_NAME_DISPLAY } from "@/api-shared/types/gantt/models/day";
 
 export const dynamic = "force-dynamic";
 
 export type RouteContext = {
     params: Promise<{ id: string }>;
-};
-
-const DAY_NAME_DISPLAY: Record<number, string> = {
-    0: "ראשון",
-    1: "שני",
-    2: "שלישי",
-    3: "רביעי",
-    4: "חמישי",
-    5: "שישי",
-    6: "שבת",
 };
 
 export async function GET(request: NextRequest, context: RouteContext) {

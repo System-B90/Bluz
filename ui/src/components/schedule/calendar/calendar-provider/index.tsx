@@ -1,7 +1,7 @@
 "use client";
 
 import { enqueueSnackbar } from "notistack";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { apiGetEvents } from "@/api-client/calendar";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
@@ -24,7 +24,7 @@ export const CalendarProvider = ({
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
 
-    const { events, dispatch, undo, redo } = useEventState();
+    const { events, dispatch, remoteDispatch, undo, redo } = useEventState();
 
     useEffect(() => {
         if (offlineMode && events.length > 0) {
@@ -32,13 +32,15 @@ export const CalendarProvider = ({
         }
     }, [offlineMode, events, captureInitialEvents]);
 
-    useEventWebsocket(offlineMode, dispatch);
+    // WS updates go through remoteDispatch so they don't pollute the undo stack.
+    useEventWebsocket(offlineMode, remoteDispatch);
 
     const { saveEvent, deleteEvent } = useEventActions(
         events,
         offlineMode,
         captureEventBeforeEdit,
         dispatch,
+        remoteDispatch,
     );
 
     const loadEvents = useCallback(
@@ -47,7 +49,10 @@ export const CalendarProvider = ({
 
             apiGetEvents({ startDate: s, endDate: e })
                 .then((fetchedEvents) => {
-                    dispatch({ type: "SET_EVENTS", payload: fetchedEvents });
+                    remoteDispatch({
+                        type: "SET_EVENTS",
+                        payload: fetchedEvents,
+                    });
                 })
                 .catch((error) =>
                     enqueueApiErrorSnackbar(
@@ -57,12 +62,22 @@ export const CalendarProvider = ({
                     ),
                 );
         },
-        [dispatch],
+        [remoteDispatch],
     );
 
     useEffect(() => {
         loadEvents(startDate, endDate);
     }, [startDate, endDate, loadEvents]);
+
+    // Force a full refetch when returning from offline mode so concurrent
+    // changes made by other users while we were offline are not lost.
+    const prevOfflineModeRef = useRef(offlineMode);
+    useEffect(() => {
+        if (prevOfflineModeRef.current && !offlineMode) {
+            loadEvents(startDate, endDate);
+        }
+        prevOfflineModeRef.current = offlineMode;
+    }, [offlineMode, loadEvents, startDate, endDate]);
 
     return (
         <CalendarFiltersProvider>

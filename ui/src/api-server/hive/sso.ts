@@ -190,8 +190,12 @@ const sessionCallback: CallbacksOptions["session"] = async ({
     return session;
 };
 
+if (!process.env.NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET environment variable is not set — auth will not function.");
+}
+
 export const authOptions: AuthOptions = {
-    debug: true,
+    debug: process.env.NODE_ENV !== "production",
     // 2. Override the logger to intercept metadata
     logger: {
         error(code, metadata) {

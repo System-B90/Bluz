@@ -31,7 +31,6 @@ export async function GET(
     const targetUrl = `${getHiveBaseUrl()}/api/core/management/users/${slug}/avatar/`;
 
     try {
-        console.log(targetUrl, accessToken);
         // 5. Make the authenticated server-to-server request to Hive
         const hiveResponse = await fetch(targetUrl, {
             method: "GET",
