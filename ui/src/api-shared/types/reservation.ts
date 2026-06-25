@@ -15,9 +15,9 @@ export type Reservation = {
     note?: string;
 };
 
-export type DbReservation = Omit<Reservation, "start" | "end"> & {
-    start: string;
+export type DbReservation = Omit<Reservation, "end" | "start"> & {
     end: string;
+    start: string;
 };
 
 export function reservationDateFixup(reservation: DbReservation): Reservation {
