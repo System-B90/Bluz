@@ -181,7 +181,7 @@ function SiblingModuleNav({
 type ModuleDetailsFormProps = {
     localTitle: string;
     localDescription: string;
-    hiveModules: Array<string>;
+    hiveModules: Array<number>;
     setLocalTitle: (val: string) => void;
     setLocalDescription: (val: string) => void;
     onCommitTitle: () => void;
