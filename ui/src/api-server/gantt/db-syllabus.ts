@@ -17,6 +17,7 @@ import { ApiSyllabus } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttSyllabusPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
     GanttCurriculumId,
+    GanttModuleId,
     GanttSyllabus,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";

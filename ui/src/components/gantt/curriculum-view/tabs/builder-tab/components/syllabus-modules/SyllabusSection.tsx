@@ -2,8 +2,7 @@ import {
     SortableContext,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import Box from "@mui/material/Box";
-import BoxProps from "@mui/material/BoxProps";
+import Box, { BoxProps } from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
