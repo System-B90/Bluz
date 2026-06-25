@@ -1,0 +1,6 @@
+[submodule ".agents/caveman"]
+	path = .agents/caveman
+	url = https://github.com/JuliusBrussee/caveman.git
+[submodule ".agents/skills/caveman"]
+	path = .agents/skills/caveman
+	url = https://github.com/JuliusBrussee/caveman.git

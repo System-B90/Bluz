@@ -1,0 +1,22 @@
+services:
+    proxy:
+        image: ghcr.io/system-b15/bluz/proxy:${BLUZ_VERSION:-latest}
+        container_name: bluz-proxy-local
+        restart: unless-stopped
+        build:
+            context: nginx
+            dockerfile: Dockerfile.proxy
+        ports:
+            - "127.0.0.3:80:80"
+            - "127.0.0.3:443:443"
+        volumes:
+            - ./../nginx/ssl:/etc/nginx/ssl:ro
+            - ./../nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+        networks:
+            - bluz_net
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+
+networks:
+    bluz_net:
+        driver: bridge

@@ -1,6 +1,22 @@
-node_modules
-.next
-.git
-dist
-.vscode
+# Dependency directories
+node_modules/
+**/node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# IDE and OS files
+.vscode/
+.idea/
+.git/
+.DS_Store
 *.log
+
+# Local environment files
+.env*.local
+
+# Debugging
+npm-debug.log*
+playwright-report/
+**/playwright-report/playwright-report

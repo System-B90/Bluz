@@ -1,0 +1,279 @@
+name: Build Bluz Images
+
+on:
+    push:
+        branches: ["**"]
+        tags: ["v*.*.*", "v*.*.*-rc*", "ci-test"]
+    pull_request:
+        branches: ["**"]
+
+# Cancel in-progress runs for PRs to save runner minutes
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME_UI: system-b15/bluz/ui
+    IMAGE_NAME_SESSIONS: system-b15/bluz/sessions
+    IMAGE_NAME_PROXY: system-b15/bluz/proxy
+    # Public images required for the offline bundle
+    IMAGE_POSTGRES: postgres:15-alpine
+    IMAGE_MONGO: mongodb/mongodb-community-server:8.0-ubuntu2204
+
+jobs:
+    lint:
+        name: Lint Codebase
+        runs-on: ubuntu-24.04
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js 24
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "24"
+                  cache: "npm"
+
+            - name: Setup Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Install Dependencies (Node)
+              run: npm ci
+
+            - name: Install Dependencies (Python)
+              run: pip install ruff
+
+            - name: Run ESLint
+              run: npm run lint
+
+            - name: Run Ruff (Python Linter)
+              run: ruff check .
+
+            - name: Run Ruff (Python Formatter Check)
+              run: ruff format --check .
+
+    test:
+        name: Unit Tests
+        runs-on: ubuntu-24.04
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js 24
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "24"
+                  cache: "npm"
+
+            - name: Install Dependencies
+              run: npm ci
+
+            - name: Run Unit Tests
+              run: npm run test:unit
+              env:
+                  NEXTAUTH_SECRET: ci_test_secret_key
+
+    build-ui:
+        name: Build UI Image
+        needs: [lint, test]
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: read
+            packages: write
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v4
+
+            - name: Log in to GitHub Container Registry
+              if: startsWith(github.ref, 'refs/tags/v')
+              uses: docker/login-action@v4
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Extract metadata for UI Image
+              id: meta
+              uses: docker/metadata-action@v6
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_UI }}
+                  tags: |
+                      type=raw,value=latest,enable={{is_default_branch}}
+                      type=ref,event=tag
+                      type=sha,format=short
+
+            - name: Build and push UI Image
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  file: ui/Dockerfile
+                  push: ${{ startsWith(github.ref, 'refs/tags/v') }}
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  build-args: |
+                      WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=ci_build_placeholder
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+    build-sessions:
+        name: Build Sessions Image
+        needs: [lint, test]
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: read
+            packages: write
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v4
+
+            - name: Log in to GitHub Container Registry
+              if: startsWith(github.ref, 'refs/tags/v')
+              uses: docker/login-action@v4
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Extract metadata for Sessions Image
+              id: meta
+              uses: docker/metadata-action@v6
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SESSIONS }}
+                  tags: |
+                      type=raw,value=latest,enable={{is_default_branch}}
+                      type=ref,event=tag
+                      type=sha,format=short
+
+            - name: Build and push Sessions Image
+              uses: docker/build-push-action@v7
+              with:
+                  context: session-server/
+                  file: session-server/Dockerfile.websocket
+                  push: ${{ startsWith(github.ref, 'refs/tags/v') }}
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+    build-proxy:
+        name: Build Proxy Image
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: read
+            packages: write
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v4
+
+            - name: Log in to GitHub Container Registry
+              if: startsWith(github.ref, 'refs/tags/v')
+              uses: docker/login-action@v4
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Extract metadata for Proxy Image
+              id: meta
+              uses: docker/metadata-action@v6
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PROXY }}
+                  tags: |
+                      type=raw,value=latest,enable={{is_default_branch}}
+                      type=ref,event=tag
+                      type=sha,format=short
+
+            - name: Build and push Proxy Image
+              uses: docker/build-push-action@v7
+              with:
+                  context: nginx/
+                  file: nginx/Dockerfile.proxy
+                  push: ${{ startsWith(github.ref, 'refs/tags/v') }}
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+    craft-release:
+        name: Craft Release Packages
+        needs: [build-ui, build-sessions, build-proxy]
+        if: startsWith(github.ref, 'refs/tags/v')
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: write
+            packages: read
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Log in to GitHub Container Registry
+              uses: docker/login-action@v4
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Prepare Workspace
+              run: |
+                  mkdir -p release-online/images
+                  mkdir -p release-offline/images
+
+                  # Copy deployment scripts into both bundles
+                  cp ./scripts/install.sh deploy/docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-online/
+                  cp ./scripts/install.sh deploy/docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-offline/
+
+            - name: Export Offline Images
+              run: |
+                  TAG_NAME=${{ github.ref_name }}
+
+                  echo "Pulling freshly built custom images..."
+                  docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_UI }}:$TAG_NAME
+                  docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SESSIONS }}:$TAG_NAME
+                  docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PROXY }}:$TAG_NAME
+
+                  echo "Pulling public database images..."
+                  docker pull ${{ env.IMAGE_POSTGRES }}
+                  docker pull ${{ env.IMAGE_MONGO }}
+
+                  echo "Saving custom images to flat archives..."
+                  docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_UI }}:$TAG_NAME -o release-offline/images/bluz-ui.tar
+                  docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SESSIONS }}:$TAG_NAME -o release-offline/images/bluz-sessions.tar
+                  docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PROXY }}:$TAG_NAME -o release-offline/images/bluz-proxy.tar
+
+                  echo "Saving database images to flat archives..."
+                  docker save ${{ env.IMAGE_POSTGRES }} -o release-offline/images/postgres.tar
+                  docker save ${{ env.IMAGE_MONGO }} -o release-offline/images/mongodb.tar
+
+            - name: Compress Final Packages
+              run: |
+                  tar -czvf bluz-online-${{ github.ref_name }}.tar.gz -C release-online .
+                  tar -czvf bluz-offline-${{ github.ref_name }}.tar.gz -C release-offline .
+
+            - name: Publish GitHub Release
+              uses: softprops/action-gh-release@v3
+              with:
+                  files: |
+                      bluz-online-${{ github.ref_name }}.tar.gz
+                      bluz-offline-${{ github.ref_name }}.tar.gz
+                  generate_release_notes: true
+                  draft: false
+                  prerelease: false
