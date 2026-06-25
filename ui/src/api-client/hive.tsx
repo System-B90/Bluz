@@ -1,7 +1,6 @@
 import { ClientApiNoPayload, safeApiFetcher } from "@/api-client/common";
 import {
     ApiHiveClassesGetResponse,
-    ApiHiveRoomsGetResponse,
     ApiHiveStudentsGetResponse,
     ApiHiveUsersGetResponse,
 } from "@/api-shared/types/hive";
@@ -11,7 +10,6 @@ import { ApiHiveSubjectsGetResponse } from "@/api-shared/types/subject";
 type ClientApiGetStudents = ClientApiNoPayload<ApiHiveStudentsGetResponse>;
 type ClientApiGetClasses = ClientApiNoPayload<ApiHiveClassesGetResponse>;
 type ClientApiGetSubjects = ClientApiNoPayload<ApiHiveSubjectsGetResponse>;
-type ClientApiGetHiveRooms = ClientApiNoPayload<ApiHiveRoomsGetResponse>;
 type ClientApiGetHiveUsers = ClientApiNoPayload<ApiHiveUsersGetResponse>;
 type ClientApiGetModules = ClientApiNoPayload<ApiHiveModulesGetResponse>;
 
@@ -32,14 +30,6 @@ export const apiGetClasses: ClientApiGetClasses = async (props) => {
 export const apiGetSubjects: ClientApiGetSubjects = async (props) => {
     return await safeApiFetcher<ApiHiveSubjectsGetResponse>(
         "/api/hive/subjects",
-        props,
-    );
-};
-
-// TODO: Is this function actually needed? Rooms are a subtype of class in Hive
-export const apiGetHiveRooms: ClientApiGetHiveRooms = async (props) => {
-    return await safeApiFetcher<ApiHiveRoomsGetResponse>(
-        "/api/hive/rooms",
         props,
     );
 };

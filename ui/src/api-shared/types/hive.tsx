@@ -1,4 +1,3 @@
-import { HiveRoom } from "@/api-shared/types/room";
 
 /*
  * Note: This file does not update automatically.
@@ -154,9 +153,6 @@ export type ApiHiveStudentsGetResponse = Array<CourseUser>;
 
 export type ApiHiveClassesGetPayload = void;
 export type ApiHiveClassesGetResponse = Array<Class>;
-
-export type ApiHiveRoomsGetPayload = void;
-export type ApiHiveRoomsGetResponse = Array<HiveRoom>;
 
 export type ApiHiveUsersGetPayload = void;
 export type ApiHiveUsersGetResponse = Array<CourseUser>;
