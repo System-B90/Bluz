@@ -29,15 +29,7 @@ import {
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
-const ALL_DAY_INDICES: Array<GanttDayIndex> = [
-    GanttDayIndex.Sunday,
-    GanttDayIndex.Monday,
-    GanttDayIndex.Tuesday,
-    GanttDayIndex.Wednesday,
-    GanttDayIndex.Thursday,
-    GanttDayIndex.Friday,
-    GanttDayIndex.Saturday,
-];
+
 
 type Props = {
     curriculum: GanttCurriculum;
@@ -89,6 +81,7 @@ export function ApplyTemplateButton({ curriculum, curriculumId }: Props) {
             const finalWeekIds: Array<string> = [
                 ...currentWeekIds.slice(0, targetCount),
             ];
+            const newWeeksMap = new Map<string, any>();
             for (let i = currentWeekIds.length; i < targetCount; i++) {
                 const newWeek = await createWeek({
                     curriculumId,
@@ -97,6 +90,7 @@ export function ApplyTemplateButton({ curriculum, curriculumId }: Props) {
                     weekendDuty: false,
                 });
                 finalWeekIds.push(newWeek.id);
+                newWeeksMap.set(newWeek.id, newWeek);
             }
 
             // 3. Apply day-minutes for each week
@@ -109,43 +103,49 @@ export function ApplyTemplateButton({ curriculum, curriculumId }: Props) {
                     weekIndex,
                 );
 
-                const week = state.weeks[weekId];
-                const dayIds = week?.days ?? [];
-
                 // Update week comment/weekendDuty for Saturday awareness
                 const hasSaturdayDuty =
                     (dayMinutes[GanttDayIndex.Saturday] ?? 0) > 0;
                 await updateWeek(weekId, { weekendDuty: hasSaturdayDuty });
 
-                // Update each day's totalWorkingMinutes
-                for (const dayId of dayIds) {
-                    const day = state.days[dayId];
-                    if (!day) continue;
+                // Gather days to update (either from existing state or from newly created week)
+                const daysToUpdate: Array<{ id: string; dayIndex: number; totalWorkingMinutes: number }> = [];
 
-                    const minutes =
-                        dayMinutes[day.dayIndex as GanttDayIndex] ?? 0;
-                    if (day.totalWorkingMinutes !== minutes) {
-                        await updateDay(dayId, {
-                            totalWorkingMinutes: minutes,
-                        });
+                const week = state.weeks[weekId];
+                if (week) {
+                    for (const dayId of week.days) {
+                        const day = state.days[dayId];
+                        if (day) {
+                            daysToUpdate.push({
+                                id: day.id,
+                                dayIndex: day.dayIndex,
+                                totalWorkingMinutes: day.totalWorkingMinutes,
+                            });
+                        }
+                    }
+                } else {
+                    const newWeek = newWeeksMap.get(weekId);
+                    if (newWeek && newWeek.w2d) {
+                        for (const link of newWeek.w2d) {
+                            if (link.day) {
+                                daysToUpdate.push({
+                                    id: link.day.id,
+                                    dayIndex: link.day.dayIndex,
+                                    totalWorkingMinutes: link.day.totalWorkingMinutes,
+                                });
+                            }
+                        }
                     }
                 }
 
-                // Handle newly-created weeks whose days aren't in state yet.
-                // Re-read from the API response stored in state after dispatch settles.
-                // (State refresh happens via reducer; weeks created above already dispatched ADD_WEEK / ADD_DAY.)
-                const freshWeek = state.weeks[weekId];
-                if (freshWeek && freshWeek.days.length > 0) {
-                    for (const dayId of freshWeek.days) {
-                        const day = state.days[dayId];
-                        if (!day) continue;
-                        const minutes =
-                            dayMinutes[day.dayIndex as GanttDayIndex] ?? 0;
-                        if (day.totalWorkingMinutes !== minutes) {
-                            await updateDay(dayId, {
-                                totalWorkingMinutes: minutes,
-                            });
-                        }
+                // Update each day's totalWorkingMinutes
+                for (const day of daysToUpdate) {
+                    const minutes =
+                        dayMinutes[day.dayIndex as GanttDayIndex] ?? 0;
+                    if (day.totalWorkingMinutes !== minutes) {
+                        await updateDay(day.id, {
+                            totalWorkingMinutes: minutes,
+                        });
                     }
                 }
             }
