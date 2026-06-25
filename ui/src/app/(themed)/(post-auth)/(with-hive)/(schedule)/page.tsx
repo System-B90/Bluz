@@ -24,14 +24,14 @@ export default function SchedulePage() {
     const [selectedEvent, setSelectedEvent] = useState<Partial<Event>>();
     const [openEventDialog, setOpenEventDialog] = useState<boolean>(false);
 
+    const openId =
+        openEventDialog && selectedEvent?.id ? selectedEvent.id : null;
+
     // Period locking: broadcast a lock while an existing event's dialog is open,
     // and release it on close. Tracks the locked id so the matching unlock fires
     // regardless of how the dialog was opened/closed.
     const lockedEventIdRef = useRef<EventId | null>(null);
     useEffect(() => {
-        const openId =
-            openEventDialog && selectedEvent?.id ? selectedEvent.id : null;
-
         if (lockedEventIdRef.current === openId) return;
 
         if (lockedEventIdRef.current !== null) {
@@ -41,21 +41,19 @@ export default function SchedulePage() {
             lockEvent(openId);
         }
         lockedEventIdRef.current = openId;
-    }, [openEventDialog, selectedEvent, lockEvent, unlockEvent]);
+    }, [openId, lockEvent, unlockEvent]);
 
     // Heartbeat: while a lock is held, re-emit it periodically. This refreshes
     // the TTL on other clients and lets clients that connected after the dialog
     // opened still learn about the lock.
     useEffect(() => {
-        const openId =
-            openEventDialog && selectedEvent?.id ? selectedEvent.id : null;
         if (openId === null) return;
 
         const interval = setInterval(() => {
             lockEvent(openId);
         }, LOCK_HEARTBEAT_MS);
         return () => clearInterval(interval);
-    }, [openEventDialog, selectedEvent, lockEvent]);
+    }, [openId, lockEvent]);
 
     // Release any held lock when leaving the page, and make a best-effort
     // release if the tab is closed outright. The TTL sweep is the real safety
