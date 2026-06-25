@@ -2,7 +2,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import ImportExportIcon from "@mui/icons-material/ImportExport";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import UploadIcon from "@mui/icons-material/Upload";
-import Button from "@mui/material/Button";
+import Button, { ButtonProps } from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -16,29 +16,22 @@ export function sanitizeFilename(name: string): string {
 }
 
 export type ImportExportMenuButtonProps = {
-    onExport: () => any | Promise<any>;
+    onExport: () => Promise<unknown> | unknown;
     onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
     importLabel?: string;
     exportLabel?: string;
     triggerLabel?: string;
     accept?: string;
-    size?: "large" | "medium" | "small";
-    variant?: "contained" | "outlined" | "text";
-    color?:
-        | "error"
-        | "info"
-        | "inherit"
-        | "primary"
-        | "secondary"
-        | "success"
-        | "warning";
+    size?: ButtonProps["size"];
+    variant?: ButtonProps["variant"];
+    color?: ButtonProps["color"];
     exportDisabled?: boolean;
     importDisabled?: boolean;
     iconOnly?: boolean;
     exportFilenamePrefix?: string;
     exportTitle?: string;
     onExportSuccess?: () => void;
-    onExportError?: (error: any) => void;
+    onExportError?: (error: unknown) => void;
     onExportExcel?: () => Promise<void> | void;
     exportExcelLabel?: string;
 };
