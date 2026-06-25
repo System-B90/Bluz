@@ -43,12 +43,13 @@ export function CalendarToolbar({
     showToolbar: boolean;
     onToggleFullscreen: () => void;
     onToggleToolbar: () => void;
-}) {
+})
+{
     const { offlineMode, setOfflineMode } = useOffline();
     const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
         useCalendarFilters();
-    const [open, setOpen] = useState(false);
-    const [filterAnchorEl, setFilterAnchorEl] =
+    const [ open, setOpen ] = useState(false);
+    const [ filterAnchorEl, setFilterAnchorEl ] =
         useState<HTMLButtonElement | null>(null);
     const filterOpen = Boolean(filterAnchorEl);
 
@@ -58,25 +59,30 @@ export function CalendarToolbar({
             filteredCourses.length !== 0 ||
             filteredInstructors.length !== 0 ||
             showPAsFor !== null,
-        [filteredCourses, filteredInstructors, showPAsFor, hidePrayers],
+        [ filteredCourses, filteredInstructors, showPAsFor, hidePrayers ],
     );
 
     const handleDateChange = useCallback(
-        (val: dayjs.Dayjs | null) => {
-            if (val && val.isValid()) {
+        (val: dayjs.Dayjs | null) =>
+        {
+            if (val && val.isValid())
+            {
                 onNavigate("DATE", val.toDate());
             }
         },
-        [onNavigate],
+        [ onNavigate ],
     );
 
-    const isTodayShown = useMemo(() => {
+    const isTodayShown = useMemo(() =>
+    {
         const today = dayjs();
         const calendarDate = dayjs(date);
-        if (view === "day") {
+        if (view === "day")
+        {
             return calendarDate.isSame(today, "day");
         }
-        if (view === "week") {
+        if (view === "week")
+        {
             const start = calendarDate.day(0).startOf("day");
             const end = calendarDate.day(6).endOf("day");
             return (
@@ -84,7 +90,8 @@ export function CalendarToolbar({
                 (today.isSame(end) || today.isBefore(end))
             );
         }
-        if (view === "work_week") {
+        if (view === "work_week")
+        {
             const start = calendarDate.day(0).startOf("day");
             const end = calendarDate.day(4).endOf("day");
             return (
@@ -93,62 +100,62 @@ export function CalendarToolbar({
             );
         }
         return false;
-    }, [date, view]);
+    }, [ date, view ]);
 
     return (
-        <Collapse in={showToolbar}>
+        <Collapse in={ showToolbar }>
             <Box
                 alignItems="center"
                 display="flex"
                 flexWrap="wrap"
-                gap={2}
+                gap={ 2 }
                 justifyContent="space-between"
-                px={2}
-                py={1.5}
-                sx={{
+                px={ 2 }
+                py={ 1.5 }
+                sx={ {
                     borderBottom: "1px solid",
                     borderColor: "divider",
                     bgcolor: (theme) =>
                         theme.palette.mode === "dark"
                             ? "background.default"
                             : "transparent",
-                }}
+                } }
                 width="100%"
             >
                 <Box
                     alignItems="center"
                     display="flex"
                     flexWrap="wrap"
-                    gap={1.5}
+                    gap={ 1.5 }
                 >
                     <ButtonGroup size="small" variant="outlined">
-                        <Button onClick={() => onNavigate("PREV")}>
-                            {CALENDAR_MESSAGES.previous}
+                        <Button onClick={ () => onNavigate("PREV") }>
+                            { CALENDAR_MESSAGES.previous }
                         </Button>
                         <Button
-                            onClick={() => onNavigate("TODAY")}
-                            variant={isTodayShown ? "contained" : "outlined"}
+                            onClick={ () => onNavigate("TODAY") }
+                            variant={ isTodayShown ? "contained" : "outlined" }
                         >
-                            {CALENDAR_MESSAGES.today}
+                            { CALENDAR_MESSAGES.today }
                         </Button>
-                        <Button onClick={() => onNavigate("NEXT")}>
-                            {CALENDAR_MESSAGES.next}
+                        <Button onClick={ () => onNavigate("NEXT") }>
+                            { CALENDAR_MESSAGES.next }
                         </Button>
                     </ButtonGroup>
                 </Box>
 
-                <Box alignItems="center" display="flex" gap={1}>
+                <Box alignItems="center" display="flex" gap={ 1 }>
                     <Typography
                         fontWeight="bold"
-                        sx={{ color: "text.primary" }}
+                        sx={ { color: "text.primary" } }
                         variant="h6"
                     >
-                        {label}
+                        { label }
                     </Typography>
                     <IconButton
-                        onClick={() => setOpen(true)}
+                        onClick={ () => setOpen(true) }
                         size="small"
-                        sx={{
+                        sx={ {
                             color: "text.secondary",
                             transition: "all 0.2s ease-in-out",
                             "&:hover": {
@@ -158,19 +165,20 @@ export function CalendarToolbar({
                             "&:active": {
                                 transform: "scale(0.95)",
                             },
-                        }}
+                        } }
                     >
                         <CalendarTodayIcon fontSize="small" />
                     </IconButton>
                     <DatePicker
                         format="DD/MM/YYYY"
-                        onChange={(val) => {
+                        onChange={ (val) =>
+                        {
                             handleDateChange(val);
                             setOpen(false);
-                        }}
-                        onClose={() => setOpen(false)}
-                        open={open}
-                        slotProps={{
+                        } }
+                        onClose={ () => setOpen(false) }
+                        open={ open }
+                        slotProps={ {
                             textField: {
                                 sx: {
                                     position: "absolute",
@@ -180,109 +188,111 @@ export function CalendarToolbar({
                                     pointerEvents: "none",
                                 },
                             },
-                        }}
-                        value={dayjs(date)}
+                        } }
+                        value={ dayjs(date) }
                     />
                 </Box>
 
-                <Box alignItems="center" display="flex" gap={1.5}>
+                <Box alignItems="center" display="flex" gap={ 1.5 }>
                     <ButtonGroup size="small" variant="outlined">
                         <Button
-                            onClick={() => onView("day")}
-                            variant={view === "day" ? "contained" : "outlined"}
+                            onClick={ () => onView("day") }
+                            variant={ view === "day" ? "contained" : "outlined" }
                         >
-                            {CALENDAR_MESSAGES.day}
+                            { CALENDAR_MESSAGES.day }
                         </Button>
                         <Button
-                            onClick={() => onView("work_week")}
+                            onClick={ () => onView("work_week") }
                             variant={
                                 view === "work_week" ? "contained" : "outlined"
                             }
                         >
-                            {CALENDAR_MESSAGES.work_week}
+                            { CALENDAR_MESSAGES.work_week }
                         </Button>
                         <Button
-                            onClick={() => onView("week")}
-                            variant={view === "week" ? "contained" : "outlined"}
+                            onClick={ () => onView("week") }
+                            variant={ view === "week" ? "contained" : "outlined" }
                         >
-                            {CALENDAR_MESSAGES.week}
+                            { CALENDAR_MESSAGES.week }
                         </Button>
                     </ButtonGroup>
 
-                    <Tooltip
-                        title={
-                            offlineMode ? "חזור למצב מקוון" : "עבור למצב לוקלי"
-                        }
-                    >
-                        <Button
-                            color={offlineMode ? "warning" : "primary"}
-                            onClick={() => setOfflineMode((v) => !v)}
-                            size="small"
-                            sx={{
-                                minWidth: 38,
-                                transition: "all 0.2s ease-in-out",
-                                "&:active": { transform: "scale(0.95)" },
-                            }}
-                            variant={offlineMode ? "contained" : "outlined"}
-                        >
-                            {offlineMode ? (
-                                <WifiTetheringOffIcon fontSize="small" />
-                            ) : (
-                                <WifiTetheringIcon fontSize="small" />
-                            )}
-                        </Button>
-                    </Tooltip>
-
-                    <Tooltip
-                        title={filterOpen ? "הסתר סננים" : "הצג סננים"}
-                    >
-                        <Button
-                            color="primary"
-                            onClick={(e) =>
-                                setFilterAnchorEl(e.currentTarget)
+                    <ButtonGroup size="small" variant="outlined">
+                        <Tooltip
+                            title={
+                                offlineMode ? "חזור למצב מקוון" : "עבור למצב לוקלי"
                             }
-                            size="small"
-                            sx={{
-                                minWidth: 38,
-                                position: "relative",
-                                transition: "all 0.2s ease-in-out",
-                                ...(filterOpen || hasAnyFilter
-                                    ? {
-                                        bgcolor: "primary.main",
-                                        color: "primary.contrastText",
-                                        "&:hover": {
-                                            bgcolor: "primary.dark",
-                                        },
-                                    }
-                                    : {}),
-                                "&:active": { transform: "scale(0.95)" },
-                            }}
-                            variant="outlined"
                         >
-                            <FilterListIcon fontSize="small" />
-                            <InfoIcon
-                                color="info"
-                                fontSize="inherit"
-                                sx={{
-                                    position: "absolute",
-                                    top: 2,
-                                    right: 2,
-                                    fontSize: "0.8rem",
-                                    opacity: !filterOpen && hasAnyFilter ? 1 : 0,
-                                    transition: "opacity 0.15s ease-in-out",
-                                }}
-                            />
-                        </Button>
-                    </Tooltip>
+                            <Button
+                                color={ offlineMode ? "warning" : "primary" }
+                                onClick={ () => setOfflineMode((v) => !v) }
+                                size="small"
+                                sx={ {
+                                    minWidth: 38,
+                                    transition: "all 0.2s ease-in-out",
+                                    "&:active": { transform: "scale(0.95)" },
+                                } }
+                                variant={ offlineMode ? "contained" : "outlined" }
+                            >
+                                { offlineMode ? (
+                                    <WifiTetheringOffIcon fontSize="small" />
+                                ) : (
+                                    <WifiTetheringIcon fontSize="small" />
+                                ) }
+                            </Button>
+                        </Tooltip>
+
+                        <Tooltip
+                            title={ filterOpen ? "הסתר סננים" : "הצג סננים" }
+                        >
+                            <Button
+                                color="primary"
+                                onClick={ (e) =>
+                                    setFilterAnchorEl(e.currentTarget)
+                                }
+                                size="small"
+                                sx={ {
+                                    minWidth: 38,
+                                    position: "relative",
+                                    transition: "all 0.2s ease-in-out",
+                                    ...(filterOpen || hasAnyFilter
+                                        ? {
+                                            bgcolor: "primary.main",
+                                            color: "primary.contrastText",
+                                            "&:hover": {
+                                                bgcolor: "primary.dark",
+                                            },
+                                        }
+                                        : {}),
+                                    "&:active": { transform: "scale(0.95)" },
+                                } }
+                                variant="outlined"
+                            >
+                                <FilterListIcon fontSize="small" />
+                                { false ? <InfoIcon
+                                    color="warning"
+                                    fontSize="inherit"
+                                    sx={ {
+                                        position: "absolute",
+                                        top: 2,
+                                        right: 2,
+                                        fontSize: "0.8rem",
+                                        opacity: !filterOpen && hasAnyFilter ? 1 : 0,
+                                        transition: "opacity 0.15s ease-in-out",
+                                    } }
+                                /> : null }
+                            </Button>
+                        </Tooltip>
+                    </ButtonGroup>
                     <Popover
-                        anchorEl={filterAnchorEl}
-                        anchorOrigin={{
+                        anchorEl={ filterAnchorEl }
+                        anchorOrigin={ {
                             vertical: "bottom",
                             horizontal: "left",
-                        }}
-                        onClose={() => setFilterAnchorEl(null)}
-                        open={filterOpen}
-                        slotProps={{
+                        } }
+                        onClose={ () => setFilterAnchorEl(null) }
+                        open={ filterOpen }
+                        slotProps={ {
                             paper: {
                                 sx: {
                                     p: 2,
@@ -290,28 +300,27 @@ export function CalendarToolbar({
                                     borderRadius: "12px",
                                     boxShadow:
                                         "0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
-                                    direction: "rtl",
                                 },
                             },
-                        }}
-                        transformOrigin={{
+                        } }
+                        transformOrigin={ {
                             vertical: "top",
                             horizontal: "left",
-                        }}
+                        } }
                     >
                         <Filters
                             display="flex"
                             flexDirection="column"
-                            gap={2}
-                            sx={{ minWidth: 240 }}
+                            gap={ 2 }
+                            sx={ { minWidth: 240 } }
                         />
                     </Popover>
 
                     <ButtonGroup size="small" variant="outlined">
                         <Tooltip title="הסתר סרגל כלים">
                             <Button
-                                onClick={onToggleToolbar}
-                                sx={{
+                                onClick={ onToggleToolbar }
+                                sx={ {
                                     minWidth: 38,
                                     transition: "all 0.2s ease-in-out",
                                     "&:hover": {
@@ -320,15 +329,15 @@ export function CalendarToolbar({
                                     "&:active": {
                                         transform: "scale(0.95)",
                                     },
-                                }}
+                                } }
                             >
                                 <VisibilityOffIcon fontSize="small" />
                             </Button>
                         </Tooltip>
                         <Tooltip title="מסך מלא">
                             <Button
-                                onClick={onToggleFullscreen}
-                                sx={{
+                                onClick={ onToggleFullscreen }
+                                sx={ {
                                     minWidth: 38,
                                     transition: "all 0.2s ease-in-out",
                                     "&:hover": {
@@ -349,7 +358,7 @@ export function CalendarToolbar({
                                     "&:active": {
                                         transform: "scale(0.95)",
                                     },
-                                }}
+                                } }
                             >
                                 <FullscreenIcon fontSize="small" />
                             </Button>
