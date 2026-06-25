@@ -215,17 +215,12 @@ export function CalendarToolbar({
                         }
                     >
                         <Button
-                            color={offlineMode ? "warning" : "inherit"}
+                            color={offlineMode ? "warning" : "primary"}
                             onClick={() => setOfflineMode((v) => !v)}
                             size="small"
                             sx={{
                                 minWidth: 38,
                                 transition: "all 0.2s ease-in-out",
-                                "&:hover": {
-                                    color: offlineMode
-                                        ? "warning.main"
-                                        : "primary.main",
-                                },
                                 "&:active": { transform: "scale(0.95)" },
                             }}
                             variant={offlineMode ? "contained" : "outlined"}
@@ -242,9 +237,7 @@ export function CalendarToolbar({
                         title={filterOpen ? "הסתר סננים" : "הצג סננים"}
                     >
                         <Button
-                            color={
-                                filterOpen || hasAnyFilter ? "primary" : "inherit"
-                            }
+                            color="primary"
                             onClick={(e) =>
                                 setFilterAnchorEl(e.currentTarget)
                             }
@@ -253,28 +246,32 @@ export function CalendarToolbar({
                                 minWidth: 38,
                                 position: "relative",
                                 transition: "all 0.2s ease-in-out",
-                                "&:hover": { color: "primary.main" },
+                                ...(filterOpen || hasAnyFilter
+                                    ? {
+                                          bgcolor: "primary.main",
+                                          color: "primary.contrastText",
+                                          "&:hover": {
+                                              bgcolor: "primary.dark",
+                                          },
+                                      }
+                                    : {}),
                                 "&:active": { transform: "scale(0.95)" },
                             }}
-                            variant={
-                                filterOpen || hasAnyFilter
-                                    ? "contained"
-                                    : "outlined"
-                            }
+                            variant="outlined"
                         >
                             <FilterListIcon fontSize="small" />
-                            {!filterOpen && hasAnyFilter ? (
-                                <InfoIcon
-                                    color="info"
-                                    fontSize="inherit"
-                                    sx={{
-                                        position: "absolute",
-                                        top: 2,
-                                        right: 2,
-                                        fontSize: "0.8rem",
-                                    }}
-                                />
-                            ) : null}
+                            <InfoIcon
+                                color="info"
+                                fontSize="inherit"
+                                sx={{
+                                    position: "absolute",
+                                    top: 2,
+                                    right: 2,
+                                    fontSize: "0.8rem",
+                                    opacity: !filterOpen && hasAnyFilter ? 1 : 0,
+                                    transition: "opacity 0.15s ease-in-out",
+                                }}
+                            />
                         </Button>
                     </Tooltip>
                     <Popover
