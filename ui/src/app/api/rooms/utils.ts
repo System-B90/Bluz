@@ -27,6 +27,7 @@ export async function getAllRooms(): Promise<Array<Room>> {
                 workstationCount: doc.workstationCount,
                 lectureSeatCount: doc.lectureSeatCount,
                 lectureComfortable: doc.lectureComfortable,
+                peAyin: doc.peAyin ?? false,
             },
         ]),
     );

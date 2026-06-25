@@ -17,6 +17,7 @@ const DEFAULT_EXTENDED_INFO: RoomExtendedInfo = {
     workstationCount: null,
     lectureSeatCount: null,
     lectureComfortable: false,
+    peAyin: false,
 };
 
 export function RoomSettings() {
@@ -31,6 +32,7 @@ export function RoomSettings() {
     const [workstationCount, setWorkstationCount] = useState<string>("");
     const [lectureSeatCount, setLectureSeatCount] = useState<string>("");
     const [lectureComfortable, setLectureComfortable] = useState(false);
+    const [peAyin, setPeAyin] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
 
     const filteredRooms = useMemo(() => {
@@ -56,6 +58,7 @@ export function RoomSettings() {
             ext.lectureSeatCount !== null ? String(ext.lectureSeatCount) : "",
         );
         setLectureComfortable(ext.lectureComfortable);
+        setPeAyin(ext.peAyin ?? false);
     }, []);
 
     const handleStartCreate = useCallback(() => {
@@ -66,6 +69,7 @@ export function RoomSettings() {
         setWorkstationCount("");
         setLectureSeatCount("");
         setLectureComfortable(false);
+        setPeAyin(false);
     }, []);
 
     const handleCancelEdit = useCallback(() => {
@@ -76,6 +80,7 @@ export function RoomSettings() {
         setWorkstationCount("");
         setLectureSeatCount("");
         setLectureComfortable(false);
+        setPeAyin(false);
     }, []);
 
     const buildExtendedInfo = useCallback(
@@ -87,8 +92,9 @@ export function RoomSettings() {
                 ? parseInt(lectureSeatCount, 10)
                 : null,
             lectureComfortable,
+            peAyin,
         }),
-        [workstationCount, lectureSeatCount, lectureComfortable],
+        [workstationCount, lectureSeatCount, lectureComfortable, peAyin],
     );
 
     const handleSave = useCallback(
@@ -229,11 +235,13 @@ export function RoomSettings() {
                 lectureComfortable={lectureComfortable}
                 lectureSeatCount={lectureSeatCount}
                 name={name}
+                peAyin={peAyin}
                 selectedRoom={selectedRoom}
                 setDescription={setDescription}
                 setLectureComfortable={setLectureComfortable}
                 setLectureSeatCount={setLectureSeatCount}
                 setName={setName}
+                setPeAyin={setPeAyin}
                 setWorkstationCount={setWorkstationCount}
                 workstationCount={workstationCount}
             />
