@@ -1,4 +1,3 @@
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ComputerIcon from "@mui/icons-material/Computer";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -11,11 +10,10 @@ import ListItemText from "@mui/material/ListItemText";
 import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 
 import { Room, RoomSource } from "@/api-shared/types/room";
 import { HiveLogo } from "@/components/base/HiveLogo";
-import { ReservationDialog } from "@/components/settings-dialog/tabs/global/room-settings/reservations/ReservationDialog";
 import { RoomExtendedInfoChip } from "@/components/settings-dialog/tabs/global/room-settings/RoomExtendedInfoChip";
 
 type RoomListItemProps = {
@@ -34,7 +32,6 @@ export function RoomListItem({
     const theme = useTheme();
     const isHive = room.source === RoomSource.Hive;
     const ext = room.extendedInfo;
-    const [reservationOpen, setReservationOpen] = useState(false);
 
     const hiveLogoColor =
         theme.palette.mode === "light" ? "#000000" : "#ffffff";
@@ -57,203 +54,173 @@ export function RoomListItem({
     );
 
     return (
-        <>
-            <ReservationDialog
-                onClose={() => setReservationOpen(false)}
-                open={reservationOpen}
-                room={room}
-            />
-            <ListItem
-                onClick={() => onPopulateForm(room)}
-                secondaryAction={
-                    <Box alignItems="center" display="flex" gap={0.5}>
-                        <Tooltip title="הזמנות חדר">
+        <ListItem
+            onClick={() => onPopulateForm(room)}
+            secondaryAction={
+                <Box alignItems="center" display="flex" gap={0.5}>
+                    <Tooltip title="ערוך פרטים מורחבים">
+                        <IconButton
+                            edge="end"
+                            onClick={handlePopulate}
+                            size="small"
+                            sx={{
+                                color: "text.secondary",
+                                "&:hover": { color: "primary.main" },
+                            }}
+                        >
+                            <EditIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    {!isHive && (
+                        <Tooltip title="מחק">
                             <IconButton
                                 edge="end"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setReservationOpen(true);
-                                }}
+                                onClick={handleDelete}
                                 size="small"
                                 sx={{
                                     color: "text.secondary",
-                                    "&:hover": { color: "primary.main" },
+                                    "&:hover": { color: "error.main" },
                                 }}
                             >
-                                <CalendarMonthIcon fontSize="small" />
+                                <DeleteIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title="ערוך פרטים מורחבים">
-                            <IconButton
-                                edge="end"
-                                onClick={handlePopulate}
-                                size="small"
+                    )}
+                    {isHive ? (
+                        <Tooltip title="חדר הייב">
+                            <Box
                                 sx={{
-                                    color: "text.secondary",
-                                    "&:hover": { color: "primary.main" },
+                                    display: "flex",
+                                    alignItems: "center",
+                                    mr: 0.5,
+                                    color: hiveLogoColor,
                                 }}
                             >
-                                <EditIcon fontSize="small" />
-                            </IconButton>
+                                <HiveLogo size={18} />
+                            </Box>
                         </Tooltip>
-                        {!isHive && (
-                            <Tooltip title="מחק">
-                                <IconButton
-                                    edge="end"
-                                    onClick={handleDelete}
-                                    size="small"
-                                    sx={{
-                                        color: "text.secondary",
-                                        "&:hover": { color: "error.main" },
-                                    }}
-                                >
-                                    <DeleteIcon fontSize="small" />
-                                </IconButton>
-                            </Tooltip>
-                        )}
+                    ) : null}
+                </Box>
+            }
+            sx={{
+                border: "1px solid",
+                borderColor: isActive ? "primary.main" : "divider",
+                borderRadius: "8px",
+                mb: 1,
+                p: 1,
+                cursor: "pointer",
+                bgcolor: isActive
+                    ? "action.selected"
+                    : theme.palette.mode === "light"
+                        ? "rgba(0,0,0,0.01)"
+                        : "rgba(255,255,255,0.01)",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                    borderColor: isActive ? "primary.main" : "text.secondary",
+                    transform: "translateY(-1px)",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+                },
+            }}
+        >
+            <ListItemText
+                disableTypography
+                primary={
+                    <Box alignItems="center" display="flex" gap={1}>
+                        <Typography
+                            component="span"
+                            sx={{
+                                fontWeight: 700,
+                                fontSize: "0.9rem",
+                                color: "text.primary",
+                            }}
+                        >
+                            {room.name}
+                        </Typography>
                         {isHive ? (
-                            <Tooltip title="חדר הייב">
-                                <Box
-                                    sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        mr: 0.5,
-                                        color: hiveLogoColor,
-                                    }}
-                                >
-                                    <HiveLogo size={18} />
-                                </Box>
-                            </Tooltip>
-                        ) : null}
-                    </Box>
-                }
-                sx={{
-                    border: "1px solid",
-                    borderColor: isActive ? "primary.main" : "divider",
-                    borderRadius: "8px",
-                    mb: 1,
-                    p: 1,
-                    cursor: "pointer",
-                    bgcolor: isActive
-                        ? "action.selected"
-                        : theme.palette.mode === "light"
-                            ? "rgba(0,0,0,0.01)"
-                            : "rgba(255,255,255,0.01)",
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                        borderColor: isActive ? "primary.main" : "text.secondary",
-                        transform: "translateY(-1px)",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
-                    },
-                }}
-            >
-                <ListItemText
-                    disableTypography
-                    primary={
-                        <Box alignItems="center" display="flex" gap={1}>
-                            <Typography
-                                component="span"
+                            <Chip
+                                icon={<HiveLogo size={12} />}
+                                label="הייב"
+                                size="small"
                                 sx={{
+                                    height: 20,
+                                    fontSize: "0.65rem",
                                     fontWeight: 700,
-                                    fontSize: "0.9rem",
-                                    color: "text.primary",
-                                }}
-                            >
-                                {room.name}
-                            </Typography>
-                            {isHive ? (
-                                <Chip
-                                    icon={<HiveLogo size={12} />}
-                                    label="הייב"
-                                    size="small"
-                                    sx={{
-                                        height: 20,
-                                        fontSize: "0.65rem",
-                                        fontWeight: 700,
-                                        borderRadius: "6px",
-                                        color: hiveLogoColor,
-                                        borderColor:
+                                    borderRadius: "6px",
+                                    color: hiveLogoColor,
+                                    borderColor:
                                         theme.palette.mode === "light"
                                             ? "rgba(0,0,0,0.2)"
                                             : "rgba(255,255,255,0.2)",
-                                        "& .MuiChip-icon": {
-                                            ml: 0.3,
-                                            color: hiveLogoColor,
-                                        },
+                                    "& .MuiChip-icon": {
+                                        ml: 0.3,
+                                        color: hiveLogoColor,
+                                    },
+                                }}
+                                variant="outlined"
+                            />
+                        ) : null}
+                    </Box>
+                }
+                secondary={
+                    hasSecondaryContent ? (
+                        <Box
+                            display="flex"
+                            flexDirection="column"
+                            gap={0.5}
+                            mt={0.5}
+                        >
+                            {room.description ? (
+                                <Typography
+                                    component="span"
+                                    sx={{
+                                        fontSize: "0.75rem",
+                                        color: "text.secondary",
                                     }}
-                                    variant="outlined"
-                                />
+                                >
+                                    {room.description}
+                                </Typography>
+                            ) : null}
+                            {ext ? (
+                                <Box display="flex" flexWrap="wrap" gap={0.5}>
+                                    {ext.workstationCount !== null && (
+                                        <RoomExtendedInfoChip
+                                            iconNode={
+                                                <ComputerIcon
+                                                    sx={{
+                                                        fontSize:
+                                                            "0.7rem !important",
+                                                    }}
+                                                />
+                                            }
+                                            label={`${ext.workstationCount} עמדות`}
+                                        />
+                                    )}
+                                    {ext.lectureSeatCount !== null && (
+                                        <RoomExtendedInfoChip
+                                            iconNode={
+                                                <EventSeatIcon
+                                                    sx={{
+                                                        fontSize:
+                                                            "0.7rem !important",
+                                                    }}
+                                                />
+                                            }
+                                            label={`${ext.lectureSeatCount} כסאות`}
+                                        />
+                                    )}
+                                    {ext.lectureComfortable ? (
+                                        <RoomExtendedInfoChip
+                                            color="success"
+                                            label="נוח להרצאה ✓"
+                                        />
+                                    ) : null}
+                                </Box>
                             ) : null}
                         </Box>
-                    }
-                    secondary={
-                        hasSecondaryContent ? (
-                            <Box
-                                display="flex"
-                                flexDirection="column"
-                                gap={0.5}
-                                mt={0.5}
-                            >
-                                {room.description ? (
-                                    <Typography
-                                        component="span"
-                                        sx={{
-                                            fontSize: "0.75rem",
-                                            color: "text.secondary",
-                                        }}
-                                    >
-                                        {room.description}
-                                    </Typography>
-                                ) : null}
-                                {ext ? (
-                                    <Box display="flex" flexWrap="wrap" gap={0.5}>
-                                        {ext.workstationCount !== null && (
-                                            <RoomExtendedInfoChip
-                                                iconNode={
-                                                    <ComputerIcon
-                                                        sx={{
-                                                            fontSize:
-                                                            "0.7rem !important",
-                                                        }}
-                                                    />
-                                                }
-                                                label={`${ext.workstationCount} עמדות`}
-                                            />
-                                        )}
-                                        {ext.lectureSeatCount !== null && (
-                                            <RoomExtendedInfoChip
-                                                iconNode={
-                                                    <EventSeatIcon
-                                                        sx={{
-                                                            fontSize:
-                                                            "0.7rem !important",
-                                                        }}
-                                                    />
-                                                }
-                                                label={`${ext.lectureSeatCount} כסאות`}
-                                            />
-                                        )}
-                                        {ext.lectureComfortable ? (
-                                            <RoomExtendedInfoChip
-                                                color="success"
-                                                label="נוח להרצאה ✓"
-                                            />
-                                        ) : null}
-                                        {ext.peAyin ? (
-                                            <RoomExtendedInfoChip
-                                                color="warning"
-                                                label='פ"ע'
-                                                sx={{ fontWeight: 800 }}
-                                            />
-                                        ) : null}
-                                    </Box>
-                                ) : null}
-                            </Box>
-                        ) : null
-                    }
-                    sx={{ my: 0 }}
-                />
-            </ListItem>
-        </>
+                    ) : null
+                }
+                sx={{ my: 0 }}
+            />
+        </ListItem>
     );
 }
