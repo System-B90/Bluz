@@ -487,14 +487,14 @@ export function curriculumReducer(
     }
 
     case "REORDER_EVENTS": {
-        const module = state.modules[action.payload.moduleId];
-        if (!module) return state;
+        const moduleDoc = state.modules[action.payload.moduleId];
+        if (!moduleDoc) return state;
         return {
             ...state,
             modules: {
                 ...state.modules,
-                [module.id]: {
-                    ...module,
+                [moduleDoc.id]: {
+                    ...moduleDoc,
                     events: action.payload.eventIds,
                 },
             },
