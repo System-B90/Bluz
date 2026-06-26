@@ -16,7 +16,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import dayjs from "dayjs";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Outsider } from "@/api-shared/types/outsider";
 
@@ -26,7 +26,7 @@ type OutsidersListProps = {
     onStartCreate: () => void;
     outsiders: Array<Outsider>;
     selectedOutsider: null | Outsider;
-}
+};
 
 export function OutsidersList({
     onDelete,
@@ -34,10 +34,12 @@ export function OutsidersList({
     onStartCreate,
     outsiders,
     selectedOutsider,
-}: OutsidersListProps) {
-    const [searchQuery, setSearchQuery] = useState("");
+}: OutsidersListProps)
+{
+    const [ searchQuery, setSearchQuery ] = useState("");
 
-    const filteredOutsiders = useMemo(() => {
+    const filteredOutsiders = useMemo(() =>
+    {
         const query = searchQuery.trim().toLowerCase();
         if (!query) return outsiders;
         return outsiders.filter(
@@ -47,11 +49,11 @@ export function OutsidersList({
                 (o.personalNumber && o.personalNumber.includes(query)) ||
                 (o.idNumber && o.idNumber.includes(query)),
         );
-    }, [outsiders, searchQuery]);
+    }, [ outsiders, searchQuery ]);
 
     return (
         <Box
-            sx={{
+            sx={ {
                 flex: 1.4,
                 minWidth: 0,
                 border: "1px solid",
@@ -66,36 +68,36 @@ export function OutsidersList({
                 display: "flex",
                 flexDirection: "column",
                 gap: 2.5,
-            }}
+            } }
         >
-            <Box alignItems="center" display="flex" gap={1.5}>
+            <Box alignItems="center" display="flex" gap={ 1.5 }>
                 <Box
-                    sx={{
+                    sx={ {
                         p: 1,
                         borderRadius: "10px",
                         bgcolor: "primary.light",
                         color: "primary.contrastText",
                         display: "flex",
                         alignItems: "center",
-                    }}
+                    } }
                 >
                     <PersonIcon className="text-[20px]" />
                 </Box>
                 <Box>
                     <Typography
-                        sx={{
+                        sx={ {
                             fontWeight: 800,
                             fontSize: "1.1rem",
                             color: "text.primary",
-                        }}
+                        } }
                     >
                         אנשי חוץ
                     </Typography>
                     <Typography
-                        sx={{
+                        sx={ {
                             fontSize: "0.75rem",
                             color: "text.secondary",
-                        }}
+                        } }
                     >
                         ניהול רשימת אנשי חוץ ומרצים חיצוניים במערכת
                     </Typography>
@@ -103,31 +105,31 @@ export function OutsidersList({
             </Box>
 
             <TextField
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={ (e) => setSearchQuery(e.target.value) }
                 placeholder="חפש איש חוץ..."
                 size="small"
-                slotProps={{
+                slotProps={ {
                     input: {
                         startAdornment: (
                             <InputAdornment position="start">
                                 <SearchIcon
                                     fontSize="small"
-                                    sx={{ color: "text.secondary" }}
+                                    sx={ { color: "text.secondary" } }
                                 />
                             </InputAdornment>
                         ),
                     },
-                }}
-                sx={{
+                } }
+                sx={ {
                     "& .MuiOutlinedInput-root": {
                         borderRadius: "10px",
                     },
-                }}
-                value={searchQuery}
+                } }
+                value={ searchQuery }
             />
 
             <Box
-                sx={{
+                sx={ {
                     maxHeight: 340,
                     overflowY: "auto",
                     pr: 0.5,
@@ -137,32 +139,33 @@ export function OutsidersList({
                     flexDirection: "column",
                     gap: 0.5,
                     minHeight: 180,
-                }}
+                } }
             >
-                {filteredOutsiders.length === 0 ? (
+                { filteredOutsiders.length === 0 ? (
                     <Box
-                        sx={{
+                        sx={ {
                             m: "auto",
                             display: "flex",
                             flexDirection: "column",
                             alignItems: "center",
                             gap: 1,
-                        }}
+                        } }
                     >
                         <Typography
-                            sx={{
+                            sx={ {
                                 color: "text.secondary",
                                 fontSize: "0.85rem",
-                            }}
+                            } }
                         >
-                            {searchQuery
+                            { searchQuery
                                 ? "לא נמצאו אנשי חוץ התואמים את החיפוש"
-                                : "לא הוגדרו אנשי חוץ"}
+                                : "לא הוגדרו אנשי חוץ" }
                         </Typography>
                     </Box>
                 ) : (
                     <List disablePadding>
-                        {filteredOutsiders.map((outsider) => {
+                        { filteredOutsiders.map((outsider) =>
+                        {
                             const isActive =
                                 selectedOutsider?.id === outsider.id;
                             const isReleased =
@@ -174,28 +177,29 @@ export function OutsidersList({
 
                             return (
                                 <ListItem
-                                    key={outsider.id}
-                                    onClick={() => onSelect(outsider)}
+                                    key={ outsider.id }
+                                    onClick={ () => onSelect(outsider) }
                                     secondaryAction={
                                         <Box
                                             alignItems="center"
                                             display="flex"
-                                            gap={0.5}
+                                            gap={ 0.5 }
                                         >
                                             <Tooltip title="ערוך">
                                                 <IconButton
                                                     edge="end"
-                                                    onClick={(e) => {
+                                                    onClick={ (e) =>
+                                                    {
                                                         e.stopPropagation();
                                                         onSelect(outsider);
-                                                    }}
+                                                    } }
                                                     size="small"
-                                                    sx={{
+                                                    sx={ {
                                                         color: "text.secondary",
                                                         "&:hover": {
                                                             color: "primary.main",
                                                         },
-                                                    }}
+                                                    } }
                                                 >
                                                     <EditIcon fontSize="small" />
                                                 </IconButton>
@@ -203,24 +207,25 @@ export function OutsidersList({
                                             <Tooltip title="מחק">
                                                 <IconButton
                                                     edge="end"
-                                                    onClick={(e) => {
+                                                    onClick={ (e) =>
+                                                    {
                                                         e.stopPropagation();
                                                         onDelete(outsider.id);
-                                                    }}
+                                                    } }
                                                     size="small"
-                                                    sx={{
+                                                    sx={ {
                                                         color: "text.secondary",
                                                         "&:hover": {
                                                             color: "error.main",
                                                         },
-                                                    }}
+                                                    } }
                                                 >
                                                     <DeleteIcon fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
                                         </Box>
                                     }
-                                    sx={{
+                                    sx={ {
                                         border: "1px solid",
                                         borderColor: isActive
                                             ? "primary.main"
@@ -244,107 +249,107 @@ export function OutsidersList({
                                             boxShadow:
                                                 "0 4px 12px rgba(0,0,0,0.03)",
                                         },
-                                    }}
+                                    } }
                                 >
                                     <ListItemText
                                         disableTypography
                                         primary={
                                             <Typography
                                                 component="div"
-                                                sx={{
+                                                sx={ {
                                                     fontWeight: 700,
                                                     fontSize: "0.9rem",
                                                     fontFamily:
                                                         "Assistant, sans-serif",
                                                     color: "text.primary",
-                                                }}
+                                                } }
                                             >
                                                 <Box
                                                     alignItems="center"
                                                     display="flex"
-                                                    gap={1}
+                                                    gap={ 1 }
                                                 >
-                                                    <span>{outsider.name}</span>
-                                                    {isReleased ? (
+                                                    <span>{ outsider.name }</span>
+                                                    { isReleased ? (
                                                         <Tooltip title="משוחרר">
                                                             <Chip
                                                                 color="success"
                                                                 icon={
                                                                     <CheckCircleIcon
-                                                                        sx={{
+                                                                        sx={ {
                                                                             fontSize:
                                                                                 "14px !important",
                                                                             color: "success.main",
-                                                                        }}
+                                                                        } }
                                                                     />
                                                                 }
                                                                 label="משוחרר"
                                                                 size="small"
-                                                                sx={{
+                                                                sx={ {
                                                                     height: 20,
                                                                     fontSize:
                                                                         "0.65rem",
                                                                     fontWeight: 700,
                                                                     borderRadius:
                                                                         "6px",
-                                                                }}
+                                                                } }
                                                                 variant="outlined"
                                                             />
                                                         </Tooltip>
-                                                    ) : null}
+                                                    ) : null }
                                                 </Box>
                                             </Typography>
                                         }
                                         secondary={
                                             <Typography
                                                 component="div"
-                                                sx={{
+                                                sx={ {
                                                     fontSize: "0.75rem",
                                                     fontFamily:
                                                         "Assistant, sans-serif",
                                                     color: "text.secondary",
                                                     mt: 0.5,
-                                                }}
+                                                } }
                                             >
                                                 <Box
                                                     display="flex"
                                                     flexDirection="column"
-                                                    gap={0.2}
+                                                    gap={ 0.2 }
                                                 >
                                                     <span>
-                                                        טלפון: {outsider.phone}
+                                                        טלפון: { outsider.phone }
                                                     </span>
-                                                    {outsider.personalNumber ||
-                                                    outsider.idNumber ? (
+                                                    { outsider.personalNumber ||
+                                                        outsider.idNumber ? (
                                                             <span>
-                                                                {outsider.personalNumber
+                                                                { outsider.personalNumber
                                                                     ? `מ.א. ${outsider.personalNumber}`
-                                                                    : ""}
-                                                                {outsider.personalNumber &&
-                                                            outsider.idNumber
+                                                                    : "" }
+                                                                { outsider.personalNumber &&
+                                                                outsider.idNumber
                                                                     ? " | "
-                                                                    : ""}
-                                                                {outsider.idNumber
+                                                                    : "" }
+                                                                { outsider.idNumber
                                                                     ? `ת.ז. ${outsider.idNumber}`
-                                                                    : ""}
+                                                                    : "" }
                                                             </span>
-                                                        ) : null}
+                                                        ) : null }
                                                 </Box>
                                             </Typography>
                                         }
                                     />
                                 </ListItem>
                             );
-                        })}
+                        }) }
                     </List>
-                )}
+                ) }
             </Box>
 
             <Button
                 color="secondary"
-                onClick={onStartCreate}
-                startIcon={<AddIcon className="ml-1" />}
-                sx={{
+                onClick={ onStartCreate }
+                startIcon={ <AddIcon className="ml-1" /> }
+                sx={ {
                     borderRadius: "10px",
                     py: 1,
                     fontWeight: 700,
@@ -355,7 +360,7 @@ export function OutsidersList({
                         transform: "translateY(-1px)",
                         boxShadow: "0 6px 16px rgb(var(--mui-palette-secondary-mainChannel) / 0.2)",
                     },
-                }}
+                } }
                 variant="contained"
             >
                 הוספת איש חוץ

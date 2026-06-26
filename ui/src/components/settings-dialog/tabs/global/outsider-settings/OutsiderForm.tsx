@@ -1,24 +1,13 @@
-import AddIcon from "@mui/icons-material/Add";
-import BadgeIcon from "@mui/icons-material/Badge";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ClearIcon from "@mui/icons-material/Clear";
-import CommentIcon from "@mui/icons-material/Comment";
-import EditIcon from "@mui/icons-material/Edit";
-import PhoneIcon from "@mui/icons-material/Phone";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
-import InputAdornment from "@mui/material/InputAdornment";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import { useSnackbar } from "notistack";
 import React, { useCallback, useMemo, useState } from "react";
 
 import { Outsider } from "@/api-shared/types/outsider";
-import { VCardQrCode } from "@/components/settings-dialog/tabs/global/outsider-settings/VCardQrCode";
+import { OutsiderEmptyState } from "@/components/settings-dialog/tabs/global/outsider-settings/OutsiderEmptyState";
+import { OutsiderFormActions } from "@/components/settings-dialog/tabs/global/outsider-settings/OutsiderFormActions";
+import { OutsiderFormFields } from "@/components/settings-dialog/tabs/global/outsider-settings/OutsiderFormFields";
+import { OutsiderFormHeader } from "@/components/settings-dialog/tabs/global/outsider-settings/OutsiderFormHeader";
 
 type OutsiderFormProps = {
     isCreating: boolean;
@@ -168,385 +157,42 @@ export function OutsiderForm({
                 transition: "opacity 0.3s ease",
             } }
         >
-            <Box
-                sx={ {
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    width: "100%",
-                    gap: 2,
-                } }
-            >
-                <Box alignItems="center" display="flex" gap={ 1.5 }>
-                    <Box
-                        sx={ {
-                            p: 1,
-                            borderRadius: "10px",
-                            bgcolor: isCreating
-                                ? "secondary.light"
-                                : "primary.light",
-                            color: isCreating
-                                ? "secondary.contrastText"
-                                : "primary.contrastText",
-                            display: "flex",
-                            alignItems: "center",
-                        } }
-                    >
-                        { isCreating ? (
-                            <AddIcon className="text-[20px]" />
-                        ) : (
-                            <EditIcon className="text-[20px]" />
-                        ) }
-                    </Box>
-                    <Box>
-                        <Typography
-                            sx={ {
-                                fontWeight: 800,
-                                fontSize: "1.1rem",
-                                color: "text.primary",
-                            } }
-                        >
-                            { isCreating
-                                ? "הוספת איש חוץ חדש"
-                                : selectedOutsider
-                                    ? "עריכת פרטי איש חוץ"
-                                    : "פרטי איש חוץ" }
-                        </Typography>
-                        <Typography
-                            sx={ {
-                                fontSize: "0.75rem",
-                                color: "text.secondary",
-                            } }
-                        >
-                            { isCreating
-                                ? "מלא את הטופס ליצירת איש חוץ חדש"
-                                : selectedOutsider
-                                    ? "עדכן את פרטי איש החוץ הנוכחי"
-                                    : "בחר איש חוץ מהרשימה לעריכה" }
-                        </Typography>
-                    </Box>
-                </Box>
-                { !isCreating && selectedOutsider ? (
-                    <VCardQrCode
-                        comment={ comment }
-                        idNumber={ idNumber }
-                        name={ name }
-                        personalNumber={ personalNumber }
-                        phone={ phone }
-                    />
-                ) : null }
-            </Box>
+            <OutsiderFormHeader
+                comment={ comment }
+                idNumber={ idNumber }
+                isCreating={ isCreating }
+                name={ name }
+                personalNumber={ personalNumber }
+                phone={ phone }
+                selectedOutsider={ selectedOutsider }
+            />
 
             { !showForm ? (
-                <Box className="m-auto py-12">
-                    <Typography
-                        sx={ {
-                            color: "text.secondary",
-                            fontSize: "0.85rem",
-                            textAlign: "center",
-                        } }
-                    >
-                        בחר איש חוץ מהרשימה או לחץ על הוספת איש חוץ
-                    </Typography>
-                </Box>
+                <OutsiderEmptyState />
             ) : (
                 <>
-                    <Box
-                        sx={ {
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 2.5,
-                            maxHeight: 340,
-                            overflowY: "auto",
-                            pl: 0.5,
-                            pr: 0.5,
-                        } }
-                    >
-                        {/* Full Name */ }
-                        <TextField
-                            fullWidth
-                            label="שם מלא"
-                            onChange={ (e) => setName(e.target.value) }
-                            placeholder="לדוגמה: פרופ׳ ישראל ישראלי"
-                            required
-                            size="small"
-                            sx={ {
-                                "& .MuiOutlinedInput-root": {
-                                    borderRadius: "10px",
-                                },
-                            } }
-                            value={ name }
-                        />
+                    <OutsiderFormFields
+                        comment={ comment }
+                        idNumber={ idNumber }
+                        idNumberWarning={ idNumberWarning }
+                        isPhoneValid={ isPhoneValid }
+                        name={ name }
+                        personalNumber={ personalNumber }
+                        personalNumberWarning={ personalNumberWarning }
+                        phone={ phone }
+                        releaseDate={ releaseDate }
+                        setComment={ setComment }
+                        setIdNumber={ setIdNumber }
+                        setName={ setName }
+                        setPersonalNumber={ setPersonalNumber }
+                        setPhone={ setPhone }
+                        setReleaseDate={ setReleaseDate }
+                    />
 
-                        {/* Phone */ }
-                        <TextField
-                            error={ !isPhoneValid }
-                            fullWidth
-                            helperText={
-                                !isPhoneValid ? "מספר טלפון לא תקין" : ""
-                            }
-                            label="מספר טלפון"
-                            onChange={ (e) => setPhone(e.target.value) }
-                            placeholder="לדוגמה: 0501234567"
-                            required
-                            size="small"
-                            slotProps={ {
-                                input: {
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <PhoneIcon
-                                                fontSize="small"
-                                                sx={ {
-                                                    color: "text.secondary",
-                                                } }
-                                            />
-                                        </InputAdornment>
-                                    ),
-                                },
-                            } }
-                            sx={ {
-                                "& .MuiOutlinedInput-root": {
-                                    borderRadius: "10px",
-                                },
-                            } }
-                            value={ phone }
-                        />
-
-                        <Divider className="my-1">
-                            <Typography
-                                sx={ {
-                                    fontSize: "0.72rem",
-                                    fontWeight: 700,
-                                    color: "text.secondary",
-                                } }
-                            >
-                                פרטים מזהים ושחרור
-                            </Typography>
-                        </Divider>
-
-                        {/* Personal Number */ }
-                        <TextField
-                            error={
-                                !!personalNumberWarning &&
-                                personalNumberWarning !==
-                                "שימו לב: מספר אישי לא הוגדר"
-                            }
-                            fullWidth
-                            helperText={
-                                personalNumberWarning ? (
-                                    <Box
-                                        alignItems="center"
-                                        component="span"
-                                        display="inline-flex"
-                                        gap={ 0.5 }
-                                        sx={ {
-                                            color: "warning.main",
-                                            mt: 0.2,
-                                        } }
-                                    >
-                                        <WarningAmberIcon
-                                            sx={ { fontSize: "14px" } }
-                                        />
-                                        <span>{ personalNumberWarning }</span>
-                                    </Box>
-                                ) : (
-                                    ""
-                                )
-                            }
-                            label="מספר אישי (7 ספרות)"
-                            onChange={ (e) =>
-                                setPersonalNumber(
-                                    e.target.value.replace(/\D/g, ""),
-                                )
-                            }
-                            placeholder="לדוגמה: 9876543"
-                            size="small"
-                            slotProps={ {
-                                input: {
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <BadgeIcon
-                                                fontSize="small"
-                                                sx={ {
-                                                    color: "text.secondary",
-                                                } }
-                                            />
-                                        </InputAdornment>
-                                    ),
-                                },
-                            } }
-                            sx={ {
-                                "& .MuiOutlinedInput-root": {
-                                    borderRadius: "10px",
-                                },
-                            } }
-                            value={ personalNumber }
-                        />
-
-                        {/* ID Number */ }
-                        <TextField
-                            error={
-                                !!idNumberWarning &&
-                                idNumberWarning !== "שימו לב: ת.ז. לא הוגדרה"
-                            }
-                            fullWidth
-                            helperText={
-                                idNumberWarning ? (
-                                    <Box
-                                        alignItems="center"
-                                        component="span"
-                                        display="inline-flex"
-                                        gap={ 0.5 }
-                                        sx={ {
-                                            color: "warning.main",
-                                            mt: 0.2,
-                                        } }
-                                    >
-                                        <WarningAmberIcon
-                                            sx={ { fontSize: "14px" } }
-                                        />
-                                        <span>{ idNumberWarning }</span>
-                                    </Box>
-                                ) : (
-                                    ""
-                                )
-                            }
-                            label="תעודת זהות (9 ספרות)"
-                            onChange={ (e) =>
-                                setIdNumber(e.target.value.replace(/\D/g, ""))
-                            }
-                            placeholder="לדוגמה: 123456789"
-                            size="small"
-                            slotProps={ {
-                                input: {
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <BadgeIcon
-                                                fontSize="small"
-                                                sx={ {
-                                                    color: "text.secondary",
-                                                } }
-                                            />
-                                        </InputAdornment>
-                                    ),
-                                },
-                            } }
-                            sx={ {
-                                "& .MuiOutlinedInput-root": {
-                                    borderRadius: "10px",
-                                },
-                            } }
-                            value={ idNumber }
-                        />
-
-                        {/* Release Date */ }
-                        <Box display="flex" flexDirection="column" gap={ 1 }>
-                            <DatePicker
-                                format="DD/MM/YYYY"
-                                label="תאריך שחרור"
-                                onChange={ (val) => setReleaseDate(val) }
-                                slotProps={ {
-                                    textField: {
-                                        size: "small",
-                                        sx: {
-                                            "& .MuiOutlinedInput-root": {
-                                                borderRadius: "10px",
-                                            },
-                                        },
-                                    },
-                                } }
-                                value={ releaseDate }
-                            />
-                            { releaseDate &&
-                                releaseDate.isValid() &&
-                                releaseDate.isBefore(dayjs(), "day") ? (
-                                <Box
-                                    alignItems="center"
-                                    display="flex"
-                                    gap={ 0.5 }
-                                    sx={ { color: "success.main" } }
-                                >
-                                    <CheckCircleIcon className="text-[16px]" />
-                                    <Typography
-                                        sx={ { fontWeight: 700 } }
-                                        variant="caption"
-                                    >
-                                        סטטוס: משוחרר
-                                    </Typography>
-                                </Box>
-                            ) : null }
-                        </Box>
-
-                        {/* Comment */ }
-                        <TextField
-                            fullWidth
-                            label="הערה"
-                            multiline
-                            onChange={ (e) => setComment(e.target.value) }
-                            placeholder="הערות לגבי המרצה..."
-                            rows={ 2 }
-                            size="small"
-                            slotProps={ {
-                                input: {
-                                    startAdornment: (
-                                        <InputAdornment
-                                            position="start"
-                                            sx={ {
-                                                alignSelf: "flex-start",
-                                                mt: 1,
-                                            } }
-                                        >
-                                            <CommentIcon
-                                                fontSize="small"
-                                                sx={ {
-                                                    color: "text.secondary",
-                                                } }
-                                            />
-                                        </InputAdornment>
-                                    ),
-                                },
-                            } }
-                            sx={ {
-                                "& .MuiOutlinedInput-root": {
-                                    borderRadius: "10px",
-                                },
-                            } }
-                            value={ comment }
-                        />
-                    </Box>
-
-                    {/* Actions */ }
-                    <Box display="flex" gap={ 1.5 } mt={ 1 }>
-                        <Button
-                            color={ isCreating ? "secondary" : "primary" }
-                            sx={ {
-                                flex: 1,
-                                borderRadius: "10px",
-                                py: 1,
-                                fontWeight: 700,
-                                fontSize: "0.82rem",
-                                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-                            } }
-                            type="submit"
-                            variant="contained"
-                        >
-                            { isCreating ? "צור איש חוץ" : "עדכן איש חוץ" }
-                        </Button>
-                        <Button
-                            color="inherit"
-                            onClick={ onCancel }
-                            startIcon={ <ClearIcon /> }
-                            sx={ {
-                                borderRadius: "10px",
-                                py: 1,
-                                fontWeight: 700,
-                                fontSize: "0.82rem",
-                            } }
-                            variant="outlined"
-                        >
-                            ביטול
-                        </Button>
-                    </Box>
+                    <OutsiderFormActions
+                        isCreating={ isCreating }
+                        onCancel={ onCancel }
+                    />
                 </>
             ) }
         </Box>
