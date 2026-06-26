@@ -19,6 +19,7 @@ import dayjs from "dayjs";
 import { useMemo, useState } from "react";
 
 import { Outsider } from "@/api-shared/types/outsider";
+import { formatPhoneNumber } from "@/components/base/utils/phone-numbers";
 
 type OutsidersListProps = {
     onDelete: (id: string) => void;
