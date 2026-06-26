@@ -1,4 +1,4 @@
-// eslint-disable-next-line no-restricted-imports
+// eslint-disable-next-line no-restricted-imports -- Barrel re-export boundary: this file is the allowed import path for session-common
 export * from "../../session-server/session-common";
 
 const SECONDS_IN_AN_HOUR = 3600;

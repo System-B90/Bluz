@@ -1,14 +1,16 @@
 import Box from "@mui/material/Box";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "notistack";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import {
-    CustomRoom,
-    Room,
-    RoomExtendedInfo,
-    RoomSource,
-} from "@/api-shared/types/room";
+import
+    {
+        CustomRoom,
+        Room,
+        RoomExtendedInfo,
+        RoomSource,
+    } from "@/api-shared/types/room";
 import { useRooms } from "@/components/base/RoomsProvider";
 import { RoomFormCard } from "@/components/settings-dialog/tabs/global/room-settings/RoomFormCard";
 import { RoomListCard } from "@/components/settings-dialog/tabs/global/room-settings/RoomListCard";
@@ -20,22 +22,51 @@ const DEFAULT_EXTENDED_INFO: RoomExtendedInfo = {
     peAyin: false,
 };
 
-export function RoomSettings() {
+export function RoomSettings()
+{
     const { rooms, addRoom, updateRoom, deleteRoom, updateRoomExtendedInfo } =
         useRooms();
     const { enqueueSnackbar } = useSnackbar();
+    const router = useRouter();
+    const searchParams = useSearchParams();
 
-    const [searchQuery, setSearchQuery] = useState("");
-    const [selectedRoom, setSelectedRoom] = useState<null | Room>(null);
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
-    const [workstationCount, setWorkstationCount] = useState<string>("");
-    const [lectureSeatCount, setLectureSeatCount] = useState<string>("");
-    const [lectureComfortable, setLectureComfortable] = useState(false);
-    const [peAyin, setPeAyin] = useState(false);
-    const [isCreating, setIsCreating] = useState(false);
+    const [ searchQuery, setSearchQuery ] = useState("");
+    const [ selectedRoom, setSelectedRoom ] = useState<null | Room>(null);
+    const [ name, setName ] = useState("");
+    const [ description, setDescription ] = useState("");
+    const [ workstationCount, setWorkstationCount ] = useState<string>("");
+    const [ lectureSeatCount, setLectureSeatCount ] = useState<string>("");
+    const [ lectureComfortable, setLectureComfortable ] = useState(false);
+    const [ peAyin, setPeAyin ] = useState(false);
+    const [ isCreating, setIsCreating ] = useState(false);
 
-    const filteredRooms = useMemo(() => {
+    const setRoomParam = useCallback((roomId: null | string) =>
+    {
+        const params = new URLSearchParams(searchParams.toString());
+        if (roomId)
+        {
+            params.set("editRoom", roomId);
+        } else
+        {
+            params.delete("editRoom");
+        }
+        router.replace(`?${params.toString()}`, { scroll: false });
+    }, [ router, searchParams ]);
+
+    useEffect(() =>
+    {
+        const roomId = searchParams.get("editRoom");
+        if (!roomId || rooms.length === 0) return;
+        const room = rooms.find((r) => r.id === roomId);
+        if (room && (!selectedRoom || selectedRoom.id !== roomId))
+        {
+            populateFormState(room);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedRoom intentionally excluded to avoid set→rerun loop
+    }, [ rooms, searchParams ]);
+
+    const filteredRooms = useMemo(() =>
+    {
         const query = searchQuery.trim().toLowerCase();
         if (!query) return rooms;
         return rooms.filter(
@@ -43,9 +74,10 @@ export function RoomSettings() {
                 r.name.toLowerCase().includes(query) ||
                 (r.description && r.description.toLowerCase().includes(query)),
         );
-    }, [rooms, searchQuery]);
+    }, [ rooms, searchQuery ]);
 
-    const populateFormFromRoom = useCallback((room: Room) => {
+    const populateFormState = useCallback((room: Room) =>
+    {
         setSelectedRoom(room);
         setIsCreating(false);
         setName(room.name);
@@ -61,7 +93,14 @@ export function RoomSettings() {
         setPeAyin(ext.peAyin ?? false);
     }, []);
 
-    const handleStartCreate = useCallback(() => {
+    const populateFormFromRoom = useCallback((room: Room) =>
+    {
+        populateFormState(room);
+        setRoomParam(room.id as string);
+    }, [ populateFormState, setRoomParam ]);
+
+    const handleStartCreate = useCallback(() =>
+    {
         setSelectedRoom(null);
         setIsCreating(true);
         setName("");
@@ -72,7 +111,8 @@ export function RoomSettings() {
         setPeAyin(false);
     }, []);
 
-    const handleCancelEdit = useCallback(() => {
+    const handleCancelEdit = useCallback(() =>
+    {
         setSelectedRoom(null);
         setIsCreating(false);
         setName("");
@@ -81,7 +121,8 @@ export function RoomSettings() {
         setLectureSeatCount("");
         setLectureComfortable(false);
         setPeAyin(false);
-    }, []);
+        setRoomParam(null);
+    }, [ setRoomParam ]);
 
     const buildExtendedInfo = useCallback(
         (): RoomExtendedInfo => ({
@@ -94,29 +135,34 @@ export function RoomSettings() {
             lectureComfortable,
             peAyin,
         }),
-        [workstationCount, lectureSeatCount, lectureComfortable, peAyin],
+        [ workstationCount, lectureSeatCount, lectureComfortable, peAyin ],
     );
 
     const handleSave = useCallback(
-        async (e: React.FormEvent) => {
+        async (e: React.FormEvent) =>
+        {
             e.preventDefault();
             const trimmedName = name.trim();
 
-            if (isCreating) {
-                if (!trimmedName) {
+            if (isCreating)
+            {
+                if (!trimmedName)
+                {
                     enqueueSnackbar("שם החדר הוא שדה חובה", {
                         variant: "warning",
                     });
                     return;
                 }
-                try {
+                try
+                {
                     await addRoom({
                         name: trimmedName,
                         description: description.trim() || null,
                         extendedInfo: buildExtendedInfo(),
                     });
                     handleCancelEdit();
-                } catch (err) {
+                } catch (err)
+                {
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
                         "שגיאה ביצירת חדר מותאם אישית",
@@ -128,14 +174,17 @@ export function RoomSettings() {
 
             if (!selectedRoom) return;
 
-            if (selectedRoom.source === RoomSource.Custom) {
-                if (!trimmedName) {
+            if (selectedRoom.source === RoomSource.Custom)
+            {
+                if (!trimmedName)
+                {
                     enqueueSnackbar("שם החדר הוא שדה חובה", {
                         variant: "warning",
                     });
                     return;
                 }
-                try {
+                try
+                {
                     await updateRoom({
                         ...selectedRoom,
                         name: trimmedName,
@@ -148,22 +197,26 @@ export function RoomSettings() {
                         buildExtendedInfo(),
                     );
                     handleCancelEdit();
-                } catch (err) {
+                } catch (err)
+                {
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
                         "שגיאה בעדכון חדר מותאם אישית",
                         err,
                     );
                 }
-            } else {
-                try {
+            } else
+            {
+                try
+                {
                     await updateRoomExtendedInfo(
                         selectedRoom.id,
                         selectedRoom.source,
                         buildExtendedInfo(),
                     );
                     handleCancelEdit();
-                } catch (err) {
+                } catch (err)
+                {
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
                         "שגיאה בעדכון פרטים מורחבים עבור חדר הייב",
@@ -187,14 +240,19 @@ export function RoomSettings() {
     );
 
     const handleDelete = useCallback(
-        async (roomId: string) => {
-            if (window.confirm("האם אתה בטוח שברצונך למחוק חדר זה?")) {
-                try {
-                    if (selectedRoom && selectedRoom.id === roomId) {
+        async (roomId: string) =>
+        {
+            if (window.confirm("האם אתה בטוח שברצונך למחוק חדר זה?"))
+            {
+                try
+                {
+                    if (selectedRoom && selectedRoom.id === roomId)
+                    {
                         handleCancelEdit();
                     }
                     await deleteRoom(roomId);
-                } catch (err) {
+                } catch (err)
+                {
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
                         "שגיאה במחיקת חדר",
@@ -203,47 +261,47 @@ export function RoomSettings() {
                 }
             }
         },
-        [selectedRoom, handleCancelEdit, deleteRoom, enqueueSnackbar],
+        [ selectedRoom, handleCancelEdit, deleteRoom, enqueueSnackbar ],
     );
 
     return (
         <Box
-            sx={{
+            sx={ {
                 display: "flex",
                 flexDirection: { xs: "column", lg: "row" },
                 gap: 3,
                 alignItems: "stretch",
                 justifyContent: "center",
                 width: "100%",
-            }}
+            } }
         >
             <RoomListCard
-                filteredRooms={filteredRooms}
-                handleDelete={handleDelete}
-                handleStartCreate={handleStartCreate}
-                populateFormFromRoom={populateFormFromRoom}
-                searchQuery={searchQuery}
-                selectedRoom={selectedRoom}
-                setSearchQuery={setSearchQuery}
+                filteredRooms={ filteredRooms }
+                handleDelete={ handleDelete }
+                handleStartCreate={ handleStartCreate }
+                populateFormFromRoom={ populateFormFromRoom }
+                searchQuery={ searchQuery }
+                selectedRoom={ selectedRoom }
+                setSearchQuery={ setSearchQuery }
             />
 
             <RoomFormCard
-                description={description}
-                handleCancelEdit={handleCancelEdit}
-                handleSave={handleSave}
-                isCreating={isCreating}
-                lectureComfortable={lectureComfortable}
-                lectureSeatCount={lectureSeatCount}
-                name={name}
-                peAyin={peAyin}
-                selectedRoom={selectedRoom}
-                setDescription={setDescription}
-                setLectureComfortable={setLectureComfortable}
-                setLectureSeatCount={setLectureSeatCount}
-                setName={setName}
-                setPeAyin={setPeAyin}
-                setWorkstationCount={setWorkstationCount}
-                workstationCount={workstationCount}
+                description={ description }
+                handleCancelEdit={ handleCancelEdit }
+                handleSave={ handleSave }
+                isCreating={ isCreating }
+                lectureComfortable={ lectureComfortable }
+                lectureSeatCount={ lectureSeatCount }
+                name={ name }
+                peAyin={ peAyin }
+                selectedRoom={ selectedRoom }
+                setDescription={ setDescription }
+                setLectureComfortable={ setLectureComfortable }
+                setLectureSeatCount={ setLectureSeatCount }
+                setName={ setName }
+                setPeAyin={ setPeAyin }
+                setWorkstationCount={ setWorkstationCount }
+                workstationCount={ workstationCount }
             />
         </Box>
     );

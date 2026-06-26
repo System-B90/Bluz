@@ -1,3 +1,5 @@
+"use client";
+
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ComputerIcon from "@mui/icons-material/Computer";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -8,7 +10,6 @@ import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
-import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useCallback, useState } from "react";
@@ -25,233 +26,199 @@ type RoomListItemProps = {
     onDelete: (roomId: string) => void;
 };
 
+type ActionButtonProps = {
+    title: string;
+    onClick: (e: React.MouseEvent) => void;
+    icon: React.ElementType;
+    hoverColor: string;
+};
+
+function ActionButton({ title, onClick, icon: Icon, hoverColor }: ActionButtonProps)
+{
+    return (
+        <Tooltip title={ title }>
+            <IconButton
+                edge="end"
+                onClick={ onClick }
+                size="small"
+                sx={ {
+                    color: "text.secondary",
+                    "&:hover": { color: hoverColor },
+                } }
+            >
+                <Icon fontSize="small" />
+            </IconButton>
+        </Tooltip>
+    );
+}
+
+const EXT_ICON_STYLES = { fontSize: "0.7rem" };
+
 export function RoomListItem({
     room,
     isActive,
     onPopulateForm,
     onDelete,
-}: RoomListItemProps) {
-    const theme = useTheme();
+}: RoomListItemProps)
+{
+    const [ reservationOpen, setReservationOpen ] = useState(false);
+
     const isHive = room.source === RoomSource.Hive;
     const ext = room.extendedInfo;
-    const [reservationOpen, setReservationOpen] = useState(false);
-
-    const hiveLogoColor =
-        theme.palette.mode === "light" ? "#000000" : "#ffffff";
-    const hasSecondaryContent = Boolean(room.description || ext);
 
     const handlePopulate = useCallback(
-        (e: React.MouseEvent) => {
+        (e: React.MouseEvent) =>
+        {
             e.stopPropagation();
             onPopulateForm(room);
         },
-        [room, onPopulateForm],
+        [ room, onPopulateForm ],
     );
 
     const handleDelete = useCallback(
-        (e: React.MouseEvent) => {
+        (e: React.MouseEvent) =>
+        {
             e.stopPropagation();
             onDelete(room.id as string);
         },
-        [room.id, onDelete],
+        [ room.id, onDelete ],
     );
+
+    const handleReservationOpen = useCallback((e: React.MouseEvent) =>
+    {
+        e.stopPropagation();
+        setReservationOpen(true);
+    }, []);
 
     return (
         <>
             <ReservationDialog
-                onClose={() => setReservationOpen(false)}
-                open={reservationOpen}
-                room={room}
+                onClose={ () => setReservationOpen(false) }
+                open={ reservationOpen }
+                room={ room }
             />
             <ListItem
-                onClick={() => onPopulateForm(room)}
+                onClick={ () => onPopulateForm(room) }
                 secondaryAction={
-                    <Box alignItems="center" display="flex" gap={0.5}>
-                        <Tooltip title="הזמנות חדר">
-                            <IconButton
-                                edge="end"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setReservationOpen(true);
-                                }}
-                                size="small"
-                                sx={{
-                                    color: "text.secondary",
-                                    "&:hover": { color: "primary.main" },
-                                }}
-                            >
-                                <CalendarMonthIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="ערוך פרטים מורחבים">
-                            <IconButton
-                                edge="end"
-                                onClick={handlePopulate}
-                                size="small"
-                                sx={{
-                                    color: "text.secondary",
-                                    "&:hover": { color: "primary.main" },
-                                }}
-                            >
-                                <EditIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
-                        {!isHive && (
-                            <Tooltip title="מחק">
-                                <IconButton
-                                    edge="end"
-                                    onClick={handleDelete}
-                                    size="small"
-                                    sx={{
-                                        color: "text.secondary",
-                                        "&:hover": { color: "error.main" },
-                                    }}
-                                >
-                                    <DeleteIcon fontSize="small" />
-                                </IconButton>
-                            </Tooltip>
-                        )}
-                        {isHive ? (
+                    <Box alignItems="center" display="flex" gap={ 0.5 }>
+                        <ActionButton
+                            hoverColor="primary.main"
+                            icon={ CalendarMonthIcon }
+                            onClick={ handleReservationOpen }
+                            title="הזמנות חדר"
+                        />
+                        <ActionButton
+                            hoverColor="primary.main"
+                            icon={ EditIcon }
+                            onClick={ handlePopulate }
+                            title="ערוך פרטים מורחבים"
+                        />
+                        { !isHive && (
+                            <ActionButton
+                                hoverColor="error.main"
+                                icon={ DeleteIcon }
+                                onClick={ handleDelete }
+                                title="מחק"
+                            />
+                        ) }
+                        { isHive && (
                             <Tooltip title="חדר הייב">
                                 <Box
-                                    sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        mr: 0.5,
-                                        color: hiveLogoColor,
-                                    }}
+                                    alignItems="center"
+                                    display="flex"
+                                    mr={ 0.5 }
+                                    sx={ { color: "text.secondary" } }
                                 >
-                                    <HiveLogo size={18} />
+                                    <HiveLogo size={ 18 } />
                                 </Box>
                             </Tooltip>
-                        ) : null}
+                        ) }
                     </Box>
                 }
-                sx={{
+                sx={ {
                     border: "1px solid",
                     borderColor: isActive ? "primary.main" : "divider",
                     borderRadius: "8px",
                     mb: 1,
                     p: 1,
                     cursor: "pointer",
-                    bgcolor: isActive
-                        ? "action.selected"
-                        : theme.palette.mode === "light"
-                            ? "rgba(0,0,0,0.01)"
-                            : "rgba(255,255,255,0.01)",
+                    bgcolor: isActive ? "action.selected" : "transparent",
                     transition: "all 0.2s ease",
                     "&:hover": {
                         borderColor: isActive ? "primary.main" : "text.secondary",
                         transform: "translateY(-1px)",
                         boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+                        bgcolor: isActive ? "action.selected" : "action.hover",
                     },
-                }}
+                } }
             >
                 <ListItemText
                     disableTypography
                     primary={
-                        <Box alignItems="center" display="flex" gap={1}>
+                        <Box alignItems="center" display="flex" flexWrap="nowrap" gap={ 1 }>
                             <Typography
                                 component="span"
-                                sx={{
+                                sx={ {
                                     fontWeight: 700,
                                     fontSize: "0.9rem",
                                     color: "text.primary",
-                                }}
+                                } }
                             >
-                                {room.name}
+                                { room.name }
                             </Typography>
-                            {isHive ? (
+                            { isHive && (
                                 <Chip
-                                    icon={<HiveLogo size={12} />}
+                                    icon={ <HiveLogo size={ 12 } /> }
                                     label="הייב"
                                     size="small"
-                                    sx={{
+                                    sx={ {
                                         height: 20,
                                         fontSize: "0.65rem",
                                         fontWeight: 700,
                                         borderRadius: "6px",
-                                        color: hiveLogoColor,
-                                        borderColor:
-                                        theme.palette.mode === "light"
-                                            ? "rgba(0,0,0,0.2)"
-                                            : "rgba(255,255,255,0.2)",
+                                        color: "text.primary",
                                         "& .MuiChip-icon": {
-                                            ml: 0.3,
-                                            color: hiveLogoColor,
+                                            marginInlineEnd: 0,
+                                            color: "text.primary",
                                         },
-                                    }}
+                                    } }
                                     variant="outlined"
                                 />
-                            ) : null}
+                            ) }
+                            { ext?.peAyin && (
+                                <RoomExtendedInfoChip color="warning" label='כיתת פ"עים' />
+                            ) }
+                            { ext?.lectureComfortable && (
+                                <RoomExtendedInfoChip color="success" label="נוח להרצאה ✓" />
+                            ) }
+                            { ext?.workstationCount != null && (
+                                <RoomExtendedInfoChip
+                                    iconNode={ <ComputerIcon sx={ EXT_ICON_STYLES } /> }
+                                    label={ `${ext.workstationCount} עמדות` }
+                                />
+                            ) }
+                            { ext?.lectureSeatCount != null && (
+                                <RoomExtendedInfoChip
+                                    iconNode={ <EventSeatIcon sx={ EXT_ICON_STYLES } /> }
+                                    label={ `${ext.lectureSeatCount} כסאות` }
+                                />
+                            ) }
                         </Box>
                     }
                     secondary={
-                        hasSecondaryContent ? (
-                            <Box
-                                display="flex"
-                                flexDirection="column"
-                                gap={0.5}
-                                mt={0.5}
+                        room.description && (
+                            <Typography
+                                component="span"
+                                sx={ {
+                                    fontSize: "0.75rem",
+                                    color: "text.secondary",
+                                } }
                             >
-                                {room.description ? (
-                                    <Typography
-                                        component="span"
-                                        sx={{
-                                            fontSize: "0.75rem",
-                                            color: "text.secondary",
-                                        }}
-                                    >
-                                        {room.description}
-                                    </Typography>
-                                ) : null}
-                                {ext ? (
-                                    <Box display="flex" flexWrap="wrap" gap={0.5}>
-                                        {ext.workstationCount !== null && (
-                                            <RoomExtendedInfoChip
-                                                iconNode={
-                                                    <ComputerIcon
-                                                        sx={{
-                                                            fontSize:
-                                                            "0.7rem !important",
-                                                        }}
-                                                    />
-                                                }
-                                                label={`${ext.workstationCount} עמדות`}
-                                            />
-                                        )}
-                                        {ext.lectureSeatCount !== null && (
-                                            <RoomExtendedInfoChip
-                                                iconNode={
-                                                    <EventSeatIcon
-                                                        sx={{
-                                                            fontSize:
-                                                            "0.7rem !important",
-                                                        }}
-                                                    />
-                                                }
-                                                label={`${ext.lectureSeatCount} כסאות`}
-                                            />
-                                        )}
-                                        {ext.lectureComfortable ? (
-                                            <RoomExtendedInfoChip
-                                                color="success"
-                                                label="נוח להרצאה ✓"
-                                            />
-                                        ) : null}
-                                        {ext.peAyin ? (
-                                            <RoomExtendedInfoChip
-                                                color="warning"
-                                                label='פ"ע'
-                                                sx={{ fontWeight: 800 }}
-                                            />
-                                        ) : null}
-                                    </Box>
-                                ) : null}
-                            </Box>
-                        ) : null
+                                { room.description }
+                            </Typography>
+                        )
                     }
-                    sx={{ my: 0 }}
+                    sx={ { my: 0 } }
                 />
             </ListItem>
         </>

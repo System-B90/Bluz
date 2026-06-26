@@ -91,7 +91,7 @@ export function VCardQrCode({
                     },
                 }}
             >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* eslint-disable-next-line @next/next/no-img-element -- QR code is a data URL; next/image doesn't support data URIs */}
                 <img
                     alt="vCard QR Code"
                     src={qrCodeUrl}

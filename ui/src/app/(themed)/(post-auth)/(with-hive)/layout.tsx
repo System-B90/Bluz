@@ -3,7 +3,7 @@ import WifiTetheringOffIcon from "@mui/icons-material/WifiTetheringOff";
 import Box from "@mui/material/Box";
 import Fab from "@mui/material/Fab";
 import Tooltip from "@mui/material/Tooltip";
-import React, { useState } from "react";
+import React from "react";
 
 import { CoursesProvider } from "@/components/base/CoursesProvider";
 import { HiveLessonsProvider } from "@/components/base/HiveLessonsProvider";
@@ -16,18 +16,12 @@ import { RoomsProvider } from "@/components/base/RoomsProvider";
 import { SettingsProvider } from "@/components/base/SettingsProvider";
 import { ScheduleAppBar } from "@/components/header/AppBar";
 import { CalendarProvider } from "@/components/schedule/calendar/calendar-provider";
-import { SettingsDialog } from "@/components/settings-dialog/SettingsDialog";
+import { SettingsDialogUrl } from "@/components/settings-dialog/SettingsDialogUrl";
+import { useSettingsDialogUrl } from "@/components/settings-dialog/useSettingsDialogUrl";
 
-function LayoutContent({
-    children,
-    openSettingsDialog,
-    setOpenSettingsDialog,
-}: {
-    children: React.ReactNode;
-    openSettingsDialog: boolean;
-    setOpenSettingsDialog: (open: boolean) => void;
-}) {
+function LayoutContent({ children }: { children: React.ReactNode }) {
     const { offlineMode } = useOffline();
+    const { openDialog } = useSettingsDialogUrl();
 
     return (
         <Box
@@ -39,7 +33,7 @@ function LayoutContent({
             sx={{ p: 0 }}
             width="100vw"
         >
-            <ScheduleAppBar setOpenSettingsDialog={setOpenSettingsDialog} />
+            <ScheduleAppBar openSettingsDialog={openDialog} />
 
             <Box
                 height="calc(100vh - 56px)"
@@ -82,10 +76,7 @@ function LayoutContent({
                 </Tooltip>
             ) : null}
 
-            <SettingsDialog
-                onClose={() => setOpenSettingsDialog(false)}
-                open={openSettingsDialog}
-            />
+            <SettingsDialogUrl />
         </Box>
     );
 }
@@ -95,9 +86,6 @@ export default function PostAuthLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const [openSettingsDialog, setOpenSettingsDialog] =
-        useState<boolean>(false);
-
     return (
         <HiveUsersProvider>
             <HiveSubjectsProvider>
@@ -109,14 +97,7 @@ export default function PostAuthLayout({
                                     <CoursesProvider>
                                         <OfflineProvider>
                                             <CalendarProvider>
-                                                <LayoutContent
-                                                    openSettingsDialog={
-                                                        openSettingsDialog
-                                                    }
-                                                    setOpenSettingsDialog={
-                                                        setOpenSettingsDialog
-                                                    }
-                                                >
+                                                <LayoutContent>
                                                     {children}
                                                 </LayoutContent>
                                             </CalendarProvider>

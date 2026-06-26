@@ -69,54 +69,55 @@ function RoomFormHeader({
     isCreating,
     isEditing,
     isHiveSelected,
-}: RoomFormHeaderProps) {
+}: RoomFormHeaderProps)
+{
     return (
-        <Box alignItems="center" display="flex" gap={1.5}>
+        <Box alignItems="center" display="flex" gap={ 1.5 }>
             <Box
-                sx={{
+                sx={ {
                     p: 1,
                     borderRadius: "10px",
                     bgcolor: "secondary.light",
                     color: "secondary.contrastText",
                     display: "flex",
                     alignItems: "center",
-                }}
+                } }
             >
-                {isCreating ? (
+                { isCreating ? (
                     <AddIcon className="text-[20px]" />
                 ) : (
                     <EditIcon className="text-[20px]" />
-                )}
+                ) }
             </Box>
             <Box>
                 <Typography
-                    sx={{
+                    sx={ {
                         fontWeight: 800,
                         fontSize: "1.1rem",
                         color: "text.primary",
-                    }}
+                    } }
                 >
-                    {isCreating
+                    { isCreating
                         ? "הוספת חדר חדש"
                         : isHiveSelected
                             ? "עריכת חדר הייב"
                             : isEditing
                                 ? "עריכת חדר"
-                                : "בחר חדר לעריכה"}
+                                : "בחר חדר לעריכה" }
                 </Typography>
                 <Typography
-                    sx={{
+                    sx={ {
                         fontSize: "0.75rem",
                         color: "text.secondary",
-                    }}
+                    } }
                 >
-                    {isCreating
+                    { isCreating
                         ? "יצירת חדר מותאם אישית חדש"
                         : isHiveSelected
                             ? "שם ותיאור נשלטים ע״י הייב. ניתן לערוך פרטים מורחבים."
                             : isEditing
                                 ? "עדכון כל פרטי החדר"
-                                : "לחץ על חדר מהרשימה כדי לערוך"}
+                                : "לחץ על חדר מהרשימה כדי לערוך" }
                 </Typography>
             </Box>
         </Box>
@@ -129,50 +130,51 @@ function RoomBasicDetails({
     setName,
     description,
     setDescription,
-}: RoomBasicDetailsProps) {
+}: RoomBasicDetailsProps)
+{
     return (
-        <Box display="flex" flexDirection="column" gap={2.5}>
+        <Box display="flex" flexDirection="column" gap={ 2.5 }>
             <TextField
-                disabled={isHiveSelected}
+                disabled={ isHiveSelected }
                 fullWidth
                 label="שם החדר"
-                onChange={(e) => setName(e.target.value)}
+                onChange={ (e) => setName(e.target.value) }
                 placeholder="לדוגמה: כיתת הדרכה 3"
-                required={!isHiveSelected}
+                required={ !isHiveSelected }
                 size="small"
-                slotProps={{
+                slotProps={ {
                     input: isHiveSelected
                         ? {
                             endAdornment: (
                                 <InputAdornment position="end">
-                                    <HiveLogo size={16} />
+                                    <HiveLogo size={ 16 } />
                                 </InputAdornment>
                             ),
                         }
                         : undefined,
-                }}
-                sx={{
+                } }
+                sx={ {
                     "& .MuiOutlinedInput-root": {
                         borderRadius: "10px",
                     },
-                }}
-                value={name}
+                } }
+                value={ name }
             />
             <TextField
-                disabled={isHiveSelected}
+                disabled={ isHiveSelected }
                 fullWidth
                 label="תיאור"
                 multiline
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={ (e) => setDescription(e.target.value) }
                 placeholder="תיאור קצר, מיקום או פרטים נוספים..."
-                rows={2}
+                rows={ 2 }
                 size="small"
-                sx={{
+                sx={ {
                     "& .MuiOutlinedInput-root": {
                         borderRadius: "10px",
                     },
-                }}
-                value={description}
+                } }
+                value={ description }
             />
         </Box>
     );
@@ -187,85 +189,86 @@ function RoomExtendedDetails({
     setLectureComfortable,
     peAyin,
     setPeAyin,
-}: RoomExtendedDetailsProps) {
+}: RoomExtendedDetailsProps)
+{
     return (
         <>
             <Divider className="my-1">
                 <Typography
-                    sx={{
+                    sx={ {
                         fontSize: "0.72rem",
                         fontWeight: 700,
                         color: "text.secondary",
-                    }}
+                    } }
                 >
                     פרטים מורחבים
                 </Typography>
             </Divider>
-            <Box display="flex" flexDirection="column" gap={2.5}>
+            <Box display="flex" flexDirection="column" gap={ 2.5 }>
                 <TextField
                     fullWidth
                     inputMode="numeric"
                     label="כמות עמדות עבודה"
-                    onChange={(e) =>
+                    onChange={ (e) =>
                         setWorkstationCount(e.target.value.replace(/\D/g, ""))
                     }
                     placeholder="0"
                     size="small"
-                    slotProps={{
+                    slotProps={ {
                         input: {
                             startAdornment: (
                                 <InputAdornment position="start">
                                     <ComputerIcon
                                         fontSize="small"
-                                        sx={{ color: "text.secondary" }}
+                                        sx={ { color: "text.secondary" } }
                                     />
                                 </InputAdornment>
                             ),
                         },
-                    }}
-                    sx={{
+                    } }
+                    sx={ {
                         "& .MuiOutlinedInput-root": {
                             borderRadius: "10px",
                         },
-                    }}
+                    } }
                     type="text"
-                    value={workstationCount}
+                    value={ workstationCount }
                 />
                 <TextField
                     fullWidth
                     inputMode="numeric"
                     label="מספר כסאות להרצאה"
-                    onChange={(e) =>
+                    onChange={ (e) =>
                         setLectureSeatCount(e.target.value.replace(/\D/g, ""))
                     }
                     placeholder="0"
                     size="small"
-                    slotProps={{
+                    slotProps={ {
                         input: {
                             startAdornment: (
                                 <InputAdornment position="start">
                                     <EventSeatIcon
                                         fontSize="small"
-                                        sx={{ color: "text.secondary" }}
+                                        sx={ { color: "text.secondary" } }
                                     />
                                 </InputAdornment>
                             ),
                         },
-                    }}
-                    sx={{
+                    } }
+                    sx={ {
                         "& .MuiOutlinedInput-root": {
                             borderRadius: "10px",
                         },
-                    }}
+                    } }
                     type="text"
-                    value={lectureSeatCount}
+                    value={ lectureSeatCount }
                 />
 
                 <Box
                     alignItems="center"
                     display="flex"
                     justifyContent="space-between"
-                    sx={{
+                    sx={ {
                         p: 1.5,
                         borderRadius: "10px",
                         border: "1px solid",
@@ -274,32 +277,32 @@ function RoomExtendedDetails({
                             theme.palette.mode === "light"
                                 ? "rgba(0,0,0,0.01)"
                                 : "rgba(255,255,255,0.02)",
-                    }}
+                    } }
                 >
                     <Box>
                         <Typography
-                            sx={{
+                            sx={ {
                                 fontWeight: 700,
                                 fontSize: "0.85rem",
                                 color: "text.primary",
-                            }}
+                            } }
                         >
                             נוח להרצאה
                         </Typography>
                         <Typography
-                            sx={{
+                            sx={ {
                                 fontSize: "0.7rem",
                                 color: "text.secondary",
-                            }}
+                            } }
                         >
-                            {lectureComfortable
+                            { lectureComfortable
                                 ? "החדר מתאים להרצאות"
-                                : "החדר אינו מתאים להרצאות"}
+                                : "החדר אינו מתאים להרצאות" }
                         </Typography>
                     </Box>
                     <LectureComfortSwitch
-                        onChange={setLectureComfortable}
-                        value={lectureComfortable}
+                        onChange={ setLectureComfortable }
+                        value={ lectureComfortable }
                     />
                 </Box>
 
@@ -307,7 +310,7 @@ function RoomExtendedDetails({
                     alignItems="center"
                     display="flex"
                     justifyContent="space-between"
-                    sx={{
+                    sx={ {
                         p: 1.5,
                         borderRadius: "10px",
                         border: "1px solid",
@@ -316,32 +319,32 @@ function RoomExtendedDetails({
                             theme.palette.mode === "light"
                                 ? "rgba(0,0,0,0.01)"
                                 : "rgba(255,255,255,0.02)",
-                    }}
+                    } }
                 >
                     <Box>
                         <Typography
-                            sx={{
+                            sx={ {
                                 fontWeight: 700,
                                 fontSize: "0.85rem",
                                 color: "text.primary",
-                            }}
+                            } }
                         >
-                            {'פ"ע — פגישת עבודה'}
+                            { 'מתאים ל-פ"ע' }
                         </Typography>
                         <Typography
-                            sx={{
+                            sx={ {
                                 fontSize: "0.7rem",
                                 color: "text.secondary",
-                            }}
+                            } }
                         >
-                            {peAyin
-                                ? 'החדר מסומן כפ"ע'
-                                : 'החדר אינו מסומן כפ"ע'}
+                            { peAyin
+                                ? 'החדר נוח ל-פ"עים'
+                                : 'החדר אינו נוח ל-פ"עים' }
                         </Typography>
                     </Box>
                     <RoomBooleanSwitch
-                        onChange={setPeAyin}
-                        value={peAyin}
+                        onChange={ setPeAyin }
+                        value={ peAyin }
                     />
                 </Box>
             </Box>
@@ -353,38 +356,39 @@ function RoomFormActions({
     isCreating,
     isHiveSelected,
     handleCancelEdit,
-}: RoomFormActionsProps) {
+}: RoomFormActionsProps)
+{
     return (
-        <Box display="flex" gap={1.5} mt={1}>
+        <Box display="flex" gap={ 1.5 } mt={ 1 }>
             <Button
-                color={isCreating ? "secondary" : "primary"}
-                sx={{
+                color={ isCreating ? "secondary" : "primary" }
+                sx={ {
                     flex: 1,
                     borderRadius: "10px",
                     py: 1,
                     fontWeight: 700,
                     fontSize: "0.82rem",
                     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-                }}
+                } }
                 type="submit"
                 variant="contained"
             >
-                {isCreating
+                { isCreating
                     ? "צור חדר"
                     : isHiveSelected
                         ? "שמור פרטים מורחבים"
-                        : "עדכן חדר"}
+                        : "עדכן חדר" }
             </Button>
             <Button
                 color="inherit"
-                onClick={handleCancelEdit}
-                startIcon={<ClearIcon />}
-                sx={{
+                onClick={ handleCancelEdit }
+                startIcon={ <ClearIcon /> }
+                sx={ {
                     borderRadius: "10px",
                     py: 1,
                     fontWeight: 700,
                     fontSize: "0.82rem",
-                }}
+                } }
                 variant="outlined"
             >
                 ביטול
@@ -410,7 +414,8 @@ export function RoomFormCard({
     setPeAyin,
     handleSave,
     handleCancelEdit,
-}: RoomFormCardProps) {
+}: RoomFormCardProps)
+{
     const isEditing = selectedRoom !== null;
     const isHiveSelected = selectedRoom?.source === RoomSource.Hive;
     const showForm = isEditing || isCreating;
@@ -418,8 +423,8 @@ export function RoomFormCard({
     return (
         <Box
             component="form"
-            onSubmit={handleSave}
-            sx={{
+            onSubmit={ handleSave }
+            sx={ {
                 flex: 1,
                 minWidth: 0,
                 border: "1px solid",
@@ -436,22 +441,22 @@ export function RoomFormCard({
                 gap: 3,
                 opacity: showForm ? 1 : 0.5,
                 transition: "opacity 0.3s ease",
-            }}
+            } }
         >
             <RoomFormHeader
-                isCreating={isCreating}
-                isEditing={isEditing}
-                isHiveSelected={isHiveSelected}
+                isCreating={ isCreating }
+                isEditing={ isEditing }
+                isHiveSelected={ isHiveSelected }
             />
 
-            {!showForm ? (
+            { !showForm ? (
                 <Box className="m-auto py-12">
                     <Typography
-                        sx={{
+                        sx={ {
                             color: "text.secondary",
                             fontSize: "0.85rem",
                             textAlign: "center",
-                        }}
+                        } }
                     >
                         בחר חדר מהרשימה או צור חדר חדש
                     </Typography>
@@ -459,29 +464,29 @@ export function RoomFormCard({
             ) : (
                 <>
                     <RoomBasicDetails
-                        description={description}
-                        isHiveSelected={isHiveSelected}
-                        name={name}
-                        setDescription={setDescription}
-                        setName={setName}
+                        description={ description }
+                        isHiveSelected={ isHiveSelected }
+                        name={ name }
+                        setDescription={ setDescription }
+                        setName={ setName }
                     />
                     <RoomExtendedDetails
-                        lectureComfortable={lectureComfortable}
-                        lectureSeatCount={lectureSeatCount}
-                        peAyin={peAyin}
-                        setLectureComfortable={setLectureComfortable}
-                        setLectureSeatCount={setLectureSeatCount}
-                        setPeAyin={setPeAyin}
-                        setWorkstationCount={setWorkstationCount}
-                        workstationCount={workstationCount}
+                        lectureComfortable={ lectureComfortable }
+                        lectureSeatCount={ lectureSeatCount }
+                        peAyin={ peAyin }
+                        setLectureComfortable={ setLectureComfortable }
+                        setLectureSeatCount={ setLectureSeatCount }
+                        setPeAyin={ setPeAyin }
+                        setWorkstationCount={ setWorkstationCount }
+                        workstationCount={ workstationCount }
                     />
                     <RoomFormActions
-                        handleCancelEdit={handleCancelEdit}
-                        isCreating={isCreating}
-                        isHiveSelected={isHiveSelected}
+                        handleCancelEdit={ handleCancelEdit }
+                        isCreating={ isCreating }
+                        isHiveSelected={ isHiveSelected }
                     />
                 </>
-            )}
+            ) }
         </Box>
     );
 }

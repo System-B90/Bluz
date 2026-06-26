@@ -137,11 +137,8 @@ export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
             <Box
                 flex={1}
                 minWidth={180}
-                sx={{
-                    bgcolor: (theme) =>
-                        theme.palette.mode === "light"
-                            ? "rgba(103, 200, 221, 0.04)"
-                            : "rgba(12, 34, 55, 0.2)",
+                sx={(theme) => ({
+                    bgcolor: "rgba(103, 200, 221, 0.04)",
                     p: 1.5,
                     borderRadius: "10px",
                     border: "1px solid",
@@ -151,7 +148,10 @@ export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
                         borderColor: "primary.main",
                         boxShadow: "0 4px 12px rgba(103, 200, 221, 0.08)",
                     },
-                }}
+                    ...theme.applyStyles("dark", {
+                        bgcolor: "rgba(12, 34, 55, 0.2)",
+                    }),
+                })}
             >
                 <Box
                     alignItems="center"

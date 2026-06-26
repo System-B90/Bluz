@@ -117,23 +117,23 @@ const SelectionCard = memo(function SelectionCard({
 }: SelectionCardProps) {
     return (
         <Box
-            sx={{
+            sx={(theme) => ({
                 flex: 1,
                 minWidth: 0,
                 border: "1px solid",
                 borderColor: "divider",
                 borderRadius: "16px",
                 p: 3,
-                boxShadow: (theme) =>
-                    theme.palette.mode === "light"
-                        ? "0 8px 24px rgba(103, 200, 221, 0.04)"
-                        : "0 8px 24px rgba(0, 0, 0, 0.2)",
+                boxShadow: "0 8px 24px rgba(103, 200, 221, 0.04)",
                 bgcolor: "background.paper",
                 display: "flex",
                 flexDirection: "column",
                 gap: 3,
                 height: "100%",
-            }}
+                ...theme.applyStyles("dark", {
+                    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
+                }),
+            })}
         >
             <Box alignItems="center" display="flex" gap={1.5}>
                 <Box
