@@ -5,6 +5,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
+import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -13,8 +14,10 @@ import {
     Dispatch,
     SetStateAction,
     useCallback,
+    useEffect,
     useMemo,
     useState,
+    useTransition,
 } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
@@ -252,6 +255,13 @@ function ModuleDialogInner({
         openModuleDialog(syllabusId, mId);
     }, [syllabusId, openModuleDialog]);
 
+    const [isContentReady, setIsContentReady] = useState(false);
+    const [, startTransition] = useTransition();
+
+    useEffect(() => {
+        if (!open) setIsContentReady(false);
+    }, [open]);
+
     const [isActionLoading, setIsActionLoading] = useState<boolean>(false);
     const [isCreatingNew, setIsCreatingNew] = useState<boolean>(false);
 
@@ -328,7 +338,15 @@ function ModuleDialogInner({
     if (syllabusId === null || moduleId === null) return null;
 
     return (
-        <Dialog fullWidth maxWidth="xl" onClose={handleClose} open={open} {...props}>
+        <Dialog
+            fullWidth
+            maxWidth="xl"
+            onClose={handleClose}
+            open={open}
+            {...props}
+            TransitionProps={{ onEnter: () => startTransition(() => setIsContentReady(true)) }}
+            transitionDuration={{ enter: 200, exit: 100 }}
+        >
             <ModuleDialogHeader
                 moduleTitle={moduleDoc?.title}
                 syllabusTitle={syllabus?.title}
@@ -346,24 +364,44 @@ function ModuleDialogInner({
                 )}
 
                 <Box alignItems="flex-start" display="flex" flexDirection="row" gap={2} mt={1}>
-                    <ModuleDetailsForm
-                        hiveModules={moduleDoc?.hiveIds ?? []}
-                        localDescription={localDescription}
-                        localTitle={localTitle}
-                        onCommitDescription={() => handleCommit({ description: localDescription })}
-                        onCommitTitle={() => handleCommit({ title: localTitle })}
-                        setLocalDescription={setLocalDescription}
-                        setLocalTitle={setLocalTitle}
-                    />
+                    {isContentReady ? (
+                        <>
+                            <ModuleDetailsForm
+                                hiveModules={moduleDoc?.hiveIds ?? []}
+                                localDescription={localDescription}
+                                localTitle={localTitle}
+                                onCommitDescription={() => handleCommit({ description: localDescription })}
+                                onCommitTitle={() => handleCommit({ title: localTitle })}
+                                setLocalDescription={setLocalDescription}
+                                setLocalTitle={setLocalTitle}
+                            />
 
-                    <Divider flexItem orientation="vertical" />
+                            <Divider flexItem orientation="vertical" />
 
-                    <Stack flexGrow={1} mt={1} spacing={2}>
-                        <ModuleEventsView
-                            eventIds={moduleDoc?.events ?? []}
-                            moduleId={moduleId}
-                        />
-                    </Stack>
+                            <Stack flexGrow={1} mt={1} spacing={2}>
+                                <ModuleEventsView
+                                    eventIds={moduleDoc?.events ?? []}
+                                    moduleId={moduleId}
+                                />
+                            </Stack>
+                        </>
+                    ) : (
+                        <>
+                            <Stack spacing={2} width="30%">
+                                <Skeleton height={56} variant="rounded" />
+                                <Skeleton height={240} variant="rounded" />
+                                <Skeleton height={40} variant="rounded" />
+                                <Skeleton height={40} variant="rounded" />
+                            </Stack>
+                            <Divider flexItem orientation="vertical" />
+                            <Stack flexGrow={1} mt={1} spacing={1}>
+                                <Skeleton height={42} variant="rounded" />
+                                <Skeleton height={52} variant="rounded" />
+                                <Skeleton height={52} variant="rounded" />
+                                <Skeleton height={52} variant="rounded" />
+                            </Stack>
+                        </>
+                    )}
                 </Box>
 
                 <Box height="1rem" />

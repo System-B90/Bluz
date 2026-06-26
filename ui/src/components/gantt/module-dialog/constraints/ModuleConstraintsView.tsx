@@ -1,9 +1,8 @@
 "use client";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import CircularProgress from "@mui/material/CircularProgress";
+import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useCallback, useMemo, useState } from "react";
@@ -203,9 +202,10 @@ export function ModuleConstraintsView({
                 </Stack>
 
                 {state.isLoading ? (
-                    <Box display="flex" justifyContent="center" p={2}>
-                        <CircularProgress size={24} />
-                    </Box>
+                    <Stack spacing={1}>
+                        <Skeleton height={52} variant="rounded" />
+                        <Skeleton height={52} variant="rounded" />
+                    </Stack>
                 ) : (
                     <Stack spacing={1}>
                         {constraintsList.map((constraint) => {
