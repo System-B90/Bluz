@@ -12,53 +12,59 @@ export function EventTimeField({
     event,
     onBlurCallback,
     ...props
-}: EventTimeFieldProps & BoxProps) {
-    const [startTime, setStartTime] = useState(event?.startTime ?? dayjs());
-    const [endTime, setEndTime] = useState(event?.endTime ?? dayjs());
+}: EventTimeFieldProps & BoxProps)
+{
+    const [ startTime, setStartTime ] = useState(event?.startTime ?? dayjs());
+    const [ endTime, setEndTime ] = useState(event?.endTime ?? dayjs());
 
     const duration: number = useMemo(
         () => (event?.endTime as Dayjs)?.diff(event?.startTime) ?? 0,
-        [event?.startTime, event?.endTime],
+        [ event?.startTime, event?.endTime ],
     );
 
     const startTimeChange = useCallback(
-        (time: PickerValue) => {
-            if (time) {
+        (time: PickerValue) =>
+        {
+            if (time)
+            {
                 setStartTime(time);
                 setEndTime(time.add(duration));
             }
         },
-        [duration],
+        [ duration ],
     );
 
     const endTimeChange = useCallback(
-        (time: PickerValue) => {
-            if (time) {
+        (time: PickerValue) =>
+        {
+            if (time)
+            {
                 setEndTime(time);
             }
         },
-        [setEndTime],
+        [ setEndTime ],
     );
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         onBlurCallback({ startTime, endTime });
-    }, [startTime, endTime, onBlurCallback]);
+    }, [ startTime, endTime, onBlurCallback ]);
 
     return (
-        <Box alignSelf="center" display="flex" gap={2} {...props}>
+        <Box alignSelf="center" display="flex" gap={ 2 } { ...props }>
             <TimePicker
                 label="שעת התחלה"
-                onChange={startTimeChange}
-                slotProps={{ textField: { fullWidth: true } }}
-                sx={{ width: "7rem" }}
-                value={(event?.startTime as Dayjs) ?? dayjs()}
+                onChange={ startTimeChange }
+                slotProps={ { textField: { fullWidth: true } } }
+                sx={ { width: "7rem" } }
+                value={ (event?.startTime as Dayjs) ?? dayjs() }
             />
             <TimePicker
                 label="שעת סיום"
-                onChange={endTimeChange}
-                slotProps={{ textField: { fullWidth: true } }}
-                sx={{ width: "7rem" }}
-                value={(event?.endTime as Dayjs) ?? dayjs()}
+                onChange={ endTimeChange }
+                slotProps={ { textField: { fullWidth: true } } }
+                sx={ { width: "7rem" } }
+                value={ (event?.endTime as Dayjs) ?? dayjs() }
             />
         </Box>
     );
