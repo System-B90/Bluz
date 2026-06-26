@@ -12,7 +12,8 @@ export function EventToggles({
 }: {
     event: Partial<Event>;
     onUpdate: (u: Partial<Event>) => void;
-}) {
+})
+{
     const toggles = [
         { label: "מתואם", key: "locked" },
         { label: "קריטי", key: "required" },
@@ -20,21 +21,21 @@ export function EventToggles({
     ] as const;
 
     return (
-        <Box display="flex" gap={2}>
-            {toggles.map(({ label, key }) => (
+        <Box display="flex" gap={ 2 }>
+            { toggles.map(({ label, key }) => (
                 <FormControlLabel
                     control={
                         <Switch
-                            checked={!!event[key]}
-                            onChange={(e) =>
-                                onUpdate({ [key]: e.target.checked })
+                            checked={ !!event[ key ] }
+                            onChange={ (e) =>
+                                onUpdate({ [ key ]: e.target.checked })
                             }
                         />
                     }
-                    key={key}
-                    label={label}
+                    key={ key }
+                    label={ label }
                 />
-            ))}
+            )) }
         </Box>
     );
 }
