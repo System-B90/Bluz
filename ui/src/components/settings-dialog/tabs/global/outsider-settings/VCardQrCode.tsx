@@ -9,6 +9,8 @@ import Typography from "@mui/material/Typography";
 import QRCode from "qrcode";
 import React, { useEffect, useMemo, useState } from "react";
 
+import { formatPhoneNumber } from "@/components/base/utils/phone-numbers";
+
 type VCardQrCodeProps = {
     comment?: string;
     idNumber?: string;
@@ -177,7 +179,7 @@ export function VCardQrCode({
                         {name}
                     </Typography>
                     {phone ? <Typography color="text.secondary" sx={{ mt: 0.5, direction: "ltr" }} variant="body1">
-                        {phone}
+                        {formatPhoneNumber(phone)}
                     </Typography> : null}
                     <Box
                         sx={{
