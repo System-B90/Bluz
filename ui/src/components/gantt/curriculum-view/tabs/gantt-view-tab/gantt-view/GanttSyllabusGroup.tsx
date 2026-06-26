@@ -134,7 +134,7 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                     <TableCell
                         key={week.id}
                         sx={{
-                            backgroundColor: theme.palette.background.default,
+                            backgroundColor: theme.vars.palette.background.default,
                             borderLeft: `1px solid ${theme.palette.divider}`,
                             borderBottom: `1px solid ${theme.palette.divider}`,
                             p: 0,
@@ -184,7 +184,7 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                     <TableCell
                         key={dayId}
                         sx={{
-                            backgroundColor: theme.palette.background.default,
+                            backgroundColor: theme.vars.palette.background.default,
                             borderLeft: `1px solid ${theme.palette.divider}`,
                             borderBottom: `1px solid ${theme.palette.divider}`,
                             p: 0,
@@ -242,7 +242,7 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                         position: "sticky",
                         left: 0,
                         zIndex: 5,
-                        backgroundColor: theme.palette.background.default,
+                        backgroundColor: theme.vars.palette.background.default,
                         borderRight: `1px solid ${theme.palette.divider}`,
                         borderBottom: `1px solid ${theme.palette.divider}`,
                     }}
