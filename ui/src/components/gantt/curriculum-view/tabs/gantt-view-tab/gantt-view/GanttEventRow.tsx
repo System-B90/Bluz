@@ -206,7 +206,7 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
                     backgroundColor: isRemoveOver
                         ? alpha(theme.palette.error.main, 0.08)
                         : theme.vars.palette.background.paper,
-                    borderRight: `1px solid ${theme.palette.divider}`,
+                    borderRight: `1px solid ${theme.vars.palette.divider}`,
                     transition: "background-color 0.2s",
                     display: "flex",
                     alignItems: "center",

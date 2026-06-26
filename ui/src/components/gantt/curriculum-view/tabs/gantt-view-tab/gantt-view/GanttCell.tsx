@@ -35,13 +35,13 @@ export const GanttCell: React.FC<GanttCellProps> = ({
             align="center"
             ref={setNodeRef}
             sx={{
-                borderLeft: `1px solid ${theme.palette.divider}`,
+                borderLeft: `1px solid ${theme.vars.palette.divider}`,
                 p: 0,
                 width: 80,
                 minWidth: 80,
                 boxSizing: "border-box",
                 backgroundColor: isOver
-                    ? theme.palette.action.hover
+                    ? theme.vars.palette.action.hover
                     : "inherit",
                 transition: "background-color 0.2s",
             }}

@@ -36,8 +36,8 @@ export const GanttHeader: React.FC = () => {
                         top: 0,
                         // Elevated zIndex to stay above horizontal scrolls entirely
                         zIndex: 6,
-                        borderRight: `1px solid ${theme.palette.divider}`,
-                        borderBottom: `1px solid ${theme.palette.divider}`,
+                        borderRight: `1px solid ${theme.vars.palette.divider}`,
+                        borderBottom: `1px solid ${theme.vars.palette.divider}`,
                     }}
                 >
                     <Typography fontWeight="bold" variant="subtitle2">
@@ -55,7 +55,7 @@ export const GanttHeader: React.FC = () => {
                             colSpan={weeklyView ? 1 : week.days.length}
                             key={week.id}
                             sx={{
-                                borderLeft: `1px solid ${theme.palette.divider}`,
+                                borderLeft: `1px solid ${theme.vars.palette.divider}`,
                                 backgroundColor: theme.vars.palette.background.paper,
                                 zIndex: 2,
                             }}
@@ -94,7 +94,7 @@ export const GanttHeader: React.FC = () => {
                                         width: 80,
                                         minWidth: 80,
                                         boxSizing: "border-box",
-                                        borderLeft: `1px solid ${theme.palette.divider}`,
+                                        borderLeft: `1px solid ${theme.vars.palette.divider}`,
                                         backgroundColor:
                                             theme.vars.palette.background.paper,
                                         zIndex: 2,

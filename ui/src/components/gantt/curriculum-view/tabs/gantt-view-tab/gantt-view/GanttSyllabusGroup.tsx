@@ -135,8 +135,8 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                         key={week.id}
                         sx={{
                             backgroundColor: theme.vars.palette.background.default,
-                            borderLeft: `1px solid ${theme.palette.divider}`,
-                            borderBottom: `1px solid ${theme.palette.divider}`,
+                            borderLeft: `1px solid ${theme.vars.palette.divider}`,
+                            borderBottom: `1px solid ${theme.vars.palette.divider}`,
                             p: 0,
                             width: 80,
                             minWidth: 80,
@@ -162,7 +162,7 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                                             : "4px",
                                     height: "8px",
                                     backgroundColor:
-                                        theme.palette.text.secondary,
+                                        theme.vars.palette.text.secondary,
                                     opacity: 0.2,
                                     borderRadius:
                                         getSpanBorderRadius(spanVariant),
@@ -185,8 +185,8 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                         key={dayId}
                         sx={{
                             backgroundColor: theme.vars.palette.background.default,
-                            borderLeft: `1px solid ${theme.palette.divider}`,
-                            borderBottom: `1px solid ${theme.palette.divider}`,
+                            borderLeft: `1px solid ${theme.vars.palette.divider}`,
+                            borderBottom: `1px solid ${theme.vars.palette.divider}`,
                             p: 0,
                             width: 80,
                             minWidth: 80,
@@ -212,7 +212,7 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                                             : "4px",
                                     height: "8px",
                                     backgroundColor:
-                                        theme.palette.text.secondary,
+                                        theme.vars.palette.text.secondary,
                                     opacity: 0.2,
                                     borderRadius:
                                         getSpanBorderRadius(spanVariant),
@@ -243,8 +243,8 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                         left: 0,
                         zIndex: 5,
                         backgroundColor: theme.vars.palette.background.default,
-                        borderRight: `1px solid ${theme.palette.divider}`,
-                        borderBottom: `1px solid ${theme.palette.divider}`,
+                        borderRight: `1px solid ${theme.vars.palette.divider}`,
+                        borderBottom: `1px solid ${theme.vars.palette.divider}`,
                     }}
                 >
                     <Typography

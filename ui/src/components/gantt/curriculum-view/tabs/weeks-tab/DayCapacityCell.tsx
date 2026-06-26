@@ -537,7 +537,7 @@ export function DayCapacityCell({
                                     disableUnderline: !isCommentFocused,
                                     style: {
                                         fontSize: "0.72rem",
-                                        color: theme.palette.text.primary,
+                                        color: theme.vars.palette.text.primary,
                                         padding: "2px 0",
                                     },
                                 },
