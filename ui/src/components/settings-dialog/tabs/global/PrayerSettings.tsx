@@ -70,7 +70,7 @@ export function PrayerSettings({
                 borderColor: "divider",
                 borderRadius: "16px",
                 p: isShrunk ? 1.5 : 3,
-                boxShadow: "0 8px 24px rgba(103, 200, 221, 0.04)",
+                boxShadow: `0 8px 24px rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`,
                 bgcolor: "background.paper",
                 display: "flex",
                 flexDirection: "column",

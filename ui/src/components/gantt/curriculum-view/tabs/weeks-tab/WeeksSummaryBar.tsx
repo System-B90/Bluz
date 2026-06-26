@@ -138,7 +138,7 @@ export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
                 flex={1}
                 minWidth={180}
                 sx={(theme) => ({
-                    bgcolor: "rgba(103, 200, 221, 0.04)",
+                    bgcolor: `rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`,
                     p: 1.5,
                     borderRadius: "10px",
                     border: "1px solid",
@@ -146,7 +146,7 @@ export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
                     transition: "all 0.25s ease",
                     "&:hover": {
                         borderColor: "primary.main",
-                        boxShadow: "0 4px 12px rgba(103, 200, 221, 0.08)",
+                        boxShadow: `0 4px 12px rgb(${theme.vars.palette.primary.mainChannel} / 0.08)`,
                     },
                     ...theme.applyStyles("dark", {
                         bgcolor: "rgba(12, 34, 55, 0.2)",

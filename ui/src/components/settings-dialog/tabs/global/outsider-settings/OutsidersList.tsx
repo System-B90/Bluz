@@ -60,7 +60,7 @@ export function OutsidersList({
                 p: 3,
                 boxShadow: (theme) =>
                     theme.palette.mode === "light"
-                        ? "0 8px 24px rgba(103, 200, 221, 0.04)"
+                        ? `0 8px 24px rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`
                         : "0 8px 24px rgba(0, 0, 0, 0.2)",
                 bgcolor: "background.paper",
                 display: "flex",
@@ -349,11 +349,11 @@ export function OutsidersList({
                     py: 1,
                     fontWeight: 700,
                     fontSize: "0.82rem",
-                    boxShadow: "0 4px 12px rgba(26, 60, 89, 0.1)",
+                    boxShadow: "0 4px 12px rgb(var(--mui-palette-secondary-mainChannel) / 0.1)",
                     transition: "all 0.2s ease",
                     "&:hover": {
                         transform: "translateY(-1px)",
-                        boxShadow: "0 6px 16px rgba(26, 60, 89, 0.2)",
+                        boxShadow: "0 6px 16px rgb(var(--mui-palette-secondary-mainChannel) / 0.2)",
                     },
                 }}
                 variant="contained"

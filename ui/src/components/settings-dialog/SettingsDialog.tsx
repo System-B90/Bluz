@@ -56,7 +56,6 @@ export function SettingsDialog({
                     bgcolor: "background.paper",
                     backgroundImage: "none",
                     boxShadow: "0 24px 50px rgba(0,0,0,0.15)",
-                    border: "1px solid rgba(255,255,255,0.08)",
                 },
             }}
         >
@@ -67,7 +66,7 @@ export function SettingsDialog({
                     sx={(theme) => ({
                         width: 220,
                         flexShrink: 0,
-                        bgcolor: "rgba(103, 200, 221, 0.08)",
+                        bgcolor: `rgb(${theme.vars.palette.primary.mainChannel} / 0.08)`,
                         borderLeft: "1px solid",
                         borderColor: "divider",
                         display: "flex",
@@ -133,7 +132,7 @@ export function SettingsDialog({
                                         ? "primary.dark"
                                         : "transparent",
                                     boxShadow: isActive
-                                        ? "0 4px 12px rgba(103, 200, 221, 0.25)"
+                                        ? "0 4px 12px rgb(var(--mui-palette-primary-mainChannel) / 0.25)"
                                         : "none",
                                     "&:hover": {
                                         bgcolor: isActive

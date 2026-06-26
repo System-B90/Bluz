@@ -191,7 +191,7 @@ export function CourseItem({
                         isOver
                             ? "action.selected"
                             : theme.palette.mode === "light"
-                                ? "rgba(103, 200, 221, 0.04)"
+                                ? `rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`
                                 : "rgba(255, 255, 255, 0.02)",
                     borderRadius: "16px",
                     p: 1.5,
