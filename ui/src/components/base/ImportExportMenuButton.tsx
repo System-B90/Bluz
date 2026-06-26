@@ -135,7 +135,7 @@ export function ImportExportMenuButton({
                     onClick={handleClick}
                     sx={{
                         border: "1px solid",
-                        borderColor: (theme) => theme.palette.primary.light,
+                        borderColor: (theme) => theme.vars.palette.primary.light,
                         borderRadius: "8px",
                         width: 32,
                         height: 32,

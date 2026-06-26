@@ -226,7 +226,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                         backgroundColor: isRemoveOver
                             ? alpha(theme.palette.error.main, 0.08)
                             : theme.vars.palette.background.paper,
-                        borderRight: `1px solid ${theme.palette.divider}`,
+                        borderRight: `1px solid ${theme.vars.palette.divider}`,
                         display: "flex",
                         alignItems: "center",
                         height: "100%",

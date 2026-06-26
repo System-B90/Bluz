@@ -432,7 +432,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                         <Box
                             sx={{
                                 p: 2,
-                                borderBottom: `1px solid ${theme.palette.divider}`,
+                                borderBottom: `1px solid ${theme.vars.palette.divider}`,
                                 flexShrink: 0,
                                 display: "flex",
                                 justifyContent: "space-between",
