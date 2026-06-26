@@ -34,14 +34,14 @@ export function SubjectDialog({
 }: SubjectDialogProps) {
     const [name, setName] = useState("");
     const [displayName, setDisplayName] = useState("");
-    const [color, setColor] = useState("#1976d2");
+    const [color, setColor] = useState("#67C8DD");
     const [groups, setGroups] = useState<Array<string>>([]);
 
     const handleSave = () => {
         onSave({ id: "", name, displayName, color, defaultGroupIDs: groups });
         setName("");
         setDisplayName("");
-        setColor("#1976d2");
+        setColor("#67C8DD");
         setGroups([]);
         onClose();
     };
