@@ -28,6 +28,11 @@ type OutsidersListProps = {
     selectedOutsider: null | Outsider;
 };
 
+function formatPhoneNumber(value: string)
+{
+    return value.replace(/\D/g, "").replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
+}
+
 export function OutsidersList({
     onDelete,
     onSelect,
@@ -317,23 +322,23 @@ export function OutsidersList({
                                                     gap={ 0.2 }
                                                 >
                                                     <span>
-                                                        טלפון: { outsider.phone }
+                                                        טלפון: { formatPhoneNumber(outsider.phone) }
                                                     </span>
                                                     { outsider.personalNumber ||
                                                         outsider.idNumber ? (
-                                                            <span>
-                                                                { outsider.personalNumber
-                                                                    ? `מ.א. ${outsider.personalNumber}`
-                                                                    : "" }
-                                                                { outsider.personalNumber &&
+                                                        <span>
+                                                            { outsider.personalNumber
+                                                                ? `מ.א. ${outsider.personalNumber}`
+                                                                : "" }
+                                                            { outsider.personalNumber &&
                                                                 outsider.idNumber
-                                                                    ? " | "
-                                                                    : "" }
-                                                                { outsider.idNumber
-                                                                    ? `ת.ז. ${outsider.idNumber}`
-                                                                    : "" }
-                                                            </span>
-                                                        ) : null }
+                                                                ? " | "
+                                                                : "" }
+                                                            { outsider.idNumber
+                                                                ? `ת.ז. ${outsider.idNumber}`
+                                                                : "" }
+                                                        </span>
+                                                    ) : null }
                                                 </Box>
                                             </Typography>
                                         }

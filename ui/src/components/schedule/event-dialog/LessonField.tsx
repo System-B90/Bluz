@@ -16,16 +16,17 @@ export function LessonField({
     event,
     onEventChange,
     ...props
-}: LessonFieldProps & FormControlProps) {
+}: LessonFieldProps & FormControlProps)
+{
     const { getLessonsOfModule } = useHiveLessons();
     const lessons = useMemo(
         () => (event?.hiveModule ? getLessonsOfModule(Number(event.hiveModule)) : []),
-        [event, getLessonsOfModule],
+        [ event, getLessonsOfModule ],
     );
 
     const lessonMenuItems = lessons.map((lesson) => (
-        <MenuItem key={lesson.id} value={lesson.id}>
-            {lesson.name}
+        <MenuItem key={ lesson.id } value={ lesson.id }>
+            { lesson.name }
         </MenuItem>
     ));
 
@@ -36,19 +37,19 @@ export function LessonField({
                 !event?.hiveModule ||
                 lessons.length === 0
             }
-            fullWidth={false}
-            {...props}
+            fullWidth={ false }
+            { ...props }
         >
             <InputLabel>שיעור</InputLabel>
             <Select
                 label="שיעור"
-                onChange={(e) => onEventChange({ hiveLesson: e.target.value ? Number(e.target.value) : null })}
-                value={event?.hiveLesson ?? ""}
+                onChange={ (e) => onEventChange({ hiveLesson: e.target.value ? Number(e.target.value) : null }) }
+                value={ event?.hiveLesson ?? "" }
             >
                 <MenuItem value="">
                     <em>ללא שיעור</em>
                 </MenuItem>
-                {lessonMenuItems}
+                { lessonMenuItems }
             </Select>
         </FormControl>
     );

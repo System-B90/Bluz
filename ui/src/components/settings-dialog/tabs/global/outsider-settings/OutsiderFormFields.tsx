@@ -45,7 +45,8 @@ export function OutsiderFormFields({
     setPersonalNumber,
     setPhone,
     setReleaseDate,
-}: OutsiderFormFieldsProps) {
+}: OutsiderFormFieldsProps)
+{
     return (
         <Box
             sx={ {
@@ -56,6 +57,8 @@ export function OutsiderFormFields({
                 overflowY: "auto",
                 pl: 0.5,
                 pr: 0.5,
+                pt: 2,
+                mt: -2,
             } }
         >
             {/* Full Name */ }

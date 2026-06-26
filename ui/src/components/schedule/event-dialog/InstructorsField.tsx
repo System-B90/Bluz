@@ -23,21 +23,28 @@ function LecturerSelectionField({
     onBlurCallback,
     selectedInstructors: _selectedInstructors = [],
     ...props
-}: LecturerSelectionFieldProps) {
+}: LecturerSelectionFieldProps)
+{
     const { getInstructor } = useHiveUsers();
     const { getOutsider } = useOutsiders();
     const currentLecturers = event?.lecturers ?? [];
 
-    const [favoriteOutsiders] = useState<Array<string>>(() => {
-        if (typeof window !== "undefined") {
+    const [ favoriteOutsiders ] = useState<Array<string>>(() =>
+    {
+        if (typeof window !== "undefined")
+        {
             const saved = localStorage.getItem("bluz_personal_settings");
-            if (saved) {
-                try {
+            if (saved)
+            {
+                try
+                {
                     const parsed = JSON.parse(saved);
-                    if (parsed && Array.isArray(parsed.favoriteOutsiders)) {
+                    if (parsed && Array.isArray(parsed.favoriteOutsiders))
+                    {
                         return parsed.favoriteOutsiders;
                     }
-                } catch (e) {
+                } catch (e)
+                {
                     console.error("Failed to load favorite outsiders", e);
                 }
             }
@@ -46,7 +53,8 @@ function LecturerSelectionField({
     });
 
     const handleChange = useCallback(
-        (ev: SelectChangeEvent<typeof currentLecturers>) => {
+        (ev: SelectChangeEvent<typeof currentLecturers>) =>
+        {
             const {
                 target: { value },
             } = ev;
@@ -54,7 +62,8 @@ function LecturerSelectionField({
             // Handle potential string autofill values vs actual arrays
             const newIds =
                 typeof value === "string"
-                    ? value.split(",").map((v) => {
+                    ? value.split(",").map((v) =>
+                    {
                         if (v === "איש חוץ") return "איש חוץ";
                         if (v.startsWith("outsider-")) return v;
                         return Number(v);
@@ -63,37 +72,39 @@ function LecturerSelectionField({
 
             onBlurCallback({ ...event, lecturers: newIds });
         },
-        [event, onBlurCallback],
+        [ event, onBlurCallback ],
     );
 
     const handleDelete = useCallback(
-        (idToDelete: number | string) => {
+        (idToDelete: number | string) =>
+        {
             const newIds = (event?.lecturers ?? []).filter(
                 (id) => id !== idToDelete,
             );
             onBlurCallback({ ...event, lecturers: newIds });
         },
-        [event, onBlurCallback],
+        [ event, onBlurCallback ],
     );
 
     return (
-        <Box {...props}>
-            <FormControl fullWidth={true}>
+        <Box { ...props }>
+            <FormControl fullWidth={ true }>
                 <InputLabel>מרצים</InputLabel>
                 <InstructorSelect
-                    favoriteOutsiders={favoriteOutsiders}
+                    favoriteOutsiders={ favoriteOutsiders }
                     label="מרצים"
                     multiple
-                    onChange={handleChange}
-                    renderValue={(selected) => (
+                    onChange={ handleChange }
+                    renderValue={ (selected) => (
                         <Box
-                            sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
+                            sx={ { display: "flex", flexWrap: "wrap", gap: 0.5 } }
                         >
-                            {selected.map((id) => {
+                            { selected.map((id) =>
+                            {
                                 // Look up instructor/outsider details by ID
                                 const outsider =
                                     typeof id === "string" &&
-                                    id.startsWith("outsider-")
+                                        id.startsWith("outsider-")
                                         ? getOutsider(id)
                                         : null;
                                 const lecturer =
@@ -104,28 +115,28 @@ function LecturerSelectionField({
                                             : { id, display_name: id };
                                 return (
                                     <Chip
-                                        key={id}
-                                        label={lecturer?.display_name ?? id}
-                                        onDelete={() => handleDelete(id)}
+                                        key={ id }
+                                        label={ lecturer?.display_name ?? id }
+                                        onDelete={ () => handleDelete(id) }
                                         // Prevent menu from opening when deleting
-                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onMouseDown={ (e) => e.stopPropagation() }
                                         size="small"
                                     />
                                 );
-                            })}
+                            }) }
                         </Box>
-                    )}
+                    ) }
                     showOutsiders
-                    value={currentLecturers}
+                    value={ currentLecturers }
                 >
                     <MenuItem
-                        key={"outside-lecturer"}
-                        sx={{
+                        key={ "outside-lecturer" }
+                        sx={ {
                             borderBottomWidth: "0.2rem",
                             borderBottomStyle: "solid",
                             borderBottomColor: "hsl(var(--border))",
-                        }}
-                        value={"איש חוץ"}
+                        } }
+                        value={ "איש חוץ" }
                     >
                         איש חוץ
                     </MenuItem>
@@ -138,17 +149,19 @@ function LecturerSelectionField({
 export function InstructorsField({
     event,
     onBlurCallback,
-}: InstructorsFieldProps) {
+}: InstructorsFieldProps)
+{
     const { getInstructor } = useHiveUsers();
     const currentInstructors = event?.instructors ?? [];
 
     const isLecture = useMemo(
         () => event?.type === EventType.LECTURE,
-        [event?.type],
+        [ event?.type ],
     );
 
     const handleChange = useCallback(
-        (ev: SelectChangeEvent<typeof currentInstructors>) => {
+        (ev: SelectChangeEvent<typeof currentInstructors>) =>
+        {
             const {
                 target: { value },
             } = ev;
@@ -161,68 +174,70 @@ export function InstructorsField({
 
             onBlurCallback({ ...event, instructors: newIds as Array<number> });
         },
-        [event, onBlurCallback],
+        [ event, onBlurCallback ],
     );
 
     const handleDelete = useCallback(
-        (idToDelete: number) => {
+        (idToDelete: number) =>
+        {
             const newIds = (event?.instructors ?? []).filter(
                 (id) => id !== idToDelete,
             );
             onBlurCallback({ ...event, instructors: newIds });
         },
-        [event, onBlurCallback],
+        [ event, onBlurCallback ],
     );
 
     return (
         <Box
-            alignItems={"flex-start"}
-            display={"flex"}
-            flexDirection={"row"}
-            flexWrap={"nowrap"}
-            width={"100%"}
+            alignItems={ "flex-start" }
+            display={ "flex" }
+            flexDirection={ "row" }
+            flexWrap={ "nowrap" }
+            width={ "100%" }
         >
-            <Box flexGrow={1}>
-                <FormControl fullWidth={true}>
+            <Box flexGrow={ 1 }>
+                <FormControl fullWidth={ true }>
                     <InputLabel>מבוזרים</InputLabel>
                     <InstructorSelect
                         label="מבוזרים"
                         multiple
-                        onChange={handleChange}
-                        renderValue={(selected) => (
+                        onChange={ handleChange }
+                        renderValue={ (selected) => (
                             <Box
-                                sx={{
+                                sx={ {
                                     display: "flex",
                                     flexWrap: "wrap",
                                     gap: 0.5,
-                                }}
+                                } }
                             >
-                                {selected.map((id) => {
+                                { selected.map((id) =>
+                                {
                                     // Look up instructor details by ID
                                     const instructor = getInstructor(id);
                                     return (
                                         <Chip
-                                            key={id}
+                                            key={ id }
                                             label={
                                                 instructor?.display_name ?? id
                                             }
-                                            onDelete={() => handleDelete(id)}
+                                            onDelete={ () => handleDelete(id) }
                                             // Prevent menu from opening when deleting
-                                            onMouseDown={(e) =>
+                                            onMouseDown={ (e) =>
                                                 e.stopPropagation()
                                             }
                                             size="small"
                                         />
                                     );
-                                })}
+                                }) }
                             </Box>
-                        )}
-                        value={currentInstructors}
+                        ) }
+                        value={ currentInstructors }
                     />
                 </FormControl>
             </Box>
             <Box
-                sx={{
+                sx={ {
                     width: isLecture ? "30%" : "0%",
                     opacity: isLecture ? 1 : 0,
                     ml: isLecture ? 1 : 0,
@@ -233,16 +248,16 @@ export function InstructorsField({
                     alignItems: "flex-start",
                     visibility: isLecture ? "visible" : "hidden",
                     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                }}
+                } }
             >
                 <LecturerSelectionField
-                    event={event}
-                    onBlurCallback={onBlurCallback}
-                    selectedInstructors={currentInstructors}
-                    sx={{
+                    event={ event }
+                    onBlurCallback={ onBlurCallback }
+                    selectedInstructors={ currentInstructors }
+                    sx={ {
                         width: "100%",
                         minWidth: "250px",
-                    }}
+                    } }
                 />
             </Box>
         </Box>
