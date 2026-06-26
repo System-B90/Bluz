@@ -30,7 +30,7 @@ export const GanttHeader: React.FC = () => {
                         minWidth: 250,
                         maxWidth: 250,
                         boxSizing: "border-box",
-                        backgroundColor: theme.palette.background.paper,
+                        backgroundColor: theme.vars.palette.background.paper,
                         position: "sticky",
                         left: 0,
                         top: 0,
@@ -56,7 +56,7 @@ export const GanttHeader: React.FC = () => {
                             key={week.id}
                             sx={{
                                 borderLeft: `1px solid ${theme.palette.divider}`,
-                                backgroundColor: theme.palette.background.paper,
+                                backgroundColor: theme.vars.palette.background.paper,
                                 zIndex: 2,
                             }}
                         >
@@ -96,7 +96,7 @@ export const GanttHeader: React.FC = () => {
                                         boxSizing: "border-box",
                                         borderLeft: `1px solid ${theme.palette.divider}`,
                                         backgroundColor:
-                                            theme.palette.background.paper,
+                                            theme.vars.palette.background.paper,
                                         zIndex: 2,
                                     }}
                                 >
