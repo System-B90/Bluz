@@ -46,7 +46,7 @@ export function InstructorCard({
                         isOverlay
                             ? undefined
                             : theme.palette.mode === "light"
-                                ? "0 4px 12px rgba(103, 200, 221, 0.1)"
+                                ? `0 4px 12px rgb(${theme.vars.palette.primary.mainChannel} / 0.1)`
                                 : "0 4px 12px rgba(0, 0, 0, 0.25)",
                 },
             }}

@@ -120,7 +120,7 @@ export function RoomListItem({
                                 title="מחק"
                             />
                         ) }
-                        { isHive ? <Tooltip title="חדר הייב">
+                        { isHive ? <Tooltip title="כיתה בהייב">
                             <Box
                                 alignItems="center"
                                 display="flex"
