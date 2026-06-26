@@ -25,7 +25,6 @@ type RoomListItemProps = {
     onPopulateForm: (room: Room) => void;
     onDelete: (roomId: string) => void;
 };
-
 type ActionButtonProps = {
     title: string;
     onClick: (e: React.MouseEvent) => void;
@@ -121,18 +120,16 @@ export function RoomListItem({
                                 title="מחק"
                             />
                         ) }
-                        { isHive && (
-                            <Tooltip title="חדר הייב">
-                                <Box
-                                    alignItems="center"
-                                    display="flex"
-                                    mr={ 0.5 }
-                                    sx={ { color: "text.secondary" } }
-                                >
-                                    <HiveLogo size={ 18 } />
-                                </Box>
-                            </Tooltip>
-                        ) }
+                        { isHive ? <Tooltip title="חדר הייב">
+                            <Box
+                                alignItems="center"
+                                display="flex"
+                                mr={ 0.5 }
+                                sx={ { color: "text.secondary" } }
+                            >
+                                <HiveLogo size={ 18 } />
+                            </Box>
+                        </Tooltip> : null }
                     </Box>
                 }
                 sx={ {
@@ -166,31 +163,25 @@ export function RoomListItem({
                             >
                                 { room.name }
                             </Typography>
-                            { isHive && (
-                                <Chip
-                                    icon={ <HiveLogo size={ 12 } /> }
-                                    label="הייב"
-                                    size="small"
-                                    sx={ {
-                                        height: 20,
-                                        fontSize: "0.65rem",
-                                        fontWeight: 700,
-                                        borderRadius: "6px",
+                            { isHive ? <Chip
+                                icon={ <HiveLogo size={ 12 } /> }
+                                label="הייב"
+                                size="small"
+                                sx={ {
+                                    height: 20,
+                                    fontSize: "0.65rem",
+                                    fontWeight: 700,
+                                    borderRadius: "6px",
+                                    color: "text.primary",
+                                    "& .MuiChip-icon": {
+                                        marginInlineEnd: 0,
                                         color: "text.primary",
-                                        "& .MuiChip-icon": {
-                                            marginInlineEnd: 0,
-                                            color: "text.primary",
-                                        },
-                                    } }
-                                    variant="outlined"
-                                />
-                            ) }
-                            { ext?.peAyin && (
-                                <RoomExtendedInfoChip color="warning" label='כיתת פ"עים' />
-                            ) }
-                            { ext?.lectureComfortable && (
-                                <RoomExtendedInfoChip color="success" label="נוח להרצאה ✓" />
-                            ) }
+                                    },
+                                } }
+                                variant="outlined"
+                            /> : null }
+                            { ext?.peAyin ? <RoomExtendedInfoChip color="warning" label='כיתת פ"עים' /> : null }
+                            { ext?.lectureComfortable ? <RoomExtendedInfoChip color="success" label="נוח להרצאה ✓" /> : null }
                             { ext?.workstationCount != null && (
                                 <RoomExtendedInfoChip
                                     iconNode={ <ComputerIcon sx={ EXT_ICON_STYLES } /> }
@@ -206,17 +197,15 @@ export function RoomListItem({
                         </Box>
                     }
                     secondary={
-                        room.description && (
-                            <Typography
-                                component="span"
-                                sx={ {
-                                    fontSize: "0.75rem",
-                                    color: "text.secondary",
-                                } }
-                            >
-                                { room.description }
-                            </Typography>
-                        )
+                        room.description ? <Typography
+                            component="span"
+                            sx={ {
+                                fontSize: "0.75rem",
+                                color: "text.secondary",
+                            } }
+                        >
+                            { room.description }
+                        </Typography> : null
                     }
                     sx={ { my: 0 } }
                 />
