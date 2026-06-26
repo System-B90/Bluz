@@ -86,7 +86,7 @@ export const ConstraintLines: React.FC<ConstraintLinesProps> = ({
                     stroke={
                         l.isViolated
                             ? theme.palette.error.main
-                            : theme.palette.text.disabled
+                            : theme.vars.palette.text.disabled
                     }
                     strokeDasharray={l.isViolated ? "none" : "4 4"}
                     strokeWidth={2}
