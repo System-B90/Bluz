@@ -1,7 +1,7 @@
 "use client";
 
 import { SettingsDialog } from "@/components/settings-dialog/SettingsDialog";
-import { useSettingsDialogUrl } from "@/components/settings-dialog/useSettingsDialogUrl";
+import { useSettingsDialogUrl } from "@/components/settings-dialog/UseSettingsDialogUrl";
 
 export function SettingsDialogUrl()
 {

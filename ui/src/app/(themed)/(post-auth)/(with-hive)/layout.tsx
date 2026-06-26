@@ -17,7 +17,7 @@ import { SettingsProvider } from "@/components/base/SettingsProvider";
 import { ScheduleAppBar } from "@/components/header/AppBar";
 import { CalendarProvider } from "@/components/schedule/calendar/calendar-provider";
 import { SettingsDialogUrl } from "@/components/settings-dialog/SettingsDialogUrl";
-import { useSettingsDialogUrl } from "@/components/settings-dialog/useSettingsDialogUrl";
+import { useSettingsDialogUrl } from "@/components/settings-dialog/UseSettingsDialogUrl";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
     const { offlineMode } = useOffline();

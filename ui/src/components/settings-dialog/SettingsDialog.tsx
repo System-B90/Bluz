@@ -13,9 +13,10 @@ import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalS
 import { OutsiderSettings } from "@/components/settings-dialog/tabs/global/outsider-settings";
 import { RoomSettings } from "@/components/settings-dialog/tabs/global/room-settings";
 import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
-import {
-    SettingsTab,
-} from "@/components/settings-dialog/useSettingsDialogUrl";
+import
+    {
+        SettingsTab,
+    } from "@/components/settings-dialog/UseSettingsDialogUrl";
 
 type SettingsDialogProps = {
     activeTab: SettingsTab;
