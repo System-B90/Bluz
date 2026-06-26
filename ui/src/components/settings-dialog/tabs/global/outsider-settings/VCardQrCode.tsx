@@ -1,5 +1,11 @@
+import CloseIcon from "@mui/icons-material/Close";
 import Box from "@mui/material/Box";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import QRCode from "qrcode";
 import React, { useEffect, useMemo, useState } from "react";
 
@@ -9,7 +15,7 @@ type VCardQrCodeProps = {
     name: string;
     personalNumber?: string;
     phone: string;
-}
+};
 
 export function VCardQrCode({
     comment,
@@ -19,6 +25,8 @@ export function VCardQrCode({
     phone,
 }: VCardQrCodeProps) {
     const [qrCodeUrl, setQrCodeUrl] = useState("");
+    const [highResQrCodeUrl, setHighResQrCodeUrl] = useState("");
+    const [open, setOpen] = useState(false);
 
     const vCardString = useMemo(() => {
         if (!name || !phone) return "";
@@ -50,17 +58,30 @@ export function VCardQrCode({
         let active = true;
         if (!vCardString) {
             void Promise.resolve().then(() => {
-                if (active) setQrCodeUrl("");
+                if (active) {
+                    setQrCodeUrl("");
+                    setHighResQrCodeUrl("");
+                }
             });
             return;
         }
-        void QRCode.toDataURL(vCardString, {
-            width: 160,
-            margin: 1,
-            errorCorrectionLevel: "M",
-        })
-            .then((url) => {
-                if (active) setQrCodeUrl(url);
+        void Promise.all([
+            QRCode.toDataURL(vCardString, {
+                width: 160,
+                margin: 1,
+                errorCorrectionLevel: "M",
+            }),
+            QRCode.toDataURL(vCardString, {
+                width: 600,
+                margin: 1,
+                errorCorrectionLevel: "M",
+            }),
+        ])
+            .then(([url, highResUrl]) => {
+                if (active) {
+                    setQrCodeUrl(url);
+                    setHighResQrCodeUrl(highResUrl);
+                }
             })
             .catch((err) => {
                 console.error("Failed to generate QR code", err);
@@ -73,35 +94,122 @@ export function VCardQrCode({
     if (!qrCodeUrl) return null;
 
     return (
-        <Tooltip arrow title="סרוק לשמירת איש הקשר בטלפון">
-            <Box
-                sx={{
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: "12px",
-                    p: 0.5,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: "white",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                    transition: "transform 0.2s",
-                    "&:hover": {
-                        transform: "scale(1.05)",
+        <>
+            <Tooltip arrow title="לחץ פעמיים להגדלה / סרוק לשמירה בטלפון">
+                <Box
+                    onDoubleClick={() => setOpen(true)}
+                    sx={{
+                        border: "1px solid",
+                        borderColor: "divider",
+                        borderRadius: "12px",
+                        p: 0.5,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: "white",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                        transition: "transform 0.2s",
+                        cursor: "pointer",
+                        "&:hover": {
+                            transform: "scale(1.05)",
+                        },
+                    }}
+                >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- QR code is a data URL; next/image doesn't support data URIs */}
+                    <img
+                        alt="vCard QR Code"
+                        src={qrCodeUrl}
+                        style={{
+                            width: 64,
+                            height: 64,
+                            display: "block",
+                        }}
+                    />
+                </Box>
+            </Tooltip>
+
+            <Dialog
+                fullWidth
+                maxWidth="xs"
+                onClose={() => setOpen(false)}
+                open={open}
+                PaperProps={{
+                    sx: {
+                        borderRadius: "20px",
+                        p: 1,
+                        textAlign: "center",
+                        overflow: "hidden",
                     },
                 }}
             >
-                {/* eslint-disable-next-line @next/next/no-img-element -- QR code is a data URL; next/image doesn't support data URIs */}
-                <img
-                    alt="vCard QR Code"
-                    src={qrCodeUrl}
-                    style={{
-                        width: 64,
-                        height: 64,
-                        display: "block",
+                <DialogTitle
+                    sx={{
+                        m: 0,
+                        p: 2,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
                     }}
-                />
-            </Box>
-        </Tooltip>
+                >
+                    <Typography component="span" fontWeight="bold" variant="h6">
+                        כרטיס איש קשר (QR)
+                    </Typography>
+                    <IconButton
+                        aria-label="close"
+                        onClick={() => setOpen(false)}
+                        sx={{
+                            color: (theme) => theme.palette.grey[500],
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent
+                    sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        pb: 4,
+                    }}
+                >
+                    <Typography component="div" fontWeight="800" sx={{ mt: 1 }} variant="h5">
+                        {name}
+                    </Typography>
+                    {phone ? <Typography color="text.secondary" sx={{ mt: 0.5, direction: "ltr" }} variant="body1">
+                        {phone}
+                    </Typography> : null}
+                    <Box
+                        sx={{
+                            border: "2px solid",
+                            borderColor: "divider",
+                            borderRadius: "24px",
+                            p: 3,
+                            mt: 3,
+                            bgcolor: "white",
+                            boxShadow: "0 12px 40px rgba(0,0,0,0.12)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            transition: "transform 0.3s",
+                            "&:hover": {
+                                transform: "scale(1.02)",
+                            },
+                        }}
+                    >
+                        {/* eslint-disable-next-line @next/next/no-img-element -- High-res QR code is a data URL */}
+                        <img
+                            alt={`vCard QR Code for ${name}`}
+                            src={highResQrCodeUrl || qrCodeUrl}
+                            style={{
+                                width: 360,
+                                height: 360,
+                                display: "block",
+                            }}
+                        />
+                    </Box>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
