@@ -5,12 +5,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
-    {
-        CustomRoom,
-        Room,
-        RoomExtendedInfo,
-        RoomSource,
-    } from "@/api-shared/types/room";
+{
+    CustomRoom,
+    Room,
+    RoomExtendedInfo,
+    RoomSource,
+} from "@/api-shared/types/room";
 import { useRooms } from "@/components/base/RoomsProvider";
 import { RoomFormCard } from "@/components/settings-dialog/tabs/global/room-settings/RoomFormCard";
 import { RoomListCard } from "@/components/settings-dialog/tabs/global/room-settings/RoomListCard";
