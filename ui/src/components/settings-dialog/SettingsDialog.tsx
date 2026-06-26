@@ -7,28 +7,40 @@ import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
-import { useState } from "react";
 
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
 import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalSettings";
 import { OutsiderSettings } from "@/components/settings-dialog/tabs/global/outsider-settings";
 import { RoomSettings } from "@/components/settings-dialog/tabs/global/room-settings";
 import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
+import {
+    SettingsTab,
+} from "@/components/settings-dialog/useSettingsDialogUrl";
 
 type SettingsDialogProps = {
-    open: boolean;
+    activeTab: SettingsTab;
     onClose: () => void;
+    onTabChange: (tab: SettingsTab) => void;
+    open: boolean;
 };
 
-export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
-    const [tab, setTab] = useState(0);
-
-    const tabs = [
-        { label: "אישי", icon: <PersonIcon />, value: 0 },
-        { label: "כללי", icon: <SettingsIcon />, value: 1 },
-        { label: "חדרים", icon: <MeetingRoomIcon />, value: 2 },
-        { label: "אנשי חוץ", icon: <AssignmentIndIcon />, value: 3 },
-    ];
+export function SettingsDialog({
+    activeTab,
+    onClose,
+    onTabChange,
+    open,
+}: SettingsDialogProps) {
+    const tabs: Array<{ label: string; icon: React.ReactNode; value: SettingsTab }> =
+        [
+            { label: "אישי", icon: <PersonIcon />, value: "personal" },
+            { label: "כללי", icon: <SettingsIcon />, value: "global" },
+            { label: "חדרים", icon: <MeetingRoomIcon />, value: "rooms" },
+            {
+                label: "אנשי חוץ",
+                icon: <AssignmentIndIcon />,
+                value: "outsiders",
+            },
+        ];
 
     return (
         <Dialog
@@ -51,20 +63,20 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
             <Box className="min-h-[480px]" display="flex" flexDirection="row">
                 {/* Sidebar Navigation */}
                 <Box
-                    sx={{
+                    sx={(theme) => ({
                         width: 220,
                         flexShrink: 0,
-                        bgcolor: (theme) =>
-                            theme.palette.mode === "light"
-                                ? "rgba(103, 200, 221, 0.08)"
-                                : "rgba(12, 34, 55, 0.6)",
+                        bgcolor: "rgba(103, 200, 221, 0.08)",
                         borderLeft: "1px solid",
                         borderColor: "divider",
                         display: "flex",
                         flexDirection: "column",
                         p: 2.5,
                         gap: 1.5,
-                    }}
+                        ...theme.applyStyles("dark", {
+                            bgcolor: "rgba(12, 34, 55, 0.6)",
+                        }),
+                    })}
                 >
                     {/* Header Title */}
                     <Box className="mb-4">
@@ -90,11 +102,11 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
 
                     {/* Navigation Items */}
                     {tabs.map((t) => {
-                        const isActive = tab === t.value;
+                        const isActive = activeTab === t.value;
                         return (
                             <Box
                                 key={t.value}
-                                onClick={() => setTab(t.value)}
+                                onClick={() => onTabChange(t.value)}
                                 sx={{
                                     display: "flex",
                                     alignItems: "center",
@@ -224,12 +236,12 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                     {/* Active Tab Panel with Entry Animation */}
                     <Box
                         className="animate-slide-up-fade grow h-full"
-                        key={tab}
+                        key={activeTab}
                     >
-                        {tab === 0 && <PersonalSettings />}
-                        {tab === 1 && <GlobalSettings />}
-                        {tab === 2 && <RoomSettings />}
-                        {tab === 3 && <OutsiderSettings />}
+                        {activeTab === "personal" && <PersonalSettings />}
+                        {activeTab === "global" && <GlobalSettings />}
+                        {activeTab === "rooms" && <RoomSettings />}
+                        {activeTab === "outsiders" && <OutsiderSettings />}
                     </Box>
                 </Box>
             </Box>

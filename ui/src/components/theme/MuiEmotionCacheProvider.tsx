@@ -1,7 +1,7 @@
 "use client";
 
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
-// eslint-disable-next-line no-restricted-imports
+// eslint-disable-next-line no-restricted-imports -- RTL stylis plugin has no alternative import path
 import rtlPlugin from "@mui/stylis-plugin-rtl";
 import { prefixer } from "stylis";
 

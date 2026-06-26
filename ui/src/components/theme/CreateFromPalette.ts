@@ -1,7 +1,7 @@
 import { ThemeOptions } from "@mui/material/styles";
 
 declare module "@mui/material/Chip" {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- MUI module augmentation requires interface for declaration merging
     interface ChipPropsSizeOverrides
     {
         smaller: true;

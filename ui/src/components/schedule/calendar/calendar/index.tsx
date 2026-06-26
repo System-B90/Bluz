@@ -88,7 +88,7 @@ export function BluzCalendar({
 
     // Only render the calendar after the component has mounted on the client.
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- Standard hydration guard: must set mounted state after client mount
         setMounted(true);
     }, []);
 
