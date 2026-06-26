@@ -55,13 +55,13 @@ function formatIsraeliLandlineNumber(value: string): string
 export function formatPhoneNumber(value: string): string
 {
     // Matches local mobile (05X-XXX-XXXX)
-    if (/^05\d{7}$/.test(value.replace(/\D/g, "")))
+    if (/^05\d{8}$/.test(value.replace(/\D/g, "")))
     {
         return formatIsraeliStyleLocalMobileNumber(value);
     }
 
     // Matches international mobile (+9725XXXXXXXX)
-    if (/^9725\d{7}$/.test(value.replace(/\D/g, "")))
+    if (/^9725\d{8}$/.test(value.replace(/\D/g, "")))
     {
         return formatIsraeliStyleInternationalMobileNumber(value);
     }
