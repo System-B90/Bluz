@@ -13,10 +13,10 @@ import { Logo } from "@/components/header/logo";
 import { UserAccessCard } from "@/components/header/UserAccessCard";
 
 export function ScheduleAppBar({
-    setOpenSettingsDialog,
+    openSettingsDialog,
     ...props
 }: {
-    setOpenSettingsDialog: (open: boolean) => void;
+    openSettingsDialog: () => void;
 } & Exclude<AppBarProps, "position">) {
     return (
         <AppBar
@@ -65,7 +65,7 @@ export function ScheduleAppBar({
                     <IconButton
                         className="hover-rotate-subtle transition-all duration-200 hover:scale-110 active:scale-95"
                         color="inherit"
-                        onClick={() => setOpenSettingsDialog(true)}
+                        onClick={openSettingsDialog}
                         size="small"
                     >
                         <SettingsIcon color="inherit" fontSize="small" />

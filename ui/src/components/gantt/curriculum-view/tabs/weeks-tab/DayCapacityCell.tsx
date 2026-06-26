@@ -91,14 +91,14 @@ export function DayCapacityCell({
     // Sync local state when the server value changes and the field is not focused
     useEffect(() => {
         if (!isTimeFocused) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync local state from server prop when field is not focused
             setLocalTime(formatMinutesAsTimeInput(day?.totalWorkingMinutes ?? 0));
         }
     }, [day?.totalWorkingMinutes, isTimeFocused]);
 
     useEffect(() => {
         if (!isCommentFocused) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync local state from server prop when field is not focused
             setLocalComment(day?.comment ?? "");
         }
     }, [day?.comment, isCommentFocused]);

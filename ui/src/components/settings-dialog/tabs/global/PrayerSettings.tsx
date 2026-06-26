@@ -65,15 +65,12 @@ export function PrayerSettings({
 
     return (
         <Box
-            sx={{
+            sx={(theme) => ({
                 border: "1px solid",
                 borderColor: "divider",
                 borderRadius: "16px",
                 p: isShrunk ? 1.5 : 3,
-                boxShadow: (theme) =>
-                    theme.palette.mode === "light"
-                        ? "0 8px 24px rgba(103, 200, 221, 0.04)"
-                        : "0 8px 24px rgba(0, 0, 0, 0.2)",
+                boxShadow: "0 8px 24px rgba(103, 200, 221, 0.04)",
                 bgcolor: "background.paper",
                 display: "flex",
                 flexDirection: "column",
@@ -81,7 +78,10 @@ export function PrayerSettings({
                 alignItems: isShrunk ? "center" : "stretch",
                 height: "100%",
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            }}
+                ...theme.applyStyles("dark", {
+                    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
+                }),
+            })}
         >
             {/* Section Header */}
             {isShrunk ? (

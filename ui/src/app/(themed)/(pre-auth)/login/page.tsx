@@ -9,8 +9,10 @@ import { Suspense } from "react";
 import { LoginWithHive } from "@/app/(themed)/(pre-auth)/login/login-with-hive-button";
 import { Logo } from "@/components/header/logo";
 
-function getAuthenticationErrorMessage(error: null | string) {
-    switch (error) {
+function getAuthenticationErrorMessage(error: null | string)
+{
+    switch (error)
+    {
     case null:
         return null;
     case "AccessDenied":
@@ -27,7 +29,8 @@ function getAuthenticationErrorMessage(error: null | string) {
     }
 }
 
-function LoginWidget() {
+function LoginWidget()
+{
     const searchParams = useSearchParams();
     const authError = searchParams.get("error");
     const authErrorMessage = getAuthenticationErrorMessage(authError);
@@ -38,86 +41,87 @@ function LoginWidget() {
 
     return (
         <Box
-            bgcolor={"background.paper"}
-            border={"1px solid"}
-            borderRadius={"20px"}
-            display={"flex"}
-            flexDirection={"column"}
-            gap={4}
-            maxWidth={"448px"}
-            p={5}
-            sx={(theme) => ({
+            bgcolor={ "background.paper" }
+            border={ "1px solid" }
+            borderRadius={ "20px" }
+            display={ "flex" }
+            flexDirection={ "column" }
+            gap={ 4 }
+            maxWidth={ "448px" }
+            p={ 5 }
+            sx={ (theme) => ({
                 borderColor: "rgba(0,0,0,0.08)",
                 boxShadow: "0 24px 50px rgba(0,0,0,0.15)",
                 ...theme.applyStyles("dark", {
                     borderColor: "rgba(255,255,255,0.08)",
                 }),
-            })}
-            width={"100%"}
+            }) }
+            width={ "100%" }
         >
-            {/* Header Section */}
+            {/* Header Section */ }
             <Box
-                alignItems={"center"}
-                display={"flex"}
-                flexDirection={"column"}
-                fontSize={30}
-                fontWeight={"bold"}
-                textAlign={"center"}
+                alignItems={ "center" }
+                display={ "flex" }
+                flexDirection={ "column" }
+                fontSize={ 30 }
+                fontWeight={ "bold" }
+                textAlign={ "center" }
             >
-                <Logo height={"8rem"} width={"8rem"} />
+                <Logo height={ "8rem" } width={ "8rem" } />
                 <Typography
-                    color={"textPrimary"}
-                    component={"h2"}
-                    fontSize={"inherit"}
-                    fontWeight={"bold"}
-                    letterSpacing={"-0.02em"}
-                    mt={1}
+                    color={ "textPrimary" }
+                    component={ "h2" }
+                    fontSize={ "inherit" }
+                    fontWeight={ "bold" }
+                    letterSpacing={ "-0.02em" }
+                    mt={ 1 }
                 >
                     ברוכים הבאים לבלוז
                 </Typography>
 
                 <Typography
-                    color={"textSecondary"}
-                    component={"p"}
-                    fontSize={14}
-                    mt={0}
+                    color={ "textSecondary" }
+                    component={ "p" }
+                    fontSize={ 14 }
+                    mt={ 0 }
                 >
                     מתי אתם מבזרים?
                 </Typography>
             </Box>
 
-            <Box mt={0}>
-                {authErrorMessage ? (
-                    <Alert severity="error" sx={{ mb: 2 }}>
+            <Box mt={ 0 }>
+                { authErrorMessage ? (
+                    <Alert severity="error" sx={ { mb: 2 } }>
                         <AlertTitle>ההתחברות נכשלה</AlertTitle>
-                        {authErrorMessage}
-                        {authErrorDetails ? (
-                            <Typography component="p" fontSize={13} mt={1}>
-                                קוד שגיאה: {authErrorDetails}
+                        { authErrorMessage }
+                        { authErrorDetails ? (
+                            <Typography component="p" fontSize={ 13 } mt={ 1 }>
+                                קוד שגיאה: { authErrorDetails }
                             </Typography>
-                        ) : null}
+                        ) : null }
                     </Alert>
-                ) : null}
+                ) : null }
                 <LoginWithHive />
             </Box>
         </Box>
     );
 }
 
-export default function LoginPage() {
+export default function LoginPage()
+{
     return (
         <Box
-            alignContent={"flex-start"}
-            alignItems={"flex-start"}
-            bgcolor={"background.default"}
-            display={"flex"}
-            height={"100vh"}
-            justifyContent={"center"}
-            justifyItems={"flex-start"}
-            pt={"20vh"}
-            width={"full"}
+            alignContent={ "flex-start" }
+            alignItems={ "flex-start" }
+            bgcolor={ "background.default" }
+            display={ "flex" }
+            height={ "100vh" }
+            justifyContent={ "center" }
+            justifyItems={ "flex-start" }
+            pt={ "20vh" }
+            width={ "full" }
         >
-            <Suspense fallback={null}>
+            <Suspense fallback={ null }>
                 <LoginWidget />
             </Suspense>
         </Box>
