@@ -84,7 +84,19 @@ def render(data: Any, *, as_json: bool, title: str | None = None) -> None:
     elif data is None:
         console.print("[dim](empty)[/dim]")
     elif isinstance(data, bytes):
-        console.print(f"[dim]{len(data)} bytes[/dim]")
+        try:
+            decoded = data.decode("utf-8")
+            console.print(decoded)
+        except UnicodeDecodeError:
+            import sys
+            if sys.stdout.isatty():
+                console.print(f"[dim]{len(data)} bytes (binary data)[/dim]")
+            else:
+                if hasattr(sys.stdout, "buffer"):
+                    sys.stdout.buffer.write(data)
+                    sys.stdout.buffer.flush()
+                else:
+                    console.print(data)
     else:
         console.print(_cell(data))
 
