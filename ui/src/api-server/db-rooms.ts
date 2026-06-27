@@ -1,19 +1,29 @@
 import { FindOptions, UpdateOptions } from "mongodb";
 
-import { databaseController } from "@/api-server/mongo-db-controller";
+import {
+    databaseController,
+    DatabaseController,
+} from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { ClientApiError } from "@/api-shared/errors";
 import { CustomRoom } from "@/api-shared/types/room";
 import { MessageTypes } from "@/settings";
 
-async function getDbRooms(options?: FindOptions): Promise<Array<CustomRoom>> {
-    const data = databaseController.rooms.find({}, options);
+async function getDbRooms(
+    options?: FindOptions,
+    controller: DatabaseController = databaseController,
+): Promise<Array<CustomRoom>> {
+    const data = controller.rooms.find({}, options);
     return await data.toArray();
 }
 
-async function setDbRoom(room: CustomRoom, options?: UpdateOptions) {
+async function setDbRoom(
+    room: CustomRoom,
+    options?: UpdateOptions,
+    controller: DatabaseController = databaseController,
+) {
     const { _id: _, id: roomId, ...roomData } = room as any;
-    const data = await databaseController.rooms.updateOne(
+    const data = await controller.rooms.updateOne(
         { id: roomId },
         { $set: roomData },
         options,
@@ -26,16 +36,22 @@ async function setDbRoom(room: CustomRoom, options?: UpdateOptions) {
     });
 }
 
-async function createDbRoom(room: CustomRoom) {
-    await databaseController.rooms.insertOne(room as CustomRoom);
+async function createDbRoom(
+    room: CustomRoom,
+    controller: DatabaseController = databaseController,
+) {
+    await controller.rooms.insertOne(room as CustomRoom);
     SendServerRequestToSessionServer(MessageTypes.ROOMS_UPDATE, {
         rooms: { [room.id]: room },
     });
     return room;
 }
 
-async function deleteDbRoom(roomId: CustomRoom["id"]) {
-    const data = await databaseController.rooms.deleteOne({ id: roomId });
+async function deleteDbRoom(
+    roomId: CustomRoom["id"],
+    controller: DatabaseController = databaseController,
+) {
+    const data = await controller.rooms.deleteOne({ id: roomId });
     if (data.deletedCount === 0) {
         throw new ClientApiError(`No room by id ${roomId} found!`);
     }

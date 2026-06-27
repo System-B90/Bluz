@@ -15,6 +15,15 @@ type CurriculumEntryProps = {
 export const CurriculumEntry = React.memo(
     ({ curriculum, onClick, selected }: CurriculumEntryProps) => {
         const isDraft = curriculum?.isDraft;
+        const isArchived = curriculum?.isArchived;
+
+        const color = selected
+            ? "text.action"
+            : isArchived
+                ? "text.disabled"
+                : isDraft
+                    ? "text.secondary"
+                    : "text.primary";
 
         return (
             <ListItem disablePadding>
@@ -24,13 +33,19 @@ export const CurriculumEntry = React.memo(
                         slotProps={{
                             primary: {
                                 sx: {
-                                    color: selected
-                                        ? "text.action"
-                                        : isDraft
-                                            ? "text.secondary"
-                                            : "text.primary",
-                                    fontWeight: isDraft ? "normal" : "medium",
-                                    fontStyle: isDraft ? "italic" : "normal",
+                                    color,
+                                    fontWeight:
+                                        !isDraft && !isArchived
+                                            ? "medium"
+                                            : "normal",
+                                    fontStyle:
+                                        isDraft || isArchived
+                                            ? "italic"
+                                            : "normal",
+                                    textDecoration: isArchived
+                                        ? "line-through"
+                                        : "none",
+                                    opacity: isArchived ? 0.7 : 1,
                                 },
                             },
                         }}

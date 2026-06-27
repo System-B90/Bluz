@@ -14,6 +14,7 @@ import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton
 import { CreateDraftAction } from "@/components/gantt/curriculum-fab/action-items/CreateDraftAction";
 import { DeleteCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DeleteCurriculumAction";
 import { DuplicateCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DuplicateCurriculumAction";
+import { ToggleArchiveAction } from "@/components/gantt/curriculum-fab/action-items/ToggleArchiveAction";
 import { ToggleDraftAction } from "@/components/gantt/curriculum-fab/action-items/ToggleDraftAction";
 
 export type CreateNewCurriculumProps = {
@@ -105,6 +106,12 @@ export function CurriculumActionItems({
                 sourceCurriculum={sourceCurriculum}
             />
             <ToggleDraftAction
+                disabled={isDisabled || !sourceCurriculum}
+                onProcessingChange={setIsProcessing}
+                onUpdate={onUpdate}
+                sourceCurriculum={sourceCurriculum}
+            />
+            <ToggleArchiveAction
                 disabled={isDisabled || !sourceCurriculum}
                 onProcessingChange={setIsProcessing}
                 onUpdate={onUpdate}
