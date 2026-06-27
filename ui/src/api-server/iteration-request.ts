@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 
-import { DbIterations } from "@/api-server/db-iterations";
 import {
     DatabaseController,
     resolveIterationDb,
+    resolveWritableIterationDb,
 } from "@/api-server/mongo-db-controller";
 import { IterationId } from "@/api-shared/types/iteration";
 
@@ -37,11 +37,17 @@ export async function resolveIterationFromRequest(
 /**
  * Same as {@link resolveIterationFromRequest} but rejects writes to a past
  * (non-current) iteration. Use for POST/PUT/PATCH/DELETE handlers.
+ * Uses a single DB lookup (existence + isCurrent check combined).
  */
 export async function resolveWritableIterationFromRequest(
     request: { nextUrl: URL } | { url: string } | NextRequest,
 ): Promise<ResolvedIteration> {
-    const resolved = await resolveIterationFromRequest(request);
-    await DbIterations.assertWritable(resolved.iterationId);
-    return resolved;
+    const url =
+        "nextUrl" in request
+            ? (request.nextUrl as URL)
+            : new URL((request as { url: string }).url);
+    const raw = url.searchParams.get(ITERATION_QUERY_PARAM);
+    const iterationId = raw && raw.length > 0 ? raw : undefined;
+    const controller = await resolveWritableIterationDb(iterationId);
+    return { iterationId, controller };
 }
