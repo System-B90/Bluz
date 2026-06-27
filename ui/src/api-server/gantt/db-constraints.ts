@@ -1,10 +1,3 @@
-/**
- * Name: ganttConstraintService.ts
- * Purpose: Business logic for managing relational and temporal constraints for Gantt events and modules.
- * Created: 2026-04-19
- * Author: Michael K. Steinberg
- */
-
 import { eq, inArray, or } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
@@ -20,11 +13,18 @@ import {
     GanttModuleId,
 } from "@/api-shared/types/gantt/models";
 
+/**
+ * Represents the types of Gantt entities that can own or be targeted by a constraint.
+ */
 export type EntityType = "event" | "module";
 
 /**
- * 1) Getting all constraints owned by a specific Event or Module.
+ * Retrieves all constraints owned by a specific Event or Module.
  * Used to load the dependencies a specific entity has before it can be scheduled.
+ * 
+ * @param ownerId - The ID of the owner event or module.
+ * @param ownerType - The entity type ("event" or "module").
+ * @returns An array of constraints owned by the entity.
  */
 export async function getConstraintsForOwner(
     ownerId: GanttEventId | GanttModuleId,
@@ -41,8 +41,12 @@ export async function getConstraintsForOwner(
 }
 
 /**
- * 2) Getting constraints targeting a specific Event or Module.
+ * Retrieves constraints targeting a specific Event or Module.
  * Useful for cascade checking, highlighting dependencies in the UI, or cyclic dependency resolution.
+ * 
+ * @param targetId - The ID of the target event or module.
+ * @param targetType - The entity type ("event" or "module").
+ * @returns An array of constraints targeting the entity.
  */
 export async function getConstraintsTargetingEntity(
     targetId: GanttEventId | GanttModuleId,
@@ -59,7 +63,10 @@ export async function getConstraintsTargetingEntity(
 }
 
 /**
- * 3) Creating a new constraint.
+ * Creates a new constraint in the database.
+ * 
+ * @param data - The constraint insert payload.
+ * @returns The created constraint record.
  */
 export async function createConstraint(
     data: typeof ganttConstraintsSchema.$inferInsert,
@@ -70,7 +77,11 @@ export async function createConstraint(
 }
 
 /**
- * 4) Updating an existing constraint.
+ * Updates an existing constraint with new values.
+ * 
+ * @param constraintId - The UUID of the constraint to update.
+ * @param newValues - The partial payload of values to update.
+ * @returns The updated constraint record.
  */
 export async function updateConstraint(
     constraintId: string,
@@ -84,7 +95,10 @@ export async function updateConstraint(
 }
 
 /**
- * 5) Delete a constraint.
+ * Deletes a constraint from the database by its identifier.
+ * 
+ * @param constraintId - The UUID of the constraint to delete.
+ * @returns The deleted constraint record.
  */
 export async function deleteConstraint(constraintId: string) {
     return await postgresDb
@@ -93,6 +107,13 @@ export async function deleteConstraint(constraintId: string) {
         .returning();
 }
 
+/**
+ * Retrieves all constraints associated with a specific curriculum.
+ * Resolves constraints owned by any modules or events mapped to the curriculum.
+ * 
+ * @param curriculumId - The curriculum identifier.
+ * @returns An array of constraints for the curriculum.
+ */
 export async function getConstraintsForCurriculum(
     curriculumId: GanttCurriculumId,
 ) {
@@ -143,11 +164,12 @@ export async function getConstraintsForCurriculum(
             ),
         );
 }
+
 /**
- * Name: getConstraintsForSyllabus
- * Purpose: Retrieves all constraints for any module or event within a specific syllabus using a single database query.
- * Created: 2026-04-19
- * Author: Michael K. Steinberg
+ * Retrieves all constraints for any module or event within a specific syllabus using a single database query.
+ * 
+ * @param syllabusId - The unique identifier of the syllabus.
+ * @returns An array of constraints found.
  */
 export async function getConstraintsForSyllabus(syllabusId: string) {
     // Subquery 1: Resolve all module IDs mapped directly to the syllabus
@@ -185,10 +207,10 @@ export async function getConstraintsForSyllabus(syllabusId: string) {
 }
 
 /**
- * Name: getConstraintsForModule
- * Purpose: Retrieves all constraints owned by a specific module or its nested events.
- * Created: 2026-04-19
- * Author: Michael K. Steinberg
+ * Retrieves all constraints owned by a specific module or its nested events.
+ * 
+ * @param moduleId - The unique identifier of the module.
+ * @returns An array of constraints found.
  */
 export async function getConstraintsForModule(moduleId: GanttModuleId) {
     // Subquery: Resolve all event IDs mapped directly to the module

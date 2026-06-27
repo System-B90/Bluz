@@ -1,16 +1,17 @@
-/**
- * Name: reducer.ts
- * Purpose: High-performance state reducer for Gantt constraints.
- * Created: 2026-04-19
- * Author: Michael K. Steinberg
- */
-
 import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 import {
     GanttConstraintAction,
     GanttConstraintState,
 } from "@/components/gantt/state/constraints/types";
 
+/**
+ * State reducer for managing Gantt constraints.
+ * Handles loading, upserting, and deleting constraints from the state.
+ * 
+ * @param state - The current constraints state.
+ * @param action - The action triggering the state modification.
+ * @returns The updated constraints state.
+ */
 export function ganttConstraintReducer(
     state: GanttConstraintState,
     action: GanttConstraintAction,

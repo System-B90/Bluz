@@ -1,9 +1,3 @@
-/**
- * Name: assignments.ts
- * Purpose: Curriculum module scheduling and event configurations
- * Created: 2026-04-17
- * Author: Michael K. Steinberg
- */
 import { relations } from "drizzle-orm";
 import {
     index,
@@ -22,9 +16,9 @@ import { ganttEventsSchema } from "./events";
 import { ganttModulesSchema } from "./modules";
 
 /**
- * curriculumModuleDayAssignments (cMDA)
+ * Drizzle database schema definition for the Gantt Curriculum Event Day Mappings table (`cMDA`).
  * Schedules modules into specific week/day slots.
- * Optionally, a specific event in the module can be assigned
+ * Optionally, a specific event in the module can be assigned.
  */
 export const ganttCurriculumEventDayMappingsSchema = pgTable(
     "cMDA",
@@ -57,6 +51,9 @@ export const ganttCurriculumEventDayMappingsSchema = pgTable(
     }),
 );
 
+/**
+ * Relations definition for the Curriculum Event Day Mappings schema.
+ */
 export const ganttCurriculumEventDayMappingsRelationsSchema = relations(
     ganttCurriculumEventDayMappingsSchema,
     ({ one }) => ({
@@ -80,6 +77,7 @@ export const ganttCurriculumEventDayMappingsRelationsSchema = relations(
 );
 
 /**
+ * Drizzle database schema definition for the Gantt Curriculum Event Configurations table (`cEC`).
  * Maps specific durations to an event within the context of a curriculum.
  */
 export const ganttCurriculumEventConfigurationsSchema = pgTable(
@@ -101,6 +99,9 @@ export const ganttCurriculumEventConfigurationsSchema = pgTable(
     }),
 );
 
+/**
+ * Relations definition for the Curriculum Event Configurations schema.
+ */
 export const ganttCurriculumEventConfigurationsRelationsSchema = relations(
     ganttCurriculumEventConfigurationsSchema,
     ({ one }) => ({
