@@ -35,7 +35,7 @@ scheduling and curriculum-management web application built for an educational in
     Auto-generated TypeScript API docs from JSDoc comments across `api-shared`,
     `api-server`, and `api-client`.
 
-    [:octicons-arrow-right-24: API Reference](api/)
+    [:octicons-arrow-right-24: API Reference](api/index.md)
 
 -   :material-console:{ .lg .middle } **CLI Reference**
 

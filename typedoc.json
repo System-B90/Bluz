@@ -20,5 +20,6 @@
     ],
     "readme": "none",
     "githubPages": false,
-    "hideGenerator": true
+    "hideGenerator": true,
+    "entryFileName": "index.md"
 }

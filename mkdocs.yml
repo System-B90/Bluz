@@ -71,5 +71,5 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Architecture: architecture.md
-  - API Reference: api/
+  - API Reference: api/index.md
   - CLI Reference: cli/index.md

@@ -44,7 +44,7 @@ jobs:
           pip install ./cli
 
       - name: Build documentation site
-        run: mkdocs build --strict
+        run: python -m mkdocs build
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
