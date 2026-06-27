@@ -1,0 +1,64 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Only allow one docs deployment at a time
+concurrency:
+  group: docs-deployment
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build Documentation
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install Python doc tools
+        run: |
+          pip install --upgrade pip
+          pip install mkdocs-material mkdocs-typedoc "mkdocs-typer2[mkdocs]"
+          pip install ./cli
+
+      - name: Build documentation site
+        run: mkdocs build --strict
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
