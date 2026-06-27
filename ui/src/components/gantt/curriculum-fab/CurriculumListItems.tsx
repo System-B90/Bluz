@@ -1,24 +1,38 @@
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
+import ListSubheader from "@mui/material/ListSubheader";
 import Skeleton from "@mui/material/Skeleton";
-import { Dispatch, SetStateAction } from "react";
+import Typography from "@mui/material/Typography";
+import { Dispatch, Fragment, SetStateAction } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumEntry } from "@/components/gantt/curriculum-fab/CurriculumEntry";
+import { CurriculumGroups } from "@/components/gantt/curriculum-fab/utils";
 
 export type CurriculumListItemsProps = {
     isFetchingDetails: boolean;
     curriculumsData: Record<GanttCurriculumId, GanttCurriculumDocument>;
-    sortedIds: Array<GanttCurriculumId>;
+    groups: CurriculumGroups;
     setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
     currentCurriculum?: GanttCurriculumId | null;
 };
 
+type SectionConfig = {
+    key: keyof CurriculumGroups;
+    label: string;
+};
+
+const SECTIONS: Array<SectionConfig> = [
+    { key: "active", label: "פעילים" },
+    { key: "drafts", label: "טיוטות" },
+    { key: "archived", label: "ארכיון" },
+];
+
 export function CurriculumListItems({
     isFetchingDetails,
     curriculumsData,
-    sortedIds,
+    groups,
     setCurrentCurriculum,
     currentCurriculum,
 }: CurriculumListItemsProps) {
@@ -35,17 +49,36 @@ export function CurriculumListItems({
         ));
     }
 
-    return sortedIds.map((id) => {
-        const curriculum = curriculumsData[id];
-        if (!curriculum) return null;
+    return SECTIONS.map(({ key, label }) => {
+        const ids = groups[key];
+        if (ids.length === 0) return null;
 
         return (
-            <CurriculumEntry
-                curriculum={curriculum}
-                key={id}
-                onClick={() => setCurrentCurriculum(id)}
-                selected={currentCurriculum === id}
-            />
+            <Fragment key={key}>
+                <ListSubheader
+                    sx={{ paddingY: 0.5, background: "transparent" }}
+                >
+                    <Typography
+                        align="center"
+                        color="text.secondary"
+                        variant="caption"
+                    >
+                        {label}
+                    </Typography>
+                </ListSubheader>
+                {ids.map((id) => {
+                    const curriculum = curriculumsData[id];
+                    if (!curriculum) return null;
+                    return (
+                        <CurriculumEntry
+                            curriculum={curriculum}
+                            key={id}
+                            onClick={() => setCurrentCurriculum(id)}
+                            selected={currentCurriculum === id}
+                        />
+                    );
+                })}
+            </Fragment>
         );
     });
 }

@@ -7,6 +7,7 @@ import { AuthSessionData } from "@/api-shared/types/sso";
 
 export async function createHiveClientFromSession(
     session: AuthSessionData,
+    hiveUrl?: string,
 ): Promise<HiveClient> {
     if (!session.accessToken) {
         throw new UserNotLoggedInError(
@@ -17,17 +18,21 @@ export async function createHiveClientFromSession(
     const hiveClient = new HiveClient(
         session.accessToken as string,
         session.refreshToken as string,
+        hiveUrl,
     );
 
     return hiveClient;
 }
 
-export async function createHiveClient(): Promise<HiveClient> {
+export async function createHiveClient(hiveUrl?: string): Promise<HiveClient> {
     const session = await getServerSession(authOptions);
     if (!session) {
         throw new UserNotLoggedInError(
             "Unauthorized: No active session found.",
         );
     }
-    return await createHiveClientFromSession(session as AuthSessionData);
+    return await createHiveClientFromSession(
+        session as AuthSessionData,
+        hiveUrl,
+    );
 }

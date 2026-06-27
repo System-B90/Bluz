@@ -1,6 +1,9 @@
 import { ObjectId } from "mongodb";
 
-import { databaseController } from "@/api-server/mongo-db-controller";
+import {
+    databaseController,
+    DatabaseController,
+} from "@/api-server/mongo-db-controller";
 import { ClientApiError } from "@/api-shared/errors";
 import { DbReservation } from "@/api-shared/types/reservation";
 import { RoomId, RoomSource } from "@/api-shared/types/room";
@@ -10,6 +13,7 @@ async function getReservations(
     roomSource?: RoomSource,
     from?: string,
     to?: string,
+    controller: DatabaseController = databaseController,
 ): Promise<Array<DbReservation>> {
     const filter: Record<string, any> = {};
     if (roomId !== undefined) filter.roomId = roomId;
@@ -19,18 +23,19 @@ async function getReservations(
         if (from) filter.start.$gte = from;
         if (to) filter.start.$lte = to;
     }
-    const docs = await databaseController.reservations.find(filter).toArray();
+    const docs = await controller.reservations.find(filter).toArray();
     return docs.map((doc) => ({ ...doc, _id: doc._id?.toString() }));
 }
 
 async function createReservation(
     reservation: Omit<DbReservation, "_id">,
+    controller: DatabaseController = databaseController,
 ): Promise<DbReservation> {
-    const session = databaseController.client.startSession();
+    const session = controller.client.startSession();
     try {
         let created: DbReservation | null = null;
         await session.withTransaction(async () => {
-            const conflict = await databaseController.reservations.findOne(
+            const conflict = await controller.reservations.findOne(
                 {
                     roomId: reservation.roomId,
                     roomSource: reservation.roomSource,
@@ -44,7 +49,7 @@ async function createReservation(
                     "החדר כבר מוזמן בטווח הזמן המבוקש",
                 );
             }
-            const result = await databaseController.reservations.insertOne(
+            const result = await controller.reservations.insertOne(
                 reservation as any,
                 { session },
             );
@@ -56,8 +61,11 @@ async function createReservation(
     }
 }
 
-async function cancelReservation(reservationId: string): Promise<void> {
-    const result = await databaseController.reservations.deleteOne({
+async function cancelReservation(
+    reservationId: string,
+    controller: DatabaseController = databaseController,
+): Promise<void> {
+    const result = await controller.reservations.deleteOne({
         _id: new ObjectId(reservationId) as any,
     });
     if (result.deletedCount === 0) {

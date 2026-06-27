@@ -15,6 +15,7 @@ export function makeCurriculum(
         startDate: curriculum?.startDate ?? null,
         syllabuses: curriculum?.syllabuses ?? [],
         isDraft: curriculum?.isDraft ?? true,
+        isArchived: curriculum?.isArchived ?? false,
         weeks: curriculum?.weeks ?? [],
     };
 }

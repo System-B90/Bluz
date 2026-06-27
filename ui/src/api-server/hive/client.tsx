@@ -34,14 +34,23 @@ export function isTimeoutError(e: unknown): e is TimeoutError {
 export class HiveClient {
     private accessToken: string;
     private refreshTokenValue?: string;
+    private hiveBaseUrl: string;
 
-    constructor(accessToken: string, refreshToken?: string) {
+    constructor(
+        accessToken: string,
+        refreshToken?: string,
+        hiveBaseUrl?: string,
+    ) {
         this.accessToken = accessToken;
         this.refreshTokenValue = refreshToken;
+        // The Hive instance changes every iteration; callers can target a
+        // specific instance, falling back to the default env URL.
+        this.hiveBaseUrl =
+            hiveBaseUrl ?? process.env.NEXT_PUBLIC_HIVE_URL ?? "";
     }
 
     private buildUrl(path: string): string {
-        return `${process.env.NEXT_PUBLIC_HIVE_URL}${path}`;
+        return `${this.hiveBaseUrl.replace(/\/$/, "")}${path}`;
     }
 
     private async refreshAccessToken(): Promise<void> {

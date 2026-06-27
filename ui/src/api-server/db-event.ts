@@ -1,6 +1,9 @@
 import { Filter, FindOptions } from "mongodb";
 
-import { databaseController } from "@/api-server/mongo-db-controller";
+import {
+    databaseController,
+    DatabaseController,
+} from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
@@ -9,6 +12,7 @@ import {
     EventDataUpdateMessage,
 } from "@/api-shared/types";
 import { DbEventDocument, EventId } from "@/api-shared/types/event";
+import { IterationId } from "@/api-shared/types/iteration";
 import { MessageTypes } from "@/settings";
 
 export type { DbEventDocument };
@@ -16,22 +20,18 @@ export type { DbEventDocument };
 async function getDbEvent(
     eventId: EventId,
     options?: FindOptions,
+    controller: DatabaseController = databaseController,
 ): Promise<DbEventDocument | null> {
-    const data = await databaseController.events.findOne(
-        { id: eventId },
-        options,
-    );
+    const data = await controller.events.findOne({ id: eventId }, options);
     return data ? data : null;
 }
 
 async function getDbEvents(
     eventIds: Array<EventId>,
     options?: FindOptions,
+    controller: DatabaseController = databaseController,
 ): Promise<Array<DbEventDocument>> {
-    const cursor = databaseController.events.find(
-        { id: { $in: eventIds } },
-        options,
-    );
+    const cursor = controller.events.find({ id: { $in: eventIds } }, options);
     const data = await cursor.toArray();
     return data;
 }
@@ -43,8 +43,9 @@ async function getDbEventsInRange(
     endDate: Date,
     options?: FindOptions,
     filter?: Filter<DbEventDocument>,
+    controller: DatabaseController = databaseController,
 ): Promise<Array<DbEventDocument>> {
-    const cursor = databaseController.events
+    const cursor = controller.events
         .find(
             {
                 startTime: { $gte: startDate },
@@ -74,6 +75,8 @@ async function getDbEventsInRange(
 async function setDbEvent(
     eventData: DbEventDocument,
     options?: FindOptions,
+    controller: DatabaseController = databaseController,
+    iterationId?: IterationId,
 ): Promise<DbEventDocument> {
     if (!eventData.id) {
         throw new ClientApiError(
@@ -86,7 +89,7 @@ async function setDbEvent(
 
     // Because the client generates the ID, we don't inherently know if this is new or an update.
     // So, we try to update it first.
-    const updateResult = await databaseController.events.updateOne(
+    const updateResult = await controller.events.updateOne(
         { id: eventId },
         { $set: updatePayload },
         options,
@@ -100,6 +103,7 @@ async function setDbEvent(
 
     SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
         events: { [eventId]: fixedEvent },
+        iterationId,
     } as EventDataUpdateMessage<DbEventDocument>);
 
     return fixedEvent;
@@ -121,6 +125,8 @@ async function setDbEvent(
 async function createDbEvent(
     eventData: DbEventDocument,
     options?: FindOptions,
+    controller: DatabaseController = databaseController,
+    iterationId?: IterationId,
 ): Promise<DbEventDocument> {
     if (!eventData.id) {
         throw new ClientApiError(
@@ -136,12 +142,13 @@ async function createDbEvent(
         id: eventId,
     };
 
-    await databaseController.events.insertOne(fixedEvent as any, options);
+    await controller.events.insertOne(fixedEvent as any, options);
 
     SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
         action: "added",
         newData: fixedEvent,
         eventId: eventId,
+        iterationId,
     } as EventAddedOrRemovedMessage<DbEventDocument>);
 
     return fixedEvent as DbEventDocument;
@@ -150,15 +157,14 @@ async function createDbEvent(
 async function deleteDbEvent(
     eventId: string,
     options?: FindOptions,
+    controller: DatabaseController = databaseController,
+    iterationId?: IterationId,
 ): Promise<void> {
     if (!eventId) {
         throw new ClientApiError("Event id is missing!");
     }
 
-    const data = await databaseController.events.deleteOne(
-        { id: eventId },
-        options,
-    );
+    const data = await controller.events.deleteOne({ id: eventId }, options);
 
     if (data.deletedCount === 0) {
         throw new ClientApiError("Failed to delete event!");
@@ -167,6 +173,7 @@ async function deleteDbEvent(
     SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
         action: "removed",
         eventId: eventId,
+        iterationId,
     } as EventAddedOrRemovedMessage<DbEventDocument>);
 }
 
