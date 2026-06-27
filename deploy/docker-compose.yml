@@ -2,12 +2,12 @@ services:
     ui:
         image: ghcr.io/system-b15/bluz/ui:${BLUZ_VERSION:-latest}
         build:
-            context: .
+            context: ./../
             dockerfile: ui/Dockerfile
         container_name: bluz-ui
         restart: unless-stopped
         env_file:
-            - .env
+            - ../.env
         # extra_hosts:
         # - "hive.org:host-gateway" # If running Hive locally
         networks:
@@ -25,7 +25,7 @@ services:
         container_name: bluz-curriculum-db
         restart: always
         env_file:
-            - .env
+            - ../.env
         environment:
             POSTGRES_USER: ${POSTGRES_USER}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -47,7 +47,7 @@ services:
         container_name: bluz-mongodb
         restart: unless-stopped
         env_file:
-            - .env
+            - ../.env
         environment:
             MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
             MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
@@ -72,12 +72,12 @@ services:
     sessions:
         image: ghcr.io/system-b15/bluz/sessions:${BLUZ_VERSION:-latest}
         build:
-            context: session-server
+            context: ../session-server
             dockerfile: Dockerfile.websocket
         container_name: bluz-sessions
         restart: unless-stopped
         env_file:
-            - .env
+            - ../.env
         networks:
             - bluz_net
 
@@ -86,13 +86,13 @@ services:
         container_name: bluz-proxy
         restart: unless-stopped
         build:
-            context: nginx
+            context: ./../nginx
             dockerfile: Dockerfile.proxy
         ports:
             - "127.0.0.3:80:80"
             - "127.0.0.3:443:443"
         volumes:
-            - ./nginx/ssl:/etc/nginx/ssl:ro
+            - ./../nginx/ssl:/etc/nginx/ssl:ro
         depends_on:
             - ui
             - sessions

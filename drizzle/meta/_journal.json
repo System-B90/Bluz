@@ -29,6 +29,13 @@
       "when": 1781524435372,
       "tag": "0003_curriculum_archived",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782579875658,
+      "tag": "0004_medical_lord_hawal",
+      "breakpoints": true
     }
   ]
 }
