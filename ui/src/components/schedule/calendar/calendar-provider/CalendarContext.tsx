@@ -3,6 +3,7 @@
 import { createContext, Dispatch, SetStateAction, useContext } from "react";
 
 import { EventLockMessage } from "@/api-shared/types";
+import { IterationId } from "@/api-shared/types/iteration";
 import { CalendarAction } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { Event, EventId } from "@/components/schedule/types/event";
 
@@ -12,12 +13,19 @@ export type CalendarContextState = {
     startDate: Date | undefined;
     endDate: Date | undefined;
 
+    // Active iteration being viewed. `undefined` ⇒ the current (writable) run.
+    // A past iteration is read-only reference material.
+    iterationId: IterationId | undefined;
+    // True when viewing a past iteration (writes are rejected server-side).
+    isReadOnlyIteration: boolean;
+
     // Period locking: maps eventId → lock info for events currently being edited by any user
     eventLocks: Record<EventId, EventLockMessage>;
 
     // Setters
     setStartDate: Dispatch<SetStateAction<Date | undefined>>;
     setEndDate: Dispatch<SetStateAction<Date | undefined>>;
+    setIterationId: Dispatch<SetStateAction<IterationId | undefined>>;
 
     // Actions
     saveEvent: (event: Partial<Event>) => void;

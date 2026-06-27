@@ -22,6 +22,7 @@ export const ganttCurriculumsSchema = pgTable("c", {
     description: text("description").notNull().default(""),
     startDate: date("start_date", { mode: "string" }),
     isDraft: boolean("draft").notNull().default(true),
+    isArchived: boolean("archived").notNull().default(false),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

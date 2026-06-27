@@ -17,8 +17,22 @@ export const useEventWebsocket = (
     offlineMode: boolean,
     dispatch: (action: CalendarAction) => void,
     setEventLock: (eventId: EventId, lock: EventLockMessage | null) => void,
+    activeIterationId?: string,
 ) => {
     const { addMessageHandler } = useAuth();
+
+    // Ignore broadcasts that belong to an iteration other than the one being
+    // viewed. A broadcast without an iterationId is for the current run; when
+    // viewing the current run (no activeIterationId) we only accept those.
+    const isForActiveIteration = useCallback(
+        (broadcastIterationId?: string) => {
+            if (activeIterationId) {
+                return broadcastIterationId === activeIterationId;
+            }
+            return !broadcastIterationId;
+        },
+        [activeIterationId],
+    );
 
     const onWebSocketMessage: MessageHandlerType = useCallback(
         (messageType: MessageTypes, data: any) => {
@@ -42,6 +56,7 @@ export const useEventWebsocket = (
             switch (messageType) {
             case MessageTypes.EVENT_DATA_UPDATE: {
                 const msg = data as EventDataUpdateMessage<Event>;
+                if (!isForActiveIteration(msg.iterationId)) break;
                 const updatedEvents = Object.values(msg.events).map(
                     (ev) => eventDateFixup(ev) as Event,
                 );
@@ -50,6 +65,7 @@ export const useEventWebsocket = (
             }
             case MessageTypes.EVENT_ADDED_OR_REMOVED: {
                 const msg = data as EventAddedOrRemovedMessage<Event>;
+                if (!isForActiveIteration(msg.iterationId)) break;
                 if (msg.action === "removed") {
                     dispatch({
                         type: "DELETE_EVENT",
@@ -65,7 +81,7 @@ export const useEventWebsocket = (
             }
             }
         },
-        [offlineMode, dispatch, setEventLock],
+        [offlineMode, dispatch, setEventLock, isForActiveIteration],
     );
 
     useEffect(() => {

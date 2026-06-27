@@ -1,19 +1,29 @@
 import { FindOptions, UpdateOptions } from "mongodb";
 
-import { databaseController } from "@/api-server/mongo-db-controller";
+import {
+    databaseController,
+    DatabaseController,
+} from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { ClientApiError } from "@/api-shared/errors";
 import { Outsider } from "@/api-shared/types/outsider";
 import { MessageTypes } from "@/settings";
 
-async function getDbOutsiders(options?: FindOptions): Promise<Array<Outsider>> {
-    const data = databaseController.outsiders.find({}, options);
+async function getDbOutsiders(
+    options?: FindOptions,
+    controller: DatabaseController = databaseController,
+): Promise<Array<Outsider>> {
+    const data = controller.outsiders.find({}, options);
     return await data.toArray();
 }
 
-async function setDbOutsider(outsider: Outsider, options?: UpdateOptions) {
+async function setDbOutsider(
+    outsider: Outsider,
+    options?: UpdateOptions,
+    controller: DatabaseController = databaseController,
+) {
     const { _id: _, id: outsiderId, ...outsiderData } = outsider as any;
-    const data = await databaseController.outsiders.updateOne(
+    const data = await controller.outsiders.updateOne(
         { id: outsiderId },
         { $set: outsiderData },
         options,
@@ -26,16 +36,22 @@ async function setDbOutsider(outsider: Outsider, options?: UpdateOptions) {
     });
 }
 
-async function createDbOutsider(outsider: Outsider) {
-    await databaseController.outsiders.insertOne(outsider as Outsider);
+async function createDbOutsider(
+    outsider: Outsider,
+    controller: DatabaseController = databaseController,
+) {
+    await controller.outsiders.insertOne(outsider as Outsider);
     SendServerRequestToSessionServer(MessageTypes.OUTSIDERS_UPDATE as any, {
         outsiders: { [outsider.id]: outsider },
     });
     return outsider;
 }
 
-async function deleteDbOutsider(outsiderId: Outsider["id"]) {
-    const data = await databaseController.outsiders.deleteOne({
+async function deleteDbOutsider(
+    outsiderId: Outsider["id"],
+    controller: DatabaseController = databaseController,
+) {
+    const data = await controller.outsiders.deleteOne({
         id: outsiderId,
     });
     if (data.deletedCount === 0) {
