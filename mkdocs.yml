@@ -42,13 +42,7 @@ plugins:
       source: ./ui/src
       tsconfig: ./ui/tsconfig.json
       output_dir: api
-      typedoc_options:
-        entryPointStrategy: expand
-        exclude:
-          - "**/node_modules/**"
-          - "**/.next/**"
-          - "**/components/**"
-          - "**/app/!(api)/**"
+      options: typedoc.json
   - mkdocs-typer2:
       pretty: true
 
