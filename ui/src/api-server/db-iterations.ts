@@ -21,24 +21,30 @@ function stripMongoId(iteration: any): Iteration {
  * One-off migration: make sure the `bluz_meta.iterations` registry exists and
  * holds the existing `bluz` database as the first, current iteration. No
  * documents are moved — the existing data stays exactly where it is.
+ * Uses upsert to avoid a TOCTOU race on concurrent cold starts.
  */
 async function ensureSeeded(): Promise<void> {
     const meta = getMetaController();
-    const existing = await meta.iterations.findOne({});
-    if (existing) return;
-
     const now = new Date();
-    await meta.iterations.insertOne({
-        id: "current",
-        label: "מחזור נוכחי",
-        dbName: DEFAULT_ITERATION_DB_NAME,
-        startDate: now,
-        endDate: null,
-        isCurrent: true,
-        createdAt: now,
-        updatedAt: now,
-    } as Iteration);
-    setCurrentIterationDbName(DEFAULT_ITERATION_DB_NAME);
+    const result = await meta.iterations.updateOne(
+        { id: "current" },
+        {
+            $setOnInsert: {
+                id: "current",
+                label: "מחזור נוכחי",
+                dbName: DEFAULT_ITERATION_DB_NAME,
+                startDate: now,
+                endDate: null,
+                isCurrent: true,
+                createdAt: now,
+                updatedAt: now,
+            } as Iteration,
+        },
+        { upsert: true },
+    );
+    if (result.upsertedCount > 0) {
+        setCurrentIterationDbName(DEFAULT_ITERATION_DB_NAME);
+    }
 }
 
 async function listIterations(): Promise<Array<Iteration>> {
@@ -136,17 +142,34 @@ async function patchIteration(
     }
 
     if (patch.isCurrent === true) {
-        await meta.iterations.updateMany(
-            { isCurrent: true },
-            { $set: { isCurrent: false, updatedAt: new Date() } },
-        );
         update.isCurrent = true;
-        // Point future default (no-`it`) calls at the new current database.
+        const session = meta.client.startSession();
+        try {
+            await session.withTransaction(async () => {
+                await meta.iterations.updateMany(
+                    { isCurrent: true },
+                    { $set: { isCurrent: false, updatedAt: new Date() } },
+                    { session },
+                );
+                await meta.iterations.updateOne(
+                    { id },
+                    { $set: update },
+                    { session },
+                );
+            });
+        } finally {
+            await session.endSession();
+        }
+        // Update in-process cache only after the transaction commits.
         setCurrentIterationDbName(existing.dbName);
+    } else {
+        await meta.iterations.updateOne({ id }, { $set: update });
     }
 
-    await meta.iterations.updateOne({ id }, { $set: update });
     const updated = await meta.iterations.findOne({ id });
+    if (!updated) {
+        throw new ClientApiError(`Iteration "${id}" disappeared during update!`);
+    }
     return stripMongoId(updated);
 }
 

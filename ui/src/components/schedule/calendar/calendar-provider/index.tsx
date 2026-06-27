@@ -88,20 +88,21 @@ export const CalendarProvider = ({
                     eventId,
                     lockedById: userData.id,
                     lockedByName: userData.display_name || userData.name,
+                    iterationId,
                 },
             });
         },
-        [sendMessage, userData.id, userData.display_name, userData.name],
+        [sendMessage, userData.id, userData.display_name, userData.name, iterationId],
     );
 
     const unlockEvent = useCallback(
         (eventId: EventId) => {
             sendMessage({
                 type: MessageTypes.EVENT_UNLOCK,
-                data: { eventId },
+                data: { eventId, iterationId },
             });
         },
-        [sendMessage],
+        [sendMessage, iterationId],
     );
 
     // WS updates go through remoteDispatch so they don't pollute the undo stack.
