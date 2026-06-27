@@ -1,6 +1,10 @@
 /*
 Name: populate_bluz.ts
 Purpose: Seeds hardcoded schedule events into the local Bluz MongoDB instance.
+         Raw payload dates sit on a Feb-2026 template; they are re-anchored onto
+         the live course timeline (week 1 = Sunday 2026-08-02) before seeding.
+         KAPE occupies weeks 3-5 (2026-08-16 .. 2026-09-06) and is reserved: any
+         event re-anchored into that window is delayed 3 weeks past it.
 Created: 2026-06-04
 Author: Michael K. Steinberg
 */
@@ -677,13 +681,38 @@ class DateParser {
     }
 }
 
+class CourseTimeline {
+    /**
+     * Re-anchors a template date (Feb-2026 layout) onto the live course timeline
+     * (week 1 = Sunday 2026-08-02), then delays anything landing inside the
+     * reserved KAPE window (weeks 3-5, 2026-08-16 .. 2026-09-06) by 3 weeks so the
+     * period stays clear.
+     */
+    private static readonly DAY_MS = 24 * 60 * 60 * 1000;
+    private static readonly ORIGINAL_START = Date.UTC(2026, 1, 2); // 2026-02-02
+    private static readonly COURSE_START = Date.UTC(2026, 7, 2); // 2026-08-02 (Sun, week 1)
+    private static readonly KAPE_START = Date.UTC(2026, 7, 16); // 2026-08-16 (week 3)
+    private static readonly KAPE_END = Date.UTC(2026, 8, 6); // 2026-09-06 (week 6, exclusive)
+    private static readonly KAPE_SHIFT_MS = 21 * CourseTimeline.DAY_MS;
+    private static readonly REANCHOR_MS =
+        CourseTimeline.COURSE_START - CourseTimeline.ORIGINAL_START;
+
+    public static adjust(start: Date): Date {
+        let t = start.getTime() + CourseTimeline.REANCHOR_MS;
+        if (t >= CourseTimeline.KAPE_START && t < CourseTimeline.KAPE_END) {
+            t += CourseTimeline.KAPE_SHIFT_MS;
+        }
+        return new Date(t);
+    }
+}
+
 class EventMapper {
     /**
      * Maps the raw payload entries to MongoDB Event Documents.
      */
     public static mapToDocuments(rawEvents: IRawEvent[]): DbEventDocument[] {
         return rawEvents.map((row) => {
-            const startTime = DateParser.parse(row.dateStr);
+            const startTime = CourseTimeline.adjust(DateParser.parse(row.dateStr));
             const endTime = new Date(
                 startTime.getTime() + (row.durationHours || 1) * 60 * 60 * 1000,
             );

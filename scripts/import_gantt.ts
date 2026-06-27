@@ -23,66 +23,43 @@ const eid = () => `e_${uid()}`;
 
 // -----------------------------------------------------------------------------
 // Input Payload
-// Module names are prefixed with the syllabus abbreviation so the Gantt chart
-// shows cohesive, non-ambiguous labels across all axes.
+// Modules are grouped by THEME (no "שבוע X" labels). The week-based layout was
+// flattened and rebuilt into functional axes/modules so the Gantt reads as
+// cohesive topic groups instead of a calendar.
+//
+// KAPE reservation: the course starts Sunday 2026-08-02 (week 1). Weeks 3-5
+// (2026-08-16 .. 2026-09-06) are reserved for קפ"ה and kept clear — events that
+// previously lived in those weeks were rehoused into their thematic modules,
+// which schedule outside the reserved block. A dedicated reserved axis marks the
+// period so nothing gets slotted into it.
 // -----------------------------------------------------------------------------
 
 const GANTT_DATA = [
-  // ─── ציר: ללא ציר ────────────────────────────────────────────────────────
+  // ─── ציר: אדמיניסטרציה וסנכרונים ─────────────────────────────────────────
   {
-    syllabus_name: "ללא ציר",
+    syllabus_name: "אדמיניסטרציה וסנכרונים",
     modules: [
       {
-        module_name: "שבוע 0",
-        events: [
-          {
-            name: "איתור - בבחינה",
-            duration_hours: 0.0,
-            comments:
-              "לברר מה היה בהרצאה, להבין האם אנחנו רוצים להכניס ולתאם בהתאם.",
-          },
-        ],
-      },
-      {
-        module_name: "כללי",
+        module_name: "דד-ליינים ואישורים",
         events: [
           { name: "דד ליין הייב", duration_hours: 0.0, comments: "" },
           { name: "דד ליין אימגים", duration_hours: 0.0, comments: "" },
           { name: "אישורי תכניות מקצועות", duration_hours: 0.0, comments: "" },
           { name: "יום הצגת מערכים - קורסי", duration_hours: 0.0, comments: "" },
+          { name: "אישור תכניות שבוע טקטי", duration_hours: 0.0, comments: "" },
+          { name: "דד ליין גאנט", duration_hours: 0.0, comments: "" },
+        ],
+      },
+      {
+        module_name: "נתוני חניכים וסנכרונים",
+        events: [
           { name: "עיבוד פרטי חניכים", duration_hours: 0.0, comments: "" },
           {
             name: 'סנכרון מק"סים',
             duration_hours: 0.0,
             comments: 'סנכרון יומי של המק"סים',
           },
-          { name: "אישור תכניות שבוע טקטי", duration_hours: 0.0, comments: "" },
           { name: "שליחת שאלון לחניכים שיאון", duration_hours: 0.0, comments: "" },
-          { name: "התנדבות?", duration_hours: 0.0, comments: "" },
-        ],
-      },
-      {
-        module_name: "שבוע 1",
-        events: [
-          { name: 'קב"הח סגל', duration_hours: 1.0, comments: "" },
-        ],
-      },
-      {
-        module_name: "שבוע 2",
-        events: [
-          { name: 'קב"הח חניכים', duration_hours: 1.0, comments: "" },
-        ],
-      },
-      {
-        module_name: "שבוע 4",
-        events: [
-          { name: "דד ליין גאנט", duration_hours: 0.0, comments: "" },
-          { name: "מטווחים", duration_hours: 0.0, comments: "" },
-        ],
-      },
-      {
-        module_name: "שבוע 5",
-        events: [
           {
             name: 'שליחת שאלון לבי"ס - חודש מראש',
             duration_hours: 0.0,
@@ -91,35 +68,281 @@ const GANTT_DATA = [
         ],
       },
       {
-        module_name: "שבוע 7",
+        module_name: "פתוח לבירור",
         events: [
-          { name: "יום הצגת מקצועות - קורסי", duration_hours: 3.0, comments: "" },
+          {
+            name: "איתור - בבחינה",
+            duration_hours: 0.0,
+            comments:
+              "לברר מה היה בהרצאה, להבין האם אנחנו רוצים להכניס ולתאם בהתאם.",
+          },
+          { name: "איך מדברים על חניכים - לברר", duration_hours: 0.0, comments: "" },
+          { name: "התנדבות?", duration_hours: 0.0, comments: "" },
+        ],
+      },
+    ],
+  },
+
+  // ─── ציר: קב"החים ─────────────────────────────────────────────────────────
+  {
+    syllabus_name: 'קב"החים',
+    modules: [
+      {
+        module_name: 'קב"החים',
+        events: [
+          { name: 'קב"הח סגל', duration_hours: 1.0, comments: "" },
+          { name: 'קב"הח חניכים', duration_hours: 1.0, comments: "" },
+        ],
+      },
+    ],
+  },
+
+  // ─── ציר: פתיחת הכנס והיכרות ──────────────────────────────────────────────
+  {
+    syllabus_name: "פתיחת הכנס והיכרות",
+    modules: [
+      {
+        module_name: "ימי פתיחה והיכרות",
+        events: [
+          {
+            name: "היכרות עם רמות",
+            duration_hours: 1.0,
+            comments: "מצגת מתוקפת בתיקיית הכנס",
+          },
+          {
+            name: "הצגת ההכנס",
+            duration_hours: 0.5,
+            comments: "מצגת מתוקפת בתיקיית הכנס",
+          },
+          { name: "היכרות לירן", duration_hours: 0.5, comments: "" },
+          { name: "היכרות ליאור", duration_hours: 0.5, comments: "" },
+          {
+            name: "היכרות חניכים",
+            duration_hours: 1.5,
+            comments:
+              "כל מפקד מציג את החניכים שלו לכלל הסגל (יש לאסוף נתונים ולרשום במצגת נתונים, תחביבים ופרטים רלוונטים על החניך)",
+          },
+          { name: "הכרת דמויות במערך", duration_hours: 0.5, comments: "" },
+          {
+            name: "שלומויות - עם היוהלמ",
+            duration_hours: 1.0,
+            comments: "להזמין אותם",
+          },
+        ],
+      },
+    ],
+  },
+
+  // ─── ציר: הכשרת איש הסגל ──────────────────────────────────────────────────
+  {
+    syllabus_name: "הכשרת איש הסגל",
+    modules: [
+      {
+        module_name: "סביבת עבודה ונהלים",
+        events: [
+          {
+            name: "פרמוט מחשבים ביום הראשון",
+            duration_hours: 2.0,
+            comments: "להכין מצגצ תדרוך, יחד עם הצגת סביבת עבודה ותיקיות.",
+          },
+          {
+            name: "אבטחת מידע",
+            duration_hours: 0.5,
+            comments:
+              "להעביר ביום שמתקינים תוכנות וכו'. לדבר על כוננים, סיווגים וביטחון מידע בקורס (גם על דלתיים פתוחות).",
+          },
+          { name: "נהלי משמעת ולבוש בסמך", duration_hours: 0.5, comments: "" },
+          { name: "ביש לוגיסטי", duration_hours: 0.5, comments: "" },
+          {
+            name: "שגרת המחלקה",
+            duration_hours: 1.0,
+            comments: "מסדר בוקר, נהלי עמידה בזמנים, חלוקת תפקידים ועוד.",
+          },
+          { name: "תדרוך עמדות תורן", duration_hours: 1.0, comments: "" },
         ],
       },
       {
-        module_name: "שבוע 9",
+        module_name: "כשירות אישית ורווחת הסגל",
         events: [
-          { name: "טקטי", duration_hours: 25.0, comments: "" },
           {
-            name: "תדרוך שבוע ראשון",
-            duration_hours: 0.45,
-            comments: "הסבר איך יתנהל השבוע הראשון, הצגת לוז, תדרוך יום קליטה",
+            name: "שיח רפואי + ביש הגשה - להביא רופא",
+            duration_hours: 1.0,
+            comments: "עדיף רופא - גם עשה סדר במרפאה",
+          },
+          {
+            name: "פיקוד מגדרי",
+            duration_hours: 1.0,
+            comments: "לדבר עם אלמוג לקראת ההרצאה",
+          },
+          {
+            name: "מתיחות והחזקה (עמית מרום / שניידר?)",
+            duration_hours: 1.0,
+            comments: "",
+          },
+          { name: "מניעת אובדנות - קבנית", duration_hours: 1.5, comments: "" },
+          { name: "רפלקציה", duration_hours: 1.0, comments: "" },
+          { name: "סדנת צילום", duration_hours: 1.0, comments: "" },
+        ],
+      },
+      {
+        module_name: "תורת ההדרכה והלמידה",
+        events: [
+          {
+            name: "מבוא לחניך - מאפיינים, יחס חניך מפקד, אירוע הדרכתי",
+            duration_hours: 1.0,
+            comments: "",
+          },
+          { name: "תפיסת ההדרכה", duration_hours: 1.5, comments: "" },
+          {
+            name: "תורת הלמידה - סגנונות, מודלים, הערכה",
+            duration_hours: 1.5,
+            comments: "",
+          },
+          { name: "תיקון שגיאות / מתן פידבק", duration_hours: 1.0, comments: "" },
+          { name: "עמידה מול קהל", duration_hours: 1.5, comments: "" },
+          {
+            name: "שעות שילוב",
+            duration_hours: 0.5,
+            comments: "הנחיות לשעות שילוב - מתי אפשר, מה מותר, התנהלות",
+          },
+          {
+            name: "תשאול ועיבוד",
+            duration_hours: 1.0,
+            comments:
+              "הסבר על מודל התשאול ועל ההבדל בינו לבין עיבוד. כדאי להתחיל להעביר קצת תוכן מנהיגות לפני זה.",
+          },
+        ],
+      },
+    ],
+  },
+
+  // ─── ציר: פיקוד והדרכה ────────────────────────────────────────────────────
+  {
+    syllabus_name: "פיקוד והדרכה",
+    modules: [
+      {
+        module_name: "זיהוי והיכרות חניכים",
+        events: [
+          {
+            name: "משחק זיהוי חניכים - גיבושים",
+            duration_hours: 0.5,
+            comments:
+              "לתת לכל מפקד שם של חניך והוא צריך לזהות אותו בתמונות או סרטונים מהגיבוש",
+          },
+          {
+            name: "משחק זיהוי חניכים - טריוויה",
+            duration_hours: 1.0,
+            comments: "שאלות טריוויה על החניכים",
+          },
+          {
+            name: "מבוא לחניך - חקר מקרי בוחן",
+            duration_hours: 1.5,
+            comments: "ניתוח אירועים ממשמרות או קורסים קודמים",
+          },
+          { name: "חשיפת חלוקת חניכים לסגל", duration_hours: 1.0, comments: "" },
+        ],
+      },
+      {
+        module_name: "כלים פיקודיים",
+        events: [
+          {
+            name: "סימולציות פיקודיות - מקרים ותגובות",
+            duration_hours: 2.0,
+            comments: "דיבייט / סימולציות - תרחישים בין מפקד לחניך, מפקד למפקד",
+          },
+          {
+            name: "הכנה למפגש הורים",
+            duration_hours: 1.0,
+            comments: "תדרוך לקראת המפגש, קווים מנחים",
           },
         ],
       },
       {
-        module_name: "שבוע 10",
+        module_name: "תחקירים",
         events: [
           {
-            name: 'תדרוך פ"א 0',
+            name: "הצגת תחקיר - מקצועי/הדרכתי",
+            duration_hours: 2.0,
+            comments:
+              "עבר טוב, ההצגה עצמה הייתה שעה, ואז עשינו באודיטוריום המשך עיבוד של איה עם הסגל",
+          },
+          {
+            name: "עיבוד הצגת תחקיר",
+            duration_hours: 1.0,
+            comments: "בהתאם לתחקיר",
+          },
+        ],
+      },
+      {
+        module_name: 'ריאיונות ופ"א',
+        events: [
+          { name: "תדרוך לראיונות קליטה", duration_hours: 0.25, comments: "" },
+          {
+            name: "תדרוך ריאיון קליטה",
             duration_hours: 0.25,
-            comments: 'להכין פתב"ס',
+            comments: "הסבר על ריאיונות קליטה - דגשים למילוי",
           },
-          { name: "תדרוך שבוע ראשון ויום קליטה", duration_hours: 1.0, comments: "" },
+          { name: "פא 0 - מחייגים לחניכים", duration_hours: 1.5, comments: "" },
+        ],
+      },
+    ],
+  },
+
+  // ─── ציר: שגרת הכנס ומסכמים ───────────────────────────────────────────────
+  {
+    syllabus_name: "שגרת הכנס ומסכמים",
+    modules: [
+      {
+        module_name: "שיחות חתך ומסכמים",
+        events: [
+          { name: "שיחת חתך - אמצע", duration_hours: 3.0, comments: "" },
+          {
+            name: "שיחת חתך - סוף הכנס (חלק מהמסכם)",
+            duration_hours: 1.5,
+            comments: "",
+          },
+          {
+            name: "מסכם הכנס",
+            duration_hours: 8.0,
+            comments:
+              "כל מפקד יעביר הרצאה מסכמת על העשייה שלו בהכנס (כ-20 דקות). לאחר מכן, מסכמים עם איה על כל ההכנס.",
+          },
         ],
       },
       {
-        module_name: "שבועי",
+        module_name: 'שיאון ופתב"ס',
+        events: [
+          {
+            name: 'איך כותבים פתב"ס',
+            duration_hours: 0.5,
+            comments: "להדגיש את אופן הכתיבה והעקרונות, במיוחד כי מתחילים שיאון",
+          },
+        ],
+      },
+    ],
+  },
+
+  // ─── ציר: גיבוש ───────────────────────────────────────────────────────────
+  {
+    syllabus_name: "גיבוש",
+    modules: [
+      {
+        module_name: "גיבוש",
+        events: [
+          { name: "חווית שטח", duration_hours: 20.0, comments: "" },
+          { name: "ערבי גיבוש", duration_hours: 2.0, comments: "" },
+          { name: "קפה יום גיבוש - מסווג", duration_hours: 0.0, comments: "" },
+        ],
+      },
+    ],
+  },
+
+  // ─── ציר: שגרה שבועית ─────────────────────────────────────────────────────
+  {
+    syllabus_name: "שגרה שבועית",
+    modules: [
+      {
+        module_name: "שגרה שבועית",
         events: [
           { name: "ניקיון חדס", duration_hours: 0.5, comments: "שלישי בלילה" },
           {
@@ -143,293 +366,55 @@ const GANTT_DATA = [
           },
         ],
       },
-      {
-        module_name: "לבירור",
-        events: [
-          { name: "איך מדברים על חניכים - לברר", duration_hours: 0.0, comments: "" },
-        ],
-      },
     ],
   },
 
-  // ─── ציר: שגרה ───────────────────────────────────────────────────────────
+  // ─── ציר: היערכות מבצעית ופתיחת קורס ──────────────────────────────────────
   {
-    syllabus_name: "שגרה",
+    syllabus_name: "היערכות מבצעית ופתיחת קורס",
     modules: [
       {
-        module_name: "שבוע 1",
+        module_name: "היערכות מבצעית",
         events: [
-          {
-            name: "היכרות עם רמות",
-            duration_hours: 1.0,
-            comments: "מצגת מתוקפת בתיקיית הכנס",
-          },
-          {
-            name: "הצגת ההכנס",
-            duration_hours: 0.5,
-            comments: "מצגת מתוקפת בתיקיית הכנס",
-          },
-          { name: "היכרות לירן", duration_hours: 0.5, comments: "" },
-          { name: "שיחת חתך - אמצע", duration_hours: 3.0, comments: "" },
-          { name: "ערבי גיבוש", duration_hours: 2.0, comments: "" },
+          { name: "מטווחים", duration_hours: 0.0, comments: "" },
+          { name: "טקטי", duration_hours: 25.0, comments: "" },
         ],
       },
       {
-        module_name: "שבוע 2",
+        module_name: "תדריכי פתיחת קורס",
         events: [
           {
-            name: "היכרות חניכים",
-            duration_hours: 1.5,
-            comments:
-              "כל מפקד מציג את החניכים שלו לכלל הסגל (יש לאסוף נתונים ולרשום במצגת נתונים, תחביבים ופרטים רלוונטים על החניך)",
-          },
-        ],
-      },
-      {
-        module_name: "שבוע 3",
-        events: [
-          { name: "היכרות ליאור", duration_hours: 0.5, comments: "" },
-        ],
-      },
-      {
-        module_name: "שבוע 5",
-        events: [
-          {
-            name: "שיחת חתך - סוף הכנס (חלק מהמסכם)",
-            duration_hours: 1.5,
-            comments: "",
-          },
-        ],
-      },
-      {
-        module_name: "שבוע 6",
-        events: [
-          {
-            name: "מסכם הכנס",
-            duration_hours: 8.0,
-            comments:
-              "כל מפקד יעביר הרצאה מסכמת על העשייה שלו בהכנס (כ-20 דקות). לאחר מכן, מסכמים עם איה על כל ההכנס.",
-          },
-        ],
-      },
-      {
-        module_name: "שבוע 8",
-        events: [
-          {
-            name: 'איך כותבים פתב"ס',
-            duration_hours: 0.5,
-            comments: "להדגיש את אופן הכתיבה והעקרונות, במיוחד כי מתחילים שיאון",
-          },
-        ],
-      },
-    ],
-  },
-
-  // ─── ציר: איש הסגל ───────────────────────────────────────────────────────
-  {
-    syllabus_name: "איש הסגל",
-    modules: [
-      {
-        module_name: "שבוע 1",
-        events: [
-          {
-            name: "פרמוט מחשבים ביום הראשון",
-            duration_hours: 2.0,
-            comments: "להכין מצגצ תדרוך, יחד עם הצגת סביבת עבודה ותיקיות.",
+            name: "תדרוך שבוע ראשון",
+            duration_hours: 0.45,
+            comments: "הסבר איך יתנהל השבוע הראשון, הצגת לוז, תדרוך יום קליטה",
           },
           {
-            name: "פיקוד מגדרי",
-            duration_hours: 1.0,
-            comments: "לדבר עם אלמוג לקראת ההרצאה",
-          },
-          {
-            name: "אבטחת מידע",
-            duration_hours: 0.5,
-            comments:
-              "להעביר ביום שמתקינים תוכנות וכו'. לדבר על כוננים, סיווגים וביטחון מידע בקורס (גם על דלתיים פתוחות).",
-          },
-          {
-            name: "שיח רפואי + ביש הגשה - להביא רופא",
-            duration_hours: 1.0,
-            comments: "עדיף רופא - גם עשה סדר במרפאה",
-          },
-          { name: "נהלי משמעת ולבוש בסמך", duration_hours: 0.5, comments: "" },
-          {
-            name: "מבוא לחניך - מאפיינים, יחס חניך מפקד, אירוע הדרכתי",
-            duration_hours: 1.0,
-            comments: "",
-          },
-          { name: "הכרת דמויות במערך", duration_hours: 0.5, comments: "" },
-          {
-            name: "שלומויות - עם היוהלמ",
-            duration_hours: 1.0,
-            comments: "להזמין אותם",
-          },
-        ],
-      },
-      {
-        module_name: "שבוע 2",
-        events: [
-          { name: "רפלקציה", duration_hours: 1.0, comments: "" },
-          { name: "תדרוך עמדות תורן", duration_hours: 1.0, comments: "" },
-          {
-            name: "תשאול ועיבוד",
-            duration_hours: 1.0,
-            comments:
-              "הסבר על מודל התשאול ועל ההבדל בינו לבין עיבוד. כדאי להתחיל להעביר קצת תוכן מנהיגות לפני זה.",
-          },
-          {
-            name: "שגרת המחלקה",
-            duration_hours: 1.0,
-            comments: "מסדר בוקר, נהלי עמידה בזמנים, חלוקת תפקידים ועוד.",
-          },
-          { name: "ביש לוגיסטי", duration_hours: 0.5, comments: "" },
-        ],
-      },
-      {
-        module_name: "שבוע 3",
-        events: [
-          { name: "סדנת צילום", duration_hours: 1.0, comments: "" },
-          {
-            name: "מתיחות והחזקה (עמית מרום / שניידר?)",
-            duration_hours: 1.0,
-            comments: "",
-          },
-          { name: "מניעת אובדנות - קבנית", duration_hours: 1.5, comments: "" },
-          { name: "תפיסת ההדרכה", duration_hours: 1.5, comments: "" },
-        ],
-      },
-      {
-        module_name: "שבוע 4",
-        events: [
-          { name: "תיקון שגיאות / מתן פידבק", duration_hours: 1.0, comments: "" },
-          {
-            name: "תורת הלמידה - סגנונות, מודלים, הערכה",
-            duration_hours: 1.5,
-            comments: "",
-          },
-        ],
-      },
-      {
-        module_name: "שבוע 5",
-        events: [
-          {
-            name: "שעות שילוב",
-            duration_hours: 0.5,
-            comments: "הנחיות לשעות שילוב - מתי אפשר, מה מותר, התנהלות",
-          },
-          { name: "עמידה מול קהל", duration_hours: 1.5, comments: "" },
-        ],
-      },
-      {
-        module_name: "שבוע 8",
-        events: [
-          { name: "חשיפת חלוקת חניכים לסגל", duration_hours: 1.0, comments: "" },
-        ],
-      },
-      {
-        module_name: "שבוע 9",
-        events: [
-          {
-            name: "תדרוך ריאיון קליטה",
+            name: 'תדרוך פ"א 0',
             duration_hours: 0.25,
-            comments: "הסבר על ריאיונות קליטה - דגשים למילוי",
+            comments: 'להכין פתב"ס',
           },
+          { name: "תדרוך שבוע ראשון ויום קליטה", duration_hours: 1.0, comments: "" },
+          { name: "יום הצגת מקצועות - קורסי", duration_hours: 3.0, comments: "" },
         ],
       },
     ],
   },
 
-  // ─── ציר: גיבוש ──────────────────────────────────────────────────────────
+  // ─── ציר: קפ"ה (שבועות 3-5) — שמור ────────────────────────────────────────
+  // Reserved block. No course events are scheduled here; week 3-5 content was
+  // moved into the thematic axes above so this period stays clear.
   {
-    syllabus_name: "גיבוש",
+    syllabus_name: 'קפ"ה (שבועות 3-5) — שמור',
     modules: [
       {
-        module_name: "שבוע 1",
-        events: [
-          { name: "חווית שטח", duration_hours: 20.0, comments: "" },
-        ],
-      },
-      {
-        module_name: "כללי",
-        events: [
-          { name: "קפה יום גיבוש - מסווג", duration_hours: 0.0, comments: "" },
-        ],
-      },
-    ],
-  },
-
-  // ─── ציר: פיקוד הדרכתי ───────────────────────────────────────────────────
-  {
-    syllabus_name: "פיקוד הדרכתי",
-    modules: [
-      {
-        module_name: "שבוע 2",
+        module_name: 'תקופת קפ"ה — שמור',
         events: [
           {
-            name: "משחק זיהוי חניכים - גיבושים",
-            duration_hours: 0.5,
+            name: 'קפ"ה - שבועות 3-5',
+            duration_hours: 0.0,
             comments:
-              "לתת לכל מפקד שם של חניך והוא צריך לזהות אותו בתמונות או סרטונים מהגיבוש",
+              'תקופה שמורה (2026-08-16 .. 2026-09-06). אין לשבץ אירועים בתקופה זו.',
           },
-          { name: "תדרוך לראיונות קליטה", duration_hours: 0.25, comments: "" },
-          {
-            name: "משחק זיהוי חניכים - טריוויה",
-            duration_hours: 1.0,
-            comments: "שאלות טריוויה על החניכים",
-          },
-        ],
-      },
-      {
-        module_name: "שבוע 3",
-        events: [
-          {
-            name: "מבוא לחניך - חקר מקרי בוחן",
-            duration_hours: 1.5,
-            comments: "ניתוח אירועים ממשמרות או קורסים קודמים",
-          },
-        ],
-      },
-      {
-        module_name: "שבוע 5",
-        events: [
-          {
-            name: "סימולציות פיקודיות - מקרים ותגובות",
-            duration_hours: 2.0,
-            comments: "דיבייט / סימולציות - תרחישים בין מפקד לחניך, מפקד למפקד",
-          },
-        ],
-      },
-      {
-        module_name: "שבוע 6",
-        events: [
-          {
-            name: "הכנה למפגש הורים",
-            duration_hours: 1.0,
-            comments: "תדרוך לקראת המפגש, קווים מנחים",
-          },
-        ],
-      },
-      {
-        module_name: "שבוע 7",
-        events: [
-          {
-            name: "הצגת תחקיר - מקצועי/הדרכתי",
-            duration_hours: 2.0,
-            comments:
-              "עבר טוב, ההצגה עצמה הייתה שעה, ואז עשינו באודיטוריום המשך עיבוד של איה עם הסגל",
-          },
-          {
-            name: "עיבוד הצגת תחקיר",
-            duration_hours: 1.0,
-            comments: "בהתאם לתחקיר",
-          },
-        ],
-      },
-      {
-        module_name: "שבוע 9",
-        events: [
-          { name: "פא 0 - מחייגים לחניכים", duration_hours: 1.5, comments: "" },
         ],
       },
     ],
