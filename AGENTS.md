@@ -112,6 +112,7 @@ When adding a new Gantt entity, follow this pattern rather than writing raw hand
 | `drizzle/` | Generated SQL migrations + Drizzle Kit config. | [README](drizzle/README.md) |
 | `session-server/` | Standalone WebSocket sync server (its own `package.json`). | [README](session-server/README.md) |
 | `scripts/` | Setup, seeding, test-runner, and CI helper scripts (Python + TS). | [README](scripts/README.md) |
+| `cli/` | The `bluz` Python CLI tool (Typer + InquirerPy) — drives the `/api/*` surface. Versioned in lockstep with the app by `scripts/publish.py`. | [README](cli/README.md) |
 | `tests/` | Playwright e2e specs + Vitest backend tests + auth setup. Has a full feature→test map. | [README](tests/README.md) |
 | `nginx/` | Reverse-proxy configs and Dockerfile for each topology. | — |
 | `.agents/` | **Vendored third-party tooling (git submodules)** — e.g. `caveman`. Not Bluz source. Don't edit. | — |

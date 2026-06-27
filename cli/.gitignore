@@ -1,0 +1,8 @@
+# Python build / cache artifacts for the bluz-cli package
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
