@@ -21,12 +21,13 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
     testDir: ".",
     testMatch: "**/*.spec.ts",
+    testIgnore: [ /worktrees/, /\.claude/ ],
     timeout: 15_000,
     fullyParallel: false,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 1,
     workers: 1,
-    reporter: process.env.CI ? [["html"], ["github"]] : [["html"], ["list"]],
+    reporter: process.env.CI ? [ [ "html" ], [ "github" ] ] : [ [ "html" ], [ "list" ] ],
 
     use: {
         baseURL: process.env.BASE_URL ?? "https://bluz.dev",
@@ -43,7 +44,7 @@ export default defineConfig({
             name: "login",
             testMatch: /login\.spec\.ts/,
             use: {
-                ...devices["Desktop Chrome"],
+                ...devices[ "Desktop Chrome" ],
                 storageState: { cookies: [], origins: [] },
             },
         },
@@ -54,12 +55,12 @@ export default defineConfig({
         },
         {
             name: "chromium",
-            testIgnore: [/login\.spec\.ts/, /auth\.setup\.ts/, /backend/],
+            testIgnore: [ /login\.spec\.ts/, /auth\.setup\.ts/, /backend/, /worktrees/, /\.claude/ ],
             use: {
-                ...devices["Desktop Chrome"],
+                ...devices[ "Desktop Chrome" ],
                 storageState: "../.auth/user.json",
             },
-            dependencies: ["setup"],
+            dependencies: [ "setup" ],
         },
     ],
 });
