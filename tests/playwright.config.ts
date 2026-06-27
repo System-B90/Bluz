@@ -58,7 +58,7 @@ export default defineConfig({
             testIgnore: [ /login\.spec\.ts/, /auth\.setup\.ts/, /backend/, /worktrees/, /\.claude/ ],
             use: {
                 ...devices[ "Desktop Chrome" ],
-                storageState: "../.auth/user.json",
+                storageState: ".auth/user.json",
             },
             dependencies: [ "setup" ],
         },

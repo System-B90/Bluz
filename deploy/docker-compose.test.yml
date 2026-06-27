@@ -9,11 +9,11 @@
 services:
     ui:
         build:
-            context: .
+            context: ./../
             dockerfile: ui/Dockerfile
             target: dev
         container_name: ${TEST_PROJECT_NAME}-ui
-        command: sh -c "npm run build -- --no-mangling && npm run start"
+        command: sh -c "npm run build -- --no-mangling && node .next/standalone/server.js"
         environment:
             - NODE_ENV=production
             - MONGO_CONNECTION_STRING=mongodb://mongo_admin:4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP@mongodb:27017/
@@ -46,5 +46,5 @@ services:
             - "127.0.0.3:${TEST_PROXY_PORT_HTTP}:80"
             - "127.0.0.3:${TEST_PROXY_PORT_HTTPS}:443"
         volumes: !override
-            - ./nginx/nginx.conf.test:/etc/nginx/nginx.conf:ro
-            - ./nginx/ssl:/etc/nginx/ssl:ro
+            - ./../nginx/nginx.conf.test:/etc/nginx/nginx.conf:ro
+            - ./../nginx/ssl:/etc/nginx/ssl:ro
