@@ -1,4 +1,4 @@
-name: Build Bluz Images
+name: Build and Release Bluz
 
 on:
     push:
@@ -263,6 +263,16 @@ jobs:
                   docker save ${{ env.IMAGE_POSTGRES }} -o release-offline/images/postgres.tar
                   docker save ${{ env.IMAGE_MONGO }} -o release-offline/images/mongodb.tar
 
+            - name: Setup Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Build Python CLI
+              run: |
+                  python -m pip install --upgrade pip build
+                  python -m build cli/
+
             - name: Compress Final Packages
               run: |
                   tar -czvf bluz-online-${{ github.ref_name }}.tar.gz -C release-online .
@@ -274,6 +284,7 @@ jobs:
                   files: |
                       bluz-online-${{ github.ref_name }}.tar.gz
                       bluz-offline-${{ github.ref_name }}.tar.gz
+                      cli/dist/*
                   generate_release_notes: true
                   draft: false
                   prerelease: false
