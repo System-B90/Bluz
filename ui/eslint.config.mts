@@ -217,6 +217,7 @@ export default defineConfig([
             ".claude/**",
             "tests/**",
             "playwright-report/",
+            "*.d.ts",
         ],
     },
 ]);
