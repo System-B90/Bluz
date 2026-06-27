@@ -106,13 +106,16 @@ class BluzClient:
     @staticmethod
     def _unwrap(response: httpx.Response) -> Any:
         import json
+
         content_type = response.headers.get("content-type", "")
         is_json = "application/json" in content_type
         body = None
 
         if not is_json:
             text = response.text.strip()
-            if (text.startswith("{") and text.endswith("}")) or (text.startswith("[") and text.endswith("]")):
+            if (text.startswith("{") and text.endswith("}")) or (
+                text.startswith("[") and text.endswith("]")
+            ):
                 try:
                     body = json.loads(text)
                     is_json = True
