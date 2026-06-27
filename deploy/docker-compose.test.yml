@@ -17,7 +17,7 @@ services:
         environment:
             - NODE_ENV=production
             - MONGO_CONNECTION_STRING=mongodb://mongo_admin:4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP@mongodb:27017/
-            - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${TEST_PROJECT_NAME}-curriculum-db:${TEST_POSTGRES_PORT}/${POSTGRES_DB}
+            - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${TEST_PROJECT_NAME}-curriculum-db:5432/${POSTGRES_DB}
             - NEXTAUTH_URL=https://127.0.0.3:${TEST_PROXY_PORT_HTTPS}
             - HIVE_CLIENT_ID=${TEST_HIVE_CLIENT_ID}
             - HIVE_CLIENT_SECRET=${TEST_HIVE_CLIENT_SECRET}
