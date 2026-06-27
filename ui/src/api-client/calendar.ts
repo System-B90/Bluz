@@ -41,9 +41,6 @@ export async function apiGetEvents({
         endpoint.toString(),
         {
             method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
         },
     );
     return rawData.map(eventDateFixup) as unknown as Array<Event>;
@@ -62,9 +59,6 @@ export async function apiGetMultipleEvents(
         endpoint.toString(),
         {
             method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
         },
     );
     for (const key of Object.keys(rawData)) {
@@ -131,7 +125,6 @@ export async function apiCompareEvents({
         b: Array<DbEventDocument>;
     }>(endpoint.toString(), {
         method: "GET",
-        headers: { "Content-Type": "application/json" },
     });
     return {
         a: rawData.a.map(eventDateFixup) as unknown as Array<Event>,

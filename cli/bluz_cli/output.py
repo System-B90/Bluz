@@ -65,12 +65,12 @@ def _render_list(data: list, title: str | None) -> None:
 def _render_dict(data: dict, title: str | None) -> None:
     # If the dictionary values are all simple scalar types and we have a title (e.g. lists),
     # format it as a beautiful structured table with ID and Title columns.
-    is_entity_map = (
-        title is not None
-        and all(isinstance(v, (str, int, float, bool)) for v in data.values())
+    is_entity_map = title is not None and all(
+        isinstance(v, (str, int, float, bool)) for v in data.values()
     )
     if is_entity_map:
         from rich import box
+
         table = Table(title=title, show_header=True, box=box.SIMPLE)
         table.add_column("ID", style="bold cyan")
         table.add_column("Title / Name")
@@ -103,6 +103,7 @@ def render(data: Any, *, as_json: bool, title: str | None = None) -> None:
             console.print(decoded)
         except UnicodeDecodeError:
             import sys
+
             if sys.stdout.isatty():
                 console.print(f"[dim]{len(data)} bytes (binary data)[/dim]")
             else:
