@@ -185,7 +185,12 @@ describe("Settings API Route", () => {
         });
         const response = await SettingsRoute.POST(request, routeContext);
         expect(response.status).toBe(200);
-        expect(DbSettings.set).toHaveBeenCalledWith("prayerTimes", payload);
+        expect(DbSettings.set).toHaveBeenCalledWith(
+            "prayerTimes",
+            payload,
+            undefined,
+            expect.anything(),
+        );
         expect(updatePrayerEvents).toHaveBeenCalled();
     });
 });
@@ -210,7 +215,11 @@ describe("Outsiders API Route", () => {
         const data = await response.json();
         expect(response.status).toBe(200);
         expect(data.data).toEqual(payload);
-        expect(DbOutsiders.set).toHaveBeenCalledWith(payload);
+        expect(DbOutsiders.set).toHaveBeenCalledWith(
+            payload,
+            undefined,
+            expect.anything(),
+        );
     });
 
     it("PUT - creates outsider", async () => {
@@ -233,7 +242,7 @@ describe("Outsiders API Route", () => {
         });
         const response = await OutsidersRoute.DELETE(request);
         expect(response.status).toBe(200);
-        expect(DbOutsiders.del).toHaveBeenCalledWith("o1");
+        expect(DbOutsiders.del).toHaveBeenCalledWith("o1", expect.anything());
     });
 });
 

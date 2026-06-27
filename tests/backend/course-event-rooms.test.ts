@@ -76,7 +76,11 @@ describe("Course API Route", () => {
 
         expect(response.status).toBe(200);
         expect(data.data).toEqual(coursePayload);
-        expect(DbCourses.set).toHaveBeenCalledWith(coursePayload);
+        expect(DbCourses.set).toHaveBeenCalledWith(
+            coursePayload,
+            undefined,
+            expect.anything(),
+        );
     });
 
     it("DELETE - deletes a course", async () => {
@@ -88,7 +92,7 @@ describe("Course API Route", () => {
         const data = await response.json();
 
         expect(response.status).toBe(200);
-        expect(DbCourses.del).toHaveBeenCalledWith("c1");
+        expect(DbCourses.del).toHaveBeenCalledWith("c1", expect.anything());
     });
 
     it("PUT - creates a course", async () => {
@@ -104,7 +108,10 @@ describe("Course API Route", () => {
 
         expect(response.status).toBe(200);
         expect(data.data).toEqual(coursePayload);
-        expect(DbCourses.create).toHaveBeenCalledWith(coursePayload);
+        expect(DbCourses.create).toHaveBeenCalledWith(
+            coursePayload,
+            expect.anything(),
+        );
     });
 });
 
@@ -119,7 +126,11 @@ describe("Event API Route", () => {
 
         expect(response.status).toBe(200);
         expect(data.data).toEqual(mockEvent);
-        expect(DbEvent.get).toHaveBeenCalledWith("e1");
+        expect(DbEvent.get).toHaveBeenCalledWith(
+            "e1",
+            undefined,
+            expect.anything(),
+        );
     });
 
     it("GET - multiple events by ids", async () => {
@@ -133,7 +144,11 @@ describe("Event API Route", () => {
 
         expect(response.status).toBe(200);
         expect(data.data).toEqual({ [mockId]: mockEvents[0] });
-        expect(DbEvent.getMultiple).toHaveBeenCalledWith([mockId]);
+        expect(DbEvent.getMultiple).toHaveBeenCalledWith(
+            [mockId],
+            undefined,
+            expect.anything(),
+        );
     });
 
     it("GET - events in date range", async () => {
@@ -188,7 +203,12 @@ describe("Event API Route", () => {
         const data = await response.json();
 
         expect(response.status).toBe(200);
-        expect(DbEvent.del).toHaveBeenCalledWith("e1");
+        expect(DbEvent.del).toHaveBeenCalledWith(
+            "e1",
+            undefined,
+            expect.anything(),
+            undefined,
+        );
     });
 });
 
@@ -216,7 +236,11 @@ describe("Rooms API Route", () => {
 
         expect(response.status).toBe(200);
         expect(data.data).toEqual(roomPayload);
-        expect(DbRooms.set).toHaveBeenCalledWith(roomPayload);
+        expect(DbRooms.set).toHaveBeenCalledWith(
+            roomPayload,
+            undefined,
+            expect.anything(),
+        );
     });
 
     it("PUT - creates custom room", async () => {
@@ -232,7 +256,10 @@ describe("Rooms API Route", () => {
 
         expect(response.status).toBe(200);
         expect(data.data).toEqual(roomPayload);
-        expect(DbRooms.create).toHaveBeenCalledWith(roomPayload);
+        expect(DbRooms.create).toHaveBeenCalledWith(
+            roomPayload,
+            expect.anything(),
+        );
     });
 
     it("DELETE - deletes custom room", async () => {
@@ -244,7 +271,7 @@ describe("Rooms API Route", () => {
         const data = await response.json();
 
         expect(response.status).toBe(200);
-        expect(DbRooms.del).toHaveBeenCalledWith("r1");
+        expect(DbRooms.del).toHaveBeenCalledWith("r1", expect.anything());
     });
 
     it("PATCH - updates room extended info", async () => {
@@ -257,6 +284,11 @@ describe("Rooms API Route", () => {
         const data = await response.json();
 
         expect(response.status).toBe(200);
-        expect(DbRoomExtendedInfo.upsert).toHaveBeenCalledWith("r1", "custom", { workstationCount: 10 });
+        expect(DbRoomExtendedInfo.upsert).toHaveBeenCalledWith(
+            "r1",
+            "custom",
+            { workstationCount: 10 },
+            expect.anything(),
+        );
     });
 });

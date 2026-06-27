@@ -150,6 +150,7 @@ export function normalizeCurriculumData(
         description: apiCurriculum.description,
         startDate: apiCurriculum.startDate,
         isDraft: apiCurriculum.isDraft,
+        isArchived: apiCurriculum.isArchived ?? false,
         updatedAt: apiCurriculum.updatedAt,
         createdAt: apiCurriculum.createdAt,
         weeks: curriculumWeekIds.sort(

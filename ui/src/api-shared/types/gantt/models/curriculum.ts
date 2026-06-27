@@ -8,6 +8,8 @@ export type GanttCurriculum = {
     startDate: null | string;
     syllabuses: Array<GanttSyllabusId>;
     isDraft: boolean;
+    /** Archived curriculums are kept as reference, grouped below drafts. */
+    isArchived: boolean;
     weeks: Array<GanttWeekId>;
 } & BaseGantItem;
 export type GanttCurriculumId = GanttCurriculum["id"];

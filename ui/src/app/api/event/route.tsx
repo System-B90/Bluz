@@ -2,6 +2,10 @@ export const dynamic = "force-dynamic";
 
 import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
 import { DbEvent } from "@/api-server/db-event";
+import {
+    resolveIterationFromRequest,
+    resolveWritableIterationFromRequest,
+} from "@/api-server/iteration-request";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import {
@@ -41,13 +45,18 @@ export const GET: ServerApiEventGet = async (request) => {
         if (!id && ids === null && !(rawStartDate && rawEndDate)) {
             throw new ClientApiError("No id provided!");
         }
+        const { controller } = await resolveIterationFromRequest(request);
         if (id) {
-            return ApiSuccess(await DbEvent.get(id));
+            return ApiSuccess(await DbEvent.get(id, undefined, controller));
         } else if (ids !== null) {
             const parsedIds = ids
                 .split(",")
                 .filter((v) => v.length === 36 || v.length === 24);
-            const eventArray = await DbEvent.getMultiple(parsedIds);
+            const eventArray = await DbEvent.getMultiple(
+                parsedIds,
+                undefined,
+                controller,
+            );
             const eventRecord = eventArray.reduce(
                 (prev, ev) => ({ ...prev, [ev.id]: ev }),
                 {} as Record<EventId, Partial<DbEventDocument>>,
@@ -69,7 +78,15 @@ export const GET: ServerApiEventGet = async (request) => {
                     `טווח התאריכים חייב להיות בין 0 ל-${MAX_RANGE_DAYS} ימים`,
                 );
             }
-            return ApiSuccess(await DbEvent.getInRange(start, end));
+            return ApiSuccess(
+                await DbEvent.getInRange(
+                    start,
+                    end,
+                    undefined,
+                    undefined,
+                    controller,
+                ),
+            );
         }
     } catch (e) {
         return catchHandler(request, e);
@@ -78,13 +95,17 @@ export const GET: ServerApiEventGet = async (request) => {
 
 export const POST: ServerApiEventUpdate = async (request) => {
     try {
+        const { controller, iterationId } =
+            await resolveWritableIterationFromRequest(request);
         const event: ApiEventUpdatePayload = eventDateFixup(
             await request.json(),
         );
         if (!event) {
             throw new ClientApiError("No data provided!");
         }
-        return ApiSuccess(await DbEvent.set(event));
+        return ApiSuccess(
+            await DbEvent.set(event, undefined, controller, iterationId),
+        );
     } catch (e) {
         return catchHandler(request, e);
     }
@@ -92,13 +113,17 @@ export const POST: ServerApiEventUpdate = async (request) => {
 
 export const PUT: ServerApiEventCreate = async (request) => {
     try {
+        const { controller, iterationId } =
+            await resolveWritableIterationFromRequest(request);
         const event: ApiEventCreatePayload = eventDateFixup(
             await request.json(),
         );
         if (!event) {
             throw new ClientApiError("No data provided!");
         }
-        return ApiSuccess(await DbEvent.create(event));
+        return ApiSuccess(
+            await DbEvent.create(event, undefined, controller, iterationId),
+        );
     } catch (e) {
         return catchHandler(request, e);
     }
@@ -106,11 +131,13 @@ export const PUT: ServerApiEventCreate = async (request) => {
 
 export const DELETE: ServerApiEventDelete = async (request) => {
     try {
+        const { controller, iterationId } =
+            await resolveWritableIterationFromRequest(request);
         const eventId: ApiEventDeletePayload = await request.json();
         if (!eventId) {
             throw new ClientApiError("No eventId provided!");
         }
-        await DbEvent.del(eventId);
+        await DbEvent.del(eventId, undefined, controller, iterationId);
         return ApiSuccess();
     } catch (e) {
         return catchHandler(request, e);

@@ -1,6 +1,9 @@
 import { FindOptions, UpdateOptions, WithId } from "mongodb";
 
-import { databaseController } from "@/api-server/mongo-db-controller";
+import {
+    databaseController,
+    DatabaseController,
+} from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { PRAYER_TIMES_SETTING_KEY } from "@/api-shared/types/settings/prayer";
 import { Setting, SettingName } from "@/api-shared/types/settings/settings";
@@ -14,9 +17,12 @@ type DbSetting = {
 async function getDbSetting(
     name: SettingName,
     options?: FindOptions,
+    controller: DatabaseController = databaseController,
 ): Promise<null | Setting> {
-    const data: null | WithId<DbSetting> =
-        await databaseController.settings.findOne({ key: name }, options);
+    const data: null | WithId<DbSetting> = await controller.settings.findOne(
+        { key: name },
+        options,
+    );
     return data ? data.value : null;
 }
 
@@ -24,8 +30,9 @@ async function setDbSetting(
     name: SettingName,
     setting: Partial<Setting>,
     options?: UpdateOptions,
+    controller: DatabaseController = databaseController,
 ) {
-    await databaseController.settings.updateOne(
+    await controller.settings.updateOne(
         { key: name },
         { $set: { value: setting } },
         options,

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGetEvents } from "@/api-client/calendar";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { EventLockMessage } from "@/api-shared/types";
+import { IterationId } from "@/api-shared/types/iteration";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { CalendarFiltersProvider } from "@/components/base/CalendarFilterProvider";
 import { useOffline } from "@/components/base/OfflineProvider";
@@ -35,6 +36,10 @@ export const CalendarProvider = ({
     const { userData, sendMessage } = useAuth();
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
+    // Active iteration. `undefined` ⇒ the current (writable) run.
+    const [iterationId, setIterationId] = useState<IterationId | undefined>(
+        undefined,
+    );
     // Internal lock state carries per-lock expiry; the public `eventLocks` map
     // (below) strips that bookkeeping for consumers.
     const [lockState, setLockState] = useState<LockState>({});
@@ -100,7 +105,8 @@ export const CalendarProvider = ({
     );
 
     // WS updates go through remoteDispatch so they don't pollute the undo stack.
-    useEventWebsocket(offlineMode, remoteDispatch, setEventLock);
+    // Pass the active iteration so broadcasts for other iterations are ignored.
+    useEventWebsocket(offlineMode, remoteDispatch, setEventLock, iterationId);
 
     const { saveEvent, deleteEvent } = useEventActions(
         events,
@@ -114,7 +120,7 @@ export const CalendarProvider = ({
         (s?: Date, e?: Date) => {
             if (!s || !e) return;
 
-            apiGetEvents({ startDate: s, endDate: e })
+            apiGetEvents({ startDate: s, endDate: e, iterationId })
                 .then((fetchedEvents) => {
                     remoteDispatch({
                         type: "SET_EVENTS",
@@ -129,9 +135,10 @@ export const CalendarProvider = ({
                     ),
                 );
         },
-        [remoteDispatch],
+        [remoteDispatch, iterationId],
     );
 
+    // Reload when the date range or the active iteration changes.
     useEffect(() => {
         loadEvents(startDate, endDate);
     }, [startDate, endDate, loadEvents]);
@@ -153,9 +160,12 @@ export const CalendarProvider = ({
                     events,
                     startDate,
                     endDate,
+                    iterationId,
+                    isReadOnlyIteration: Boolean(iterationId),
                     eventLocks,
                     setStartDate,
                     setEndDate,
+                    setIterationId,
                     saveEvent,
                     deleteEvent,
                     undo,

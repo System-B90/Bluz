@@ -29,6 +29,7 @@ export function DuplicateCurriculumAction({
             description: sourceCurriculum.description,
             startDate: sourceCurriculum.startDate,
             isDraft: true,
+            isArchived: false,
             weeks: sourceCurriculum.weeks,
         };
         // Cast to proper type - duplication uses the same week IDs structure

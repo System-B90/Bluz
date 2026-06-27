@@ -23,7 +23,8 @@ import { CurriculumActionItems } from "@/components/gantt/curriculum-fab/Curricu
 import { CurriculumListItems } from "@/components/gantt/curriculum-fab/CurriculumListItems";
 import {
     fetchDrawerData,
-    sortCurriculumsByDraftAndUpdatedAt,
+    flattenCurriculumGroups,
+    groupCurriculumsByStatus,
 } from "@/components/gantt/curriculum-fab/utils";
 
 export type CurriculumDrawerProps = {
@@ -60,10 +61,12 @@ export function CurriculumFab({
         };
     }, [enqueueSnackbar]);
 
-    const sortedIds = useMemo(
-        () => sortCurriculumsByDraftAndUpdatedAt(curriculumsData),
+    const groups = useMemo(
+        () => groupCurriculumsByStatus(curriculumsData),
         [curriculumsData],
     );
+
+    const sortedIds = useMemo(() => flattenCurriculumGroups(groups), [groups]);
 
     useEffect(() => {
         if (
@@ -225,9 +228,9 @@ export function CurriculumFab({
                     <CurriculumListItems
                         currentCurriculum={currentCurriculum}
                         curriculumsData={curriculumsData}
+                        groups={groups}
                         isFetchingDetails={isFetchingDetails}
                         setCurrentCurriculum={handleSelectCurriculum}
-                        sortedIds={sortedIds}
                     />
                 </List>
             </Popover>

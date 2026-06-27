@@ -3,16 +3,21 @@ import { Event } from "@/components/schedule/types/event";
 
 export type EventDataUpdateMessage<T extends DbEventDocument | Event> = {
     events: Record<string, T>;
+    // Iteration the change belongs to. Omitted ⇒ current iteration. Clients
+    // ignore broadcasts for an iteration they are not currently viewing.
+    iterationId?: string;
 };
 
 type EventRemovedMessage = {
     action: "removed";
     eventId: string;
+    iterationId?: string;
 };
 type EventAddedMessage<T extends DbEventDocument | Event> = {
     action: "added";
     eventId: string;
     newData: T;
+    iterationId?: string;
 };
 
 export type EventAddedOrRemovedMessage<T extends DbEventDocument | Event> =
