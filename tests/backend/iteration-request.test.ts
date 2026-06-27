@@ -1,16 +1,18 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, it, expect, vi } from "vitest";
 
-const { resolveIterationDb, assertWritable } = vi.hoisted(() => ({
+const { resolveIterationDb, resolveWritableIterationDb } = vi.hoisted(() => ({
     resolveIterationDb: vi.fn(async (id?: string) => ({
         dbName: id ? `db_${id}` : "current",
     })),
-    assertWritable: vi.fn(async () => undefined),
+    resolveWritableIterationDb: vi.fn(async (id?: string) => ({
+        dbName: id ? `db_${id}` : "current",
+    })),
 }));
 
-vi.mock("@/api-server/mongo-db-controller", () => ({ resolveIterationDb }));
-vi.mock("@/api-server/db-iterations", () => ({
-    DbIterations: { assertWritable },
+vi.mock("@/api-server/mongo-db-controller", () => ({
+    resolveIterationDb,
+    resolveWritableIterationDb,
 }));
 
 import {
@@ -56,14 +58,18 @@ describe("resolveIterationFromRequest", () => {
 });
 
 describe("resolveWritableIterationFromRequest", () => {
-    it("passes the iteration through the write guard", async () => {
+    it("resolves writes through the writable resolver", async () => {
         const req = new NextRequest("http://localhost/api/event?it=past");
-        await resolveWritableIterationFromRequest(req as any);
-        expect(assertWritable).toHaveBeenCalledWith("past");
+        const { iterationId } =
+            await resolveWritableIterationFromRequest(req as any);
+        expect(iterationId).toBe("past");
+        expect(resolveWritableIterationDb).toHaveBeenCalledWith("past");
     });
 
-    it("propagates a guard rejection", async () => {
-        assertWritable.mockRejectedValueOnce(new Error("read only"));
+    it("propagates a read-only rejection from the resolver", async () => {
+        resolveWritableIterationDb.mockRejectedValueOnce(
+            new Error("read only"),
+        );
         const req = new NextRequest("http://localhost/api/event?it=past");
         await expect(
             resolveWritableIterationFromRequest(req as any),

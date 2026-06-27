@@ -13,27 +13,32 @@ vi.mock("@/api-server/db-event", () => ({
     },
 }));
 
-// Resolve any iteration to a stub controller, no Mongo needed.
-const fakeController = { dbName: "stub" };
-vi.mock("@/api-server/mongo-db-controller", () => ({
-    resolveIterationDb: vi.fn(async () => fakeController),
-}));
+// Resolve any iteration to a stub controller, no Mongo needed. The writable
+// resolver enforces the read-only guard: reject the "past" iteration only.
+const { fakeController, resolveIterationDb, resolveWritableIterationDb } =
+    vi.hoisted(() => {
+        const fakeController = { dbName: "stub" };
+        return {
+            fakeController,
+            resolveIterationDb: vi.fn(async () => fakeController),
+            resolveWritableIterationDb: vi.fn(async (id?: string) => {
+                if (id === "past") {
+                    const { ClientApiError } = await import(
+                        "@/api-shared/errors"
+                    );
+                    throw new ClientApiError("read only");
+                }
+                return fakeController;
+            }),
+        };
+    });
 
-// The read-only guard: reject writes to the "past" iteration only.
-vi.mock("@/api-server/db-iterations", () => ({
-    DbIterations: {
-        assertWritable: vi.fn(async (id?: string) => {
-            if (id === "past") {
-                const { ClientApiError } = await import("@/api-shared/errors");
-                throw new ClientApiError("read only");
-            }
-        }),
-    },
+vi.mock("@/api-server/mongo-db-controller", () => ({
+    resolveIterationDb,
+    resolveWritableIterationDb,
 }));
 
 import { DbEvent } from "@/api-server/db-event";
-import { DbIterations } from "@/api-server/db-iterations";
-import { resolveIterationDb } from "@/api-server/mongo-db-controller";
 import * as EventRoute from "@/app/api/event/route";
 
 beforeEach(() => vi.clearAllMocks());
@@ -50,7 +55,7 @@ describe("event route — iteration read-only guard", () => {
         const res = await EventRoute.POST(req as any);
 
         expect(res.status).toBe(400);
-        expect(DbIterations.assertWritable).toHaveBeenCalledWith("past");
+        expect(resolveWritableIterationDb).toHaveBeenCalledWith("past");
         expect(DbEvent.set).not.toHaveBeenCalled();
     });
 
@@ -83,6 +88,7 @@ describe("event route — iteration read-only guard", () => {
 
         expect(res.status).toBe(200);
         expect(resolveIterationDb).toHaveBeenCalledWith("2026b");
+        expect(resolveWritableIterationDb).not.toHaveBeenCalled();
         expect(DbEvent.getInRange).toHaveBeenCalledWith(
             expect.any(Date),
             expect.any(Date),
