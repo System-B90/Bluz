@@ -406,7 +406,13 @@ def main(
 
     # Run tests via Playwright
     typer.secho("Running Playwright tests...", fg=typer.colors.CYAN)
-    playwright_cmd = ["npx", "playwright", "test"]
+    playwright_cmd = [
+        "npx",
+        "playwright",
+        "test",
+        "--config",
+        "tests/playwright.config.ts",
+    ]
     if ui:
         playwright_cmd.append("--ui")
     elif visual:
