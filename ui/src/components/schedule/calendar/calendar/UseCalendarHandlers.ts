@@ -1,10 +1,3 @@
-/**
- * Name: useCalendarHandlers.ts
- * Purpose: Custom hook to manage calendar event logic and keyboard shortcuts.
- * Created: 2026-04-18
- * Author: Michael K. Steinberg
- */
-
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SlotInfo } from "react-big-calendar";
@@ -16,6 +9,17 @@ import { Event } from "@/components/schedule/types/event";
 
 const DUMMY_ROOM_ID = "no-room-unassigned";
 
+/**
+ * Custom React hook to manage calendar event logic, user interactions (e.g. drag & drop, select, click),
+ * and keyboard shortcuts (copy, paste, delete).
+ * 
+ * @param events - The current list of calendar events.
+ * @param handleSaveEvent - Callback when saving an event.
+ * @param handleDeleteEvent - Callback when deleting an event.
+ * @param setSelectedEvent - State setter to select an event.
+ * @param setOpenEventDialog - State setter to open/close the event dialog.
+ * @returns State and event handlers for the calendar.
+ */
 export function useCalendarHandlers(
     events: Array<Event>,
     handleSaveEvent: (event: Event) => void,

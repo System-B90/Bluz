@@ -344,8 +344,8 @@ function ModuleDialogInner({
             onClose={handleClose}
             open={open}
             {...props}
-            TransitionProps={{ onEnter: () => startTransition(() => setIsContentReady(true)) }}
             transitionDuration={{ enter: 200, exit: 100 }}
+            TransitionProps={{ onEnter: () => startTransition(() => setIsContentReady(true)) }}
         >
             <ModuleDialogHeader
                 moduleTitle={moduleDoc?.title}

@@ -1,9 +1,3 @@
-/**
- * Name: curriculum.ts
- * Purpose: Curriculum, Weeks, and Days definitions
- * Created: 2026-04-17
- * Author: Michael K. Steinberg
- */
 import { relations } from "drizzle-orm";
 import { boolean, date, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
@@ -16,6 +10,9 @@ import {
     ganttCurriculumEventDayMappingsSchema,
 } from "./mappings";
 
+/**
+ * Drizzle database schema definition for the Gantt Curriculums table (`c`).
+ */
 export const ganttCurriculumsSchema = pgTable("c", {
     id: text("id").primaryKey(),
     title: text("title").notNull(),
@@ -26,6 +23,9 @@ export const ganttCurriculumsSchema = pgTable("c", {
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+/**
+ * Relations definition for the Gantt Curriculums schema.
+ */
 export const ganttCurriculumsRelationsSchema = relations(
     ganttCurriculumsSchema,
     ({ many }) => ({

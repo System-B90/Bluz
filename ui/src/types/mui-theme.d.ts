@@ -1,7 +1,7 @@
 export {};
 
 declare module "@mui/material/styles" {
-    interface Theme {
+    type Theme = {
         vars: NonNullable<import("@mui/material/styles").Theme["vars"]>;
     }
 }

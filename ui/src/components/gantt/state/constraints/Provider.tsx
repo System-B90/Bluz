@@ -1,10 +1,3 @@
-/**
- * Name: provider.tsx
- * Purpose: Context provider for managing and syncing Gantt constraints, scoped by curriculum or module.
- * Created: 2026-04-19
- * Author: Michael K. Steinberg
- */
-
 "use client";
 
 import { useSnackbar } from "notistack";
@@ -24,6 +17,10 @@ import {
 import { GanttConstraintContext } from "@/components/gantt/state/constraints/context";
 import { ganttConstraintReducer } from "@/components/gantt/state/constraints/reducer";
 
+/**
+ * Defines the scope of the Gantt constraints provider context,
+ * which can be scoped either curriculum-wide or to a specific module.
+ */
 export type ProviderScope =
     | { type: "curriculum"; curriculumId: GanttCurriculumId }
     | {
@@ -33,6 +30,13 @@ export type ProviderScope =
           moduleId: GanttModuleId;
       };
 
+/**
+ * Context provider for managing and syncing Gantt constraints.
+ * Fetches, creates, updates, and deletes constraints and exposes their state.
+ * 
+ * @param props - React props containing children and the scope context.
+ * @returns The rendered React element.
+ */
 export function GanttConstraintProvider({
     children,
     context,
