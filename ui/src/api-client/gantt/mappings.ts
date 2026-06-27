@@ -1,10 +1,3 @@
-/**
- * Name: mappings.ts
- * Purpose: Client-side API wrappers for curriculum-module-day mappings.
- * Created: 2026-04-15
- * Author: Michael K. Steinberg
- */
-
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { baseDocumentFixup, RawBaseDocument } from "@/api-client/gantt/base";
 import { CreateGanttCurriculumEventDayMapping } from "@/api-shared/types/gantt/create-payloads";
@@ -112,6 +105,10 @@ async function apiDeleteModuleDayMapping(
     );
 }
 
+/**
+ * Client-side API client wrapper for managing curriculum module and event day mappings.
+ * Provides endpoints for retrieving, creating, updating, and deleting mappings.
+ */
 export const curriculumModuleDayMappingApi = {
     apiGet: apiGetModuleDayMapping,
     apiCreate: apiCreateModuleDayMapping,

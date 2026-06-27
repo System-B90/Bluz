@@ -1,10 +1,3 @@
-/**
- * Name: WorkTimePanel.tsx
- * Purpose: Management interface for curriculum work weeks and daily hour allocations.
- * Created: 2026-04-14
- * Author: Michael K. Steinberg
- */
-
 import AddIcon from "@mui/icons-material/Add";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
@@ -23,6 +16,13 @@ import { useWorkTimePanelLogic } from "@/components/gantt/curriculum-view/compon
 import { cloneWeeks } from "@/components/gantt/curriculum-view/components/WorkTimePanel/utils";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 
+/**
+ * Management interface panel for curriculum work weeks and daily hour allocations.
+ * Allows viewing weekly capacities and adding new weeks to the curriculum.
+ * 
+ * @param props - Component props containing curriculumId and the curriculum object.
+ * @returns The rendered WorkTimePanel component.
+ */
 export function WorkTimePanel({
     curriculumId,
     curriculum,

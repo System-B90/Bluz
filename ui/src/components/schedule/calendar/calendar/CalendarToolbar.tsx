@@ -1,10 +1,3 @@
-/**
- * Name: CalendarToolbar.tsx
- * Purpose: Custom header toolbar for the calendar containing navigation, date picker, and view tabs.
- * Created: 2026-06-04
- * Author: Antigravity
- */
-
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
@@ -31,6 +24,12 @@ import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { Filters } from "@/components/header/filters";
 import { IterationSelector } from "@/components/schedule/calendar/calendar/IterationSelector";
 
+/**
+ * Custom header toolbar for the calendar containing navigation controls, a date picker, and view selectors.
+ * 
+ * @param props - React-big-calendar toolbar props and custom layout state callbacks.
+ * @returns The rendered CalendarToolbar component.
+ */
 export function CalendarToolbar({
     date,
     label,

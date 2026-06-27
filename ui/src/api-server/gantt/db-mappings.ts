@@ -1,10 +1,3 @@
-/**
- * Name: curriculumAssignmentService.ts
- * Purpose: Business logic for managing module-to-day mappings within variable-length weeks.
- * Created: 2026-04-15
- * Author: Michael K. Steinberg
- */
-
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
@@ -19,10 +12,14 @@ import {
 } from "@/api-shared/types/gantt/models";
 
 /**
- * 1) Getting mappings for a specific curriculum.
+ * Retrieves curriculum module/event day mappings for a specific curriculum.
  * Can be filtered by dayIds and/or weekIds for partial loading.
- * weekIds are resolved to dayIds via the week->day junction table (w2d),
+ * weekIds are resolved to dayIds via the week->day junction table,
  * then combined with any explicit dayIds using AND logic.
+ * 
+ * @param curriculumId - The curriculum identifier.
+ * @param filters - Optional filters for dayIds and weekIds.
+ * @returns An array of mapping records.
  */
 export async function getModuleDayMappingsForCurriculum(
     curriculumId: GanttCurriculumId,
@@ -62,7 +59,10 @@ export async function getModuleDayMappingsForCurriculum(
 }
 
 /**
- * 2) Creating a mapping.
+ * Creates a new module or event day mapping.
+ * 
+ * @param data - The details for the new mapping.
+ * @returns The created mapping record.
  */
 export async function createCurriculumModuleDayMapping(data: {
     curriculumId: GanttCurriculumId;
@@ -85,8 +85,15 @@ export async function createCurriculumModuleDayMapping(data: {
 }
 
 /**
- * 3) Updating an existing mapping (e.g., moving a module to a different day/week).
- * Uses the composite primary key for identification.
+ * Updates an existing mapping (e.g., moving a module to a different day/week).
+ * Uses the composite primary key fields for identification.
+ * 
+ * @param curriculumId - The curriculum identifier.
+ * @param moduleId - The module identifier.
+ * @param eventId - The event identifier (or null if mapping a module only).
+ * @param oldMapping - The old day mapping coordinates.
+ * @param newValues - The new values to apply.
+ * @returns The updated mapping record.
  */
 export async function updateCurriculumModuleDayMapping(
     curriculumId: GanttCurriculumId,
@@ -118,8 +125,15 @@ export async function updateCurriculumModuleDayMapping(
 }
 
 /**
- * 4) Reordering modules within a specific day.
+ * Reorders modules or events within a specific day.
  * Implements a fractional/float-based update for the sortOrder.
+ * 
+ * @param curriculumId - The curriculum identifier.
+ * @param moduleId - The module identifier.
+ * @param eventId - The event identifier (or null if reordering a module mapping).
+ * @param dayId - The day identifier.
+ * @param newSortOrder - The new sort order weight.
+ * @returns The database update operation result.
  */
 export async function reorderCurriculumModuleMappingInDay(
     curriculumId: GanttCurriculumId,
@@ -147,7 +161,13 @@ export async function reorderCurriculumModuleMappingInDay(
 }
 
 /**
- * 5) Delete an existing mapping.
+ * Deletes an existing curriculum day mapping.
+ * 
+ * @param curriculumId - The curriculum identifier.
+ * @param moduleId - The module identifier.
+ * @param eventId - The event identifier (or null if deleting a module mapping).
+ * @param dayId - The day identifier.
+ * @returns The deleted mapping record.
  */
 export async function deleteCurriculumModuleDayMapping(
     curriculumId: GanttCurriculumId,

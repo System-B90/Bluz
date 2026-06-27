@@ -1,12 +1,3 @@
-/**
- * Name: ModuleItem.tsx
- * Purpose: Draggable module item with placeholder logic for DragOverlay support.
- *          In the sidebar (no dayId + syllabusId provided), it behaves as a sortable item.
- *          In week panels (dayId provided), it behaves as a draggable for week assignment.
- * Created: 2026-04-15
- * Author: Michael K. Steinberg
- */
-
 import { useDraggable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -26,10 +17,17 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";
 import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
+/**
+ * Properties for the {@link ModuleItem} component.
+ */
 export type ModuleItemProps = {
+    /** The unique identifier of the Gantt module. */
     moduleId: GanttModuleId;
+    
+    /** Optional identifier of the day if the item is placed inside a week panel. */
     dayId?: GanttDayId;
-    /** When set, the item is in the sidebar and participates in sort-within-syllabus */
+    
+    /** Optional identifier of the syllabus if the item is in the sidebar. */
     syllabusId?: GanttSyllabusId;
 } & PaperProps;
 
@@ -194,6 +192,13 @@ function DraggableModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
     );
 }
 
+/**
+ * A draggable/sortable representation of a syllabus module.
+ * If in the sidebar, it acts as a sortable item. If placed in a week, it acts as a draggable.
+ * 
+ * @param props - Component props containing moduleId, and optional dayId/syllabusId.
+ * @returns The rendered ModuleItem element.
+ */
 export function ModuleItem({ moduleId, dayId, syllabusId, ...props }: ModuleItemProps) {
     if (syllabusId && !dayId) {
         return (

@@ -1,10 +1,3 @@
-/**
- * Name: SyllabusCard.tsx
- * Purpose: A collapsible card displaying syllabus modules and actions.
- * Created: 2026-04-14
- * Author: Michael K. Steinberg
- */
-
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Card, { CardProps } from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -22,8 +15,14 @@ import { ModulesTable } from "@/components/gantt/syllabus-card/ModulesTable";
 import { SyllabusCardActions } from "@/components/gantt/syllabus-card/SyllabusCardActions";
 import { SyllabusCardHeader } from "@/components/gantt/syllabus-card/SyllabusCardHeader";
 
+/**
+ * Properties for the {@link SyllabusCard} component.
+ */
 export type SyllabusCardProps = {
+    /** The identifier of the Gantt curriculum context. */
     curriculumId: GanttCurriculumId;
+    
+    /** The identifier of the syllabus to display. */
     syllabusId: GanttSyllabusId;
 } & Omit<CardProps, "sx">;
 
@@ -38,6 +37,12 @@ const ExpandMore = styled((props: { _expand: boolean } & any) => {
     }),
 }));
 
+/**
+ * A collapsible card component displaying syllabus modules and associated actions.
+ * 
+ * @param props - Component props containing curriculumId and syllabusId.
+ * @returns The rendered React element, or null if the syllabus is not loaded.
+ */
 export function SyllabusCard({
     curriculumId,
     syllabusId,

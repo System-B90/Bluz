@@ -1,9 +1,3 @@
-/**
- * Name: junctions.ts
- * Purpose: Junction tables for M2M relations
- * Created: 2026-04-17
- * Author: Michael K. Steinberg
- */
 import { relations } from "drizzle-orm";
 import { integer, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
 
@@ -14,6 +8,9 @@ import { ganttModulesSchema } from "./modules";
 import { ganttSyllabusesSchema } from "./syllabuses";
 import { ganttWeeksSchema } from "./weeks";
 
+/**
+ * Drizzle database schema definition for the Curriculum to Syllabuses junction table (`c2s`).
+ */
 export const ganttCurriculum2SyllabusesSchema = pgTable(
     "c2s",
     {
@@ -33,6 +30,9 @@ export const ganttCurriculum2SyllabusesSchema = pgTable(
     }),
 );
 
+/**
+ * Relations definition for the Curriculum to Syllabuses junction schema.
+ */
 export const ganttCurriculum2SyllabusesRelationsSchema = relations(
     ganttCurriculum2SyllabusesSchema,
     ({ one }) => ({
@@ -47,6 +47,9 @@ export const ganttCurriculum2SyllabusesRelationsSchema = relations(
     }),
 );
 
+/**
+ * Drizzle database schema definition for the Syllabus to Modules junction table (`s2m`).
+ */
 export const ganttSyllabus2ModulesSchema = pgTable(
     "s2m",
     {
@@ -65,6 +68,9 @@ export const ganttSyllabus2ModulesSchema = pgTable(
     }),
 );
 
+/**
+ * Relations definition for the Syllabus to Modules junction schema.
+ */
 export const ganttSyllabus2ModulesRelationsSchema = relations(
     ganttSyllabus2ModulesSchema,
     ({ one }) => ({
@@ -79,6 +85,9 @@ export const ganttSyllabus2ModulesRelationsSchema = relations(
     }),
 );
 
+/**
+ * Drizzle database schema definition for the Module to Events junction table (`m2e`).
+ */
 export const ganttModule2EventsSchema = pgTable(
     "m2e",
     {
@@ -95,6 +104,9 @@ export const ganttModule2EventsSchema = pgTable(
     }),
 );
 
+/**
+ * Relations definition for the Module to Events junction schema.
+ */
 export const ganttModule2EventsRelationsSchema = relations(
     ganttModule2EventsSchema,
     ({ one }) => ({
@@ -109,6 +121,9 @@ export const ganttModule2EventsRelationsSchema = relations(
     }),
 );
 
+/**
+ * Drizzle database schema definition for the Curriculum to Weeks junction table (`c2w`).
+ */
 export const ganttCurriculum2WeeksSchema = pgTable(
     "c2w",
     {
@@ -125,6 +140,10 @@ export const ganttCurriculum2WeeksSchema = pgTable(
         pk: primaryKey({ columns: [t.curriculumId, t.weekId] }),
     }),
 );
+
+/**
+ * Relations definition for the Curriculum to Weeks junction schema.
+ */
 export const ganttCurriculum2WeeksRelationsSchema = relations(
     ganttCurriculum2WeeksSchema,
     ({ one }) => ({
@@ -139,6 +158,9 @@ export const ganttCurriculum2WeeksRelationsSchema = relations(
     }),
 );
 
+/**
+ * Drizzle database schema definition for the Week to Days junction table (`w2d`).
+ */
 export const ganttWeek2DaysSchema = pgTable(
     "w2d",
     {
@@ -154,6 +176,9 @@ export const ganttWeek2DaysSchema = pgTable(
     }),
 );
 
+/**
+ * Relations definition for the Week to Days junction schema.
+ */
 export const ganttWeek2DaysRelationsSchema = relations(
     ganttWeek2DaysSchema,
     ({ one }) => ({
