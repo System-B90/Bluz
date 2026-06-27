@@ -32,9 +32,16 @@ beforeEach(() => vi.clearAllMocks());
 describe("GET /api/rooms — per-iteration Hive instance", () => {
     it("uses the iteration's Hive URL when viewing a past iteration", async () => {
         vi.mocked(getAllRooms).mockResolvedValueOnce([] as any);
+        const hiveCache = {
+            modules: {},
+            subjects: {},
+            rooms: { "30": "חדר ג" },
+            cachedAt: "2026-06-27T00:00:00.000Z",
+        };
         vi.mocked(DbIterations.get).mockResolvedValueOnce({
             id: "2026b",
             hiveUrl: "https://hive-2026b.example",
+            hiveCache,
         } as any);
 
         const req = new NextRequest("http://localhost/api/rooms?it=2026b");
@@ -45,6 +52,7 @@ describe("GET /api/rooms — per-iteration Hive instance", () => {
         expect(getAllRooms).toHaveBeenCalledWith(
             expect.anything(),
             "https://hive-2026b.example",
+            hiveCache,
         );
     });
 
@@ -56,6 +64,10 @@ describe("GET /api/rooms — per-iteration Hive instance", () => {
 
         expect(res.status).toBe(200);
         expect(DbIterations.get).not.toHaveBeenCalled();
-        expect(getAllRooms).toHaveBeenCalledWith(expect.anything(), undefined);
+        expect(getAllRooms).toHaveBeenCalledWith(
+            expect.anything(),
+            undefined,
+            undefined,
+        );
     });
 });

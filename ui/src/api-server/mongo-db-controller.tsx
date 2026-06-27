@@ -160,14 +160,40 @@ export function getMetaController(): MetaController {
 }
 
 // The writable "current" iteration's database. Defaults to the migrated `bluz`
-// DB and is updated in-process when an admin switches the current iteration. We
-// deliberately keep this off the per-request hot path (no Mongo round-trip) so
-// the common single-iteration case stays fast and side-effect free.
+// DB and is updated in-process when an admin switches the current iteration.
 let _currentIterationDbName: string = DEFAULT_ITERATION_DB_NAME;
+
+// Cold start / serverless safety: the in-process default can be stale if the
+// current iteration was switched to a custom database in a previous process.
+// On the first default resolve we read `isCurrent` from the registry exactly
+// once and memoize the promise, so subsequent calls stay off the hot path.
+let _currentInitPromise: null | Promise<void> = null;
+
+async function ensureCurrentIterationResolved(): Promise<void> {
+    // Unit tests run without Mongo; the registry is mocked where it matters, so
+    // skip the probe to keep the default fast and deterministic.
+    if (process.env.VITEST) return;
+    if (_currentInitPromise) return await _currentInitPromise;
+    _currentInitPromise = (async () => {
+        try {
+            const current = await getMetaController().iterations.findOne({
+                isCurrent: true,
+            });
+            if (current?.dbName) {
+                _currentIterationDbName = current.dbName;
+            }
+        } catch {
+            // Registry unreachable or unseeded — keep the default database.
+        }
+    })();
+    return await _currentInitPromise;
+}
 
 /** Update the cached current-iteration database (called after a setCurrent). */
 export function setCurrentIterationDbName(dbName: string) {
     _currentIterationDbName = dbName;
+    // A subsequent registry probe must not clobber an explicit switch.
+    _currentInitPromise = Promise.resolve();
 }
 
 /** The database name backing the current (writable) iteration. */
@@ -178,12 +204,14 @@ export function getCurrentIterationDbName(): string {
 /**
  * Resolve the controller for a given iteration. When `iterationId` is omitted the
  * current iteration is used (backward compatible with single-iteration callers).
- * Only an explicit iteration id triggers a registry (Mongo) lookup.
+ * The current iteration is resolved from the registry once per process (cold
+ * start safe); an explicit iteration id always triggers a registry lookup.
  */
 export async function resolveIterationDb(
     iterationId?: IterationId,
 ): Promise<DatabaseController> {
     if (!iterationId) {
+        await ensureCurrentIterationResolved();
         return getDatabaseController(_currentIterationDbName);
     }
 
