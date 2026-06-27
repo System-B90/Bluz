@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 ROOT_PACKAGE = Path("package.json")
 SESSIONS_PACKAGE = Path("session-server/package.json")
+CLI_VERSION_FILE = Path("cli/bluz_cli/__init__.py")
 
 STATE = {"verbose": False}
 TAG_BASE_BRANCH_NAMES = (
@@ -119,9 +120,39 @@ def get_version_info() -> Tuple[int, int, int, Optional[int]]:
     )
 
 
+def update_cli_version(version: str) -> Optional[Path]:
+    """
+    Writes the new version into the bluz-cli package (single source of truth in
+    cli/bluz_cli/__init__.py). Keeps the shipped Python CLI tool in lockstep with
+    the Bluz release version.
+
+    Args:
+        version: The semantic version string.
+
+    Returns:
+        The updated path, or None if the CLI package was not found.
+    """
+    if not CLI_VERSION_FILE.exists():
+        logger.warning("File %s not found. Skipping CLI version bump.", CLI_VERSION_FILE)
+        return None
+
+    content = CLI_VERSION_FILE.read_text(encoding="utf-8")
+    new_content, count = re.subn(
+        r'(__version__\s*=\s*)["\'][^"\']*["\']',
+        rf'\g<1>"{version}"',
+        content,
+    )
+    if count == 0:
+        logger.warning("No __version__ assignment in %s. Skipping.", CLI_VERSION_FILE)
+        return None
+
+    CLI_VERSION_FILE.write_text(new_content, encoding="utf-8")
+    return CLI_VERSION_FILE
+
+
 def update_manifests(version: str) -> List[Path]:
     """
-    Writes the new version to project package.json files.
+    Writes the new version to project package.json files and the Python CLI tool.
 
     Args:
         version: The semantic version string.
@@ -144,6 +175,10 @@ def update_manifests(version: str) -> List[Path]:
             json.dump(data, f, indent=2)
             f.write("\n")
         updated.append(path)
+
+    cli_path = update_cli_version(version)
+    if cli_path is not None:
+        updated.append(cli_path)
 
     return updated
 
