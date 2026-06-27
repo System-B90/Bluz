@@ -95,7 +95,7 @@ and the 🔒 Security section. Items with a non-security tag keep their original
   `useHiveUsers`); delete the mock arrays.
 
 - [ ] **[INFRA] CI publishes images with no test gating.**
-  `.github/workflows/build.yml` build jobs only `needs: lint`; `e2e.yml` is
+  `.github/workflows/release-pipeline.yml` build jobs only `needs: lint`; `e2e.yml` is
   `workflow_dispatch` only and `vitest` runs nowhere in the gating path.
   **Impact:** Lint-clean-but-broken code is built and pushed to GHCR / release bundles
   untested.
