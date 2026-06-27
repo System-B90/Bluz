@@ -2,6 +2,7 @@ import { Collection, Db, MongoClient } from "mongodb";
 
 import { DbEventDocument } from "@/api-server/db-event";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
+import { ClientApiError } from "@/api-shared/errors";
 import { Course } from "@/api-shared/types/course";
 import {
     GanttCurriculum,
@@ -219,7 +220,33 @@ export async function resolveIterationDb(
         id: iterationId,
     });
     if (!iteration) {
-        throw new Error(`Unknown iteration "${iterationId}"`);
+        throw new ClientApiError(`Unknown iteration "${iterationId}"`);
+    }
+    return getDatabaseController(iteration.dbName);
+}
+
+/**
+ * Like {@link resolveIterationDb} but also rejects past (non-current) iterations.
+ * Avoids the double Mongo lookup of calling resolveIterationDb + assertWritable separately.
+ */
+export async function resolveWritableIterationDb(
+    iterationId?: IterationId,
+): Promise<DatabaseController> {
+    if (!iterationId) {
+        await ensureCurrentIterationResolved();
+        return getDatabaseController(_currentIterationDbName);
+    }
+
+    const iteration = await getMetaController().iterations.findOne({
+        id: iterationId,
+    });
+    if (!iteration) {
+        throw new ClientApiError(`Unknown iteration "${iterationId}"`);
+    }
+    if (!iteration.isCurrent) {
+        throw new ClientApiError(
+            "מחזור קודם הוא לקריאה בלבד ולא ניתן לעריכה",
+        );
     }
     return getDatabaseController(iteration.dbName);
 }

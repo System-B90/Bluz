@@ -39,10 +39,12 @@ export type EventLockMessage = {
     lockedByName: string;
     // Session ID / user ID so the owner can be compared on the receiving end
     lockedById: string;
+    iterationId?: string;
 };
 
 export type EventUnlockMessage = {
     eventId: string;
+    iterationId?: string;
 };
 
 // Snapshot: a named point-in-time copy of the visible calendar window.
