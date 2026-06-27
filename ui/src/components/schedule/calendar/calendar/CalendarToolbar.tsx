@@ -29,6 +29,7 @@ import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useOffline } from "@/components/base/OfflineProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { Filters } from "@/components/header/filters";
+import { IterationSelector } from "@/components/schedule/calendar/calendar/IterationSelector";
 
 export function CalendarToolbar({
     date,
@@ -142,6 +143,7 @@ export function CalendarToolbar({
                             { CALENDAR_MESSAGES.next }
                         </Button>
                     </ButtonGroup>
+                    <IterationSelector />
                 </Box>
 
                 <Box alignItems="center" display="flex" gap={ 1 }>

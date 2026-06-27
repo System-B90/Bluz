@@ -4,6 +4,8 @@ import {
     databaseController,
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
+import { ClassTypeEnum } from "@/api-shared/types/hive";
+import { HiveIterationCache } from "@/api-shared/types/iteration";
 import {
     CustomRoom,
     HiveRoom,
@@ -12,12 +14,38 @@ import {
     roomToKey,
 } from "@/api-shared/types/room";
 
+/** Reconstruct minimal Hive rooms from a cached id→name snapshot. */
+function roomsFromCache(cache: HiveIterationCache): Array<HiveRoom> {
+    return Object.entries(cache.rooms).map(
+        ([id, name]) =>
+            ({
+                id: Number(id),
+                display_name: name,
+                name,
+                type: ClassTypeEnum.Room,
+                source: RoomSource.Hive,
+            }) as unknown as HiveRoom,
+    );
+}
+
 export async function getAllRooms(
     controller: DatabaseController = databaseController,
     hiveUrl?: string,
+    hiveCache?: HiveIterationCache,
 ): Promise<Array<Room>> {
-    const hiveClient = await createHiveClient(hiveUrl);
-    const hiveRooms: Array<HiveRoom> = await hiveClient.getRooms();
+    let hiveRooms: Array<HiveRoom>;
+    try {
+        const hiveClient = await createHiveClient(hiveUrl);
+        hiveRooms = await hiveClient.getRooms();
+    } catch (error) {
+        // A past iteration's Hive instance may be offline. Fall back to the
+        // names snapshotted when the iteration was created, rather than failing.
+        if (hiveCache) {
+            hiveRooms = roomsFromCache(hiveCache);
+        } else {
+            throw error;
+        }
+    }
     const customRooms: Array<CustomRoom> = (
         await controller.rooms.find({}).toArray()
     ).map((r) => ({ ...r, source: RoomSource.Custom }));
