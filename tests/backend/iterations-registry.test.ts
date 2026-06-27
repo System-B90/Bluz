@@ -3,43 +3,64 @@ import { beforeEach, describe, it, expect, vi } from "vitest";
 // In-memory fake of the meta `iterations` collection, supporting just the query
 // shapes DbIterations actually uses ({} / {id} / {isCurrent:true}). Defined via
 // vi.hoisted so it is available inside the hoisted vi.mock factory below.
-const { docs, iterations, setCurrentIterationDbName } = vi.hoisted(() => {
-    type Doc = Record<string, any>;
-    const docs: Array<Doc> = [];
-    const matches = (doc: Doc, filter: Doc): boolean =>
-        Object.entries(filter).every(([k, v]) => doc[k] === v);
+const { docs, iterations, client, setCurrentIterationDbName } = vi.hoisted(
+    () => {
+        type Doc = Record<string, any>;
+        const docs: Array<Doc> = [];
+        const matches = (doc: Doc, filter: Doc): boolean =>
+            Object.entries(filter).every(([k, v]) => doc[k] === v);
 
-    const iterations = {
-        findOne: vi.fn(async (filter: Doc = {}) => {
-            return docs.find((d) => matches(d, filter)) ?? null;
-        }),
-        find: vi.fn((filter: Doc = {}) => ({
-            sort: () => ({
-                toArray: async () => docs.filter((d) => matches(d, filter)),
+        const iterations = {
+            findOne: vi.fn(async (filter: Doc = {}) => {
+                return docs.find((d) => matches(d, filter)) ?? null;
             }),
-        })),
-        insertOne: vi.fn(async (doc: Doc) => {
-            docs.push({ ...doc });
-            return { insertedId: "x" };
-        }),
-        updateOne: vi.fn(async (filter: Doc, update: Doc) => {
-            const doc = docs.find((d) => matches(d, filter));
-            if (doc) Object.assign(doc, update.$set);
-            return { matchedCount: doc ? 1 : 0 };
-        }),
-        updateMany: vi.fn(async (filter: Doc, update: Doc) => {
-            const targets = docs.filter((d) => matches(d, filter));
-            targets.forEach((d) => Object.assign(d, update.$set));
-            return { matchedCount: targets.length };
-        }),
-    };
+            find: vi.fn((filter: Doc = {}) => ({
+                sort: () => ({
+                    toArray: async () => docs.filter((d) => matches(d, filter)),
+                }),
+            })),
+            insertOne: vi.fn(async (doc: Doc) => {
+                docs.push({ ...doc });
+                return { insertedId: "x" };
+            }),
+            // Supports the upsert + $setOnInsert path used by ensureSeeded.
+            updateOne: vi.fn(async (filter: Doc, update: Doc, opts?: Doc) => {
+                const doc = docs.find((d) => matches(d, filter));
+                if (doc) {
+                    if (update.$set) Object.assign(doc, update.$set);
+                    return { matchedCount: 1, upsertedCount: 0 };
+                }
+                if (opts?.upsert) {
+                    docs.push({
+                        ...(update.$setOnInsert ?? {}),
+                        ...(update.$set ?? {}),
+                    });
+                    return { matchedCount: 0, upsertedCount: 1 };
+                }
+                return { matchedCount: 0, upsertedCount: 0 };
+            }),
+            updateMany: vi.fn(async (filter: Doc, update: Doc) => {
+                const targets = docs.filter((d) => matches(d, filter));
+                targets.forEach((d) => Object.assign(d, update.$set));
+                return { matchedCount: targets.length };
+            }),
+        };
 
-    return { docs, iterations, setCurrentIterationDbName: vi.fn() };
-});
+        // Transaction stub for the atomic promotion path in patchIteration.
+        const client = {
+            startSession: () => ({
+                withTransaction: async (fn: () => Promise<unknown>) => fn(),
+                endSession: async () => {},
+            }),
+        };
+
+        return { docs, iterations, client, setCurrentIterationDbName: vi.fn() };
+    },
+);
 
 vi.mock("@/api-server/mongo-db-controller", () => ({
     DEFAULT_ITERATION_DB_NAME: "bluz",
-    getMetaController: () => ({ iterations }),
+    getMetaController: () => ({ iterations, client }),
     getDatabaseController: vi.fn((name: string) => ({ dbName: name })),
     setCurrentIterationDbName,
 }));
