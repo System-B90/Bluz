@@ -12,7 +12,9 @@ const nextConfig: NextConfig = {
     experimental: {
         optimizePackageImports: [ "@mui/x-date-pickers" ],
     },
-
+    turbopack: {
+        root: process.cwd(),
+    },
 };
 
 export default nextConfig;

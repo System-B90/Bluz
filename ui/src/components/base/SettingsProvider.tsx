@@ -1,7 +1,8 @@
 "use client";
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { enqueueSnackbar } from "notistack";
-import {
+import
+{
     createContext,
     useCallback,
     useContext,
@@ -10,7 +11,8 @@ import {
 } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import {
+import
+{
     apiGetPrayerSettings,
     apiSetPrayerSettings,
 } from "@/api-client/prayer";
@@ -27,8 +29,8 @@ export type SettingsContextState = {
 const SettingsContext = createContext<SettingsContextState | undefined>({
     default: true,
     prayerTimes: {} as PrayerSettings,
-    updatePrayerTimes: (_newPrayerTimes: PrayerSettings) => {},
-    updatePrayerTime: (_key: keyof PrayerSettings, _value: Date | Dayjs) => {},
+    updatePrayerTimes: (_newPrayerTimes: PrayerSettings) => { },
+    updatePrayerTime: (_key: keyof PrayerSettings, _value: Date | Dayjs) => { },
 });
 
 type PrayerSettingsState = {
@@ -36,19 +38,21 @@ type PrayerSettingsState = {
     isLoading: boolean;
 };
 type PrayerSettingsAction =
-    | { type: "ROLLBACK_PRAYER_TIMES"; payload: PrayerSettings }
-    | { type: "SET_LOADING"; payload: boolean }
-    | { type: "SET_PRAYER_TIMES"; payload: PrayerSettings }
+    | { type: "ROLLBACK_PRAYER_TIMES"; payload: PrayerSettings; }
+    | { type: "SET_LOADING"; payload: boolean; }
+    | { type: "SET_PRAYER_TIMES"; payload: PrayerSettings; }
     | {
-          type: "UPDATE_PRAYER_TIME";
-          payload: { key: keyof PrayerSettings; value: Date | Dayjs };
-      };
+        type: "UPDATE_PRAYER_TIME";
+        payload: { key: keyof PrayerSettings; value: Date | Dayjs; };
+    };
 
 function prayerSettingsReducer(
     state: PrayerSettingsState,
     action: PrayerSettingsAction,
-): PrayerSettingsState {
-    switch (action.type) {
+): PrayerSettingsState
+{
+    switch (action.type)
+    {
     case "SET_LOADING":
         return { ...state, isLoading: action.payload };
     case "SET_PRAYER_TIMES":
@@ -58,7 +62,7 @@ function prayerSettingsReducer(
             ...state,
             prayerTimes: {
                 ...state.prayerTimes,
-                [action.payload.key]: action.payload.value,
+                [ action.payload.key ]: action.payload.value,
             },
         };
     case "ROLLBACK_PRAYER_TIMES":
@@ -72,16 +76,23 @@ export const SettingsProvider = ({
     children,
 }: {
     children: React.ReactNode;
-}) => {
-    const [state, dispatch] = useReducer(prayerSettingsReducer, {
-        prayerTimes: {} as PrayerSettings,
+}) =>
+{
+    const [ state, dispatch ] = useReducer(prayerSettingsReducer, {
+        prayerTimes: {
+            shacharit: dayjs().hour(6),
+            mincha: dayjs().hour(12),
+            arvit: dayjs().hour(18),
+        },
         isLoading: true,
     });
 
-    const loadPrayerSettings = useCallback(() => {
+    const loadPrayerSettings = useCallback(() =>
+    {
         dispatch({ type: "SET_LOADING", payload: true });
         apiGetPrayerSettings()
-            .then((fetchedPrayerSettings) => {
+            .then((fetchedPrayerSettings) =>
+            {
                 inplaceDateFixup(fetchedPrayerSettings, "shacharit");
                 inplaceDateFixup(fetchedPrayerSettings, "mincha");
                 inplaceDateFixup(fetchedPrayerSettings, "arvit");
@@ -90,7 +101,8 @@ export const SettingsProvider = ({
                     payload: fetchedPrayerSettings,
                 });
             })
-            .catch((error) => {
+            .catch((error) =>
+            {
                 dispatch({ type: "SET_LOADING", payload: false });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -98,19 +110,22 @@ export const SettingsProvider = ({
                     error,
                 );
             });
-    }, [dispatch]);
+    }, [ dispatch ]);
 
     const updatePrayerTimes = useCallback(
-        async (newPrayerTimes: PrayerSettings) => {
+        async (newPrayerTimes: PrayerSettings) =>
+        {
             const previousPrayerTimes = state.prayerTimes;
             dispatch({ type: "SET_PRAYER_TIMES", payload: newPrayerTimes });
 
-            try {
+            try
+            {
                 await apiSetPrayerSettings(newPrayerTimes);
                 enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", {
                     variant: "success",
                 });
-            } catch (error) {
+            } catch (error)
+            {
                 dispatch({
                     type: "ROLLBACK_PRAYER_TIMES",
                     payload: previousPrayerTimes,
@@ -122,25 +137,28 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [state.prayerTimes, dispatch],
+        [ state.prayerTimes, dispatch ],
     );
 
     const updatePrayerTime = useCallback(
-        async (key: keyof PrayerSettings, value: Date | Dayjs) => {
+        async (key: keyof PrayerSettings, value: Date | Dayjs) =>
+        {
             const previousPrayerTimes = state.prayerTimes;
             dispatch({ type: "UPDATE_PRAYER_TIME", payload: { key, value } });
 
             const updatedTimes = {
                 ...state.prayerTimes,
-                [key]: value,
+                [ key ]: value,
             };
 
-            try {
+            try
+            {
                 await apiSetPrayerSettings(updatedTimes);
                 enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", {
                     variant: "success",
                 });
-            } catch (error) {
+            } catch (error)
+            {
                 dispatch({
                     type: "ROLLBACK_PRAYER_TIMES",
                     payload: previousPrayerTimes,
@@ -152,31 +170,34 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [state.prayerTimes, dispatch],
+        [ state.prayerTimes, dispatch ],
     );
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         loadPrayerSettings();
-    }, [loadPrayerSettings]);
+    }, [ loadPrayerSettings ]);
 
     return (
         <SettingsContext.Provider
-            value={{
+            value={ {
                 default: false,
                 prayerTimes: state.prayerTimes,
                 updatePrayerTimes,
                 updatePrayerTime,
-            }}
+            } }
         >
-            {children}
+            { children }
         </SettingsContext.Provider>
     );
 };
 
-export const useSettings = () => {
+export const useSettings = () =>
+{
     const context = useContext(SettingsContext);
 
-    if (context === undefined || context.default) {
+    if (context === undefined || context.default)
+    {
         throw new Error("useSettings must be used within an SettingsProvider");
     }
 
