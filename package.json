@@ -18,7 +18,7 @@
         "docker:prod": "docker compose -f deploy/docker-compose.yml up -d --build",
         "docker:down": "docker compose -f deploy/docker-compose.yml down",
         "docker:nuke": "docker compose -f deploy/docker-compose.yml down -v",
-        "docker:test": "docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.test.yml up -d --build",
+        "docker:test": "set TEST_PROJECT_NAME=test&& docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.test.yml up -d --build",
         "docker:test:down": "docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.test.yml down -v",
         "test": "python scripts/run_tests.py",
         "test:unit": "vitest run --config tests/vitest.config.ts",
