@@ -41,11 +41,13 @@ export const useEventWebsocket = (
             // always reflects what other users are editing.
             case MessageTypes.EVENT_LOCK: {
                 const msg = data as EventLockMessage;
+                if (!isForActiveIteration(msg.iterationId)) break;
                 setEventLock(msg.eventId, msg);
                 break;
             }
             case MessageTypes.EVENT_UNLOCK: {
                 const msg = data as EventUnlockMessage;
+                if (!isForActiveIteration(msg.iterationId)) break;
                 setEventLock(msg.eventId, null);
                 break;
             }
