@@ -133,7 +133,9 @@ def update_cli_version(version: str) -> Optional[Path]:
         The updated path, or None if the CLI package was not found.
     """
     if not CLI_VERSION_FILE.exists():
-        logger.warning("File %s not found. Skipping CLI version bump.", CLI_VERSION_FILE)
+        logger.warning(
+            "File %s not found. Skipping CLI version bump.", CLI_VERSION_FILE
+        )
         return None
 
     content = CLI_VERSION_FILE.read_text(encoding="utf-8")
