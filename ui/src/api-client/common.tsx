@@ -25,7 +25,15 @@ export async function safeApiFetcher<T = unknown>(
     input: RequestInfo,
     init?: RequestInit | undefined,
 ): Promise<T> {
-    return await safeFetcher(input, init)
+    const headers = new Headers(init?.headers);
+    if (!headers.has("Content-Type")) {
+        headers.set("Content-Type", "application/json");
+    }
+    const mergedInit: RequestInit = {
+        ...init,
+        headers,
+    };
+    return await safeFetcher(input, mergedInit)
         .then((response): Promise<any> => {
             // An API request should only return a redirect if the user is not logged in!
             if (response.redirected) {

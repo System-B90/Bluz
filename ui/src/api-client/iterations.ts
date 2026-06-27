@@ -9,14 +9,12 @@ import {
 export async function apiListIterations(): Promise<Array<Iteration>> {
     return await safeApiFetcher<Array<Iteration>>("/api/iterations", {
         method: "GET",
-        headers: { "Content-Type": "application/json" },
     });
 }
 
 export async function apiGetCurrentIteration(): Promise<Iteration> {
     return await safeApiFetcher<Iteration>("/api/iterations/current", {
         method: "GET",
-        headers: { "Content-Type": "application/json" },
     });
 }
 
@@ -25,7 +23,6 @@ export async function apiRegisterIteration(
 ): Promise<Iteration> {
     return await safeApiFetcher<Iteration>("/api/iterations", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
     });
 }
@@ -38,7 +35,6 @@ export async function apiPatchIteration(
         `/api/iterations/${encodeURIComponent(id)}`,
         {
             method: "PATCH",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(patch),
         },
     );
