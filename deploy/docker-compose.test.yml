@@ -13,7 +13,7 @@ services:
             dockerfile: ui/Dockerfile
             target: dev
         container_name: ${TEST_PROJECT_NAME}-ui
-        command: sh -c "npm run build -- --no-mangling && node .next/standalone/server.js"
+        command: sh -c "npm run build -- --no-mangling && npm start"
         environment:
             - NODE_ENV=production
             - MONGO_CONNECTION_STRING=mongodb://mongo_admin:4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP@mongodb:27017/
