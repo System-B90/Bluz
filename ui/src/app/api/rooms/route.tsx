@@ -45,11 +45,16 @@ export const GET: ServerApiRoomsGet = async (request) => {
     try {
         const { controller, iterationId } =
             await resolveIterationFromRequest(request);
-        // Past iterations point at a different Hive instance.
-        const hiveUrl = iterationId
-            ? (await DbIterations.get(iterationId))?.hiveUrl
-            : undefined;
-        const rooms = await getAllRooms(controller, hiveUrl);
+        // Past iterations point at a different Hive instance; fall back to the
+        // names cached at creation if that instance is unreachable.
+        const iteration = iterationId
+            ? await DbIterations.get(iterationId)
+            : null;
+        const rooms = await getAllRooms(
+            controller,
+            iteration?.hiveUrl,
+            iteration?.hiveCache,
+        );
         return ApiSuccess(rooms);
     } catch (e) {
         return catchHandler(request, e);
