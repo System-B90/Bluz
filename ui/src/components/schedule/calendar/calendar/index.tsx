@@ -1,10 +1,3 @@
-/**
- * Name: BluzCalendar.tsx
- * Purpose: Entry point for the Bluz Schedule Calendar.
- * Created: 2026-04-18
- * Author: Michael K. Steinberg
- */
-
 "use client";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
@@ -40,6 +33,13 @@ type BluzCalendarProps = {
     events: Array<Event>;
 };
 
+/**
+ * Entry point component for the Bluz Schedule Calendar.
+ * Renders the calendar view, toolbars, fullscreen toggle, and side filter drawer, integrating state and filters.
+ * 
+ * @param props - Component props containing events, selection states, and save/delete callback functions.
+ * @returns The rendered React element.
+ */
 export function BluzCalendar({
     handleSaveEvent,
     handleDeleteEvent,
