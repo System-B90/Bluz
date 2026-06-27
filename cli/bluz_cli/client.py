@@ -105,8 +105,21 @@ class BluzClient:
 
     @staticmethod
     def _unwrap(response: httpx.Response) -> Any:
+        import json
         content_type = response.headers.get("content-type", "")
-        if "application/json" not in content_type:
+        is_json = "application/json" in content_type
+        body = None
+
+        if not is_json:
+            text = response.text.strip()
+            if (text.startswith("{") and text.endswith("}")) or (text.startswith("[") and text.endswith("]")):
+                try:
+                    body = json.loads(text)
+                    is_json = True
+                except ValueError:
+                    pass
+
+        if not is_json:
             # Non-JSON payloads (e.g. an Excel export) are returned verbatim.
             if response.is_error:
                 raise BluzApiError(
@@ -116,12 +129,13 @@ class BluzClient:
                 )
             return response.content
 
-        try:
-            body = response.json()
-        except ValueError as exc:
-            raise BluzApiError(
-                "InvalidResponse", f"Server did not return valid JSON: {exc}"
-            ) from exc
+        if body is None:
+            try:
+                body = response.json()
+            except ValueError as exc:
+                raise BluzApiError(
+                    "InvalidResponse", f"Server did not return valid JSON: {exc}"
+                ) from exc
 
         if isinstance(body, dict) and "status" in body:
             if body.get("status") == 0:

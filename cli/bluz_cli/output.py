@@ -37,7 +37,7 @@ def _cell(value: Any) -> str:
 
 
 def _print_json(data: Any) -> None:
-    console.print_json(json.dumps(_to_jsonable(data), ensure_ascii=False, default=str))
+    print(json.dumps(_to_jsonable(data), ensure_ascii=False, indent=2, default=str))
 
 
 def _render_list(data: list, title: str | None) -> None:
@@ -63,11 +63,25 @@ def _render_list(data: list, title: str | None) -> None:
 
 
 def _render_dict(data: dict, title: str | None) -> None:
-    table = Table(title=title, show_header=False, box=None)
-    table.add_column("field", style="bold cyan")
-    table.add_column("value")
-    for key, value in data.items():
-        table.add_row(str(key), _cell(value))
+    # If the dictionary values are all simple scalar types and we have a title (e.g. lists),
+    # format it as a beautiful structured table with ID and Title columns.
+    is_entity_map = (
+        title is not None
+        and all(isinstance(v, (str, int, float, bool)) for v in data.values())
+    )
+    if is_entity_map:
+        from rich import box
+        table = Table(title=title, show_header=True, box=box.SIMPLE)
+        table.add_column("ID", style="bold cyan")
+        table.add_column("Title / Name")
+        for key, value in data.items():
+            table.add_row(str(key), _cell(value))
+    else:
+        table = Table(title=title, show_header=False, box=None)
+        table.add_column("field", style="bold cyan")
+        table.add_column("value")
+        for key, value in data.items():
+            table.add_row(str(key), _cell(value))
     console.print(table)
 
 
