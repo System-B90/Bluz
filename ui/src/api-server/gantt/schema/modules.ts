@@ -1,10 +1,3 @@
-/**
- * Name: modules.ts
- * Purpose: Syllabus, Module, and Event definitions
- * Created: 2026-04-17
- * Author: Michael K. Steinberg
- */
-
 import { relations } from "drizzle-orm";
 import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
@@ -13,6 +6,9 @@ import {
     ganttSyllabus2ModulesSchema,
 } from "./junctions";
 
+/**
+ * Drizzle database schema definition for the Gantt Modules table (`m`).
+ */
 export const ganttModulesSchema = pgTable("m", {
     id: text("id").primaryKey(),
     title: text("title").notNull(),
@@ -22,6 +18,9 @@ export const ganttModulesSchema = pgTable("m", {
     updatedAt: timestamp("ua").defaultNow().notNull(),
 });
 
+/**
+ * Relations definition for the Gantt Modules schema.
+ */
 export const ganttModuleRelationsSchema = relations(
     ganttModulesSchema,
     ({ many }) => ({

@@ -1,10 +1,3 @@
-/**
- * Name: constraints.ts
- * Purpose: Client-side API wrappers for Gantt relational and temporal constraints.
- * Created: 2026-04-19
- * Author: Michael K. Steinberg
- */
-
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { baseDocumentFixup, RawBaseDocument } from "@/api-client/gantt/base";
 import {
@@ -20,6 +13,10 @@ import {
 } from "@/api-shared/types/gantt/models/constraint";
 
 // Matches the Omit type used in the Provider context
+/**
+ * Represents the payload structure required to create a new Gantt constraint.
+ * Can be either a relational or temporal constraint, excluding timestamp fields.
+ */
 export type CreateConstraintPayload =
     | Omit<RelationalConstraint, "createdAt" | "updatedAt">
     | Omit<TemporalConstraint, "createdAt" | "updatedAt">;
@@ -171,6 +168,10 @@ async function apiDeleteConstraint(
     );
 }
 
+/**
+ * Client-side API client wrapper for managing Gantt constraints.
+ * Provides endpoints for retrieving, creating, updating, and deleting constraints.
+ */
 export const ganttConstraintsApi = {
     apiGet: apiGetConstraints,
     apiCreate: apiCreateConstraint,

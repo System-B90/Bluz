@@ -1,11 +1,4 @@
 /**
- * Name: phone_formatter.ts
- * Purpose: Utility functions for formatting Israeli phone numbers according to established conventions.
- * Created: 2026-06-26
- * Author: Michael K. Steinberg
- */
-
-/**
  * Formats a local Israeli mobile number to 0XX-XXX-XXXX.
  * @param value - The raw phone number string.
  * @returns The formatted phone number.

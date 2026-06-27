@@ -1,18 +1,19 @@
-/**
- * Name: types.ts
- * Purpose: State definitions and actions for the Gantt constraints context provider.
- * Created: 2026-04-19
- * Author: Michael K. Steinberg
- */
-
 import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 
+/**
+ * State representation for the Gantt constraints context provider.
+ */
 export type GanttConstraintState = {
-    // Key: constraint.id
+    /** Map of constraint IDs to their constraint records. */
     constraints: Record<string, GanttConstraint>;
+    
+    /** Flag indicating if the constraints are currently loading. */
     isLoading: boolean;
 };
 
+/**
+ * Action definitions for the Gantt constraints context state reducer.
+ */
 export type GanttConstraintAction =
     | {
           type: "DELETE_CONSTRAINT";

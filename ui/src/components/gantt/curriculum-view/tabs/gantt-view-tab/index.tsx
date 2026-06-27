@@ -1,10 +1,3 @@
-/**
- * Name: index.tsx (CurriculumGanttView)
- * Purpose: Main export for Gantt View tab, integrating Gantt with Bluz state.
- * Created: 2026-04-17
- * Author: Michael K. Steinberg
- */
-
 "use client";
 import React from "react";
 
@@ -14,10 +7,20 @@ import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Pr
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
 
+/**
+ * Properties for the {@link CurriculumGanttView} component.
+ */
 export type CurriculumGanttViewProps = {
+    /** The unique identifier of the Gantt curriculum. */
     readonly curriculumId: GanttCurriculumId;
 };
 
+/**
+ * Main export component for the Gantt View tab, integrating the Gantt chart with Bluz state providers.
+ * 
+ * @param props - Component props containing the curriculumId.
+ * @returns The rendered React element, or null if the curriculum is not loaded.
+ */
 export function CurriculumGanttView({
     curriculumId,
 }: CurriculumGanttViewProps): null | React.ReactElement {
