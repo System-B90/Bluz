@@ -1,16 +1,19 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { test as setup, expect, Page } from "@playwright/test";
+import { expect, Page, test as setup } from "@playwright/test";
 
 import { SELECTORS } from "./fixtures";
 
-const AUTH_FILE = path.join(__dirname, "..", ".auth", "user.json");
+const AUTH_FILE = path.join(__dirname, ".auth", "user.json");
 
-async function waitForAuthApi(page: Page, baseURL: string): Promise<void> {
-    for (let attempt = 1; attempt <= 10; attempt++) {
+async function waitForAuthApi(page: Page, baseURL: string): Promise<void>
+{
+    for (let attempt = 1; attempt <= 10; attempt++)
+    {
         const response = await page.request.get(`${baseURL}/api/auth/csrf`);
-        if (response.ok()) {
+        if (response.ok())
+        {
             return;
         }
 
@@ -20,17 +23,21 @@ async function waitForAuthApi(page: Page, baseURL: string): Promise<void> {
     throw new Error("NextAuth API is not ready");
 }
 
-async function startHiveSso(page: Page, baseURL: string): Promise<void> {
+async function startHiveSso(page: Page, baseURL: string): Promise<void>
+{
     await waitForAuthApi(page, baseURL);
 
     const maxAttempts = 3;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++)
+    {
+        try
+        {
             const csrfResponse = await page.request.get(
                 `${baseURL}/api/auth/csrf`,
             );
-            if (!csrfResponse.ok()) {
+            if (!csrfResponse.ok())
+            {
                 throw new Error(
                     `CSRF request failed: ${csrfResponse.status()}`,
                 );
@@ -47,7 +54,8 @@ async function startHiveSso(page: Page, baseURL: string): Promise<void> {
                     },
                 },
             );
-            if (!signInResponse.ok()) {
+            if (!signInResponse.ok())
+            {
                 throw new Error(
                     `Sign-in request failed: ${signInResponse.status()}`,
                 );
@@ -61,8 +69,10 @@ async function startHiveSso(page: Page, baseURL: string): Promise<void> {
             });
             await page.waitForURL(/hive\.org/, { timeout: 60_000 });
             return;
-        } catch (error) {
-            if (attempt === maxAttempts) {
+        } catch (error)
+        {
+            if (attempt === maxAttempts)
+            {
                 throw error;
             }
 
@@ -75,28 +85,35 @@ async function tryGoto(
     page: Page,
     url: string,
     timeout = 30_000,
-): Promise<boolean> {
-    try {
+): Promise<boolean>
+{
+    try
+    {
         const response = await page.goto(url, {
             waitUntil: "commit",
             timeout,
         });
 
         return !!response && response.status() < 500;
-    } catch {
+    } catch
+    {
         return false;
     }
 }
 
-async function gotoReliable(page: Page, url: string): Promise<void> {
+async function gotoReliable(page: Page, url: string): Promise<void>
+{
     const maxAttempts = 3;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        if (await tryGoto(page, url, 45_000)) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++)
+    {
+        if (await tryGoto(page, url, 45_000))
+        {
             return;
         }
 
-        if (attempt < maxAttempts) {
+        if (attempt < maxAttempts)
+        {
             await page.waitForTimeout(2_000 * attempt);
         }
     }
@@ -113,14 +130,17 @@ async function gotoReliable(page: Page, url: string): Promise<void> {
  * On consecutive runs, optimistically reuses .auth/user.json if the session is
  * still valid; otherwise performs the full SSO flow and refreshes the saved state.
  */
-setup("authenticate via Hive SSO", async ({ browser }) => {
+setup("authenticate via Hive SSO", async ({ browser }) =>
+{
     const authDir = path.dirname(AUTH_FILE);
-    if (!fs.existsSync(authDir)) {
+    if (!fs.existsSync(authDir))
+    {
         fs.mkdirSync(authDir, { recursive: true });
     }
 
     // Try to reuse a previously saved session before starting SSO
-    if (fs.existsSync(AUTH_FILE)) {
+    if (fs.existsSync(AUTH_FILE))
+    {
         const reuseContext = await browser.newContext({
             storageState: AUTH_FILE,
         });
@@ -130,7 +150,8 @@ setup("authenticate via Hive SSO", async ({ browser }) => {
         if (
             (await tryGoto(reusePage, "/")) &&
             !reusePage.url().includes("/login")
-        ) {
+        )
+        {
             await reuseContext.storageState({ path: AUTH_FILE });
             await reuseContext.close();
             return;
@@ -149,7 +170,8 @@ setup("authenticate via Hive SSO", async ({ browser }) => {
     // login button so setup does not depend on client-side React hydration.
     await gotoReliable(page, "/login");
 
-    if (!page.url().includes("/login")) {
+    if (!page.url().includes("/login"))
+    {
         await context.storageState({ path: AUTH_FILE });
         await context.close();
         return;
@@ -175,13 +197,15 @@ setup("authenticate via Hive SSO", async ({ browser }) => {
         .first();
     await submitButton.click();
 
-    try {
+    try
+    {
         const authorizeButton = page.locator(
             "button:has-text('Authorize'), button:has-text('Allow'), button:has-text('אשר'), input[type='submit'][value='Authorize']",
         );
         await authorizeButton.waitFor({ state: "visible", timeout: 5_000 });
         await authorizeButton.click();
-    } catch {
+    } catch
+    {
         // No authorization screen — continue
     }
 
