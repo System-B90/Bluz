@@ -46,7 +46,7 @@ test.describe("Gantt Page", () => {
         await fab.click();
 
         // Check if there is a selected curriculum to delete to show placeholder
-        const deleteButton = page.locator('span[title="מחיקה"] button, span[aria-label="מחיקה"] button');
+        const deleteButton = page.getByRole("button", { name: "מחיקה" });
         if (await deleteButton.isVisible()) {
             await deleteButton.click();
             await page.waitForTimeout(1000);

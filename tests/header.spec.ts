@@ -99,14 +99,21 @@ test.describe("Header / AppBar", () => {
         const showBtn = page.getByRole("button", { name: /גלה חלונות פ"א/ });
         await expect(showBtn).toBeVisible();
 
-        // Click → should switch to "הסתר" (hide PA windows)
+        // Click to toggle; the filter Popover may close (Tooltip Portal / ClickAwayListener
+        // interaction) — re-open it before asserting the new label.
         await showBtn.click();
+        if (!await page.getByRole("button", { name: /הסתר סננים/ }).isVisible()) {
+            await filterToggle.click();
+        }
         await expect(
             page.getByRole("button", { name: /הסתר חלונות פ"א/ }),
         ).toBeVisible({ timeout: 5_000 });
 
-        // Click → back to "גלה"
+        // Toggle back — same pattern
         await page.getByRole("button", { name: /הסתר חלונות פ"א/ }).click();
+        if (!await page.getByRole("button", { name: /הסתר סננים/ }).isVisible()) {
+            await filterToggle.click();
+        }
         await expect(
             page.getByRole("button", { name: /גלה חלונות פ"א/ }),
         ).toBeVisible({ timeout: 5_000 });
@@ -163,29 +170,32 @@ test.describe("Header / AppBar", () => {
         page,
     }) => {
         const filterToggle = page.getByRole("button", { name: /הצג סננים|הסתר סננים/ });
-        await filterToggle.click();
 
-        const misconfigToggle = page.getByRole("button", { name: /הצג פערי איוש|הסתר פערי איוש/ });
-        await expect(misconfigToggle).toBeVisible();
+        const openAndFind = async () => {
+            if (!await page.getByRole("button", { name: /הסתר סננים/ }).isVisible()) {
+                await filterToggle.click();
+            }
+            return page.getByRole("button", { name: /הצג פערי איוש|הסתר פערי איוש/ });
+        };
 
-        const initialMisconfigLabel =
-            (await misconfigToggle.getAttribute("title")) || (await misconfigToggle.getAttribute("aria-label"));
+        let toggle = await openAndFind();
+        await expect(toggle).toBeVisible();
 
-        if (initialMisconfigLabel?.includes("הסתר")) {
-            await misconfigToggle.click();
-            await expect
-                .poll(async () => (await misconfigToggle.getAttribute("title")) || (await misconfigToggle.getAttribute("aria-label")))
-                .toMatch(/הצג פערי/, { timeout: 10_000 });
+        // Normalise: start with misconfigurations hidden ("הצג" = currently off)
+        if ((await toggle.getAttribute("aria-label"))?.includes("הסתר")) {
+            await toggle.click();
+            toggle = await openAndFind();
+            await expect(page.getByRole("button", { name: /הצג פערי/ })).toBeVisible({ timeout: 5_000 });
         }
 
-        await misconfigToggle.click();
-        await expect
-            .poll(async () => (await misconfigToggle.getAttribute("title")) || (await misconfigToggle.getAttribute("aria-label")))
-            .toMatch(/הסתר פערי/, { timeout: 10_000 });
+        // Toggle ON → label should become "הסתר פערי איוש"
+        await page.getByRole("button", { name: /הצג פערי/ }).click();
+        toggle = await openAndFind();
+        await expect(page.getByRole("button", { name: /הסתר פערי/ })).toBeVisible({ timeout: 5_000 });
 
-        await misconfigToggle.click();
-        await expect
-            .poll(async () => (await misconfigToggle.getAttribute("title")) || (await misconfigToggle.getAttribute("aria-label")))
-            .toMatch(/הצג פערי/, { timeout: 10_000 });
+        // Toggle OFF → label should return to "הצג פערי איוש"
+        await page.getByRole("button", { name: /הסתר פערי/ }).click();
+        toggle = await openAndFind();
+        await expect(page.getByRole("button", { name: /הצג פערי/ })).toBeVisible({ timeout: 5_000 });
     });
 });
