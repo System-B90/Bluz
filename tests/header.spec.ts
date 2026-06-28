@@ -95,18 +95,21 @@ test.describe("Header / AppBar", () => {
         const filterToggle = page.getByRole("button", { name: /הצג סננים|הסתר סננים/ });
         await filterToggle.click();
 
-        const paToggle = page.getByRole("button", { name: /גלה חלונות פ"א|הסתר חלונות פ"א/ });
-        await expect(paToggle).toBeVisible();
+        // Initial state — "גלה" (show PA windows)
+        const showBtn = page.getByRole("button", { name: /גלה חלונות פ"א/ });
+        await expect(showBtn).toBeVisible();
 
-        await paToggle.click();
-        await expect
-            .poll(async () => (await paToggle.getAttribute("title")) || (await paToggle.getAttribute("aria-label")))
-            .toMatch(/הסתר חלונות/, { timeout: 10_000 });
+        // Click → should switch to "הסתר" (hide PA windows)
+        await showBtn.click();
+        await expect(
+            page.getByRole("button", { name: /הסתר חלונות פ"א/ }),
+        ).toBeVisible({ timeout: 5_000 });
 
-        await paToggle.click();
-        await expect
-            .poll(async () => (await paToggle.getAttribute("title")) || (await paToggle.getAttribute("aria-label")))
-            .toMatch(/גלה חלונות/, { timeout: 10_000 });
+        // Click → back to "גלה"
+        await page.getByRole("button", { name: /הסתר חלונות פ"א/ }).click();
+        await expect(
+            page.getByRole("button", { name: /גלה חלונות פ"א/ }),
+        ).toBeVisible({ timeout: 5_000 });
     });
 
     test("navigates to the Gantt page via curriculum icon", async ({

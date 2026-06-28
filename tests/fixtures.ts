@@ -255,8 +255,27 @@ export async function exitOfflineMode(page: Page): Promise<ReturnType<typeof get
 /**
  * Ensures the test ends in online mode by force-reverting any pending
  * offline changes. Safe to call even when already online.
+ *
+ * Also dismisses any lingering dialogs (event editor, push-updates) left
+ * open by a failed test so they don't block the next retry's pointer events.
  */
 export async function cleanupOfflineMode(page: Page): Promise<void> {
+    // Close any leftover push-updates dialog from a failed test.
+    const staleDialog = getPushUpdatesDialog(page);
+    if (await staleDialog.isVisible({ timeout: 1_000 }).catch(() => false)) {
+        const revertBtn = staleDialog.getByRole("button", { name: "שחזר הכל" });
+        if (await revertBtn.isVisible()) await revertBtn.click();
+        else await page.keyboard.press("Escape");
+        await page.waitForTimeout(300);
+    }
+
+    // Close any other lingering MUI dialog (e.g. event editor left open).
+    const anyDialog = page.locator(".MuiDialog-root:visible").first();
+    if (await anyDialog.isVisible({ timeout: 500 }).catch(() => false)) {
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(300);
+    }
+
     const returnBtn = page.getByRole("button", { name: /חזור למצב מקוון/ });
     if (!(await returnBtn.isVisible())) return;
 
@@ -266,13 +285,22 @@ export async function cleanupOfflineMode(page: Page): Promise<void> {
         const revertBtn = dialog.getByRole("button", { name: "שחזר הכל" });
         if (await revertBtn.isVisible()) {
             await revertBtn.click();
-        } else {
-            // No changes — the dialog auto-closes; nothing to do.
         }
     }
     await expect(
         page.getByRole("button", { name: /עבור למצב לוקלי/ }),
     ).toBeVisible({ timeout: 10_000 });
+}
+
+/**
+ * Double-clicks a calendar event by name.
+ * Uses `force: true` to bypass `.rbc-time-slot` z-index interception.
+ */
+export async function dblclickCalendarEvent(page: Page, name: string): Promise<void> {
+    const calEvent = page.locator(SELECTORS.calendarEvent).filter({ hasText: name });
+    await expect(calEvent.first()).toBeVisible({ timeout: 5_000 });
+    await calEvent.first().dblclick({ force: true });
+    await page.waitForTimeout(400);
 }
 
 /**

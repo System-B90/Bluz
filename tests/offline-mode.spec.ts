@@ -8,6 +8,7 @@ import {
     exitOfflineMode,
     cleanupOfflineMode,
     createEventInOfflineMode,
+    dblclickCalendarEvent,
     getPushUpdatesDialog,
     getEventDialog,
     selectCalendarTimeRange,
@@ -182,12 +183,7 @@ test.describe("Offline mode", () => {
         // Now go offline and modify it
         await enterOfflineMode(page);
 
-        const calEvent = page
-            .locator(SELECTORS.calendarEvent)
-            .filter({ hasText: originalName });
-        await expect(calEvent.first()).toBeVisible({ timeout: 5_000 });
-        await calEvent.first().dblclick();
-        await page.waitForTimeout(400);
+        await dblclickCalendarEvent(page, originalName);
 
         const editDialog = getEventDialog(page);
         await expect(editDialog).toBeVisible();
@@ -218,12 +214,7 @@ test.describe("Offline mode", () => {
         // Go offline and delete it
         await enterOfflineMode(page);
 
-        const calEvent = page
-            .locator(SELECTORS.calendarEvent)
-            .filter({ hasText: name });
-        await expect(calEvent.first()).toBeVisible({ timeout: 5_000 });
-        await calEvent.first().dblclick();
-        await page.waitForTimeout(400);
+        await dblclickCalendarEvent(page, name);
 
         const editDialog = getEventDialog(page);
         await expect(editDialog).toBeVisible();
@@ -254,9 +245,7 @@ test.describe("Offline mode", () => {
         // Enter offline, edit once → v2
         await enterOfflineMode(page);
 
-        const calEvent = page.locator(SELECTORS.calendarEvent).filter({ hasText: v1 });
-        await calEvent.first().dblclick();
-        await page.waitForTimeout(400);
+        await dblclickCalendarEvent(page, v1);
 
         let editDialog = getEventDialog(page);
         await editDialog.locator("input").first().clear();
@@ -265,9 +254,7 @@ test.describe("Offline mode", () => {
         await page.waitForTimeout(500);
 
         // Edit again offline — this second capture must NOT overwrite the first
-        const calEvent2 = page.locator(SELECTORS.calendarEvent).filter({ hasText: v2 });
-        await calEvent2.first().dblclick();
-        await page.waitForTimeout(400);
+        await dblclickCalendarEvent(page, v2);
 
         editDialog = getEventDialog(page);
         const finalName = testId("multi-edit-v3");
