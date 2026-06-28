@@ -25,8 +25,8 @@
         "test:e2e": "npx playwright test --config tests/playwright.config.ts",
         "test:e2e:ui": "npx playwright test --config tests/playwright.config.ts --ui",
         "session:start": "cd session-server && npm install && npm start",
-        "docs:build": "python -m mkdocs build",
-        "docs:serve": "python -m mkdocs serve"
+        "docs:build": "pwsh -Command \"$env:NO_MKDOCS_2_WARNING='true'; python -m mkdocs build\"",
+        "docs:serve": "pwsh -Command \"$env:NO_MKDOCS_2_WARNING='true'; python -m mkdocs serve\""
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": "eslint --config ./ui/eslint.config.mts",

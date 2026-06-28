@@ -1,5 +1,6 @@
 {
     "$schema": "https://typedoc.org/schema.json",
+    "logLevel": "Error",
     "entryPointStrategy": "expand",
     "entryPoints": [
         "ui/src/api-shared",

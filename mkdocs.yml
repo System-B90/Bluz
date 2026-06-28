@@ -7,7 +7,6 @@ copyright: Copyright &copy; 2026 System B15
 
 theme:
   name: material
-  direction: rtl
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default

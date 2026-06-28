@@ -44,6 +44,8 @@ jobs:
           pip install ./cli
 
       - name: Build documentation site
+        env:
+          NO_MKDOCS_2_WARNING: "true"
         run: python -m mkdocs build
 
       - name: Upload Pages artifact
