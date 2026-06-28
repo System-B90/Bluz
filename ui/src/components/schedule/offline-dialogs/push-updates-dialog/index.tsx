@@ -7,7 +7,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
     apiCreateEvent,
@@ -206,11 +206,14 @@ export function PushOfflineUpdatesDialog() {
             return states;
         }, [localEvents, getCapturedEvent, getCapturedState, enqueueSnackbar]);
 
+    const checkRef = useRef(checkEventCollisionStates);
+    checkRef.current = checkEventCollisionStates;
+
     useEffect(() => {
         if (!pushDialogOpen) {
             return;
         }
-        checkEventCollisionStates()
+        checkRef.current()
             .then((states) => {
                 const keys = Object.keys(states);
                 if (keys.length === 0) {
@@ -235,13 +238,10 @@ export function PushOfflineUpdatesDialog() {
                     error,
                 ),
             );
-    }, [
-        pushDialogOpen,
-        checkEventCollisionStates,
-        purgeCapturedState,
-        setPushDialogOpen,
-        enqueueSnackbar,
-    ]);
+        // Only re-run when the dialog opens — not on every localEvents change.
+        // checkRef holds the latest checkEventCollisionStates without causing re-fires.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pushDialogOpen]);
 
     const collisionListKey = useMemo(
         () =>

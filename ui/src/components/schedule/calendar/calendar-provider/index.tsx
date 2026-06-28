@@ -46,11 +46,18 @@ export const CalendarProvider = ({
 
     const { events, dispatch, remoteDispatch, undo, redo } = useEventState();
 
+    const eventsRef = useRef(events);
+    eventsRef.current = events;
+
     useEffect(() => {
-        if (offlineMode && events.length > 0) {
-            captureInitialEvents(events);
+        if (offlineMode && eventsRef.current.length > 0) {
+            captureInitialEvents(eventsRef.current);
         }
-    }, [offlineMode, events, captureInitialEvents]);
+        // Only capture the snapshot when entering offline mode, not on every
+        // events change — otherwise locally-created events get immediately
+        // captured and look unchanged when the push dialog compares them.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [offlineMode, captureInitialEvents]);
 
     const setEventLock = useCallback(
         (eventId: EventId, lock: EventLockMessage | null) => {
