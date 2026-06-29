@@ -73,18 +73,25 @@ test.describe("Header / AppBar", () => {
 
     test("toggles prayer filter on click", async ({ page }) => {
         const filterToggle = page.getByRole("button", { name: /הצג סננים|הסתר סננים/ });
-        await filterToggle.click();
+
+        // Panel may already be open from a previous test; open it if not
+        if (!await page.getByRole("button", { name: /הסתר סננים/ }).isVisible()) {
+            await filterToggle.click();
+        }
 
         const prayerToggle = page.getByRole("button", { name: /הסתר תפילות|הצג תפילות/ });
         await expect(prayerToggle).toBeVisible();
 
-        // Click to toggle prayer filter
+        // Click to toggle prayer filter; Tooltip-Portal / ClickAwayListener may
+        // close the Popover — re-open it before asserting the overlay icon.
         await prayerToggle.click();
-        await page.waitForTimeout(300);
+        if (!await page.getByRole("button", { name: /הסתר סננים/ }).isVisible()) {
+            await filterToggle.click();
+        }
 
         // The DoNotDisturbAlt overlay icon should become visible
         const overlayIcon = prayerToggle.locator("svg.absolute");
-        await expect(overlayIcon).toBeVisible();
+        await expect(overlayIcon).toBeVisible({ timeout: 5_000 });
 
         // Toggle back
         await prayerToggle.click();
@@ -95,18 +102,28 @@ test.describe("Header / AppBar", () => {
         const filterToggle = page.getByRole("button", { name: /הצג סננים|הסתר סננים/ });
         await filterToggle.click();
 
-        const paToggle = page.getByRole("button", { name: /גלה חלונות פ"א|הסתר חלונות פ"א/ });
-        await expect(paToggle).toBeVisible();
+        // Initial state — "גלה" (show PA windows)
+        const showBtn = page.getByRole("button", { name: /גלה חלונות פ"א/ });
+        await expect(showBtn).toBeVisible();
 
-        await paToggle.click();
-        await expect
-            .poll(async () => (await paToggle.getAttribute("title")) || (await paToggle.getAttribute("aria-label")))
-            .toMatch(/הסתר חלונות/, { timeout: 10_000 });
+        // Click to toggle; the filter Popover may close (Tooltip Portal / ClickAwayListener
+        // interaction) — re-open it before asserting the new label.
+        await showBtn.click();
+        if (!await page.getByRole("button", { name: /הסתר סננים/ }).isVisible()) {
+            await filterToggle.click();
+        }
+        await expect(
+            page.getByRole("button", { name: /הסתר חלונות פ"א/ }),
+        ).toBeVisible({ timeout: 5_000 });
 
-        await paToggle.click();
-        await expect
-            .poll(async () => (await paToggle.getAttribute("title")) || (await paToggle.getAttribute("aria-label")))
-            .toMatch(/גלה חלונות/, { timeout: 10_000 });
+        // Toggle back — same pattern
+        await page.getByRole("button", { name: /הסתר חלונות פ"א/ }).click();
+        if (!await page.getByRole("button", { name: /הסתר סננים/ }).isVisible()) {
+            await filterToggle.click();
+        }
+        await expect(
+            page.getByRole("button", { name: /גלה חלונות פ"א/ }),
+        ).toBeVisible({ timeout: 5_000 });
     });
 
     test("navigates to the Gantt page via curriculum icon", async ({
@@ -160,29 +177,32 @@ test.describe("Header / AppBar", () => {
         page,
     }) => {
         const filterToggle = page.getByRole("button", { name: /הצג סננים|הסתר סננים/ });
-        await filterToggle.click();
 
-        const misconfigToggle = page.getByRole("button", { name: /הצג פערי איוש|הסתר פערי איוש/ });
-        await expect(misconfigToggle).toBeVisible();
+        const openAndFind = async () => {
+            if (!await page.getByRole("button", { name: /הסתר סננים/ }).isVisible()) {
+                await filterToggle.click();
+            }
+            return page.getByRole("button", { name: /הצג פערי איוש|הסתר פערי איוש/ });
+        };
 
-        const initialMisconfigLabel =
-            (await misconfigToggle.getAttribute("title")) || (await misconfigToggle.getAttribute("aria-label"));
+        let toggle = await openAndFind();
+        await expect(toggle).toBeVisible();
 
-        if (initialMisconfigLabel?.includes("הסתר")) {
-            await misconfigToggle.click();
-            await expect
-                .poll(async () => (await misconfigToggle.getAttribute("title")) || (await misconfigToggle.getAttribute("aria-label")))
-                .toMatch(/הצג פערי/, { timeout: 10_000 });
+        // Normalise: start with misconfigurations hidden ("הצג" = currently off)
+        if ((await toggle.getAttribute("aria-label"))?.includes("הסתר")) {
+            await toggle.click();
+            toggle = await openAndFind();
+            await expect(page.getByRole("button", { name: /הצג פערי/ })).toBeVisible({ timeout: 5_000 });
         }
 
-        await misconfigToggle.click();
-        await expect
-            .poll(async () => (await misconfigToggle.getAttribute("title")) || (await misconfigToggle.getAttribute("aria-label")))
-            .toMatch(/הסתר פערי/, { timeout: 10_000 });
+        // Toggle ON → label should become "הסתר פערי איוש"
+        await page.getByRole("button", { name: /הצג פערי/ }).click();
+        toggle = await openAndFind();
+        await expect(page.getByRole("button", { name: /הסתר פערי/ })).toBeVisible({ timeout: 5_000 });
 
-        await misconfigToggle.click();
-        await expect
-            .poll(async () => (await misconfigToggle.getAttribute("title")) || (await misconfigToggle.getAttribute("aria-label")))
-            .toMatch(/הצג פערי/, { timeout: 10_000 });
+        // Toggle OFF → label should return to "הצג פערי איוש"
+        await page.getByRole("button", { name: /הסתר פערי/ }).click();
+        toggle = await openAndFind();
+        await expect(page.getByRole("button", { name: /הצג פערי/ })).toBeVisible({ timeout: 5_000 });
     });
 });

@@ -46,9 +46,35 @@ export const CalendarProvider = ({
 
     const { events, dispatch, remoteDispatch, undo, redo } = useEventState();
 
+    const eventsRef = useRef(events);
+    eventsRef.current = events;
+
+    const offlineModeRef = useRef(offlineMode);
+    offlineModeRef.current = offlineMode;
+
+    // Tracks whether we've already taken the offline snapshot for this session.
+    // Reset when leaving offline mode so the next entry gets a fresh capture.
+    const didCaptureOfflineRef = useRef(false);
+
     useEffect(() => {
-        if (offlineMode && events.length > 0) {
+        if (!offlineMode) {
+            didCaptureOfflineRef.current = false;
+            return;
+        }
+        if (eventsRef.current.length > 0) {
+            captureInitialEvents(eventsRef.current);
+            didCaptureOfflineRef.current = true;
+        }
+        // Only fire on offlineMode toggle, not on every events change.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [offlineMode, captureInitialEvents]);
+
+    // Deferred capture: if events hadn't loaded yet when offline mode was
+    // entered, capture the first non-empty batch that arrives.
+    useEffect(() => {
+        if (offlineMode && !didCaptureOfflineRef.current && events.length > 0) {
             captureInitialEvents(events);
+            didCaptureOfflineRef.current = true;
         }
     }, [offlineMode, events, captureInitialEvents]);
 
@@ -123,10 +149,12 @@ export const CalendarProvider = ({
 
             apiGetEvents({ startDate: s, endDate: e, iterationId })
                 .then((fetchedEvents) => {
-                    remoteDispatch({
-                        type: "SET_EVENTS",
-                        payload: fetchedEvents,
-                    });
+                    if (!offlineModeRef.current) {
+                        remoteDispatch({
+                            type: "SET_EVENTS",
+                            payload: fetchedEvents,
+                        });
+                    }
                 })
                 .catch((error) =>
                     enqueueApiErrorSnackbar(

@@ -21,6 +21,7 @@ except ImportError as e:
     print(f"Error: Missing required dependency '{e.name}'.", file=sys.stderr)
     print("Please install the required packages by running:\n", file=sys.stderr)
     print("    pip install typer InquirerPy python-dotenv\n", file=sys.stderr)
+    print("    pip install pyhivelms\n", file=sys.stderr)
     sys.exit(1)
 
 try:

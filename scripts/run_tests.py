@@ -185,11 +185,15 @@ def main(
         "BLUZ_VERSION": "latest",
     }
 
+    new_ui_container = True
+
     if is_running and not rebuild:
         typer.secho(
             "Existing test containers detected. Reusing them to optimize runtime.",
             fg=typer.colors.GREEN,
         )
+        new_ui_container = False
+
         # Query existing ports
         ports["postgres"] = get_running_port(project_name, "curriculum-db", 5432)
         ports["mongo"] = get_running_port(project_name, "mongodb", 27017)
@@ -203,6 +207,7 @@ def main(
                 fg=typer.colors.YELLOW,
             )
             is_running = False
+            new_ui_container = True
 
     if not is_running or rebuild:
         if rebuild:
@@ -309,10 +314,15 @@ def main(
         if rebuild:
             compose_cmd.append("--build")
 
-        subprocess.run(compose_cmd, env=compose_env, check=True, timeout=180)
+        subprocess.run(
+            compose_cmd,
+            env=compose_env,
+            check=True,
+            timeout=180 if new_ui_container else 600,
+        )
 
         typer.secho("Waiting for web application to be ready...", fg=typer.colors.CYAN)
-        if wait_for_ui_ready(ports["https"]):
+        if wait_for_ui_ready(ports["https"], timeout=600 if new_ui_container else 120):
             typer.secho("Web application is ready!", fg=typer.colors.GREEN)
         else:
             raise RuntimeError("Timeout waiting for application to be ready.")
