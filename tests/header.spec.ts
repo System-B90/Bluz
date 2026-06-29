@@ -73,18 +73,25 @@ test.describe("Header / AppBar", () => {
 
     test("toggles prayer filter on click", async ({ page }) => {
         const filterToggle = page.getByRole("button", { name: /הצג סננים|הסתר סננים/ });
-        await filterToggle.click();
+
+        // Panel may already be open from a previous test; open it if not
+        if (!await page.getByRole("button", { name: /הסתר סננים/ }).isVisible()) {
+            await filterToggle.click();
+        }
 
         const prayerToggle = page.getByRole("button", { name: /הסתר תפילות|הצג תפילות/ });
         await expect(prayerToggle).toBeVisible();
 
-        // Click to toggle prayer filter
+        // Click to toggle prayer filter; Tooltip-Portal / ClickAwayListener may
+        // close the Popover — re-open it before asserting the overlay icon.
         await prayerToggle.click();
-        await page.waitForTimeout(300);
+        if (!await page.getByRole("button", { name: /הסתר סננים/ }).isVisible()) {
+            await filterToggle.click();
+        }
 
         // The DoNotDisturbAlt overlay icon should become visible
         const overlayIcon = prayerToggle.locator("svg.absolute");
-        await expect(overlayIcon).toBeVisible();
+        await expect(overlayIcon).toBeVisible({ timeout: 5_000 });
 
         // Toggle back
         await prayerToggle.click();

@@ -41,19 +41,25 @@ test.describe("Gantt Page", () => {
     // ─── Page Load ──────────────────────────────────────────────────────────
 
     test("renders the Gantt page with placeholder text", async ({ page }) => {
-        // Open FAB first
         const fab = page.getByRole("button", { name: "גאנטים" });
-        await fab.click();
 
-        // Check if there is a selected curriculum to delete to show placeholder
-        const deleteButton = page.getByRole("button", { name: "מחיקה" });
-        if (await deleteButton.isVisible()) {
+        // Delete every curriculum in the list so the placeholder is visible.
+        // Each delete click may close the FAB (Tooltip-Portal / ClickAwayListener),
+        // so we reopen it at the top of each iteration.
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            await fab.click();
+            // Wait for item skeletons to resolve before looking for the button
+            await page.locator(".MuiSkeleton-root").waitFor({ state: "hidden", timeout: 10_000 });
+
+            const deleteButton = page.getByRole("button", { name: "מחיקה" });
+            if (!await deleteButton.isVisible()) {
+                await page.keyboard.press("Escape");
+                await page.waitForTimeout(300);
+                break;
+            }
             await deleteButton.click();
-            await page.waitForTimeout(1000);
-        } else {
-            // Close the FAB popover if not deleting
-            await page.keyboard.press("Escape");
-            await page.waitForTimeout(300);
+            await page.waitForTimeout(1_000);
         }
 
         // Without a selected curriculum, the placeholder should be visible

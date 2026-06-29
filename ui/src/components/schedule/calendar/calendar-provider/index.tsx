@@ -49,6 +49,9 @@ export const CalendarProvider = ({
     const eventsRef = useRef(events);
     eventsRef.current = events;
 
+    const offlineModeRef = useRef(offlineMode);
+    offlineModeRef.current = offlineMode;
+
     // Tracks whether we've already taken the offline snapshot for this session.
     // Reset when leaving offline mode so the next entry gets a fresh capture.
     const didCaptureOfflineRef = useRef(false);
@@ -146,10 +149,12 @@ export const CalendarProvider = ({
 
             apiGetEvents({ startDate: s, endDate: e, iterationId })
                 .then((fetchedEvents) => {
-                    remoteDispatch({
-                        type: "SET_EVENTS",
-                        payload: fetchedEvents,
-                    });
+                    if (!offlineModeRef.current) {
+                        remoteDispatch({
+                            type: "SET_EVENTS",
+                            payload: fetchedEvents,
+                        });
+                    }
                 })
                 .catch((error) =>
                     enqueueApiErrorSnackbar(

@@ -160,7 +160,7 @@ export function PushOfflineUpdatesDialog() {
                 const captured = getCapturedEvent(id) ?? undefined;
 
                 if (local === undefined || captured === undefined) {
-                    if (local !== undefined) return true; // Created locally
+                    if (local !== undefined) return id.includes("-"); // Created locally (UUID format; server IDs have no hyphens)
                     if (captured !== undefined) return true; // Deleted locally
                     return false;
                 }
@@ -192,8 +192,11 @@ export function PushOfflineUpdatesDialog() {
                 const captured = getCapturedEvent(id) ?? undefined;
                 const server = serverEvents[id] ?? undefined;
 
-                // Conflict if captured version differs from committed server version
-                const conflicting = !areDiffValuesEqual(captured, server);
+                // Conflict only when both versions exist and differ
+                const conflicting =
+                    captured !== undefined &&
+                    server !== undefined &&
+                    !areDiffValuesEqual(captured, server);
 
                 states[id] = {
                     localModifiedEvent: local,
