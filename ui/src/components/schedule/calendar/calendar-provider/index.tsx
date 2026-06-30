@@ -32,8 +32,12 @@ export const CalendarProvider = ({
 }: {
     children: React.ReactNode;
 }) => {
-    const { offlineMode, captureEventBeforeEdit, captureInitialEvents } =
-        useOffline();
+    const {
+        offlineMode,
+        pushDialogOpen,
+        captureEventBeforeEdit,
+        captureInitialEvents,
+    } = useOffline();
     const { userData, sendMessage } = useAuth();
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
@@ -180,15 +184,19 @@ export const CalendarProvider = ({
         loadEvents(startDate, endDate);
     }, [startDate, endDate, loadEvents]);
 
-    // Force a full refetch when returning from offline mode so concurrent
-    // changes made by other users while we were offline are not lost.
-    const prevOfflineModeRef = useRef(offlineMode);
+    // Force a full refetch to pull in concurrent changes made by other users
+    // while we were offline. This must wait until the offline reconciliation
+    // dialog has been *resolved* (closed while back online): refetching on the
+    // raw offline→online transition races the dialog and overwrites the user's
+    // local edits with the server state before they can review them — the
+    // dialog then sees no diffs, closes itself, and silently discards the work.
+    const prevPushDialogOpenRef = useRef(pushDialogOpen);
     useEffect(() => {
-        if (prevOfflineModeRef.current && !offlineMode) {
+        if (prevPushDialogOpenRef.current && !pushDialogOpen && !offlineMode) {
             loadEvents(startDate, endDate);
         }
-        prevOfflineModeRef.current = offlineMode;
-    }, [offlineMode, loadEvents, startDate, endDate]);
+        prevPushDialogOpenRef.current = pushDialogOpen;
+    }, [pushDialogOpen, offlineMode, loadEvents, startDate, endDate]);
 
     return (
         <CalendarFiltersProvider>
