@@ -2,6 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import DriveFileMoveIcon from "@mui/icons-material/DriveFileMove";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
 import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
@@ -22,6 +23,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { EVENT_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
+import { MoveEventDialog } from "@/components/gantt/module-dialog/MoveEventDialog";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from "@/components/gantt/state/hooks/UseEvent";
 
@@ -58,6 +60,7 @@ export function ModuleEventView({
     const { enqueueSnackbar } = useSnackbar();
     const moduleEvent = useEvent(eventId);
     const { deleteEvent, updateEvent, duplicateEvent } = useModuleEventActions();
+    const [moveDialogOpen, setMoveDialogOpen] = useState(false);
 
     const {
         attributes,
@@ -174,10 +177,19 @@ export function ModuleEventView({
                 <IconButton onClick={handleDuplicateClick} size="small" title="שכפול המופע">
                     <FileCopyIcon color="info" fontSize="small" />
                 </IconButton>
+                <IconButton onClick={() => setMoveDialogOpen(true)} size="small" title="העבר מופע למערך אחר">
+                    <DriveFileMoveIcon color="action" fontSize="small" />
+                </IconButton>
                 <IconButton onClick={handleDeleteClick} size="small" title="מחיקת המופע">
                     <DeleteIcon color="error" fontSize="small" />
                 </IconButton>
             </TableCell>
+            <MoveEventDialog
+                currentModuleId={moduleId}
+                eventId={eventId}
+                onClose={() => setMoveDialogOpen(false)}
+                open={moveDialogOpen}
+            />
         </TableRow>
     );
 }

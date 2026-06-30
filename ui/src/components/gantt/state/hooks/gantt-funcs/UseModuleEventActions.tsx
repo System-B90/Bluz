@@ -142,6 +142,24 @@ export function useModuleEventActions() {
         [dispatch],
     );
 
+    const moveEvent = useCallback(
+        async (
+            eventId: GanttEventId,
+            fromModuleId: GanttModuleId,
+            toModuleId: GanttModuleId,
+        ) => {
+            return await withGantErrorHandling(async () => {
+                await ganttApi.event.apiUnlink(eventId, fromModuleId);
+                await ganttApi.event.apiLink(eventId, toModuleId);
+                dispatch({
+                    type: "MOVE_EVENT",
+                    payload: { eventId, fromModuleId, toModuleId },
+                });
+            }, `Failed to move event (ID: ${eventId}):`);
+        },
+        [dispatch],
+    );
+
     return {
         createEvent,
         updateEvent,
@@ -150,5 +168,6 @@ export function useModuleEventActions() {
         unlinkEventFromModule,
         allocateTimeToModuleEvent,
         duplicateEvent,
+        moveEvent,
     } as const;
 }
