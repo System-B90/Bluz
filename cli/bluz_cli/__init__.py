@@ -5,4 +5,4 @@ Created: 2026-06-27
 Author: Michael K. Steinberg
 """
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
