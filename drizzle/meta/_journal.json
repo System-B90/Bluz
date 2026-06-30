@@ -36,6 +36,20 @@
       "when": 1782579875658,
       "tag": "0004_medical_lord_hawal",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782839304987,
+      "tag": "0005_fixed_captain_flint",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782840638145,
+      "tag": "0006_harsh_thunderbolts",
+      "breakpoints": true
     }
   ]
 }

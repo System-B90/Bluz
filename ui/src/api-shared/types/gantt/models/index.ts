@@ -10,7 +10,11 @@ export {
     getDayNameDisplay,
 } from "@/api-shared/types/gantt/models/day";
 export type { GanttDay, GanttDayId } from "@/api-shared/types/gantt/models/day";
-export { ModuleEventType } from "@/api-shared/types/gantt/models/event";
+export {
+    EventRecurrence,
+    ModuleEventType,
+    RoomRequirement,
+} from "@/api-shared/types/gantt/models/event";
 export type {
     GanttEvent,
     GanttEventId,

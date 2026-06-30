@@ -67,9 +67,17 @@ export type Action =
               duration: number;
           };
       }
-    | { type: "REMOVE_DAY"; payload: { dayId: GanttDayId } }
+    | {
+          type: "MOVE_EVENT";
+          payload: {
+              eventId: GanttEventId;
+              fromModuleId: GanttModuleId;
+              toModuleId: GanttModuleId;
+          };
+      }
 
     // Removes
+    | { type: "REMOVE_DAY"; payload: { dayId: GanttDayId } }
     | {
           type: "REMOVE_EVENT";
           payload: { moduleId: GanttModuleId; eventId: GanttEventId };
@@ -386,6 +394,32 @@ export function curriculumReducer(
                     events: parent.events.filter(
                         (id) => id !== action.payload.eventId,
                     ),
+                },
+            },
+        };
+    }
+
+    case "MOVE_EVENT": {
+        const { eventId, fromModuleId, toModuleId } = action.payload;
+        const fromModule = state.modules[fromModuleId];
+        const toModule = state.modules[toModuleId];
+        const event = state.events[eventId];
+        if (!fromModule || !toModule || !event) return state;
+        return {
+            ...state,
+            events: {
+                ...state.events,
+                [eventId]: { ...event, moduleId: toModuleId },
+            },
+            modules: {
+                ...state.modules,
+                [fromModuleId]: {
+                    ...fromModule,
+                    events: fromModule.events.filter((id) => id !== eventId),
+                },
+                [toModuleId]: {
+                    ...toModule,
+                    events: [...toModule.events, eventId],
                 },
             },
         };

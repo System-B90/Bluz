@@ -5,6 +5,7 @@ import { NextRequest } from "next/server";
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { DbModuleEvent } from "@/api-server/gantt/db-module-event";
 import { ClientApiError } from "@/api-shared/errors";
+import { getNextIndexedTitle } from "@/app/api/gantt/events/[id]/duplicate/title-utils";
 
 type RouteContext = {
     params: Promise<{ id: string; }>;
@@ -42,6 +43,14 @@ export async function POST(request: NextRequest, context: RouteContext)
             type: originalEvent.type,
             minimumDuration: originalEvent.minimumDuration,
             allocatedDuration: 0,
+            orchestratorId: originalEvent.orchestratorId,
+            recommendedLecturerIds: originalEvent.recommendedLecturerIds,
+            systemRequirements: originalEvent.systemRequirements,
+            roomRequirement: originalEvent.roomRequirement,
+            recurrence: originalEvent.recurrence,
+            isCritical: originalEvent.isCritical,
+            isPaWindow: originalEvent.isPaWindow,
+            comment: originalEvent.comment,
             moduleId: payload.moduleId,
         });
 
@@ -50,18 +59,4 @@ export async function POST(request: NextRequest, context: RouteContext)
     {
         return catchHandler(request, error);
     }
-}
-
-function getNextIndexedTitle(title: string): string
-{
-    const match = title.match(/^(.*?)\s*\((\d+)\)$/);
-
-    if (match)
-    {
-        const baseName = match[ 1 ];
-        const currentIndex = parseInt(match[ 2 ], 10);
-        return `${baseName} (${currentIndex + 1})`;
-    }
-
-    return `${title} (2)`;
 }

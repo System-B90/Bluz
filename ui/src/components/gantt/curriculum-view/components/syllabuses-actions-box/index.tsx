@@ -1,4 +1,5 @@
 import Box, { BoxProps } from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import { useSnackbar } from "notistack";
 import React, { useCallback } from "react";
 
@@ -15,11 +16,17 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type SyllabusesActionsBoxProps = {
     curriculumId: GanttCurriculumId;
+    onToggleAllExpanded?: () => void;
+    visibleSyllabusCount?: number;
+    expandedCount?: number;
 } & Omit<BoxProps, "display" | "justifyContent">;
 
 export function SyllabusesActionsBox({
     curriculumId,
-    ...props
+    onToggleAllExpanded,
+    visibleSyllabusCount = 0,
+    expandedCount = 0,
+    ...boxProps
 }: SyllabusesActionsBoxProps) {
     const { enqueueSnackbar } = useSnackbar();
     const state = useCurriculumState();
@@ -171,7 +178,7 @@ export function SyllabusesActionsBox({
             display="flex"
             gap={2}
             justifyContent="flex-start"
-            {...props}
+            {...boxProps}
             width="100%"
         >
             <CreateSyllabusButton curriculumId={curriculumId} />
@@ -184,6 +191,17 @@ export function SyllabusesActionsBox({
                 gap={1}
             />
             <GanttSearchField />
+            {visibleSyllabusCount > 0 && (
+                <Button
+                    onClick={onToggleAllExpanded}
+                    size="small"
+                    variant="outlined"
+                >
+                    {expandedCount === visibleSyllabusCount
+                        ? "צמצום הכול"
+                        : "הרחב הכול"}
+                </Button>
+            )}
             <Box flexGrow={1} />
             <ImportExportMenuButton
                 color="primary"

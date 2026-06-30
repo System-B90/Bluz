@@ -8,6 +8,7 @@ import { ganttApi } from "@/api-client/gantt";
 import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
 import {
     GanttCurriculumId,
+    GanttEventId,
     GanttModuleId,
 } from "@/api-shared/types/gantt/models";
 import {
@@ -23,6 +24,13 @@ import { ganttConstraintReducer } from "@/components/gantt/state/constraints/red
  */
 export type ProviderScope =
     | { type: "curriculum"; curriculumId: GanttCurriculumId }
+    | {
+          type: "event";
+          curriculumId: GanttCurriculumId;
+          syllabusId: string;
+          moduleId: GanttModuleId;
+          eventId: GanttEventId;
+      }
     | {
           type: "module";
           curriculumId: GanttCurriculumId;
@@ -58,6 +66,11 @@ export function GanttConstraintProvider({
             if (context.type === "curriculum") return true;
             if (constraint.type === ConstraintType.Temporal) return true;
 
+            // In event scope, only constraints owned by this very event are editable.
+            if (context.type === "event") {
+                return constraint.ownerEventId === context.eventId;
+            }
+
             // In module scope, we cannot modify constraints owned by a DIFFERENT module.
             if (
                 constraint.ownerModuleId &&
@@ -79,8 +92,11 @@ export function GanttConstraintProvider({
     const refreshConstraints = useCallback(async () => {
         dispatch({ type: "SET_LOADING", payload: true });
         try {
+            // Event scope reuses the module-scoped query: the server already
+            // returns every constraint owned by the module's events, which we
+            // then filter down to this event in the view.
             const queryOptions =
-                context.type === "module"
+                context.type === "module" || context.type === "event"
                     ? {
                         moduleId: context.moduleId,
                         syllabusId: context.syllabusId,
