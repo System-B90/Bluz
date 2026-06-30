@@ -17,12 +17,19 @@ import { MessageTypes } from "@/settings";
 
 export type { DbEventDocument };
 
+// Soft-deleted (archived) events must never surface in active views. Every read
+// path folds this predicate into its Mongo filter.
+const NOT_ARCHIVED: Filter<DbEventDocument> = { archived: { $ne: true } };
+
 async function getDbEvent(
     eventId: EventId,
     options?: FindOptions,
     controller: DatabaseController = databaseController,
 ): Promise<DbEventDocument | null> {
-    const data = await controller.events.findOne({ id: eventId }, options);
+    const data = await controller.events.findOne(
+        { id: eventId, ...NOT_ARCHIVED },
+        options,
+    );
     return data ? data : null;
 }
 
@@ -31,7 +38,10 @@ async function getDbEvents(
     options?: FindOptions,
     controller: DatabaseController = databaseController,
 ): Promise<Array<DbEventDocument>> {
-    const cursor = controller.events.find({ id: { $in: eventIds } }, options);
+    const cursor = controller.events.find(
+        { id: { $in: eventIds }, ...NOT_ARCHIVED },
+        options,
+    );
     const data = await cursor.toArray();
     return data;
 }
@@ -50,6 +60,7 @@ async function getDbEventsInRange(
             {
                 startTime: { $gte: startDate },
                 endTime: { $lte: endDate },
+                ...NOT_ARCHIVED,
                 ...filter,
             },
             options,
@@ -154,6 +165,13 @@ async function createDbEvent(
     return fixedEvent as DbEventDocument;
 }
 
+/**
+ * Soft-deletes a calendar event by setting its `archived` flag rather than
+ * removing the document. Archived events are filtered out of every read path,
+ * so to clients this is indistinguishable from a hard delete — but the record
+ * is preserved for auditing/restore. The real-time broadcast still uses the
+ * "removed" action so connected clients drop it from their views.
+ */
 async function deleteDbEvent(
     eventId: string,
     options?: FindOptions,
@@ -164,9 +182,13 @@ async function deleteDbEvent(
         throw new ClientApiError("Event id is missing!");
     }
 
-    const data = await controller.events.deleteOne({ id: eventId }, options);
+    const data = await controller.events.updateOne(
+        { id: eventId, ...NOT_ARCHIVED },
+        { $set: { archived: true } },
+        options,
+    );
 
-    if (data.deletedCount === 0) {
+    if (data.matchedCount === 0) {
         throw new ClientApiError("Failed to delete event!");
     }
 
