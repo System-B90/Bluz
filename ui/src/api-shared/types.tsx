@@ -47,11 +47,21 @@ export type EventUnlockMessage = {
     iterationId?: string;
 };
 
-// Snapshot: a named point-in-time copy of the visible calendar window.
-// Intended for the future snapshot/revert feature discussed in issue #12 comments.
+// Snapshot: a named, git-tag-like point-in-time copy of the calendar. It stores
+// the full event documents so the calendar can be restored to this exact state
+// later via a SET_EVENTS dispatch.
 export type CalendarSnapshot = {
     id: string;
     label: string;
     createdAt: string;
-    eventIds: Array<string>;
+    // The iteration this snapshot was taken from (undefined ⇒ current run).
+    iterationId?: string;
+    // Full captured event documents at snapshot time.
+    events: Array<DbEventDocument>;
+};
+
+// Lightweight list-row variant returned by the list endpoint — omits the (large)
+// events payload and exposes just the count.
+export type CalendarSnapshotSummary = Omit<CalendarSnapshot, "events"> & {
+    eventCount: number;
 };

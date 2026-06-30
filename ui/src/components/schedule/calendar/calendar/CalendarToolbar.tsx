@@ -23,6 +23,7 @@ import { useOffline } from "@/components/base/OfflineProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { Filters } from "@/components/header/filters";
 import { IterationSelector } from "@/components/schedule/calendar/calendar/IterationSelector";
+import { SnapshotMenu } from "@/components/schedule/calendar/calendar/SnapshotMenu";
 
 /**
  * Custom header toolbar for the calendar containing navigation controls, a date picker, and view selectors.
@@ -195,6 +196,7 @@ export function CalendarToolbar({
                 </Box>
 
                 <Box alignItems="center" display="flex" gap={ 1.5 }>
+                    <SnapshotMenu />
                     <ButtonGroup size="small" variant="outlined">
                         <Button
                             onClick={ () => onView("day") }
