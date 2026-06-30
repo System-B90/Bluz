@@ -114,17 +114,7 @@ export function SyllabusCard({
                         <ExpandMoreIcon />
                     </ExpandMore>
                 }
-                onClick={handleExpandClick}
-                sx={{
-                    pb: 0,
-                    pt: 1.5,
-                    px: 2,
-                    cursor: "pointer",
-                    userSelect: "none",
-                    "&:hover": {
-                        backgroundColor: "rgba(0, 0, 0, 0.04)",
-                    },
-                }}
+                sx={{ pb: 0, pt: 1.5, px: 2 }}
                 syllabusId={syllabusId}
             />
 
