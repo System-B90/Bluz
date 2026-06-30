@@ -1,7 +1,7 @@
 "use client";
 
 import { enqueueSnackbar } from "notistack";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { apiGetEvents } from "@/api-client/calendar";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
@@ -26,6 +26,7 @@ import { MessageTypes } from "@/settings";
 
 import "dayjs/locale/he";
 
+/** Provides calendar event state, offline support, undo/redo, and live presence locks to child components. */
 export const CalendarProvider = ({
     children,
 }: {
@@ -47,10 +48,13 @@ export const CalendarProvider = ({
     const { events, dispatch, remoteDispatch, undo, redo } = useEventState();
 
     const eventsRef = useRef(events);
-    eventsRef.current = events;
-
     const offlineModeRef = useRef(offlineMode);
-    offlineModeRef.current = offlineMode;
+
+    // Keep refs in sync after every render without triggering re-renders.
+    useLayoutEffect(() => {
+        eventsRef.current = events;
+        offlineModeRef.current = offlineMode;
+    });
 
     // Tracks whether we've already taken the offline snapshot for this session.
     // Reset when leaving offline mode so the next entry gets a fresh capture.
@@ -78,6 +82,7 @@ export const CalendarProvider = ({
         }
     }, [offlineMode, events, captureInitialEvents]);
 
+    /** Applies a lock or unlock update for a single event into the lock state map. */
     const setEventLock = useCallback(
         (eventId: EventId, lock: EventLockMessage | null) => {
             setLockState((prev) =>
@@ -106,6 +111,7 @@ export const CalendarProvider = ({
     // show a "dirty" indicator. Relayed through the session server (ephemeral).
     // Re-emitting this on a heartbeat both refreshes the TTL on existing
     // listeners and informs clients that connected after the lock was taken.
+    /** Broadcasts an EVENT_LOCK message so other clients show a presence indicator on the event. */
     const lockEvent = useCallback(
         (eventId: EventId) => {
             sendMessage({
@@ -121,6 +127,7 @@ export const CalendarProvider = ({
         [sendMessage, userData.id, userData.display_name, userData.name, iterationId],
     );
 
+    /** Broadcasts an EVENT_UNLOCK message to release the presence lock on the event. */
     const unlockEvent = useCallback(
         (eventId: EventId) => {
             sendMessage({
@@ -143,6 +150,7 @@ export const CalendarProvider = ({
         remoteDispatch,
     );
 
+    /** Fetches events for the given date range and dispatches them remotely; skips dispatch when offline. */
     const loadEvents = useCallback(
         (s?: Date, e?: Date) => {
             if (!s || !e) return;
