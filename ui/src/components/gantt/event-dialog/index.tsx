@@ -22,6 +22,7 @@ import {
     Dispatch,
     SetStateAction,
     useCallback,
+    useMemo,
     useState,
     useTransition,
 } from "react";
@@ -427,7 +428,24 @@ export function EventDialog({
     eventId,
     ...props
 }: EventDialogProps) {
-    if (!curriculumId || !syllabusId || !moduleId || !eventId) {
+    // Stable identity: GanttConstraintProvider refetches whenever this
+    // object's reference changes, so it must not be recreated on every
+    // render (e.g. while typing in unrelated fields).
+    const constraintContext = useMemo(
+        () =>
+            curriculumId && syllabusId && moduleId && eventId
+                ? ({
+                    type: "event" as const,
+                    curriculumId,
+                    syllabusId,
+                    moduleId,
+                    eventId,
+                })
+                : null,
+        [curriculumId, syllabusId, moduleId, eventId],
+    );
+
+    if (!constraintContext) {
         return (
             <EventDialogInner
                 eventId={eventId}
@@ -439,15 +457,7 @@ export function EventDialog({
     }
 
     return (
-        <GanttConstraintProvider
-            context={{
-                type: "event",
-                curriculumId,
-                syllabusId,
-                moduleId,
-                eventId,
-            }}
-        >
+        <GanttConstraintProvider context={constraintContext}>
             <EventDialogInner
                 eventId={eventId}
                 moduleId={moduleId}

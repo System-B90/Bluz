@@ -432,7 +432,23 @@ export function ModuleDialog({
     focusEventId,
     ...props
 }: ModuleDialogProps) {
-    if (!syllabusId || !moduleId || !curriculumId) {
+    // Stable identity: GanttConstraintProvider refetches whenever this
+    // object's reference changes, so it must not be recreated on every
+    // render (e.g. while typing in unrelated fields).
+    const constraintContext = useMemo(
+        () =>
+            syllabusId && moduleId && curriculumId
+                ? ({
+                    type: "module" as const,
+                    curriculumId,
+                    syllabusId,
+                    moduleId,
+                })
+                : null,
+        [curriculumId, syllabusId, moduleId],
+    );
+
+    if (!constraintContext) {
         return (
             <ModuleDialogInner
                 focusEventId={focusEventId}
@@ -444,14 +460,7 @@ export function ModuleDialog({
     }
 
     return (
-        <GanttConstraintProvider
-            context={{
-                type: "module",
-                curriculumId,
-                syllabusId,
-                moduleId,
-            }}
-        >
+        <GanttConstraintProvider context={constraintContext}>
             <ModuleDialogInner
                 focusEventId={focusEventId}
                 moduleId={moduleId}

@@ -203,10 +203,15 @@ export function TemporalDraftFields({
                 />
             </Stack>
 
-            <Stack alignItems="center" direction="row" spacing={3}>
-                <WeekDayVisualizer validDays={validDays} />
-                <Collapse in={hasNoValidDays} orientation="vertical">
-                    <Alert severity="warning" sx={{ py: 0, px: 2 }}>
+            <Stack alignItems="flex-start" direction="row" spacing={3}>
+                <Box sx={{ pt: 0.5 }}>
+                    <WeekDayVisualizer validDays={validDays} />
+                </Box>
+                <Collapse in={hasNoValidDays} orientation="horizontal">
+                    <Alert
+                        severity="warning"
+                        sx={{ py: 0, px: 2, whiteSpace: "nowrap" }}
+                    >
                         לא קיים יום העונה על הדרישות
                     </Alert>
                 </Collapse>
