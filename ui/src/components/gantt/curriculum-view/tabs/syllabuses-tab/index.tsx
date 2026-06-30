@@ -72,7 +72,7 @@ export const SyllabusesTab = memo(function SyllabusesTab({
         resetKey: curriculumId,
     });
     const hiddenSyllabusCount = syllabuses.length - visibleSyllabusCount;
-    const [expandedCards, setExpandedCards] = useState<Set<GanttSyllabusId>>(
+    const [ expandedCards, setExpandedCards ] = useState<Set<GanttSyllabusId>>(
         new Set(syllabuses.slice(0, visibleSyllabusCount))
     );
 
@@ -85,12 +85,16 @@ export const SyllabusesTab = memo(function SyllabusesTab({
                     curriculumId={ curriculumId }
                     expanded={ expandedCards.has(syllabusId) }
                     key={ syllabusId }
-                    onExpandChange={ (expanded) => {
-                        setExpandedCards((prev) => {
+                    onExpandChange={ (expanded) =>
+                    {
+                        setExpandedCards((prev) =>
+                        {
                             const next = new Set(prev);
-                            if (expanded) {
+                            if (expanded)
+                            {
                                 next.add(syllabusId);
-                            } else {
+                            } else
+                            {
                                 next.delete(syllabusId);
                             }
                             return next;
@@ -101,11 +105,14 @@ export const SyllabusesTab = memo(function SyllabusesTab({
             ));
     }, [ curriculumId, syllabuses, visibleSyllabusCount, expandedCards ]);
 
-    const toggleAllExpanded = () => {
+    const toggleAllExpanded = () =>
+    {
         const allExpanded = expandedCards.size === visibleSyllabusCount;
-        if (allExpanded) {
+        if (allExpanded)
+        {
             setExpandedCards(new Set());
-        } else {
+        } else
+        {
             setExpandedCards(new Set(syllabuses.slice(0, visibleSyllabusCount)));
         }
     };
@@ -139,7 +146,7 @@ export const SyllabusesTab = memo(function SyllabusesTab({
                     flexWrap={ "wrap" }
                     gap={ 2 }
                     height={ "100%" }
-                    paddingInlineEnd={1}
+                    paddingInlineEnd={ 1 }
                     pt={ 1 }
                     sx={ { overflowX: "scroll" } }
                 >

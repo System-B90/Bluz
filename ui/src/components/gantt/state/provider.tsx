@@ -82,37 +82,25 @@ function ModuleDialogManager({
     const [ eventDialogOpen, setEventDialogOpen ] = useState<boolean>(false);
 
     // This function is passed to the Actions context
-    const openModuleDialog: OpenModuleDialog = useCallback<OpenModuleDialog>(
-        (syllabusId, moduleId, eventId) =>
-        {
-            setCurrentSyllabusId(syllabusId);
-            setCurrentModuleId(moduleId);
-            setCurrentEventId(eventId ?? null);
-            setModuleDialogOpen(true);
-        },
-        [],
-    );
+    const openModuleDialog: OpenModuleDialog = useCallback<OpenModuleDialog>((syllabusId, moduleId, eventId) =>
+    {
+        setCurrentSyllabusId(syllabusId);
+        setCurrentModuleId(moduleId);
+        setCurrentEventId(eventId ?? null);
+        setModuleDialogOpen(true);
+    }, []);
 
-    const closeModuleDialog: CloseModuleDialog = useCallback(
-        () => setModuleDialogOpen(false),
-        [],
-    );
+    const closeModuleDialog: CloseModuleDialog = useCallback(() => setModuleDialogOpen(false), []);
 
-    const openEventDialog: OpenEventDialog = useCallback<OpenEventDialog>(
-        (syllabusId, moduleId, eventId) =>
-        {
-            setEventDialogSyllabusId(syllabusId);
-            setEventDialogModuleId(moduleId);
-            setEventDialogEventId(eventId);
-            setEventDialogOpen(true);
-        },
-        [],
-    );
+    const openEventDialog: OpenEventDialog = useCallback<OpenEventDialog>((syllabusId, moduleId, eventId) =>
+    {
+        setEventDialogSyllabusId(syllabusId);
+        setEventDialogModuleId(moduleId);
+        setEventDialogEventId(eventId);
+        setEventDialogOpen(true);
+    }, []);
 
-    const closeEventDialog: CloseEventDialog = useCallback(
-        () => setEventDialogOpen(false),
-        [],
-    );
+    const closeEventDialog: CloseEventDialog = useCallback(() => setEventDialogOpen(false), []);
 
     return (
         <CurriculumUIProviderInternal
@@ -125,7 +113,7 @@ function ModuleDialogManager({
             <ModuleDialog
                 curriculumId={ curriculumId }
                 focusEventId={ currentEventId }
-                key={ `${currentSyllabusId}-${currentModuleId}` }
+                key={ `module-dialog-${currentSyllabusId}-${currentModuleId}` }
                 moduleId={ currentModuleId }
                 open={ moduleDialogOpen }
                 setOpen={ setModuleDialogOpen }
@@ -134,7 +122,7 @@ function ModuleDialogManager({
             <EventDialog
                 curriculumId={ curriculumId }
                 eventId={ eventDialogEventId }
-                key={ `${eventDialogModuleId}-${eventDialogEventId}` }
+                key={ `event-dialog-${eventDialogModuleId}-${eventDialogEventId}` }
                 moduleId={ eventDialogModuleId }
                 open={ eventDialogOpen }
                 setOpen={ setEventDialogOpen }
