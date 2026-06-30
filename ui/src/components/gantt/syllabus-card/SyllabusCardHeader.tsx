@@ -19,6 +19,7 @@ function InternalHeader({ syllabusId }: { syllabusId: GanttSyllabusId }) {
             display={"flex"}
             flexDirection={"row"}
             flexWrap={"nowrap"}
+            onClick={(e) => e.stopPropagation()}
         >
             <SyllabusName
                 key={`${syllabus?.title ?? "-syllabus-title"}`}

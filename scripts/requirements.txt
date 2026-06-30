@@ -2,3 +2,4 @@ InquirerPy>=0.3.4
 prompt-toolkit>=3.0.36
 python-dotenv==1.2.2
 typer==0.20.0
+PyHiveLMS>=1.4.0

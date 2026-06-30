@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumViewSidebar } from "@/components/gantt/curriculum-view/components/sidebars";
+import { GanttSearchNavProvider } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
 
 export type CurriculumViewProps = {
@@ -49,33 +50,35 @@ export function CurriculumView({
     }, [selectedTabIndex, pathname]);
 
     return (
-        <Box
-            alignItems={"flex-start"}
-            display={"flex"}
-            flexDirection={"row"}
-            flexWrap={"nowrap"}
-            gap={4}
-            height={"100%"}
-            justifyContent={"flex-start"}
-            justifyItems={"flex-start"}
-            width={"100%"}
-            {...props}
-        >
-            <CurriculumViewSidebar
-                curriculumId={curriculumId}
-                selectedTabIndex={selectedTabIndex}
-            />
-
-            <CurriculumViewTabs
-                curriculumId={curriculumId}
+        <GanttSearchNavProvider>
+            <Box
+                alignItems={"flex-start"}
                 display={"flex"}
-                flexDirection={"column"}
-                flexGrow={1}
+                flexDirection={"row"}
+                flexWrap={"nowrap"}
+                gap={4}
                 height={"100%"}
-                selectedTabIndex={selectedTabIndex}
-                setSelectedTabIndex={setSelectedTabIndex}
+                justifyContent={"flex-start"}
+                justifyItems={"flex-start"}
                 width={"100%"}
-            />
-        </Box>
+                {...props}
+            >
+                <CurriculumViewSidebar
+                    curriculumId={curriculumId}
+                    selectedTabIndex={selectedTabIndex}
+                />
+
+                <CurriculumViewTabs
+                    curriculumId={curriculumId}
+                    display={"flex"}
+                    flexDirection={"column"}
+                    flexGrow={1}
+                    height={"100%"}
+                    selectedTabIndex={selectedTabIndex}
+                    setSelectedTabIndex={setSelectedTabIndex}
+                    width={"100%"}
+                />
+            </Box>
+        </GanttSearchNavProvider>
     );
 }

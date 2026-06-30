@@ -2,11 +2,13 @@ import { useCallback } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import {
+    EventRecurrence,
     GanttCurriculumId,
     GanttEvent,
     GanttEventId,
     GanttModuleId,
     ModuleEventType,
+    RoomRequirement,
 } from "@/api-shared/types/gantt/models";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
@@ -29,6 +31,14 @@ export function useModuleEventActions() {
                     type,
                     minimumDuration,
                     allocatedDuration,
+                    orchestratorId: null,
+                    recommendedLecturerIds: [],
+                    systemRequirements: [],
+                    roomRequirement: RoomRequirement.Classified,
+                    recurrence: EventRecurrence.None,
+                    isCritical: false,
+                    isPaWindow: false,
+                    comment: null,
                 });
                 dispatch({
                     type: "ADD_EVENT",
@@ -125,6 +135,41 @@ export function useModuleEventActions() {
         [dispatch],
     );
 
+    const duplicateEvent = useCallback(
+        async (eventId: GanttEventId, moduleId: GanttModuleId) => {
+            return await withGantErrorHandling(async () => {
+                const duplicatedEvent = await ganttApi.event.apiDuplicate(
+                    eventId,
+                    moduleId,
+                );
+                dispatch({
+                    type: "ADD_EVENT",
+                    payload: { event: duplicatedEvent, moduleId },
+                });
+                return duplicatedEvent;
+            }, `Failed to duplicate event (ID: ${eventId}):`);
+        },
+        [dispatch],
+    );
+
+    const moveEvent = useCallback(
+        async (
+            eventId: GanttEventId,
+            fromModuleId: GanttModuleId,
+            toModuleId: GanttModuleId,
+        ) => {
+            return await withGantErrorHandling(async () => {
+                await ganttApi.event.apiUnlink(eventId, fromModuleId);
+                await ganttApi.event.apiLink(eventId, toModuleId);
+                dispatch({
+                    type: "MOVE_EVENT",
+                    payload: { eventId, fromModuleId, toModuleId },
+                });
+            }, `Failed to move event (ID: ${eventId}):`);
+        },
+        [dispatch],
+    );
+
     return {
         createEvent,
         updateEvent,
@@ -132,5 +177,7 @@ export function useModuleEventActions() {
         linkEventToModule,
         unlinkEventFromModule,
         allocateTimeToModuleEvent,
+        duplicateEvent,
+        moveEvent,
     } as const;
 }

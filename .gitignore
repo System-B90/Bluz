@@ -57,3 +57,8 @@ next-env.d.ts
 .vscode/PythonImportHelper-v2-Completion.json
 ssl/
 tests/.auth/user.json
+
+# docs
+/site/
+
+/scripts/hive-api-6.4.0.yaml

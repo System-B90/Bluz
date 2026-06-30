@@ -10,6 +10,10 @@ import {
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import {
+    SYLLABUS_ANCHOR_PREFIX,
+    useGanttSearchNav,
+} from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { ModulesTable } from "@/components/gantt/syllabus-card/ModulesTable";
 import { SyllabusCardActions } from "@/components/gantt/syllabus-card/SyllabusCardActions";
@@ -21,9 +25,15 @@ import { SyllabusCardHeader } from "@/components/gantt/syllabus-card/SyllabusCar
 export type SyllabusCardProps = {
     /** The identifier of the Gantt curriculum context. */
     curriculumId: GanttCurriculumId;
-    
+
     /** The identifier of the syllabus to display. */
     syllabusId: GanttSyllabusId;
+
+    /** Optional controlled expanded state. If provided, the card is controlled. */
+    expanded?: boolean;
+
+    /** Optional callback when expansion state changes. */
+    onExpandChange?: (expanded: boolean) => void;
 } & Omit<CardProps, "sx">;
 
 const ExpandMore = styled((props: { _expand: boolean } & any) => {
@@ -46,17 +56,29 @@ const ExpandMore = styled((props: { _expand: boolean } & any) => {
 export function SyllabusCard({
     curriculumId,
     syllabusId,
+    expanded: controlledExpanded,
+    onExpandChange,
     ...props
 }: SyllabusCardProps) {
     const syllabus = useSyllabus(syllabusId);
-    const [expanded, setExpanded] = useState<boolean>(true);
+    const [localExpanded, setLocalExpanded] = useState<boolean>(true);
+    const isControlled = controlledExpanded !== undefined;
+    const expanded = isControlled ? controlledExpanded : localExpanded;
+    const { highlightedSyllabusId } = useGanttSearchNav();
+    const isHighlighted = highlightedSyllabusId === syllabusId;
 
     const handleExpandClick = () => {
-        setExpanded(!expanded);
+        const newExpanded = !expanded;
+        if (isControlled) {
+            onExpandChange?.(newExpanded);
+        } else {
+            setLocalExpanded(newExpanded);
+        }
     };
 
     return (
         <Card
+            id={`${SYLLABUS_ANCHOR_PREFIX}${syllabusId}`}
             sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -67,6 +89,11 @@ export function SyllabusCard({
                 transition:
                     "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease",
                 border: "1px solid transparent",
+                ...(isHighlighted && {
+                    borderColor: "primary.main",
+                    boxShadow:
+                        "0 0 0 3px var(--mui-palette-primary-light, rgba(25, 118, 210, 0.4))",
+                }),
                 "&:hover": {
                     transform: "translateY(-4px)",
                     boxShadow:
@@ -87,7 +114,17 @@ export function SyllabusCard({
                         <ExpandMoreIcon />
                     </ExpandMore>
                 }
-                sx={{ pb: 0, pt: 1.5, px: 2 }}
+                onClick={handleExpandClick}
+                sx={{
+                    pb: 0,
+                    pt: 1.5,
+                    px: 2,
+                    cursor: "pointer",
+                    userSelect: "none",
+                    "&:hover": {
+                        backgroundColor: "rgba(0, 0, 0, 0.04)",
+                    },
+                }}
                 syllabusId={syllabusId}
             />
 

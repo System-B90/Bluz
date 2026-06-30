@@ -17,6 +17,7 @@ export function ActionItemButton({
         <Tooltip title={tooltipTitle}>
             <span>
                 <IconButton
+                    aria-label={tooltipTitle}
                     color={props.color as any}
                     disabled={props.disabled}
                     onClick={props.onClick as any}

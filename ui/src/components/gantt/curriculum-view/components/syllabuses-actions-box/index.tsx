@@ -1,4 +1,5 @@
 import Box, { BoxProps } from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import { useSnackbar } from "notistack";
 import React, { useCallback } from "react";
 
@@ -7,6 +8,7 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CreateSyllabusButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/CreateSyllabusButton";
 import { SyllabusSelectionField } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/SyllabusSelectionField";
+import { GanttSearchField } from "@/components/gantt/curriculum-view/search/GanttSearchField";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
@@ -14,11 +16,17 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type SyllabusesActionsBoxProps = {
     curriculumId: GanttCurriculumId;
+    onToggleAllExpanded?: () => void;
+    visibleSyllabusCount?: number;
+    expandedCount?: number;
 } & Omit<BoxProps, "display" | "justifyContent">;
 
 export function SyllabusesActionsBox({
     curriculumId,
-    ...props
+    onToggleAllExpanded,
+    visibleSyllabusCount = 0,
+    expandedCount = 0,
+    ...boxProps
 }: SyllabusesActionsBoxProps) {
     const { enqueueSnackbar } = useSnackbar();
     const state = useCurriculumState();
@@ -170,7 +178,7 @@ export function SyllabusesActionsBox({
             display="flex"
             gap={2}
             justifyContent="flex-start"
-            {...props}
+            {...boxProps}
             width="100%"
         >
             <CreateSyllabusButton curriculumId={curriculumId} />
@@ -182,6 +190,18 @@ export function SyllabusesActionsBox({
                 flexDirection="row"
                 gap={1}
             />
+            <GanttSearchField />
+            {visibleSyllabusCount > 0 && (
+                <Button
+                    onClick={onToggleAllExpanded}
+                    size="small"
+                    variant="outlined"
+                >
+                    {expandedCount === visibleSyllabusCount
+                        ? "צמצום הכול"
+                        : "הרחב הכול"}
+                </Button>
+            )}
             <Box flexGrow={1} />
             <ImportExportMenuButton
                 color="primary"

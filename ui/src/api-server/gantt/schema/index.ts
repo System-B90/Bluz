@@ -11,7 +11,11 @@ export
     ganttCurriculumsSchema
 } from "./curriculums";
 export { curriculumDaysRelations, ganttDaysSchema } from "./days";
-export { moduleEventTypeEnumSchema } from "./enums";
+export {
+    moduleEventTypeEnumSchema,
+    recurrenceEnumSchema,
+    roomRequirementEnumSchema,
+} from "./enums";
 export { ganttEventsRelationsSchema, ganttEventsSchema } from "./events";
 export
 {
