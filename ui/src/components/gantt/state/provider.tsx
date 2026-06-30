@@ -23,6 +23,7 @@ import
     GanttModuleId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import { EventDialog } from "@/components/gantt/event-dialog";
 import { ModuleDialog } from "@/components/gantt/module-dialog";
 import { Action, curriculumReducer } from "@/components/gantt/state/reducer";
 
@@ -33,11 +34,20 @@ export type OpenModuleDialog = (
 ) => void;
 export type CloseModuleDialog = () => void;
 
+export type OpenEventDialog = (
+    syllabusId: GanttSyllabusId,
+    moduleId: GanttModuleId,
+    eventId: GanttEventId,
+) => void;
+export type CloseEventDialog = () => void;
+
 const CurriculumStateContext = createContext<NormalizedStore | null>(null);
 const CurriculumActionsContext = createContext<{
     dispatch: React.Dispatch<Action>;
     openModuleDialog: OpenModuleDialog;
     closeModuleDialog: CloseModuleDialog;
+    openEventDialog: OpenEventDialog;
+    closeEventDialog: CloseEventDialog;
 } | null>(null);
 
 /**
@@ -62,6 +72,15 @@ function ModuleDialogManager({
     );
     const [ moduleDialogOpen, setModuleDialogOpen ] = useState<boolean>(false);
 
+    // Event dialog state (independent of the module dialog so it can open on top).
+    const [ eventDialogSyllabusId, setEventDialogSyllabusId ] =
+        useState<GanttSyllabusId | null>(null);
+    const [ eventDialogModuleId, setEventDialogModuleId ] =
+        useState<GanttModuleId | null>(null);
+    const [ eventDialogEventId, setEventDialogEventId ] =
+        useState<GanttEventId | null>(null);
+    const [ eventDialogOpen, setEventDialogOpen ] = useState<boolean>(false);
+
     // This function is passed to the Actions context
     const openModuleDialog: OpenModuleDialog = useCallback<OpenModuleDialog>(
         (syllabusId, moduleId, eventId) =>
@@ -79,9 +98,27 @@ function ModuleDialogManager({
         [],
     );
 
+    const openEventDialog: OpenEventDialog = useCallback<OpenEventDialog>(
+        (syllabusId, moduleId, eventId) =>
+        {
+            setEventDialogSyllabusId(syllabusId);
+            setEventDialogModuleId(moduleId);
+            setEventDialogEventId(eventId);
+            setEventDialogOpen(true);
+        },
+        [],
+    );
+
+    const closeEventDialog: CloseEventDialog = useCallback(
+        () => setEventDialogOpen(false),
+        [],
+    );
+
     return (
         <CurriculumUIProviderInternal
+            closeEventDialog={ closeEventDialog }
             closeModuleDialog={ closeModuleDialog }
+            openEventDialog={ openEventDialog }
             openModuleDialog={ openModuleDialog }
         >
             { children }
@@ -94,6 +131,15 @@ function ModuleDialogManager({
                 setOpen={ setModuleDialogOpen }
                 syllabusId={ currentSyllabusId }
             />
+            <EventDialog
+                curriculumId={ curriculumId }
+                eventId={ eventDialogEventId }
+                key={ `${eventDialogModuleId}-${eventDialogEventId}` }
+                moduleId={ eventDialogModuleId }
+                open={ eventDialogOpen }
+                setOpen={ setEventDialogOpen }
+                syllabusId={ eventDialogSyllabusId }
+            />
         </CurriculumUIProviderInternal>
     );
 }
@@ -103,10 +149,14 @@ function CurriculumUIProviderInternal({
     children,
     openModuleDialog,
     closeModuleDialog,
+    openEventDialog,
+    closeEventDialog,
 }: {
     children: ReactNode;
     openModuleDialog: OpenModuleDialog;
     closeModuleDialog: CloseModuleDialog;
+    openEventDialog: OpenEventDialog;
+    closeEventDialog: CloseEventDialog;
 })
 {
     const { dispatch } = useCurriculumProviderActions();
@@ -116,8 +166,16 @@ function CurriculumUIProviderInternal({
             dispatch,
             openModuleDialog,
             closeModuleDialog,
+            openEventDialog,
+            closeEventDialog,
         }),
-        [ dispatch, openModuleDialog, closeModuleDialog ],
+        [
+            dispatch,
+            openModuleDialog,
+            closeModuleDialog,
+            openEventDialog,
+            closeEventDialog,
+        ],
     );
 
     return (
@@ -155,6 +213,8 @@ export function CurriculumProvider({
                     dispatch,
                     openModuleDialog: () => { },
                     closeModuleDialog: () => { },
+                    openEventDialog: () => { },
+                    closeEventDialog: () => { },
                 } }
             >
                 <ModuleDialogManager curriculumId={ curriculumId }>

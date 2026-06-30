@@ -30,7 +30,7 @@ export function MoveEventDialog({
     const { enqueueSnackbar } = useSnackbar();
     const { moveEvent } = useModuleEventActions();
     const state = useCurriculumState();
-    const [destModuleId, setDestModuleId] = useState<GanttModuleId | "">("");
+    const [destModuleId, setDestModuleId] = useState<"" | GanttModuleId>("");
 
     const syllabuses = Object.values(state.syllabuses);
 

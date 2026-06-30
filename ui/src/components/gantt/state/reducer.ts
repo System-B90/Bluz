@@ -67,9 +67,6 @@ export type Action =
               duration: number;
           };
       }
-    | { type: "REMOVE_DAY"; payload: { dayId: GanttDayId } }
-
-    // Removes
     | {
           type: "MOVE_EVENT";
           payload: {
@@ -78,6 +75,9 @@ export type Action =
               toModuleId: GanttModuleId;
           };
       }
+
+    // Removes
+    | { type: "REMOVE_DAY"; payload: { dayId: GanttDayId } }
     | {
           type: "REMOVE_EVENT";
           payload: { moduleId: GanttModuleId; eventId: GanttEventId };

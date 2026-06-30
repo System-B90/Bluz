@@ -34,7 +34,7 @@ export function GanttSearchField()
 {
     const items = useGanttSearchItems();
     const { goToSyllabus } = useGanttSearchNav();
-    const { openModuleDialog } = useCurriculumProviderActions();
+    const { openModuleDialog, openEventDialog } = useCurriculumProviderActions();
 
     const [ inputValue, setInputValue ] = useState("");
 
@@ -62,12 +62,12 @@ export function GanttSearchField()
             } else if (value.type === "module" && value.moduleId)
             {
                 openModuleDialog(value.syllabusId, value.moduleId);
-            } else if (value.type === "event" && value.moduleId)
+            } else if (value.type === "event" && value.moduleId && value.eventId)
             {
-                openModuleDialog(value.syllabusId, value.moduleId, value.eventId);
+                openEventDialog(value.syllabusId, value.moduleId, value.eventId);
             }
         },
-        [ goToSyllabus, openModuleDialog ],
+        [ goToSyllabus, openModuleDialog, openEventDialog ],
     );
 
     return (

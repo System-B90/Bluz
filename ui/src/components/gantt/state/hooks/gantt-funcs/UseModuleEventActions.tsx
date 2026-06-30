@@ -2,11 +2,13 @@ import { useCallback } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import {
+    EventRecurrence,
     GanttCurriculumId,
     GanttEvent,
     GanttEventId,
     GanttModuleId,
     ModuleEventType,
+    RoomRequirement,
 } from "@/api-shared/types/gantt/models";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
@@ -29,6 +31,14 @@ export function useModuleEventActions() {
                     type,
                     minimumDuration,
                     allocatedDuration,
+                    orchestratorId: null,
+                    recommendedLecturerIds: [],
+                    systemRequirements: [],
+                    roomRequirement: RoomRequirement.Classified,
+                    recurrence: EventRecurrence.None,
+                    isCritical: false,
+                    isPaWindow: false,
+                    comment: null,
                 });
                 dispatch({
                     type: "ADD_EVENT",

@@ -3,6 +3,7 @@ import {
     BaseDocument,
     baseDocumentFixup,
     clientGantApiBuilder,
+    RawBaseDocument,
 } from "@/api-client/gantt/base";
 import { CreateGanttEventPayload } from "@/api-shared/types/gantt/create-payloads";
 import { GanttEvent, GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
@@ -20,7 +21,7 @@ async function apiDuplicate(
     eventId: GanttEventId,
     moduleId: GanttModuleId,
 ): Promise<ModuleEventDocument> {
-    const rawData = await safeApiFetcher<GanttEvent>(
+    const rawData = await safeApiFetcher<GanttEvent & RawBaseDocument>(
         `/api/gantt/events/${eventId}/duplicate`,
         {
             method: "POST",

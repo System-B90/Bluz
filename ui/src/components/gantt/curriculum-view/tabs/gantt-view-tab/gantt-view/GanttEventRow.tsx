@@ -10,7 +10,10 @@ import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-v
 import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
 import { GanttEventRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 
 export const GanttEventRow: React.FC<GanttEventRowProps> = ({
     eventId,
@@ -18,6 +21,7 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
 }) => {
     const theme = useTheme();
     const state = useCurriculumState();
+    const { openEventDialog } = useCurriculumProviderActions();
     const {
         weeklyView,
         timelineWeeks,
@@ -216,7 +220,21 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
                 <Typography
                     color="text.secondary"
                     noWrap
-                    sx={{ display: "block" }}
+                    onClick={() => {
+                        const syllabusId = state.modules[moduleId]?.syllabusId;
+                        if (syllabusId) {
+                            openEventDialog(syllabusId, moduleId, eventId);
+                        }
+                    }}
+                    sx={{
+                        display: "block",
+                        cursor: "pointer",
+                        "&:hover": {
+                            color: "primary.main",
+                            textDecoration: "underline",
+                        },
+                    }}
+                    title="עריכת המופע"
                     variant="caption"
                 >
                     ↳ {event.title}
