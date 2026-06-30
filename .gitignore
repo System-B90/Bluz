@@ -60,3 +60,5 @@ tests/.auth/user.json
 
 # docs
 /site/
+
+/scripts/hive-api-6.4.0.yaml
