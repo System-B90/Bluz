@@ -6,6 +6,7 @@ import { postgresDb } from "@/api-server/gantt";
 import { getConstraintsForCurriculum } from "@/api-server/gantt/db-constraints";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
+import { safeTitle } from "@/api-shared/common";
 import { ClientApiError } from "@/api-shared/errors";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { buildGanttExcelWorkbook } from "@/app/api/gantt/curriculums/[id]/export/excel/workbook";
@@ -34,8 +35,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         const workbook = await buildGanttExcelWorkbook(curriculum, mappings);
 
         const buffer = await workbook.xlsx.writeBuffer();
-        const safeTitle = curriculum.title.replace(/[^a-zA-Z0-9֐-׿]/g, "_");
-        const filename = `bluz-gantt-${safeTitle}.xlsx`;
+        const filename = `bluz-gantt-${safeTitle(curriculum.title)}.xlsx`;
         const encodedFilename = encodeURIComponent(filename);
 
         const headers = new Headers();
