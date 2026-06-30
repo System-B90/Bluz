@@ -110,10 +110,12 @@ function ModuleDialogManager({
             openModuleDialog={ openModuleDialog }
         >
             { children }
+            {/* No module-scoped key: keeping a single persistent instance lets
+                the user navigate between sibling modules without the dialog
+                unmounting/remounting (which caused a close→reopen flicker). */}
             <ModuleDialog
                 curriculumId={ curriculumId }
                 focusEventId={ currentEventId }
-                key={ `module-dialog-${currentSyllabusId}-${currentModuleId}` }
                 moduleId={ currentModuleId }
                 open={ moduleDialogOpen }
                 setOpen={ setModuleDialogOpen }

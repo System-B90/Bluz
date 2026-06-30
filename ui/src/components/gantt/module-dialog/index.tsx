@@ -299,6 +299,15 @@ function ModuleDialogInner({
     const [localTitle, setLocalTitle] = useState(moduleDoc?.title ?? "");
     const [localDescription, setLocalDescription] = useState(moduleDoc?.description ?? "");
 
+    // The dialog is no longer remounted per-module (to avoid a close→reopen
+    // flicker when navigating siblings), so reset the local form fields from
+    // the newly selected module whenever the active module changes.
+    useEffect(() => {
+        setLocalTitle(moduleDoc?.title ?? "");
+        setLocalDescription(moduleDoc?.description ?? "");
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset when the selected module changes, not on every keystroke
+    }, [moduleId]);
+
     const handleClose = useCallback(() => {
         setOpen(false);
     }, [setOpen]);
