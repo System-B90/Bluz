@@ -3,7 +3,8 @@ import TableRow from "@mui/material/TableRow";
 import React, { useMemo } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
-import {
+import
+{
     buildDailyEventCells,
     buildWeeklyEventCells,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventCells";
