@@ -25,9 +25,15 @@ import { SyllabusCardHeader } from "@/components/gantt/syllabus-card/SyllabusCar
 export type SyllabusCardProps = {
     /** The identifier of the Gantt curriculum context. */
     curriculumId: GanttCurriculumId;
-    
+
     /** The identifier of the syllabus to display. */
     syllabusId: GanttSyllabusId;
+
+    /** Optional controlled expanded state. If provided, the card is controlled. */
+    expanded?: boolean;
+
+    /** Optional callback when expansion state changes. */
+    onExpandChange?: (expanded: boolean) => void;
 } & Omit<CardProps, "sx">;
 
 const ExpandMore = styled((props: { _expand: boolean } & any) => {
@@ -50,15 +56,24 @@ const ExpandMore = styled((props: { _expand: boolean } & any) => {
 export function SyllabusCard({
     curriculumId,
     syllabusId,
+    expanded: controlledExpanded,
+    onExpandChange,
     ...props
 }: SyllabusCardProps) {
     const syllabus = useSyllabus(syllabusId);
-    const [expanded, setExpanded] = useState<boolean>(true);
+    const [localExpanded, setLocalExpanded] = useState<boolean>(true);
+    const isControlled = controlledExpanded !== undefined;
+    const expanded = isControlled ? controlledExpanded : localExpanded;
     const { highlightedSyllabusId } = useGanttSearchNav();
     const isHighlighted = highlightedSyllabusId === syllabusId;
 
     const handleExpandClick = () => {
-        setExpanded(!expanded);
+        const newExpanded = !expanded;
+        if (isControlled) {
+            onExpandChange?.(newExpanded);
+        } else {
+            setLocalExpanded(newExpanded);
+        }
     };
 
     return (
@@ -99,7 +114,17 @@ export function SyllabusCard({
                         <ExpandMoreIcon />
                     </ExpandMore>
                 }
-                sx={{ pb: 0, pt: 1.5, px: 2 }}
+                onClick={handleExpandClick}
+                sx={{
+                    pb: 0,
+                    pt: 1.5,
+                    px: 2,
+                    cursor: "pointer",
+                    userSelect: "none",
+                    "&:hover": {
+                        backgroundColor: "rgba(0, 0, 0, 0.04)",
+                    },
+                }}
                 syllabusId={syllabusId}
             />
 
