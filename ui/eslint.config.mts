@@ -218,6 +218,7 @@ export default defineConfig([
             "tests/**",
             "playwright-report/",
             "*.d.ts",
+            "site/",
         ],
     },
 ]);

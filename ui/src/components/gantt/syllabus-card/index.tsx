@@ -10,6 +10,10 @@ import {
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import {
+    SYLLABUS_ANCHOR_PREFIX,
+    useGanttSearchNav,
+} from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { ModulesTable } from "@/components/gantt/syllabus-card/ModulesTable";
 import { SyllabusCardActions } from "@/components/gantt/syllabus-card/SyllabusCardActions";
@@ -50,6 +54,8 @@ export function SyllabusCard({
 }: SyllabusCardProps) {
     const syllabus = useSyllabus(syllabusId);
     const [expanded, setExpanded] = useState<boolean>(true);
+    const { highlightedSyllabusId } = useGanttSearchNav();
+    const isHighlighted = highlightedSyllabusId === syllabusId;
 
     const handleExpandClick = () => {
         setExpanded(!expanded);
@@ -57,6 +63,7 @@ export function SyllabusCard({
 
     return (
         <Card
+            id={`${SYLLABUS_ANCHOR_PREFIX}${syllabusId}`}
             sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -67,6 +74,11 @@ export function SyllabusCard({
                 transition:
                     "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease",
                 border: "1px solid transparent",
+                ...(isHighlighted && {
+                    borderColor: "primary.main",
+                    boxShadow:
+                        "0 0 0 3px var(--mui-palette-primary-light, rgba(25, 118, 210, 0.4))",
+                }),
                 "&:hover": {
                     transform: "translateY(-4px)",
                     boxShadow:

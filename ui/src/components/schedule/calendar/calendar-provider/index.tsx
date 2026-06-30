@@ -66,7 +66,7 @@ export const CalendarProvider = ({
             didCaptureOfflineRef.current = true;
         }
         // Only fire on offlineMode toggle, not on every events change.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, [offlineMode, captureInitialEvents]);
 
     // Deferred capture: if events hadn't loaded yet when offline mode was

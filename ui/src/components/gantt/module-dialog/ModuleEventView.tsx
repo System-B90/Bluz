@@ -2,6 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import FileCopyIcon from "@mui/icons-material/FileCopy";
 import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
@@ -20,6 +21,7 @@ import {
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
+import { EVENT_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from "@/components/gantt/state/hooks/UseEvent";
 
@@ -47,13 +49,15 @@ function ModuleEventTitle({
 export function ModuleEventView({
     moduleId,
     eventId,
+    isHighlighted = false,
 }: {
     moduleId: GanttModuleId;
     eventId: GanttEventId;
+    isHighlighted?: boolean;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const moduleEvent = useEvent(eventId);
-    const { deleteEvent, updateEvent } = useModuleEventActions();
+    const { deleteEvent, updateEvent, duplicateEvent } = useModuleEventActions();
 
     const {
         attributes,
@@ -87,13 +91,33 @@ export function ModuleEventView({
         );
     }, [eventId, moduleId, deleteEvent, enqueueSnackbar]);
 
+    const handleDuplicateClick = useCallback(() => {
+        duplicateEvent(eventId, moduleId).catch((error) =>
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "שכפול המופע נכשל!",
+                error,
+            ),
+        );
+    }, [eventId, moduleId, duplicateEvent, enqueueSnackbar]);
+
     return (
         <TableRow
+            id={`${EVENT_ANCHOR_PREFIX}${eventId}`}
             ref={setNodeRef}
             style={{
                 transform: CSS.Transform.toString(transform),
                 transition,
                 opacity: isDragging ? 0.4 : 1,
+            }}
+            sx={{
+                transition: "background-color 0.4s ease",
+                ...(isHighlighted && {
+                    backgroundColor: "primary.light",
+                    "& .MuiTableCell-root": {
+                        backgroundColor: "transparent",
+                    },
+                }),
             }}
         >
             <TableCell sx={{ width: "1rem", pr: 0, cursor: "grab" }} {...attributes} {...listeners}>
@@ -147,7 +171,10 @@ export function ModuleEventView({
                 </FormControl>
             </TableCell>
             <TableCell>
-                <IconButton onClick={handleDeleteClick} size="small">
+                <IconButton onClick={handleDuplicateClick} size="small" title="שכפול המופע">
+                    <FileCopyIcon color="info" fontSize="small" />
+                </IconButton>
+                <IconButton onClick={handleDeleteClick} size="small" title="מחיקת המופע">
                     <DeleteIcon color="error" fontSize="small" />
                 </IconButton>
             </TableCell>

@@ -23,6 +23,7 @@ import {
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     GanttCurriculumId,
+    GanttEventId,
     GanttModule,
     GanttModuleId,
     GanttSyllabusId,
@@ -45,6 +46,8 @@ export type ModuleDialogProps = {
     moduleId: GanttModuleId | null;
     syllabusId: GanttSyllabusId | null;
     curriculumId: GanttCurriculumId | null;
+    /** When set, the matching event row is scrolled into view and highlighted. */
+    focusEventId?: GanttEventId | null;
 } & DialogProps;
 
 type ModuleDialogHeaderProps = {
@@ -239,6 +242,7 @@ function ModuleDialogInner({
     setOpen,
     syllabusId,
     moduleId,
+    focusEventId,
     ...props
 }: Omit<ModuleDialogProps, "curriculumId">) {
     const { enqueueSnackbar } = useSnackbar();
@@ -381,6 +385,7 @@ function ModuleDialogInner({
                             <Stack flexGrow={1} mt={1} spacing={2}>
                                 <ModuleEventsView
                                     eventIds={moduleDoc?.events ?? []}
+                                    focusEventId={focusEventId}
                                     moduleId={moduleId}
                                 />
                             </Stack>
@@ -424,11 +429,13 @@ export function ModuleDialog({
     curriculumId,
     syllabusId,
     moduleId,
+    focusEventId,
     ...props
 }: ModuleDialogProps) {
     if (!syllabusId || !moduleId || !curriculumId) {
         return (
             <ModuleDialogInner
+                focusEventId={focusEventId}
                 moduleId={moduleId}
                 syllabusId={syllabusId}
                 {...props}
@@ -446,6 +453,7 @@ export function ModuleDialog({
             }}
         >
             <ModuleDialogInner
+                focusEventId={focusEventId}
                 moduleId={moduleId}
                 syllabusId={syllabusId}
                 {...props}

@@ -23,11 +23,15 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
+import {
+    EVENT_ANCHOR_PREFIX,
+    HIGHLIGHT_DURATION_MS,
+} from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { ModuleEventView } from "@/components/gantt/module-dialog/ModuleEventView";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
@@ -55,12 +59,53 @@ function CreateModuleEventButton({ moduleId }: { moduleId: GanttModuleId }) {
 export function ModuleEventsView({
     moduleId,
     eventIds,
+    focusEventId,
 }: {
     moduleId: GanttModuleId;
     eventIds: Array<GanttEventId>;
+    focusEventId?: GanttEventId | null;
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const { dispatch } = useCurriculumProviderActions();
+
+    const [highlightedEventId, setHighlightedEventId] =
+        useState<GanttEventId | null>(null);
+    const clearTimerRef = useRef<null | number>(null);
+
+    // When the dialog is opened from search targeting a specific event, scroll
+    // it into view and briefly highlight it. The list lives behind a mount
+    // transition, so retry across frames until the row exists.
+    useEffect(() => {
+        if (!focusEventId || !eventIds.includes(focusEventId)) return;
+
+        let attempts = 0;
+        let frameId = 0;
+        const tryScroll = () => {
+            const element = document.getElementById(
+                `${EVENT_ANCHOR_PREFIX}${focusEventId}`,
+            );
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+                return;
+            }
+            if (attempts++ < 60) {
+                frameId = window.requestAnimationFrame(tryScroll);
+            }
+        };
+        frameId = window.requestAnimationFrame(tryScroll);
+
+        setHighlightedEventId(focusEventId);
+        if (clearTimerRef.current) window.clearTimeout(clearTimerRef.current);
+        clearTimerRef.current = window.setTimeout(
+            () => setHighlightedEventId(null),
+            HIGHLIGHT_DURATION_MS,
+        );
+
+        return () => {
+            window.cancelAnimationFrame(frameId);
+            if (clearTimerRef.current) window.clearTimeout(clearTimerRef.current);
+        };
+    }, [focusEventId, eventIds]);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -130,6 +175,7 @@ export function ModuleEventsView({
                             {eventIds.map((eventId) => (
                                 <ModuleEventView
                                     eventId={eventId}
+                                    isHighlighted={eventId === highlightedEventId}
                                     key={eventId}
                                     moduleId={moduleId}
                                 />

@@ -125,6 +125,23 @@ export function useModuleEventActions() {
         [dispatch],
     );
 
+    const duplicateEvent = useCallback(
+        async (eventId: GanttEventId, moduleId: GanttModuleId) => {
+            return await withGantErrorHandling(async () => {
+                const duplicatedEvent = await ganttApi.event.apiDuplicate(
+                    eventId,
+                    moduleId,
+                );
+                dispatch({
+                    type: "ADD_EVENT",
+                    payload: { event: duplicatedEvent, moduleId },
+                });
+                return duplicatedEvent;
+            }, `Failed to duplicate event (ID: ${eventId}):`);
+        },
+        [dispatch],
+    );
+
     return {
         createEvent,
         updateEvent,
@@ -132,5 +149,6 @@ export function useModuleEventActions() {
         linkEventToModule,
         unlinkEventFromModule,
         allocateTimeToModuleEvent,
+        duplicateEvent,
     } as const;
 }

@@ -7,6 +7,7 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CreateSyllabusButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/CreateSyllabusButton";
 import { SyllabusSelectionField } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/SyllabusSelectionField";
+import { GanttSearchField } from "@/components/gantt/curriculum-view/search/GanttSearchField";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
@@ -182,6 +183,7 @@ export function SyllabusesActionsBox({
                 flexDirection="row"
                 gap={1}
             />
+            <GanttSearchField />
             <Box flexGrow={1} />
             <ImportExportMenuButton
                 color="primary"
