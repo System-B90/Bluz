@@ -8,7 +8,10 @@ import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { useMemo } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
-import { getCurriculumScheduledMinutes } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import {
+    getCurriculumScheduledMinutes,
+    getTentativeMinutesForModuleIds,
+} from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 import { calculateMinimumRequiredTimeForCurriculum } from "@/components/gantt/utils";
@@ -60,6 +63,19 @@ export function HoursCard({
                 : 0,
         [ curriculum, mappings, state ],
     );
+    const tentativeWorkingHours = useMemo(
+        () =>
+            curriculum
+                ? getTentativeMinutesForModuleIds({
+                    mappings,
+                    moduleIds: curriculum.syllabuses.flatMap(
+                        (syllabusId) => state.syllabuses[ syllabusId ]?.modules ?? [],
+                    ),
+                    state,
+                }) / 60
+                : 0,
+        [ curriculum, mappings, state ],
+    );
 
     if (!curriculum)
     {
@@ -84,36 +100,59 @@ export function HoursCard({
                 שעות
             </Typography>
             <Box alignItems="center" display="flex" flexDirection="row" gap={ 3 }>
-                <Gauge
-                    height={ 80 }
-                    sx={ {
-                        [ `& .${gaugeClasses.valueText}` ]: {
-                            fontSize: "1rem",
-                            fontWeight: "medium",
-                            transform: "translate(0px, -1px)",
-                        },
-                        [ `& .${gaugeClasses.valueArc}` ]: {
-                            fill:
-                                totalWorkingHours === 0
-                                    ? "grey.200"
-                                    : totalWorkingHours >= usedWorkingHours
-                                        ? theme.palette.primary.main
-                                        : theme.palette.warning.main,
-                        },
-                        [ `& .${gaugeClasses.referenceArc}` ]: {
-                            fill: "grey.200",
-                        },
-                    } }
-                    text={
-                        totalWorkingHours > 0
-                            ? `${Math.round((100 * usedWorkingHours) / totalWorkingHours)}%`
-                            : "-"
-                    }
-                    value={ usedWorkingHours }
-                    valueMax={ totalWorkingHours }
-                    valueMin={ 0 }
-                    width={ 80 }
-                />
+                <Box sx={ { position: "relative", height: 80, width: 80 } }>
+                    <Box sx={ { position: "absolute", insetInlineStart: 0, top: 0 } }>
+                        <Gauge
+                            height={ 80 }
+                            sx={ {
+                                [ `& .${gaugeClasses.valueArc}` ]: {
+                                    fill: theme.palette.primary.main,
+                                    opacity: 0.35,
+                                },
+                                [ `& .${gaugeClasses.referenceArc}` ]: {
+                                    fill: "grey.200",
+                                },
+                                [ `& .${gaugeClasses.valueText}` ]: { display: "none" },
+                            } }
+                            value={ tentativeWorkingHours }
+                            valueMax={ totalWorkingHours }
+                            valueMin={ 0 }
+                            width={ 80 }
+                        />
+                    </Box>
+                    <Box sx={ { position: "absolute", insetInlineStart: 0, top: 0 } }>
+                        <Gauge
+                            height={ 80 }
+                            sx={ {
+                                [ `& .${gaugeClasses.valueText}` ]: {
+                                    fontSize: "1rem",
+                                    fontWeight: "medium",
+                                    transform: "translate(0px, -1px)",
+                                },
+                                [ `& .${gaugeClasses.valueArc}` ]: {
+                                    fill:
+                                        totalWorkingHours === 0
+                                            ? "grey.200"
+                                            : totalWorkingHours >= usedWorkingHours
+                                                ? theme.palette.primary.main
+                                                : theme.palette.warning.main,
+                                },
+                                [ `& .${gaugeClasses.referenceArc}` ]: {
+                                    fill: "none",
+                                },
+                            } }
+                            text={
+                                totalWorkingHours > 0
+                                    ? `${Math.round((100 * usedWorkingHours) / totalWorkingHours)}%`
+                                    : "-"
+                            }
+                            value={ usedWorkingHours }
+                            valueMax={ totalWorkingHours }
+                            valueMin={ 0 }
+                            width={ 80 }
+                        />
+                    </Box>
+                </Box>
                 <Stack spacing={ 0.5 }>
                     <Box
                         alignItems="baseline"
@@ -152,6 +191,19 @@ export function HoursCard({
                         </Typography>
                         <Typography fontWeight="bold" variant="body2">
                             { minimumHoursRequired.toFixed(2) }
+                        </Typography>
+                    </Box>
+                    <Box
+                        alignItems="baseline"
+                        display="flex"
+                        flexDirection="row"
+                        gap={ 1 }
+                    >
+                        <Typography color="text.secondary" variant="body2">
+                            טנטטיבית:
+                        </Typography>
+                        <Typography fontWeight="bold" variant="body2">
+                            { tentativeWorkingHours.toFixed(2) }
                         </Typography>
                     </Box>
                 </Stack>

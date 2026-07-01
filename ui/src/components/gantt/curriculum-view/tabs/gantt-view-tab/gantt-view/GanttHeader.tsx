@@ -1,7 +1,10 @@
-import { useTheme } from "@mui/material/styles";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import Box from "@mui/material/Box";
+import { alpha, useTheme } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import React from "react";
 
@@ -9,7 +12,9 @@ import { getDayNameDisplay } from "@/api-shared/types/gantt/models";
 import {
     formatShortDate,
     formatWeekDateRange,
+    getCapacityStatus,
     getDayDate,
+    getScheduledMinutesForDay,
     getWeekDateRange,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
@@ -18,7 +23,8 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 export const GanttHeader: React.FC = () => {
     const theme = useTheme();
     const state = useCurriculumState();
-    const { startDate, timelineWeeks, weeklyView } = useGanttContext();
+    const { curriculumMappings, showConstraints, startDate, timelineWeeks, weeklyView } =
+        useGanttContext();
 
     return (
         <TableHead>
@@ -49,6 +55,24 @@ export const GanttHeader: React.FC = () => {
                         getWeekDateRange(startDate, weekIndex),
                     );
 
+                    const overAllocatedDayNames = showConstraints
+                        ? week.days
+                            .map((dayId) => state.days[dayId])
+                            .filter(
+                                (day) =>
+                                    !!day &&
+                                    getCapacityStatus(
+                                        day.totalWorkingMinutes,
+                                        getScheduledMinutesForDay({
+                                            dayId: day.id,
+                                            mappings: curriculumMappings,
+                                            state,
+                                        }),
+                                    ) === "error",
+                            )
+                            .map((day) => getDayNameDisplay(day!.dayIndex))
+                        : [];
+
                     return (
                         <TableCell
                             align="center"
@@ -60,9 +84,27 @@ export const GanttHeader: React.FC = () => {
                                 zIndex: 2,
                             }}
                         >
-                            <Typography fontWeight="bold" variant="subtitle2">
-                                {week.title}
-                            </Typography>
+                            <Box
+                                alignItems="center"
+                                display="flex"
+                                gap={0.5}
+                                justifyContent="center"
+                            >
+                                <Typography fontWeight="bold" variant="subtitle2">
+                                    {week.title}
+                                </Typography>
+                                {weeklyView && overAllocatedDayNames.length > 0 && (
+                                    <Tooltip
+                                        arrow
+                                        title={`חריגה בהקצאה: ${overAllocatedDayNames.join(", ")}`}
+                                    >
+                                        <WarningAmberIcon
+                                            color="error"
+                                            sx={{ fontSize: 16 }}
+                                        />
+                                    </Tooltip>
+                                )}
+                            </Box>
                             {dateRangeLabel ? (
                                 <Typography
                                     color="text.secondary"
@@ -86,6 +128,16 @@ export const GanttHeader: React.FC = () => {
                                 weekIndex,
                                 day.dayIndex,
                             );
+                            const isOverAllocated =
+                                showConstraints &&
+                                getCapacityStatus(
+                                    day.totalWorkingMinutes,
+                                    getScheduledMinutesForDay({
+                                        dayId,
+                                        mappings: curriculumMappings,
+                                        state,
+                                    }),
+                                ) === "error";
                             return (
                                 <TableCell
                                     align="center"
@@ -95,8 +147,9 @@ export const GanttHeader: React.FC = () => {
                                         minWidth: 80,
                                         boxSizing: "border-box",
                                         borderLeft: `1px solid ${theme.vars.palette.divider}`,
-                                        backgroundColor:
-                                            theme.vars.palette.background.paper,
+                                        backgroundColor: isOverAllocated
+                                            ? alpha(theme.palette.error.main, 0.12)
+                                            : theme.vars.palette.background.paper,
                                         zIndex: 2,
                                     }}
                                 >

@@ -9,7 +9,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { fuzzyScore } from "@/components/gantt/curriculum-view/search/fuzzy";
 import { useGanttSearchNav } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
@@ -37,6 +37,8 @@ export function GanttSearchField()
     const { openModuleDialog, openEventDialog } = useCurriculumProviderActions();
 
     const [ inputValue, setInputValue ] = useState("");
+    const [ focused, setFocused ] = useState(false);
+    const anchorRef = useRef<HTMLDivElement>(null);
 
     // Keep the hierarchical ordering of `items`; just drop non-matches. The
     // score is used only to decide membership, never to re-sort.
@@ -71,6 +73,7 @@ export function GanttSearchField()
     );
 
     return (
+        <Box ref={ anchorRef } sx={ { flexGrow: 1, maxWidth: 420, minWidth: 260 } }>
         <Autocomplete<GanttSearchItem, false, false, false>
             blurOnSelect
             clearOnEscape
@@ -91,6 +94,8 @@ export function GanttSearchField()
             renderInput={ (params) => (
                 <TextField
                     { ...params }
+                    onBlur={ () => setFocused(false) }
+                    onFocus={ () => setFocused(true) }
                     placeholder="חיפוש סילבוס, מערך או מופע..."
                     size="small"
                     slotProps={ {
@@ -123,7 +128,11 @@ export function GanttSearchField()
                         component="li"
                         key={ key }
                         { ...liProps }
-                        sx={ { ...liProps.style, paddingInlineStart: visuals.indent } }
+                        sx={ {
+                            ...liProps.style,
+                            paddingInlineEnd: 2,
+                            paddingInlineStart: visuals.indent + 2,
+                        } }
                     >
                         <Stack
                             alignItems="center"
@@ -168,10 +177,16 @@ export function GanttSearchField()
             } }
             slotProps={ {
                 listbox: { sx: { maxHeight: 420 } },
-                paper: { sx: { minWidth: 320 } },
+                paper: { sx: { minWidth: 320, width: 420 } },
+                popper: { anchorEl: anchorRef.current ?? undefined, sx: { width: "420px !important" } },
             } }
-            sx={ { flexGrow: 1, maxWidth: 420, minWidth: 260 } }
+            sx={ {
+                maxWidth: focused ? 420 : 260,
+                minWidth: 180,
+                transition: (theme) => theme.transitions.create("max-width"),
+            } }
             value={ null }
         />
+        </Box>
     );
 }

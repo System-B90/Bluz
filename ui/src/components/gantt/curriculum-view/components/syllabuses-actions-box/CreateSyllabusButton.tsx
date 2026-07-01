@@ -28,6 +28,7 @@ export function CreateSyllabusButton({
     return (
         <Button
             onClick={clickHandler}
+            size="small"
             startIcon={<AddIcon />}
             variant="contained"
         >

@@ -1,6 +1,7 @@
 import {
     GanttConstraint,
     GanttCurriculumId,
+    GanttCurriculumModuleDayMapping,
     GanttWeek,
 } from "@/api-shared/types/gantt/models";
 
@@ -11,11 +12,13 @@ export type GanttConstraintState = {
 
 export type GanttContextType = {
     weeklyView: boolean;
+    showConstraints: boolean;
     startDate: null | string;
     timelineWeeks: Array<GanttWeek>;
     linearDays: Array<string>;
     eventMappings: Record<string, string>;
     moduleMappings: Record<string, Array<string>>;
+    curriculumMappings: Record<string, GanttCurriculumModuleDayMapping>;
     violations: Record<string, Array<string>>;
     onMapModule: (moduleId: string, dayId: string) => Promise<void>;
     onMapEvent: (

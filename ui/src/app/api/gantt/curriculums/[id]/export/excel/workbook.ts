@@ -17,7 +17,12 @@ const THEME = {
     bgDefault:    argb("F4FAFC"), // palette.background.default
     white:        argb("FFFFFF"), // palette.background.paper
     border:       argb("D9D9D9"), // neutral divider
+    success:      argb("2E7D32"), // palette.success.main
+    inactive:     argb("B0B7BD"), // muted neutral for "no" icons
 } as const;
+
+// Boolean flag icons (משובץ / קריטי / חלון פ"א) rendered instead of כן/לא text.
+export const BOOL_ICON = { yes: "✓", no: "✗" } as const;
 
 const RECURRENCE_DISPLAY: Record<EventRecurrence, string> = {
     [EventRecurrence.None]:   "ללא",
@@ -56,6 +61,28 @@ function paintRow(
 
 const minutesToHours = (minutes: number) => Math.round((minutes / 60) * 100) / 100;
 
+// Merges runs of consecutive rows in a column that share the same value
+// (e.g. repeated סילבוס/מודול names), so each distinct value appears once.
+function mergeConsecutiveIdenticalCells(
+    sheet: ExcelJS.Worksheet,
+    col: number,
+    firstRow: number,
+    lastRow: number,
+): void {
+    const END_OF_RANGE = Symbol("end");
+    let runStart = firstRow;
+    let runValue: ExcelJS.CellValue | typeof END_OF_RANGE = sheet.getCell(runStart, col).value;
+    for (let r = firstRow + 1; r <= lastRow + 1; r++) {
+        const value: ExcelJS.CellValue | typeof END_OF_RANGE =
+            r <= lastRow ? sheet.getCell(r, col).value : END_OF_RANGE;
+        if (value !== runValue) {
+            if (r - 1 > runStart) sheet.mergeCells(runStart, col, r - 1, col);
+            runStart = r;
+            runValue = value;
+        }
+    }
+}
+
 export async function buildGanttExcelWorkbook(
     curriculum: ApiCurriculum,
     mappings: Array<DayMapping>,
@@ -68,6 +95,7 @@ export async function buildGanttExcelWorkbook(
 
     const moduleMap = new Map<string, { moduleTitle: string; syllabusTitle: string }>();
     const eventMap = new Map<string, { eventTitle: string; allocatedDuration: number }>();
+    const moduleEventIds = new Map<string, Array<string>>();
     const syllabusTitles: Array<string> = [];
 
     // Per-curriculum required duration for an event (allocated, else minimum).
@@ -84,6 +112,7 @@ export async function buildGanttExcelWorkbook(
             const mod = s2mItem.module;
             if (!mod) continue;
             moduleMap.set(mod.id, { moduleTitle: mod.title, syllabusTitle: syllabus.title });
+            const eventIds: Array<string> = [];
             for (const m2eItem of mod.m2e ?? []) {
                 const event = m2eItem.event;
                 if (!event) continue;
@@ -91,7 +120,9 @@ export async function buildGanttExcelWorkbook(
                     eventTitle: event.title,
                     allocatedDuration: eventRequiredMinutes(event),
                 });
+                eventIds.push(event.id);
             }
+            moduleEventIds.set(mod.id, eventIds);
         }
     }
 
@@ -99,6 +130,13 @@ export async function buildGanttExcelWorkbook(
     const allocatedEventIds = new Set(
         mappings.filter((m) => m.eventId).map((m) => m.eventId as string),
     );
+
+    // A module whose every event has already been placed on a day no longer needs
+    // its own unassigned-slot placeholder row in the timeline.
+    const isModuleFullyAllocated = (moduleId: string): boolean => {
+        const eventIds = moduleEventIds.get(moduleId) ?? [];
+        return eventIds.length > 0 && eventIds.every((id) => allocatedEventIds.has(id));
+    };
 
     const weeks = (curriculum.c2w ?? [])
         .map((c2wItem) => c2wItem.week)
@@ -186,8 +224,8 @@ export async function buildGanttExcelWorkbook(
         { header: "יום בשבוע",    key: "hebrewDayName",  width: 15 },
         { header: "תאריך",        key: "formattedDate",  width: 15 },
         { header: "סילבוס",       key: "syllabusTitle",  width: 25 },
-        { header: "מודול",        key: "moduleTitle",    width: 25 },
-        { header: "אירוע",        key: "eventTitle",     width: 30 },
+        { header: "מערך",         key: "moduleTitle",    width: 25 },
+        { header: "מופע",         key: "eventTitle",     width: 30 },
         { header: "שעות שהוקצו", key: "allocatedHours", width: 15 },
     ];
 
@@ -198,7 +236,7 @@ export async function buildGanttExcelWorkbook(
 
     for (let wIdx = 0; wIdx < weeks.length; wIdx++) {
         const week = weeks[wIdx];
-        const weekName = week.title ?? `שבוע ${week.number}`;
+        const weekName = week.comment?.trim() || "ללא הערה";
         const days = (week.w2d ?? [])
             .map((w2dItem) => w2dItem.day)
             .filter(Boolean)
@@ -212,6 +250,7 @@ export async function buildGanttExcelWorkbook(
         weekHeaderRow.outlineLevel = 0;
         weekHeaderRow.height = 24;
         let weekTotalHours = 0;
+        const weekStartRow = weekHeaderRow.number;
 
         for (const day of days) {
             const dayIndex = day.dayIndex as GanttDayIndex;
@@ -223,7 +262,11 @@ export async function buildGanttExcelWorkbook(
 
             const dayMappings = mappings
                 .filter((m) => m.dayId === day.id)
+                .filter((m) => m.eventId || !isModuleFullyAllocated(m.moduleId))
                 .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
+            let dayStartRow: number;
+            let dayEndRow: number;
 
             if (dayMappings.length === 0) {
                 const row = timelineSheet.addRow({
@@ -243,7 +286,9 @@ export async function buildGanttExcelWorkbook(
                     cell.alignment = { horizontal: "center", vertical: "middle" };
                     cell.border = BORDER_STYLE;
                 });
+                dayStartRow = dayEndRow = row.number;
             } else {
+                dayStartRow = timelineSheet.rowCount + 1;
                 for (const mapping of dayMappings) {
                     const modInfo = moduleMap.get(mapping.moduleId);
                     const evInfo = mapping.eventId ? eventMap.get(mapping.eventId) : null;
@@ -274,7 +319,21 @@ export async function buildGanttExcelWorkbook(
                         }
                     });
                 }
+                dayEndRow = timelineSheet.rowCount;
             }
+
+            // Merge the day-name and date columns across every row for this day.
+            if (dayEndRow > dayStartRow) {
+                timelineSheet.mergeCells(dayStartRow, 3, dayEndRow, 3);
+                timelineSheet.mergeCells(dayStartRow, 4, dayEndRow, 4);
+            }
+        }
+
+        // Merge the week-number and week-name columns across every row for this week.
+        const weekEndRow = timelineSheet.rowCount;
+        if (weekEndRow > weekStartRow) {
+            timelineSheet.mergeCells(weekStartRow, 1, weekEndRow, 1);
+            timelineSheet.mergeCells(weekStartRow, 2, weekEndRow, 2);
         }
 
         // Fill the week summary total now that all day rows are accounted for.
@@ -288,6 +347,13 @@ export async function buildGanttExcelWorkbook(
         });
     }
 
+    // Merge repeated סילבוס/מודול values across consecutive rows, mirroring the
+    // week/day column merges above.
+    if (timelineSheet.rowCount > 1) {
+        mergeConsecutiveIdenticalCells(timelineSheet, 5, 2, timelineSheet.rowCount);
+        mergeConsecutiveIdenticalCells(timelineSheet, 6, 2, timelineSheet.rowCount);
+    }
+
     // ── Sheet 3: פירוט סילבוסים (By-syllabus deep dive) ──────────────────────
 
     const detailSheet = workbook.addWorksheet("פירוט סילבוסים", {
@@ -297,8 +363,8 @@ export async function buildGanttExcelWorkbook(
 
     detailSheet.columns = [
         { header: "סילבוס",        key: "syllabus",      width: 24 },
-        { header: "מודול",         key: "module",        width: 24 },
-        { header: "אירוע",         key: "event",         width: 28 },
+        { header: "מערך",          key: "module",        width: 24 },
+        { header: "מופע",          key: "event",         width: 28 },
         { header: "סוג",           key: "type",          width: 12 },
         { header: "משובץ",         key: "isAllocated",   width: 10 },
         { header: "שעות מינ'",     key: "minHours",      width: 11 },
@@ -329,6 +395,7 @@ export async function buildGanttExcelWorkbook(
         syllabusRow.outlineLevel = 0;
         syllabusRow.height = 24;
         let syllabusTotalMinutes = 0;
+        const syllabusStartRow = syllabusRow.number;
 
         for (const s2mItem of syllabus.s2m ?? []) {
             const mod = s2mItem.module;
@@ -339,6 +406,7 @@ export async function buildGanttExcelWorkbook(
             moduleRow.outlineLevel = 1;
             moduleRow.height = 22;
             let moduleTotalMinutes = 0;
+            const moduleStartRow = moduleRow.number;
 
             for (const m2eItem of mod.m2e ?? []) {
                 const event = m2eItem.event;
@@ -352,22 +420,33 @@ export async function buildGanttExcelWorkbook(
                     module:       "",
                     event:        event.title,
                     type:         event.type ?? "-",
-                    isAllocated:  allocatedEventIds.has(event.id) ? "כן" : "לא",
+                    isAllocated:  allocatedEventIds.has(event.id) ? BOOL_ICON.yes : BOOL_ICON.no,
                     minHours:     minutesToHours(event.minimumDuration ?? 0),
                     requiredHours: minutesToHours(requiredMinutes),
                     orchestrator: event.orchestratorId ?? "-",
                     room:         event.roomRequirement ?? "-",
                     recurrence:   RECURRENCE_DISPLAY[event.recurrence] ?? event.recurrence ?? "-",
-                    isCritical:   event.isCritical ? "כן" : "לא",
-                    isPaWindow:   event.isPaWindow ? "כן" : "לא",
+                    isCritical:   event.isCritical ? BOOL_ICON.yes : BOOL_ICON.no,
+                    isPaWindow:   event.isPaWindow ? BOOL_ICON.yes : BOOL_ICON.no,
                     systemReqs:   (event.systemRequirements ?? []).join(", ") || "-",
                     comment:      event.comment || "-",
                 });
                 row.outlineLevel = 2;
                 row.height = 20;
                 const stripe = eventRowParity++ % 2 === 0;
+                const BOOL_ICON_COLS = [5, 11, 12]; // isAllocated, isCritical, isPaWindow
                 paintRow(row, DETAIL_COLS, (cell, colNumber) => {
-                    cell.font = { name: "Segoe UI", size: 10, color: { argb: THEME.textPrimary } };
+                    const isBoolIcon = BOOL_ICON_COLS.includes(colNumber);
+                    cell.font = {
+                        name: "Segoe UI",
+                        size: isBoolIcon ? 12 : 10,
+                        bold: isBoolIcon,
+                        color: {
+                            argb: isBoolIcon
+                                ? (cell.value === BOOL_ICON.yes ? THEME.success : THEME.inactive)
+                                : THEME.textPrimary,
+                        },
+                    };
                     cell.alignment = {
                         horizontal: [3, 13, 14].includes(colNumber) ? "right" : "center",
                         vertical: "middle",
@@ -383,6 +462,12 @@ export async function buildGanttExcelWorkbook(
 
             syllabusTotalMinutes += moduleTotalMinutes;
 
+            // Merge the module column across the module row and its event rows.
+            const moduleEndRow = detailSheet.rowCount;
+            if (moduleEndRow > moduleStartRow) {
+                detailSheet.mergeCells(moduleStartRow, 2, moduleEndRow, 2);
+            }
+
             // Backfill the module summary total.
             moduleRow.getCell(REQUIRED_COL).value = minutesToHours(moduleTotalMinutes);
             paintRow(moduleRow, DETAIL_COLS, (cell, colNumber) => {
@@ -392,6 +477,12 @@ export async function buildGanttExcelWorkbook(
                 cell.border = BORDER_STYLE;
                 if (colNumber === REQUIRED_COL) cell.numFmt = "0.0";
             });
+        }
+
+        // Merge the syllabus column across the syllabus row and all its module/event rows.
+        const syllabusEndRow = detailSheet.rowCount;
+        if (syllabusEndRow > syllabusStartRow) {
+            detailSheet.mergeCells(syllabusStartRow, 1, syllabusEndRow, 1);
         }
 
         // Backfill the syllabus summary total.

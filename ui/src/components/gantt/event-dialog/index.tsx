@@ -46,7 +46,7 @@ import { SystemRequirementsField } from "@/components/gantt/event-dialog/SystemR
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from "@/components/gantt/state/hooks/UseEvent";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/provider";
 
 const RECURRENCE_LABELS: Record<EventRecurrence, string> = {
     [EventRecurrence.None]: "ללא",
@@ -66,28 +66,43 @@ function EventDialogHeader({
     eventTitle,
     moduleTitle,
     syllabusTitle,
+    onModuleClick,
 }: {
     eventTitle?: string;
     moduleTitle?: string;
     syllabusTitle?: string;
+    onModuleClick?: () => void;
 }) {
-    const breadcrumb = [syllabusTitle, moduleTitle]
-        .filter(Boolean)
-        .join(" / ");
-
     return (
         <DialogTitle sx={{ pb: 1 }}>
             <Stack spacing={0.5}>
                 <Typography component="span" sx={{ fontWeight: "bold" }} variant="h5">
                     עריכת מופע: {eventTitle}
                 </Typography>
-                {!!breadcrumb && (
+                {(!!syllabusTitle || !!moduleTitle) && (
                     <Typography
                         component="span"
                         sx={{ color: "text.secondary" }}
                         variant="caption"
                     >
-                        {breadcrumb}
+                        {syllabusTitle}
+                        {!!syllabusTitle && !!moduleTitle && " / "}
+                        {!!moduleTitle && (
+                            <Typography
+                                component="span"
+                                onClick={onModuleClick}
+                                sx={{
+                                    color: "text.secondary",
+                                    cursor: onModuleClick ? "pointer" : undefined,
+                                    "&:hover": onModuleClick
+                                        ? { textDecoration: "underline" }
+                                        : undefined,
+                                }}
+                                variant="caption"
+                            >
+                                {moduleTitle}
+                            </Typography>
+                        )}
                     </Typography>
                 )}
             </Stack>
@@ -250,6 +265,7 @@ function EventDialogInner({
 }: Omit<EventDialogProps, "curriculumId">) {
     const { enqueueSnackbar } = useSnackbar();
     const { updateEvent, deleteEvent } = useModuleEventActions();
+    const { openModuleDialog } = useCurriculumProviderActions();
 
     const event = useEvent(eventId ?? "");
     const state = useCurriculumState();
@@ -274,6 +290,12 @@ function EventDialogInner({
     );
 
     const handleClose = useCallback(() => setOpen(false), [setOpen]);
+
+    const handleModuleClick = useCallback(() => {
+        if (!syllabusId || !moduleId) return;
+        setOpen(false);
+        openModuleDialog(syllabusId, moduleId);
+    }, [syllabusId, moduleId, setOpen, openModuleDialog]);
 
     const handleDelete = useCallback(() => {
         if (!moduleId || !eventId) return;
@@ -304,6 +326,7 @@ function EventDialogInner({
             <EventDialogHeader
                 eventTitle={event?.title}
                 moduleTitle={ganttModule?.title}
+                onModuleClick={ganttModule ? handleModuleClick : undefined}
                 syllabusTitle={syllabus?.title}
             />
 

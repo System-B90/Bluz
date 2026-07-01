@@ -83,7 +83,7 @@ export function SyllabusSelectionField({
 
     return (
         <Box {...props}>
-            <FormControl fullWidth={true}>
+            <FormControl fullWidth={true} size="small">
                 <InputLabel>סילבוסים קיימים</InputLabel>
                 <Select
                     fullWidth
@@ -95,23 +95,26 @@ export function SyllabusSelectionField({
                 </Select>
             </FormControl>
             <Tooltip title="הוסף סילבוס לגאנט">
-                <IconButton
-                    disabled={currentSyllabusId.length === 0}
-                    onClick={addClickHandler}
-                >
-                    {isLinking ? (
-                        <CircularProgress color="inherit" size={24} />
-                    ) : (
-                        <LinkIcon
-                            color={
-                                currentSyllabusId.length > 0
-                                    ? "info"
-                                    : "disabled"
-                            }
-                            fontSize="medium"
-                        />
-                    )}
-                </IconButton>
+                <span>
+                    <IconButton
+                        disabled={currentSyllabusId.length === 0}
+                        onClick={addClickHandler}
+                        size="small"
+                    >
+                        {isLinking ? (
+                            <CircularProgress color="inherit" size={20} />
+                        ) : (
+                            <LinkIcon
+                                color={
+                                    currentSyllabusId.length > 0
+                                        ? "info"
+                                        : "disabled"
+                                }
+                                fontSize="small"
+                            />
+                        )}
+                    </IconButton>
+                </span>
             </Tooltip>
         </Box>
     );

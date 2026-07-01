@@ -72,13 +72,17 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
                 left: isAbsolute ? "4px" : "auto",
                 width: blockWidth,
                 height: "24px",
-                backgroundColor: theme.palette.primary.main,
+                backgroundColor: isOpaque
+                    ? "transparent"
+                    : theme.palette.primary.main,
                 borderRadius: "4px",
                 border: isViolated
                     ? `2px solid ${theme.palette.error.main}`
-                    : "none",
+                    : isOpaque
+                        ? `1px solid ${theme.palette.primary.main}`
+                        : "none",
                 cursor: isDragging ? "grabbing" : "grab",
-                opacity: isDragging ? 0.8 : isOpaque ? 0.5 : 1,
+                opacity: isDragging ? 0.8 : 1,
                 boxShadow: isDragging
                     ? "0 10px 25px rgba(0, 0, 0, 0.2)"
                     : "none",
@@ -95,7 +99,9 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
             {title ? (
                 <Typography
                     sx={{
-                        color: "primary.contrastText",
+                        color: isOpaque
+                            ? "primary.main"
+                            : "primary.contrastText",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
