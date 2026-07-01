@@ -93,17 +93,15 @@ export const GanttHeader: React.FC = () => {
                                 <Typography fontWeight="bold" variant="subtitle2">
                                     {week.title}
                                 </Typography>
-                                {weeklyView && overAllocatedDayNames.length > 0 && (
-                                    <Tooltip
-                                        arrow
-                                        title={`חריגה בהקצאה: ${overAllocatedDayNames.join(", ")}`}
-                                    >
-                                        <WarningAmberIcon
-                                            color="error"
-                                            sx={{ fontSize: 16 }}
-                                        />
-                                    </Tooltip>
-                                )}
+                                {weeklyView && overAllocatedDayNames.length > 0 ? <Tooltip
+                                    arrow
+                                    title={`חריגה בהקצאה: ${overAllocatedDayNames.join(", ")}`}
+                                >
+                                    <WarningAmberIcon
+                                        color="error"
+                                        sx={{ fontSize: 16 }}
+                                    />
+                                </Tooltip> : null}
                             </Box>
                             {dateRangeLabel ? (
                                 <Typography

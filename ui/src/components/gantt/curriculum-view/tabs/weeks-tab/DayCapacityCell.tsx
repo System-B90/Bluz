@@ -15,21 +15,21 @@ import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react"
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
-    {
-        GanttDayId,
-        GanttDayIndex,
-        getDayNameDisplay,
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttDayId,
+    GanttDayIndex,
+    getDayNameDisplay,
+} from "@/api-shared/types/gantt/models";
 import
-    {
-        CapacityStatus,
-        formatHoursLabel,
-        formatMinutesAsTimeInput,
-        formatShortDate,
-        getCapacityStatus,
-        getDayDate,
-        parseTimeInputToMinutes,
-    } from "@/components/gantt/curriculum-view/gantt-time-utils";
+{
+    CapacityStatus,
+    formatHoursLabel,
+    formatMinutesAsTimeInput,
+    formatShortDate,
+    getCapacityStatus,
+    getDayDate,
+    parseTimeInputToMinutes,
+} from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gantt/state/hooks/UseDay";
 import { useCurriculumState } from "@/components/gantt/state/provider";
