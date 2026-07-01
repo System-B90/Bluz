@@ -34,20 +34,20 @@ export function resolveWeekDayMinutes(
 }
 
 // ---------------------------------------------------------------------------
-// Preset: הכנ"ס (Knas) — Israeli military introductory course
+// Preset: הכנ"ס (HACHNAS) — Israeli military introductory course
 // ---------------------------------------------------------------------------
 
 /**
- * Standard הכנ"ס (Knas) schedule:
+ * Standard HACHNAS (הכנת סגל) schedule:
  *   Sun–Thu  08:00–17:00  →  9 hours = 540 min
  *   Friday   08:00–13:00  →  5 hours = 300 min  (short day before Shabbat)
  *   Saturday              →  0  (Shabbat, base closed)
  *
- * Typical course length: 8 weeks.
+ * Typical course length: 8–13 weeks preamble before the main course.
  */
 export const KNAS_TEMPLATE: GanttCurriculumTemplate = {
     id: "knas",
-    label: 'הכנ"ס (קורס גיוס סטנדרטי)',
+    label: 'הכנ"ס — HACHNAS (קורס גיוס סטנדרטי)',
     weekCount: 8,
     defaultDayMinutes: {
         [GanttDayIndex.Sunday]: 540,
