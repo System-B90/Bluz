@@ -55,7 +55,7 @@ export function DraftConstraintForm({
     return (
         <Box border={1} borderColor="primary.main" borderRadius={1} p={1}>
             <Stack
-                alignItems={"center"}
+                alignItems={"flex-start"}
                 direction="row"
                 justifyContent="space-between"
                 spacing={1}

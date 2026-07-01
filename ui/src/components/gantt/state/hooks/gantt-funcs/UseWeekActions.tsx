@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { ApiCurriculumWeek } from "@/api-shared/types/gantt/api-layer";
@@ -15,7 +15,10 @@ import {
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 
 export type UseWeekActionsReturn = {
     createWeek: (payload: CreateGanttWeekPayload) => Promise<GanttWeek>;
@@ -37,6 +40,14 @@ export type UseWeekActionsReturn = {
 
 export function useWeekActions(): UseWeekActionsReturn {
     const { dispatch } = useCurriculumProviderActions();
+
+    // Keep the latest store in a ref so callbacks can read current week values
+    // (for optimistic-update rollback) without being recreated each render.
+    const state = useCurriculumState();
+    const stateRef = useRef(state);
+    useEffect(() => {
+        stateRef.current = state;
+    }, [state]);
 
     const createWeek = useCallback(
         async (payload: CreateGanttWeekPayload) => {
@@ -91,7 +102,22 @@ export function useWeekActions(): UseWeekActionsReturn {
             weekId: GanttWeekId,
             updates: Partial<{ comment?: string; weekendDuty?: boolean }>,
         ) => {
-            return await withGantErrorHandling(async () => {
+            // Optimistically apply the change so toggles/inputs react instantly
+            // instead of waiting on the server round-trip. Snapshot the prior
+            // values for the touched keys so we can roll back on failure.
+            const existing = stateRef.current.weeks[weekId];
+            const rollback: Partial<{ comment?: string; weekendDuty?: boolean }> =
+                {};
+            if ("comment" in updates) rollback.comment = existing?.comment;
+            if ("weekendDuty" in updates)
+                rollback.weekendDuty = existing?.weekendDuty;
+
+            dispatch({
+                type: "UPDATE_WEEK",
+                payload: { id: weekId, updates },
+            });
+
+            try {
                 const updatedWeek = await ganttApi.week.apiUpdate({
                     id: weekId,
                     ...updates,
@@ -102,7 +128,15 @@ export function useWeekActions(): UseWeekActionsReturn {
                     payload: { id: weekId, updates: { comment, weekendDuty } },
                 });
                 return updatedWeek;
-            }, `Failed to update week (ID: ${weekId}):`);
+            } catch (error) {
+                // Revert the optimistic change before surfacing the error.
+                dispatch({
+                    type: "UPDATE_WEEK",
+                    payload: { id: weekId, updates: rollback },
+                });
+                console.error(`Failed to update week (ID: ${weekId}):`, error);
+                throw error;
+            }
         },
         [dispatch],
     );

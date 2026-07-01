@@ -27,36 +27,37 @@ export type GanttCurriculumTemplate = {
 export function resolveWeekDayMinutes(
     template: GanttCurriculumTemplate,
     weekIndex: number,
-): TemplateDayConfig {
-    const override = template.weekOverrides?.[weekIndex];
+): TemplateDayConfig
+{
+    const override = template.weekOverrides?.[ weekIndex ];
     if (!override) return template.defaultDayMinutes;
     return { ...template.defaultDayMinutes, ...override };
 }
 
 // ---------------------------------------------------------------------------
-// Preset: הכנ"ס (Knas) — Israeli military introductory course
+// Preset: הכנ"ס (HACHNAS) — הכנת סגל
 // ---------------------------------------------------------------------------
 
 /**
- * Standard הכנ"ס (Knas) schedule:
+ * Standard HACHNAS (הכנת סגל) schedule:
  *   Sun–Thu  08:00–17:00  →  9 hours = 540 min
  *   Friday   08:00–13:00  →  5 hours = 300 min  (short day before Shabbat)
  *   Saturday              →  0  (Shabbat, base closed)
  *
- * Typical course length: 8 weeks.
+ * Typical course length: 8–13 weeks preamble before the main course.
  */
-export const KNAS_TEMPLATE: GanttCurriculumTemplate = {
-    id: "knas",
-    label: 'הכנ"ס (קורס גיוס סטנדרטי)',
+export const HACHNAS_TEMPLATE: GanttCurriculumTemplate = {
+    id: "hachnas",
+    label: 'הכנ"ס',
     weekCount: 8,
     defaultDayMinutes: {
-        [GanttDayIndex.Sunday]: 540,
-        [GanttDayIndex.Monday]: 540,
-        [GanttDayIndex.Tuesday]: 540,
-        [GanttDayIndex.Wednesday]: 540,
-        [GanttDayIndex.Thursday]: 540,
-        [GanttDayIndex.Friday]: 300,
-        [GanttDayIndex.Saturday]: 0,
+        [ GanttDayIndex.Sunday ]: 540,
+        [ GanttDayIndex.Monday ]: 540,
+        [ GanttDayIndex.Tuesday ]: 540,
+        [ GanttDayIndex.Wednesday ]: 540,
+        [ GanttDayIndex.Thursday ]: 540,
+        [ GanttDayIndex.Friday ]: 300,
+        [ GanttDayIndex.Saturday ]: 0,
     },
 };
 
@@ -65,5 +66,5 @@ export const KNAS_TEMPLATE: GanttCurriculumTemplate = {
 // ---------------------------------------------------------------------------
 
 export const CURRICULUM_TEMPLATES: Array<GanttCurriculumTemplate> = [
-    KNAS_TEMPLATE,
+    HACHNAS_TEMPLATE,
 ];

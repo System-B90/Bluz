@@ -1,5 +1,6 @@
 import Box, { BoxProps } from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
 import { useSnackbar } from "notistack";
 import React, { useCallback } from "react";
 
@@ -176,21 +177,29 @@ export function SyllabusesActionsBox({
         <Box
             alignItems="center"
             display="flex"
-            gap={2}
+            gap={1.5}
             justifyContent="flex-start"
             {...boxProps}
             width="100%"
         >
-            <CreateSyllabusButton curriculumId={curriculumId} />
-            <SyllabusSelectionField
-                alignItems={"center"}
-                className="w-100"
-                curriculumId={curriculumId}
-                display="flex"
-                flexDirection="row"
-                gap={1}
-            />
+            <Box alignItems="center" display="flex" flexShrink={0} gap={1.5}>
+                <CreateSyllabusButton curriculumId={curriculumId} />
+                <SyllabusSelectionField
+                    alignItems="center"
+                    curriculumId={curriculumId}
+                    display="flex"
+                    flexDirection="row"
+                    gap={1}
+                    width={260}
+                />
+            </Box>
+
+            <Divider flexItem orientation="vertical" />
+
             <GanttSearchField />
+
+            <Box flexGrow={1} />
+
             {visibleSyllabusCount > 0 && (
                 <Button
                     onClick={onToggleAllExpanded}
@@ -202,7 +211,6 @@ export function SyllabusesActionsBox({
                         : "הרחב הכול"}
                 </Button>
             )}
-            <Box flexGrow={1} />
             <ImportExportMenuButton
                 color="primary"
                 exportLabel="ייצוא סילבוסים"

@@ -32,8 +32,12 @@ export const CalendarProvider = ({
 }: {
     children: React.ReactNode;
 }) => {
-    const { offlineMode, captureEventBeforeEdit, captureInitialEvents } =
-        useOffline();
+    const {
+        offlineMode,
+        pushDialogOpen,
+        captureEventBeforeEdit,
+        captureInitialEvents,
+    } = useOffline();
     const { userData, sendMessage } = useAuth();
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
@@ -47,12 +51,10 @@ export const CalendarProvider = ({
 
     const { events, dispatch, remoteDispatch, undo, redo } = useEventState();
 
-    const eventsRef = useRef(events);
     const offlineModeRef = useRef(offlineMode);
 
-    // Keep refs in sync after every render without triggering re-renders.
+    // Keep ref in sync after every render without triggering re-renders.
     useLayoutEffect(() => {
-        eventsRef.current = events;
         offlineModeRef.current = offlineMode;
     });
 
@@ -60,23 +62,14 @@ export const CalendarProvider = ({
     // Reset when leaving offline mode so the next entry gets a fresh capture.
     const didCaptureOfflineRef = useRef(false);
 
+    // Captures the first non-empty batch of events after entering offline mode,
+    // whether that batch is already loaded or arrives later.
     useEffect(() => {
         if (!offlineMode) {
             didCaptureOfflineRef.current = false;
             return;
         }
-        if (eventsRef.current.length > 0) {
-            captureInitialEvents(eventsRef.current);
-            didCaptureOfflineRef.current = true;
-        }
-        // Only fire on offlineMode toggle, not on every events change.
-         
-    }, [offlineMode, captureInitialEvents]);
-
-    // Deferred capture: if events hadn't loaded yet when offline mode was
-    // entered, capture the first non-empty batch that arrives.
-    useEffect(() => {
-        if (offlineMode && !didCaptureOfflineRef.current && events.length > 0) {
+        if (!didCaptureOfflineRef.current && events.length > 0) {
             captureInitialEvents(events);
             didCaptureOfflineRef.current = true;
         }
@@ -180,15 +173,19 @@ export const CalendarProvider = ({
         loadEvents(startDate, endDate);
     }, [startDate, endDate, loadEvents]);
 
-    // Force a full refetch when returning from offline mode so concurrent
-    // changes made by other users while we were offline are not lost.
-    const prevOfflineModeRef = useRef(offlineMode);
+    // Force a full refetch to pull in concurrent changes made by other users
+    // while we were offline. This must wait until the offline reconciliation
+    // dialog has been *resolved* (closed while back online): refetching on the
+    // raw offline→online transition races the dialog and overwrites the user's
+    // local edits with the server state before they can review them — the
+    // dialog then sees no diffs, closes itself, and silently discards the work.
+    const prevPushDialogOpenRef = useRef(pushDialogOpen);
     useEffect(() => {
-        if (prevOfflineModeRef.current && !offlineMode) {
+        if (prevPushDialogOpenRef.current && !pushDialogOpen && !offlineMode) {
             loadEvents(startDate, endDate);
         }
-        prevOfflineModeRef.current = offlineMode;
-    }, [offlineMode, loadEvents, startDate, endDate]);
+        prevPushDialogOpenRef.current = pushDialogOpen;
+    }, [pushDialogOpen, offlineMode, loadEvents, startDate, endDate]);
 
     return (
         <CalendarFiltersProvider>

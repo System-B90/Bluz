@@ -79,6 +79,15 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
         return merged;
     }, [globalMappings, curriculumId]);
 
+    const curriculumMappings = useMemo(() => {
+        const merged: Record<string, any> = {};
+        Object.entries(globalMappings).forEach(([mappingId, mapping]: [string, any]) => {
+            if (mapping.curriculumId !== curriculumId) return;
+            merged[mappingId] = mapping;
+        });
+        return merged;
+    }, [globalMappings, curriculumId]);
+
     const { violations, activeLinks } = useMemo(() => {
         const v: Record<string, Array<string>> = {};
         const links: Array<ConstraintLink> = [];
@@ -405,11 +414,13 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             <GanttContext.Provider
                 value={{
                     weeklyView,
+                    showConstraints,
                     startDate: curriculum.startDate,
                     timelineWeeks,
                     linearDays,
                     moduleMappings,
                     eventMappings,
+                    curriculumMappings,
                     violations,
                     onMapModule: handleMapModule,
                     onMapEvent: handleMapEvent,

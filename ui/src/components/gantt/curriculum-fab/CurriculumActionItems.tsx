@@ -1,5 +1,6 @@
 import Box from "@mui/material/Box";
 import { ButtonProps } from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
@@ -12,6 +13,7 @@ import {
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CreateDraftAction } from "@/components/gantt/curriculum-fab/action-items/CreateDraftAction";
+import { CreateFromTemplateAction } from "@/components/gantt/curriculum-fab/action-items/CreateFromTemplateAction";
 import { DeleteCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DeleteCurriculumAction";
 import { DuplicateCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DuplicateCurriculumAction";
 import { ToggleArchiveAction } from "@/components/gantt/curriculum-fab/action-items/ToggleArchiveAction";
@@ -99,6 +101,12 @@ export function CurriculumActionItems({
                 onProcessingChange={setIsProcessing}
                 {...props}
             />
+            <CreateFromTemplateAction
+                disabled={isDisabled}
+                onCreate={onCreate}
+                onProcessingChange={setIsProcessing}
+                {...props}
+            />
             <DuplicateCurriculumAction
                 disabled={isDisabled || !sourceCurriculum}
                 onCreate={onCreate}
@@ -136,6 +144,7 @@ export function CurriculumActionItems({
                 onProcessingChange={setIsProcessing}
                 sourceCurriculum={sourceCurriculum}
             />
+            {isProcessing ? <CircularProgress size={20} /> : null}
         </Box>
     );
 }

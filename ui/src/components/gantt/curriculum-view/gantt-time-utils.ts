@@ -7,12 +7,44 @@ import {
     GanttDay,
     GanttDayId,
     GanttDayIndex,
+    GanttModuleId,
     GanttWeek,
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
 import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
 export type CapacityStatus = "empty" | "error" | "ok" | "warning";
+
+// Tentative time: every module with at least one mapping (whole-module or
+// event-level) contributes its full required time, regardless of how many
+// of its events are actually allocated. Each module is counted once even if
+// mapped across multiple days.
+export function getTentativeMinutesForModuleIds({
+    mappings,
+    moduleIds,
+    state,
+}: {
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    moduleIds: Iterable<GanttModuleId>;
+    state: NormalizedStore;
+}): number {
+    const moduleIdsSet = new Set(moduleIds);
+    const seen = new Set<GanttModuleId>();
+    let total = 0;
+
+    for (const mapping of Object.values(mappings)) {
+        if (!moduleIdsSet.has(mapping.moduleId)) continue;
+        if (seen.has(mapping.moduleId)) continue;
+        seen.add(mapping.moduleId);
+
+        const moduleDoc = state.modules[mapping.moduleId];
+        if (moduleDoc) {
+            total += calculateMinimumRequiredTimeForModule(moduleDoc, state);
+        }
+    }
+
+    return total;
+}
 
 export function clampWorkingMinutes(minutes: number): number {
     if (!Number.isFinite(minutes)) return 0;
@@ -132,6 +164,34 @@ export function getCourseEndDate(
     return startDay.add(weekCount * 7 - 1, "day");
 }
 
+// Allocated time only comes from allocated events, never from a whole-module
+// mapping. A module's allocated total is the sum of its own allocated events -
+// 0 if none are allocated, partial if only some are. An event mapped across N
+// days produces N mapping rows sharing the same eventId; count it once.
+function sumUniqueMappedMinutes({
+    dayIds,
+    mappings,
+    state,
+}: {
+    dayIds: Set<GanttDayId>;
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    state: NormalizedStore;
+}): number {
+    const seen = new Set<string>();
+    let total = 0;
+
+    for (const mapping of Object.values(mappings)) {
+        if (!dayIds.has(mapping.dayId)) continue;
+        if (!mapping.eventId) continue;
+        if (seen.has(mapping.eventId)) continue;
+        seen.add(mapping.eventId);
+
+        total += state.events[mapping.eventId]?.minimumDuration ?? 0;
+    }
+
+    return total;
+}
+
 export function getScheduledMinutesForDay({
     dayId,
     mappings,
@@ -141,20 +201,7 @@ export function getScheduledMinutesForDay({
     mappings: Record<string, GanttCurriculumModuleDayMapping>;
     state: NormalizedStore;
 }): number {
-    return Object.values(mappings).reduce((total, mapping) => {
-        if (mapping.dayId !== dayId) return total;
-
-        if (mapping.eventId) {
-            return (
-                total + (state.events[mapping.eventId]?.minimumDuration ?? 0)
-            );
-        }
-
-        const moduleDoc = state.modules[mapping.moduleId];
-        if (!moduleDoc) return total;
-
-        return total + calculateMinimumRequiredTimeForModule(moduleDoc, state);
-    }, 0);
+    return sumUniqueMappedMinutes({ dayIds: new Set([dayId]), mappings, state });
 }
 
 export function getWeekScheduledMinutes({
@@ -166,11 +213,11 @@ export function getWeekScheduledMinutes({
     state: NormalizedStore;
     week: GanttWeek | undefined;
 }): number {
-    return (week?.days ?? []).reduce(
-        (total, dayId) =>
-            total + getScheduledMinutesForDay({ dayId, mappings, state }),
-        0,
-    );
+    return sumUniqueMappedMinutes({
+        dayIds: new Set(week?.days ?? []),
+        mappings,
+        state,
+    });
 }
 
 export function getCurriculumScheduledMinutes({
@@ -183,10 +230,14 @@ export function getCurriculumScheduledMinutes({
     state: NormalizedStore;
 }): number {
     if (!curriculum) return 0;
-    return (curriculum.weeks ?? []).reduce((total, weekId) => {
-        const week = state.weeks[weekId];
-        return total + getWeekScheduledMinutes({ week, mappings, state });
-    }, 0);
+    const dayIds = new Set<GanttDayId>();
+    for (const weekId of curriculum.weeks ?? []) {
+        for (const dayId of state.weeks[weekId]?.days ?? []) {
+            dayIds.add(dayId);
+        }
+    }
+
+    return sumUniqueMappedMinutes({ dayIds, mappings, state });
 }
 
 export function getCapacityStatus(

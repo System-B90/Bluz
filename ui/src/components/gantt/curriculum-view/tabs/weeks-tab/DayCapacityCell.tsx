@@ -14,12 +14,14 @@ import { useSnackbar } from "notistack";
 import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import {
+import
+{
     GanttDayId,
     GanttDayIndex,
     getDayNameDisplay,
 } from "@/api-shared/types/gantt/models";
-import {
+import
+{
     CapacityStatus,
     formatHoursLabel,
     formatMinutesAsTimeInput,
@@ -289,7 +291,7 @@ export function DayCapacityCell({
                             }}
                             variant="caption"
                         >
-                            יוצאים שבת
+                            יוצאים הביתה
                         </Typography>
                     </Box>
 

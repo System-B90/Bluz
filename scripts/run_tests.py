@@ -318,11 +318,11 @@ def main(
             compose_cmd,
             env=compose_env,
             check=True,
-            timeout=180 if new_ui_container else 600,
+            timeout=180 if new_ui_container else 1200,
         )
 
         typer.secho("Waiting for web application to be ready...", fg=typer.colors.CYAN)
-        if wait_for_ui_ready(ports["https"], timeout=600 if new_ui_container else 120):
+        if wait_for_ui_ready(ports["https"], timeout=1200 if new_ui_container else 120):
             typer.secho("Web application is ready!", fg=typer.colors.GREEN)
         else:
             raise RuntimeError("Timeout waiting for application to be ready.")
