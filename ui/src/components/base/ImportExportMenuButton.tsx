@@ -11,9 +11,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
 import React, { useCallback, useState } from "react";
 
-export function sanitizeFilename(name: string): string {
-    return name.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_").trim();
-}
+import { safeTitle } from "@/api-shared/common";
 
 export type ImportExportMenuButtonProps = {
     onExport: () => Promise<unknown> | unknown;
@@ -78,7 +76,7 @@ export function ImportExportMenuButton({
                 const blob = new Blob([jsonString], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
 
-                const cleanTitle = sanitizeFilename(exportTitle || "export");
+                const cleanTitle = safeTitle(exportTitle || "export");
                 const filename = `${exportFilenamePrefix}${cleanTitle}.json`;
 
                 const link = document.createElement("a");
