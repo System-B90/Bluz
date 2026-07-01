@@ -96,6 +96,14 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
         return timelineWeeks.flatMap((w) => w.days);
     }, [timelineWeeks]);
 
+    // When zoomed the grid holds a single week, but date labels are derived from a
+    // week's absolute position, so expose that offset to the header (#90).
+    const weekIndexOffset = useMemo(() => {
+        if (weeklyView || !zoomedWeekId) return 0;
+        const idx = allTimelineWeeks.findIndex((w) => w.id === zoomedWeekId);
+        return idx === -1 ? 0 : idx;
+    }, [weeklyView, zoomedWeekId, allTimelineWeeks]);
+
     // Widen day columns to fill the container when a single week is zoomed (#90).
     const dayCellWidth = useMemo(() => {
         const DEFAULT_WIDTH = 80;
@@ -569,6 +577,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             dayCellWidth,
             zoomedWeekId,
             setZoomedWeekId,
+            weekIndexOffset,
             isSyllabusExpanded,
             toggleSyllabus,
             onMapModule: handleMapModule,
@@ -589,6 +598,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             violations,
             dayCellWidth,
             zoomedWeekId,
+            weekIndexOffset,
             isSyllabusExpanded,
             toggleSyllabus,
             handleMapModule,

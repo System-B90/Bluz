@@ -25,6 +25,11 @@ export type GanttContextType = {
     /** Id of the week currently zoomed to full width, or null (days view only, #90). */
     zoomedWeekId: null | string;
     setZoomedWeekId: (weekId: null | string) => void;
+    /**
+     * Absolute index of the first visible week within the full timeline. Non-zero
+     * only while zoomed, so date labels stay correct when the grid is filtered (#90).
+     */
+    weekIndexOffset: number;
     /** Per-syllabus expand/collapse state, lifted so all rows can be toggled at once (#91). */
     isSyllabusExpanded: (syllabusId: string) => boolean;
     toggleSyllabus: (syllabusId: string) => void;

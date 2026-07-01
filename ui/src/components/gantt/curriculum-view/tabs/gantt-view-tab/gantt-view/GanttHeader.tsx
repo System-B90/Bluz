@@ -31,6 +31,7 @@ export const GanttHeader: React.FC = () => {
         startDate,
         timelineWeeks,
         weeklyView,
+        weekIndexOffset,
         zoomedWeekId,
     } = useGanttContext();
     const canZoom = !weeklyView;
@@ -61,7 +62,10 @@ export const GanttHeader: React.FC = () => {
                 </TableCell>
                 {timelineWeeks.map((week, weekIndex) => {
                     const dateRangeLabel = formatWeekDateRange(
-                        getWeekDateRange(startDate, weekIndex),
+                        getWeekDateRange(
+                            startDate,
+                            weekIndex + weekIndexOffset,
+                        ),
                     );
 
                     const overAllocatedDayNames = showConstraints
@@ -157,7 +161,7 @@ export const GanttHeader: React.FC = () => {
                             if (!day) return null;
                             const dayDate = getDayDate(
                                 startDate,
-                                weekIndex,
+                                weekIndex + weekIndexOffset,
                                 day.dayIndex,
                             );
                             const isOverAllocated =
