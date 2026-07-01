@@ -12,7 +12,6 @@ import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import Collapse from "@mui/material/Collapse";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -753,12 +752,14 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                             </Box>
                         </Box>
 
-                        <Collapse in={showUnallocated} unmountOnExit>
+                        {showUnallocated ? (
                             <Box
                                 sx={{
                                     px: 2,
                                     py: 1.5,
                                     borderBottom: `1px solid ${theme.vars.palette.divider}`,
+                                    backgroundColor:
+                                        theme.vars.palette.background.paper,
                                     flexShrink: 0,
                                     maxHeight: 200,
                                     overflow: "auto",
@@ -812,7 +813,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                     </Stack>
                                 )}
                             </Box>
-                        </Collapse>
+                        ) : null}
 
                         <Box
                             sx={{
