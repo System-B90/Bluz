@@ -33,6 +33,9 @@ export type GanttContextType = {
     /** Per-syllabus expand/collapse state, lifted so all rows can be toggled at once (#91). */
     isSyllabusExpanded: (syllabusId: string) => boolean;
     toggleSyllabus: (syllabusId: string) => void;
+    /** Per-module expand/collapse state, lifted so a chip can reveal an event row. */
+    isModuleExpanded: (moduleId: string) => boolean;
+    toggleModule: (moduleId: string) => void;
     onMapModule: (moduleId: string, dayId: string) => Promise<void>;
     onMapEvent: (
         moduleId: string,

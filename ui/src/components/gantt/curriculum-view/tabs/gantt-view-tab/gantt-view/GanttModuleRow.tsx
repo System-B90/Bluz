@@ -4,9 +4,10 @@ import { alpha, useTheme } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import React, { memo, useMemo, useState } from "react";
+import React, { memo, useMemo } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
+import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
 import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
 import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventRow";
@@ -25,8 +26,10 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         moduleMappings,
         eventMappings,
         violations,
+        isModuleExpanded,
+        toggleModule,
     } = useGanttContext();
-    const [isExpanded, setIsExpanded] = useState(false);
+    const isExpanded = isModuleExpanded(moduleId);
 
     const { isOver: isRemoveOver, setNodeRef: setRemoveNodeRef } = useDroppable(
         {
@@ -226,7 +229,11 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
 
     return (
         <React.Fragment>
-            <TableRow hover>
+            <TableRow
+                hover
+                id={`gantt-row-module-${moduleId}`}
+                sx={getFlashRowSx(theme)}
+            >
                 <TableCell
                     ref={setRemoveNodeRef}
                     sx={{
@@ -251,7 +258,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                     {hasEvents ? (
                         <Box
                             component="span"
-                            onClick={() => setIsExpanded(!isExpanded)}
+                            onClick={() => toggleModule(moduleId)}
                             sx={{
                                 fontSize: "0.8rem",
                                 width: 20,

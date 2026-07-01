@@ -58,6 +58,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
 
     // Strongly type as HTMLDivElement to satisfy MUI TableContainer
     const containerRef = useRef<HTMLDivElement>(null);
+    const pendingScrollRafs = useRef<Array<number>>([]);
 
     const [showConstraints, setShowConstraints] = useState(true);
     const [weeklyView, setWeeklyView] = useState(true);
@@ -66,7 +67,12 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
     const [collapsedSyllabusIds, setCollapsedSyllabusIds] = useState<
         Set<string>
     >(() => new Set());
+    const [expandedModuleIds, setExpandedModuleIds] = useState<Set<string>>(
+        () => new Set(),
+    );
     const [containerWidth, setContainerWidth] = useState(0);
+    // DOM id of a row to scroll into view once its ancestors have expanded.
+    const [pendingScrollId, setPendingScrollId] = useState<null | string>(null);
 
     // Require a small drag distance before activating, so a click never pays the
     // (day-view) droppable measurement cost and drags feel intentional (#88).
@@ -148,6 +154,73 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             collapsedSyllabusIds.has(id),
         );
 
+    const isModuleExpanded = useCallback(
+        (moduleId: string) => expandedModuleIds.has(moduleId),
+        [expandedModuleIds],
+    );
+
+    const toggleModule = useCallback((moduleId: string) => {
+        setExpandedModuleIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(moduleId)) next.delete(moduleId);
+            else next.add(moduleId);
+            return next;
+        });
+    }, []);
+
+    // Reveal an unallocated module/event: expand its ancestors, then scroll its
+    // row into view once rendered.
+    const revealItem = useCallback(
+        (syllabusId: string, moduleId: string, eventId?: string) => {
+            setCollapsedSyllabusIds((prev) => {
+                if (!prev.has(syllabusId)) return prev;
+                const next = new Set(prev);
+                next.delete(syllabusId);
+                return next;
+            });
+            if (eventId) {
+                setExpandedModuleIds((prev) => {
+                    if (prev.has(moduleId)) return prev;
+                    const next = new Set(prev);
+                    next.add(moduleId);
+                    return next;
+                });
+            }
+            setPendingScrollId(
+                eventId
+                    ? `gantt-row-event-${eventId}`
+                    : `gantt-row-module-${moduleId}`,
+            );
+        },
+        [],
+    );
+
+    // After the target's ancestors expand, scroll to it and flash a highlight.
+    useEffect(() => {
+        if (!pendingScrollId) return;
+        const raf1 = requestAnimationFrame(() => {
+            const raf2 = requestAnimationFrame(() => {
+                const el = document.getElementById(pendingScrollId);
+                if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                    el.dataset.ganttFlash = "true";
+                    window.setTimeout(() => {
+                        delete el.dataset.ganttFlash;
+                    }, 1500);
+                }
+                setPendingScrollId(null);
+            });
+            pendingScrollRafs.current.push(raf2);
+        });
+        pendingScrollRafs.current.push(raf1);
+        return () => {
+            pendingScrollRafs.current.forEach((id) =>
+                cancelAnimationFrame(id),
+            );
+            pendingScrollRafs.current = [];
+        };
+    }, [pendingScrollId]);
+
     // Track the scroll container width so a zoomed week can be sized to fill it (#90).
     useEffect(() => {
         const node = containerRef.current;
@@ -210,13 +283,19 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 const unallocatedModules = modules.filter(
                     (m) => (moduleMappings[m.id] ?? []).length === 0,
                 );
-                const unallocatedEvents = modules
-                    .flatMap((m) => m.events ?? [])
-                    .map((eventId) => state.events[eventId])
-                    .filter(
-                        (e): e is NonNullable<typeof e> =>
-                            !!e && !eventMappings[e.id],
-                    );
+                const unallocatedEvents = modules.flatMap((m) =>
+                    (m.events ?? [])
+                        .map((eventId) => state.events[eventId])
+                        .filter(
+                            (e): e is NonNullable<typeof e> =>
+                                !!e && !eventMappings[e.id],
+                        )
+                        .map((e) => ({
+                            id: e.id,
+                            title: e.title,
+                            moduleId: m.id,
+                        })),
+                );
 
                 if (
                     unallocatedModules.length === 0 &&
@@ -579,6 +658,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             weekIndexOffset,
             isSyllabusExpanded,
             toggleSyllabus,
+            isModuleExpanded,
+            toggleModule,
             onMapModule: handleMapModule,
             onMapEvent: handleMapEvent,
             onMoveModule: handleMoveModule,
@@ -600,6 +681,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             weekIndexOffset,
             isSyllabusExpanded,
             toggleSyllabus,
+            isModuleExpanded,
+            toggleModule,
             handleMapModule,
             handleMapEvent,
             handleMoveModule,
@@ -792,17 +875,32 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                                 >
                                                     {group.modules.map((m) => (
                                                         <Chip
+                                                            clickable
                                                             color="primary"
                                                             key={m.id}
                                                             label={m.title}
+                                                            onClick={() =>
+                                                                revealItem(
+                                                                    group.syllabusId,
+                                                                    m.id,
+                                                                )
+                                                            }
                                                             size="small"
                                                             variant="outlined"
                                                         />
                                                     ))}
                                                     {group.events.map((e) => (
                                                         <Chip
+                                                            clickable
                                                             key={e.id}
                                                             label={e.title}
+                                                            onClick={() =>
+                                                                revealItem(
+                                                                    group.syllabusId,
+                                                                    e.moduleId,
+                                                                    e.id,
+                                                                )
+                                                            }
                                                             size="small"
                                                             variant="outlined"
                                                         />

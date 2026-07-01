@@ -1,8 +1,10 @@
 import { useDroppable } from "@dnd-kit/core";
+import { useTheme } from "@mui/material/styles";
 import TableRow from "@mui/material/TableRow";
 import React, { memo, useMemo } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
+import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
 import
 {
     buildDailyEventCells,
@@ -21,6 +23,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
     moduleId,
 }) =>
 {
+    const theme = useTheme();
     const state = useCurriculumState();
     const { openEventDialog } = useCurriculumProviderActions();
     const {
@@ -124,7 +127,11 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
     if (!event) return null;
 
     return (
-        <TableRow hover>
+        <TableRow
+            hover
+            id={ `gantt-row-event-${eventId}` }
+            sx={ getFlashRowSx(theme) }
+        >
             <GanttEventLabelCell
                 eventId={ eventId }
                 eventTitle={ event.title }
