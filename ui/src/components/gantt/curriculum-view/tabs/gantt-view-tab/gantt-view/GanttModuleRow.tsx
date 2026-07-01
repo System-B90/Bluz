@@ -4,7 +4,7 @@ import { alpha, useTheme } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import React, { useMemo, useState } from "react";
+import React, { memo, useMemo, useState } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
@@ -13,7 +13,9 @@ import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-vie
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 
-export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
+const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
+    moduleId,
+}) => {
     const theme = useTheme();
     const ganttModule = useModule(moduleId);
     const {
@@ -110,8 +112,9 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
             ? spanIndices.max - spanIndices.min + 1
             : 1;
 
-    // Build cells depending on view mode
-    const renderCells = () => {
+    // Build cells depending on view mode. Memoized so a re-render triggered by the
+    // remove-target droppable (during a drag) doesn't rebuild every day cell (#88).
+    const cells = useMemo(() => {
         if (weeklyView) {
             // Compute proportional pixel positioning for multi-week blocks
             let blockLeftPx: number | undefined;
@@ -207,7 +210,19 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                 );
             }),
         );
-    };
+    }, [
+        weeklyView,
+        timelineWeeks,
+        linearDays,
+        moduleId,
+        ganttModule?.title,
+        hasEvents,
+        isExpanded,
+        spanIndices,
+        weekSpanIndices,
+        spanLength,
+        myViolations,
+    ]);
 
     return (
         <React.Fragment>
@@ -274,7 +289,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                     </Box>
                 </TableCell>
 
-                {renderCells()}
+                {cells}
             </TableRow>
 
             {isExpanded && hasEvents
@@ -289,3 +304,5 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
         </React.Fragment>
     );
 };
+
+export const GanttModuleRow = memo(GanttModuleRowComponent);

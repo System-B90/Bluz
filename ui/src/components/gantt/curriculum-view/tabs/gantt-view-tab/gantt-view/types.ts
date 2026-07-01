@@ -20,6 +20,14 @@ export type GanttContextType = {
     moduleMappings: Record<string, Array<string>>;
     curriculumMappings: Record<string, GanttCurriculumModuleDayMapping>;
     violations: Record<string, Array<string>>;
+    /** Pixel width of a single day/week column. Widens when a week is zoomed (#90). */
+    dayCellWidth: number;
+    /** Id of the week currently zoomed to full width, or null (days view only, #90). */
+    zoomedWeekId: null | string;
+    setZoomedWeekId: (weekId: null | string) => void;
+    /** Per-syllabus expand/collapse state, lifted so all rows can be toggled at once (#91). */
+    isSyllabusExpanded: (syllabusId: string) => boolean;
+    toggleSyllabus: (syllabusId: string) => void;
     onMapModule: (moduleId: string, dayId: string) => Promise<void>;
     onMapEvent: (
         moduleId: string,

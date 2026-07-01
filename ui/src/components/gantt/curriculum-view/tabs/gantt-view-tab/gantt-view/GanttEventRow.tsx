@@ -1,6 +1,6 @@
 import { useDroppable } from "@dnd-kit/core";
 import TableRow from "@mui/material/TableRow";
-import React, { useMemo } from "react";
+import React, { memo, useMemo } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import
@@ -16,7 +16,7 @@ import
     useCurriculumState,
 } from "@/components/gantt/state/provider";
 
-export const GanttEventRow: React.FC<GanttEventRowProps> = ({
+const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
     eventId,
     moduleId,
 }) =>
@@ -147,3 +147,5 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
         </TableRow>
     );
 };
+
+export const GanttEventRow = memo(GanttEventRowComponent);
