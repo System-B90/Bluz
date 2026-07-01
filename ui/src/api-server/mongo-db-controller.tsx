@@ -3,7 +3,7 @@ import { Collection, Db, MongoClient } from "mongodb";
 import { DbEventDocument } from "@/api-server/db-event";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import { ClientApiError } from "@/api-shared/errors";
-import { CalendarSnapshot } from "@/api-shared/types";
+import { CalendarDraft, CalendarSnapshot } from "@/api-shared/types";
 import { Course } from "@/api-shared/types/course";
 import {
     GanttCurriculum,
@@ -55,6 +55,7 @@ class DatabaseController {
     private _outsiders: Collection<Outsider>;
     private _reservations: Collection<DbReservation>;
     private _calendarSnapshots: Collection<CalendarSnapshot>;
+    private _calendarDrafts: Collection<CalendarDraft>;
     public readonly dbName: string;
 
     constructor(dbName: string = DEFAULT_ITERATION_DB_NAME) {
@@ -74,6 +75,7 @@ class DatabaseController {
         this._reservations = this.bluzDb.collection("reservations");
         this._calendarSnapshots =
             this.bluzDb.collection("calendarSnapshots");
+        this._calendarDrafts = this.bluzDb.collection("calendarDrafts");
     }
 
     public get events(): Collection<DbEventDocument> {
@@ -111,6 +113,9 @@ class DatabaseController {
     }
     public get calendarSnapshots(): Collection<CalendarSnapshot> {
         return this._calendarSnapshots;
+    }
+    public get calendarDrafts(): Collection<CalendarDraft> {
+        return this._calendarDrafts;
     }
     public get client(): MongoClient {
         return this.mongoClient;

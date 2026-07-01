@@ -65,3 +65,24 @@ export type CalendarSnapshot = {
 export type CalendarSnapshotSummary = Omit<CalendarSnapshot, "events"> & {
     eventCount: number;
 };
+
+// Draft: a named, server-persisted working copy of the calendar, shared across
+// users. Unlike a snapshot (an immutable restore point), a draft is mutable —
+// any user can load it, edit, and re-save it. `updatedBy` records the last
+// editor so collaborators can see who touched it most recently.
+export type CalendarDraft = {
+    id: string;
+    label: string;
+    createdAt: string;
+    updatedAt: string;
+    updatedBy: string;
+    updatedById?: string;
+    // The iteration this draft belongs to (undefined ⇒ current run).
+    iterationId?: string;
+    events: Array<DbEventDocument>;
+};
+
+// List-row variant — omits the events payload, exposes the count.
+export type CalendarDraftSummary = Omit<CalendarDraft, "events"> & {
+    eventCount: number;
+};
