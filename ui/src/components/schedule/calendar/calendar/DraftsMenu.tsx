@@ -236,9 +236,7 @@ export function DraftsMenu() {
                                         <Tooltip title="טען טיוטה">
                                             <span>
                                                 <IconButton
-                                                    disabled={
-                                                        busyId === draft.id
-                                                    }
+                                                    disabled={busyId !== null}
                                                     edge="end"
                                                     onClick={() =>
                                                         void handleLoad(
@@ -254,9 +252,7 @@ export function DraftsMenu() {
                                         <Tooltip title="עדכן למצב הנוכחי">
                                             <span>
                                                 <IconButton
-                                                    disabled={
-                                                        busyId === draft.id
-                                                    }
+                                                    disabled={busyId !== null}
                                                     edge="end"
                                                     onClick={() =>
                                                         void handleOverwrite(
@@ -273,9 +269,7 @@ export function DraftsMenu() {
                                             <span>
                                                 <IconButton
                                                     color="error"
-                                                    disabled={
-                                                        busyId === draft.id
-                                                    }
+                                                    disabled={busyId !== null}
                                                     edge="end"
                                                     onClick={() =>
                                                         void handleDelete(

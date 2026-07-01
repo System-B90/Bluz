@@ -101,7 +101,7 @@ async function setDbEvent(
     // Because the client generates the ID, we don't inherently know if this is new or an update.
     // So, we try to update it first.
     const updateResult = await controller.events.updateOne(
-        { id: eventId },
+        { id: eventId, ...NOT_ARCHIVED },
         { $set: updatePayload },
         options,
     );

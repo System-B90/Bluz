@@ -21,7 +21,8 @@ export async function GET(request: Request) {
     try {
         const url = new URL(request.url);
         const id = url.searchParams.get("id");
-        const { controller } = await resolveIterationFromRequest(request);
+        const { controller, iterationId } =
+            await resolveIterationFromRequest(request);
 
         if (id) {
             return ApiSuccess(
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
             );
         }
         return ApiSuccess(
-            await DbCalendarSnapshot.list(controller),
+            await DbCalendarSnapshot.list(controller, iterationId),
             "no-store",
         );
     } catch (e) {

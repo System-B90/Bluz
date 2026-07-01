@@ -113,6 +113,14 @@ describe("DbCalendarDraft (#62)", () => {
         expect(list[0]).toMatchObject({ id: "d1", eventCount: 2 });
     });
 
+    it("scopes the listing to the given iteration", async () => {
+        await DbCalendarDraft.list(controller as never, "it1" as never);
+        expect(controller.calendarDrafts.find).toHaveBeenCalledWith(
+            { iterationId: "it1" },
+            { projection: { events: 0, _id: 0 } },
+        );
+    });
+
     it("throws when deleting a missing draft", async () => {
         controller.calendarDrafts.deleteOne.mockResolvedValueOnce({
             deletedCount: 0,

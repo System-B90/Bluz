@@ -87,6 +87,14 @@ describe("DbCalendarSnapshot (#61)", () => {
         ]);
     });
 
+    it("scopes the listing to the given iteration", async () => {
+        await DbCalendarSnapshot.list(controller as never, "it1" as never);
+        expect(controller.calendarSnapshots.find).toHaveBeenCalledWith(
+            { iterationId: "it1" },
+            { projection: { events: 0, _id: 0 } },
+        );
+    });
+
     it("fetches a single snapshot including normalized events", async () => {
         controller.calendarSnapshots.findOne.mockResolvedValueOnce({
             id: "s1",

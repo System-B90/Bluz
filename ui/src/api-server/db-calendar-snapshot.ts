@@ -59,9 +59,13 @@ async function createSnapshot(
 /** Lists snapshots newest-first, without their (large) events payload. */
 async function listSnapshots(
     controller: DatabaseController = databaseController,
+    iterationId?: IterationId,
 ): Promise<Array<CalendarSnapshotSummary>> {
     const docs = await controller.calendarSnapshots
-        .find({}, { projection: { events: 0, _id: 0 } })
+        .find(
+            iterationId ? { iterationId } : {},
+            { projection: { events: 0, _id: 0 } },
+        )
         .sort({ createdAt: -1 })
         .toArray();
 

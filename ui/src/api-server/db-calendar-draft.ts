@@ -115,9 +115,13 @@ async function updateDraft(
 /** Lists shared drafts newest-updated-first, without their events payload. */
 async function listDrafts(
     controller: DatabaseController = databaseController,
+    iterationId?: IterationId,
 ): Promise<Array<CalendarDraftSummary>> {
     const docs = await controller.calendarDrafts
-        .find({}, { projection: { events: 0, _id: 0 } })
+        .find(
+            iterationId ? { iterationId } : {},
+            { projection: { events: 0, _id: 0 } },
+        )
         .sort({ updatedAt: -1 })
         .toArray();
 

@@ -79,4 +79,10 @@ describe("DbEvent soft delete (#63)", () => {
         const [filter] = controller.events.find.mock.calls[0];
         expect(filter).toMatchObject({ archived: { $ne: true } });
     });
+
+    it("excludes archived events from update (cannot revive via edit)", async () => {
+        await DbEvent.set({ id: "e1" } as any, undefined, controller as any);
+        const [filter] = controller.events.updateOne.mock.calls[0];
+        expect(filter).toMatchObject({ id: "e1", archived: { $ne: true } });
+    });
 });

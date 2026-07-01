@@ -216,7 +216,7 @@ export function SnapshotMenu() {
                                         <Tooltip title="שחזר">
                                             <span>
                                                 <IconButton
-                                                    disabled={busyId === snap.id}
+                                                    disabled={busyId !== null}
                                                     edge="end"
                                                     onClick={() =>
                                                         void handleRestore(
@@ -233,7 +233,7 @@ export function SnapshotMenu() {
                                             <span>
                                                 <IconButton
                                                     color="error"
-                                                    disabled={busyId === snap.id}
+                                                    disabled={busyId !== null}
                                                     edge="end"
                                                     onClick={() =>
                                                         void handleDelete(

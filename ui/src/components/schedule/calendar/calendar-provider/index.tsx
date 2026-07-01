@@ -51,12 +51,10 @@ export const CalendarProvider = ({
 
     const { events, dispatch, remoteDispatch, undo, redo } = useEventState();
 
-    const eventsRef = useRef(events);
     const offlineModeRef = useRef(offlineMode);
 
-    // Keep refs in sync after every render without triggering re-renders.
+    // Keep ref in sync after every render without triggering re-renders.
     useLayoutEffect(() => {
-        eventsRef.current = events;
         offlineModeRef.current = offlineMode;
     });
 
@@ -64,23 +62,14 @@ export const CalendarProvider = ({
     // Reset when leaving offline mode so the next entry gets a fresh capture.
     const didCaptureOfflineRef = useRef(false);
 
+    // Captures the first non-empty batch of events after entering offline mode,
+    // whether that batch is already loaded or arrives later.
     useEffect(() => {
         if (!offlineMode) {
             didCaptureOfflineRef.current = false;
             return;
         }
-        if (eventsRef.current.length > 0) {
-            captureInitialEvents(eventsRef.current);
-            didCaptureOfflineRef.current = true;
-        }
-        // Only fire on offlineMode toggle, not on every events change.
-         
-    }, [offlineMode, captureInitialEvents]);
-
-    // Deferred capture: if events hadn't loaded yet when offline mode was
-    // entered, capture the first non-empty batch that arrives.
-    useEffect(() => {
-        if (offlineMode && !didCaptureOfflineRef.current && events.length > 0) {
+        if (!didCaptureOfflineRef.current && events.length > 0) {
             captureInitialEvents(events);
             didCaptureOfflineRef.current = true;
         }
