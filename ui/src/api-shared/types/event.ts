@@ -156,6 +156,12 @@ export function getPresentInstructors(
 export type DbEventDocument = Omit<Event, "endTime" | "startTime"> & {
     startTime: Date;
     endTime: Date;
+    /**
+     * Soft-delete marker. When `true` the event has been archived (deleted by
+     * the user) and must be excluded from all active views. Absent/`false`
+     * means the event is live.
+     */
+    archived?: boolean;
 };
 
 export type ApiEventGetPayload = void;

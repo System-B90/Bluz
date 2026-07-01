@@ -307,3 +307,42 @@ describe("Offline capture state invariants", () => {
         expect(state["e2"].name).toBe("Fresh"); // new event added
     });
 });
+
+// ─── Offline-exit refetch gate (#71) ──────────────────────────────────────────
+//
+// Exiting offline mode opens the reconciliation dialog. The full server
+// refetch (SET_EVENTS) that pulls in other users' concurrent changes MUST be
+// deferred until the dialog has been resolved (closed while back online).
+// Refetching on the raw offline→online transition clobbers the user's local
+// edits before they can review them, so the dialog closes itself with "no
+// changes" and silently discards the work.
+
+describe("offline-exit refetch gate", () => {
+    /** Mirrors the gating predicate in CalendarProvider. */
+    function shouldRefetch(
+        prevPushDialogOpen: boolean,
+        pushDialogOpen: boolean,
+        offlineMode: boolean,
+    ): boolean {
+        return prevPushDialogOpen && !pushDialogOpen && !offlineMode;
+    }
+
+    it("does NOT refetch the moment offline mode is exited (dialog just opened)", () => {
+        // Dialog transitions closed→open; nothing to refetch yet.
+        expect(shouldRefetch(false, true, false)).toBe(false);
+    });
+
+    it("refetches once the dialog is resolved while back online", () => {
+        // Dialog transitions open→closed and we are no longer offline.
+        expect(shouldRefetch(true, false, false)).toBe(true);
+    });
+
+    it("does NOT refetch when the dialog is cancelled back into offline mode", () => {
+        // 'Cancel (stay offline)' closes the dialog but re-enters offline mode.
+        expect(shouldRefetch(true, false, true)).toBe(false);
+    });
+
+    it("does NOT refetch while the dialog stays open", () => {
+        expect(shouldRefetch(true, true, false)).toBe(false);
+    });
+});

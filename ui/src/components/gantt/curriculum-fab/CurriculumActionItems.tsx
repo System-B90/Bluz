@@ -12,6 +12,7 @@ import {
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CreateDraftAction } from "@/components/gantt/curriculum-fab/action-items/CreateDraftAction";
+import { CreateFromTemplateAction } from "@/components/gantt/curriculum-fab/action-items/CreateFromTemplateAction";
 import { DeleteCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DeleteCurriculumAction";
 import { DuplicateCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DuplicateCurriculumAction";
 import { ToggleArchiveAction } from "@/components/gantt/curriculum-fab/action-items/ToggleArchiveAction";
@@ -94,6 +95,12 @@ export function CurriculumActionItems({
             sx={{ mt: 1, mb: 0.5 }}
         >
             <CreateDraftAction
+                disabled={isDisabled}
+                onCreate={onCreate}
+                onProcessingChange={setIsProcessing}
+                {...props}
+            />
+            <CreateFromTemplateAction
                 disabled={isDisabled}
                 onCreate={onCreate}
                 onProcessingChange={setIsProcessing}
