@@ -54,6 +54,16 @@ describe("DbCalendarDraft (#62)", () => {
         expect(summary).not.toHaveProperty("events");
     });
 
+    it("does not throw when the summary's events list is missing", async () => {
+        const summary = await DbCalendarDraft.create(
+            "No events",
+            undefined as never,
+            author,
+            controller as never,
+        );
+        expect(summary.eventCount).toBe(0);
+    });
+
     it("rejects a blank label on create", async () => {
         await expect(
             DbCalendarDraft.create("  ", [], author, controller as never),

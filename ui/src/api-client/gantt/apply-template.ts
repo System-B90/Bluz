@@ -32,15 +32,21 @@ export async function seedCurriculumFromTemplate(
             weekendDuty: hasSaturdayDuty,
         })) as unknown as ApiCurriculumWeek;
 
-        for (const link of newWeek.w2d ?? []) {
-            const minutes =
-                dayMinutes[link.day.dayIndex as GanttDayIndex] ?? 0;
-            if (link.day.totalWorkingMinutes !== minutes) {
-                await ganttApi.day.apiUpdate({
-                    id: link.day.id,
-                    totalWorkingMinutes: minutes,
-                });
-            }
-        }
+        await Promise.all(
+            (newWeek.w2d ?? [])
+                .filter((link) => {
+                    const minutes =
+                        dayMinutes[link.day.dayIndex as GanttDayIndex] ?? 0;
+                    return link.day.totalWorkingMinutes !== minutes;
+                })
+                .map((link) =>
+                    ganttApi.day.apiUpdate({
+                        id: link.day.id,
+                        totalWorkingMinutes:
+                            dayMinutes[link.day.dayIndex as GanttDayIndex] ??
+                            0,
+                    }),
+                ),
+        );
     }
 }

@@ -2,7 +2,10 @@ export const dynamic = "force-dynamic";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { DbCalendarSnapshot } from "@/api-server/db-calendar-snapshot";
-import { resolveIterationFromRequest } from "@/api-server/iteration-request";
+import {
+    resolveIterationFromRequest,
+    resolveWritableIterationFromRequest,
+} from "@/api-server/iteration-request";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import { DbEventDocument } from "@/api-shared/types/event";
@@ -43,7 +46,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const { controller, iterationId } =
-            await resolveIterationFromRequest(request);
+            await resolveWritableIterationFromRequest(request);
         const body = (await request.json()) as CreateSnapshotBody;
         if (!body || typeof body.label !== "string") {
             throw new ClientApiError("A snapshot label is required.");
@@ -73,7 +76,9 @@ export async function DELETE(request: Request) {
         if (!id) {
             throw new ClientApiError("No snapshot id provided.");
         }
-        const { controller } = await resolveIterationFromRequest(request);
+        const { controller } = await resolveWritableIterationFromRequest(
+            request,
+        );
         await DbCalendarSnapshot.del(id, controller);
         return ApiSuccess();
     } catch (e) {

@@ -32,6 +32,7 @@ async function createSnapshot(
     if (!trimmedLabel) {
         throw new ClientApiError("Snapshot label is required.");
     }
+    events = events ?? [];
     if (events.length > MAX_SNAPSHOT_EVENTS) {
         throw new ClientApiError(
             `Snapshot exceeds the ${MAX_SNAPSHOT_EVENTS}-event limit.`,
@@ -121,7 +122,7 @@ async function deleteSnapshot(
 
 function toSummary(snapshot: CalendarSnapshot): CalendarSnapshotSummary {
     const { events, ...rest } = snapshot;
-    return { ...rest, eventCount: events.length };
+    return { ...rest, eventCount: events?.length ?? 0 };
 }
 
 export namespace DbCalendarSnapshot {

@@ -5,7 +5,10 @@ import {
     DbCalendarDraft,
     DraftAuthor,
 } from "@/api-server/db-calendar-draft";
-import { resolveIterationFromRequest } from "@/api-server/iteration-request";
+import {
+    resolveIterationFromRequest,
+    resolveWritableIterationFromRequest,
+} from "@/api-server/iteration-request";
 import { getSessionUser } from "@/api-server/session-user";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
@@ -65,7 +68,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const { controller, iterationId } =
-            await resolveIterationFromRequest(request);
+            await resolveWritableIterationFromRequest(request);
         const body = (await request.json()) as CreateDraftBody;
         if (!body || typeof body.label !== "string") {
             throw new ClientApiError("A draft label is required.");
@@ -88,10 +91,18 @@ export async function POST(request: Request) {
 /** PUT /api/calendar/drafts — update an existing shared draft's events/label. */
 export async function PUT(request: Request) {
     try {
-        const { controller } = await resolveIterationFromRequest(request);
+        const { controller } = await resolveWritableIterationFromRequest(
+            request,
+        );
         const body = (await request.json()) as UpdateDraftBody;
         if (!body || typeof body.id !== "string") {
             throw new ClientApiError("A draft id is required.");
+        }
+        if (
+            body.label !== undefined &&
+            typeof body.label !== "string"
+        ) {
+            throw new ClientApiError("Draft label must be a string.");
         }
         const author = await resolveAuthor();
         return ApiSuccess(
@@ -116,7 +127,9 @@ export async function DELETE(request: Request) {
         if (!id) {
             throw new ClientApiError("No draft id provided.");
         }
-        const { controller } = await resolveIterationFromRequest(request);
+        const { controller } = await resolveWritableIterationFromRequest(
+            request,
+        );
         await DbCalendarDraft.del(id, controller);
         return ApiSuccess();
     } catch (e) {

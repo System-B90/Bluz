@@ -54,6 +54,15 @@ describe("DbCalendarSnapshot (#61)", () => {
         expect(summary).not.toHaveProperty("events");
     });
 
+    it("does not throw when the events list is missing", async () => {
+        const summary = await DbCalendarSnapshot.create(
+            "No events",
+            undefined as never,
+            controller as never,
+        );
+        expect(summary.eventCount).toBe(0);
+    });
+
     it("rejects a blank label", async () => {
         await expect(
             DbCalendarSnapshot.create("   ", [], controller as never),

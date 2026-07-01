@@ -32,6 +32,7 @@ async function createDraft(
     if (!trimmedLabel) {
         throw new ClientApiError("Draft label is required.");
     }
+    events = events ?? [];
     if (events.length > MAX_DRAFT_EVENTS) {
         throw new ClientApiError(
             `Draft exceeds the ${MAX_DRAFT_EVENTS}-event limit.`,
@@ -72,6 +73,7 @@ async function updateDraft(
     if (!draftId) {
         throw new ClientApiError("Draft id is missing.");
     }
+    events = events ?? [];
     if (events.length > MAX_DRAFT_EVENTS) {
         throw new ClientApiError(
             `Draft exceeds the ${MAX_DRAFT_EVENTS}-event limit.`,
@@ -180,7 +182,7 @@ async function deleteDraft(
 
 function toSummary(draft: CalendarDraft): CalendarDraftSummary {
     const { events, ...rest } = draft;
-    return { ...rest, eventCount: events.length };
+    return { ...rest, eventCount: events?.length ?? 0 };
 }
 
 export namespace DbCalendarDraft {
