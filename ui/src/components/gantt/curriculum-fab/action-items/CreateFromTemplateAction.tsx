@@ -10,7 +10,8 @@ import { ganttApi } from "@/api-client/gantt";
 import { seedCurriculumFromTemplate } from "@/api-client/gantt/apply-template";
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { makeCurriculum } from "@/api-shared/types/gantt/maker";
-import {
+import
+{
     CURRICULUM_TEMPLATES,
     GanttCurriculumTemplate,
 } from "@/api-shared/types/gantt/templates";
@@ -32,9 +33,10 @@ export function CreateFromTemplateAction({
     onCreate,
     onProcessingChange,
     ...props
-}: CreateFromTemplateActionProps) {
+}: CreateFromTemplateActionProps)
+{
     const runAction = useAsyncAction(onProcessingChange);
-    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+    const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
 
     const openMenu = useCallback(
         (e: MouseEvent<HTMLButtonElement>) => setAnchorEl(e.currentTarget),
@@ -43,10 +45,12 @@ export function CreateFromTemplateAction({
     const closeMenu = useCallback(() => setAnchorEl(null), []);
 
     const handleSelect = useCallback(
-        (template: GanttCurriculumTemplate) => {
+        (template: GanttCurriculumTemplate) =>
+        {
             closeMenu();
             runAction(
-                async () => {
+                async () =>
+                {
                     const newCurriculum = await ganttApi.curriculum.apiCreate(
                         makeCurriculum({ title: template.label }),
                     );
@@ -60,46 +64,46 @@ export function CreateFromTemplateAction({
                 "יצירת הגאנט מהתבנית נכשלה!",
             );
         },
-        [closeMenu, runAction, onCreate],
+        [ closeMenu, runAction, onCreate ],
     );
 
     return (
         <>
             <ActionItemButton
-                onClick={openMenu}
-                startIcon={<AutoFixHighIcon fontSize="small" />}
-                tooltipTitle="צור מתבנית"
-                {...props}
+                onClick={ openMenu }
+                startIcon={ <AutoFixHighIcon fontSize="small" /> }
+                tooltipTitle="יצירה מתבנית"
+                { ...props }
             />
             <Menu
-                anchorEl={anchorEl}
-                onClose={closeMenu}
-                open={Boolean(anchorEl)}
+                anchorEl={ anchorEl }
+                onClose={ closeMenu }
+                open={ Boolean(anchorEl) }
             >
-                <MenuItem disabled sx={{ opacity: "1 !important" }}>
+                <MenuItem disabled sx={ { opacity: "1 !important" } }>
                     <Typography
                         color="text.secondary"
-                        sx={{ fontSize: "0.75rem", fontWeight: 700 }}
+                        sx={ { fontSize: "0.75rem", fontWeight: 700 } }
                         variant="caption"
                     >
-                        צור גאנט חדש מתבנית
+                        יצירת גאנט מהתבנית
                     </Typography>
                 </MenuItem>
                 <Divider />
-                {CURRICULUM_TEMPLATES.map((template) => (
+                { CURRICULUM_TEMPLATES.map((template) => (
                     <MenuItem
-                        key={template.id}
-                        onClick={() => handleSelect(template)}
+                        key={ template.id }
+                        onClick={ () => handleSelect(template) }
                     >
                         <ListItemText
-                            primary={template.label}
-                            secondary={`${template.weekCount} שבועות`}
-                            slotProps={{
+                            primary={ template.label }
+                            secondary={ `${template.weekCount} שבועות` }
+                            slotProps={ {
                                 secondary: { sx: { fontSize: "0.72rem" } },
-                            }}
+                            } }
                         />
                     </MenuItem>
-                ))}
+                )) }
             </Menu>
         </>
     );

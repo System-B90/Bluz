@@ -18,7 +18,8 @@ import dayjs from "dayjs";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
-import {
+import
+{
     apiCreateSnapshot,
     apiDeleteSnapshot,
     apiGetSnapshot,
@@ -186,7 +187,7 @@ export function SnapshotMenu() {
                         onClick={() => void handleCreate()}
                         variant="contained"
                     >
-                        צור
+                        יצירה
                     </Button>
                 </Stack>
 

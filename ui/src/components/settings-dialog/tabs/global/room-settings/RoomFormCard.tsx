@@ -374,7 +374,7 @@ function RoomFormActions({
                 variant="contained"
             >
                 { isCreating
-                    ? "צור חדר"
+                    ? "יצירת חדר"
                     : isHiveSelected
                         ? "שמור פרטים מורחבים"
                         : "עדכן חדר" }

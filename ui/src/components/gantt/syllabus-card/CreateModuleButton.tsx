@@ -6,7 +6,8 @@ import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import {
+import
+{
     GanttSyllabusId,
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
@@ -72,7 +73,7 @@ export function CreateModuleButton({
     ]);
 
     return (
-        <Tooltip placement="top" title="צור מערך חדש">
+        <Tooltip placement="top" title="יצירת מערך חדש">
             <span>
                 <IconButton
                     color="secondary"
