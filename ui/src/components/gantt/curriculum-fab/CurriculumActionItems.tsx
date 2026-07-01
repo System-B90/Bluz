@@ -1,5 +1,6 @@
 import Box from "@mui/material/Box";
 import { ButtonProps } from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
@@ -143,6 +144,7 @@ export function CurriculumActionItems({
                 onProcessingChange={setIsProcessing}
                 sourceCurriculum={sourceCurriculum}
             />
+            {isProcessing ? <CircularProgress size={20} /> : null}
         </Box>
     );
 }

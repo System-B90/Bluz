@@ -52,7 +52,10 @@ export function CreateFromTemplateAction({
                 async () =>
                 {
                     const newCurriculum = await ganttApi.curriculum.apiCreate(
-                        makeCurriculum({ title: template.label }),
+                        makeCurriculum({
+                            title: template.label,
+                            description: `נוצר מתבנית ${template.label}`,
+                        }),
                     );
                     await seedCurriculumFromTemplate(
                         newCurriculum.id,
