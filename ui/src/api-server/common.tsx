@@ -121,6 +121,31 @@ export function catchHandler<T extends NextRequest>(request: T, e: any) {
     );
 }
 
+/**
+ * Wrap a route handler with the standard error boundary. Thrown
+ * `UserNotLoggedInError` / `ClientApiError` / unexpected errors map to
+ * 401 / 400 / 500 via {@link catchHandler}, so handlers contain only the
+ * happy path and `throw` for everything else.
+ *
+ * @example
+ * ```ts
+ * export const GET = withApi(async (request) => {
+ *     return ApiSuccess(await DbThing.list());
+ * });
+ * ```
+ */
+export function withApi<TRequest extends Request, TContext = never>(
+    handler: (request: TRequest, context: TContext) => Promise<Response>,
+): (request: TRequest, context: TContext) => Promise<Response> {
+    return async (request: TRequest, context: TContext) => {
+        try {
+            return await handler(request, context);
+        } catch (e) {
+            return catchHandler(request as never, e);
+        }
+    };
+}
+
 export type ServerApiRequest<T> = Omit<NextRequest, "json"> & {
     json: () => Promise<T>;
 };
