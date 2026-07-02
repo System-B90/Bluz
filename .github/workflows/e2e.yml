@@ -23,6 +23,15 @@ jobs:
             # ── Hive (SSO identity provider + organizational data) ────────────
             # The Hive repository is private — HIVE_REPO_TOKEN must be a PAT
             # with read access to hivelms/Hive.
+            - name: Ensure HIVE_REPO_TOKEN secret is configured
+              env:
+                  HIVE_REPO_TOKEN: ${{ secrets.HIVE_REPO_TOKEN }}
+              run: |
+                  if [ -z "$HIVE_REPO_TOKEN" ]; then
+                    echo "::error::The HIVE_REPO_TOKEN repository secret is not set. Add a PAT with read access to hivelms/Hive (Settings → Secrets and variables → Actions)."
+                    exit 1
+                  fi
+
             - name: Checkout Hive (SSO branch)
               uses: actions/checkout@v6
               with:
