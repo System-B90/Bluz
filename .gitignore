@@ -62,3 +62,6 @@ tests/.auth/user.json
 /site/
 
 /scripts/hive-api-6.4.0.yaml
+# python
+__pycache__/
+*.pyc
