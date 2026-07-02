@@ -259,6 +259,18 @@ export function PushOfflineUpdatesDialog() {
 
     const hasChanges = Object.keys(collisionStates).length > 0;
 
+    // When none of the conflicting events have a local change selected,
+    // saving is equivalent to accepting the remote versions for all of them.
+    const conflictingIds = Object.keys(collisionStates).filter(
+        (id) => collisionStates[id].conflicting,
+    );
+    const hasUnresolvedConflicts =
+        conflictingIds.length > 0 &&
+        !conflictingIds.some((id) => selectedIds.includes(id));
+    const submitLabel = hasUnresolvedConflicts
+        ? "קבל שינויים מרוחקים"
+        : "שמור שינויים מסומנים";
+
     return (
         <Dialog
             fullWidth
@@ -334,7 +346,7 @@ export function PushOfflineUpdatesDialog() {
                         type="submit"
                         variant="contained"
                     >
-                        {loading ? "שומר..." : "שמור שינויים מסומנים"}
+                        {loading ? "שומר..." : submitLabel}
                     </Button>
                 </DialogActions>
             </form>

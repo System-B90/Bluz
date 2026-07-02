@@ -78,6 +78,47 @@ export function formatValue(value: any, key: string): string {
     return String(value);
 }
 
+const HEBREW_DAY_NAMES = [
+    "ראשון",
+    "שני",
+    "שלישי",
+    "רביעי",
+    "חמישי",
+    "שישי",
+    "שבת",
+];
+
+/**
+ * Builds a human-readable Hebrew note describing a startTime/endTime change,
+ * e.g. "הוזז מ-11:15 ל-10:15" for a same-day time shift, or
+ * "זז מיום ראשון ה-11.4 ליום רביעי ה-14.4 (הוזז ב-3 ימים)" when the day changes.
+ * Returns null when there's nothing meaningful to report.
+ */
+export function formatDateTimeChangeNote(from: any, to: any): null | string {
+    if (from === undefined || from === null || to === undefined || to === null) {
+        return null;
+    }
+
+    const fromDate = dayjs(from);
+    const toDate = dayjs(to);
+    if (!fromDate.isValid() || !toDate.isValid() || fromDate.isSame(toDate)) {
+        return null;
+    }
+
+    if (fromDate.isSame(toDate, "day")) {
+        return `הוזז משעה ${fromDate.format("HH:mm")} לשעה ${toDate.format("HH:mm")}`;
+    }
+
+    const fromDay = HEBREW_DAY_NAMES[fromDate.day()];
+    const toDay = HEBREW_DAY_NAMES[toDate.day()];
+    const dayDiff = Math.abs(
+        toDate.startOf("day").diff(fromDate.startOf("day"), "day"),
+    );
+    const dayWord = dayDiff === 1 ? "יום אחד" : `${dayDiff} ימים`;
+
+    return `זז מיום ${fromDay} ה-${fromDate.format("D.M")} ליום ${toDay} ה-${toDate.format("D.M")} (הוזז ב-${dayWord})`;
+}
+
 /**
  * Re-export the globally unified recursive deep-comparison helper from EventUtils
  */
