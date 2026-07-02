@@ -3,7 +3,7 @@ import { useTheme } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import React, { useMemo, useState } from "react";
+import React, { memo, useMemo } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { GanttModuleRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttModuleRow";
@@ -13,7 +13,7 @@ import {
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
-export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
+const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
     syllabusId,
 }) => {
     const theme = useTheme();
@@ -24,8 +24,11 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
         linearDays,
         moduleMappings,
         eventMappings,
+        dayCellWidth,
+        isSyllabusExpanded,
+        toggleSyllabus,
     } = useGanttContext();
-    const [isExpanded, setIsExpanded] = useState(true);
+    const isExpanded = isSyllabusExpanded(syllabusId);
 
     const syllabus = state.syllabuses[syllabusId];
 
@@ -188,8 +191,8 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
                             borderLeft: `1px solid ${theme.vars.palette.divider}`,
                             borderBottom: `1px solid ${theme.vars.palette.divider}`,
                             p: 0,
-                            width: 80,
-                            minWidth: 80,
+                            width: dayCellWidth,
+                            minWidth: dayCellWidth,
                             boxSizing: "border-box",
                             position: "relative",
                         }}
@@ -230,7 +233,7 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
         <React.Fragment>
             <TableRow
                 hover
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={() => toggleSyllabus(syllabusId)}
                 sx={{ cursor: "pointer" }}
             >
                 <TableCell
@@ -272,3 +275,5 @@ export const GanttSyllabusGroup: React.FC<GanttSyllabusGroupProps> = ({
         </React.Fragment>
     );
 };
+
+export const GanttSyllabusGroup = memo(GanttSyllabusGroupComponent);

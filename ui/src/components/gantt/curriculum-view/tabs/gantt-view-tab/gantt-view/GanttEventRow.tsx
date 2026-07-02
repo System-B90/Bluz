@@ -1,8 +1,10 @@
 import { useDroppable } from "@dnd-kit/core";
+import { useTheme } from "@mui/material/styles";
 import TableRow from "@mui/material/TableRow";
-import React, { useMemo } from "react";
+import React, { memo, useMemo } from "react";
 
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
+import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
 import
 {
     buildDailyEventCells,
@@ -16,11 +18,12 @@ import
     useCurriculumState,
 } from "@/components/gantt/state/provider";
 
-export const GanttEventRow: React.FC<GanttEventRowProps> = ({
+const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
     eventId,
     moduleId,
 }) =>
 {
+    const theme = useTheme();
     const state = useCurriculumState();
     const { openEventDialog } = useCurriculumProviderActions();
     const {
@@ -124,7 +127,11 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
     if (!event) return null;
 
     return (
-        <TableRow hover>
+        <TableRow
+            hover
+            id={ `gantt-row-event-${eventId}` }
+            sx={ getFlashRowSx(theme) }
+        >
             <GanttEventLabelCell
                 eventId={ eventId }
                 eventTitle={ event.title }
@@ -147,3 +154,5 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
         </TableRow>
     );
 };
+
+export const GanttEventRow = memo(GanttEventRowComponent);

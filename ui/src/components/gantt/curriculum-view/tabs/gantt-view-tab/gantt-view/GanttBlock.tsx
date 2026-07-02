@@ -3,7 +3,7 @@ import Box from "@mui/material/Box";
 import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import React from "react";
+import React, { memo } from "react";
 
 import { GanttBlockProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import {
@@ -11,7 +11,7 @@ import {
     useCurriculumState,
 } from "@/components/gantt/state/provider";
 
-export const GanttBlock: React.FC<GanttBlockProps> = ({
+const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     id,
     payload,
     title,
@@ -126,3 +126,5 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
         block
     );
 };
+
+export const GanttBlock = memo(GanttBlockComponent);

@@ -23,8 +23,18 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 export const GanttHeader: React.FC = () => {
     const theme = useTheme();
     const state = useCurriculumState();
-    const { curriculumMappings, showConstraints, startDate, timelineWeeks, weeklyView } =
-        useGanttContext();
+    const {
+        curriculumMappings,
+        dayCellWidth,
+        setZoomedWeekId,
+        showConstraints,
+        startDate,
+        timelineWeeks,
+        weeklyView,
+        weekIndexOffset,
+        zoomedWeekId,
+    } = useGanttContext();
+    const canZoom = !weeklyView;
 
     return (
         <TableHead>
@@ -52,7 +62,10 @@ export const GanttHeader: React.FC = () => {
                 </TableCell>
                 {timelineWeeks.map((week, weekIndex) => {
                     const dateRangeLabel = formatWeekDateRange(
-                        getWeekDateRange(startDate, weekIndex),
+                        getWeekDateRange(
+                            startDate,
+                            weekIndex + weekIndexOffset,
+                        ),
                     );
 
                     const overAllocatedDayNames = showConstraints
@@ -78,11 +91,36 @@ export const GanttHeader: React.FC = () => {
                             align="center"
                             colSpan={weeklyView ? 1 : week.days.length}
                             key={week.id}
+                            onClick={
+                                canZoom
+                                    ? () =>
+                                        setZoomedWeekId(
+                                            zoomedWeekId === week.id
+                                                ? null
+                                                : week.id,
+                                        )
+                                    : undefined
+                            }
                             sx={{
                                 borderLeft: `1px solid ${theme.vars.palette.divider}`,
                                 backgroundColor: theme.vars.palette.background.paper,
                                 zIndex: 2,
+                                cursor: canZoom ? "pointer" : "default",
+                                userSelect: "none",
+                                ...(canZoom && {
+                                    "&:hover": {
+                                        backgroundColor:
+                                            theme.vars.palette.action.hover,
+                                    },
+                                }),
                             }}
+                            title={
+                                canZoom
+                                    ? zoomedWeekId === week.id
+                                        ? "לחץ כדי לצאת מהזום"
+                                        : "לחץ כדי להתמקד בשבוע זה"
+                                    : undefined
+                            }
                         >
                             <Box
                                 alignItems="center"
@@ -123,7 +161,7 @@ export const GanttHeader: React.FC = () => {
                             if (!day) return null;
                             const dayDate = getDayDate(
                                 startDate,
-                                weekIndex,
+                                weekIndex + weekIndexOffset,
                                 day.dayIndex,
                             );
                             const isOverAllocated =
@@ -141,8 +179,8 @@ export const GanttHeader: React.FC = () => {
                                     align="center"
                                     key={dayId}
                                     sx={{
-                                        width: 80,
-                                        minWidth: 80,
+                                        width: dayCellWidth,
+                                        minWidth: dayCellWidth,
                                         boxSizing: "border-box",
                                         borderLeft: `1px solid ${theme.vars.palette.divider}`,
                                         backgroundColor: isOverAllocated
