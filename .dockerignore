@@ -20,3 +20,7 @@ out/
 npm-debug.log*
 playwright-report/
 **/playwright-report/playwright-report
+
+# Local Hive checkout (CI clones it into hive/; its db/ is root-owned)
+hive/
+container-logs/
