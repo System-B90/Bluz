@@ -1,5 +1,7 @@
 import dayjs from "dayjs";
 
+import { CollisionStates } from "@/components/schedule/offline-dialogs/push-updates-dialog/types";
+import { EventId } from "@/components/schedule/types/event";
 import { areValuesEqual } from "@/components/schedule/types/EventUtils";
 
 /**
@@ -117,6 +119,39 @@ export function formatDateTimeChangeNote(from: any, to: any): null | string {
     const dayWord = dayDiff === 1 ? "יום אחד" : `${dayDiff} ימים`;
 
     return `זז מיום ${fromDay} ה-${fromDate.format("D.M")} ליום ${toDay} ה-${toDate.format("D.M")} (הוזז ב-${dayWord})`;
+}
+
+/**
+ * True when the collision set has at least one real conflict (both captured
+ * and server versions exist and differ) but none of those conflicting events
+ * are currently selected — i.e. saving would be equivalent to accepting the
+ * remote version for every conflict.
+ */
+export function hasUnresolvedConflicts(
+    collisionStates: CollisionStates,
+    selectedIds: Array<EventId>,
+): boolean {
+    const conflictingIds = Object.keys(collisionStates).filter(
+        (id) => collisionStates[id].conflicting,
+    );
+    return (
+        conflictingIds.length > 0 &&
+        !conflictingIds.some((id) => selectedIds.includes(id))
+    );
+}
+
+/**
+ * Label for the dialog's submit button: reflects that saving with no
+ * conflicting event selected accepts the remote versions rather than
+ * pushing local edits.
+ */
+export function getSubmitLabel(
+    collisionStates: CollisionStates,
+    selectedIds: Array<EventId>,
+): string {
+    return hasUnresolvedConflicts(collisionStates, selectedIds)
+        ? "קבל שינויים מרוחקים"
+        : "שמור שינויים מסומנים";
 }
 
 /**

@@ -20,7 +20,10 @@ import { useOffline } from "@/components/base/OfflineProvider";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { EventCollisionsList } from "@/components/schedule/offline-dialogs/push-updates-dialog/EventCollisionsList";
 import { CollisionStates } from "@/components/schedule/offline-dialogs/push-updates-dialog/types";
-import { areDiffValuesEqual } from "@/components/schedule/offline-dialogs/push-updates-dialog/utils";
+import {
+    areDiffValuesEqual,
+    getSubmitLabel,
+} from "@/components/schedule/offline-dialogs/push-updates-dialog/utils";
 import { EventId } from "@/components/schedule/types/event";
 
 export function PushOfflineUpdatesDialog() {
@@ -258,18 +261,7 @@ export function PushOfflineUpdatesDialog() {
     );
 
     const hasChanges = Object.keys(collisionStates).length > 0;
-
-    // When none of the conflicting events have a local change selected,
-    // saving is equivalent to accepting the remote versions for all of them.
-    const conflictingIds = Object.keys(collisionStates).filter(
-        (id) => collisionStates[id].conflicting,
-    );
-    const hasUnresolvedConflicts =
-        conflictingIds.length > 0 &&
-        !conflictingIds.some((id) => selectedIds.includes(id));
-    const submitLabel = hasUnresolvedConflicts
-        ? "קבל שינויים מרוחקים"
-        : "שמור שינויים מסומנים";
+    const submitLabel = getSubmitLabel(collisionStates, selectedIds);
 
     return (
         <Dialog
