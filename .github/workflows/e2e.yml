@@ -18,7 +18,7 @@ jobs:
     full-test-suite:
         name: Full Test Suite (Unit + E2E)
         runs-on: ubuntu-24.04
-        timeout-minutes: 60
+        timeout-minutes: 90
 
         steps:
             - name: Checkout repository
@@ -59,6 +59,8 @@ jobs:
                   fi
                   echo "Hive token OK — repository and branch '${HIVE_REF}' are reachable."
 
+            # blob:limit=50k mirrors Hive's documented clone (skips >1.5 GiB of
+            # large blobs; git lazy-fetches any that the checkout needs).
             - name: Checkout Hive (SSO branch)
               uses: actions/checkout@v6
               with:
@@ -66,6 +68,7 @@ jobs:
                   ref: ${{ env.HIVE_REF }}
                   token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
                   path: hive
+                  filter: blob:limit=50k
                   persist-credentials: false
 
             - name: Map local hostnames
@@ -78,17 +81,30 @@ jobs:
               with:
                   python-version: "3.13"
 
-            # Standard first-time Hive setup (see Hive's docs):
-            #   build_deps → build the docker images
-            #   init       → create the DB, run migrations, seed dummy data
-            #                (includes the admin:Password1 account)
-            #   start      → bring the composition up on https://hive.org
+            # First-time Hive setup, per Hive's dev docs — but with a
+            # non-interactive twist: `manage_hive.py init` calls Django's
+            # `createsuperuser` with interactive prompts (that's where devs
+            # type admin:Password1), which would hang in CI. So run `update`
+            # (build_deps → build → up → migrate → collectstatic → db update),
+            # then replay init's remaining pieces with --noinput.
+            # `dummy_db` is skipped — Bluz reseeds Hive via pyhive anyway.
+            # Hive's committed .env already sets HIVE_HOSTNAME_PLAIN=hive.org
+            # and ships sample SSL keys, and its nginx publishes 80/443.
             - name: Build & Initialize Hive
               working-directory: hive
               run: |
-                  python manage_hive.py --env dev build_deps
-                  python manage_hive.py --env dev init
-                  python manage_hive.py --env dev start
+                  python3 manage_hive.py --env dev update
+                  docker compose exec -T core python manage.py service_accounts
+                  docker compose exec -T core python manage.py load_tags
+                  docker compose exec -T \
+                    -e DJANGO_SUPERUSER_USERNAME=admin \
+                    -e DJANGO_SUPERUSER_PASSWORD=Password1 \
+                    -e DJANGO_SUPERUSER_EMAIL=admin@hive.org \
+                    core python manage.py createsuperuser --noinput
+                  docker compose exec -T core python manage.py load_programs
+                  # Dev-mode frontend runs from mounted source — install deps
+                  docker compose run --rm frontend yarn
+                  python3 manage_hive.py --env dev start
 
             - name: Wait for Hive
               run: |
