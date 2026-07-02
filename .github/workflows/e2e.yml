@@ -10,6 +10,10 @@ concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
 
+env:
+    HIVE_REPO: hivelms/Hive
+    HIVE_REF: SSO
+
 jobs:
     full-test-suite:
         name: Full Test Suite (Unit + E2E)
@@ -34,29 +38,32 @@ jobs:
                   fi
                   repo_code=$(curl -s -o /dev/null -w "%{http_code}" \
                     -H "Authorization: token ${HIVE_CHECKOUT_TOKEN}" \
-                    https://api.github.com/repos/hivelms/Hive)
+                    "https://api.github.com/repos/${HIVE_REPO}")
                   if [ "$repo_code" = "401" ]; then
                     echo "::error::The Hive checkout token is invalid, expired, or revoked (HTTP 401). Generate a new PAT and update the secret."
                     exit 1
                   fi
                   if [ "$repo_code" != "200" ]; then
-                    echo "::error::The token cannot read hivelms/Hive (HTTP $repo_code). Check: classic PAT has the 'repo' scope; the hivelms org allows classic PATs (or SSO-authorize the token for the org); a fine-grained PAT must be approved by the hivelms org admins."
+                    echo "::error::The token cannot read ${HIVE_REPO} (HTTP $repo_code). Check: classic PAT has the 'repo' scope; the hivelms org allows classic PATs (or SSO-authorize the token for the org); a fine-grained PAT must be approved by the hivelms org admins."
                     exit 1
                   fi
                   branch_code=$(curl -s -o /dev/null -w "%{http_code}" \
                     -H "Authorization: token ${HIVE_CHECKOUT_TOKEN}" \
-                    https://api.github.com/repos/hivelms/Hive/branches/SSO)
+                    "https://api.github.com/repos/${HIVE_REPO}/branches/${HIVE_REF}")
                   if [ "$branch_code" != "200" ]; then
-                    echo "::error::The token can read hivelms/Hive, but branch 'SSO' was not found (HTTP $branch_code). Verify the branch name."
+                    echo "::error::The token can read ${HIVE_REPO}, but branch '${HIVE_REF}' was not found (HTTP $branch_code). Available branches:"
+                    curl -s -H "Authorization: token ${HIVE_CHECKOUT_TOKEN}" \
+                      "https://api.github.com/repos/${HIVE_REPO}/branches?per_page=100" \
+                      | python3 -c "import json,sys; [print(' -', b['name']) for b in json.load(sys.stdin)]"
                     exit 1
                   fi
-                  echo "Hive token OK — repository and SSO branch are reachable."
+                  echo "Hive token OK — repository and branch '${HIVE_REF}' are reachable."
 
             - name: Checkout Hive (SSO branch)
               uses: actions/checkout@v6
               with:
-                  repository: hivelms/Hive
-                  ref: SSO
+                  repository: ${{ env.HIVE_REPO }}
+                  ref: ${{ env.HIVE_REF }}
                   token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
                   path: hive
                   persist-credentials: false
