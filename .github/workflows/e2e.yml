@@ -24,7 +24,7 @@ jobs:
             # The Hive repository is private — checkout needs a PAT with read
             # access to hivelms/Hive. Prefers CLASSIC_ACCESS_TOKEN (classic
             # PATs don't need org approval), falls back to HIVE_REPO_TOKEN.
-            - name: Ensure a Hive checkout token is configured
+            - name: Verify Hive checkout token and SSO branch
               env:
                   HIVE_CHECKOUT_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
               run: |
@@ -32,6 +32,25 @@ jobs:
                     echo "::error::No Hive checkout token configured. Add CLASSIC_ACCESS_TOKEN or HIVE_REPO_TOKEN (PAT with read access to hivelms/Hive) under Settings → Secrets and variables → Actions."
                     exit 1
                   fi
+                  repo_code=$(curl -s -o /dev/null -w "%{http_code}" \
+                    -H "Authorization: token ${HIVE_CHECKOUT_TOKEN}" \
+                    https://api.github.com/repos/hivelms/Hive)
+                  if [ "$repo_code" = "401" ]; then
+                    echo "::error::The Hive checkout token is invalid, expired, or revoked (HTTP 401). Generate a new PAT and update the secret."
+                    exit 1
+                  fi
+                  if [ "$repo_code" != "200" ]; then
+                    echo "::error::The token cannot read hivelms/Hive (HTTP $repo_code). Check: classic PAT has the 'repo' scope; the hivelms org allows classic PATs (or SSO-authorize the token for the org); a fine-grained PAT must be approved by the hivelms org admins."
+                    exit 1
+                  fi
+                  branch_code=$(curl -s -o /dev/null -w "%{http_code}" \
+                    -H "Authorization: token ${HIVE_CHECKOUT_TOKEN}" \
+                    https://api.github.com/repos/hivelms/Hive/branches/SSO)
+                  if [ "$branch_code" != "200" ]; then
+                    echo "::error::The token can read hivelms/Hive, but branch 'SSO' was not found (HTTP $branch_code). Verify the branch name."
+                    exit 1
+                  fi
+                  echo "Hive token OK — repository and SSO branch are reachable."
 
             - name: Checkout Hive (SSO branch)
               uses: actions/checkout@v6
