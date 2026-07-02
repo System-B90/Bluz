@@ -12,7 +12,7 @@ concurrency:
 
 env:
     HIVE_REPO: hivelms/Hive
-    HIVE_REF: SSO
+    HIVE_REF: feature/sso
 
 jobs:
     full-test-suite:
