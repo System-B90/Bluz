@@ -2,20 +2,119 @@ name: E2E Tests
 
 on:
     workflow_dispatch:
+    pull_request:
+    push:
+        branches: [master, dev]
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
 
 jobs:
-    e2e-tests:
-        name: Playwright E2E Tests
+    full-test-suite:
+        name: Full Test Suite (Unit + E2E)
         runs-on: ubuntu-24.04
-        timeout-minutes: 30
+        timeout-minutes: 60
 
         steps:
             - name: Checkout repository
               uses: actions/checkout@v6
+
+            # ── Hive (SSO identity provider + organizational data) ────────────
+            # The Hive repository is private — HIVE_REPO_TOKEN must be a PAT
+            # with read access to hivelms/Hive.
+            - name: Checkout Hive (SSO branch)
+              uses: actions/checkout@v6
+              with:
+                  repository: hivelms/Hive
+                  ref: SSO
+                  token: ${{ secrets.HIVE_REPO_TOKEN }}
+                  path: hive
+
+            - name: Map local hostnames
+              run: |
+                  echo "127.0.0.1 hive.org" | sudo tee -a /etc/hosts
+                  echo "127.0.0.3 bluz.dev" | sudo tee -a /etc/hosts
+
+            - name: Setup Python 3.13
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.13"
+
+            # Standard first-time Hive setup (see Hive's docs):
+            #   build_deps → build the docker images
+            #   init       → create the DB, run migrations, seed dummy data
+            #                (includes the admin:Password1 account)
+            #   start      → bring the composition up on https://hive.org
+            - name: Build & Initialize Hive
+              working-directory: hive
+              run: |
+                  python manage_hive.py --env dev build_deps
+                  python manage_hive.py --env dev init
+                  python manage_hive.py --env dev start
+
+            - name: Wait for Hive
+              run: |
+                  for i in $(seq 1 90); do
+                    code=$(curl -ks -o /dev/null -w "%{http_code}" https://hive.org/ || true)
+                    if [ "$code" -ge 200 ] && [ "$code" -lt 500 ]; then
+                      echo "Hive is up (HTTP $code)"
+                      exit 0
+                    fi
+                    echo "Attempt $i/90 - Hive not ready yet (HTTP $code), waiting 5s..."
+                    sleep 5
+                  done
+                  echo "::error::Hive failed to become ready in time"
+                  exit 1
+
+            # PyHiveLMS (pyhive) drives SSO registration + Hive seeding below.
+            - name: Install Python dependencies (pyhive)
+              run: pip install -r scripts/requirements.txt
+
+            - name: Verify Hive admin login via pyhive
+              run: |
+                  python - <<'PY'
+                  from pyhive import HiveClient
+
+                  with HiveClient("admin", "Password1", "https://hive.org", verify=False, timeout=30) as client:
+                      print("Hive admin login OK. API version:", client.get_hive_version())
+                  PY
+
+            # ── Bluz environment ───────────────────────────────────────────────
+            # Non-interactive stand-in for scripts/setup.py. HIVE_CLIENT_* are
+            # placeholders — the test pipeline registers a fresh SSO client with
+            # Hive per run and injects it via TEST_HIVE_CLIENT_*.
+            # The Mongo password must match the connection string hardcoded in
+            # deploy/docker-compose.test.yml.
+            - name: Generate CI .env
+              run: |
+                  PG_PASS=$(openssl rand -hex 16)
+                  MONGO_PASS=4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP
+                  cat > .env <<EOF
+                  BLUZ_VERSION=latest
+                  WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$(openssl rand -hex 32)
+                  NEXT_PUBLIC_HIVE_URL=https://hive.org
+                  NODE_TLS_REJECT_UNAUTHORIZED=0
+                  NEXTAUTH_URL=https://bluz.dev
+                  NEXTAUTH_SECRET=$(openssl rand -hex 32)
+                  HIVE_CLIENT_ID=ci-placeholder
+                  HIVE_CLIENT_SECRET=ci-placeholder
+                  MONGO_ROOT_USER=mongo_admin
+                  MONGO_ROOT_PASSWORD=${MONGO_PASS}
+                  MONGO_CONNECTION_STRING=mongodb://mongo_admin:${MONGO_PASS}@bluz-mongodb:27017/?authSource=admin
+                  JWT_SECRET=$(openssl rand -hex 32)
+                  SYM_ENC_KEY=$(openssl rand -hex 32)
+                  POSTGRES_USER=admin
+                  POSTGRES_PASSWORD=${PG_PASS}
+                  POSTGRES_DB=curriculum_db
+                  DATABASE_URL=postgres://admin:${PG_PASS}@bluz-curriculum-db:5432/curriculum_db
+                  EOF
+
+            - name: Generate self-signed SSL certificates
+              run: |
+                  mkdir -p nginx/ssl
+                  openssl req -x509 -newkey rsa:4096 -keyout nginx/ssl/key.pem \
+                    -out nginx/ssl/cert.pem -sha256 -days 30 -nodes -subj "/CN=bluz.dev"
 
             - name: Setup Node.js 24
               uses: actions/setup-node@v6
@@ -29,45 +128,33 @@ jobs:
             - name: Install Playwright Browsers
               run: npx playwright install chromium --with-deps
 
-            # ── Orchestrate dedicated test containers ──────────────────────────
-            - name: Start Test Docker Composition
+            # Pre-build the test images so the pipeline's `compose up` is fast.
+            # TEST_* values only satisfy compose interpolation — the pipeline
+            # assigns the real dynamic values at runtime.
+            - name: Pre-build Test Images
               run: |
-                  docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.test.yml up -d --build
+                  docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.test.yml build
               env:
                   BLUZ_VERSION: latest
+                  TEST_PROJECT_NAME: bluz-test-ci
+                  TEST_POSTGRES_PORT: "0"
+                  TEST_MONGO_PORT: "0"
+                  TEST_PROXY_PORT_HTTP: "0"
+                  TEST_PROXY_PORT_HTTPS: "0"
+                  TEST_HIVE_CLIENT_ID: ci-placeholder
+                  TEST_HIVE_CLIENT_SECRET: ci-placeholder
 
-            - name: Wait for Services
-              run: |
-                  echo "Waiting for Bluz to be ready..."
-                  for i in $(seq 1 60); do
-                    if curl -ks https://bluz.dev/login > /dev/null 2>&1; then
-                      echo "Bluz is ready!"
-                      break
-                    fi
-                    echo "Attempt $i/60 - waiting 5s..."
-                    sleep 5
-                  done
-
-            # ── Authentication ────────────────────────────────────────────────
-            # TODO: Inject auth state or automate Hive SSO login for CI.
-            # For now, the setup project will attempt to log in via the Hive
-            # instance. Ensure the CI runner can reach https://hive.org and
-            # that the admin:Password1 credentials are valid.
-            #
-            # To use pre-baked auth state from a secret:
-            #   - name: Inject Auth State
-            #     run: |
-            #       mkdir -p .auth
-            #       echo '${{ secrets.E2E_AUTH_STATE }}' > .auth/user.json
-
-            # ── Run Tests ─────────────────────────────────────────────────────
-            - name: Run Playwright Tests
-              run: npm run test:e2e
+            # ── Run the full pipeline ──────────────────────────────────────────
+            # scripts/run_tests.py: unit tests → test composition (dynamic
+            # ports) → SSO client registration with Hive (pyhive) → drizzle
+            # schema push → Hive seeding (pyhive) + Bluz seeding → Playwright.
+            # --seed-hive forces a reseed of the fresh Hive instance.
+            - name: Run Full Test Suite
+              run: python scripts/run_tests.py --seed-hive
               env:
-                  BASE_URL: https://bluz.dev
                   CI: true
 
-            # ── Artifacts ─────────────────────────────────────────────────────
+            # ── Artifacts ──────────────────────────────────────────────────────
             - name: Upload Playwright Report
               uses: actions/upload-artifact@v4
               if: ${{ !cancelled() }}
@@ -84,8 +171,23 @@ jobs:
                   path: test-results/
                   retention-days: 7
 
-            # ── Teardown ──────────────────────────────────────────────────────
-            - name: Tear Down Test Containers
-              if: always()
+            - name: Dump Container Logs
+              if: failure()
               run: |
-                  docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.test.yml down -v
+                  mkdir -p container-logs
+                  docker ps -a
+                  for c in $(docker ps -aq); do
+                    name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
+                    docker logs "$c" > "container-logs/$name.log" 2>&1 || true
+                  done
+
+            - name: Upload Container Logs
+              uses: actions/upload-artifact@v4
+              if: failure()
+              with:
+                  name: container-logs
+                  path: container-logs/
+                  retention-days: 7
+
+            # No teardown step — the runner is ephemeral, and the compose
+            # project name is derived per-worktree inside run_tests.py.
