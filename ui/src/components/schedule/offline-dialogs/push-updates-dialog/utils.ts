@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 
+import { GanttDayIndex, getDayNameDisplay } from "@/api-shared/types/gantt/models/day";
 import { CollisionStates } from "@/components/schedule/offline-dialogs/push-updates-dialog/types";
 import { EventId } from "@/components/schedule/types/event";
 import { areValuesEqual } from "@/components/schedule/types/EventUtils";
@@ -80,20 +81,11 @@ export function formatValue(value: any, key: string): string {
     return String(value);
 }
 
-const HEBREW_DAY_NAMES = [
-    "ראשון",
-    "שני",
-    "שלישי",
-    "רביעי",
-    "חמישי",
-    "שישי",
-    "שבת",
-];
-
 /**
  * Builds a human-readable Hebrew note describing a startTime/endTime change,
- * e.g. "הוזז מ-11:15 ל-10:15" for a same-day time shift, or
- * "זז מיום ראשון ה-11.4 ליום רביעי ה-14.4 (הוזז ב-3 ימים)" when the day changes.
+ * e.g. "קודם משעה 11:15 לשעה 10:15" / "נדחה משעה 10:15 לשעה 11:15" for a
+ * same-day time shift, or "הוקדם מיום שלישי ה-14.4 ליום ראשון ה-11.4 (ב-3 ימים)"
+ * / "נדחה מיום שני ה-6.4 ליום חמישי ה-9.4 (ב-3 ימים)" when the day changes.
  * Returns null when there's nothing meaningful to report.
  */
 export function formatDateTimeChangeNote(from: any, to: any): null | string {
@@ -107,18 +99,22 @@ export function formatDateTimeChangeNote(from: any, to: any): null | string {
         return null;
     }
 
+    const movedEarlier = toDate.isBefore(fromDate);
+
     if (fromDate.isSame(toDate, "day")) {
-        return `הוזז משעה ${fromDate.format("HH:mm")} לשעה ${toDate.format("HH:mm")}`;
+        const verb = movedEarlier ? "קודם" : "נדחה";
+        return `${verb} משעה ${fromDate.format("HH:mm")} לשעה ${toDate.format("HH:mm")}`;
     }
 
-    const fromDay = HEBREW_DAY_NAMES[fromDate.day()];
-    const toDay = HEBREW_DAY_NAMES[toDate.day()];
+    const fromDay = getDayNameDisplay(fromDate.day() as GanttDayIndex);
+    const toDay = getDayNameDisplay(toDate.day() as GanttDayIndex);
     const dayDiff = Math.abs(
         toDate.startOf("day").diff(fromDate.startOf("day"), "day"),
     );
     const dayWord = dayDiff === 1 ? "יום אחד" : `${dayDiff} ימים`;
+    const verb = movedEarlier ? "הוקדם" : "נדחה";
 
-    return `זז מיום ${fromDay} ה-${fromDate.format("D.M")} ליום ${toDay} ה-${toDate.format("D.M")} (הוזז ב-${dayWord})`;
+    return `${verb} מיום ${fromDay} ה-${fromDate.format("D.M")} ליום ${toDay} ה-${toDate.format("D.M")} (ב-${dayWord})`;
 }
 
 /**
@@ -150,8 +146,8 @@ export function getSubmitLabel(
     selectedIds: Array<EventId>,
 ): string {
     return hasUnresolvedConflicts(collisionStates, selectedIds)
-        ? "קבל שינויים מרוחקים"
-        : "שמור שינויים מסומנים";
+        ? "קבלת שינויים מרוחקים"
+        : "שמירת שינויים מסומנים";
 }
 
 /**

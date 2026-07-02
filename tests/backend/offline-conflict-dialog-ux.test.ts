@@ -40,20 +40,36 @@ describe("formatDateTimeChangeNote", () => {
         expect(formatDateTimeChangeNote(value, dayjs(value))).toBeNull();
     });
 
-    it("notes a same-day time shift as a time-only move", () => {
+    it("notes a same-day time shift moved earlier as 'קודם'", () => {
         const from = dayjs("2026-04-11T11:15:00");
         const to = dayjs("2026-04-11T10:15:00");
         expect(formatDateTimeChangeNote(from, to)).toBe(
-            "הוזז משעה 11:15 לשעה 10:15",
+            "קודם משעה 11:15 לשעה 10:15",
         );
     });
 
-    it("notes a cross-day shift with weekday names, dates, and day count", () => {
+    it("notes a same-day time shift moved later as 'נדחה'", () => {
+        const from = dayjs("2026-04-11T10:15:00");
+        const to = dayjs("2026-04-11T11:15:00");
+        expect(formatDateTimeChangeNote(from, to)).toBe(
+            "נדחה משעה 10:15 לשעה 11:15",
+        );
+    });
+
+    it("notes a cross-day shift moved later as 'נדחה', with weekday names, dates, and day count", () => {
         // 2026-04-11 is a Saturday, 2026-04-14 is a Tuesday: 3 days apart
         const from = dayjs("2026-04-11T09:00:00");
         const to = dayjs("2026-04-14T09:00:00");
         expect(formatDateTimeChangeNote(from, to)).toBe(
-            "זז מיום שבת ה-11.4 ליום שלישי ה-14.4 (הוזז ב-3 ימים)",
+            "נדחה מיום שבת ה-11.4 ליום שלישי ה-14.4 (ב-3 ימים)",
+        );
+    });
+
+    it("notes a cross-day shift moved earlier as 'הוקדם'", () => {
+        const from = dayjs("2026-04-14T09:00:00");
+        const to = dayjs("2026-04-11T09:00:00");
+        expect(formatDateTimeChangeNote(from, to)).toBe(
+            "הוקדם מיום שלישי ה-14.4 ליום שבת ה-11.4 (ב-3 ימים)",
         );
     });
 
@@ -61,15 +77,7 @@ describe("formatDateTimeChangeNote", () => {
         const from = dayjs("2026-04-11T09:00:00");
         const to = dayjs("2026-04-12T09:00:00");
         expect(formatDateTimeChangeNote(from, to)).toBe(
-            "זז מיום שבת ה-11.4 ליום ראשון ה-12.4 (הוזז ב-יום אחד)",
-        );
-    });
-
-    it("reports the day count regardless of direction (moved earlier)", () => {
-        const from = dayjs("2026-04-14T09:00:00");
-        const to = dayjs("2026-04-11T09:00:00");
-        expect(formatDateTimeChangeNote(from, to)).toBe(
-            "זז מיום שלישי ה-14.4 ליום שבת ה-11.4 (הוזז ב-3 ימים)",
+            "נדחה מיום שבת ה-11.4 ליום ראשון ה-12.4 (ב-יום אחד)",
         );
     });
 
@@ -79,7 +87,7 @@ describe("formatDateTimeChangeNote", () => {
                 "2026-04-11T11:15:00",
                 "2026-04-11T10:15:00",
             ),
-        ).toBe("הוזז משעה 11:15 לשעה 10:15");
+        ).toBe("קודם משעה 11:15 לשעה 10:15");
     });
 
     it("returns null for invalid date input", () => {
@@ -123,18 +131,18 @@ describe("hasUnresolvedConflicts", () => {
 });
 
 describe("getSubmitLabel", () => {
-    it("reads 'שמור שינויים מסומנים' when there are no unresolved conflicts", () => {
+    it("reads 'שמירת שינויים מסומנים' when there are no unresolved conflicts", () => {
         const states = makeCollisionStates({ e1: false });
-        expect(getSubmitLabel(states, [])).toBe("שמור שינויים מסומנים");
+        expect(getSubmitLabel(states, [])).toBe("שמירת שינויים מסומנים");
     });
 
-    it("reads 'קבל שינויים מרוחקים' when conflicts exist and none are selected", () => {
+    it("reads 'קבלת שינויים מרוחקים' when conflicts exist and none are selected", () => {
         const states = makeCollisionStates({ e1: true });
-        expect(getSubmitLabel(states, [])).toBe("קבל שינויים מרוחקים");
+        expect(getSubmitLabel(states, [])).toBe("קבלת שינויים מרוחקים");
     });
 
-    it("reverts to 'שמור שינויים מסומנים' once the user selects the conflicting event", () => {
+    it("reverts to 'שמירת שינויים מסומנים' once the user selects the conflicting event", () => {
         const states = makeCollisionStates({ e1: true });
-        expect(getSubmitLabel(states, [ "e1" ])).toBe("שמור שינויים מסומנים");
+        expect(getSubmitLabel(states, [ "e1" ])).toBe("שמירת שינויים מסומנים");
     });
 });
