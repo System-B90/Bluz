@@ -16,12 +16,319 @@ import ListItemText from "@mui/material/ListItemText";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CustomColor } from "@/api-shared/types/custom-color";
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
+
+/** Default hex color used when creating / resetting the color form. */
+const DEFAULT_NEW_COLOR_HEX = "#3f51b5";
+
+// --- Color list item sub-component ---
+
+type ColorEntry = {
+    id: string;
+    name: string;
+    hex: string;
+    isReadonly: boolean;
+};
+type ColorListItemProps = {
+    color: ColorEntry;
+    isSelected: boolean;
+    onSelect: (color: CustomColor) => void;
+    onDelete: (colorId: string) => void;
+};
+
+const ColorListItem = memo(function ColorListItem({
+    color,
+    isSelected,
+    onSelect,
+    onDelete,
+}: ColorListItemProps) {
+    return (
+        <ListItem
+            button={!color.isReadonly}
+            onClick={() =>
+                !color.isReadonly
+                    ? onSelect(color as CustomColor)
+                    : undefined
+            }
+            sx={{
+                borderRadius: "8px",
+                mb: 0.5,
+                bgcolor: isSelected ? "action.selected" : "transparent",
+                "&:hover": {
+                    bgcolor: color.isReadonly ? "transparent" : "action.hover",
+                },
+            }}
+        >
+            {/* Color Preview Block */}
+            <Box
+                sx={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: "4px",
+                    bgcolor: color.hex,
+                    mr: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                }}
+            />
+            <ListItemText
+                primary={color.name}
+                secondary={color.hex}
+                sx={{ textAlign: "right", pr: 2 }}
+            />
+            <ListItemSecondaryAction>
+                {color.isReadonly ? (
+                    <Chip
+                        label="מקצוע Hive"
+                        size="small"
+                        sx={{ fontSize: "0.7rem", height: 20 }}
+                        variant="outlined"
+                    />
+                ) : (
+                    <Box display="flex" gap={0.5}>
+                        <IconButton
+                            edge="end"
+                            onClick={() => onSelect(color as CustomColor)}
+                            size="small"
+                        >
+                            <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                            color="error"
+                            edge="end"
+                            onClick={() => onDelete(color.id)}
+                            size="small"
+                        >
+                            <DeleteIcon fontSize="small" />
+                        </IconButton>
+                    </Box>
+                )}
+            </ListItemSecondaryAction>
+        </ListItem>
+    );
+});
+
+// --- Color list panel ---
+
+type ColorListPanelProps = {
+    allColors: Array<ColorEntry>;
+    selectedColorId: string | undefined;
+    onSelect: (color: CustomColor) => void;
+    onDelete: (colorId: string) => void;
+    onStartCreate: () => void;
+};
+
+const ColorListPanel = memo(function ColorListPanel({
+    allColors,
+    selectedColorId,
+    onSelect,
+    onDelete,
+    onStartCreate,
+}: ColorListPanelProps) {
+    return (
+        <Card
+            sx={{
+                flex: 1.2,
+                display: "flex",
+                flexDirection: "column",
+                borderRadius: "16px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
+                border: "1px solid",
+                borderColor: "divider",
+            }}
+        >
+            <CardContent
+                sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    p: 3,
+                    "&:last-child": { pb: 3 },
+                }}
+            >
+                <Box
+                    alignItems="center"
+                    display="flex"
+                    justifyContent="space-between"
+                    mb={2}
+                >
+                    <Box alignItems="center" display="flex" gap={1.5}>
+                        <PaletteIcon color="primary" />
+                        <Typography sx={{ fontWeight: 800, fontSize: "1.1rem" }}>
+                            ניהול צבעי מערכת
+                        </Typography>
+                    </Box>
+                    <Button
+                        color="primary"
+                        onClick={onStartCreate}
+                        size="small"
+                        variant="contained"
+                    >
+                        הוספת צבע חדש
+                    </Button>
+                </Box>
+
+                <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", mb: 2 }}>
+                    ניתן לערוך צבעים אלו דרך הייב
+                </Typography>
+
+                <Divider />
+
+                <Box sx={{ overflowY: "auto", flexGrow: 1, maxHeight: "350px", mt: 1 }}>
+                    {allColors.length === 0 ? (
+                        <Typography
+                            sx={{
+                                textAlign: "center",
+                                color: "text.secondary",
+                                mt: 4,
+                                fontSize: "0.9rem",
+                            }}
+                        >
+                            אין צבעים מוגדרים במערכת. העולם כולו אפור.
+                        </Typography>
+                    ) : (
+                        <List dense disablePadding>
+                            {allColors.map((color) => (
+                                <ColorListItem
+                                    color={color}
+                                    isSelected={selectedColorId === color.id}
+                                    key={color.id}
+                                    onDelete={onDelete}
+                                    onSelect={onSelect}
+                                />
+                            ))}
+                        </List>
+                    )}
+                </Box>
+            </CardContent>
+        </Card>
+    );
+});
+
+// --- Edit / Create form panel ---
+
+type ColorFormPanelProps = {
+    isCreating: boolean;
+    selectedColor: CustomColor | null;
+    name: string;
+    hex: string;
+    onNameChange: (value: string) => void;
+    onHexChange: (value: string) => void;
+    onSave: (e: React.FormEvent) => void;
+    onCancel: () => void;
+};
+
+const ColorFormPanel = memo(function ColorFormPanel({
+    isCreating,
+    selectedColor,
+    name,
+    hex,
+    onNameChange,
+    onHexChange,
+    onSave,
+    onCancel,
+}: ColorFormPanelProps) {
+    return (
+        <Card
+            sx={{
+                flex: 0.8,
+                borderRadius: "16px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
+                border: "1px solid",
+                borderColor: "divider",
+            }}
+        >
+            <CardContent sx={{ p: 3 }}>
+                <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", mb: 3 }}>
+                    {isCreating
+                        ? "הוספת צבע מותאם אישית"
+                        : selectedColor
+                            ? `עריכת צבע: ${selectedColor.name}`
+                            : "פרטי צבע"}
+                </Typography>
+
+                {!isCreating && !selectedColor ? (
+                    <Box
+                        alignItems="center"
+                        display="flex"
+                        flexDirection="column"
+                        justifyContent="center"
+                        minHeight="200px"
+                        sx={{ color: "text.secondary", gap: 1 }}
+                    >
+                        <PaletteIcon sx={{ fontSize: 40, opacity: 0.5 }} />
+                        <Typography sx={{ fontSize: "0.85rem" }}>
+                            יש לבחור צבע מהרשימה לעריכה או ליצור צבע חדש
+                        </Typography>
+                    </Box>
+                ) : (
+                    <form onSubmit={onSave}>
+                        <Box display="flex" flexDirection="column" gap={3}>
+                            <TextField
+                                fullWidth
+                                label="שם הצבע"
+                                onChange={(e) => onNameChange(e.target.value)}
+                                required
+                                size="small"
+                                value={name}
+                            />
+
+                            <Box alignItems="center" display="flex" gap={2}>
+                                <TextField
+                                    fullWidth
+                                    label="קוד צבע (Hex)"
+                                    onChange={(e) => onHexChange(e.target.value)}
+                                    required
+                                    size="small"
+                                    value={hex}
+                                />
+                                <input
+                                    onChange={(e) => onHexChange(e.target.value)}
+                                    style={{
+                                        width: 48,
+                                        height: 40,
+                                        border: "1px solid #ccc",
+                                        borderRadius: "8px",
+                                        cursor: "pointer",
+                                        padding: 0,
+                                        backgroundColor: "transparent",
+                                    }}
+                                    type="color"
+                                    value={
+                                        hex.startsWith("#") && hex.length === 7
+                                            ? hex
+                                            : DEFAULT_NEW_COLOR_HEX
+                                    }
+                                />
+                            </Box>
+
+                            <Box display="flex" gap={1.5} justifyContent="flex-end" mt={1}>
+                                <Button onClick={onCancel} size="small">
+                                    ביטול
+                                </Button>
+                                <Button
+                                    color="primary"
+                                    size="small"
+                                    type="submit"
+                                    variant="contained"
+                                >
+                                    שמירה
+                                </Button>
+                            </Box>
+                        </Box>
+                    </form>
+                )}
+            </CardContent>
+        </Card>
+    );
+});
+
+// --- Main orchestrating component ---
 
 export function ColorSettings() {
     const { customColors, addCustomColor, updateCustomColor, deleteCustomColor } =
@@ -32,7 +339,7 @@ export function ColorSettings() {
     const [selectedColor, setSelectedColor] = useState<CustomColor | null>(null);
     const [isCreating, setIsCreating] = useState(false);
     const [name, setName] = useState("");
-    const [hex, setHex] = useState("#3f51b5");
+    const [hex, setHex] = useState(DEFAULT_NEW_COLOR_HEX);
 
     // Map Hive subjects into read-only colors
     const subjectColors = useMemo(() => {
@@ -55,6 +362,13 @@ export function ColorSettings() {
         return [...customMapped, ...subjectColors];
     }, [customColors, subjectColors]);
 
+    const resetForm = useCallback(() => {
+        setSelectedColor(null);
+        setIsCreating(false);
+        setName("");
+        setHex(DEFAULT_NEW_COLOR_HEX);
+    }, []);
+
     const handleSelectColor = useCallback((color: CustomColor) => {
         setSelectedColor(color);
         setIsCreating(false);
@@ -66,14 +380,7 @@ export function ColorSettings() {
         setSelectedColor(null);
         setIsCreating(true);
         setName("");
-        setHex("#3f51b5");
-    }, []);
-
-    const handleCancelEdit = useCallback(() => {
-        setSelectedColor(null);
-        setIsCreating(false);
-        setName("");
-        setHex("#3f51b5");
+        setHex(DEFAULT_NEW_COLOR_HEX);
     }, []);
 
     const handleSave = useCallback(
@@ -100,7 +407,7 @@ export function ColorSettings() {
                         name: trimmedName,
                         hex: trimmedHex,
                     });
-                    handleCancelEdit();
+                    resetForm();
                 } catch (err) {
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
@@ -115,7 +422,7 @@ export function ColorSettings() {
                         name: trimmedName,
                         hex: trimmedHex,
                     });
-                    handleCancelEdit();
+                    resetForm();
                 } catch (err) {
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
@@ -132,7 +439,7 @@ export function ColorSettings() {
             selectedColor,
             addCustomColor,
             updateCustomColor,
-            handleCancelEdit,
+            resetForm,
             enqueueSnackbar,
         ],
     );
@@ -143,12 +450,12 @@ export function ColorSettings() {
                 customColors.find((c) => c.id === colorId)?.name || colorId;
             if (
                 window.confirm(
-                    `האם אתה בטוח שברצונך למחוק את הצבע המותאם אישית "${colorName}"?`,
+                    `למחוק את הצבע המותאם אישית "${colorName}"?`,
                 )
             ) {
                 try {
                     if (selectedColor && selectedColor.id === colorId) {
-                        handleCancelEdit();
+                        resetForm();
                     }
                     await deleteCustomColor(colorId);
                 } catch (err) {
@@ -160,7 +467,7 @@ export function ColorSettings() {
                 }
             }
         },
-        [selectedColor, handleCancelEdit, deleteCustomColor, customColors, enqueueSnackbar],
+        [selectedColor, resetForm, deleteCustomColor, customColors, enqueueSnackbar],
     );
 
     return (
@@ -175,239 +482,23 @@ export function ColorSettings() {
                 height: "100%",
             }}
         >
-            {/* Colors List Card */}
-            <Card
-                sx={{
-                    flex: 1.2,
-                    display: "flex",
-                    flexDirection: "column",
-                    borderRadius: "16px",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
-                    border: "1px solid",
-                    borderColor: "divider",
-                }}
-            >
-                <CardContent
-                    sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        height: "100%",
-                        p: 3,
-                        "&:last-child": { pb: 3 },
-                    }}
-                >
-                    <Box
-                        alignItems="center"
-                        display="flex"
-                        justifyContent="space-between"
-                        mb={2}
-                    >
-                        <Box alignItems="center" display="flex" gap={1.5}>
-                            <PaletteIcon color="primary" />
-                            <Typography sx={{ fontWeight: 800, fontSize: "1.1rem" }}>
-                                ניהול צבעי מערכת
-                            </Typography>
-                        </Box>
-                        <Button
-                            color="primary"
-                            onClick={handleStartCreate}
-                            size="small"
-                            variant="contained"
-                        >
-                            הוספת צבע חדש
-                        </Button>
-                    </Box>
-
-                    <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", mb: 2 }}>
-                        כל הצבעים הזמינים במערכת. צבעי מקצועות נטענים מ-Hive והם לקריאה בלבד.
-                    </Typography>
-
-                    <Divider />
-
-                    <Box sx={{ overflowY: "auto", flexGrow: 1, maxHeight: "350px", mt: 1 }}>
-                        {allColors.length === 0 ? (
-                            <Typography
-                                sx={{
-                                    textAlign: "center",
-                                    color: "text.secondary",
-                                    mt: 4,
-                                    fontSize: "0.9rem",
-                                }}
-                            >
-                                אין צבעים מוגדרים במערכת
-                            </Typography>
-                        ) : (
-                            <List dense disablePadding>
-                                {allColors.map((color) => (
-                                    <ListItem
-                                        button={!color.isReadonly}
-                                        key={color.id}
-                                        onClick={() =>
-                                            !color.isReadonly
-                                                ? handleSelectColor(color as CustomColor)
-                                                : undefined
-                                        }
-                                        sx={{
-                                            borderRadius: "8px",
-                                            mb: 0.5,
-                                            bgcolor:
-                                                selectedColor?.id === color.id
-                                                    ? "action.selected"
-                                                    : "transparent",
-                                            "&:hover": {
-                                                bgcolor: color.isReadonly
-                                                    ? "transparent"
-                                                    : "action.hover",
-                                            },
-                                        }}
-                                    >
-                                        {/* Color Preview Block */}
-                                        <Box
-                                            sx={{
-                                                width: 24,
-                                                height: 24,
-                                                borderRadius: "4px",
-                                                bgcolor: color.hex,
-                                                mr: 2,
-                                                border: "1px solid",
-                                                borderColor: "divider",
-                                            }}
-                                        />
-                                        <ListItemText
-                                            primary={color.name}
-                                            secondary={color.hex}
-                                            sx={{ textAlign: "right", pr: 2 }}
-                                        />
-                                        <ListItemSecondaryAction>
-                                            {color.isReadonly ? (
-                                                <Chip
-                                                    label="מקצוע Hive"
-                                                    size="small"
-                                                    sx={{ fontSize: "0.7rem", height: 20 }}
-                                                    variant="outlined"
-                                                />
-                                            ) : (
-                                                <Box display="flex" gap={0.5}>
-                                                    <IconButton
-                                                        edge="end"
-                                                        onClick={() =>
-                                                            handleSelectColor(color as CustomColor)
-                                                        }
-                                                        size="small"
-                                                    >
-                                                        <EditIcon fontSize="small" />
-                                                    </IconButton>
-                                                    <IconButton
-                                                        color="error"
-                                                        edge="end"
-                                                        onClick={() => handleDelete(color.id)}
-                                                        size="small"
-                                                    >
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Box>
-                                            )}
-                                        </ListItemSecondaryAction>
-                                    </ListItem>
-                                ))}
-                            </List>
-                        )}
-                    </Box>
-                </CardContent>
-            </Card>
-
-            {/* Edit / Create Form Card */}
-            <Card
-                sx={{
-                    flex: 0.8,
-                    borderRadius: "16px",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
-                    border: "1px solid",
-                    borderColor: "divider",
-                }}
-            >
-                <CardContent sx={{ p: 3 }}>
-                    <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", mb: 3 }}>
-                        {isCreating
-                            ? "הוספת צבע מותאם אישית"
-                            : selectedColor
-                                ? `עריכת צבע: ${selectedColor.name}`
-                                : "פרטי צבע"}
-                    </Typography>
-
-                    {!isCreating && !selectedColor ? (
-                        <Box
-                            alignItems="center"
-                            display="flex"
-                            flexDirection="column"
-                            justifyContent="center"
-                            minHeight="200px"
-                            sx={{ color: "text.secondary", gap: 1 }}
-                        >
-                            <PaletteIcon sx={{ fontSize: 40, opacity: 0.5 }} />
-                            <Typography sx={{ fontSize: "0.85rem" }}>
-                                בחר צבע מהרשימה לעריכה או צור צבע חדש
-                            </Typography>
-                        </Box>
-                    ) : (
-                        <form onSubmit={handleSave}>
-                            <Box display="flex" flexDirection="column" gap={3}>
-                                <TextField
-                                    fullWidth
-                                    label="שם הצבע"
-                                    onChange={(e) => setName(e.target.value)}
-                                    required
-                                    size="small"
-                                    value={name}
-                                />
-
-                                <Box alignItems="center" display="flex" gap={2}>
-                                    <TextField
-                                        fullWidth
-                                        label="קוד צבע (Hex)"
-                                        onChange={(e) => setHex(e.target.value)}
-                                        required
-                                        size="small"
-                                        value={hex}
-                                    />
-                                    <input
-                                        onChange={(e) => setHex(e.target.value)}
-                                        style={{
-                                            width: 48,
-                                            height: 40,
-                                            border: "1px solid #ccc",
-                                            borderRadius: "8px",
-                                            cursor: "pointer",
-                                            padding: 0,
-                                            backgroundColor: "transparent",
-                                        }}
-                                        type="color"
-                                        value={
-                                            hex.startsWith("#") && hex.length === 7
-                                                ? hex
-                                                : "#3f51b5"
-                                        }
-                                    />
-                                </Box>
-
-                                <Box display="flex" gap={1.5} justifyContent="flex-end" mt={1}>
-                                    <Button onClick={handleCancelEdit} size="small">
-                                        ביטול
-                                    </Button>
-                                    <Button
-                                        color="primary"
-                                        size="small"
-                                        type="submit"
-                                        variant="contained"
-                                    >
-                                        שמירה
-                                    </Button>
-                                </Box>
-                            </Box>
-                        </form>
-                    )}
-                </CardContent>
-            </Card>
+            <ColorListPanel
+                allColors={allColors}
+                onDelete={handleDelete}
+                onSelect={handleSelectColor}
+                onStartCreate={handleStartCreate}
+                selectedColorId={selectedColor?.id}
+            />
+            <ColorFormPanel
+                hex={hex}
+                isCreating={isCreating}
+                name={name}
+                onCancel={resetForm}
+                onHexChange={setHex}
+                onNameChange={setName}
+                onSave={handleSave}
+                selectedColor={selectedColor}
+            />
         </Box>
     );
 }

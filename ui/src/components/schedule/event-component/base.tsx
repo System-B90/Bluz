@@ -8,10 +8,11 @@ import { EventProps } from "react-big-calendar";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
+import { resolveEventDefaultColor } from "@/components/schedule/event-component/event-colors";
 import { EventTooltipContent } from "@/components/schedule/event-component/EventTooltip";
 import { UnifiedEvent } from "@/components/schedule/event-component/UnifiedEvent";
 import { useElementSize } from "@/components/schedule/event-component/utils";
-import { Event, EventType } from "@/components/schedule/types/event";
+import { Event } from "@/components/schedule/types/event";
 
 export type ContainerSize = {
     width: number;
@@ -29,8 +30,7 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
     const subject = getSubject(event.subject);
     const bgColor =
         event.color ||
-        (event.type === EventType.PRAYER ? "#e0f9fe" : subject?.color) ??
-        theme.palette.common.black;
+        resolveEventDefaultColor(event, subject, theme.palette.common.black);
     const textColor = theme.palette.getContrastText(bgColor);
 
     const { ref, size } = useElementSize<HTMLDivElement>();
