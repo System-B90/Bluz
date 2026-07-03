@@ -5,6 +5,7 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import WarningIcon from "@mui/icons-material/Warning";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
@@ -87,6 +88,11 @@ export function EventTooltipContent({ event }: { event: Event }) {
         statusFlags.push({
             icon: <ChatIcon fontSize="inherit" />,
             label: 'חלון פ"א',
+        });
+    if (event.hidden)
+        statusFlags.push({
+            icon: <VisibilityOffIcon fontSize="inherit" />,
+            label: "מוסתר",
         });
 
     return (

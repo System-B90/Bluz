@@ -18,6 +18,7 @@ export function EventToggles({
         { label: "מתואם", key: "locked" },
         { label: "קריטי", key: "required" },
         { label: 'חלון פ"א', key: "personalTalk" },
+        { label: "מוסתר", key: "hidden" },
     ] as const;
 
     return (
