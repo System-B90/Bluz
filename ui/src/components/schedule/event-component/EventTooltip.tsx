@@ -5,6 +5,7 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import TheaterComedyIcon from "@mui/icons-material/TheaterComedy";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import WarningIcon from "@mui/icons-material/Warning";
 import Box from "@mui/material/Box";
@@ -93,6 +94,11 @@ export function EventTooltipContent({ event }: { event: Event }) {
         statusFlags.push({
             icon: <VisibilityOffIcon fontSize="inherit" />,
             label: "מוסתר",
+        });
+    if (event.fake)
+        statusFlags.push({
+            icon: <TheaterComedyIcon fontSize="inherit" />,
+            label: "פיקטיבי",
         });
 
     return (

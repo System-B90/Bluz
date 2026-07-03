@@ -50,6 +50,13 @@ export type Event = {
     required: boolean;
     personalTalk: boolean;
     color?: string;
+    /**
+     * "פיקטיבי" marker (issue #102): shown to students as a normal event but
+     * acts as a placeholder for Checkers/Segel. Fake events are not wired to
+     * a Hive subject/module/lesson — they carry only a manual color override
+     * and a comment.
+     */
+    fake?: boolean;
 };
 
 /**

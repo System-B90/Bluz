@@ -32,5 +32,7 @@ export const createEventFactory = (
         required: eventPartial.required ?? false,
         hidden: eventPartial.hidden ?? false,
         personalTalk: eventPartial.personalTalk ?? false,
+        fake: eventPartial.fake ?? false,
+        color: eventPartial.color,
     };
 };
