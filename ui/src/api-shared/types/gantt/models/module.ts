@@ -8,5 +8,10 @@ export type GanttModule = {
     events: Array<GanttEventId>;
     hiveIds: Array<number>;
     constraints: Array<GanttConstraint>;
+    /**
+     * Shuffle names (from the parent syllabus) this module applies to.
+     * Empty/undefined ⇒ applies to all shuffles.
+     */
+    shuffles?: Array<string>;
 } & BaseGantItem;
 export type GanttModuleId = GanttModule["id"];
