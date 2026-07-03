@@ -19,7 +19,8 @@ import dayjs from "dayjs";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
-import {
+import
+{
     apiCreateDraft,
     apiDeleteDraft,
     apiGetDraft,
@@ -35,67 +36,79 @@ import { useCalendar } from "@/components/schedule/calendar/calendar-provider/Ca
  * current calendar as a named draft, list everyone's drafts, load one (via a
  * SET_EVENTS dispatch), overwrite one with the current state, or delete it.
  */
-export function DraftsMenu() {
+export function DraftsMenu()
+{
     const { enqueueSnackbar } = useSnackbar();
     const { events, dispatch, iterationId } = useCalendar();
 
-    const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-    const [drafts, setDrafts] = useState<Array<CalendarDraftSummary>>([]);
-    const [label, setLabel] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [busyId, setBusyId] = useState<null | string>(null);
+    const [ anchorEl, setAnchorEl ] = useState<HTMLButtonElement | null>(null);
+    const [ drafts, setDrafts ] = useState<Array<CalendarDraftSummary>>([]);
+    const [ label, setLabel ] = useState("");
+    const [ loading, setLoading ] = useState(false);
+    const [ busyId, setBusyId ] = useState<null | string>(null);
 
     const open = Boolean(anchorEl);
 
-    const refresh = useCallback(async () => {
+    const refresh = useCallback(async () =>
+    {
         setLoading(true);
-        try {
+        try
+        {
             setDrafts(await apiListDrafts(iterationId));
-        } catch (error) {
+        } catch (error)
+        {
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
                 "טעינת הטיוטות נכשלה!",
                 error,
             );
-        } finally {
+        } finally
+        {
             setLoading(false);
         }
-    }, [iterationId, enqueueSnackbar]);
+    }, [ iterationId, enqueueSnackbar ]);
 
     const handleOpen = useCallback(
-        (e: React.MouseEvent<HTMLButtonElement>) => {
+        (e: React.MouseEvent<HTMLButtonElement>) =>
+        {
             setAnchorEl(e.currentTarget);
             void refresh();
         },
-        [refresh],
+        [ refresh ],
     );
 
     const handleClose = useCallback(() => setAnchorEl(null), []);
 
-    const handleCreate = useCallback(async () => {
+    const handleCreate = useCallback(async () =>
+    {
         const trimmed = label.trim();
         if (!trimmed) return;
         setLoading(true);
-        try {
+        try
+        {
             await apiCreateDraft(trimmed, events, iterationId);
             setLabel("");
             enqueueSnackbar("הטיוטה נשמרה לשרת.", { variant: "success" });
             await refresh();
-        } catch (error) {
+        } catch (error)
+        {
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
                 "שמירת הטיוטה נכשלה!",
                 error,
             );
-        } finally {
+        } finally
+        {
             setLoading(false);
         }
-    }, [label, events, iterationId, enqueueSnackbar, refresh]);
+    }, [ label, events, iterationId, enqueueSnackbar, refresh ]);
 
     const handleLoad = useCallback(
-        async (draftId: string) => {
+        async (draftId: string) =>
+        {
             setBusyId(draftId);
-            try {
+            try
+            {
                 const { events: loaded } = await apiGetDraft(
                     draftId,
                     iterationId,
@@ -106,58 +119,68 @@ export function DraftsMenu() {
                     { variant: "success" },
                 );
                 handleClose();
-            } catch (error) {
+            } catch (error)
+            {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "טעינת הטיוטה נכשלה!",
                     error,
                 );
-            } finally {
+            } finally
+            {
                 setBusyId(null);
             }
         },
-        [iterationId, dispatch, enqueueSnackbar, handleClose],
+        [ iterationId, dispatch, enqueueSnackbar, handleClose ],
     );
 
     const handleOverwrite = useCallback(
-        async (draftId: string) => {
+        async (draftId: string) =>
+        {
             setBusyId(draftId);
-            try {
+            try
+            {
                 await apiUpdateDraft(draftId, events, iterationId);
                 enqueueSnackbar("הטיוטה עודכנה למצב הנוכחי.", {
                     variant: "success",
                 });
                 await refresh();
-            } catch (error) {
+            } catch (error)
+            {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "עדכון הטיוטה נכשל!",
                     error,
                 );
-            } finally {
+            } finally
+            {
                 setBusyId(null);
             }
         },
-        [events, iterationId, enqueueSnackbar, refresh],
+        [ events, iterationId, enqueueSnackbar, refresh ],
     );
 
     const handleDelete = useCallback(
-        async (draftId: string) => {
+        async (draftId: string) =>
+        {
             setBusyId(draftId);
-            try {
+            try
+            {
                 await apiDeleteDraft(draftId, iterationId);
                 setDrafts((prev) => prev.filter((d) => d.id !== draftId));
-            } catch (error) {
+            } catch (error)
+            {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "מחיקת הטיוטה נכשלה!",
                     error,
                 );
-            } finally {
+            } finally
+            {
                 setBusyId(null);
             }
         },
-        [iterationId, enqueueSnackbar],
+        [ iterationId, enqueueSnackbar ],
     );
 
     return (
@@ -165,80 +188,81 @@ export function DraftsMenu() {
             <Tooltip title="טיוטות משותפות">
                 <IconButton
                     aria-label="טיוטות משותפות"
-                    onClick={handleOpen}
+                    onClick={ handleOpen }
                     size="small"
-                    sx={{
+                    sx={ {
                         color: "text.secondary",
                         "&:hover": { color: "primary.main" },
-                    }}
+                    } }
                 >
                     <DriveFileRenameOutlineIcon fontSize="small" />
                 </IconButton>
             </Tooltip>
 
             <Popover
-                anchorEl={anchorEl}
-                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                onClose={handleClose}
-                open={open}
-                slotProps={{
+                anchorEl={ anchorEl }
+                anchorOrigin={ { vertical: "bottom", horizontal: "left" } }
+                onClose={ handleClose }
+                open={ open }
+                slotProps={ {
                     paper: { sx: { p: 2, mt: 1, width: 400, borderRadius: 2 } },
-                }}
-                transformOrigin={{ vertical: "top", horizontal: "left" }}
+                } }
+                transformOrigin={ { vertical: "top", horizontal: "left" } }
             >
-                <Typography sx={{ fontWeight: 700, mb: 1 }} variant="subtitle1">
+                <Typography sx={ { fontWeight: 700, mb: 1 } } variant="subtitle1">
                     טיוטות משותפות
                 </Typography>
 
-                <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                <Stack direction="row" spacing={ 1 } sx={ { mb: 1 } }>
                     <TextField
                         fullWidth
                         label="שם הטיוטה"
-                        onChange={(e) => setLabel(e.target.value)}
-                        onKeyDown={(e) => {
+                        onChange={ (e) => setLabel(e.target.value) }
+                        onKeyDown={ (e) =>
+                        {
                             if (e.key === "Enter") void handleCreate();
-                        }}
+                        } }
                         size="small"
-                        value={label}
+                        value={ label }
                     />
                     <Button
-                        disabled={!label.trim() || loading}
-                        onClick={() => void handleCreate()}
-                        startIcon={<SaveIcon />}
+                        disabled={ !label.trim() || loading }
+                        onClick={ () => void handleCreate() }
+                        startIcon={ <SaveIcon /> }
                         variant="contained"
                     >
-                        שמור
+                        שמירה
                     </Button>
                 </Stack>
 
-                <Divider sx={{ my: 1 }} />
+                <Divider sx={ { my: 1 } } />
 
-                {loading && drafts.length === 0 ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-                        <CircularProgress size={24} />
+                { loading && drafts.length === 0 ? (
+                    <Box sx={ { display: "flex", justifyContent: "center", py: 3 } }>
+                        <CircularProgress size={ 24 } />
                     </Box>
                 ) : drafts.length === 0 ? (
                     <Typography
                         color="text.secondary"
-                        sx={{ py: 2, textAlign: "center" }}
+                        sx={ { py: 2, textAlign: "center" } }
                         variant="body2"
                     >
                         אין טיוטות משותפות.
                     </Typography>
                 ) : (
-                    <List dense sx={{ maxHeight: 320, overflowY: "auto" }}>
-                        {drafts.map((draft) => (
+                    <List dense sx={ { maxHeight: 320, overflowY: "auto" } }>
+                        { drafts.map((draft) => (
                             <ListItem
                                 disableGutters
-                                key={draft.id}
+                                key={ draft.id }
                                 secondaryAction={
-                                    <Stack direction="row" spacing={0.5}>
-                                        <Tooltip title="טען טיוטה">
+                                    <Stack direction="row" spacing={ 0.5 }>
+                                        <Tooltip title="טעינת טיוטה">
                                             <span>
                                                 <IconButton
-                                                    disabled={busyId !== null}
+                                                    disabled={ busyId !== null }
                                                     edge="end"
-                                                    onClick={() =>
+                                                    onClick={ () =>
                                                         void handleLoad(
                                                             draft.id,
                                                         )
@@ -249,12 +273,12 @@ export function DraftsMenu() {
                                                 </IconButton>
                                             </span>
                                         </Tooltip>
-                                        <Tooltip title="עדכן למצב הנוכחי">
+                                        <Tooltip title="עדכון למצב הנוכחי">
                                             <span>
                                                 <IconButton
-                                                    disabled={busyId !== null}
+                                                    disabled={ busyId !== null }
                                                     edge="end"
-                                                    onClick={() =>
+                                                    onClick={ () =>
                                                         void handleOverwrite(
                                                             draft.id,
                                                         )
@@ -265,13 +289,13 @@ export function DraftsMenu() {
                                                 </IconButton>
                                             </span>
                                         </Tooltip>
-                                        <Tooltip title="מחק">
+                                        <Tooltip title="מחיקה">
                                             <span>
                                                 <IconButton
                                                     color="error"
-                                                    disabled={busyId !== null}
+                                                    disabled={ busyId !== null }
                                                     edge="end"
-                                                    onClick={() =>
+                                                    onClick={ () =>
                                                         void handleDelete(
                                                             draft.id,
                                                         )
@@ -286,17 +310,16 @@ export function DraftsMenu() {
                                 }
                             >
                                 <ListItemText
-                                    primary={draft.label}
-                                    secondary={`${draft.updatedBy} · ${dayjs(
+                                    primary={ draft.label }
+                                    secondary={ `${draft.updatedBy} · ${dayjs(
                                         draft.updatedAt,
-                                    ).format("DD/MM/YYYY HH:mm")} · ${
-                                        draft.eventCount
-                                    } מופעים`}
+                                    ).format("DD/MM/YYYY HH:mm")} · ${draft.eventCount
+                                    } מופעים` }
                                 />
                             </ListItem>
-                        ))}
+                        )) }
                     </List>
-                )}
+                ) }
             </Popover>
         </>
     );

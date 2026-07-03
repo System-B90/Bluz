@@ -260,8 +260,8 @@ export function BluzCalendar({
                             <Tooltip
                                 title={
                                     showToolbar
-                                        ? "הסתר סרגל כלים"
-                                        : "הצג סרגל כלים"
+                                        ? "הסתרת סרגל כלים"
+                                        : "הצגת סרגל כלים"
                                 }
                             >
                                 <IconButton

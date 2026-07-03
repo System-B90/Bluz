@@ -406,7 +406,7 @@ export function PersonalSettings() {
                     icon={<PeopleIcon className="text-[20px]" />}
                     onAdd={handleAddGroup}
                     onRemove={handleRemoveGroup}
-                    searchLabel="חפש והוסף קבוצה..."
+                    searchLabel="חיפוש והוספת קבוצה..."
                     selectedItems={selectedGroups}
                     title="קבוצות שלי"
                 />
@@ -418,7 +418,7 @@ export function PersonalSettings() {
                     icon={<SchoolIcon className="text-[20px]" />}
                     onAdd={handleAddInstructor}
                     onRemove={handleRemoveInstructor}
-                    searchLabel="חפש והוסף מרצה..."
+                    searchLabel="חיפוש והוספת מרצה..."
                     selectedItems={selectedInstructors}
                     title="מרצים מועדפים"
                 />
@@ -437,7 +437,7 @@ export function PersonalSettings() {
                     icon={<AssignmentIndIcon className="text-[20px]" />}
                     onAdd={handleAddOutsider}
                     onRemove={handleRemoveOutsider}
-                    searchLabel="חפש והוסף איש חוץ..."
+                    searchLabel="חיפוש והוספת איש חוץ..."
                     selectedItems={selectedOutsiders}
                     title="אנשי חוץ מועדפים"
                 />

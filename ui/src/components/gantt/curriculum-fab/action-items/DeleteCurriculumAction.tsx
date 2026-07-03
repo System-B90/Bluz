@@ -15,6 +15,7 @@ export function DeleteCurriculumAction({
     sourceCurriculum,
     onDelete,
     onProcessingChange,
+    loading,
     ...props
 }: DeleteCurriculumActionProps) {
     const runAction = useAsyncAction(onProcessingChange);
@@ -31,6 +32,7 @@ export function DeleteCurriculumAction({
     return (
         <ActionItemButton
             color="error"
+            loading={loading}
             onClick={clickHandler}
             startIcon={<DeleteOutlineIcon fontSize="small" />}
             tooltipTitle="מחיקה"

@@ -229,7 +229,7 @@ export function SnapshotMenu() {
                                                 </IconButton>
                                             </span>
                                         </Tooltip>
-                                        <Tooltip title="מחק">
+                                        <Tooltip title="מחיקה">
                                             <span>
                                                 <IconButton
                                                     color="error"

@@ -377,7 +377,7 @@ export function CourseItem({
                             }}
                         >
                             {/* Add Sub-course */}
-                            <Tooltip title="הוסף תת-מסלול">
+                            <Tooltip title="הוספת תת-מסלול">
                                 <IconButton
                                     color="secondary"
                                     onClick={handleCreateSubCourse}
@@ -388,7 +388,7 @@ export function CourseItem({
                             </Tooltip>
 
                             {/* Quick-Assign Instructor */}
-                            <Tooltip title="שייך מדריך">
+                            <Tooltip title="שיוך מדריך">
                                 <IconButton
                                     color="secondary"
                                     onClick={(e) =>
@@ -401,7 +401,7 @@ export function CourseItem({
                             </Tooltip>
 
                             {/* Delete Course */}
-                            <Tooltip title="מחק מסלול">
+                            <Tooltip title="מחיקת מסלול">
                                 <IconButton
                                     color="error"
                                     onClick={() => deleteCourse(course.id)}
@@ -508,7 +508,7 @@ export function CourseItem({
                     disabled
                     sx={{ fontSize: "0.75rem", fontWeight: 700 }}
                 >
-                    בחר מדריך לשיוך
+                    בחירת מדריך לשיוך
                 </MenuItem>
                 {unassignedInstructors.map((inst) => (
                     <MenuItem

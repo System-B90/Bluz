@@ -27,7 +27,7 @@ export const CurriculumEntry = React.memo(
 
         return (
             <ListItem disablePadding>
-                <ListItemButton onClick={onClick}>
+                <ListItemButton onClick={onClick} sx={{ paddingY: 0.25 }}>
                     <ListItemText
                         primary={curriculum?.title || "ללא שם"}
                         slotProps={{

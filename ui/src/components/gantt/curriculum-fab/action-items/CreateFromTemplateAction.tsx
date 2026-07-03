@@ -32,6 +32,7 @@ export type CreateFromTemplateActionProps = {
 export function CreateFromTemplateAction({
     onCreate,
     onProcessingChange,
+    loading,
     ...props
 }: CreateFromTemplateActionProps)
 {
@@ -73,6 +74,7 @@ export function CreateFromTemplateAction({
     return (
         <>
             <ActionItemButton
+                loading={ loading }
                 onClick={ openMenu }
                 startIcon={ <AutoFixHighIcon fontSize="small" /> }
                 tooltipTitle="יצירה מתבנית"

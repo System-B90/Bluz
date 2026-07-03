@@ -103,7 +103,7 @@ export function WorkTimePanel({
                 <Typography gutterBottom variant="subtitle1">
                     שעות עבודה לשיבוץ
                 </Typography>
-                <Tooltip title="הוסף שבוע">
+                <Tooltip title="הוספת שבוע">
                     <span>
                         <IconButton
                             color="primary"

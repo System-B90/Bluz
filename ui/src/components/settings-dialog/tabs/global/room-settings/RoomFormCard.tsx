@@ -103,7 +103,7 @@ function RoomFormHeader({
                             ? "עריכת כיתה מהייב"
                             : isEditing
                                 ? "עריכת חדר"
-                                : "בחר חדר לעריכה" }
+                                : "בחירת חדר לעריכה" }
                 </Typography>
                 <Typography
                     sx={ {
@@ -117,7 +117,7 @@ function RoomFormHeader({
                             ? "שם ותיאור נשלטים ע״י הייב. ניתן לערוך פרטים מורחבים."
                             : isEditing
                                 ? "עדכון כל פרטי החדר"
-                                : "לחץ על חדר מהרשימה כדי לערוך" }
+                                : "לחיצה על חדר מהרשימה כדי לערוך" }
                 </Typography>
             </Box>
         </Box>
@@ -374,10 +374,10 @@ function RoomFormActions({
                 variant="contained"
             >
                 { isCreating
-                    ? "צור חדר"
+                    ? "יצירת חדר"
                     : isHiveSelected
-                        ? "שמור פרטים מורחבים"
-                        : "עדכן חדר" }
+                        ? "שמירת פרטים מורחבים"
+                        : "עדכון חדר" }
             </Button>
             <Button
                 color="inherit"
@@ -458,7 +458,7 @@ export function RoomFormCard({
                             textAlign: "center",
                         } }
                     >
-                        בחר חדר מהרשימה או צור חדר חדש
+                        בחירת חדר מהרשימה או יצירת חדר חדש
                     </Typography>
                 </Box>
             ) : (

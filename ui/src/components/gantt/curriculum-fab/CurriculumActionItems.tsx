@@ -1,11 +1,12 @@
 import Box from "@mui/material/Box";
 import { ButtonProps } from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
+import Divider from "@mui/material/Divider";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import {
+import
+{
     GanttCurriculumDocument,
     apiExportCurriculum,
     apiImportCurriculum,
@@ -19,13 +20,22 @@ import { DuplicateCurriculumAction } from "@/components/gantt/curriculum-fab/act
 import { ToggleArchiveAction } from "@/components/gantt/curriculum-fab/action-items/ToggleArchiveAction";
 import { ToggleDraftAction } from "@/components/gantt/curriculum-fab/action-items/ToggleDraftAction";
 
+type ActionKey =
+    | "createDraft"
+    | "createFromTemplate"
+    | "delete"
+    | "duplicate"
+    | "importExport"
+    | "toggleArchive"
+    | "toggleDraft";
+
 export type CreateNewCurriculumProps = {
     disabled: boolean;
     onCreate: (newCurriculum: GanttCurriculumDocument) => void;
     onUpdate: (updatedCurriculum: GanttCurriculumDocument) => void;
     onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
     sourceCurriculum?: GanttCurriculumDocument | null;
-} & Omit<ButtonProps, "onClick" | "sx">;
+} & Omit<ButtonProps, "loading" | "onClick" | "sx">;
 
 export function CurriculumActionItems({
     onCreate,
@@ -34,117 +44,159 @@ export function CurriculumActionItems({
     disabled,
     sourceCurriculum,
     ...props
-}: CreateNewCurriculumProps) {
+}: CreateNewCurriculumProps)
+{
     const { enqueueSnackbar } = useSnackbar();
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [ activeAction, setActiveAction ] = useState<ActionKey | null>(null);
+    const isProcessing = activeAction !== null;
     const isDisabled = disabled || isProcessing;
 
-    const handleExport = useCallback(async () => {
-        if (!sourceCurriculum) return null;
-        return await apiExportCurriculum(sourceCurriculum.id);
-    }, [sourceCurriculum]);
+    const makeProcessingHandler = useCallback(
+        (key: ActionKey) => (loading: boolean) => setActiveAction(loading ? key : null),
+        [],
+    );
 
-    const handleExportExcel = useCallback(() => {
+    const handleExport = useCallback(async () =>
+    {
+        if (!sourceCurriculum) return null;
+        setActiveAction("importExport");
+        try
+        {
+            return await apiExportCurriculum(sourceCurriculum.id);
+        } finally
+        {
+            setActiveAction(null);
+        }
+    }, [ sourceCurriculum ]);
+
+    const handleExportExcel = useCallback(() =>
+    {
         if (!sourceCurriculum) return;
         window.open(`/api/gantt/curriculums/${sourceCurriculum.id}/export/excel`, "_blank");
-    }, [sourceCurriculum]);
+    }, [ sourceCurriculum ]);
 
-    const handleExportSuccess = useCallback(() => {
+    const handleExportSuccess = useCallback(() =>
+    {
         enqueueSnackbar("הגאנט יוצא בהצלחה!", { variant: "success" });
-    }, [enqueueSnackbar]);
+    }, [ enqueueSnackbar ]);
 
     const handleExportError = useCallback(
-        (error: any) => {
+        (error: any) =>
+        {
             enqueueApiErrorSnackbar(enqueueSnackbar, "ייצוא הגאנט נכשל!", error);
         },
-        [enqueueSnackbar],
+        [ enqueueSnackbar ],
     );
 
     const handleImport = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-            const file = e.target.files?.[0];
+        (e: React.ChangeEvent<HTMLInputElement>) =>
+        {
+            const file = e.target.files?.[ 0 ];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
+            reader.onload = async (event) =>
+            {
+                try
+                {
                     const json = JSON.parse(event.target?.result as string);
-                    setIsProcessing(true);
+                    setActiveAction("importExport");
                     const newCurriculum = await apiImportCurriculum(json);
                     onCreate(newCurriculum);
                     enqueueSnackbar("הגאנט יובא בהצלחה!", { variant: "success" });
-                } catch (err) {
+                } catch (err)
+                {
                     enqueueApiErrorSnackbar(enqueueSnackbar, "ייבוא הגאנט נכשל!", err);
-                } finally {
-                    setIsProcessing(false);
+                } finally
+                {
+                    setActiveAction(null);
                 }
             };
             reader.readAsText(file);
         },
-        [onCreate, enqueueSnackbar],
+        [ onCreate, enqueueSnackbar ],
     );
 
     return (
         <Box
-            alignItems={"center"}
+            alignItems={ "center" }
             display="flex"
             flexDirection="row"
-            flexWrap={"wrap"}
-            gap={0.5}
-            justifyContent={"center"}
-            justifyItems={"center"}
-            sx={{ mt: 1, mb: 0.5 }}
+            flexWrap={ "wrap" }
+            gap={ 0.5 }
+            justifyContent={ "center" }
+            justifyItems={ "center" }
+            sx={ { mt: 1, mb: 0.5 } }
         >
-            <CreateDraftAction
-                disabled={isDisabled}
-                onCreate={onCreate}
-                onProcessingChange={setIsProcessing}
-                {...props}
-            />
-            <CreateFromTemplateAction
-                disabled={isDisabled}
-                onCreate={onCreate}
-                onProcessingChange={setIsProcessing}
-                {...props}
-            />
-            <DuplicateCurriculumAction
-                disabled={isDisabled || !sourceCurriculum}
-                onCreate={onCreate}
-                onProcessingChange={setIsProcessing}
-                sourceCurriculum={sourceCurriculum}
-            />
-            <ToggleDraftAction
-                disabled={isDisabled || !sourceCurriculum}
-                onProcessingChange={setIsProcessing}
-                onUpdate={onUpdate}
-                sourceCurriculum={sourceCurriculum}
-            />
-            <ToggleArchiveAction
-                disabled={isDisabled || !sourceCurriculum}
-                onProcessingChange={setIsProcessing}
-                onUpdate={onUpdate}
-                sourceCurriculum={sourceCurriculum}
-            />
-            <ImportExportMenuButton
-                exportDisabled={isDisabled || !sourceCurriculum}
-                exportFilenamePrefix="bluz-gantt-"
-                exportTitle={sourceCurriculum?.title}
-                iconOnly
-                importDisabled={isDisabled}
-                onExport={handleExport}
-                onExportError={handleExportError}
-                onExportExcel={handleExportExcel}
-                onExportSuccess={handleExportSuccess}
-                onImport={handleImport}
-                variant="outlined"
-            />
+            { /* Creation actions */ }
+            <Box alignItems="center" display="flex" gap={ 0.5 }>
+                <CreateDraftAction
+                    disabled={ isDisabled }
+                    loading={ activeAction === "createDraft" }
+                    onCreate={ onCreate }
+                    onProcessingChange={ makeProcessingHandler("createDraft") }
+                    { ...props }
+                />
+                <CreateFromTemplateAction
+                    disabled={ isDisabled }
+                    loading={ activeAction === "createFromTemplate" }
+                    onCreate={ onCreate }
+                    onProcessingChange={ makeProcessingHandler("createFromTemplate") }
+                    { ...props }
+                />
+                <DuplicateCurriculumAction
+                    disabled={ isDisabled || !sourceCurriculum }
+                    loading={ activeAction === "duplicate" }
+                    onCreate={ onCreate }
+                    onProcessingChange={ makeProcessingHandler("duplicate") }
+                    sourceCurriculum={ sourceCurriculum }
+                />
+            </Box>
+
+            <Divider flexItem orientation="vertical" sx={ { my: 0.5 } } />
+
+            { /* Status / export actions on the current curriculum */ }
+            <Box alignItems="center" display="flex" gap={ 0.5 }>
+                <ToggleDraftAction
+                    disabled={ isDisabled || !sourceCurriculum }
+                    loading={ activeAction === "toggleDraft" }
+                    onProcessingChange={ makeProcessingHandler("toggleDraft") }
+                    onUpdate={ onUpdate }
+                    sourceCurriculum={ sourceCurriculum }
+                />
+                <ToggleArchiveAction
+                    disabled={ isDisabled || !sourceCurriculum }
+                    loading={ activeAction === "toggleArchive" }
+                    onProcessingChange={ makeProcessingHandler("toggleArchive") }
+                    onUpdate={ onUpdate }
+                    sourceCurriculum={ sourceCurriculum }
+                />
+                <ImportExportMenuButton
+                    exportDisabled={ isDisabled || !sourceCurriculum }
+                    exportFilenamePrefix="bluz-gantt-"
+                    exportTitle={ sourceCurriculum?.title }
+                    iconOnly
+                    importDisabled={ isDisabled }
+                    loading={ activeAction === "importExport" }
+                    onExport={ handleExport }
+                    onExportError={ handleExportError }
+                    onExportExcel={ handleExportExcel }
+                    onExportSuccess={ handleExportSuccess }
+                    onImport={ handleImport }
+                    variant="outlined"
+                />
+            </Box>
+
+            <Divider flexItem orientation="vertical" sx={ { my: 0.5 } } />
+
+            { /* Destructive action, kept apart to avoid accidental clicks */ }
             <DeleteCurriculumAction
-                disabled={isDisabled || !sourceCurriculum}
-                onDelete={onDelete}
-                onProcessingChange={setIsProcessing}
-                sourceCurriculum={sourceCurriculum}
+                disabled={ isDisabled || !sourceCurriculum }
+                loading={ activeAction === "delete" }
+                onDelete={ onDelete }
+                onProcessingChange={ makeProcessingHandler("delete") }
+                sourceCurriculum={ sourceCurriculum }
             />
-            {isProcessing ? <CircularProgress size={20} /> : null}
         </Box>
     );
 }

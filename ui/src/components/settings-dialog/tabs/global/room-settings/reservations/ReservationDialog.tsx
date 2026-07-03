@@ -287,7 +287,7 @@ export function ReservationDialog({
                             <ListItem
                                 key={r._id}
                                 secondaryAction={
-                                    <Tooltip title="בטל הזמנה">
+                                    <Tooltip title="ביטול הזמנה">
                                         <IconButton
                                             onClick={() =>
                                                 r._id && handleCancel(r._id)
@@ -372,7 +372,7 @@ export function ReservationDialog({
                     sx={{ borderRadius: "10px" }}
                     variant="outlined"
                 >
-                    סגור
+                    סגירה
                 </Button>
             </DialogActions>
         </Dialog>

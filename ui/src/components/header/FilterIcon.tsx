@@ -37,7 +37,7 @@ export function FilterIcon() {
         <>
             <Tooltip
                 placement="bottom"
-                title={open ? "הסתר סננים" : "הצג סננים"}
+                title={open ? "הסתרת סננים" : "הצגת סננים"}
             >
                 <IconButton
                     className="relative transition-all duration-200 hover:scale-110 active:scale-95"

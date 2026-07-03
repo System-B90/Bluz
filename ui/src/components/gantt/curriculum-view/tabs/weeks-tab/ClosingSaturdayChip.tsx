@@ -39,7 +39,7 @@ export function ClosingSaturdayChip({
     }, [week, weekId, weekendDuty, updateWeek, enqueueSnackbar]);
 
     return (
-        <Tooltip arrow title={weekendDuty ? "צא הביתה" : "סגור שבת"}>
+        <Tooltip arrow title={weekendDuty ? "יציאה הביתה" : "סגירת שבת"}>
             <Chip
                 className={`
                     transition-all duration-300 ease-in-out cursor-pointer font-bold
@@ -56,7 +56,7 @@ export function ClosingSaturdayChip({
                         <EventAvailable className="text-slate-500" />
                     )
                 }
-                label={weekendDuty ? "סוגרים" : "יוצאים"}
+                label={weekendDuty ? "סוגרים שבת" : "יוצאים הביתה"}
                 onClick={clickHandler}
                 sx={{
                     height: 28,

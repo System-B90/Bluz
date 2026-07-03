@@ -56,9 +56,9 @@ export function MoveEventDialog({
             <DialogTitle>העבר מופע למערך אחר</DialogTitle>
             <DialogContent>
                 <FormControl fullWidth size="small" sx={{ mt: 1 }}>
-                    <InputLabel>בחר מערך</InputLabel>
+                    <InputLabel>בחירת מערך</InputLabel>
                     <Select
-                        label="בחר מערך"
+                        label="בחירת מערך"
                         onChange={(e) => setDestModuleId(e.target.value as GanttModuleId)}
                         value={destModuleId}
                     >
