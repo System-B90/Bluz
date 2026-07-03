@@ -37,6 +37,10 @@ import React, {
 } from "react";
 
 import { ConstraintType } from "@/api-shared/types/gantt/models/constraint";
+import {
+    computeEventDaySpans,
+    getSpilloverMinutesByDay,
+} from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { ConstraintLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/ConstraintLines";
 import { GanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { GanttHeader } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHeader";
@@ -273,6 +277,23 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
         });
         return merged;
     }, [globalMappings, curriculumId]);
+
+    // Multi-day spillover layout: which days each mapped event actually
+    // occupies, and per-day scheduled minutes with the spill applied (#105).
+    const eventSpans = useMemo(
+        () =>
+            computeEventDaySpans({
+                mappings: curriculumMappings,
+                state,
+                linearDays,
+            }),
+        [curriculumMappings, state, linearDays],
+    );
+
+    const scheduledMinutesByDay = useMemo(
+        () => getSpilloverMinutesByDay(eventSpans),
+        [eventSpans],
+    );
 
     // Modules/events with no day mapping yet, grouped by syllabus, for the
     // "unallocated" panel (#89).
@@ -658,6 +679,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             moduleMappings,
             eventMappings,
             curriculumMappings,
+            eventSpans,
+            scheduledMinutesByDay,
             violations,
             dayCellWidth,
             zoomedWeekId,
@@ -682,6 +705,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             moduleMappings,
             eventMappings,
             curriculumMappings,
+            eventSpans,
+            scheduledMinutesByDay,
             violations,
             dayCellWidth,
             zoomedWeekId,

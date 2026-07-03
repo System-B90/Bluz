@@ -1,6 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
 import Box from "@mui/material/Box";
-import { useTheme } from "@mui/material/styles";
+import { alpha, useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import React, { memo } from "react";
@@ -20,6 +20,9 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     isAbsolute = true,
     elementId,
     violations = [],
+    blockLeftPx,
+    blockWidthPx,
+    isSpillover = false,
 }) => {
     const theme = useTheme();
     const state = useCurriculumState();
@@ -50,13 +53,24 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
         : undefined;
 
     const blockWidth =
-        spanLength > 1
-            ? `calc(${spanLength * 100}% - 8px)`
-            : isAbsolute
-                ? "calc(100% - 8px)"
-                : "100%";
+        blockWidthPx !== undefined
+            ? `${blockWidthPx}px`
+            : spanLength > 1
+                ? `calc(${spanLength * 100}% - 8px)`
+                : isAbsolute
+                    ? "calc(100% - 8px)"
+                    : "100%";
 
     const isViolated = violations.length > 0;
+
+    // Multi-day overflow blocks fade out toward the spilled days (#105).
+    const spilloverBackground =
+        isSpillover && !isOpaque
+            ? `linear-gradient(to left, ${theme.palette.primary.main} 55%, ${alpha(
+                theme.palette.primary.main,
+                0.45,
+            )} 100%)`
+            : undefined;
 
     const block = (
         <Box
@@ -69,12 +83,15 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
                 position: isAbsolute ? "absolute" : "relative",
                 top: isAbsolute ? "5px" : "auto",
                 bottom: isAbsolute ? "5px" : "auto",
-                left: isAbsolute ? "4px" : "auto",
+                left: isAbsolute
+                    ? `${blockLeftPx !== undefined ? blockLeftPx : 4}px`
+                    : "auto",
                 width: blockWidth,
                 height: "24px",
                 backgroundColor: isOpaque
                     ? "transparent"
                     : theme.palette.primary.main,
+                backgroundImage: spilloverBackground,
                 borderRadius: "4px",
                 border: isViolated
                     ? `2px solid ${theme.palette.error.main}`
@@ -114,9 +131,11 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
         </Box>
     );
 
-    const tooltipContent = isViolated
-        ? `${title ?? ""}\n${violations.join("\n")}`.trim()
-        : (title ?? "");
+    const spilloverNote = isSpillover ? "גולש על פני מספר ימים" : "";
+    const tooltipContent = [title ?? "", spilloverNote, ...violations]
+        .filter(Boolean)
+        .join("\n")
+        .trim();
 
     return tooltipContent ? (
         <Tooltip arrow placement="top" title={tooltipContent}>

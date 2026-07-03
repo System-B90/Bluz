@@ -3,6 +3,14 @@ import React from "react";
 import { GanttWeek } from "@/api-shared/types/gantt/models";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
 
+/** Multi-day spillover info for a mapped event (#105). */
+export type EventSpanInfo = {
+    /** Last day the event occupies (after overflow). */
+    endDayId: string;
+    /** Total days covered from start to end, inclusive. */
+    spanDayCount: number;
+};
+
 type WeeklyCellsParams = {
     timelineWeeks: Array<GanttWeek>;
     moduleId: string;
@@ -13,6 +21,7 @@ type WeeklyCellsParams = {
     isModuleMapped: boolean;
     moduleStartWeekIdx: number;
     violations: Array<string>;
+    spanInfo?: EventSpanInfo | null;
 };
 
 export function buildWeeklyEventCells(
@@ -28,6 +37,7 @@ export function buildWeeklyEventCells(
         isModuleMapped,
         moduleStartWeekIdx,
         violations,
+        spanInfo,
     } = params;
 
     return timelineWeeks.map((week, weekIdx) => {
@@ -57,10 +67,29 @@ export function buildWeeklyEventCells(
             const CELL = 80;
             const dayPosInWeek = week.days.indexOf(currentDayId);
             const startFrac = dayPosInWeek / week.days.length;
-            const endFrac = (dayPosInWeek + 1) / week.days.length;
+            let endFrac = (dayPosInWeek + 1) / week.days.length;
+            let weekSpan = 0;
+
+            // Multi-day spillover: stretch the block to the last spanned day,
+            // possibly across week boundaries (#105).
+            if (spanInfo)
+            {
+                const endWeekIdx = timelineWeeks.findIndex((w) =>
+                    w.days.includes(spanInfo.endDayId),
+                );
+                if (endWeekIdx >= weekIdx)
+                {
+                    const endWeek = timelineWeeks[ endWeekIdx ];
+                    endFrac =
+                        (endWeek.days.indexOf(spanInfo.endDayId) + 1) /
+                        endWeek.days.length;
+                    weekSpan = endWeekIdx - weekIdx;
+                }
+            }
+
             blockLeftPx = Math.round(startFrac * CELL) + 2;
             blockWidthPx = Math.max(
-                Math.round((endFrac - startFrac) * CELL) - 4,
+                Math.round(weekSpan * CELL + (endFrac - startFrac) * CELL) - 4,
                 16,
             );
         }
@@ -80,6 +109,7 @@ export function buildWeeklyEventCells(
                 hasBlock={ hasBlock }
                 isAbsoluteBlock={ true }
                 isOpaque={ isWaitingInModuleStartColumn }
+                isSpillover={ isExplicitlyMappedHere && !!spanInfo }
                 key={ `week-${week.id}-${eventId}` }
                 payloadData={ {
                     targetType: "event",
@@ -102,6 +132,7 @@ type DailyCellsParams = {
     isModuleMapped: boolean;
     moduleStartDayId: null | string;
     violations: Array<string>;
+    spanInfo?: EventSpanInfo | null;
 };
 
 export function buildDailyEventCells(
@@ -117,6 +148,7 @@ export function buildDailyEventCells(
         isModuleMapped,
         moduleStartDayId,
         violations,
+        spanInfo,
     } = params;
 
     return timelineWeeks.flatMap((week) =>
@@ -150,8 +182,14 @@ export function buildDailyEventCells(
                     hasBlock={ hasBlock }
                     isAbsoluteBlock={ true }
                     isOpaque={ isWaitingInModuleStartColumn }
+                    isSpillover={ isExplicitlyMappedHere && !!spanInfo }
                     key={ `${dayId}-${eventId}` }
                     payloadData={ { targetType: "event", eventId, dayId } }
+                    spanLength={
+                        isExplicitlyMappedHere && spanInfo
+                            ? spanInfo.spanDayCount
+                            : 1
+                    }
                     violations={ hasBlock ? violations : undefined }
                 />
             );

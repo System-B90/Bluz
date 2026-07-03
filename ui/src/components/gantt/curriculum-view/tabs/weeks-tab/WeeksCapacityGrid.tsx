@@ -22,11 +22,12 @@ import {
     getDayNameDisplay,
 } from "@/api-shared/types/gantt/models";
 import {
+    computeEventDaySpans,
     formatHoursLabel,
     formatMinutesAsTimeInput,
     formatWeekDateRange,
     getCapacityStatus,
-    getScheduledMinutesForDay,
+    getSpilloverMinutesByDay,
     getWeekDateRange,
     getWeekScheduledMinutes,
     getWeekTotalMinutes,
@@ -63,6 +64,7 @@ function getDayIdByIndex(
 function WeekRow({
     isCompact = false,
     mappings,
+    scheduledMinutesByDay,
     startDate,
     state,
     week,
@@ -70,6 +72,8 @@ function WeekRow({
 }: {
     isCompact?: boolean;
     mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    /** Per-day scheduled minutes with multi-day spillover applied (#105). */
+    scheduledMinutesByDay: Record<GanttDayId, number>;
     startDate: null | string;
     state: NormalizedStore;
     week: NormalizedStore["weeks"][string];
@@ -226,11 +230,7 @@ function WeekRow({
                         isCompact={isCompact}
                         isMuted={isMutedSaturday}
                         key={dayId}
-                        scheduledMinutes={getScheduledMinutesForDay({
-                            dayId,
-                            mappings,
-                            state,
-                        })}
+                        scheduledMinutes={scheduledMinutesByDay[dayId] ?? 0}
                         startDate={startDate}
                         weekIndex={weekIndex}
                     />
@@ -429,6 +429,15 @@ export function WeeksCapacityGrid({
         return nextWeeks;
     }, [curriculum.weeks, state.weeks]);
 
+    // Multi-day spillover: distribute each event's minutes across the days it
+    // actually occupies so capacity bars reflect the dynamic overflow (#105).
+    const scheduledMinutesByDay = useMemo(() => {
+        const linearDays = weeks.flatMap((week) => week.days);
+        return getSpilloverMinutesByDay(
+            computeEventDaySpans({ mappings, state, linearDays }),
+        );
+    }, [weeks, mappings, state]);
+
     return (
         <TableContainer
             className="animate-slide-up-fade"
@@ -513,6 +522,7 @@ export function WeeksCapacityGrid({
                                 isCompact={isCompact}
                                 key={week.id}
                                 mappings={mappings}
+                                scheduledMinutesByDay={scheduledMinutesByDay}
                                 startDate={curriculum.startDate}
                                 state={state}
                                 week={week}

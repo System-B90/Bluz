@@ -14,7 +14,6 @@ import {
     formatWeekDateRange,
     getCapacityStatus,
     getDayDate,
-    getScheduledMinutesForDay,
     getWeekDateRange,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
@@ -24,8 +23,8 @@ export const GanttHeader: React.FC = () => {
     const theme = useTheme();
     const state = useCurriculumState();
     const {
-        curriculumMappings,
         dayCellWidth,
+        scheduledMinutesByDay,
         setZoomedWeekId,
         showConstraints,
         startDate,
@@ -76,11 +75,7 @@ export const GanttHeader: React.FC = () => {
                                     !!day &&
                                     getCapacityStatus(
                                         day.totalWorkingMinutes,
-                                        getScheduledMinutesForDay({
-                                            dayId: day.id,
-                                            mappings: curriculumMappings,
-                                            state,
-                                        }),
+                                        scheduledMinutesByDay[day.id] ?? 0,
                                     ) === "error",
                             )
                             .map((day) => getDayNameDisplay(day!.dayIndex))
@@ -168,11 +163,7 @@ export const GanttHeader: React.FC = () => {
                                 showConstraints &&
                                 getCapacityStatus(
                                     day.totalWorkingMinutes,
-                                    getScheduledMinutesForDay({
-                                        dayId,
-                                        mappings: curriculumMappings,
-                                        state,
-                                    }),
+                                    scheduledMinutesByDay[dayId] ?? 0,
                                 ) === "error";
                             return (
                                 <TableCell
