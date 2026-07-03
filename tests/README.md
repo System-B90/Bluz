@@ -124,13 +124,19 @@ All other test projects inject this stored state, skipping login entirely.
 ### CI/CD
 
 Tests run via GitHub Actions on pushes to `master`/`dev` and on pull requests.
-See `.github/workflows/e2e.yml`. The CI job:
+See `.github/workflows/e2e.yml`. The CI job is fully hermetic — it stands up its
+own Hive instance instead of depending on an external one:
 
-1. Builds and starts the test docker composition
-2. Installs Playwright browsers
-3. Runs all tests
-4. Uploads `playwright-report/` and `test-results/` as workflow artifacts
-5. Tears down test containers
+1. Checks out `hivelms/Hive` (SSO branch; requires the `HIVE_REPO_TOKEN` secret),
+   then builds, initializes, and starts it via `manage_hive.py` at `https://hive.org`
+2. Verifies the `admin:Password1` account with `pyhive` (pip: `pyhivelms`)
+3. Generates a CI `.env` + self-signed SSL certs, installs npm/Python deps and
+   Playwright browsers, and pre-builds the test docker images
+4. Runs the full pipeline (`python scripts/run_tests.py --seed-hive`): unit tests,
+   test composition with dynamic ports, per-run SSO client registration, Drizzle
+   schema push, Hive + Bluz seeding via `pyhive`, then Playwright e2e
+5. Uploads `playwright-report/`, `test-results/`, and (on failure) container logs
+   as workflow artifacts
 
 ---
 

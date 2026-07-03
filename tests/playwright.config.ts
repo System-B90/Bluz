@@ -1,3 +1,5 @@
+import * as path from "path";
+
 import { defineConfig, devices } from "@playwright/test";
 
 /**
@@ -58,7 +60,10 @@ export default defineConfig({
             testIgnore: [ /login\.spec\.ts/, /auth\.setup\.ts/, /backend/, /worktrees/, /\.claude/ ],
             use: {
                 ...devices[ "Desktop Chrome" ],
-                storageState: ".auth/user.json",
+                // Absolute path: the custom context fixture passes this raw to
+                // browser.newContext(), which resolves relative paths against
+                // the process CWD rather than this config's directory.
+                storageState: path.join(__dirname, ".auth", "user.json"),
             },
             dependencies: [ "setup" ],
         },
