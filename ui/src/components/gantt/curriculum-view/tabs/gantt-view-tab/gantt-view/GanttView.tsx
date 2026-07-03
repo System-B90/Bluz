@@ -36,7 +36,10 @@ import React, {
     useState,
 } from "react";
 
-import { ConstraintType } from "@/api-shared/types/gantt/models/constraint";
+import {
+    ConstraintType,
+    hasConflictingTemporalConstraints,
+} from "@/api-shared/types/gantt/models/constraint";
 import {
     computeEventDaySpans,
     getSpilloverMinutesByDay,
@@ -373,6 +376,18 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             entityType: "event" | "module",
         ) => {
             const cIds: Array<string> = entity.constraintIds || [];
+
+            // Conflicting temporal constraints are flagged even before the
+            // entity is mapped to a day (#104). Warning only — never blocks.
+            if (
+                hasConflictingTemporalConstraints(
+                    cIds.map((cId) => constraints[cId]),
+                )
+            ) {
+                if (!v[entityId]) v[entityId] = [];
+                v[entityId].push("אילוצים סותרים: לא נותר אף יום חוקי");
+            }
+
             const myIdx = getMappedDayIdx(entityType, entityId);
             if (myIdx === -1) return;
 

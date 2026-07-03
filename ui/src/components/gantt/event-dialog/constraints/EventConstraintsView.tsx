@@ -1,5 +1,6 @@
 "use client";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -15,6 +16,7 @@ import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
 import {
     ConstraintType,
     GanttConstraint,
+    hasConflictingTemporalConstraints,
     RelationalConstraint,
 } from "@/api-shared/types/gantt/models/constraint";
 import { buildVirtualSiblingConstraints } from "@/components/gantt/event-dialog/constraints/virtual-constraints";
@@ -87,6 +89,12 @@ export function EventConstraintsView({
                 (c) => c.ownerEventId === eventId,
             ),
         [state.constraints, eventId],
+    );
+
+    // Warning-only cross-constraint validation (#104): saving is not blocked.
+    const hasTemporalConflict = useMemo(
+        () => hasConflictingTemporalConstraints(constraintsList),
+        [constraintsList],
     );
 
     // Default sibling constraints, derived from the event order in the module.
@@ -253,6 +261,13 @@ export function EventConstraintsView({
                         הוספת אילוץ
                     </Button>
                 </Stack>
+
+                {hasTemporalConflict ? (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                        האילוצים הזמניים סותרים זה את זה — לא נותר אף יום
+                        חוקי לשיבוץ. ניתן לשמור, אך מומלץ לתקן.
+                    </Alert>
+                ) : null}
 
                 {state.isLoading ? (
                     <Stack spacing={1}>

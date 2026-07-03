@@ -48,6 +48,48 @@ export type TemporalConstraint = BaseConstraint & {
 
 export type GanttConstraint = RelationalConstraint | TemporalConstraint;
 
+const ALL_DAY_INDICES: Array<GanttDayIndex> = [
+    GanttDayIndex.Sunday,
+    GanttDayIndex.Monday,
+    GanttDayIndex.Tuesday,
+    GanttDayIndex.Wednesday,
+    GanttDayIndex.Thursday,
+    GanttDayIndex.Friday,
+    GanttDayIndex.Saturday,
+];
+
+/**
+ * Detects mutually conflicting temporal constraints (issue #104): intersects
+ * all `allowedDays`, subtracts all `forbiddenDays`, and reports a conflict
+ * when no valid day of the week remains. Warning-level only — saving is
+ * never blocked by this check.
+ */
+export function hasConflictingTemporalConstraints(
+    constraints: Array<GanttConstraint | undefined>,
+): boolean {
+    const temporal = constraints.filter(
+        (c): c is TemporalConstraint => c?.type === ConstraintType.Temporal,
+    );
+    if (temporal.length === 0) return false;
+
+    let allowed = new Set<GanttDayIndex>(ALL_DAY_INDICES);
+    for (const constraint of temporal) {
+        if (constraint.allowedDays && constraint.allowedDays.length > 0) {
+            allowed = new Set(
+                [...allowed].filter((day) =>
+                    constraint.allowedDays!.includes(day),
+                ),
+            );
+        }
+    }
+    for (const constraint of temporal) {
+        for (const day of constraint.forbiddenDays ?? []) {
+            allowed.delete(day);
+        }
+    }
+    return allowed.size === 0;
+}
+
 export function constraintToHumanReadableString(
     constraint: GanttConstraint,
     state: any,
