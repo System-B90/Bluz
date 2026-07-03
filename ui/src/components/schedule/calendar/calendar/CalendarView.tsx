@@ -4,7 +4,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { useMemo } from "react";
 import { CalendarProps, View, Views } from "react-big-calendar";
 
-import { GanttDayIndex, getDayNameDisplay } from "@/api-shared/types/gantt/models/day";
+import { GanttDayIndex, getDayNameDisplay, HEBREW_DAYS_SHORT } from "@/api-shared/types/gantt/models/day";
 import { Room, RoomSource, roomToResolvable } from "@/api-shared/types/room"; // Import the full Room type and roomToResolvable
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
@@ -22,8 +22,6 @@ const NO_ROOM_RESOURCE: Room = {
     name: "ללא כיתה",
     source: RoomSource.Custom,
 };
-
-const HEBREW_DAYS_SHORT = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
 
 function CalendarHeader({ date }: { date: Date }) {
     const dayIndex = date.getDay();

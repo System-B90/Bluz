@@ -4,12 +4,17 @@ export type {
     GanttCurriculumId,
 } from "@/api-shared/types/gantt/models/curriculum";
 export type { GanttCurriculumEventDayMapping as GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models/curriculum-day-module-mapping";
+
 export {
     DAY_NAME_DISPLAY,
     GanttDayIndex,
     getDayNameDisplay,
+    DAYS_OF_WEEK,
+    HEBREW_DAYS_SHORT,
+    HEBREW_DAYS_SINGLE_LETTER,
 } from "@/api-shared/types/gantt/models/day";
-export type { GanttDay, GanttDayId } from "@/api-shared/types/gantt/models/day";
+export type { GanttDay, GanttDayId, DayOfWeekConfig } from "@/api-shared/types/gantt/models/day";
+
 export {
     EventRecurrence,
     ModuleEventType,
