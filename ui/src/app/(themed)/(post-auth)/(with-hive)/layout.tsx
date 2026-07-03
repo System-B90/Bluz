@@ -6,6 +6,7 @@ import Tooltip from "@mui/material/Tooltip";
 import React from "react";
 
 import { CoursesProvider } from "@/components/base/CoursesProvider";
+import { CustomColorsProvider } from "@/components/base/CustomColorsProvider";
 import { HiveLessonsProvider } from "@/components/base/HiveLessonsProvider";
 import { HiveModulesProvider } from "@/components/base/HiveModulesProvider";
 import { HiveSubjectsProvider } from "@/components/base/HiveSubjectsProvider";
@@ -92,19 +93,21 @@ export default function PostAuthLayout({
                 <HiveModulesProvider>
                     <HiveLessonsProvider>
                         <RoomsProvider>
-                            <OutsidersProvider>
-                                <SettingsProvider>
-                                    <CoursesProvider>
-                                        <OfflineProvider>
-                                            <CalendarProvider>
-                                                <LayoutContent>
-                                                    {children}
-                                                </LayoutContent>
-                                            </CalendarProvider>
-                                        </OfflineProvider>
-                                    </CoursesProvider>
-                                </SettingsProvider>
-                            </OutsidersProvider>
+                            <CustomColorsProvider>
+                                <OutsidersProvider>
+                                    <SettingsProvider>
+                                        <CoursesProvider>
+                                            <OfflineProvider>
+                                                <CalendarProvider>
+                                                    <LayoutContent>
+                                                        {children}
+                                                    </LayoutContent>
+                                                </CalendarProvider>
+                                            </OfflineProvider>
+                                        </CoursesProvider>
+                                    </SettingsProvider>
+                                </OutsidersProvider>
+                            </CustomColorsProvider>
                         </RoomsProvider>
                     </HiveLessonsProvider>
                 </HiveModulesProvider>

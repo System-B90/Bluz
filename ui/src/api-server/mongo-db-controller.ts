@@ -5,6 +5,7 @@ import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import { ClientApiError } from "@/api-shared/errors";
 import { CalendarDraft, CalendarSnapshot } from "@/api-shared/types";
 import { Course } from "@/api-shared/types/course";
+import { CustomColor } from "@/api-shared/types/custom-color";
 import {
     GanttCurriculum,
     GanttEvent,
@@ -211,6 +212,9 @@ class MetaController {
         return this.metaDb.collection<PersonalSettingsDocument>(
             "personalSettings",
         );
+    }
+    public get customColors(): Collection<CustomColor> {
+        return this.metaDb.collection<CustomColor>("customColors");
     }
     public get client(): MongoClient {
         return mongoClient;

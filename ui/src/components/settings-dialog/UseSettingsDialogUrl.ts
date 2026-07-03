@@ -4,6 +4,7 @@ import { useCallback, useMemo } from "react";
 export const SETTINGS_TABS = [
     "personal",
     "global",
+    "colors",
     "rooms",
     "outsiders",
 ] as const;

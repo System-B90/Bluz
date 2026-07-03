@@ -28,6 +28,7 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
 
     const subject = getSubject(event.subject);
     const bgColor =
+        event.color ||
         (event.type === EventType.PRAYER ? "#e0f9fe" : subject?.color) ??
         theme.palette.common.black;
     const textColor = theme.palette.getContrastText(bgColor);

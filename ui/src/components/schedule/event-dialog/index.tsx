@@ -11,6 +11,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import { FormEvent, useCallback, useState } from "react";
 
+import { ColorPickerField } from "@/components/schedule/event-dialog/ColorPickerField";
 import { EventClassification } from "@/components/schedule/event-dialog/EventClassification";
 import { EventPrimaryDetails } from "@/components/schedule/event-dialog/EventPrimaryDetails";
 import { EventToggles } from "@/components/schedule/event-dialog/EventToggles";
@@ -118,6 +119,11 @@ export function EventDialog({
                         <InstructorsField
                             event={ event }
                             onBlurCallback={ handleUpdate }
+                        />
+
+                        <ColorPickerField
+                            event={ event }
+                            onUpdate={ handleUpdate }
                         />
 
                         <EventToggles event={ event } onUpdate={ handleUpdate } />

@@ -48,6 +48,7 @@ export type Event = {
     hidden: boolean;
     required: boolean;
     personalTalk: boolean;
+    color?: string;
 };
 
 /**
