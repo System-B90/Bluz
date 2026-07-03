@@ -55,7 +55,7 @@ export class HiveClient {
 
     private async refreshAccessToken(): Promise<void> {
         if (!this.refreshTokenValue) {
-            throw new HiveClientError("אין טוקן רפרש זמין, אנא התחבר מחדש");
+            throw new HiveClientError("אין טוקן רפרש זמין, נדרשת התחברות מחדש");
         }
 
         const response = await fetch(
@@ -72,7 +72,7 @@ export class HiveClient {
         );
 
         if (!response.ok) {
-            throw new HiveClientError("עדכון הטוקן נכשל, אנא התחבר מחדש");
+            throw new HiveClientError("עדכון הטוקן נכשל, נדרשת התחברות מחדש");
         }
 
         const data = await response.json();
@@ -104,7 +104,7 @@ export class HiveClient {
                 await this.refreshAccessToken();
                 return await this._request<T>(url, method, body, true, 0);
             }
-            throw new HiveClientError("הטוקן אינו תקף, אנא התחבר מחדש");
+            throw new HiveClientError("הטוקן אינו תקף, נדרשת התחברות מחדש");
         }
 
         if (response.status === 500) {

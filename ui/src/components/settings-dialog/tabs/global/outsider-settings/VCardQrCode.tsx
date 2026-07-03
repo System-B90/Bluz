@@ -97,7 +97,7 @@ export function VCardQrCode({
 
     return (
         <>
-            <Tooltip arrow title="לחץ פעמיים להגדלה / סרוק לשמירה בטלפון">
+            <Tooltip arrow title="לחיצה כפולה להגדלה / סריקה לשמירה בטלפון">
                 <Box
                     onDoubleClick={() => setOpen(true)}
                     sx={{

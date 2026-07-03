@@ -50,7 +50,7 @@ export function Filters({ ...props }: BoxProps)
             >
                 <Tooltip
                     title={
-                        showPAsFor !== null ? 'הסתר חלונות פ"א' : 'גלה חלונות פ"א'
+                        showPAsFor !== null ? 'הסתרת חלונות פ"א' : 'גילוי חלונות פ"א'
                     }
                 >
                     <IconButton
@@ -61,7 +61,7 @@ export function Filters({ ...props }: BoxProps)
                     </IconButton>
                 </Tooltip>
 
-                <Tooltip title={ hidePrayers ? "הצג תפילות" : "הסתר תפילות" }>
+                <Tooltip title={ hidePrayers ? "הצגת תפילות" : "הסתרת תפילות" }>
                     <IconButton
                         className="relative"
                         color="inherit"
@@ -84,7 +84,7 @@ export function Filters({ ...props }: BoxProps)
 
                 <Tooltip
                     title={
-                        showMisconfigurations ? "הסתר פערי איוש" : "הצג פערי איוש"
+                        showMisconfigurations ? "הסתרת פערי איוש" : "הצגת פערי איוש"
                     }
                 >
                     <IconButton

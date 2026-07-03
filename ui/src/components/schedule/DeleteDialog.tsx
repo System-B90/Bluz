@@ -26,16 +26,16 @@ export function DeleteDialog({
 
     return (
         <Dialog onClose={onClose} open={open}>
-            <DialogTitle>אשר מחיקה</DialogTitle>
+            <DialogTitle>אישור מחיקה</DialogTitle>
             <DialogContent>
                 <Typography>
-                    האם אתה בטוח שברצונך למחוק את &quot;{event.name}&quot; מ{}?
+                    האם ברצונך למחוק את &quot;{event.name}&quot;?
                 </Typography>
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose}>ביטול</Button>
                 <Button color="error" onClick={onConfirm} variant="contained">
-                    מחק
+                    מחיקה
                 </Button>
             </DialogActions>
         </Dialog>

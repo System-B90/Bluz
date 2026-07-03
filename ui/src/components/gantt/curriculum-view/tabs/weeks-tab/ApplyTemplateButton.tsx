@@ -183,7 +183,7 @@ export function ApplyTemplateButton({ curriculum, curriculumId }: Props) {
                 size="small"
                 variant="outlined"
             >
-                {isApplying ? "מחיל תבנית..." : "בחר תבנית"}
+                {isApplying ? "מחיל תבנית..." : "בחירת תבנית"}
             </Button>
 
             <Menu
@@ -242,7 +242,7 @@ export function ApplyTemplateButton({ curriculum, curriculumId }: Props) {
                         onClick={() => void applyTemplate()}
                         variant="contained"
                     >
-                        החל תבנית
+                        החלת תבנית
                     </Button>
                 </DialogActions>
             </Dialog>

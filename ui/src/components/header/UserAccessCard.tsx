@@ -60,7 +60,7 @@ function ChipAvatar({ className, ...props }: AvatarProps) {
                 sx={{ margin: "0 !important" }}
             />
 
-            <Tooltip title="התנתק">
+            <Tooltip title="התנתקות">
                 <IconButton
                     className="logout-icon"
                     color="error"

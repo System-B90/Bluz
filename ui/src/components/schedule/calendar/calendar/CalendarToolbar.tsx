@@ -248,7 +248,7 @@ export function CalendarToolbar({
                         </Tooltip>
 
                         <Tooltip
-                            title={ filterOpen ? "הסתר סננים" : "הצג סננים" }
+                            title={ filterOpen ? "הסתרת סננים" : "הצגת סננים" }
                         >
                             <Button
                                 color="primary"
@@ -322,7 +322,7 @@ export function CalendarToolbar({
                     </Popover>
 
                     <ButtonGroup size="small" variant="outlined">
-                        <Tooltip title="הסתר סרגל כלים">
+                        <Tooltip title="הסתרת סרגל כלים">
                             <Button
                                 onClick={ onToggleToolbar }
                                 sx={ {

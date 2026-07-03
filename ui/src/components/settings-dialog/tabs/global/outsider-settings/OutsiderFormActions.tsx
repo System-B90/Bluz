@@ -27,7 +27,7 @@ export function OutsiderFormActions({
                 type="submit"
                 variant="contained"
             >
-                { isCreating ? "הוסף איש חוץ" : "עדכן איש חוץ" }
+                { isCreating ? "הוספת איש חוץ" : "עדכון איש חוץ" }
             </Button>
             <Button
                 color="inherit"

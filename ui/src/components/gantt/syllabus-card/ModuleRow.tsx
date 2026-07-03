@@ -97,7 +97,7 @@ export function ModuleRow({
                 )}
             </TableCell>
             <TableCell>
-                <Tooltip placement="top" title="ערוך מערך">
+                <Tooltip placement="top" title="עריכת מערך">
                     <IconButton
                         color="primary"
                         onClick={editClickHandler}

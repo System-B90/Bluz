@@ -6,49 +6,8 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import React, { useMemo } from "react";
 
-import {
-    GanttDayIndex,
-    getDayNameDisplay,
-} from "@/api-shared/types/gantt/models";
+import { DAYS_OF_WEEK, GanttDayIndex } from "@/api-shared/types/gantt/models";
 import { TemporalDraft } from "@/components/gantt/module-dialog/constraints/types";
-
-const DAYS_OF_WEEK = [
-    {
-        index: GanttDayIndex.Sunday,
-        label: getDayNameDisplay(GanttDayIndex.Sunday),
-        short: "א",
-    },
-    {
-        index: GanttDayIndex.Monday,
-        label: getDayNameDisplay(GanttDayIndex.Monday),
-        short: "ב",
-    },
-    {
-        index: GanttDayIndex.Tuesday,
-        label: getDayNameDisplay(GanttDayIndex.Tuesday),
-        short: "ג",
-    },
-    {
-        index: GanttDayIndex.Wednesday,
-        label: getDayNameDisplay(GanttDayIndex.Wednesday),
-        short: "ד",
-    },
-    {
-        index: GanttDayIndex.Thursday,
-        label: getDayNameDisplay(GanttDayIndex.Thursday),
-        short: "ה",
-    },
-    {
-        index: GanttDayIndex.Friday,
-        label: getDayNameDisplay(GanttDayIndex.Friday),
-        short: "ו",
-    },
-    {
-        index: GanttDayIndex.Saturday,
-        label: getDayNameDisplay(GanttDayIndex.Saturday),
-        short: "ש",
-    },
-] as const;
 
 type WeekDayVisualizerProps = {
     validDays: Set<GanttDayIndex>;

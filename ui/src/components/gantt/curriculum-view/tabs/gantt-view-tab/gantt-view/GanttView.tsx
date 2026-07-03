@@ -806,7 +806,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                     ]}
                                 >
                                     <ToggleButton
-                                        aria-label="הצג אילוצים"
+                                        aria-label="הצגת אילוצים"
                                         sx={{ gap: 0.5, px: 1.5 }}
                                         value="constraints"
                                     >
@@ -814,7 +814,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                         אילוצים
                                     </ToggleButton>
                                     <ToggleButton
-                                        aria-label="הצג לא משובצים"
+                                        aria-label="הצגת פערי שיבוץ"
                                         sx={{ gap: 0.5, px: 1.5 }}
                                         value="unallocated"
                                     >
@@ -857,9 +857,9 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                     </IconButton>
                                 </Tooltip>
                                 {zoomedWeekId ? (
-                                    <Tooltip title="הצג את כל השבועות">
+                                    <Tooltip title="הצגת כל השבועות">
                                         <IconButton
-                                            aria-label="הצג את כל השבועות"
+                                            aria-label="הצגת כל השבועות"
                                             color="primary"
                                             onClick={() =>
                                                 setZoomedWeekId(null)

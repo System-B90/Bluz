@@ -16,6 +16,7 @@ export function DuplicateCurriculumAction({
     sourceCurriculum,
     onCreate,
     onProcessingChange,
+    loading,
     ...props
 }: DuplicateCurriculumActionProps) {
     const runAction = useAsyncAction(onProcessingChange);
@@ -42,6 +43,7 @@ export function DuplicateCurriculumAction({
 
     return (
         <ActionItemButton
+            loading={loading}
             onClick={clickHandler}
             startIcon={<ContentCopyIcon fontSize="small" />}
             tooltipTitle="שכפול"

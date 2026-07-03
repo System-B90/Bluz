@@ -13,6 +13,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { Iteration, IterationId } from "@/api-shared/types/iteration";
 import { Outsider } from "@/api-shared/types/outsider";
+import { PersonalSettings } from "@/api-shared/types/personal-settings";
 import { DbReservation } from "@/api-shared/types/reservation";
 import {
     CustomRoom,
@@ -205,10 +206,18 @@ class MetaController {
     public get iterations(): Collection<Iteration> {
         return this.metaDb.collection<Iteration>("iterations");
     }
+    /** Per-user personal settings (favorites etc.), shared across all iterations. */
+    public get personalSettings(): Collection<PersonalSettingsDocument> {
+        return this.metaDb.collection<PersonalSettingsDocument>(
+            "personalSettings",
+        );
+    }
     public get client(): MongoClient {
         return mongoClient;
     }
 }
+
+export type PersonalSettingsDocument = PersonalSettings & { userId: string };
 
 let _metaController: MetaController | null = null;
 export function getMetaController(): MetaController {

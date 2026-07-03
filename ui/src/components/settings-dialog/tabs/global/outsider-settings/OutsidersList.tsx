@@ -107,7 +107,7 @@ export function OutsidersList({
 
             <TextField
                 onChange={ (e) => setSearchQuery(e.target.value) }
-                placeholder="חפש איש חוץ..."
+                placeholder="חיפוש איש חוץ..."
                 size="small"
                 slotProps={ {
                     input: {
@@ -186,7 +186,7 @@ export function OutsidersList({
                                             display="flex"
                                             gap={ 0.5 }
                                         >
-                                            <Tooltip title="ערוך">
+                                            <Tooltip title="עריכה">
                                                 <IconButton
                                                     edge="end"
                                                     onClick={ (e) =>
@@ -205,7 +205,7 @@ export function OutsidersList({
                                                     <EditIcon fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
-                                            <Tooltip title="מחק">
+                                            <Tooltip title="מחיקה">
                                                 <IconButton
                                                     edge="end"
                                                     onClick={ (e) =>

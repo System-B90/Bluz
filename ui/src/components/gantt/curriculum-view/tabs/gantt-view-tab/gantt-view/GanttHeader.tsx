@@ -117,8 +117,8 @@ export const GanttHeader: React.FC = () => {
                             title={
                                 canZoom
                                     ? zoomedWeekId === week.id
-                                        ? "לחץ כדי לצאת מהזום"
-                                        : "לחץ כדי להתמקד בשבוע זה"
+                                        ? "יציאה ממצב מוגדל"
+                                        : "התמקדות בשבוע"
                                     : undefined
                             }
                         >

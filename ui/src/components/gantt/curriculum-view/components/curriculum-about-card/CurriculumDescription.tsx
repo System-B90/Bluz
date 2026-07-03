@@ -31,7 +31,7 @@ export function CurriculumDescription({
         <EditableCurriculumField
             allowEmpty
             canEdit={Boolean(curriculumId)}
-            editTooltip="ערוך תיאור תכנית"
+            editTooltip="עריכת תיאור התוכנית"
             minRows={2}
             multiline
             onSave={saveDescriptionHandler}

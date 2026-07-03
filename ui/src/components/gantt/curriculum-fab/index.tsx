@@ -207,15 +207,16 @@ export function CurriculumFab({
                     />
                 </Box>
                 <List
+                    dense
                     sx={{
-                        paddingX: 2,
-                        paddingY: 1,
+                        paddingX: 1,
+                        paddingY: 0.5,
                         overflowY: "auto",
                         maxHeight: 330,
                     }}
                 >
                     <ListSubheader
-                        sx={{ paddingY: 0.5, background: "transparent" }}
+                        sx={{ paddingY: 0, lineHeight: 1.75, background: "transparent" }}
                     >
                         <Typography
                             align="center"

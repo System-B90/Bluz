@@ -12,7 +12,7 @@ export function OutsiderEmptyState() {
                     textAlign: "center",
                 } }
             >
-                בחר איש חוץ מהרשימה או לחץ על הוספת איש חוץ
+                בחירת איש חוץ מהרשימה או לחיצה על הוספת איש חוץ
             </Typography>
         </Box>
     );

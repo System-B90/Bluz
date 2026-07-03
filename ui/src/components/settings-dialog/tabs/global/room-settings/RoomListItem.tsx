@@ -110,14 +110,14 @@ export function RoomListItem({
                             hoverColor="primary.main"
                             icon={ EditIcon }
                             onClick={ handlePopulate }
-                            title="ערוך פרטים מורחבים"
+                            title="עריכת פרטים מורחבים"
                         />
                         { !isHive && (
                             <ActionButton
                                 hoverColor="error.main"
                                 icon={ DeleteIcon }
                                 onClick={ handleDelete }
-                                title="מחק"
+                                title="מחיקה"
                             />
                         ) }
                         { isHive ? <Tooltip title="כיתה בהייב">

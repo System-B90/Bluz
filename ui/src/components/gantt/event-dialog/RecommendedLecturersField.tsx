@@ -179,7 +179,7 @@ export function RecommendedLecturersField({
                         value=""
                     >
                         <MenuItem disabled value="">
-                            בחר איש חוץ להוספה...
+                            בחירת איש חוץ להוספה...
                         </MenuItem>
                         {availableToAdd.map((o) => (
                             <MenuItem key={o.id} value={o.id}>

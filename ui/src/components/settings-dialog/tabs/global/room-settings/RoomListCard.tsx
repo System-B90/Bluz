@@ -103,7 +103,7 @@ export function RoomListCard({
 
             <TextField
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="חפש חדר..."
+                placeholder="חיפוש חדר..."
                 size="small"
                 slotProps={{
                     input: {
