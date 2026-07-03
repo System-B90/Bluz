@@ -338,6 +338,6 @@ export async function createEventInOfflineMode(
     const dialog = getEventDialog(page);
     await expect(dialog).toBeVisible({ timeout: 5_000 });
     await dialog.locator("input").first().fill(name);
-    await dialog.getByRole("button", { name: "שמור" }).click();
+    await dialog.getByRole("button", { name: "שמירה" }).click();
     await page.waitForTimeout(500);
 }

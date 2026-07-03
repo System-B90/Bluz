@@ -180,7 +180,7 @@ test.describe("Offline mode", () => {
         const createDialog = getEventDialog(page);
         await expect(createDialog).toBeVisible();
         await createDialog.locator("input").first().fill(originalName);
-        await createDialog.getByRole("button", { name: "שמור" }).click();
+        await createDialog.getByRole("button", { name: "שמירה" }).click();
         await page.waitForTimeout(1_000);
 
         // Now go offline and modify it
@@ -193,7 +193,7 @@ test.describe("Offline mode", () => {
         const nameField = editDialog.locator("input").first();
         await nameField.clear();
         await nameField.fill(modifiedName);
-        await editDialog.getByRole("button", { name: "שמור" }).click();
+        await editDialog.getByRole("button", { name: "שמירה" }).click();
         await page.waitForTimeout(500);
 
         const pushDialog = await exitOfflineMode(page);
@@ -246,7 +246,7 @@ test.describe("Offline mode", () => {
         await selectCalendarTimeRange(page);
         const createDialog = getEventDialog(page);
         await createDialog.locator("input").first().fill(v1);
-        await createDialog.getByRole("button", { name: "שמור" }).click();
+        await createDialog.getByRole("button", { name: "שמירה" }).click();
         await page.waitForTimeout(1_000);
 
         // Enter offline, edit once → v2
@@ -257,7 +257,7 @@ test.describe("Offline mode", () => {
         let editDialog = getEventDialog(page);
         await editDialog.locator("input").first().clear();
         await editDialog.locator("input").first().fill(v2);
-        await editDialog.getByRole("button", { name: "שמור" }).click();
+        await editDialog.getByRole("button", { name: "שמירה" }).click();
         await page.waitForTimeout(500);
 
         // Edit again offline — this second capture must NOT overwrite the first
@@ -267,7 +267,7 @@ test.describe("Offline mode", () => {
         const finalName = testId("multi-edit-v3");
         await editDialog.locator("input").first().clear();
         await editDialog.locator("input").first().fill(finalName);
-        await editDialog.getByRole("button", { name: "שמור" }).click();
+        await editDialog.getByRole("button", { name: "שמירה" }).click();
         await page.waitForTimeout(500);
 
         const pushDialog = await exitOfflineMode(page);
