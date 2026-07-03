@@ -81,30 +81,41 @@ jobs:
               with:
                   python-version: "3.13"
 
-            # First-time Hive setup, per Hive's dev docs — but with a
-            # non-interactive twist: `manage_hive.py init` calls Django's
-            # `createsuperuser` with interactive prompts (that's where devs
-            # type admin:Password1), which would hang in CI. So run `update`
-            # (build_deps → build → up → migrate → collectstatic → db update),
-            # then replay init's remaining pieces with --noinput.
-            # `dummy_db` is skipped — Bluz reseeds Hive via pyhive anyway.
-            # Hive's committed .env already sets HIVE_HOSTNAME_PLAIN=hive.org
-            # and ships sample SSL keys, and its nginx publishes 80/443.
+            # First-time Hive setup in PROD mode (manage_hive.py default env),
+            # with two CI adaptations:
+            #
+            #  1. build_deps: prod's `update` deliberately skips it
+            #     (_should_build_deps_in_update = False) — a real prod deploy
+            #     loads pre-built base images from a release's hive_images.tar.gz.
+            #     CI builds Hive from a source checkout, so the base images
+            #     (hive/core-base, hive/frontend-base, hive/nginx-base) must be
+            #     built here first, or `build` fails on the missing FROM bases.
+            #  2. non-interactive superuser: `manage_hive.py init` runs Django's
+            #     createsuperuser with interactive prompts (hangs in CI). So run
+            #     `update` (build → up → migrate → collectstatic → db update),
+            #     then replay init's remaining steps with --noinput.
+            #
+            # Prod omits the dev override (compose.override.yaml), so the manual
+            # steps pin `-f docker-compose.yaml` to match manage_hive.py's prod
+            # invocations. The dev-only `frontend yarn` (source-mounted dev
+            # server) and `dummy_db` are intentionally not run — prod serves a
+            # pre-built frontend, and Bluz reseeds Hive via pyhive anyway.
+            # Hive's committed .env sets HIVE_HOSTNAME_PLAIN=hive.org, ships
+            # sample SSL keys, and its nginx publishes 80/443.
             - name: Build & Initialize Hive
               working-directory: hive
               run: |
+                  python3 manage_hive.py build_deps
                   python3 manage_hive.py update
-                  docker compose exec -T core python manage.py service_accounts
-                  docker compose exec -T core python manage.py load_tags
-                  docker compose exec -T \
+                  compose="docker compose -f docker-compose.yaml"
+                  $compose exec -T core python manage.py service_accounts
+                  $compose exec -T core python manage.py load_tags
+                  $compose exec -T \
                     -e DJANGO_SUPERUSER_USERNAME=admin \
                     -e DJANGO_SUPERUSER_PASSWORD=Password1 \
                     -e DJANGO_SUPERUSER_EMAIL=admin@hive.org \
                     core python manage.py createsuperuser --noinput
-                  docker compose exec -T core python manage.py load_programs
-                  # Dev-mode frontend runs from mounted source — install deps
-                  docker compose run --rm frontend yarn
-                  python3 manage_hive.py start
+                  $compose exec -T core python manage.py load_programs
 
             - name: Wait for Hive
               run: |
