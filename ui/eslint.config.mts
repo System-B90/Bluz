@@ -1,11 +1,11 @@
 import stylistic from "@stylistic/eslint-plugin";
-import { defineConfig } from "eslint/config";
 import nextConfig from "eslint-config-next/core-web-vitals";
 import importPlugin from "eslint-plugin-import";
 import perfectionist from "eslint-plugin-perfectionist";
 import reactPlugin from "eslint-plugin-react";
 import unicorn from "eslint-plugin-unicorn";
 import unusedImports from "eslint-plugin-unused-imports";
+import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig([
@@ -200,7 +200,7 @@ export default defineConfig([
     },
     {
         ignores: [
-            ".next/*",
+            ".next/",
             "out/*",
             "dist/*",
             "ui/.next/*",
