@@ -10,6 +10,7 @@ import { ResolvableRoom } from "@/api-shared/types/room";
 export enum EventType {
     EXERCISE = 'ע"ע',
     LECTURE = "הרצאה",
+    WORKSHOP = "סדנה",
     BREAK = "הפסקה",
     PRAYER = "תפילה",
     OTHER = "אחר",
@@ -80,7 +81,32 @@ export type PrayerEvent = {
  * ```
  */
 export function eventHasSubject(type: EventType): boolean {
-    return type === EventType.EXERCISE || type === EventType.LECTURE;
+    return (
+        type === EventType.EXERCISE ||
+        type === EventType.LECTURE ||
+        type === EventType.WORKSHOP
+    );
+}
+
+/**
+ * Checks if an event type carries a `lecturers` selection (lectures have
+ * "מרצים"; workshops reuse the same field, labeled "מנהלים").
+ * @param type The EventType to check.
+ * @returns true if the lecturers field applies to this event type.
+ */
+export function eventHasLecturers(type: EventType): boolean {
+    return type === EventType.LECTURE || type === EventType.WORKSHOP;
+}
+
+/**
+ * The display label for the `lecturers` field of a given event type:
+ * workshops (סדנה) have "מנהלים" while lectures have "מרצים". The selection
+ * source (instructors and outsiders) is identical.
+ * @param type The EventType whose label is needed.
+ * @returns The Hebrew field label.
+ */
+export function lecturersLabelForType(type: EventType): string {
+    return type === EventType.WORKSHOP ? "מנהלים" : "מרצים";
 }
 
 /**

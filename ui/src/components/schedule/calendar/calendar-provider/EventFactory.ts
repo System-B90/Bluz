@@ -1,6 +1,10 @@
 import dayjs from "dayjs";
 
-import { Event, EventType } from "@/components/schedule/types/event";
+import {
+    Event,
+    eventHasLecturers,
+    EventType,
+} from "@/components/schedule/types/event";
 
 export const createEventFactory = (
     eventPartial: Partial<Event>,
@@ -19,8 +23,9 @@ export const createEventFactory = (
         courses: eventPartial.courses ?? [],
         rooms: eventPartial.rooms ?? [],
         instructors: eventPartial.instructors ?? [],
-        lecturers:
-            type === EventType.LECTURE ? (eventPartial.lecturers ?? []) : [],
+        lecturers: eventHasLecturers(type)
+            ? (eventPartial.lecturers ?? [])
+            : [],
         tags: eventPartial.tags ?? [],
         notes: eventPartial.notes ?? "",
         locked: eventPartial.locked ?? false,

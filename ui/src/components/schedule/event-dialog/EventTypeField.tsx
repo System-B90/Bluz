@@ -1,5 +1,6 @@
 "use client";
 import CoPresentIcon from "@mui/icons-material/CoPresent";
+import ConstructionIcon from "@mui/icons-material/Construction";
 import EmojiFoodBeverageIcon from "@mui/icons-material/EmojiFoodBeverage";
 import QuizIcon from "@mui/icons-material/Quiz";
 import SchoolIcon from "@mui/icons-material/School";
@@ -14,6 +15,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import {
+    eventHasLecturers,
     EventType,
     eventTypeToHebrew,
 } from "@/components/schedule/types/event";
@@ -24,6 +26,8 @@ function getEventTypeIcon(type: EventType, props = {}) {
         return <CoPresentIcon {...props} />;
     case EventType.LECTURE:
         return <SchoolIcon {...props} />;
+    case EventType.WORKSHOP:
+        return <ConstructionIcon {...props} />;
     case EventType.OTHER:
         return <QuizIcon {...props} />;
     case EventType.BREAK:
@@ -56,7 +60,7 @@ export function EventTypeField({
     }, []);
 
     const onClose = useCallback(() => {
-        if (latestTypeRef.current !== EventType.LECTURE) {
+        if (!eventHasLecturers(latestTypeRef.current)) {
             onBlurCallback({ type: latestTypeRef.current, lecturers: [] });
         } else {
             onBlurCallback({ type: latestTypeRef.current });

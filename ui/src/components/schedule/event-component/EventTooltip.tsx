@@ -23,8 +23,9 @@ import { useRooms } from "@/components/base/RoomsProvider";
 import { EventTypeIcon } from "@/components/schedule/event-component/EventTypeIcon";
 import {
     Event,
-    EventType,
+    eventHasLecturers,
     eventHasSubject,
+    EventType,
     getPresentInstructors,
 } from "@/components/schedule/types/event";
 
@@ -66,7 +67,7 @@ export function EventTooltipContent({ event }: { event: Event }) {
         .map(getInstructor)
         .filter((v) => !!v);
     const hasOutsider =
-        event.type === EventType.LECTURE &&
+        eventHasLecturers(event.type) &&
         event.lecturers?.includes("איש חוץ");
     const isPrayer = event.type === EventType.PRAYER;
     const isBreak = event.type === EventType.BREAK;
