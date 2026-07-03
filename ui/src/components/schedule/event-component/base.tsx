@@ -67,6 +67,12 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
                     boxSizing: "border-box",
                     position: "relative",
                     overflow: "hidden",
+                    /* Fake (פיקטיבי) events read as placeholders for
+                       Checkers/Segel: dashed outline + reduced opacity (#102). */
+                    ...(event.fake && {
+                        border: `2px dashed ${alpha(textColor, 0.65)}`,
+                        opacity: 0.75,
+                    }),
                     /* Contrast-aware accent tokens for child components */
                     "--event-border": alpha(textColor, 0.25),
                     "--event-divider": alpha(textColor, 0.18),
@@ -75,6 +81,23 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
                 }}
             >
                 <UnifiedEvent event={event} size={size} />
+
+                {event.fake ? (
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            bottom: 2,
+                            insetInlineEnd: 4,
+                            fontSize: "0.6rem",
+                            fontWeight: 700,
+                            letterSpacing: "0.03em",
+                            color: alpha(textColor, 0.75),
+                            pointerEvents: "none",
+                        }}
+                    >
+                        פיקטיבי
+                    </Box>
+                ) : null}
 
                 {lock ? (
                     <Tooltip

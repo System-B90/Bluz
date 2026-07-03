@@ -32,6 +32,7 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
     violations,
     blockLeftPx,
     blockWidthPx,
+    isSpillover,
 }) => {
     const theme = useTheme();
     const { dayCellWidth } = useGanttContext();
@@ -69,6 +70,7 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
                         id={blockId}
                         isAbsolute={isAbsoluteBlock}
                         isOpaque={isOpaque}
+                        isSpillover={isSpillover}
                         payload={blockPayload}
                         spanLength={spanLength}
                         title={blockTitle}

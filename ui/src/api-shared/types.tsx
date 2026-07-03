@@ -66,6 +66,16 @@ export type CalendarSnapshotSummary = Omit<CalendarSnapshot, "events"> & {
     eventCount: number;
 };
 
+// Result of a server-side snapshot restore: how many events were written back,
+// how many live events inside the snapshot's range were removed, and the exact
+// date range (ISO strings) the restore operated on.
+export type CalendarSnapshotRestoreResult = {
+    restoredCount: number;
+    removedCount: number;
+    rangeStart: string;
+    rangeEnd: string;
+};
+
 // Draft: a named, server-persisted working copy of the calendar, shared across
 // users. Unlike a snapshot (an immutable restore point), a draft is mutable —
 // any user can load it, edit, and re-save it. `updatedBy` records the last

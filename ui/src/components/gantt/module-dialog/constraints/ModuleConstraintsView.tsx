@@ -1,4 +1,5 @@
 "use client";
+import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -12,6 +13,7 @@ import { GanttModuleId } from "@/api-shared/types/gantt/models";
 import {
     ConstraintType,
     GanttConstraint,
+    hasConflictingTemporalConstraints,
 } from "@/api-shared/types/gantt/models/constraint";
 import { ConstraintListItem } from "@/components/gantt/module-dialog/constraints/ConstraintListItem";
 import { DraftConstraintForm } from "@/components/gantt/module-dialog/constraints/DraftConstraintForm";
@@ -41,6 +43,12 @@ export function ModuleConstraintsView({
     const constraintsList = useMemo(
         () => Object.values(state.constraints),
         [state.constraints],
+    );
+
+    // Warning-only cross-constraint validation (#104): saving is not blocked.
+    const hasTemporalConflict = useMemo(
+        () => hasConflictingTemporalConstraints(constraintsList),
+        [constraintsList],
     );
 
     const handleStartCreate = useCallback(() => {
@@ -200,6 +208,13 @@ export function ModuleConstraintsView({
                         הוספת אילוץ
                     </Button>
                 </Stack>
+
+                {hasTemporalConflict ? (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                        האילוצים הזמניים סותרים זה את זה — לא נותר אף יום
+                        חוקי לשיבוץ. ניתן לשמור, אך מומלץ לתקן.
+                    </Alert>
+                ) : null}
 
                 {state.isLoading ? (
                     <Stack spacing={1}>

@@ -10,7 +10,11 @@ import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
-import { EventType } from "@/components/schedule/types/event";
+import {
+    eventHasLecturers,
+    EventType,
+    lecturersLabelForType,
+} from "@/components/schedule/types/event";
 
 type InstructorsFieldProps = {} & EventFieldProps;
 type LecturerSelectionFieldProps = {
@@ -86,13 +90,18 @@ function LecturerSelectionField({
         [ event, onBlurCallback ],
     );
 
+    // Workshops (סדנה) reuse the lecturers field but label it "מנהלים".
+    const fieldLabel = lecturersLabelForType(
+        event?.type ?? EventType.LECTURE,
+    );
+
     return (
         <Box { ...props }>
             <FormControl fullWidth={ true }>
-                <InputLabel>מרצים</InputLabel>
+                <InputLabel>{ fieldLabel }</InputLabel>
                 <InstructorSelect
                     favoriteOutsiders={ favoriteOutsiders }
-                    label="מרצים"
+                    label={ fieldLabel }
                     multiple
                     onChange={ handleChange }
                     renderValue={ (selected) => (
@@ -155,7 +164,7 @@ export function InstructorsField({
     const currentInstructors = event?.instructors ?? [];
 
     const isLecture = useMemo(
-        () => event?.type === EventType.LECTURE,
+        () => !!event?.type && eventHasLecturers(event.type),
         [ event?.type ],
     );
 

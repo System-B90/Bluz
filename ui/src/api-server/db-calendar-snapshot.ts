@@ -4,14 +4,19 @@ import {
     databaseController,
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
+import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     CalendarSnapshot,
+    CalendarSnapshotRestoreResult,
     CalendarSnapshotSummary,
+    EventAddedOrRemovedMessage,
+    EventDataUpdateMessage,
 } from "@/api-shared/types";
 import { DbEventDocument } from "@/api-shared/types/event";
 import { IterationId } from "@/api-shared/types/iteration";
+import { MessageTypes } from "@/settings";
 
 /** Hard ceiling on captured events to keep a single snapshot document sane. */
 const MAX_SNAPSHOT_EVENTS = 10_000;
@@ -120,6 +125,87 @@ async function deleteSnapshot(
     }
 }
 
+/**
+ * Restores the calendar to a snapshot's state within the snapshot's own date
+ * range: live events inside the range are archived (soft-deleted), the
+ * snapshot's events are upserted back, and connected clients are notified via
+ * WebSocket broadcasts.
+ */
+async function restoreSnapshot(
+    snapshotId: string,
+    controller: DatabaseController = databaseController,
+    iterationId?: IterationId,
+): Promise<CalendarSnapshotRestoreResult> {
+    const snapshot = await getSnapshot(snapshotId, controller);
+    const events = snapshot.events ?? [];
+    if (events.length === 0) {
+        throw new ClientApiError(
+            "Snapshot has no events — nothing to restore.",
+        );
+    }
+
+    const rangeStart = new Date(
+        Math.min(...events.map((e) => e.startTime.getTime())),
+    );
+    const rangeEnd = new Date(
+        Math.max(...events.map((e) => e.endTime.getTime())),
+    );
+
+    // Live events fully inside the snapshot's range get replaced by the restore.
+    const existingIds = (
+        await controller.events
+            .find(
+                {
+                    startTime: { $gte: rangeStart },
+                    endTime: { $lte: rangeEnd },
+                    archived: { $ne: true },
+                },
+                { projection: { id: 1, _id: 0 } },
+            )
+            .toArray()
+    ).map((doc) => doc.id);
+
+    if (existingIds.length > 0) {
+        await controller.events.updateMany(
+            { id: { $in: existingIds } },
+            { $set: { archived: true } },
+        );
+    }
+
+    // Upserting by id also un-archives originals that survived into the snapshot.
+    await controller.events.bulkWrite(
+        events.map((event) => ({
+            replaceOne: {
+                filter: { id: event.id },
+                replacement: { ...event, archived: false },
+                upsert: true,
+            },
+        })),
+    );
+
+    const restoredIds = new Set(events.map((e) => e.id));
+    const removedIds = existingIds.filter((id) => !restoredIds.has(id));
+
+    SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
+        events: Object.fromEntries(events.map((e) => [e.id, e])),
+        iterationId,
+    } as EventDataUpdateMessage<DbEventDocument>);
+    for (const eventId of removedIds) {
+        SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
+            action: "removed",
+            eventId,
+            iterationId,
+        } as EventAddedOrRemovedMessage<DbEventDocument>);
+    }
+
+    return {
+        restoredCount: events.length,
+        removedCount: removedIds.length,
+        rangeStart: rangeStart.toISOString(),
+        rangeEnd: rangeEnd.toISOString(),
+    };
+}
+
 function toSummary(snapshot: CalendarSnapshot): CalendarSnapshotSummary {
     const { events, ...rest } = snapshot;
     return { ...rest, eventCount: events?.length ?? 0 };
@@ -130,4 +216,5 @@ export namespace DbCalendarSnapshot {
     export const list = listSnapshots;
     export const get = getSnapshot;
     export const del = deleteSnapshot;
+    export const restore = restoreSnapshot;
 }

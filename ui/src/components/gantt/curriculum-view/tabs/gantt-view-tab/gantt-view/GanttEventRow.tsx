@@ -32,6 +32,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         linearDays,
         moduleMappings,
         eventMappings,
+        eventSpans,
         violations,
     } = useGanttContext();
 
@@ -46,6 +47,18 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
 
     const currentDayId = eventMappings[ eventId ] || null;
     const isEventUnmapped = !currentDayId;
+
+    // Multi-day spillover: last occupied day + total covered days (#105).
+    const spanInfo = useMemo(() =>
+    {
+        const span = eventSpans[ eventId ];
+        if (!span || !span.spillover || !currentDayId) return null;
+        const endDayId = span.dayIds[ span.dayIds.length - 1 ];
+        const startIdx = linearDays.indexOf(currentDayId);
+        const endIdx = linearDays.indexOf(endDayId);
+        if (startIdx === -1 || endIdx <= startIdx) return null;
+        return { endDayId, spanDayCount: endIdx - startIdx + 1 };
+    }, [ eventSpans, eventId, currentDayId, linearDays ]);
     const myViolations = useMemo(
         () => violations[ eventId ] || [],
         [ eventId, violations ],
@@ -98,6 +111,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 isModuleMapped,
                 moduleStartWeekIdx,
                 violations: myViolations,
+                spanInfo,
             })
             : buildDailyEventCells({
                 timelineWeeks,
@@ -109,6 +123,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 isModuleMapped,
                 moduleStartDayId,
                 violations: myViolations,
+                spanInfo,
             });
     }, [
         event,
@@ -122,6 +137,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         moduleStartWeekIdx,
         moduleStartDayId,
         myViolations,
+        spanInfo,
     ]);
 
     if (!event) return null;

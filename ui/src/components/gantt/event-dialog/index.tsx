@@ -43,6 +43,7 @@ import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { EventConstraintsView } from "@/components/gantt/event-dialog/constraints/EventConstraintsView";
 import { RecommendedLecturersField } from "@/components/gantt/event-dialog/RecommendedLecturersField";
 import { SystemRequirementsField } from "@/components/gantt/event-dialog/SystemRequirementsField";
+import { ShuffleSelect } from "@/components/gantt/ShuffleSelect";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from "@/components/gantt/state/hooks/UseEvent";
@@ -117,6 +118,7 @@ function EventDetailsForm({
     setLocalTitle,
     setLocalComment,
     commit,
+    shuffleOptions,
 }: {
     event: GanttEvent;
     localTitle: string;
@@ -124,6 +126,7 @@ function EventDetailsForm({
     setLocalTitle: (v: string) => void;
     setLocalComment: (v: string) => void;
     commit: (updates: Partial<GanttEvent>) => void;
+    shuffleOptions: Array<string>;
 }) {
     return (
         <Stack spacing={2} width="32%">
@@ -239,6 +242,12 @@ function EventDetailsForm({
                 />
             </Box>
 
+            <ShuffleSelect
+                onChange={(shuffles) => commit({ shuffles })}
+                options={shuffleOptions}
+                value={event.shuffles ?? []}
+            />
+
             <TextField
                 fullWidth
                 label="הערה"
@@ -347,6 +356,7 @@ function EventDialogInner({
                                 localTitle={localTitle}
                                 setLocalComment={setLocalComment}
                                 setLocalTitle={setLocalTitle}
+                                shuffleOptions={syllabus?.shuffles ?? []}
                             />
 
                             <Divider flexItem orientation="vertical" />

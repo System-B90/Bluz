@@ -36,7 +36,14 @@ import React, {
     useState,
 } from "react";
 
-import { ConstraintType } from "@/api-shared/types/gantt/models/constraint";
+import {
+    ConstraintType,
+    hasConflictingTemporalConstraints,
+} from "@/api-shared/types/gantt/models/constraint";
+import {
+    computeEventDaySpans,
+    getSpilloverMinutesByDay,
+} from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { ConstraintLines } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/ConstraintLines";
 import { GanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { GanttHeader } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHeader";
@@ -274,6 +281,23 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
         return merged;
     }, [globalMappings, curriculumId]);
 
+    // Multi-day spillover layout: which days each mapped event actually
+    // occupies, and per-day scheduled minutes with the spill applied (#105).
+    const eventSpans = useMemo(
+        () =>
+            computeEventDaySpans({
+                mappings: curriculumMappings,
+                state,
+                linearDays,
+            }),
+        [curriculumMappings, state, linearDays],
+    );
+
+    const scheduledMinutesByDay = useMemo(
+        () => getSpilloverMinutesByDay(eventSpans),
+        [eventSpans],
+    );
+
     // Modules/events with no day mapping yet, grouped by syllabus, for the
     // "unallocated" panel (#89).
     const unallocatedBySyllabus = useMemo(() => {
@@ -352,6 +376,18 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             entityType: "event" | "module",
         ) => {
             const cIds: Array<string> = entity.constraintIds || [];
+
+            // Conflicting temporal constraints are flagged even before the
+            // entity is mapped to a day (#104). Warning only — never blocks.
+            if (
+                hasConflictingTemporalConstraints(
+                    cIds.map((cId) => constraints[cId]),
+                )
+            ) {
+                if (!v[entityId]) v[entityId] = [];
+                v[entityId].push("אילוצים סותרים: לא נותר אף יום חוקי");
+            }
+
             const myIdx = getMappedDayIdx(entityType, entityId);
             if (myIdx === -1) return;
 
@@ -658,6 +694,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             moduleMappings,
             eventMappings,
             curriculumMappings,
+            eventSpans,
+            scheduledMinutesByDay,
             violations,
             dayCellWidth,
             zoomedWeekId,
@@ -682,6 +720,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             moduleMappings,
             eventMappings,
             curriculumMappings,
+            eventSpans,
+            scheduledMinutesByDay,
             violations,
             dayCellWidth,
             zoomedWeekId,

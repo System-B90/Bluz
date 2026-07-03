@@ -1,3 +1,4 @@
+import ConstructionIcon from "@mui/icons-material/Construction";
 import CoPresentIcon from "@mui/icons-material/CoPresent";
 import EmojiFoodBeverageIcon from "@mui/icons-material/EmojiFoodBeverage";
 import QuizIcon from "@mui/icons-material/Quiz";
@@ -25,6 +26,9 @@ export function EventTypeIcon({
         break;
     case EventType.LECTURE:
         icon = <SchoolIcon {...props} />;
+        break;
+    case EventType.WORKSHOP:
+        icon = <ConstructionIcon {...props} />;
         break;
     case EventType.OTHER:
         icon = <QuizIcon {...props} />;

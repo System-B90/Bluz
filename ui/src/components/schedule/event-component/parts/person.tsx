@@ -14,7 +14,7 @@ import { shortenInstructorName } from "@/components/schedule/event-component/Nam
 import { tagSx } from "@/components/schedule/event-component/parts/tag-sx";
 import {
     Event,
-    EventType,
+    eventHasLecturers,
     getPresentInstructors,
 } from "@/components/schedule/types/event";
 
@@ -39,7 +39,7 @@ export function PersonChip({
     );
 
     const isLecturer =
-        event.type === EventType.LECTURE &&
+        eventHasLecturers(event.type) &&
         event.lecturers?.includes(instructorId ?? personData);
 
     const fullName: string =
@@ -116,7 +116,7 @@ export function InstructorsList({
                     />
                 </Tooltip>
             ) : null}
-            {event.type === EventType.LECTURE &&
+            {eventHasLecturers(event.type) &&
             event.lecturers?.includes("איש חוץ") ? (
                     <PersonChip event={event} key="איש חוץ" personData="איש חוץ" />
                 ) : null}
