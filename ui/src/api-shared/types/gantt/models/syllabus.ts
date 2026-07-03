@@ -5,5 +5,10 @@ export type GanttSyllabus = {
     title: string;
     hiveIds: Array<number>;
     modules: Array<GanttModuleId>;
+    /**
+     * Student group ("shuffle") names for this syllabus (e.g. "ניצה", "לחם").
+     * Empty/undefined ⇒ the syllabus has a single, unnamed group.
+     */
+    shuffles?: Array<string>;
 } & BaseGantItem;
 export type GanttSyllabusId = GanttSyllabus["id"];

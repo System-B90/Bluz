@@ -50,6 +50,13 @@
       "when": 1782840638145,
       "tag": "0006_harsh_thunderbolts",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783092765516,
+      "tag": "0007_lame_goblin_queen",
+      "breakpoints": true
     }
   ]
 }

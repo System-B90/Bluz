@@ -2,6 +2,7 @@ import { safeApiFetcher } from "@/api-client/common";
 import { eventDateFixup } from "@/api-shared/calendar";
 import {
     CalendarSnapshot,
+    CalendarSnapshotRestoreResult,
     CalendarSnapshotSummary,
 } from "@/api-shared/types";
 import { DbEventDocument, Event } from "@/api-shared/types/event";
@@ -67,6 +68,26 @@ export async function apiGetSnapshot(
         (e: DbEventDocument) => eventDateFixup(e) as unknown as Event,
     );
     return { snapshot, events };
+}
+
+/**
+ * Restores the calendar to a snapshot's state on the server. The server
+ * archives live events within the snapshot's date range, re-inserts the
+ * snapshot's events, and broadcasts the change to all connected clients.
+ */
+export async function apiRestoreSnapshot(
+    snapshotId: string,
+    iterationId?: IterationId,
+): Promise<CalendarSnapshotRestoreResult> {
+    const endpoint = withIteration(
+        new URL(`${SNAPSHOTS_PATH}/restore`, window.location.origin),
+        iterationId,
+    );
+    endpoint.searchParams.set("id", snapshotId);
+    return await safeApiFetcher<CalendarSnapshotRestoreResult>(
+        endpoint.toString(),
+        { method: "POST" },
+    );
 }
 
 /** Permanently deletes a snapshot. */

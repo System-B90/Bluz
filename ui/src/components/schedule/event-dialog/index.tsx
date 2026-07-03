@@ -113,6 +113,19 @@ export function EventDialog({
                             mt: 1,
                         } }
                     >
+                        <Collapse
+                            in={ Boolean(
+                                event.fake &&
+                                (!event.color || !event.notes?.trim()),
+                            ) }
+                            unmountOnExit
+                        >
+                            <Alert severity="info" variant="outlined">
+                                מופע פיקטיבי דורש בחירת צבע ידני והערה לפני
+                                השמירה.
+                            </Alert>
+                        </Collapse>
+
                         <Collapse in={ Boolean(lockedByName) } unmountOnExit>
                             <Alert
                                 icon={ <LockPersonIcon fontSize="inherit" /> }
@@ -154,7 +167,13 @@ export function EventDialog({
                     </Button>
                     <Button onClick={ onClose }>ביטול</Button>
                     <Button
-                        disabled={ !event?.name?.trim() }
+                        disabled={
+                            !event?.name?.trim() ||
+                            Boolean(
+                                event.fake &&
+                                (!event.color || !event.notes?.trim()),
+                            )
+                        }
                         type="submit"
                         variant="contained"
                     >

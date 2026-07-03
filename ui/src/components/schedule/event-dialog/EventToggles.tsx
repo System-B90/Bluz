@@ -18,6 +18,7 @@ export function EventToggles({
         { label: "מתואם", key: "locked" },
         { label: "קריטי", key: "required" },
         { label: 'חלון פ"א', key: "personalTalk" },
+        { label: "מוסתר", key: "hidden" },
     ] as const;
 
     return (
@@ -36,6 +37,28 @@ export function EventToggles({
                     label={ label }
                 />
             )) }
+            <FormControlLabel
+                control={
+                    <Switch
+                        checked={ !!event.fake }
+                        onChange={ (e) =>
+                            // Fake events are detached from Hive: clear the
+                            // subject/module/lesson wiring when toggled on.
+                            onUpdate(
+                                e.target.checked
+                                    ? {
+                                        fake: true,
+                                        subject: 0,
+                                        hiveModule: 0,
+                                        hiveLesson: null,
+                                    }
+                                    : { fake: false },
+                            )
+                        }
+                    />
+                }
+                label="פיקטיבי"
+            />
         </Box>
     );
 }

@@ -41,5 +41,10 @@ export type GanttEvent = {
     isPaWindow: boolean;
     comment: null | string;
     constraints: Array<GanttConstraint>;
+    /**
+     * Shuffle names (from the parent syllabus) this event applies to.
+     * Empty/undefined ⇒ applies to all shuffles.
+     */
+    shuffles?: Array<string>;
 } & BaseGantItem;
 export type GanttEventId = GanttEvent["id"];

@@ -4,6 +4,7 @@ import {
     GanttCurriculumModuleDayMapping,
     GanttWeek,
 } from "@/api-shared/types/gantt/models";
+import { EventDaySpan } from "@/components/gantt/curriculum-view/gantt-time-utils";
 
 export type GanttConstraintState = {
     constraints: Record<string, GanttConstraint>;
@@ -19,6 +20,10 @@ export type GanttContextType = {
     eventMappings: Record<string, string>;
     moduleMappings: Record<string, Array<string>>;
     curriculumMappings: Record<string, GanttCurriculumModuleDayMapping>;
+    /** Days each mapped event occupies once multi-day spillover is applied (#105). */
+    eventSpans: Record<string, EventDaySpan>;
+    /** Per-day scheduled minutes with spillover subtracted/added per day (#105). */
+    scheduledMinutesByDay: Record<string, number>;
     violations: Record<string, Array<string>>;
     /** Pixel width of a single day/week column. Widens when a week is zoomed (#90). */
     dayCellWidth: number;
@@ -73,6 +78,8 @@ export type GanttBlockProps = {
     violations?: Array<string>;
     blockLeftPx?: number;
     blockWidthPx?: number;
+    /** Multi-day overflow block: rendered with a spillover gradient (#105). */
+    isSpillover?: boolean;
 };
 
 export type GanttCellProps = {
@@ -90,6 +97,8 @@ export type GanttCellProps = {
     violations?: Array<string>;
     blockLeftPx?: number;
     blockWidthPx?: number;
+    /** Multi-day overflow block: rendered with a spillover gradient (#105). */
+    isSpillover?: boolean;
 };
 
 export type GanttModuleRowProps = {

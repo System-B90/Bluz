@@ -40,6 +40,8 @@ export const ganttEventsSchema = pgTable("e", {
     isCritical: boolean("is_critical").notNull().default(false),
     isPaWindow: boolean("is_pa_window").notNull().default(false),
     comment: text("comment"),
+    // Shuffle names this event applies to. Empty ⇒ all shuffles.
+    shuffles: text("shuffles").array().notNull().default([]),
     createdAt: timestamp("ca").defaultNow().notNull(),
     updatedAt: timestamp("ua").defaultNow().notNull(),
 });

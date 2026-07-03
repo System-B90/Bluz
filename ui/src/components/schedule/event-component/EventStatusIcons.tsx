@@ -1,6 +1,7 @@
 import ChatIcon from "@mui/icons-material/Chat";
 import FmdBadIcon from "@mui/icons-material/FmdBad";
 import LockIcon from "@mui/icons-material/Lock";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Box, { BoxProps } from "@mui/material/Box";
 import Tooltip from "@mui/material/Tooltip";
 
@@ -37,6 +38,14 @@ export function EventStatusIcons({
             {event.personalTalk ? (
                 <Tooltip placement={tooltipPlacement} title='חלון פ"א'>
                     <ChatIcon fontSize={"inherit"} />
+                </Tooltip>
+            ) : null}
+            {event.hidden ? (
+                <Tooltip
+                    placement={tooltipPlacement}
+                    title="מוסתר (לא יוצג לחניכים)"
+                >
+                    <VisibilityOffIcon fontSize={"inherit"} />
                 </Tooltip>
             ) : null}
         </Box>

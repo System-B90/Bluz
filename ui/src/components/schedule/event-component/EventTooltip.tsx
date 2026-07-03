@@ -5,6 +5,8 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import TheaterComedyIcon from "@mui/icons-material/TheaterComedy";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import WarningIcon from "@mui/icons-material/Warning";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
@@ -23,8 +25,9 @@ import { useRooms } from "@/components/base/RoomsProvider";
 import { EventTypeIcon } from "@/components/schedule/event-component/EventTypeIcon";
 import {
     Event,
-    EventType,
+    eventHasLecturers,
     eventHasSubject,
+    EventType,
     getPresentInstructors,
 } from "@/components/schedule/types/event";
 
@@ -66,7 +69,7 @@ export function EventTooltipContent({ event }: { event: Event }) {
         .map(getInstructor)
         .filter((v) => !!v);
     const hasOutsider =
-        event.type === EventType.LECTURE &&
+        eventHasLecturers(event.type) &&
         event.lecturers?.includes("איש חוץ");
     const isPrayer = event.type === EventType.PRAYER;
     const isBreak = event.type === EventType.BREAK;
@@ -86,6 +89,16 @@ export function EventTooltipContent({ event }: { event: Event }) {
         statusFlags.push({
             icon: <ChatIcon fontSize="inherit" />,
             label: 'חלון פ"א',
+        });
+    if (event.hidden)
+        statusFlags.push({
+            icon: <VisibilityOffIcon fontSize="inherit" />,
+            label: "מוסתר",
+        });
+    if (event.fake)
+        statusFlags.push({
+            icon: <TheaterComedyIcon fontSize="inherit" />,
+            label: "פיקטיבי",
         });
 
     return (
