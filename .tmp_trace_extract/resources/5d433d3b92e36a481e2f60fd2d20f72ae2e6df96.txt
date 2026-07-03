@@ -1,1 +1,0 @@
-{"status":0,"data":[{"id":"current","createdAt":"2026-06-27T21:39:37.714Z","dbName":"bluz","endDate":null,"isCurrent":true,"label":"מחזור נוכחי","startDate":"2026-06-27T21:39:37.714Z","updatedAt":"2026-06-27T21:39:37.714Z"}]}
