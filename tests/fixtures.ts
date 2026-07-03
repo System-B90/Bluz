@@ -198,14 +198,14 @@ export async function selectCalendarTimeRange(page: Page): Promise<void> {
  * Returns the visible event dialog, if any.
  */
 export function getEventDialog(page: Page) {
-    return page.getByRole("dialog").filter({ hasText: "ערוך מופע" });
+    return page.getByRole("dialog").filter({ hasText: "עריכת מופע" });
 }
 
 /**
  * Calendar filter strip in the AppBar (prayer/PA/misconfig icons live here).
  */
 export function getHeaderFilters(page: Page) {
-    return page.getByRole("button", { name: /גלה חלונות פ"א|הסתר חלונות פ"א/ });
+    return page.getByRole("button", { name: /גילוי חלונות פ\"א|הסתרת חלונות פ\"א/ });
 }
 
 /**

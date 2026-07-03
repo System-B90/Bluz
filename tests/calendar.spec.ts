@@ -138,7 +138,7 @@ test.describe("Calendar Page", () => {
 
     test("hides and shows the toolbar", async ({ page }) => {
         // Find the hide-toolbar button
-        const hideToolbarButton = page.getByRole("button", { name: "הסתר סרגל כלים" });
+        const hideToolbarButton = page.getByRole("button", { name: "הסתרת סרגל כלים" });
 
         // Toolbar should be visible initially
         await expect(page.getByRole("button", { name: "היום" })).toBeVisible();
@@ -153,7 +153,7 @@ test.describe("Calendar Page", () => {
         ).not.toBeVisible();
 
         // The floating controls should appear with a show button
-        const showButton = page.getByRole("button", { name: "הצג סרגל כלים" });
+        const showButton = page.getByRole("button", { name: "הצגת סרגל כלים" });
         await expect(showButton).toBeVisible();
 
         // Click show
@@ -191,7 +191,7 @@ test.describe("Calendar Page", () => {
 
         const dialog = getEventDialog(page);
         await expect(dialog).toBeVisible();
-        await expect(dialog.getByText("ערוך מופע")).toBeVisible();
+        await expect(dialog.getByText("עריכת מופע")).toBeVisible();
     });
 
     test("creates a new event via the event dialog", async ({ page }) => {
@@ -205,7 +205,7 @@ test.describe("Calendar Page", () => {
         const nameField = dialog.locator("input").first();
         await nameField.fill(eventName);
 
-        await dialog.getByRole("button", { name: "שמור" }).click();
+        await dialog.getByRole("button", { name: "שמירה" }).click();
         await page.waitForTimeout(500);
 
         const calendarEvent = page.locator(SELECTORS.calendarEvent).filter({
@@ -251,12 +251,12 @@ test.describe("Calendar Page", () => {
         await expect(dialog.getByText("מתואם").first()).toBeVisible();
         await expect(dialog.getByText("קריטי").first()).toBeVisible();
         await expect(
-            dialog.getByRole("button", { name: "שמור" }),
+            dialog.getByRole("button", { name: "שמירה" }),
         ).toBeVisible();
         await expect(
             dialog.getByRole("button", { name: "ביטול" }),
         ).toBeVisible();
-        await expect(dialog.getByRole("button", { name: "מחק" })).toBeVisible();
+        await expect(dialog.getByRole("button", { name: "מחיקה" })).toBeVisible();
 
         await dialog.getByRole("button", { name: "ביטול" }).click();
     });

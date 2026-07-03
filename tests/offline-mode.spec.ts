@@ -215,7 +215,7 @@ test.describe("Offline mode", () => {
         const createDialog = getEventDialog(page);
         await expect(createDialog).toBeVisible();
         await createDialog.locator("input").first().fill(name);
-        await createDialog.getByRole("button", { name: "שמור" }).click();
+        await createDialog.getByRole("button", { name: "שמירה" }).click();
         await page.waitForTimeout(1_000);
 
         // Go offline and delete it
@@ -225,7 +225,7 @@ test.describe("Offline mode", () => {
 
         const editDialog = getEventDialog(page);
         await expect(editDialog).toBeVisible();
-        await editDialog.getByRole("button", { name: "מחק" }).click();
+        await editDialog.getByRole("button", { name: "מחיקה" }).click();
         await page.waitForTimeout(500);
 
         const pushDialog = await exitOfflineMode(page);

@@ -99,10 +99,10 @@ test.describe("Settings Dialog", () => {
 
         const dialog = page.locator(SELECTORS.settingsDialog).first();
 
-        // Find the groups autocomplete (first one with "חפש והוסף קבוצה")
+        // Find the groups autocomplete (first one with "חיפוש והוספת קבוצה")
         const groupSearch = dialog
             .locator(SELECTORS.autocomplete)
-            .filter({ hasText: "חפש והוסף קבוצה" })
+            .filter({ hasText: "חיפוש והוספת קבוצה" })
             .first();
 
         // Click the autocomplete input and type
@@ -147,7 +147,7 @@ test.describe("Settings Dialog", () => {
 
         const instructorSearch = dialog
             .locator(SELECTORS.autocomplete)
-            .filter({ hasText: "חפש והוסף מרצה" })
+            .filter({ hasText: "חיפוש והוספת מרצה" })
             .first();
 
         await instructorSearch.locator("input").click();
@@ -260,7 +260,7 @@ test.describe("Settings Dialog", () => {
                         await roomItem.first().click();
                         await page.waitForTimeout(300);
 
-                        const deleteButton = dialog.locator("li").filter({ hasText: roomName }).getByRole("button", { name: "מחק" });
+                        const deleteButton = dialog.locator("li").filter({ hasText: roomName }).getByRole("button", { name: "מחיקה" });
                         if ((await deleteButton.count()) > 0) {
                             // Handle confirmation dialog
                             page.on("dialog", (d) => d.accept());
