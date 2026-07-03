@@ -81,30 +81,93 @@ jobs:
               with:
                   python-version: "3.13"
 
-            # First-time Hive setup, per Hive's dev docs — but with a
-            # non-interactive twist: `manage_hive.py init` calls Django's
-            # `createsuperuser` with interactive prompts (that's where devs
-            # type admin:Password1), which would hang in CI. So run `update`
-            # (build_deps → build → up → migrate → collectstatic → db update),
-            # then replay init's remaining pieces with --noinput.
-            # `dummy_db` is skipped — Bluz reseeds Hive via pyhive anyway.
-            # Hive's committed .env already sets HIVE_HOSTNAME_PLAIN=hive.org
-            # and ships sample SSL keys, and its nginx publishes 80/443.
+            # Hive rarely changes, so cache its built prod images keyed on the
+            # checked-out Hive commit. On a hit we `docker load` and skip the
+            # multi-minute build; when feature/sso advances, the key changes and
+            # we rebuild + re-cache. No restore-keys — an inexact hit would run
+            # stale images against a newer checkout, so only an exact SHA reuses.
+            - name: Resolve Hive commit
+              id: hive_sha
+              working-directory: hive
+              run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+            - name: Cache Hive prod images
+              id: hive_images_cache
+              uses: actions/cache@v4
+              with:
+                  path: /tmp/hive-images.tar
+                  key: hive-prod-images-v1-${{ steps.hive_sha.outputs.sha }}
+
+            - name: Load cached Hive images
+              if: steps.hive_images_cache.outputs.cache-hit == 'true'
+              run: docker load -i /tmp/hive-images.tar
+
+            # Bring Hive up in PROD mode (manage_hive.py default env) and run its
+            # init non-interactively. This inlines manage_hive.py's prod
+            # update()+init() rather than calling them, so the build can be
+            # skipped entirely on a cache hit (a plain `docker compose build`
+            # would rebuild — `docker load` restores images, not layer cache).
+            #
+            # CI adaptations vs `manage_hive.py init`:
+            #  * build_deps first on a miss — prod's update skips it, but a
+            #    source build needs the base images (hive/*-base) built.
+            #  * createsuperuser --noinput — init's is interactive and hangs.
+            #  * dev-only `frontend yarn`/`dummy_db` omitted — prod serves a
+            #    pre-built frontend and Bluz reseeds Hive via pyhive.
+            # Prod omits the dev override, so pin -f docker-compose.yaml. Hive's
+            # committed .env sets HIVE_HOSTNAME_PLAIN=hive.org, ships sample SSL
+            # keys, and its nginx publishes 80/443.
             - name: Build & Initialize Hive
               working-directory: hive
+              env:
+                  HIVE_CACHE_HIT: ${{ steps.hive_images_cache.outputs.cache-hit }}
               run: |
-                  python3 manage_hive.py update
-                  docker compose exec -T core python manage.py service_accounts
-                  docker compose exec -T core python manage.py load_tags
-                  docker compose exec -T \
+                  # Cap Hive's prod resource footprint for CI. Hive's committed
+                  # .env sets HIVE_CORE_WORKERS=10 × HIVE_CORE_THREADS=8 gunicorn
+                  # workers, which on a 2-vCPU runner starves the Next.js prod
+                  # build in the Bluz UI container (OOM/crash-loop → never ready).
+                  # docker-compose.yaml loads .env.override (optional) after .env.
+                  cat > .env.override <<'EOF'
+                  HIVE_CORE_WORKERS=2
+                  HIVE_CORE_THREADS=2
+                  HIVE_NGINX_WORKERS=1
+                  EOF
+                  compose="docker compose -f docker-compose.yaml"
+
+                  if [ "$HIVE_CACHE_HIT" = "true" ]; then
+                    echo "Reusing cached Hive images — skipping build."
+                  else
+                    echo "No Hive image cache — building from source."
+                    python3 manage_hive.py build_deps
+                    $compose build
+                  fi
+
+                  # Start the stack from (cached or freshly built) images. The DB
+                  # volume is not cached, so migrations + seeding run every time.
+                  $compose up -d
+                  $compose exec -T core python manage.py migrate
+                  $compose exec -T core python manage.py collectstatic --noinput
+                  $compose exec -T database sh /update.sh
+                  $compose exec -T core python manage.py service_accounts
+                  $compose exec -T core python manage.py load_tags
+                  $compose exec -T \
                     -e DJANGO_SUPERUSER_USERNAME=admin \
                     -e DJANGO_SUPERUSER_PASSWORD=Password1 \
                     -e DJANGO_SUPERUSER_EMAIL=admin@hive.org \
                     core python manage.py createsuperuser --noinput
-                  docker compose exec -T core python manage.py load_programs
-                  # Dev-mode frontend runs from mounted source — install deps
-                  docker compose run --rm frontend yarn
-                  python3 manage_hive.py start
+                  $compose exec -T core python manage.py load_programs
+
+                  # On a miss, save the runtime images so the next run reuses
+                  # them (actions/cache uploads the tar in its post step). Base
+                  # images are excluded — they are only needed to build, which a
+                  # cache hit skips.
+                  if [ "$HIVE_CACHE_HIT" != "true" ]; then
+                    imgs=$(docker images 'hive/*' --format '{{.Repository}}:{{.Tag}}' | grep -v -- '-base' || true)
+                    if [ -n "$imgs" ]; then
+                      echo "Saving Hive images for cache:"; echo "$imgs"
+                      docker save -o /tmp/hive-images.tar $imgs
+                    fi
+                  fi
 
             - name: Wait for Hive
               run: |
@@ -233,6 +296,17 @@ jobs:
                     name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
                     docker logs "$c" > "container-logs/$name.log" 2>&1 || true
                   done
+                  # Echo the Bluz UI container log to stdout so failures are
+                  # diagnosable from the job log alone (no artifact download).
+                  echo "::group::Bluz UI container status + log (tail)"
+                  ui=$(docker ps -a --filter "name=-ui" --format '{{.Names}}' | head -1)
+                  if [ -n "$ui" ]; then
+                    docker inspect --format 'State={{.State.Status}} ExitCode={{.State.ExitCode}} OOMKilled={{.State.OOMKilled}} Restarts={{.RestartCount}}' "$ui" || true
+                    docker logs --tail 200 "$ui" 2>&1 || true
+                  else
+                    echo "No Bluz UI container found."
+                  fi
+                  echo "::endgroup::"
 
             - name: Upload Container Logs
               uses: actions/upload-artifact@v4
