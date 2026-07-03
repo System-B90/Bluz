@@ -1,0 +1,312 @@
+/* [project]/ui/src/components/header/theme-selector.css [app-client] (css) */
+.theme-slider {
+  cursor: pointer;
+  background-color: #87ceeb;
+  border: none;
+  border-radius: 34px;
+  width: 68px;
+  height: 34px;
+  padding: 0;
+  transition: background-color .4s;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 5px #0003;
+}
+
+.dark .theme-slider {
+  background-color: #1a202c;
+}
+
+.slider-bg {
+  width: 100%;
+  height: 100%;
+  transition: opacity .4s;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.theme-slider .starry-bg {
+  opacity: 0;
+}
+
+.dark .theme-slider .starry-bg {
+  opacity: 1;
+}
+
+.star {
+  background-color: #fff;
+  border-radius: 50%;
+  position: absolute;
+}
+
+.star-1 {
+  width: 2px;
+  height: 2px;
+  top: 6px;
+  left: 14px;
+}
+
+.star-2 {
+  width: 3px;
+  height: 3px;
+  top: 16px;
+  left: 8px;
+  box-shadow: 0 0 3px #fff;
+}
+
+.star-3 {
+  width: 2px;
+  height: 2px;
+  top: 24px;
+  left: 20px;
+}
+
+.dark .theme-slider .sunny-bg {
+  opacity: 0;
+}
+
+.theme-slider .sunny-bg {
+  opacity: 1;
+}
+
+.cloud {
+  opacity: .9;
+  background-color: #fff;
+  border-radius: 10px;
+  position: absolute;
+}
+
+.cloud-1 {
+  width: 20px;
+  height: 6px;
+  top: 8px;
+  right: 10px;
+}
+
+.cloud-1:before {
+  content: "";
+  background: #fff;
+  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  position: absolute;
+  top: -4px;
+  left: 4px;
+}
+
+.cloud-2 {
+  width: 14px;
+  height: 4px;
+  top: 22px;
+  right: 22px;
+}
+
+.slider-head {
+  z-index: 10;
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+  transition: transform .5s cubic-bezier(.4, 0, .2, 1), background-color .5s;
+  display: flex;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+}
+
+.theme-slider .slider-head {
+  background-color: #fbbf24;
+  transform: translateX(0);
+  box-shadow: 0 0 10px #fbbf24cc;
+}
+
+.dark .theme-slider .slider-head {
+  background-color: #f8fafc;
+  transform: translateX(34px);
+  box-shadow: 0 0 10px #f8fafc80;
+}
+
+.icon {
+  justify-content: center;
+  align-items: center;
+  transition: opacity .5s, transform .5s;
+  display: flex;
+  position: absolute;
+}
+
+.dark .theme-slider .sun-icon {
+  opacity: 0;
+  transform: rotate(-90deg);
+}
+
+.theme-slider .sun-icon, .dark .theme-slider .moon-icon {
+  opacity: 1;
+  transform: rotate(0);
+}
+
+.theme-slider .moon-icon {
+  opacity: 0;
+  transform: rotate(90deg);
+}
+
+/* [project]/ui/src/components/settings-dialog/tabs/global/lecture-comfort-switch.css [app-client] (css) */
+.lecture-slider {
+  cursor: pointer;
+  border: none;
+  border-radius: 34px;
+  width: 68px;
+  height: 34px;
+  padding: 0;
+  transition: background-color .4s;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 5px #0003;
+}
+
+.lecture-slider.disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.lecture-slider.comfortable {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.lecture-slider.uncomfortable {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.slider-bg {
+  width: 100%;
+  height: 100%;
+  transition: opacity .4s;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.lecture-slider.uncomfortable .comfort-bg {
+  opacity: 0;
+}
+
+.lecture-slider.comfortable .comfort-bg {
+  opacity: 1;
+}
+
+.sparkle {
+  background-color: #ffffffb3;
+  border-radius: 50%;
+  animation: 2s ease-in-out infinite sparkle-pulse;
+  position: absolute;
+}
+
+.sparkle-1 {
+  width: 3px;
+  height: 3px;
+  animation-delay: 0s;
+  top: 7px;
+  left: 12px;
+}
+
+.sparkle-2 {
+  width: 2px;
+  height: 2px;
+  animation-delay: .8s;
+  top: 22px;
+  left: 22px;
+}
+
+@keyframes sparkle-pulse {
+  0%, 100% {
+    opacity: .4;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+}
+
+.lecture-slider.comfortable .discomfort-bg {
+  opacity: 0;
+}
+
+.lecture-slider.uncomfortable .discomfort-bg {
+  opacity: 1;
+}
+
+.dust {
+  background-color: #00000026;
+  border-radius: 50%;
+  position: absolute;
+}
+
+.dust-1 {
+  border-radius: 50%;
+  width: 6px;
+  height: 4px;
+  top: 10px;
+  right: 8px;
+}
+
+.dust-2 {
+  border-radius: 50%;
+  width: 4px;
+  height: 3px;
+  top: 20px;
+  right: 16px;
+}
+
+.lecture-slider .slider-head {
+  z-index: 10;
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+  transition: transform .5s cubic-bezier(.4, 0, .2, 1), background-color .5s;
+  display: flex;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+}
+
+.lecture-slider.comfortable .slider-head {
+  background-color: #15803d;
+  transform: translateX(34px);
+  box-shadow: 0 0 10px #22c55e99;
+}
+
+.lecture-slider.uncomfortable .slider-head {
+  background-color: #b91c1c;
+  transform: translateX(0);
+  box-shadow: 0 0 10px #ef444499;
+}
+
+.lecture-slider .icon {
+  justify-content: center;
+  align-items: center;
+  transition: opacity .5s, transform .5s;
+  display: flex;
+  position: absolute;
+}
+
+.lecture-slider.uncomfortable .thumbup-icon {
+  opacity: 0;
+  transform: rotate(-90deg);
+}
+
+.lecture-slider.comfortable .thumbup-icon, .lecture-slider.uncomfortable .thumbdown-icon {
+  opacity: 1;
+  transform: rotate(0);
+}
+
+.lecture-slider.comfortable .thumbdown-icon {
+  opacity: 0;
+  transform: rotate(90deg);
+}
+
+/*# sourceMappingURL=ui_src_components_0leurf6._.css.map*/

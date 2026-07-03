@@ -42,7 +42,8 @@ export const GET: ServerApiCustomColorsGet = async (request) => {
 
 export const POST: ServerApiCustomColorUpdate = async (request) => {
     try {
-        const color = await request.json();
+        const textBody = await request.text();
+        const color = textBody ? JSON.parse(textBody) : null;
         if (!color) {
             throw new ClientApiError("No data provided!");
         }
@@ -55,7 +56,8 @@ export const POST: ServerApiCustomColorUpdate = async (request) => {
 
 export const PUT: ServerApiCustomColorCreate = async (request) => {
     try {
-        const color = await request.json();
+        const textBody = await request.text();
+        const color = textBody ? JSON.parse(textBody) : null;
         if (!color) {
             throw new ClientApiError("No data provided!");
         }
@@ -71,7 +73,8 @@ export const PUT: ServerApiCustomColorCreate = async (request) => {
 
 export const DELETE: ServerApiCustomColorDelete = async (request) => {
     try {
-        const colorId = await request.json();
+        const textBody = await request.text();
+        const colorId = textBody ? JSON.parse(textBody) : null;
         if (!colorId) {
             throw new ClientApiError("No colorId provided!");
         }

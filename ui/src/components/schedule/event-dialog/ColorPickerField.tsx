@@ -1,10 +1,12 @@
 "use client";
 import CheckIcon from "@mui/icons-material/Check";
-import RotateLeftIcon from "@mui/icons-material/RotateLeft";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import Box, { BoxProps } from "@mui/material/Box";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListSubheader from "@mui/material/ListSubheader";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -12,31 +14,34 @@ import { memo, useCallback, useMemo, useState } from "react";
 
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
-import { resolveEventDefaultColor } from "@/components/schedule/event-component/event-colors";
-import { Event, EventType } from "@/components/schedule/types/event";
+import {
+    excludeSwatchIds,
+    resolveColorById,
+    resolveEventDefaultColor,
+    updateRecentColorIds,
+} from "@/components/schedule/event-component/event-colors";
+import { Event } from "@/components/schedule/types/event";
 
 const LOCAL_STORAGE_RECENT_COLORS_KEY = "bluz-recent-colors";
+const DEFAULT_COLOR_ID = "-default";
 
 // --- ColorSwatch sub-component ---
 type ColorSwatchProps = {
     hex: string;
     label: string;
     isSelected: boolean;
-    onSelect: (hex: string) => void;
 };
 
 const ColorSwatch = memo(function ColorSwatch({
     hex,
     label,
     isSelected,
-    onSelect,
 }: ColorSwatchProps)
 {
     const theme = useTheme();
     return (
         <Tooltip title={ label }>
             <Box
-                onClick={ () => onSelect(hex) }
                 sx={ {
                     width: 28,
                     height: 28,
@@ -45,16 +50,12 @@ const ColorSwatch = memo(function ColorSwatch({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    cursor: "pointer",
                     border: "2px solid",
                     borderColor: isSelected ? "primary.main" : "transparent",
                     transition: theme.transitions.create([ "transform" ], {
                         duration: theme.transitions.duration.shorter,
                     }),
                     color: theme.palette.getContrastText(hex),
-                    "&:hover": {
-                        transform: "scale(1.1)",
-                    },
                 } }
             >
                 { isSelected ? <CheckIcon sx={ { fontSize: 16 } } /> : null }
@@ -67,18 +68,40 @@ const ColorSwatch = memo(function ColorSwatch({
 type ColorPickerFieldProps = {
     event: Partial<Event>;
     onUpdate: (update: Partial<Event>) => void;
-};
+} & Omit<BoxProps, "onSelect">;
+// `id` is the color's identity: a custom color's ID, a Hive subject's ID, or
+// DEFAULT_COLOR_ID for the "no override" option.
+type Swatch = { id: string; hex: string; label: string; isSelected: boolean; };
+
+// MUI's Select reads `value` directly off its immediate MenuItem children, so
+// this must render content only, not wrap MenuItem in its own component.
+function SwatchOptionContent({ swatch }: { swatch: Swatch; })
+{
+    return (
+        <>
+            <ListItemIcon>
+                <ColorSwatch
+                    hex={ swatch.hex }
+                    isSelected={ swatch.isSelected }
+                    label={ swatch.label }
+                />
+            </ListItemIcon>
+            <Typography>{ swatch.label }</Typography>
+        </>
+    );
+}
 
 export function ColorPickerField({
     event,
     onUpdate,
+    ...boxProps
 }: ColorPickerFieldProps)
 {
     const theme = useTheme();
     const { getSubject, subjects } = useHiveSubjects();
-    const { customColors } = useCustomColors();
+    const { getCustomColor, customColors } = useCustomColors();
 
-    const [ recentColors, setRecentColors ] = useState<Array<string>>(() =>
+    const [ recentColorIds, setRecentColorIds ] = useState<Array<string>>(() =>
     {
         if (typeof window === "undefined") return [];
         try
@@ -110,15 +133,19 @@ export function ColorPickerField({
     const hasOverride = !!event.color;
 
     const handleSelectColor = useCallback(
-        (hex: string) =>
+        (colorId: string) =>
         {
-            onUpdate({ color: hex });
-
-            // Update recent colors
-            setRecentColors((prev) =>
+            if (colorId === DEFAULT_COLOR_ID)
             {
-                const filtered = prev.filter((c) => c.toLowerCase() !== hex.toLowerCase());
-                const updated = [ hex, ...filtered ].slice(0, 3);
+                onUpdate({ color: undefined });
+                return;
+            }
+
+            onUpdate({ color: colorId });
+
+            setRecentColorIds((prev) =>
+            {
+                const updated = updateRecentColorIds(prev, colorId);
                 try
                 {
                     localStorage.setItem(LOCAL_STORAGE_RECENT_COLORS_KEY, JSON.stringify(updated));
@@ -132,165 +159,96 @@ export function ColorPickerField({
         [ onUpdate ],
     );
 
-    const handleRevert = useCallback(() =>
-    {
-        onUpdate({ color: undefined });
-    }, [ onUpdate ]);
-
     // Memoize swatch entries
-    const recentSwatches = useMemo(
+    const recentSwatches: Array<Swatch> = useMemo(
         () =>
-            recentColors.map((color) => ({
-                hex: color,
-                label: color,
-                isSelected:
-                    hasOverride &&
-                    event.color?.toLowerCase() === color.toLowerCase(),
-            })),
-        [ recentColors, hasOverride, event.color ],
+            recentColorIds
+                .map((id) =>
+                {
+                    const resolved = resolveColorById(id, { getCustomColor, getSubject });
+                    if (!resolved) return undefined;
+                    return {
+                        id,
+                        hex: resolved.hex,
+                        label: resolved.label,
+                        isSelected: hasOverride && event.color === id,
+                    };
+                })
+                .filter((swatch): swatch is Swatch => !!swatch),
+        [ recentColorIds, getCustomColor, getSubject, hasOverride, event.color ],
     );
 
-    const customSwatches = useMemo(
-        () =>
-            customColors.map((color) => ({
-                hex: color.hex,
-                label: color.name,
-                isSelected:
-                    hasOverride &&
-                    event.color?.toLowerCase() === color.hex.toLowerCase(),
+    const customSwatches: Array<Swatch> = useMemo(() =>
+        customColors.map((color) => ({
+            id: color.id,
+            hex: color.hex,
+            label: color.name,
+            isSelected: hasOverride && event.color === color.id,
+        })),
+    [ customColors, hasOverride, event.color ]);
+
+    const subjectSwatches: Array<Swatch> = useMemo(() =>
+        subjects
+            .filter((s) => !!s.color)
+            .map((s) => ({
+                id: s.id,
+                hex: s.color as string,
+                label: s.displayName || s.name,
+                isSelected: hasOverride && event.color === s.id,
             })),
-        [ customColors, hasOverride, event.color ],
-    );
+    [ subjects, hasOverride, event.color ]);
 
-    const subjectSwatches = useMemo(() =>
-    {
-        const colorMap = new Map<string, { hex: string; subjectNames: Array<string>; }>();
-        subjects.forEach((subject) =>
-        {
-            if (subject.color)
-            {
-                const hex = subject.color.toLowerCase();
-                const existing = colorMap.get(hex);
-                if (existing)
-                {
-                    if (!existing.subjectNames.includes(subject.name))
-                    {
-                        existing.subjectNames.push(subject.name);
-                    }
-                } else
-                {
-                    colorMap.set(hex, {
-                        hex: subject.color,
-                        subjectNames: [ subject.name ],
-                    });
-                }
-            }
-        });
+    // A recently-used color can also be a subject or custom color that's already
+    // listed in its own group below - drop those to avoid duplicate ids/keys.
+    const dedupedRecentSwatches: Array<Swatch> = useMemo(() =>
+        excludeSwatchIds(recentSwatches, [
+            ...subjectSwatches.map((s) => s.id),
+            ...customSwatches.map((s) => s.id),
+        ]),
+    [ recentSwatches, subjectSwatches, customSwatches ]);
 
-        return Array.from(colorMap.values()).map(({ hex, subjectNames }) => ({
-            hex,
-            label: subjectNames.join(", "),
-            isSelected:
-                hasOverride &&
-                event.color?.toLowerCase() === hex.toLowerCase(),
-        }));
-    }, [ subjects, hasOverride, event.color ]);
+    const options = useMemo(() =>
+        [
+            { title: "מועדפים", swatches: dedupedRecentSwatches },
+            { title: "מהייב", swatches: subjectSwatches },
+            { title: "מיוחדים", swatches: customSwatches },
+        ]
+            .filter((group) => group.swatches.length > 0)
+            .flatMap((group) => [
+                <ListSubheader key={ `${group.title}-header` }>
+                    { group.title }
+                </ListSubheader>,
+                ...group.swatches.map((swatch) => (
+                    <MenuItem key={ swatch.id } value={ swatch.id }>
+                        <SwatchOptionContent swatch={ swatch } />
+                    </MenuItem>
+                )),
+            ]),
+    [ dedupedRecentSwatches, subjectSwatches, customSwatches ]);
+
+    const defaultSwatch: Swatch = {
+        id: DEFAULT_COLOR_ID,
+        hex: defaultColor,
+        label: "ברירת מחדל",
+        isSelected: !hasOverride,
+    };
 
     return (
         <FormControl
-            disabled={ event?.type === EventType.PRAYER }
             fullWidth={ false }
+            sx={ { minWidth: "5rem", ...((boxProps.sx as object) ?? {}) } }
         >
             <InputLabel>צבע</InputLabel>
-            <Box display="flex" flexDirection="column" gap={ 2 } sx={ { pl: 1 } }>
-
-                <Box alignItems="center" display="flex" gap={ 2 }>
-                    <Typography color="text.secondary" sx={ { minWidth: 90 } } variant="body2">
-                        ברירת מחדל:
-                    </Typography>
-                    <ColorSwatch
-                        hex={ defaultColor }
-                        isSelected={ !hasOverride }
-                        label="צבע ברירת מחדל (Hive)"
-                        onSelect={ handleRevert }
-                    />
-                    { hasOverride ? (
-                        <Button
-                            onClick={ handleRevert }
-                            size="small"
-                            startIcon={ <RotateLeftIcon /> }
-                            sx={ { py: 0.25 } }
-                            variant="outlined"
-                        >
-                            חזרה לברירת מחדל
-                        </Button>
-                    ) : null }
-                </Box>
-
-                {/* Recent Colors Row */ }
-                { recentSwatches.length > 0 && (
-                    <Box alignItems="center" display="flex" gap={ 2 }>
-                        <Typography color="text.secondary" sx={ { minWidth: 90 } } variant="body2">
-                            בשימוש לאחרונה:
-                        </Typography>
-                        <Box display="flex" gap={ 1 }>
-                            { recentSwatches.map((swatch) => (
-                                <ColorSwatch
-                                    hex={ swatch.hex }
-                                    isSelected={ swatch.isSelected }
-                                    key={ swatch.hex }
-                                    label={ swatch.label }
-                                    onSelect={ handleSelectColor }
-                                />
-                            )) }
-                        </Box>
-                    </Box>
-                ) }
-
-                {/* Subject Colors Row */ }
-                { subjectSwatches.length > 0 && (
-                    <Box alignItems="flex-start" display="flex" gap={ 2 }>
-                        <Typography color="text.secondary" sx={ { minWidth: 90, pt: 0.5 } } variant="body2">
-                            צבעי מקצועות:
-                        </Typography>
-                        <Box display="flex" flexWrap="wrap" gap={ 1 } maxWidth="400px">
-                            { subjectSwatches.map((swatch) => (
-                                <ColorSwatch
-                                    hex={ swatch.hex }
-                                    isSelected={ swatch.isSelected }
-                                    key={ swatch.hex }
-                                    label={ swatch.label }
-                                    onSelect={ handleSelectColor }
-                                />
-                            )) }
-                        </Box>
-                    </Box>
-                ) }
-
-                {/* Custom Colors Row */ }
-                <Box alignItems="flex-start" display="flex" gap={ 2 }>
-                    <Typography color="text.secondary" sx={ { minWidth: 90, pt: 0.5 } } variant="body2">
-                        צבעים מותאמים:
-                    </Typography>
-                    { customSwatches.length === 0 ? (
-                        <Typography color="text.secondary" sx={ { pt: 0.5 } } variant="caption">
-                            אין צבעים מותאמים אישית (ניתן להוסיף בהגדרות)
-                        </Typography>
-                    ) : (
-                        <Box display="flex" flexWrap="wrap" gap={ 1 } maxWidth="400px">
-                            { customSwatches.map((swatch) => (
-                                <ColorSwatch
-                                    hex={ swatch.hex }
-                                    isSelected={ swatch.isSelected }
-                                    key={ swatch.hex }
-                                    label={ swatch.label }
-                                    onSelect={ handleSelectColor }
-                                />
-                            )) }
-                        </Box>
-                    ) }
-                </Box>
-            </Box>
+            <Select
+                label="צבע"
+                onChange={ (e) => handleSelectColor(e.target.value) }
+                value={ event.color ?? DEFAULT_COLOR_ID }
+            >
+                <MenuItem key={ DEFAULT_COLOR_ID } value={ DEFAULT_COLOR_ID }>
+                    <SwatchOptionContent swatch={ defaultSwatch } />
+                </MenuItem>
+                { options }
+            </Select>
         </FormControl>
     );
 }

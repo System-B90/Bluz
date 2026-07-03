@@ -6,9 +6,10 @@ import { useMemo } from "react";
 import { EventProps } from "react-big-calendar";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
+import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
-import { resolveEventDefaultColor } from "@/components/schedule/event-component/event-colors";
+import { resolveEventColor } from "@/components/schedule/event-component/event-colors";
 import { EventTooltipContent } from "@/components/schedule/event-component/EventTooltip";
 import { UnifiedEvent } from "@/components/schedule/event-component/UnifiedEvent";
 import { useElementSize } from "@/components/schedule/event-component/utils";
@@ -22,15 +23,19 @@ export type ContainerSize = {
 export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
     const theme = useTheme();
     const { getSubject } = useHiveSubjects();
+    const { getCustomColor } = useCustomColors();
     const { eventFilteredOpacity } = useCalendarFilters();
     const { eventLocks } = useCalendar();
 
     const lock = eventLocks[event.id];
 
     const subject = getSubject(event.subject);
-    const bgColor =
-        event.color ||
-        resolveEventDefaultColor(event, subject, theme.palette.common.black);
+    const bgColor = resolveEventColor(
+        event,
+        subject,
+        { getCustomColor, getSubject },
+        theme.palette.common.black,
+    );
     const textColor = theme.palette.getContrastText(bgColor);
 
     const { ref, size } = useElementSize<HTMLDivElement>();
