@@ -40,7 +40,6 @@ export const RoomListCard: ListCard<Room> = function RoomListCard({
         selectedRoom,
         handleDelete,
         populateFormFromRoom,
-        searchQuery,
     ]);
 
     return (

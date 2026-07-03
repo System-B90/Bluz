@@ -31,8 +31,8 @@ export function SettingsListCardContent({ items, headerProps, searchPlaceholder,
                         : searchMessages.noEntries
                 }
             />
-        ) : (<List disablePadding>{ items }</List>)
-    ), [ items ]);
+        ) : <List disablePadding>{ items }</List>
+    ), [ items, searchQuery, searchMessages ]);
 
     return (
         <Box sx={ { ...settingsCardSx, flex: 1.4 } }>

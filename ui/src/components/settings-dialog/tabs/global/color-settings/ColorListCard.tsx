@@ -87,7 +87,7 @@ export const ColorListCard: ListCard<ColorEntry> = function ColorListCard({
             onDelete={ handleDelete }
             onSelect={ populateFormFromColor }
         />
-    )), [ filteredColors, selectedColor, handleDelete, populateFormFromColor, searchQuery ]);
+    )), [ filteredColors, selectedColor, handleDelete, populateFormFromColor ]);
 
     return (
         <SettingsListCardContent

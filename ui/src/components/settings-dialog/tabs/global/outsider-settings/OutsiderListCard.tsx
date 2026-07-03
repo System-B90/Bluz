@@ -120,7 +120,6 @@ export const OutsiderListCard: ListCard<Outsider> = function OutsiderListCard({
         selectedOutsider,
         handleDelete,
         populateFormFromOutsider,
-        searchQuery,
     ]);
 
     return (
