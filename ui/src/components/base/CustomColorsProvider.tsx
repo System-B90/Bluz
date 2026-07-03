@@ -1,6 +1,7 @@
 "use client";
 import { enqueueSnackbar } from "notistack";
-import {
+import
+{
     createContext,
     useCallback,
     useContext,
@@ -10,7 +11,8 @@ import {
 } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import {
+import
+{
     apiCreateCustomColor,
     apiDeleteCustomColor,
     apiGetCustomColors,
@@ -34,9 +36,9 @@ const CustomColorsContext = createContext<CustomColorsContextState>({
     default: true,
     customColors: [],
     getCustomColor: (_id: string) => null,
-    addCustomColor: async () => {},
-    updateCustomColor: async () => {},
-    deleteCustomColor: async () => {},
+    addCustomColor: async () => { },
+    updateCustomColor: async () => { },
+    deleteCustomColor: async () => { },
 });
 
 type CustomColorsState = {
@@ -44,18 +46,20 @@ type CustomColorsState = {
     isLoading: boolean;
 };
 type CustomColorsAction =
-    | { type: "ADD_COLOR"; payload: CustomColor }
-    | { type: "DELETE_COLOR"; payload: string }
-    | { type: "ROLLBACK_COLORS"; payload: Record<string, CustomColor> }
-    | { type: "SET_COLORS"; payload: Record<string, CustomColor> }
-    | { type: "SET_LOADING"; payload: boolean }
-    | { type: "UPDATE_COLOR"; payload: CustomColor };
+    | { type: "ADD_COLOR"; payload: CustomColor; }
+    | { type: "DELETE_COLOR"; payload: string; }
+    | { type: "ROLLBACK_COLORS"; payload: Record<string, CustomColor>; }
+    | { type: "SET_COLORS"; payload: Record<string, CustomColor>; }
+    | { type: "SET_LOADING"; payload: boolean; }
+    | { type: "UPDATE_COLOR"; payload: CustomColor; };
 
 function customColorsReducer(
     state: CustomColorsState,
     action: CustomColorsAction,
-): CustomColorsState {
-    switch (action.type) {
+): CustomColorsState
+{
+    switch (action.type)
+    {
     case "SET_LOADING":
         return { ...state, isLoading: action.payload };
     case "SET_COLORS":
@@ -69,7 +73,7 @@ function customColorsReducer(
             ...state,
             customColors: {
                 ...state.customColors,
-                [action.payload.id]: action.payload,
+                [ action.payload.id ]: action.payload,
             },
         };
     case "UPDATE_COLOR":
@@ -77,12 +81,12 @@ function customColorsReducer(
             ...state,
             customColors: {
                 ...state.customColors,
-                [action.payload.id]: action.payload,
+                [ action.payload.id ]: action.payload,
             },
         };
     case "DELETE_COLOR": {
         const next = { ...state.customColors };
-        delete next[action.payload];
+        delete next[ action.payload ];
         return {
             ...state,
             customColors: next,
@@ -102,39 +106,45 @@ export const CustomColorsProvider = ({
     children,
 }: {
     children: React.ReactNode;
-}) => {
+}) =>
+{
     const { addMessageHandler } = useAuth();
-    const [state, dispatch] = useReducer(customColorsReducer, {
+    const [ state, dispatch ] = useReducer(customColorsReducer, {
         customColors: {},
         isLoading: true,
     });
 
     const customColors = useMemo(
         () => Object.values(state.customColors),
-        [state.customColors],
+        [ state.customColors ],
     );
 
     const getCustomColor = useCallback(
-        (id: string) => {
-            return state.customColors[id] || null;
+        (id: string) =>
+        {
+            return state.customColors[ id ] || null;
         },
-        [state.customColors],
+        [ state.customColors ],
     );
 
-    const loadCustomColors = useCallback(() => {
+    const loadCustomColors = useCallback(() =>
+    {
         dispatch({ type: "SET_LOADING", payload: true });
         apiGetCustomColors()
-            .then((fetched) => {
+            .then((fetched) =>
+            {
                 const map: Record<string, CustomColor> = {};
-                fetched.forEach((c) => {
-                    map[c.id] = c;
+                fetched.forEach((c) =>
+                {
+                    map[ c.id ] = c;
                 });
                 dispatch({
                     type: "SET_COLORS",
                     payload: map,
                 });
             })
-            .catch((error) => {
+            .catch((error) =>
+            {
                 dispatch({ type: "SET_LOADING", payload: false });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -145,7 +155,8 @@ export const CustomColorsProvider = ({
     }, []);
 
     const addCustomColor = useCallback(
-        async (colorData: Omit<CustomColor, "id">) => {
+        async (colorData: Omit<CustomColor, "id">) =>
+        {
             const id = `color-${crypto.randomUUID()}`;
             const color: CustomColor = {
                 id,
@@ -155,7 +166,8 @@ export const CustomColorsProvider = ({
 
             dispatch({ type: "ADD_COLOR", payload: color });
 
-            try {
+            try
+            {
                 const created = await apiCreateCustomColor(color);
                 enqueueSnackbar(
                     `יצירת צבע ${colorData.name} הסתיימה בהצלחה.`,
@@ -164,7 +176,8 @@ export const CustomColorsProvider = ({
                 dispatch({ type: "DELETE_COLOR", payload: id });
                 dispatch({ type: "ADD_COLOR", payload: created });
                 loadCustomColors();
-            } catch (error) {
+            } catch (error)
+            {
                 dispatch({
                     type: "ROLLBACK_COLORS",
                     payload: previous,
@@ -176,16 +189,18 @@ export const CustomColorsProvider = ({
                 );
             }
         },
-        [state.customColors, loadCustomColors],
+        [ state.customColors, loadCustomColors ],
     );
 
     const updateCustomColor = useCallback(
-        async (color: CustomColor) => {
+        async (color: CustomColor) =>
+        {
             const previous = { ...state.customColors };
 
             dispatch({ type: "UPDATE_COLOR", payload: color });
 
-            try {
+            try
+            {
                 const updated = await apiUpdateCustomColor(color);
                 enqueueSnackbar(
                     `עדכון צבע ${color.name} הסתיים בהצלחה.`,
@@ -193,7 +208,8 @@ export const CustomColorsProvider = ({
                 );
                 dispatch({ type: "UPDATE_COLOR", payload: updated });
                 loadCustomColors();
-            } catch (error) {
+            } catch (error)
+            {
                 dispatch({
                     type: "ROLLBACK_COLORS",
                     payload: previous,
@@ -205,23 +221,26 @@ export const CustomColorsProvider = ({
                 );
             }
         },
-        [state.customColors, loadCustomColors],
+        [ state.customColors, loadCustomColors ],
     );
 
     const deleteCustomColor = useCallback(
-        async (colorId: string) => {
+        async (colorId: string) =>
+        {
             const previous = { ...state.customColors };
-            const name = state.customColors[colorId]?.name || colorId;
+            const name = state.customColors[ colorId ]?.name || colorId;
 
             dispatch({ type: "DELETE_COLOR", payload: colorId });
 
-            try {
+            try
+            {
                 await apiDeleteCustomColor(colorId);
                 enqueueSnackbar(`מחיקת צבע ${name} הסתיימה בהצלחה.`, {
                     variant: "success",
                 });
                 loadCustomColors();
-            } catch (error) {
+            } catch (error)
+            {
                 dispatch({
                     type: "ROLLBACK_COLORS",
                     payload: previous,
@@ -233,50 +252,57 @@ export const CustomColorsProvider = ({
                 );
             }
         },
-        [state.customColors, loadCustomColors],
+        [ state.customColors, loadCustomColors ],
     );
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         loadCustomColors();
-    }, [loadCustomColors]);
+    }, [ loadCustomColors ]);
 
     const onWebSocketMessage: MessageHandlerType = useCallback(
-        (messageType: MessageTypes, _data: any) => {
-            if (messageType === (MessageTypes.CUSTOM_COLORS_UPDATE as any)) {
+        (messageType: MessageTypes, _data: any) =>
+        {
+            if (messageType === (MessageTypes.CUSTOM_COLORS_UPDATE as any))
+            {
                 loadCustomColors();
             }
         },
-        [loadCustomColors],
+        [ loadCustomColors ],
     );
 
-    useEffect(() => {
-        if (typeof window === "undefined") {
+    useEffect(() =>
+    {
+        if (typeof window === "undefined")
+        {
             return;
         }
 
         return addMessageHandler(onWebSocketMessage);
-    }, [addMessageHandler, onWebSocketMessage]);
+    }, [ addMessageHandler, onWebSocketMessage ]);
 
     return (
         <CustomColorsContext.Provider
-            value={{
+            value={ {
                 default: false,
                 customColors,
                 getCustomColor,
                 addCustomColor,
                 updateCustomColor,
                 deleteCustomColor,
-            }}
+            } }
         >
-            {children}
+            { children }
         </CustomColorsContext.Provider>
     );
 };
 
-export const useCustomColors = () => {
+export const useCustomColors = () =>
+{
     const context = useContext(CustomColorsContext);
 
-    if (context === undefined || context.default) {
+    if (context === undefined || context.default)
+    {
         throw new Error(
             "useCustomColors must be used within an CustomColorsProvider",
         );

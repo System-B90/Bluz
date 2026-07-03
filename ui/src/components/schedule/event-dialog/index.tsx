@@ -9,9 +9,10 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { FormEvent, useCallback, useState } from "react";
 
-import { ColorPickerField } from "@/components/schedule/event-dialog/ColorPickerField";
 import { EventClassification } from "@/components/schedule/event-dialog/EventClassification";
 import { EventPrimaryDetails } from "@/components/schedule/event-dialog/EventPrimaryDetails";
 import { EventToggles } from "@/components/schedule/event-dialog/EventToggles";
@@ -78,13 +79,29 @@ export function EventDialog({
             maxWidth="lg"
             onClose={ onClose }
             open={ open }
-            PaperProps={ {
-                sx: {
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            slotProps={ {
+                paper: {
+                    sx: {
+                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    },
                 },
             } }
         >
-            <DialogTitle>עריכת מופע</DialogTitle>
+            <DialogTitle sx={ { pb: 1 } }>
+                <Stack spacing={ 0.5 }>
+                    <Typography component="span" sx={ { fontWeight: "bold" } } variant="h5">
+                        עריכת מופע
+                    </Typography>
+
+                    <Typography
+                        component="span"
+                        sx={ { color: "text.secondary" } }
+                        variant="caption"
+                    >
+                        יום:
+                    </Typography>
+                </Stack>
+            </DialogTitle>
 
             <form onSubmit={ handleSubmit }>
                 <DialogContent>
@@ -119,11 +136,6 @@ export function EventDialog({
                         <InstructorsField
                             event={ event }
                             onBlurCallback={ handleUpdate }
-                        />
-
-                        <ColorPickerField
-                            event={ event }
-                            onUpdate={ handleUpdate }
                         />
 
                         <EventToggles event={ event } onUpdate={ handleUpdate } />

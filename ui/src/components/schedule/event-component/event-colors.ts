@@ -11,9 +11,10 @@ export const PRAYER_DEFAULT_COLOR = "#e0f9fe";
  */
 export function resolveEventDefaultColor(
     event: Partial<Event>,
-    subject: { color?: string } | undefined,
+    subject: { color?: string; } | undefined,
     fallback: string,
-): string {
+): string
+{
     return (
         (event.type === EventType.PRAYER ? PRAYER_DEFAULT_COLOR : subject?.color) ??
         fallback

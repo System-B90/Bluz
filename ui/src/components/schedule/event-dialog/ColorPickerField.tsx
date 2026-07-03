@@ -1,17 +1,19 @@
 "use client";
 import CheckIcon from "@mui/icons-material/Check";
 import RotateLeftIcon from "@mui/icons-material/RotateLeft";
-import Box, { BoxProps } from "@mui/material/Box";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
 import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import React, { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { resolveEventDefaultColor } from "@/components/schedule/event-component/event-colors";
-import { Event } from "@/components/schedule/types/event";
+import { Event, EventType } from "@/components/schedule/types/event";
 
 const LOCAL_STORAGE_RECENT_COLORS_KEY = "bluz-recent-colors";
 
@@ -28,13 +30,14 @@ const ColorSwatch = memo(function ColorSwatch({
     label,
     isSelected,
     onSelect,
-}: ColorSwatchProps) {
+}: ColorSwatchProps)
+{
     const theme = useTheme();
     return (
-        <Tooltip title={label}>
+        <Tooltip title={ label }>
             <Box
-                onClick={() => onSelect(hex)}
-                sx={{
+                onClick={ () => onSelect(hex) }
+                sx={ {
                     width: 28,
                     height: 28,
                     borderRadius: "50%",
@@ -45,14 +48,16 @@ const ColorSwatch = memo(function ColorSwatch({
                     cursor: "pointer",
                     border: "2px solid",
                     borderColor: isSelected ? "primary.main" : "transparent",
-                    transition: "all 0.2s ease",
+                    transition: theme.transitions.create([ "transform" ], {
+                        duration: theme.transitions.duration.shorter,
+                    }),
                     color: theme.palette.getContrastText(hex),
                     "&:hover": {
                         transform: "scale(1.1)",
                     },
-                }}
+                } }
             >
-                {isSelected ? <CheckIcon sx={{ fontSize: 16 }} /> : null}
+                { isSelected ? <CheckIcon sx={ { fontSize: 16 } } /> : null }
             </Box>
         </Tooltip>
     );
@@ -62,28 +67,33 @@ const ColorSwatch = memo(function ColorSwatch({
 type ColorPickerFieldProps = {
     event: Partial<Event>;
     onUpdate: (update: Partial<Event>) => void;
-} & Omit<BoxProps, "onSelect">;
+};
 
 export function ColorPickerField({
     event,
     onUpdate,
-    ...boxProps
-}: ColorPickerFieldProps) {
+}: ColorPickerFieldProps)
+{
     const theme = useTheme();
-    const { getSubject } = useHiveSubjects();
+    const { getSubject, subjects } = useHiveSubjects();
     const { customColors } = useCustomColors();
 
-    const [recentColors, setRecentColors] = useState<Array<string>>(() => {
+    const [ recentColors, setRecentColors ] = useState<Array<string>>(() =>
+    {
         if (typeof window === "undefined") return [];
-        try {
+        try
+        {
             const stored = localStorage.getItem(LOCAL_STORAGE_RECENT_COLORS_KEY);
-            if (stored) {
+            if (stored)
+            {
                 const parsed = JSON.parse(stored);
-                if (Array.isArray(parsed)) {
+                if (Array.isArray(parsed))
+                {
                     return parsed.slice(0, 3);
                 }
             }
-        } catch (e) {
+        } catch (e)
+        {
             console.error("Failed to load recent colors from localStorage", e);
         }
         return [];
@@ -100,27 +110,32 @@ export function ColorPickerField({
     const hasOverride = !!event.color;
 
     const handleSelectColor = useCallback(
-        (hex: string) => {
+        (hex: string) =>
+        {
             onUpdate({ color: hex });
 
             // Update recent colors
-            setRecentColors((prev) => {
+            setRecentColors((prev) =>
+            {
                 const filtered = prev.filter((c) => c.toLowerCase() !== hex.toLowerCase());
-                const updated = [hex, ...filtered].slice(0, 3);
-                try {
+                const updated = [ hex, ...filtered ].slice(0, 3);
+                try
+                {
                     localStorage.setItem(LOCAL_STORAGE_RECENT_COLORS_KEY, JSON.stringify(updated));
-                } catch (e) {
+                } catch (e)
+                {
                     console.error("Failed to save recent colors to localStorage", e);
                 }
                 return updated;
             });
         },
-        [onUpdate],
+        [ onUpdate ],
     );
 
-    const handleRevert = useCallback(() => {
+    const handleRevert = useCallback(() =>
+    {
         onUpdate({ color: undefined });
-    }, [onUpdate]);
+    }, [ onUpdate ]);
 
     // Memoize swatch entries
     const recentSwatches = useMemo(
@@ -132,7 +147,7 @@ export function ColorPickerField({
                     hasOverride &&
                     event.color?.toLowerCase() === color.toLowerCase(),
             })),
-        [recentColors, hasOverride, event.color],
+        [ recentColors, hasOverride, event.color ],
     );
 
     const customSwatches = useMemo(
@@ -144,94 +159,138 @@ export function ColorPickerField({
                     hasOverride &&
                     event.color?.toLowerCase() === color.hex.toLowerCase(),
             })),
-        [customColors, hasOverride, event.color],
+        [ customColors, hasOverride, event.color ],
     );
 
-    return (
-        <Box
-            {...boxProps}
-            sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 1.5,
-                mt: 1,
-                ...((boxProps.sx as object) ?? {}),
-            }}
-        >
-            <Typography sx={{ fontWeight: 700, fontSize: "0.9rem", color: "text.primary" }}>
-                צבע מופע
-            </Typography>
+    const subjectSwatches = useMemo(() =>
+    {
+        const colorMap = new Map<string, { hex: string; subjectNames: Array<string>; }>();
+        subjects.forEach((subject) =>
+        {
+            if (subject.color)
+            {
+                const hex = subject.color.toLowerCase();
+                const existing = colorMap.get(hex);
+                if (existing)
+                {
+                    if (!existing.subjectNames.includes(subject.name))
+                    {
+                        existing.subjectNames.push(subject.name);
+                    }
+                } else
+                {
+                    colorMap.set(hex, {
+                        hex: subject.color,
+                        subjectNames: [ subject.name ],
+                    });
+                }
+            }
+        });
 
-            {/* Picker Sections */}
-            <Box display="flex" flexDirection="column" gap={2} sx={{ pl: 1 }}>
-                {/* Default Color Row */}
-                <Box alignItems="center" display="flex" gap={2}>
-                    <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", minWidth: 90 }}>
+        return Array.from(colorMap.values()).map(({ hex, subjectNames }) => ({
+            hex,
+            label: subjectNames.join(", "),
+            isSelected:
+                hasOverride &&
+                event.color?.toLowerCase() === hex.toLowerCase(),
+        }));
+    }, [ subjects, hasOverride, event.color ]);
+
+    return (
+        <FormControl
+            disabled={ event?.type === EventType.PRAYER }
+            fullWidth={ false }
+        >
+            <InputLabel>צבע</InputLabel>
+            <Box display="flex" flexDirection="column" gap={ 2 } sx={ { pl: 1 } }>
+
+                <Box alignItems="center" display="flex" gap={ 2 }>
+                    <Typography color="text.secondary" sx={ { minWidth: 90 } } variant="body2">
                         ברירת מחדל:
                     </Typography>
                     <ColorSwatch
-                        hex={defaultColor}
-                        isSelected={!hasOverride}
+                        hex={ defaultColor }
+                        isSelected={ !hasOverride }
                         label="צבע ברירת מחדל (Hive)"
-                        onSelect={handleRevert}
+                        onSelect={ handleRevert }
                     />
-                    {hasOverride ? (
+                    { hasOverride ? (
                         <Button
-                            onClick={handleRevert}
+                            onClick={ handleRevert }
                             size="small"
-                            startIcon={<RotateLeftIcon />}
-                            sx={{ borderRadius: "8px", py: 0.25 }}
+                            startIcon={ <RotateLeftIcon /> }
+                            sx={ { py: 0.25 } }
                             variant="outlined"
                         >
                             חזרה לברירת מחדל
                         </Button>
-                    ) : null}
+                    ) : null }
                 </Box>
 
-                {/* Recent Colors Row */}
-                {recentSwatches.length > 0 && (
-                    <Box alignItems="center" display="flex" gap={2}>
-                        <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", minWidth: 90 }}>
+                {/* Recent Colors Row */ }
+                { recentSwatches.length > 0 && (
+                    <Box alignItems="center" display="flex" gap={ 2 }>
+                        <Typography color="text.secondary" sx={ { minWidth: 90 } } variant="body2">
                             בשימוש לאחרונה:
                         </Typography>
-                        <Box display="flex" gap={1}>
-                            {recentSwatches.map((swatch) => (
+                        <Box display="flex" gap={ 1 }>
+                            { recentSwatches.map((swatch) => (
                                 <ColorSwatch
-                                    hex={swatch.hex}
-                                    isSelected={swatch.isSelected}
-                                    key={swatch.hex}
-                                    label={swatch.label}
-                                    onSelect={handleSelectColor}
+                                    hex={ swatch.hex }
+                                    isSelected={ swatch.isSelected }
+                                    key={ swatch.hex }
+                                    label={ swatch.label }
+                                    onSelect={ handleSelectColor }
                                 />
-                            ))}
+                            )) }
                         </Box>
                     </Box>
-                )}
+                ) }
 
-                {/* Custom Colors Row */}
-                <Box alignItems="flex-start" display="flex" gap={2}>
-                    <Typography sx={{ fontSize: "0.85rem", color: "text.secondary", minWidth: 90, pt: 0.5 }}>
+                {/* Subject Colors Row */ }
+                { subjectSwatches.length > 0 && (
+                    <Box alignItems="flex-start" display="flex" gap={ 2 }>
+                        <Typography color="text.secondary" sx={ { minWidth: 90, pt: 0.5 } } variant="body2">
+                            צבעי מקצועות:
+                        </Typography>
+                        <Box display="flex" flexWrap="wrap" gap={ 1 } maxWidth="400px">
+                            { subjectSwatches.map((swatch) => (
+                                <ColorSwatch
+                                    hex={ swatch.hex }
+                                    isSelected={ swatch.isSelected }
+                                    key={ swatch.hex }
+                                    label={ swatch.label }
+                                    onSelect={ handleSelectColor }
+                                />
+                            )) }
+                        </Box>
+                    </Box>
+                ) }
+
+                {/* Custom Colors Row */ }
+                <Box alignItems="flex-start" display="flex" gap={ 2 }>
+                    <Typography color="text.secondary" sx={ { minWidth: 90, pt: 0.5 } } variant="body2">
                         צבעים מותאמים:
                     </Typography>
-                    {customSwatches.length === 0 ? (
-                        <Typography sx={{ fontSize: "0.8rem", color: "text.secondary", pt: 0.5 }}>
+                    { customSwatches.length === 0 ? (
+                        <Typography color="text.secondary" sx={ { pt: 0.5 } } variant="caption">
                             אין צבעים מותאמים אישית (ניתן להוסיף בהגדרות)
                         </Typography>
                     ) : (
-                        <Box display="flex" flexWrap="wrap" gap={1} maxWidth="400px">
-                            {customSwatches.map((swatch) => (
+                        <Box display="flex" flexWrap="wrap" gap={ 1 } maxWidth="400px">
+                            { customSwatches.map((swatch) => (
                                 <ColorSwatch
-                                    hex={swatch.hex}
-                                    isSelected={swatch.isSelected}
-                                    key={swatch.hex}
-                                    label={swatch.label}
-                                    onSelect={handleSelectColor}
+                                    hex={ swatch.hex }
+                                    isSelected={ swatch.isSelected }
+                                    key={ swatch.hex }
+                                    label={ swatch.label }
+                                    onSelect={ handleSelectColor }
                                 />
-                            ))}
+                            )) }
                         </Box>
-                    )}
+                    ) }
                 </Box>
             </Box>
-        </Box>
+        </FormControl>
     );
 }
