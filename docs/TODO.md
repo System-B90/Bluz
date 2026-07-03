@@ -324,6 +324,13 @@ and the 🔒 Security section. Items with a non-security tag keep their original
 - [ ] **[INFRA] Test stack tests a non-prod image.** `docker-compose.test.yml` builds `target: dev`
   then runs `build && start` with `--no-mangling` — structurally different from the real `runner`
   stage (deps, root user, source present). **Fix:** build/test against the `runner` target.
+- [ ] **[TEST] 3 e2e specs quarantined (`test.fixme`).** Surfaced by the new hermetic CI against a
+  freshly-seeded Hive. **(a)** `gantt.spec.ts` "renders the Gantt page with placeholder text" and
+  **(b)** `offline-mode.spec.ts` "deleted event appears in push dialog" — the delete buttons
+  (`מחיקה`/`מחק`) stay **disabled** on freshly-seeded data, timing the tests out. **(c)**
+  `offline-mode.spec.ts` "exiting without changes auto-closes…" — the push-updates dialog doesn't
+  auto-close within 3s. **Fix:** investigate the disabled-delete precondition + the no-op
+  offline-exit path, then drop the `test.fixme` markers.
 
 ---
 
