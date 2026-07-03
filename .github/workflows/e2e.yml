@@ -93,7 +93,7 @@ jobs:
             - name: Build & Initialize Hive
               working-directory: hive
               run: |
-                  python3 manage_hive.py --env dev update
+                  python3 manage_hive.py update
                   docker compose exec -T core python manage.py service_accounts
                   docker compose exec -T core python manage.py load_tags
                   docker compose exec -T \
@@ -104,7 +104,7 @@ jobs:
                   docker compose exec -T core python manage.py load_programs
                   # Dev-mode frontend runs from mounted source — install deps
                   docker compose run --rm frontend yarn
-                  python3 manage_hive.py --env dev start
+                  python3 manage_hive.py start
 
             - name: Wait for Hive
               run: |
