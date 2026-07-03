@@ -1,38 +1,204 @@
-import assert from "assert";
 import { WebSocket, WebSocketServer } from "ws";
-import
-    {
-        MessageTypes,
-        WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY,
-        WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
-    } from "./session-common";
+import {
+    MessageTypes,
+    WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY,
+    WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
+} from "./session-common";
 
-const GC_INTERVAL_MS = 3600 * 1000; // One hour
+const LISTEN_PORT = Number.parseInt(
+    process.env.WEBSOCKET_SESSION_SERVER_INTERNAL_PORT ?? "28199",
+    10,
+);
+const HEARTBEAT_INTERVAL_MS = Number.parseInt(
+    process.env.WEBSOCKET_SESSION_SERVER_HEARTBEAT_MS ?? "30000",
+    10,
+);
 
-interface ConnectedSession
-{
-    ws: WebSocket;
-    initiatorKey: string;
-    abandonedMark?: boolean;
+type MessageData = Record<string, unknown>;
+
+interface SessionState {
+    initiatorKey?: string;
+    isAlive: boolean;
+    /** Sync-object ids this socket listens to (for O(1) cleanup on close). */
+    syncObjectIds: Set<string>;
 }
 
-type ConnectedSyncObjectSession = ConnectedSession;
+/**
+ * In-memory connection registry.
+ *
+ * Every accepted socket gets a SessionState; `sessions` drives the broadcast
+ * fan-out and the heartbeat sweep. `syncObjectListeners` is a reverse index
+ * (sync-object id → listening sockets) so targeted dispatch never scans the
+ * whole session table.
+ *
+ * NOTE: the registry is process-local. To scale this server horizontally the
+ * fan-out must go through a shared broker (e.g. Redis pub/sub) — see
+ * docs/performance-and-scaling.md.
+ */
+const sessions = new Map<WebSocket, SessionState>();
+const syncObjectListeners = new Map<string, Set<WebSocket>>();
 
-const connectedSessions: Array<ConnectedSession> = [];
-const registeredSyncObjectConnections: {
-    [ x: string ]: Array<ConnectedSyncObjectSession>;
-} = {};
+function log(message: string) {
+    console.log(`[WS] ${message}`);
+}
 
-function updateSessionLastContact<T extends ConnectedSession>(session: T)
-{
-    session.abandonedMark = false;
+function logError(message: string, error?: unknown) {
+    console.error(`[WS] ${message}`, error ?? "");
+}
+
+function registerSession(ws: WebSocket, initiatorKey: unknown) {
+    if (typeof initiatorKey !== "string") {
+        logError(
+            `register-session ignored: initiatorKey must be a string, got ${typeof initiatorKey}`,
+        );
+        return;
+    }
+    const state = sessions.get(ws);
+    if (state) {
+        state.initiatorKey = initiatorKey;
+    }
+}
+
+function registerSyncObjectListener(ws: WebSocket, syncObjectId: unknown) {
+    if (typeof syncObjectId !== "string") {
+        logError(
+            `register-sync-provider ignored: syncObjectId must be a string, got ${typeof syncObjectId}`,
+        );
+        return;
+    }
+    let listeners = syncObjectListeners.get(syncObjectId);
+    if (!listeners) {
+        listeners = new Set();
+        syncObjectListeners.set(syncObjectId, listeners);
+    }
+    listeners.add(ws);
+    sessions.get(ws)?.syncObjectIds.add(syncObjectId);
+}
+
+function removeConnection(ws: WebSocket) {
+    const state = sessions.get(ws);
+    if (!state) return;
+
+    for (const syncObjectId of state.syncObjectIds) {
+        const listeners = syncObjectListeners.get(syncObjectId);
+        if (!listeners) continue;
+        listeners.delete(ws);
+        if (listeners.size === 0) {
+            syncObjectListeners.delete(syncObjectId);
+        }
+    }
+    sessions.delete(ws);
+    if (state.initiatorKey) {
+        log(`Session ${state.initiatorKey} removed`);
+    }
+}
+
+function buildMessage(
+    messageType: MessageTypes,
+    target?: string,
+    data?: MessageData,
+): string {
+    return JSON.stringify({ type: messageType, target, data });
+}
+
+function safeSend(ws: WebSocket, message: string, context: string) {
+    if (ws.readyState !== WebSocket.OPEN) return;
+    try {
+        ws.send(message);
+    } catch (error) {
+        logError(`Failed to send ${context}`, error);
+    }
+}
+
+function dispatchMessageToEveryone(
+    messageType: MessageTypes,
+    targets?: Array<string> | string,
+    data?: MessageData,
+) {
+    // Serialize once per broadcast instead of once per recipient.
+    const message = buildMessage(messageType, undefined, data);
+    for (const [ws, state] of sessions) {
+        if (state.initiatorKey === undefined) continue;
+        safeSend(ws, message, `${messageType} to ${state.initiatorKey}`);
+    }
+
+    if (typeof targets === "string") {
+        dispatchToSyncObjectListeners(messageType, targets, data);
+    } else if (Array.isArray(targets)) {
+        for (const target of targets) {
+            dispatchToSyncObjectListeners(messageType, target, data);
+        }
+    }
+}
+
+function dispatchToSyncObjectListeners(
+    messageType: MessageTypes,
+    syncObjectId: string,
+    data?: MessageData,
+) {
+    const listeners = syncObjectListeners.get(syncObjectId);
+    if (!listeners || listeners.size === 0) {
+        log(`Dispatch requested on sync object "${syncObjectId}" with no listeners`);
+        return;
+    }
+    const message = buildMessage(messageType, syncObjectId, data);
+    for (const ws of listeners) {
+        safeSend(ws, message, `${messageType} to sync object ${syncObjectId}`);
+    }
+}
+
+function validateServerMessage(data: MessageData) {
+    if (!("authKey" in data)) {
+        throw new Error(`Missing "authKey" in server data!`);
+    }
+    if (data["authKey"] !== WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY) {
+        throw new Error(`Invalid "authKey" in server data!`);
+    }
+}
+
+function handleServerMessage(data: MessageData) {
+    try {
+        validateServerMessage(data);
+        log(`Server message ${data["type"]}`);
+        delete data["authKey"];
+        dispatchMessageToEveryone(
+            data["type"] as MessageTypes,
+            data["targets"] as Array<string> | string | undefined,
+            data["data"] as MessageData | undefined,
+        );
+    } catch (error) {
+        logError("Server message error", error);
+    }
+}
+
+const VALID_MESSAGE_TYPES = new Set<unknown>(Object.values(MessageTypes));
+
+function handleClientMessage(ws: WebSocket, data: MessageData) {
+    switch (data["type"]) {
+        case MessageTypes.REGISTER_SESSION:
+            registerSession(ws, data["initiatorKey"]);
+            break;
+        case MessageTypes.REGISTER_SYNC_PROVIDER:
+            registerSyncObjectListener(ws, data["syncObjectId"]);
+            break;
+        // Period locking: relay ephemeral lock/unlock presence from one client
+        // to all connected clients. Not persisted — pure presence signalling.
+        // The sender receives its own lock back and filters it out client-side.
+        case MessageTypes.EVENT_LOCK:
+        case MessageTypes.EVENT_UNLOCK:
+            dispatchMessageToEveryone(
+                data["type"] as MessageTypes,
+                undefined,
+                data["data"] as MessageData | undefined,
+            );
+            break;
+    }
 }
 
 const wss = new WebSocketServer({
-    port: 28199,
+    port: LISTEN_PORT,
     perMessageDeflate: {
         zlibDeflateOptions: {
-            // See zlib defaults.
             chunkSize: 1024,
             memLevel: 7,
             level: 3,
@@ -40,303 +206,79 @@ const wss = new WebSocketServer({
         zlibInflateOptions: {
             chunkSize: 10 * 1024,
         },
-        // Other options settable:
-        clientNoContextTakeover: true, // Defaults to negotiated value.
-        serverNoContextTakeover: true, // Defaults to negotiated value.
-        serverMaxWindowBits: 10, // Defaults to negotiated value.
-        // Below options specified as default values.
+        clientNoContextTakeover: true,
+        serverNoContextTakeover: true,
+        serverMaxWindowBits: 10,
         concurrencyLimit: 50, // Limits zlib concurrency for perf.
-        threshold: 1024, // Size (in bytes) below which messages
-        // should not be compressed if context takeover is disabled.
+        threshold: 1024, // Don't compress payloads smaller than this.
     },
 });
 
-function registerSession(ws: WebSocket, initiatorKey: string)
-{
-    assert(
-        typeof initiatorKey === "string",
-        `initiatorKey must be of type string, not ${typeof initiatorKey}`,
-    );
-    connectedSessions.push({ ws, initiatorKey });
-}
+wss.on("listening", () => log(`Listening on port ${LISTEN_PORT}`));
 
-function registerSyncObjectConnection(ws: WebSocket, syncObjectId: string)
-{
-    assert(
-        typeof syncObjectId === "string",
-        `syncObjectId must be of type string, not ${typeof syncObjectId}`,
-    );
-    if (!registeredSyncObjectConnections[ syncObjectId ])
-    {
-        registeredSyncObjectConnections[ syncObjectId ] = [];
-    }
-    registeredSyncObjectConnections[ syncObjectId ].push({
-        ws,
-        initiatorKey: syncObjectId,
-    });
-}
+wss.on("connection", (ws) => {
+    sessions.set(ws, { isAlive: true, syncObjectIds: new Set() });
 
-const buildMessage = (
-    messageType: MessageTypes,
-    target?: string,
-    data?: { [ x: string ]: any; },
-) =>
-{
-    const result: any = {
-        type: messageType,
-        target,
-        data,
-    };
-
-    return JSON.stringify(result);
-};
-
-const dispatchMessageToEveryone = (
-    messageType: MessageTypes,
-    targets?: Array<string> | string,
-    data?: { [ x: string ]: any; },
-) =>
-{
-    connectedSessions.forEach((session) =>
-    {
-        if (session.initiatorKey === undefined)
-        {
-            return;
-        }
-        if (session.ws.readyState !== WebSocket.OPEN)
-        {
-            return;
-        }
-        console.log(`Sending ${messageType} to user ${session.initiatorKey}`);
-        try
-        {
-            session.ws.send(buildMessage(messageType, undefined, data));
-            updateSessionLastContact(session);
-        } catch (e)
-        {
-            console.error(`[WS] Failed to send ${messageType} to ${session.initiatorKey}:`, e);
-        }
+    ws.on("pong", () => {
+        const state = sessions.get(ws);
+        if (state) state.isAlive = true;
     });
 
-    if (typeof targets === "string")
-    {
-        dispatchToSyncObjectListeners(messageType, targets, data);
-    } else
-    {
-        console.log("targets", targets);
-        targets?.map((target) =>
-        {
-            dispatchToSyncObjectListeners(messageType, target, data);
-        });
-    }
-};
+    ws.on("error", (error) => logError("Connection error", error));
 
-const dispatchToSyncObjectListeners = (
-    messageType: MessageTypes,
-    syncObjectId: string,
-    data?: { [ x: string ]: any; },
-) =>
-{
-    if (!registeredSyncObjectConnections[ syncObjectId ])
-    {
-        console.log(`Dispatch was requested on an object with no listeners!`);
-        return;
-    }
-    const message = buildMessage(messageType, syncObjectId, data);
-    registeredSyncObjectConnections[ syncObjectId ].map(
-        (session: ConnectedSyncObjectSession) =>
-        {
-            const { ws: listenerWS, initiatorKey } = session;
-            assert(
-                typeof initiatorKey !== "undefined",
-                `initiatorKey must be defined!`,
-            );
-            assert(
-                initiatorKey === syncObjectId,
-                `ID confusion on sync object!`,
-            );
-            console.log(`Sending ${messageType} to sync-sock ${syncObjectId}`);
-            listenerWS.send(message);
-            updateSessionLastContact(session);
-        },
-    );
-};
+    ws.on("close", () => removeConnection(ws));
 
-function validateServerMessage(data: { [ x: string ]: any; })
-{
-    if (!("authKey" in data))
-    {
-        throw Error(`Missing "authKey" in server data!`);
-    }
-    if (data[ "authKey" ] !== WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY)
-    {
-        throw Error(`Invalid "authKey" in server data!`);
-    }
-}
-
-function handleServerMessage(data: { [ x: string ]: any; })
-{
-    try
-    {
-        validateServerMessage(data);
-        console.log(`Server message ${data[ "type" ]}`);
-        delete data[ "authKey" ];
-        dispatchMessageToEveryone(data[ "type" ], data[ "targets" ], data[ "data" ]);
-    } catch (e: unknown)
-    {
-        console.error("Server message error: ", e);
-    }
-}
-
-wss.on("connection", (ws) =>
-{
-    console.log(`[WebSocket] : New connection!`);
-    ws.on("error", () => console.error("[WebSocket] : connection error!"));
-
-    ws.on("close", () =>
-    {
-        const idx = connectedSessions.findIndex((s) => s.ws === ws);
-        if (idx !== -1)
-        {
-            console.log(`[WebSocket] : Session ${connectedSessions[ idx ].initiatorKey} disconnected, removing`);
-            connectedSessions.splice(idx, 1);
-        }
-        for (const syncId in registeredSyncObjectConnections)
-        {
-            registeredSyncObjectConnections[ syncId ] = registeredSyncObjectConnections[ syncId ].filter(
-                (s) => s.ws !== ws,
-            );
-            if (registeredSyncObjectConnections[ syncId ].length === 0)
-            {
-                delete registeredSyncObjectConnections[ syncId ];
-            }
-        }
-    });
-
-    ws.on("message", (dataString) =>
-    {
-        console.log(`[WebSocket] : Data: ${dataString}`);
-
-        let data: Record<string, unknown>;
-        try
-        {
+    ws.on("message", (dataString) => {
+        let data: MessageData;
+        try {
             data = JSON.parse(dataString.toString());
-        } catch
-        {
-            console.error("[WebSocket] : Received malformed frame, ignoring");
+        } catch {
+            logError("Received malformed frame, ignoring");
             return;
         }
 
-        const msgType = data[ "type" ];
-        const validTypes: unknown[] = Object.values(MessageTypes);
-        const isServerMessage =
-            data[ "sender" ] === WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC;
-        if (!isServerMessage && !validTypes.includes(msgType))
-        {
-            console.error(
-                `[WebSocket] : Unknown message type "${msgType}", ignoring`,
-            );
-            return;
-        }
-
-        if (isServerMessage)
-        {
+        if (data["sender"] === WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC) {
             handleServerMessage(data);
             return;
         }
-
-        switch (data[ 'type' ])
-        {
-            case MessageTypes.REGISTER_SESSION:
-                registerSession(ws, data[ "initiatorKey" ] as string);
-                break;
-            case MessageTypes.REGISTER_SYNC_PROVIDER:
-                registerSyncObjectConnection(ws, data[ "syncObjectId" ] as string);
-                break;
-            // Period locking: relay ephemeral lock/unlock presence from one client
-            // to all connected clients. Not persisted — pure presence signalling.
-            // The sender receives its own lock back and filters it out client-side.
-            case MessageTypes.EVENT_LOCK:
-            case MessageTypes.EVENT_UNLOCK:
-                dispatchMessageToEveryone(
-                    data[ "type" ] as MessageTypes,
-                    undefined,
-                    data[ "data" ] as { [ x: string ]: any; },
-                );
-                break;
+        if (!VALID_MESSAGE_TYPES.has(data["type"])) {
+            logError(`Unknown message type "${data["type"]}", ignoring`);
+            return;
         }
+        handleClientMessage(ws, data);
     });
 });
 
-function handleAbandonedSession<T extends ConnectedSession>(
-    purgeList: Array<T>,
-    session: T,
-)
-{
-    if (!session.abandonedMark)
-    {
-        return markSessionAbandoned(session);
-    } // Not abandoned, mark for next round
-    purgeList.push(session);
-}
-
-function markSessionAbandoned<T extends ConnectedSession>(session: T)
-{
-    session.abandonedMark = true;
-}
-
-function abandonedSessionsGC()
-{
-    const gcStartTime = Date.now();
-    console.log(`[GC] : Beginning Session GC ${gcStartTime}`);
-
-    const syncSessionsToRemove: Array<ConnectedSession> = [];
-    for (const syncId in registeredSyncObjectConnections)
-    {
-        registeredSyncObjectConnections[ syncId ].map((session) =>
-            handleAbandonedSession(syncSessionsToRemove, session),
-        );
-    }
-
-    const sessionsToRemove: Array<ConnectedSession> = [];
-    for (const userId in connectedSessions)
-    {
-        const session = connectedSessions[ userId ];
-        handleAbandonedSession(sessionsToRemove, session);
-    }
-
-    // Shallow copy to avoid changing size of the dict midway
-    for (const syncId in { ...registeredSyncObjectConnections })
-    {
-        const filteredSessions = registeredSyncObjectConnections[ syncId ].filter(
-            (session) => !syncSessionsToRemove.includes(session),
-        );
-
-        if (0 < filteredSessions.length)
-        {
-            registeredSyncObjectConnections[ syncId ] = filteredSessions;
-        } else
-        {
-            console.log(`[GC] : Removing sync object ${syncId}`);
-            delete registeredSyncObjectConnections[ syncId ];
+// Protocol-level heartbeat: browsers and the `ws` client answer pings
+// automatically, so a socket that misses a full interval is genuinely dead
+// (half-open TCP, crashed tab, dropped network) and gets terminated. This
+// replaces the old mark-and-sweep GC, which purged idle-but-healthy sockets.
+const heartbeat = setInterval(() => {
+    for (const [ws, state] of sessions) {
+        if (!state.isAlive) {
+            log(
+                `Terminating unresponsive session${state.initiatorKey ? ` ${state.initiatorKey}` : ""}`,
+            );
+            ws.terminate(); // "close" handler performs registry cleanup.
+            continue;
         }
+        state.isAlive = false;
+        ws.ping();
     }
+}, HEARTBEAT_INTERVAL_MS);
 
-    // Shallow copy to avoid changing size of the dict midway
-    for (const userId in { ...connectedSessions })
-    {
-        const session = connectedSessions[ userId ];
-        if (sessionsToRemove.includes(session))
-        {
-            console.log(`[GC] : Removing session ${userId}`);
-            delete connectedSessions[ userId ];
-        }
+function shutdown(signal: string) {
+    log(`${signal} received, shutting down`);
+    clearInterval(heartbeat);
+    for (const ws of sessions.keys()) {
+        ws.close(1001, "Server shutting down");
     }
-
-    const gcDuration = Date.now() - gcStartTime;
-    console.log(`[GC] : Session GC took ${gcDuration / 1000} seconds`);
+    wss.close(() => process.exit(0));
+    // Force-exit if clients keep the server alive past the grace period.
+    setTimeout(() => process.exit(0), 5000).unref();
 }
 
-setInterval(abandonedSessionsGC, GC_INTERVAL_MS);
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 export default wss;

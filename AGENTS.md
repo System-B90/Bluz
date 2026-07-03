@@ -206,7 +206,8 @@ Runtime config comes from the root **`.env`** (consumed by docker-compose and co
 | `NEXT_PUBLIC_HIVE_URL`, `HIVE_CLIENT_ID`, `HIVE_CLIENT_SECRET` | Hive microservice + SSO. |
 | `NEXTAUTH_URL`, `NEXTAUTH_SECRET` | next-auth. |
 | `JWT_SECRET`, `SYM_ENC_KEY` | Session JWT signing + AES-GCM token encryption (`ui/src/settings.tsx`). |
-| `WEBSOCKET_SESSION_SERVER_*` | WebSocket session server host/auth. |
+| `WEBSOCKET_SESSION_SERVER_*` | WebSocket session server host/auth/port/heartbeat. |
+| `POSTGRES_POOL_MAX`, `POSTGRES_PREPARE`, `MONGO_MAX_POOL_SIZE`, … | DB pool tuning — see [docs/performance-and-scaling.md](docs/performance-and-scaling.md). |
 | `NEXT_PUBLIC_GANT_DEFAULT_*_HOURS` | Default work hours for new Gantt week days. |
 | `BLUZ_VERSION` | Docker image tag. |
 
@@ -230,8 +231,9 @@ Runtime config comes from the root **`.env`** (consumed by docker-compose and co
   `tsconfig.tsbuildinfo`.
 - **Don't touch `.agents/` submodules** as part of Bluz changes.
 - **Prefer the existing patterns:** `buildGantCollectionRoutes` for Gantt CRUD,
-  `catchHandler`/`ApiSuccess` (`ui/src/api-server/common.tsx`) for route error handling,
-  the reducer/context pattern in `components/gantt/state/` for Gantt UI state.
+  `withApi` + `ApiSuccess` (`ui/src/api-server/common.tsx`) for route handlers and
+  error handling, the reducer/context pattern in `components/gantt/state/` for Gantt
+  UI state.
 - **Platform:** primary dev is Windows + PowerShell, but Docker is the source of truth for
   runtime. Dev requires `bluz.dev` → `127.0.0.3` in your hosts file.
 

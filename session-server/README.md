@@ -6,6 +6,31 @@ This directory houses a standalone, real-time Node.js **WebSocket coordination s
 
 ---
 
+## Quick Start
+
+```bash
+# From the repo root — installs deps and starts the server (tsx)
+npm run session:start
+
+# Or from this directory, with file-watching
+npm install
+npm run dev
+```
+
+Configuration (all optional):
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `WEBSOCKET_SESSION_SERVER_INTERNAL_PORT` | `28199` | Listen port. |
+| `WEBSOCKET_SESSION_SERVER_HEARTBEAT_MS` | `30000` | Ping interval; a socket that misses one full interval is terminated. |
+| `WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY` | — | Shared secret the Next.js server presents on server-to-server broadcasts. |
+
+The connection registry is **process-local** (in-memory `Map`/`Set`). Running more
+than one instance requires a shared broker — see
+[docs/performance-and-scaling.md](../docs/performance-and-scaling.md).
+
+---
+
 ## Directory Structure
 
 - This is a standalone package containing its own `package.json`, TypeScript build config, and standard socket server script.
