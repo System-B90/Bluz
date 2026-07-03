@@ -105,6 +105,16 @@ jobs:
             - name: Build & Initialize Hive
               working-directory: hive
               run: |
+                  # Cap Hive's prod resource footprint for CI. Hive's committed
+                  # .env sets HIVE_CORE_WORKERS=10 × HIVE_CORE_THREADS=8 gunicorn
+                  # workers, which on a 2-vCPU runner starves the Next.js prod
+                  # build in the Bluz UI container (OOM/crash-loop → never ready).
+                  # docker-compose.yaml loads .env.override (optional) after .env.
+                  cat > .env.override <<'EOF'
+                  HIVE_CORE_WORKERS=2
+                  HIVE_CORE_THREADS=2
+                  HIVE_NGINX_WORKERS=1
+                  EOF
                   python3 manage_hive.py build_deps
                   python3 manage_hive.py update
                   compose="docker compose -f docker-compose.yaml"
@@ -244,6 +254,17 @@ jobs:
                     name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
                     docker logs "$c" > "container-logs/$name.log" 2>&1 || true
                   done
+                  # Echo the Bluz UI container log to stdout so failures are
+                  # diagnosable from the job log alone (no artifact download).
+                  echo "::group::Bluz UI container status + log (tail)"
+                  ui=$(docker ps -a --filter "name=-ui" --format '{{.Names}}' | head -1)
+                  if [ -n "$ui" ]; then
+                    docker inspect --format 'State={{.State.Status}} ExitCode={{.State.ExitCode}} OOMKilled={{.State.OOMKilled}} Restarts={{.RestartCount}}' "$ui" || true
+                    docker logs --tail 200 "$ui" 2>&1 || true
+                  else
+                    echo "No Bluz UI container found."
+                  fi
+                  echo "::endgroup::"
 
             - name: Upload Container Logs
               uses: actions/upload-artifact@v4
