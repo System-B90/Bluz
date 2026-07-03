@@ -365,14 +365,13 @@ export function SnapshotMenu() {
                 <DialogTitle>שחזור מחוץ לטווח הנוכחי</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        {pendingRestore &&
-                            `המופעים בצילום המצב שייכים לטווח ${dayjs(
-                                pendingRestore.rangeStart,
-                            ).format("DD/MM/YYYY")} – ${dayjs(
-                                pendingRestore.rangeEnd,
-                            ).format(
-                                "DD/MM/YYYY",
-                            )}, שאינו מוצג כעת. לעבור לטווח הזה ולשחזר?`}
+                        {pendingRestore ? `המופעים בצילום המצב שייכים לטווח ${dayjs(
+                            pendingRestore.rangeStart,
+                        ).format("DD/MM/YYYY")} – ${dayjs(
+                            pendingRestore.rangeEnd,
+                        ).format(
+                            "DD/MM/YYYY",
+                        )}, שאינו מוצג כעת. לעבור לטווח הזה ולשחזר?` : null}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>

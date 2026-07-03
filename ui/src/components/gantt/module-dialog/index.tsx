@@ -30,9 +30,9 @@ import {
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView";
-import { ShuffleSelect } from "@/components/gantt/ShuffleSelect";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import { HiveLessonsView, HiveModulesView } from "@/components/gantt/module-dialog/utils";
+import { ShuffleSelect } from "@/components/gantt/ShuffleSelect";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";

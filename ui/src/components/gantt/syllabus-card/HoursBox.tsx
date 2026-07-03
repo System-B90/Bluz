@@ -214,11 +214,9 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                             {tentativeHours}
                         </Typography>
                     </Box>
-                    {shuffleTotals && (
-                        <Box pt={0.5}>
-                            <ShuffleTimeBadge totals={shuffleTotals} />
-                        </Box>
-                    )}
+                    {shuffleTotals ? <Box pt={0.5}>
+                        <ShuffleTimeBadge totals={shuffleTotals} />
+                    </Box> : null}
                 </Stack>
             </Box>
         </Box>

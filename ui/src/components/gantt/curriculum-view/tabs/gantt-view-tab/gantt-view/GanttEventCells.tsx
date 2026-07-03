@@ -109,7 +109,7 @@ export function buildWeeklyEventCells(
                 hasBlock={ hasBlock }
                 isAbsoluteBlock={ true }
                 isOpaque={ isWaitingInModuleStartColumn }
-                isSpillover={ isExplicitlyMappedHere && !!spanInfo }
+                isSpillover={ Boolean(isExplicitlyMappedHere && spanInfo) }
                 key={ `week-${week.id}-${eventId}` }
                 payloadData={ {
                     targetType: "event",
@@ -182,7 +182,7 @@ export function buildDailyEventCells(
                     hasBlock={ hasBlock }
                     isAbsoluteBlock={ true }
                     isOpaque={ isWaitingInModuleStartColumn }
-                    isSpillover={ isExplicitlyMappedHere && !!spanInfo }
+                    isSpillover={ Boolean(isExplicitlyMappedHere && spanInfo) }
                     key={ `${dayId}-${eventId}` }
                     payloadData={ { targetType: "event", eventId, dayId } }
                     spanLength={
