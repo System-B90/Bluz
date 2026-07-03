@@ -134,7 +134,7 @@ export function catchHandler<T extends NextRequest>(request: T, e: any) {
  * });
  * ```
  */
-export function withApi<TRequest extends Request, TContext = never>(
+export function withApi<TRequest extends Request, TContext = any>(
     handler: (request: TRequest, context: TContext) => Promise<Response>,
 ): (request: TRequest, context: TContext) => Promise<Response> {
     return async (request: TRequest, context: TContext) => {
