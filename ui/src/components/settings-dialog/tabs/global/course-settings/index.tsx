@@ -1,4 +1,5 @@
-import {
+import
+{
     defaultDropAnimationSideEffects,
     DndContext,
     DragEndEvent,
@@ -22,12 +23,14 @@ import { CourseUser } from "@/api-shared/types/hive";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { CourseItem } from "@/components/settings-dialog/tabs/global/course-settings/CourseItem";
-import {
+import
+{
     DraggedItemData,
     DropTargetCourseData,
     DropTargetRootData,
 } from "@/components/settings-dialog/tabs/global/course-settings/dnd-types";
-import {
+import
+{
     InstructorCard,
     InstructorSourceList,
 } from "@/components/settings-dialog/tabs/global/course-settings/InstructorSourceList";
@@ -42,11 +45,14 @@ const dropAnimation = {
     }),
 };
 
-const dialogOffsetModifier: Modifier = ({ transform }) => {
-    if (typeof window !== "undefined") {
+const dialogOffsetModifier: Modifier = ({ transform }) =>
+{
+    if (typeof window !== "undefined")
+    {
         // Find the nearest Dialog containing block to compensate for the fixed positioning offset it introduces
         const dialog = document.querySelector(".MuiDialog-paper");
-        if (dialog) {
+        if (dialog)
+        {
             const rect = dialog.getBoundingClientRect();
             return {
                 ...transform,
@@ -64,10 +70,11 @@ function InstructorDragOverlay({
 }: {
     activeId: string;
     instructors: Array<CourseUser>;
-}) {
+})
+{
     const inst = instructors.find((i) => `instructor-${i.id}` === activeId);
     if (!inst) return null;
-    return <InstructorCard instructor={inst} isOverlay />;
+    return <InstructorCard instructor={ inst } isOverlay />;
 }
 
 function CourseDragOverlay({
@@ -76,12 +83,13 @@ function CourseDragOverlay({
 }: {
     activeId: string;
     courses: Array<Course>;
-}) {
+})
+{
     const course = courses.find((c) => `course-${c.id}` === activeId);
     if (!course) return null;
     return (
         <Card
-            sx={{
+            sx={ {
                 p: 1.5,
                 display: "flex",
                 alignItems: "center",
@@ -95,31 +103,32 @@ function CourseDragOverlay({
                         ? "#ffffff"
                         : "rgba(255, 255, 255, 0.05)",
                 cursor: "grabbing",
-            }}
+            } }
         >
             <Box
-                sx={{
+                sx={ {
                     width: "18px",
                     height: "18px",
                     borderRadius: "50%",
                     bgcolor: course.color ?? "#e0e0e0",
                     border: "1px solid rgba(0,0,0,0.15)",
-                }}
+                } }
             />
             <Typography
-                sx={{
+                sx={ {
                     fontWeight: 700,
                     fontSize: "0.88rem",
                     color: "text.primary",
-                }}
+                } }
             >
-                {course.name}
+                { course.name }
             </Typography>
         </Card>
     );
 }
 
-function RootDropZone() {
+function RootDropZone()
+{
     const { isOver, setNodeRef } = useDroppable({
         id: "root-dropzone",
         data: { type: "ROOT_DROP" } as DropTargetRootData,
@@ -127,8 +136,8 @@ function RootDropZone() {
 
     return (
         <Box
-            ref={setNodeRef}
-            sx={{
+            ref={ setNodeRef }
+            sx={ {
                 border: "2px dashed",
                 borderColor: isOver ? "secondary.main" : "divider",
                 borderRadius: "12px",
@@ -145,52 +154,56 @@ function RootDropZone() {
                             ? "rgba(0, 0, 0, 0.01)"
                             : "rgba(255, 255, 255, 0.01)",
                 transition: "all 0.25s ease",
-            }}
+            } }
         >
             <SwapHorizIcon
-                sx={{
+                sx={ {
                     color: isOver ? "secondary.main" : "text.secondary",
                     fontSize: 20,
-                }}
+                } }
             />
             <Typography
-                sx={{
+                sx={ {
                     fontSize: "0.78rem",
                     fontWeight: 700,
                     color: isOver ? "secondary.main" : "text.secondary",
                     whiteSpace: "nowrap",
-                }}
+                } }
             >
-                {isOver ? "שחרר כאן לראשי" : "גרור להוצאה מהיררכיה"}
+                { isOver ? "שחרר כאן לראשי" : "גרור להוצאה מהיררכיה" }
             </Typography>
         </Box>
     );
 }
 
-export function CourseSettings() {
+export function CourseSettings()
+{
     const { courses, addCourse, updateCoursePartial } = useCourses();
     const { instructors } = useHiveUsers();
     const { enqueueSnackbar } = useSnackbar();
 
-    const [activeDrag, setActiveDrag] = useState<{
+    const [ activeDrag, setActiveDrag ] = useState<{
         id: string;
         type: "COURSE" | "INSTRUCTOR";
         data: any;
     } | null>(null);
 
-    const handleCreate = useCallback(() => {
+    const handleCreate = useCallback(() =>
+    {
         void addCourse({
             name: "מסלול חדש",
             color: "#67C8DD", // Brand turquoise as default
             parentId: null,
             instructorIds: [],
         });
-    }, [addCourse]);
+    }, [ addCourse ]);
 
-    const handleDragStart = useCallback((event: DragStartEvent) => {
+    const handleDragStart = useCallback((event: DragStartEvent) =>
+    {
         const { active } = event;
         const data = active.data.current as DraggedItemData | undefined;
-        if (data) {
+        if (data)
+        {
             setActiveDrag({
                 id: active.id as string,
                 type: data.type,
@@ -199,12 +212,14 @@ export function CourseSettings() {
         }
     }, []);
 
-    const handleDragCancel = useCallback(() => {
+    const handleDragCancel = useCallback(() =>
+    {
         setActiveDrag(null);
     }, []);
 
     const handleDragEnd = useCallback(
-        (event: DragEndEvent) => {
+        (event: DragEndEvent) =>
+        {
             setActiveDrag(null);
             const { active, over } = event;
             if (!over) return;
@@ -220,15 +235,19 @@ export function CourseSettings() {
             if (!activeData || !overData) return;
 
             // Handle Instructor Drag & Drop
-            if (activeData.type === "INSTRUCTOR") {
-                if (overData.type === "COURSE_DROP") {
+            if (activeData.type === "INSTRUCTOR")
+            {
+                if (overData.type === "COURSE_DROP")
+                {
                     const targetCourseId = overData.targetCourseId;
                     const courseObj = courses.find(
                         (c) => c.id === targetCourseId,
                     );
-                    if (courseObj) {
+                    if (courseObj)
+                    {
                         const currentIds = courseObj.instructorIds ?? [];
-                        if (!currentIds.includes(activeData.instructorId)) {
+                        if (!currentIds.includes(activeData.instructorId))
+                        {
                             void updateCoursePartial(targetCourseId, {
                                 instructorIds: [
                                     ...currentIds,
@@ -241,20 +260,24 @@ export function CourseSettings() {
             }
 
             // Handle Course Nesting Drag & Drop
-            if (activeData.type === "COURSE") {
+            if (activeData.type === "COURSE")
+            {
                 const draggedId = activeData.courseId;
 
                 // Move back to Root level
-                if (overData.type === "ROOT_DROP") {
+                if (overData.type === "ROOT_DROP")
+                {
                     const courseObj = courses.find((c) => c.id === draggedId);
-                    if (courseObj?.parentId) {
+                    if (courseObj?.parentId)
+                    {
                         void updateCoursePartial(draggedId, { parentId: null });
                     }
                     return;
                 }
 
                 // Nest under another course
-                if (overData.type === "COURSE_DROP") {
+                if (overData.type === "COURSE_DROP")
+                {
                     const targetId = overData.targetCourseId;
 
                     if (draggedId === targetId) return;
@@ -263,9 +286,11 @@ export function CourseSettings() {
                     const hasCycle = (
                         dragId: string,
                         destId: string,
-                    ): boolean => {
+                    ): boolean =>
+                    {
                         let current = courses.find((c) => c.id === destId);
-                        while (current) {
+                        while (current)
+                        {
                             if (current.parentId === dragId) return true;
                             const parentId = current.parentId;
                             current = parentId
@@ -275,7 +300,8 @@ export function CourseSettings() {
                         return false;
                     };
 
-                    if (hasCycle(draggedId, targetId)) {
+                    if (hasCycle(draggedId, targetId))
+                    {
                         enqueueSnackbar(
                             "שגיאה: לא ניתן להכניס מסלול אב לתוך אחד מצאצאיו!",
                             {
@@ -291,7 +317,7 @@ export function CourseSettings() {
                 }
             }
         },
-        [courses, updateCoursePartial, enqueueSnackbar],
+        [ courses, updateCoursePartial, enqueueSnackbar ],
     );
 
     // Identify top-level courses (courses without valid parents present in the list)
@@ -302,12 +328,12 @@ export function CourseSettings() {
 
     return (
         <DndContext
-            onDragCancel={handleDragCancel}
-            onDragEnd={handleDragEnd}
-            onDragStart={handleDragStart}
+            onDragCancel={ handleDragCancel }
+            onDragEnd={ handleDragEnd }
+            onDragStart={ handleDragStart }
         >
             <Box
-                sx={{
+                sx={ {
                     border: "1px solid",
                     borderColor: "divider",
                     borderRadius: "16px",
@@ -323,59 +349,59 @@ export function CourseSettings() {
                     maxHeight: 520,
                     overflow: "hidden",
                     alignItems: "stretch",
-                }}
+                } }
             >
-                {/* Available Instructors Side Drawer Panel */}
+                {/* Available Instructors Side Drawer Panel */ }
                 <InstructorSourceList />
 
-                {/* Courses Hierarchy Content Pane */}
+                {/* Courses Hierarchy Content Pane */ }
                 <Box
-                    sx={{
+                    sx={ {
                         flexGrow: 1,
                         p: 3,
                         display: "flex",
                         flexDirection: "column",
                         minWidth: 0,
-                    }}
+                    } }
                 >
-                    {/* Header */}
-                    <Box alignItems="center" display="flex" gap={1.5} mb={2.5}>
+                    {/* Header */ }
+                    <Box alignItems="center" display="flex" gap={ 1.5 } mb={ 2.5 }>
                         <Box
-                            sx={{
+                            sx={ {
                                 p: 1,
                                 borderRadius: "10px",
                                 bgcolor: "secondary.light",
                                 color: "secondary.contrastText",
                                 display: "flex",
                                 alignItems: "center",
-                            }}
+                            } }
                         >
                             <LayersIcon className="text-[20px]" />
                         </Box>
                         <Box>
                             <Typography
-                                sx={{
+                                sx={ {
                                     fontWeight: 800,
                                     fontSize: "1.1rem",
                                     color: "text.primary",
-                                }}
+                                } }
                             >
                                 היררכיית מסלולים ומדריכים
                             </Typography>
                             <Typography
-                                sx={{
+                                sx={ {
                                     fontSize: "0.75rem",
                                     color: "text.secondary",
-                                }}
+                                } }
                             >
                                 הגדרת מבנה ההיררכיה ושיוך מדריכים למסלולים
                             </Typography>
                         </Box>
                     </Box>
 
-                    {/* Hierarchy Scrollable Tree */}
+                    {/* Hierarchy Scrollable Tree */ }
                     <Box
-                        sx={{
+                        sx={ {
                             display: "flex",
                             flexDirection: "column",
                             gap: 1.5,
@@ -384,34 +410,34 @@ export function CourseSettings() {
                             overflowX: "hidden",
                             pr: 0.5,
                             mb: 2,
-                        }}
+                        } }
                     >
-                        {rootCourses.map((course) => (
+                        { rootCourses.map((course) => (
                             <CourseItem
-                                allCourses={courses}
-                                course={course}
-                                key={course.id}
+                                allCourses={ courses }
+                                course={ course }
+                                key={ course.id }
                             />
-                        ))}
+                        )) }
 
-                        {courses.length === 0 && (
+                        { courses.length === 0 && (
                             <Typography
                                 align="center"
-                                sx={{
+                                sx={ {
                                     color: "text.secondary",
                                     fontSize: "0.85rem",
                                     mt: 6,
-                                }}
+                                } }
                             >
                                 לא הוגדרו מסלולים. יש ללחוץ על הכפתור למטה ליצירת
                                 מסלול.
                             </Typography>
-                        )}
+                        ) }
                     </Box>
 
-                    {/* Bottom Actions Row */}
+                    {/* Bottom Actions Row */ }
                     <Box
-                        sx={{
+                        sx={ {
                             display: "flex",
                             flexDirection: "row",
                             alignItems: "stretch",
@@ -419,14 +445,14 @@ export function CourseSettings() {
                             borderTop: "1px solid",
                             borderColor: "divider",
                             pt: 2,
-                        }}
+                        } }
                     >
-                        {/* Create Course Button */}
+                        {/* Create Course Button */ }
                         <Button
                             color="secondary"
-                            onClick={handleCreate}
-                            startIcon={<AddIcon className="ml-1" />}
-                            sx={{
+                            onClick={ handleCreate }
+                            startIcon={ <AddIcon className="ml-1" /> }
+                            sx={ {
                                 flex: 1,
                                 borderRadius: "10px",
                                 py: 1,
@@ -439,38 +465,38 @@ export function CourseSettings() {
                                     boxShadow:
                                         "0 6px 16px rgb(var(--mui-palette-secondary-mainChannel) / 0.2)",
                                 },
-                            }}
+                            } }
                             variant="contained"
                         >
                             יצירת מסלול ראשי חדש
                         </Button>
 
-                        {/* Un-nest / Move to Root Droppable Area */}
-                        {courses.some((c) => c.parentId) ? (
-                            <Box sx={{ flex: 1.2, display: "flex" }}>
+                        {/* Un-nest / Move to Root Droppable Area */ }
+                        { courses.some((c) => c.parentId) ? (
+                            <Box sx={ { flex: 1.2, display: "flex" } }>
                                 <RootDropZone />
                             </Box>
-                        ) : null}
+                        ) : null }
                     </Box>
                 </Box>
             </Box>
             <DragOverlay
-                dropAnimation={dropAnimation}
-                modifiers={[dialogOffsetModifier]}
+                dropAnimation={ dropAnimation }
+                modifiers={ [ dialogOffsetModifier ] }
             >
-                {activeDrag ? (
+                { activeDrag ? (
                     activeDrag.type === "INSTRUCTOR" ? (
                         <InstructorDragOverlay
-                            activeId={activeDrag.id}
-                            instructors={instructors}
+                            activeId={ activeDrag.id }
+                            instructors={ instructors }
                         />
                     ) : (
                         <CourseDragOverlay
-                            activeId={activeDrag.id}
-                            courses={courses}
+                            activeId={ activeDrag.id }
+                            courses={ courses }
                         />
                     )
-                ) : null}
+                ) : null }
             </DragOverlay>
         </DndContext>
     );

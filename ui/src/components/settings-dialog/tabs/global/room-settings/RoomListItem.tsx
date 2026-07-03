@@ -8,14 +8,14 @@ import EventSeatIcon from "@mui/icons-material/EventSeat";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useCallback, useState } from "react";
 
 import { Room, RoomSource } from "@/api-shared/types/room";
 import { HiveLogo } from "@/components/base/HiveLogo";
+import { SettingsListItem } from "@/components/settings-dialog/tabs/global/common/ListItem";
+import { SettingsListItemTextSecondary } from "@/components/settings-dialog/tabs/global/common/ListItemText";
 import { ReservationDialog } from "@/components/settings-dialog/tabs/global/room-settings/reservations/ReservationDialog";
 import { RoomExtendedInfoChip } from "@/components/settings-dialog/tabs/global/room-settings/RoomExtendedInfoChip";
 
@@ -96,62 +96,11 @@ export function RoomListItem({
                 open={ reservationOpen }
                 room={ room }
             />
-            <ListItem
-                onClick={ () => onPopulateForm(room) }
-                secondaryAction={
-                    <Box alignItems="center" display="flex" gap={ 0.5 }>
-                        <ActionButton
-                            hoverColor="primary.main"
-                            icon={ CalendarMonthIcon }
-                            onClick={ handleReservationOpen }
-                            title="הזמנות חדר"
-                        />
-                        <ActionButton
-                            hoverColor="primary.main"
-                            icon={ EditIcon }
-                            onClick={ handlePopulate }
-                            title="עריכת פרטים מורחבים"
-                        />
-                        { !isHive && (
-                            <ActionButton
-                                hoverColor="error.main"
-                                icon={ DeleteIcon }
-                                onClick={ handleDelete }
-                                title="מחיקה"
-                            />
-                        ) }
-                        { isHive ? <Tooltip title="כיתה בהייב">
-                            <Box
-                                alignItems="center"
-                                display="flex"
-                                mr={ 0.5 }
-                                sx={ { color: "text.secondary" } }
-                            >
-                                <HiveLogo size={ 18 } />
-                            </Box>
-                        </Tooltip> : null }
-                    </Box>
-                }
-                sx={ {
-                    border: "1px solid",
-                    borderColor: isActive ? "primary.main" : "divider",
-                    borderRadius: "8px",
-                    mb: 1,
-                    p: 1,
-                    cursor: "pointer",
-                    bgcolor: isActive ? "action.selected" : "transparent",
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                        borderColor: isActive ? "primary.main" : "text.secondary",
-                        transform: "translateY(-1px)",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
-                        bgcolor: isActive ? "action.selected" : "action.hover",
-                    },
-                } }
-            >
-                <ListItemText
-                    disableTypography
-                    primary={
+            <SettingsListItem
+                isActive={ isActive }
+                item={ room }
+                itemText={ {
+                    primary: (
                         <Box alignItems="center" display="flex" flexWrap="nowrap" gap={ 1 }>
                             <Typography
                                 component="span"
@@ -195,21 +144,45 @@ export function RoomListItem({
                                 />
                             ) }
                         </Box>
-                    }
-                    secondary={
-                        room.description ? <Typography
-                            component="span"
-                            sx={ {
-                                fontSize: "0.75rem",
-                                color: "text.secondary",
-                            } }
-                        >
-                            { room.description }
-                        </Typography> : null
-                    }
-                    sx={ { my: 0 } }
-                />
-            </ListItem>
+                    ),
+                    secondary: (<SettingsListItemTextSecondary value={ room.description } />)
+                } }
+                onClick={ () => onPopulateForm(room) }
+                secondaryAction={
+                    <Box alignItems="center" display="flex" gap={ 0.5 }>
+                        <ActionButton
+                            hoverColor="primary.main"
+                            icon={ CalendarMonthIcon }
+                            onClick={ handleReservationOpen }
+                            title="הזמנות חדר"
+                        />
+                        <ActionButton
+                            hoverColor="primary.main"
+                            icon={ EditIcon }
+                            onClick={ handlePopulate }
+                            title="עריכת פרטים מורחבים"
+                        />
+                        { !isHive && (
+                            <ActionButton
+                                hoverColor="error.main"
+                                icon={ DeleteIcon }
+                                onClick={ handleDelete }
+                                title="מחיקה"
+                            />
+                        ) }
+                        { isHive ? <Tooltip title="כיתה בהייב">
+                            <Box
+                                alignItems="center"
+                                display="flex"
+                                mx={ 0.5 }
+                                sx={ { color: "text.secondary" } }
+                            >
+                                <HiveLogo size={ 18 } />
+                            </Box>
+                        </Tooltip> : null }
+                    </Box>
+                }
+            />
         </>
     );
 }

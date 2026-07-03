@@ -15,7 +15,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import {
+import
+{
     MuiColorInput,
     MuiColorInputColors,
     MuiColorInputProps,
@@ -26,7 +27,8 @@ import { Course } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { HiveAvatar } from "@/components/header/HiveAvatarImage";
-import {
+import
+{
     DraggedCourseData,
     DropTargetCourseData,
 } from "@/components/settings-dialog/tabs/global/course-settings/dnd-types";
@@ -43,7 +45,8 @@ export function CourseItem({
     allCourses,
     depth = 0,
     visited = new Set<string>(),
-}: CourseItemProps) {
+}: CourseItemProps)
+{
     const hasVisited = visited.has(course.id);
 
     const nextVisited = new Set(visited);
@@ -52,18 +55,19 @@ export function CourseItem({
     const { addCourse, updateCoursePartial, deleteCourse } = useCourses();
     const { instructors, getInstructor } = useHiveUsers();
 
-    const [title, setTitle] = useState<string>(course.name);
-    const [color, setColor] = useState<string>(course.color ?? "#e0e0e0");
-    const [isEditing, setIsEditing] = useState<boolean>(false);
-    const [isExpanded, setIsExpanded] = useState<boolean>(true);
+    const [ title, setTitle ] = useState<string>(course.name);
+    const [ color, setColor ] = useState<string>(course.color ?? "#e0e0e0");
+    const [ isEditing, setIsEditing ] = useState<boolean>(false);
+    const [ isExpanded, setIsExpanded ] = useState<boolean>(true);
 
     // Instructor Quick-Add Menu State
-    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+    const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
     const isMenuOpen = Boolean(anchorEl);
 
     // Debounce for color picker to avoid server commits on every pixel change
     const colorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    useEffect(() => () => {
+    useEffect(() => () =>
+    {
         if (colorTimeoutRef.current) clearTimeout(colorTimeoutRef.current);
     }, []);
 
@@ -71,7 +75,7 @@ export function CourseItem({
     const subCourses = allCourses.filter((c) => c.parentId === course.id);
     const assignedIds = useMemo(
         () => course.instructorIds ?? [],
-        [course.instructorIds],
+        [ course.instructorIds ],
     );
 
     // setup dnd-kit draggable & droppable
@@ -100,43 +104,53 @@ export function CourseItem({
         opacity: isDragging ? 0.4 : 1,
     };
 
-    const commitTitleChange = useCallback(() => {
+    const commitTitleChange = useCallback(() =>
+    {
         setIsEditing(false);
         const trimmed = title.trim();
-        if (trimmed && trimmed !== course.name) {
+        if (trimmed && trimmed !== course.name)
+        {
             void updateCoursePartial(course.id, { name: trimmed });
-        } else {
+        } else
+        {
             setTitle(course.name);
         }
-    }, [title, course.name, course.id, updateCoursePartial]);
+    }, [ title, course.name, course.id, updateCoursePartial ]);
 
     const handleKeyDown = useCallback(
-        (event: React.KeyboardEvent<HTMLInputElement>) => {
-            if (event.key === "Enter") {
+        (event: React.KeyboardEvent<HTMLInputElement>) =>
+        {
+            if (event.key === "Enter")
+            {
                 commitTitleChange();
-            } else if (event.key === "Escape") {
+            } else if (event.key === "Escape")
+            {
                 setIsEditing(false);
                 setTitle(course.name);
             }
         },
-        [commitTitleChange, course.name],
+        [ commitTitleChange, course.name ],
     );
 
-    const handleColorChange: MuiColorInputProps["onChange"] = useCallback(
-        (value: string, colors: MuiColorInputColors) => {
+    const handleColorChange: MuiColorInputProps[ "onChange" ] = useCallback(
+        (value: string, colors: MuiColorInputColors) =>
+        {
             const hex = colors.hex;
             setColor(hex);
-            if (colorTimeoutRef.current) {
+            if (colorTimeoutRef.current)
+            {
                 clearTimeout(colorTimeoutRef.current);
             }
-            colorTimeoutRef.current = setTimeout(() => {
+            colorTimeoutRef.current = setTimeout(() =>
+            {
                 void updateCoursePartial(course.id, { color: hex });
             }, 600);
         },
-        [course.id, updateCoursePartial],
+        [ course.id, updateCoursePartial ],
     );
 
-    const handleCreateSubCourse = useCallback(() => {
+    const handleCreateSubCourse = useCallback(() =>
+    {
         void addCourse({
             name: "מסלול חדש",
             color: course.color || "#67C8DD",
@@ -144,25 +158,27 @@ export function CourseItem({
             instructorIds: [],
         });
         setIsExpanded(true);
-    }, [addCourse, course]);
+    }, [ addCourse, course ]);
 
     const handleRemoveInstructor = useCallback(
-        (instructorId: number) => {
+        (instructorId: number) =>
+        {
             const nextIds = assignedIds.filter((id) => id !== instructorId);
             void updateCoursePartial(course.id, { instructorIds: nextIds });
         },
-        [assignedIds, course.id, updateCoursePartial],
+        [ assignedIds, course.id, updateCoursePartial ],
     );
 
     const handleAddInstructor = useCallback(
-        (instructorId: number) => {
+        (instructorId: number) =>
+        {
             setAnchorEl(null);
             if (assignedIds.includes(instructorId)) return;
             void updateCoursePartial(course.id, {
-                instructorIds: [...assignedIds, instructorId],
+                instructorIds: [ ...assignedIds, instructorId ],
             });
         },
-        [assignedIds, course.id, updateCoursePartial],
+        [ assignedIds, course.id, updateCoursePartial ],
     );
 
     // Get instructors not yet assigned to this course
@@ -170,17 +186,18 @@ export function CourseItem({
         (inst) => !assignedIds.includes(inst.id),
     );
 
-    if (hasVisited) {
+    if (hasVisited)
+    {
         return null;
     }
 
     return (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {/* Main Course Card Container */}
+        <Box sx={ { display: "flex", flexDirection: "column", gap: 1 } }>
+            {/* Main Course Card Container */ }
             <Box
                 className="course-card-container"
-                ref={setDropRef}
-                sx={{
+                ref={ setDropRef }
+                sx={ {
                     display: "flex",
                     flexDirection: "column",
                     mr: depth > 0 ? 0.5 : 0, // In RTL, indentation works via mr (margin-right)
@@ -196,47 +213,47 @@ export function CourseItem({
                     borderRadius: "16px",
                     p: 1.5,
                     transition: "all 0.2s ease",
-                }}
+                } }
             >
                 <Box
-                    ref={setDragRef}
-                    style={style}
-                    sx={{
+                    ref={ setDragRef }
+                    style={ style }
+                    sx={ {
                         display: "flex",
                         alignItems: "center",
                         gap: 1.5,
-                    }}
+                    } }
                 >
-                    {/* Drag Handle */}
+                    {/* Drag Handle */ }
                     <Box
-                        {...attributes}
-                        {...listeners}
-                        sx={{
+                        { ...attributes }
+                        { ...listeners }
+                        sx={ {
                             cursor: isDragging ? "grabbing" : "grab",
                             display: "flex",
                             alignItems: "center",
                             color: "text.secondary",
                             "&:hover": { color: "text.primary" },
-                        }}
+                        } }
                     >
                         <DragIndicatorIcon className="text-[18px]" />
                     </Box>
 
-                    {/* Expand/Collapse Toggle */}
+                    {/* Expand/Collapse Toggle */ }
                     <Box
-                        sx={{
+                        sx={ {
                             width: 34,
                             display: "flex",
                             justifyContent: "center",
-                        }}
+                        } }
                     >
-                        {subCourses.length > 0 || assignedIds.length > 0 ? (
-                            <Tooltip title={isExpanded ? "כווץ" : "הרחב"}>
+                        { subCourses.length > 0 || assignedIds.length > 0 ? (
+                            <Tooltip title={ isExpanded ? "כווץ" : "הרחב" }>
                                 <IconButton
-                                    onClick={() => setIsExpanded(!isExpanded)}
+                                    onClick={ () => setIsExpanded(!isExpanded) }
                                     size="small"
                                 >
-                                    {isExpanded ? (
+                                    { isExpanded ? (
                                         <KeyboardArrowUpIcon
                                             className="text-[18px]"
                                         />
@@ -244,22 +261,22 @@ export function CourseItem({
                                         <KeyboardArrowDownIcon
                                             className="text-[18px]"
                                         />
-                                    )}
+                                    ) }
                                 </IconButton>
                             </Tooltip>
-                        ) : null}
+                        ) : null }
                     </Box>
 
-                    {/* Color Input Dot */}
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                    {/* Color Input Dot */ }
+                    <Box sx={ { display: "flex", alignItems: "center" } }>
                         <MuiColorInput
                             format="hex"
-                            fullWidth={false}
+                            fullWidth={ false }
                             isAlphaHidden
-                            onChange={handleColorChange}
-                            PopoverProps={{ sx: { direction: "ltr" } }}
+                            onChange={ handleColorChange }
+                            PopoverProps={ { sx: { direction: "ltr" } } }
                             size="small"
-                            sx={{
+                            sx={ {
                                 p: 0,
                                 m: 0,
                                 width: "18px",
@@ -290,52 +307,52 @@ export function CourseItem({
                                         "&:hover": { transform: "scale(1.2)" },
                                     },
                                 },
-                            }}
-                            value={color}
+                            } }
+                            value={ color }
                         />
                     </Box>
 
-                    {/* Editable Name Field */}
+                    {/* Editable Name Field */ }
                     <Box
-                        onClick={() => !isEditing && setIsEditing(true)}
-                        sx={{
+                        onClick={ () => !isEditing && setIsEditing(true) }
+                        sx={ {
                             flexGrow: 1,
                             display: "flex",
                             alignItems: "center",
                             gap: 0.8,
                             cursor: "pointer",
                             minWidth: 0,
-                        }}
+                        } }
                     >
-                        {isEditing ? (
+                        { isEditing ? (
                             <InputBase
                                 autoFocus
-                                onBlur={commitTitleChange}
-                                onChange={(e) => setTitle(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                sx={{
+                                onBlur={ commitTitleChange }
+                                onChange={ (e) => setTitle(e.target.value) }
+                                onKeyDown={ handleKeyDown }
+                                sx={ {
                                     fontSize: "0.88rem",
                                     fontWeight: 700,
                                     width: "100%",
                                     borderBottom: "1px solid",
                                     borderColor: "primary.main",
-                                }}
-                                value={title}
+                                } }
+                                value={ title }
                             />
                         ) : (
                             <Box
                                 alignItems="center"
                                 display="flex"
-                                gap={0.5}
-                                sx={{
+                                gap={ 0.5 }
+                                sx={ {
                                     flexGrow: 1,
                                     minWidth: 0,
                                     "&:hover svg": { opacity: 1 },
-                                }}
+                                } }
                             >
                                 <Typography
                                     noWrap
-                                    sx={{
+                                    sx={ {
                                         fontWeight: 700,
                                         fontSize: "0.88rem",
                                         userSelect: "none",
@@ -343,29 +360,29 @@ export function CourseItem({
                                         overflow: "hidden",
                                         textOverflow: "ellipsis",
                                         flexGrow: 1,
-                                    }}
+                                    } }
                                 >
-                                    {title}
+                                    { title }
                                 </Typography>
                                 <EditIcon
-                                    sx={{
+                                    sx={ {
                                         fontSize: 11,
                                         color: "text.secondary",
                                         opacity: 0,
                                         transition: "opacity 0.2s ease",
                                         flexShrink: 0,
-                                    }}
+                                    } }
                                 />
                             </Box>
-                        )}
+                        ) }
                     </Box>
 
-                    {/* Quick Action Controls */}
+                    {/* Quick Action Controls */ }
                     <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                        sx={ { display: "flex", alignItems: "center", gap: 0.5 } }
                     >
                         <Box
-                            sx={{
+                            sx={ {
                                 display: "flex",
                                 alignItems: "center",
                                 gap: 0.5,
@@ -374,24 +391,24 @@ export function CourseItem({
                                 ".course-card-container:hover &": {
                                     opacity: 1,
                                 },
-                            }}
+                            } }
                         >
-                            {/* Add Sub-course */}
+                            {/* Add Sub-course */ }
                             <Tooltip title="הוספת תת-מסלול">
                                 <IconButton
                                     color="secondary"
-                                    onClick={handleCreateSubCourse}
+                                    onClick={ handleCreateSubCourse }
                                     size="small"
                                 >
                                     <AddIcon className="text-[18px]" />
                                 </IconButton>
                             </Tooltip>
 
-                            {/* Quick-Assign Instructor */}
+                            {/* Quick-Assign Instructor */ }
                             <Tooltip title="שיוך מדריך">
                                 <IconButton
                                     color="secondary"
-                                    onClick={(e) =>
+                                    onClick={ (e) =>
                                         setAnchorEl(e.currentTarget)
                                     }
                                     size="small"
@@ -400,11 +417,11 @@ export function CourseItem({
                                 </IconButton>
                             </Tooltip>
 
-                            {/* Delete Course */}
+                            {/* Delete Course */ }
                             <Tooltip title="מחיקת מסלול">
                                 <IconButton
                                     color="error"
-                                    onClick={() => deleteCourse(course.id)}
+                                    onClick={ () => deleteCourse(course.id) }
                                     size="small"
                                 >
                                     <DeleteIcon className="text-[16px]" />
@@ -414,68 +431,66 @@ export function CourseItem({
                     </Box>
                 </Box>
 
-                {/* Assigned Instructors Chips List */}
+                {/* Assigned Instructors Chips List */ }
                 <Collapse
-                    in={isExpanded ? assignedIds.length > 0 : false}
+                    in={ isExpanded ? assignedIds.length > 0 : false }
                     timeout="auto"
                     unmountOnExit
                 >
                     <Box
-                        sx={{
+                        sx={ {
                             display: "flex",
                             flexWrap: "wrap",
                             gap: 0.8,
                             mt: 1.5,
                             mr: 4, // Indent inside RTL card
-                        }}
+                        } }
                     >
-                        {assignedIds.map((id) => {
+                        { assignedIds.map((id) =>
+                        {
                             const inst = getInstructor(id);
                             if (!inst) return null;
                             return (
                                 <Chip
                                     avatar={
                                         <HiveAvatar
-                                            alt={inst.display_name ?? ""}
-                                            hiveId={inst.id}
-                                            sx={{
+                                            alt={ inst.display_name ?? "" }
+                                            hiveId={ inst.id }
+                                            sx={ {
                                                 bgcolor: "secondary.light",
                                                 color: "secondary.contrastText",
                                                 fontSize: "0.65rem",
                                                 fontWeight: 800,
-                                            }}
+                                            } }
                                         />
                                     }
-                                    key={id}
-                                    label={inst.display_name}
-                                    onDelete={() => handleRemoveInstructor(id)}
+                                    key={ id }
+                                    label={ inst.display_name }
+                                    onDelete={ () => handleRemoveInstructor(id) }
                                     size="small"
-                                    sx={{
+                                    sx={ {
                                         fontSize: "0.72rem",
                                         fontWeight: 700,
                                         borderRadius: "8px",
-                                        bgcolor: (theme) =>
-                                            theme.palette.mode === "light"
-                                                ? "#ffffff"
-                                                : "rgba(255,255,255,0.06)",
+                                        bgcolor: "primary.dark",
                                         border: "1px solid",
                                         borderColor: "divider",
-                                    }}
+                                    } }
                                 />
                             );
-                        })}
+                        }) }
                     </Box>
                 </Collapse>
             </Box>
 
-            {/* Recursively Render Sub-courses */}
+            {/* Recursively Render Sub-courses */ }
             <Collapse
-                in={isExpanded ? subCourses.length > 0 : false}
+                in={ isExpanded ? subCourses.length > 0 : false }
                 timeout="auto"
                 unmountOnExit
             >
                 <Box
-                    sx={{
+                    sx={ {
                         display: "flex",
                         flexDirection: "column",
                         gap: 1,
@@ -484,48 +499,48 @@ export function CourseItem({
                         borderColor: "divider",
                         pr: 1.5, // Padding between the vertical line and the sub-courses
                         mt: 1,
-                    }}
+                    } }
                 >
-                    {subCourses.map((child) => (
+                    { subCourses.map((child) => (
                         <CourseItem
-                            allCourses={allCourses}
-                            course={child}
-                            depth={depth + 1}
-                            key={child.id}
-                            visited={nextVisited}
+                            allCourses={ allCourses }
+                            course={ child }
+                            depth={ depth + 1 }
+                            key={ child.id }
+                            visited={ nextVisited }
                         />
-                    ))}
+                    )) }
                 </Box>
             </Collapse>
 
-            {/* Inline Instructor Selection Menu */}
+            {/* Inline Instructor Selection Menu */ }
             <Menu
-                anchorEl={anchorEl}
-                onClose={() => setAnchorEl(null)}
-                open={isMenuOpen}
+                anchorEl={ anchorEl }
+                onClose={ () => setAnchorEl(null) }
+                open={ isMenuOpen }
             >
                 <MenuItem
                     disabled
-                    sx={{ fontSize: "0.75rem", fontWeight: 700 }}
+                    sx={ { fontSize: "0.75rem", fontWeight: 700 } }
                 >
                     בחירת מדריך לשיוך
                 </MenuItem>
-                {unassignedInstructors.map((inst) => (
+                { unassignedInstructors.map((inst) => (
                     <MenuItem
-                        key={inst.id}
-                        onClick={() => handleAddInstructor(inst.id)}
-                        sx={{
+                        key={ inst.id }
+                        onClick={ () => handleAddInstructor(inst.id) }
+                        sx={ {
                             fontSize: "0.8rem",
-                        }}
+                        } }
                     >
-                        {inst.display_name}
+                        { inst.display_name }
                     </MenuItem>
-                ))}
-                {unassignedInstructors.length === 0 && (
-                    <MenuItem disabled sx={{ fontSize: "0.8rem" }}>
+                )) }
+                { unassignedInstructors.length === 0 && (
+                    <MenuItem disabled sx={ { fontSize: "0.8rem" } }>
                         כל המדריכים משוייכים
                     </MenuItem>
-                )}
+                ) }
             </Menu>
         </Box>
     );
