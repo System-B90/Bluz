@@ -21,7 +21,7 @@ import { GanttSyllabusGroup } from "@/components/gantt/curriculum-view/tabs/gant
 import { GanttToolbar } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttToolbar";
 import { GanttUnallocatedPanel } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttUnallocatedPanel";
 import { GanttViewProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
-import { useGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/useGanttView";
+import { useGanttView } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/UseGanttView";
 
 export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
 {
