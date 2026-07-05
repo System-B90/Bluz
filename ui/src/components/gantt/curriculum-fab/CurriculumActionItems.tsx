@@ -197,6 +197,7 @@ export function CurriculumActionItems({
                 onProcessingChange={ makeProcessingHandler("delete") }
                 sourceCurriculum={ sourceCurriculum }
             />
+            {isProcessing ? <CircularProgress size={20} /> : null}
         </Box>
     );
 }
