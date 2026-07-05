@@ -3,29 +3,28 @@ import Button from "@mui/material/Button";
 import Dialog, { DialogProps } from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import
-    {
-        Dispatch,
-        SetStateAction,
-        useCallback,
-        useMemo,
-        useState,
-        useTransition,
-    } from "react";
+{
+    Dispatch,
+    SetStateAction,
+    useCallback,
+    useMemo,
+    useState,
+    useTransition,
+} from "react";
 
 import
-    {
-        GanttCurriculumId,
-        GanttEventId,
-        GanttModuleId,
-        GanttSyllabusId
-    } from "@/api-shared/types/gantt/models";
+{
+    GanttCurriculumId,
+    GanttEventId,
+    GanttModuleId,
+    GanttSyllabusId
+} from "@/api-shared/types/gantt/models";
 import { EventDialogContent } from "@/components/gantt/event-dialog/DialogContent";
 import { EventDialogHeader } from "@/components/gantt/event-dialog/DialogHeader";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from "@/components/gantt/state/hooks/UseEvent";
 import { useCurriculumProviderActions, useCurriculumState } from "@/components/gantt/state/provider";
-
 
 export type EventDialogProps = {
     setOpen: Dispatch<SetStateAction<boolean>>;
@@ -34,7 +33,6 @@ export type EventDialogProps = {
     syllabusId: GanttSyllabusId | null;
     curriculumId: GanttCurriculumId | null;
 } & DialogProps;
-
 
 function EventDialogInner({
     open,
@@ -84,17 +82,17 @@ function EventDialogInner({
     return (
         <Dialog
             fullWidth
-            maxWidth="lg"
+            maxWidth="md"
             onClose={ handleClose }
             open={ open }
             { ...props }
-            transitionDuration={ { enter: 200, exit: 100 } }
             slotProps={ {
                 transition: {
                     onEnter: () => startTransition(() => setIsContentReady(true)),
                     onExited: () => setIsContentReady(false),
                 }
             } }
+            transitionDuration={ { enter: 200, exit: 100 } }
         >
             <EventDialogHeader
                 eventTitle={ event?.title }
@@ -103,7 +101,7 @@ function EventDialogInner({
                 syllabusTitle={ syllabus?.title }
             />
 
-            <EventDialogContent isContentReady={ isContentReady } event={ event } eventId={ eventId } moduleId={ moduleId } syllabus={ syllabus } />
+            <EventDialogContent event={ event } eventId={ eventId } isContentReady={ isContentReady } moduleId={ moduleId } syllabus={ syllabus } />
 
             <DialogActions>
                 <Button color="error" disabled={ isActionLoading } onClick={ handleDelete }>

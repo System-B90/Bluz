@@ -25,6 +25,7 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
     blockId,
     blockPayload,
     blockTitle,
+    blockTimeLabel,
     spanLength = 1,
     isOpaque = false,
     isAbsoluteBlock = true,
@@ -73,6 +74,7 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
                         isSpillover={isSpillover}
                         payload={blockPayload}
                         spanLength={spanLength}
+                        timeLabel={blockTimeLabel}
                         title={blockTitle}
                         violations={violations}
                     />

@@ -10,6 +10,8 @@ import React from "react";
 
 import { getDayNameDisplay } from "@/api-shared/types/gantt/models";
 import {
+    CapacityStatus,
+    formatHoursLabel,
     formatShortDate,
     formatWeekDateRange,
     getCapacityStatus,
@@ -19,6 +21,14 @@ import {
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
+function getCapacityColor(status: CapacityStatus): string {
+    if (status === "error") return "error.main";
+    if (status === "warning") return "warning.main";
+    if (status === "ok") return "primary.main";
+
+    return "text.secondary";
+}
+
 export const GanttHeader: React.FC = () => {
     const theme = useTheme();
     const state = useCurriculumState();
@@ -27,6 +37,7 @@ export const GanttHeader: React.FC = () => {
         scheduledMinutesByDay,
         setZoomedWeekId,
         showConstraints,
+        singleWeekDayZoom,
         startDate,
         timelineWeeks,
         weeklyView,
@@ -159,12 +170,14 @@ export const GanttHeader: React.FC = () => {
                                 weekIndex + weekIndexOffset,
                                 day.dayIndex,
                             );
+                            const scheduledMinutes =
+                                scheduledMinutesByDay[dayId] ?? 0;
+                            const capacityStatus = getCapacityStatus(
+                                day.totalWorkingMinutes,
+                                scheduledMinutes,
+                            );
                             const isOverAllocated =
-                                showConstraints &&
-                                getCapacityStatus(
-                                    day.totalWorkingMinutes,
-                                    scheduledMinutesByDay[dayId] ?? 0,
-                                ) === "error";
+                                showConstraints && capacityStatus === "error";
                             return (
                                 <TableCell
                                     align="center"
@@ -190,6 +203,22 @@ export const GanttHeader: React.FC = () => {
                                             variant="caption"
                                         >
                                             {formatShortDate(dayDate)}
+                                        </Typography>
+                                    ) : null}
+                                    {singleWeekDayZoom ? (
+                                        <Typography
+                                            color={getCapacityColor(
+                                                capacityStatus,
+                                            )}
+                                            display="block"
+                                            fontWeight={700}
+                                            variant="caption"
+                                        >
+                                            {`${formatHoursLabel(
+                                                scheduledMinutes,
+                                            )} / ${formatHoursLabel(
+                                                day.totalWorkingMinutes,
+                                            )}`}
                                         </Typography>
                                     ) : null}
                                 </TableCell>

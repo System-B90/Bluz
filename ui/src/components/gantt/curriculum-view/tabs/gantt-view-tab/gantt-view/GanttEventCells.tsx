@@ -142,6 +142,8 @@ type DailyCellsParams = {
     moduleStartDayId: null | string;
     violations: Array<string>;
     spanInfo?: EventSpanInfo | null;
+    /** Required-time label shown on the mapped block (zoomed single-week day view). */
+    timeLabel?: string;
 };
 
 export function buildDailyEventCells(
@@ -158,6 +160,7 @@ export function buildDailyEventCells(
         moduleStartDayId,
         violations,
         spanInfo,
+        timeLabel,
     } = params;
 
     return timelineWeeks.flatMap((week) =>
@@ -182,6 +185,9 @@ export function buildDailyEventCells(
                 <GanttCell
                     blockId={ blockId }
                     blockPayload={ blockPayload }
+                    blockTimeLabel={
+                        isExplicitlyMappedHere ? timeLabel : undefined
+                    }
                     blockTitle={ eventTitle }
                     dayId={ dayId }
                     dropId={ `drop-event-${eventId}-${dayId}` }

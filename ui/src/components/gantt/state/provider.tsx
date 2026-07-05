@@ -1,10 +1,12 @@
 "use client";
 
+import { usePathname, useSearchParams } from "next/navigation";
 import React, {
     ReactNode,
     createContext,
     useCallback,
     useContext,
+    useEffect,
     useMemo,
     useReducer,
     useState,
@@ -63,6 +65,10 @@ function ModuleDialogManager({
     curriculumId: GanttCurriculumId;
 })
 {
+    const state = useCurriculumState();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
     const [ currentSyllabusId, setCurrentSyllabusId ] =
         useState<GanttSyllabusId | null>(null);
     const [ currentModuleId, setCurrentModuleId ] =
@@ -101,6 +107,47 @@ function ModuleDialogManager({
     }, []);
 
     const closeEventDialog: CloseEventDialog = useCallback(() => setEventDialogOpen(false), []);
+
+    // Restore the event dialog from the URL on load/refresh.
+    useEffect(() =>
+    {
+        const urlEventId = searchParams.get("eventId") as GanttEventId | null;
+        if (!urlEventId) return;
+
+        const event = state.events[ urlEventId ];
+        if (!event) return;
+
+        const ganttModule = state.modules[ event.moduleId ];
+        if (!ganttModule) return;
+
+        setEventDialogSyllabusId(ganttModule.syllabusId);
+        setEventDialogModuleId(event.moduleId);
+        setEventDialogEventId(urlEventId);
+        setEventDialogOpen(true);
+        // Only run once on mount: the dialog's own open/close handlers own the URL after that.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Keep the URL in sync with the event dialog's open state.
+    useEffect(() =>
+    {
+        if (typeof window === "undefined") return;
+
+        const nextParams = new URLSearchParams(window.location.search);
+        const currentUrlEventId = nextParams.get("eventId");
+        const nextEventId = eventDialogOpen ? eventDialogEventId : null;
+
+        if (currentUrlEventId === nextEventId) return;
+
+        if (nextEventId) nextParams.set("eventId", nextEventId);
+        else nextParams.delete("eventId");
+
+        const hash = window.location.hash;
+        const nextSearch = nextParams.toString();
+        const nextUrl = `${pathname}${nextSearch ? `?${nextSearch}` : ""}${hash}`;
+
+        window.history.replaceState(window.history.state, "", nextUrl);
+    }, [ eventDialogOpen, eventDialogEventId, pathname ]);
 
     return (
         <CurriculumUIProviderInternal

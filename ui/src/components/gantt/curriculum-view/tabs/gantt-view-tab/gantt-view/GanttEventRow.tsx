@@ -3,6 +3,7 @@ import { useTheme } from "@mui/material/styles";
 import TableRow from "@mui/material/TableRow";
 import React, { memo, useMemo } from "react";
 
+import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
 import
@@ -29,6 +30,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
     const {
         weeklyView,
         relativeDaySizing,
+        singleWeekDayZoom,
         timelineWeeks,
         linearDays,
         moduleMappings,
@@ -64,6 +66,12 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         () => violations[ eventId ] || [],
         [ eventId, violations ],
     );
+
+    // Zoomed single-week day view: label the block with its required time.
+    const timeLabel =
+        singleWeekDayZoom && event
+            ? formatHoursLabel(event.minimumDuration ?? 0)
+            : undefined;
 
     const { isModuleMapped, moduleStartDayId } = useMemo(() =>
     {
@@ -126,6 +134,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 moduleStartDayId,
                 violations: myViolations,
                 spanInfo,
+                timeLabel,
             });
     }, [
         event,
@@ -141,6 +150,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         moduleStartDayId,
         myViolations,
         spanInfo,
+        timeLabel,
     ]);
 
     if (!event) return null;

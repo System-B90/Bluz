@@ -2,15 +2,15 @@ import { DragEndEvent } from "@dnd-kit/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import
-    {
-        ConstraintType,
-        hasConflictingTemporalConstraints,
-    } from "@/api-shared/types/gantt/models/constraint";
+{
+    ConstraintType,
+    hasConflictingTemporalConstraints,
+} from "@/api-shared/types/gantt/models/constraint";
 import
-    {
-        computeEventDaySpans,
-        getSpilloverMinutesByDay,
-    } from "@/components/gantt/curriculum-view/gantt-time-utils";
+{
+    computeEventDaySpans,
+    getSpilloverMinutesByDay,
+} from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { ConstraintLink } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGanttConstraints } from "@/components/gantt/state/constraints/hooks";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
@@ -737,6 +737,7 @@ export const useGanttView = (curriculumId: string) =>
             violations,
             dayCellWidth,
             zoomedWeekId,
+            singleWeekDayZoom: !weeklyView && zoomedWeekId !== null,
             setZoomedWeekId,
             weekIndexOffset,
             isSyllabusExpanded,

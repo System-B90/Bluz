@@ -1,5 +1,6 @@
 "use client";
-import {
+import
+{
     closestCenter,
     DndContext,
     DragEndEvent,
@@ -8,7 +9,8 @@ import {
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
-import {
+import
+{
     arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
@@ -41,7 +43,8 @@ function OutsiderRow({
     rank: number;
     name: string;
     onRemove: (id: string) => void;
-}) {
+})
+{
     const {
         attributes,
         listeners,
@@ -54,31 +57,31 @@ function OutsiderRow({
     return (
         <Box
             alignItems="center"
-            border={1}
+            border={ 1 }
             borderColor="divider"
-            borderRadius={1}
+            borderRadius={ 1 }
             display="flex"
-            gap={1}
-            px={1}
-            py={0.5}
-            ref={setNodeRef}
-            style={{
+            gap={ 1 }
+            px={ 1 }
+            py={ 0.5 }
+            ref={ setNodeRef }
+            style={ {
                 transform: CSS.Transform.toString(transform),
                 transition,
                 opacity: isDragging ? 0.4 : 1,
-            }}
+            } }
         >
-            <Box sx={{ cursor: "grab", display: "flex" }} {...attributes} {...listeners}>
+            <Box sx={ { cursor: "grab", display: "flex" } } { ...attributes } { ...listeners }>
                 <DragIndicatorIcon
                     fontSize="small"
-                    sx={{ color: "text.disabled", display: "block" }}
+                    sx={ { color: "text.disabled", display: "block" } }
                 />
             </Box>
-            <Chip color="primary" label={rank} size="small" variant="outlined" />
-            <Typography sx={{ flexGrow: 1 }} variant="body2">
-                {name}
+            <Chip color="primary" label={ rank } size="small" variant="outlined" />
+            <Typography sx={ { flexGrow: 1 } } variant="body2">
+                { name }
             </Typography>
-            <IconButton color="error" onClick={() => onRemove(id)} size="small">
+            <IconButton color="error" onClick={ () => onRemove(id) } size="small">
                 <DeleteIcon fontSize="small" />
             </IconButton>
         </Box>
@@ -91,7 +94,8 @@ export function RecommendedLecturersField({
 }: {
     outsiderIds: Array<string>;
     onChange: (ids: Array<string>) => void;
-}) {
+})
+{
     const { outsiders, getOutsider } = useOutsiders();
 
     const sensors = useSensors(
@@ -102,7 +106,8 @@ export function RecommendedLecturersField({
     );
 
     const handleDragEnd = useCallback(
-        (event: DragEndEvent) => {
+        (event: DragEndEvent) =>
+        {
             const { active, over } = event;
             if (!over || active.id === over.id) return;
 
@@ -112,53 +117,51 @@ export function RecommendedLecturersField({
 
             onChange(arrayMove(outsiderIds, oldIndex, newIndex));
         },
-        [outsiderIds, onChange],
+        [ outsiderIds, onChange ],
     );
 
     const handleAdd = useCallback(
-        (id: string) => {
+        (id: string) =>
+        {
             if (outsiderIds.includes(id)) return;
-            onChange([...outsiderIds, id]);
+            onChange([ ...outsiderIds, id ]);
         },
-        [outsiderIds, onChange],
+        [ outsiderIds, onChange ],
     );
 
     const handleRemove = useCallback(
         (id: string) => onChange(outsiderIds.filter((x) => x !== id)),
-        [outsiderIds, onChange],
+        [ outsiderIds, onChange ],
     );
 
     const availableToAdd = outsiders.filter((o) => !outsiderIds.includes(o.id));
 
     return (
-        <Stack spacing={1}>
-            <Typography sx={{ fontWeight: "bold" }} variant="subtitle2">
-                מרצים מומלצים (אנשי חוץ)
-            </Typography>
+        <Stack spacing={ 1 }>
             <Typography color="text.secondary" variant="caption">
                 ממוין לפי רמת המלצה — העליון מומלץ ביותר. ניתן לגרור לשינוי הסדר.
             </Typography>
 
-            {outsiderIds.length > 0 ? (
+            { outsiderIds.length > 0 ? (
                 <DndContext
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                    sensors={sensors}
+                    collisionDetection={ closestCenter }
+                    onDragEnd={ handleDragEnd }
+                    sensors={ sensors }
                 >
                     <SortableContext
-                        items={outsiderIds}
-                        strategy={verticalListSortingStrategy}
+                        items={ outsiderIds }
+                        strategy={ verticalListSortingStrategy }
                     >
-                        <Stack spacing={0.5}>
-                            {outsiderIds.map((id, index) => (
+                        <Stack spacing={ 0.5 }>
+                            { outsiderIds.map((id, index) => (
                                 <OutsiderRow
-                                    id={id}
-                                    key={id}
-                                    name={getOutsider(id)?.name ?? `מזהה ${id}`}
-                                    onRemove={handleRemove}
-                                    rank={index + 1}
+                                    id={ id }
+                                    key={ id }
+                                    name={ getOutsider(id)?.name ?? `מזהה ${id}` }
+                                    onRemove={ handleRemove }
+                                    rank={ index + 1 }
                                 />
-                            ))}
+                            )) }
                         </Stack>
                     </SortableContext>
                 </DndContext>
@@ -166,29 +169,30 @@ export function RecommendedLecturersField({
                 <Typography color="text.secondary" variant="body2">
                     לא הוגדרו מרצים מומלצים.
                 </Typography>
-            )}
+            ) }
 
-            {availableToAdd.length > 0 && (
+            { availableToAdd.length > 0 && (
                 <FormControl fullWidth size="small">
                     <InputLabel>הוספת מרצה מומלץ</InputLabel>
                     <Select<string>
                         label="הוספת מרצה מומלץ"
-                        onChange={(e) => {
+                        onChange={ (e) =>
+                        {
                             if (e.target.value) handleAdd(e.target.value);
-                        }}
+                        } }
                         value=""
                     >
                         <MenuItem disabled value="">
                             בחירת איש חוץ להוספה...
                         </MenuItem>
-                        {availableToAdd.map((o) => (
-                            <MenuItem key={o.id} value={o.id}>
-                                {o.name}
+                        { availableToAdd.map((o) => (
+                            <MenuItem key={ o.id } value={ o.id }>
+                                { o.name }
                             </MenuItem>
-                        ))}
+                        )) }
                     </Select>
                 </FormControl>
-            )}
+            ) }
         </Stack>
     );
 }

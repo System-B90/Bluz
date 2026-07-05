@@ -31,6 +31,8 @@ export type GanttContextType = {
     dayCellWidth: number;
     /** Id of the week currently zoomed to full width, or null (days view only, #90). */
     zoomedWeekId: null | string;
+    /** True when a single week is zoomed in day view: header shows allocated/available time and blocks are sized by their required time. */
+    singleWeekDayZoom: boolean;
     setZoomedWeekId: (weekId: null | string) => void;
     /**
      * Absolute index of the first visible week within the full timeline. Non-zero
@@ -73,6 +75,8 @@ export type GanttBlockProps = {
     id: string;
     payload: any;
     title?: string;
+    /** Required-time label shown on the block (zoomed single-week day view). */
+    timeLabel?: string;
     isOpaque?: boolean;
     spanLength?: number;
     isAbsolute?: boolean;
@@ -93,6 +97,8 @@ export type GanttCellProps = {
     blockId?: string;
     blockPayload?: any;
     blockTitle?: string;
+    /** Required-time label shown on the block (zoomed single-week day view). */
+    blockTimeLabel?: string;
     spanLength?: number;
     isOpaque?: boolean;
     isAbsoluteBlock?: boolean;

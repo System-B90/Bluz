@@ -1,11 +1,11 @@
 import
-    {
-        DndContext,
-        MeasuringStrategy,
-        PointerSensor,
-        useSensor,
-        useSensors,
-    } from "@dnd-kit/core";
+{
+    DndContext,
+    MeasuringStrategy,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from "@dnd-kit/core";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";

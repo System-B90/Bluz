@@ -23,6 +23,7 @@ Runs Next.js on Windows host with fast frontend Hot Module Replacement (HMR).
   *(Note: Copies `.env` to `ui/.env` and starts proxy container + Next.js host server)*
 - **Database Backend:** Can run database containers locally in Docker, OR use remote instances on `mks-srvu`.
 - **Recommendation:** Use this fast HMR mode unless the task explicitly requires altering local Nginx configurations.
+- **Testing in Chrome:** If port 3000 is already in use (server already running elsewhere), don't start a new one — just browse to `https://bluz.dev` to test local changes. It's already wired to the dev server and picks up HMR.
 
 ### 2. Docker-Based Development
 Runs everything (frontend + backend) in containers.

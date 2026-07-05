@@ -1,6 +1,10 @@
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
+import Collapse from "@mui/material/Collapse";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
@@ -29,6 +33,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
     const curriculum = useCurriculum(curriculumId);
     const state = useCurriculumState();
     const [isCompact, setIsCompact] = useState(false);
+    const [isSummaryCollapsed, setIsSummaryCollapsed] = useState(false);
     const {
         state: { isLoading, mappings },
     } = useGanttMappings();
@@ -267,13 +272,36 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                         gap={2}
                         justifyContent="space-between"
                     >
-                        <Box>
-                            <Typography fontWeight={700} variant="h6">
-                                שבועות
-                            </Typography>
-                            <Typography color="text.secondary" variant="body2">
-                                אורך הקורס, תאריכים, שעות זמינות ושבתות בבסיס
-                            </Typography>
+                        <Box alignItems="center" display="flex" gap={1}>
+                            <IconButton
+                                aria-label={
+                                    isSummaryCollapsed
+                                        ? "הרחב את סיכום השבועות"
+                                        : "צמצם את סיכום השבועות"
+                                }
+                                onClick={() =>
+                                    setIsSummaryCollapsed((prev) => !prev)
+                                }
+                                size="small"
+                            >
+                                {isSummaryCollapsed ? (
+                                    <ExpandMoreIcon fontSize="small" />
+                                ) : (
+                                    <ExpandLessIcon fontSize="small" />
+                                )}
+                            </IconButton>
+                            <Box>
+                                <Typography fontWeight={700} variant="h6">
+                                    שבועות
+                                </Typography>
+                                <Typography
+                                    color="text.secondary"
+                                    variant="body2"
+                                >
+                                    אורך הקורס, תאריכים, שעות זמינות ושבתות
+                                    בבסיס
+                                </Typography>
+                            </Box>
                         </Box>
                         <Stack alignItems="center" direction="row" spacing={1}>
                             <ApplyTemplateButton
@@ -296,47 +324,57 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                             />
                         </Stack>
                     </Box>
-                    <Box
-                        alignItems="center"
-                        display="flex"
-                        flexWrap="wrap"
-                        gap={2}
-                        justifyContent="space-between"
-                    >
-                        <CourseStartDateControl
-                            curriculum={curriculum}
-                            curriculumId={curriculumId}
-                        />
-                        <FormControlLabel
-                            control={
-                                <Switch
-                                    checked={isCompact}
-                                    onChange={(e) =>
-                                        setIsCompact(e.target.checked)
-                                    }
-                                    size="small"
+                    <Collapse in={!isSummaryCollapsed}>
+                        <Stack spacing={1.5}>
+                            <Box
+                                alignItems="center"
+                                display="flex"
+                                flexWrap="wrap"
+                                gap={2}
+                                justifyContent="space-between"
+                            >
+                                <CourseStartDateControl
+                                    curriculum={curriculum}
+                                    curriculumId={curriculumId}
                                 />
-                            }
-                            label={
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={isCompact}
+                                            onChange={(e) =>
+                                                setIsCompact(e.target.checked)
+                                            }
+                                            size="small"
+                                        />
+                                    }
+                                    label={
+                                        <Typography
+                                            sx={{
+                                                fontWeight: 700,
+                                                fontSize: "0.85rem",
+                                                color: "text.secondary",
+                                            }}
+                                        >
+                                            תצוגה מצומצמת
+                                        </Typography>
+                                    }
+                                    sx={{ m: 0 }}
+                                />
+                            </Box>
+                            <WeeksSummaryBar
+                                curriculum={curriculum}
+                                state={state}
+                            />
+                            {isLoading ? (
                                 <Typography
-                                    sx={{
-                                        fontWeight: 700,
-                                        fontSize: "0.85rem",
-                                        color: "text.secondary",
-                                    }}
+                                    color="text.secondary"
+                                    variant="caption"
                                 >
-                                    תצוגה מצומצמת
+                                    טוען שיבוצים קיימים...
                                 </Typography>
-                            }
-                            sx={{ m: 0 }}
-                        />
-                    </Box>
-                    <WeeksSummaryBar curriculum={curriculum} state={state} />
-                    {isLoading ? (
-                        <Typography color="text.secondary" variant="caption">
-                            טוען שיבוצים קיימים...
-                        </Typography>
-                    ) : null}
+                            ) : null}
+                        </Stack>
+                    </Collapse>
                 </Stack>
             </Paper>
             <WeeksCapacityGrid

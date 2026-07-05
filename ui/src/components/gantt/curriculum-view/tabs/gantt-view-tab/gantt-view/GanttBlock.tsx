@@ -15,6 +15,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     id,
     payload,
     title,
+    timeLabel,
     isOpaque,
     spanLength = 1,
     isAbsolute = true,
@@ -111,7 +112,8 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
                     : "none",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
+                justifyContent: timeLabel ? "space-between" : "center",
+                gap: 0.5,
                 overflow: "hidden",
                 px: 1,
                 boxSizing: "border-box",
@@ -132,6 +134,22 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
                     variant="caption"
                 >
                     {title}
+                </Typography>
+            ) : null}
+            {timeLabel ? (
+                <Typography
+                    sx={{
+                        color: isOpaque
+                            ? "primary.main"
+                            : "primary.contrastText",
+                        fontWeight: 700,
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                        opacity: 0.9,
+                    }}
+                    variant="caption"
+                >
+                    {timeLabel}
                 </Typography>
             ) : null}
         </Box>

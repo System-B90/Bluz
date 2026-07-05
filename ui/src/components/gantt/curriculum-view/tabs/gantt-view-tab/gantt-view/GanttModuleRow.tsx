@@ -6,6 +6,7 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import React, { memo, useMemo } from "react";
 
+import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
 import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
@@ -13,14 +14,18 @@ import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-ta
 import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventRow";
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
+import { useCurriculumState } from "@/components/gantt/state/provider";
+import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
 const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
     moduleId,
 }) => {
     const theme = useTheme();
+    const state = useCurriculumState();
     const ganttModule = useModule(moduleId);
     const {
         weeklyView,
+        singleWeekDayZoom,
         timelineWeeks,
         linearDays,
         moduleMappings,
@@ -115,6 +120,17 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
             ? spanIndices.max - spanIndices.min + 1
             : 1;
 
+    // Zoomed single-week day view: label the module block with its required time.
+    const timeLabel = useMemo(
+        () =>
+            singleWeekDayZoom && ganttModule
+                ? formatHoursLabel(
+                    calculateMinimumRequiredTimeForModule(ganttModule, state),
+                )
+                : undefined,
+        [singleWeekDayZoom, ganttModule, state],
+    );
+
     // Build cells depending on view mode. Memoized so a re-render triggered by the
     // remove-target droppable (during a drag) doesn't rebuild every day cell (#88).
     const cells = useMemo(() => {
@@ -143,11 +159,19 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                 const endFrac = (lastDayPosInWeek + 1) / lastWeek.days.length;
                 const weekSpan = weekSpanIndices.max - weekSpanIndices.min;
 
-                blockLeftPercent = startFrac * 100;
-                blockWidthPercent = Math.max(
-                    weekSpan * 100 + (endFrac - startFrac) * 100,
-                    5, // minimum visible width
-                );
+                const naturalWidth =
+                    weekSpan * 100 + (endFrac - startFrac) * 100;
+
+                // A module block always fills at least one full column: when it
+                // would render narrower than a single week, snap it to the whole
+                // starting column instead of a thin intra-week sliver.
+                if (naturalWidth < 100) {
+                    blockLeftPercent = 0;
+                    blockWidthPercent = 100;
+                } else {
+                    blockLeftPercent = startFrac * 100;
+                    blockWidthPercent = naturalWidth;
+                }
             }
 
             return timelineWeeks.map((week, weekIdx) => {
@@ -201,6 +225,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                             moduleId,
                             sourceDayId: dayId,
                         }}
+                        blockTimeLabel={isSpanStart ? timeLabel : undefined}
                         blockTitle={ganttModule?.title}
                         dayId={dayId}
                         dropId={`drop-module-${moduleId}-${dayId}`}
@@ -230,6 +255,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         weekSpanIndices,
         spanLength,
         myViolations,
+        timeLabel,
     ]);
 
     return (

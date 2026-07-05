@@ -1,31 +1,45 @@
+import NotesIcon from "@mui/icons-material/Notes";
+import RecordVoiceOverOutlinedIcon from "@mui/icons-material/RecordVoiceOverOutlined";
+import TuneIcon from "@mui/icons-material/Tune";
+import Chip from "@mui/material/Chip";
+import DialogContent from "@mui/material/DialogContent";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import { useSnackbar } from "notistack";
+import { useCallback, useState } from "react";
+
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { GanttEvent, GanttEventId, GanttModuleId, GanttSyllabus } from "@/api-shared/types/gantt/models";
-import { InstructorSelect } from "@/components/base/InstructorSelect";
+import { EventRecurrence, GanttEvent, GanttEventId, GanttModuleId, GanttSyllabus } from "@/api-shared/types/gantt/models";
+import { CollapsibleSection } from "@/components/gantt/event-dialog/CollapsibleSection";
 import { EventConstraintsView } from "@/components/gantt/event-dialog/constraints/EventConstraintsView";
 import { EventDetailsForm } from "@/components/gantt/event-dialog/DetailsForm";
+import { EventRecurrenceField, RECURRENCE_LABELS } from "@/components/gantt/event-dialog/EventRecurrenceField";
+import { EventRoomRequirementsField } from "@/components/gantt/event-dialog/EventRoomRequirementsField";
 import { RecommendedLecturersField } from "@/components/gantt/event-dialog/RecommendedLecturersField";
 import { SystemRequirementsField } from "@/components/gantt/event-dialog/SystemRequirementsField";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import DialogContent from "@mui/material/DialogContent";
-import Divider from "@mui/material/Divider";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Skeleton from "@mui/material/Skeleton";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import { useSnackbar } from "notistack";
-import { useCallback, useState } from "react";
 
 export type EventDialogContentProps = {
     event: GanttEvent | undefined;
     eventId: GanttEventId;
     moduleId: GanttModuleId;
-    syllabus: GanttSyllabus | undefined | null;
+    syllabus: GanttSyllabus | null | undefined;
     isContentReady: boolean;
 };
+
+/** A muted outlined chip used to summarize an empty/quiet section state. */
+function QuietChip({ label }: { label: string })
+{
+    return (
+        <Chip
+            label={ label }
+            size="small"
+            sx={ { color: "text.secondary" } }
+            variant="outlined"
+        />
+    );
+}
 
 export function EventDialogContent({
     event,
@@ -51,104 +65,145 @@ export function EventDialogContent({
         [ eventId, updateEvent, enqueueSnackbar ],
     );
 
-
     return (
         <DialogContent sx={ { pt: 1, mt: -1 } }>
             { isContentReady && event ? (
-                <>
-                    <Box
-                        alignItems="flex-start"
-                        display="flex"
-                        flexDirection="row"
-                        gap={ 2 }
-                        mt={ 1 }
-                    >
-                        <EventDetailsForm
-                            commit={ commit }
-                            event={ event }
-                            localComment={ localComment }
-                            localTitle={ localTitle }
-                            setLocalComment={ setLocalComment }
-                            setLocalTitle={ setLocalTitle }
-                            shuffleOptions={ syllabus?.shuffles ?? [] }
-                        />
+                <Stack mt={ 1 } spacing={ 3 }>
+                    <EventDetailsForm
+                        commit={ commit }
+                        event={ event }
+                        localTitle={ localTitle }
+                        setLocalTitle={ setLocalTitle }
+                        shuffleOptions={ syllabus?.shuffles ?? [] }
+                    />
 
-                        <Divider flexItem orientation="vertical" />
-
-                        <Stack flexGrow={ 1 } spacing={ 3 }>
-                            <Stack spacing={ 1 }>
-                                <Typography
-                                    sx={ { fontWeight: "bold" } }
-                                    variant="subtitle2"
-                                >
-                                    אחראי
-                                </Typography>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel>אחראי</InputLabel>
-                                    <InstructorSelect<"" | number>
-                                        label="אחראי"
-                                        onChange={ (e) =>
-                                        {
-                                            const val = e.target.value;
-                                            commit({
-                                                orchestratorId:
-                                                    val === ""
-                                                        ? null
-                                                        : Number(val),
-                                            });
-                                        } }
-                                        value={ event.orchestratorId ?? "" }
-                                    >
-                                        <MenuItem value="">
-                                            <em>ללא אחראי</em>
-                                        </MenuItem>
-                                    </InstructorSelect>
-                                </FormControl>
-                                { event.orchestratorId === null && (
-                                    <Alert severity="warning">
-                                        למופע זה לא הוגדר אחראי. מומלץ להגדיר
-                                        אחראי מבין המדריכים.
-                                    </Alert>
-                                ) }
-                            </Stack>
-
+                    <Stack spacing={ 1.5 }>
+                        <CollapsibleSection
+                            chips={
+                                event.recommendedLecturerIds.length > 0 ? (
+                                    <Chip
+                                        color="primary"
+                                        label={ `${event.recommendedLecturerIds.length} מומלצים` }
+                                        size="small"
+                                        variant="outlined"
+                                    />
+                                ) : (
+                                    <QuietChip label="לא הוגדרו" />
+                                )
+                            }
+                            icon={ <RecordVoiceOverOutlinedIcon /> }
+                            title="אנשי חוץ מומלצים"
+                        >
                             <RecommendedLecturersField
                                 onChange={ (ids) =>
                                     commit({ recommendedLecturerIds: ids })
                                 }
                                 outsiderIds={ event.recommendedLecturerIds }
                             />
+                        </CollapsibleSection>
 
-                            <SystemRequirementsField
-                                onChange={ (reqs) =>
-                                    commit({ systemRequirements: reqs })
-                                }
-                                requirements={ event.systemRequirements }
+                        <CollapsibleSection
+                            chips={
+                                <>
+                                    <Chip
+                                        label={ `חדר: ${event.roomRequirement}` }
+                                        size="small"
+                                        variant="outlined"
+                                    />
+                                    { event.recurrence !== EventRecurrence.None && (
+                                        <Chip
+                                            color="primary"
+                                            label={ `חזרה: ${RECURRENCE_LABELS[ event.recurrence ]}` }
+                                            size="small"
+                                            variant="outlined"
+                                        />
+                                    ) }
+                                    { event.systemRequirements.length > 0 && (
+                                        <Chip
+                                            color="primary"
+                                            label={ `${event.systemRequirements.length} דרישות סיסטם` }
+                                            size="small"
+                                            variant="outlined"
+                                        />
+                                    ) }
+                                </>
+                            }
+                            icon={ <TuneIcon /> }
+                            title="שיבוץ ודרישות"
+                        >
+                            <Stack spacing={ 2 }>
+                                <Stack direction="row" spacing={ 2 }>
+                                    <EventRoomRequirementsField
+                                        commit={ commit }
+                                        event={ event }
+                                        size="small"
+                                        sx={ { flex: 1 } }
+                                    />
+                                    <EventRecurrenceField
+                                        commit={ commit }
+                                        event={ event }
+                                        sx={ { flex: 1 } }
+                                    />
+                                </Stack>
+                                <SystemRequirementsField
+                                    onChange={ (reqs) =>
+                                        commit({ systemRequirements: reqs })
+                                    }
+                                    requirements={ event.systemRequirements }
+                                />
+                            </Stack>
+                        </CollapsibleSection>
+
+                        <CollapsibleSection
+                            chips={
+                                event.comment ? (
+                                    <Chip
+                                        color="primary"
+                                        label="יש הערה"
+                                        size="small"
+                                        variant="outlined"
+                                    />
+                                ) : (
+                                    <QuietChip label="ריק" />
+                                )
+                            }
+                            icon={ <NotesIcon /> }
+                            title="הערה"
+                        >
+                            <TextField
+                                fullWidth
+                                minRows={ 3 }
+                                multiline
+                                onBlur={ () =>
+                                {
+                                    const next = localComment.trim() === "" ? null : localComment;
+                                    if (next !== event.comment) commit({ comment: next });
+                                } }
+                                onChange={ (e) => setLocalComment(e.target.value) }
+                                placeholder="הערה חופשית על המופע..."
+                                value={ localComment }
                             />
-                        </Stack>
-                    </Box>
+                        </CollapsibleSection>
 
-                    <Box height="1rem" />
-                    <EventConstraintsView
-                        eventId={ eventId }
-                        moduleId={ moduleId }
-                    />
-                </>
+                        <EventConstraintsView
+                            eventId={ eventId }
+                            moduleId={ moduleId }
+                        />
+                    </Stack>
+                </Stack>
             ) : (
-                <Box display="flex" flexDirection="row" gap={ 2 } mt={ 1 }>
-                    <Stack spacing={ 2 } width="32%">
+                <Stack mt={ 1 } spacing={ 3 }>
+                    <Stack spacing={ 2.5 }>
+                        <Skeleton height={ 56 } variant="rounded" />
+                        <Skeleton height={ 48 } variant="rounded" />
+                    </Stack>
+                    <Stack spacing={ 1.5 }>
                         <Skeleton height={ 56 } variant="rounded" />
                         <Skeleton height={ 56 } variant="rounded" />
                         <Skeleton height={ 56 } variant="rounded" />
                         <Skeleton height={ 56 } variant="rounded" />
                     </Stack>
-                    <Divider flexItem orientation="vertical" />
-                    <Stack flexGrow={ 1 } spacing={ 1 }>
-                        <Skeleton height={ 56 } variant="rounded" />
-                        <Skeleton height={ 120 } variant="rounded" />
-                        <Skeleton height={ 120 } variant="rounded" />
-                    </Stack>
-                </Box>
+                </Stack>
             ) }
         </DialogContent>
     );
