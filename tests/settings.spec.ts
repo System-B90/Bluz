@@ -285,15 +285,18 @@ test.describe("Settings Dialog", () => {
             await page.waitForTimeout(300);
 
             // The form should now be populated
-            // Look for the extended info fields
-            const workstationLabel = dialog.getByText("כמות עמדות עבודה");
-            const seatLabel = dialog.getByText("מספר כסאות להרצאה");
+            // Look for the extended info fields. Use getByLabel (targets the
+            // input, not text nodes) since MUI's outlined variant renders the
+            // label text twice in the DOM (visible <label> + hidden notch
+            // <legend><span>), which trips getByText's strict-mode matching.
+            const workstationInput = dialog.getByLabel("כמות עמדות עבודה");
+            const seatInput = dialog.getByLabel("מספר כסאות להרצאה");
 
-            if ((await workstationLabel.count()) > 0) {
-                await expect(workstationLabel).toBeVisible();
+            if ((await workstationInput.count()) > 0) {
+                await expect(workstationInput).toBeVisible();
             }
-            if ((await seatLabel.count()) > 0) {
-                await expect(seatLabel).toBeVisible();
+            if ((await seatInput.count()) > 0) {
+                await expect(seatInput).toBeVisible();
             }
         }
     });
