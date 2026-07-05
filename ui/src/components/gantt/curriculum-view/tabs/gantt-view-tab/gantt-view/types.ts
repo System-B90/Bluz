@@ -87,6 +87,11 @@ export type GanttBlockProps = {
     blockWidthPercent?: number;
     /** Multi-day overflow block: rendered with a spillover gradient (#105). */
     isSpillover?: boolean;
+    /**
+     * Auto-generated recurrence occurrence (a repeat of a recurring event's
+     * start block). Rendered as a faded, non-draggable indicator (#111).
+     */
+    isRecurrence?: boolean;
 };
 
 export type GanttCellProps = {
@@ -109,6 +114,8 @@ export type GanttCellProps = {
     blockWidthPercent?: number;
     /** Multi-day overflow block: rendered with a spillover gradient (#105). */
     isSpillover?: boolean;
+    /** Auto-generated recurrence occurrence indicator (#111). */
+    isRecurrence?: boolean;
 };
 
 export type GanttModuleRowProps = {

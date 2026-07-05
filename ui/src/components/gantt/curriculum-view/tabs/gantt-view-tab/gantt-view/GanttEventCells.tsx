@@ -23,6 +23,10 @@ type WeeklyCellsParams = {
     violations: Array<string>;
     spanInfo?: EventSpanInfo | null;
     relativeDaySizing: boolean;
+    /** Recurring event (daily/weekly). Drives repeat blocks + first-column staging (#111). */
+    isRecurring: boolean;
+    /** Index of the week holding the event's mapped start day, or -1 when unmapped (#111). */
+    currentWeekIdx: number;
 };
 
 export function buildWeeklyEventCells(
@@ -40,6 +44,8 @@ export function buildWeeklyEventCells(
         violations,
         spanInfo,
         relativeDaySizing,
+        isRecurring,
+        currentWeekIdx,
     } = params;
 
     return timelineWeeks.map((week, weekIdx) => {
@@ -48,19 +54,40 @@ export function buildWeeklyEventCells(
         const isExplicitlyMappedHere = currentDayId
             ? week.days.includes(currentDayId)
             : false;
+
+        // Recurring event: echo the start block into every following week (#111).
+        const isRecurrenceWeek =
+            isRecurring &&
+            !isExplicitlyMappedHere &&
+            currentWeekIdx !== -1 &&
+            weekIdx > currentWeekIdx;
+
+        // A recurring event that has no start yet is staged in the first column;
+        // a non-recurring one waits in its module's start column (existing).
+        const isWaitingInFirstColumn =
+            isEventUnmapped && isRecurring && weekIdx === 0;
         const isWaitingInModuleStartColumn =
             isEventUnmapped &&
+            !isRecurring &&
             isModuleMapped &&
             weekIdx === moduleStartWeekIdx;
-        const hasBlock = isExplicitlyMappedHere || isWaitingInModuleStartColumn;
+        const isWaiting =
+            isWaitingInFirstColumn || isWaitingInModuleStartColumn;
+
+        const hasBlock =
+            isExplicitlyMappedHere || isRecurrenceWeek || isWaiting;
 
         const blockPayload = isExplicitlyMappedHere
             ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId }
-            : { type: "event-map", moduleId, eventId };
+            : isRecurrenceWeek
+                ? { moduleId, eventId }
+                : { type: "event-map", moduleId, eventId };
 
         const blockId = isExplicitlyMappedHere
             ? `drag-event-${eventId}-${currentDayId}`
-            : `drag-event-staged-${eventId}`;
+            : isRecurrenceWeek
+                ? `recur-event-${eventId}-${week.id}`
+                : `drag-event-staged-${eventId}`;
 
         // Positioned as percentages of the anchor cell's own width — week
         // columns render wider than their nominal size (the table stretches
@@ -114,10 +141,15 @@ export function buildWeeklyEventCells(
                 }
                 dayId={ firstDayId }
                 dropId={ `drop-event-${eventId}-${firstDayId}` }
-                elementId={ hasBlock ? `block-event-${eventId}` : undefined }
+                elementId={
+                    isExplicitlyMappedHere || isWaiting
+                        ? `block-event-${eventId}`
+                        : undefined
+                }
                 hasBlock={ hasBlock }
                 isAbsoluteBlock={ true }
-                isOpaque={ isWaitingInModuleStartColumn }
+                isOpaque={ isWaiting }
+                isRecurrence={ isRecurrenceWeek }
                 isSpillover={ Boolean(isExplicitlyMappedHere && spanInfo) }
                 key={ `week-${week.id}-${eventId}` }
                 payloadData={ {
@@ -144,6 +176,12 @@ type DailyCellsParams = {
     spanInfo?: EventSpanInfo | null;
     /** Required-time label shown on the mapped block (zoomed single-week day view). */
     timeLabel?: string;
+    /** Recurring event (daily/weekly). Drives repeat blocks + first-column staging (#111). */
+    isRecurring: boolean;
+    /** Days a recurring event repeats onto, excluding its start day (#111). */
+    recurrenceDayIds: Set<string>;
+    /** First day of the timeline — where an unallocated recurring event is staged (#111). */
+    firstDayId: null | string;
 };
 
 export function buildDailyEventCells(
@@ -161,25 +199,47 @@ export function buildDailyEventCells(
         violations,
         spanInfo,
         timeLabel,
+        isRecurring,
+        recurrenceDayIds,
+        firstDayId,
     } = params;
 
     return timelineWeeks.flatMap((week) =>
         week.days.map((dayId) => {
             const isExplicitlyMappedHere = currentDayId === dayId;
+
+            // Recurring event: echo the start block onto each recurrence day (#111).
+            const isRecurrenceOccurrence =
+                isRecurring &&
+                !isExplicitlyMappedHere &&
+                recurrenceDayIds.has(dayId);
+
+            // A recurring event with no start yet is staged in the first column;
+            // a non-recurring one waits in its module's start column (existing).
+            const isWaitingInFirstColumn =
+                isEventUnmapped && isRecurring && firstDayId === dayId;
             const isWaitingInModuleStartColumn =
                 isEventUnmapped &&
+                !isRecurring &&
                 isModuleMapped &&
                 moduleStartDayId === dayId;
+            const isWaiting =
+                isWaitingInFirstColumn || isWaitingInModuleStartColumn;
+
             const hasBlock =
-                isExplicitlyMappedHere || isWaitingInModuleStartColumn;
+                isExplicitlyMappedHere || isRecurrenceOccurrence || isWaiting;
 
             const blockPayload = isExplicitlyMappedHere
                 ? { type: "event-move", moduleId, eventId, sourceDayId: dayId }
-                : { type: "event-map", moduleId, eventId };
+                : isRecurrenceOccurrence
+                    ? { moduleId, eventId }
+                    : { type: "event-map", moduleId, eventId };
 
             const blockId = isExplicitlyMappedHere
                 ? `drag-event-${eventId}-${dayId}`
-                : `drag-event-staged-${eventId}`;
+                : isRecurrenceOccurrence
+                    ? `recur-event-${eventId}-${dayId}`
+                    : `drag-event-staged-${eventId}`;
 
             return (
                 <GanttCell
@@ -192,11 +252,14 @@ export function buildDailyEventCells(
                     dayId={ dayId }
                     dropId={ `drop-event-${eventId}-${dayId}` }
                     elementId={
-                        hasBlock ? `block-event-${eventId}` : undefined
+                        isExplicitlyMappedHere || isWaiting
+                            ? `block-event-${eventId}`
+                            : undefined
                     }
                     hasBlock={ hasBlock }
                     isAbsoluteBlock={ true }
-                    isOpaque={ isWaitingInModuleStartColumn }
+                    isOpaque={ isWaiting }
+                    isRecurrence={ isRecurrenceOccurrence }
                     isSpillover={ Boolean(isExplicitlyMappedHere && spanInfo) }
                     key={ `${dayId}-${eventId}` }
                     payloadData={ { targetType: "event", eventId, dayId } }

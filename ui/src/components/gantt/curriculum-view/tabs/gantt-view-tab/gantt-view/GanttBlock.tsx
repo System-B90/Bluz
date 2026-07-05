@@ -1,4 +1,5 @@
 import { useDraggable } from "@dnd-kit/core";
+import RepeatIcon from "@mui/icons-material/Repeat";
 import Box from "@mui/material/Box";
 import { alpha, useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
@@ -24,6 +25,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     blockLeftPercent,
     blockWidthPercent,
     isSpillover = false,
+    isRecurrence = false,
 }) => {
     const theme = useTheme();
     const state = useCurriculumState();
@@ -32,8 +34,17 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     const { attributes, listeners, setNodeRef, transform, isDragging } =
         useDraggable({
             id,
+            // Recurrence occurrences are auto-generated echoes of the start
+            // block — never draggable, so they carry no drag payload (#111).
+            disabled: isRecurrence,
             data: payload,
         });
+
+    // Recurrence occurrences are display-only: suppress drag listeners so they
+    // read as indicators rather than interactive blocks (#111).
+    const dragProps = isRecurrence
+        ? {}
+        : { ...listeners, ...attributes };
 
     const handleDoubleClick = (e: React.MouseEvent) => {
         if (!payload || !payload.moduleId) return;
@@ -81,8 +92,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
         <Box
             id={elementId}
             ref={setNodeRef}
-            {...listeners}
-            {...attributes}
+            {...dragProps}
             onDoubleClick={handleDoubleClick}
             sx={{
                 position: isAbsolute ? "absolute" : "relative",
@@ -97,15 +107,23 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
                 height: "24px",
                 backgroundColor: isOpaque
                     ? "transparent"
-                    : theme.palette.primary.main,
+                    : isRecurrence
+                        ? alpha(theme.palette.primary.main, 0.4)
+                        : theme.palette.primary.main,
                 backgroundImage: spilloverBackground,
                 borderRadius: "4px",
                 border: isViolated
                     ? `2px solid ${theme.palette.error.main}`
                     : isOpaque
                         ? `1px solid ${theme.palette.primary.main}`
-                        : "none",
-                cursor: isDragging ? "grabbing" : "grab",
+                        : isRecurrence
+                            ? `1px dashed ${theme.palette.primary.main}`
+                            : "none",
+                cursor: isRecurrence
+                    ? "default"
+                    : isDragging
+                        ? "grabbing"
+                        : "grab",
                 opacity: isDragging ? 0.8 : 1,
                 boxShadow: isDragging
                     ? "0 10px 25px rgba(0, 0, 0, 0.2)"
@@ -121,12 +139,22 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
                 ...style,
             }}
         >
+            {isRecurrence ? (
+                <RepeatIcon
+                    sx={{
+                        color: "primary.main",
+                        fontSize: "0.9rem",
+                        flexShrink: 0,
+                    }}
+                />
+            ) : null}
             {title ? (
                 <Typography
                     sx={{
-                        color: isOpaque
-                            ? "primary.main"
-                            : "primary.contrastText",
+                        color:
+                            isOpaque || isRecurrence
+                                ? "primary.main"
+                                : "primary.contrastText",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -156,7 +184,8 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     );
 
     const spilloverNote = isSpillover ? "גולש על פני מספר ימים" : "";
-    const tooltipContent = [title ?? "", spilloverNote, ...violations]
+    const recurrenceNote = isRecurrence ? "מופע חוזר" : "";
+    const tooltipContent = [title ?? "", recurrenceNote, spilloverNote, ...violations]
         .filter(Boolean)
         .join("\n")
         .trim();
