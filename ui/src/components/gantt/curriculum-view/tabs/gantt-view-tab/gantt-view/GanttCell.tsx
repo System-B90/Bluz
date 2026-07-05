@@ -30,8 +30,8 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
     isAbsoluteBlock = true,
     elementId,
     violations,
-    blockLeftPx,
-    blockWidthPx,
+    blockLeftPercent,
+    blockWidthPercent,
     isSpillover,
 }) => {
     const theme = useTheme();
@@ -64,8 +64,8 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
             <Box sx={CELL_INNER_SX}>
                 {hasBlock && blockId && blockPayload ? (
                     <GanttBlock
-                        blockLeftPx={blockLeftPx}
-                        blockWidthPx={blockWidthPx}
+                        blockLeftPercent={blockLeftPercent}
+                        blockWidthPercent={blockWidthPercent}
                         elementId={elementId}
                         id={blockId}
                         isAbsolute={isAbsoluteBlock}

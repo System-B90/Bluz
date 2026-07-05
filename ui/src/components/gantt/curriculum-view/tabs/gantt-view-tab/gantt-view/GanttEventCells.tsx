@@ -22,6 +22,7 @@ type WeeklyCellsParams = {
     moduleStartWeekIdx: number;
     violations: Array<string>;
     spanInfo?: EventSpanInfo | null;
+    relativeDaySizing: boolean;
 };
 
 export function buildWeeklyEventCells(
@@ -38,6 +39,7 @@ export function buildWeeklyEventCells(
         moduleStartWeekIdx,
         violations,
         spanInfo,
+        relativeDaySizing,
     } = params;
 
     return timelineWeeks.map((week, weekIdx) => {
@@ -60,14 +62,21 @@ export function buildWeeklyEventCells(
             ? `drag-event-${eventId}-${currentDayId}`
             : `drag-event-staged-${eventId}`;
 
-        let blockLeftPx: number | undefined;
-        let blockWidthPx: number | undefined;
+        // Positioned as percentages of the anchor cell's own width — week
+        // columns render wider than their nominal size (the table stretches
+        // fixed-width columns to fill the container), so pixel math would
+        // undershoot the real span (#118).
+        let blockLeftPercent: number | undefined;
+        let blockWidthPercent: number | undefined;
         if (isExplicitlyMappedHere && currentDayId)
         {
-            const CELL = 80;
             const dayPosInWeek = week.days.indexOf(currentDayId);
-            const startFrac = dayPosInWeek / week.days.length;
-            let endFrac = (dayPosInWeek + 1) / week.days.length;
+            const startFrac = relativeDaySizing
+                ? dayPosInWeek / week.days.length
+                : 0;
+            let endFrac = relativeDaySizing
+                ? (dayPosInWeek + 1) / week.days.length
+                : 1;
             let weekSpan = 0;
 
             // Multi-day spillover: stretch the block to the last spanned day,
@@ -87,21 +96,21 @@ export function buildWeeklyEventCells(
                 }
             }
 
-            blockLeftPx = Math.round(startFrac * CELL) + 2;
-            blockWidthPx = Math.max(
-                Math.round(weekSpan * CELL + (endFrac - startFrac) * CELL) - 4,
-                16,
+            blockLeftPercent = startFrac * 100;
+            blockWidthPercent = Math.max(
+                weekSpan * 100 + (endFrac - startFrac) * 100,
+                5,
             );
         }
 
         return (
             <GanttCell
                 blockId={ blockId }
-                blockLeftPx={ isExplicitlyMappedHere ? blockLeftPx : undefined }
+                blockLeftPercent={ isExplicitlyMappedHere ? blockLeftPercent : undefined }
                 blockPayload={ blockPayload }
                 blockTitle={ eventTitle }
-                blockWidthPx={
-                    isExplicitlyMappedHere ? blockWidthPx : undefined
+                blockWidthPercent={
+                    isExplicitlyMappedHere ? blockWidthPercent : undefined
                 }
                 dayId={ firstDayId }
                 dropId={ `drop-event-${eventId}-${firstDayId}` }

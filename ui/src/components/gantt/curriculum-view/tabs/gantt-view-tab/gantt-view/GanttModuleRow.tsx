@@ -119,12 +119,15 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
     // remove-target droppable (during a drag) doesn't rebuild every day cell (#88).
     const cells = useMemo(() => {
         if (weeklyView) {
-            // Compute proportional pixel positioning for multi-week blocks
-            let blockLeftPx: number | undefined;
-            let blockWidthPx: number | undefined;
+            // Position multi-week blocks as percentages of the anchor cell's own
+            // width rather than fixed pixels — week columns render wider than
+            // their nominal size (the table stretches fixed-width columns to
+            // fill the container), so a pixel-based width would undershoot the
+            // real span (#118).
+            let blockLeftPercent: number | undefined;
+            let blockWidthPercent: number | undefined;
 
             if (weekSpanIndices !== null && spanIndices !== null) {
-                const CELL = 80;
                 const firstWeek = timelineWeeks[weekSpanIndices.min];
                 const lastWeek = timelineWeeks[weekSpanIndices.max];
                 const firstDayLinear = linearDays[spanIndices.min];
@@ -133,16 +136,18 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                     firstWeek.days.indexOf(firstDayLinear);
                 const lastDayPosInWeek = lastWeek.days.indexOf(lastDayLinear);
 
+                // Module blocks always span from the first mapped event/day to
+                // the last, regardless of the toggle — only individual event
+                // blocks shrink to their own day in relative mode.
                 const startFrac = firstDayPosInWeek / firstWeek.days.length;
                 const endFrac = (lastDayPosInWeek + 1) / lastWeek.days.length;
                 const weekSpan = weekSpanIndices.max - weekSpanIndices.min;
 
-                blockLeftPx = Math.round(startFrac * CELL) + 2;
-                blockWidthPx =
-                    Math.round(
-                        weekSpan * CELL + endFrac * CELL - startFrac * CELL,
-                    ) - 4;
-                blockWidthPx = Math.max(blockWidthPx, 16); // minimum visible width
+                blockLeftPercent = startFrac * 100;
+                blockWidthPercent = Math.max(
+                    weekSpan * 100 + (endFrac - startFrac) * 100,
+                    5, // minimum visible width
+                );
             }
 
             return timelineWeeks.map((week, weekIdx) => {
@@ -153,14 +158,14 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                 return (
                     <GanttCell
                         blockId={`drag-module-shift-${moduleId}-${firstDayId}`}
-                        blockLeftPx={isSpanStart ? blockLeftPx : undefined}
+                        blockLeftPercent={isSpanStart ? blockLeftPercent : undefined}
                         blockPayload={{
                             type: "module-shift",
                             moduleId,
                             sourceDayId: firstDayId,
                         }}
                         blockTitle={ganttModule?.title}
-                        blockWidthPx={isSpanStart ? blockWidthPx : undefined}
+                        blockWidthPercent={isSpanStart ? blockWidthPercent : undefined}
                         dayId={firstDayId}
                         dropId={`drop-module-${moduleId}-${firstDayId}`}
                         elementId={

@@ -14,6 +14,8 @@ export type GanttConstraintState = {
 export type GanttContextType = {
     weeklyView: boolean;
     showConstraints: boolean;
+    /** Weekly view only: size/position blocks by the day they occupy instead of filling the whole cell. */
+    relativeDaySizing: boolean;
     startDate: null | string;
     timelineWeeks: Array<GanttWeek>;
     linearDays: Array<string>;
@@ -76,8 +78,9 @@ export type GanttBlockProps = {
     isAbsolute?: boolean;
     elementId?: string;
     violations?: Array<string>;
-    blockLeftPx?: number;
-    blockWidthPx?: number;
+    /** Percentage (of the anchor cell's own width) offset/width for multi-week spans (#118). */
+    blockLeftPercent?: number;
+    blockWidthPercent?: number;
     /** Multi-day overflow block: rendered with a spillover gradient (#105). */
     isSpillover?: boolean;
 };
@@ -95,8 +98,9 @@ export type GanttCellProps = {
     isAbsoluteBlock?: boolean;
     elementId?: string;
     violations?: Array<string>;
-    blockLeftPx?: number;
-    blockWidthPx?: number;
+    /** Percentage (of the anchor cell's own width) offset/width for multi-week spans (#118). */
+    blockLeftPercent?: number;
+    blockWidthPercent?: number;
     /** Multi-day overflow block: rendered with a spillover gradient (#105). */
     isSpillover?: boolean;
 };

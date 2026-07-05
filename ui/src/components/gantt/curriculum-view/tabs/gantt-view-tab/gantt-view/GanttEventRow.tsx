@@ -28,6 +28,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
     const { openEventDialog } = useCurriculumProviderActions();
     const {
         weeklyView,
+        relativeDaySizing,
         timelineWeeks,
         linearDays,
         moduleMappings,
@@ -112,6 +113,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 moduleStartWeekIdx,
                 violations: myViolations,
                 spanInfo,
+                relativeDaySizing,
             })
             : buildDailyEventCells({
                 timelineWeeks,
@@ -128,6 +130,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
     }, [
         event,
         weeklyView,
+        relativeDaySizing,
         timelineWeeks,
         moduleId,
         eventId,

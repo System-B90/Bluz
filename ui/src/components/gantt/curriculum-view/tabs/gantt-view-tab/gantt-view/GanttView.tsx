@@ -1,4 +1,5 @@
-import {
+import
+{
     DndContext,
     DragEndEvent,
     MeasuringStrategy,
@@ -12,6 +13,7 @@ import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import RuleIcon from "@mui/icons-material/Rule";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
@@ -36,11 +38,13 @@ import React, {
     useState,
 } from "react";
 
-import {
+import
+{
     ConstraintType,
     hasConflictingTemporalConstraints,
 } from "@/api-shared/types/gantt/models/constraint";
-import {
+import
+{
     computeEventDaySpans,
     getSpilloverMinutesByDay,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
@@ -48,7 +52,8 @@ import { ConstraintLines } from "@/components/gantt/curriculum-view/tabs/gantt-v
 import { GanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { GanttHeader } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttHeader";
 import { GanttSyllabusGroup } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttSyllabusGroup";
-import {
+import
+{
     ConstraintLink,
     GanttViewProps,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
@@ -56,7 +61,8 @@ import { useGanttConstraints } from "@/components/gantt/state/constraints/hooks"
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
-export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
+export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
+{
     const theme = useTheme();
     const state = useCurriculumState();
     const {
@@ -68,25 +74,26 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
     const {
         state: { constraints },
     } = useGanttConstraints();
-    const curriculum = state.curriculums[curriculumId];
+    const curriculum = state.curriculums[ curriculumId ];
 
     // Strongly type as HTMLDivElement to satisfy MUI TableContainer
     const containerRef = useRef<HTMLDivElement>(null);
     const pendingScrollRafs = useRef<Array<number>>([]);
 
-    const [showConstraints, setShowConstraints] = useState(true);
-    const [weeklyView, setWeeklyView] = useState(true);
-    const [showUnallocated, setShowUnallocated] = useState(false);
-    const [zoomedWeekId, setZoomedWeekId] = useState<null | string>(null);
-    const [collapsedSyllabusIds, setCollapsedSyllabusIds] = useState<
+    const [ showConstraints, setShowConstraints ] = useState(true);
+    const [ weeklyView, setWeeklyView ] = useState(true);
+    const [ relativeDaySizing, setRelativeDaySizing ] = useState(false);
+    const [ showUnallocated, setShowUnallocated ] = useState(false);
+    const [ zoomedWeekId, setZoomedWeekId ] = useState<null | string>(null);
+    const [ collapsedSyllabusIds, setCollapsedSyllabusIds ] = useState<
         Set<string>
     >(() => new Set());
-    const [expandedModuleIds, setExpandedModuleIds] = useState<Set<string>>(
+    const [ expandedModuleIds, setExpandedModuleIds ] = useState<Set<string>>(
         () => new Set(),
     );
-    const [containerWidth, setContainerWidth] = useState(0);
+    const [ containerWidth, setContainerWidth ] = useState(0);
     // DOM id of a row to scroll into view once its ancestors have expanded.
-    const [pendingScrollId, setPendingScrollId] = useState<null | string>(null);
+    const [ pendingScrollId, setPendingScrollId ] = useState<null | string>(null);
 
     // Require a small drag distance before activating, so a click never pays the
     // (day-view) droppable measurement cost and drags feel intentional (#88).
@@ -94,59 +101,68 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
         useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     );
 
-    const allTimelineWeeks = useMemo(() => {
+    const allTimelineWeeks = useMemo(() =>
+    {
         if (!curriculum) return [];
         return curriculum.weeks
-            .map((weekId) => state.weeks[weekId])
+            .map((weekId) => state.weeks[ weekId ])
             .filter((w) => !!w);
-    }, [curriculum, state.weeks]);
+    }, [ curriculum, state.weeks ]);
 
     // Zoom only applies in days view. When active, restrict the grid to the one
     // zoomed week so it can fill the available width (#90).
-    const timelineWeeks = useMemo(() => {
-        if (!weeklyView && zoomedWeekId) {
+    const timelineWeeks = useMemo(() =>
+    {
+        if (!weeklyView && zoomedWeekId)
+        {
             const zoomed = allTimelineWeeks.find((w) => w.id === zoomedWeekId);
-            if (zoomed) return [zoomed];
+            if (zoomed) return [ zoomed ];
         }
         return allTimelineWeeks;
-    }, [allTimelineWeeks, weeklyView, zoomedWeekId]);
+    }, [ allTimelineWeeks, weeklyView, zoomedWeekId ]);
 
-    const linearDays = useMemo(() => {
+    const linearDays = useMemo(() =>
+    {
         return timelineWeeks.flatMap((w) => w.days);
-    }, [timelineWeeks]);
+    }, [ timelineWeeks ]);
 
     // When zoomed the grid holds a single week, but date labels are derived from a
     // week's absolute position, so expose that offset to the header (#90).
-    const weekIndexOffset = useMemo(() => {
+    const weekIndexOffset = useMemo(() =>
+    {
         if (weeklyView || !zoomedWeekId) return 0;
         const idx = allTimelineWeeks.findIndex((w) => w.id === zoomedWeekId);
         return idx === -1 ? 0 : idx;
-    }, [weeklyView, zoomedWeekId, allTimelineWeeks]);
+    }, [ weeklyView, zoomedWeekId, allTimelineWeeks ]);
 
     // Widen day columns to fill the container when a single week is zoomed (#90).
-    const dayCellWidth = useMemo(() => {
+    const dayCellWidth = useMemo(() =>
+    {
         const DEFAULT_WIDTH = 80;
         const LABEL_COL_WIDTH = 250;
         if (weeklyView || !zoomedWeekId) return DEFAULT_WIDTH;
-        const dayCount = timelineWeeks[0]?.days.length ?? 0;
+        const dayCount = timelineWeeks[ 0 ]?.days.length ?? 0;
         const available = containerWidth - LABEL_COL_WIDTH;
         if (dayCount <= 0 || available <= 0) return DEFAULT_WIDTH;
         return Math.max(DEFAULT_WIDTH, Math.floor(available / dayCount));
-    }, [weeklyView, zoomedWeekId, timelineWeeks, containerWidth]);
+    }, [ weeklyView, zoomedWeekId, timelineWeeks, containerWidth ]);
 
     // Zoom is a days-view-only affordance: drop it when returning to weekly view.
-    const handleWeeklyViewChange = useCallback((checked: boolean) => {
+    const handleWeeklyViewChange = useCallback((checked: boolean) =>
+    {
         setWeeklyView(checked);
         if (checked) setZoomedWeekId(null);
     }, []);
 
     const isSyllabusExpanded = useCallback(
         (syllabusId: string) => !collapsedSyllabusIds.has(syllabusId),
-        [collapsedSyllabusIds],
+        [ collapsedSyllabusIds ],
     );
 
-    const toggleSyllabus = useCallback((syllabusId: string) => {
-        setCollapsedSyllabusIds((prev) => {
+    const toggleSyllabus = useCallback((syllabusId: string) =>
+    {
+        setCollapsedSyllabusIds((prev) =>
+        {
             const next = new Set(prev);
             if (next.has(syllabusId)) next.delete(syllabusId);
             else next.add(syllabusId);
@@ -154,11 +170,13 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
         });
     }, []);
 
-    const collapseAllSyllabuses = useCallback(() => {
+    const collapseAllSyllabuses = useCallback(() =>
+    {
         setCollapsedSyllabusIds(new Set(curriculum?.syllabuses ?? []));
-    }, [curriculum?.syllabuses]);
+    }, [ curriculum?.syllabuses ]);
 
-    const expandAllSyllabuses = useCallback(() => {
+    const expandAllSyllabuses = useCallback(() =>
+    {
         setCollapsedSyllabusIds(new Set());
     }, []);
 
@@ -170,11 +188,13 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
 
     const isModuleExpanded = useCallback(
         (moduleId: string) => expandedModuleIds.has(moduleId),
-        [expandedModuleIds],
+        [ expandedModuleIds ],
     );
 
-    const toggleModule = useCallback((moduleId: string) => {
-        setExpandedModuleIds((prev) => {
+    const toggleModule = useCallback((moduleId: string) =>
+    {
+        setExpandedModuleIds((prev) =>
+        {
             const next = new Set(prev);
             if (next.has(moduleId)) next.delete(moduleId);
             else next.add(moduleId);
@@ -185,15 +205,19 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
     // Reveal an unallocated module/event: expand its ancestors, then scroll its
     // row into view once rendered.
     const revealItem = useCallback(
-        (syllabusId: string, moduleId: string, eventId?: string) => {
-            setCollapsedSyllabusIds((prev) => {
+        (syllabusId: string, moduleId: string, eventId?: string) =>
+        {
+            setCollapsedSyllabusIds((prev) =>
+            {
                 if (!prev.has(syllabusId)) return prev;
                 const next = new Set(prev);
                 next.delete(syllabusId);
                 return next;
             });
-            if (eventId) {
-                setExpandedModuleIds((prev) => {
+            if (eventId)
+            {
+                setExpandedModuleIds((prev) =>
+                {
                     if (prev.has(moduleId)) return prev;
                     const next = new Set(prev);
                     next.add(moduleId);
@@ -210,15 +234,20 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
     );
 
     // After the target's ancestors expand, scroll to it and flash a highlight.
-    useEffect(() => {
+    useEffect(() =>
+    {
         if (!pendingScrollId) return;
-        const raf1 = requestAnimationFrame(() => {
-            const raf2 = requestAnimationFrame(() => {
+        const raf1 = requestAnimationFrame(() =>
+        {
+            const raf2 = requestAnimationFrame(() =>
+            {
                 const el = document.getElementById(pendingScrollId);
-                if (el) {
+                if (el)
+                {
                     el.scrollIntoView({ behavior: "smooth", block: "center" });
                     el.dataset.ganttFlash = "true";
-                    window.setTimeout(() => {
+                    window.setTimeout(() =>
+                    {
                         delete el.dataset.ganttFlash;
                     }, 1500);
                 }
@@ -227,59 +256,71 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             pendingScrollRafs.current.push(raf2);
         });
         pendingScrollRafs.current.push(raf1);
-        return () => {
+        return () =>
+        {
             pendingScrollRafs.current.forEach((id) =>
                 cancelAnimationFrame(id),
             );
             pendingScrollRafs.current = [];
         };
-    }, [pendingScrollId]);
+    }, [ pendingScrollId ]);
 
     // Track the scroll container width so a zoomed week can be sized to fill it (#90).
-    useEffect(() => {
+    useEffect(() =>
+    {
         const node = containerRef.current;
         if (!node || typeof ResizeObserver === "undefined") return;
         setContainerWidth(node.clientWidth);
-        const observer = new ResizeObserver((entries) => {
-            setContainerWidth(entries[0].contentRect.width);
+        const observer = new ResizeObserver((entries) =>
+        {
+            setContainerWidth(entries[ 0 ].contentRect.width);
         });
         observer.observe(node);
         return () => observer.disconnect();
     }, []);
 
-    const moduleMappings = useMemo(() => {
+    const moduleMappings = useMemo(() =>
+    {
         const merged: Record<string, Array<string>> = {};
-        Object.values(globalMappings).forEach((mapping: any) => {
+        Object.values(globalMappings).forEach((mapping: any) =>
+        {
             if (mapping.curriculumId !== curriculumId) return;
-            if (!mapping.eventId) {
-                const arr = merged[mapping.moduleId] || [];
-                if (!arr.includes(mapping.dayId)) {
-                    merged[mapping.moduleId] = [...arr, mapping.dayId];
+            if (!mapping.eventId)
+            {
+                const arr = merged[ mapping.moduleId ] || [];
+                if (!arr.includes(mapping.dayId))
+                {
+                    merged[ mapping.moduleId ] = [ ...arr, mapping.dayId ];
                 }
             }
         });
         return merged;
-    }, [globalMappings, curriculumId]);
+    }, [ globalMappings, curriculumId ]);
 
-    const eventMappings = useMemo(() => {
+    const eventMappings = useMemo(() =>
+    {
         const merged: Record<string, string> = {};
-        Object.values(globalMappings).forEach((mapping: any) => {
+        Object.values(globalMappings).forEach((mapping: any) =>
+        {
             if (mapping.curriculumId !== curriculumId) return;
-            if (mapping.eventId) {
-                merged[mapping.eventId] = mapping.dayId;
+            if (mapping.eventId)
+            {
+                merged[ mapping.eventId ] = mapping.dayId;
             }
         });
         return merged;
-    }, [globalMappings, curriculumId]);
+    }, [ globalMappings, curriculumId ]);
 
-    const curriculumMappings = useMemo(() => {
+    const curriculumMappings = useMemo(() =>
+    {
         const merged: Record<string, any> = {};
-        Object.entries(globalMappings).forEach(([mappingId, mapping]: [string, any]) => {
+        Object.entries(globalMappings).forEach(([ mappingId, mapping ]: [ string, any ]) =>
+        {
             if (mapping.curriculumId !== curriculumId) return;
-            merged[mappingId] = mapping;
+            merged[ mappingId ] = mapping;
         });
         return merged;
-    }, [globalMappings, curriculumId]);
+    }, [ globalMappings, curriculumId ]);
 
     // Multi-day spillover layout: which days each mapped event actually
     // occupies, and per-day scheduled minutes with the spill applied (#105).
@@ -290,36 +331,38 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 state,
                 linearDays,
             }),
-        [curriculumMappings, state, linearDays],
+        [ curriculumMappings, state, linearDays ],
     );
 
     const scheduledMinutesByDay = useMemo(
         () => getSpilloverMinutesByDay(eventSpans),
-        [eventSpans],
+        [ eventSpans ],
     );
 
     // Modules/events with no day mapping yet, grouped by syllabus, for the
     // "unallocated" panel (#89).
-    const unallocatedBySyllabus = useMemo(() => {
+    const unallocatedBySyllabus = useMemo(() =>
+    {
         if (!curriculum) return [];
         return curriculum.syllabuses
-            .map((syllabusId) => {
-                const syllabus = state.syllabuses[syllabusId];
+            .map((syllabusId) =>
+            {
+                const syllabus = state.syllabuses[ syllabusId ];
                 if (!syllabus) return null;
 
                 const modules = (syllabus.modules ?? [])
-                    .map((moduleId) => state.modules[moduleId])
+                    .map((moduleId) => state.modules[ moduleId ])
                     .filter((m): m is NonNullable<typeof m> => !!m);
 
                 const unallocatedModules = modules.filter(
-                    (m) => (moduleMappings[m.id] ?? []).length === 0,
+                    (m) => (moduleMappings[ m.id ] ?? []).length === 0,
                 );
                 const unallocatedEvents = modules.flatMap((m) =>
                     (m.events ?? [])
-                        .map((eventId) => state.events[eventId])
+                        .map((eventId) => state.events[ eventId ])
                         .filter(
                             (e): e is NonNullable<typeof e> =>
-                                !!e && !eventMappings[e.id],
+                                !!e && !eventMappings[ e.id ],
                         )
                         .map((e) => ({
                             id: e.id,
@@ -331,7 +374,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 if (
                     unallocatedModules.length === 0 &&
                     unallocatedEvents.length === 0
-                ) {
+                )
+                {
                     return null;
                 }
                 return {
@@ -342,7 +386,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 };
             })
             .filter((g): g is NonNullable<typeof g> => g !== null);
-    }, [curriculum, state.syllabuses, state.modules, state.events, moduleMappings, eventMappings]);
+    }, [ curriculum, state.syllabuses, state.modules, state.events, moduleMappings, eventMappings ]);
 
     const unallocatedCount = useMemo(
         () =>
@@ -350,19 +394,23 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 (sum, g) => sum + g.modules.length + g.events.length,
                 0,
             ),
-        [unallocatedBySyllabus],
+        [ unallocatedBySyllabus ],
     );
 
-    const { violations, activeLinks } = useMemo(() => {
+    const { violations, activeLinks } = useMemo(() =>
+    {
         const v: Record<string, Array<string>> = {};
         const links: Array<ConstraintLink> = [];
 
-        const getMappedDayIdx = (type: "event" | "module", id: string) => {
-            if (type === "event") {
-                const dayId = eventMappings[id];
+        const getMappedDayIdx = (type: "event" | "module", id: string) =>
+        {
+            if (type === "event")
+            {
+                const dayId = eventMappings[ id ];
                 return dayId ? linearDays.indexOf(dayId) : -1;
-            } else {
-                const dayIds = moduleMappings[id] || [];
+            } else
+            {
+                const dayIds = moduleMappings[ id ] || [];
                 const indices = dayIds
                     .map((d) => linearDays.indexOf(d))
                     .filter((i) => i !== -1);
@@ -374,53 +422,61 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             entity: any,
             entityId: string,
             entityType: "event" | "module",
-        ) => {
+        ) =>
+        {
             const cIds: Array<string> = entity.constraintIds || [];
 
             // Conflicting temporal constraints are flagged even before the
             // entity is mapped to a day (#104). Warning only — never blocks.
             if (
                 hasConflictingTemporalConstraints(
-                    cIds.map((cId) => constraints[cId]),
+                    cIds.map((cId) => constraints[ cId ]),
                 )
-            ) {
-                if (!v[entityId]) v[entityId] = [];
-                v[entityId].push("אילוצים סותרים: לא נותר אף יום חוקי");
+            )
+            {
+                if (!v[ entityId ]) v[ entityId ] = [];
+                v[ entityId ].push("אילוצים סותרים: לא נותר אף יום חוקי");
             }
 
             const myIdx = getMappedDayIdx(entityType, entityId);
             if (myIdx === -1) return;
 
-            const myDay = state.days[linearDays[myIdx]];
+            const myDay = state.days[ linearDays[ myIdx ] ];
             if (!myDay) return;
 
-            cIds.forEach((cId) => {
-                const c = constraints[cId];
+            cIds.forEach((cId) =>
+            {
+                const c = constraints[ cId ];
                 if (!c) return;
 
-                if (c.type === ConstraintType.Temporal) {
+                if (c.type === ConstraintType.Temporal)
+                {
                     if (
                         c.allowedDays &&
                         !c.allowedDays.includes(myDay.dayIndex)
-                    ) {
-                        if (!v[entityId]) v[entityId] = [];
-                        v[entityId].push("מפר ימי עבודה מותרים");
+                    )
+                    {
+                        if (!v[ entityId ]) v[ entityId ] = [];
+                        v[ entityId ].push("מפר ימי עבודה מותרים");
                     }
                     if (
                         c.forbiddenDays &&
                         c.forbiddenDays.includes(myDay.dayIndex)
-                    ) {
-                        if (!v[entityId]) v[entityId] = [];
-                        v[entityId].push("מפר ימי עבודה אסורים");
+                    )
+                    {
+                        if (!v[ entityId ]) v[ entityId ] = [];
+                        v[ entityId ].push("מפר ימי עבודה אסורים");
                     }
-                } else if (c.type === ConstraintType.Relational) {
+                } else if (c.type === ConstraintType.Relational)
+                {
                     const targetIdx = getMappedDayIdx(c.targetType, c.targetId);
                     if (targetIdx === -1) return;
 
                     let isViolated = false;
                     const delta = myIdx - targetIdx;
 
-                    if (c.relation === "after") {
+                    if (c.relation === "after")
+                    {
                         if (delta <= 0) isViolated = true;
                         if (
                             c.minDelayDays !== undefined &&
@@ -432,13 +488,15 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                             delta > c.maxDelayDays
                         )
                             isViolated = true;
-                    } else if (c.relation === "before") {
+                    } else if (c.relation === "before")
+                    {
                         if (delta >= 0) isViolated = true;
                     }
 
-                    if (isViolated) {
-                        if (!v[entityId]) v[entityId] = [];
-                        v[entityId].push(
+                    if (isViolated)
+                    {
+                        if (!v[ entityId ]) v[ entityId ] = [];
+                        v[ entityId ].push(
                             `מפר אילוץ יחסי עם ${c.targetType === "event" ? "מפגש" : "מערך"}`,
                         );
                     }
@@ -472,21 +530,24 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
     ]);
 
     const handleMapModule = useCallback(
-        async (moduleId: string, dayId: string) => {
+        async (moduleId: string, dayId: string) =>
+        {
             await createMapping({ moduleId, eventId: null, dayId });
         },
-        [createMapping],
+        [ createMapping ],
     );
 
     const handleMapEvent = useCallback(
-        async (moduleId: string, eventId: string, dayId: string) => {
+        async (moduleId: string, eventId: string, dayId: string) =>
+        {
             await createMapping({ moduleId, eventId, dayId });
         },
-        [createMapping],
+        [ createMapping ],
     );
 
     const handleMoveModule = useCallback(
-        async (moduleId: string, sourceDayId: string, targetDayId: string) => {
+        async (moduleId: string, sourceDayId: string, targetDayId: string) =>
+        {
             await moveMapping({
                 moduleId,
                 eventId: null,
@@ -494,7 +555,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 to: { d: targetDayId },
             });
         },
-        [moveMapping],
+        [ moveMapping ],
     );
 
     const handleMoveEvent = useCallback(
@@ -503,7 +564,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             eventId: string,
             sourceDayId: string,
             targetDayId: string,
-        ) => {
+        ) =>
+        {
             await moveMapping({
                 moduleId,
                 eventId,
@@ -511,22 +573,25 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 to: { d: targetDayId },
             });
         },
-        [moveMapping],
+        [ moveMapping ],
     );
 
     const handleShiftModule = useCallback(
-        async (moduleId: string, deltaDays: number) => {
+        async (moduleId: string, deltaDays: number) =>
+        {
             if (deltaDays === 0) return;
 
-            const ganttModule = state.modules[moduleId];
+            const ganttModule = state.modules[ moduleId ];
             const promises: Array<Promise<void>> = [];
 
-            const mDays = moduleMappings[moduleId] || [];
-            mDays.forEach((dayId) => {
+            const mDays = moduleMappings[ moduleId ] || [];
+            mDays.forEach((dayId) =>
+            {
                 const currentIdx = linearDays.indexOf(dayId);
                 const newIdx = currentIdx + deltaDays;
-                const targetDayId = linearDays[newIdx];
-                if (targetDayId) {
+                const targetDayId = linearDays[ newIdx ];
+                if (targetDayId)
+                {
                     promises.push(
                         moveMapping({
                             moduleId,
@@ -538,14 +603,18 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                 }
             });
 
-            if (ganttModule && ganttModule.events) {
-                ganttModule.events.forEach((eventId) => {
-                    const currentDayId = eventMappings[eventId];
-                    if (currentDayId) {
+            if (ganttModule && ganttModule.events)
+            {
+                ganttModule.events.forEach((eventId) =>
+                {
+                    const currentDayId = eventMappings[ eventId ];
+                    if (currentDayId)
+                    {
                         const currentIdx = linearDays.indexOf(currentDayId);
                         const newIdx = currentIdx + deltaDays;
-                        const targetDayId = linearDays[newIdx];
-                        if (targetDayId) {
+                        const targetDayId = linearDays[ newIdx ];
+                        if (targetDayId)
+                        {
                             promises.push(
                                 moveMapping({
                                     moduleId,
@@ -561,11 +630,12 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
 
             await Promise.all(promises);
         },
-        [linearDays, state.modules, moduleMappings, eventMappings, moveMapping],
+        [ linearDays, state.modules, moduleMappings, eventMappings, moveMapping ],
     );
 
     const handleDragEnd = useCallback(
-        async (event: DragEndEvent) => {
+        async (event: DragEndEvent) =>
+        {
             const { active, over } = event;
             if (!over) return;
 
@@ -574,15 +644,18 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
 
             if (!payload || !target) return;
 
-            if (target.targetType === "remove") {
+            if (target.targetType === "remove")
+            {
                 if (
                     payload.type === "module-move" ||
                     payload.type === "module-shift"
-                ) {
-                    const mDays = moduleMappings[payload.moduleId] || [];
+                )
+                {
+                    const mDays = moduleMappings[ payload.moduleId ] || [];
                     const promises: Array<Promise<void>> = [];
 
-                    mDays.forEach((d) => {
+                    mDays.forEach((d) =>
+                    {
                         promises.push(
                             removeMapping({
                                 moduleId: payload.moduleId,
@@ -592,11 +665,14 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                         );
                     });
 
-                    const ganttModule = state.modules[payload.moduleId];
-                    if (ganttModule && ganttModule.events) {
-                        ganttModule.events.forEach((eId) => {
-                            const d = eventMappings[eId];
-                            if (d) {
+                    const ganttModule = state.modules[ payload.moduleId ];
+                    if (ganttModule && ganttModule.events)
+                    {
+                        ganttModule.events.forEach((eId) =>
+                        {
+                            const d = eventMappings[ eId ];
+                            if (d)
+                            {
                                 promises.push(
                                     removeMapping({
                                         moduleId: payload.moduleId,
@@ -608,7 +684,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                         });
                     }
                     await Promise.all(promises);
-                } else if (payload.type === "event-move") {
+                } else if (payload.type === "event-move")
+                {
                     await removeMapping({
                         moduleId: payload.moduleId,
                         eventId: payload.eventId,
@@ -621,12 +698,14 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             if (
                 payload.type === "module-map" &&
                 target.targetType === "module"
-            ) {
+            )
+            {
                 await handleMapModule(payload.moduleId, target.dayId);
             } else if (
                 payload.type === "event-map" &&
                 target.targetType === "event"
-            ) {
+            )
+            {
                 await handleMapEvent(
                     payload.moduleId,
                     payload.eventId,
@@ -635,8 +714,10 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             } else if (
                 payload.type === "module-move" &&
                 target.targetType === "module"
-            ) {
-                if (payload.sourceDayId !== target.dayId) {
+            )
+            {
+                if (payload.sourceDayId !== target.dayId)
+                {
                     await handleMoveModule(
                         payload.moduleId,
                         payload.sourceDayId,
@@ -646,19 +727,23 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
             } else if (
                 payload.type === "module-shift" &&
                 target.targetType === "module"
-            ) {
+            )
+            {
                 const sourceIdx = linearDays.indexOf(payload.sourceDayId);
                 const targetIdx = linearDays.indexOf(target.dayId);
                 const deltaDays = targetIdx - sourceIdx;
 
-                if (deltaDays !== 0) {
+                if (deltaDays !== 0)
+                {
                     await handleShiftModule(payload.moduleId, deltaDays);
                 }
             } else if (
                 payload.type === "event-move" &&
                 target.targetType === "event"
-            ) {
-                if (payload.sourceDayId !== target.dayId) {
+            )
+            {
+                if (payload.sourceDayId !== target.dayId)
+                {
                     await handleMoveEvent(
                         payload.moduleId,
                         payload.eventId,
@@ -688,6 +773,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
         () => ({
             weeklyView,
             showConstraints,
+            relativeDaySizing,
             startDate: curriculum?.startDate ?? null,
             timelineWeeks,
             linearDays,
@@ -714,6 +800,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
         [
             weeklyView,
             showConstraints,
+            relativeDaySizing,
             curriculum?.startDate,
             timelineWeeks,
             linearDays,
@@ -738,77 +825,79 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
         ],
     );
 
-    if (!curriculum) {
-        return <Typography sx={{ p: 2 }}>טוען גאנט...</Typography>;
+    if (!curriculum)
+    {
+        return <Typography sx={ { p: 2 } }>טוען גאנט...</Typography>;
     }
 
     return (
         <DndContext
-            measuring={{
+            measuring={ {
                 droppable: { strategy: MeasuringStrategy.WhileDragging },
-            }}
-            onDragEnd={handleDragEnd}
-            sensors={sensors}
+            } }
+            onDragEnd={ handleDragEnd }
+            sensors={ sensors }
         >
-            <GanttContext.Provider value={contextValue}>
-                <Box sx={{ width: "100%", overflow: "hidden", mt: 2 }}>
+            <GanttContext.Provider value={ contextValue }>
+                <Box sx={ { width: "100%", overflow: "hidden", mt: 2 } }>
                     <Paper
-                        elevation={0}
-                        sx={{
+                        elevation={ 0 }
+                        sx={ {
                             width: "100%",
                             maxHeight: "calc(100vh - 180px)",
                             display: "flex",
                             flexDirection: "column",
                             overflow: "hidden",
-                        }}
+                        } }
                     >
                         <Box
-                            sx={{
+                            sx={ {
                                 p: 2,
                                 borderBottom: `1px solid ${theme.vars.palette.divider}`,
                                 flexShrink: 0,
                                 display: "flex",
                                 justifyContent: "space-between",
                                 alignItems: "center",
-                            }}
+                            } }
                         >
                             <Box>
                                 <Typography variant="h6">
-                                    {curriculum.title}
+                                    { curriculum.title }
                                 </Typography>
                                 <Typography
                                     color="text.secondary"
                                     variant="body2"
                                 >
-                                    {curriculum.description}
+                                    { curriculum.description }
                                 </Typography>
                             </Box>
                             <Stack
                                 alignItems="center"
                                 direction="row"
-                                spacing={1}
-                                sx={{
+                                spacing={ 1 }
+                                sx={ {
                                     flexWrap: "wrap",
                                     justifyContent: "flex-end",
                                     rowGap: 1,
-                                }}
+                                } }
                             >
-                                {/* View mode: weekly / daily */}
+                                {/* View mode: weekly / daily */ }
                                 <ToggleButtonGroup
                                     aria-label="מצב תצוגה"
                                     exclusive
-                                    onChange={(_, value) => {
+                                    onChange={ (_, value) =>
+                                    {
                                         if (value)
                                             handleWeeklyViewChange(
                                                 value === "week",
                                             );
-                                    }}
+                                    } }
                                     size="small"
-                                    value={weeklyView ? "week" : "day"}
+                                    value={ weeklyView ? "week" : "day" }
                                 >
                                     <ToggleButton
                                         aria-label="תצוגה שבועית"
-                                        sx={{ gap: 0.5, px: 1.5 }}
+                                        sx={ { gap: 0.5, px: 1.5 } }
                                         value="week"
                                     >
                                         <CalendarViewWeekIcon fontSize="small" />
@@ -816,7 +905,7 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                     </ToggleButton>
                                     <ToggleButton
                                         aria-label="תצוגה יומית"
-                                        sx={{ gap: 0.5, px: 1.5 }}
+                                        sx={ { gap: 0.5, px: 1.5 } }
                                         value="day"
                                     >
                                         <CalendarViewDayIcon fontSize="small" />
@@ -824,30 +913,31 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                     </ToggleButton>
                                 </ToggleButtonGroup>
 
-                                {/* Display options: constraints / unallocated */}
+                                {/* Display options: constraints / unallocated */ }
                                 <ToggleButtonGroup
                                     aria-label="אפשרויות תצוגה"
-                                    onChange={(_, values: Array<string>) => {
+                                    onChange={ (_, values: Array<string>) =>
+                                    {
                                         setShowConstraints(
                                             values.includes("constraints"),
                                         );
                                         setShowUnallocated(
                                             values.includes("unallocated"),
                                         );
-                                    }}
+                                    } }
                                     size="small"
-                                    value={[
+                                    value={ [
                                         ...(showConstraints
-                                            ? ["constraints"]
+                                            ? [ "constraints" ]
                                             : []),
                                         ...(showUnallocated
-                                            ? ["unallocated"]
+                                            ? [ "unallocated" ]
                                             : []),
-                                    ]}
+                                    ] }
                                 >
                                     <ToggleButton
                                         aria-label="הצגת אילוצים"
-                                        sx={{ gap: 0.5, px: 1.5 }}
+                                        sx={ { gap: 0.5, px: 1.5 } }
                                         value="constraints"
                                     >
                                         <RuleIcon fontSize="small" />
@@ -855,13 +945,13 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                     </ToggleButton>
                                     <ToggleButton
                                         aria-label="הצגת פערי שיבוץ"
-                                        sx={{ gap: 0.5, px: 1.5 }}
+                                        sx={ { gap: 0.5, px: 1.5 } }
                                         value="unallocated"
                                     >
                                         <Badge
-                                            badgeContent={unallocatedCount}
+                                            badgeContent={ unallocatedCount }
                                             color="warning"
-                                            max={999}
+                                            max={ 999 }
                                             overlap="circular"
                                         >
                                             <PendingActionsIcon fontSize="small" />
@@ -870,9 +960,46 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                     </ToggleButton>
                                 </ToggleButtonGroup>
 
+                                { weeklyView ? (
+                                    <ToggleButtonGroup
+                                        aria-label="גודל בלוקים"
+                                        exclusive
+                                        onChange={ (_, value) =>
+                                        {
+                                            if (value)
+                                                setRelativeDaySizing(
+                                                    value === "relative",
+                                                );
+                                        } }
+                                        size="small"
+                                        value={
+                                            relativeDaySizing
+                                                ? "relative"
+                                                : "full"
+                                        }
+                                    >
+                                        <ToggleButton
+                                            aria-label="מילוי מלא של התא"
+                                            sx={ { gap: 0.5, px: 1.5 } }
+                                            value="full"
+                                        >
+                                            <ViewColumnIcon fontSize="small" />
+                                            תא מלא
+                                        </ToggleButton>
+                                        <ToggleButton
+                                            aria-label="גודל יחסי ליום"
+                                            sx={ { gap: 0.5, px: 1.5 } }
+                                            value="relative"
+                                        >
+                                            <ViewColumnIcon fontSize="small" />
+                                            לפי יום
+                                        </ToggleButton>
+                                    </ToggleButtonGroup>
+                                ) : null }
+
                                 <Divider flexItem orientation="vertical" />
 
-                                {/* Row actions */}
+                                {/* Row actions */ }
                                 <Tooltip
                                     title={
                                         allCollapsed ? "הרחב הכל" : "כווץ הכל"
@@ -889,19 +1016,19 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                         }
                                         size="small"
                                     >
-                                        {allCollapsed ? (
+                                        { allCollapsed ? (
                                             <UnfoldMoreIcon />
                                         ) : (
                                             <UnfoldLessIcon />
-                                        )}
+                                        ) }
                                     </IconButton>
                                 </Tooltip>
-                                {zoomedWeekId ? (
-                                    <Tooltip title="הצגת כל השבועות">
+                                { zoomedWeekId ? (
+                                    <Tooltip title="בחזרה לכל השבועות">
                                         <IconButton
-                                            aria-label="הצגת כל השבועות"
+                                            aria-label="בחזרה לכל השבועות"
                                             color="primary"
-                                            onClick={() =>
+                                            onClick={ () =>
                                                 setZoomedWeekId(null)
                                             }
                                             size="small"
@@ -909,13 +1036,13 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                             <ZoomOutMapIcon />
                                         </IconButton>
                                     </Tooltip>
-                                ) : null}
+                                ) : null }
                             </Stack>
                         </Box>
 
-                        {showUnallocated ? (
+                        { showUnallocated ? (
                             <Box
-                                sx={{
+                                sx={ {
                                     px: 2,
                                     py: 1.5,
                                     borderBottom: `1px solid ${theme.vars.palette.divider}`,
@@ -924,9 +1051,9 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                     flexShrink: 0,
                                     maxHeight: 200,
                                     overflow: "auto",
-                                }}
+                                } }
                             >
-                                {unallocatedBySyllabus.length === 0 ? (
+                                { unallocatedBySyllabus.length === 0 ? (
                                     <Typography
                                         color="text.secondary"
                                         variant="body2"
@@ -934,30 +1061,30 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                         כל המערכים והמפגשים משובצים 🎉
                                     </Typography>
                                 ) : (
-                                    <Stack spacing={1}>
-                                        {unallocatedBySyllabus.map((group) => (
-                                            <Box key={group.syllabusId}>
+                                    <Stack spacing={ 1 }>
+                                        { unallocatedBySyllabus.map((group) => (
+                                            <Box key={ group.syllabusId }>
                                                 <Typography
                                                     fontWeight="bold"
                                                     variant="caption"
                                                 >
-                                                    {group.syllabusTitle}
+                                                    { group.syllabusTitle }
                                                 </Typography>
                                                 <Box
-                                                    sx={{
+                                                    sx={ {
                                                         display: "flex",
                                                         flexWrap: "wrap",
                                                         gap: 0.5,
                                                         mt: 0.5,
-                                                    }}
+                                                    } }
                                                 >
-                                                    {group.modules.map((m) => (
+                                                    { group.modules.map((m) => (
                                                         <Chip
                                                             clickable
                                                             color="primary"
-                                                            key={m.id}
-                                                            label={m.title}
-                                                            onClick={() =>
+                                                            key={ m.id }
+                                                            label={ m.title }
+                                                            onClick={ () =>
                                                                 revealItem(
                                                                     group.syllabusId,
                                                                     m.id,
@@ -966,13 +1093,13 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                                             size="small"
                                                             variant="outlined"
                                                         />
-                                                    ))}
-                                                    {group.events.map((e) => (
+                                                    )) }
+                                                    { group.events.map((e) => (
                                                         <Chip
                                                             clickable
-                                                            key={e.id}
-                                                            label={e.title}
-                                                            onClick={() =>
+                                                            key={ e.id }
+                                                            label={ e.title }
+                                                            onClick={ () =>
                                                                 revealItem(
                                                                     group.syllabusId,
                                                                     e.moduleId,
@@ -982,61 +1109,61 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) => {
                                                             size="small"
                                                             variant="outlined"
                                                         />
-                                                    ))}
+                                                    )) }
                                                 </Box>
                                             </Box>
-                                        ))}
+                                        )) }
                                     </Stack>
-                                )}
+                                ) }
                             </Box>
-                        ) : null}
+                        ) : null }
 
                         <Box
-                            sx={{
+                            sx={ {
                                 flexGrow: 1,
                                 position: "relative",
                                 overflow: "hidden",
                                 display: "flex",
                                 flexDirection: "column",
-                            }}
+                            } }
                         >
                             <TableContainer
-                                ref={containerRef}
-                                sx={{
+                                ref={ containerRef }
+                                sx={ {
                                     width: "100%",
                                     height: "100%",
                                     overflow: "auto",
                                     pb: 3,
-                                }}
+                                } }
                             >
                                 <Table
                                     size="small"
                                     stickyHeader
-                                    sx={{
+                                    sx={ {
                                         width: "max-content",
                                         minWidth: "100%",
                                         tableLayout: "fixed",
-                                    }}
+                                    } }
                                 >
                                     <GanttHeader />
                                     <TableBody>
-                                        {curriculum.syllabuses.map(
+                                        { curriculum.syllabuses.map(
                                             (syllabusId) => (
                                                 <GanttSyllabusGroup
-                                                    key={syllabusId}
-                                                    syllabusId={syllabusId}
+                                                    key={ syllabusId }
+                                                    syllabusId={ syllabusId }
                                                 />
                                             ),
-                                        )}
+                                        ) }
                                     </TableBody>
                                 </Table>
                             </TableContainer>
-                            {showConstraints ? (
+                            { showConstraints ? (
                                 <ConstraintLines
-                                    containerRef={containerRef}
-                                    links={activeLinks}
+                                    containerRef={ containerRef }
+                                    links={ activeLinks }
                                 />
-                            ) : null}
+                            ) : null }
                         </Box>
                     </Paper>
                 </Box>

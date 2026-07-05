@@ -20,13 +20,13 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     isAbsolute = true,
     elementId,
     violations = [],
-    blockLeftPx,
-    blockWidthPx,
+    blockLeftPercent,
+    blockWidthPercent,
     isSpillover = false,
 }) => {
     const theme = useTheme();
     const state = useCurriculumState();
-    const { openModuleDialog } = useCurriculumProviderActions();
+    const { openModuleDialog, openEventDialog } = useCurriculumProviderActions();
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
         useDraggable({
@@ -35,13 +35,17 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
         });
 
     const handleDoubleClick = (e: React.MouseEvent) => {
-        if (payload && payload.moduleId && !payload.eventId) {
-            e.stopPropagation();
-            e.preventDefault();
-            const moduleObj = state.modules[payload.moduleId];
-            if (moduleObj?.syllabusId) {
-                openModuleDialog(moduleObj.syllabusId, payload.moduleId);
-            }
+        if (!payload || !payload.moduleId) return;
+
+        e.stopPropagation();
+        e.preventDefault();
+        const moduleObj = state.modules[payload.moduleId];
+        if (!moduleObj?.syllabusId) return;
+
+        if (payload.eventId) {
+            openEventDialog(moduleObj.syllabusId, payload.moduleId, payload.eventId);
+        } else {
+            openModuleDialog(moduleObj.syllabusId, payload.moduleId);
         }
     };
 
@@ -53,8 +57,8 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
         : undefined;
 
     const blockWidth =
-        blockWidthPx !== undefined
-            ? `${blockWidthPx}px`
+        blockWidthPercent !== undefined
+            ? `calc(${blockWidthPercent}% - 4px)`
             : spanLength > 1
                 ? `calc(${spanLength * 100}% - 8px)`
                 : isAbsolute
@@ -84,7 +88,9 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
                 top: isAbsolute ? "5px" : "auto",
                 bottom: isAbsolute ? "5px" : "auto",
                 left: isAbsolute
-                    ? `${blockLeftPx !== undefined ? blockLeftPx : 4}px`
+                    ? blockLeftPercent !== undefined
+                        ? `calc(${blockLeftPercent}% + 2px)`
+                        : "4px"
                     : "auto",
                 width: blockWidth,
                 height: "24px",
