@@ -26,6 +26,41 @@ import {
     getConstraintsForModule,
 } from "@/api-server/gantt/db-constraints";
 
+/**
+ * Builds a thenable proxy that mimics Drizzle's chainable query builder:
+ * every property access returns a function that re-returns the same chain,
+ * and awaiting the chain at any point resolves/rejects to `result`.
+ */
+function createChain(result: unknown, shouldReject = false): any {
+    const methodCache = new Map<string | symbol, ReturnType<typeof vi.fn>>();
+    const chain: any = new Proxy(
+        {},
+        {
+            get(_target, prop) {
+                if (prop === "then") {
+                    return (onFulfilled: any, onRejected: any) =>
+                        (shouldReject
+                            ? Promise.reject(result)
+                            : Promise.resolve(result)
+                        ).then(onFulfilled, onRejected);
+                }
+                if (prop === "catch") {
+                    return (onRejected: any) =>
+                        (shouldReject
+                            ? Promise.reject(result)
+                            : Promise.resolve(result)
+                        ).catch(onRejected);
+                }
+                if (!methodCache.has(prop)) {
+                    methodCache.set(prop, vi.fn(() => chain));
+                }
+                return methodCache.get(prop);
+            },
+        },
+    );
+    return chain;
+}
+
 describe("Gantt DB Constraints - Failure Paths", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -116,6 +151,11 @@ describe("Gantt DB Constraints - Failure Paths", () => {
             );
 
             await getConstraintsTargetingEntity("target-123", "event");
+
+            vi.mocked(postgresDb.query.ganttConstraintsSchema.findMany).mockResolvedValueOnce(
+                []
+            );
+
             await getConstraintsTargetingEntity("target-456", "module");
 
             expect(
@@ -127,10 +167,9 @@ describe("Gantt DB Constraints - Failure Paths", () => {
     describe("createConstraint", () => {
         it("throws error when insert fails", async () => {
             const dbError = new Error("Constraint validation failed");
-            const mockInsert = vi.fn().mockReturnValue({
-                values: vi.fn().mockRejectedValueOnce(dbError),
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
+            vi.mocked(postgresDb.insert).mockReturnValue(
+                createChain(dbError, true)
+            );
 
             await expect(
                 createConstraint({
@@ -142,10 +181,9 @@ describe("Gantt DB Constraints - Failure Paths", () => {
 
         it("throws error when database is unavailable", async () => {
             const dbError = new Error("Database unavailable");
-            const mockInsert = vi.fn().mockReturnValue({
-                values: vi.fn().mockRejectedValueOnce(dbError),
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
+            vi.mocked(postgresDb.insert).mockReturnValue(
+                createChain(dbError, true)
+            );
 
             await expect(
                 createConstraint({ id: "c1" } as any)
@@ -158,14 +196,9 @@ describe("Gantt DB Constraints - Failure Paths", () => {
                 ownerEventId: "e1",
                 targetModuleId: "m1",
             };
-            const mockReturning = vi.fn().mockResolvedValueOnce([expectedConstraint]);
-            const mockValues = vi.fn().mockReturnValue({
-                returning: mockReturning,
-            });
-            const mockInsert = vi.fn().mockReturnValue({
-                values: mockValues,
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
+            vi.mocked(postgresDb.insert).mockReturnValue(
+                createChain([expectedConstraint])
+            );
 
             const result = await createConstraint({ id: "c1" } as any);
 
@@ -173,14 +206,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
         });
 
         it("handles empty result from database", async () => {
-            const mockReturning = vi.fn().mockResolvedValueOnce([]);
-            const mockValues = vi.fn().mockReturnValue({
-                returning: mockReturning,
-            });
-            const mockInsert = vi.fn().mockReturnValue({
-                values: mockValues,
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
+            vi.mocked(postgresDb.insert).mockReturnValue(createChain([]));
 
             const result = await createConstraint({ id: "c1" } as any);
 
@@ -191,12 +217,9 @@ describe("Gantt DB Constraints - Failure Paths", () => {
     describe("updateConstraint", () => {
         it("throws error when update fails", async () => {
             const dbError = new Error("Update constraint failed");
-            const mockWhere = vi.fn().mockRejectedValueOnce(dbError);
-            const mockSet = vi.fn().mockReturnValue({ where: mockWhere });
-            const mockUpdate = vi.fn().mockReturnValue({
-                set: mockSet,
-            });
-            vi.mocked(postgresDb.update).mockReturnValue(mockUpdate as any);
+            vi.mocked(postgresDb.update).mockReturnValue(
+                createChain(dbError, true)
+            );
 
             await expect(
                 updateConstraint("c1", { duration: 100 } as any)
@@ -204,16 +227,12 @@ describe("Gantt DB Constraints - Failure Paths", () => {
         });
 
         it("sets updated timestamp automatically", async () => {
-            const mockWhere = vi.fn().mockResolvedValueOnce([]);
-            const mockSet = vi.fn().mockReturnValue({ where: mockWhere });
-            const mockUpdate = vi.fn().mockReturnValue({
-                set: mockSet,
-            });
-            vi.mocked(postgresDb.update).mockReturnValue(mockUpdate as any);
+            const chain = createChain([]);
+            vi.mocked(postgresDb.update).mockReturnValue(chain);
 
             await updateConstraint("c1", { duration: 100 } as any);
 
-            expect(mockSet).toHaveBeenCalledWith(
+            expect(chain.set).toHaveBeenCalledWith(
                 expect.objectContaining({
                     updatedAt: expect.any(Date),
                     duration: 100,
@@ -222,26 +241,19 @@ describe("Gantt DB Constraints - Failure Paths", () => {
         });
 
         it("handles partial updates", async () => {
-            const mockWhere = vi.fn().mockResolvedValueOnce([]);
-            const mockSet = vi.fn().mockReturnValue({ where: mockWhere });
-            const mockUpdate = vi.fn().mockReturnValue({
-                set: mockSet,
-            });
-            vi.mocked(postgresDb.update).mockReturnValue(mockUpdate as any);
+            const chain = createChain([]);
+            vi.mocked(postgresDb.update).mockReturnValue(chain);
 
             await updateConstraint("c1", { duration: 200 } as any);
 
-            expect(mockSet).toHaveBeenCalled();
+            expect(chain.set).toHaveBeenCalled();
         });
 
         it("returns updated constraint records", async () => {
             const updatedConstraint = { id: "c1", duration: 200 };
-            const mockWhere = vi.fn().mockResolvedValueOnce([updatedConstraint]);
-            const mockSet = vi.fn().mockReturnValue({ where: mockWhere });
-            const mockUpdate = vi.fn().mockReturnValue({
-                set: mockSet,
-            });
-            vi.mocked(postgresDb.update).mockReturnValue(mockUpdate as any);
+            vi.mocked(postgresDb.update).mockReturnValue(
+                createChain([updatedConstraint])
+            );
 
             const result = await updateConstraint("c1", { duration: 200 } as any);
 
@@ -252,11 +264,9 @@ describe("Gantt DB Constraints - Failure Paths", () => {
     describe("deleteConstraint", () => {
         it("throws error when delete fails", async () => {
             const dbError = new Error("Delete constraint failed");
-            const mockWhere = vi.fn().mockRejectedValueOnce(dbError);
-            const mockDelete = vi.fn().mockReturnValue({
-                where: mockWhere,
-            });
-            vi.mocked(postgresDb.delete).mockReturnValue(mockDelete as any);
+            vi.mocked(postgresDb.delete).mockReturnValue(
+                createChain(dbError, true)
+            );
 
             await expect(deleteConstraint("c1")).rejects.toThrow(
                 "Delete constraint failed"
@@ -265,11 +275,9 @@ describe("Gantt DB Constraints - Failure Paths", () => {
 
         it("returns deleted constraint record", async () => {
             const deletedConstraint = { id: "c1" };
-            const mockWhere = vi.fn().mockResolvedValueOnce([deletedConstraint]);
-            const mockDelete = vi.fn().mockReturnValue({
-                where: mockWhere,
-            });
-            vi.mocked(postgresDb.delete).mockReturnValue(mockDelete as any);
+            vi.mocked(postgresDb.delete).mockReturnValue(
+                createChain([deletedConstraint])
+            );
 
             const result = await deleteConstraint("c1");
 
@@ -277,11 +285,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
         });
 
         it("handles delete of non-existent constraint", async () => {
-            const mockWhere = vi.fn().mockResolvedValueOnce([]);
-            const mockDelete = vi.fn().mockReturnValue({
-                where: mockWhere,
-            });
-            vi.mocked(postgresDb.delete).mockReturnValue(mockDelete as any);
+            vi.mocked(postgresDb.delete).mockReturnValue(createChain([]));
 
             const result = await deleteConstraint("non-existent");
 
@@ -290,65 +294,51 @@ describe("Gantt DB Constraints - Failure Paths", () => {
     });
 
     describe("getConstraintsForCurriculum", () => {
-        it("throws error when subquery fails", async () => {
-            const dbError = new Error("Subquery execution failed");
-            vi.mocked(postgresDb.select).mockReturnValue({
-                from: vi.fn().mockRejectedValueOnce(dbError),
-            } as any);
+        it("throws error when the main query fails", async () => {
+            const dbError = new Error("Query execution failed");
+            vi.mocked(postgresDb.select).mockReturnValue(
+                createChain(dbError, true)
+            );
 
             await expect(
                 getConstraintsForCurriculum("curr-1")
-            ).rejects.toThrow("Subquery execution failed");
+            ).rejects.toThrow("Query execution failed");
         });
 
-        it("returns empty array when curriculum has no modules", async () => {
-            const mockSelect = vi.fn().mockReturnValue({
-                from: vi.fn().mockResolvedValueOnce([]),
-            });
-            vi.mocked(postgresDb.select).mockReturnValue(mockSelect as any);
+        it("returns empty array when curriculum has no constraints", async () => {
+            vi.mocked(postgresDb.select).mockReturnValue(createChain([]));
 
             const result = await getConstraintsForCurriculum("curr-1");
 
             expect(result).toEqual([]);
         });
 
-        it("handles curriculum with no constraints", async () => {
-            vi.mocked(postgresDb.select).mockReturnValue({
-                from: vi.fn().mockResolvedValueOnce([]),
-            } as any);
+        it("returns constraints matching the curriculum", async () => {
+            const constraint = { id: "c1", ownerModuleId: "mod-1" };
+            vi.mocked(postgresDb.select).mockReturnValue(
+                createChain([constraint])
+            );
 
             const result = await getConstraintsForCurriculum("curr-1");
 
-            expect(result).toEqual([]);
+            expect(result).toEqual([constraint]);
         });
     });
 
     describe("getConstraintsForSyllabus", () => {
         it("throws error when query fails", async () => {
             const dbError = new Error("Syllabus query failed");
-            vi.mocked(postgresDb.select).mockReturnValue({
-                from: vi.fn().mockRejectedValueOnce(dbError),
-            } as any);
+            vi.mocked(postgresDb.select).mockReturnValue(
+                createChain(dbError, true)
+            );
 
             await expect(
                 getConstraintsForSyllabus("syll-1")
             ).rejects.toThrow("Syllabus query failed");
         });
 
-        it("returns empty array when syllabus has no modules", async () => {
-            vi.mocked(postgresDb.select).mockReturnValue({
-                from: vi.fn().mockResolvedValueOnce([]),
-            } as any);
-
-            const result = await getConstraintsForSyllabus("syll-1");
-
-            expect(result).toEqual([]);
-        });
-
-        it("handles syllabus with no events", async () => {
-            vi.mocked(postgresDb.select).mockReturnValue({
-                from: vi.fn().mockResolvedValueOnce([]),
-            } as any);
+        it("returns empty array when syllabus has no constraints", async () => {
+            vi.mocked(postgresDb.select).mockReturnValue(createChain([]));
 
             const result = await getConstraintsForSyllabus("syll-1");
 
@@ -359,9 +349,9 @@ describe("Gantt DB Constraints - Failure Paths", () => {
     describe("getConstraintsForModule", () => {
         it("throws error when query fails", async () => {
             const dbError = new Error("Module query failed");
-            vi.mocked(postgresDb.select).mockReturnValue({
-                from: vi.fn().mockRejectedValueOnce(dbError),
-            } as any);
+            vi.mocked(postgresDb.select).mockReturnValue(
+                createChain(dbError, true)
+            );
 
             await expect(
                 getConstraintsForModule("mod-1")
@@ -369,9 +359,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
         });
 
         it("returns empty array when module has no constraints", async () => {
-            vi.mocked(postgresDb.select).mockReturnValue({
-                from: vi.fn().mockResolvedValueOnce([]),
-            } as any);
+            vi.mocked(postgresDb.select).mockReturnValue(createChain([]));
 
             const result = await getConstraintsForModule("mod-1");
 
@@ -382,11 +370,9 @@ describe("Gantt DB Constraints - Failure Paths", () => {
             const moduleConstraint = { id: "c1", ownerModuleId: "mod-1" };
             const eventConstraint = { id: "c2", ownerEventId: "e1" };
 
-            vi.mocked(postgresDb.select).mockReturnValue({
-                from: vi
-                    .fn()
-                    .mockResolvedValueOnce([moduleConstraint, eventConstraint]),
-            } as any);
+            vi.mocked(postgresDb.select).mockReturnValue(
+                createChain([moduleConstraint, eventConstraint])
+            );
 
             const result = await getConstraintsForModule("mod-1");
 
@@ -396,11 +382,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
 
     describe("Edge Cases", () => {
         it("handles null constraint ID gracefully", async () => {
-            const mockWhere = vi.fn().mockResolvedValueOnce([]);
-            const mockDelete = vi.fn().mockReturnValue({
-                where: mockWhere,
-            });
-            vi.mocked(postgresDb.delete).mockReturnValue(mockDelete as any);
+            vi.mocked(postgresDb.delete).mockReturnValue(createChain([]));
 
             const result = await deleteConstraint(null as any);
 
@@ -408,11 +390,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
         });
 
         it("handles empty string IDs", async () => {
-            const mockWhere = vi.fn().mockResolvedValueOnce([]);
-            const mockDelete = vi.fn().mockReturnValue({
-                where: mockWhere,
-            });
-            vi.mocked(postgresDb.delete).mockReturnValue(mockDelete as any);
+            vi.mocked(postgresDb.delete).mockReturnValue(createChain([]));
 
             const result = await deleteConstraint("");
 

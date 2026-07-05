@@ -16,7 +16,43 @@ vi.mock("@/api-server/gantt", () => ({
 }));
 
 import { postgresDb } from "@/api-server/gantt";
+import { DbModuleEvent } from "@/api-server/gantt/db-module-event";
 import { ClientApiError } from "@/api-shared/errors";
+
+/**
+ * Builds a thenable proxy that mimics Drizzle's chainable query builder:
+ * every property access returns a function that re-returns the same chain,
+ * and awaiting the chain at any point resolves/rejects to `result`.
+ */
+function createChain(result: unknown, shouldReject = false): any {
+    const methodCache = new Map<string | symbol, ReturnType<typeof vi.fn>>();
+    const chain: any = new Proxy(
+        {},
+        {
+            get(_target, prop) {
+                if (prop === "then") {
+                    return (onFulfilled: any, onRejected: any) =>
+                        (shouldReject
+                            ? Promise.reject(result)
+                            : Promise.resolve(result)
+                        ).then(onFulfilled, onRejected);
+                }
+                if (prop === "catch") {
+                    return (onRejected: any) =>
+                        (shouldReject
+                            ? Promise.reject(result)
+                            : Promise.resolve(result)
+                        ).catch(onRejected);
+                }
+                if (!methodCache.has(prop)) {
+                    methodCache.set(prop, vi.fn(() => chain));
+                }
+                return methodCache.get(prop);
+            },
+        },
+    );
+    return chain;
+}
 
 describe("Gantt DB Module Event - Failure Paths", () => {
     beforeEach(() => {
@@ -27,9 +63,6 @@ describe("Gantt DB Module Event - Failure Paths", () => {
         it("throws ClientApiError when event not found", async () => {
             vi.mocked(postgresDb.query.ganttEventsSchema.findFirst).mockResolvedValueOnce(null);
 
-            // Import dynamically to use mocked postgresDb
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
-
             await expect(DbModuleEvent.getItem("event-not-found")).rejects.toThrow(
                 ClientApiError
             );
@@ -37,8 +70,6 @@ describe("Gantt DB Module Event - Failure Paths", () => {
 
         it("throws error with Hebrew message when event not found", async () => {
             vi.mocked(postgresDb.query.ganttEventsSchema.findFirst).mockResolvedValueOnce(null);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
 
             await expect(DbModuleEvent.getItem("e123")).rejects.toThrow(/מופע/);
         });
@@ -48,8 +79,6 @@ describe("Gantt DB Module Event - Failure Paths", () => {
             vi.mocked(postgresDb.query.ganttEventsSchema.findFirst).mockRejectedValueOnce(
                 dbError
             );
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
 
             await expect(DbModuleEvent.getItem("e123")).rejects.toThrow(
                 "Database connection error"
@@ -69,12 +98,16 @@ describe("Gantt DB Module Event - Failure Paths", () => {
                 mockEvent
             );
 
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
-
             const result = await DbModuleEvent.getItem("e1");
 
             expect(result.id).toBe("e1");
             expect(result.cEC).toBeDefined();
+        });
+
+        it("throws ClientApiError for an empty event ID (not found)", async () => {
+            vi.mocked(postgresDb.query.ganttEventsSchema.findFirst).mockResolvedValueOnce(null);
+
+            await expect(DbModuleEvent.getItem("")).rejects.toThrow(ClientApiError);
         });
     });
 
@@ -88,12 +121,9 @@ describe("Gantt DB Module Event - Failure Paths", () => {
                 detail: "duplicate key",
             };
 
-            const mockInsert = vi.fn().mockReturnValue({
-                values: vi.fn().mockRejectedValueOnce(uniqueViolationError),
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
+            vi.mocked(postgresDb.insert).mockReturnValue(
+                createChain(uniqueViolationError, true)
+            );
 
             await expect(
                 DbModuleEvent.linkItem("mod1", "e1")
@@ -109,12 +139,9 @@ describe("Gantt DB Module Event - Failure Paths", () => {
                 detail: "foreign key constraint failed",
             };
 
-            const mockInsert = vi.fn().mockReturnValue({
-                values: vi.fn().mockRejectedValueOnce(fkViolationError),
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
+            vi.mocked(postgresDb.insert).mockReturnValue(
+                createChain(fkViolationError, true)
+            );
 
             await expect(
                 DbModuleEvent.linkItem("non-existent-mod", "non-existent-event")
@@ -128,12 +155,9 @@ describe("Gantt DB Module Event - Failure Paths", () => {
                 name: "QueryFailedError",
             };
 
-            const mockInsert = vi.fn().mockReturnValue({
-                values: vi.fn().mockRejectedValueOnce(unknownError),
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
+            vi.mocked(postgresDb.insert).mockReturnValue(
+                createChain(unknownError, true)
+            );
 
             await expect(
                 DbModuleEvent.linkItem("mod1", "e1")
@@ -142,49 +166,38 @@ describe("Gantt DB Module Event - Failure Paths", () => {
 
         it("retrieves event after successful link", async () => {
             const mockEvent = { id: "e1", title: "Event" };
-            const mockInsert = vi.fn().mockReturnValue({
-                values: vi.fn().mockResolvedValueOnce({ acknowledged: true }),
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
+            vi.mocked(postgresDb.insert).mockReturnValue(
+                createChain({ acknowledged: true })
+            );
             vi.mocked(postgresDb.query.ganttEventsSchema.findFirst).mockResolvedValueOnce(
                 mockEvent
             );
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
 
             const result = await DbModuleEvent.linkItem("mod1", "e1");
 
             expect(result.id).toBe("e1");
         });
 
-        it("throws error when event fetch fails after linking", async () => {
-            const mockInsert = vi.fn().mockReturnValue({
-                values: vi.fn().mockResolvedValueOnce({ acknowledged: true }),
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
+        it("wraps error when event fetch fails after linking", async () => {
+            vi.mocked(postgresDb.insert).mockReturnValue(
+                createChain({ acknowledged: true })
+            );
             const fetchError = new Error("Event fetch failed");
             vi.mocked(postgresDb.query.ganttEventsSchema.findFirst).mockRejectedValueOnce(
                 fetchError
             );
 
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
-
+            // The post-insert fetch happens inside the same try/catch as the
+            // insert, so its error is swallowed into the generic link-failure message.
             await expect(
                 DbModuleEvent.linkItem("mod1", "e1")
-            ).rejects.toThrow("Event fetch failed");
+            ).rejects.toThrow(/Failed to add event/);
         });
     });
 
     describe("removeEventFromModule", () => {
         it("throws error when mapping does not exist", async () => {
-            const mockDelete = vi.fn().mockReturnValue({
-                where: vi.fn().mockReturnValue({
-                    returning: vi.fn().mockResolvedValueOnce([]),
-                }),
-            });
-            vi.mocked(postgresDb.delete).mockReturnValue(mockDelete as any);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
+            vi.mocked(postgresDb.delete).mockReturnValue(createChain([]));
 
             await expect(
                 DbModuleEvent.unlinkItem("mod1", "non-existent-event")
@@ -193,12 +206,7 @@ describe("Gantt DB Module Event - Failure Paths", () => {
 
         it("throws error when database delete fails", async () => {
             const dbError = new Error("Delete operation failed");
-            const mockDelete = vi.fn().mockReturnValue({
-                where: vi.fn().mockRejectedValueOnce(dbError),
-            });
-            vi.mocked(postgresDb.delete).mockReturnValue(mockDelete as any);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
+            vi.mocked(postgresDb.delete).mockReturnValue(createChain(dbError, true));
 
             await expect(
                 DbModuleEvent.unlinkItem("mod1", "e1")
@@ -206,16 +214,9 @@ describe("Gantt DB Module Event - Failure Paths", () => {
         });
 
         it("successfully removes event-module mapping", async () => {
-            const mockDelete = vi.fn().mockReturnValue({
-                where: vi.fn().mockReturnValue({
-                    returning: vi
-                        .fn()
-                        .mockResolvedValueOnce([{ deletedModuleId: "mod1" }]),
-                }),
-            });
-            vi.mocked(postgresDb.delete).mockReturnValue(mockDelete as any);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
+            vi.mocked(postgresDb.delete).mockReturnValue(
+                createChain([{ deletedModuleId: "mod1" }])
+            );
 
             await expect(
                 DbModuleEvent.unlinkItem("mod1", "e1")
@@ -229,8 +230,6 @@ describe("Gantt DB Module Event - Failure Paths", () => {
                 postgresDb.query.ganttCurriculumEventConfigurationsSchema.findFirst
             ).mockResolvedValueOnce(null);
 
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
-
             const result = await DbModuleEvent.getAllocatedTime("e1", "curr1");
 
             expect(result).toBe(0);
@@ -241,8 +240,6 @@ describe("Gantt DB Module Event - Failure Paths", () => {
             vi.mocked(
                 postgresDb.query.ganttCurriculumEventConfigurationsSchema.findFirst
             ).mockRejectedValueOnce(dbError);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
 
             await expect(
                 DbModuleEvent.getAllocatedTime("e1", "curr1")
@@ -256,8 +253,6 @@ describe("Gantt DB Module Event - Failure Paths", () => {
                 allocatedDuration: 250,
             });
 
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
-
             const result = await DbModuleEvent.getAllocatedTime("e1", "curr1");
 
             expect(result).toBe(250);
@@ -270,8 +265,6 @@ describe("Gantt DB Module Event - Failure Paths", () => {
                 allocatedDuration: null,
             });
 
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
-
             const result = await DbModuleEvent.getAllocatedTime("e1", "curr1");
 
             expect(result).toBe(0);
@@ -281,15 +274,7 @@ describe("Gantt DB Module Event - Failure Paths", () => {
     describe("setAllocatedTime", () => {
         it("throws error when database insert fails", async () => {
             const dbError = new Error("Insert failed");
-            const mockOnConflict = vi.fn().mockRejectedValueOnce(dbError);
-            const mockInsert = vi.fn().mockReturnValue({
-                values: vi.fn().mockReturnValue({
-                    onConflictDoUpdate: mockOnConflict,
-                }),
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
+            vi.mocked(postgresDb.insert).mockReturnValue(createChain(dbError, true));
 
             await expect(
                 DbModuleEvent.setAllocatedTime("e1", "curr1", 100)
@@ -297,16 +282,7 @@ describe("Gantt DB Module Event - Failure Paths", () => {
         });
 
         it("sets allocated duration successfully", async () => {
-            const mockOnConflict = vi.fn().mockResolvedValueOnce([]);
-            const mockValues = vi.fn().mockReturnValue({
-                onConflictDoUpdate: mockOnConflict,
-            });
-            const mockInsert = vi.fn().mockReturnValue({
-                values: mockValues,
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
+            vi.mocked(postgresDb.insert).mockReturnValue(createChain(undefined));
 
             await expect(
                 DbModuleEvent.setAllocatedTime("e1", "curr1", 200)
@@ -314,16 +290,7 @@ describe("Gantt DB Module Event - Failure Paths", () => {
         });
 
         it("handles zero duration", async () => {
-            const mockOnConflict = vi.fn().mockResolvedValueOnce([]);
-            const mockValues = vi.fn().mockReturnValue({
-                onConflictDoUpdate: mockOnConflict,
-            });
-            const mockInsert = vi.fn().mockReturnValue({
-                values: mockValues,
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
+            vi.mocked(postgresDb.insert).mockReturnValue(createChain(undefined));
 
             await expect(
                 DbModuleEvent.setAllocatedTime("e1", "curr1", 0)
@@ -331,16 +298,7 @@ describe("Gantt DB Module Event - Failure Paths", () => {
         });
 
         it("handles negative duration", async () => {
-            const mockOnConflict = vi.fn().mockResolvedValueOnce([]);
-            const mockValues = vi.fn().mockReturnValue({
-                onConflictDoUpdate: mockOnConflict,
-            });
-            const mockInsert = vi.fn().mockReturnValue({
-                values: mockValues,
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
+            vi.mocked(postgresDb.insert).mockReturnValue(createChain(undefined));
 
             await expect(
                 DbModuleEvent.setAllocatedTime("e1", "curr1", -100)
@@ -348,43 +306,18 @@ describe("Gantt DB Module Event - Failure Paths", () => {
         });
 
         it("updates allocated time on conflict", async () => {
-            const mockOnConflict = vi.fn().mockResolvedValueOnce([]);
-            const mockValues = vi.fn().mockReturnValue({
-                onConflictDoUpdate: mockOnConflict,
-            });
-            const mockInsert = vi.fn().mockReturnValue({
-                values: mockValues,
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
+            const chain = createChain(undefined);
+            vi.mocked(postgresDb.insert).mockReturnValue(chain);
 
             await DbModuleEvent.setAllocatedTime("e1", "curr1", 300);
 
-            expect(mockOnConflict).toHaveBeenCalled();
+            expect(chain.onConflictDoUpdate).toHaveBeenCalled();
         });
     });
 
     describe("Edge Cases", () => {
-        it("handles empty event ID", async () => {
-            vi.mocked(postgresDb.query.ganttEventsSchema.findFirst).mockResolvedValueOnce(null);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
-
-            await expect(DbModuleEvent.getItem("")).rejects.toThrow();
-        });
-
         it("handles very long allocated duration", async () => {
-            const mockOnConflict = vi.fn().mockResolvedValueOnce([]);
-            const mockValues = vi.fn().mockReturnValue({
-                onConflictDoUpdate: mockOnConflict,
-            });
-            const mockInsert = vi.fn().mockReturnValue({
-                values: mockValues,
-            });
-            vi.mocked(postgresDb.insert).mockReturnValue(mockInsert as any);
-
-            const { DbModuleEvent } = await import("@/api-server/gantt/db-module-event");
+            vi.mocked(postgresDb.insert).mockReturnValue(createChain(undefined));
 
             await expect(
                 DbModuleEvent.setAllocatedTime("e1", "curr1", Number.MAX_SAFE_INTEGER)

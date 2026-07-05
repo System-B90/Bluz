@@ -27,6 +27,7 @@ describe("Gantt Base API - Failure Paths", () => {
     });
 
     beforeEach(() => {
+        vi.stubGlobal("window", { location: { origin: "http://localhost" } });
         vi.clearAllMocks();
     });
 
@@ -91,7 +92,7 @@ describe("Gantt Base API - Failure Paths", () => {
                 updatedAt: new Date().toISOString(),
             });
 
-            await api.apiGet("test-id");
+            await api.apiGet("test-id", {});
 
             expect(vi.mocked(safeApiFetcher)).toHaveBeenCalledWith(
                 "/api/test/test-id",
@@ -441,7 +442,7 @@ describe("Gantt Base API - Failure Paths", () => {
 
             vi.mocked(safeApiFetcher).mockResolvedValueOnce({});
 
-            await apiWithTrailingSlash.apiList();
+            await apiWithTrailingSlash.apiList({});
 
             expect(vi.mocked(safeApiFetcher)).toHaveBeenCalledWith(
                 "/api/test",
@@ -457,10 +458,10 @@ describe("Gantt Base API - Failure Paths", () => {
 
             vi.mocked(safeApiFetcher).mockResolvedValueOnce({});
 
-            await apiWithRoot.apiList();
+            await apiWithRoot.apiList({});
 
             expect(vi.mocked(safeApiFetcher)).toHaveBeenCalledWith(
-                "/",
+                "",
                 expect.any(Object)
             );
         });

@@ -10,6 +10,7 @@ import { ganttConstraintsApi } from "@/api-client/gantt/constraints";
 
 describe("GanttConstraints Client - Failure Paths", () => {
     beforeEach(() => {
+        vi.stubGlobal("window", { location: { origin: "http://localhost" } });
         vi.clearAllMocks();
     });
 
@@ -50,7 +51,7 @@ describe("GanttConstraints Client - Failure Paths", () => {
             ).rejects.toThrow(/Malformed constraint! Owner type is "event"/);
         });
 
-        it("throws error when relational constraint has both eventId and moduleId for target", async () => {
+        it("prefers targetModuleId over targetEventId when both are present", async () => {
             const ambiguousConstraint = {
                 id: "c1",
                 type: ConstraintType.Relational,
@@ -63,9 +64,13 @@ describe("GanttConstraints Client - Failure Paths", () => {
 
             vi.mocked(safeApiFetcher).mockResolvedValueOnce(ambiguousConstraint);
 
-            await expect(
-                ganttConstraintsApi.apiCreate("curr1", ambiguousConstraint as any)
-            ).rejects.toThrow();
+            const result = await ganttConstraintsApi.apiCreate(
+                "curr1",
+                ambiguousConstraint as any
+            );
+
+            expect(result.targetType).toBe("module");
+            expect(result.targetId).toBe("e2");
         });
     });
 

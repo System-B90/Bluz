@@ -1,12 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/api-server/mongo-db-controller", () => ({
-    databaseController: {},
+    databaseController: {
+        settings: {
+            findOne: vi.fn(),
+            updateOne: vi.fn(),
+        },
+    },
 }));
 vi.mock("@/api-server/web-socket-utils", () => ({
     SendServerRequestToSessionServer: vi.fn(),
 }));
 
+import { databaseController } from "@/api-server/mongo-db-controller";
 import { DbSettings } from "@/api-server/db-settings";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { PRAYER_TIMES_SETTING_KEY } from "@/api-shared/types/settings/prayer";
@@ -22,6 +28,12 @@ function makeController() {
 
 describe("DbSettings - Failure Paths", () => {
     let controller: ReturnType<typeof makeController>;
+    // `DbSettings.init` always uses the real `databaseController` singleton
+    // (it never accepts a controller param), so its tests mock that directly.
+    const singletonSettings = databaseController.settings as unknown as {
+        findOne: ReturnType<typeof vi.fn>;
+        updateOne: ReturnType<typeof vi.fn>;
+    };
 
     beforeEach(() => {
         controller = makeController();
@@ -128,15 +140,16 @@ describe("DbSettings - Failure Paths", () => {
 
     describe("initDbSettings", () => {
         it("initializes prayer times when not already set", async () => {
-            controller.settings.findOne.mockResolvedValueOnce(null);
-            controller.settings.updateOne.mockResolvedValueOnce({ ok: 1 });
+            singletonSettings.findOne.mockResolvedValueOnce(null);
+            singletonSettings.updateOne.mockResolvedValueOnce({ ok: 1 });
 
-            await DbSettings.init(controller as any);
+            await DbSettings.init();
 
-            expect(controller.settings.findOne).toHaveBeenCalledWith({
-                key: PRAYER_TIMES_SETTING_KEY,
-            });
-            expect(controller.settings.updateOne).toHaveBeenCalled();
+            expect(singletonSettings.findOne).toHaveBeenCalledWith(
+                { key: PRAYER_TIMES_SETTING_KEY },
+                undefined
+            );
+            expect(singletonSettings.updateOne).toHaveBeenCalled();
         });
 
         it("skips initialization if prayer times already exist", async () => {
@@ -149,40 +162,38 @@ describe("DbSettings - Failure Paths", () => {
                     shacharit: new Date(),
                 },
             };
-            controller.settings.findOne.mockResolvedValueOnce(existingSetting);
+            singletonSettings.findOne.mockResolvedValueOnce(existingSetting);
 
-            await DbSettings.init(controller as any);
+            await DbSettings.init();
 
-            expect(controller.settings.findOne).toHaveBeenCalled();
-            expect(controller.settings.updateOne).not.toHaveBeenCalled();
+            expect(singletonSettings.findOne).toHaveBeenCalled();
+            expect(singletonSettings.updateOne).not.toHaveBeenCalled();
         });
 
         it("throws error when database check fails", async () => {
             const dbError = new Error("Database unreachable");
-            controller.settings.findOne.mockRejectedValueOnce(dbError);
+            singletonSettings.findOne.mockRejectedValueOnce(dbError);
 
-            await expect(DbSettings.init(controller as any)).rejects.toThrow(
+            await expect(DbSettings.init()).rejects.toThrow(
                 "Database unreachable"
             );
         });
 
         it("throws error when initialization update fails", async () => {
-            controller.settings.findOne.mockResolvedValueOnce(null);
+            singletonSettings.findOne.mockResolvedValueOnce(null);
             const updateError = new Error("Insert failed");
-            controller.settings.updateOne.mockRejectedValueOnce(updateError);
+            singletonSettings.updateOne.mockRejectedValueOnce(updateError);
 
-            await expect(DbSettings.init(controller as any)).rejects.toThrow(
-                "Insert failed"
-            );
+            await expect(DbSettings.init()).rejects.toThrow("Insert failed");
         });
 
         it("uses upsert option during initialization", async () => {
-            controller.settings.findOne.mockResolvedValueOnce(null);
-            controller.settings.updateOne.mockResolvedValueOnce({ ok: 1 });
+            singletonSettings.findOne.mockResolvedValueOnce(null);
+            singletonSettings.updateOne.mockResolvedValueOnce({ ok: 1 });
 
-            await DbSettings.init(controller as any);
+            await DbSettings.init();
 
-            const [, updateObj] = vi.mocked(controller.settings.updateOne).mock
+            const [, , updateObj] = vi.mocked(singletonSettings.updateOne).mock
                 .calls[0];
             expect(updateObj).toHaveProperty("upsert", true);
         });
