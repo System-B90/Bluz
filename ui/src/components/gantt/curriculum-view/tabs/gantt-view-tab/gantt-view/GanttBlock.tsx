@@ -1,9 +1,10 @@
 import { useDraggable } from "@dnd-kit/core";
+import RepeatIcon from "@mui/icons-material/Repeat";
 import Box from "@mui/material/Box";
-import { useTheme } from "@mui/material/styles";
+import { alpha, useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import React from "react";
+import React, { memo } from "react";
 
 import { GanttBlockProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import {
@@ -11,34 +12,52 @@ import {
     useCurriculumState,
 } from "@/components/gantt/state/provider";
 
-export const GanttBlock: React.FC<GanttBlockProps> = ({
+const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     id,
     payload,
     title,
+    timeLabel,
     isOpaque,
     spanLength = 1,
     isAbsolute = true,
     elementId,
     violations = [],
+    blockLeftPercent,
+    blockWidthPercent,
+    isSpillover = false,
+    isRecurrence = false,
 }) => {
     const theme = useTheme();
     const state = useCurriculumState();
-    const { openModuleDialog } = useCurriculumProviderActions();
+    const { openModuleDialog, openEventDialog } = useCurriculumProviderActions();
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
         useDraggable({
             id,
+            // Recurrence occurrences are auto-generated echoes of the start
+            // block — never draggable, so they carry no drag payload (#111).
+            disabled: isRecurrence,
             data: payload,
         });
 
+    // Recurrence occurrences are display-only: suppress drag listeners so they
+    // read as indicators rather than interactive blocks (#111).
+    const dragProps = isRecurrence
+        ? {}
+        : { ...listeners, ...attributes };
+
     const handleDoubleClick = (e: React.MouseEvent) => {
-        if (payload && payload.moduleId && !payload.eventId) {
-            e.stopPropagation();
-            e.preventDefault();
-            const moduleObj = state.modules[payload.moduleId];
-            if (moduleObj?.syllabusId) {
-                openModuleDialog(moduleObj.syllabusId, payload.moduleId);
-            }
+        if (!payload || !payload.moduleId) return;
+
+        e.stopPropagation();
+        e.preventDefault();
+        const moduleObj = state.modules[payload.moduleId];
+        if (!moduleObj?.syllabusId) return;
+
+        if (payload.eventId) {
+            openEventDialog(moduleObj.syllabusId, payload.moduleId, payload.eventId);
+        } else {
+            openModuleDialog(moduleObj.syllabusId, payload.moduleId);
         }
     };
 
@@ -50,45 +69,69 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
         : undefined;
 
     const blockWidth =
-        spanLength > 1
-            ? `calc(${spanLength * 100}% - 8px)`
-            : isAbsolute
-                ? "calc(100% - 8px)"
-                : "100%";
+        blockWidthPercent !== undefined
+            ? `calc(${blockWidthPercent}% - 4px)`
+            : spanLength > 1
+                ? `calc(${spanLength * 100}% - 8px)`
+                : isAbsolute
+                    ? "calc(100% - 8px)"
+                    : "100%";
 
     const isViolated = violations.length > 0;
+
+    // Multi-day overflow blocks fade out toward the spilled days (#105).
+    const spilloverBackground =
+        isSpillover && !isOpaque
+            ? `linear-gradient(to left, ${theme.palette.primary.main} 55%, ${alpha(
+                theme.palette.primary.main,
+                0.45,
+            )} 100%)`
+            : undefined;
 
     const block = (
         <Box
             id={elementId}
             ref={setNodeRef}
-            {...listeners}
-            {...attributes}
+            {...dragProps}
             onDoubleClick={handleDoubleClick}
             sx={{
                 position: isAbsolute ? "absolute" : "relative",
                 top: isAbsolute ? "5px" : "auto",
                 bottom: isAbsolute ? "5px" : "auto",
-                left: isAbsolute ? "4px" : "auto",
+                left: isAbsolute
+                    ? blockLeftPercent !== undefined
+                        ? `calc(${blockLeftPercent}% + 2px)`
+                        : "4px"
+                    : "auto",
                 width: blockWidth,
                 height: "24px",
                 backgroundColor: isOpaque
                     ? "transparent"
-                    : theme.palette.primary.main,
+                    : isRecurrence
+                        ? alpha(theme.palette.primary.main, 0.4)
+                        : theme.palette.primary.main,
+                backgroundImage: spilloverBackground,
                 borderRadius: "4px",
                 border: isViolated
                     ? `2px solid ${theme.palette.error.main}`
                     : isOpaque
                         ? `1px solid ${theme.palette.primary.main}`
-                        : "none",
-                cursor: isDragging ? "grabbing" : "grab",
+                        : isRecurrence
+                            ? `1px dashed ${theme.palette.primary.main}`
+                            : "none",
+                cursor: isRecurrence
+                    ? "default"
+                    : isDragging
+                        ? "grabbing"
+                        : "grab",
                 opacity: isDragging ? 0.8 : 1,
                 boxShadow: isDragging
                     ? "0 10px 25px rgba(0, 0, 0, 0.2)"
                     : "none",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
+                justifyContent: timeLabel ? "space-between" : "center",
+                gap: 0.5,
                 overflow: "hidden",
                 px: 1,
                 boxSizing: "border-box",
@@ -96,12 +139,22 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
                 ...style,
             }}
         >
+            {isRecurrence ? (
+                <RepeatIcon
+                    sx={{
+                        color: "primary.main",
+                        fontSize: "0.9rem",
+                        flexShrink: 0,
+                    }}
+                />
+            ) : null}
             {title ? (
                 <Typography
                     sx={{
-                        color: isOpaque
-                            ? "primary.main"
-                            : "primary.contrastText",
+                        color:
+                            isOpaque || isRecurrence
+                                ? "primary.main"
+                                : "primary.contrastText",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -111,12 +164,31 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
                     {title}
                 </Typography>
             ) : null}
+            {timeLabel ? (
+                <Typography
+                    sx={{
+                        color: isOpaque
+                            ? "primary.main"
+                            : "primary.contrastText",
+                        fontWeight: 700,
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                        opacity: 0.9,
+                    }}
+                    variant="caption"
+                >
+                    {timeLabel}
+                </Typography>
+            ) : null}
         </Box>
     );
 
-    const tooltipContent = isViolated
-        ? `${title ?? ""}\n${violations.join("\n")}`.trim()
-        : (title ?? "");
+    const spilloverNote = isSpillover ? "גולש על פני מספר ימים" : "";
+    const recurrenceNote = isRecurrence ? "מופע חוזר" : "";
+    const tooltipContent = [title ?? "", recurrenceNote, spilloverNote, ...violations]
+        .filter(Boolean)
+        .join("\n")
+        .trim();
 
     return tooltipContent ? (
         <Tooltip arrow placement="top" title={tooltipContent}>
@@ -126,3 +198,5 @@ export const GanttBlock: React.FC<GanttBlockProps> = ({
         block
     );
 };
+
+export const GanttBlock = memo(GanttBlockComponent);

@@ -2,6 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import EditIcon from "@mui/icons-material/Edit";
+import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import Skeleton from "@mui/material/Skeleton";
@@ -88,6 +89,15 @@ export function ModuleRow({
             </TableCell>
             <TableCell>
                 <Typography variant="body2">{moduleDoc.title}</Typography>
+                {(moduleDoc.shuffles ?? []).map((shuffle) => (
+                    <Chip
+                        key={shuffle}
+                        label={shuffle}
+                        size="small"
+                        sx={{ marginInlineEnd: 0.5, mt: 0.25 }}
+                        variant="outlined"
+                    />
+                ))}
             </TableCell>
             <TableCell>
                 {minimumRequiredTime !== undefined ? (
@@ -97,7 +107,7 @@ export function ModuleRow({
                 )}
             </TableCell>
             <TableCell>
-                <Tooltip placement="top" title="ערוך מערך">
+                <Tooltip placement="top" title="עריכת מערך">
                     <IconButton
                         color="primary"
                         onClick={editClickHandler}

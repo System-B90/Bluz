@@ -1,8 +1,12 @@
 import { useDroppable } from "@dnd-kit/core";
+import { useTheme } from "@mui/material/styles";
 import TableRow from "@mui/material/TableRow";
-import React, { useMemo } from "react";
+import React, { memo, useMemo } from "react";
 
+import { EventRecurrence } from "@/api-shared/types/gantt/models";
+import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
+import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
 import
 {
     buildDailyEventCells,
@@ -16,19 +20,23 @@ import
     useCurriculumState,
 } from "@/components/gantt/state/provider";
 
-export const GanttEventRow: React.FC<GanttEventRowProps> = ({
+const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
     eventId,
     moduleId,
 }) =>
 {
+    const theme = useTheme();
     const state = useCurriculumState();
     const { openEventDialog } = useCurriculumProviderActions();
     const {
         weeklyView,
+        relativeDaySizing,
+        singleWeekDayZoom,
         timelineWeeks,
         linearDays,
         moduleMappings,
         eventMappings,
+        eventSpans,
         violations,
     } = useGanttContext();
 
@@ -43,10 +51,67 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
 
     const currentDayId = eventMappings[ eventId ] || null;
     const isEventUnmapped = !currentDayId;
+
+    // Multi-day spillover: last occupied day + total covered days (#105).
+    const spanInfo = useMemo(() =>
+    {
+        const span = eventSpans[ eventId ];
+        if (!span || !span.spillover || !currentDayId) return null;
+        const endDayId = span.dayIds[ span.dayIds.length - 1 ];
+        const startIdx = linearDays.indexOf(currentDayId);
+        const endIdx = linearDays.indexOf(endDayId);
+        if (startIdx === -1 || endIdx <= startIdx) return null;
+        return { endDayId, spanDayCount: endIdx - startIdx + 1 };
+    }, [ eventSpans, eventId, currentDayId, linearDays ]);
     const myViolations = useMemo(
         () => violations[ eventId ] || [],
         [ eventId, violations ],
     );
+
+    // Zoomed single-week day view: label the block with its required time.
+    const timeLabel =
+        singleWeekDayZoom && event
+            ? formatHoursLabel(event.minimumDuration ?? 0)
+            : undefined;
+
+    const isRecurring =
+        !!event && event.recurrence !== EventRecurrence.None;
+
+    // Days a recurring event repeats onto (daily view). Daily ⇒ every following
+    // day; weekly ⇒ the same weekday in every following week (#111).
+    const recurrenceDayIds = useMemo(() =>
+    {
+        const ids = new Set<string>();
+        if (!isRecurring || !currentDayId || !event) return ids;
+        const startIdx = linearDays.indexOf(currentDayId);
+        if (startIdx === -1) return ids;
+        const startDay = state.days[ currentDayId ];
+        for (let i = startIdx + 1; i < linearDays.length; i++)
+        {
+            const dayId = linearDays[ i ];
+            if (event.recurrence === EventRecurrence.Daily)
+            {
+                ids.add(dayId);
+            } else if (event.recurrence === EventRecurrence.Weekly)
+            {
+                const day = state.days[ dayId ];
+                if (day && startDay && day.dayIndex === startDay.dayIndex)
+                {
+                    ids.add(dayId);
+                }
+            }
+        }
+        return ids;
+    }, [ isRecurring, currentDayId, event, linearDays, state.days ]);
+
+    // Week holding the event's mapped start day (weekly view repeat blocks, #111).
+    const currentWeekIdx = useMemo(() =>
+    {
+        if (!currentDayId) return -1;
+        return timelineWeeks.findIndex((w) => w.days.includes(currentDayId));
+    }, [ currentDayId, timelineWeeks ]);
+
+    const firstDayId = timelineWeeks[ 0 ]?.days[ 0 ] ?? null;
 
     const { isModuleMapped, moduleStartDayId } = useMemo(() =>
     {
@@ -95,6 +160,10 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
                 isModuleMapped,
                 moduleStartWeekIdx,
                 violations: myViolations,
+                spanInfo,
+                relativeDaySizing,
+                isRecurring,
+                currentWeekIdx,
             })
             : buildDailyEventCells({
                 timelineWeeks,
@@ -106,10 +175,16 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
                 isModuleMapped,
                 moduleStartDayId,
                 violations: myViolations,
+                spanInfo,
+                timeLabel,
+                isRecurring,
+                recurrenceDayIds,
+                firstDayId,
             });
     }, [
         event,
         weeklyView,
+        relativeDaySizing,
         timelineWeeks,
         moduleId,
         eventId,
@@ -119,17 +194,33 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
         moduleStartWeekIdx,
         moduleStartDayId,
         myViolations,
+        spanInfo,
+        timeLabel,
+        isRecurring,
+        currentWeekIdx,
+        recurrenceDayIds,
+        firstDayId,
     ]);
 
     if (!event) return null;
 
     return (
-        <TableRow hover>
+        <TableRow
+            hover
+            id={ `gantt-row-event-${eventId}` }
+            sx={ getFlashRowSx(theme) }
+        >
             <GanttEventLabelCell
                 eventId={ eventId }
                 eventTitle={ event.title }
                 isRemoveOver={ isRemoveOver }
-                isUnmapped={ isEventUnmapped ? !isModuleMapped : null }
+                isUnmapped={
+                    isEventUnmapped
+                        ? isRecurring
+                            ? false
+                            : !isModuleMapped
+                        : null
+                }
                 moduleId={ moduleId }
                 onTitleClick={ () =>
                 {
@@ -147,3 +238,5 @@ export const GanttEventRow: React.FC<GanttEventRowProps> = ({
         </TableRow>
     );
 };
+
+export const GanttEventRow = memo(GanttEventRowComponent);

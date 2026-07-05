@@ -6,11 +6,13 @@ import IconButton from "@mui/material/IconButton";
 import { styled } from "@mui/material/styles";
 import { useState } from "react";
 
-import {
+import
+{
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
-import {
+import
+{
     SYLLABUS_ANCHOR_PREFIX,
     useGanttSearchNav,
 } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
@@ -18,6 +20,7 @@ import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { ModulesTable } from "@/components/gantt/syllabus-card/ModulesTable";
 import { SyllabusCardActions } from "@/components/gantt/syllabus-card/SyllabusCardActions";
 import { SyllabusCardHeader } from "@/components/gantt/syllabus-card/SyllabusCardHeader";
+import { SyllabusShuffles } from "@/components/gantt/syllabus-card/SyllabusShuffles";
 
 /**
  * Properties for the {@link SyllabusCard} component.
@@ -36,9 +39,10 @@ export type SyllabusCardProps = {
     onExpandChange?: (expanded: boolean) => void;
 } & Omit<CardProps, "sx">;
 
-const ExpandMore = styled((props: { _expand: boolean } & any) => {
+const ExpandMore = styled((props: { _expand: boolean; } & any) =>
+{
     const { expand: _expand, ...other } = props;
-    return <IconButton {...other} />;
+    return <IconButton { ...other } />;
 })(({ theme, expand }) => ({
     transform: !expand ? "rotate(0deg)" : "rotate(180deg)",
     marginLeft: "auto",
@@ -59,27 +63,31 @@ export function SyllabusCard({
     expanded: controlledExpanded,
     onExpandChange,
     ...props
-}: SyllabusCardProps) {
+}: SyllabusCardProps)
+{
     const syllabus = useSyllabus(syllabusId);
-    const [localExpanded, setLocalExpanded] = useState<boolean>(true);
+    const [ localExpanded, setLocalExpanded ] = useState<boolean>(true);
     const isControlled = controlledExpanded !== undefined;
     const expanded = isControlled ? controlledExpanded : localExpanded;
     const { highlightedSyllabusId } = useGanttSearchNav();
     const isHighlighted = highlightedSyllabusId === syllabusId;
 
-    const handleExpandClick = () => {
+    const handleExpandClick = () =>
+    {
         const newExpanded = !expanded;
-        if (isControlled) {
+        if (isControlled)
+        {
             onExpandChange?.(newExpanded);
-        } else {
+        } else
+        {
             setLocalExpanded(newExpanded);
         }
     };
 
     return (
         <Card
-            id={`${SYLLABUS_ANCHOR_PREFIX}${syllabusId}`}
-            sx={{
+            id={ `${SYLLABUS_ANCHOR_PREFIX}${syllabusId}` }
+            sx={ {
                 display: "flex",
                 flexDirection: "column",
                 width: "30%",
@@ -100,22 +108,22 @@ export function SyllabusCard({
                         "0 12px 24px -10px rgba(0, 0, 0, 0.15), 0 8px 16px -8px rgba(0, 0, 0, 0.1)",
                     borderColor: "primary.light",
                 },
-            }}
-            {...props}
+            } }
+            { ...props }
         >
             <SyllabusCardHeader
                 action={
                     <ExpandMore
-                        aria-expanded={expanded}
-                        aria-label="הצג עוד"
-                        expand={expanded}
-                        onClick={handleExpandClick}
+                        aria-expanded={ expanded }
+                        aria-label="עוד"
+                        expand={ expanded }
+                        onClick={ handleExpandClick }
                     >
                         <ExpandMoreIcon />
                     </ExpandMore>
                 }
-                onClick={handleExpandClick}
-                sx={{
+                onClick={ handleExpandClick }
+                sx={ {
                     pb: 0,
                     pt: 1.5,
                     px: 2,
@@ -124,29 +132,30 @@ export function SyllabusCard({
                     "&:hover": {
                         backgroundColor: "rgba(0, 0, 0, 0.04)",
                     },
-                }}
-                syllabusId={syllabusId}
+                } }
+                syllabusId={ syllabusId }
             />
 
-            <Collapse in={expanded} timeout="auto" unmountOnExit>
+            <Collapse in={ expanded } timeout="auto" unmountOnExit>
                 <CardContent
-                    sx={{
+                    sx={ {
                         display: "flex",
                         flexDirection: "column",
                         paddingY: 1,
                         flex: 1,
                         overflow: "hidden",
-                    }}
+                    } }
                 >
                     <ModulesTable
-                        curriculumId={curriculumId}
-                        syllabusId={syllabusId}
-                        syllabusModules={syllabus?.modules ?? []}
+                        curriculumId={ curriculumId }
+                        syllabusId={ syllabusId }
+                        syllabusModules={ syllabus?.modules ?? [] }
                     />
                 </CardContent>
+                <SyllabusShuffles syllabusId={ syllabusId } />
                 <SyllabusCardActions
-                    curriculumId={curriculumId}
-                    syllabusId={syllabusId}
+                    curriculumId={ curriculumId }
+                    syllabusId={ syllabusId }
                 />
             </Collapse>
         </Card>

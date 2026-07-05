@@ -162,6 +162,22 @@ export async function switchToDayView(page: Page): Promise<void> {
 }
 
 /**
+ * Re-enables pointer events on calendar event chips. The drag-select helpers
+ * disable them on `.rbc-events-container` so a drag can pass through overlapping
+ * events, but that inline style persists — leaving events unclickable (a later
+ * `dblclick` would hit-test through to the grid slot and open a blank new event
+ * instead of editing the existing one). Callers that need to interact with an
+ * event afterwards must restore pointer events first.
+ */
+async function restoreEventPointerEvents(page: Page): Promise<void> {
+    await page.evaluate(() => {
+        document.querySelectorAll(".rbc-events-container").forEach((el) => {
+            (el as HTMLElement).style.pointerEvents = "";
+        });
+    });
+}
+
+/**
  * Drag-selects a time range on the calendar to open the event dialog.
  * Single clicks are ignored by the app (see handleSlotSelect); only drag opens the dialog.
  */
@@ -192,20 +208,23 @@ export async function selectCalendarTimeRange(page: Page): Promise<void> {
     await page.mouse.move(x, endY, { steps: 8 });
     await page.mouse.up();
     await page.waitForTimeout(500);
+
+    // Restore interactivity so events created/edited afterwards are clickable.
+    await restoreEventPointerEvents(page);
 }
 
 /**
  * Returns the visible event dialog, if any.
  */
 export function getEventDialog(page: Page) {
-    return page.getByRole("dialog").filter({ hasText: "ערוך מופע" });
+    return page.getByRole("dialog").filter({ hasText: "עריכת מופע" });
 }
 
 /**
  * Calendar filter strip in the AppBar (prayer/PA/misconfig icons live here).
  */
 export function getHeaderFilters(page: Page) {
-    return page.getByRole("button", { name: /גלה חלונות פ"א|הסתר חלונות פ"א/ });
+    return page.getByRole("button", { name: /גילוי חלונות פ\"א|הסתרת חלונות פ\"א/ });
 }
 
 /**
@@ -297,6 +316,9 @@ export async function cleanupOfflineMode(page: Page): Promise<void> {
  * Uses `force: true` to bypass `.rbc-time-slot` z-index interception.
  */
 export async function dblclickCalendarEvent(page: Page, name: string): Promise<void> {
+    // Defensive: a prior drag-select may have left events non-interactive, which
+    // would route the dblclick through to the grid and open a blank new event.
+    await restoreEventPointerEvents(page);
     const calEvent = page.locator(SELECTORS.calendarEvent).filter({ hasText: name });
     await expect(calEvent.first()).toBeVisible({ timeout: 5_000 });
     await calEvent.first().dblclick({ force: true });
@@ -338,6 +360,9 @@ export async function createEventInOfflineMode(
     const dialog = getEventDialog(page);
     await expect(dialog).toBeVisible({ timeout: 5_000 });
     await dialog.locator("input").first().fill(name);
-    await dialog.getByRole("button", { name: "שמור" }).click();
+    await dialog.getByRole("button", { name: "שמירה" }).click();
     await page.waitForTimeout(500);
+
+    // Restore interactivity so events created/edited afterwards are clickable.
+    await restoreEventPointerEvents(page);
 }

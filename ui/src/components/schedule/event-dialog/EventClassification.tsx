@@ -22,6 +22,8 @@ export function EventClassification({
     onUpdate: (u: Partial<Event>) => void;
 }) {
     const isPrayer = event?.type === EventType.PRAYER;
+    // Fake events aren't wired to Hive — hide subject/module/lesson (#102).
+    const showHiveFields = !isPrayer && !event?.fake;
 
     return (
         <Box
@@ -64,17 +66,17 @@ export function EventClassification({
             {/* Subject, Module and Lesson fields with transition */}
             <Box
                 sx={{
-                    width: !isPrayer ? "52%" : 0,
-                    opacity: !isPrayer ? 1 : 0,
-                    transform: !isPrayer ? "scale(1)" : "scale(0.95)",
+                    width: showHiveFields ? "52%" : 0,
+                    opacity: showHiveFields ? 1 : 0,
+                    transform: showHiveFields ? "scale(1)" : "scale(0.95)",
                     transition:
                         "all 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     overflow: "hidden",
                     display: "flex",
                     gap: 2,
                     alignItems: "flex-start",
-                    visibility: !isPrayer ? "visible" : "hidden",
-                    mr: !isPrayer ? 0 : -2,
+                    visibility: showHiveFields ? "visible" : "hidden",
+                    mr: showHiveFields ? 0 : -2,
                     pt: 1.5,
                     mt: -1.5,
                 }}

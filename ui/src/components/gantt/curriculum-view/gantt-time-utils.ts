@@ -204,6 +204,101 @@ export function getScheduledMinutesForDay({
     return sumUniqueMappedMinutes({ dayIds: new Set([dayId]), mappings, state });
 }
 
+// ---------------------------------------------------------------------------
+// Multi-day spanning events (issue #105)
+// ---------------------------------------------------------------------------
+
+export type EventDaySpan = {
+    /** Day ids the event occupies, starting at its mapped day. */
+    dayIds: Array<GanttDayId>;
+    /** Minutes consumed on each spanned day (parallel to `dayIds`). */
+    minutesPerDay: Array<number>;
+    /** True when the event overflows its start day onto subsequent day(s). */
+    spillover: boolean;
+};
+
+/**
+ * Computes, per mapped event, the days it actually occupies. An event whose
+ * required minutes exceed its start day's working capacity dynamically
+ * overflows the excess onto subsequent days. The database still stores only
+ * the start-day mapping — this is a pure frontend layout computation.
+ */
+export function computeEventDaySpans({
+    mappings,
+    state,
+    linearDays,
+}: {
+    mappings: Record<string, GanttCurriculumModuleDayMapping>;
+    state: NormalizedStore;
+    linearDays: Array<GanttDayId>;
+}): Record<string, EventDaySpan> {
+    const spans: Record<string, EventDaySpan> = {};
+
+    for (const mapping of Object.values(mappings)) {
+        if (!mapping.eventId || spans[mapping.eventId]) continue;
+        const event = state.events[mapping.eventId];
+        if (!event) continue;
+        const startIdx = linearDays.indexOf(mapping.dayId);
+        if (startIdx === -1) continue;
+
+        const dayIds: Array<GanttDayId> = [];
+        const minutesPerDay: Array<number> = [];
+        let remaining = event.minimumDuration ?? 0;
+        let idx = startIdx;
+
+        while (idx < linearDays.length) {
+            const dayId = linearDays[idx];
+            const capacity = state.days[dayId]?.totalWorkingMinutes ?? 0;
+            const isStartDay = dayIds.length === 0;
+
+            // Zero-capacity days can't host hours; skip them mid-span. The
+            // start day always hosts (a 0-capacity start absorbs everything,
+            // matching the pre-spillover behavior).
+            if (capacity > 0 || isStartDay) {
+                const consumed =
+                    capacity > 0 ? Math.min(remaining, capacity) : remaining;
+                dayIds.push(dayId);
+                minutesPerDay.push(consumed);
+                remaining -= consumed;
+            }
+            if (remaining <= 0) break;
+            idx += 1;
+        }
+
+        if (remaining > 0 && minutesPerDay.length > 0) {
+            // Timeline ended mid-overflow: park the leftover on the last day.
+            minutesPerDay[minutesPerDay.length - 1] += remaining;
+        }
+        if (dayIds.length > 0) {
+            spans[mapping.eventId] = {
+                dayIds,
+                minutesPerDay,
+                spillover: dayIds.length > 1,
+            };
+        }
+    }
+
+    return spans;
+}
+
+/**
+ * Per-day scheduled minutes with multi-day spillover applied: each event
+ * contributes only the minutes it consumes on that specific day, so hours
+ * spilled onto subsequent days are subtracted from the start day and added
+ * to the days they land on.
+ */
+export function getSpilloverMinutesByDay(
+    spans: Record<string, EventDaySpan>,
+): Record<GanttDayId, number> {
+    const byDay: Record<GanttDayId, number> = {};
+    for (const span of Object.values(spans)) {
+        span.dayIds.forEach((dayId, i) => {
+            byDay[dayId] = (byDay[dayId] ?? 0) + span.minutesPerDay[i];
+        });
+    }
+    return byDay;
+}
+
 export function getWeekScheduledMinutes({
     week,
     mappings,

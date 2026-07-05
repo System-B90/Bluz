@@ -73,5 +73,7 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Architecture: architecture.md
+  - Performance & Scaling: performance-and-scaling.md
+  - Code Quality Review: code-quality.md
   - API Reference: api/index.md
   - CLI Reference: cli/index.md

@@ -1,9 +1,12 @@
 "use client";
+import AddIcon from "@mui/icons-material/Add";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import RuleIcon from "@mui/icons-material/Rule";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
+import Chip from "@mui/material/Chip";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
@@ -15,8 +18,10 @@ import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
 import {
     ConstraintType,
     GanttConstraint,
+    hasConflictingTemporalConstraints,
     RelationalConstraint,
 } from "@/api-shared/types/gantt/models/constraint";
+import { CollapsibleSection } from "@/components/gantt/event-dialog/CollapsibleSection";
 import { buildVirtualSiblingConstraints } from "@/components/gantt/event-dialog/constraints/virtual-constraints";
 import { ConstraintHumanReadableEntry } from "@/components/gantt/module-dialog/constraints/ConstraintHumanReadableEntry";
 import { ConstraintListItem } from "@/components/gantt/module-dialog/constraints/ConstraintListItem";
@@ -87,6 +92,12 @@ export function EventConstraintsView({
                 (c) => c.ownerEventId === eventId,
             ),
         [state.constraints, eventId],
+    );
+
+    // Warning-only cross-constraint validation (#104): saving is not blocked.
+    const hasTemporalConflict = useMemo(
+        () => hasConflictingTemporalConstraints(constraintsList),
+        [constraintsList],
     );
 
     // Default sibling constraints, derived from the event order in the module.
@@ -233,86 +244,124 @@ export function EventConstraintsView({
         setEditingDraft(null);
     }, [editingConstraintId, editingDraft, updateConstraint]);
 
+    // Collapsed-state summary: custom count, built-in count, conflict flag.
+    const summaryChips = state.isLoading ? (
+        <Chip label="טוען..." size="small" variant="outlined" />
+    ) : (
+        <>
+            { hasTemporalConflict ? <Chip
+                color="warning"
+                icon={ <WarningAmberIcon /> }
+                label="סתירה"
+                size="small"
+            /> : null }
+            { constraintsList.length > 0 ? (
+                <Chip
+                    color="primary"
+                    label={ `${constraintsList.length} אילוצים` }
+                    size="small"
+                    variant="outlined"
+                />
+            ) : (
+                <Chip
+                    label="ללא אילוצים"
+                    size="small"
+                    sx={ { color: "text.secondary" } }
+                    variant="outlined"
+                />
+            ) }
+            { virtualConstraints.length > 0 && (
+                <Chip
+                    label={ `${virtualConstraints.length} מובנים` }
+                    size="small"
+                    sx={ { color: "text.secondary" } }
+                    variant="outlined"
+                />
+            ) }
+        </>
+    );
+
     return (
-        <Card variant="outlined">
-            <CardContent>
-                <Stack
-                    alignItems="center"
-                    direction="row"
-                    justifyContent="space-between"
-                    mb={2}
-                >
-                    <Typography variant="h6">אילוצים</Typography>
+        <CollapsibleSection
+            chips={ summaryChips }
+            icon={ <RuleIcon /> }
+            title="אילוצים"
+        >
+            {hasTemporalConflict ? (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                    האילוצים הזמניים סותרים זה את זה — לא נותר אף יום
+                    חוקי לשיבוץ. ניתן לשמור, אך מומלץ לתקן.
+                </Alert>
+            ) : null}
+
+            {state.isLoading ? (
+                <Stack spacing={1}>
+                    <Skeleton height={52} variant="rounded" />
+                    <Skeleton height={52} variant="rounded" />
+                </Stack>
+            ) : (
+                <Stack spacing={1}>
+                    {virtualConstraints.map((constraint) => (
+                        <VirtualConstraintItem
+                            constraint={constraint}
+                            key={constraint.id}
+                        />
+                    ))}
+
+                    {constraintsList.map((constraint) => {
+                        const isEditing =
+                            constraint.id === editingConstraintId;
+                        if (isEditing && editingDraft) {
+                            return (
+                                <DraftConstraintForm
+                                    curriculumState={curriculumState}
+                                    draft={editingDraft}
+                                    key={constraint.id}
+                                    onCancel={handleCancelEdit}
+                                    onSubmit={handleSubmitEdit}
+                                    setDraft={setEditingDraft}
+                                    targetOptions={targetOptions}
+                                />
+                            );
+                        }
+                        return (
+                            <ConstraintListItem
+                                constraint={constraint}
+                                key={constraint.id}
+                                onEdit={() => handleStartEdit(constraint)}
+                                onRemove={removeConstraint}
+                            />
+                        );
+                    })}
+
+                    {draft ? (
+                        <DraftConstraintForm
+                            curriculumState={curriculumState}
+                            draft={draft}
+                            onCancel={handleCancelCreate}
+                            onSubmit={handleSubmitCreate}
+                            setDraft={setDraft}
+                            targetOptions={targetOptions}
+                        />
+                    ) : null}
+
+                    {constraintsList.length === 0 && !draft && (
+                        <Typography color="text.secondary" variant="body2">
+                            לא הוגדרו אילוצים נוספים למופע זה.
+                        </Typography>
+                    )}
+
                     <Button
-                        color="primary"
                         disabled={!!draft}
                         onClick={handleStartCreate}
                         size="small"
-                        variant="outlined"
+                        startIcon={<AddIcon />}
+                        sx={{ alignSelf: "flex-start" }}
                     >
                         הוספת אילוץ
                     </Button>
                 </Stack>
-
-                {state.isLoading ? (
-                    <Stack spacing={1}>
-                        <Skeleton height={52} variant="rounded" />
-                        <Skeleton height={52} variant="rounded" />
-                    </Stack>
-                ) : (
-                    <Stack spacing={1}>
-                        {virtualConstraints.map((constraint) => (
-                            <VirtualConstraintItem
-                                constraint={constraint}
-                                key={constraint.id}
-                            />
-                        ))}
-
-                        {constraintsList.map((constraint) => {
-                            const isEditing =
-                                constraint.id === editingConstraintId;
-                            if (isEditing && editingDraft) {
-                                return (
-                                    <DraftConstraintForm
-                                        curriculumState={curriculumState}
-                                        draft={editingDraft}
-                                        key={constraint.id}
-                                        onCancel={handleCancelEdit}
-                                        onSubmit={handleSubmitEdit}
-                                        setDraft={setEditingDraft}
-                                        targetOptions={targetOptions}
-                                    />
-                                );
-                            }
-                            return (
-                                <ConstraintListItem
-                                    constraint={constraint}
-                                    key={constraint.id}
-                                    onEdit={() => handleStartEdit(constraint)}
-                                    onRemove={removeConstraint}
-                                />
-                            );
-                        })}
-
-                        {draft ? (
-                            <DraftConstraintForm
-                                curriculumState={curriculumState}
-                                draft={draft}
-                                onCancel={handleCancelCreate}
-                                onSubmit={handleSubmitCreate}
-                                setDraft={setDraft}
-                                targetOptions={targetOptions}
-                            />
-                        ) : null}
-
-                        {constraintsList.length === 0 && !draft && (
-                            <Typography color="text.secondary" variant="body2">
-                                לא הוגדרו אילוצים נוספים למופע זה.
-                            </Typography>
-                        )}
-                    </Stack>
-                )}
-            </CardContent>
-        </Card>
+            )}
+        </CollapsibleSection>
     );
 }

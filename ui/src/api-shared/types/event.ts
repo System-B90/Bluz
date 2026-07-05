@@ -7,9 +7,11 @@ import { ResolvableRoom } from "@/api-shared/types/room";
  * Standardized Hebrew event types for the calendar engine,
  * fully aligning with the Gantt engine event types.
  */
-export enum EventType {
+export enum EventType
+{
     EXERCISE = 'ע"ע',
     LECTURE = "הרצאה",
+    WORKSHOP = "סדנה",
     BREAK = "הפסקה",
     PRAYER = "תפילה",
     OTHER = "אחר",
@@ -48,12 +50,21 @@ export type Event = {
     hidden: boolean;
     required: boolean;
     personalTalk: boolean;
+    color?: string;
+    /**
+     * "פיקטיבי" marker (issue #102): shown to students as a normal event but
+     * acts as a placeholder for Checkers/Segel. Fake events are not wired to
+     * a Hive subject/module/lesson — they carry only a manual color override
+     * and a comment.
+     */
+    fake?: boolean;
 };
 
 /**
  * Standardized types of prayers.
  */
-export enum PrayerType {
+export enum PrayerType
+{
     SHACHARIT = "shacharit",
     MINCHA = "mincha",
     ARVIT = "arvit",
@@ -78,8 +89,36 @@ export type PrayerEvent = {
  * }
  * ```
  */
-export function eventHasSubject(type: EventType): boolean {
-    return type === EventType.EXERCISE || type === EventType.LECTURE;
+export function eventHasSubject(type: EventType): boolean
+{
+    return (
+        type === EventType.EXERCISE ||
+        type === EventType.LECTURE ||
+        type === EventType.WORKSHOP
+    );
+}
+
+/**
+ * Checks if an event type carries a `lecturers` selection (lectures have
+ * "מרצים"; workshops reuse the same field, labeled "מנהלים").
+ * @param type The EventType to check.
+ * @returns true if the lecturers field applies to this event type.
+ */
+export function eventHasLecturers(type: EventType): boolean
+{
+    return type === EventType.LECTURE || type === EventType.WORKSHOP;
+}
+
+/**
+ * The display label for the `lecturers` field of a given event type:
+ * workshops (סדנה) have "מנהלים" while lectures have "מרצים". The selection
+ * source (instructors and outsiders) is identical.
+ * @param type The EventType whose label is needed.
+ * @returns The Hebrew field label.
+ */
+export function lecturersLabelForType(type: EventType): string
+{
+    return type === EventType.WORKSHOP ? "מנהלים" : "מרצים";
 }
 
 /**
@@ -93,7 +132,8 @@ export function eventHasSubject(type: EventType): boolean {
  * }
  * ```
  */
-export function eventHasRoom(type: EventType): boolean {
+export function eventHasRoom(type: EventType): boolean
+{
     return type !== EventType.PRAYER;
 }
 
@@ -106,13 +146,14 @@ export function eventHasRoom(type: EventType): boolean {
  * const label = prayerTypeToHebrew(PrayerType.SHACHARIT); // "שחרית"
  * ```
  */
-export function prayerTypeToHebrew(prayerType: PrayerType): string {
+export function prayerTypeToHebrew(prayerType: PrayerType): string
+{
     const LOOKUP: Record<PrayerType, string> = {
-        [PrayerType.SHACHARIT]: "שחרית",
-        [PrayerType.MINCHA]: "מנחה",
-        [PrayerType.ARVIT]: "ערבית",
+        [ PrayerType.SHACHARIT ]: "שחרית",
+        [ PrayerType.MINCHA ]: "מנחה",
+        [ PrayerType.ARVIT ]: "ערבית",
     };
-    return LOOKUP[prayerType] ?? prayerType;
+    return LOOKUP[ prayerType ] ?? prayerType;
 }
 
 /**
@@ -125,7 +166,8 @@ export function prayerTypeToHebrew(prayerType: PrayerType): string {
  * const label = eventTypeToHebrew(event.type); // "הרצאה", "תפילה", etc.
  * ```
  */
-export function eventTypeToHebrew(type: EventType): string {
+export function eventTypeToHebrew(type: EventType): string
+{
     return type;
 }
 
@@ -143,7 +185,8 @@ export function getPresentInstructors(event: Event): Array<number>;
 export function getPresentInstructors(
     event: Event,
     includeOutsiders: boolean = false,
-): Array<PersonId> {
+): Array<PersonId>
+{
     const reduced = new Set<PersonId>([
         ...event.instructors,
         ...(event.lecturers?.filter(

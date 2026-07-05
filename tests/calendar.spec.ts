@@ -2,6 +2,7 @@ import {
     expect,
     test,
     SELECTORS,
+    dblclickCalendarEvent,
     getEventDialog,
     gotoAppHome,
     selectCalendarTimeRange,
@@ -138,7 +139,7 @@ test.describe("Calendar Page", () => {
 
     test("hides and shows the toolbar", async ({ page }) => {
         // Find the hide-toolbar button
-        const hideToolbarButton = page.getByRole("button", { name: "הסתר סרגל כלים" });
+        const hideToolbarButton = page.getByRole("button", { name: "הסתרת סרגל כלים" });
 
         // Toolbar should be visible initially
         await expect(page.getByRole("button", { name: "היום" })).toBeVisible();
@@ -153,7 +154,7 @@ test.describe("Calendar Page", () => {
         ).not.toBeVisible();
 
         // The floating controls should appear with a show button
-        const showButton = page.getByRole("button", { name: "הצג סרגל כלים" });
+        const showButton = page.getByRole("button", { name: "הצגת סרגל כלים" });
         await expect(showButton).toBeVisible();
 
         // Click show
@@ -191,7 +192,7 @@ test.describe("Calendar Page", () => {
 
         const dialog = getEventDialog(page);
         await expect(dialog).toBeVisible();
-        await expect(dialog.getByText("ערוך מופע")).toBeVisible();
+        await expect(dialog.getByText("עריכת מופע")).toBeVisible();
     });
 
     test("creates a new event via the event dialog", async ({ page }) => {
@@ -205,7 +206,7 @@ test.describe("Calendar Page", () => {
         const nameField = dialog.locator("input").first();
         await nameField.fill(eventName);
 
-        await dialog.getByRole("button", { name: "שמור" }).click();
+        await dialog.getByRole("button", { name: "שמירה" }).click();
         await page.waitForTimeout(500);
 
         const calendarEvent = page.locator(SELECTORS.calendarEvent).filter({
@@ -251,12 +252,12 @@ test.describe("Calendar Page", () => {
         await expect(dialog.getByText("מתואם").first()).toBeVisible();
         await expect(dialog.getByText("קריטי").first()).toBeVisible();
         await expect(
-            dialog.getByRole("button", { name: "שמור" }),
+            dialog.getByRole("button", { name: "שמירה" }),
         ).toBeVisible();
         await expect(
             dialog.getByRole("button", { name: "ביטול" }),
         ).toBeVisible();
-        await expect(dialog.getByRole("button", { name: "מחק" })).toBeVisible();
+        await expect(dialog.getByRole("button", { name: "מחיקה" })).toBeVisible();
 
         await dialog.getByRole("button", { name: "ביטול" }).click();
     });
@@ -280,6 +281,69 @@ test.describe("Calendar Page", () => {
         expect(isNowChecked).toBe(!wasChecked);
 
         await dialog.getByRole("button", { name: "ביטול" }).click();
+    });
+
+    // ─── Event Color Picker ─────────────────────────────────────────────────
+
+    /**
+     * The color Select's accessible name isn't reliably exposed (its selected
+     * value renders as an icon + paragraph, not plain text), so it's located
+     * structurally via its FormControl instead of by role name.
+     */
+    function getColorSelect(dialog: ReturnType<typeof getEventDialog>) {
+        return dialog
+            .locator(".MuiFormControl-root")
+            .filter({ hasText: "צבע" })
+            .getByRole("combobox");
+    }
+
+    test("color selector defaults to no override for a new event", async ({ page }) => {
+        await selectCalendarTimeRange(page);
+
+        const dialog = getEventDialog(page);
+        await expect(dialog).toBeVisible();
+
+        await expect(getColorSelect(dialog)).toHaveText("ברירת מחדל");
+
+        await dialog.getByRole("button", { name: "ביטול" }).click();
+    });
+
+    test("selecting a color persists after save and reopening the dialog", async ({ page }) => {
+        const eventName = testId("color-event");
+
+        await selectCalendarTimeRange(page);
+
+        const dialog = getEventDialog(page);
+        await expect(dialog).toBeVisible();
+        await dialog.locator("input").first().fill(eventName);
+
+        const colorSelect = getColorSelect(dialog);
+        await colorSelect.click();
+
+        // Scoped to .MuiMenuItem-root (not getByRole("option")) because the
+        // group headers (.MuiListSubheader-root) also expose an option role.
+        const options = page.locator(".MuiMenuItem-root");
+        // First option is always "ברירת מחדל" (no override); skip this
+        // environment if there's no actual color to pick.
+        test.skip(
+            (await options.count()) < 2,
+            "No selectable colors are seeded in this environment",
+        );
+
+        const chosenLabel = (await options.nth(1).textContent())?.trim() ?? "";
+        await options.nth(1).click();
+        await expect(colorSelect).toHaveText(chosenLabel);
+
+        await dialog.getByRole("button", { name: "שמירה" }).click();
+        await page.waitForTimeout(500);
+
+        await dblclickCalendarEvent(page, eventName);
+
+        const reopenedDialog = getEventDialog(page);
+        await expect(reopenedDialog).toBeVisible();
+        await expect(getColorSelect(reopenedDialog)).toHaveText(chosenLabel);
+
+        await reopenedDialog.getByRole("button", { name: "ביטול" }).click();
     });
 
     // ─── Keyboard Shortcuts ─────────────────────────────────────────────────

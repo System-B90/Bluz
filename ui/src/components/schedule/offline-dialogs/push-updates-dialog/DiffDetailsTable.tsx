@@ -12,6 +12,7 @@ import { useMemo } from "react";
 import { DeletedItemPlaceholder } from "@/components/schedule/offline-dialogs/push-updates-dialog/DeletedItemPlaceholder";
 import {
     areDiffValuesEqual,
+    formatDateTimeChangeNote,
     formatValue,
     KEY_TRANSLATIONS,
 } from "@/components/schedule/offline-dialogs/push-updates-dialog/utils";
@@ -91,6 +92,15 @@ export function DiffDetailsTable({
                     !areDiffValuesEqual(serverValue, capturedValue) &&
                     !areDiffValuesEqual(localValue, capturedValue);
 
+                // For startTime/endTime, surface a human-readable "moved from X to Y" note
+                const isDateTimeKey = key === "startTime" || key === "endTime";
+                const localChangeNote = isDateTimeKey
+                    ? formatDateTimeChangeNote(capturedValue, localValue)
+                    : null;
+                const serverChangeNote = isDateTimeKey
+                    ? formatDateTimeChangeNote(capturedValue, serverValue)
+                    : null;
+
                 return (
                     <TableRow
                         key={`${eventId}-${key}`}
@@ -132,9 +142,19 @@ export function DiffDetailsTable({
                         <TableCell>
                             {localModifiedEvent !== undefined &&
                             localModifiedEvent[key] !== undefined ? (
-                                    <Typography>
-                                        {formatValue(localModifiedEvent[key], key)}
-                                    </Typography>
+                                    <>
+                                        <Typography>
+                                            {formatValue(localModifiedEvent[key], key)}
+                                        </Typography>
+                                        {localChangeNote ? (
+                                            <Typography
+                                                color="text.secondary"
+                                                variant="caption"
+                                            >
+                                                {localChangeNote}
+                                            </Typography>
+                                        ) : null}
+                                    </>
                                 ) : (
                                     <DeletedItemPlaceholder />
                                 )}
@@ -152,9 +172,19 @@ export function DiffDetailsTable({
                         <TableCell>
                             {serverVersion !== undefined &&
                             serverVersion[key] !== undefined ? (
-                                    <Typography>
-                                        {formatValue(serverVersion[key], key)}
-                                    </Typography>
+                                    <>
+                                        <Typography>
+                                            {formatValue(serverVersion[key], key)}
+                                        </Typography>
+                                        {serverChangeNote ? (
+                                            <Typography
+                                                color="text.secondary"
+                                                variant="caption"
+                                            >
+                                                {serverChangeNote}
+                                            </Typography>
+                                        ) : null}
+                                    </>
                                 ) : (
                                     <DeletedItemPlaceholder />
                                 )}

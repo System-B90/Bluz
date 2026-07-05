@@ -3,6 +3,7 @@ import ImportExportIcon from "@mui/icons-material/ImportExport";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import UploadIcon from "@mui/icons-material/Upload";
 import Button, { ButtonProps } from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -26,6 +27,7 @@ export type ImportExportMenuButtonProps = {
     exportDisabled?: boolean;
     importDisabled?: boolean;
     iconOnly?: boolean;
+    loading?: boolean;
     exportFilenamePrefix?: string;
     exportTitle?: string;
     onExportSuccess?: () => void;
@@ -47,6 +49,7 @@ export function ImportExportMenuButton({
     exportDisabled = false,
     importDisabled = false,
     iconOnly = false,
+    loading = false,
     exportFilenamePrefix = "export-",
     exportTitle = "data",
     onExportSuccess,
@@ -129,7 +132,7 @@ export function ImportExportMenuButton({
                     aria-expanded={open ? "true" : undefined}
                     aria-haspopup="true"
                     color={color}
-                    disabled={Boolean(exportDisabled && importDisabled)}
+                    disabled={Boolean(exportDisabled && importDisabled) || loading}
                     onClick={handleClick}
                     sx={{
                         border: "1px solid",
@@ -138,9 +141,18 @@ export function ImportExportMenuButton({
                         width: 32,
                         height: 32,
                         padding: 0.5,
+                        transition: (theme) =>
+                            theme.transitions.create(
+                                ["color", "border-color"],
+                                { duration: theme.transitions.duration.short },
+                            ),
+                        "&.Mui-disabled": {
+                            color: (theme) => theme.palette.action.disabled,
+                            borderColor: (theme) => theme.palette.action.disabledBackground,
+                        },
                     }}
                 >
-                    <ImportExportIcon />
+                    {loading ? <CircularProgress color="inherit" size={16} /> : <ImportExportIcon />}
                 </IconButton>
             </span>
         </Tooltip>
@@ -150,9 +162,10 @@ export function ImportExportMenuButton({
             aria-expanded={open ? "true" : undefined}
             aria-haspopup="true"
             color={color}
+            disabled={loading}
             onClick={handleClick}
             size={size}
-            startIcon={<ImportExportIcon />}
+            startIcon={loading ? <CircularProgress color="inherit" size={16} /> : <ImportExportIcon />}
             sx={{ whiteSpace: "nowrap" }}
             variant={variant}
         >

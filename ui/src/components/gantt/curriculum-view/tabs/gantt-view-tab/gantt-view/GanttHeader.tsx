@@ -10,21 +10,41 @@ import React from "react";
 
 import { getDayNameDisplay } from "@/api-shared/types/gantt/models";
 import {
+    CapacityStatus,
+    formatHoursLabel,
     formatShortDate,
     formatWeekDateRange,
     getCapacityStatus,
     getDayDate,
-    getScheduledMinutesForDay,
     getWeekDateRange,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
+function getCapacityColor(status: CapacityStatus): string {
+    if (status === "error") return "error.main";
+    if (status === "warning") return "warning.main";
+    if (status === "ok") return "primary.main";
+
+    return "text.secondary";
+}
+
 export const GanttHeader: React.FC = () => {
     const theme = useTheme();
     const state = useCurriculumState();
-    const { curriculumMappings, showConstraints, startDate, timelineWeeks, weeklyView } =
-        useGanttContext();
+    const {
+        dayCellWidth,
+        scheduledMinutesByDay,
+        setZoomedWeekId,
+        showConstraints,
+        singleWeekDayZoom,
+        startDate,
+        timelineWeeks,
+        weeklyView,
+        weekIndexOffset,
+        zoomedWeekId,
+    } = useGanttContext();
+    const canZoom = !weeklyView;
 
     return (
         <TableHead>
@@ -52,7 +72,10 @@ export const GanttHeader: React.FC = () => {
                 </TableCell>
                 {timelineWeeks.map((week, weekIndex) => {
                     const dateRangeLabel = formatWeekDateRange(
-                        getWeekDateRange(startDate, weekIndex),
+                        getWeekDateRange(
+                            startDate,
+                            weekIndex + weekIndexOffset,
+                        ),
                     );
 
                     const overAllocatedDayNames = showConstraints
@@ -63,11 +86,7 @@ export const GanttHeader: React.FC = () => {
                                     !!day &&
                                     getCapacityStatus(
                                         day.totalWorkingMinutes,
-                                        getScheduledMinutesForDay({
-                                            dayId: day.id,
-                                            mappings: curriculumMappings,
-                                            state,
-                                        }),
+                                        scheduledMinutesByDay[day.id] ?? 0,
                                     ) === "error",
                             )
                             .map((day) => getDayNameDisplay(day!.dayIndex))
@@ -78,11 +97,36 @@ export const GanttHeader: React.FC = () => {
                             align="center"
                             colSpan={weeklyView ? 1 : week.days.length}
                             key={week.id}
+                            onClick={
+                                canZoom
+                                    ? () =>
+                                        setZoomedWeekId(
+                                            zoomedWeekId === week.id
+                                                ? null
+                                                : week.id,
+                                        )
+                                    : undefined
+                            }
                             sx={{
                                 borderLeft: `1px solid ${theme.vars.palette.divider}`,
                                 backgroundColor: theme.vars.palette.background.paper,
                                 zIndex: 2,
+                                cursor: canZoom ? "pointer" : "default",
+                                userSelect: "none",
+                                ...(canZoom && {
+                                    "&:hover": {
+                                        backgroundColor:
+                                            theme.vars.palette.action.hover,
+                                    },
+                                }),
                             }}
+                            title={
+                                canZoom
+                                    ? zoomedWeekId === week.id
+                                        ? "יציאה ממצב מוגדל"
+                                        : "התמקדות בשבוע"
+                                    : undefined
+                            }
                         >
                             <Box
                                 alignItems="center"
@@ -123,26 +167,24 @@ export const GanttHeader: React.FC = () => {
                             if (!day) return null;
                             const dayDate = getDayDate(
                                 startDate,
-                                weekIndex,
+                                weekIndex + weekIndexOffset,
                                 day.dayIndex,
                             );
+                            const scheduledMinutes =
+                                scheduledMinutesByDay[dayId] ?? 0;
+                            const capacityStatus = getCapacityStatus(
+                                day.totalWorkingMinutes,
+                                scheduledMinutes,
+                            );
                             const isOverAllocated =
-                                showConstraints &&
-                                getCapacityStatus(
-                                    day.totalWorkingMinutes,
-                                    getScheduledMinutesForDay({
-                                        dayId,
-                                        mappings: curriculumMappings,
-                                        state,
-                                    }),
-                                ) === "error";
+                                showConstraints && capacityStatus === "error";
                             return (
                                 <TableCell
                                     align="center"
                                     key={dayId}
                                     sx={{
-                                        width: 80,
-                                        minWidth: 80,
+                                        width: dayCellWidth,
+                                        minWidth: dayCellWidth,
                                         boxSizing: "border-box",
                                         borderLeft: `1px solid ${theme.vars.palette.divider}`,
                                         backgroundColor: isOverAllocated
@@ -161,6 +203,22 @@ export const GanttHeader: React.FC = () => {
                                             variant="caption"
                                         >
                                             {formatShortDate(dayDate)}
+                                        </Typography>
+                                    ) : null}
+                                    {singleWeekDayZoom ? (
+                                        <Typography
+                                            color={getCapacityColor(
+                                                capacityStatus,
+                                            )}
+                                            display="block"
+                                            fontWeight={700}
+                                            variant="caption"
+                                        >
+                                            {`${formatHoursLabel(
+                                                scheduledMinutes,
+                                            )} / ${formatHoursLabel(
+                                                day.totalWorkingMinutes,
+                                            )}`}
                                         </Typography>
                                     ) : null}
                                 </TableCell>

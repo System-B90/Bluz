@@ -99,10 +99,10 @@ test.describe("Settings Dialog", () => {
 
         const dialog = page.locator(SELECTORS.settingsDialog).first();
 
-        // Find the groups autocomplete (first one with "חפש והוסף קבוצה")
+        // Find the groups autocomplete (first one with "חיפוש והוספת קבוצה")
         const groupSearch = dialog
             .locator(SELECTORS.autocomplete)
-            .filter({ hasText: "חפש והוסף קבוצה" })
+            .filter({ hasText: "חיפוש והוספת קבוצה" })
             .first();
 
         // Click the autocomplete input and type
@@ -147,7 +147,7 @@ test.describe("Settings Dialog", () => {
 
         const instructorSearch = dialog
             .locator(SELECTORS.autocomplete)
-            .filter({ hasText: "חפש והוסף מרצה" })
+            .filter({ hasText: "חיפוש והוספת מרצה" })
             .first();
 
         await instructorSearch.locator("input").click();
@@ -233,15 +233,10 @@ test.describe("Settings Dialog", () => {
             await addButton.first().click();
             await page.waitForTimeout(300);
 
-            // Fill room name
-            const nameInput = dialog.locator("input").filter({
-                has: page.locator("[type='text']"),
-            });
-
-            // Find the name field specifically (labeled "שם" or first text input in form area)
-            const formInputs = dialog.locator("input[type='text']");
-            if ((await formInputs.count()) > 0) {
-                await formInputs.first().fill(roomName);
+            // Fill room name (labeled "שם החדר")
+            const nameInput = dialog.getByLabel("שם החדר");
+            if ((await nameInput.count()) > 0) {
+                await nameInput.first().fill(roomName);
 
                 // Click save
                 const saveButton = dialog.getByRole("button", {
@@ -260,7 +255,7 @@ test.describe("Settings Dialog", () => {
                         await roomItem.first().click();
                         await page.waitForTimeout(300);
 
-                        const deleteButton = dialog.locator("li").filter({ hasText: roomName }).getByRole("button", { name: "מחק" });
+                        const deleteButton = dialog.locator("li").filter({ hasText: roomName }).getByRole("button", { name: "מחיקה" });
                         if ((await deleteButton.count()) > 0) {
                             // Handle confirmation dialog
                             page.on("dialog", (d) => d.accept());
@@ -290,15 +285,18 @@ test.describe("Settings Dialog", () => {
             await page.waitForTimeout(300);
 
             // The form should now be populated
-            // Look for the extended info fields
-            const workstationLabel = dialog.getByText("עמדות מחשב");
-            const seatLabel = dialog.getByText("מקומות ישיבה");
+            // Look for the extended info fields. Use getByLabel (targets the
+            // input, not text nodes) since MUI's outlined variant renders the
+            // label text twice in the DOM (visible <label> + hidden notch
+            // <legend><span>), which trips getByText's strict-mode matching.
+            const workstationInput = dialog.getByLabel("כמות עמדות עבודה");
+            const seatInput = dialog.getByLabel("מספר כסאות להרצאה");
 
-            if ((await workstationLabel.count()) > 0) {
-                await expect(workstationLabel).toBeVisible();
+            if ((await workstationInput.count()) > 0) {
+                await expect(workstationInput).toBeVisible();
             }
-            if ((await seatLabel.count()) > 0) {
-                await expect(seatLabel).toBeVisible();
+            if ((await seatInput.count()) > 0) {
+                await expect(seatInput).toBeVisible();
             }
         }
     });

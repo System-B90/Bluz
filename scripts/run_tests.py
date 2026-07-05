@@ -9,6 +9,7 @@ import os
 import socket
 import ssl
 import subprocess
+import sys
 import time
 import urllib.request
 
@@ -158,8 +159,10 @@ def main(
     if not seed_only:
         typer.secho("Running Backend Unit Tests...", fg=typer.colors.CYAN, bold=True)
         try:
+            # String command: shell=True + list args resolves differently on
+            # POSIX (list items become sh positional args, not the command).
             subprocess.run(
-                ["npm", "run", "test:unit"],
+                "npm run test:unit",
                 shell=True,
                 check=True,
                 env=merged_env,
@@ -318,7 +321,7 @@ def main(
             compose_cmd,
             env=compose_env,
             check=True,
-            timeout=180 if new_ui_container else 1200,
+            timeout=1200 if new_ui_container else 180,
         )
 
         typer.secho("Waiting for web application to be ready...", fg=typer.colors.CYAN)
@@ -350,14 +353,14 @@ def main(
     typer.secho(f"Postgres DB URL: {db_url}")
     # Generate migrations first
     subprocess.run(
-        ["npm", "run", "db:generate"], env=test_env, shell=True, check=True, timeout=60
+        "npm run db:generate", env=test_env, shell=True, check=True, timeout=60
     )
     # Push schema directly (retry to wait for PostgreSQL container to be fully ready)
     max_retries = 15
     for attempt in range(1, max_retries + 1):
         try:
             subprocess.run(
-                ["npm", "run", "db:push"],
+                "npm run db:push",
                 env=test_env,
                 shell=True,
                 check=True,
@@ -380,7 +383,7 @@ def main(
     hive_data_path = os.path.join("scripts", "demo", "hive_data.json")
     if seed_hive or not os.path.exists(hive_data_path):
         subprocess.run(
-            ["python", "scripts/demo/populate_demo_hive.py"],
+            [sys.executable, "scripts/demo/populate_demo_hive.py"],
             env=test_env,
             check=True,
             timeout=120,
@@ -393,7 +396,7 @@ def main(
         )
     # Bluz populate (runs TS populate script)
     subprocess.run(
-        ["npx", "tsx", "scripts/demo/populate_demo_bluz.ts"],
+        "npx tsx scripts/demo/populate_demo_bluz.ts",
         env=test_env,
         shell=True,
         check=True,
@@ -416,24 +419,18 @@ def main(
 
     # Run tests via Playwright
     typer.secho("Running Playwright tests...", fg=typer.colors.CYAN)
-    playwright_cmd = [
-        "npx",
-        "playwright",
-        "test",
-        "--config",
-        "tests/playwright.config.ts",
-    ]
+    playwright_cmd = "npx playwright test --config tests/playwright.config.ts"
     if ui:
-        playwright_cmd.append("--ui")
+        playwright_cmd += " --ui"
     elif visual:
-        playwright_cmd.append("--headed")
+        playwright_cmd += " --headed"
         test_env["TEST_VISUAL"] = "1"
 
     if grep:
-        playwright_cmd.extend(["--grep", grep])
+        playwright_cmd += f' --grep "{grep}"'
 
     if spec:
-        playwright_cmd.append(f"tests/{spec}.spec.ts")
+        playwright_cmd += f" tests/{spec}.spec.ts"
 
     result = subprocess.run(playwright_cmd, env=test_env, shell=True, timeout=600)
 

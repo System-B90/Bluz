@@ -1,24 +1,25 @@
-import AddIcon from "@mui/icons-material/Add";
-import ClearIcon from "@mui/icons-material/Clear";
 import ComputerIcon from "@mui/icons-material/Computer";
 import EditIcon from "@mui/icons-material/Edit";
 import EventSeatIcon from "@mui/icons-material/EventSeat";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import React from "react";
 
 import { Room, RoomSource } from "@/api-shared/types/room";
 import { HiveLogo } from "@/components/base/HiveLogo";
+import
+{
+    FormCard
+} from "@/components/settings-dialog/tabs/global/common";
+import { SettingsFormActions } from "@/components/settings-dialog/tabs/global/common/FormActions";
+import { BaseFormCard, FormCardBaseProps } from "@/components/settings-dialog/tabs/global/common/FormCard";
+import { SettingsSectionHeader } from "@/components/settings-dialog/tabs/global/common/SectionHeader";
 import { LectureComfortSwitch } from "@/components/settings-dialog/tabs/global/LectureComfortSwitch";
 import { RoomBooleanSwitch } from "@/components/settings-dialog/tabs/global/RoomBooleanSwitch";
 
-export type RoomFormCardProps = {
-    selectedRoom: null | Room;
-    isCreating: boolean;
+export type RoomFormCardProps = Omit<FormCardBaseProps<Room>, "selectedEntity"> & {
     name: string;
     setName: (name: string) => void;
     description: string;
@@ -31,8 +32,6 @@ export type RoomFormCardProps = {
     setLectureComfortable: (comfortable: boolean) => void;
     peAyin: boolean;
     setPeAyin: (peAyin: boolean) => void;
-    handleSave: (e: React.FormEvent) => Promise<void>;
-    handleCancelEdit: () => void;
 };
 
 type RoomFormHeaderProps = {
@@ -72,55 +71,26 @@ function RoomFormHeader({
 }: RoomFormHeaderProps)
 {
     return (
-        <Box alignItems="center" display="flex" gap={ 1.5 }>
-            <Box
-                sx={ {
-                    p: 1,
-                    borderRadius: "10px",
-                    bgcolor: "secondary.light",
-                    color: "secondary.contrastText",
-                    display: "flex",
-                    alignItems: "center",
-                } }
-            >
-                { isCreating ? (
-                    <AddIcon className="text-[20px]" />
-                ) : (
-                    <EditIcon className="text-[20px]" />
-                ) }
-            </Box>
-            <Box>
-                <Typography
-                    sx={ {
-                        fontWeight: 800,
-                        fontSize: "1.1rem",
-                        color: "text.primary",
-                    } }
-                >
-                    { isCreating
-                        ? "הוספת חדר חדש"
-                        : isHiveSelected
-                            ? "עריכת כיתה מהייב"
-                            : isEditing
-                                ? "עריכת חדר"
-                                : "בחר חדר לעריכה" }
-                </Typography>
-                <Typography
-                    sx={ {
-                        fontSize: "0.75rem",
-                        color: "text.secondary",
-                    } }
-                >
-                    { isCreating
-                        ? "יצירת חדר מותאם אישית חדש"
-                        : isHiveSelected
-                            ? "שם ותיאור נשלטים ע״י הייב. ניתן לערוך פרטים מורחבים."
-                            : isEditing
-                                ? "עדכון כל פרטי החדר"
-                                : "לחץ על חדר מהרשימה כדי לערוך" }
-                </Typography>
-            </Box>
-        </Box>
+        <SettingsSectionHeader
+            color={ isCreating ? "secondary" : "primary" }
+            icon={ EditIcon }
+            subtitle={
+                isCreating
+                    ? "יצירת חדר מותאם אישית חדש"
+                    : isHiveSelected
+                        ? "שם ותיאור נשלטים ע״י הייב. ניתן לערוך פרטים מורחבים."
+                        : isEditing
+                            ? "עדכון כל פרטי החדר"
+                            : "בחרו חדר מהרשימה כדי לערוך"
+            }
+            title={
+                isCreating
+                    ? "הוספת חדר חדש"
+                    : isHiveSelected
+                        ? "עריכת כיתה מהייב"
+                        : "עריכת חדר"
+            }
+        />
     );
 }
 
@@ -359,46 +329,22 @@ function RoomFormActions({
 }: RoomFormActionsProps)
 {
     return (
-        <Box display="flex" gap={ 1.5 } mt={ 1 }>
-            <Button
-                color={ isCreating ? "secondary" : "primary" }
-                sx={ {
-                    flex: 1,
-                    borderRadius: "10px",
-                    py: 1,
-                    fontWeight: 700,
-                    fontSize: "0.82rem",
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-                } }
-                type="submit"
-                variant="contained"
-            >
-                { isCreating
-                    ? "צור חדר"
+        <SettingsFormActions
+            onCancel={ handleCancelEdit }
+            submitColor={ isCreating ? "secondary" : "primary" }
+            submitLabel={
+                isCreating
+                    ? "יצירת חדר"
                     : isHiveSelected
-                        ? "שמור פרטים מורחבים"
-                        : "עדכן חדר" }
-            </Button>
-            <Button
-                color="inherit"
-                onClick={ handleCancelEdit }
-                startIcon={ <ClearIcon /> }
-                sx={ {
-                    borderRadius: "10px",
-                    py: 1,
-                    fontWeight: 700,
-                    fontSize: "0.82rem",
-                } }
-                variant="outlined"
-            >
-                ביטול
-            </Button>
-        </Box>
+                        ? "שמירת פרטים מורחבים"
+                        : "עדכון חדר"
+            }
+        />
     );
 }
 
-export function RoomFormCard({
-    selectedRoom,
+export const RoomFormCard: FormCard<Room, RoomFormCardProps> = function RoomFormCard({
+    selectedEntity: selectedRoom,
     isCreating,
     name,
     setName,
@@ -414,79 +360,47 @@ export function RoomFormCard({
     setPeAyin,
     handleSave,
     handleCancelEdit,
-}: RoomFormCardProps)
+}: RoomFormCardProps & { selectedEntity: null | Room; })
 {
     const isEditing = selectedRoom !== null;
     const isHiveSelected = selectedRoom?.source === RoomSource.Hive;
-    const showForm = isEditing || isCreating;
 
     return (
-        <Box
-            component="form"
-            onSubmit={ handleSave }
-            sx={ {
-                flex: 1,
-                minWidth: 0,
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: "16px",
-                p: 3,
-                boxShadow: (theme) =>
-                    theme.palette.mode === "light"
-                        ? `0 8px 24px rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`
-                        : "0 8px 24px rgba(0, 0, 0, 0.2)",
-                bgcolor: "background.paper",
-                display: "flex",
-                flexDirection: "column",
-                gap: 3,
-                opacity: showForm ? 1 : 0.5,
-                transition: "opacity 0.3s ease",
-            } }
-        >
-            <RoomFormHeader
+        <BaseFormCard
+            formActions={ <RoomFormActions
+                handleCancelEdit={ handleCancelEdit }
+                isCreating={ isCreating }
+                isHiveSelected={ isHiveSelected }
+            /> }
+            formFields={ <>
+                <RoomBasicDetails
+                    description={ description }
+                    isHiveSelected={ isHiveSelected }
+                    name={ name }
+                    setDescription={ setDescription }
+                    setName={ setName }
+                />
+                <RoomExtendedDetails
+                    lectureComfortable={ lectureComfortable }
+                    lectureSeatCount={ lectureSeatCount }
+                    peAyin={ peAyin }
+                    setLectureComfortable={ setLectureComfortable }
+                    setLectureSeatCount={ setLectureSeatCount }
+                    setPeAyin={ setPeAyin }
+                    setWorkstationCount={ setWorkstationCount }
+                    workstationCount={ workstationCount }
+                />
+            </> }
+            formHeader={ <RoomFormHeader
                 isCreating={ isCreating }
                 isEditing={ isEditing }
                 isHiveSelected={ isHiveSelected }
-            />
-
-            { !showForm ? (
-                <Box className="m-auto py-12">
-                    <Typography
-                        sx={ {
-                            color: "text.secondary",
-                            fontSize: "0.85rem",
-                            textAlign: "center",
-                        } }
-                    >
-                        בחר חדר מהרשימה או צור חדר חדש
-                    </Typography>
-                </Box>
-            ) : (
-                <>
-                    <RoomBasicDetails
-                        description={ description }
-                        isHiveSelected={ isHiveSelected }
-                        name={ name }
-                        setDescription={ setDescription }
-                        setName={ setName }
-                    />
-                    <RoomExtendedDetails
-                        lectureComfortable={ lectureComfortable }
-                        lectureSeatCount={ lectureSeatCount }
-                        peAyin={ peAyin }
-                        setLectureComfortable={ setLectureComfortable }
-                        setLectureSeatCount={ setLectureSeatCount }
-                        setPeAyin={ setPeAyin }
-                        setWorkstationCount={ setWorkstationCount }
-                        workstationCount={ workstationCount }
-                    />
-                    <RoomFormActions
-                        handleCancelEdit={ handleCancelEdit }
-                        isCreating={ isCreating }
-                        isHiveSelected={ isHiveSelected }
-                    />
-                </>
-            ) }
-        </Box>
+            /> }
+            handleCancelEdit={ handleCancelEdit }
+            handleSave={ handleSave }
+            isCreating={ isCreating }
+            placeholderMessage="בחרו חדר מהרשימה או הוספת חדר מותאם אישית"
+            selectedEntity={ selectedRoom }
+        />
     );
-}
+};

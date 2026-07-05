@@ -1,7 +1,6 @@
 import { WebSocket } from "ws";
 
-import
-{
+import {
     MessageTypes,
     WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY,
     WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
@@ -10,10 +9,68 @@ import
 const INTERNAL_SESSION_SERVER_URI =
     process.env.INTERNAL_SESSION_SERVER_URI ?? "ws://bluz-sessions:28199/";
 
+const CONNECT_TIMEOUT_MS = 5000;
+const MAX_PENDING_MESSAGES = 1000;
+
+// One persistent socket per process instead of a fresh TCP+WebSocket handshake
+// per broadcast. Messages sent while (re)connecting are queued and flushed on
+// open; if the connection drops, the next send lazily reconnects.
+let socket: null | WebSocket = null;
+const pendingMessages: Array<string> = [];
+
+function flushPending(ws: WebSocket) {
+    while (pendingMessages.length > 0) {
+        const message = pendingMessages.shift()!;
+        try {
+            ws.send(message);
+        } catch (error) {
+            console.error("[WS Server Sender] Failed to flush message:", error);
+        }
+    }
+}
+
+function connect(): WebSocket {
+    const ws = new WebSocket(INTERNAL_SESSION_SERVER_URI);
+
+    const timeout = setTimeout(() => {
+        if (ws.readyState !== WebSocket.OPEN) {
+            console.error(
+                "[WS Server Sender] Timeout connecting to session server",
+            );
+            ws.terminate();
+        }
+    }, CONNECT_TIMEOUT_MS);
+    // Never keep the process alive just for the broadcast channel.
+    timeout.unref?.();
+
+    ws.onopen = () => {
+        clearTimeout(timeout);
+        flushPending(ws);
+    };
+
+    ws.onerror = (err) => {
+        console.error(
+            `[WS Server Sender] Session server connection error: ${err.message}`,
+        );
+    };
+
+    ws.onclose = () => {
+        clearTimeout(timeout);
+        if (socket === ws) {
+            socket = null; // Next send re-establishes the connection.
+        }
+    };
+
+    return ws;
+}
+
 /**
  * Dispatch an asynchronous server-to-server request over WebSocket to the Session Server.
  * This runs within Next.js server-side API routes to broadcast event changes, additions,
  * or deletions to all connected clients in real-time.
+ *
+ * The underlying connection is persistent and re-established lazily, so a broadcast
+ * costs one `send()` on the hot path instead of a full connection handshake.
  *
  * @param type The type of message being broadcasted (e.g. MessageTypes.EVENT_DATA_UPDATE).
  * @param data Optional payload containing details of the updated/added/removed entities.
@@ -29,52 +86,35 @@ const INTERNAL_SESSION_SERVER_URI =
 export function SendServerRequestToSessionServer(
     type: MessageTypes,
     data?: any,
-)
-{
-    const ws = new WebSocket(INTERNAL_SESSION_SERVER_URI);
+) {
+    const message = JSON.stringify({
+        sender: WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
+        authKey: WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY,
+        type: type,
+        data,
+    });
 
-    const timeout = setTimeout(() =>
-    {
-        if (ws.readyState !== WebSocket.OPEN)
-        {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        try {
+            socket.send(message);
+            return;
+        } catch (error) {
             console.error(
-                `[WS Server Sender] Timeout connecting to session server for message type "${type}"`,
+                `[WS Server Sender] Send failed for "${type}", reconnecting:`,
+                error,
             );
-            ws.close();
+            socket = null;
         }
-    }, 5000);
+    }
 
-    ws.onopen = () =>
-    {
-        clearTimeout(timeout);
-        ws.send(
-            JSON.stringify({
-                sender: WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
-                authKey: WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY,
-                type: type,
-                data,
-            }),
-        );
-        ws.close();
-    };
+    if (pendingMessages.length >= MAX_PENDING_MESSAGES) {
+        // Broadcasts are fire-and-forget freshness hints; dropping the oldest
+        // beats unbounded memory growth while the session server is down.
+        pendingMessages.shift();
+    }
+    pendingMessages.push(message);
 
-    ws.onerror = (err) =>
-    {
-        clearTimeout(timeout);
-        console.error(
-            `[WS Server Sender] Error dispatching message type "${type}" to session server:`,
-            err.message,
-        );
-    };
-
-    ws.onclose = (event) =>
-    {
-        clearTimeout(timeout);
-        if (!event.wasClean && event.code !== 1000)
-        {
-            console.error(
-                `[WS Server Sender] Connection closed unexpectedly for message type "${type}" (code=${event.code})`,
-            );
-        }
-    };
+    if (!socket || socket.readyState === WebSocket.CLOSED) {
+        socket = connect();
+    }
 }

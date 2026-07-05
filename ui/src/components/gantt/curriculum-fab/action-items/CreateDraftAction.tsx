@@ -15,6 +15,7 @@ export type CreateDraftActionProps = {
 export function CreateDraftAction({
     onCreate,
     onProcessingChange,
+    loading,
     ...props
 }: CreateDraftActionProps) {
     const runAction = useAsyncAction(onProcessingChange);
@@ -29,6 +30,7 @@ export function CreateDraftAction({
 
     return (
         <ActionItemButton
+            loading={loading}
             onClick={clickHandler}
             startIcon={<AddCircleOutlineIcon fontSize="small" />}
             tooltipTitle="דראפט חדש"

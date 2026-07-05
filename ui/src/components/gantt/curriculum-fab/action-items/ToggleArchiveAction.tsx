@@ -16,6 +16,7 @@ export function ToggleArchiveAction({
     sourceCurriculum,
     onUpdate,
     onProcessingChange,
+    loading,
     ...props
 }: ToggleArchiveActionProps) {
     const runAction = useAsyncAction(onProcessingChange);
@@ -41,6 +42,7 @@ export function ToggleArchiveAction({
     return (
         <ActionItemButton
             color={sourceCurriculum?.isArchived ? "info" : "inherit"}
+            loading={loading}
             onClick={clickHandler}
             startIcon={
                 sourceCurriculum?.isArchived ? (

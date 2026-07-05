@@ -1,6 +1,7 @@
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import CloseIcon from "@mui/icons-material/Close";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
+import PaletteIcon from "@mui/icons-material/Palette";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
 import Box from "@mui/material/Box";
@@ -9,6 +10,7 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
+import { ColorSettings } from "@/components/settings-dialog/tabs/global/color-settings";
 import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalSettings";
 import { OutsiderSettings } from "@/components/settings-dialog/tabs/global/outsider-settings";
 import { RoomSettings } from "@/components/settings-dialog/tabs/global/room-settings";
@@ -35,6 +37,7 @@ export function SettingsDialog({
         [
             { label: "אישי", icon: <PersonIcon />, value: "personal" },
             { label: "כללי", icon: <SettingsIcon />, value: "global" },
+            { label: "צבעים", icon: <PaletteIcon />, value: "colors" },
             { label: "חדרים", icon: <MeetingRoomIcon />, value: "rooms" },
             {
                 label: "אנשי חוץ",
@@ -240,6 +243,7 @@ export function SettingsDialog({
                     >
                         {activeTab === "personal" && <PersonalSettings />}
                         {activeTab === "global" && <GlobalSettings />}
+                        {activeTab === "colors" && <ColorSettings />}
                         {activeTab === "rooms" && <RoomSettings />}
                         {activeTab === "outsiders" && <OutsiderSettings />}
                     </Box>

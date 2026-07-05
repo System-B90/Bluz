@@ -4,27 +4,37 @@ import { alpha, useTheme } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
-import React, { useMemo, useState } from "react";
+import React, { memo, useMemo } from "react";
 
+import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
+import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
 import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
 import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventRow";
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
+import { useCurriculumState } from "@/components/gantt/state/provider";
+import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
-export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
+const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
+    moduleId,
+}) => {
     const theme = useTheme();
+    const state = useCurriculumState();
     const ganttModule = useModule(moduleId);
     const {
         weeklyView,
+        singleWeekDayZoom,
         timelineWeeks,
         linearDays,
         moduleMappings,
         eventMappings,
         violations,
+        isModuleExpanded,
+        toggleModule,
     } = useGanttContext();
-    const [isExpanded, setIsExpanded] = useState(false);
+    const isExpanded = isModuleExpanded(moduleId);
 
     const { isOver: isRemoveOver, setNodeRef: setRemoveNodeRef } = useDroppable(
         {
@@ -110,15 +120,30 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
             ? spanIndices.max - spanIndices.min + 1
             : 1;
 
-    // Build cells depending on view mode
-    const renderCells = () => {
+    // Zoomed single-week day view: label the module block with its required time.
+    const timeLabel = useMemo(
+        () =>
+            singleWeekDayZoom && ganttModule
+                ? formatHoursLabel(
+                    calculateMinimumRequiredTimeForModule(ganttModule, state),
+                )
+                : undefined,
+        [singleWeekDayZoom, ganttModule, state],
+    );
+
+    // Build cells depending on view mode. Memoized so a re-render triggered by the
+    // remove-target droppable (during a drag) doesn't rebuild every day cell (#88).
+    const cells = useMemo(() => {
         if (weeklyView) {
-            // Compute proportional pixel positioning for multi-week blocks
-            let blockLeftPx: number | undefined;
-            let blockWidthPx: number | undefined;
+            // Position multi-week blocks as percentages of the anchor cell's own
+            // width rather than fixed pixels — week columns render wider than
+            // their nominal size (the table stretches fixed-width columns to
+            // fill the container), so a pixel-based width would undershoot the
+            // real span (#118).
+            let blockLeftPercent: number | undefined;
+            let blockWidthPercent: number | undefined;
 
             if (weekSpanIndices !== null && spanIndices !== null) {
-                const CELL = 80;
                 const firstWeek = timelineWeeks[weekSpanIndices.min];
                 const lastWeek = timelineWeeks[weekSpanIndices.max];
                 const firstDayLinear = linearDays[spanIndices.min];
@@ -127,16 +152,26 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                     firstWeek.days.indexOf(firstDayLinear);
                 const lastDayPosInWeek = lastWeek.days.indexOf(lastDayLinear);
 
+                // Module blocks always span from the first mapped event/day to
+                // the last, regardless of the toggle — only individual event
+                // blocks shrink to their own day in relative mode.
                 const startFrac = firstDayPosInWeek / firstWeek.days.length;
                 const endFrac = (lastDayPosInWeek + 1) / lastWeek.days.length;
                 const weekSpan = weekSpanIndices.max - weekSpanIndices.min;
 
-                blockLeftPx = Math.round(startFrac * CELL) + 2;
-                blockWidthPx =
-                    Math.round(
-                        weekSpan * CELL + endFrac * CELL - startFrac * CELL,
-                    ) - 4;
-                blockWidthPx = Math.max(blockWidthPx, 16); // minimum visible width
+                const naturalWidth =
+                    weekSpan * 100 + (endFrac - startFrac) * 100;
+
+                // A module block always fills at least one full column: when it
+                // would render narrower than a single week, snap it to the whole
+                // starting column instead of a thin intra-week sliver.
+                if (naturalWidth < 100) {
+                    blockLeftPercent = 0;
+                    blockWidthPercent = 100;
+                } else {
+                    blockLeftPercent = startFrac * 100;
+                    blockWidthPercent = naturalWidth;
+                }
             }
 
             return timelineWeeks.map((week, weekIdx) => {
@@ -147,14 +182,14 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                 return (
                     <GanttCell
                         blockId={`drag-module-shift-${moduleId}-${firstDayId}`}
-                        blockLeftPx={isSpanStart ? blockLeftPx : undefined}
+                        blockLeftPercent={isSpanStart ? blockLeftPercent : undefined}
                         blockPayload={{
                             type: "module-shift",
                             moduleId,
                             sourceDayId: firstDayId,
                         }}
                         blockTitle={ganttModule?.title}
-                        blockWidthPx={isSpanStart ? blockWidthPx : undefined}
+                        blockWidthPercent={isSpanStart ? blockWidthPercent : undefined}
                         dayId={firstDayId}
                         dropId={`drop-module-${moduleId}-${firstDayId}`}
                         elementId={
@@ -190,6 +225,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                             moduleId,
                             sourceDayId: dayId,
                         }}
+                        blockTimeLabel={isSpanStart ? timeLabel : undefined}
                         blockTitle={ganttModule?.title}
                         dayId={dayId}
                         dropId={`drop-module-${moduleId}-${dayId}`}
@@ -207,11 +243,28 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                 );
             }),
         );
-    };
+    }, [
+        weeklyView,
+        timelineWeeks,
+        linearDays,
+        moduleId,
+        ganttModule?.title,
+        hasEvents,
+        isExpanded,
+        spanIndices,
+        weekSpanIndices,
+        spanLength,
+        myViolations,
+        timeLabel,
+    ]);
 
     return (
         <React.Fragment>
-            <TableRow hover>
+            <TableRow
+                hover
+                id={`gantt-row-module-${moduleId}`}
+                sx={getFlashRowSx(theme)}
+            >
                 <TableCell
                     ref={setRemoveNodeRef}
                     sx={{
@@ -236,7 +289,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                     {hasEvents ? (
                         <Box
                             component="span"
-                            onClick={() => setIsExpanded(!isExpanded)}
+                            onClick={() => toggleModule(moduleId)}
                             sx={{
                                 fontSize: "0.8rem",
                                 width: 20,
@@ -274,7 +327,7 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
                     </Box>
                 </TableCell>
 
-                {renderCells()}
+                {cells}
             </TableRow>
 
             {isExpanded && hasEvents
@@ -289,3 +342,5 @@ export const GanttModuleRow: React.FC<GanttModuleRowProps> = ({ moduleId }) => {
         </React.Fragment>
     );
 };
+
+export const GanttModuleRow = memo(GanttModuleRowComponent);

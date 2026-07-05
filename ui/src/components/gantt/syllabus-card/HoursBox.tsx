@@ -1,15 +1,63 @@
+import GroupsIcon from "@mui/icons-material/Groups";
 import Box, { BoxProps } from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { useMemo } from "react";
 
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
-import { getTentativeMinutesForModuleIds } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import {
+    formatHoursLabel,
+    getTentativeMinutesForModuleIds,
+} from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
-import { calculateMinimumRequiredTimeForSyllabus } from "@/components/gantt/utils";
+import {
+    calculateMinimumRequiredTimeForSyllabus,
+    doShuffleTotalsDiffer,
+    getSyllabusShuffleTotals,
+} from "@/components/gantt/utils";
+
+/**
+ * Badge indicating whether all shuffles of the syllabus receive the same
+ * amount of required time; a warning color marks unequal shuffles.
+ */
+function ShuffleTimeBadge({
+    totals,
+}: {
+    totals: Record<string, number>;
+}) {
+    const differ = doShuffleTotalsDiffer(totals);
+    const tooltip = (
+        <Stack spacing={0}>
+            <Typography variant="caption">
+                {differ
+                    ? "לשאפלים זמן נדרש שונה:"
+                    : "לכל השאפלים זמן נדרש זהה:"}
+            </Typography>
+            {Object.entries(totals).map(([name, minutes]) => (
+                <Typography key={name} variant="caption">
+                    {name}: {formatHoursLabel(minutes)}
+                </Typography>
+            ))}
+        </Stack>
+    );
+
+    return (
+        <Tooltip title={tooltip}>
+            <Chip
+                color={differ ? "warning" : "default"}
+                icon={<GroupsIcon />}
+                label={differ ? "שאפלים לא שווים" : "שאפלים שווים"}
+                size="small"
+                variant="outlined"
+            />
+        </Tooltip>
+    );
+}
 
 export type HoursBoxProps = {
     syllabusId: GanttSyllabusId;
@@ -24,6 +72,14 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
     const minimumRequiredHours = syllabus
         ? calculateMinimumRequiredTimeForSyllabus(syllabus, state)
         : 0;
+
+    const shuffleTotals = useMemo(
+        () =>
+            syllabus
+                ? getSyllabusShuffleTotals(syllabus, "minimumDuration", state)
+                : null,
+        [syllabus, state],
+    );
 
     const tentativeHours = useMemo(() => {
         if (!syllabus || !mappings) return 0;
@@ -158,6 +214,9 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
                             {tentativeHours}
                         </Typography>
                     </Box>
+                    {shuffleTotals ? <Box pt={0.5}>
+                        <ShuffleTimeBadge totals={shuffleTotals} />
+                    </Box> : null}
                 </Stack>
             </Box>
         </Box>

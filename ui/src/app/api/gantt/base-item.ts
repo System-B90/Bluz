@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { ApiSuccess, withApi } from "@/api-server/common";
 import { ClientApiError } from "@/api-shared/errors";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 import { BasicGantOperations } from "@/app/api/gantt/base-collection";
@@ -16,34 +16,31 @@ export type RouteContext = {
     params: Promise<{ id: string }>;
 };
 
+async function resolveItemId(context: RouteContext): Promise<string> {
+    const { id } = await context.params;
+    if (!id) {
+        throw new ClientApiError(
+            "Item identifier (id) is missing from the request parameters.",
+        );
+    }
+    return id;
+}
+
 export function buildGantItemRoutes<
     TEntity extends BaseGantItem,
     TCreatePayload = Omit<TEntity, "id">,
 >({ dbSet }: BuildGantItemRoutesProps<TEntity, TCreatePayload>) {
-    async function GET(request: NextRequest, context: RouteContext) {
-        try {
-            const { id } = await context.params;
-            if (!id) {
-                throw new ClientApiError(
-                    "Item identifier (id) is missing from the request parameters.",
-                );
-            }
-
+    const GET = withApi(
+        async (_request: NextRequest, context: RouteContext) => {
+            const id = await resolveItemId(context);
             const item = await dbSet.getItem(id as TEntity["id"]);
             return ApiSuccess(item);
-        } catch (error) {
-            return catchHandler(request, error);
-        }
-    }
+        },
+    );
 
-    async function PATCH(request: NextRequest, context: RouteContext) {
-        try {
-            const { id } = await context.params;
-            if (!id) {
-                throw new ClientApiError(
-                    "Item identifier (id) is missing from the request parameters.",
-                );
-            }
+    const PATCH = withApi(
+        async (request: NextRequest, context: RouteContext) => {
+            const id = await resolveItemId(context);
 
             const textBody = await request.text();
             if (!textBody) {
@@ -65,26 +62,16 @@ export function buildGantItemRoutes<
                 payload,
             );
             return ApiSuccess(updatedItem);
-        } catch (error) {
-            return catchHandler(request, error);
-        }
-    }
+        },
+    );
 
-    async function DELETE(request: NextRequest, context: RouteContext) {
-        try {
-            const { id } = await context.params;
-            if (!id) {
-                throw new ClientApiError(
-                    "Item identifier (id) is missing from the request parameters.",
-                );
-            }
-
+    const DELETE = withApi(
+        async (_request: NextRequest, context: RouteContext) => {
+            const id = await resolveItemId(context);
             await dbSet.deleteItem(id as TEntity["id"]);
             return ApiSuccess({ deleted: true, id: id });
-        } catch (error) {
-            return catchHandler(request, error);
-        }
-    }
+        },
+    );
 
     return {
         GET,

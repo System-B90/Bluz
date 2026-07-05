@@ -5,6 +5,7 @@ import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import { ClientApiError } from "@/api-shared/errors";
 import { CalendarDraft, CalendarSnapshot } from "@/api-shared/types";
 import { Course } from "@/api-shared/types/course";
+import { CustomColor } from "@/api-shared/types/custom-color";
 import {
     GanttCurriculum,
     GanttEvent,
@@ -13,6 +14,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { Iteration, IterationId } from "@/api-shared/types/iteration";
 import { Outsider } from "@/api-shared/types/outsider";
+import { PersonalSettings } from "@/api-shared/types/personal-settings";
 import { DbReservation } from "@/api-shared/types/reservation";
 import {
     CustomRoom,
@@ -36,9 +38,28 @@ export const DEFAULT_ITERATION_DB_NAME = process.env.MONGO_DB_NAME ?? "bluz";
 /** Shared meta database that holds the registry of all iterations. */
 export const META_DB_NAME = process.env.MONGO_META_DB_NAME ?? "bluz_meta";
 
+function readIntEnv(name: string, fallback: number): number {
+    const parsed = Number.parseInt(process.env[name] ?? "", 10);
+    return Number.isNaN(parsed) ? fallback : parsed;
+}
+
 // A single MongoClient is shared across every iteration. `client.db(name)`
 // handles are cheap, so we create one controller per database name on demand.
-const mongoClient = new MongoClient(MONGO_CONNECTION_STRING);
+// The client is cached on globalThis so Next.js dev hot-reload reuses the pool
+// instead of leaking a new connection pool on every module re-evaluation.
+const globalCache = globalThis as unknown as { __bluzMongoClient?: MongoClient };
+
+const mongoClient =
+    globalCache.__bluzMongoClient ??
+    new MongoClient(MONGO_CONNECTION_STRING, {
+        maxPoolSize: readIntEnv("MONGO_MAX_POOL_SIZE", 50),
+        minPoolSize: readIntEnv("MONGO_MIN_POOL_SIZE", 0),
+        maxIdleTimeMS: readIntEnv("MONGO_MAX_IDLE_TIME_MS", 60_000),
+    });
+
+if (process.env.NODE_ENV !== "production") {
+    globalCache.__bluzMongoClient = mongoClient;
+}
 
 class DatabaseController {
     private mongoClient: MongoClient;
@@ -124,6 +145,32 @@ class DatabaseController {
 
 export { DatabaseController };
 
+// Indexes backing the hot query paths. Created lazily (once per database, per
+// process) in the background — createIndex is idempotent so racing processes
+// are safe, and a failure only costs query speed, never correctness.
+const indexedDbNames = new Set<string>();
+
+function ensureIndexesInBackground(controller: DatabaseController): void {
+    // Unit tests run without Mongo; skip so vitest never waits on connect retries.
+    if (process.env.VITEST) return;
+    if (indexedDbNames.has(controller.dbName)) return;
+    indexedDbNames.add(controller.dbName);
+
+    void Promise.all([
+        // Every event read/update path filters on the client-generated `id`.
+        controller.events.createIndex({ id: 1 }),
+        // Calendar views fetch by date window (getDbEventsInRange).
+        controller.events.createIndex({ startTime: 1, endTime: 1 }),
+        // Snapshot listing sorts newest-first.
+        controller.calendarSnapshots.createIndex({ createdAt: -1 }),
+    ]).catch((error) => {
+        console.error(
+            `Failed to ensure Mongo indexes on "${controller.dbName}"`,
+            error,
+        );
+    });
+}
+
 // One controller per database name. `.db()` handles are cheap so the cost here
 // is just the small per-database collection wrappers.
 const controllerCache = new Map<string, DatabaseController>();
@@ -139,6 +186,7 @@ export function getDatabaseController(
     if (!controller) {
         controller = new DatabaseController(dbName);
         controllerCache.set(dbName, controller);
+        ensureIndexesInBackground(controller);
     }
     return controller;
 }
@@ -159,15 +207,35 @@ class MetaController {
     public get iterations(): Collection<Iteration> {
         return this.metaDb.collection<Iteration>("iterations");
     }
+    /** Per-user personal settings (favorites etc.), shared across all iterations. */
+    public get personalSettings(): Collection<PersonalSettingsDocument> {
+        return this.metaDb.collection<PersonalSettingsDocument>(
+            "personalSettings",
+        );
+    }
+    public get customColors(): Collection<CustomColor> {
+        return this.metaDb.collection<CustomColor>("customColors");
+    }
     public get client(): MongoClient {
         return mongoClient;
     }
 }
 
+export type PersonalSettingsDocument = PersonalSettings & { userId: string };
+
 let _metaController: MetaController | null = null;
 export function getMetaController(): MetaController {
     if (!_metaController) {
         _metaController = new MetaController();
+        if (!process.env.VITEST) {
+            // The registry is consulted on every iteration-scoped request.
+            void Promise.all([
+                _metaController.iterations.createIndex({ id: 1 }),
+                _metaController.iterations.createIndex({ isCurrent: 1 }),
+            ]).catch((error) => {
+                console.error("Failed to ensure iteration registry indexes", error);
+            });
+        }
     }
     return _metaController;
 }

@@ -89,7 +89,7 @@ export const AuthProvider = ({
 
     useEffect(() => {
         if (session && (session as any).error === "TokenExpiredError") {
-            enqueueSnackbar("ההתחברות שלך פגה. אנא התחבר מחדש.", {
+            enqueueSnackbar("עבר הרבה זמן... בואו נתחבר מחדש", {
                 variant: "warning",
             });
             logout();

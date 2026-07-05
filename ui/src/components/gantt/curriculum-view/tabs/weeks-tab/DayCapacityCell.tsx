@@ -258,7 +258,7 @@ export function DayCapacityCell({
                             <Tooltip
                                 arrow
                                 title={
-                                    week?.weekendDuty ? "צא הביתה" : "סגור שבת"
+                                    week?.weekendDuty ? "יציאה הביתה" : "סגירת שבת"
                                 }
                             >
                                 <Switch
@@ -343,7 +343,7 @@ export function DayCapacityCell({
                             <Tooltip
                                 arrow
                                 title={
-                                    week?.weekendDuty ? "צא הביתה" : "סגור שבת"
+                                    week?.weekendDuty ? "יציאה הביתה" : "סגירת שבת"
                                 }
                             >
                                 <Switch

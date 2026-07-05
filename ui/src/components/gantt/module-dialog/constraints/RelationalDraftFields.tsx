@@ -57,7 +57,7 @@ export function RelationalDraftFields({
                         });
                     }}
                     renderValue={(value) => {
-                        if (!value) return "בחר יעד";
+                        if (!value) return "בחירת יעד";
                         for (const group of Object.values(targetOptions)) {
                             const found = group.find((o) => o.id === value);
                             if (found) return found.label;

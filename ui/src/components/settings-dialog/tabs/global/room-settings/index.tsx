@@ -1,4 +1,3 @@
-import Box from "@mui/material/Box";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -12,7 +11,9 @@ import
     RoomSource,
 } from "@/api-shared/types/room";
 import { useRooms } from "@/components/base/RoomsProvider";
-import { RoomFormCard } from "@/components/settings-dialog/tabs/global/room-settings/RoomFormCard";
+import { SettingsTab } from "@/components/settings-dialog/tabs/global/common";
+import { useConfirmDialog } from "@/components/settings-dialog/tabs/global/common/UseConfirmDialog";
+import { RoomFormCard, RoomFormCardProps } from "@/components/settings-dialog/tabs/global/room-settings/RoomFormCard";
 import { RoomListCard } from "@/components/settings-dialog/tabs/global/room-settings/RoomListCard";
 
 const DEFAULT_EXTENDED_INFO: RoomExtendedInfo = {
@@ -27,6 +28,7 @@ export function RoomSettings()
     const { rooms, addRoom, updateRoom, deleteRoom, updateRoomExtendedInfo } =
         useRooms();
     const { enqueueSnackbar } = useSnackbar();
+    const { confirm, confirmDialog } = useConfirmDialog();
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -242,7 +244,7 @@ export function RoomSettings()
     const handleDelete = useCallback(
         async (roomId: string) =>
         {
-            if (window.confirm("האם אתה בטוח שברצונך למחוק חדר זה?"))
+            if (await confirm("האם אתה בטוח שברצונך למחוק חדר זה?"))
             {
                 try
                 {
@@ -261,48 +263,44 @@ export function RoomSettings()
                 }
             }
         },
-        [ selectedRoom, handleCancelEdit, deleteRoom, enqueueSnackbar ],
+        [ selectedRoom, handleCancelEdit, deleteRoom, enqueueSnackbar, confirm ],
     );
 
     return (
-        <Box
-            sx={ {
-                display: "flex",
-                flexDirection: { xs: "column", lg: "row" },
-                gap: 3,
-                alignItems: "stretch",
-                justifyContent: "center",
-                width: "100%",
-            } }
-        >
-            <RoomListCard
-                filteredRooms={ filteredRooms }
-                handleDelete={ handleDelete }
-                handleStartCreate={ handleStartCreate }
-                populateFormFromRoom={ populateFormFromRoom }
-                searchQuery={ searchQuery }
-                selectedRoom={ selectedRoom }
-                setSearchQuery={ setSearchQuery }
-            />
+        <>
+            <SettingsTab<Room, RoomFormCardProps>
+                FormCard={ RoomFormCard }
+                formCardProps={ {
+                    description
+                    , handleCancelEdit
+                    , handleSave
+                    , isCreating
+                    , lectureComfortable
+                    , lectureSeatCount
+                    , name
+                    , peAyin
+                    , setDescription
+                    , setLectureComfortable
+                    , setLectureSeatCount
+                    , setName
+                    , setPeAyin
+                    , setWorkstationCount
+                    , workstationCount
+                } }
+                ListCard={ RoomListCard }
 
-            <RoomFormCard
-                description={ description }
-                handleCancelEdit={ handleCancelEdit }
-                handleSave={ handleSave }
-                isCreating={ isCreating }
-                lectureComfortable={ lectureComfortable }
-                lectureSeatCount={ lectureSeatCount }
-                name={ name }
-                peAyin={ peAyin }
-                selectedRoom={ selectedRoom }
-                setDescription={ setDescription }
-                setLectureComfortable={ setLectureComfortable }
-                setLectureSeatCount={ setLectureSeatCount }
-                setName={ setName }
-                setPeAyin={ setPeAyin }
-                setWorkstationCount={ setWorkstationCount }
-                workstationCount={ workstationCount }
+                listCardProps={ {
+                    filteredEntities: filteredRooms,
+                    handleDelete,
+                    handleStartCreate,
+                    populateFormFrom: populateFormFromRoom,
+                    searchQuery,
+                    setSearchQuery,
+                } }
+
+                selectedEntity={ selectedRoom }
             />
-        </Box>
+            { confirmDialog }
+        </>
     );
 }

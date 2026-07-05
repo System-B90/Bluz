@@ -10,6 +10,8 @@ export const ganttSyllabusesSchema = pgTable("s", {
     id: text("id").primaryKey(),
     title: text("title").notNull(),
     hiveIds: integer("hive_ids").array().notNull().default([]),
+    // Student group ("shuffle") names, e.g. ["ניצה", "לחם"]. Empty ⇒ one group.
+    shuffles: text("shuffles").array().notNull().default([]),
     createdAt: timestamp("ca").defaultNow().notNull(),
     updatedAt: timestamp("ua").defaultNow().notNull(),
 });

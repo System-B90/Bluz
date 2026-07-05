@@ -14,6 +14,8 @@ export const ganttModulesSchema = pgTable("m", {
     title: text("title").notNull(),
     description: text("desc").notNull().default(""),
     hiveIds: integer("hive_ids").array().notNull().default([]),
+    // Shuffle names this module applies to. Empty ⇒ all shuffles.
+    shuffles: text("shuffles").array().notNull().default([]),
     createdAt: timestamp("ca").defaultNow().notNull(),
     updatedAt: timestamp("ua").defaultNow().notNull(),
 });

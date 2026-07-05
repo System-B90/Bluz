@@ -6,12 +6,14 @@ import { useMemo } from "react";
 import { EventProps } from "react-big-calendar";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
+import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
+import { resolveEventColor } from "@/components/schedule/event-component/event-colors";
 import { EventTooltipContent } from "@/components/schedule/event-component/EventTooltip";
 import { UnifiedEvent } from "@/components/schedule/event-component/UnifiedEvent";
 import { useElementSize } from "@/components/schedule/event-component/utils";
-import { Event, EventType } from "@/components/schedule/types/event";
+import { Event } from "@/components/schedule/types/event";
 
 export type ContainerSize = {
     width: number;
@@ -21,15 +23,19 @@ export type ContainerSize = {
 export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
     const theme = useTheme();
     const { getSubject } = useHiveSubjects();
+    const { getCustomColor } = useCustomColors();
     const { eventFilteredOpacity } = useCalendarFilters();
     const { eventLocks } = useCalendar();
 
     const lock = eventLocks[event.id];
 
     const subject = getSubject(event.subject);
-    const bgColor =
-        (event.type === EventType.PRAYER ? "#e0f9fe" : subject?.color) ??
-        theme.palette.common.black;
+    const bgColor = resolveEventColor(
+        event,
+        subject,
+        { getCustomColor, getSubject },
+        theme.palette.common.black,
+    );
     const textColor = theme.palette.getContrastText(bgColor);
 
     const { ref, size } = useElementSize<HTMLDivElement>();
@@ -66,6 +72,12 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
                     boxSizing: "border-box",
                     position: "relative",
                     overflow: "hidden",
+                    /* Fake (פיקטיבי) events read as placeholders for
+                       Checkers/Segel: dashed outline + reduced opacity (#102). */
+                    ...(event.fake && {
+                        border: `2px dashed ${alpha(textColor, 0.65)}`,
+                        opacity: 0.75,
+                    }),
                     /* Contrast-aware accent tokens for child components */
                     "--event-border": alpha(textColor, 0.25),
                     "--event-divider": alpha(textColor, 0.18),
@@ -74,6 +86,23 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
                 }}
             >
                 <UnifiedEvent event={event} size={size} />
+
+                {event.fake ? (
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            bottom: 2,
+                            insetInlineEnd: 4,
+                            fontSize: "0.6rem",
+                            fontWeight: 700,
+                            letterSpacing: "0.03em",
+                            color: alpha(textColor, 0.75),
+                            pointerEvents: "none",
+                        }}
+                    >
+                        פיקטיבי
+                    </Box>
+                ) : null}
 
                 {lock ? (
                     <Tooltip

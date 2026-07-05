@@ -32,6 +32,7 @@ import {
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import { HiveLessonsView, HiveModulesView } from "@/components/gantt/module-dialog/utils";
+import { ShuffleSelect } from "@/components/gantt/ShuffleSelect";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
@@ -192,6 +193,9 @@ type ModuleDetailsFormProps = {
     setLocalDescription: (val: string) => void;
     onCommitTitle: () => void;
     onCommitDescription: () => void;
+    shuffleOptions: Array<string>;
+    shuffles: Array<string>;
+    onShufflesChange: (shuffles: Array<string>) => void;
 }
 
 function ModuleDetailsForm({
@@ -202,6 +206,9 @@ function ModuleDetailsForm({
     setLocalDescription,
     onCommitTitle,
     onCommitDescription,
+    shuffleOptions,
+    shuffles,
+    onShufflesChange,
 }: ModuleDetailsFormProps) {
     return (
         <Stack spacing={2} width="30%">
@@ -229,6 +236,12 @@ function ModuleDetailsForm({
                     "& textarea": { height: "100% !important" },
                 }}
                 value={localDescription}
+            />
+
+            <ShuffleSelect
+                onChange={onShufflesChange}
+                options={shuffleOptions}
+                value={shuffles}
             />
 
             <HiveModulesView hiveModules={hiveModules} />
@@ -385,8 +398,11 @@ function ModuleDialogInner({
                                 localTitle={localTitle}
                                 onCommitDescription={() => handleCommit({ description: localDescription })}
                                 onCommitTitle={() => handleCommit({ title: localTitle })}
+                                onShufflesChange={(shuffles) => handleCommit({ shuffles })}
                                 setLocalDescription={setLocalDescription}
                                 setLocalTitle={setLocalTitle}
+                                shuffleOptions={syllabus?.shuffles ?? []}
+                                shuffles={moduleDoc?.shuffles ?? []}
                             />
 
                             <Divider flexItem orientation="vertical" />

@@ -20,92 +20,96 @@ export function SystemRequirementsField({
 }: {
     requirements: Array<string>;
     onChange: (requirements: Array<string>) => void;
-}) {
-    const [local, setLocal] = useState<Array<string>>(requirements);
+})
+{
+    const [ local, setLocal ] = useState<Array<string>>(requirements);
 
     // Keep local in sync when the underlying event changes (e.g. navigation).
-    useEffect(() => {
+    useEffect(() =>
+    {
         setLocal(requirements);
-    }, [requirements]);
+    }, [ requirements ]);
 
     const commit = useCallback(
-        (next: Array<string>) => {
+        (next: Array<string>) =>
+        {
             const cleaned = next.map((r) => r.trim()).filter((r) => r.length > 0);
             // Avoid a write when nothing actually changed.
             if (
                 cleaned.length === requirements.length &&
-                cleaned.every((r, i) => r === requirements[i])
-            ) {
+                cleaned.every((r, i) => r === requirements[ i ])
+            )
+            {
                 return;
             }
             onChange(cleaned);
         },
-        [requirements, onChange],
+        [ requirements, onChange ],
     );
 
-    const handleEdit = useCallback((index: number, value: string) => {
+    const handleEdit = useCallback((index: number, value: string) =>
+    {
         setLocal((prev) => prev.map((r, i) => (i === index ? value : r)));
     }, []);
 
-    const handleAdd = useCallback(() => {
-        setLocal((prev) => [...prev, ""]);
+    const handleAdd = useCallback(() =>
+    {
+        setLocal((prev) => [ ...prev, "" ]);
     }, []);
 
     const handleRemove = useCallback(
-        (index: number) => {
-            setLocal((prev) => {
+        (index: number) =>
+        {
+            setLocal((prev) =>
+            {
                 const next = prev.filter((_, i) => i !== index);
                 commit(next);
                 return next;
             });
         },
-        [commit],
+        [ commit ],
     );
 
     return (
-        <Stack spacing={1}>
-            <Typography sx={{ fontWeight: "bold" }} variant="subtitle2">
-                דרישות מערכת
-            </Typography>
-
-            {local.length === 0 && (
+        <Stack spacing={ 1 }>
+            { local.length === 0 && (
                 <Typography color="text.secondary" variant="body2">
-                    לא הוגדרו דרישות מערכת.
+                    לא הוגדרו דרישות סיסטם.
                 </Typography>
-            )}
+            ) }
 
-            <Stack spacing={0.5}>
-                {local.map((req, index) => (
+            <Stack spacing={ 0.5 }>
+                { local.map((req, index) => (
                     <Box
                         alignItems="center"
                         display="flex"
-                        gap={1}
-                        key={index}
+                        gap={ 1 }
+                        key={ index }
                     >
                         <TextField
                             fullWidth
-                            onBlur={() => commit(local)}
-                            onChange={(e) => handleEdit(index, e.target.value)}
+                            onBlur={ () => commit(local) }
+                            onChange={ (e) => handleEdit(index, e.target.value) }
                             placeholder="דרישה..."
                             size="small"
-                            value={req}
+                            value={ req }
                         />
                         <IconButton
                             color="error"
-                            onClick={() => handleRemove(index)}
+                            onClick={ () => handleRemove(index) }
                             size="small"
                         >
                             <DeleteIcon fontSize="small" />
                         </IconButton>
                     </Box>
-                ))}
+                )) }
             </Stack>
 
             <Button
-                onClick={handleAdd}
+                onClick={ handleAdd }
                 size="small"
-                startIcon={<AddIcon />}
-                sx={{ alignSelf: "flex-start" }}
+                startIcon={ <AddIcon /> }
+                sx={ { alignSelf: "flex-start" } }
             >
                 הוספת דרישה
             </Button>

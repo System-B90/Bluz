@@ -14,6 +14,7 @@ tags: [docker, dev-env, playwright, diagnostics]
 ```powershell
 npm run dev   # copies .env → ui/.env, starts proxy container + Next.js on host
 ```
+If port 3000 is already in use, don't start another server — browse to `https://bluz.dev` to test local changes; it's already wired to the dev server and picks up HMR.
 
 **Docker-based (needed for Nginx/proxy changes):**
 ```powershell

@@ -3,7 +3,8 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 
-import {
+import
+{
     Event,
     EventType,
     PrayerEvent,
@@ -20,26 +21,27 @@ export function PrayerTypeField({
     event,
     onEventChange,
     ...props
-}: PrayerTypeFieldProps & FormControlProps) {
+}: PrayerTypeFieldProps & FormControlProps)
+{
     const prayerTypeItems = Object.values(PrayerType).map((prayerType) => (
-        <MenuItem key={prayerType} value={prayerType}>
-            {prayerTypeToHebrew(prayerType)}
+        <MenuItem key={ prayerType } value={ prayerType }>
+            { prayerTypeToHebrew(prayerType) }
         </MenuItem>
     ));
 
     return (
         <FormControl
-            disabled={event?.type !== EventType.PRAYER}
-            fullWidth={false}
-            {...props}
+            disabled={ event?.type !== EventType.PRAYER }
+            fullWidth={ false }
+            { ...props }
         >
             <InputLabel>תפילת</InputLabel>
             <Select
                 label="תפילת"
-                onChange={(e) => onEventChange({ prayerType: e.target.value })}
-                value={(event as PrayerEvent)?.prayerType || ""}
+                onChange={ (e) => onEventChange({ prayerType: e.target.value }) }
+                value={ (event as PrayerEvent)?.prayerType || "" }
             >
-                {prayerTypeItems}
+                { prayerTypeItems }
             </Select>
         </FormControl>
     );

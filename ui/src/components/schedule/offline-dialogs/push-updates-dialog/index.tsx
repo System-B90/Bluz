@@ -20,7 +20,10 @@ import { useOffline } from "@/components/base/OfflineProvider";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { EventCollisionsList } from "@/components/schedule/offline-dialogs/push-updates-dialog/EventCollisionsList";
 import { CollisionStates } from "@/components/schedule/offline-dialogs/push-updates-dialog/types";
-import { areDiffValuesEqual } from "@/components/schedule/offline-dialogs/push-updates-dialog/utils";
+import {
+    areDiffValuesEqual,
+    getSubmitLabel,
+} from "@/components/schedule/offline-dialogs/push-updates-dialog/utils";
 import { EventId } from "@/components/schedule/types/event";
 
 export function PushOfflineUpdatesDialog() {
@@ -258,6 +261,7 @@ export function PushOfflineUpdatesDialog() {
     );
 
     const hasChanges = Object.keys(collisionStates).length > 0;
+    const submitLabel = getSubmitLabel(collisionStates, selectedIds);
 
     return (
         <Dialog
@@ -285,7 +289,7 @@ export function PushOfflineUpdatesDialog() {
                                 sx={{ mb: 1 }}
                                 variant="body2"
                             >
-                                להלן השינויים שביצעת בזמן שהיית במצב לוקלי. סמן
+                                להלן השינויים שביצעת בזמן שהיית במצב לוקלי. יש לסמן
                                 את השינויים שברצונך לשמור לשרת. שינויים שלא
                                 יסומנו ישוחזרו לגרסת השרת הנוכחית.
                             </Typography>
@@ -334,7 +338,7 @@ export function PushOfflineUpdatesDialog() {
                         type="submit"
                         variant="contained"
                     >
-                        {loading ? "שומר..." : "שמור שינויים מסומנים"}
+                        {loading ? "שומר..." : submitLabel}
                     </Button>
                 </DialogActions>
             </form>

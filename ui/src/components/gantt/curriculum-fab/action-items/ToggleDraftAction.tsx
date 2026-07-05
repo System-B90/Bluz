@@ -16,6 +16,7 @@ export function ToggleDraftAction({
     sourceCurriculum,
     onUpdate,
     onProcessingChange,
+    loading,
     ...props
 }: ToggleDraftActionProps) {
     const runAction = useAsyncAction(onProcessingChange);
@@ -33,6 +34,7 @@ export function ToggleDraftAction({
     return (
         <ActionItemButton
             color={sourceCurriculum?.isDraft ? "success" : "warning"}
+            loading={loading}
             onClick={clickHandler}
             startIcon={
                 sourceCurriculum?.isDraft ? (

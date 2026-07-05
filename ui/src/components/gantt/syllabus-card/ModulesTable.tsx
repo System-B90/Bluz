@@ -136,7 +136,7 @@ export function ModulesTable({
                                             color="textSecondary"
                                             variant="caption"
                                         >
-                                            לא נמצאו מערכים. לחצו על הוסף כדי להתחיל.
+                                            לא נמצאו מערכים. לחצו על הוספה כדי להתחיל.
                                         </Typography>
                                     </TableCell>
                                 </TableRow>

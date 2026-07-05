@@ -35,6 +35,7 @@ export enum MessageTypes {
     COURSES_UPDATE = "cu",
     ROOMS_UPDATE = "ru",
     OUTSIDERS_UPDATE = "ou",
+    CUSTOM_COLORS_UPDATE = "ccu",
 
     // Period locking: broadcast that a user has started/finished editing an event
     EVENT_LOCK = "el",
