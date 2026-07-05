@@ -2,6 +2,7 @@ import {
     expect,
     test,
     SELECTORS,
+    dblclickCalendarEvent,
     getEventDialog,
     gotoAppHome,
     selectCalendarTimeRange,
@@ -336,12 +337,7 @@ test.describe("Calendar Page", () => {
         await dialog.getByRole("button", { name: "שמירה" }).click();
         await page.waitForTimeout(500);
 
-        const calendarEvent = page.locator(SELECTORS.calendarEvent).filter({
-            hasText: eventName,
-        });
-        await expect(calendarEvent.first()).toBeVisible();
-        await calendarEvent.first().dblclick({ force: true });
-        await page.waitForTimeout(400);
+        await dblclickCalendarEvent(page, eventName);
 
         const reopenedDialog = getEventDialog(page);
         await expect(reopenedDialog).toBeVisible();
