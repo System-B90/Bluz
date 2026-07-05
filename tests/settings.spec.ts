@@ -233,15 +233,10 @@ test.describe("Settings Dialog", () => {
             await addButton.first().click();
             await page.waitForTimeout(300);
 
-            // Fill room name
-            const nameInput = dialog.locator("input").filter({
-                has: page.locator("[type='text']"),
-            });
-
-            // Find the name field specifically (labeled "שם" or first text input in form area)
-            const formInputs = dialog.locator("input[type='text']");
-            if ((await formInputs.count()) > 0) {
-                await formInputs.first().fill(roomName);
+            // Fill room name (labeled "שם החדר")
+            const nameInput = dialog.getByLabel("שם החדר");
+            if ((await nameInput.count()) > 0) {
+                await nameInput.first().fill(roomName);
 
                 // Click save
                 const saveButton = dialog.getByRole("button", {
@@ -291,8 +286,8 @@ test.describe("Settings Dialog", () => {
 
             // The form should now be populated
             // Look for the extended info fields
-            const workstationLabel = dialog.getByText("עמדות מחשב");
-            const seatLabel = dialog.getByText("מקומות ישיבה");
+            const workstationLabel = dialog.getByText("כמות עמדות עבודה");
+            const seatLabel = dialog.getByText("מספר כסאות להרצאה");
 
             if ((await workstationLabel.count()) > 0) {
                 await expect(workstationLabel).toBeVisible();
