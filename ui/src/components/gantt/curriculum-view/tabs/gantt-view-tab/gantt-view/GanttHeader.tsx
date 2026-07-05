@@ -14,7 +14,6 @@ import {
     formatWeekDateRange,
     getCapacityStatus,
     getDayDate,
-    getScheduledMinutesForDay,
     getWeekDateRange,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
