@@ -372,6 +372,7 @@ test.describe("Gantt Recurring Events (#111)", () => {
             .boundingBox();
         const eventBlockBox = await page
             .locator('[id^="block-event-"]')
+            .first()
             .boundingBox();
 
         expect(moduleBlockBox).not.toBeNull();
