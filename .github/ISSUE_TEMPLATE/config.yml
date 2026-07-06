@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+    - name: 📚 Developer Documentation
+      url: https://system-b15.github.io/bluz/
+      about: Architecture, getting started, API reference, and performance docs.
+    - name: 🤖 Agent / Contributor Guide (AGENTS.md)
+      url: https://github.com/System-B15/Bluz/blob/master/AGENTS.md
+      about: The canonical guide to the codebase layout, commands, and conventions.
