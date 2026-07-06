@@ -1,3 +1,4 @@
+import LinkIcon from "@mui/icons-material/Link";
 import NotesIcon from "@mui/icons-material/Notes";
 import RecordVoiceOverOutlinedIcon from "@mui/icons-material/RecordVoiceOverOutlined";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -14,6 +15,7 @@ import { EventRecurrence, GanttEvent, GanttEventId, GanttModuleId, GanttSyllabus
 import { CollapsibleSection } from "@/components/gantt/event-dialog/CollapsibleSection";
 import { EventConstraintsView } from "@/components/gantt/event-dialog/constraints/EventConstraintsView";
 import { EventDetailsForm } from "@/components/gantt/event-dialog/DetailsForm";
+import { EventHiveLinkageFields } from "@/components/gantt/event-dialog/EventHiveLinkageFields";
 import { EventRecurrenceField, RECURRENCE_LABELS } from "@/components/gantt/event-dialog/EventRecurrenceField";
 import { EventRoomRequirementsField } from "@/components/gantt/event-dialog/EventRoomRequirementsField";
 import { RecommendedLecturersField } from "@/components/gantt/event-dialog/RecommendedLecturersField";
@@ -100,6 +102,25 @@ export function EventDialogContent({
                                 }
                                 outsiderIds={ event.recommendedLecturerIds }
                             />
+                        </CollapsibleSection>
+
+                        <CollapsibleSection
+                            chips={
+                                event.hiveLessonId !== null || event.hiveModuleId !== null || event.hiveSubjectId !== null ? (
+                                    <Chip
+                                        color="primary"
+                                        label="מקושר"
+                                        size="small"
+                                        variant="outlined"
+                                    />
+                                ) : (
+                                    <QuietChip label="לא מקושר" />
+                                )
+                            }
+                            icon={ <LinkIcon /> }
+                            title="קישור ל-Hive"
+                        >
+                            <EventHiveLinkageFields commit={ commit } event={ event } />
                         </CollapsibleSection>
 
                         <CollapsibleSection

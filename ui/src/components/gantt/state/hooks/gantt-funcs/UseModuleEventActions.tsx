@@ -39,6 +39,9 @@ export function useModuleEventActions() {
                     isCritical: false,
                     isPaWindow: false,
                     comment: null,
+                    hiveSubjectId: null,
+                    hiveModuleId: null,
+                    hiveLessonId: null,
                 });
                 dispatch({
                     type: "ADD_EVENT",

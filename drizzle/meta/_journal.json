@@ -64,6 +64,13 @@
       "when": 1783349231991,
       "tag": "0008_complete_nighthawk",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783355545763,
+      "tag": "0009_nasty_jazinda",
+      "breakpoints": true
     }
   ]
 }
