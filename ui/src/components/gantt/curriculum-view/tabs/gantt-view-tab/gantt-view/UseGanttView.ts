@@ -15,6 +15,7 @@ import { ConstraintLink } from "@/components/gantt/curriculum-view/tabs/gantt-vi
 import { useGanttConstraints } from "@/components/gantt/state/constraints/hooks";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
 export const useGanttView = (curriculumId: string) =>
 {
@@ -25,6 +26,7 @@ export const useGanttView = (curriculumId: string) =>
         moveMapping,
         removeMapping,
     } = useGanttMappings();
+    const { deleteOccurrence } = useGanttRecurrenceExceptions();
     const {
         state: { constraints },
     } = useGanttConstraints();
@@ -643,6 +645,12 @@ export const useGanttView = (curriculumId: string) =>
                         eventId: payload.eventId,
                         dayId: payload.sourceDayId,
                     });
+                } else if (payload.type === "event-occurrence")
+                {
+                    await deleteOccurrence({
+                        eventId: payload.eventId,
+                        dayId: payload.dayId,
+                    });
                 }
                 return;
             }
@@ -715,6 +723,7 @@ export const useGanttView = (curriculumId: string) =>
             moduleMappings,
             eventMappings,
             removeMapping,
+            deleteOccurrence,
             state.modules,
         ],
     );

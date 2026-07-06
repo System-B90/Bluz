@@ -13,6 +13,7 @@ import {
     recurrenceEnumSchema,
     roomRequirementEnumSchema,
 } from "./enums";
+import { ganttEventRecurrenceExceptionsSchema } from "./event-recurrence-exceptions";
 import { ganttModule2EventsSchema } from "./junctions";
 import { ganttCurriculumEventConfigurationsSchema } from "./mappings";
 
@@ -56,5 +57,6 @@ export const ganttEventsRelationsSchema = relations(
         targetedByConstraints: many(ganttConstraintsSchema, {
             relationName: "targetEvent",
         }),
+        eRE: many(ganttEventRecurrenceExceptionsSchema),
     }),
 );

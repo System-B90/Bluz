@@ -1,7 +1,12 @@
 import React from "react";
 
-import { GanttWeek } from "@/api-shared/types/gantt/models";
+import {
+    EventRecurrence,
+    GanttDayIndex,
+    GanttWeek,
+} from "@/api-shared/types/gantt/models";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
+import { getOccurrenceDayIdForWeek } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/recurrence";
 
 /** Multi-day spillover info for a mapped event (#105). */
 export type EventSpanInfo = {
@@ -25,10 +30,16 @@ type WeeklyCellsParams = {
     relativeDaySizing: boolean;
     /** Recurring event (daily/weekly). Drives repeat blocks + first-column staging (#111). */
     isRecurring: boolean;
+    /** Recurrence cadence, used to resolve the real occurrence day per week. */
+    recurrence: EventRecurrence;
     /** Whether every week already holds an occurrence — hides the first-column marker (#111). */
     recurrenceSatisfied: boolean;
     /** Index of the week holding the event's mapped start day, or -1 when unmapped (#111). */
     currentWeekIdx: number;
+    /** Day-of-week for a day id, or undefined when unknown. */
+    dayIndexOf: (dayId: string) => GanttDayIndex | undefined;
+    /** Occurrence days deleted or materialized into a standalone event. */
+    excludedDayIds: Set<string>;
 };
 
 export function buildWeeklyEventCells(
@@ -47,9 +58,14 @@ export function buildWeeklyEventCells(
         spanInfo,
         relativeDaySizing,
         isRecurring,
+        recurrence,
         recurrenceSatisfied,
         currentWeekIdx,
+        dayIndexOf,
+        excludedDayIds,
     } = params;
+
+    const startDow = currentDayId ? dayIndexOf(currentDayId) : undefined;
 
     return timelineWeeks.map((week, weekIdx) => {
         const firstDayId = week.days[ 0 ];
@@ -58,12 +74,20 @@ export function buildWeeklyEventCells(
             ? week.days.includes(currentDayId)
             : false;
 
+        // The real occurrence day within this week (weekday match for weekly
+        // recurrence; any day works for daily since it recurs every day).
+        const weekOccurrenceDayId =
+            recurrence === EventRecurrence.Weekly
+                ? getOccurrenceDayIdForWeek(week.days, startDow, dayIndexOf)
+                : firstDayId;
+
         // Recurring event: echo the start block into every following week (#111).
         const isRecurrenceWeek =
             isRecurring &&
             !isExplicitlyMappedHere &&
             currentWeekIdx !== -1 &&
-            weekIdx > currentWeekIdx;
+            weekIdx > currentWeekIdx &&
+            !(weekOccurrenceDayId && excludedDayIds.has(weekOccurrenceDayId));
 
         // Recurrence not yet satisfied ⇒ an "unallocated" marker sits in the
         // first column. Draggable staging when unmapped; a non-interactive cue
@@ -93,9 +117,11 @@ export function buildWeeklyEventCells(
 
         const blockPayload = isExplicitlyMappedHere
             ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId }
-            : isRecurrenceWeek || reminderIsMarker
-                ? { moduleId, eventId }
-                : { type: "event-map", moduleId, eventId };
+            : isRecurrenceWeek
+                ? { type: "event-occurrence", moduleId, eventId, dayId: weekOccurrenceDayId }
+                : reminderIsMarker
+                    ? { moduleId, eventId }
+                    : { type: "event-map", moduleId, eventId };
 
         const blockId = isExplicitlyMappedHere
             ? `drag-event-${eventId}-${currentDayId}`
@@ -194,7 +220,7 @@ type DailyCellsParams = {
     isRecurring: boolean;
     /** Whether every week already holds an occurrence — hides the first-column marker (#111). */
     recurrenceSatisfied: boolean;
-    /** Days a recurring event repeats onto, excluding its start day (#111). */
+    /** Days a recurring event repeats onto, excluding its start day and excepted days (#111). */
     recurrenceDayIds: Set<string>;
     /** First day of the timeline — where an unallocated recurring event is staged (#111). */
     firstDayId: null | string;
@@ -261,9 +287,11 @@ export function buildDailyEventCells(
 
             const blockPayload = isExplicitlyMappedHere
                 ? { type: "event-move", moduleId, eventId, sourceDayId: dayId }
-                : isRecurrenceOccurrence || reminderIsMarker
-                    ? { moduleId, eventId }
-                    : { type: "event-map", moduleId, eventId };
+                : isRecurrenceOccurrence
+                    ? { type: "event-occurrence", moduleId, eventId, dayId }
+                    : reminderIsMarker
+                        ? { moduleId, eventId }
+                        : { type: "event-map", moduleId, eventId };
 
             const blockId = isExplicitlyMappedHere
                 ? `drag-event-${eventId}-${dayId}`

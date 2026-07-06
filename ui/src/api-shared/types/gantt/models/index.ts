@@ -28,6 +28,7 @@ export type {
     GanttModule,
     GanttModuleId,
 } from "@/api-shared/types/gantt/models/module";
+export type { GanttEventRecurrenceException } from "@/api-shared/types/gantt/models/recurrence-exception";
 export type { BaseGantItem } from "@/api-shared/types/gantt/models/shared";
 export type {
     GanttSyllabus,

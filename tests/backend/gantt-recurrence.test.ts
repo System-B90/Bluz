@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { EventRecurrence, GanttDayIndex } from "@/api-shared/types/gantt/models";
 import {
+    getOccurrenceDayIdForWeek,
     getRecurrenceOccurrenceDayIds,
     isRecurrenceSatisfied,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/recurrence";
@@ -77,6 +78,58 @@ describe("getRecurrenceOccurrenceDayIds", () => {
             dayIndexOf,
         });
         expect(ids.size).toBe(0);
+    });
+
+    it("skips excluded days for daily recurrence (deleted/materialized occurrences)", () => {
+        const ids = getRecurrenceOccurrenceDayIds({
+            recurrence: EventRecurrence.Daily,
+            startDayId: "d3",
+            linearDays,
+            dayIndexOf,
+            excludedDayIds: new Set(["d5", "d8"]),
+        });
+        expect([...ids].sort()).toEqual(
+            ["d4", "d6", "d7", "d9", "d10", "d11", "d12", "d13"].sort(),
+        );
+    });
+
+    it("skips an excluded day for weekly recurrence", () => {
+        // d2 and d9 share a weekday; excluding d9 leaves no occurrences.
+        const ids = getRecurrenceOccurrenceDayIds({
+            recurrence: EventRecurrence.Weekly,
+            startDayId: "d2",
+            linearDays,
+            dayIndexOf,
+            excludedDayIds: new Set(["d9"]),
+        });
+        expect(ids.size).toBe(0);
+    });
+});
+
+describe("getOccurrenceDayIdForWeek", () => {
+    const linearDays = Array.from({ length: 14 }, (_, i) => `d${i}`);
+    const dayIndexOf = (dayId: string): GanttDayIndex | undefined => {
+        const i = linearDays.indexOf(dayId);
+        if (i === -1) return undefined;
+        return (i % 7) as GanttDayIndex;
+    };
+    const week2Days = linearDays.slice(7, 14);
+
+    it("finds the day within the week matching the start weekday", () => {
+        const dow = dayIndexOf("d2");
+        expect(getOccurrenceDayIdForWeek(week2Days, dow, dayIndexOf)).toBe("d9");
+    });
+
+    it("returns null when the start weekday is unknown", () => {
+        expect(
+            getOccurrenceDayIdForWeek(week2Days, undefined, dayIndexOf),
+        ).toBeNull();
+    });
+
+    it("returns null when no day in the week matches the weekday", () => {
+        expect(
+            getOccurrenceDayIdForWeek([], dayIndexOf("d2"), dayIndexOf),
+        ).toBeNull();
     });
 });
 

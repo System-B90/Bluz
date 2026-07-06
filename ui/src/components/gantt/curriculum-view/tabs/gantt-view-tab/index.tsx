@@ -6,6 +6,7 @@ import { CurriculumGanttViewInner } from "@/components/gantt/curriculum-view/tab
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
+import { GanttRecurrenceExceptionProvider } from "@/components/gantt/state/recurrence-exceptions/Provider";
 
 /**
  * Properties for the {@link CurriculumGanttView} component.
@@ -30,11 +31,13 @@ export function CurriculumGanttView({
 
     return (
         <GanttMappingProvider curriculumId={curriculumId}>
-            <GanttConstraintProvider
-                context={{ curriculumId, type: "curriculum" }}
-            >
-                <CurriculumGanttViewInner curriculumId={curriculumId} />
-            </GanttConstraintProvider>
+            <GanttRecurrenceExceptionProvider curriculumId={curriculumId}>
+                <GanttConstraintProvider
+                    context={{ curriculumId, type: "curriculum" }}
+                >
+                    <CurriculumGanttViewInner curriculumId={curriculumId} />
+                </GanttConstraintProvider>
+            </GanttRecurrenceExceptionProvider>
         </GanttMappingProvider>
     );
 }

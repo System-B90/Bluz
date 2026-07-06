@@ -19,6 +19,11 @@ export {
 export { ganttEventsRelationsSchema, ganttEventsSchema } from "./events";
 export
 {
+    ganttEventRecurrenceExceptionsRelationsSchema,
+    ganttEventRecurrenceExceptionsSchema
+} from "./event-recurrence-exceptions";
+export
+{
     ganttCurriculum2SyllabusesRelationsSchema,
     ganttCurriculum2SyllabusesSchema,
     ganttCurriculum2WeeksRelationsSchema,

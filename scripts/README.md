@@ -11,6 +11,10 @@ This directory contains utility files, developer tools, database seeding scripts
 - This directory contains self-contained shell files (`.sh`), Python scripts (`.py`), and raw JavaScript tasks (`.js`) designed to run directly in terminal shells.
 - **Seeding & Setups**: Automated setups to prepare databases (e.g., populating Hive mocks, running migrations scripts).
 - **Code Refactoring Helpers**: Custom JS ast runners used during large-scale code transformations (e.g., standardizing imports, removing redundant files).
+- **`tools_impl.py`**: implementation behind the root [`tools.py`](../tools.py) CLI — a
+  Typer-based wrapper around the npm/docker scripts (`dev`, `lint`, `test`, `db`, `docker`),
+  optimized for agentic use (backgrounded dev server + `dev status`/`dev stop`, concise
+  output). Extend this file, not `tools.py`, when adding new subcommands.
 
 ---
 
