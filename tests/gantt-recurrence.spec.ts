@@ -1,0 +1,252 @@
+import { Locator, Page } from "@playwright/test";
+
+import { test, expect, waitForAppLoad } from "./fixtures";
+
+/**
+ * Gantt timeline recurring-event integration tests (#111).
+ *
+ * Covers: setting an event's recurrence, mapping it to the first week (which
+ * satisfies a weekly recurrence — an occurrence exists in every week), and the
+ * resulting repeat blocks/unallocated marker in the timeline (רצף זמן) tab.
+ *
+ * Each test creates its own curriculum so the timeline/hierarchy state starts
+ * empty and deterministic.
+ */
+
+async function createAndSelectCurriculum(page: Page): Promise<void> {
+    const fab = page.getByRole("button", { name: "גאנטים" });
+    await fab.click();
+
+    const draftButton = page.getByRole("button", { name: "דראפט חדש" });
+    await expect(draftButton).toBeVisible({ timeout: 10_000 });
+    await draftButton.click();
+
+    await expect(page).toHaveURL(/cid=/, { timeout: 10_000 });
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+}
+
+/** Adds `count` weeks to the currently-selected curriculum via the weeks tab. */
+async function addWeeks(page: Page, count: number): Promise<void> {
+    await page.getByRole("tab", { name: "שבועות" }).click();
+
+    const manageButton = page.getByRole("button", { name: "ניהול אורך קורס" });
+    await expect(manageButton).toBeVisible({ timeout: 10_000 });
+
+    for (let i = 0; i < count; i++) {
+        await manageButton.click();
+        await page
+            .getByRole("menuitem", { name: "הוספת שבוע לסוף הקורס" })
+            .click();
+        await page.waitForTimeout(300);
+    }
+}
+
+/**
+ * Creates a syllabus and a module (via the "create module" action, which also
+ * seeds two default events: a lecture "הרצאת מבוא" and an exercise 'ע"ע', and
+ * opens the module dialog). Returns the lecture event's title for lookup.
+ */
+async function createModuleWithEvents(page: Page): Promise<string> {
+    await page.getByRole("tab", { name: "סילבוסים" }).click();
+
+    await page.getByRole("button", { name: "סילבוס חדש" }).click();
+    await page.waitForTimeout(300);
+
+    // The new syllabus card starts collapsed — expand it to reveal its actions.
+    await page.getByRole("button", { name: "עוד" }).first().click();
+
+    // Plain Tooltip+IconButton (no aria-label on the button itself — MUI's
+    // Tooltip puts aria-label on the wrapping <span>, not the inner <button>).
+    const createModuleButton = page
+        .locator(
+            'span[title="יצירת מערך חדש"] button, span[aria-label="יצירת מערך חדש"] button',
+        )
+        .first();
+    await expect(createModuleButton).toBeVisible({ timeout: 10_000 });
+    await createModuleButton.click();
+
+    // Creating the module opens its dialog automatically.
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
+
+    return "הרצאת מבוא";
+}
+
+/** Opens the event dialog for `eventTitle` (must be visible in an open module dialog). */
+async function openEventEditDialog(page: Page, eventTitle: string): Promise<Locator> {
+    await page.getByTitle("עריכת המופע").first().click();
+
+    const eventDialog = page
+        .getByRole("dialog")
+        .filter({ hasText: `עריכת מופע: ${eventTitle}` });
+    await expect(eventDialog).toBeVisible({ timeout: 10_000 });
+    return eventDialog;
+}
+
+/**
+ * Closes an open event dialog, then the module dialog behind it. Waits for the
+ * event dialog to fully unmount before checking for the module dialog — doing
+ * this check too early can match the still-fading-out event dialog too,
+ * confusing which "סגירה" button gets clicked.
+ */
+async function closeEventAndModuleDialogs(
+    page: Page,
+    eventDialog: Locator,
+): Promise<void> {
+    await eventDialog.getByRole("button", { name: "סגירה" }).click();
+    await expect(eventDialog).not.toBeVisible();
+
+    const moduleDialog = page.getByRole("dialog");
+    if (await moduleDialog.count() > 0) {
+        const closeButton = moduleDialog.getByRole("button", { name: "סגירה" });
+        if (await closeButton.count() > 0) {
+            await closeButton.click();
+        } else {
+            await page.keyboard.press("Escape");
+        }
+    }
+    await page.waitForTimeout(300);
+}
+
+/** Opens the event dialog for `eventTitle` and sets its recurrence. */
+async function setEventRecurrence(
+    page: Page,
+    eventTitle: string,
+    recurrenceLabel: "יומי" | "שבועי",
+): Promise<void> {
+    const eventDialog = await openEventEditDialog(page, eventTitle);
+
+    // The recurrence field lives in a collapsed "שיבוץ ודרישות" accordion.
+    await eventDialog.getByText("שיבוץ ודרישות").click();
+
+    const recurrenceSelect = eventDialog
+        .locator(".MuiFormControl-root")
+        .filter({ hasText: "חזרה" })
+        .getByRole("combobox");
+    await expect(recurrenceSelect).toBeVisible({ timeout: 5_000 });
+    await recurrenceSelect.click();
+
+    await page.getByRole("option", { name: recurrenceLabel }).click();
+    await expect(recurrenceSelect).toHaveText(recurrenceLabel);
+
+    await closeEventAndModuleDialogs(page, eventDialog);
+}
+
+/**
+ * Expands the (single) module row on the "רצף זמן" timeline so its event rows
+ * render, then locates the event's row by its label text.
+ */
+async function getTimelineEventRow(
+    page: Page,
+    eventTitle: string,
+): Promise<Locator> {
+    const moduleRow = page.locator('[id^="gantt-row-module-"]');
+    await expect(moduleRow).toBeVisible({ timeout: 10_000 });
+
+    const eventRow = page
+        .locator('[id^="gantt-row-event-"]')
+        .filter({ hasText: eventTitle });
+
+    if ((await eventRow.count()) === 0) {
+        // Module rows start collapsed; the "▶"/"▼" toggle has no accessible
+        // name, so it's targeted structurally within the module row.
+        await moduleRow.locator("span").filter({ hasText: "▶" }).first().click();
+    }
+
+    return eventRow;
+}
+
+/** Drags the row's staged/anchor block by a few px within its own cell, to trigger a map-to-day drop. */
+async function dragBlockWithinItsCell(page: Page, block: Locator): Promise<void> {
+    const box = await block.boundingBox();
+    if (!box) throw new Error("Gantt block not found for drag");
+
+    const startX = box.x + box.width / 2;
+    const startY = box.y + box.height / 2;
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 20, startY, { steps: 8 });
+    await page.mouse.up();
+    await page.waitForTimeout(500);
+}
+
+test.describe("Gantt Recurring Events (#111)", () => {
+    // Each test builds a syllabus/module/event hierarchy from scratch (several
+    // sequential API round-trips) before touching the timeline — comfortably
+    // under the default 15s on a healthy machine, but tight under load.
+    test.describe.configure({ timeout: 60_000 });
+
+    test.beforeEach(async ({ page }) => {
+        await page.goto("/gantt");
+        await waitForAppLoad(page);
+        await createAndSelectCurriculum(page);
+        // Two weeks: enough to distinguish "satisfied" (starts week 1) from
+        // "not yet satisfied" (a later week wouldn't cover week 1).
+        await addWeeks(page, 2);
+    });
+
+    test("weekly recurring event repeats into every later week once mapped to the first week", async ({
+        page,
+    }) => {
+        const eventTitle = await createModuleWithEvents(page);
+        await setEventRecurrence(page, eventTitle, "שבועי");
+
+        await page.getByRole("tab", { name: "רצף זמן" }).click();
+        await page.waitForTimeout(500);
+
+        const eventRow = await getTimelineEventRow(page, eventTitle);
+        await expect(eventRow).toBeVisible({ timeout: 10_000 });
+
+        // Before mapping: an unallocated marker (draggable, no recurrence echo yet).
+        const stagedBlock = eventRow.locator('[id^="block-event-"]');
+        await expect(stagedBlock).toBeVisible({ timeout: 10_000 });
+        await expect(eventRow.locator("[data-gantt-recurrence]")).toHaveCount(0);
+
+        // Map it — a small drag within the same (first-week) cell.
+        await dragBlockWithinItsCell(page, stagedBlock);
+
+        // Now mapped in week 1 ⇒ recurrence satisfied ⇒ a repeat echo appears
+        // in every later week (we added 2 weeks total, so exactly one echo).
+        await expect(eventRow.locator("[data-gantt-recurrence]")).toHaveCount(1, {
+            timeout: 10_000,
+        });
+    });
+
+    test("shows an unallocated marker for an unmapped recurring event", async ({
+        page,
+    }) => {
+        const eventTitle = await createModuleWithEvents(page);
+        await setEventRecurrence(page, eventTitle, "יומי");
+
+        await page.getByRole("tab", { name: "רצף זמן" }).click();
+        await page.waitForTimeout(500);
+
+        const eventRow = await getTimelineEventRow(page, eventTitle);
+        await expect(eventRow).toBeVisible({ timeout: 10_000 });
+
+        // Recurrence unsatisfied (never mapped) ⇒ a draggable staged block sits
+        // in the first column, and no repeat echoes exist yet.
+        await expect(eventRow.locator('[id^="block-event-"]')).toBeVisible({
+            timeout: 10_000,
+        });
+        await expect(eventRow.locator("[data-gantt-recurrence]")).toHaveCount(0);
+    });
+
+    test("non-recurring events are unaffected by the recurrence machinery", async ({
+        page,
+    }) => {
+        const eventTitle = await createModuleWithEvents(page);
+        // Leave recurrence at its default (ללא / None) — just open+close to
+        // exercise the same dialog path without setting anything.
+        const eventDialog = await openEventEditDialog(page, eventTitle);
+        await closeEventAndModuleDialogs(page, eventDialog);
+
+        await page.getByRole("tab", { name: "רצף זמן" }).click();
+        await page.waitForTimeout(500);
+
+        const eventRow = await getTimelineEventRow(page, eventTitle);
+        await expect(eventRow).toBeVisible({ timeout: 10_000 });
+        await expect(eventRow.locator("[data-gantt-recurrence]")).toHaveCount(0);
+    });
+});

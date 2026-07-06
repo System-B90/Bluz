@@ -13,6 +13,11 @@ import
     buildWeeklyEventCells,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventCells";
 import { GanttEventLabelCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventLabelCell";
+import
+{
+    getRecurrenceOccurrenceDayIds,
+    isRecurrenceSatisfied,
+} from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/recurrence";
 import { GanttEventRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import
 {
@@ -74,35 +79,21 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
             ? formatHoursLabel(event.minimumDuration ?? 0)
             : undefined;
 
-    const isRecurring =
-        !!event && event.recurrence !== EventRecurrence.None;
+    const recurrence = event?.recurrence ?? EventRecurrence.None;
+    const isRecurring = recurrence !== EventRecurrence.None;
 
     // Days a recurring event repeats onto (daily view). Daily ⇒ every following
     // day; weekly ⇒ the same weekday in every following week (#111).
-    const recurrenceDayIds = useMemo(() =>
-    {
-        const ids = new Set<string>();
-        if (!isRecurring || !currentDayId || !event) return ids;
-        const startIdx = linearDays.indexOf(currentDayId);
-        if (startIdx === -1) return ids;
-        const startDay = state.days[ currentDayId ];
-        for (let i = startIdx + 1; i < linearDays.length; i++)
-        {
-            const dayId = linearDays[ i ];
-            if (event.recurrence === EventRecurrence.Daily)
-            {
-                ids.add(dayId);
-            } else if (event.recurrence === EventRecurrence.Weekly)
-            {
-                const day = state.days[ dayId ];
-                if (day && startDay && day.dayIndex === startDay.dayIndex)
-                {
-                    ids.add(dayId);
-                }
-            }
-        }
-        return ids;
-    }, [ isRecurring, currentDayId, event, linearDays, state.days ]);
+    const recurrenceDayIds = useMemo(
+        () =>
+            getRecurrenceOccurrenceDayIds({
+                recurrence,
+                startDayId: currentDayId,
+                linearDays,
+                dayIndexOf: (dayId) => state.days[ dayId ]?.dayIndex,
+            }),
+        [ recurrence, currentDayId, linearDays, state.days ],
+    );
 
     // Week holding the event's mapped start day (weekly view repeat blocks, #111).
     const currentWeekIdx = useMemo(() =>
@@ -110,6 +101,10 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         if (!currentDayId) return -1;
         return timelineWeeks.findIndex((w) => w.days.includes(currentDayId));
     }, [ currentDayId, timelineWeeks ]);
+
+    // Recurrence is satisfied only once an occurrence exists in every week; with
+    // forward echoes that means the event starts in the first week (#111).
+    const recurrenceSatisfied = isRecurrenceSatisfied(recurrence, currentWeekIdx);
 
     const firstDayId = timelineWeeks[ 0 ]?.days[ 0 ] ?? null;
 
@@ -163,6 +158,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 spanInfo,
                 relativeDaySizing,
                 isRecurring,
+                recurrenceSatisfied,
                 currentWeekIdx,
             })
             : buildDailyEventCells({
@@ -178,6 +174,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 spanInfo,
                 timeLabel,
                 isRecurring,
+                recurrenceSatisfied,
                 recurrenceDayIds,
                 firstDayId,
             });
@@ -197,6 +194,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         spanInfo,
         timeLabel,
         isRecurring,
+        recurrenceSatisfied,
         currentWeekIdx,
         recurrenceDayIds,
         firstDayId,

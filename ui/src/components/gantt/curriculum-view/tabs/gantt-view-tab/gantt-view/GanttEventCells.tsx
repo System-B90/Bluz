@@ -25,6 +25,8 @@ type WeeklyCellsParams = {
     relativeDaySizing: boolean;
     /** Recurring event (daily/weekly). Drives repeat blocks + first-column staging (#111). */
     isRecurring: boolean;
+    /** Whether every week already holds an occurrence — hides the first-column marker (#111). */
+    recurrenceSatisfied: boolean;
     /** Index of the week holding the event's mapped start day, or -1 when unmapped (#111). */
     currentWeekIdx: number;
 };
@@ -45,6 +47,7 @@ export function buildWeeklyEventCells(
         spanInfo,
         relativeDaySizing,
         isRecurring,
+        recurrenceSatisfied,
         currentWeekIdx,
     } = params;
 
@@ -62,24 +65,35 @@ export function buildWeeklyEventCells(
             currentWeekIdx !== -1 &&
             weekIdx > currentWeekIdx;
 
-        // A recurring event that has no start yet is staged in the first column;
-        // a non-recurring one waits in its module's start column (existing).
-        const isWaitingInFirstColumn =
-            isEventUnmapped && isRecurring && weekIdx === 0;
-        const isWaitingInModuleStartColumn =
+        // Recurrence not yet satisfied ⇒ an "unallocated" marker sits in the
+        // first column. Draggable staging when unmapped; a non-interactive cue
+        // when the event is mapped but doesn't cover every week (#111).
+        const isRecurrenceReminder =
+            isRecurring &&
+            !recurrenceSatisfied &&
+            !isExplicitlyMappedHere &&
+            weekIdx === 0;
+        const reminderIsStaged = isRecurrenceReminder && isEventUnmapped;
+        const reminderIsMarker = isRecurrenceReminder && !isEventUnmapped;
+
+        // Non-recurring events keep waiting in their module's start column.
+        const isModuleWaiting =
             isEventUnmapped &&
             !isRecurring &&
             isModuleMapped &&
             weekIdx === moduleStartWeekIdx;
-        const isWaiting =
-            isWaitingInFirstColumn || isWaitingInModuleStartColumn;
+        const isOpaqueBlock = reminderIsStaged || reminderIsMarker || isModuleWaiting;
+        const ownsAnchor = isExplicitlyMappedHere || reminderIsStaged || isModuleWaiting;
 
         const hasBlock =
-            isExplicitlyMappedHere || isRecurrenceWeek || isWaiting;
+            isExplicitlyMappedHere ||
+            isRecurrenceWeek ||
+            isRecurrenceReminder ||
+            isModuleWaiting;
 
         const blockPayload = isExplicitlyMappedHere
             ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId }
-            : isRecurrenceWeek
+            : isRecurrenceWeek || reminderIsMarker
                 ? { moduleId, eventId }
                 : { type: "event-map", moduleId, eventId };
 
@@ -87,7 +101,9 @@ export function buildWeeklyEventCells(
             ? `drag-event-${eventId}-${currentDayId}`
             : isRecurrenceWeek
                 ? `recur-event-${eventId}-${week.id}`
-                : `drag-event-staged-${eventId}`;
+                : reminderIsMarker
+                    ? `recur-staged-${eventId}-${week.id}`
+                    : `drag-event-staged-${eventId}`;
 
         // Positioned as percentages of the anchor cell's own width — week
         // columns render wider than their nominal size (the table stretches
@@ -142,14 +158,12 @@ export function buildWeeklyEventCells(
                 dayId={ firstDayId }
                 dropId={ `drop-event-${eventId}-${firstDayId}` }
                 elementId={
-                    isExplicitlyMappedHere || isWaiting
-                        ? `block-event-${eventId}`
-                        : undefined
+                    ownsAnchor ? `block-event-${eventId}` : undefined
                 }
                 hasBlock={ hasBlock }
                 isAbsoluteBlock={ true }
-                isOpaque={ isWaiting }
-                isRecurrence={ isRecurrenceWeek }
+                isOpaque={ isOpaqueBlock }
+                isRecurrence={ isRecurrenceWeek || reminderIsMarker }
                 isSpillover={ Boolean(isExplicitlyMappedHere && spanInfo) }
                 key={ `week-${week.id}-${eventId}` }
                 payloadData={ {
@@ -178,6 +192,8 @@ type DailyCellsParams = {
     timeLabel?: string;
     /** Recurring event (daily/weekly). Drives repeat blocks + first-column staging (#111). */
     isRecurring: boolean;
+    /** Whether every week already holds an occurrence — hides the first-column marker (#111). */
+    recurrenceSatisfied: boolean;
     /** Days a recurring event repeats onto, excluding its start day (#111). */
     recurrenceDayIds: Set<string>;
     /** First day of the timeline — where an unallocated recurring event is staged (#111). */
@@ -200,6 +216,7 @@ export function buildDailyEventCells(
         spanInfo,
         timeLabel,
         isRecurring,
+        recurrenceSatisfied,
         recurrenceDayIds,
         firstDayId,
     } = params;
@@ -214,24 +231,37 @@ export function buildDailyEventCells(
                 !isExplicitlyMappedHere &&
                 recurrenceDayIds.has(dayId);
 
-            // A recurring event with no start yet is staged in the first column;
-            // a non-recurring one waits in its module's start column (existing).
-            const isWaitingInFirstColumn =
-                isEventUnmapped && isRecurring && firstDayId === dayId;
-            const isWaitingInModuleStartColumn =
+            // Recurrence not yet satisfied ⇒ an "unallocated" marker sits on the
+            // first day. Draggable staging when unmapped; a non-interactive cue
+            // when the event is mapped but doesn't cover every week (#111).
+            const isRecurrenceReminder =
+                isRecurring &&
+                !recurrenceSatisfied &&
+                !isExplicitlyMappedHere &&
+                firstDayId === dayId;
+            const reminderIsStaged = isRecurrenceReminder && isEventUnmapped;
+            const reminderIsMarker = isRecurrenceReminder && !isEventUnmapped;
+
+            // Non-recurring events keep waiting in their module's start column.
+            const isModuleWaiting =
                 isEventUnmapped &&
                 !isRecurring &&
                 isModuleMapped &&
                 moduleStartDayId === dayId;
-            const isWaiting =
-                isWaitingInFirstColumn || isWaitingInModuleStartColumn;
+            const isOpaqueBlock =
+                reminderIsStaged || reminderIsMarker || isModuleWaiting;
+            const ownsAnchor =
+                isExplicitlyMappedHere || reminderIsStaged || isModuleWaiting;
 
             const hasBlock =
-                isExplicitlyMappedHere || isRecurrenceOccurrence || isWaiting;
+                isExplicitlyMappedHere ||
+                isRecurrenceOccurrence ||
+                isRecurrenceReminder ||
+                isModuleWaiting;
 
             const blockPayload = isExplicitlyMappedHere
                 ? { type: "event-move", moduleId, eventId, sourceDayId: dayId }
-                : isRecurrenceOccurrence
+                : isRecurrenceOccurrence || reminderIsMarker
                     ? { moduleId, eventId }
                     : { type: "event-map", moduleId, eventId };
 
@@ -239,7 +269,9 @@ export function buildDailyEventCells(
                 ? `drag-event-${eventId}-${dayId}`
                 : isRecurrenceOccurrence
                     ? `recur-event-${eventId}-${dayId}`
-                    : `drag-event-staged-${eventId}`;
+                    : reminderIsMarker
+                        ? `recur-staged-${eventId}-${dayId}`
+                        : `drag-event-staged-${eventId}`;
 
             return (
                 <GanttCell
@@ -252,14 +284,12 @@ export function buildDailyEventCells(
                     dayId={ dayId }
                     dropId={ `drop-event-${eventId}-${dayId}` }
                     elementId={
-                        isExplicitlyMappedHere || isWaiting
-                            ? `block-event-${eventId}`
-                            : undefined
+                        ownsAnchor ? `block-event-${eventId}` : undefined
                     }
                     hasBlock={ hasBlock }
                     isAbsoluteBlock={ true }
-                    isOpaque={ isWaiting }
-                    isRecurrence={ isRecurrenceOccurrence }
+                    isOpaque={ isOpaqueBlock }
+                    isRecurrence={ isRecurrenceOccurrence || reminderIsMarker }
                     isSpillover={ Boolean(isExplicitlyMappedHere && spanInfo) }
                     key={ `${dayId}-${eventId}` }
                     payloadData={ { targetType: "event", eventId, dayId } }
