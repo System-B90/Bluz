@@ -13,6 +13,7 @@ import IconButton from "@mui/material/IconButton";
 import InputBase from "@mui/material/InputBase";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import
@@ -59,6 +60,11 @@ export function CourseItem({
     const [ color, setColor ] = useState<string>(course.color ?? "#e0e0e0");
     const [ isEditing, setIsEditing ] = useState<boolean>(false);
     const [ isExpanded, setIsExpanded ] = useState<boolean>(true);
+    const [ description, setDescription ] = useState<string>(
+        course.description ?? "",
+    );
+    const [ isEditingDescription, setIsEditingDescription ] =
+        useState<boolean>(false);
 
     // Instructor Quick-Add Menu State
     const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
@@ -116,6 +122,18 @@ export function CourseItem({
             setTitle(course.name);
         }
     }, [ title, course.name, course.id, updateCoursePartial ]);
+
+    const commitDescriptionChange = useCallback(() =>
+    {
+        setIsEditingDescription(false);
+        const trimmed = description.trim();
+        const next = trimmed === "" ? undefined : trimmed;
+        if (next !== course.description)
+        {
+            void updateCoursePartial(course.id, { description: next });
+        }
+        setDescription(trimmed);
+    }, [ description, course.description, course.id, updateCoursePartial ]);
 
     const handleKeyDown = useCallback(
         (event: React.KeyboardEvent<HTMLInputElement>) =>
@@ -429,6 +447,39 @@ export function CourseItem({
                             </Tooltip>
                         </Box>
                     </Box>
+                </Box>
+
+                {/* Description Field */ }
+                <Box
+                    onClick={ () =>
+                        !isEditingDescription && setIsEditingDescription(true) }
+                    sx={ { mt: 1, mr: 4, cursor: "pointer" } }
+                >
+                    { isEditingDescription ? (
+                        <TextField
+                            autoFocus
+                            fullWidth
+                            multiline
+                            onBlur={ commitDescriptionChange }
+                            onChange={ (e) => setDescription(e.target.value) }
+                            placeholder="תיאור (אופציונלי)..."
+                            rows={ 2 }
+                            size="small"
+                            value={ description }
+                        />
+                    ) : description ? (
+                        <Typography
+                            noWrap
+                            sx={ {
+                                fontSize: "0.75rem",
+                                color: "text.secondary",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                            } }
+                        >
+                            { description }
+                        </Typography>
+                    ) : null }
                 </Box>
 
                 {/* Assigned Instructors Chips List */ }
