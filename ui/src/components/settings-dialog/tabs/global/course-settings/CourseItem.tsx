@@ -127,10 +127,13 @@ export function CourseItem({
     {
         setIsEditingDescription(false);
         const trimmed = description.trim();
-        const next = trimmed === "" ? undefined : trimmed;
-        if (next !== course.description)
+        // Mongo's `$set` never unsets a field whose value is `undefined` (it's
+        // dropped entirely by JSON.stringify before the request body is
+        // built), so an empty string - not `undefined` - is what actually
+        // clears a previously-set description.
+        if (trimmed !== (course.description ?? ""))
         {
-            void updateCoursePartial(course.id, { description: next });
+            void updateCoursePartial(course.id, { description: trimmed });
         }
         setDescription(trimmed);
     }, [ description, course.description, course.id, updateCoursePartial ]);
