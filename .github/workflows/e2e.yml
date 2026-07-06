@@ -3,8 +3,9 @@ name: E2E Tests
 on:
     workflow_dispatch:
     pull_request:
+        branches: [master]
     push:
-        branches: [master, dev]
+        branches: [master]
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -19,6 +20,7 @@ jobs:
         name: Full Test Suite (Unit + E2E)
         runs-on: ubuntu-24.04
         timeout-minutes: 90
+        if: github.event_name != 'pull_request' || github.head_ref == 'dev'
 
         steps:
             - name: Checkout repository
