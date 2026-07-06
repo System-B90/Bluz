@@ -5,7 +5,7 @@ import {
     getOccurrenceDayIdForWeek,
     getRecurrenceOccurrenceDayIds,
     isRecurrenceSatisfied,
-} from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/recurrence";
+} from "@/api-shared/gantt/recurrence";
 
 describe("getRecurrenceOccurrenceDayIds", () => {
     // Two 7-day weeks: d0..d6 (week 1), d7..d13 (week 2).

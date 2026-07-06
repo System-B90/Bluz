@@ -6,6 +6,7 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import React, { memo, useMemo } from "react";
 
+import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
 import { EventRecurrence } from "@/api-shared/types/gantt/models";
 import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
@@ -13,7 +14,6 @@ import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-vie
 import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
 import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventRow";
-import { getRecurrenceOccurrenceDayIds } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/recurrence";
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import { useCurriculumState } from "@/components/gantt/state/provider";

@@ -3,6 +3,11 @@ import { useTheme } from "@mui/material/styles";
 import TableRow from "@mui/material/TableRow";
 import React, { memo, useMemo } from "react";
 
+import
+{
+    getRecurrenceOccurrenceDayIds,
+    isRecurrenceSatisfied,
+} from "@/api-shared/gantt/recurrence";
 import { EventRecurrence } from "@/api-shared/types/gantt/models";
 import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
@@ -13,11 +18,6 @@ import
     buildWeeklyEventCells,
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventCells";
 import { GanttEventLabelCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventLabelCell";
-import
-{
-    getRecurrenceOccurrenceDayIds,
-    isRecurrenceSatisfied,
-} from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/recurrence";
 import { GanttEventRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import
 {

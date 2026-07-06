@@ -1,12 +1,12 @@
 import React from "react";
 
+import { getOccurrenceDayIdForWeek } from "@/api-shared/gantt/recurrence";
 import {
     EventRecurrence,
     GanttDayIndex,
     GanttWeek,
 } from "@/api-shared/types/gantt/models";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
-import { getOccurrenceDayIdForWeek } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/recurrence";
 
 /** Multi-day spillover info for a mapped event (#105). */
 export type EventSpanInfo = {
