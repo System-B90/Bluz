@@ -7,6 +7,8 @@ export type Course = {
     color: Color | null;
     parentId?: null | string;
     instructorIds?: Array<number>;
+    /** Optional free-text description (e.g. provenance of auto-created courses). */
+    description?: string;
 };
 
 export type ApiCourseCreatePayload = Course;

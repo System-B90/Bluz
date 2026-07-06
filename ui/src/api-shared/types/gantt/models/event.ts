@@ -46,5 +46,11 @@ export type GanttEvent = {
      * Empty/undefined ⇒ applies to all shuffles.
      */
     shuffles?: Array<string>;
+    /** Hive subject id; null when unlinked. */
+    hiveSubjectId: null | number;
+    /** Hive module id; null when unlinked. */
+    hiveModuleId: null | number;
+    /** Hive lesson id; null when unlinked. */
+    hiveLessonId: null | number;
 } & BaseGantItem;
 export type GanttEventId = GanttEvent["id"];

@@ -36,7 +36,9 @@ def _spawn_background(cmd: list[str], log_file: Path, pid_file: Path) -> int:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     creationflags = 0
     if sys.platform == "win32":
-        creationflags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
+        creationflags = (
+            subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
+        )
     with log_file.open("w", encoding="utf-8") as log:
         proc = subprocess.Popen(
             cmd,
@@ -113,7 +115,9 @@ app.add_typer(dev_app, name="dev")
 def dev_main(
     ctx: typer.Context,
     docker: bool = typer.Option(
-        False, "--docker", help="Boot the full docker compose stack (npm run docker:dev) instead of npm run dev."
+        False,
+        "--docker",
+        help="Boot the full docker compose stack (npm run docker:dev) instead of npm run dev.",
     ),
 ) -> None:
     """Backgrounds the existing npm dev script and returns immediately."""
@@ -131,7 +135,9 @@ def dev_status() -> None:
     port_up = _port_in_use(DEV_PORT)
     https_up, https_detail = _https_ok(DEV_HOST)
     typer.echo(f"next:{'up' if port_up else 'down'} port={DEV_PORT}")
-    typer.echo(f"proxy:{'up' if https_up else 'down'} https://{DEV_HOST} -> {https_detail}")
+    typer.echo(
+        f"proxy:{'up' if https_up else 'down'} https://{DEV_HOST} -> {https_detail}"
+    )
     if not (port_up and https_up):
         raise typer.Exit(1)
 
@@ -192,11 +198,7 @@ def lint(fix: bool = typer.Option(False, "--fix", help="Apply autofixes.")) -> N
 
 
 @app.command("test")
-def test(
-    kind: str = typer.Argument(
-        "all", help="One of: all, unit, e2e."
-    )
-) -> None:
+def test(kind: str = typer.Argument("all", help="One of: all, unit, e2e.")) -> None:
     """Runs the test suite. 'all' runs the full pipeline (scripts/run_tests.py)."""
     script = {"all": "test", "unit": "test:unit", "e2e": "test:e2e"}.get(kind)
     if script is None:

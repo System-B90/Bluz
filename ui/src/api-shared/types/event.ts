@@ -12,6 +12,7 @@ export enum EventType
     EXERCISE = 'ע"ע',
     LECTURE = "הרצאה",
     WORKSHOP = "סדנה",
+    SELF_TEACHING = 'ל"ע',
     BREAK = "הפסקה",
     PRAYER = "תפילה",
     OTHER = "אחר",
@@ -94,7 +95,8 @@ export function eventHasSubject(type: EventType): boolean
     return (
         type === EventType.EXERCISE ||
         type === EventType.LECTURE ||
-        type === EventType.WORKSHOP
+        type === EventType.WORKSHOP ||
+        type === EventType.SELF_TEACHING
     );
 }
 

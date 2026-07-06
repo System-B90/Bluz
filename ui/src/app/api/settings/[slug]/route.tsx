@@ -66,6 +66,8 @@ export const POST: ServerApiSettingUpdate = async (request, context) => {
                 startDate: new Date(Date.now()),
                 newConfig: value as PrayerSettings,
             });
+        } else {
+            await DbSettings.set(slug as SettingName, value, undefined, controller);
         }
 
         return ApiSuccess();

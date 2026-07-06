@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import { useState } from "react";
 
 import { CourseSettings } from "@/components/settings-dialog/tabs/global/course-settings";
+import { DayStartTimeSetting } from "@/components/settings-dialog/tabs/global/DayStartTimeSetting";
 import { PrayerSettings } from "@/components/settings-dialog/tabs/global/PrayerSettings";
 
 export function GlobalSettings() {
@@ -26,12 +27,14 @@ export function GlobalSettings() {
                     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     display: "flex",
                     flexDirection: "column",
+                    gap: 3,
                 }}
             >
                 <PrayerSettings
                     isShrunk={isPrayerShrunk}
                     onToggleShrink={() => setIsPrayerShrunk(!isPrayerShrunk)}
                 />
+                {!isPrayerShrunk && <DayStartTimeSetting />}
             </Box>
             <Box
                 sx={{
