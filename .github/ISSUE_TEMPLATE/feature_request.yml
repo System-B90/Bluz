@@ -1,0 +1,46 @@
+name: ✨ Feature Request
+description: Suggest a new capability or improvement for Bluz.
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+    - type: dropdown
+      id: surface
+      attributes:
+          label: Surface
+          options:
+              - Schedule / Calendar
+              - Gantt / Curriculum
+              - Auth / Hive SSO
+              - Real-time sync
+              - bluz CLI
+              - Infra / tooling
+              - Cross-cutting
+      validations:
+          required: true
+
+    - type: textarea
+      id: problem
+      attributes:
+          label: Problem
+          description: What can't you do today, or what is painful?
+      validations:
+          required: true
+
+    - type: textarea
+      id: proposal
+      attributes:
+          label: Proposed solution
+          description: What should happen instead? Mockups welcome (RTL, Hebrew UI).
+      validations:
+          required: true
+
+    - type: textarea
+      id: alternatives
+      attributes:
+          label: Alternatives considered
+
+    - type: textarea
+      id: context
+      attributes:
+          label: Additional context
+          description: Related issues, docs, or constraints (e.g. offline mode, real-time sync implications).

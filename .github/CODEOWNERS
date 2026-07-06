@@ -1,0 +1,11 @@
+# Default owner for everything in the repo.
+# Later rules override earlier ones for matching paths.
+* @Michael-K-Stein
+
+# Load-bearing areas — always route to the maintainer.
+/ui/src/api-server/         @Michael-K-Stein
+/ui/src/api-shared/         @Michael-K-Stein
+/drizzle/                   @Michael-K-Stein
+/.github/workflows/         @Michael-K-Stein
+/deploy/                    @Michael-K-Stein
+/nginx/                     @Michael-K-Stein
