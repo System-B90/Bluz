@@ -51,6 +51,9 @@ export async function POST(request: NextRequest, context: RouteContext)
             isCritical: originalEvent.isCritical,
             isPaWindow: originalEvent.isPaWindow,
             comment: originalEvent.comment,
+            hiveSubjectId: originalEvent.hiveSubjectId,
+            hiveModuleId: originalEvent.hiveModuleId,
+            hiveLessonId: originalEvent.hiveLessonId,
             moduleId: payload.moduleId,
         });
 

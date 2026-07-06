@@ -152,7 +152,7 @@ describe("DbSettings - Failure Paths", () => {
             expect(singletonSettings.updateOne).toHaveBeenCalled();
         });
 
-        it("skips initialization if prayer times already exist", async () => {
+        it("skips initialization if prayer times and schedule already exist", async () => {
             const existingSetting = {
                 _id: "id",
                 key: PRAYER_TIMES_SETTING_KEY,
@@ -162,7 +162,14 @@ describe("DbSettings - Failure Paths", () => {
                     shacharit: new Date(),
                 },
             };
-            singletonSettings.findOne.mockResolvedValueOnce(existingSetting);
+            const existingScheduleSetting = {
+                _id: "id2",
+                key: "schedule",
+                value: { dayStartTime: "08:00" },
+            };
+            singletonSettings.findOne
+                .mockResolvedValueOnce(existingSetting)
+                .mockResolvedValueOnce(existingScheduleSetting);
 
             await DbSettings.init();
 
