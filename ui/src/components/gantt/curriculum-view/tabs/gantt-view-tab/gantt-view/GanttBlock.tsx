@@ -90,6 +90,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
 
     const block = (
         <Box
+            data-gantt-recurrence={isRecurrence ? true : undefined}
             id={elementId}
             ref={setNodeRef}
             {...dragProps}
