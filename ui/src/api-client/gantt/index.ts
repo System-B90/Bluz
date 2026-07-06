@@ -1,5 +1,6 @@
 import { ganttConstraintsApi } from "@/api-client/gantt/constraints";
 import { curriculumApi } from "@/api-client/gantt/curriculum";
+import { curriculumCutApi } from "@/api-client/gantt/cut";
 import { dayApi } from "@/api-client/gantt/day";
 import { curriculumModuleDayMappingApi } from "@/api-client/gantt/mappings";
 import { moduleApi } from "@/api-client/gantt/module";
@@ -19,6 +20,7 @@ const ganttApi = {
     mappings: curriculumModuleDayMappingApi,
     recurrenceExceptions: recurrenceExceptionApi,
     constraints: ganttConstraintsApi,
+    cut: curriculumCutApi,
     reorderModules: apiReorderModules,
     reorderEvents: apiReorderEvents,
 } as const;

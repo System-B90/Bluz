@@ -59,6 +59,16 @@ export type Event = {
      * and a comment.
      */
     fake?: boolean;
+    /**
+     * Gantt event this schedule event was cut from (גזירה ללו"ז); absent for
+     * normal events. Set by the curriculum cut endpoint (#118).
+     */
+    ganttEventId?: string;
+    /**
+     * ISO date (yyyy-MM-dd) of the planned occurrence — disambiguates
+     * recurrence occurrences of the same gantt event. Absent for normal events.
+     */
+    ganttOccurrenceDate?: string;
 };
 
 /**

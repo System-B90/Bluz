@@ -73,6 +73,22 @@ async function getIteration(id: IterationId): Promise<Iteration | null> {
     return doc ? stripMongoId(doc) : null;
 }
 
+/**
+ * Find the iteration linked to a given Postgres curriculum, i.e. the iteration
+ * whose `ganttCurriculumId` equals `curriculumId`. Used by the curriculum cut
+ * (#118) to locate the target schedule database. Returns null when nothing is
+ * linked.
+ */
+async function getIterationByCurriculum(
+    curriculumId: string,
+): Promise<Iteration | null> {
+    await ensureSeeded();
+    const doc = await getMetaController().iterations.findOne({
+        ganttCurriculumId: curriculumId,
+    });
+    return doc ? stripMongoId(doc) : null;
+}
+
 function deriveDbName(id: IterationId): string {
     // Keep db names deterministic and safe for Mongo (alnum + underscore).
     const safe = id.replace(/[^a-zA-Z0-9_]/g, "_");
@@ -195,6 +211,7 @@ export namespace DbIterations {
     export const list = listIterations;
     export const current = getCurrentIteration;
     export const get = getIteration;
+    export const getByCurriculum = getIterationByCurriculum;
     export const register = registerIteration;
     export const patch = patchIteration;
     export const assertWritable = assertWritableIteration;
