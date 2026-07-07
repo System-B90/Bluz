@@ -1,14 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-    CurriculumCutError,
-    cutCurriculumToSchedule,
-} from "@/api-client/gantt/cut";
+import { cutCurriculumToSchedule } from "@/api-client/gantt/cut";
+import { CurriculumCutError } from "@/api-shared/types/gantt/cut";
 
-function mockFetch(status: number, jsonBody: unknown) {
+function mockFetch(jsonBody: unknown) {
     return vi.fn(async () => ({
-        ok: status >= 200 && status < 300,
-        status,
+        redirected: false,
         json: async () => jsonBody,
     }));
 }
@@ -18,7 +15,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("cutCurriculumToSchedule (client)", () => {
     it("POSTs to the cut endpoint and returns the summary", async () => {
-        const fetchMock = mockFetch(200, {
+        const fetchMock = mockFetch({
             status: 0,
             data: { createdEvents: 2, createdCourses: [], overlaps: 1 },
         });
@@ -35,7 +32,7 @@ describe("cutCurriculumToSchedule (client)", () => {
     it("throws a typed CurriculumCutError carrying the structured error", async () => {
         vi.stubGlobal(
             "fetch",
-            mockFetch(400, {
+            mockFetch({
                 status: -1,
                 error: {
                     code: "invalid-plan",
@@ -51,10 +48,11 @@ describe("cutCurriculumToSchedule (client)", () => {
 
         try {
             await cutCurriculumToSchedule("c1");
+            expect.unreachable("should have thrown");
         } catch (error) {
             const cutError = error as CurriculumCutError;
-            expect(cutError.cutError.code).toBe("invalid-plan");
-            expect(cutError.cutError.errors).toHaveLength(1);
+            expect(cutError.code).toBe("invalid-plan");
+            expect(cutError.errors).toHaveLength(1);
             expect(cutError.message).toBe("bad plan");
         }
     });
@@ -62,7 +60,7 @@ describe("cutCurriculumToSchedule (client)", () => {
     it("surfaces the already-cut count", async () => {
         vi.stubGlobal(
             "fetch",
-            mockFetch(409, {
+            mockFetch({
                 status: -1,
                 error: { code: "already-cut", count: 7, message: "cut" },
             }),
@@ -72,7 +70,25 @@ describe("cutCurriculumToSchedule (client)", () => {
             await cutCurriculumToSchedule("c1");
             expect.unreachable("should have thrown");
         } catch (error) {
-            expect((error as CurriculumCutError).cutError.count).toBe(7);
+            expect((error as CurriculumCutError).count).toBe(7);
+        }
+    });
+
+    it("rethrows a plain ClientApiError when the failure carries no cut code", async () => {
+        vi.stubGlobal(
+            "fetch",
+            mockFetch({
+                status: -1,
+                error: { name: "InternalServerError", message: "boom" },
+            }),
+        );
+
+        try {
+            await cutCurriculumToSchedule("c1");
+            expect.unreachable("should have thrown");
+        } catch (error) {
+            expect(error).not.toBeInstanceOf(CurriculumCutError);
+            expect((error as Error).message).toBe("boom");
         }
     });
 });

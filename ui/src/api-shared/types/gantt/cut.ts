@@ -1,3 +1,4 @@
+import { ClientApiError } from "@/api-shared/errors";
 import { CutValidationError } from "@/api-shared/gantt/cut-planner";
 
 /**
@@ -34,3 +35,34 @@ export type ApiCurriculumCutError = {
     /** Human-readable Hebrew message describing the rejection. */
     message?: string;
 };
+
+/**
+ * Thrown by the client wrapper when a cut is rejected. Carries the full
+ * structured payload (code + planner validation errors + already-cut count)
+ * so the UI can render a specific message or validation list instead of a
+ * generic network error. Extends {@link ClientApiError} so it flows through
+ * the shared snackbar handling.
+ */
+export class CurriculumCutError
+    extends ClientApiError
+    implements ApiCurriculumCutError
+{
+    readonly code: CurriculumCutErrorCode;
+    readonly errors?: Array<CutValidationError>;
+    readonly count?: number;
+
+    constructor(payload: ApiCurriculumCutError) {
+        super(payload.message ?? 'גזירת הגאנט ללו"ז נכשלה');
+        this.name = "CurriculumCutError";
+        this.code = payload.code;
+        this.errors = payload.errors;
+        this.count = payload.count;
+    }
+}
+
+/** Narrows a caught {@link ClientApiError} to one carrying a cut error code. */
+export function isCurriculumCutErrorPayload(
+    error: ClientApiError,
+): error is ClientApiError & ApiCurriculumCutError {
+    return typeof (error as Partial<ApiCurriculumCutError>).code === "string";
+}
