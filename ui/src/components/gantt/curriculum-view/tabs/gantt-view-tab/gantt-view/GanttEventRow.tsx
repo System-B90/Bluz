@@ -19,6 +19,7 @@ import
 } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventCells";
 import { GanttEventLabelCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventLabelCell";
 import { GanttEventRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
+import { useGanttExecution } from "@/components/gantt/state/execution/hooks";
 import
 {
     useCurriculumProviderActions,
@@ -54,6 +55,8 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
     );
 
     const { state: exceptionsState } = useGanttRecurrenceExceptions();
+    const { state: executionState } = useGanttExecution();
+    const isDrifted = executionState.events[ eventId ]?.drifted ?? false;
 
     const event = state.events[ eventId ];
 
@@ -234,6 +237,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
             sx={ getFlashRowSx(theme) }
         >
             <GanttEventLabelCell
+                drifted={ isDrifted }
                 eventId={ eventId }
                 eventTitle={ event.title }
                 isRemoveOver={ isRemoveOver }

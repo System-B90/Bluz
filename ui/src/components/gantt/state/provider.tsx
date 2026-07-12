@@ -27,6 +27,7 @@ import
 } from "@/api-shared/types/gantt/models";
 import { EventDialog } from "@/components/gantt/event-dialog";
 import { ModuleDialog } from "@/components/gantt/module-dialog";
+import { GanttExecutionProvider } from "@/components/gantt/state/execution/Provider";
 import { Action, curriculumReducer } from "@/components/gantt/state/reducer";
 
 export type OpenModuleDialog = (
@@ -254,9 +255,11 @@ export function CurriculumProvider({
                     closeEventDialog: () => { },
                 } }
             >
-                <ModuleDialogManager curriculumId={ curriculumId }>
-                    { children }
-                </ModuleDialogManager>
+                <GanttExecutionProvider curriculumId={ curriculumId }>
+                    <ModuleDialogManager curriculumId={ curriculumId }>
+                        { children }
+                    </ModuleDialogManager>
+                </GanttExecutionProvider>
             </CurriculumActionsContext.Provider>
         </CurriculumStateContext.Provider>
     );

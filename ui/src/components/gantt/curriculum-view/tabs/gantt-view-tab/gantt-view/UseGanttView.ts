@@ -1,4 +1,5 @@
 import { DragEndEvent } from "@dnd-kit/core";
+import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import
@@ -17,9 +18,24 @@ import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
+/** Maximum drag actions remembered for Ctrl+Z (#142). */
+const UNDO_STACK_LIMIT = 50;
+
+/** True when the keystroke happened inside a text-entry element. */
+function isTypingTarget(target: EventTarget | null): boolean
+{
+    if (!(target instanceof HTMLElement)) return false;
+    return (
+        target.isContentEditable ||
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA"
+    );
+}
+
 export const useGanttView = (curriculumId: string) =>
 {
     const state = useCurriculumState();
+    const { enqueueSnackbar } = useSnackbar();
     const {
         state: { mappings: globalMappings },
         createMapping,
@@ -587,6 +603,48 @@ export const useGanttView = (curriculumId: string) =>
         [ linearDays, state.modules, moduleMappings, eventMappings, moveMapping ],
     );
 
+    // Undo stack for drag actions in the timeline (#142). Each entry is the
+    // inverse of one completed user action; Ctrl+Z pops and executes it.
+    const undoStackRef = useRef<Array<() => Promise<void>>>([]);
+
+    const pushUndo = useCallback((undo: () => Promise<void>) =>
+    {
+        undoStackRef.current.push(undo);
+        if (undoStackRef.current.length > UNDO_STACK_LIMIT)
+        {
+            undoStackRef.current.shift();
+        }
+    }, []);
+
+    const handleUndo = useCallback(async () =>
+    {
+        const undo = undoStackRef.current.pop();
+        if (!undo) return;
+        try
+        {
+            await undo();
+            enqueueSnackbar("הפעולה האחרונה בוטלה", { variant: "info" });
+        } catch
+        {
+            enqueueSnackbar("ביטול הפעולה נכשל!", { variant: "error" });
+        }
+    }, [ enqueueSnackbar ]);
+
+    // Ctrl+Z / Cmd+Z while the timeline is mounted (ignoring text inputs).
+    useEffect(() =>
+    {
+        const onKeyDown = (e: KeyboardEvent) =>
+        {
+            if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
+            if (e.key.toLowerCase() !== "z") return;
+            if (isTypingTarget(e.target)) return;
+            e.preventDefault();
+            void handleUndo();
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [ handleUndo ]);
+
     const handleDragEnd = useCallback(
         async (event: DragEndEvent) =>
         {
@@ -607,9 +665,15 @@ export const useGanttView = (curriculumId: string) =>
                 {
                     const mDays = moduleMappings[ payload.moduleId ] || [];
                     const promises: Array<Promise<void>> = [];
+                    // Snapshot for undo: everything this drop removes (#142).
+                    const removed: Array<{
+                        eventId: null | string;
+                        dayId: string;
+                    }> = [];
 
                     mDays.forEach((d) =>
                     {
+                        removed.push({ eventId: null, dayId: d });
                         promises.push(
                             removeMapping({
                                 moduleId: payload.moduleId,
@@ -627,6 +691,7 @@ export const useGanttView = (curriculumId: string) =>
                             const d = eventMappings[ eId ];
                             if (d)
                             {
+                                removed.push({ eventId: eId, dayId: d });
                                 promises.push(
                                     removeMapping({
                                         moduleId: payload.moduleId,
@@ -638,12 +703,35 @@ export const useGanttView = (curriculumId: string) =>
                         });
                     }
                     await Promise.all(promises);
+                    if (removed.length > 0)
+                    {
+                        pushUndo(async () =>
+                        {
+                            await Promise.all(
+                                removed.map((r) =>
+                                    createMapping({
+                                        moduleId: payload.moduleId,
+                                        eventId: r.eventId,
+                                        dayId: r.dayId,
+                                    }),
+                                ),
+                            );
+                        });
+                    }
                 } else if (payload.type === "event-move")
                 {
                     await removeMapping({
                         moduleId: payload.moduleId,
                         eventId: payload.eventId,
                         dayId: payload.sourceDayId,
+                    });
+                    pushUndo(async () =>
+                    {
+                        await createMapping({
+                            moduleId: payload.moduleId,
+                            eventId: payload.eventId,
+                            dayId: payload.sourceDayId,
+                        });
                     });
                 } else if (payload.type === "event-occurrence")
                 {
@@ -661,6 +749,14 @@ export const useGanttView = (curriculumId: string) =>
             )
             {
                 await handleMapModule(payload.moduleId, target.dayId);
+                pushUndo(async () =>
+                {
+                    await removeMapping({
+                        moduleId: payload.moduleId,
+                        eventId: null,
+                        dayId: target.dayId,
+                    });
+                });
             } else if (
                 payload.type === "event-map" &&
                 target.targetType === "event"
@@ -671,6 +767,14 @@ export const useGanttView = (curriculumId: string) =>
                     payload.eventId,
                     target.dayId,
                 );
+                pushUndo(async () =>
+                {
+                    await removeMapping({
+                        moduleId: payload.moduleId,
+                        eventId: payload.eventId,
+                        dayId: target.dayId,
+                    });
+                });
             } else if (
                 payload.type === "module-move" &&
                 target.targetType === "module"
@@ -683,6 +787,14 @@ export const useGanttView = (curriculumId: string) =>
                         payload.sourceDayId,
                         target.dayId,
                     );
+                    pushUndo(async () =>
+                    {
+                        await handleMoveModule(
+                            payload.moduleId,
+                            target.dayId,
+                            payload.sourceDayId,
+                        );
+                    });
                 }
             } else if (
                 payload.type === "module-shift" &&
@@ -696,6 +808,10 @@ export const useGanttView = (curriculumId: string) =>
                 if (deltaDays !== 0)
                 {
                     await handleShiftModule(payload.moduleId, deltaDays);
+                    pushUndo(async () =>
+                    {
+                        await handleShiftModule(payload.moduleId, -deltaDays);
+                    });
                 }
             } else if (
                 payload.type === "event-move" &&
@@ -710,6 +826,15 @@ export const useGanttView = (curriculumId: string) =>
                         payload.sourceDayId,
                         target.dayId,
                     );
+                    pushUndo(async () =>
+                    {
+                        await handleMoveEvent(
+                            payload.moduleId,
+                            payload.eventId,
+                            target.dayId,
+                            payload.sourceDayId,
+                        );
+                    });
                 }
             }
         },
@@ -723,6 +848,8 @@ export const useGanttView = (curriculumId: string) =>
             moduleMappings,
             eventMappings,
             removeMapping,
+            createMapping,
+            pushUndo,
             deleteOccurrence,
             state.modules,
         ],
