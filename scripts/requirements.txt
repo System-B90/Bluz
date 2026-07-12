@@ -1,6 +1,6 @@
 InquirerPy>=0.3.4
 prompt-toolkit>=3.0.52
 python-dotenv==1.2.2
-typer==0.20.0
+typer==0.26.8
 PyHiveLMS>=1.4.0
 tqdm>=4.66
