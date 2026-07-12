@@ -3,8 +3,9 @@ name: E2E Tests
 on:
     workflow_dispatch:
     pull_request:
+        branches: [master]
     push:
-        branches: [master, dev]
+        branches: [master]
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -19,10 +20,11 @@ jobs:
         name: Full Test Suite (Unit + E2E)
         runs-on: ubuntu-24.04
         timeout-minutes: 90
+        if: github.event_name != 'pull_request' || github.head_ref == 'dev'
 
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
 
             # ── Hive (SSO identity provider + organizational data) ────────────
             # The Hive repository is private — checkout needs a PAT with read
@@ -62,7 +64,7 @@ jobs:
             # blob:limit=50k mirrors Hive's documented clone (skips >1.5 GiB of
             # large blobs; git lazy-fetches any that the checkout needs).
             - name: Checkout Hive (SSO branch)
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                   repository: ${{ env.HIVE_REPO }}
                   ref: ${{ env.HIVE_REF }}
@@ -77,7 +79,7 @@ jobs:
                   echo "127.0.0.3 bluz.dev" | sudo tee -a /etc/hosts
 
             - name: Setup Python 3.13
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@v6
               with:
                   python-version: "3.13"
 
