@@ -12,6 +12,7 @@ import
     getSpilloverMinutesByDay,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { ConstraintLink } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
+import { useGanttUndo } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-undo";
 import { useGanttConstraints } from "@/components/gantt/state/constraints/hooks";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
@@ -587,6 +588,10 @@ export const useGanttView = (curriculumId: string) =>
         [ linearDays, state.modules, moduleMappings, eventMappings, moveMapping ],
     );
 
+    // Undo stack for drag actions in the timeline (#142). Each entry is the
+    // inverse of one completed user action; Ctrl+Z pops and executes it.
+    const { pushUndo } = useGanttUndo();
+
     const handleDragEnd = useCallback(
         async (event: DragEndEvent) =>
         {
@@ -607,9 +612,15 @@ export const useGanttView = (curriculumId: string) =>
                 {
                     const mDays = moduleMappings[ payload.moduleId ] || [];
                     const promises: Array<Promise<void>> = [];
+                    // Snapshot for undo: everything this drop removes (#142).
+                    const removed: Array<{
+                        eventId: null | string;
+                        dayId: string;
+                    }> = [];
 
                     mDays.forEach((d) =>
                     {
+                        removed.push({ eventId: null, dayId: d });
                         promises.push(
                             removeMapping({
                                 moduleId: payload.moduleId,
@@ -627,6 +638,7 @@ export const useGanttView = (curriculumId: string) =>
                             const d = eventMappings[ eId ];
                             if (d)
                             {
+                                removed.push({ eventId: eId, dayId: d });
                                 promises.push(
                                     removeMapping({
                                         moduleId: payload.moduleId,
@@ -638,12 +650,35 @@ export const useGanttView = (curriculumId: string) =>
                         });
                     }
                     await Promise.all(promises);
+                    if (removed.length > 0)
+                    {
+                        pushUndo(async () =>
+                        {
+                            await Promise.all(
+                                removed.map((r) =>
+                                    createMapping({
+                                        moduleId: payload.moduleId,
+                                        eventId: r.eventId,
+                                        dayId: r.dayId,
+                                    }),
+                                ),
+                            );
+                        });
+                    }
                 } else if (payload.type === "event-move")
                 {
                     await removeMapping({
                         moduleId: payload.moduleId,
                         eventId: payload.eventId,
                         dayId: payload.sourceDayId,
+                    });
+                    pushUndo(async () =>
+                    {
+                        await createMapping({
+                            moduleId: payload.moduleId,
+                            eventId: payload.eventId,
+                            dayId: payload.sourceDayId,
+                        });
                     });
                 } else if (payload.type === "event-occurrence")
                 {
@@ -661,6 +696,14 @@ export const useGanttView = (curriculumId: string) =>
             )
             {
                 await handleMapModule(payload.moduleId, target.dayId);
+                pushUndo(async () =>
+                {
+                    await removeMapping({
+                        moduleId: payload.moduleId,
+                        eventId: null,
+                        dayId: target.dayId,
+                    });
+                });
             } else if (
                 payload.type === "event-map" &&
                 target.targetType === "event"
@@ -671,6 +714,14 @@ export const useGanttView = (curriculumId: string) =>
                     payload.eventId,
                     target.dayId,
                 );
+                pushUndo(async () =>
+                {
+                    await removeMapping({
+                        moduleId: payload.moduleId,
+                        eventId: payload.eventId,
+                        dayId: target.dayId,
+                    });
+                });
             } else if (
                 payload.type === "module-move" &&
                 target.targetType === "module"
@@ -683,6 +734,14 @@ export const useGanttView = (curriculumId: string) =>
                         payload.sourceDayId,
                         target.dayId,
                     );
+                    pushUndo(async () =>
+                    {
+                        await handleMoveModule(
+                            payload.moduleId,
+                            target.dayId,
+                            payload.sourceDayId,
+                        );
+                    });
                 }
             } else if (
                 payload.type === "module-shift" &&
@@ -696,6 +755,10 @@ export const useGanttView = (curriculumId: string) =>
                 if (deltaDays !== 0)
                 {
                     await handleShiftModule(payload.moduleId, deltaDays);
+                    pushUndo(async () =>
+                    {
+                        await handleShiftModule(payload.moduleId, -deltaDays);
+                    });
                 }
             } else if (
                 payload.type === "event-move" &&
@@ -710,6 +773,15 @@ export const useGanttView = (curriculumId: string) =>
                         payload.sourceDayId,
                         target.dayId,
                     );
+                    pushUndo(async () =>
+                    {
+                        await handleMoveEvent(
+                            payload.moduleId,
+                            payload.eventId,
+                            target.dayId,
+                            payload.sourceDayId,
+                        );
+                    });
                 }
             }
         },
@@ -723,6 +795,8 @@ export const useGanttView = (curriculumId: string) =>
             moduleMappings,
             eventMappings,
             removeMapping,
+            createMapping,
+            pushUndo,
             deleteOccurrence,
             state.modules,
         ],

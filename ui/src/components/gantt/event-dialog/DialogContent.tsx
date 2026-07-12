@@ -18,6 +18,7 @@ import { EventDetailsForm } from "@/components/gantt/event-dialog/DetailsForm";
 import { EventHiveLinkageFields } from "@/components/gantt/event-dialog/EventHiveLinkageFields";
 import { EventRecurrenceField, RECURRENCE_LABELS } from "@/components/gantt/event-dialog/EventRecurrenceField";
 import { EventRoomRequirementsField } from "@/components/gantt/event-dialog/EventRoomRequirementsField";
+import { ExecutionComparisonSection } from "@/components/gantt/event-dialog/ExecutionComparisonSection";
 import { RecommendedLecturersField } from "@/components/gantt/event-dialog/RecommendedLecturersField";
 import { SystemRequirementsField } from "@/components/gantt/event-dialog/SystemRequirementsField";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
@@ -210,6 +211,8 @@ export function EventDialogContent({
                             eventId={ eventId }
                             moduleId={ moduleId }
                         />
+
+                        <ExecutionComparisonSection event={ event } />
                     </Stack>
                 </Stack>
             ) : (
