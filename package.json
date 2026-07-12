@@ -42,7 +42,7 @@
         "@mui/icons-material": "^7.3.5",
         "@mui/material": "^7.3.6",
         "@mui/material-nextjs": "^7.3.10",
-        "@mui/stylis-plugin-rtl": "^7.3.6",
+        "@mui/stylis-plugin-rtl": "^9.1.1",
         "@mui/x-charts": "^9.9.0",
         "@mui/x-date-pickers": "^8.17.0",
         "@opentelemetry/api-logs": "^0.220.0",
