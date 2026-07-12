@@ -15,6 +15,7 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CreateDraftAction } from "@/components/gantt/curriculum-fab/action-items/CreateDraftAction";
 import { CreateFromTemplateAction } from "@/components/gantt/curriculum-fab/action-items/CreateFromTemplateAction";
+import { CutToScheduleAction } from "@/components/gantt/curriculum-fab/action-items/CutToScheduleAction";
 import { DeleteCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DeleteCurriculumAction";
 import { DuplicateCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DuplicateCurriculumAction";
 import { ToggleArchiveAction } from "@/components/gantt/curriculum-fab/action-items/ToggleArchiveAction";
@@ -23,6 +24,7 @@ import { ToggleDraftAction } from "@/components/gantt/curriculum-fab/action-item
 type ActionKey =
     | "createDraft"
     | "createFromTemplate"
+    | "cutToSchedule"
     | "delete"
     | "duplicate"
     | "importExport"
@@ -169,6 +171,12 @@ export function CurriculumActionItems({
                     loading={ activeAction === "toggleArchive" }
                     onProcessingChange={ makeProcessingHandler("toggleArchive") }
                     onUpdate={ onUpdate }
+                    sourceCurriculum={ sourceCurriculum }
+                />
+                <CutToScheduleAction
+                    disabled={ isDisabled || !sourceCurriculum }
+                    loading={ activeAction === "cutToSchedule" }
+                    onProcessingChange={ makeProcessingHandler("cutToSchedule") }
                     sourceCurriculum={ sourceCurriculum }
                 />
                 <ImportExportMenuButton
