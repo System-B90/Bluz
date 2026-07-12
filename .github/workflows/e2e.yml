@@ -24,7 +24,7 @@ jobs:
 
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
 
             # ── Hive (SSO identity provider + organizational data) ────────────
             # The Hive repository is private — checkout needs a PAT with read
@@ -64,7 +64,7 @@ jobs:
             # blob:limit=50k mirrors Hive's documented clone (skips >1.5 GiB of
             # large blobs; git lazy-fetches any that the checkout needs).
             - name: Checkout Hive (SSO branch)
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                   repository: ${{ env.HIVE_REPO }}
                   ref: ${{ env.HIVE_REF }}
