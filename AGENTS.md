@@ -267,3 +267,8 @@ Runtime config comes from the root **`.env`** (consumed by docker-compose and co
 5. Commit messages in this repo are short and imperative (see `git log`). Commit all changes, even if they are not verified.
 6. Create a new branch for new features `feature/<feature-name>`, and `hotfix/<bug-name>` for bugs.
 7. Push only working changes after running linters and testing pipelines.
+8. **UI changes need screenshots in the PR.** If a change touches anything under
+   `ui/src/components/`, `ui/src/app/` pages, or otherwise alters rendered markup/styles,
+   attach before/after screenshots of every affected page, modal, or component — as a PR
+   comment if not included in the PR description. Cover both light/dark or RTL states if
+   the change affects them. No screenshots, no merge.
