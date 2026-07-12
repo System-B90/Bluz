@@ -1,5 +1,5 @@
 import ContentCutIcon from "@mui/icons-material/ContentCut";
-import { useCallback, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 
 import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items/ActionItemButton";
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
@@ -27,16 +27,14 @@ export function CutToScheduleAction({
     }, [sourceCurriculum]);
 
     return (
-        <>
+        <Fragment>
             <ActionItemButton
                 disabled={disabled || isDraft}
                 loading={loading}
                 onClick={handleClick}
                 startIcon={<ContentCutIcon fontSize="small" />}
                 tooltipTitle={
-                    isDraft
-                        ? 'הלו"ז נגזר רק מתוכנית לימודים שפורסמה'
-                        : 'גזירה ללו"ז'
+                    isDraft ? "ניתן לגזור רק מגאנט מוגמר" : 'גזירה ללו"ז'
                 }
                 {...props}
             />
@@ -46,6 +44,6 @@ export function CutToScheduleAction({
                 onClose={() => setDialogOpen(false)}
                 open={dialogOpen}
             /> : null}
-        </>
+        </Fragment>
     );
 }

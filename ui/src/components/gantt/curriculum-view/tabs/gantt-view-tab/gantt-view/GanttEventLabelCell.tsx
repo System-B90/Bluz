@@ -75,7 +75,7 @@ export const GanttEventLabelCell: React.FC<GanttEventLabelCellProps> = ({
             </Typography>
 
             { drifted ? (
-                <Tooltip title="בוצע שונה מהמתוכנן">
+                <Tooltip title="ביצוע שונה מהתכנון">
                     <Box
                         sx={ {
                             width: 8,

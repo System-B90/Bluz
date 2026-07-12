@@ -1,5 +1,4 @@
 import { DragEndEvent } from "@dnd-kit/core";
-import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import
@@ -13,29 +12,15 @@ import
     getSpilloverMinutesByDay,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { ConstraintLink } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
+import { useGanttUndo } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-undo";
 import { useGanttConstraints } from "@/components/gantt/state/constraints/hooks";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
-/** Maximum drag actions remembered for Ctrl+Z (#142). */
-const UNDO_STACK_LIMIT = 50;
-
-/** True when the keystroke happened inside a text-entry element. */
-function isTypingTarget(target: EventTarget | null): boolean
-{
-    if (!(target instanceof HTMLElement)) return false;
-    return (
-        target.isContentEditable ||
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA"
-    );
-}
-
 export const useGanttView = (curriculumId: string) =>
 {
     const state = useCurriculumState();
-    const { enqueueSnackbar } = useSnackbar();
     const {
         state: { mappings: globalMappings },
         createMapping,
@@ -605,45 +590,7 @@ export const useGanttView = (curriculumId: string) =>
 
     // Undo stack for drag actions in the timeline (#142). Each entry is the
     // inverse of one completed user action; Ctrl+Z pops and executes it.
-    const undoStackRef = useRef<Array<() => Promise<void>>>([]);
-
-    const pushUndo = useCallback((undo: () => Promise<void>) =>
-    {
-        undoStackRef.current.push(undo);
-        if (undoStackRef.current.length > UNDO_STACK_LIMIT)
-        {
-            undoStackRef.current.shift();
-        }
-    }, []);
-
-    const handleUndo = useCallback(async () =>
-    {
-        const undo = undoStackRef.current.pop();
-        if (!undo) return;
-        try
-        {
-            await undo();
-            enqueueSnackbar("הפעולה האחרונה בוטלה", { variant: "info" });
-        } catch
-        {
-            enqueueSnackbar("ביטול הפעולה נכשל!", { variant: "error" });
-        }
-    }, [ enqueueSnackbar ]);
-
-    // Ctrl+Z / Cmd+Z while the timeline is mounted (ignoring text inputs).
-    useEffect(() =>
-    {
-        const onKeyDown = (e: KeyboardEvent) =>
-        {
-            if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
-            if (e.key.toLowerCase() !== "z") return;
-            if (isTypingTarget(e.target)) return;
-            e.preventDefault();
-            void handleUndo();
-        };
-        window.addEventListener("keydown", onKeyDown);
-        return () => window.removeEventListener("keydown", onKeyDown);
-    }, [ handleUndo ]);
+    const { pushUndo } = useGanttUndo();
 
     const handleDragEnd = useCallback(
         async (event: DragEndEvent) =>

@@ -1,10 +1,11 @@
 import { createContext } from "react";
 
 import { GanttEventExecution } from "@/api-shared/types/gantt/execution";
+import { GanttEventId } from "@/api-shared/types/gantt/models";
 
 export type GanttExecutionState = {
     /** Keyed by gantt event id; empty ⇒ curriculum not cut (or still loading). */
-    events: Record<string, GanttEventExecution>;
+    events: Record<GanttEventId, GanttEventExecution>;
     isLoading: boolean;
     /** True once at least one fetch completed (distinguishes "not cut" from "loading"). */
     hasLoaded: boolean;

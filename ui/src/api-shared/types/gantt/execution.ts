@@ -6,6 +6,8 @@
  * `(ganttEventId, ganttOccurrenceDate)`.
  */
 
+import { GanttEventId } from "@/api-shared/types/gantt/models";
+
 /** Planned side of an occurrence: what the gantt says should happen. */
 export type PlannedOccurrenceExecution = {
     /** ISO datetime of the planned start. */
@@ -43,7 +45,7 @@ export type OccurrenceExecution = {
 };
 
 export type GanttEventExecution = {
-    ganttEventId: string;
+    ganttEventId: GanttEventId;
     occurrences: Array<OccurrenceExecution>;
     /** Aggregates, mainly useful for recurring events. */
     totals: {
@@ -61,5 +63,5 @@ export type ApiCurriculumExecutionResponse = {
      * Keyed by gantt event id. Only gantt events that were cut appear here;
      * empty object ⇒ curriculum not cut yet (or no linked iteration).
      */
-    events: Record<string, GanttEventExecution>;
+    events: Record<GanttEventId, GanttEventExecution>;
 };

@@ -12,7 +12,6 @@ export async function fetchCurriculumExecution(
 ): Promise<ApiCurriculumExecutionResponse> {
     return await safeApiFetcher<ApiCurriculumExecutionResponse>(
         `/api/gantt/curriculums/${curriculumId}/execution`,
-        { method: "GET" },
     );
 }
 
