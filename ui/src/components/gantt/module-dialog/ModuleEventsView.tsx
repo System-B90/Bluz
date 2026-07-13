@@ -94,12 +94,11 @@ export function ModuleEventsView({
         };
         frameId = window.requestAnimationFrame(tryScroll);
 
-        setHighlightedEventId(focusEventId);
         if (clearTimerRef.current) window.clearTimeout(clearTimerRef.current);
-        clearTimerRef.current = window.setTimeout(
-            () => setHighlightedEventId(null),
-            HIGHLIGHT_DURATION_MS,
-        );
+        clearTimerRef.current = window.setTimeout(() => {
+            setHighlightedEventId(null);
+        }, HIGHLIGHT_DURATION_MS);
+        queueMicrotask(() => setHighlightedEventId(focusEventId));
 
         return () => {
             window.cancelAnimationFrame(frameId);

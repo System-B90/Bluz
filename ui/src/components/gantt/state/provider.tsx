@@ -121,10 +121,13 @@ function ModuleDialogManager({
         const ganttModule = state.modules[ event.moduleId ];
         if (!ganttModule) return;
 
-        setEventDialogSyllabusId(ganttModule.syllabusId);
-        setEventDialogModuleId(event.moduleId);
-        setEventDialogEventId(urlEventId);
-        setEventDialogOpen(true);
+        queueMicrotask(() =>
+        {
+            setEventDialogSyllabusId(ganttModule.syllabusId);
+            setEventDialogModuleId(event.moduleId);
+            setEventDialogEventId(urlEventId);
+            setEventDialogOpen(true);
+        });
         // Only run once on mount: the dialog's own open/close handlers own the URL after that.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

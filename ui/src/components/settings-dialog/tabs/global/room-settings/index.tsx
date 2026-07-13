@@ -55,29 +55,6 @@ export function RoomSettings()
         router.replace(`?${params.toString()}`, { scroll: false });
     }, [ router, searchParams ]);
 
-    useEffect(() =>
-    {
-        const roomId = searchParams.get("editRoom");
-        if (!roomId || rooms.length === 0) return;
-        const room = rooms.find((r) => r.id === roomId);
-        if (room && (!selectedRoom || selectedRoom.id !== roomId))
-        {
-            populateFormState(room);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedRoom intentionally excluded to avoid set→rerun loop
-    }, [ rooms, searchParams ]);
-
-    const filteredRooms = useMemo(() =>
-    {
-        const query = searchQuery.trim().toLowerCase();
-        if (!query) return rooms;
-        return rooms.filter(
-            (r) =>
-                r.name.toLowerCase().includes(query) ||
-                (r.description && r.description.toLowerCase().includes(query)),
-        );
-    }, [ rooms, searchQuery ]);
-
     const populateFormState = useCallback((room: Room) =>
     {
         setSelectedRoom(room);
@@ -94,6 +71,29 @@ export function RoomSettings()
         setLectureComfortable(ext.lectureComfortable);
         setPeAyin(ext.peAyin ?? false);
     }, []);
+
+    useEffect(() =>
+    {
+        const roomId = searchParams.get("editRoom");
+        if (!roomId || rooms.length === 0) return;
+        const room = rooms.find((r) => r.id === roomId);
+        if (room && (!selectedRoom || selectedRoom.id !== roomId))
+        {
+            queueMicrotask(() => populateFormState(room));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedRoom intentionally excluded to avoid set→rerun loop
+    }, [ rooms, searchParams ]);
+
+    const filteredRooms = useMemo(() =>
+    {
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return rooms;
+        return rooms.filter(
+            (r) =>
+                r.name.toLowerCase().includes(query) ||
+                (r.description && r.description.toLowerCase().includes(query)),
+        );
+    }, [ rooms, searchQuery ]);
 
     const populateFormFromRoom = useCallback((room: Room) =>
     {

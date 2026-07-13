@@ -71,10 +71,15 @@ export function ReservationDialog({
         }
     }, [room.id, room.source]);
 
+    const [prevOpen, setPrevOpen] = useState(open);
+    if (open !== prevOpen) {
+        setPrevOpen(open);
+        if (open) setForm(EMPTY_FORM);
+    }
+
     useEffect(() => {
         if (open) {
-            setForm(EMPTY_FORM);
-            void fetchReservations();
+            queueMicrotask(() => void fetchReservations());
         }
     }, [open, fetchReservations]);
 

@@ -7,7 +7,7 @@ import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 /**
  * Editable list of free-text system requirements. Edits are buffered locally
@@ -25,10 +25,12 @@ export function SystemRequirementsField({
     const [ local, setLocal ] = useState<Array<string>>(requirements);
 
     // Keep local in sync when the underlying event changes (e.g. navigation).
-    useEffect(() =>
+    const [ prevRequirements, setPrevRequirements ] = useState(requirements);
+    if (requirements !== prevRequirements)
     {
+        setPrevRequirements(requirements);
         setLocal(requirements);
-    }, [ requirements ]);
+    }
 
     const commit = useCallback(
         (next: Array<string>) =>

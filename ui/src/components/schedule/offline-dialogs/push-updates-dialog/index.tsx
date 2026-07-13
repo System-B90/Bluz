@@ -213,7 +213,9 @@ export function PushOfflineUpdatesDialog() {
         }, [localEvents, getCapturedEvent, getCapturedState, enqueueSnackbar]);
 
     const checkRef = useRef(checkEventCollisionStates);
-    checkRef.current = checkEventCollisionStates;
+    useEffect(() => {
+        checkRef.current = checkEventCollisionStates;
+    });
 
     useEffect(() => {
         if (!pushDialogOpen) {
