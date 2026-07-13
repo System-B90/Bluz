@@ -1,5 +1,4 @@
 import Box from "@mui/material/Box";
-import { ButtonProps } from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
@@ -13,39 +12,28 @@ import
 } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
-import { CreateDraftAction } from "@/components/gantt/curriculum-fab/action-items/CreateDraftAction";
-import { CreateFromTemplateAction } from "@/components/gantt/curriculum-fab/action-items/CreateFromTemplateAction";
-import { CutToScheduleAction } from "@/components/gantt/curriculum-fab/action-items/CutToScheduleAction";
+import { CreateCurriculumHoverMenu } from "@/components/gantt/curriculum-fab/action-items/CreateCurriculumHoverMenu";
 import { DeleteCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DeleteCurriculumAction";
-import { DuplicateCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DuplicateCurriculumAction";
-import { ToggleArchiveAction } from "@/components/gantt/curriculum-fab/action-items/ToggleArchiveAction";
-import { ToggleDraftAction } from "@/components/gantt/curriculum-fab/action-items/ToggleDraftAction";
 
 type ActionKey =
     | "createDraft"
     | "createFromTemplate"
-    | "cutToSchedule"
     | "delete"
     | "duplicate"
-    | "importExport"
-    | "toggleArchive"
-    | "toggleDraft";
+    | "importExport";
 
 export type CreateNewCurriculumProps = {
     disabled: boolean;
     onCreate: (newCurriculum: GanttCurriculumDocument) => void;
-    onUpdate: (updatedCurriculum: GanttCurriculumDocument) => void;
     onDelete: (deletedCurriculumId: GanttCurriculumId) => void;
     sourceCurriculum?: GanttCurriculumDocument | null;
-} & Omit<ButtonProps, "loading" | "onClick" | "sx">;
+};
 
 export function CurriculumActionItems({
     onCreate,
-    onUpdate,
     onDelete,
     disabled,
     sourceCurriculum,
-    ...props
 }: CreateNewCurriculumProps)
 {
     const { enqueueSnackbar } = useSnackbar();
@@ -130,55 +118,19 @@ export function CurriculumActionItems({
             justifyItems={ "center" }
             sx={ { mt: 1, mb: 0.5 } }
         >
-            { /* Creation actions */ }
-            <Box alignItems="center" display="flex" gap={ 0.5 }>
-                <CreateDraftAction
-                    disabled={ isDisabled }
-                    loading={ activeAction === "createDraft" }
-                    onCreate={ onCreate }
-                    onProcessingChange={ makeProcessingHandler("createDraft") }
-                    { ...props }
-                />
-                <CreateFromTemplateAction
-                    disabled={ isDisabled }
-                    loading={ activeAction === "createFromTemplate" }
-                    onCreate={ onCreate }
-                    onProcessingChange={ makeProcessingHandler("createFromTemplate") }
-                    { ...props }
-                />
-                <DuplicateCurriculumAction
-                    disabled={ isDisabled || !sourceCurriculum }
-                    loading={ activeAction === "duplicate" }
-                    onCreate={ onCreate }
-                    onProcessingChange={ makeProcessingHandler("duplicate") }
-                    sourceCurriculum={ sourceCurriculum }
-                />
-            </Box>
+            { /* Creation actions - rare action, hidden behind a hover reveal */ }
+            <CreateCurriculumHoverMenu
+                activeAction={ activeAction }
+                isDisabled={ isDisabled }
+                makeProcessingHandler={ makeProcessingHandler }
+                onCreate={ onCreate }
+                sourceCurriculum={ sourceCurriculum }
+            />
 
             <Divider flexItem orientation="vertical" sx={ { my: 0.5 } } />
 
-            { /* Status / export actions on the current curriculum */ }
+            { /* Import/export on the current curriculum */ }
             <Box alignItems="center" display="flex" gap={ 0.5 }>
-                <ToggleDraftAction
-                    disabled={ isDisabled || !sourceCurriculum }
-                    loading={ activeAction === "toggleDraft" }
-                    onProcessingChange={ makeProcessingHandler("toggleDraft") }
-                    onUpdate={ onUpdate }
-                    sourceCurriculum={ sourceCurriculum }
-                />
-                <ToggleArchiveAction
-                    disabled={ isDisabled || !sourceCurriculum }
-                    loading={ activeAction === "toggleArchive" }
-                    onProcessingChange={ makeProcessingHandler("toggleArchive") }
-                    onUpdate={ onUpdate }
-                    sourceCurriculum={ sourceCurriculum }
-                />
-                <CutToScheduleAction
-                    disabled={ isDisabled || !sourceCurriculum }
-                    loading={ activeAction === "cutToSchedule" }
-                    onProcessingChange={ makeProcessingHandler("cutToSchedule") }
-                    sourceCurriculum={ sourceCurriculum }
-                />
                 <ImportExportMenuButton
                     exportDisabled={ isDisabled || !sourceCurriculum }
                     exportFilenamePrefix="bluz-gantt-"

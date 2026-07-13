@@ -27,6 +27,7 @@ export type AuthContextState = {
     userData: AuthSessionUser;
     logout: () => void;
     canEdit: boolean;
+    degraded: boolean;
     addMessageHandler: (handler: MessageHandlerType) => () => void;
     sendMessage: (data: WebSocketSessionMessage) => void;
 };
@@ -36,9 +37,11 @@ const AuthContext = createContext<AuthContextState | undefined>(undefined);
 export const AuthProvider = ({
     children,
     userData,
+    degraded = false,
 }: {
     children: React.ReactNode;
     userData: AuthSessionUser;
+    degraded?: boolean;
 }) => {
     const { ws, addMessageHandler } = useSessionWebSocketContext();
     const { enqueueSnackbar } = useSnackbar();
@@ -88,12 +91,40 @@ export const AuthProvider = ({
     }, []);
 
     useEffect(() => {
-        if (session && (session as any).error === "TokenExpiredError") {
-            enqueueSnackbar("עבר הרבה זמן... בואו נתחבר מחדש", {
-                variant: "warning",
-            });
-            logout();
+        if (degraded) {
+            enqueueSnackbar(
+                "הייב אינו זמין כרגע. פועלים במצב מוגבל עם ההתחברות האחרונה שנשמרה.",
+                { variant: "warning", persist: true, preventDuplicate: true },
+            );
         }
+    }, [degraded, enqueueSnackbar]);
+
+    useEffect(() => {
+        if (!session || (session as any).error !== "TokenExpiredError") {
+            return;
+        }
+
+        // A stale token normally forces re-login, but that requires Hive
+        // to be up. Only sign out if Hive is actually reachable again.
+        let cancelled = false;
+        void (async () => {
+            try {
+                const response = await fetch("/api/auth/hive-status");
+                const { reachable } = await response.json();
+                if (!cancelled && reachable) {
+                    enqueueSnackbar("עבר הרבה זמן... בואו נתחבר מחדש", {
+                        variant: "warning",
+                    });
+                    logout();
+                }
+            } catch {
+                // Status check itself failed; stay on the cached session.
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
     }, [session, logout, enqueueSnackbar]);
 
     const canEdit: boolean = !!userData;
@@ -148,10 +179,11 @@ export const AuthProvider = ({
             userData,
             logout,
             canEdit,
+            degraded,
             addMessageHandler,
             sendMessage,
         }),
-        [logout, userData, canEdit, addMessageHandler, sendMessage],
+        [logout, userData, canEdit, degraded, addMessageHandler, sendMessage],
     );
 
     return (

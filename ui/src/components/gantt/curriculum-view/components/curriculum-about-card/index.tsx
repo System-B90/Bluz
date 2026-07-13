@@ -7,6 +7,8 @@ import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumDescription } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumDescription";
 import { CurriculumName } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumName";
+import { CurriculumStatusActions } from "@/components/gantt/curriculum-view/components/curriculum-about-card/CurriculumStatusActions";
+import { IterationLinkField } from "@/components/gantt/curriculum-view/components/curriculum-about-card/IterationLinkField";
 
 export type CurriculumCardProps = {
     curriculumId: GanttCurriculumId | null;
@@ -40,6 +42,15 @@ export function CurriculumAboutCard({
                 ) : (
                     <Skeleton variant="text" width={80} />
                 )}
+            </Box>
+            <Box mt={1.5}>
+                <IterationLinkField curriculumId={curriculumId} />
+            </Box>
+            <Box mt={1.5}>
+                <CurriculumStatusActions
+                    curriculum={curriculum}
+                    curriculumId={curriculumId}
+                />
             </Box>
         </Card>
     );

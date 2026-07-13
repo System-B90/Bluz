@@ -56,7 +56,11 @@ export function CurriculumListItems({
         return (
             <Fragment key={key}>
                 <ListSubheader
-                    sx={{ paddingY: 0, lineHeight: 1.5, background: "transparent" }}
+                    sx={{
+                        paddingY: 0,
+                        lineHeight: 1.5,
+                        bgcolor: "background.paper",
+                    }}
                 >
                     <Typography
                         align="center"
