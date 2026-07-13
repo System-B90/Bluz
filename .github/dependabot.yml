@@ -1,0 +1,61 @@
+version: 2
+updates:
+    # Main app (root package.json covers ui/ via the monorepo layout)
+    - package-ecosystem: "npm"
+      directory: "/"
+      schedule:
+          interval: "weekly"
+          day: "sunday"
+      open-pull-requests-limit: 5
+      groups:
+          minor-and-patch:
+              update-types: ["minor", "patch"]
+      commit-message:
+          prefix: "Vibe-Bumped"
+
+    # Standalone WebSocket session server
+    - package-ecosystem: "npm"
+      directory: "/session-server"
+      schedule:
+          interval: "weekly"
+          day: "sunday"
+      open-pull-requests-limit: 3
+      groups:
+          minor-and-patch:
+              update-types: ["minor", "patch"]
+      commit-message:
+          prefix: "Vibe-Bumped"
+
+    # Python: bluz CLI + scripts tooling
+    - package-ecosystem: "pip"
+      directory: "/cli"
+      schedule:
+          interval: "weekly"
+          day: "sunday"
+      open-pull-requests-limit: 3
+      groups:
+          minor-and-patch:
+              update-types: ["minor", "patch"]
+      commit-message:
+          prefix: "Vibe-Bumped"
+
+    - package-ecosystem: "pip"
+      directory: "/scripts"
+      schedule:
+          interval: "weekly"
+          day: "sunday"
+      open-pull-requests-limit: 3
+      groups:
+          minor-and-patch:
+              update-types: ["minor", "patch"]
+      commit-message:
+          prefix: "Vibe-Bumped"
+
+    # GitHub Actions pins
+    - package-ecosystem: "github-actions"
+      directory: "/"
+      schedule:
+          interval: "monthly"
+      open-pull-requests-limit: 3
+      commit-message:
+          prefix: "Vibe-Bumped"

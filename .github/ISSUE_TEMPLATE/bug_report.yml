@@ -1,0 +1,76 @@
+name: 🐛 Bug Report
+description: Something in Bluz is broken or behaving unexpectedly.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Thanks for reporting! Please search existing issues first to avoid duplicates.
+
+    - type: dropdown
+      id: surface
+      attributes:
+          label: Surface
+          description: Where does the bug happen?
+          options:
+              - Schedule / Calendar (MongoDB engine)
+              - Gantt / Curriculum (PostgreSQL engine)
+              - Auth / Hive SSO
+              - Real-time sync (WebSocket session server)
+              - bluz CLI
+              - Infra (Docker / Nginx / CI)
+              - Other / not sure
+      validations:
+          required: true
+
+    - type: textarea
+      id: what-happened
+      attributes:
+          label: What happened?
+          description: Clear description of the bug. Screenshots welcome — the UI is Hebrew RTL, capture as-is.
+      validations:
+          required: true
+
+    - type: textarea
+      id: expected
+      attributes:
+          label: Expected behavior
+      validations:
+          required: true
+
+    - type: textarea
+      id: repro
+      attributes:
+          label: Steps to reproduce
+          placeholder: |
+              1. Go to '...'
+              2. Click on '...'
+              3. See error
+      validations:
+          required: true
+
+    - type: dropdown
+      id: environment
+      attributes:
+          label: Environment
+          options:
+              - Production deployment
+              - Local dev (`npm run docker:dev`)
+              - Local dev (`npm run dev`)
+              - Test stack (`npm run docker:test`)
+      validations:
+          required: true
+
+    - type: input
+      id: version
+      attributes:
+          label: Version / commit
+          description: "`BLUZ_VERSION` image tag or `git rev-parse --short HEAD`."
+
+    - type: textarea
+      id: logs
+      attributes:
+          label: Relevant logs
+          description: Browser console, container logs (`docker compose logs`), or Playwright output. Redact secrets.
+          render: shell
