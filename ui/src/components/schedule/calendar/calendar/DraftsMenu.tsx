@@ -218,7 +218,7 @@ export function DraftsMenu()
                     טיוטות משותפות
                 </Typography>
 
-                <Stack direction="row" spacing={ 1 } sx={ { mb: 1 } }>
+                <Stack alignItems="stretch" direction="row" spacing={ 1 } sx={ { mb: 1 } }>
                     <TextField
                         fullWidth
                         label="שם הטיוטה"
@@ -233,8 +233,8 @@ export function DraftsMenu()
                     <Button
                         disabled={ !label.trim() || loading }
                         onClick={ () => void handleCreate() }
+                        size="small"
                         startIcon={ <SaveIcon /> }
-                        sx={{ height: "100%" }}
                         variant="contained"
                     >
                         שמירה
