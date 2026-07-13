@@ -141,11 +141,10 @@ export function CutToScheduleDialog({
 }: CutToScheduleDialogProps) {
     const [phase, setPhase] = useState<DialogPhase>({ kind: "confirm" });
     const [loadingStep, setLoadingStep] = useState(0);
-    const loadingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const loadingIntervalRef = useRef<null | ReturnType<typeof setInterval>>(null);
 
     useEffect(() => {
         if (phase.kind === "loading") {
-            setLoadingStep(0);
             loadingIntervalRef.current = setInterval(() => {
                 setLoadingStep((step) =>
                     Math.min(step + 1, LOADING_STEPS.length - 1),
@@ -170,6 +169,7 @@ export function CutToScheduleDialog({
     }, [onClose, phase.kind]);
 
     const handleConfirm = useCallback(async () => {
+        setLoadingStep(0);
         setPhase({ kind: "loading" });
         try {
             const result = await ganttApi.cut.cut(curriculumId);

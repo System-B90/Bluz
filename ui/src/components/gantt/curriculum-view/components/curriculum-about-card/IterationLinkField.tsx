@@ -17,8 +17,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { apiListIterations, apiPatchIteration } from "@/api-client/iterations";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
-import { EditableCurriculumField } from "@/components/gantt/curriculum-view/components/curriculum-about-card/EditableCurriculumField";
 import { Iteration, IterationId } from "@/api-shared/types/iteration";
+import { EditableCurriculumField } from "@/components/gantt/curriculum-view/components/curriculum-about-card/EditableCurriculumField";
 
 export type IterationLinkFieldProps = {
     curriculumId: GanttCurriculumId | null;
@@ -159,9 +159,7 @@ export function IterationLinkField({ curriculumId }: IterationLinkFieldProps) {
                             value={linkedIteration.label}
                         />
                     </Box>
-                    {linkedIteration.isCurrent && (
-                        <Chip color="primary" label="נוכחי" size="small" />
-                    )}
+                    {linkedIteration.isCurrent ? <Chip color="primary" label="נוכחי" size="small" /> : null}
                     <Tooltip title="ניתוק המחזור מתוכנית הלימודים">
                         <span>
                             <IconButton

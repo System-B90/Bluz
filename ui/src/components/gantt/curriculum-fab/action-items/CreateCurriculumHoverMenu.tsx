@@ -11,7 +11,7 @@ import { DuplicateCurriculumAction } from "@/components/gantt/curriculum-fab/act
 
 export type CreateCurriculumHoverMenuProps = {
     isDisabled: boolean;
-    activeAction: string | null;
+    activeAction: null | string;
     onCreate: (newCurriculum: GanttCurriculumDocument) => void;
     makeProcessingHandler: (
         key: "createDraft" | "createFromTemplate" | "duplicate",

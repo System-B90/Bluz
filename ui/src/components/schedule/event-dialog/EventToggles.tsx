@@ -1,14 +1,15 @@
 "use client";
 
-import type { SvgIconComponent } from "@mui/icons-material";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
 import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
+import type { SvgIconProps } from "@mui/material/SvgIcon";
+import Typography from "@mui/material/Typography";
+import type { ComponentType } from "react";
 
 import { Event } from "@/components/schedule/types/event";
 
@@ -16,7 +17,7 @@ type ToggleDef = {
     label: string;
     key: keyof Event;
     hue: string;
-    Icon: SvgIconComponent;
+    Icon: ComponentType<SvgIconProps>;
 };
 
 /**
@@ -39,9 +40,9 @@ function ToggleChip({
 
     return (
         <Box
+            aria-checked={ checked }
             onClick={ () => onChange(!checked) }
             role="switch"
-            aria-checked={ checked }
             sx={ {
                 display: "flex",
                 alignItems: "center",
@@ -95,7 +96,7 @@ export function EventToggles({
     onUpdate: (u: Partial<Event>) => void;
 })
 {
-    const toggles: ToggleDef[] = [
+    const toggles: Array<ToggleDef> = [
         { label: "מתואם", key: "locked", hue: "#2e7d32", Icon: LockOutlinedIcon },
         { label: "קריטי", key: "required", hue: "#d32f2f", Icon: PriorityHighIcon },
         {

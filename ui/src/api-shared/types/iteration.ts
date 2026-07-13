@@ -72,5 +72,5 @@ export type PatchIterationPayload = {
     endDate?: Date | null | string;
     isCurrent?: boolean;
     /** Pass null to unlink the curriculum. */
-    ganttCurriculumId?: string | null;
+    ganttCurriculumId?: null | string;
 };

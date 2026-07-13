@@ -19,9 +19,9 @@ import {
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { useCurriculumSyncRef } from "@/components/gantt/curriculum-fab/curriculum-sync-context";
 import { CurriculumActionItems } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumListItems } from "@/components/gantt/curriculum-fab/CurriculumListItems";
-import { useCurriculumSyncRef } from "@/components/gantt/curriculum-fab/curriculum-sync-context";
 import {
     fetchDrawerData,
     flattenCurriculumGroups,

@@ -14,7 +14,7 @@ export type CurriculumStatusActionsProps = {
     curriculum: GanttCurriculumDocument | undefined;
 };
 
-type ActionKey = "toggleArchive" | "toggleDraft" | "cutToSchedule";
+type ActionKey = "cutToSchedule" | "toggleArchive" | "toggleDraft";
 
 export function CurriculumStatusActions({
     curriculumId,

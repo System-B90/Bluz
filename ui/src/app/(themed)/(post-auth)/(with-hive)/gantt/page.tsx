@@ -187,46 +187,46 @@ function GanttPageInner()
             sx={ { position: "relative" } }
         >
             <CurriculumSyncContext.Provider value={ curriculumSyncRef }>
-            <CurriculumFab
-                currentCurriculum={ currentCurriculum }
-                open={ drawerOpen }
-                setCurrentCurriculum={ setCurrentCurriculum }
-                setOpen={ setDrawerOpen }
-            />
+                <CurriculumFab
+                    currentCurriculum={ currentCurriculum }
+                    open={ drawerOpen }
+                    setCurrentCurriculum={ setCurrentCurriculum }
+                    setOpen={ setDrawerOpen }
+                />
 
-            <Box
-                flexGrow={ 1 }
-                sx={ {
-                    padding: 2,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    maxWidth: "100%",
-                } }
-            >
-                { !currentCurriculum && !isLoading && (
-                    <Typography color="textSecondary">
+                <Box
+                    flexGrow={ 1 }
+                    sx={ {
+                        padding: 2,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        maxWidth: "100%",
+                    } }
+                >
+                    { !currentCurriculum && !isLoading && (
+                        <Typography color="textSecondary">
                         בחרו גאנט כדי להתחיל לעבוד
-                    </Typography>
-                ) }
+                        </Typography>
+                    ) }
 
-                { isLoading ? <WindowsLoadingScreen /> : null }
+                    { isLoading ? <WindowsLoadingScreen /> : null }
 
-                { error ? <Typography color="error">{ error }</Typography> : null }
+                    { error ? <Typography color="error">{ error }</Typography> : null }
 
-                { currentCurriculum && !isLoading && initialData ? (
-                    <CurriculumProvider
-                        curriculumId={ currentCurriculum }
-                        initialData={ initialData }
-                        key={ currentCurriculum }
-                    >
-                        <GanttMappingProvider curriculumId={ currentCurriculum }>
-                            <CurriculumView curriculumId={ currentCurriculum } />
-                        </GanttMappingProvider>
-                    </CurriculumProvider>
-                ) : null }
-            </Box>
+                    { currentCurriculum && !isLoading && initialData ? (
+                        <CurriculumProvider
+                            curriculumId={ currentCurriculum }
+                            initialData={ initialData }
+                            key={ currentCurriculum }
+                        >
+                            <GanttMappingProvider curriculumId={ currentCurriculum }>
+                                <CurriculumView curriculumId={ currentCurriculum } />
+                            </GanttMappingProvider>
+                        </CurriculumProvider>
+                    ) : null }
+                </Box>
             </CurriculumSyncContext.Provider>
         </Box>
     );
