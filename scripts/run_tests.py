@@ -136,6 +136,16 @@ def main(
         "--spec",
         help="Run specific test spec file (e.g. calendar, gantt, settings).",
     ),
+    shard: str = typer.Option(
+        None,
+        "--shard",
+        help="Run a subset of tests via Playwright sharding, e.g. '1/3'.",
+    ),
+    skip_unit: bool = typer.Option(
+        False,
+        "--skip-unit",
+        help="Skip backend unit tests (use when they already run in a separate CI job).",
+    ),
 ):
     """
     Main entry point for testing pipeline.
@@ -156,7 +166,7 @@ def main(
     merged_env.update({k: str(v) for k, v in root_env.items() if v is not None})
 
     # Run Backend Unit Tests (fail fast)
-    if not seed_only:
+    if not seed_only and not skip_unit:
         typer.secho("Running Backend Unit Tests...", fg=typer.colors.CYAN, bold=True)
         try:
             # String command: shell=True + list args resolves differently on
@@ -431,6 +441,9 @@ def main(
 
     if spec:
         playwright_cmd += f" tests/{spec}.spec.ts"
+
+    if shard:
+        playwright_cmd += f" --shard={shard}"
 
     result = subprocess.run(playwright_cmd, env=test_env, shell=True, timeout=600)
 
