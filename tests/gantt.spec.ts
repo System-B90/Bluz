@@ -22,6 +22,10 @@ test.describe("Gantt Page", () => {
         const listItems = page.locator("[role='presentation'] ul li").filter({ has: page.getByRole("button") });
         const count = await listItems.count();
         if (count === 0) {
+            // Create actions are hidden behind a hover-reveal trigger.
+            const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
+            await createTrigger.click();
+
             const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
             await draftButton.click();
             
@@ -106,6 +110,10 @@ test.describe("Gantt Page", () => {
         // Open FAB first
         const fab = page.getByRole("button", { name: "גאנטים" });
         await fab.click();
+
+        // Create actions are hidden behind a hover-reveal trigger.
+        const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
+        await createTrigger.click();
 
         // Click "דראפט חדש" button
         const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
@@ -254,6 +262,10 @@ test.describe("Gantt Page", () => {
         const fab = page.getByRole("button", { name: "גאנטים" });
         await fab.click();
         await page.waitForTimeout(500);
+
+        // Create actions are hidden behind a hover-reveal trigger.
+        const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
+        await createTrigger.click();
 
         const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
         await expect(draftButton).toBeVisible();

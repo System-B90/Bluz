@@ -17,6 +17,12 @@ async function createAndSelectCurriculum(page: Page): Promise<void> {
     const fab = page.getByRole("button", { name: "גאנטים" });
     await fab.click();
 
+    // The concrete create actions (draft/duplicate/template) are hidden behind
+    // a hover-reveal trigger — click it to expand the Collapse before the
+    // "New Draft" button becomes visible.
+    const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
+    await createTrigger.click();
+
     const draftButton = page.getByRole("button", { name: "דראפט חדש" });
     await expect(draftButton).toBeVisible({ timeout: 10_000 });
     await draftButton.click();
