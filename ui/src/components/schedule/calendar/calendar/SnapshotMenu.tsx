@@ -1,3 +1,4 @@
+import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import HistoryIcon from "@mui/icons-material/History";
 import RestoreIcon from "@mui/icons-material/Restore";
@@ -50,7 +51,8 @@ type PendingRestore = {
  * point from the current calendar, list existing ones, restore one (via a
  * SET_EVENTS dispatch), or delete one.
  */
-export function SnapshotMenu() {
+export function SnapshotMenu()
+{
     const { enqueueSnackbar } = useSnackbar();
     const {
         events,
@@ -62,68 +64,79 @@ export function SnapshotMenu() {
         setEndDate,
     } = useCalendar();
 
-    const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-    const [snapshots, setSnapshots] = useState<Array<CalendarSnapshotSummary>>(
+    const [ anchorEl, setAnchorEl ] = useState<HTMLButtonElement | null>(null);
+    const [ snapshots, setSnapshots ] = useState<Array<CalendarSnapshotSummary>>(
         [],
     );
-    const [label, setLabel] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [busyId, setBusyId] = useState<null | string>(null);
-    const [pendingRestore, setPendingRestore] =
+    const [ label, setLabel ] = useState("");
+    const [ loading, setLoading ] = useState(false);
+    const [ busyId, setBusyId ] = useState<null | string>(null);
+    const [ pendingRestore, setPendingRestore ] =
         useState<null | PendingRestore>(null);
 
     const open = Boolean(anchorEl);
 
-    const refresh = useCallback(async () => {
+    const refresh = useCallback(async () =>
+    {
         setLoading(true);
-        try {
+        try
+        {
             setSnapshots(await apiListSnapshots(iterationId));
-        } catch (error) {
+        } catch (error)
+        {
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
                 "טעינת צילומי המצב נכשלה!",
                 error,
             );
-        } finally {
+        } finally
+        {
             setLoading(false);
         }
-    }, [iterationId, enqueueSnackbar]);
+    }, [ iterationId, enqueueSnackbar ]);
 
     const handleOpen = useCallback(
-        (e: React.MouseEvent<HTMLButtonElement>) => {
+        (e: React.MouseEvent<HTMLButtonElement>) =>
+        {
             setAnchorEl(e.currentTarget);
             void refresh();
         },
-        [refresh],
+        [ refresh ],
     );
 
     const handleClose = useCallback(() => setAnchorEl(null), []);
 
-    const handleCreate = useCallback(async () => {
+    const handleCreate = useCallback(async () =>
+    {
         const trimmed = label.trim();
         if (!trimmed) return;
         setLoading(true);
-        try {
+        try
+        {
             await apiCreateSnapshot(trimmed, events, iterationId);
             setLabel("");
             enqueueSnackbar("צילום המצב נשמר בהצלחה.", { variant: "success" });
             await refresh();
-        } catch (error) {
+        } catch (error)
+        {
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
                 "שמירת צילום המצב נכשלה!",
                 error,
             );
-        } finally {
+        } finally
+        {
             setLoading(false);
         }
-    }, [label, events, iterationId, enqueueSnackbar, refresh]);
+    }, [ label, events, iterationId, enqueueSnackbar, refresh ]);
 
     /** Runs the server-side restore and syncs the local view. */
     const performRestore = useCallback(
-        async (snapshotId: string, restored: Array<Event>) => {
+        async (snapshotId: string, restored: Array<Event>) =>
+        {
             setBusyId(snapshotId);
-            try {
+            try
+            {
                 const result = await apiRestoreSnapshot(
                     snapshotId,
                     iterationId,
@@ -134,28 +147,33 @@ export function SnapshotMenu() {
                     { variant: "success" },
                 );
                 handleClose();
-            } catch (error) {
+            } catch (error)
+            {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "שחזור המצב נכשל!",
                     error,
                 );
-            } finally {
+            } finally
+            {
                 setBusyId(null);
             }
         },
-        [iterationId, dispatch, enqueueSnackbar, handleClose],
+        [ iterationId, dispatch, enqueueSnackbar, handleClose ],
     );
 
     const handleRestore = useCallback(
-        async (snapshotId: string) => {
+        async (snapshotId: string) =>
+        {
             setBusyId(snapshotId);
-            try {
+            try
+            {
                 const { events: restored } = await apiGetSnapshot(
                     snapshotId,
                     iterationId,
                 );
-                if (restored.length === 0) {
+                if (restored.length === 0)
+                {
                     enqueueSnackbar("צילום המצב ריק — אין מה לשחזר.", {
                         variant: "warning",
                     });
@@ -175,7 +193,8 @@ export function SnapshotMenu() {
                     !endDate ||
                     rangeStart < startDate ||
                     rangeEnd > endDate;
-                if (outOfView) {
+                if (outOfView)
+                {
                     setPendingRestore({
                         snapshotId,
                         events: restored,
@@ -186,13 +205,15 @@ export function SnapshotMenu() {
                 }
 
                 await performRestore(snapshotId, restored);
-            } catch (error) {
+            } catch (error)
+            {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "שחזור המצב נכשל!",
                     error,
                 );
-            } finally {
+            } finally
+            {
                 setBusyId(null);
             }
         },
@@ -207,7 +228,8 @@ export function SnapshotMenu() {
 
     /** User confirmed an out-of-view restore: jump the view to the snapshot's
      *  range, then restore. */
-    const handleConfirmPendingRestore = useCallback(async () => {
+    const handleConfirmPendingRestore = useCallback(async () =>
+    {
         if (!pendingRestore) return;
         const { snapshotId, events: restored, rangeStart, rangeEnd } =
             pendingRestore;
@@ -215,107 +237,119 @@ export function SnapshotMenu() {
         setStartDate(dayjs(rangeStart).startOf("day").toDate());
         setEndDate(dayjs(rangeEnd).endOf("day").toDate());
         await performRestore(snapshotId, restored);
-    }, [pendingRestore, setStartDate, setEndDate, performRestore]);
+    }, [ pendingRestore, setStartDate, setEndDate, performRestore ]);
 
     const handleDelete = useCallback(
-        async (snapshotId: string) => {
+        async (snapshotId: string) =>
+        {
             setBusyId(snapshotId);
-            try {
+            try
+            {
                 await apiDeleteSnapshot(snapshotId, iterationId);
                 setSnapshots((prev) =>
                     prev.filter((s) => s.id !== snapshotId),
                 );
-            } catch (error) {
+            } catch (error)
+            {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "מחיקת צילום המצב נכשלה!",
                     error,
                 );
-            } finally {
+            } finally
+            {
                 setBusyId(null);
             }
         },
-        [iterationId, enqueueSnackbar],
+        [ iterationId, enqueueSnackbar ],
     );
 
     return (
         <>
             <Tooltip title="צילומי מצב (נקודות שחזור)">
-                <IconButton
-                    aria-label="צילומי מצב"
-                    onClick={handleOpen}
-                    size="small"
-                    sx={{
-                        color: "text.secondary",
-                        "&:hover": { color: "primary.main" },
-                    }}
+                <Button
+                    onClick={ handleOpen }
+                    sx={ {
+                        minWidth: 38,
+                        transition: "all 0.2s ease-in-out",
+                        "&:hover": {
+                            color: "primary.main",
+                        },
+                        "&:active": {
+                            transform: "scale(0.95)",
+                        },
+                    } }
+                    variant="outlined"
                 >
                     <HistoryIcon fontSize="small" />
-                </IconButton>
+                </Button>
             </Tooltip>
 
             <Popover
-                anchorEl={anchorEl}
-                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                onClose={handleClose}
-                open={open}
-                slotProps={{
-                    paper: { sx: { p: 2, mt: 1, width: 360, borderRadius: 2 } },
-                }}
-                transformOrigin={{ vertical: "top", horizontal: "left" }}
+                anchorEl={ anchorEl }
+                anchorOrigin={ { vertical: "bottom", horizontal: "left" } }
+                onClose={ handleClose }
+                open={ open }
+                slotProps={ {
+                    paper: { sx: { p: 2, mt: 1, width: 400, borderRadius: 2 } },
+                } }
+                transformOrigin={ { vertical: "top", horizontal: "left" } }
             >
-                <Typography sx={{ fontWeight: 700, mb: 1 }} variant="subtitle1">
+                <Typography sx={ { fontWeight: 700, mb: 1 } } variant="subtitle1">
                     צילומי מצב
                 </Typography>
 
-                <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                <Stack alignItems="stretch" direction="row" spacing={ 1 } sx={ { mb: 1 } }>
                     <TextField
                         fullWidth
                         label="שם נקודת שחזור"
-                        onChange={(e) => setLabel(e.target.value)}
-                        onKeyDown={(e) => {
+                        onChange={ (e) => setLabel(e.target.value) }
+                        onKeyDown={ (e) =>
+                        {
                             if (e.key === "Enter") void handleCreate();
-                        }}
+                        } }
                         size="small"
-                        value={label}
+                        value={ label }
                     />
                     <Button
-                        disabled={!label.trim() || loading}
-                        onClick={() => void handleCreate()}
+                        disabled={ !label.trim() || loading }
+                        onClick={ () => void handleCreate() }
+                        size="small"
+                        startIcon={ <AddAPhotoIcon /> }
                         variant="contained"
                     >
                         יצירה
                     </Button>
                 </Stack>
 
-                <Divider sx={{ my: 1 }} />
+                <Divider sx={ { my: 1 } } />
 
-                {loading && snapshots.length === 0 ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-                        <CircularProgress size={24} />
+                { loading && snapshots.length === 0 ? (
+                    <Box sx={ { display: "flex", justifyContent: "center", py: 3 } }>
+                        <CircularProgress size={ 24 } />
                     </Box>
                 ) : snapshots.length === 0 ? (
                     <Typography
                         color="text.secondary"
-                        sx={{ py: 2, textAlign: "center" }}
+                        sx={ { py: 2, textAlign: "center" } }
                         variant="body2"
                     >
                         אין צילומי מצב שמורים.
                     </Typography>
                 ) : (
-                    <List dense sx={{ maxHeight: 320, overflowY: "auto" }}>
-                        {snapshots.map((snap) => (
+                    <List dense sx={ { maxHeight: 320, overflowY: "auto" } }>
+                        { snapshots.map((snap) => (
                             <ListItem
                                 disableGutters
-                                key={snap.id}
+                                key={ snap.id }
                                 secondaryAction={
-                                    <Stack direction="row" spacing={0.5}>
-                                        <Tooltip title="שחזר">
+                                    <Stack direction="row" spacing={ 0.5 }>
+                                        <Tooltip title="שחזור">
                                             <span>
                                                 <IconButton
-                                                    disabled={busyId !== null}
+                                                    disabled={ busyId !== null }
                                                     edge="end"
-                                                    onClick={() =>
+                                                    onClick={ () =>
                                                         void handleRestore(
                                                             snap.id,
                                                         )
@@ -330,9 +364,9 @@ export function SnapshotMenu() {
                                             <span>
                                                 <IconButton
                                                     color="error"
-                                                    disabled={busyId !== null}
+                                                    disabled={ busyId !== null }
                                                     edge="end"
-                                                    onClick={() =>
+                                                    onClick={ () =>
                                                         void handleDelete(
                                                             snap.id,
                                                         )
@@ -347,39 +381,39 @@ export function SnapshotMenu() {
                                 }
                             >
                                 <ListItemText
-                                    primary={snap.label}
-                                    secondary={`${dayjs(snap.createdAt).format(
+                                    primary={ snap.label }
+                                    secondary={ `${dayjs(snap.createdAt).format(
                                         "DD/MM/YYYY HH:mm",
-                                    )} · ${snap.eventCount} מופעים`}
+                                    )} · ${snap.eventCount} מופעים` }
                                 />
                             </ListItem>
-                        ))}
+                        )) }
                     </List>
-                )}
+                ) }
             </Popover>
 
             <Dialog
-                onClose={() => setPendingRestore(null)}
-                open={pendingRestore !== null}
+                onClose={ () => setPendingRestore(null) }
+                open={ pendingRestore !== null }
             >
                 <DialogTitle>שחזור מחוץ לטווח הנוכחי</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        {pendingRestore ? `המופעים בצילום המצב שייכים לטווח ${dayjs(
+                        { pendingRestore ? `המופעים בצילום המצב שייכים לטווח ${dayjs(
                             pendingRestore.rangeStart,
                         ).format("DD/MM/YYYY")} – ${dayjs(
                             pendingRestore.rangeEnd,
                         ).format(
                             "DD/MM/YYYY",
-                        )}, שאינו מוצג כעת. לעבור לטווח הזה ולשחזר?` : null}
+                        )}, שאינו מוצג כעת. לעבור לטווח הזה ולשחזר?` : null }
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setPendingRestore(null)}>
+                    <Button onClick={ () => setPendingRestore(null) }>
                         ביטול
                     </Button>
                     <Button
-                        onClick={() => void handleConfirmPendingRestore()}
+                        onClick={ () => void handleConfirmPendingRestore() }
                         variant="contained"
                     >
                         עבור לטווח ושחזר

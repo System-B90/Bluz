@@ -30,7 +30,11 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
-import { HiveLessonsView, HiveModulesView } from "@/components/gantt/module-dialog/utils";
+import {
+    HiveLessonsView,
+    HiveModuleLinker,
+    HiveModulesView,
+} from "@/components/gantt/module-dialog/utils";
 import { ShuffleSelect } from "@/components/gantt/ShuffleSelect";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useModuleActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleActions";
@@ -188,6 +192,7 @@ type ModuleDetailsFormProps = {
     localTitle: string;
     localDescription: string;
     hiveModules: Array<number>;
+    onHiveModulesChange: (ids: Array<number>) => void;
     setLocalTitle: (val: string) => void;
     setLocalDescription: (val: string) => void;
     onCommitTitle: () => void;
@@ -201,6 +206,7 @@ function ModuleDetailsForm({
     localTitle,
     localDescription,
     hiveModules,
+    onHiveModulesChange,
     setLocalTitle,
     setLocalDescription,
     onCommitTitle,
@@ -243,7 +249,16 @@ function ModuleDetailsForm({
                 value={shuffles}
             />
 
-            <HiveModulesView hiveModules={hiveModules} />
+            <HiveModuleLinker
+                hiveModules={hiveModules}
+                onChange={onHiveModulesChange}
+            />
+            <HiveModulesView
+                hiveModules={hiveModules}
+                onRemove={(id) =>
+                    onHiveModulesChange(hiveModules.filter((m) => m !== id))
+                }
+            />
             <HiveLessonsView hiveModules={hiveModules} />
         </Stack>
     );
@@ -400,6 +415,9 @@ function ModuleDialogInner({
                                 localTitle={localTitle}
                                 onCommitDescription={() => handleCommit({ description: localDescription })}
                                 onCommitTitle={() => handleCommit({ title: localTitle })}
+                                onHiveModulesChange={(hiveIds) =>
+                                    handleCommit({ hiveIds })
+                                }
                                 onShufflesChange={(shuffles) => handleCommit({ shuffles })}
                                 setLocalDescription={setLocalDescription}
                                 setLocalTitle={setLocalTitle}

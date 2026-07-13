@@ -24,7 +24,10 @@ import
 } from "@/api-client/schedule-settings";
 import { inplaceDateFixup } from "@/api-shared/date-fixer";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
-import { DEFAULT_DAY_START_TIME } from "@/api-shared/types/settings/schedule";
+import {
+    DEFAULT_DAY_START_TIME,
+    DEFAULT_WEEKEND_HOME_START_TIME,
+} from "@/api-shared/types/settings/schedule";
 
 export type SettingsContextState = {
     default: boolean;
@@ -33,6 +36,8 @@ export type SettingsContextState = {
     updatePrayerTime: (key: keyof PrayerSettings, value: Date | Dayjs) => void;
     dayStartTime: string;
     updateDayStartTime: (newDayStartTime: string) => void;
+    weekendHomeStartTime: string;
+    updateWeekendHomeStartTime: (newWeekendHomeStartTime: string) => void;
 };
 
 const SettingsContext = createContext<SettingsContextState | undefined>({
@@ -42,6 +47,8 @@ const SettingsContext = createContext<SettingsContextState | undefined>({
     updatePrayerTime: (_key: keyof PrayerSettings, _value: Date | Dayjs) => { },
     dayStartTime: DEFAULT_DAY_START_TIME,
     updateDayStartTime: (_newDayStartTime: string) => { },
+    weekendHomeStartTime: DEFAULT_WEEKEND_HOME_START_TIME,
+    updateWeekendHomeStartTime: (_newWeekendHomeStartTime: string) => { },
 });
 
 type PrayerSettingsState = {
@@ -187,6 +194,9 @@ export const SettingsProvider = ({
     const [ dayStartTime, setDayStartTime ] = useState<string>(
         DEFAULT_DAY_START_TIME,
     );
+    const [ weekendHomeStartTime, setWeekendHomeStartTime ] = useState<string>(
+        DEFAULT_WEEKEND_HOME_START_TIME,
+    );
 
     const loadScheduleSettings = useCallback(() =>
     {
@@ -197,6 +207,10 @@ export const SettingsProvider = ({
                     fetchedScheduleSettings?.dayStartTime ??
                         DEFAULT_DAY_START_TIME,
                 );
+                setWeekendHomeStartTime(
+                    fetchedScheduleSettings?.weekendHomeStartTime ??
+                        DEFAULT_WEEKEND_HOME_START_TIME,
+                );
             })
             .catch((error) =>
             {
@@ -206,7 +220,7 @@ export const SettingsProvider = ({
                     error,
                 );
             });
-    }, [ setDayStartTime ]);
+    }, [ setDayStartTime, setWeekendHomeStartTime ]);
 
     const updateDayStartTime = useCallback(
         async (newDayStartTime: string) =>
@@ -216,7 +230,10 @@ export const SettingsProvider = ({
 
             try
             {
-                await apiSetScheduleSettings({ dayStartTime: newDayStartTime });
+                await apiSetScheduleSettings({
+                    dayStartTime: newDayStartTime,
+                    weekendHomeStartTime,
+                });
                 enqueueSnackbar('שעת תחילת יום ברירת מחדל עודכנה בהצלחה.', {
                     variant: "success",
                 });
@@ -230,7 +247,35 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ dayStartTime ],
+        [ dayStartTime, weekendHomeStartTime ],
+    );
+
+    const updateWeekendHomeStartTime = useCallback(
+        async (newWeekendHomeStartTime: string) =>
+        {
+            const previousWeekendHomeStartTime = weekendHomeStartTime;
+            setWeekendHomeStartTime(newWeekendHomeStartTime);
+
+            try
+            {
+                await apiSetScheduleSettings({
+                    dayStartTime,
+                    weekendHomeStartTime: newWeekendHomeStartTime,
+                });
+                enqueueSnackbar('שעת תחילת לו"ז אחרי סופ"ש עודכנה בהצלחה.', {
+                    variant: "success",
+                });
+            } catch (error)
+            {
+                setWeekendHomeStartTime(previousWeekendHomeStartTime);
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    'עדכון שעת תחילת לו"ז אחרי סופ"ש נכשל!',
+                    error,
+                );
+            }
+        },
+        [ dayStartTime, weekendHomeStartTime ],
     );
 
     useEffect(() =>
@@ -248,6 +293,8 @@ export const SettingsProvider = ({
                 updatePrayerTime,
                 dayStartTime,
                 updateDayStartTime,
+                weekendHomeStartTime,
+                updateWeekendHomeStartTime,
             } }
         >
             { children }

@@ -1,11 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    {
-      "name": "ui-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 3000
-    }
-  ]
+    //  DO NOT USE THE BUILTIN BROWSER. NAVIGATE TO https://bluz.dev/ USING CHROME.
+  ],
+  "autoVerify": true
 }

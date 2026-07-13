@@ -71,5 +71,6 @@ export type PatchIterationPayload = {
     hiveUrl?: string;
     endDate?: Date | null | string;
     isCurrent?: boolean;
-    ganttCurriculumId?: string;
+    /** Pass null to unlink the curriculum. */
+    ganttCurriculumId?: null | string;
 };

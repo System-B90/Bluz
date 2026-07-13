@@ -1,6 +1,7 @@
 import PaletteIcon from "@mui/icons-material/Palette";
 import Box from "@mui/material/Box";
 import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { memo, useCallback, useMemo } from "react";
 
 import { HiveLogo } from "@/components/base/HiveLogo";
@@ -11,7 +12,7 @@ import
 } from "@/components/settings-dialog/tabs/global/common";
 import { SettingsListCardContent } from "@/components/settings-dialog/tabs/global/common/ListCard";
 import { SettingsListItem } from "@/components/settings-dialog/tabs/global/common/ListItem";
-import { SettingsListItemTextPrimary, SettingsListItemTextSecondary } from "@/components/settings-dialog/tabs/global/common/ListItemText";
+import { SettingsListItemTextPrimary } from "@/components/settings-dialog/tabs/global/common/ListItemText";
 import { SettingsListItemSecondaryAction } from "@/components/settings-dialog/tabs/global/common/SecondaryAction";
 
 type ColorListItemProps = {
@@ -32,11 +33,23 @@ const ColorListItem = memo(function ColorListItem({
 
     return (
         <SettingsListItem
+            dense
             isActive={ isSelected }
             item={ color }
             itemText={ {
-                primary: (<SettingsListItemTextPrimary value={ color.name } />),
-                secondary: (<SettingsListItemTextSecondary value={ color.hex } />)
+                primary: (
+                    <Box alignItems="center" display="flex" flexWrap="nowrap" gap={ 1 }>
+                        <SettingsListItemTextPrimary value={ color.name } />
+                        <Typography
+                            component="span"
+                            dir="ltr"
+                            sx={ { fontSize: "0.75rem", color: "text.secondary", unicodeBidi: "isolate" } }
+                        >
+                            { color.hex }
+                        </Typography>
+                    </Box>
+                ),
+                secondary: null
             } }
             onClick={ onClick }
             secondaryAction={
@@ -56,11 +69,11 @@ const ColorListItem = memo(function ColorListItem({
         >
             <Box
                 sx={ {
-                    width: 24,
-                    height: 24,
+                    width: 18,
+                    height: 18,
                     borderRadius: "4px",
                     bgcolor: color.hex,
-                    mr: 2,
+                    mr: 1.5,
                     border: "1px solid",
                     borderColor: "divider",
                 } }

@@ -63,6 +63,7 @@ async function main() {
 
     const hiveData = JSON.parse(fs.readFileSync(hiveDataPath, "utf-8"));
     const segelUsers = hiveData.segel || [];
+    const adminUsers = hiveData.admins || [];
     const subjects = hiveData.subjects || [];
     const modules = hiveData.modules || [];
     const rooms = hiveData.rooms || [];
@@ -71,6 +72,9 @@ async function main() {
         console.error("Error: No segel users found in hive_data.json.");
         process.exit(1);
     }
+
+    const findAdminId = (username: string): number | undefined =>
+        adminUsers.find((u: any) => u.username === username)?.id;
 
     let connectionString =
         localConnectionString ||
@@ -113,39 +117,48 @@ async function main() {
             return shuffled.slice(0, Math.min(count, shuffled.length));
         };
 
+        const gassiId = findAdminId("gassi");
         const mainCourse = {
-            id: "cyber-main",
-            name: "קורס סייבר",
+            id: "bis-90",
+            name: 'בי"ס 90',
             color: "#4f46e5",
             parentId: null,
-            instructorIds: getRandomSegel(2),
+            instructorIds: gassiId !== undefined ? [gassiId] : [],
         };
 
-        const subCourseA = {
-            id: "cyber-sub-a",
-            name: "סייבר - תת קורס א'",
+        const michaelksId = findAdminId("michaelks");
+        const subCourseApollo = {
+            id: "bis-90-apollo",
+            name: "אפולו",
             color: "#06b6d4",
-            parentId: "cyber-main",
-            instructorIds: getRandomSegel(2),
+            parentId: "bis-90",
+            instructorIds: michaelksId !== undefined ? [michaelksId] : [],
         };
 
-        const subCourseB = {
-            id: "cyber-sub-b",
-            name: "סייבר - תת קורס ב'",
+        const omerbId = findAdminId("omerb");
+        const subCourseMivtzar = {
+            id: "bis-90-mivtzar",
+            name: "מבצר",
             color: "#10b981",
-            parentId: "cyber-main",
-            instructorIds: getRandomSegel(2),
+            parentId: "bis-90",
+            instructorIds: omerbId !== undefined ? [omerbId] : [],
         };
 
-        const subCourseC = {
-            id: "cyber-sub-c",
-            name: "סייבר - תת קורס ג'",
+        const yardendId = findAdminId("yardend");
+        const subCourseSphinx = {
+            id: "bis-90-sphinx",
+            name: "ספינקס",
             color: "#f59e0b",
-            parentId: "cyber-main",
-            instructorIds: getRandomSegel(2),
+            parentId: "bis-90",
+            instructorIds: yardendId !== undefined ? [yardendId] : [],
         };
 
-        const coursesList = [mainCourse, subCourseA, subCourseB, subCourseC];
+        const coursesList = [
+            mainCourse,
+            subCourseApollo,
+            subCourseMivtzar,
+            subCourseSphinx,
+        ];
         await db.collection("courses").insertMany(coursesList);
         console.log(
             `Successfully created ${coursesList.length} courses (1 main and 3 sub-courses).`,
@@ -164,7 +177,7 @@ async function main() {
         };
 
         const eventsList: any[] = [];
-        const subCourseIds = ["cyber-sub-a", "cyber-sub-b", "cyber-sub-c"];
+        const subCourseIds = ["bis-90-apollo", "bis-90-mivtzar", "bis-90-sphinx"];
 
         // 5. Generate events for a 7-day schedule (today to today + 6)
         console.log("Generating calendar events...");

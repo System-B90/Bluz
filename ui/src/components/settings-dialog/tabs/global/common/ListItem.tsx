@@ -11,13 +11,14 @@ export type SettingsListItemProps<TEntity extends TEntityBase> = {
     item: TEntity;
     secondaryAction: React.ReactNode;
     isActive: boolean;
+    dense?: boolean;
     itemText: {
         primary: React.ReactNode;
         secondary: React.ReactNode;
     };
 } & Pick<ListItemProps, 'children' | "onClick">;
 
-export const SettingsListItem = memo(function SettingsListItem<TEntity extends TEntityBase>({ item, isActive, secondaryAction, itemText, children, ...props }: SettingsListItemProps<TEntity>)
+export const SettingsListItem = memo(function SettingsListItem<TEntity extends TEntityBase>({ item, isActive, secondaryAction, itemText, children, dense, ...props }: SettingsListItemProps<TEntity>)
 {
     return (
         <ListItem
@@ -28,8 +29,8 @@ export const SettingsListItem = memo(function SettingsListItem<TEntity extends T
                 border: "1px solid",
                 borderColor: isActive ? "primary.main" : "divider",
                 borderRadius: "12px",
-                mb: 1.5,
-                p: 1.5,
+                mb: dense ? 0.75 : 1.5,
+                p: dense ? 0.75 : 1.5,
                 cursor: "pointer",
                 bgcolor: (theme) =>
                     isActive

@@ -19,6 +19,7 @@ import {
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { useCurriculumSyncRef } from "@/components/gantt/curriculum-fab/curriculum-sync-context";
 import { CurriculumActionItems } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumListItems } from "@/components/gantt/curriculum-fab/CurriculumListItems";
 import {
@@ -34,7 +35,7 @@ export type CurriculumDrawerProps = {
     currentCurriculum?: GanttCurriculumId | null;
 };
 
-const PANEL_WIDTH = 300;
+const PANEL_WIDTH = 320;
 
 export function CurriculumFab({
     setCurrentCurriculum,
@@ -47,6 +48,7 @@ export function CurriculumFab({
     const [isFetchingDetails, setIsFetchingDetails] = useState<boolean>(true);
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
     const hasInitializedSelection = useRef(false);
+    const syncRef = useCurriculumSyncRef();
 
     useEffect(() => {
         let isMounted = true;
@@ -60,6 +62,16 @@ export function CurriculumFab({
             isMounted = false;
         };
     }, [enqueueSnackbar]);
+
+    useEffect(() => {
+        if (!syncRef) return;
+        syncRef.current = (updatedCurriculum) => {
+            setCurriculumsData((prev) => ({
+                ...prev,
+                [updatedCurriculum.id]: updatedCurriculum,
+            }));
+        };
+    }, [syncRef]);
 
     const groups = useMemo(
         () => groupCurriculumsByStatus(curriculumsData),
@@ -86,18 +98,6 @@ export function CurriculumFab({
                 ...prev,
                 [newCurriculum.id]: newCurriculum,
             }));
-            setAnchorEl(null);
-        },
-        [setCurrentCurriculum],
-    );
-
-    const onUpdateCallback = useCallback(
-        (updatedCurriculum: GanttCurriculumDocument) => {
-            setCurriculumsData((prev) => ({
-                ...prev,
-                [updatedCurriculum.id]: updatedCurriculum,
-            }));
-            setCurrentCurriculum(updatedCurriculum.id);
             setAnchorEl(null);
         },
         [setCurrentCurriculum],
@@ -180,9 +180,15 @@ export function CurriculumFab({
                         className: "animate-slide-up-fade",
                         sx: {
                             width: PANEL_WIDTH,
-                            maxHeight: 420,
+                            maxHeight: "min(480px, calc(100vh - 96px))",
+                            display: "flex",
+                            flexDirection: "column",
                             overflow: "hidden",
                             borderRadius: "12px",
+                            // Cancel MUI's dark-mode elevation overlay so the flat
+                            // background.paper color used by ListSubheader (which has
+                            // no overlay of its own) matches the panel exactly.
+                            backgroundImage: "none",
                             boxShadow:
                                 "0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
                         },
@@ -190,7 +196,7 @@ export function CurriculumFab({
                 }}
                 transformOrigin={{ vertical: "bottom", horizontal: "left" }}
             >
-                <Box sx={{ p: 1, pb: 0 }}>
+                <Box sx={{ p: 1, pb: 0, flexShrink: 0 }}>
                     <Typography align="center" variant="h6">
                         גאנטים
                     </Typography>
@@ -198,7 +204,6 @@ export function CurriculumFab({
                         disabled={isFetchingDetails}
                         onCreate={onCreateCallback}
                         onDelete={onDeleteCallback}
-                        onUpdate={onUpdateCallback}
                         sourceCurriculum={
                             currentCurriculum
                                 ? curriculumsData[currentCurriculum]
@@ -212,11 +217,16 @@ export function CurriculumFab({
                         paddingX: 1,
                         paddingY: 0.5,
                         overflowY: "auto",
-                        maxHeight: 330,
+                        flexGrow: 1,
+                        minHeight: 0,
                     }}
                 >
                     <ListSubheader
-                        sx={{ paddingY: 0, lineHeight: 1.75, background: "transparent" }}
+                        sx={{
+                            paddingY: 0,
+                            lineHeight: 1.75,
+                            bgcolor: "background.paper",
+                        }}
                     >
                         <Typography
                             align="center"

@@ -1,6 +1,6 @@
+import json
 import os
 import sys
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from random import randint, shuffle
@@ -27,65 +27,7 @@ class UserData:
     username: str
 
 
-MOCK_STUDENTS: list[UserData] = [
-    UserData(
-        first_name="אליס",
-        last_name="רוזן",
-        gender=GenderEnum.FEMALE,
-        username="test-alisr",
-    ),
-    UserData(
-        first_name="בן", last_name="כץ", gender=GenderEnum.MALE, username="test-benk"
-    ),
-    UserData(
-        first_name="קלרה",
-        last_name="וייס",
-        gender=GenderEnum.FEMALE,
-        username="test-claw",
-    ),
-    UserData(
-        first_name="דניאל",
-        last_name="לוי",
-        gender=GenderEnum.MALE,
-        username="test-danl",
-    ),
-    UserData(
-        first_name="אלה",
-        last_name="כהן",
-        gender=GenderEnum.FEMALE,
-        username="test-ellc",
-    ),
-    UserData(
-        first_name="פליקס",
-        last_name="גולדמן",
-        gender=GenderEnum.MALE,
-        username="test-felg",
-    ),
-    UserData(
-        first_name="גילה",
-        last_name="שפירא",
-        gender=GenderEnum.FEMALE,
-        username="test-gilsh",
-    ),
-    UserData(
-        first_name="הראל",
-        last_name="בר-און",
-        gender=GenderEnum.MALE,
-        username="test-harba",
-    ),
-    UserData(
-        first_name="ענבר",
-        last_name="מזרחי",
-        gender=GenderEnum.FEMALE,
-        username="test-inmiz",
-    ),
-    UserData(
-        first_name="יונה",
-        last_name="פרץ",
-        gender=GenderEnum.MALE,
-        username="test-jonp",
-    ),
-]
+MOCK_STUDENTS: list[UserData] = []
 
 MOCK_SEGEL: list[UserData] = [
     UserData(
@@ -106,35 +48,33 @@ MOCK_SEGEL: list[UserData] = [
         gender=GenderEnum.FEMALE,
         username="test-mayag",
     ),
+]
+
+
+MOCK_ADMINS: list[UserData] = [
     UserData(
-        first_name="נועה",
-        last_name="גולן",
-        gender=GenderEnum.FEMALE,
-        username="test-noag",
-    ),
-    UserData(
-        first_name="דוד",
-        last_name="אברהמי",
+        first_name="מיכאל",
+        last_name="שטיינברג",
         gender=GenderEnum.MALE,
-        username="test-davida",
+        username="michaelks",
     ),
     UserData(
-        first_name="רוני",
-        last_name="סגל",
-        gender=GenderEnum.FEMALE,
-        username="test-ronis",
-    ),
-    UserData(
-        first_name="איתי",
-        last_name="רגב",
+        first_name="עומר",
+        last_name="בלס",
         gender=GenderEnum.MALE,
-        username="test-itair",
+        username="omerb",
     ),
     UserData(
-        first_name="דנה",
-        last_name="פרידמן",
-        gender=GenderEnum.FEMALE,
-        username="test-danaf",
+        first_name="ירדן",
+        last_name="דרור",
+        gender=GenderEnum.MALE,
+        username="yardend",
+    ),
+    UserData(
+        first_name="גל",
+        last_name="אסף",
+        gender=GenderEnum.MALE,
+        username="gassi",
     ),
 ]
 
@@ -145,8 +85,7 @@ class ProgramData:
 
 
 MOCK_PROGRAMS: list[ProgramData] = [
-    ProgramData(name="מגמה מגניבה"),
-    ProgramData(name="מגמה סאחית"),
+    ProgramData(name="Bis90"),
 ]
 
 
@@ -159,29 +98,114 @@ class ModuleData:
 class SubjectData:
     name: str
     symbol: str
+    color: str
     modules: list[ModuleData] | None = None
 
 
 MOCK_SUBJECTS: list[SubjectData] = [
-    SubjectData(name="סעמק", symbol="ס"),
     SubjectData(
-        name="עד מתי",
-        symbol="ע",
+        name="קפה",
+        symbol="קפ",
+        color="#4f46e5",
         modules=[
-            ModuleData(name="התחפשנות חוד"),
-            ModuleData(name="שנץ"),
+            ModuleData(name="קפה שבוע 1"),
+            ModuleData(name="קפה שבוע 2"),
+            ModuleData(name="קפה שבוע 3"),
+            ModuleData(name="כללי"),
         ],
     ),
     SubjectData(
-        name="עבודות רסר",
-        symbol="ר",
+        name="סימולציות",
+        symbol="סי",
+        color="#06b6d4",
         modules=[
-            ModuleData(name="טאטוא עלים"),
-            ModuleData(name="ניקוי שירותים"),
-            ModuleData(name="שטיפת רצפות"),
+            ModuleData(name="מקתגים"),
+            ModuleData(name="מקרי קצה"),
         ],
     ),
-    SubjectData(name="פרויקטים", symbol="פ"),
+    SubjectData(
+        name="גיבוש",
+        symbol="גי",
+        color="#10b981",
+        modules=[
+            ModuleData(name="גיבוש פתיחה קורסי)"),
+            ModuleData(name="גיבוש פתיחה ביסי)"),
+            ModuleData(name="משחקים"),
+            ModuleData(name="תזים"),
+            ModuleData(name="סכמש"),
+            ModuleData(name="אחידות"),
+            ModuleData(name="שעות מקס"),
+        ],
+    ),
+    SubjectData(
+        name="פיקוד אישי",
+        symbol="פא",
+        color="#f59e0b",
+        modules=[
+            ModuleData(name="תדריכים לתקשורת עם חניכים"),
+            ModuleData(name="חניכי קצה"),
+            ModuleData(name="תקשורת עם הורים"),
+            ModuleData(name="תחקיר"),
+            ModuleData(name="פיקוד מגדרי"),
+            ModuleData(name="משמעת וענישה"),
+            ModuleData(name="מבוא לחניך"),
+            ModuleData(name="תפיסות תפקיד"),
+            ModuleData(name="פאים"),
+        ],
+    ),
+    SubjectData(
+        name="סיסטם ובינוי",
+        symbol="סו",
+        color="#ef4444",
+        modules=[
+            ModuleData(name="סיסטם"),
+            ModuleData(name="בינוי"),
+            ModuleData(name="שבוע טקטי"),
+            ModuleData(name="מטווחים"),
+        ],
+    ),
+    SubjectData(
+        name="פיקוד הדרכתי",
+        symbol="פה",
+        color="#8b5cf6",
+        modules=[
+            ModuleData(name="כללי"),
+            ModuleData(name="מישוב"),
+            ModuleData(name="פיתוח הסגל"),
+        ],
+    ),
+    SubjectData(
+        name="בירוקרטיה ושוטף",
+        symbol="בו",
+        color="#ec4899",
+        modules=[
+            ModuleData(name="קליטה"),
+            ModuleData(name="שיבוצים"),
+            ModuleData(name="אג"),
+            ModuleData(name="קמפוס דאוס"),
+            ModuleData(name="חלוקת חניכים"),
+        ],
+    ),
+    SubjectData(
+        name="מורשת ביס",
+        symbol="מב",
+        color="#14b8a6",
+        modules=[
+            ModuleData(name="הכרת הביס"),
+            ModuleData(name="הכרת חוץ ביס"),
+            ModuleData(name="דמויות הבוגרים"),
+        ],
+    ),
+    SubjectData(
+        name="עבודה על מקצועות",
+        symbol="עמ",
+        color="#f97316",
+        modules=[
+            ModuleData(name="מקצועות"),
+            ModuleData(name="נקודות בקרה"),
+            ModuleData(name="סדנאות"),
+        ],
+    ),
 ]
 
 
@@ -266,7 +290,7 @@ def create_students(client: HiveClient):
                 mentor=mentors[randint(0, len(mentors) - 1)],
             )
         except Exception as ex:
-            print(ex)
+            tqdm.tqdm.write(str(ex))
 
 
 def create_segel(client: HiveClient):
@@ -281,23 +305,44 @@ def create_segel(client: HiveClient):
                 clearance=ClearanceEnum.SEGEL,
             )
         except Exception as ex:
-            print(ex)
+            tqdm.tqdm.write(str(ex))
+
+
+def create_admins(client: HiveClient):
+    existing_admins = list(client.get_users(clearance__in=[ClearanceEnum.ADMIN]))
+    existing_by_username = {u.username: u for u in existing_admins}
+
+    for admin_data in tqdm.tqdm(MOCK_ADMINS, desc="Creating Admins", unit="admin"):
+        if admin_data.username in existing_by_username:
+            tqdm.tqdm.write(f"User '{admin_data.username}' already exists, reusing.")
+            continue
+        try:
+            client.create_user(
+                admin_data.username,
+                "test",
+                gender=admin_data.gender,
+                first_name=admin_data.first_name,
+                last_name=admin_data.last_name,
+                clearance=ClearanceEnum.ADMIN,
+            )
+        except Exception as ex:
+            tqdm.tqdm.write(str(ex))
 
 
 def create_programs(client: HiveClient):
-    checker1 = None
+    liran = None
     try:
         checkers = list(client.get_users(clearance__in=[ClearanceEnum.CHECKER]))
-        checker1 = next((u for u in checkers if u.username == "checker1"), None)
-        if checker1:
-            print("User 'checker1' already exists, reusing.")
+        liran = next((u for u in checkers if u.username == "liran"), None)
+        if liran:
+            tqdm.tqdm.write("User 'liran' already exists, reusing.")
     except Exception as ex:
-        print(f"Error checking existing checker1: {ex}")
+        tqdm.tqdm.write(f"Error checking existing liran: {ex}")
 
-    if not checker1:
+    if not liran:
         try:
-            checker1 = client.create_user(
-                "checker1",
+            liran = client.create_user(
+                "liran",
                 "Password1",
                 gender=GenderEnum.MALE,
                 first_name="צ׳ק",
@@ -305,20 +350,20 @@ def create_programs(client: HiveClient):
                 clearance=ClearanceEnum.CHECKER,
             )
         except Exception as ex:
-            print(f"Error creating checker1: {ex}")
+            tqdm.tqdm.write(f"Error creating liran: {ex}")
             try:
                 checkers = list(client.get_users(clearance__in=[ClearanceEnum.CHECKER]))
-                checker1 = next((u for u in checkers if u.username == "checker1"), None)
+                liran = next((u for u in checkers if u.username == "liran"), None)
             except Exception:
                 pass
-            if not checker1:
+            if not liran:
                 raise ex
 
     for program in tqdm.tqdm(MOCK_PROGRAMS, desc="Creating Programs", unit="program"):
         try:
-            client.create_program(name=program.name, checker=checker1)
+            client.create_program(name=program.name, checker=liran)
         except Exception as ex:
-            print(ex)
+            tqdm.tqdm.write(str(ex))
 
 
 def create_subjects(client: HiveClient):
@@ -328,8 +373,8 @@ def create_subjects(client: HiveClient):
             s = client.create_subject(
                 name=subject.name,
                 symbol=subject.symbol,
-                color="#1F1229",
-                program=programs[randint(0, len(programs) - 1)],
+                color=subject.color,
+                program=programs[0],
             )
             if not subject.modules:
                 continue
@@ -344,9 +389,13 @@ def create_subjects(client: HiveClient):
                         name=module.name, order=index, parent_subject=s
                     )
                 except Exception as ex:
-                    print(ex)
+                    tqdm.tqdm.write(
+                        " | ".join([str(ex), "Module Creation Error", module.name])
+                    )
         except Exception as ex:
-            print(ex)
+            tqdm.tqdm.write(
+                str(" | ".join([str(ex), "Subject Creation Error", subject.name]))
+            )
 
 
 def create_classes(client: HiveClient):
@@ -363,7 +412,7 @@ def create_classes(client: HiveClient):
                 users=students[: randint(0, len(students))],
             )
         except Exception as ex:
-            print(ex)
+            tqdm.tqdm.write(str(ex))
 
 
 def main():
@@ -371,7 +420,9 @@ def main():
     root_dir = Path(__file__).resolve().parents[2]
     load_dotenv(dotenv_path=root_dir / ".env")
     hive_url = os.getenv("NEXT_PUBLIC_HIVE_URL", "https://hive.org/")
-    # Use direct password authentication to avoid interactive browser SSO in headless testing
+    # Use direct password authentication to avoid interactive browser SSO in headless testing.
+    # Must log in as the seeded superuser ("admin") — "michaelks" doesn't exist yet on a
+    # fresh Hive instance; create_admins() below is what creates it.
     with HiveClient("admin", "Password1", hive_url, verify=False, timeout=10) as client:
         clean_existing_data(client)
 
@@ -388,6 +439,7 @@ def main():
             pass
 
         create_segel(client)
+        create_admins(client)
 
         create_programs(client)
         create_subjects(client)
@@ -397,8 +449,9 @@ def main():
         create_classes(client)
 
         # Collect generated info and write to JSON
-        print("Collecting generated objects from Hive...")
+        tqdm.tqdm.write("Collecting generated objects from Hive...")
         segel_users = list(client.get_users(clearance__in=[ClearanceEnum.SEGEL]))
+        admin_users = list(client.get_users(clearance__in=[ClearanceEnum.ADMIN]))
         subjects = list(client.get_subjects())
         modules = list(client.get_modules())
         rooms = list(client.get_classes(type_=ClassTypeEnum.ROOM))
@@ -412,6 +465,15 @@ def main():
                     "last_name": u.last_name,
                 }
                 for u in segel_users
+            ],
+            "admins": [
+                {
+                    "id": u.id,
+                    "username": u.username,
+                    "first_name": u.first_name,
+                    "last_name": u.last_name,
+                }
+                for u in admin_users
             ],
             "subjects": [
                 {
@@ -442,7 +504,9 @@ def main():
         json_path = Path(__file__).resolve().parent / "hive_data.json"
         with json_path.open("w", encoding="utf-8") as f:
             json.dump(export_data, f, ensure_ascii=False, indent=2)
-        print(f"Successfully exported Hive structural metadata to {json_path}")
+        tqdm.tqdm.write(
+            f"Successfully exported Hive structural metadata to {json_path}"
+        )
 
 
 if __name__ == "__main__":

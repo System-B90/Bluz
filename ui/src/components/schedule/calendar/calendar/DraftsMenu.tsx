@@ -186,17 +186,22 @@ export function DraftsMenu()
     return (
         <>
             <Tooltip title="טיוטות משותפות">
-                <IconButton
-                    aria-label="טיוטות משותפות"
+                <Button
                     onClick={ handleOpen }
-                    size="small"
                     sx={ {
-                        color: "text.secondary",
-                        "&:hover": { color: "primary.main" },
+                        minWidth: 38,
+                        transition: "all 0.2s ease-in-out",
+                        "&:hover": {
+                            color: "primary.main",
+                        },
+                        "&:active": {
+                            transform: "scale(0.95)",
+                        },
                     } }
+                    variant="outlined"
                 >
                     <DriveFileRenameOutlineIcon fontSize="small" />
-                </IconButton>
+                </Button>
             </Tooltip>
 
             <Popover
@@ -213,7 +218,7 @@ export function DraftsMenu()
                     טיוטות משותפות
                 </Typography>
 
-                <Stack direction="row" spacing={ 1 } sx={ { mb: 1 } }>
+                <Stack alignItems="stretch" direction="row" spacing={ 1 } sx={ { mb: 1 } }>
                     <TextField
                         fullWidth
                         label="שם הטיוטה"
@@ -228,6 +233,7 @@ export function DraftsMenu()
                     <Button
                         disabled={ !label.trim() || loading }
                         onClick={ () => void handleCreate() }
+                        size="small"
                         startIcon={ <SaveIcon /> }
                         variant="contained"
                     >

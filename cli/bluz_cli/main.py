@@ -11,10 +11,22 @@ from __future__ import annotations
 
 import sys
 
-import typer
+# Windows defaults stdout/stderr to the legacy console codepage (cp1252), which
+# cannot encode Hebrew text or Rich's Unicode glyphs (checkmarks, etc.) whenever
+# output isn't a real attached console — piped, redirected, or run from a script
+# or agent. Force UTF-8 here, before any Rich Console is constructed (commands
+# import bluz_cli.output below, which instantiates Console at module load).
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
 
-from bluz_cli import __version__
-from bluz_cli.commands import (
+import typer  # noqa: E402
+
+from bluz_cli import __version__  # noqa: E402
+from bluz_cli.commands import (  # noqa: E402
     auth,
     courses,
     events,
@@ -25,9 +37,9 @@ from bluz_cli.commands import (
     rooms,
     settings,
 )
-from bluz_cli.context import configure
-from bluz_cli.errors import BluzCliError
-from bluz_cli.output import fail
+from bluz_cli.context import configure  # noqa: E402
+from bluz_cli.errors import BluzCliError  # noqa: E402
+from bluz_cli.output import fail  # noqa: E402
 
 app = typer.Typer(
     help="Bluz CLI — drive the Bluz scheduling & curriculum API from your terminal.",

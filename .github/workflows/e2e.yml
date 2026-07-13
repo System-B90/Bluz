@@ -17,10 +17,20 @@ env:
 
 jobs:
     full-test-suite:
-        name: Full Test Suite (Unit + E2E)
+        name: Full Test Suite (E2E) — shard ${{ matrix.shard }}/${{ strategy.job-total }}
         runs-on: ubuntu-24.04
         timeout-minutes: 90
         if: github.event_name != 'pull_request' || github.head_ref == 'dev'
+        strategy:
+            fail-fast: false
+            # Each shard boots its own full Hive + Bluz stack (Hive images are
+            # cache-shared across shards, so this only multiplies the cheap
+            # part). Splitting keeps any one Playwright/Chromium process
+            # alive for less wall-clock time — the E2E job was observed
+            # crashing the browser process ~4 minutes into a single long
+            # single-worker run on this runner's 2 vCPUs.
+            matrix:
+                shard: [1, 2, 3]
 
         steps:
             - name: Checkout repository
@@ -263,12 +273,18 @@ jobs:
                   TEST_HIVE_CLIENT_SECRET: ci-placeholder
 
             # ── Run the full pipeline ──────────────────────────────────────────
-            # scripts/run_tests.py: unit tests → test composition (dynamic
-            # ports) → SSO client registration with Hive (pyhive) → drizzle
-            # schema push → Hive seeding (pyhive) + Bluz seeding → Playwright.
+            # scripts/run_tests.py: test composition (dynamic ports) → SSO
+            # client registration with Hive (pyhive) → drizzle schema push →
+            # Hive seeding (pyhive) + Bluz seeding → Playwright.
             # --seed-hive forces a reseed of the fresh Hive instance.
+            # --skip-unit: backend unit tests already run in their own job
+            # (release-pipeline.yml "Unit Tests") — no need to repeat them
+            # per shard.
+            # --shard: splits the Playwright suite N/3 so no single shard
+            # keeps one Chromium process alive long enough to hit the
+            # memory-pressure crash seen in a full single-worker run.
             - name: Run Full Test Suite
-              run: python scripts/run_tests.py --seed-hive
+              run: python scripts/run_tests.py --seed-hive --skip-unit --shard ${{ matrix.shard }}/${{ strategy.job-total }}
               env:
                   CI: true
 
@@ -277,7 +293,7 @@ jobs:
               uses: actions/upload-artifact@v4
               if: ${{ !cancelled() }}
               with:
-                  name: playwright-report
+                  name: playwright-report-${{ matrix.shard }}
                   path: playwright-report/
                   retention-days: 14
 
@@ -285,7 +301,7 @@ jobs:
               uses: actions/upload-artifact@v4
               if: ${{ !cancelled() }}
               with:
-                  name: test-results
+                  name: test-results-${{ matrix.shard }}
                   path: test-results/
                   retention-days: 7
 
@@ -314,7 +330,7 @@ jobs:
               uses: actions/upload-artifact@v4
               if: failure()
               with:
-                  name: container-logs
+                  name: container-logs-${{ matrix.shard }}
                   path: container-logs/
                   retention-days: 7
 

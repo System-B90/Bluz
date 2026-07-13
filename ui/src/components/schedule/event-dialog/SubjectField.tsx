@@ -1,9 +1,6 @@
-import FormControl, { FormControlProps } from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
+import { FormControlProps } from "@mui/material/FormControl";
 
-import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
+import { HiveSubjectSelect } from "@/components/base/HiveSubjectSelect";
 import { Event, eventHasSubject } from "@/components/schedule/types/event";
 
 type SubjectFieldProps = {
@@ -11,33 +8,21 @@ type SubjectFieldProps = {
     onEventChange: (updates: Partial<Event>) => void;
 };
 
+/** Event-dialog binding around the reusable {@link HiveSubjectSelect}. */
 export function SubjectField({
     event,
     onEventChange,
     ...props
-}: SubjectFieldProps & FormControlProps) {
-    const { subjects } = useHiveSubjects();
-
-    const subjectMenuItems = subjects.map((subject) => (
-        <MenuItem key={subject.id} value={subject.id}>
-            {subject.name}
-        </MenuItem>
-    ));
-
+}: SubjectFieldProps & Omit<FormControlProps, "onChange">) {
     return (
-        <FormControl
+        <HiveSubjectSelect
             disabled={event?.type ? !eventHasSubject(event?.type) : false}
             fullWidth={false}
+            onChange={(id) =>
+                onEventChange({ subject: id ? Number(id) : undefined })
+            }
+            value={event?.subject != null ? String(event.subject) : null}
             {...props}
-        >
-            <InputLabel>מקצוע</InputLabel>
-            <Select
-                label="מקצוע"
-                onChange={(e) => onEventChange({ subject: e.target.value })}
-                value={event?.subject || ""}
-            >
-                {subjectMenuItems}
-            </Select>
-        </FormControl>
+        />
     );
 }

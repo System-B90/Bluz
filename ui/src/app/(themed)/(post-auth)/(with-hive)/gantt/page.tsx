@@ -6,13 +6,17 @@ import { keyframes } from '@mui/material/styles';
 import Typography from "@mui/material/Typography";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "notistack";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumFab } from "@/components/gantt/curriculum-fab";
+import {
+    CurriculumSyncContext,
+    CurriculumSyncHandler,
+} from "@/components/gantt/curriculum-fab/curriculum-sync-context";
 import { CurriculumView } from "@/components/gantt/curriculum-view";
 import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
 import { CurriculumProvider } from "@/components/gantt/state/provider";
@@ -103,6 +107,8 @@ function GanttPageInner()
             return cidFromUrl ? (cidFromUrl as GanttCurriculumId) : null;
         });
 
+    const curriculumSyncRef = useRef<CurriculumSyncHandler>(() => {});
+
     const [ initialData, setInitialData ] = useState<ApiCurriculum | null>(null);
     const [ isLoading, setIsLoading ] = useState(false);
     const [ error, setError ] = useState<null | string>(null);
@@ -180,46 +186,48 @@ function GanttPageInner()
             maxWidth="100vw"
             sx={ { position: "relative" } }
         >
-            <CurriculumFab
-                currentCurriculum={ currentCurriculum }
-                open={ drawerOpen }
-                setCurrentCurriculum={ setCurrentCurriculum }
-                setOpen={ setDrawerOpen }
-            />
+            <CurriculumSyncContext.Provider value={ curriculumSyncRef }>
+                <CurriculumFab
+                    currentCurriculum={ currentCurriculum }
+                    open={ drawerOpen }
+                    setCurrentCurriculum={ setCurrentCurriculum }
+                    setOpen={ setDrawerOpen }
+                />
 
-            <Box
-                flexGrow={ 1 }
-                sx={ {
-                    padding: 2,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    maxWidth: "100%",
-                } }
-            >
-                { !currentCurriculum && !isLoading && (
-                    <Typography color="textSecondary">
+                <Box
+                    flexGrow={ 1 }
+                    sx={ {
+                        padding: 2,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        maxWidth: "100%",
+                    } }
+                >
+                    { !currentCurriculum && !isLoading && (
+                        <Typography color="textSecondary">
                         בחרו גאנט כדי להתחיל לעבוד
-                    </Typography>
-                ) }
+                        </Typography>
+                    ) }
 
-                { isLoading ? <WindowsLoadingScreen /> : null }
+                    { isLoading ? <WindowsLoadingScreen /> : null }
 
-                { error ? <Typography color="error">{ error }</Typography> : null }
+                    { error ? <Typography color="error">{ error }</Typography> : null }
 
-                { currentCurriculum && !isLoading && initialData ? (
-                    <CurriculumProvider
-                        curriculumId={ currentCurriculum }
-                        initialData={ initialData }
-                        key={ currentCurriculum }
-                    >
-                        <GanttMappingProvider curriculumId={ currentCurriculum }>
-                            <CurriculumView curriculumId={ currentCurriculum } />
-                        </GanttMappingProvider>
-                    </CurriculumProvider>
-                ) : null }
-            </Box>
+                    { currentCurriculum && !isLoading && initialData ? (
+                        <CurriculumProvider
+                            curriculumId={ currentCurriculum }
+                            initialData={ initialData }
+                            key={ currentCurriculum }
+                        >
+                            <GanttMappingProvider curriculumId={ currentCurriculum }>
+                                <CurriculumView curriculumId={ currentCurriculum } />
+                            </GanttMappingProvider>
+                        </CurriculumProvider>
+                    ) : null }
+                </Box>
+            </CurriculumSyncContext.Provider>
         </Box>
     );
 }

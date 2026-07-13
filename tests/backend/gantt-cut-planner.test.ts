@@ -258,4 +258,91 @@ describe("planCut", () => {
         const echoDay = plan.occurrences.filter((o) => o.occurrenceDate === "2024-01-08");
         expect(echoDay.map((o) => o.ganttEventId)).toEqual([ "a", "b" ]);
     });
+
+    it("starts Sunday at weekendHomeStartTime when the week is not on weekend duty", () => {
+        const { days, weeks } = buildWeeks(1);
+        weeks[0].weekendDuty = false;
+        const event = makeEvent({ id: "e1" });
+        const input = baseInput({
+            days,
+            weeks,
+            events: [ event ],
+            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0 } ],
+            dayStartTime: "08:00",
+            weekendHomeStartTime: "10:00",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        expect(plan.occurrences[0].startTime.toISOString()).toBe(
+            new Date("2024-01-07T10:00:00").toISOString(),
+        );
+    });
+
+    it("starts Sunday at the regular dayStartTime when the week is on weekend duty", () => {
+        const { days, weeks } = buildWeeks(1);
+        weeks[0].weekendDuty = true;
+        const event = makeEvent({ id: "e1" });
+        const input = baseInput({
+            days,
+            weeks,
+            events: [ event ],
+            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0 } ],
+            dayStartTime: "08:00",
+            weekendHomeStartTime: "10:00",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        expect(plan.occurrences[0].startTime.toISOString()).toBe(
+            new Date("2024-01-07T08:00:00").toISOString(),
+        );
+    });
+
+    it("leaves non-Sunday days at the regular dayStartTime even when off weekend duty", () => {
+        const { days, weeks } = buildWeeks(1);
+        weeks[0].weekendDuty = false;
+        const event = makeEvent({ id: "e1" });
+        const input = baseInput({
+            days,
+            weeks,
+            events: [ event ],
+            mappings: [ { eventId: "e1", dayId: "w0d1", sortOrder: 0 } ], // Monday
+            dayStartTime: "08:00",
+            weekendHomeStartTime: "10:00",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        expect(plan.occurrences[0].startTime.toISOString()).toBe(
+            new Date("2024-01-08T08:00:00").toISOString(),
+        );
+    });
+
+    it("defaults to weekendDuty=true (regular start) when the flag is omitted", () => {
+        const { days, weeks } = buildWeeks(1); // weekendDuty left unset
+        const event = makeEvent({ id: "e1" });
+        const input = baseInput({
+            days,
+            weeks,
+            events: [ event ],
+            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0 } ],
+            dayStartTime: "08:00",
+            weekendHomeStartTime: "10:00",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        expect(plan.occurrences[0].startTime.toISOString()).toBe(
+            new Date("2024-01-07T08:00:00").toISOString(),
+        );
+    });
 });
