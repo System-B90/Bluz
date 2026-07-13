@@ -268,16 +268,15 @@ test.describe("Calendar Page", () => {
         const dialog = getEventDialog(page);
         await expect(dialog).toBeVisible();
 
-        const lockedSwitch = dialog
-            .locator(SELECTORS.formControlLabel)
-            .filter({ hasText: "מתואם" })
-            .locator("input[type='checkbox']");
+        // EventToggles renders each toggle as a custom `role="switch"` chip
+        // (not a MUI Switch/checkbox input) — state lives in `aria-checked`.
+        const lockedSwitch = dialog.getByRole("switch", { name: "מתואם" });
 
-        const wasChecked = await lockedSwitch.isChecked();
+        const wasChecked = (await lockedSwitch.getAttribute("aria-checked")) === "true";
         await lockedSwitch.click();
         await page.waitForTimeout(200);
 
-        const isNowChecked = await lockedSwitch.isChecked();
+        const isNowChecked = (await lockedSwitch.getAttribute("aria-checked")) === "true";
         expect(isNowChecked).toBe(!wasChecked);
 
         await dialog.getByRole("button", { name: "ביטול" }).click();
