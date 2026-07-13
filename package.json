@@ -106,11 +106,11 @@
         "husky": "^9.0.0",
         "prettier": "3.9.5",
         "tailwindcss": "^4.1.17",
+        "typedoc": "^0.28.20",
+        "typedoc-plugin-markdown": "^4.12.0",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.63.0",
         "vite-tsconfig-paths": "^6.1.1",
-        "typedoc": "^0.28.20",
-        "typedoc-plugin-markdown": "^4.12.0",
         "vitest": "^4.1.10"
     },
     "allowScripts": {

@@ -13,6 +13,7 @@ import {
     recurrenceEnumSchema,
     roomRequirementEnumSchema,
 } from "./enums";
+import { ganttEventRecurrenceExceptionsSchema } from "./event-recurrence-exceptions";
 import { ganttModule2EventsSchema } from "./junctions";
 import { ganttCurriculumEventConfigurationsSchema } from "./mappings";
 
@@ -42,6 +43,10 @@ export const ganttEventsSchema = pgTable("e", {
     comment: text("comment"),
     // Shuffle names this event applies to. Empty ⇒ all shuffles.
     shuffles: text("shuffles").array().notNull().default([]),
+    // Hive linkage copied onto schedule events by the "גזירה ללו"ז" cut; all optional.
+    hiveSubjectId: integer("hive_subject_id"),
+    hiveModuleId: integer("hive_module_id"),
+    hiveLessonId: integer("hive_lesson_id"),
     createdAt: timestamp("ca").defaultNow().notNull(),
     updatedAt: timestamp("ua").defaultNow().notNull(),
 });
@@ -56,5 +61,6 @@ export const ganttEventsRelationsSchema = relations(
         targetedByConstraints: many(ganttConstraintsSchema, {
             relationName: "targetEvent",
         }),
+        eRE: many(ganttEventRecurrenceExceptionsSchema),
     }),
 );

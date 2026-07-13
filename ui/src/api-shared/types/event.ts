@@ -12,6 +12,7 @@ export enum EventType
     EXERCISE = 'ע"ע',
     LECTURE = "הרצאה",
     WORKSHOP = "סדנה",
+    SELF_TEACHING = 'ל"ע',
     BREAK = "הפסקה",
     PRAYER = "תפילה",
     OTHER = "אחר",
@@ -58,6 +59,16 @@ export type Event = {
      * and a comment.
      */
     fake?: boolean;
+    /**
+     * Gantt event this schedule event was cut from (גזירה ללו"ז); absent for
+     * normal events. Set by the curriculum cut endpoint (#118).
+     */
+    ganttEventId?: string;
+    /**
+     * ISO date (yyyy-MM-dd) of the planned occurrence — disambiguates
+     * recurrence occurrences of the same gantt event. Absent for normal events.
+     */
+    ganttOccurrenceDate?: string;
 };
 
 /**
@@ -94,7 +105,8 @@ export function eventHasSubject(type: EventType): boolean
     return (
         type === EventType.EXERCISE ||
         type === EventType.LECTURE ||
-        type === EventType.WORKSHOP
+        type === EventType.WORKSHOP ||
+        type === EventType.SELF_TEACHING
     );
 }
 

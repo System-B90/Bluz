@@ -6,6 +6,8 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import React, { memo, useMemo } from "react";
 
+import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
+import { EventRecurrence } from "@/api-shared/types/gantt/models";
 import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
@@ -15,6 +17,7 @@ import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-vie
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
 import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
 
 const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
@@ -35,6 +38,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         toggleModule,
     } = useGanttContext();
     const isExpanded = isModuleExpanded(moduleId);
+    const { state: exceptionsState } = useGanttRecurrenceExceptions();
 
     const { isOver: isRemoveOver, setNodeRef: setRemoveNodeRef } = useDroppable(
         {
@@ -56,41 +60,64 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         [moduleId, violations],
     );
 
-    // Day-level span (used in daily mode)
-    const spanIndices = useMemo(() => {
+    // Every day the module's block should visually cover: explicit mappings
+    // plus, for recurring events, every surviving echoed occurrence day — so
+    // the block spans the full recurrence, not just its start.
+    const allDayIds = useMemo(() => {
         const dayIds = new Set<string>();
-
         mappedDays.forEach((d) => dayIds.add(d));
 
         if (hasEvents) {
             (ganttModule?.events ?? []).forEach((eId) => {
-                const d = eventMappings[eId];
-                if (d) dayIds.add(d);
+                const startDayId = eventMappings[eId];
+                if (!startDayId) return;
+                dayIds.add(startDayId);
+
+                const recurrence = state.events[eId]?.recurrence ?? EventRecurrence.None;
+                if (recurrence === EventRecurrence.None) return;
+
+                const excludedDayIds = new Set<string>();
+                Object.values(exceptionsState.exceptions).forEach((ex) => {
+                    if (ex.eventId === eId) excludedDayIds.add(ex.dayId);
+                });
+
+                getRecurrenceOccurrenceDayIds({
+                    recurrence,
+                    startDayId,
+                    linearDays,
+                    dayIndexOf: (d) => state.days[d]?.dayIndex,
+                    excludedDayIds,
+                }).forEach((d) => dayIds.add(d));
             });
         }
 
-        const indices = Array.from(dayIds)
+        return dayIds;
+    }, [
+        hasEvents,
+        ganttModule?.events,
+        eventMappings,
+        mappedDays,
+        linearDays,
+        state.events,
+        state.days,
+        exceptionsState.exceptions,
+    ]);
+
+    // Day-level span (used in daily mode)
+    const spanIndices = useMemo(() => {
+        const indices = Array.from(allDayIds)
             .map((id) => linearDays.indexOf(id))
             .filter((i) => i !== -1);
         if (indices.length === 0) return null;
         return { min: Math.min(...indices), max: Math.max(...indices) };
-    }, [hasEvents, ganttModule?.events, eventMappings, mappedDays, linearDays]);
+    }, [allDayIds, linearDays]);
 
     // Week-level span (used in weekly mode)
     const weekSpanIndices = useMemo(() => {
         if (!weeklyView) return null;
 
-        const dayIds = new Set<string>();
-        mappedDays.forEach((d) => dayIds.add(d));
-        if (hasEvents) {
-            (ganttModule?.events ?? []).forEach((eId) => {
-                const d = eventMappings[eId];
-                if (d) dayIds.add(d);
-            });
-        }
-
         const weekIndices = new Set<number>();
-        dayIds.forEach((dayId) => {
+        allDayIds.forEach((dayId) => {
             const weekIdx = timelineWeeks.findIndex((w) =>
                 w.days.includes(dayId),
             );
@@ -100,14 +127,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         if (weekIndices.size === 0) return null;
         const arr = Array.from(weekIndices);
         return { min: Math.min(...arr), max: Math.max(...arr) };
-    }, [
-        weeklyView,
-        mappedDays,
-        hasEvents,
-        ganttModule?.events,
-        eventMappings,
-        timelineWeeks,
-    ]);
+    }, [weeklyView, allDayIds, timelineWeeks]);
 
     const isUnmapped = weeklyView
         ? weekSpanIndices === null

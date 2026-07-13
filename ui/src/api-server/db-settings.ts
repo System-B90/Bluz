@@ -6,6 +6,10 @@ import {
 } from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { PRAYER_TIMES_SETTING_KEY } from "@/api-shared/types/settings/prayer";
+import {
+    DEFAULT_DAY_START_TIME,
+    SCHEDULE_SETTINGS_KEY,
+} from "@/api-shared/types/settings/schedule";
 import { Setting, SettingName } from "@/api-shared/types/settings/settings";
 import { MessageTypes } from "@/settings";
 
@@ -45,17 +49,26 @@ async function setDbSetting(
 
 async function initDbSettings() {
     const prayerSetting = await getDbSetting(PRAYER_TIMES_SETTING_KEY);
-    if (prayerSetting !== null) return;
+    if (prayerSetting === null) {
+        await setDbSetting(
+            PRAYER_TIMES_SETTING_KEY,
+            {
+                arvit: new Date(1970, 0, 1, 18, 0, 0, 0),
+                mincha: new Date(1970, 0, 1, 12, 0, 0, 0),
+                shacharit: new Date(1970, 0, 1, 6, 0, 0, 0),
+            } as Setting,
+            { upsert: true },
+        );
+    }
 
-    await setDbSetting(
-        PRAYER_TIMES_SETTING_KEY,
-        {
-            arvit: new Date(1970, 0, 1, 18, 0, 0, 0),
-            mincha: new Date(1970, 0, 1, 12, 0, 0, 0),
-            shacharit: new Date(1970, 0, 1, 6, 0, 0, 0),
-        } as Setting,
-        { upsert: true },
-    );
+    const scheduleSetting = await getDbSetting(SCHEDULE_SETTINGS_KEY);
+    if (scheduleSetting === null) {
+        await setDbSetting(
+            SCHEDULE_SETTINGS_KEY,
+            { dayStartTime: DEFAULT_DAY_START_TIME } as Setting,
+            { upsert: true },
+        );
+    }
 }
 
 export namespace DbSettings {

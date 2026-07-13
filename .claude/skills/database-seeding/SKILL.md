@@ -15,15 +15,16 @@ Ports: `127.0.0.3:5432` (Postgres), `127.0.0.3:27018` (MongoDB)
 
 ## Drizzle Commands
 ```powershell
-npm run db:generate   # generate SQL migration from schema changes
-npm run db:push       # push schema directly (dev sandbox, no migration file)
-npm run db:studio     # open web GUI
+npm run db:generate   # generate SQL migration from schema changes (also: python tools.py db generate)
+npm run db:push       # push schema directly, dev sandbox, no migration file (also: python tools.py db push)
+npm run db:studio     # open web GUI (no tools.py wrap — interactive)
 ```
 Schema source: `ui\src\api-server\gantt\schema\`
 
 ## Seeding Demo Data
 ```powershell
 npm run db:seed
+# also: python tools.py db seed
 # Runs: python scripts\demo\populate_demo_hive.py && npx tsx scripts\demo\populate_demo_bluz.ts
 ```
 Requires Python 3 + Node in PATH. Run after containers are up.

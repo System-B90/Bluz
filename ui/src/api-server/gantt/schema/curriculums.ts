@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import { boolean, date, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
+import { ganttEventRecurrenceExceptionsSchema } from "./event-recurrence-exceptions";
 import {
     ganttCurriculum2SyllabusesSchema,
     ganttCurriculum2WeeksSchema,
@@ -34,5 +35,6 @@ export const ganttCurriculumsRelationsSchema = relations(
         cEC: many(ganttCurriculumEventConfigurationsSchema), // eventConfigs
         cMDA: many(ganttCurriculumEventDayMappingsSchema),
         c2w: many(ganttCurriculum2WeeksSchema),
+        eRE: many(ganttEventRecurrenceExceptionsSchema),
     }),
 );

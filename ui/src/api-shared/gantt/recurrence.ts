@@ -19,10 +19,14 @@ export type GetRecurrenceOccurrenceDayIdsParams = {
     linearDays: Array<string>;
     /** Day-of-week for a day id, or undefined when unknown. */
     dayIndexOf: (dayId: string) => GanttDayIndex | undefined;
+    /** Occurrence days to skip — deleted or materialized into their own event. */
+    excludedDayIds?: Set<string>;
 };
 
 /**
- * The day ids a recurring event echoes onto, excluding its start day.
+ * The day ids a recurring event echoes onto, excluding its start day and any
+ * excepted days (deleted occurrences or occurrences materialized into their
+ * own standalone event).
  * Returns an empty set for non-recurring or unmapped events.
  */
 export function getRecurrenceOccurrenceDayIds({
@@ -30,6 +34,7 @@ export function getRecurrenceOccurrenceDayIds({
     startDayId,
     linearDays,
     dayIndexOf,
+    excludedDayIds,
 }: GetRecurrenceOccurrenceDayIdsParams): Set<string> {
     const ids = new Set<string>();
     if (recurrence === EventRecurrence.None || !startDayId) return ids;
@@ -40,6 +45,7 @@ export function getRecurrenceOccurrenceDayIds({
     const startDow = dayIndexOf(startDayId);
     for (let i = startIdx + 1; i < linearDays.length; i++) {
         const dayId = linearDays[ i ];
+        if (excludedDayIds?.has(dayId)) continue;
         if (recurrence === EventRecurrence.Daily) {
             ids.add(dayId);
         } else if (recurrence === EventRecurrence.Weekly) {
@@ -50,6 +56,21 @@ export function getRecurrenceOccurrenceDayIds({
         }
     }
     return ids;
+}
+
+/**
+ * The actual occurrence day within a given week's days for a weekly-recurring
+ * event — the day matching the start day's weekday. The weekly timeline view
+ * anchors an occurrence's visual block to the week's first day, but delete/
+ * materialize actions need the real day id the occurrence falls on.
+ */
+export function getOccurrenceDayIdForWeek(
+    weekDayIds: Array<string>,
+    startDow: GanttDayIndex | undefined,
+    dayIndexOf: (dayId: string) => GanttDayIndex | undefined,
+): null | string {
+    if (startDow === undefined) return null;
+    return weekDayIds.find((dayId) => dayIndexOf(dayId) === startDow) ?? null;
 }
 
 /**

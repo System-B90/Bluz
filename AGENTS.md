@@ -111,7 +111,7 @@ When adding a new Gantt entity, follow this pattern rather than writing raw hand
 | `ui/src/api-shared/` | Shared types/contracts and pure utilities. | [README](ui/src/api-shared/README.md) |
 | `drizzle/` | Generated SQL migrations + Drizzle Kit config. | [README](drizzle/README.md) |
 | `session-server/` | Standalone WebSocket sync server (its own `package.json`). | [README](session-server/README.md) |
-| `scripts/` | Setup, seeding, test-runner, and CI helper scripts (Python + TS). | [README](scripts/README.md) |
+| `scripts/` | Setup, seeding, test-runner, and CI helper scripts (Python + TS). Includes `tools_impl.py`, the implementation behind root [`tools.py`](tools.py). | [README](scripts/README.md) |
 | `cli/` | The `bluz` Python CLI tool (Typer + InquirerPy) — drives the `/api/*` surface. Versioned in lockstep with the app by `scripts/publish.py`. | [README](cli/README.md) |
 | `tests/` | Playwright e2e specs + Vitest backend tests + auth setup. Has a full feature→test map. | [README](tests/README.md) |
 | `nginx/` | Reverse-proxy configs and Dockerfile for each topology. | — |
@@ -136,19 +136,30 @@ curriculum store via `drizzle-normalize`).
 
 ## 5. Commands you'll actually use
 
-All `npm` scripts run from the repo root (`package.json`).
+All `npm` scripts run from the repo root (`package.json`). For agents, prefer the
+`tools.py` CLI (`python tools.py --help`) where a command exists — it wraps the same
+npm/docker scripts but backgrounds long-running ones and gives concise, scriptable
+status output instead of a blocking foreground process.
 
 ### Run the app
 
 ```bash
+python tools.py dev             # Backgrounds `npm run dev`, returns immediately
+python tools.py dev --docker    # Backgrounds `npm run docker:dev` instead
+python tools.py dev status      # Checks port 3000 + https://bluz.dev, exit code reflects up/down
+python tools.py dev stop        # Stops the background dev process tools.py started
+
 npm run docker:dev      # Full dev stack in Docker, with hot-reload watch on ui
 npm run dev             # Run Next.js dev server locally + a Dockerized proxy only
-npm run docker:down     # Stop containers
-npm run docker:nuke     # Stop + remove volumes (wipes local DB data)
+npm run docker:down      # Stop containers (also: python tools.py docker down)
+npm run docker:nuke      # Stop + remove volumes, wipes local DB data (also: python tools.py docker nuke)
 ```
 
 `npm run dev` copies `.env-mks-srvu` (if present) or `.env` into `ui/.env` before
 starting — so edit the **root** `.env`, not `ui/.env`.
+
+> Before starting a new dev server, check `python tools.py dev status` first — if one
+> is already up, don't start another; just browse to `https://bluz.dev`.
 
 ### Lint & format
 
@@ -156,6 +167,8 @@ starting — so edit the **root** `.env`, not `ui/.env`.
 npm run lint            # ESLint over ui/ (flat config at ui/eslint.config.mts)
 npm run lint:fix        # …with --fix
 ```
+
+Equivalent: `python tools.py lint` / `python tools.py lint --fix`.
 
 Prettier config (`.prettierrc`): **4-space indent, double quotes, semicolons, trailing
 commas, LF**. A Husky pre-commit hook runs `lint-staged` (ESLint on JS/TS, Prettier on
@@ -170,6 +183,9 @@ npm run db:studio       # Drizzle Studio GUI
 npm run db:seed         # Seed demo data into Hive (python) then Bluz (tsx)
 ```
 
+Equivalents: `python tools.py db generate|push|seed` (no `tools.py` wrap for `db:studio`,
+which is an interactive GUI).
+
 Drizzle config is `drizzle/drizzle.config.ts`; **schema source is
 `ui/src/api-server/gantt/schema/`**, output migrations land in `drizzle/`.
 
@@ -183,6 +199,9 @@ npm run test:e2e:ui     # Playwright interactive UI
 npm run docker:test     # Bring up the isolated test compose stack
 npm run docker:test:down
 ```
+
+Equivalent: `python tools.py test [all|unit|e2e]` (`all` is the default, mapping to
+`npm run test`).
 
 See `tests/README.md` for the full feature→spec map and the SSO auth-setup flow.
 
@@ -248,3 +267,8 @@ Runtime config comes from the root **`.env`** (consumed by docker-compose and co
 5. Commit messages in this repo are short and imperative (see `git log`). Commit all changes, even if they are not verified.
 6. Create a new branch for new features `feature/<feature-name>`, and `hotfix/<bug-name>` for bugs.
 7. Push only working changes after running linters and testing pipelines.
+8. **UI changes need screenshots in the PR.** If a change touches anything under
+   `ui/src/components/`, `ui/src/app/` pages, or otherwise alters rendered markup/styles,
+   attach before/after screenshots of every affected page, modal, or component — as a PR
+   comment if not included in the PR description. Cover both light/dark or RTL states if
+   the change affects them. No screenshots, no merge.

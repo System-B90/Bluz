@@ -1,12 +1,15 @@
 import Box from "@mui/material/Box";
 import { alpha, useTheme } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import React from "react";
 
 import { GanttBlock } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttBlock";
 
 type GanttEventLabelCellProps = {
+    /** Execution drift (#121): the cut schedule diverged from the plan. */
+    drifted?: boolean;
     eventId: string;
     eventTitle: string;
     isRemoveOver: boolean;
@@ -18,6 +21,7 @@ type GanttEventLabelCellProps = {
 };
 
 export const GanttEventLabelCell: React.FC<GanttEventLabelCellProps> = ({
+    drifted,
     eventId,
     eventTitle,
     isRemoveOver,
@@ -69,6 +73,21 @@ export const GanttEventLabelCell: React.FC<GanttEventLabelCellProps> = ({
             >
                 ↳ { eventTitle }
             </Typography>
+
+            { drifted ? (
+                <Tooltip title="ביצוע שונה מהתכנון">
+                    <Box
+                        sx={ {
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            backgroundColor: theme.palette.warning.main,
+                            flexShrink: 0,
+                            marginInlineStart: 0.75,
+                        } }
+                    />
+                </Tooltip>
+            ) : null }
 
             { isUnmapped ? (
                 <Box

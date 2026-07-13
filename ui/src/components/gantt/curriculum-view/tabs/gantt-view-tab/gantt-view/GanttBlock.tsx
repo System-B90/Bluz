@@ -11,6 +11,7 @@ import {
     useCurriculumProviderActions,
     useCurriculumState,
 } from "@/components/gantt/state/provider";
+import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
 const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     id,
@@ -30,29 +31,47 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     const theme = useTheme();
     const state = useCurriculumState();
     const { openModuleDialog, openEventDialog } = useCurriculumProviderActions();
+    const { materializeOccurrence } = useGanttRecurrenceExceptions();
+
+    // A concrete occurrence (as opposed to the non-interactive "unallocated"
+    // reminder marker) carries its own dayId and can be dragged/materialized.
+    const isOccurrence = payload?.type === "event-occurrence";
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
         useDraggable({
             id,
-            // Recurrence occurrences are auto-generated echoes of the start
-            // block — never draggable, so they carry no drag payload (#111).
-            disabled: isRecurrence,
+            // The reminder marker is a pure display cue with no day of its own —
+            // never draggable. Occurrence blocks *are* draggable (drag-to-remove).
+            disabled: isRecurrence && !isOccurrence,
             data: payload,
         });
 
-    // Recurrence occurrences are display-only: suppress drag listeners so they
-    // read as indicators rather than interactive blocks (#111).
-    const dragProps = isRecurrence
-        ? {}
-        : { ...listeners, ...attributes };
+    const dragProps =
+        isRecurrence && !isOccurrence ? {} : { ...listeners, ...attributes };
 
-    const handleDoubleClick = (e: React.MouseEvent) => {
+    const handleDoubleClick = async (e: React.MouseEvent) => {
         if (!payload || !payload.moduleId) return;
 
         e.stopPropagation();
         e.preventDefault();
         const moduleObj = state.modules[payload.moduleId];
         if (!moduleObj?.syllabusId) return;
+
+        if (isOccurrence) {
+            const result = await materializeOccurrence({
+                moduleId: payload.moduleId,
+                eventId: payload.eventId,
+                dayId: payload.dayId,
+            });
+            if (result) {
+                openEventDialog(
+                    moduleObj.syllabusId,
+                    payload.moduleId,
+                    result.event.id,
+                );
+            }
+            return;
+        }
 
         if (payload.eventId) {
             openEventDialog(moduleObj.syllabusId, payload.moduleId, payload.eventId);
@@ -120,7 +139,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
                         : isRecurrence
                             ? `1px dashed ${theme.palette.primary.main}`
                             : "none",
-                cursor: isRecurrence
+                cursor: isRecurrence && !isOccurrence
                     ? "default"
                     : isDragging
                         ? "grabbing"

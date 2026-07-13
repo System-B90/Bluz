@@ -1,0 +1,370 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// ---- DB mocks (no Mongo / Postgres needed) --------------------------------
+
+const fakeEvents = {
+    countDocuments: vi.fn(async () => 0),
+    insertMany: vi.fn(async () => ({ insertedCount: 0 })),
+};
+const fakeController = { dbName: "bluz_cut", events: fakeEvents };
+
+vi.mock("@/api-server/gantt/db-curriculum", () => ({
+    DbCurriculum: { getItem: vi.fn() },
+}));
+vi.mock("@/api-server/db-iterations", () => ({
+    DbIterations: { getByCurriculum: vi.fn() },
+}));
+vi.mock("@/api-server/gantt/db-mappings", () => ({
+    getModuleDayMappingsForCurriculum: vi.fn(async () => []),
+}));
+vi.mock("@/api-server/gantt/db-recurrence-exceptions", () => ({
+    listRecurrenceExceptionsForCurriculum: vi.fn(async () => []),
+}));
+vi.mock("@/api-server/db-settings", () => ({
+    DbSettings: { get: vi.fn(async () => ({ dayStartTime: "08:00" })) },
+}));
+vi.mock("@/api-server/db-courses", () => ({
+    DbCourses: { get: vi.fn(async () => []), create: vi.fn(async () => {}) },
+}));
+vi.mock("@/api-server/mongo-db-controller", () => ({
+    getDatabaseController: vi.fn(() => fakeController),
+}));
+const broadcast = vi.fn();
+vi.mock("@/api-server/web-socket-utils", () => ({
+    SendServerRequestToSessionServer: (...args: Array<unknown>) =>
+        broadcast(...args),
+}));
+
+import { DbCourses } from "@/api-server/db-courses";
+import { DbIterations } from "@/api-server/db-iterations";
+import { DbSettings } from "@/api-server/db-settings";
+import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
+import { getModuleDayMappingsForCurriculum } from "@/api-server/gantt/db-mappings";
+import {
+    buildCutPlanInput,
+    buildScheduleEvent,
+    countOverlappingOccurrences,
+    cutCurriculumToSchedule,
+    indexCurriculumEvents,
+    moduleEventTypeToCalendarType,
+} from "@/api-server/gantt/cut";
+import { PlannedOccurrence } from "@/api-shared/gantt/cut-planner";
+import { EventType } from "@/api-shared/types/event";
+import { ApiCurriculum, ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
+import {
+    EventRecurrence,
+    GanttDayIndex,
+    ModuleEventType,
+} from "@/api-shared/types/gantt/models";
+
+// ---- Fixtures --------------------------------------------------------------
+
+function makeEvent(overrides: Partial<ApiModuleEvent> & { id: string }): ApiModuleEvent {
+    return {
+        id: overrides.id,
+        title: overrides.id,
+        type: ModuleEventType.Lecture,
+        minimumDuration: 60,
+        allocatedDuration: 0,
+        orchestratorId: null,
+        recommendedLecturerIds: [],
+        systemRequirements: [],
+        roomRequirement: "בחוץ",
+        recurrence: EventRecurrence.None,
+        isCritical: false,
+        isPaWindow: false,
+        comment: null,
+        shuffles: [],
+        hiveSubjectId: null,
+        hiveModuleId: null,
+        hiveLessonId: null,
+        cEC: [{ eventId: overrides.id, curriculumId: "c1", allocatedDuration: 0 }],
+        createdAt: "2024-01-01T00:00:00.000Z",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+        ...overrides,
+    } as ApiModuleEvent;
+}
+
+/** One curriculum: two weeks (Sun-start), one syllabus/module holding `events`. */
+function makeCurriculum(
+    events: Array<ApiModuleEvent>,
+    overrides: Partial<ApiCurriculum> = {},
+): ApiCurriculum {
+    const week = (id: string, number: number) => ({
+        curriculumId: "c1",
+        weekId: id,
+        week: {
+            id,
+            number,
+            w2d: Array.from({ length: 7 }, (_, d) => ({
+                weekId: id,
+                dayId: `${id}d${d}`,
+                day: { id: `${id}d${d}`, dayIndex: d as GanttDayIndex },
+            })),
+        },
+    });
+
+    return {
+        id: "c1",
+        title: "מסלול",
+        isDraft: false,
+        startDate: "2024-01-07", // Sunday
+        c2s: [
+            {
+                curriculumId: "c1",
+                syllabusId: "s1",
+                syllabus: {
+                    id: "s1",
+                    title: "סילבוס א",
+                    s2m: [
+                        {
+                            syllabusId: "s1",
+                            moduleId: "m1",
+                            module: {
+                                id: "m1",
+                                m2e: events.map((event) => ({
+                                    moduleId: "m1",
+                                    eventId: event.id,
+                                    event,
+                                })),
+                            },
+                        },
+                    ],
+                },
+            },
+        ],
+        c2w: [week("w1", 1), week("w0", 0)], // intentionally out of order
+        ...overrides,
+    } as unknown as ApiCurriculum;
+}
+
+const occ = (over: Partial<PlannedOccurrence>): PlannedOccurrence => ({
+    ganttEventId: "e1",
+    occurrenceDate: "2024-01-07",
+    startTime: new Date("2024-01-07T08:00:00"),
+    endTime: new Date("2024-01-07T09:00:00"),
+    isRecurrenceEcho: false,
+    ...over,
+});
+
+beforeEach(() => {
+    vi.clearAllMocks();
+    fakeEvents.countDocuments.mockResolvedValue(0);
+    vi.mocked(DbSettings.get).mockResolvedValue({ dayStartTime: "08:00" } as any);
+    vi.mocked(DbCourses.get).mockResolvedValue([] as any);
+});
+
+// ---- Pure helpers ----------------------------------------------------------
+
+describe("moduleEventTypeToCalendarType", () => {
+    it("maps every gantt event type to its calendar counterpart", () => {
+        expect(moduleEventTypeToCalendarType(ModuleEventType.Lecture)).toBe(EventType.LECTURE);
+        expect(moduleEventTypeToCalendarType(ModuleEventType.Exercise)).toBe(EventType.EXERCISE);
+        expect(moduleEventTypeToCalendarType(ModuleEventType.SelfTeaching)).toBe(EventType.SELF_TEACHING);
+        expect(moduleEventTypeToCalendarType(ModuleEventType.Other)).toBe(EventType.OTHER);
+    });
+});
+
+describe("indexCurriculumEvents", () => {
+    it("indexes events by id and records the parent syllabus title", () => {
+        const curriculum = makeCurriculum([makeEvent({ id: "e1" }), makeEvent({ id: "e2" })]);
+        const { eventsById, syllabusTitleByEvent } = indexCurriculumEvents(curriculum);
+        expect(eventsById.size).toBe(2);
+        expect(eventsById.get("e1")?.title).toBe("e1");
+        expect(syllabusTitleByEvent.get("e2")).toBe("סילבוס א");
+    });
+});
+
+describe("buildCutPlanInput", () => {
+    it("orders weeks by number, days by dayIndex, and filters module-only mappings", () => {
+        const curriculum = makeCurriculum([
+            makeEvent({ id: "e1", cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 90 }] }),
+        ]);
+        const input = buildCutPlanInput({
+            curriculum,
+            mappings: [
+                { eventId: null, dayId: "w0d0", sortOrder: 0 }, // module-only → dropped
+                { eventId: "e1", dayId: "w0d0", sortOrder: 3 },
+            ],
+            exceptions: [{ eventId: "e1", dayId: "w1d1" }],
+            dayStartTime: "09:30",
+        });
+
+        expect(input.weeks.map((w) => w.id)).toEqual(["w0", "w1"]);
+        expect(input.weeks[0].dayIds).toEqual(["w0d0", "w0d1", "w0d2", "w0d3", "w0d4", "w0d5", "w0d6"]);
+        expect(input.mappings).toEqual([{ eventId: "e1", dayId: "w0d0", sortOrder: 3 }]);
+        expect(input.events[0].allocatedDuration).toBe(90);
+        expect(input.recurrenceExceptions).toEqual([{ eventId: "e1", dayId: "w1d1" }]);
+        expect(input.dayStartTime).toBe("09:30");
+        expect(input.startDate).toBe("2024-01-07");
+    });
+});
+
+describe("countOverlappingOccurrences", () => {
+    it("counts intersecting same-date pairs and ignores adjacent / different dates", () => {
+        const back2back = [
+            occ({ startTime: new Date("2024-01-07T08:00:00"), endTime: new Date("2024-01-07T09:00:00") }),
+            occ({ startTime: new Date("2024-01-07T09:00:00"), endTime: new Date("2024-01-07T10:00:00") }),
+        ];
+        expect(countOverlappingOccurrences(back2back)).toBe(0);
+
+        const overlapping = [
+            occ({ startTime: new Date("2024-01-07T08:00:00"), endTime: new Date("2024-01-07T09:30:00") }),
+            occ({ startTime: new Date("2024-01-07T09:00:00"), endTime: new Date("2024-01-07T10:00:00") }),
+            // different date, cannot overlap the two above
+            occ({ occurrenceDate: "2024-01-08", startTime: new Date("2024-01-08T08:00:00"), endTime: new Date("2024-01-08T12:00:00") }),
+        ];
+        expect(countOverlappingOccurrences(overlapping)).toBe(1);
+    });
+});
+
+describe("buildScheduleEvent", () => {
+    it("copies Hive linkage, orchestrator, notes and provenance", () => {
+        const event = makeEvent({
+            id: "e1",
+            title: "הרצאת פתיחה",
+            type: ModuleEventType.Exercise,
+            orchestratorId: 42,
+            comment: "הערה",
+            hiveSubjectId: 5,
+            hiveModuleId: 6,
+            hiveLessonId: 7,
+        });
+        const doc = buildScheduleEvent(occ({ ganttEventId: "e1" }), event, ["course-1"]);
+
+        expect(doc.name).toBe("הרצאת פתיחה");
+        expect(doc.type).toBe(EventType.EXERCISE);
+        expect(doc.subject).toBe(5);
+        expect(doc.hiveModule).toBe(6);
+        expect(doc.hiveLesson).toBe(7);
+        expect(doc.instructors).toEqual([42]);
+        expect(doc.notes).toBe("הערה");
+        expect(doc.courses).toEqual(["course-1"]);
+        expect(doc.ganttEventId).toBe("e1");
+        expect(doc.ganttOccurrenceDate).toBe("2024-01-07");
+        expect(doc.locked).toBe(false);
+        expect(typeof doc.id).toBe("string");
+    });
+
+    it("stores a non-Hive placeholder when linkage is absent", () => {
+        const event = makeEvent({ id: "e1" });
+        const doc = buildScheduleEvent(occ({}), event, []);
+        expect(doc.subject).toBe(0);
+        expect(doc.hiveModule).toBe(0);
+        expect(doc.hiveLesson).toBe(null);
+        expect(doc.instructors).toEqual([]);
+        expect(doc.notes).toBe("");
+    });
+});
+
+// ---- Orchestration ---------------------------------------------------------
+
+describe("cutCurriculumToSchedule", () => {
+    it("rejects a draft curriculum without writing", async () => {
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(
+            makeCurriculum([makeEvent({ id: "e1" })], { isDraft: true }) as any,
+        );
+        const outcome = await cutCurriculumToSchedule("c1");
+        expect(outcome.ok).toBe(false);
+        if (outcome.ok) return;
+        expect(outcome.error.code).toBe("draft");
+        expect(fakeEvents.insertMany).not.toHaveBeenCalled();
+        expect(DbIterations.getByCurriculum).not.toHaveBeenCalled();
+    });
+
+    it("rejects when no iteration is linked", async () => {
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1" })]) as any);
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(null);
+        const outcome = await cutCurriculumToSchedule("c1");
+        expect(outcome.ok).toBe(false);
+        if (outcome.ok) return;
+        expect(outcome.error.code).toBe("no-iteration");
+        expect(fakeEvents.insertMany).not.toHaveBeenCalled();
+    });
+
+    it("rejects when the iteration already holds cut events (one-shot)", async () => {
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1" })]) as any);
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        fakeEvents.countDocuments.mockResolvedValue(3);
+
+        const outcome = await cutCurriculumToSchedule("c1");
+        expect(outcome.ok).toBe(false);
+        if (outcome.ok) return;
+        expect(outcome.error.code).toBe("already-cut");
+        expect(outcome.error.count).toBe(3);
+        expect(fakeEvents.insertMany).not.toHaveBeenCalled();
+    });
+
+    it("propagates planner validation errors without writing", async () => {
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1", title: "לא ממופה" })]) as any);
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        // no mappings → unmapped-event error
+
+        const outcome = await cutCurriculumToSchedule("c1");
+        expect(outcome.ok).toBe(false);
+        if (outcome.ok) return;
+        expect(outcome.error.code).toBe("invalid-plan");
+        expect(outcome.error.errors).toEqual([
+            { type: "unmapped-event", eventId: "e1", title: "לא ממופה" },
+        ]);
+        expect(fakeEvents.insertMany).not.toHaveBeenCalled();
+    });
+
+    it("cuts a mapped event, inserts documents and broadcasts once", async () => {
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(
+            makeCurriculum([makeEvent({ id: "e1", allocatedDuration: 0, cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]) as any,
+        );
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }] as any);
+
+        const outcome = await cutCurriculumToSchedule("c1");
+        expect(outcome.ok).toBe(true);
+        if (!outcome.ok) return;
+        expect(outcome.result.createdEvents).toBe(1);
+        expect(outcome.result.overlaps).toBe(0);
+        expect(fakeEvents.insertMany).toHaveBeenCalledTimes(1);
+        const inserted = fakeEvents.insertMany.mock.calls[0][0] as Array<any>;
+        expect(inserted).toHaveLength(1);
+        expect(inserted[0].ganttEventId).toBe("e1");
+        expect(broadcast).toHaveBeenCalledTimes(1);
+    });
+
+    it("creates a course per shuffle with provenance and assigns it to the event", async () => {
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(
+            makeCurriculum([makeEvent({ id: "e1", shuffles: ["מחלקה א"], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]) as any,
+        );
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }] as any);
+        vi.mocked(DbCourses.get).mockResolvedValue([] as any);
+
+        const outcome = await cutCurriculumToSchedule("c1");
+        expect(outcome.ok).toBe(true);
+        if (!outcome.ok) return;
+        expect(outcome.result.createdCourses).toHaveLength(1);
+        expect(outcome.result.createdCourses[0].name).toBe("מחלקה א");
+        expect(DbCourses.create).toHaveBeenCalledTimes(1);
+        const createdCourse = vi.mocked(DbCourses.create).mock.calls[0][0] as any;
+        expect(createdCourse.description).toBe('נגזר מסילבוס "סילבוס א"');
+        const inserted = fakeEvents.insertMany.mock.calls[0][0] as Array<any>;
+        expect(inserted[0].courses).toEqual([createdCourse.id]);
+    });
+
+    it("assigns all iteration courses to an event with no shuffles", async () => {
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(
+            makeCurriculum([makeEvent({ id: "e1", shuffles: [], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]) as any,
+        );
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }] as any);
+        vi.mocked(DbCourses.get).mockResolvedValue([
+            { id: "course-a", name: "A", color: null },
+            { id: "course-b", name: "B", color: null },
+        ] as any);
+
+        const outcome = await cutCurriculumToSchedule("c1");
+        expect(outcome.ok).toBe(true);
+        if (!outcome.ok) return;
+        expect(DbCourses.create).not.toHaveBeenCalled();
+        const inserted = fakeEvents.insertMany.mock.calls[0][0] as Array<any>;
+        expect(inserted[0].courses).toEqual(["course-a", "course-b"]);
+    });
+});

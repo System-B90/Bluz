@@ -20,10 +20,12 @@ export class ClientApiError extends ClientError {
         if (typeof message === "string") {
             this.name = "ClientApiError";
         } else if (message) {
-            this.name = message.name;
-            if (message.status !== undefined) {
-                this.status = message.status;
-            }
+            // Carry through any structured fields a server error payload adds
+            // beyond name/message/status (e.g. a coded error's discriminant
+            // and extra data), so subclasses can reconstruct the full shape
+            // without every feature reimplementing fetch/parse logic.
+            Object.assign(this, message);
+            this.name = message.name ?? "ClientApiError";
         }
     }
 }

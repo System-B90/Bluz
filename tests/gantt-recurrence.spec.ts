@@ -171,6 +171,37 @@ async function dragBlockWithinItsCell(page: Page, block: Locator): Promise<void>
     await page.waitForTimeout(500);
 }
 
+/** Drags `block` onto the row's first (label/remove) column, to trigger a remove drop. */
+async function dragBlockToRemoveColumn(
+    page: Page,
+    block: Locator,
+    row: Locator,
+): Promise<void> {
+    const blockBox = await block.boundingBox();
+    const cellBox = await row.locator("td").first().boundingBox();
+    if (!blockBox || !cellBox) throw new Error("Block or remove cell not found for drag");
+
+    await page.mouse.move(
+        blockBox.x + blockBox.width / 2,
+        blockBox.y + blockBox.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+        cellBox.x + cellBox.width / 2,
+        cellBox.y + cellBox.height / 2,
+        { steps: 10 },
+    );
+    await page.mouse.up();
+    await page.waitForTimeout(500);
+}
+
+/** Maps `eventTitle`'s recurring event to the first week/day, satisfying its recurrence. */
+async function mapEventToFirstWeek(page: Page, eventRow: Locator): Promise<void> {
+    const stagedBlock = eventRow.locator('[id^="block-event-"]');
+    await expect(stagedBlock).toBeVisible({ timeout: 10_000 });
+    await dragBlockWithinItsCell(page, stagedBlock);
+}
+
 test.describe("Gantt Recurring Events (#111)", () => {
     // Each test builds a syllabus/module/event hierarchy from scratch (several
     // sequential API round-trips) before touching the timeline — comfortably
@@ -248,5 +279,104 @@ test.describe("Gantt Recurring Events (#111)", () => {
         const eventRow = await getTimelineEventRow(page, eventTitle);
         await expect(eventRow).toBeVisible({ timeout: 10_000 });
         await expect(eventRow.locator("[data-gantt-recurrence]")).toHaveCount(0);
+    });
+
+    test("double-clicking a recurrence occurrence materializes it into a standalone event", async ({
+        page,
+    }) => {
+        const eventTitle = await createModuleWithEvents(page);
+        await setEventRecurrence(page, eventTitle, "שבועי");
+
+        await page.getByRole("tab", { name: "רצף זמן" }).click();
+        await page.waitForTimeout(500);
+
+        const eventRow = await getTimelineEventRow(page, eventTitle);
+        await mapEventToFirstWeek(page, eventRow);
+
+        const occurrence = eventRow.locator("[data-gantt-recurrence]").first();
+        await expect(occurrence).toBeVisible({ timeout: 10_000 });
+
+        const eventRowCountBefore = await page
+            .locator('[id^="gantt-row-event-"]')
+            .count();
+
+        await occurrence.dblclick();
+
+        // A new, independent event row appears in the module.
+        await expect(page.locator('[id^="gantt-row-event-"]')).toHaveCount(
+            eventRowCountBefore + 1,
+            { timeout: 10_000 },
+        );
+
+        // The source event no longer echoes onto the materialized day.
+        await expect(eventRow.locator("[data-gantt-recurrence]")).toHaveCount(0, {
+            timeout: 10_000,
+        });
+    });
+
+    test("dragging a recurrence occurrence to the first column deletes that occurrence", async ({
+        page,
+    }) => {
+        const eventTitle = await createModuleWithEvents(page);
+        await setEventRecurrence(page, eventTitle, "שבועי");
+
+        await page.getByRole("tab", { name: "רצף זמן" }).click();
+        await page.waitForTimeout(500);
+
+        const eventRow = await getTimelineEventRow(page, eventTitle);
+        await mapEventToFirstWeek(page, eventRow);
+
+        const occurrence = eventRow.locator("[data-gantt-recurrence]").first();
+        await expect(occurrence).toBeVisible({ timeout: 10_000 });
+
+        await dragBlockToRemoveColumn(page, occurrence, eventRow);
+
+        await expect(eventRow.locator("[data-gantt-recurrence]")).toHaveCount(0, {
+            timeout: 10_000,
+        });
+
+        // Survives reload — the deletion is persisted as an exception, not just
+        // an optimistic UI update.
+        await page.reload();
+        await waitForAppLoad(page);
+        await page.getByRole("tab", { name: "רצף זמן" }).click();
+        await page.waitForTimeout(500);
+        const eventRowAfterReload = await getTimelineEventRow(page, eventTitle);
+        await expect(
+            eventRowAfterReload.locator("[data-gantt-recurrence]"),
+        ).toHaveCount(0, { timeout: 10_000 });
+    });
+
+    test("the module block spans through surviving recurrence occurrences", async ({
+        page,
+    }) => {
+        // A third week so the recurrence echoes twice, giving the module block
+        // room to visibly outgrow the event's own single-week block.
+        await addWeeks(page, 1);
+
+        const eventTitle = await createModuleWithEvents(page);
+        await setEventRecurrence(page, eventTitle, "שבועי");
+
+        await page.getByRole("tab", { name: "רצף זמן" }).click();
+        await page.waitForTimeout(500);
+
+        const eventRow = await getTimelineEventRow(page, eventTitle);
+        await mapEventToFirstWeek(page, eventRow);
+
+        await expect(eventRow.locator("[data-gantt-recurrence]")).toHaveCount(2, {
+            timeout: 10_000,
+        });
+
+        const moduleBlockBox = await page
+            .locator('[id^="block-module-"]')
+            .boundingBox();
+        const eventBlockBox = await page
+            .locator('[id^="block-event-"]')
+            .first()
+            .boundingBox();
+
+        expect(moduleBlockBox).not.toBeNull();
+        expect(eventBlockBox).not.toBeNull();
+        expect(moduleBlockBox!.width).toBeGreaterThan(eventBlockBox!.width);
     });
 });
