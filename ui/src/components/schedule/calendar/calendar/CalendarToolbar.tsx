@@ -130,7 +130,7 @@ export function CalendarToolbar({
                     flexWrap="wrap"
                     gap={ 1.5 }
                 >
-                    <ButtonGroup size="small" variant="outlined">
+                    <ButtonGroup size="small" sx={ { "& .MuiButton-root": { height: 32 } } } variant="outlined">
                         <Button onClick={ () => onNavigate("PREV") }>
                             { CALENDAR_MESSAGES.previous }
                         </Button>
@@ -197,9 +197,11 @@ export function CalendarToolbar({
                 </Box>
 
                 <Box alignItems="center" display="flex" gap={ 1.5 }>
-                    <DraftsMenu />
-                    <SnapshotMenu />
-                    <ButtonGroup size="small" variant="outlined">
+                    <ButtonGroup size="small" sx={ { "& .MuiButton-root": { height: 32 } } } variant="outlined">
+                        <DraftsMenu />
+                        <SnapshotMenu />
+                    </ButtonGroup>
+                    <ButtonGroup size="small" sx={ { "& .MuiButton-root": { height: 32 } } } variant="outlined">
                         <Button
                             onClick={ () => onView("day") }
                             variant={ view === "day" ? "contained" : "outlined" }
@@ -222,7 +224,7 @@ export function CalendarToolbar({
                         </Button>
                     </ButtonGroup>
 
-                    <ButtonGroup size="small" variant="outlined">
+                    <ButtonGroup size="small" sx={ { "& .MuiButton-root": { height: 32 } } } variant="outlined">
                         <Tooltip
                             title={
                                 offlineMode ? "חזור למצב מקוון" : "עבור למצב לוקלי"
@@ -321,7 +323,7 @@ export function CalendarToolbar({
                         />
                     </Popover>
 
-                    <ButtonGroup size="small" variant="outlined">
+                    <ButtonGroup size="small" sx={ { "& .MuiButton-root": { height: 32 } } } variant="outlined">
                         <Tooltip title="הסתרת סרגל כלים">
                             <Button
                                 onClick={ onToggleToolbar }

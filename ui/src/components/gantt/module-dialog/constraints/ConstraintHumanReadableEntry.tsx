@@ -9,7 +9,10 @@ import {
 } from "@/api-shared/types/gantt/models/constraint";
 import { GanttDayIndex } from "@/api-shared/types/gantt/models/day";
 import { WeekDayVisualizer } from "@/components/gantt/module-dialog/constraints/TemporalDraftFields";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 
 function RelationalConstraintHumanReadableEntry({
     constraint,
@@ -17,6 +20,7 @@ function RelationalConstraintHumanReadableEntry({
     constraint: RelationalConstraint;
 }) {
     const state = useCurriculumState();
+    const { openModuleDialog, openEventDialog } = useCurriculumProviderActions();
 
     const target =
         constraint.targetType === "module"
@@ -31,6 +35,40 @@ function RelationalConstraintHumanReadableEntry({
         (constraint.ownerType === "event"
             ? state.events[constraint.ownerEventId]?.title
             : state.modules[constraint.ownerModuleId]?.title) ?? "*לא נמצא*";
+
+    const openOwner = () => {
+        if (constraint.ownerType === "event") {
+            const event = state.events[constraint.ownerEventId];
+            const ganttModule = event && state.modules[event.moduleId];
+            if (!ganttModule) return;
+            openEventDialog(
+                ganttModule.syllabusId,
+                event.moduleId,
+                constraint.ownerEventId,
+            );
+        } else {
+            const ganttModule = state.modules[constraint.ownerModuleId];
+            if (!ganttModule) return;
+            openModuleDialog(ganttModule.syllabusId, constraint.ownerModuleId);
+        }
+    };
+
+    const openTarget = () => {
+        if (constraint.targetType === "module") {
+            const ganttModule = state.modules[constraint.targetId];
+            if (!ganttModule) return;
+            openModuleDialog(ganttModule.syllabusId, constraint.targetId);
+        } else {
+            const event = state.events[constraint.targetId];
+            const ganttModule = event && state.modules[event.moduleId];
+            if (!ganttModule) return;
+            openEventDialog(
+                ganttModule.syllabusId,
+                event.moduleId,
+                constraint.targetId,
+            );
+        }
+    };
 
     const hasMin =
         constraint.minDelayDays !== undefined &&
@@ -63,7 +101,13 @@ function RelationalConstraintHumanReadableEntry({
                 {ownerTypeName}
             </Typography>
             <Box width="0.2rem" />
-            <Typography color="primary" fontStyle={"italic"} variant="body2">
+            <Typography
+                color="primary"
+                fontStyle={"italic"}
+                onClick={openOwner}
+                sx={{ cursor: "pointer", textDecoration: "underline" }}
+                variant="body2"
+            >
                 {ownerName}
             </Typography>
             <Box width="0.2rem" />
@@ -91,7 +135,13 @@ function RelationalConstraintHumanReadableEntry({
                 ש{targetTypeName}
             </Typography>
             <Box width="0.2rem" />
-            <Typography color="primary" fontStyle={"italic"} variant="body2">
+            <Typography
+                color="primary"
+                fontStyle={"italic"}
+                onClick={openTarget}
+                sx={{ cursor: "pointer", textDecoration: "underline" }}
+                variant="body2"
+            >
                 {target?.title ?? "*לא נמצא*"}
             </Typography>
             <Box width="0.2rem" />
