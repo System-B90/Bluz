@@ -25,6 +25,9 @@ test.describe("Gantt Page", () => {
             // Create actions are hidden behind a hover-reveal trigger.
             const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
             await createTrigger.click();
+            // Let the Collapse finish expanding before clicking a target
+            // whose position is still shifting mid-animation.
+            await page.waitForTimeout(400);
 
             const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
             await draftButton.click();
@@ -114,6 +117,9 @@ test.describe("Gantt Page", () => {
         // Create actions are hidden behind a hover-reveal trigger.
         const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
         await createTrigger.click();
+        // Let the Collapse finish expanding before clicking a target whose
+        // position is still shifting mid-animation.
+        await page.waitForTimeout(400);
 
         // Click "דראפט חדש" button
         const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');

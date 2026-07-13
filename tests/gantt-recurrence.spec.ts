@@ -32,6 +32,10 @@ async function createAndSelectCurriculum(page: Page): Promise<void> {
 
     const draftButton = page.getByRole("button", { name: "דראפט חדש" });
     await expect(draftButton).toBeVisible({ timeout: 10_000 });
+    // The Collapse is still animating open here — clicking mid-transition
+    // lands on whatever the shifting layout currently covers the target
+    // with, not the button itself. Let it settle before interacting.
+    await page.waitForTimeout(400);
     await draftButton.click();
 
     await expect(page).toHaveURL(/cid=/, { timeout: 10_000 });
