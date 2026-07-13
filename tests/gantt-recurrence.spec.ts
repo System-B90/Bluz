@@ -17,10 +17,17 @@ async function createAndSelectCurriculum(page: Page): Promise<void> {
     const fab = page.getByRole("button", { name: "גאנטים" });
     await fab.click();
 
+    // The create trigger stays disabled until the panel's async curriculum
+    // fetch resolves (skeleton loaders visible until then) — wait it out,
+    // otherwise the click below retries against a disabled button for the
+    // full test timeout instead of failing fast.
+    await page.locator(".MuiSkeleton-root").first().waitFor({ state: "hidden", timeout: 10_000 }).catch(() => {});
+
     // The concrete create actions (draft/duplicate/template) are hidden behind
     // a hover-reveal trigger — click it to expand the Collapse before the
     // "New Draft" button becomes visible.
     const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
+    await expect(createTrigger).toBeEnabled({ timeout: 10_000 });
     await createTrigger.click();
 
     const draftButton = page.getByRole("button", { name: "דראפט חדש" });
