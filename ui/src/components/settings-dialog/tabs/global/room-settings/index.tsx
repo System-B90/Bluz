@@ -79,7 +79,7 @@ export function RoomSettings()
         const room = rooms.find((r) => r.id === roomId);
         if (room && (!selectedRoom || selectedRoom.id !== roomId))
         {
-            populateFormState(room);
+            queueMicrotask(() => populateFormState(room));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedRoom intentionally excluded to avoid set→rerun loop
     }, [ rooms, searchParams ]);

@@ -139,11 +139,11 @@ function GanttPageInner()
         if (!currentCurriculum) return;
 
         let isMounted = true;
-        setIsLoading(true);
-        setError(null);
 
         const fetchCurriculum = async () =>
         {
+            setIsLoading(true);
+            setError(null);
             try
             {
                 const data =
@@ -163,7 +163,7 @@ function GanttPageInner()
             }
         };
 
-        void fetchCurriculum();
+        queueMicrotask(() => void fetchCurriculum());
 
         return () =>
         {

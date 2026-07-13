@@ -79,7 +79,7 @@ export function ReservationDialog({
 
     useEffect(() => {
         if (open) {
-            void fetchReservations();
+            queueMicrotask(() => void fetchReservations());
         }
     }, [open, fetchReservations]);
 
