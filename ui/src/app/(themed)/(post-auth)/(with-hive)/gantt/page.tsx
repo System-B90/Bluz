@@ -127,13 +127,16 @@ function GanttPageInner()
         router.replace(nextSearch ? `${pathname}?${nextSearch}` : pathname);
     }, [ currentCurriculum, pathname, router, searchParams ]);
 
+    const [ prevCurriculum, setPrevCurriculum ] = useState(currentCurriculum);
+    if (currentCurriculum !== prevCurriculum)
+    {
+        setPrevCurriculum(currentCurriculum);
+        if (!currentCurriculum) setInitialData(null);
+    }
+
     useEffect(() =>
     {
-        if (!currentCurriculum)
-        {
-            setInitialData(null);
-            return;
-        }
+        if (!currentCurriculum) return;
 
         let isMounted = true;
         setIsLoading(true);

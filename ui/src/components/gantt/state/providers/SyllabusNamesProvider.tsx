@@ -60,7 +60,7 @@ export function SyllabusNamesProvider({
 
     useEffect(() => {
         // Error handling is in fetchSyllabuses
-        void fetchSyllabuses();
+        queueMicrotask(() => void fetchSyllabuses());
     }, [fetchSyllabuses]);
 
     const value = useMemo<SyllabusProviderState>(

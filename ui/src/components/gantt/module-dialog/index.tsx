@@ -14,7 +14,6 @@ import {
     Dispatch,
     SetStateAction,
     useCallback,
-    useEffect,
     useMemo,
     useState,
     useTransition,
@@ -275,9 +274,11 @@ function ModuleDialogInner({
     const [isContentReady, setIsContentReady] = useState(false);
     const [, startTransition] = useTransition();
 
-    useEffect(() => {
+    const [prevOpen, setPrevOpen] = useState(open);
+    if (open !== prevOpen) {
+        setPrevOpen(open);
         if (!open) setIsContentReady(false);
-    }, [open]);
+    }
 
     const [isActionLoading, setIsActionLoading] = useState<boolean>(false);
     const [isCreatingNew, setIsCreatingNew] = useState<boolean>(false);
@@ -315,11 +316,12 @@ function ModuleDialogInner({
     // The dialog is no longer remounted per-module (to avoid a close→reopen
     // flicker when navigating siblings), so reset the local form fields from
     // the newly selected module whenever the active module changes.
-    useEffect(() => {
+    const [prevModuleId, setPrevModuleId] = useState(moduleId);
+    if (moduleId !== prevModuleId) {
+        setPrevModuleId(moduleId);
         setLocalTitle(moduleDoc?.title ?? "");
         setLocalDescription(moduleDoc?.description ?? "");
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset when the selected module changes, not on every keystroke
-    }, [moduleId]);
+    }
 
     const handleClose = useCallback(() => {
         setOpen(false);

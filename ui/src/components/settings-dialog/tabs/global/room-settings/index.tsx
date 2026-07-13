@@ -55,6 +55,23 @@ export function RoomSettings()
         router.replace(`?${params.toString()}`, { scroll: false });
     }, [ router, searchParams ]);
 
+    const populateFormState = useCallback((room: Room) =>
+    {
+        setSelectedRoom(room);
+        setIsCreating(false);
+        setName(room.name);
+        setDescription(room.description || "");
+        const ext = room.extendedInfo || DEFAULT_EXTENDED_INFO;
+        setWorkstationCount(
+            ext.workstationCount !== null ? String(ext.workstationCount) : "",
+        );
+        setLectureSeatCount(
+            ext.lectureSeatCount !== null ? String(ext.lectureSeatCount) : "",
+        );
+        setLectureComfortable(ext.lectureComfortable);
+        setPeAyin(ext.peAyin ?? false);
+    }, []);
+
     useEffect(() =>
     {
         const roomId = searchParams.get("editRoom");
@@ -77,23 +94,6 @@ export function RoomSettings()
                 (r.description && r.description.toLowerCase().includes(query)),
         );
     }, [ rooms, searchQuery ]);
-
-    const populateFormState = useCallback((room: Room) =>
-    {
-        setSelectedRoom(room);
-        setIsCreating(false);
-        setName(room.name);
-        setDescription(room.description || "");
-        const ext = room.extendedInfo || DEFAULT_EXTENDED_INFO;
-        setWorkstationCount(
-            ext.workstationCount !== null ? String(ext.workstationCount) : "",
-        );
-        setLectureSeatCount(
-            ext.lectureSeatCount !== null ? String(ext.lectureSeatCount) : "",
-        );
-        setLectureComfortable(ext.lectureComfortable);
-        setPeAyin(ext.peAyin ?? false);
-    }, []);
 
     const populateFormFromRoom = useCallback((room: Room) =>
     {

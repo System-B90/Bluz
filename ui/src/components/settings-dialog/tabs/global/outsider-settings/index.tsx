@@ -71,7 +71,7 @@ export function OutsiderSettings()
             (!selectedOutsider || selectedOutsider.id !== outsiderId)
         )
         {
-            populateFormState(outsider);
+            queueMicrotask(() => populateFormState(outsider));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedOutsider intentionally excluded to avoid set→rerun loop
     }, [ outsiders, searchParams ]);
