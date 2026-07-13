@@ -3,9 +3,16 @@ export const dynamic = "force-dynamic";
 import { NextRequest } from "next/server";
 
 import { ApiErrorMaker, ApiSuccess, catchHandler } from "@/api-server/common";
-import { cutCurriculumToSchedule } from "@/api-server/gantt/cut";
+import {
+    cutCurriculumToSchedule,
+    getCutStatus,
+    pullBackCutSchedule,
+} from "@/api-server/gantt/cut";
 import { ClientApiError } from "@/api-shared/errors";
-import { CurriculumCutErrorCode } from "@/api-shared/types/gantt/cut";
+import {
+    CurriculumCutErrorCode,
+    CurriculumPullBackErrorCode,
+} from "@/api-shared/types/gantt/cut";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 
 type RouteContext = {
@@ -19,6 +26,12 @@ const STATUS_BY_CODE: Record<CurriculumCutErrorCode, number> = {
     "no-iteration": 409,
     "already-cut": 409,
     "invalid-plan": 400,
+};
+
+// Pull-back conflicts (no linked iteration / nothing cut) are 409.
+const PULL_BACK_STATUS_BY_CODE: Record<CurriculumPullBackErrorCode, number> = {
+    "no-iteration": 409,
+    "not-cut": 409,
 };
 
 /**
@@ -35,6 +48,44 @@ export async function POST(request: NextRequest, context: RouteContext) {
             return ApiErrorMaker(
                 outcome.error,
                 STATUS_BY_CODE[outcome.error.code] ?? 400,
+            );
+        }
+
+        return ApiSuccess(outcome.result);
+    } catch (error) {
+        return catchHandler(request, error);
+    }
+}
+
+/**
+ * GET: cut status for a curriculum — whether its linked iteration currently
+ * holds live cut events, driving the UI toggle between "cut" and "pull back".
+ */
+export async function GET(request: NextRequest, context: RouteContext) {
+    try {
+        const { id } = await context.params;
+        if (!id) throw new ClientApiError("Curriculum ID is missing.");
+
+        return ApiSuccess(await getCutStatus(id as GanttCurriculumId));
+    } catch (error) {
+        return catchHandler(request, error);
+    }
+}
+
+/**
+ * DELETE: pull back a previous cut — soft-delete every live schedule event that
+ * was generated for this curriculum in the linked iteration.
+ */
+export async function DELETE(request: NextRequest, context: RouteContext) {
+    try {
+        const { id } = await context.params;
+        if (!id) throw new ClientApiError("Curriculum ID is missing.");
+
+        const outcome = await pullBackCutSchedule(id as GanttCurriculumId);
+        if (!outcome.ok) {
+            return ApiErrorMaker(
+                outcome.error,
+                PULL_BACK_STATUS_BY_CODE[outcome.error.code] ?? 400,
             );
         }
 

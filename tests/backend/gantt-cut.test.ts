@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const fakeEvents = {
     countDocuments: vi.fn(async () => 0),
     insertMany: vi.fn(async () => ({ insertedCount: 0 })),
+    find: vi.fn(() => ({ toArray: async () => [] as Array<any> })),
+    updateMany: vi.fn(async () => ({ matchedCount: 0, modifiedCount: 0 })),
 };
 const fakeController = { dbName: "bluz_cut", events: fakeEvents };
 
@@ -45,8 +47,10 @@ import {
     buildScheduleEvent,
     countOverlappingOccurrences,
     cutCurriculumToSchedule,
+    getCutStatus,
     indexCurriculumEvents,
     moduleEventTypeToCalendarType,
+    pullBackCutSchedule,
 } from "@/api-server/gantt/cut";
 import { PlannedOccurrence } from "@/api-shared/gantt/cut-planner";
 import { EventType } from "@/api-shared/types/event";
@@ -90,12 +94,13 @@ function makeCurriculum(
     events: Array<ApiModuleEvent>,
     overrides: Partial<ApiCurriculum> = {},
 ): ApiCurriculum {
-    const week = (id: string, number: number) => ({
+    const week = (id: string, number: number, weekendDuty?: boolean) => ({
         curriculumId: "c1",
         weekId: id,
         week: {
             id,
             number,
+            weekendDuty,
             w2d: Array.from({ length: 7 }, (_, d) => ({
                 weekId: id,
                 dayId: `${id}d${d}`,
@@ -150,6 +155,8 @@ const occ = (over: Partial<PlannedOccurrence>): PlannedOccurrence => ({
 beforeEach(() => {
     vi.clearAllMocks();
     fakeEvents.countDocuments.mockResolvedValue(0);
+    fakeEvents.find.mockReturnValue({ toArray: async () => [] as Array<any> });
+    fakeEvents.updateMany.mockResolvedValue({ matchedCount: 0, modifiedCount: 0 });
     vi.mocked(DbSettings.get).mockResolvedValue({ dayStartTime: "08:00" } as any);
     vi.mocked(DbCourses.get).mockResolvedValue([] as any);
 });
@@ -197,6 +204,24 @@ describe("buildCutPlanInput", () => {
         expect(input.recurrenceExceptions).toEqual([{ eventId: "e1", dayId: "w1d1" }]);
         expect(input.dayStartTime).toBe("09:30");
         expect(input.startDate).toBe("2024-01-07");
+    });
+
+    it("threads weekendDuty and weekendHomeStartTime through per week, defaulting missing weekendDuty to true", () => {
+        const curriculum = makeCurriculum([makeEvent({ id: "e1" })]);
+        (curriculum.c2w[0].week as any).weekendDuty = false; // "w1" (sorted second)
+        // "w0" (sorted first) intentionally left unset → defaults to true.
+
+        const input = buildCutPlanInput({
+            curriculum,
+            mappings: [],
+            exceptions: [],
+            dayStartTime: "08:00",
+            weekendHomeStartTime: "10:00",
+        });
+
+        expect(input.weekendHomeStartTime).toBe("10:00");
+        expect(input.weeks.find((w) => w.id === "w0")?.weekendDuty).toBe(true);
+        expect(input.weeks.find((w) => w.id === "w1")?.weekendDuty).toBe(false);
     });
 });
 
@@ -366,5 +391,56 @@ describe("cutCurriculumToSchedule", () => {
         expect(DbCourses.create).not.toHaveBeenCalled();
         const inserted = fakeEvents.insertMany.mock.calls[0][0] as Array<any>;
         expect(inserted[0].courses).toEqual(["course-a", "course-b"]);
+    });
+});
+
+describe("getCutStatus", () => {
+    it("reports not-cut when no iteration is linked", async () => {
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(null);
+        expect(await getCutStatus("c1")).toEqual({ cut: false, count: 0 });
+    });
+
+    it("reports cut with the live event count", async () => {
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        fakeEvents.countDocuments.mockResolvedValue(5);
+        expect(await getCutStatus("c1")).toEqual({ cut: true, count: 5 });
+    });
+});
+
+describe("pullBackCutSchedule", () => {
+    it("rejects when no iteration is linked", async () => {
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(null);
+        const outcome = await pullBackCutSchedule("c1");
+        expect(outcome.ok).toBe(false);
+        if (outcome.ok) return;
+        expect(outcome.error.code).toBe("no-iteration");
+        expect(fakeEvents.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("rejects when there are no live cut events", async () => {
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        fakeEvents.find.mockReturnValue({ toArray: async () => [] });
+        const outcome = await pullBackCutSchedule("c1");
+        expect(outcome.ok).toBe(false);
+        if (outcome.ok) return;
+        expect(outcome.error.code).toBe("not-cut");
+        expect(fakeEvents.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("archives live cut events and broadcasts one removal each", async () => {
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        fakeEvents.find.mockReturnValue({
+            toArray: async () => [{ id: "ev1" }, { id: "ev2" }],
+        });
+
+        const outcome = await pullBackCutSchedule("c1");
+        expect(outcome.ok).toBe(true);
+        if (!outcome.ok) return;
+        expect(outcome.result.removedEvents).toBe(2);
+        expect(fakeEvents.updateMany).toHaveBeenCalledTimes(1);
+        const [filter, update] = fakeEvents.updateMany.mock.calls[0] as Array<any>;
+        expect(filter).toMatchObject({ archived: { $ne: true } });
+        expect(update).toEqual({ $set: { archived: true } });
+        expect(broadcast).toHaveBeenCalledTimes(2);
     });
 });

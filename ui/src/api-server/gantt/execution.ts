@@ -23,6 +23,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import {
     DEFAULT_DAY_START_TIME,
+    DEFAULT_WEEKEND_HOME_START_TIME,
     SCHEDULE_SETTINGS_KEY,
     ScheduleSettings,
 } from "@/api-shared/types/settings/schedule";
@@ -63,12 +64,16 @@ export async function getCurriculumExecution(
     const dayStartTime =
         (scheduleSetting as null | ScheduleSettings)?.dayStartTime ??
         DEFAULT_DAY_START_TIME;
+    const weekendHomeStartTime =
+        (scheduleSetting as null | ScheduleSettings)?.weekendHomeStartTime ??
+        DEFAULT_WEEKEND_HOME_START_TIME;
 
     const planInput = buildCutPlanInput({
         curriculum,
         mappings: mappings as Array<CutMappingRow>,
         exceptions: exceptions as Array<CutExceptionRow>,
         dayStartTime,
+        weekendHomeStartTime,
     });
     const plan = planCut(planInput);
     const plannedOccurrences = plan.ok ? plan.occurrences : [];

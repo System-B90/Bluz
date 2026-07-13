@@ -12,7 +12,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { CutValidationError } from "@/api-shared/gantt/cut-planner";
@@ -27,7 +27,20 @@ export type CutToScheduleDialogProps = {
     curriculumId: GanttCurriculumId;
     curriculumTitle?: string;
     onClose: () => void;
+    /** Fired after a successful cut so the caller can flip its cut state. */
+    onSuccess?: () => void;
 };
+
+// Mirrors the real steps `cutCurriculumToSchedule` performs server-side
+// (@/api-server/gantt/cut → planCut), cycled client-side since the endpoint
+// is a single request with no progress feed of its own.
+const LOADING_STEPS = [
+    "טוען את נתוני הגאנט…",
+    "בודק שיבוצים ליום…",
+    "פותר אירועים מחזוריים…",
+    "ממפה לימי לוח השנה…",
+    "יוצר אירועים במערכת השעות…",
+] as const;
 
 type DialogPhase =
     | { kind: "confirm" }
@@ -124,8 +137,31 @@ export function CutToScheduleDialog({
     curriculumId,
     curriculumTitle,
     onClose,
+    onSuccess,
 }: CutToScheduleDialogProps) {
     const [phase, setPhase] = useState<DialogPhase>({ kind: "confirm" });
+    const [loadingStep, setLoadingStep] = useState(0);
+    const loadingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    useEffect(() => {
+        if (phase.kind === "loading") {
+            setLoadingStep(0);
+            loadingIntervalRef.current = setInterval(() => {
+                setLoadingStep((step) =>
+                    Math.min(step + 1, LOADING_STEPS.length - 1),
+                );
+            }, 900);
+        } else if (loadingIntervalRef.current) {
+            clearInterval(loadingIntervalRef.current);
+            loadingIntervalRef.current = null;
+        }
+        return () => {
+            if (loadingIntervalRef.current) {
+                clearInterval(loadingIntervalRef.current);
+                loadingIntervalRef.current = null;
+            }
+        };
+    }, [phase.kind]);
 
     const handleClose = useCallback(() => {
         if (phase.kind === "loading") return;
@@ -138,6 +174,7 @@ export function CutToScheduleDialog({
         try {
             const result = await ganttApi.cut.cut(curriculumId);
             setPhase({ kind: "success", result });
+            onSuccess?.();
         } catch (error) {
             if (error instanceof CurriculumCutError) {
                 setPhase({ kind: "cut-error", error });
@@ -148,7 +185,7 @@ export function CutToScheduleDialog({
                 });
             }
         }
-    }, [curriculumId]);
+    }, [curriculumId, onSuccess]);
 
     const isTerminal =
         phase.kind === "success" ||
@@ -173,7 +210,7 @@ export function CutToScheduleDialog({
                     <Stack alignItems="center" gap={1} sx={{ py: 2 }}>
                         <CircularProgress />
                         <Typography variant="body2">
-                            גוזר את הגאנט ללו&quot;ז…
+                            {LOADING_STEPS[loadingStep]}
                         </Typography>
                     </Stack>
                 )}

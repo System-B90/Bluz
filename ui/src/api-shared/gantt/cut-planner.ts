@@ -21,6 +21,8 @@ export type CutPlanWeekInput = {
     id: string;
     /** Day ids in this week, in display order. */
     dayIds: Array<string>;
+    /** Whether the trainee was on weekend duty. Defaults to `true` (on duty). */
+    weekendDuty?: boolean;
 };
 
 export type CutPlanEventInput = {
@@ -55,6 +57,11 @@ export type CutPlanInput = {
     recurrenceExceptions: Array<CutPlanRecurrenceExceptionInput>;
     /** Day-start time for stacking, `"HH:mm"`. */
     dayStartTime: string;
+    /**
+     * Sunday start time (`"HH:mm"`) when the trainee was home (not on
+     * weekend duty). Falls back to `dayStartTime` when omitted.
+     */
+    weekendHomeStartTime?: string;
 };
 
 export type PlannedOccurrence = {
@@ -148,7 +155,30 @@ export function planCut(input: CutPlanInput): CutPlan {
             .add(weekIdx * 7 + dow, "day");
     };
 
-    const [ startHour, startMinute ] = input.dayStartTime.split(":").map(Number);
+    const parseTime = (time: string): [number, number] => {
+        const [ hour, minute ] = time.split(":").map(Number);
+        return [ hour ?? 0, minute ?? 0 ];
+    };
+    const defaultStart = parseTime(input.dayStartTime);
+    const weekendHomeStart = parseTime(
+        input.weekendHomeStartTime ?? input.dayStartTime,
+    );
+
+    const weekByDayId = new Map<string, CutPlanWeekInput>();
+    for (const week of input.weeks) {
+        for (const dayId of week.dayIds) {
+            weekByDayId.set(dayId, week);
+        }
+    }
+
+    // Sunday after a weekend spent at home (weekendDuty === false) starts
+    // later, using `weekendHomeStartTime` instead of the regular day start.
+    const startTimeForDay = (dayId: string): [number, number] => {
+        const isHomeWeekendSunday =
+            dayIndexOf(dayId) === GanttDayIndex.Sunday &&
+            weekByDayId.get(dayId)?.weekendDuty === false;
+        return isHomeWeekendSunday ? weekendHomeStart : defaultStart;
+    };
 
     type Slot = { eventId: string; isRecurrenceEcho: boolean };
     const slotsByDay = new Map<string, Array<Slot>>();
@@ -199,7 +229,8 @@ export function planCut(input: CutPlanInput): CutPlan {
 
     for (const [ dayId, slots ] of slotsByDay) {
         const date = dayDate(dayId);
-        let cursor = date.hour(startHour ?? 0).minute(startMinute ?? 0).second(0).millisecond(0);
+        const [ startHour, startMinute ] = startTimeForDay(dayId);
+        let cursor = date.hour(startHour).minute(startMinute).second(0).millisecond(0);
 
         for (const slot of slots) {
             const event = eventsById.get(slot.eventId);
