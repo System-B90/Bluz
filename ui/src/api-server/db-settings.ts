@@ -8,6 +8,7 @@ import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils"
 import { PRAYER_TIMES_SETTING_KEY } from "@/api-shared/types/settings/prayer";
 import {
     DEFAULT_DAY_START_TIME,
+    DEFAULT_WEEKEND_HOME_START_TIME,
     SCHEDULE_SETTINGS_KEY,
 } from "@/api-shared/types/settings/schedule";
 import { Setting, SettingName } from "@/api-shared/types/settings/settings";
@@ -65,7 +66,10 @@ async function initDbSettings() {
     if (scheduleSetting === null) {
         await setDbSetting(
             SCHEDULE_SETTINGS_KEY,
-            { dayStartTime: DEFAULT_DAY_START_TIME } as Setting,
+            {
+                dayStartTime: DEFAULT_DAY_START_TIME,
+                weekendHomeStartTime: DEFAULT_WEEKEND_HOME_START_TIME,
+            } as Setting,
             { upsert: true },
         );
     }

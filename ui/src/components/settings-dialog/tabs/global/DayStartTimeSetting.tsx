@@ -1,4 +1,6 @@
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import WbTwilightIcon from "@mui/icons-material/WbTwilight";
+import WeekendIcon from "@mui/icons-material/Weekend";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
@@ -8,9 +10,14 @@ import { useCallback } from "react";
 import { useSettings } from "@/components/base/SettingsProvider";
 
 export function DayStartTimeSetting() {
-    const { dayStartTime, updateDayStartTime } = useSettings();
+    const {
+        dayStartTime,
+        updateDayStartTime,
+        weekendHomeStartTime,
+        updateWeekendHomeStartTime,
+    } = useSettings();
 
-    const handleChange = useCallback(
+    const handleDayStartChange = useCallback(
         (newValue: Dayjs | null) => {
             if (newValue && newValue.isValid()) {
                 updateDayStartTime(newValue.format("HH:mm"));
@@ -18,6 +25,34 @@ export function DayStartTimeSetting() {
         },
         [updateDayStartTime],
     );
+
+    const handleWeekendHomeStartChange = useCallback(
+        (newValue: Dayjs | null) => {
+            if (newValue && newValue.isValid()) {
+                updateWeekendHomeStartTime(newValue.format("HH:mm"));
+            }
+        },
+        [updateWeekendHomeStartTime],
+    );
+
+    const rows = [
+        {
+            key: "dayStart",
+            label: "שעת תחילת יום",
+            value: dayStartTime,
+            onChange: handleDayStartChange,
+            icon: <WbTwilightIcon className="text-[#FF9F43]" />,
+            bgColor: "rgba(255, 159, 67, 0.12)",
+        },
+        {
+            key: "weekendHomeStart",
+            label: 'שעת תחילת לו"ז אחרי סופ"ש',
+            value: weekendHomeStartTime,
+            onChange: handleWeekendHomeStartChange,
+            icon: <WeekendIcon className="text-[#26A69A]" />,
+            bgColor: "rgba(38, 166, 154, 0.12)",
+        },
+    ];
 
     return (
         <Box
@@ -47,7 +82,7 @@ export function DayStartTimeSetting() {
                         alignItems: "center",
                     }}
                 >
-                    <WbTwilightIcon className="text-[20px]" />
+                    <AccessTimeIcon className="text-[20px]" />
                 </Box>
                 <Box>
                     <Typography
@@ -65,28 +100,68 @@ export function DayStartTimeSetting() {
                             color: "text.secondary",
                         }}
                     >
-                        שעת ההתחלה שממנה נערמים אירועים בגזירת לו&quot;ז מסילבוס
+                        שעת ההתחלה שממנה נערכים אירועים בגזירת לו&quot;ז מסילבוס
                     </Typography>
                 </Box>
             </Box>
 
-            <TimePicker
-                label="שעת תחילת יום"
-                onChange={handleChange}
-                slotProps={{
-                    textField: {
-                        size: "small",
-                        fullWidth: true,
-                        sx: {
-                            "& .MuiOutlinedInput-root": {
-                                borderRadius: "8px",
-                                bgcolor: "transparent",
+            <Box display="flex" flexDirection="column" gap={2.5}>
+                {rows.map((row) => (
+                    <Box
+                        key={row.key}
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 2,
+                            p: 1.5,
+                            borderRadius: "12px",
+                            border: "1px solid",
+                            borderColor: "action.hover",
+                            bgcolor: "rgba(255,255,255,0.01)",
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                                borderColor: "primary.main",
+                                bgcolor: "action.hover",
                             },
-                        },
-                    },
-                }}
-                value={dayjs(dayStartTime, "HH:mm")}
-            />
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                width: 42,
+                                height: 42,
+                                borderRadius: "50%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                bgcolor: row.bgColor,
+                                flexShrink: 0,
+                            }}
+                        >
+                            {row.icon}
+                        </Box>
+
+                        <Box className="grow min-w-0">
+                            <TimePicker
+                                label={row.label}
+                                onChange={row.onChange}
+                                slotProps={{
+                                    textField: {
+                                        size: "small",
+                                        fullWidth: true,
+                                        sx: {
+                                            "& .MuiOutlinedInput-root": {
+                                                borderRadius: "8px",
+                                                bgcolor: "transparent",
+                                            },
+                                        },
+                                    },
+                                }}
+                                value={dayjs(row.value, "HH:mm")}
+                            />
+                        </Box>
+                    </Box>
+                ))}
+            </Box>
         </Box>
     );
 }

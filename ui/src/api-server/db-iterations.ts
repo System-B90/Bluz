@@ -150,11 +150,16 @@ async function patchIteration(
     }
 
     const update: Record<string, unknown> = { updatedAt: new Date() };
+    const unset: Partial<Record<keyof Iteration, "">> = {};
     if (patch.label !== undefined) update.label = patch.label;
     if (patch.hiveUrl !== undefined) update.hiveUrl = patch.hiveUrl;
     if (patch.endDate !== undefined) update.endDate = patch.endDate;
     if (patch.ganttCurriculumId !== undefined) {
-        update.ganttCurriculumId = patch.ganttCurriculumId;
+        if (patch.ganttCurriculumId === null) {
+            unset.ganttCurriculumId = "";
+        } else {
+            update.ganttCurriculumId = patch.ganttCurriculumId;
+        }
     }
 
     if (patch.isCurrent === true) {
@@ -169,7 +174,9 @@ async function patchIteration(
                 );
                 await meta.iterations.updateOne(
                     { id },
-                    { $set: update },
+                    Object.keys(unset).length > 0
+                        ? { $set: update, $unset: unset }
+                        : { $set: update },
                     { session },
                 );
             });
@@ -179,7 +186,12 @@ async function patchIteration(
         // Update in-process cache only after the transaction commits.
         setCurrentIterationDbName(existing.dbName);
     } else {
-        await meta.iterations.updateOne({ id }, { $set: update });
+        await meta.iterations.updateOne(
+            { id },
+            Object.keys(unset).length > 0
+                ? { $set: update, $unset: unset }
+                : { $set: update },
+        );
     }
 
     const updated = await meta.iterations.findOne({ id });

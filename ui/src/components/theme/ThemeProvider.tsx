@@ -100,7 +100,7 @@ function InnerThemeProvider({ children }: { children: ReactNode; })
 
     return (
         <ThemeContext.Provider value={ contextValue }>
-            <MUIThemeProvider theme={ muiTheme }>{ children }</MUIThemeProvider>
+            <MUIThemeProvider modeStorageKey="theme" theme={ muiTheme }>{ children }</MUIThemeProvider>
         </ThemeContext.Provider>
     );
 }
