@@ -22,12 +22,12 @@ test.describe("Gantt Page", () => {
         const listItems = page.locator("[role='presentation'] ul li").filter({ has: page.getByRole("button") });
         const count = await listItems.count();
         if (count === 0) {
-            // Create actions are hidden behind a hover-reveal trigger.
+            // Create actions are hidden behind a hover-reveal trigger. Hover
+            // (not click) — the trigger's onClick toggles `expanded` off the
+            // previous value, so a real click's `mouseenter` opens it via
+            // hover just before the click handler closes it again.
             const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
-            await createTrigger.click();
-            // Let the Collapse finish expanding before clicking a target
-            // whose position is still shifting mid-animation.
-            await page.waitForTimeout(400);
+            await createTrigger.hover();
 
             const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
             await draftButton.click();
@@ -114,12 +114,10 @@ test.describe("Gantt Page", () => {
         const fab = page.getByRole("button", { name: "גאנטים" });
         await fab.click();
 
-        // Create actions are hidden behind a hover-reveal trigger.
+        // Create actions are hidden behind a hover-reveal trigger. Hover
+        // (not click) — see note in beforeEach above.
         const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
-        await createTrigger.click();
-        // Let the Collapse finish expanding before clicking a target whose
-        // position is still shifting mid-animation.
-        await page.waitForTimeout(400);
+        await createTrigger.hover();
 
         // Click "דראפט חדש" button
         const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
@@ -269,9 +267,10 @@ test.describe("Gantt Page", () => {
         await fab.click();
         await page.waitForTimeout(500);
 
-        // Create actions are hidden behind a hover-reveal trigger.
+        // Create actions are hidden behind a hover-reveal trigger. Hover
+        // (not click) — see note in beforeEach above.
         const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
-        await createTrigger.click();
+        await createTrigger.hover();
 
         const draftButton = page.locator('span[title="דראפט חדש"] button, span[aria-label="דראפט חדש"] button');
         await expect(draftButton).toBeVisible();

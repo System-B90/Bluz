@@ -24,18 +24,17 @@ async function createAndSelectCurriculum(page: Page): Promise<void> {
     await page.locator(".MuiSkeleton-root").first().waitFor({ state: "hidden", timeout: 10_000 }).catch(() => {});
 
     // The concrete create actions (draft/duplicate/template) are hidden behind
-    // a hover-reveal trigger — click it to expand the Collapse before the
-    // "New Draft" button becomes visible.
+    // a hover-reveal trigger. Hover (not click!) reveals it: the trigger's
+    // onClick toggles `expanded` off the *previous* value, and a real mouse
+    // interaction fires `mouseenter` (opening it via hover) before the click
+    // handler runs (immediately closing what hover just opened). Hovering
+    // matches the component's own desktop-mouse design intent.
     const createTrigger = page.getByRole("button", { name: "גאנט חדש" });
     await expect(createTrigger).toBeEnabled({ timeout: 10_000 });
-    await createTrigger.click();
+    await createTrigger.hover();
 
     const draftButton = page.getByRole("button", { name: "דראפט חדש" });
     await expect(draftButton).toBeVisible({ timeout: 10_000 });
-    // The Collapse is still animating open here — clicking mid-transition
-    // lands on whatever the shifting layout currently covers the target
-    // with, not the button itself. Let it settle before interacting.
-    await page.waitForTimeout(400);
     await draftButton.click();
 
     await expect(page).toHaveURL(/cid=/, { timeout: 10_000 });
