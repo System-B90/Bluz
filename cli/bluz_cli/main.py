@@ -11,6 +11,18 @@ from __future__ import annotations
 
 import sys
 
+# Windows defaults stdout/stderr to the legacy console codepage (cp1252), which
+# cannot encode Hebrew text or Rich's Unicode glyphs (checkmarks, etc.) whenever
+# output isn't a real attached console — piped, redirected, or run from a script
+# or agent. Force UTF-8 here, before any Rich Console is constructed (commands
+# import bluz_cli.output below, which instantiates Console at module load).
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 import typer
 
 from bluz_cli import __version__
