@@ -22,7 +22,7 @@ export function ganttMappingReducer(
         return { ...state, mappings: newMappings, isLoading: false };
     }
 
-    case "UPSERT_MAPPING":
+    case "UPSERT_MAPPING": {
         return {
             ...state,
             mappings: {
@@ -30,6 +30,7 @@ export function ganttMappingReducer(
                 [getGanttMappingKey(action.payload)]: action.payload,
             },
         };
+    }
 
     case "DELETE_MAPPING": {
         const updated = { ...state.mappings };
@@ -37,8 +38,9 @@ export function ganttMappingReducer(
         return { ...state, mappings: updated };
     }
 
-    case "SET_LOADING":
+    case "SET_LOADING": {
         return { ...state, isLoading: action.payload };
+    }
 
     default:
         return state;

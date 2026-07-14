@@ -9,7 +9,7 @@ import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
@@ -271,26 +271,15 @@ function DayHeaderCell({
     const firstDay = firstDayId ? state.days[firstDayId] : undefined;
     const currentMinutes = firstDay ? firstDay.totalWorkingMinutes : null;
 
-    // Load default hours from localStorage, fallback to 8 hours (480 minutes)
+    // Default fallbacks: Saturday is typically 0 (closed), others 8 hours (480 mins)
+    const fallbackMinutes = dayIndex === GanttDayIndex.Saturday ? 0 : 480;
     const localStorageKey = `bluz_gantt_default_hours_${dayIndex}`;
-    const initialMinutes = useMemo(() => {
-        if (currentMinutes !== null) return currentMinutes;
-        const stored = typeof window !== "undefined" ? localStorage.getItem(localStorageKey) : null;
-        if (stored !== null) {
-            const parsed = parseFloat(stored);
-            if (!isNaN(parsed) && parsed >= 0) {
-                // Handle legacy format (hours) vs minutes in localStorage
-                return parsed <= 24
-                    ? Math.round(parsed * 60)
-                    : Math.round(parsed);
-            }
-        }
-        // Default fallbacks: Saturday is typically 0 (closed), others 8 hours (480 mins)
-        return dayIndex === GanttDayIndex.Saturday ? 0 : 480;
-    }, [currentMinutes, dayIndex, localStorageKey]);
+    // Same value on server and first client render — no localStorage read
+    // during render, so no hydration mismatch.
+    const lastValidMinutesRef = useRef(currentMinutes ?? fallbackMinutes);
 
     const [inputValue, setInputValue] = useState(() =>
-        formatMinutesAsTimeInput(initialMinutes),
+        formatMinutesAsTimeInput(currentMinutes ?? fallbackMinutes),
     );
 
     // Reconcile local input with server state when it changes externally
@@ -299,21 +288,37 @@ function DayHeaderCell({
     // in-progress typing.
     useEffect(() => {
         if (currentMinutes !== null) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing local editable state to an external (server) value change, not derived render state.
+            lastValidMinutesRef.current = currentMinutes;
             setInputValue(formatMinutesAsTimeInput(currentMinutes));
         }
     }, [currentMinutes]);
+
+    // Client-only: hydrate the remembered default from localStorage once the
+    // day has no server value yet. Runs post-mount, never during render.
+    useEffect(() => {
+        if (currentMinutes !== null) return;
+        const stored = localStorage.getItem(localStorageKey);
+        if (stored === null) return;
+        const parsed = parseFloat(stored);
+        if (isNaN(parsed) || parsed < 0) return;
+        // Handle legacy format (hours) vs minutes in localStorage
+        const minutes = parsed <= 24 ? Math.round(parsed * 60) : Math.round(parsed);
+        lastValidMinutesRef.current = minutes;
+        setInputValue(formatMinutesAsTimeInput(minutes));
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally runs once per mount; re-running after the server value arrives would clobber it.
+    }, [localStorageKey]);
 
     const handleBlur = useCallback(async () => {
         const parsedMinutes = parseTimeInputToMinutes(inputValue);
         if (parsedMinutes === null) {
             // Revert on invalid input
-            setInputValue(formatMinutesAsTimeInput(initialMinutes));
+            setInputValue(formatMinutesAsTimeInput(lastValidMinutesRef.current));
             return;
         }
 
         // Save to localStorage
         localStorage.setItem(localStorageKey, parsedMinutes.toString());
+        lastValidMinutesRef.current = parsedMinutes;
         setInputValue(formatMinutesAsTimeInput(parsedMinutes));
 
         // Perform bulk update on all weeks for that day in the current curriculum
@@ -356,7 +361,6 @@ function DayHeaderCell({
         }
     }, [
         inputValue,
-        initialMinutes,
         localStorageKey,
         curriculum.weeks,
         state.weeks,

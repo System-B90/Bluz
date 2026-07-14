@@ -7,6 +7,7 @@ import type { SxProps, Theme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import { renderMultiSectionDigitalClockTimeView } from "@mui/x-date-pickers/timeViewRenderers";
 import { Dayjs } from "dayjs";
 import { ReactNode } from "react";
 
@@ -277,6 +278,12 @@ export function BaseTimeSettingsCard({
                                         },
                                     } }
                                     value={ row.value }
+                                    // Hours/minutes side by side instead of
+                                    // the default single scrollable list.
+                                    viewRenderers={ {
+                                        hours: renderMultiSectionDigitalClockTimeView,
+                                        minutes: renderMultiSectionDigitalClockTimeView,
+                                    } }
                                 />
                             </Box>
                         </Box>

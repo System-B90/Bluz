@@ -53,7 +53,6 @@ function SummaryMetric({
                 sx={{
                     fontSize: "0.95rem",
                     mt: 0.25,
-                    fontFamily: "Assistant, sans-serif",
                 }}
                 variant="subtitle2"
             >
