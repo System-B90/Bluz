@@ -71,6 +71,13 @@
       "when": 1783355545763,
       "tag": "0009_nasty_jazinda",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784063342575,
+      "tag": "0010_ordinary_obadiah_stane",
+      "breakpoints": true
     }
   ]
 }

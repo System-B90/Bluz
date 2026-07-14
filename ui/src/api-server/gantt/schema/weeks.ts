@@ -12,7 +12,7 @@ import { ganttCurriculum2WeeksSchema, ganttWeek2DaysSchema } from "./junctions";
 export const ganttWeeksSchema = pgTable("w", {
     id: text("id").primaryKey(),
     number: integer("number").notNull(),
-    comment: text("comment").default(""),
+    comment: text("comment").notNull().default(""),
     weekendDuty: boolean("weekend_duty").notNull().default(false),
     createdAt: timestamp("ca").defaultNow().notNull(),
     updatedAt: timestamp("ua").defaultNow().notNull(),

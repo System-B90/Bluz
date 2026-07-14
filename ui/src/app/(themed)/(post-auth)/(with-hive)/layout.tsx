@@ -53,7 +53,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                         sx={{
                             position: "fixed",
                             bottom: 24,
-                            left: 24,
+                            insetInlineStart: 24,
                             zIndex: 1000,
                             background:
                                 "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",

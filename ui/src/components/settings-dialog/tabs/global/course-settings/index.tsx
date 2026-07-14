@@ -16,7 +16,7 @@ import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Course } from "@/api-shared/types/course";
 import { CourseUser } from "@/api-shared/types/hive";
@@ -43,25 +43,6 @@ const dropAnimation = {
             },
         },
     }),
-};
-
-const dialogOffsetModifier: Modifier = ({ transform }) =>
-{
-    if (typeof window !== "undefined")
-    {
-        // Find the nearest Dialog containing block to compensate for the fixed positioning offset it introduces
-        const dialog = document.querySelector(".MuiDialog-paper");
-        if (dialog)
-        {
-            const rect = dialog.getBoundingClientRect();
-            return {
-                ...transform,
-                x: transform.x - rect.left,
-                y: transform.y - rect.top,
-            };
-        }
-    }
-    return transform;
 };
 
 function InstructorDragOverlay({
@@ -111,7 +92,8 @@ function CourseDragOverlay({
                     height: "18px",
                     borderRadius: "50%",
                     bgcolor: course.color ?? "#e0e0e0",
-                    border: "1px solid rgba(0,0,0,0.15)",
+                    border: "1px solid",
+                    borderColor: "divider",
                 } }
             />
             <Typography
@@ -188,6 +170,20 @@ export function CourseSettings()
         data: any;
     } | null>(null);
 
+    // Captured once per drag (on start) instead of measured on every pointer
+    // move, which forced a layout reflow via getBoundingClientRect().
+    const dialogRectRef = useRef<DOMRect | null>(null);
+    const dialogOffsetModifier = useMemo<Modifier>(() => ({ transform }) =>
+    {
+        const rect = dialogRectRef.current;
+        if (!rect) return transform;
+        return {
+            ...transform,
+            x: transform.x - rect.left,
+            y: transform.y - rect.top,
+        };
+    }, []);
+
     const handleCreate = useCallback(() =>
     {
         void addCourse({
@@ -200,6 +196,10 @@ export function CourseSettings()
 
     const handleDragStart = useCallback((event: DragStartEvent) =>
     {
+        dialogRectRef.current =
+            document.querySelector(".MuiDialog-paper")?.getBoundingClientRect() ??
+            null;
+
         const { active } = event;
         const data = active.data.current as DraggedItemData | undefined;
         if (data)
@@ -450,7 +450,7 @@ export function CourseSettings()
                         <Button
                             color="secondary"
                             onClick={ handleCreate }
-                            startIcon={ <AddIcon className="ml-1" /> }
+                            startIcon={ <AddIcon className="me-1" /> }
                             sx={ {
                                 flex: 1,
                                 borderRadius: "10px",

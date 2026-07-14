@@ -12,7 +12,7 @@ export function SettingsAddButton({ label, onClick }: SettingsAddButtonProps)
         <Button
             color="secondary"
             onClick={ onClick }
-            startIcon={ <AddIcon className="ml-1" /> }
+            startIcon={ <AddIcon className="me-1" /> }
             sx={ {
                 borderRadius: "10px",
                 py: 1,
