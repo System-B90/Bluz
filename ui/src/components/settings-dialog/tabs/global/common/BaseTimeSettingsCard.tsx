@@ -58,7 +58,7 @@ export function BaseTimeSettingsCard({
                         boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
                     }),
                 }),
-                ...(Array.isArray(sx) ? sx : [sx]),
+                ...(Array.isArray(sx) ? sx : [ sx ]),
             ] }
         >
             {/* Section Header */ }
@@ -71,7 +71,7 @@ export function BaseTimeSettingsCard({
                     width="100%"
                 >
                     { !!onToggleShrink && (
-                        <Tooltip placement="left" title="הרחב פאנל">
+                        <Tooltip placement="left" title="הרחבת הפאנל">
                             <IconButton
                                 onClick={ onToggleShrink }
                                 size="small"

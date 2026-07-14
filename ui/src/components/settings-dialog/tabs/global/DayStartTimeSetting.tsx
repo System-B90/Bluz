@@ -1,3 +1,4 @@
+import AlarmOnIcon from '@mui/icons-material/AlarmOn';
 import WbTwilightIcon from "@mui/icons-material/WbTwilight";
 import WeekendIcon from "@mui/icons-material/Weekend";
 import dayjs, { Dayjs } from "dayjs";
@@ -48,7 +49,7 @@ export function DayStartTimeSetting({
     const rows = useMemo<Array<TimeSettingRow>>(() => [
         {
             key: "dayStart",
-            label: "שעת תחילת יום",
+            label: "שעת תחילת יום רגיל",
             value: dayStartTime ? dayjs(dayStartTime, "HH:mm") : null,
             onChange: handleDayStartChange,
             icon: <WbTwilightIcon className="text-[#FF9F43]" />,
@@ -66,11 +67,12 @@ export function DayStartTimeSetting({
 
     return (
         <BaseTimeSettingsCard
-            description='שעת ההתחלה שממנה נערכים אירועים בגזירת לו"ז מסילבוס'
+            description='שעות התחלת לו"ז בגזירת גאנט'
+            icon={ <AlarmOnIcon /> }
             isShrunk={ isShrunk }
             onToggleShrink={ onToggleShrink }
             rows={ rows }
-            title="שעת תחילת יום ברירת מחדל"
+            title="שעות תחילת יום"
         />
     );
 }

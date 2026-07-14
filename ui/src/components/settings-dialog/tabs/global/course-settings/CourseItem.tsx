@@ -270,7 +270,7 @@ export function CourseItem({
                         } }
                     >
                         { subCourses.length > 0 || assignedIds.length > 0 ? (
-                            <Tooltip title={ isExpanded ? "כווץ" : "הרחב" }>
+                            <Tooltip title={ isExpanded ? "כיווץ" : "הרחבה" }>
                                 <IconButton
                                     onClick={ () => setIsExpanded(!isExpanded) }
                                     size="small"

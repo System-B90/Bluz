@@ -28,29 +28,35 @@ export function SyllabusesActionsBox({
     visibleSyllabusCount = 0,
     expandedCount = 0,
     ...boxProps
-}: SyllabusesActionsBoxProps) {
+}: SyllabusesActionsBoxProps)
+{
     const { enqueueSnackbar } = useSnackbar();
     const state = useCurriculumState();
-    const curriculum = state.curriculums[curriculumId];
+    const curriculum = state.curriculums[ curriculumId ];
 
     const { createSyllabus } = useSyllabusActions();
     const { createModule } = useModuleActions();
     const { createEvent } = useModuleEventActions();
 
-    const handleExport = useCallback(() => {
+    const handleExport = useCallback(() =>
+    {
         if (!curriculum) return;
-        try {
+        try
+        {
             const syllabusesData = curriculum.syllabuses
-                .map((syllabusId) => {
-                    const syllabus = state.syllabuses[syllabusId];
+                .map((syllabusId) =>
+                {
+                    const syllabus = state.syllabuses[ syllabusId ];
                     if (!syllabus) return null;
                     const modules = (syllabus.modules ?? [])
-                        .map((moduleId) => {
-                            const moduleDoc = state.modules[moduleId];
+                        .map((moduleId) =>
+                        {
+                            const moduleDoc = state.modules[ moduleId ];
                             if (!moduleDoc) return null;
                             const events = (moduleDoc.events ?? [])
-                                .map((eventId) => {
-                                    const eventDoc = state.events[eventId];
+                                .map((eventId) =>
+                                {
+                                    const eventDoc = state.events[ eventId ];
                                     if (!eventDoc) return null;
                                     return {
                                         title: eventDoc.title,
@@ -92,23 +98,28 @@ export function SyllabusesActionsBox({
             downloadAnchor.click();
             downloadAnchor.remove();
             enqueueSnackbar("הסילבוסים יוצאו בהצלחה!", { variant: "success" });
-        } catch {
+        } catch
+        {
             enqueueSnackbar("ייצוא הסילבוסים נכשל!", { variant: "error" });
         }
-    }, [curriculum, state, curriculumId, enqueueSnackbar]);
+    }, [ curriculum, state, curriculumId, enqueueSnackbar ]);
 
     const handleImport = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-            const file = e.target.files?.[0];
+        (e: React.ChangeEvent<HTMLInputElement>) =>
+        {
+            const file = e.target.files?.[ 0 ];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
+            reader.onload = async (event) =>
+            {
+                try
+                {
                     const importedSyllabuses = JSON.parse(
                         event.target?.result as string,
                     );
-                    if (!Array.isArray(importedSyllabuses)) {
+                    if (!Array.isArray(importedSyllabuses))
+                    {
                         throw new Error(
                             "Invalid format: expected an array of syllabuses",
                         );
@@ -118,15 +129,18 @@ export function SyllabusesActionsBox({
                         variant: "info",
                     });
 
-                    for (const syllabusData of importedSyllabuses) {
+                    for (const syllabusData of importedSyllabuses)
+                    {
                         const newSyllabus = await createSyllabus(
                             syllabusData.title || "סילבוס מיובא",
                             curriculumId,
                             syllabusData.hiveIds || [],
                         );
 
-                        if (Array.isArray(syllabusData.modules)) {
-                            for (const moduleData of syllabusData.modules) {
+                        if (Array.isArray(syllabusData.modules))
+                        {
+                            for (const moduleData of syllabusData.modules)
+                            {
                                 const newModule = await createModule(
                                     moduleData.title || "מערך מיובא",
                                     newSyllabus.id,
@@ -134,8 +148,10 @@ export function SyllabusesActionsBox({
                                     moduleData.hiveIds || [],
                                 );
 
-                                if (Array.isArray(moduleData.events)) {
-                                    for (const eventData of moduleData.events) {
+                                if (Array.isArray(moduleData.events))
+                                {
+                                    for (const eventData of moduleData.events)
+                                    {
                                         await createEvent(
                                             eventData.title || "מופע מיובא",
                                             newModule.id,
@@ -152,13 +168,15 @@ export function SyllabusesActionsBox({
                     enqueueSnackbar("ייבוא הסילבוסים הושלם בהצלחה!", {
                         variant: "success",
                     });
-                } catch (error: any) {
+                } catch (error: any)
+                {
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
                         "ייבוא הסילבוסים נכשל!",
                         error,
                     );
-                } finally {
+                } finally
+                {
                     e.target.value = "";
                 }
             };
@@ -177,20 +195,20 @@ export function SyllabusesActionsBox({
         <Box
             alignItems="center"
             display="flex"
-            gap={1.5}
+            gap={ 1.5 }
             justifyContent="flex-start"
-            {...boxProps}
+            { ...boxProps }
             width="100%"
         >
-            <Box alignItems="center" display="flex" flexShrink={0} gap={1.5}>
-                <CreateSyllabusButton curriculumId={curriculumId} />
+            <Box alignItems="center" display="flex" flexShrink={ 0 } gap={ 1.5 }>
+                <CreateSyllabusButton curriculumId={ curriculumId } />
                 <SyllabusSelectionField
                     alignItems="center"
-                    curriculumId={curriculumId}
+                    curriculumId={ curriculumId }
                     display="flex"
                     flexDirection="row"
-                    gap={1}
-                    width={260}
+                    gap={ 1 }
+                    width={ 260 }
                 />
             </Box>
 
@@ -198,25 +216,25 @@ export function SyllabusesActionsBox({
 
             <GanttSearchField />
 
-            <Box flexGrow={1} />
+            <Box flexGrow={ 1 } />
 
-            {visibleSyllabusCount > 0 && (
+            { visibleSyllabusCount > 0 && (
                 <Button
-                    onClick={onToggleAllExpanded}
+                    onClick={ onToggleAllExpanded }
                     size="small"
                     variant="outlined"
                 >
-                    {expandedCount === visibleSyllabusCount
-                        ? "צמצום הכול"
-                        : "הרחב הכול"}
+                    { expandedCount === visibleSyllabusCount
+                        ? "לצמצם הכל"
+                        : "להרחיב הכל" }
                 </Button>
-            )}
+            ) }
             <ImportExportMenuButton
                 color="primary"
                 exportLabel="ייצוא סילבוסים"
                 importLabel="ייבוא סילבוסים"
-                onExport={handleExport}
-                onImport={handleImport}
+                onExport={ handleExport }
+                onImport={ handleImport }
                 size="small"
                 triggerLabel="ייבוא / ייצוא סילבוסים"
                 variant="outlined"

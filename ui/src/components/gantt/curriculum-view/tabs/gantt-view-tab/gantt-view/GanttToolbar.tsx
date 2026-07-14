@@ -212,12 +212,12 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                 {/* Row actions */ }
                 <Tooltip
                     title={
-                        allCollapsed ? "הרחב הכל" : "כווץ הכל"
+                        allCollapsed ? "להרחיב הכל" : "לכווץ הכל"
                     }
                 >
                     <IconButton
                         aria-label={
-                            allCollapsed ? "הרחב הכל" : "כווץ הכל"
+                            allCollapsed ? "להרחיב הכל" : "לכווץ הכל"
                         }
                         onClick={
                             allCollapsed
