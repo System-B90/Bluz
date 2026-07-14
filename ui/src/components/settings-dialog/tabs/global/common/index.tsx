@@ -64,3 +64,5 @@ export const settingsCardSx: SxProps<Theme> = {
     flexDirection: "column",
     gap: 2.5,
 };
+
+export * from "@/components/settings-dialog/tabs/global/common/BaseTimeSettingsCard";
