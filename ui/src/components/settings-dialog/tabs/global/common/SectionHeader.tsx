@@ -1,6 +1,8 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
+import { iconBadgeSx } from "@/components/settings-dialog/tabs/global/common/styles";
+
 export type SettingsSectionHeaderProps = {
     icon: React.ElementType;
     title: string;
@@ -14,16 +16,7 @@ export function SettingsSectionHeader({ icon: Icon, title, subtitle, color = "pr
     return (
         <Box alignItems="center" display="flex" gap={ 2 } justifyContent="space-between">
             <Box alignItems="center" display="flex" gap={ 1.5 }>
-                <Box
-                    sx={ {
-                        p: 1,
-                        borderRadius: "10px",
-                        bgcolor: `${color}.light`,
-                        color: `${color}.contrastText`,
-                        display: "flex",
-                        alignItems: "center",
-                    } }
-                >
+                <Box sx={ iconBadgeSx(color) }>
                     <Icon className="text-[20px]" />
                 </Box>
                 <Box>

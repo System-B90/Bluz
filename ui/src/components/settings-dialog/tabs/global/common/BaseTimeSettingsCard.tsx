@@ -11,6 +11,8 @@ import { renderMultiSectionDigitalClockTimeView } from "@mui/x-date-pickers/time
 import { Dayjs } from "dayjs";
 import { ReactNode } from "react";
 
+import { iconBadgeSx, settingsCardSx } from "@/components/settings-dialog/tabs/global/common/styles";
+
 export type TimeSettingRow = {
     key: string;
     label: string;
@@ -43,22 +45,13 @@ export function BaseTimeSettingsCard({
     return (
         <Box
             sx={ [
-                (theme) => ({
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: "16px",
+                {
+                    ...settingsCardSx,
                     p: isShrunk ? 1.5 : 3,
-                    boxShadow: `0 8px 24px rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`,
-                    bgcolor: "background.paper",
-                    display: "flex",
-                    flexDirection: "column",
                     gap: isShrunk ? 1.5 : 2,
                     alignItems: isShrunk ? "center" : "stretch",
                     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    ...theme.applyStyles("dark", {
-                        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
-                    }),
-                }),
+                },
                 ...(Array.isArray(sx) ? sx : [ sx ]),
             ] }
         >
@@ -85,16 +78,7 @@ export function BaseTimeSettingsCard({
                             </IconButton>
                         </Tooltip>
                     ) }
-                    <Box
-                        sx={ {
-                            p: 1,
-                            borderRadius: "10px",
-                            bgcolor: "primary.light",
-                            color: "primary.contrastText",
-                            display: "flex",
-                            alignItems: "center",
-                        } }
-                    >
+                    <Box sx={ iconBadgeSx("primary") }>
                         { icon }
                     </Box>
                 </Box>
@@ -106,16 +90,7 @@ export function BaseTimeSettingsCard({
                     width="100%"
                 >
                     <Box alignItems="center" display="flex" gap={ 1.5 }>
-                        <Box
-                            sx={ {
-                                p: 1,
-                                borderRadius: "10px",
-                                bgcolor: "primary.light",
-                                color: "primary.contrastText",
-                                display: "flex",
-                                alignItems: "center",
-                            } }
-                        >
+                        <Box sx={ iconBadgeSx("primary") }>
                             { icon }
                         </Box>
                         <Box>
