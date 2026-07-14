@@ -1,11 +1,8 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import EditIcon from "@mui/icons-material/Edit";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Collapse from "@mui/material/Collapse";
@@ -28,6 +25,7 @@ import { Course } from "@/api-shared/types/course";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { HiveAvatar } from "@/components/header/HiveAvatarImage";
+import { CourseItemQuickActionControls } from "@/components/settings-dialog/tabs/global/course-settings/CourseItemQuickActionControls";
 import
 {
     DraggedCourseData,
@@ -59,7 +57,7 @@ export function CourseItem({
     const [ title, setTitle ] = useState<string>(course.name);
     const [ color, setColor ] = useState<string>(course.color ?? "#e0e0e0");
     const [ isEditing, setIsEditing ] = useState<boolean>(false);
-    const [ isExpanded, setIsExpanded ] = useState<boolean>(true);
+    const [ isExpanded, setIsExpanded ] = useState<boolean>(false);
     const [ description, setDescription ] = useState<string>(
         course.description ?? "",
     );
@@ -69,6 +67,7 @@ export function CourseItem({
     // Instructor Quick-Add Menu State
     const [ anchorEl, setAnchorEl ] = useState<HTMLElement | null>(null);
     const isMenuOpen = Boolean(anchorEl);
+    const [ isHovered, setIsHovered ] = useState(false);
 
     // Debounce for color picker to avoid server commits on every pixel change
     const colorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -217,6 +216,8 @@ export function CourseItem({
             {/* Main Course Card Container */ }
             <Box
                 className="course-card-container"
+                onMouseEnter={ () => setIsHovered(true) }
+                onMouseLeave={ () => setIsHovered(false) }
                 ref={ setDropRef }
                 sx={ {
                     display: "flex",
@@ -399,64 +400,20 @@ export function CourseItem({
                     </Box>
 
                     {/* Quick Action Controls */ }
-                    <Box
-                        sx={ { display: "flex", alignItems: "center", gap: 0.5 } }
-                    >
-                        <Box
-                            sx={ {
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.5,
-                                opacity: isMenuOpen ? 1 : 0,
-                                transition: "opacity 0.2s ease",
-                                ".course-card-container:hover &": {
-                                    opacity: 1,
-                                },
-                            } }
-                        >
-                            {/* Add Sub-course */ }
-                            <Tooltip title="הוספת תת-מסלול">
-                                <IconButton
-                                    color="secondary"
-                                    onClick={ handleCreateSubCourse }
-                                    size="small"
-                                >
-                                    <AddIcon className="text-[18px]" />
-                                </IconButton>
-                            </Tooltip>
-
-                            {/* Quick-Assign Instructor */ }
-                            <Tooltip title="שיוך מדריך">
-                                <IconButton
-                                    color="secondary"
-                                    onClick={ (e) =>
-                                        setAnchorEl(e.currentTarget)
-                                    }
-                                    size="small"
-                                >
-                                    <PersonAddIcon className="text-[18px]" />
-                                </IconButton>
-                            </Tooltip>
-
-                            {/* Delete Course */ }
-                            <Tooltip title="מחיקת מסלול">
-                                <IconButton
-                                    color="error"
-                                    onClick={ () => deleteCourse(course.id) }
-                                    size="small"
-                                >
-                                    <DeleteIcon className="text-[16px]" />
-                                </IconButton>
-                            </Tooltip>
-                        </Box>
-                    </Box>
+                    <CourseItemQuickActionControls
+                        course={ course }
+                        deleteCourse={ deleteCourse }
+                        handleCreateSubCourse={ handleCreateSubCourse }
+                        isHovered={ isHovered }
+                        isMenuOpen={ isMenuOpen }
+                        setAnchorEl={ setAnchorEl }
+                    />
                 </Box>
 
                 {/* Description Field */ }
-                <Box
-                    onClick={ () =>
-                        !isEditingDescription && setIsEditingDescription(true) }
-                    sx={ { mt: 1, mr: 4, cursor: "pointer" } }
+                <Box onClick={ () =>
+                    !isEditingDescription && setIsEditingDescription(true) }
+                sx={ { mt: 1, mr: 4, cursor: "pointer" } }
                 >
                     { isEditingDescription ? (
                         <TextField

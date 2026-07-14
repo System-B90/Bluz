@@ -346,7 +346,6 @@ export function CourseSettings()
                     flexDirection: "row",
                     height: "100%",
                     minHeight: 380,
-                    maxHeight: 520,
                     overflow: "hidden",
                     alignItems: "stretch",
                 } }
