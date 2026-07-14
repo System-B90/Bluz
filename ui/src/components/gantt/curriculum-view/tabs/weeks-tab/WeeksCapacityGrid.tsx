@@ -9,7 +9,7 @@ import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { KeyboardEvent, useCallback, useMemo, useState } from "react";
+import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
@@ -282,6 +282,17 @@ function DayHeaderCell({
         formatMinutesAsTimeInput(initialMinutes),
     );
 
+    // Reconcile local input with server state when it changes externally
+    // (another user's edit, or our own commit round-tripping back). Only
+    // fires when currentMinutes itself changes, so it never clobbers
+    // in-progress typing.
+    useEffect(() => {
+        if (currentMinutes !== null) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing local editable state to an external (server) value change, not derived render state.
+            setInputValue(formatMinutesAsTimeInput(currentMinutes));
+        }
+    }, [currentMinutes]);
+
     const handleBlur = useCallback(async () => {
         const parsedMinutes = parseTimeInputToMinutes(inputValue);
         if (parsedMinutes === null) {
@@ -490,29 +501,14 @@ export function WeeksCapacityGrid({
                             שם / הערת שבוע
                         </TableCell>
 
-                        {DAY_COLUMNS.map((dayIndex) => {
-                            const firstWeekId = curriculum.weeks[0];
-                            const firstWeek = firstWeekId
-                                ? state.weeks[firstWeekId]
-                                : undefined;
-                            const firstDayId = firstWeek?.days.find(
-                                (dId) => state.days[dId]?.dayIndex === dayIndex,
-                            );
-                            const firstDay = firstDayId
-                                ? state.days[firstDayId]
-                                : undefined;
-                            const currentMinutes =
-                                firstDay?.totalWorkingMinutes ??
-                                (dayIndex === GanttDayIndex.Saturday ? 0 : 480);
-                            return (
-                                <DayHeaderCell
-                                    curriculum={curriculum}
-                                    dayIndex={dayIndex}
-                                    key={`${dayIndex}-${currentMinutes}`}
-                                    state={state}
-                                />
-                            );
-                        })}
+                        {DAY_COLUMNS.map((dayIndex) => (
+                            <DayHeaderCell
+                                curriculum={curriculum}
+                                dayIndex={dayIndex}
+                                key={dayIndex}
+                                state={state}
+                            />
+                        ))}
                     </TableRow>
                 </TableHead>
                 <TableBody>

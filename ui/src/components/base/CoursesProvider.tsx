@@ -305,18 +305,28 @@ export const CoursesProvider = ({
         return addMessageHandler(onWebSocketMessage);
     }, [addMessageHandler, onWebSocketMessage]);
 
+    const contextValue = useMemo(
+        () => ({
+            default: false as const,
+            courses: coursesArray,
+            getCourse,
+            addCourse,
+            updateCourse,
+            updateCoursePartial,
+            deleteCourse,
+        }),
+        [
+            coursesArray,
+            getCourse,
+            addCourse,
+            updateCourse,
+            updateCoursePartial,
+            deleteCourse,
+        ],
+    );
+
     return (
-        <CoursesContext.Provider
-            value={{
-                default: false,
-                courses: coursesArray,
-                getCourse,
-                addCourse,
-                updateCourse,
-                updateCoursePartial,
-                deleteCourse,
-            }}
-        >
+        <CoursesContext.Provider value={contextValue}>
             {children}
         </CoursesContext.Provider>
     );

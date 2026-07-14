@@ -41,6 +41,8 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         singleWeekDayZoom,
         timelineWeeks,
         linearDays,
+        dayIndexMap,
+        weekIndexByDayId,
         moduleMappings,
         eventMappings,
         eventSpans,
@@ -79,11 +81,11 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         const span = eventSpans[ eventId ];
         if (!span || !span.spillover || !currentDayId) return null;
         const endDayId = span.dayIds[ span.dayIds.length - 1 ];
-        const startIdx = linearDays.indexOf(currentDayId);
-        const endIdx = linearDays.indexOf(endDayId);
+        const startIdx = dayIndexMap.get(currentDayId) ?? -1;
+        const endIdx = dayIndexMap.get(endDayId) ?? -1;
         if (startIdx === -1 || endIdx <= startIdx) return null;
         return { endDayId, spanDayCount: endIdx - startIdx + 1 };
-    }, [ eventSpans, eventId, currentDayId, linearDays ]);
+    }, [ eventSpans, eventId, currentDayId, dayIndexMap ]);
     const myViolations = useMemo(
         () => violations[ eventId ] || [],
         [ eventId, violations ],
@@ -121,8 +123,8 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
     const currentWeekIdx = useMemo(() =>
     {
         if (!currentDayId) return -1;
-        return timelineWeeks.findIndex((w) => w.days.includes(currentDayId));
-    }, [ currentDayId, timelineWeeks ]);
+        return weekIndexByDayId.get(currentDayId) ?? -1;
+    }, [ currentDayId, weekIndexByDayId ]);
 
     // Recurrence is satisfied only once an occurrence exists in every week; with
     // forward echoes that means the event starts in the first week (#111).
@@ -145,22 +147,20 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         }
 
         const indices = Array.from(dayIds)
-            .map((id) => linearDays.indexOf(id))
+            .map((id) => dayIndexMap.get(id) ?? -1)
             .filter((i) => i !== -1);
         const mapped = indices.length > 0;
         const startId = mapped ? linearDays[ Math.min(...indices) ] : null;
 
         return { isModuleMapped: mapped, moduleStartDayId: startId };
-    }, [ moduleId, state.modules, moduleMappings, eventMappings, linearDays ]);
+    }, [ moduleId, state.modules, moduleMappings, eventMappings, linearDays, dayIndexMap ]);
 
     // In weekly mode, find which week the module start falls in
     const moduleStartWeekIdx = useMemo(() =>
     {
         if (!weeklyView || !moduleStartDayId) return -1;
-        return timelineWeeks.findIndex((w) =>
-            w.days.includes(moduleStartDayId),
-        );
-    }, [ weeklyView, moduleStartDayId, timelineWeeks ]);
+        return weekIndexByDayId.get(moduleStartDayId) ?? -1;
+    }, [ weeklyView, moduleStartDayId, weekIndexByDayId ]);
 
     const cells = useMemo(() =>
     {
@@ -185,6 +185,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 currentWeekIdx,
                 dayIndexOf,
                 excludedDayIds,
+                weekIndexByDayId,
             })
             : buildDailyEventCells({
                 timelineWeeks,
@@ -226,6 +227,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         firstDayId,
         dayIndexOf,
         excludedDayIds,
+        weekIndexByDayId,
     ]);
 
     if (!event) return null;

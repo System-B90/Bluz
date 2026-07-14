@@ -399,18 +399,21 @@ export const RoomsProvider = ({ children }: { children: React.ReactNode }) => {
         return addMessageHandler(onWebSocketMessage);
     }, [addMessageHandler, onWebSocketMessage]);
 
+    const contextValue = useMemo(
+        () => ({
+            default: false as const,
+            rooms,
+            getRoom,
+            addRoom,
+            updateRoom,
+            deleteRoom,
+            updateRoomExtendedInfo,
+        }),
+        [rooms, getRoom, addRoom, updateRoom, deleteRoom, updateRoomExtendedInfo],
+    );
+
     return (
-        <RoomsContext.Provider
-            value={{
-                default: false,
-                rooms,
-                getRoom,
-                addRoom,
-                updateRoom,
-                deleteRoom,
-                updateRoomExtendedInfo,
-            }}
-        >
+        <RoomsContext.Provider value={contextValue}>
             {children}
         </RoomsContext.Provider>
     );

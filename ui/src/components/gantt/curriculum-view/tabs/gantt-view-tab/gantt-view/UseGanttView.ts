@@ -8,6 +8,8 @@ import
 } from "@/api-shared/types/gantt/models/constraint";
 import
 {
+    buildDayIndexMap,
+    buildWeekIndexByDayId,
     computeEventDaySpans,
     getSpilloverMinutesByDay,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
@@ -76,6 +78,18 @@ export const useGanttView = (curriculumId: string) =>
     {
         return timelineWeeks.flatMap((w) => w.days);
     }, [ timelineWeeks ]);
+
+    // O(1) replacements for the linearDays.indexOf(...) / timelineWeeks.findIndex(...)
+    // scans that row/cell components previously ran per-item, per-render (#159).
+    const dayIndexMap = useMemo(
+        () => buildDayIndexMap(linearDays),
+        [ linearDays ],
+    );
+
+    const weekIndexByDayId = useMemo(
+        () => buildWeekIndexByDayId(timelineWeeks),
+        [ timelineWeeks ],
+    );
 
     // When zoomed the grid holds a single week, but date labels are derived from a
     // week's absolute position, so expose that offset to the header (#90).
@@ -812,6 +826,8 @@ export const useGanttView = (curriculumId: string) =>
             startDate: curriculum?.startDate ?? null,
             timelineWeeks,
             linearDays,
+            dayIndexMap,
+            weekIndexByDayId,
             moduleMappings,
             eventMappings,
             curriculumMappings,
@@ -840,6 +856,8 @@ export const useGanttView = (curriculumId: string) =>
             curriculum?.startDate,
             timelineWeeks,
             linearDays,
+            dayIndexMap,
+            weekIndexByDayId,
             moduleMappings,
             eventMappings,
             curriculumMappings,

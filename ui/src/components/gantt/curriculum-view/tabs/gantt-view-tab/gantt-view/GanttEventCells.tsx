@@ -40,6 +40,8 @@ type WeeklyCellsParams = {
     dayIndexOf: (dayId: string) => GanttDayIndex | undefined;
     /** Occurrence days deleted or materialized into a standalone event. */
     excludedDayIds: Set<string>;
+    /** O(1) lookup of a dayId's owning week index within timelineWeeks (#159). */
+    weekIndexByDayId: Map<string, number>;
 };
 
 export function buildWeeklyEventCells(
@@ -63,6 +65,7 @@ export function buildWeeklyEventCells(
         currentWeekIdx,
         dayIndexOf,
         excludedDayIds,
+        weekIndexByDayId,
     } = params;
 
     const startDow = currentDayId ? dayIndexOf(currentDayId) : undefined;
@@ -152,9 +155,7 @@ export function buildWeeklyEventCells(
             // possibly across week boundaries (#105).
             if (spanInfo)
             {
-                const endWeekIdx = timelineWeeks.findIndex((w) =>
-                    w.days.includes(spanInfo.endDayId),
-                );
+                const endWeekIdx = weekIndexByDayId.get(spanInfo.endDayId) ?? -1;
                 if (endWeekIdx >= weekIdx)
                 {
                     const endWeek = timelineWeeks[ endWeekIdx ];

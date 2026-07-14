@@ -205,6 +205,30 @@ export function getScheduledMinutesForDay({
 }
 
 // ---------------------------------------------------------------------------
+// O(1) day/week index lookups (issue #159)
+// ---------------------------------------------------------------------------
+
+/** Maps each dayId to its position within a flattened list of days. */
+export function buildDayIndexMap(
+    linearDays: Array<GanttDayId>,
+): Map<GanttDayId, number> {
+    const map = new Map<GanttDayId, number>();
+    linearDays.forEach((dayId, idx) => map.set(dayId, idx));
+    return map;
+}
+
+/** Maps each dayId to the index of the week (within timelineWeeks) that owns it. */
+export function buildWeekIndexByDayId(
+    timelineWeeks: Array<GanttWeek>,
+): Map<GanttDayId, number> {
+    const map = new Map<GanttDayId, number>();
+    timelineWeeks.forEach((week, weekIdx) => {
+        week.days.forEach((dayId) => map.set(dayId, weekIdx));
+    });
+    return map;
+}
+
+// ---------------------------------------------------------------------------
 // Multi-day spanning events (issue #105)
 // ---------------------------------------------------------------------------
 

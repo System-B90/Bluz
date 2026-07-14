@@ -41,7 +41,6 @@ RUN mkdir -p ui/.next && chown nextjs:nodejs ui/.next
 
 COPY --from=builder --chown=nextjs:nodejs /app/ui/public ./ui/public
 COPY --from=builder --chown=nextjs:nodejs /app/ui/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/ui/.next/static ./ui/.next/static
 COPY --from=deps --chown=nextjs:nodejs /usr/local/bin/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 

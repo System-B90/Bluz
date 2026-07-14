@@ -66,7 +66,7 @@ export function BluzCalendar({
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
     const { rooms } = useRooms();
-    const { setStartDate, setEndDate } = useCalendar();
+    const { startDate, endDate, setStartDate, setEndDate } = useCalendar();
     const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
         useCalendarFilters();
 
@@ -97,6 +97,17 @@ export function BluzCalendar({
             setSelectedEvent,
             setOpenEventDialog,
         );
+
+    // Scope to the visible date range so WS broadcasts for events outside
+    // the current view don't force react-big-calendar to re-lay-out the grid.
+    const visibleEvents = useMemo(() => {
+        if (!startDate || !endDate) return events;
+        return events.filter(
+            (event) =>
+                event.endTime.toDate() >= startDate &&
+                event.startTime.toDate() <= endDate,
+        );
+    }, [events, startDate, endDate]);
 
     // Only render the calendar after the component has mounted on the client.
     useEffect(() => {
@@ -336,7 +347,7 @@ export function BluzCalendar({
             <CalendarView
                 currentView={currentView}
                 date={currentDate}
-                events={events}
+                events={visibleEvents}
                 onDoubleClickEvent={handleEditEvent}
                 onEventDrop={handleEventDrag}
                 onNavigate={onNavigate}
