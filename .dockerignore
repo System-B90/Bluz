@@ -13,8 +13,12 @@ out/
 .DS_Store
 *.log
 
-# Local environment files
-.env*.local
+# Environment files (secrets — never bake into an image)
+.env
+.env.*
+
+# TLS material
+nginx/ssl/
 
 # Debugging
 npm-debug.log*

@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "tsx watch session-server.ts",
     "start": "tsx session-server.ts",
+    "build": "tsc",
+    "start:prod": "node dist/session-server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky"

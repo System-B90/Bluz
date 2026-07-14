@@ -44,6 +44,7 @@ export function useSessionWebSocketContext() {
 
     const ws = useRef<null | WebSocket>(null);
     const messageHandlers = useRef<Array<MessageHandlerType>>([]);
+    const messageQueue = useRef<Array<Record<string, unknown>>>([]);
     const reconnectAttempt = useRef(0);
     const reconnectTimer = useRef<null | ReturnType<typeof setTimeout>>(null);
     const isMounted = useRef(true);
@@ -89,6 +90,10 @@ export function useSessionWebSocketContext() {
         socket.onopen = () => {
             reconnectAttempt.current = 0;
             registerCurrentSession(socket);
+            while (messageQueue.current.length > 0) {
+                const msg = messageQueue.current.shift();
+                if (msg) socket.send(JSON.stringify(msg));
+            }
         };
 
         socket.onmessage = webSocketMessageHandler;
@@ -133,7 +138,18 @@ export function useSessionWebSocketContext() {
         };
     }, [connect]);
 
-    return { ws, addMessageHandler };
+    const sendMessage = useCallback((data: Record<string, unknown>) => {
+        const socket = ws.current;
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify(data));
+        } else if (socket && socket.readyState === WebSocket.CONNECTING) {
+            messageQueue.current.push(data);
+        } else {
+            console.error("WebSocket is closed. Cannot send message.");
+        }
+    }, []);
+
+    return { ws, addMessageHandler, sendMessage };
 }
 
 export const useMessageHandler = () => {

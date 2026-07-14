@@ -22,7 +22,6 @@ export type CreateConstraintPayload =
     | Omit<TemporalConstraint, "createdAt" | "updatedAt">;
 
 function normalizeConstraintObject(serverConstraint: any): GanttConstraint {
-    console.log("serverConstraint", serverConstraint);
     if (serverConstraint.type === ConstraintType.Relational) {
         const {
             ownerEventId,
@@ -122,7 +121,6 @@ async function apiCreateConstraint(
             body: JSON.stringify(payload),
         },
     );
-    console.log("rawData", rawData);
     return normalizeConstraintObject(
         baseDocumentFixup(rawData as RawBaseDocument),
     );

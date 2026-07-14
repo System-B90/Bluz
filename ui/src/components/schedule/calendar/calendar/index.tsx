@@ -107,15 +107,6 @@ export function BluzCalendar({
     const updateDateRange = useCallback(
         (date: Date, view: View) => {
             const { start, end } = getRangeForView(date, view);
-            console.log(
-                "Updating date range:",
-                start,
-                end,
-                "for view:",
-                view,
-                " from: ",
-                date,
-            );
             setStartDate(start);
             setEndDate(end);
         },
@@ -123,7 +114,6 @@ export function BluzCalendar({
     );
 
     const onNavigate = useCallback((newDate: Date) => {
-        console.log("newDate: ", newDate);
         setCurrentDate(newDate);
     }, []);
 

@@ -11,9 +11,8 @@ services:
         build:
             context: ./../
             dockerfile: ui/Dockerfile
-            target: dev
+            target: runner
         container_name: ${TEST_PROJECT_NAME}-ui
-        command: sh -c "npm run build -- --no-mangling && npm start"
         # Resolve hive.org to the host, where the local Hive instance publishes
         # its proxy. Override HIVE_HOST_IP if Hive runs elsewhere.
         extra_hosts:
