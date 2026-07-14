@@ -102,6 +102,24 @@ export function ApiSuccess<T>(
     return ApiResponseMaker(data, cacheControl, init);
 }
 
+/**
+ * Detects a raw database driver error (postgres.js `PostgresError`, identified
+ * by its `name` or a 5-char SQLSTATE `code`). These carry internal details —
+ * table/column/constraint names, the offending SQL — that must never reach the
+ * client (#162), so they are collapsed into an opaque 500 by {@link catchHandler}
+ * rather than surfaced verbatim.
+ */
+export function isDatabaseError(e: unknown): boolean {
+    if (!e || typeof e !== "object") return false;
+    const err = e as { name?: unknown; code?: unknown; severity?: unknown };
+    if (err.name === "PostgresError") return true;
+    return (
+        typeof err.code === "string" &&
+        /^[0-9A-Z]{5}$/.test(err.code) &&
+        typeof err.severity === "string"
+    );
+}
+
 export function catchHandler<T extends NextRequest>(request: T, e: any) {
     if (e instanceof UserNotLoggedInError) {
         return NextResponse.json(
@@ -112,6 +130,16 @@ export function catchHandler<T extends NextRequest>(request: T, e: any) {
 
     if (e instanceof ClientApiError) {
         return ApiErrorMaker(e, 400);
+    }
+
+    // Raw DB errors are logged server-side but returned as an opaque 500 so no
+    // internal schema/constraint details leak to the client (#162).
+    if (isDatabaseError(e)) {
+        console.error("catchHandler database error", e);
+        return ApiErrorMaker(
+            { name: "InternalDatabaseError", message: "Internal Database Error" },
+            500,
+        );
     }
 
     console.error("catchHandler unexpected error", e);

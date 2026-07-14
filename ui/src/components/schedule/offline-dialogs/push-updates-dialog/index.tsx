@@ -23,6 +23,8 @@ import { CollisionStates } from "@/components/schedule/offline-dialogs/push-upda
 import {
     areDiffValuesEqual,
     getSubmitLabel,
+    pushSelectedCollisionUpdates,
+    reconcileCollisionStatesAfterPush,
 } from "@/components/schedule/offline-dialogs/push-updates-dialog/utils";
 import { EventId } from "@/components/schedule/types/event";
 
@@ -35,6 +37,7 @@ export function PushOfflineUpdatesDialog() {
         getCapturedEvent,
         getCapturedState,
         purgeCapturedState,
+        purgeCapturedEvents,
     } = useOffline();
 
     const { events: localEvents, dispatch } = useCalendar();
@@ -85,46 +88,66 @@ export function PushOfflineUpdatesDialog() {
 
             try {
                 const keys = Object.keys(collisionStates);
-                for (const eventId of keys) {
-                    const state = collisionStates[eventId];
-                    const isSelected = selectedIds.includes(eventId);
+                const selectedKeys = keys.filter((id) =>
+                    selectedIds.includes(id),
+                );
+                const unselectedKeys = keys.filter(
+                    (id) => !selectedIds.includes(id),
+                );
 
-                    if (isSelected) {
-                        if (state.localModifiedEvent === undefined) {
-                            // Deleted locally -> delete on server
-                            await apiDeleteEvent(eventId);
-                        } else if (state.capturedVersion === undefined) {
-                            // Created locally -> create on server
-                            if (state.localModifiedEvent) {
-                                await apiCreateEvent(state.localModifiedEvent);
-                            }
-                        } else {
-                            // Modified locally -> update on server
-                            if (state.localModifiedEvent) {
-                                await apiUpdateEvent(state.localModifiedEvent);
-                            }
-                        }
+                // Unselected -> discard the local edit and restore server state.
+                // Purely local (sync) reverts, so they always resolve.
+                for (const eventId of unselectedKeys) {
+                    const state = collisionStates[eventId];
+                    if (state.serverVersion === undefined) {
+                        dispatch({ type: "DELETE_EVENT", payload: eventId });
                     } else {
-                        // Unselected -> Discard local edit and restore server state
-                        if (state.serverVersion === undefined) {
-                            dispatch({
-                                type: "DELETE_EVENT",
-                                payload: eventId,
-                            });
-                        } else {
-                            dispatch({
-                                type: "UPSERT_EVENT",
-                                payload: state.serverVersion,
-                            });
-                        }
+                        dispatch({
+                            type: "UPSERT_EVENT",
+                            payload: state.serverVersion,
+                        });
                     }
                 }
 
-                enqueueSnackbar("השינויים סונכרנו בהצלחה!", {
-                    variant: "success",
-                });
-                purgeCapturedState();
-                setPushDialogOpen(false);
+                // Push each selected edit independently so a mid-loop failure
+                // leaves only the failed + remaining items pending (#157).
+                const { succeededIds, failedIds } =
+                    await pushSelectedCollisionUpdates(
+                        collisionStates,
+                        selectedKeys,
+                        {
+                            createEvent: apiCreateEvent,
+                            updateEvent: apiUpdateEvent,
+                            deleteEvent: apiDeleteEvent,
+                        },
+                    );
+
+                // Drop everything that reached a terminal state (synced or
+                // reverted) from the captured snapshot so it can't resurface as
+                // a pending edit on the next reconciliation pass.
+                const resolvedIds = [...unselectedKeys, ...succeededIds];
+                purgeCapturedEvents(resolvedIds);
+
+                if (failedIds.length === 0) {
+                    enqueueSnackbar("השינויים סונכרנו בהצלחה!", {
+                        variant: "success",
+                    });
+                    purgeCapturedState();
+                    setPushDialogOpen(false);
+                } else {
+                    // Partial failure: keep only the failed items pending and
+                    // stay open so the user can retry just those.
+                    setCollisionStates((prev) =>
+                        reconcileCollisionStatesAfterPush(prev, resolvedIds),
+                    );
+                    setSelectedIds((prev) =>
+                        prev.filter((id) => failedIds.includes(id)),
+                    );
+                    enqueueSnackbar(
+                        `סנכרון חלק מהשינויים נכשל (${failedIds.length}). הפריטים שנכשלו נותרו לניסיון חוזר.`,
+                        { variant: "error" },
+                    );
+                }
             } catch (error) {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -140,6 +163,7 @@ export function PushOfflineUpdatesDialog() {
             selectedIds,
             dispatch,
             purgeCapturedState,
+            purgeCapturedEvents,
             setPushDialogOpen,
             enqueueSnackbar,
         ],

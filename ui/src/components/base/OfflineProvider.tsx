@@ -20,6 +20,7 @@ export type OfflineContextState = {
     captureEventBeforeEdit: (event: Event) => void;
     captureInitialEvents: (events: Array<Event>) => void;
     purgeCapturedState: () => void;
+    purgeCapturedEvents: (eventIds: Array<EventId>) => void;
     getCapturedEvent: (eventId: EventId) => Event | null;
     getCapturedState: () => Record<EventId, Event>;
 };
@@ -33,6 +34,7 @@ const OfflineContext = createContext<OfflineContextState | undefined>({
     captureEventBeforeEdit: (_event) => {},
     captureInitialEvents: (_events) => {},
     purgeCapturedState: () => {},
+    purgeCapturedEvents: (_eventIds) => {},
     getCapturedEvent: (_eventId) => null,
     getCapturedState: () => ({}),
 });
@@ -97,6 +99,24 @@ export const OfflineProvider = ({
         setCapturedStateBeforeOffline({});
     }, []);
 
+    // Drop only the given events from the captured pre-offline snapshot. Used
+    // after a partial push (#157) so items that already synced don't reappear
+    // as pending edits on the next reconciliation pass, while failed items keep
+    // their captured version for retry.
+    const purgeCapturedEvents = useCallback((eventIds: Array<EventId>) => {
+        setCapturedStateBeforeOffline((capturedState) => {
+            let changed = false;
+            const next = { ...capturedState };
+            for (const id of eventIds) {
+                if (id in next) {
+                    delete next[id];
+                    changed = true;
+                }
+            }
+            return changed ? next : capturedState;
+        });
+    }, []);
+
     const getCapturedEvent = useCallback(
         (eventId: EventId): Event | null => {
             return capturedStateBeforeOffline[eventId] ?? null;
@@ -119,6 +139,7 @@ export const OfflineProvider = ({
                 captureEventBeforeEdit,
                 captureInitialEvents,
                 purgeCapturedState,
+                purgeCapturedEvents,
                 getCapturedEvent,
                 getCapturedState,
             }}

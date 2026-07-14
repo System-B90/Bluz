@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 
 import { GanttDayIndex, getDayNameDisplay } from "@/api-shared/types/gantt/models/day";
 import { CollisionStates } from "@/components/schedule/offline-dialogs/push-updates-dialog/types";
-import { EventId } from "@/components/schedule/types/event";
+import { Event, EventId } from "@/components/schedule/types/event";
 import { areValuesEqual } from "@/components/schedule/types/EventUtils";
 
 /**
@@ -172,3 +172,76 @@ export function getSubmitLabel(
  * Re-export the globally unified recursive deep-comparison helper from EventUtils
  */
 export const areDiffValuesEqual = areValuesEqual;
+
+/**
+ * The three server operations the push dialog can perform per event. Injected
+ * so the sync loop stays pure and unit-testable (no React / api-client).
+ */
+export type PushApi = {
+    createEvent: (event: Event) => Promise<unknown>;
+    updateEvent: (event: Event) => Promise<unknown>;
+    deleteEvent: (eventId: EventId) => Promise<unknown>;
+};
+
+export type PushOutcome = {
+    succeededIds: Array<EventId>;
+    failedIds: Array<EventId>;
+};
+
+/**
+ * Pushes the selected offline edits to the server one at a time, isolating
+ * each write in its own try/catch (#157). A failure mid-loop no longer aborts
+ * the whole batch: earlier items that already committed are reported as
+ * succeeded and the remaining items keep going, so only genuinely-failed items
+ * stay pending. Returns the per-event outcome for reconciliation.
+ */
+export async function pushSelectedCollisionUpdates(
+    collisionStates: CollisionStates,
+    selectedIds: Array<EventId>,
+    api: PushApi,
+): Promise<PushOutcome> {
+    const succeededIds: Array<EventId> = [];
+    const failedIds: Array<EventId> = [];
+
+    for (const eventId of selectedIds) {
+        const state = collisionStates[eventId];
+        if (!state) continue;
+
+        try {
+            if (state.localModifiedEvent === undefined) {
+                // Deleted locally -> delete on server
+                await api.deleteEvent(eventId);
+            } else if (state.capturedVersion === undefined) {
+                // Created locally -> create on server
+                await api.createEvent(state.localModifiedEvent);
+            } else {
+                // Modified locally -> update on server
+                await api.updateEvent(state.localModifiedEvent);
+            }
+            succeededIds.push(eventId);
+        } catch {
+            failedIds.push(eventId);
+        }
+    }
+
+    return { succeededIds, failedIds };
+}
+
+/**
+ * Removes already-resolved events (synced or reverted) from the collision set
+ * so a partial-failure retry only re-shows the items that still need syncing
+ * (#157).
+ */
+export function reconcileCollisionStatesAfterPush(
+    collisionStates: CollisionStates,
+    resolvedIds: Array<EventId>,
+): CollisionStates {
+    const resolved = new Set(resolvedIds);
+    const next: CollisionStates = {};
+    for (const id of Object.keys(collisionStates)) {
+        if (!resolved.has(id)) {
+            next[id] = collisionStates[id];
+        }
+    }
+    return next;
+}

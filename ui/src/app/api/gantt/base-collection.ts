@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { ApiSuccess, withApi } from "@/api-server/common";
+import { ClientApiError } from "@/api-shared/errors";
 import { ApiT } from "@/api-shared/types/gantt/api-layer";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 
@@ -55,7 +56,14 @@ export function buildGantCollectionRoutes<
 
     const POST = withApi(async (request: NextRequest) => {
         // Strongly typed as TCreatePayload, allowing relational IDs to flow into the DB layer
-        const payload: TCreatePayload = await request.json();
+        const payload = (await request.json()) as TCreatePayload;
+
+        // Minimal, on-demand shape check: reject non-object bodies at the
+        // boundary with a 400 instead of letting them hit the DB and surface as
+        // a raw error (#162). Field/enum validation stays in the DB layer.
+        if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
+            throw new ClientApiError("Request body must be a JSON object.");
+        }
 
         // The DB layer handles extracting the foreign keys and returning the clean TEntity
         const newItem = await dbSet.createNewItem(payload);

@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { CalendarProps, View, Views } from "react-big-calendar";
 
 import { GanttDayIndex, getDayNameDisplay, HEBREW_DAYS_SHORT } from "@/api-shared/types/gantt/models/day";
-import { Room, RoomSource, roomToResolvable } from "@/api-shared/types/room"; // Import the full Room type and roomToResolvable
+import { Room, roomLikeToResourceKey, RoomSource } from "@/api-shared/types/room"; // Import the full Room type and the stable resource-key helper
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
 import {
@@ -166,19 +166,15 @@ export function CalendarView({
             resizableAccessor={(e) => !e.locked}
             resourceAccessor={(event: Event) =>
                 event.rooms.length > 0
-                    ? event.rooms.map((room) =>
-                        JSON.stringify({ id: room.id, source: room.source }),
-                    )
+                    ? event.rooms.map((room) => roomLikeToResourceKey(room))
                     : [
-                        JSON.stringify({
+                        roomLikeToResourceKey({
                             id: DUMMY_ROOM_ID,
                             source: RoomSource.Custom,
                         }),
                     ]
             }
-            resourceIdAccessor={(room: Room) =>
-                JSON.stringify(roomToResolvable(room))
-            }
+            resourceIdAccessor={(room: Room) => roomLikeToResourceKey(room)}
             // Resource logic
             resources={
                 currentView === Views.DAY

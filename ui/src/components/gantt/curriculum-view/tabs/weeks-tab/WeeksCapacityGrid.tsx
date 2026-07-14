@@ -84,6 +84,17 @@ function WeekRow({
     const [localComment, setLocalComment] = useState(week.comment ?? "");
     const [isCommentFocused, setIsCommentFocused] = useState(false);
 
+    // Reconcile local editable comment with the server value when it changes
+    // externally (another user's edit, or our own commit round-tripping back),
+    // but never while the field is focused so in-progress typing is preserved
+    // (#165 — same pattern as DayCapacityCell / DayHeaderCell #164).
+    useEffect(() => {
+        if (!isCommentFocused) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing local editable state to an external (server) value change, not derived render state.
+            setLocalComment(week.comment ?? "");
+        }
+    }, [week.comment, isCommentFocused]);
+
     const weekTotalMinutes = useMemo(
         () => getWeekTotalMinutes(week, state),
         [state, week],

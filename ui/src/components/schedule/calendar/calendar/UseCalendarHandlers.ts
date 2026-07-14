@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { SlotInfo } from "react-big-calendar";
 import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
-import { ResolvableRoom } from "@/api-shared/types/room";
+import { ResolvableRoom, resourceKeyToResolvable } from "@/api-shared/types/room";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { Event } from "@/components/schedule/types/event";
 
@@ -51,7 +51,7 @@ export function useCalendarHandlers(
             if (changes.event.locked) return;
 
             const roomId: null | ResolvableRoom = changes.resourceId
-                ? JSON.parse(changes.resourceId.toString())
+                ? resourceKeyToResolvable(changes.resourceId.toString())
                 : null;
 
             let newRooms = changes.event.rooms;
@@ -86,7 +86,7 @@ export function useCalendarHandlers(
             if (slotInfo.action === "click") return;
 
             const roomId: null | ResolvableRoom = slotInfo.resourceId
-                ? JSON.parse(slotInfo.resourceId.toString())
+                ? resourceKeyToResolvable(slotInfo.resourceId.toString())
                 : null;
 
             const newRooms =
@@ -148,7 +148,7 @@ export function useCalendarHandlers(
 
                 let newRooms = currentCopied.rooms;
                 if (currentSlot?.resourceId) {
-                    const parsedRoomId = JSON.parse(
+                    const parsedRoomId = resourceKeyToResolvable(
                         currentSlot.resourceId.toString(),
                     );
                     newRooms =

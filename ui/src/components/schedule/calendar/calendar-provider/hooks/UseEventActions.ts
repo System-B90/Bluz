@@ -10,6 +10,7 @@ import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { createEventFactory } from "@/components/schedule/calendar/calendar-provider/EventFactory";
 import { CalendarAction } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { Event, EventId } from "@/components/schedule/types/event";
+import { areEventsEqual } from "@/components/schedule/types/EventUtils";
 
 export const useEventActions = (
     events: Array<Event>,
@@ -23,7 +24,12 @@ export const useEventActions = (
             if (!eventPartial || eventPartial.name === "") return;
 
             const isNewEvent = typeof eventPartial.id === "undefined";
-            const newEvent = createEventFactory(eventPartial, isNewEvent);
+            // Stamp a client revision so optimistic/echo/broadcast upserts can
+            // be ordered — see isStaleUpsert (#156).
+            const newEvent: Event = {
+                ...createEventFactory(eventPartial, isNewEvent),
+                updatedAt: Date.now(),
+            };
 
             if (!isNewEvent && offlineMode) {
                 const oldEvent = events.find((ev) => ev.id === newEvent.id);
@@ -45,8 +51,26 @@ export const useEventActions = (
                 apiCall(newEvent)
                     .then((res) => {
                         enqueueSnackbar(successMsg, { variant: "success" });
-                        // Server confirmation — update without polluting undo history
-                        remoteDispatch({ type: "UPSERT_EVENT", payload: res });
+                        // Server confirmation. Skip the redundant re-upsert when
+                        // the server echoed back exactly what we optimistically
+                        // applied — re-dispatching identical data just churns
+                        // references and flickers the calendar (#156). Any real
+                        // server-side normalization still flows through.
+                        if (!areEventsEqual(res, newEvent)) {
+                            remoteDispatch({
+                                type: "UPSERT_EVENT",
+                                // Strictly-newer revision so the authoritative
+                                // server version wins over both the optimistic
+                                // copy and the (older) self WS echo.
+                                payload: {
+                                    ...res,
+                                    updatedAt: Math.max(
+                                        Date.now(),
+                                        (newEvent.updatedAt ?? 0) + 1,
+                                    ),
+                                },
+                            });
+                        }
                     })
                     .catch((error) => {
                         enqueueApiErrorSnackbar(
