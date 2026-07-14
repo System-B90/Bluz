@@ -29,6 +29,7 @@ export function GlobalSettings()
                     display: "flex",
                     flexDirection: "column",
                     gap: 3,
+                    height: '100%',
                 } }
             >
                 <PrayerSettings
@@ -47,7 +48,7 @@ export function GlobalSettings()
                     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     display: "flex",
                     flexDirection: "column",
-                    height: '100%'
+                    height: '100%',
                 } }
             >
                 <CourseSettings />
