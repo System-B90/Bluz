@@ -197,6 +197,11 @@ def main(
         **merged_env,
         "TEST_PROJECT_NAME": project_name,
         "BLUZ_VERSION": "latest",
+        # docker-compose.test.yml points the ui container's Mongo connection
+        # string at TEST_MONGO_PASSWORD, but mongodb's actual root password
+        # (set by the base compose file) is MONGO_ROOT_PASSWORD -- reuse it
+        # so the ui container can authenticate against the real password.
+        "TEST_MONGO_PASSWORD": root_env.get("MONGO_ROOT_PASSWORD", ""),
     }
 
     new_ui_container = True
@@ -345,7 +350,7 @@ def main(
     # Ephemeral per-run credentials for the disposable test containers — no
     # static secret to leak from the repo/CI logs.
     db_pass = root_env.get("POSTGRES_PASSWORD") or secrets.token_urlsafe(24)
-    mongo_pass = root_env.get("TEST_MONGO_PASSWORD") or secrets.token_urlsafe(24)
+    mongo_pass = root_env.get("MONGO_ROOT_PASSWORD") or secrets.token_urlsafe(24)
     db_url = f"postgres://admin:{db_pass}@127.0.0.3:{ports['postgres']}/curriculum_db"
 
     assert db_pass is not None, "Postgres DB password is unset!"
