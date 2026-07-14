@@ -24,6 +24,47 @@ import { ClientApiError } from "@/api-shared/errors";
 
 export const dynamic = "force-dynamic";
 
+// Upper bound on the total number of entities a single import may create.
+// Guards the recursive curriculum walk against a hostile/corrupt payload that
+// would otherwise fan out into an unbounded number of inserts (#162).
+const MAX_IMPORT_NODES = 50_000;
+
+/**
+ * Counts the entities the import would create (weeks, days, syllabuses,
+ * modules, events, mappings, constraints) without touching the DB, so an
+ * oversized payload is rejected up front rather than mid-transaction.
+ */
+function countImportNodes(
+    curriculum: any,
+    mappings: unknown,
+    constraints: unknown,
+): number {
+    let count = 1; // the curriculum itself
+    if (Array.isArray(curriculum?.c2w)) {
+        for (const c2w of curriculum.c2w) {
+            count += 1;
+            const days = c2w?.week?.w2d;
+            if (Array.isArray(days)) count += days.length;
+        }
+    }
+    if (Array.isArray(curriculum?.c2s)) {
+        for (const c2s of curriculum.c2s) {
+            count += 1;
+            const modules = c2s?.syllabus?.s2m;
+            if (Array.isArray(modules)) {
+                for (const s2m of modules) {
+                    count += 1;
+                    const events = s2m?.module?.m2e;
+                    if (Array.isArray(events)) count += events.length;
+                }
+            }
+        }
+    }
+    if (Array.isArray(mappings)) count += mappings.length;
+    if (Array.isArray(constraints)) count += constraints.length;
+    return count;
+}
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
@@ -31,6 +72,15 @@ export async function POST(request: NextRequest) {
 
         if (!curriculum || !curriculum.title) {
             throw new ClientApiError("שגיאה: נתוני גאנט לא תקינים.");
+        }
+
+        if (
+            countImportNodes(curriculum, mappings, constraints) >
+            MAX_IMPORT_NODES
+        ) {
+            throw new ClientApiError(
+                "שגיאה: קובץ הייבוא גדול מדי.",
+            );
         }
 
         const newCurriculumId = `c_${crypto.randomUUID()}`;

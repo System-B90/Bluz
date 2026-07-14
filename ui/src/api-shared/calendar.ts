@@ -1,6 +1,5 @@
-import dayjs from "dayjs";
-
 import { DbEventDocument } from "@/api-server/db-event";
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { Event } from "@/components/schedule/types/event";
 
 export function eventDateFixup<T extends Partial<DbEventDocument | Event>>(
@@ -19,11 +18,13 @@ export function eventDateFixup<T extends Partial<DbEventDocument | Event>>(
         }
     } else {
         // --- CLIENT ENVIRONMENT (Target: Dayjs) ---
+        // Anchor to the app timezone so the wall-clock is DST-correct and
+        // independent of the viewer's browser timezone (#168).
         if (result.startTime !== undefined) {
-            result.startTime = dayjs(result.startTime) as any;
+            result.startTime = dayjs(result.startTime).tz(APP_TIMEZONE) as any;
         }
         if (result.endTime !== undefined) {
-            result.endTime = dayjs(result.endTime) as any;
+            result.endTime = dayjs(result.endTime).tz(APP_TIMEZONE) as any;
         }
     }
 

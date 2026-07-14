@@ -6,6 +6,7 @@ Author: Antigravity
 
 import hashlib
 import os
+import secrets
 import socket
 import ssl
 import subprocess
@@ -196,6 +197,11 @@ def main(
         **merged_env,
         "TEST_PROJECT_NAME": project_name,
         "BLUZ_VERSION": "latest",
+        # docker-compose.test.yml points the ui container's Mongo connection
+        # string at TEST_MONGO_PASSWORD, but mongodb's actual root password
+        # (set by the base compose file) is MONGO_ROOT_PASSWORD -- reuse it
+        # so the ui container can authenticate against the real password.
+        "TEST_MONGO_PASSWORD": root_env.get("MONGO_ROOT_PASSWORD", ""),
     }
 
     new_ui_container = True
@@ -341,7 +347,10 @@ def main(
             raise RuntimeError("Timeout waiting for application to be ready.")
 
     # Setup connection strings/configs for host scripts
-    db_pass = root_env.get("POSTGRES_PASSWORD", "lCqoKrgSLSGmZH98gvV15Kz6yaDUw8w2")
+    # Ephemeral per-run credentials for the disposable test containers — no
+    # static secret to leak from the repo/CI logs.
+    db_pass = root_env.get("POSTGRES_PASSWORD") or secrets.token_urlsafe(24)
+    mongo_pass = root_env.get("MONGO_ROOT_PASSWORD") or secrets.token_urlsafe(24)
     db_url = f"postgres://admin:{db_pass}@127.0.0.3:{ports['postgres']}/curriculum_db"
 
     assert db_pass is not None, "Postgres DB password is unset!"
@@ -349,6 +358,7 @@ def main(
         **merged_env,
         "DATABASE_URL": db_url,
         "POSTGRES_PASSWORD": db_pass,
+        "TEST_MONGO_PASSWORD": mongo_pass,
         "MONGO_PORT": str(ports["mongo"]),
         "BASE_URL": f"https://127.0.0.3:{ports['https']}",
         "TEST_PROJECT_NAME": project_name,

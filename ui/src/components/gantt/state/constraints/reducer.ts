@@ -25,7 +25,7 @@ export function ganttConstraintReducer(
         return { ...state, constraints: newConstraints, isLoading: false };
     }
 
-    case "UPSERT_CONSTRAINT":
+    case "UPSERT_CONSTRAINT": {
         return {
             ...state,
             constraints: {
@@ -33,6 +33,7 @@ export function ganttConstraintReducer(
                 [action.payload.id]: action.payload,
             },
         };
+    }
 
     case "DELETE_CONSTRAINT": {
         // Micro-optimization: Object destructuring avoids the `delete` keyword,
@@ -42,8 +43,9 @@ export function ganttConstraintReducer(
         return { ...state, constraints: remainingConstraints };
     }
 
-    case "SET_LOADING":
+    case "SET_LOADING": {
         return { ...state, isLoading: action.payload };
+    }
 
     default:
         return state;

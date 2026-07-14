@@ -1,8 +1,9 @@
 import { WebSocket, WebSocketServer } from "ws";
 import {
+    getWsAuthKey,
     MessageTypes,
-    WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY,
     WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
+    verifyWsTicket,
 } from "./session-common";
 
 const LISTEN_PORT = Number.parseInt(
@@ -18,6 +19,8 @@ type MessageData = Record<string, unknown>;
 
 interface SessionState {
     initiatorKey?: string;
+    /** Authenticated user id resolved from the connect-time ticket. */
+    userId: string;
     isAlive: boolean;
     /** Sync-object ids this socket listens to (for O(1) cleanup on close). */
     syncObjectIds: Set<string>;
@@ -151,7 +154,7 @@ function validateServerMessage(data: MessageData) {
     if (!("authKey" in data)) {
         throw new Error(`Missing "authKey" in server data!`);
     }
-    if (data["authKey"] !== WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY) {
+    if (data["authKey"] !== getWsAuthKey()) {
         throw new Error(`Invalid "authKey" in server data!`);
     }
 }
@@ -216,8 +219,18 @@ const wss = new WebSocketServer({
 
 wss.on("listening", () => log(`Listening on port ${LISTEN_PORT}`));
 
-wss.on("connection", (ws) => {
-    sessions.set(ws, { isAlive: true, syncObjectIds: new Set() });
+wss.on("connection", (ws, req) => {
+    const ticket = new URL(req.url ?? "", "http://internal").searchParams.get(
+        "ticket",
+    );
+    const userId = ticket ? verifyWsTicket(ticket) : null;
+    if (!userId) {
+        logError("Rejected connection: missing or invalid ticket");
+        ws.close(1008, "Invalid or missing ticket");
+        return;
+    }
+
+    sessions.set(ws, { isAlive: true, userId, syncObjectIds: new Set() });
 
     ws.on("pong", () => {
         const state = sessions.get(ws);

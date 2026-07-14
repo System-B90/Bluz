@@ -137,27 +137,19 @@ export function createThemeOptions(): ThemeOptions
                         backgroundImage: "none",
                         boxShadow: "0 24px 50px rgba(0,0,0,0.15)",
                         border: "1px solid",
-                        borderColor: "rgba(0,0,0,0.08)",
-                        ...theme.applyStyles("dark", {
-                            borderColor: "rgba(255,255,255,0.08)",
-                        }),
+                        borderColor: theme.vars.palette.divider,
                     }),
                 },
             },
             MuiAppBar: {
                 styleOverrides: {
                     root: ({ theme }) => ({
-                        backgroundColor: "rgba(173,226,238,0.29)",
+                        backgroundColor: theme.vars.palette.background.paper,
                         backgroundImage: "none",
                         boxShadow: "none",
                         borderBottom: "1px solid",
-                        borderColor: "rgba(0,0,0,0.08)",
-                        color: "#0D2336",
-                        ...theme.applyStyles("dark", {
-                            backgroundColor: "#0C2237",
-                            borderColor: "rgba(255,255,255,0.08)",
-                            color: "#EBF7FA",
-                        }),
+                        borderColor: theme.vars.palette.divider,
+                        color: theme.vars.palette.text.primary,
                     }),
                 },
             },

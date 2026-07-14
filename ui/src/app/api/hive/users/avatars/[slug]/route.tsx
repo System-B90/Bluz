@@ -11,6 +11,14 @@ export async function GET(
     // 1. Await params to extract the requested user ID (slug)
     const { slug } = await params;
 
+    // Reject anything that isn't a plain Hive user id/username segment —
+    // slug is interpolated directly into the upstream URL, so path
+    // separators or a full URL here would let a caller redirect the
+    // server-side fetch (SSRF) instead of hitting the avatar endpoint.
+    if (!/^[\w-]+$/.test(slug)) {
+        return new NextResponse("Invalid user identifier", { status: 400 });
+    }
+
     // 2. Retrieve the session token directly from the request cookies
     const token = await getToken({ req: request });
     const extraData: Partial<AuthSessionData> | undefined = token?.data as any;

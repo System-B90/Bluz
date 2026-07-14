@@ -19,6 +19,10 @@ export type GanttContextType = {
     startDate: null | string;
     timelineWeeks: Array<GanttWeek>;
     linearDays: Array<string>;
+    /** O(1) lookup of a dayId's position within linearDays (#159). */
+    dayIndexMap: Map<string, number>;
+    /** O(1) lookup of a dayId's owning week index within timelineWeeks (#159). */
+    weekIndexByDayId: Map<string, number>;
     eventMappings: Record<string, string>;
     moduleMappings: Record<string, Array<string>>;
     curriculumMappings: Record<string, GanttCurriculumModuleDayMapping>;

@@ -105,7 +105,7 @@ jobs:
 
             - name: Cache Hive prod images
               id: hive_images_cache
-              uses: actions/cache@v4
+              uses: actions/cache@v6
               with:
                   path: /tmp/hive-images.tar
                   key: hive-prod-images-v1-${{ steps.hive_sha.outputs.sha }}
@@ -290,7 +290,7 @@ jobs:
 
             # ── Artifacts ──────────────────────────────────────────────────────
             - name: Upload Playwright Report
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               if: ${{ !cancelled() }}
               with:
                   name: playwright-report-${{ matrix.shard }}
@@ -298,7 +298,7 @@ jobs:
                   retention-days: 14
 
             - name: Upload Test Results
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               if: ${{ !cancelled() }}
               with:
                   name: test-results-${{ matrix.shard }}
@@ -320,14 +320,24 @@ jobs:
                   ui=$(docker ps -a --filter "name=-ui" --format '{{.Names}}' | head -1)
                   if [ -n "$ui" ]; then
                     docker inspect --format 'State={{.State.Status}} ExitCode={{.State.ExitCode}} OOMKilled={{.State.OOMKilled}} Restarts={{.RestartCount}}' "$ui" || true
-                    docker logs --tail 200 "$ui" 2>&1 || true
+                    docker logs --tail 400 "$ui" 2>&1 || true
                   else
                     echo "No Bluz UI container found."
                   fi
                   echo "::endgroup::"
 
+                  # Migration failures (e.g. missing node_modules deps in the
+                  # runner image) crash the container before the app ever
+                  # serves traffic, which otherwise only shows up buried in
+                  # the full container-logs artifact. Surface it directly.
+                  echo "::group::Bluz UI migration errors (if any)"
+                  if [ -n "$ui" ]; then
+                    docker logs "$ui" 2>&1 | grep -iE "migration|Cannot find module|MODULE_NOT_FOUND" || echo "No migration-related errors found in UI container log."
+                  fi
+                  echo "::endgroup::"
+
             - name: Upload Container Logs
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               if: failure()
               with:
                   name: container-logs-${{ matrix.shard }}

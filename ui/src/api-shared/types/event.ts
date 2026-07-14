@@ -69,6 +69,14 @@ export type Event = {
      * recurrence occurrences of the same gantt event. Absent for normal events.
      */
     ganttOccurrenceDate?: string;
+    /**
+     * Client-stamped revision (epoch ms) set at save time (#156). Used as an
+     * optimistic-concurrency guard: an incoming upsert (server resolve echo or
+     * WS broadcast) is applied only when strictly newer than the copy already
+     * in state, so a self-echo or a stale broadcast can never overwrite a newer
+     * local edit. Absent on legacy events (treated as always-overwritable).
+     */
+    updatedAt?: number;
 };
 
 /**

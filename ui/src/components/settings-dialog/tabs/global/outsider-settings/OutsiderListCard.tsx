@@ -45,7 +45,6 @@ export const OutsiderListCard: ListCard<Outsider> = function OutsiderListCard({
                             sx={ {
                                 fontWeight: 700,
                                 fontSize: "0.9rem",
-                                fontFamily: "Assistant, sans-serif",
                                 color: "text.primary",
                             } }
                         >
@@ -83,7 +82,6 @@ export const OutsiderListCard: ListCard<Outsider> = function OutsiderListCard({
                             component="div"
                             sx={ {
                                 fontSize: "0.75rem",
-                                fontFamily: "Assistant, sans-serif",
                                 color: "text.secondary",
                                 mt: 0.5,
                             } }

@@ -200,7 +200,11 @@ export const authOptions: AuthOptions = {
     logger: {
         error(code, metadata) {
             console.error(`\n❌ [NextAuth Error]: ${code}`);
-            console.error(JSON.stringify(metadata, null, 2));
+            // Metadata can carry tokens/PII (e.g. OAuthCallbackError includes
+            // the provider response) — only dump it outside production.
+            if (process.env.NODE_ENV !== "production") {
+                console.error(JSON.stringify(metadata, null, 2));
+            }
             console.error(`Hive URL: ${NEXT_PUBLIC_HIVE_URL}`);
         },
         warn(code) {

@@ -9,7 +9,7 @@ import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { KeyboardEvent, useCallback, useMemo, useState } from "react";
+import { KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
@@ -83,6 +83,17 @@ function WeekRow({
     const { updateWeek } = useWeekActions();
     const [localComment, setLocalComment] = useState(week.comment ?? "");
     const [isCommentFocused, setIsCommentFocused] = useState(false);
+
+    // Reconcile local editable comment with the server value when it changes
+    // externally (another user's edit, or our own commit round-tripping back),
+    // but never while the field is focused so in-progress typing is preserved
+    // (#165 — same pattern as DayCapacityCell / DayHeaderCell #164).
+    useEffect(() => {
+        if (!isCommentFocused) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing local editable state to an external (server) value change, not derived render state.
+            setLocalComment(week.comment ?? "");
+        }
+    }, [week.comment, isCommentFocused]);
 
     const weekTotalMinutes = useMemo(
         () => getWeekTotalMinutes(week, state),
@@ -260,38 +271,56 @@ function DayHeaderCell({
     const firstDay = firstDayId ? state.days[firstDayId] : undefined;
     const currentMinutes = firstDay ? firstDay.totalWorkingMinutes : null;
 
-    // Load default hours from localStorage, fallback to 8 hours (480 minutes)
+    // Default fallbacks: Saturday is typically 0 (closed), others 8 hours (480 mins)
+    const fallbackMinutes = dayIndex === GanttDayIndex.Saturday ? 0 : 480;
     const localStorageKey = `bluz_gantt_default_hours_${dayIndex}`;
-    const initialMinutes = useMemo(() => {
-        if (currentMinutes !== null) return currentMinutes;
-        const stored = typeof window !== "undefined" ? localStorage.getItem(localStorageKey) : null;
-        if (stored !== null) {
-            const parsed = parseFloat(stored);
-            if (!isNaN(parsed) && parsed >= 0) {
-                // Handle legacy format (hours) vs minutes in localStorage
-                return parsed <= 24
-                    ? Math.round(parsed * 60)
-                    : Math.round(parsed);
-            }
-        }
-        // Default fallbacks: Saturday is typically 0 (closed), others 8 hours (480 mins)
-        return dayIndex === GanttDayIndex.Saturday ? 0 : 480;
-    }, [currentMinutes, dayIndex, localStorageKey]);
+    // Same value on server and first client render — no localStorage read
+    // during render, so no hydration mismatch.
+    const lastValidMinutesRef = useRef(currentMinutes ?? fallbackMinutes);
 
     const [inputValue, setInputValue] = useState(() =>
-        formatMinutesAsTimeInput(initialMinutes),
+        formatMinutesAsTimeInput(currentMinutes ?? fallbackMinutes),
     );
+
+    // Reconcile local input with server state when it changes externally
+    // (another user's edit, or our own commit round-tripping back). Only
+    // fires when currentMinutes itself changes, so it never clobbers
+    // in-progress typing.
+    useEffect(() => {
+        if (currentMinutes !== null) {
+            lastValidMinutesRef.current = currentMinutes;
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing local editable state to an external (server) value change, not derived render state.
+            setInputValue(formatMinutesAsTimeInput(currentMinutes));
+        }
+    }, [currentMinutes]);
+
+    // Client-only: hydrate the remembered default from localStorage once the
+    // day has no server value yet. Runs post-mount, never during render.
+    useEffect(() => {
+        if (currentMinutes !== null) return;
+        const stored = localStorage.getItem(localStorageKey);
+        if (stored === null) return;
+        const parsed = parseFloat(stored);
+        if (isNaN(parsed) || parsed < 0) return;
+        // Handle legacy format (hours) vs minutes in localStorage
+        const minutes = parsed <= 24 ? Math.round(parsed * 60) : Math.round(parsed);
+        lastValidMinutesRef.current = minutes;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time hydration from localStorage, not derived render state.
+        setInputValue(formatMinutesAsTimeInput(minutes));
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally runs once per mount; re-running after the server value arrives would clobber it.
+    }, [localStorageKey]);
 
     const handleBlur = useCallback(async () => {
         const parsedMinutes = parseTimeInputToMinutes(inputValue);
         if (parsedMinutes === null) {
             // Revert on invalid input
-            setInputValue(formatMinutesAsTimeInput(initialMinutes));
+            setInputValue(formatMinutesAsTimeInput(lastValidMinutesRef.current));
             return;
         }
 
         // Save to localStorage
         localStorage.setItem(localStorageKey, parsedMinutes.toString());
+        lastValidMinutesRef.current = parsedMinutes;
         setInputValue(formatMinutesAsTimeInput(parsedMinutes));
 
         // Perform bulk update on all weeks for that day in the current curriculum
@@ -334,7 +363,6 @@ function DayHeaderCell({
         }
     }, [
         inputValue,
-        initialMinutes,
         localStorageKey,
         curriculum.weeks,
         state.weeks,
@@ -490,29 +518,14 @@ export function WeeksCapacityGrid({
                             שם / הערת שבוע
                         </TableCell>
 
-                        {DAY_COLUMNS.map((dayIndex) => {
-                            const firstWeekId = curriculum.weeks[0];
-                            const firstWeek = firstWeekId
-                                ? state.weeks[firstWeekId]
-                                : undefined;
-                            const firstDayId = firstWeek?.days.find(
-                                (dId) => state.days[dId]?.dayIndex === dayIndex,
-                            );
-                            const firstDay = firstDayId
-                                ? state.days[firstDayId]
-                                : undefined;
-                            const currentMinutes =
-                                firstDay?.totalWorkingMinutes ??
-                                (dayIndex === GanttDayIndex.Saturday ? 0 : 480);
-                            return (
-                                <DayHeaderCell
-                                    curriculum={curriculum}
-                                    dayIndex={dayIndex}
-                                    key={`${dayIndex}-${currentMinutes}`}
-                                    state={state}
-                                />
-                            );
-                        })}
+                        {DAY_COLUMNS.map((dayIndex) => (
+                            <DayHeaderCell
+                                curriculum={curriculum}
+                                dayIndex={dayIndex}
+                                key={dayIndex}
+                                state={state}
+                            />
+                        ))}
                     </TableRow>
                 </TableHead>
                 <TableBody>

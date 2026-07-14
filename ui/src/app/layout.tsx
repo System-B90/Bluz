@@ -16,8 +16,11 @@ export default function RootLayout({
     children: React.ReactNode;
 }>)
 {
-    const wsHost = process.env.WEBSOCKET_SESSION_SERVER_HOST || "bluz.dev";
-    const wsProtcol = WEBSOCKET_PROTOCOL || "wss";
+    // Sourced from a NEXT_PUBLIC_ var (like NEXT_PUBLIC_HIVE_URL) since this
+    // value is handed straight to the browser to open the WS connection.
+    const wsHost =
+        process.env.NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST || "bluz.dev";
+    const wsProtocol = WEBSOCKET_PROTOCOL || "wss";
     const wsPortSuffix = WEBSOCKET_PORT_SUFFIX || "";
 
     return (
@@ -31,7 +34,7 @@ export default function RootLayout({
                         <WebSocketConfigProvider
                             host={ wsHost }
                             portSuffix={ wsPortSuffix }
-                            protocol={ wsProtcol }
+                            protocol={ wsProtocol }
                         >
                             { children }
                         </WebSocketConfigProvider>

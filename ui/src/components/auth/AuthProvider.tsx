@@ -8,7 +8,6 @@ import React, {
     useContext,
     useEffect,
     useMemo,
-    useRef,
 } from "react";
 
 import { AuthSessionUser } from "@/api-shared/types/sso";
@@ -43,11 +42,13 @@ export const AuthProvider = ({
     userData: AuthSessionUser;
     degraded?: boolean;
 }) => {
-    const { ws, addMessageHandler } = useSessionWebSocketContext();
+    const { addMessageHandler, sendMessage } = useSessionWebSocketContext();
     const { enqueueSnackbar } = useSnackbar();
-    const messageQueue = useRef<Array<WebSocketSessionMessage>>([]);
     const { data: session } = useSession();
 
+    // next-auth v4 has no public client-side hook for CLIENT_FETCH_ERROR
+    // (its logger module isn't part of the package's exports map), so this
+    // intercepts the "/api/auth/_log" beacon it POSTs internally.
     useEffect(() => {
         const originalFetch = window.fetch;
         window.fetch = async (...args) => {
@@ -139,40 +140,6 @@ export const AuthProvider = ({
     useEffect(() => {
         return addMessageHandler(onWebSocketMessage);
     }, [addMessageHandler, onWebSocketMessage]);
-
-    const sendMessage = useCallback(
-        (data: WebSocketSessionMessage) => {
-            if (!ws?.current) return;
-
-            if (ws.current.readyState === WebSocket.OPEN) {
-                ws.current.send(JSON.stringify(data));
-            } else if (ws.current.readyState === WebSocket.CONNECTING) {
-                messageQueue.current.push(data);
-            } else {
-                console.error("WebSocket is closed. Cannot send message.");
-            }
-        },
-        [ws],
-    );
-
-    useEffect(() => {
-        if (!ws?.current) return;
-
-        const socketInstance = ws.current;
-
-        const handleSocketOpen = () => {
-            while (messageQueue.current.length > 0) {
-                const msg = messageQueue.current.shift();
-                if (msg) socketInstance.send(JSON.stringify(msg));
-            }
-        };
-
-        socketInstance.addEventListener("open", handleSocketOpen);
-
-        return () => {
-            socketInstance.removeEventListener("open", handleSocketOpen);
-        };
-    }, [ws]);
 
     const contextValue = useMemo<AuthContextState>(
         () => ({

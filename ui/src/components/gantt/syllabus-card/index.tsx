@@ -20,7 +20,6 @@ import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { ModulesTable } from "@/components/gantt/syllabus-card/ModulesTable";
 import { SyllabusCardActions } from "@/components/gantt/syllabus-card/SyllabusCardActions";
 import { SyllabusCardHeader } from "@/components/gantt/syllabus-card/SyllabusCardHeader";
-import { SyllabusShuffles } from "@/components/gantt/syllabus-card/SyllabusShuffles";
 
 /**
  * Properties for the {@link SyllabusCard} component.
@@ -152,9 +151,9 @@ export function SyllabusCard({
                         syllabusModules={ syllabus?.modules ?? [] }
                     />
                 </CardContent>
-                <SyllabusShuffles syllabusId={ syllabusId } />
                 <SyllabusCardActions
                     curriculumId={ curriculumId }
+                    sx={ { width: '100%', gap: 0 } }
                     syllabusId={ syllabusId }
                 />
             </Collapse>

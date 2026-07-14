@@ -21,7 +21,8 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
     const {
         weeklyView,
         timelineWeeks,
-        linearDays,
+        dayIndexMap,
+        weekIndexByDayId,
         moduleMappings,
         eventMappings,
         dayCellWidth,
@@ -52,11 +53,11 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
         });
 
         const indices = Array.from(allMappedDays)
-            .map((id) => linearDays.indexOf(id))
+            .map((id) => dayIndexMap.get(id) ?? -1)
             .filter((i) => i !== -1);
         if (indices.length === 0) return null;
         return { min: Math.min(...indices), max: Math.max(...indices) };
-    }, [syllabus, state.modules, moduleMappings, eventMappings, linearDays]);
+    }, [syllabus, state.modules, moduleMappings, eventMappings, dayIndexMap]);
 
     // Week-level span (used in weekly mode)
     const weekSpanIndices = useMemo(() => {
@@ -81,10 +82,8 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
 
         const weekIndices = new Set<number>();
         allMappedDays.forEach((dayId) => {
-            const weekIdx = timelineWeeks.findIndex((w) =>
-                w.days.includes(dayId),
-            );
-            if (weekIdx !== -1) weekIndices.add(weekIdx);
+            const weekIdx = weekIndexByDayId.get(dayId);
+            if (weekIdx !== undefined) weekIndices.add(weekIdx);
         });
 
         if (weekIndices.size === 0) return null;
@@ -96,7 +95,7 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
         state.modules,
         moduleMappings,
         eventMappings,
-        timelineWeeks,
+        weekIndexByDayId,
     ]);
 
     if (!syllabus) return null;
@@ -180,7 +179,7 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
 
         return timelineWeeks.map((week) =>
             week.days.map((dayId) => {
-                const dayIndex = linearDays.indexOf(dayId);
+                const dayIndex = dayIndexMap.get(dayId) ?? -1;
                 const spanVariant = computeSpanVariant(dayIndex, spanIndices);
 
                 return (

@@ -35,5 +35,9 @@
     ],
     "javascript.preferences.autoImportSpecifierExcludeRegexes": [
         "^@mui/[^/]+$"
+    ],
+    "python.analysis.extraPaths": [
+        "C:\\Users\\mkupe\\Code\\",
+        "./scripts"
     ]
 }

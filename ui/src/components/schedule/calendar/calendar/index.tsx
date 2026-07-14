@@ -7,6 +7,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
     Dispatch,
     SetStateAction,
@@ -47,14 +48,25 @@ export function BluzCalendar({
     setSelectedEvent,
     events,
 }: BluzCalendarProps) {
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const validViews = useMemo<Array<View>>(
+        () => [Views.DAY, Views.WEEK, Views.WORK_WEEK],
+        [],
+    );
+    const viewParam = searchParams.get("view") as null | View;
+    const initialView =
+        viewParam && validViews.includes(viewParam) ? viewParam : Views.WEEK;
+
     const [mounted, setMounted] = useState(false);
-    const [currentView, setCurrentView] = useState<View>(Views.WEEK);
+    const [currentView, setCurrentView] = useState<View>(initialView);
     const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
     const [showToolbar, setShowToolbar] = useState<boolean>(true);
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
     const { rooms } = useRooms();
-    const { setStartDate, setEndDate } = useCalendar();
+    const { startDate, endDate, setStartDate, setEndDate } = useCalendar();
     const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
         useCalendarFilters();
 
@@ -86,6 +98,17 @@ export function BluzCalendar({
             setOpenEventDialog,
         );
 
+    // Scope to the visible date range so WS broadcasts for events outside
+    // the current view don't force react-big-calendar to re-lay-out the grid.
+    const visibleEvents = useMemo(() => {
+        if (!startDate || !endDate) return events;
+        return events.filter(
+            (event) =>
+                event.endTime.toDate() >= startDate &&
+                event.startTime.toDate() <= endDate,
+        );
+    }, [events, startDate, endDate]);
+
     // Only render the calendar after the component has mounted on the client.
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- Standard hydration guard: must set mounted state after client mount
@@ -95,15 +118,6 @@ export function BluzCalendar({
     const updateDateRange = useCallback(
         (date: Date, view: View) => {
             const { start, end } = getRangeForView(date, view);
-            console.log(
-                "Updating date range:",
-                start,
-                end,
-                "for view:",
-                view,
-                " from: ",
-                date,
-            );
             setStartDate(start);
             setEndDate(end);
         },
@@ -111,9 +125,20 @@ export function BluzCalendar({
     );
 
     const onNavigate = useCallback((newDate: Date) => {
-        console.log("newDate: ", newDate);
         setCurrentDate(newDate);
     }, []);
+
+    const handleViewChange = useCallback(
+        (view: View) => {
+            setCurrentView(view);
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("view", view);
+            router.replace(`${pathname}?${params.toString()}`, {
+                scroll: false,
+            });
+        },
+        [pathname, router, searchParams],
+    );
 
     useEffect(() => {
         updateDateRange(currentDate, currentView);
@@ -322,7 +347,7 @@ export function BluzCalendar({
             <CalendarView
                 currentView={currentView}
                 date={currentDate}
-                events={events}
+                events={visibleEvents}
                 onDoubleClickEvent={handleEditEvent}
                 onEventDrop={handleEventDrag}
                 onNavigate={onNavigate}
@@ -330,7 +355,7 @@ export function BluzCalendar({
                 onSelectSlot={handleSlotSelect}
                 onToggleFullscreen={() => setIsFullscreen(true)}
                 onToggleToolbar={() => setShowToolbar(!showToolbar)}
-                onView={setCurrentView}
+                onView={handleViewChange}
                 rooms={rooms}
                 showToolbar={showToolbar && !isFullscreen ? true : false}
             />

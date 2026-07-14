@@ -1,8 +1,8 @@
 import { WebSocket } from "ws";
 
 import {
+    getWsAuthKey,
     MessageTypes,
-    WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY,
     WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
 } from "@/settings";
 
@@ -89,7 +89,7 @@ export function SendServerRequestToSessionServer(
 ) {
     const message = JSON.stringify({
         sender: WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
-        authKey: WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY,
+        authKey: getWsAuthKey(),
         type: type,
         data,
     });

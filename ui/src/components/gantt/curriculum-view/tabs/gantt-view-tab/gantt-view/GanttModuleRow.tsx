@@ -31,6 +31,8 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         singleWeekDayZoom,
         timelineWeeks,
         linearDays,
+        dayIndexMap,
+        weekIndexByDayId,
         moduleMappings,
         eventMappings,
         violations,
@@ -106,11 +108,11 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
     // Day-level span (used in daily mode)
     const spanIndices = useMemo(() => {
         const indices = Array.from(allDayIds)
-            .map((id) => linearDays.indexOf(id))
+            .map((id) => dayIndexMap.get(id) ?? -1)
             .filter((i) => i !== -1);
         if (indices.length === 0) return null;
         return { min: Math.min(...indices), max: Math.max(...indices) };
-    }, [allDayIds, linearDays]);
+    }, [allDayIds, dayIndexMap]);
 
     // Week-level span (used in weekly mode)
     const weekSpanIndices = useMemo(() => {
@@ -118,16 +120,14 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
 
         const weekIndices = new Set<number>();
         allDayIds.forEach((dayId) => {
-            const weekIdx = timelineWeeks.findIndex((w) =>
-                w.days.includes(dayId),
-            );
-            if (weekIdx !== -1) weekIndices.add(weekIdx);
+            const weekIdx = weekIndexByDayId.get(dayId);
+            if (weekIdx !== undefined) weekIndices.add(weekIdx);
         });
 
         if (weekIndices.size === 0) return null;
         const arr = Array.from(weekIndices);
         return { min: Math.min(...arr), max: Math.max(...arr) };
-    }, [weeklyView, allDayIds, timelineWeeks]);
+    }, [weeklyView, allDayIds, weekIndexByDayId]);
 
     const isUnmapped = weeklyView
         ? weekSpanIndices === null
@@ -233,7 +233,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
 
         return timelineWeeks.map((week) =>
             week.days.map((dayId) => {
-                const dayIndex = linearDays.indexOf(dayId);
+                const dayIndex = dayIndexMap.get(dayId) ?? -1;
                 const isSpanStart =
                     spanIndices !== null && dayIndex === spanIndices.min;
 
@@ -267,6 +267,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         weeklyView,
         timelineWeeks,
         linearDays,
+        dayIndexMap,
         moduleId,
         ganttModule?.title,
         hasEvents,

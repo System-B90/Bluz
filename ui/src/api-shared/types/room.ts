@@ -68,6 +68,32 @@ export function roomToKey(room: RoomLike): string {
     return `${room.source}-${room.id}`;
 }
 
+/**
+ * Stable composite key for matching a room across the calendar resource layer
+ * (react-big-calendar `resourceIdAccessor` / `resourceAccessor`). Uses a `:`
+ * separator so the key round-trips unambiguously even when the room id itself
+ * contains `-` (custom-room UUIDs, the "no-room" sentinel). Replaces the old
+ * `JSON.stringify(room)` matching, which was fragile to property order / extra
+ * fields and could silently drop events into the "no room" column (#170).
+ */
+export function roomLikeToResourceKey(room: RoomLike): string {
+    return `${room.source}:${room.id}`;
+}
+
+/**
+ * Inverse of {@link roomLikeToResourceKey}. Splits on the first `:` only, so
+ * ids containing further separators survive intact. Hive ids are numeric and
+ * are coerced back to `number` to match {@link ResolvableRoom}.
+ */
+export function resourceKeyToResolvable(key: string): ResolvableRoom {
+    const sep = key.indexOf(":");
+    const source = Number(key.slice(0, sep)) as RoomSource;
+    const rawId = key.slice(sep + 1);
+    return source === RoomSource.Hive
+        ? { id: Number(rawId), source: RoomSource.Hive }
+        : { id: rawId, source: RoomSource.Custom };
+}
+
 export type ApiRoomsGetPayload = void;
 export type ApiRoomsGetResponse = Array<Room>;
 

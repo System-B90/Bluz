@@ -44,6 +44,7 @@ export function useSessionWebSocketContext() {
 
     const ws = useRef<null | WebSocket>(null);
     const messageHandlers = useRef<Array<MessageHandlerType>>([]);
+    const messageQueue = useRef<Array<Record<string, unknown>>>([]);
     const reconnectAttempt = useRef(0);
     const reconnectTimer = useRef<null | ReturnType<typeof setTimeout>>(null);
     const isMounted = useRef(true);
@@ -80,15 +81,36 @@ export function useSessionWebSocketContext() {
         );
     }, []);
 
-    const connect = useCallback(() => {
+    const connect = useCallback(async () => {
         if (!isMounted.current) return;
 
-        const socket = new WebSocket(connectionString);
+        // A short-lived, user-bound ticket (minted from the authenticated
+        // NextAuth session) lets the session server bind this socket to a
+        // real user instead of trusting a client-supplied random id.
+        let ticket = "";
+        try {
+            const res = await fetch("/api/ws-ticket");
+            if (res.ok) {
+                ({ ticket } = await res.json());
+            }
+        } catch {
+            // Falls through to an unticketed connect attempt; the server
+            // will reject it and the reconnect backoff will retry.
+        }
+        if (!isMounted.current) return;
+
+        const socket = new WebSocket(
+            `${connectionString}?ticket=${encodeURIComponent(ticket)}`,
+        );
         ws.current = socket;
 
         socket.onopen = () => {
             reconnectAttempt.current = 0;
             registerCurrentSession(socket);
+            while (messageQueue.current.length > 0) {
+                const msg = messageQueue.current.shift();
+                if (msg) socket.send(JSON.stringify(msg));
+            }
         };
 
         socket.onmessage = webSocketMessageHandler;
@@ -117,7 +139,7 @@ export function useSessionWebSocketContext() {
         // Keep the ref in sync so onclose always calls the latest closure.
         connectRef.current = connect;
         isMounted.current = true;
-        connect();
+        void connect();
 
         return () => {
             isMounted.current = false;
@@ -133,7 +155,18 @@ export function useSessionWebSocketContext() {
         };
     }, [connect]);
 
-    return { ws, addMessageHandler };
+    const sendMessage = useCallback((data: Record<string, unknown>) => {
+        const socket = ws.current;
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify(data));
+        } else if (socket && socket.readyState === WebSocket.CONNECTING) {
+            messageQueue.current.push(data);
+        } else {
+            console.error("WebSocket is closed. Cannot send message.");
+        }
+    }, []);
+
+    return { ws, addMessageHandler, sendMessage };
 }
 
 export const useMessageHandler = () => {

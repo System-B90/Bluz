@@ -187,28 +187,47 @@ export const CalendarProvider = ({
         prevPushDialogOpenRef.current = pushDialogOpen;
     }, [pushDialogOpen, offlineMode, loadEvents, startDate, endDate]);
 
+    const contextValue = useMemo(
+        () => ({
+            events,
+            startDate,
+            endDate,
+            iterationId,
+            isReadOnlyIteration: Boolean(iterationId),
+            eventLocks,
+            setStartDate,
+            setEndDate,
+            setIterationId,
+            saveEvent,
+            deleteEvent,
+            undo,
+            redo,
+            dispatch,
+            lockEvent,
+            unlockEvent,
+        }),
+        [
+            events,
+            startDate,
+            endDate,
+            iterationId,
+            eventLocks,
+            setStartDate,
+            setEndDate,
+            setIterationId,
+            saveEvent,
+            deleteEvent,
+            undo,
+            redo,
+            dispatch,
+            lockEvent,
+            unlockEvent,
+        ],
+    );
+
     return (
         <CalendarFiltersProvider>
-            <CalendarContext.Provider
-                value={{
-                    events,
-                    startDate,
-                    endDate,
-                    iterationId,
-                    isReadOnlyIteration: Boolean(iterationId),
-                    eventLocks,
-                    setStartDate,
-                    setEndDate,
-                    setIterationId,
-                    saveEvent,
-                    deleteEvent,
-                    undo,
-                    redo,
-                    dispatch,
-                    lockEvent,
-                    unlockEvent,
-                }}
-            >
+            <CalendarContext.Provider value={contextValue}>
                 {children}
             </CalendarContext.Provider>
         </CalendarFiltersProvider>
