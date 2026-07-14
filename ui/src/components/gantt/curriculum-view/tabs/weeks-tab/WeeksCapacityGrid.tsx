@@ -289,6 +289,7 @@ function DayHeaderCell({
     useEffect(() => {
         if (currentMinutes !== null) {
             lastValidMinutesRef.current = currentMinutes;
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing local editable state to an external (server) value change, not derived render state.
             setInputValue(formatMinutesAsTimeInput(currentMinutes));
         }
     }, [currentMinutes]);
@@ -304,6 +305,7 @@ function DayHeaderCell({
         // Handle legacy format (hours) vs minutes in localStorage
         const minutes = parsed <= 24 ? Math.round(parsed * 60) : Math.round(parsed);
         lastValidMinutesRef.current = minutes;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time hydration from localStorage, not derived render state.
         setInputValue(formatMinutesAsTimeInput(minutes));
         // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally runs once per mount; re-running after the server value arrives would clobber it.
     }, [localStorageKey]);
