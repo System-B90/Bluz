@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
+import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { DbCustomColors } from "@/api-server/db-custom-colors";
 import { ClientApiError } from "@/api-shared/errors";
 import {
@@ -31,56 +31,40 @@ type ServerApiCustomColorDelete = ServerApi<
     ApiCustomColorDeleteResponse
 >;
 
-export const GET: ServerApiCustomColorsGet = async (request) => {
-    try {
-        const colors = await DbCustomColors.get();
-        return ApiSuccess(colors);
-    } catch (e) {
-        return catchHandler(request, e);
-    }
-};
+export const GET: ServerApiCustomColorsGet = withApi(async (request) => {
+    const colors = await DbCustomColors.get();
+    return ApiSuccess(colors);
+});
 
-export const POST: ServerApiCustomColorUpdate = async (request) => {
-    try {
-        const textBody = await request.text();
-        const color = textBody ? JSON.parse(textBody) : null;
-        if (!color) {
-            throw new ClientApiError("No data provided!");
-        }
-        await DbCustomColors.set(color);
-        return ApiSuccess(color);
-    } catch (e) {
-        return catchHandler(request, e);
+export const POST: ServerApiCustomColorUpdate = withApi(async (request) => {
+    const textBody = await request.text();
+    const color = textBody ? JSON.parse(textBody) : null;
+    if (!color) {
+        throw new ClientApiError("No data provided!");
     }
-};
+    await DbCustomColors.set(color);
+    return ApiSuccess(color);
+});
 
-export const PUT: ServerApiCustomColorCreate = async (request) => {
-    try {
-        const textBody = await request.text();
-        const color = textBody ? JSON.parse(textBody) : null;
-        if (!color) {
-            throw new ClientApiError("No data provided!");
-        }
-        if (!color.id) {
-            throw new ClientApiError("Color ID is not provided!");
-        }
-        const createdColor = await DbCustomColors.create(color);
-        return ApiSuccess(createdColor);
-    } catch (e) {
-        return catchHandler(request, e);
+export const PUT: ServerApiCustomColorCreate = withApi(async (request) => {
+    const textBody = await request.text();
+    const color = textBody ? JSON.parse(textBody) : null;
+    if (!color) {
+        throw new ClientApiError("No data provided!");
     }
-};
+    if (!color.id) {
+        throw new ClientApiError("Color ID is not provided!");
+    }
+    const createdColor = await DbCustomColors.create(color);
+    return ApiSuccess(createdColor);
+});
 
-export const DELETE: ServerApiCustomColorDelete = async (request) => {
-    try {
-        const textBody = await request.text();
-        const colorId = textBody ? JSON.parse(textBody) : null;
-        if (!colorId) {
-            throw new ClientApiError("No colorId provided!");
-        }
-        await DbCustomColors.del(colorId);
-        return ApiSuccess();
-    } catch (e) {
-        return catchHandler(request, e);
+export const DELETE: ServerApiCustomColorDelete = withApi(async (request) => {
+    const textBody = await request.text();
+    const colorId = textBody ? JSON.parse(textBody) : null;
+    if (!colorId) {
+        throw new ClientApiError("No colorId provided!");
     }
-};
+    await DbCustomColors.del(colorId);
+    return ApiSuccess();
+});

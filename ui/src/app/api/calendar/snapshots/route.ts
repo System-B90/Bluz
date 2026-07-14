@@ -6,6 +6,7 @@ import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
+import { requireStaffSession } from "@/api-server/session-user";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import { DbEventDocument } from "@/api-shared/types/event";
@@ -21,6 +22,7 @@ type CreateSnapshotBody = {
  *   - ?id=<uuid> → fetch one snapshot including its captured events (for restore)
  */
 export const GET = withApi(async (request: Request) => {
+    await requireStaffSession();
     const url = new URL(request.url);
     const id = url.searchParams.get("id");
     const { controller, iterationId } =
@@ -40,6 +42,7 @@ export const GET = withApi(async (request: Request) => {
 
 /** POST /api/calendar/snapshots — create a snapshot from the supplied events. */
 export const POST = withApi(async (request: Request) => {
+    await requireStaffSession();
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
     const body = (await request.json()) as CreateSnapshotBody;
@@ -62,6 +65,7 @@ export const POST = withApi(async (request: Request) => {
 
 /** DELETE /api/calendar/snapshots?id=<uuid> — remove a snapshot. */
 export const DELETE = withApi(async (request: Request) => {
+    await requireStaffSession();
     const url = new URL(request.url);
     const id = url.searchParams.get("id");
     if (!id) {

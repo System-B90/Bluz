@@ -1,6 +1,8 @@
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/api-server/hive/sso";
+import { ForbiddenError, UserNotLoggedInError } from "@/api-shared/errors";
+import { Clearance } from "@/api-shared/types/hive";
 import { AuthSessionData } from "@/api-shared/types/sso";
 
 export type SessionUser = {
@@ -25,4 +27,26 @@ export async function getSessionUser(): Promise<null | SessionUser> {
         displayName:
             session.user.display_name || session.user.name || "משתמש",
     };
+}
+
+/**
+ * Gates a route to Segel/Admin clearance (#199). Every request re-checks the
+ * JWT, not just the one-time sign-in gate in `sso.ts`'s `signInCallback`.
+ * Throws so callers can just `await requireStaffSession()` at the top of a
+ * `withApi` handler and let `catchHandler` map it to 401/403.
+ */
+export async function requireStaffSession(): Promise<AuthSessionData["user"]> {
+    const session = (await getServerSession(authOptions)) as
+        | AuthSessionData
+        | null;
+    if (!session?.user) {
+        throw new UserNotLoggedInError("Unauthorized: No active session found.");
+    }
+    if (
+        session.user.clearance !== Clearance.Segel &&
+        session.user.clearance !== Clearance.Admin
+    ) {
+        throw new ForbiddenError("Forbidden: insufficient clearance.");
+    }
+    return session.user;
 }

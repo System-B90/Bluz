@@ -1,4 +1,4 @@
-import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
+import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { getHiveStudents } from "@/api-server/hive/students";
 import {
     ApiHiveStudentsGetPayload,
@@ -10,11 +10,7 @@ type ServerApiHiveStudentsGet = ServerApi<
     ApiHiveStudentsGetResponse
 >;
 
-export const GET: ServerApiHiveStudentsGet = async (request) => {
-    try {
-        const data = await getHiveStudents();
-        return ApiSuccess(data);
-    } catch (e) {
-        return catchHandler(request, e);
-    }
-};
+export const GET: ServerApiHiveStudentsGet = withApi(async (request) => {
+    const data = await getHiveStudents();
+    return ApiSuccess(data);
+});

@@ -2,8 +2,8 @@ export const dynamic = "force-dynamic";
 
 import {
     ApiSuccess,
-    catchHandler,
     ServerApiWithParams,
+    withApi,
 } from "@/api-server/common";
 import { DbIterations } from "@/api-server/db-iterations";
 import { ClientApiError } from "@/api-shared/errors";
@@ -23,24 +23,16 @@ type ServerApiIterationPatch = ServerApiWithParams<
     { id: string }
 >;
 
-export const GET: ServerApiIterationGet = async (request, context) => {
-    try {
-        const { id } = await context.params;
-        return ApiSuccess(await DbIterations.get(id));
-    } catch (e) {
-        return catchHandler(request, e);
-    }
-};
+export const GET: ServerApiIterationGet = withApi(async (request, context) => {
+    const { id } = await context.params;
+    return ApiSuccess(await DbIterations.get(id));
+});
 
-export const PATCH: ServerApiIterationPatch = async (request, context) => {
-    try {
-        const { id } = await context.params;
-        const patch = await request.json();
-        if (!patch || typeof patch !== "object") {
-            throw new ClientApiError("No patch data provided!");
-        }
-        return ApiSuccess(await DbIterations.patch(id, patch));
-    } catch (e) {
-        return catchHandler(request, e);
+export const PATCH: ServerApiIterationPatch = withApi(async (request, context) => {
+    const { id } = await context.params;
+    const patch = await request.json();
+    if (!patch || typeof patch !== "object") {
+        throw new ClientApiError("No patch data provided!");
     }
-};
+    return ApiSuccess(await DbIterations.patch(id, patch));
+});

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { ApiSuccess, withApi } from "@/api-server/common";
 import { materializeRecurrenceOccurrence } from "@/api-server/gantt/db-recurrence-exceptions";
 import { ClientApiError } from "@/api-shared/errors";
 import {
@@ -20,31 +20,27 @@ type RouteContext = {
  * mapped onto the occurrence day, and excepts the source event from
  * echoing onto that day going forward.
  */
-export async function POST(request: NextRequest, context: RouteContext) {
-    try {
-        const { id: eventId } = await context.params;
-        const body = await request.json();
+export const POST = withApi(async (request: NextRequest, context: RouteContext) => {
+    const { id: eventId } = await context.params;
+    const body = await request.json();
 
-        const { curriculumId, moduleId, dayId } = body as {
-            curriculumId: GanttCurriculumId;
-            moduleId: GanttModuleId;
-            dayId: GanttDayId;
-        };
-        if (!curriculumId || !moduleId || !dayId) {
-            throw new ClientApiError(
-                "Missing required fields: curriculumId, moduleId or dayId.",
-            );
-        }
-
-        const result = await materializeRecurrenceOccurrence({
-            curriculumId,
-            moduleId,
-            eventId,
-            dayId,
-        });
-
-        return ApiSuccess(result);
-    } catch (error) {
-        return catchHandler(request, error);
+    const { curriculumId, moduleId, dayId } = body as {
+        curriculumId: GanttCurriculumId;
+        moduleId: GanttModuleId;
+        dayId: GanttDayId;
+    };
+    if (!curriculumId || !moduleId || !dayId) {
+        throw new ClientApiError(
+            "Missing required fields: curriculumId, moduleId or dayId.",
+        );
     }
-}
+
+    const result = await materializeRecurrenceOccurrence({
+        curriculumId,
+        moduleId,
+        eventId,
+        dayId,
+    });
+
+    return ApiSuccess(result);
+});

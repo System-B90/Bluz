@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
+import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { DbOutsiders } from "@/api-server/db-outsiders";
 import {
     resolveIterationFromRequest,
@@ -35,60 +35,44 @@ type ServerApiOutsiderDelete = ServerApi<
     ApiOutsiderDeleteResponse
 >;
 
-export const GET: ServerApiOutsidersGet = async (request) => {
-    try {
-        const { controller } = await resolveIterationFromRequest(request);
-        const outsiders = await DbOutsiders.get(undefined, controller);
-        return ApiSuccess(outsiders);
-    } catch (e) {
-        return catchHandler(request, e);
-    }
-};
+export const GET: ServerApiOutsidersGet = withApi(async (request) => {
+    const { controller } = await resolveIterationFromRequest(request);
+    const outsiders = await DbOutsiders.get(undefined, controller);
+    return ApiSuccess(outsiders);
+});
 
-export const POST: ServerApiOutsiderUpdate = async (request) => {
-    try {
-        const { controller } =
-            await resolveWritableIterationFromRequest(request);
-        const outsider = await request.json();
-        if (!outsider) {
-            throw new ClientApiError("No data provided!");
-        }
-        await DbOutsiders.set(outsider, undefined, controller);
-        return ApiSuccess(outsider);
-    } catch (e) {
-        return catchHandler(request, e);
+export const POST: ServerApiOutsiderUpdate = withApi(async (request) => {
+    const { controller } =
+        await resolveWritableIterationFromRequest(request);
+    const outsider = await request.json();
+    if (!outsider) {
+        throw new ClientApiError("No data provided!");
     }
-};
+    await DbOutsiders.set(outsider, undefined, controller);
+    return ApiSuccess(outsider);
+});
 
-export const PUT: ServerApiOutsiderCreate = async (request) => {
-    try {
-        const { controller } =
-            await resolveWritableIterationFromRequest(request);
-        const outsider = await request.json();
-        if (!outsider) {
-            throw new ClientApiError("No data provided!");
-        }
-        if (!outsider.id) {
-            throw new ClientApiError("Outsider ID is not provided!");
-        }
-        const createdOutsider = await DbOutsiders.create(outsider, controller);
-        return ApiSuccess(createdOutsider);
-    } catch (e) {
-        return catchHandler(request, e);
+export const PUT: ServerApiOutsiderCreate = withApi(async (request) => {
+    const { controller } =
+        await resolveWritableIterationFromRequest(request);
+    const outsider = await request.json();
+    if (!outsider) {
+        throw new ClientApiError("No data provided!");
     }
-};
+    if (!outsider.id) {
+        throw new ClientApiError("Outsider ID is not provided!");
+    }
+    const createdOutsider = await DbOutsiders.create(outsider, controller);
+    return ApiSuccess(createdOutsider);
+});
 
-export const DELETE: ServerApiOutsiderDelete = async (request) => {
-    try {
-        const { controller } =
-            await resolveWritableIterationFromRequest(request);
-        const outsiderId = await request.json();
-        if (!outsiderId) {
-            throw new ClientApiError("No outsiderId provided!");
-        }
-        await DbOutsiders.del(outsiderId, controller);
-        return ApiSuccess();
-    } catch (e) {
-        return catchHandler(request, e);
+export const DELETE: ServerApiOutsiderDelete = withApi(async (request) => {
+    const { controller } =
+        await resolveWritableIterationFromRequest(request);
+    const outsiderId = await request.json();
+    if (!outsiderId) {
+        throw new ClientApiError("No outsiderId provided!");
     }
-};
+    await DbOutsiders.del(outsiderId, controller);
+    return ApiSuccess();
+});

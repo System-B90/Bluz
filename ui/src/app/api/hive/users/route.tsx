@@ -1,4 +1,4 @@
-import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
+import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { createHiveClient } from "@/api-server/hive/session-client";
 import {
     ApiHiveUsersGetPayload,
@@ -10,11 +10,7 @@ type ServerApiHiveUsersGet = ServerApi<
     ApiHiveUsersGetResponse
 >;
 
-export const GET: ServerApiHiveUsersGet = async (request) => {
-    try {
-        const hiveClient = await createHiveClient();
-        return ApiSuccess(await hiveClient.getUsers());
-    } catch (e) {
-        return catchHandler(request, e);
-    }
-};
+export const GET: ServerApiHiveUsersGet = withApi(async (request) => {
+    const hiveClient = await createHiveClient();
+    return ApiSuccess(await hiveClient.getUsers());
+});

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { ApiSuccess, withApi } from "@/api-server/common";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiT } from "@/api-shared/types/gantt/api-layer";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
@@ -34,6 +35,7 @@ export function buildGantCollectionRoutes<
     TCreatePayload = Omit<TEntity, "id">,
 >({ dbSet }: BuildGantCollectionRoutesProps<TEntity, TCreatePayload>) {
     const GET = withApi(async (request: NextRequest) => {
+        await requireStaffSession();
         const requestedIds = request.nextUrl.searchParams.get("ids");
         let items: Record<TEntity["id"], TEntity | TEntity["title"]>;
 
@@ -55,6 +57,7 @@ export function buildGantCollectionRoutes<
     });
 
     const POST = withApi(async (request: NextRequest) => {
+        await requireStaffSession();
         // Strongly typed as TCreatePayload, allowing relational IDs to flow into the DB layer
         const payload = (await request.json()) as TCreatePayload;
 

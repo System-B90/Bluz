@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
+import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { DbIterations } from "@/api-server/db-iterations";
 import { createHiveClient } from "@/api-server/hive/session-client";
 import { ClientApiError } from "@/api-shared/errors";
@@ -47,27 +47,19 @@ type ServerApiIterationRegister = ServerApi<
     Iteration
 >;
 
-export const GET: ServerApiIterationsList = async (request) => {
-    try {
-        return ApiSuccess(await DbIterations.list());
-    } catch (e) {
-        return catchHandler(request, e);
-    }
-};
+export const GET: ServerApiIterationsList = withApi(async (request) => {
+    return ApiSuccess(await DbIterations.list());
+});
 
-export const POST: ServerApiIterationRegister = async (request) => {
-    try {
-        const payload = await request.json();
-        if (!payload || !payload.id || !payload.label) {
-            throw new ClientApiError("Iteration id and label are required!");
-        }
-        // Cache Hive names for this iteration's instance unless one was supplied.
-        const hiveCache =
-            payload.hiveCache ?? (await buildHiveCache(payload.hiveUrl));
-        return ApiSuccess(
-            await DbIterations.register({ ...payload, hiveCache }),
-        );
-    } catch (e) {
-        return catchHandler(request, e);
+export const POST: ServerApiIterationRegister = withApi(async (request) => {
+    const payload = await request.json();
+    if (!payload || !payload.id || !payload.label) {
+        throw new ClientApiError("Iteration id and label are required!");
     }
-};
+    // Cache Hive names for this iteration's instance unless one was supplied.
+    const hiveCache =
+        payload.hiveCache ?? (await buildHiveCache(payload.hiveUrl));
+    return ApiSuccess(
+        await DbIterations.register({ ...payload, hiveCache }),
+    );
+});

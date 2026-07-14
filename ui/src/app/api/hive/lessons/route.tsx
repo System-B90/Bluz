@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
+import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { createHiveClient } from "@/api-server/hive/session-client";
 import {
     ApiHiveLessonsGetPayload,
@@ -12,19 +12,15 @@ type ServerApiHiveLessonsGet = ServerApi<
     ApiHiveLessonsGetResponse
 >;
 
-export const GET: ServerApiHiveLessonsGet = async (request) => {
-    try {
-        const { searchParams } = new URL(request.url);
-        const params: Record<string, any> = {};
-        for (const [key, value] of searchParams.entries()) {
-            params[key] = value;
-        }
-
-        const hiveClient = await createHiveClient();
-        const data = await hiveClient.getLessons(params);
-
-        return ApiSuccess(data);
-    } catch (e) {
-        return catchHandler(request, e);
+export const GET: ServerApiHiveLessonsGet = withApi(async (request) => {
+    const { searchParams } = new URL(request.url);
+    const params: Record<string, any> = {};
+    for (const [key, value] of searchParams.entries()) {
+        params[key] = value;
     }
-};
+
+    const hiveClient = await createHiveClient();
+    const data = await hiveClient.getLessons(params);
+
+    return ApiSuccess(data);
+});

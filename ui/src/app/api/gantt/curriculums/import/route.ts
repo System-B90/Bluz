@@ -2,7 +2,7 @@ import crypto from "crypto";
 
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { ApiSuccess, withApi } from "@/api-server/common";
 import { postgresDb } from "@/api-server/gantt";
 import {
     ganttCurriculumsSchema,
@@ -65,9 +65,8 @@ function countImportNodes(
     return count;
 }
 
-export async function POST(request: NextRequest) {
-    try {
-        const body = await request.json();
+export const POST = withApi(async (request: NextRequest) => {
+    const body = await request.json();
         const { curriculum, mappings, constraints } = body;
 
         if (!curriculum || !curriculum.title) {
@@ -310,8 +309,5 @@ export async function POST(request: NextRequest) {
             updatedAt: result.updatedAt.toISOString(),
         };
 
-        return ApiSuccess(responseData);
-    } catch (error) {
-        return catchHandler(request, error);
-    }
-}
+    return ApiSuccess(responseData);
+});
