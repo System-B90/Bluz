@@ -3,14 +3,16 @@ import CardActions, { CardActionsProps } from "@mui/material/CardActions";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { useSnackbar } from "notistack";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import {
+import
+{
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
+import { SyllabusShuffles } from "@/components/gantt/syllabus-card/SyllabusShuffles";
 
 export type SyllabusCardActionsProps = {
     curriculumId: GanttCurriculumId;
@@ -21,11 +23,14 @@ export function SyllabusCardActions({
     curriculumId,
     syllabusId,
     ...props
-}: SyllabusCardActionsProps) {
+}: SyllabusCardActionsProps)
+{
     const { enqueueSnackbar } = useSnackbar();
     const { unlinkSyllabusFromCurriculum } = useSyllabusActions();
+    const [ isHovered, setIsHovered ] = useState(false);
 
-    const deleteHandler = useCallback(() => {
+    const deleteHandler = useCallback(() =>
+    {
         unlinkSyllabusFromCurriculum(curriculumId, syllabusId).catch((error) =>
             enqueueApiErrorSnackbar(
                 enqueueSnackbar,
@@ -41,16 +46,17 @@ export function SyllabusCardActions({
     ]);
 
     return (
-        <CardActions {...props}>
+        <CardActions onMouseEnter={ () => setIsHovered(true) } onMouseLeave={ () => setIsHovered(false) } { ...props }>
             <Tooltip title="הסרת סילבוס מהגאנט">
                 <IconButton
                     color="warning"
-                    onClick={deleteHandler}
+                    onClick={ deleteHandler }
                     size="small"
                 >
                     <LinkOffIcon fontSize="small" />
                 </IconButton>
             </Tooltip>
+            <SyllabusShuffles isHovered={ isHovered } syllabusId={ syllabusId } />
         </CardActions>
     );
 }

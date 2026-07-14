@@ -17,15 +17,19 @@ import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
  */
 export function SyllabusShuffles({
     syllabusId,
+    isHovered,
 }: {
     syllabusId: GanttSyllabusId;
-}) {
+    isHovered: boolean;
+})
+{
     const { enqueueSnackbar } = useSnackbar();
     const syllabus = useSyllabus(syllabusId);
     const { updateSyllabus } = useSyllabusActions();
 
     const handleChange = useCallback(
-        (_: unknown, value: Array<string>) => {
+        (_: unknown, value: Array<string>) =>
+        {
             const shuffles = Array.from(
                 new Set(value.map((v) => v.trim()).filter(Boolean)),
             );
@@ -37,7 +41,7 @@ export function SyllabusShuffles({
                 ),
             );
         },
-        [syllabusId, updateSyllabus, enqueueSnackbar],
+        [ syllabusId, updateSyllabus, enqueueSnackbar ],
     );
 
     if (!syllabus) return null;
@@ -47,34 +51,47 @@ export function SyllabusShuffles({
             alignItems="center"
             display="flex"
             flexDirection="row"
-            gap={1}
-            px={2}
-            py={0.5}
+            gap={ 1 }
+            px={ 2 }
+            py={ 0.5 }
+            width='100%'
         >
-            <Tooltip title="שאפלים (קבוצות לימוד) בסילבוס">
+            <Tooltip title="שאפלים במקצוע">
                 <GroupsIcon color="action" fontSize="small" />
             </Tooltip>
-            <Autocomplete
-                freeSolo
-                fullWidth
-                multiple
-                onChange={handleChange}
-                options={[]}
-                renderInput={(params) => (
-                    <TextField
-                        {...params}
-                        placeholder={
-                            (syllabus.shuffles ?? []).length === 0
-                                ? "הוספת שאפל (Enter להוספה)"
-                                : undefined
-                        }
+            <Box flexGrow={ 1 } minWidth={ 0 }>
+                <Box
+                    overflow="hidden"
+                    sx={ {
+                        maxWidth: isHovered ? '100%' : 0,
+                        transition: (theme) => theme.transitions.create('max-width', {
+                            duration: theme.transitions.duration.shorter,
+                        }),
+                    } }
+                >
+                    <Autocomplete
+                        freeSolo
+                        fullWidth
+                        multiple
+                        onChange={ handleChange }
+                        options={ [] }
+                        renderInput={ (params) => (
+                            <TextField
+                                { ...params }
+                                placeholder={
+                                    (syllabus.shuffles ?? []).length === 0
+                                        ? "הוספת שאפל (Enter להוספה)"
+                                        : undefined
+                                }
+                                size="small"
+                                variant="standard"
+                            />
+                        ) }
                         size="small"
-                        variant="standard"
+                        value={ syllabus.shuffles ?? [] }
                     />
-                )}
-                size="small"
-                value={syllabus.shuffles ?? []}
-            />
+                </Box>
+            </Box>
         </Box>
     );
 }

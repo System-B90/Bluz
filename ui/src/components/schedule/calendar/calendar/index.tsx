@@ -55,7 +55,7 @@ export function BluzCalendar({
         () => [Views.DAY, Views.WEEK, Views.WORK_WEEK],
         [],
     );
-    const viewParam = searchParams.get("view") as View | null;
+    const viewParam = searchParams.get("view") as null | View;
     const initialView =
         viewParam && validViews.includes(viewParam) ? viewParam : Views.WEEK;
 
