@@ -81,10 +81,27 @@ export function useSessionWebSocketContext() {
         );
     }, []);
 
-    const connect = useCallback(() => {
+    const connect = useCallback(async () => {
         if (!isMounted.current) return;
 
-        const socket = new WebSocket(connectionString);
+        // A short-lived, user-bound ticket (minted from the authenticated
+        // NextAuth session) lets the session server bind this socket to a
+        // real user instead of trusting a client-supplied random id.
+        let ticket = "";
+        try {
+            const res = await fetch("/api/ws-ticket");
+            if (res.ok) {
+                ({ ticket } = await res.json());
+            }
+        } catch {
+            // Falls through to an unticketed connect attempt; the server
+            // will reject it and the reconnect backoff will retry.
+        }
+        if (!isMounted.current) return;
+
+        const socket = new WebSocket(
+            `${connectionString}?ticket=${encodeURIComponent(ticket)}`,
+        );
         ws.current = socket;
 
         socket.onopen = () => {
@@ -122,7 +139,7 @@ export function useSessionWebSocketContext() {
         // Keep the ref in sync so onclose always calls the latest closure.
         connectRef.current = connect;
         isMounted.current = true;
-        connect();
+        void connect();
 
         return () => {
             isMounted.current = false;
