@@ -7,6 +7,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
     Dispatch,
     SetStateAction,
@@ -47,8 +48,19 @@ export function BluzCalendar({
     setSelectedEvent,
     events,
 }: BluzCalendarProps) {
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const validViews = useMemo<Array<View>>(
+        () => [Views.DAY, Views.WEEK, Views.WORK_WEEK],
+        [],
+    );
+    const viewParam = searchParams.get("view") as View | null;
+    const initialView =
+        viewParam && validViews.includes(viewParam) ? viewParam : Views.WEEK;
+
     const [mounted, setMounted] = useState(false);
-    const [currentView, setCurrentView] = useState<View>(Views.WEEK);
+    const [currentView, setCurrentView] = useState<View>(initialView);
     const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
     const [showToolbar, setShowToolbar] = useState<boolean>(true);
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -114,6 +126,18 @@ export function BluzCalendar({
         console.log("newDate: ", newDate);
         setCurrentDate(newDate);
     }, []);
+
+    const handleViewChange = useCallback(
+        (view: View) => {
+            setCurrentView(view);
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("view", view);
+            router.replace(`${pathname}?${params.toString()}`, {
+                scroll: false,
+            });
+        },
+        [pathname, router, searchParams],
+    );
 
     useEffect(() => {
         updateDateRange(currentDate, currentView);
@@ -330,7 +354,7 @@ export function BluzCalendar({
                 onSelectSlot={handleSlotSelect}
                 onToggleFullscreen={() => setIsFullscreen(true)}
                 onToggleToolbar={() => setShowToolbar(!showToolbar)}
-                onView={setCurrentView}
+                onView={handleViewChange}
                 rooms={rooms}
                 showToolbar={showToolbar && !isFullscreen ? true : false}
             />
