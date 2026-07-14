@@ -115,6 +115,7 @@ export function CalendarToolbar({
                 px={ 2 }
                 py={ 1.5 }
                 sx={ {
+                    position: "relative",
                     borderBottom: "1px solid",
                     borderColor: "divider",
                     bgcolor: (theme) =>
@@ -147,7 +148,16 @@ export function CalendarToolbar({
                     <IterationSelector />
                 </Box>
 
-                <Box alignItems="center" display="flex" gap={ 1 }>
+                <Box
+                    alignItems="center"
+                    display="flex"
+                    gap={ 1 }
+                    sx={ {
+                        position: { xs: "static", md: "absolute" },
+                        insetInlineStart: { md: "50%" },
+                        transform: { md: "translateX(-50%)" },
+                    } }
+                >
                     <Typography
                         fontWeight="bold"
                         sx={ { color: "text.primary" } }
