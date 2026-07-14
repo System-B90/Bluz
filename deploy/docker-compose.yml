@@ -1,3 +1,5 @@
+name: bluz
+
 services:
     ui:
         image: ghcr.io/system-b15/bluz/ui:${BLUZ_VERSION:-latest}
