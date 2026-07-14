@@ -24,7 +24,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXTAUTH_SECRET=ci_build_placeholder
 
 RUN npm run build
-RUN npx tsc ui/src/api-server/drizzle-migrate.ts --outDir /app/dist-migrate --esModuleInterop --skipLibCheck
+# Bundle (not just transpile) so migrate.js carries its own deps
+# (drizzle-orm, pg) inline -- it runs in the runner stage, which only ships
+# the pruned node_modules traced from the Next.js app, not this script's.
+RUN npx esbuild ui/src/api-server/drizzle-migrate.ts --bundle --platform=node --target=node22 --outfile=/app/dist-migrate/drizzle-migrate.js --external:pg-native
 RUN npm prune --omit=dev
 
 FROM node:22-alpine AS runner

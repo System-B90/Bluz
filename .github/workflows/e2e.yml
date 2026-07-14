@@ -320,9 +320,19 @@ jobs:
                   ui=$(docker ps -a --filter "name=-ui" --format '{{.Names}}' | head -1)
                   if [ -n "$ui" ]; then
                     docker inspect --format 'State={{.State.Status}} ExitCode={{.State.ExitCode}} OOMKilled={{.State.OOMKilled}} Restarts={{.RestartCount}}' "$ui" || true
-                    docker logs --tail 200 "$ui" 2>&1 || true
+                    docker logs --tail 400 "$ui" 2>&1 || true
                   else
                     echo "No Bluz UI container found."
+                  fi
+                  echo "::endgroup::"
+
+                  # Migration failures (e.g. missing node_modules deps in the
+                  # runner image) crash the container before the app ever
+                  # serves traffic, which otherwise only shows up buried in
+                  # the full container-logs artifact. Surface it directly.
+                  echo "::group::Bluz UI migration errors (if any)"
+                  if [ -n "$ui" ]; then
+                    docker logs "$ui" 2>&1 | grep -iE "migration|Cannot find module|MODULE_NOT_FOUND" || echo "No migration-related errors found in UI container log."
                   fi
                   echo "::endgroup::"
 
