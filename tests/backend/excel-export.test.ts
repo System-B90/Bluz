@@ -2,6 +2,19 @@ import { describe, it, expect, vi } from "vitest";
 import { NextRequest } from "next/server";
 import ExcelJS from "exceljs";
 
+// requireStaffSession() -> getServerSession() calls next/headers, which throws
+// outside a real Next.js request scope (vitest). Resolve a Segel session so the
+// #199 auth gate passes and the route under test runs its actual logic.
+vi.mock("next-auth", () => ({
+    getServerSession: vi.fn(async () => ({
+        user: {
+            id: "test-user",
+            display_name: "Test User",
+            clearance: 3, // Clearance.Segel (literal: vi.mock factories are hoisted above imports)
+        },
+    })),
+}));
+
 // Mock gantt schema/db (self-contained to prevent hoisting issues)
 vi.mock("@/api-server/gantt", () => {
     return {
@@ -31,11 +44,7 @@ import * as ExcelExportRoute from "@/app/api/gantt/curriculums/[id]/export/excel
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { getConstraintsForCurriculum } from "@/api-server/gantt/db-constraints";
 
-// TODO: tracked in https://github.com/System-B15/Bluz/issues/210
-// requireStaffSession() -> getServerSession() calls next/headers outside a
-// request scope in vitest; needs a next-auth mock like
-// hive-settings.test.ts uses before this can be un-skipped.
-describe.skip("Gantt Excel Export Route", () => {
+describe("Gantt Excel Export Route", () => {
     const routeContext = { params: Promise.resolve({ id: "c1" }) };
 
     it("GET - exports full curriculum to excel successfully", async () => {
