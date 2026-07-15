@@ -67,170 +67,169 @@ function countImportNodes(
 
 export const POST = withApi(async (request: NextRequest) => {
     const body = await request.json();
-        const { curriculum, mappings, constraints } = body;
+    const { curriculum, mappings, constraints } = body;
 
-        if (!curriculum || !curriculum.title) {
-            throw new ClientApiError("שגיאה: נתוני גאנט לא תקינים.");
-        }
+    if (!curriculum || !curriculum.title) {
+        throw new ClientApiError("שגיאה: נתוני גאנט לא תקינים.");
+    }
 
-        if (
-            countImportNodes(curriculum, mappings, constraints) >
+    if (
+        countImportNodes(curriculum, mappings, constraints) >
             MAX_IMPORT_NODES
-        ) {
-            throw new ClientApiError(
-                "שגיאה: קובץ הייבוא גדול מדי.",
-            );
-        }
+    ) {
+        throw new ClientApiError(
+            "שגיאה: קובץ הייבוא גדול מדי.",
+        );
+    }
 
-        const newCurriculumId = `c_${crypto.randomUUID()}`;
-        const oldCurriculumId = curriculum.id;
+    const newCurriculumId = `c_${crypto.randomUUID()}`;
+    const oldCurriculumId = curriculum.id;
 
-        const dayIdMap: Record<string, string> = {};
-        const moduleIdMap: Record<string, string> = {};
-        const eventIdMap: Record<string, string> = {};
+    const dayIdMap: Record<string, string> = {};
+    const moduleIdMap: Record<string, string> = {};
+    const eventIdMap: Record<string, string> = {};
 
-        const result = await postgresDb.transaction(async (tx) => {
-            // 1. Create Curriculum
-            const now = new Date();
-            const [newCurriculum] = await tx
-                .insert(ganttCurriculumsSchema)
-                .values({
-                    id: newCurriculumId,
-                    title: `${curriculum.title} (מיובא)`,
-                    description: curriculum.description || "",
-                    startDate: curriculum.startDate,
-                    isDraft: true,
+    const result = await postgresDb.transaction(async (tx) => {
+        // 1. Create Curriculum
+        const now = new Date();
+        const [newCurriculum] = await tx
+            .insert(ganttCurriculumsSchema)
+            .values({
+                id: newCurriculumId,
+                title: `${curriculum.title} (מיובא)`,
+                description: curriculum.description || "",
+                startDate: curriculum.startDate,
+                isDraft: true,
+                createdAt: now,
+                updatedAt: now,
+            })
+            .returning();
+
+        // 2. Import Weeks and Days
+        if (Array.isArray(curriculum.c2w)) {
+            for (const c2wItem of curriculum.c2w) {
+                const oldWeek = c2wItem.week;
+                if (!oldWeek) continue;
+
+                const newWeekId = `w_${crypto.randomUUID()}`;
+                await tx.insert(ganttWeeksSchema).values({
+                    id: newWeekId,
+                    number: oldWeek.number,
+                    comment: oldWeek.comment || "",
+                    weekendDuty: oldWeek.weekendDuty || false,
                     createdAt: now,
                     updatedAt: now,
-                })
-                .returning();
+                });
 
-            // 2. Import Weeks and Days
-            if (Array.isArray(curriculum.c2w)) {
-                for (const c2wItem of curriculum.c2w) {
-                    const oldWeek = c2wItem.week;
-                    if (!oldWeek) continue;
+                await tx.insert(ganttCurriculum2WeeksSchema).values({
+                    curriculumId: newCurriculumId,
+                    weekId: newWeekId,
+                });
 
-                    const newWeekId = `w_${crypto.randomUUID()}`;
-                    await tx.insert(ganttWeeksSchema).values({
-                        id: newWeekId,
-                        number: oldWeek.number,
-                        comment: oldWeek.comment || "",
-                        weekendDuty: oldWeek.weekendDuty || false,
-                        createdAt: now,
-                        updatedAt: now,
-                    });
+                if (Array.isArray(oldWeek.w2d)) {
+                    for (const w2dItem of oldWeek.w2d) {
+                        const oldDay = w2dItem.day;
+                        if (!oldDay) continue;
 
-                    await tx.insert(ganttCurriculum2WeeksSchema).values({
-                        curriculumId: newCurriculumId,
-                        weekId: newWeekId,
-                    });
+                        const newDayId = `d_${crypto.randomUUID()}`;
+                        dayIdMap[oldDay.id] = newDayId;
 
-                    if (Array.isArray(oldWeek.w2d)) {
-                        for (const w2dItem of oldWeek.w2d) {
-                            const oldDay = w2dItem.day;
-                            if (!oldDay) continue;
+                        await tx.insert(ganttDaysSchema).values({
+                            id: newDayId,
+                            dayIndex: oldDay.dayIndex,
+                            totalWorkingMinutes: oldDay.totalWorkingMinutes || 0,
+                            comment: oldDay.comment || "",
+                            createdAt: now,
+                            updatedAt: now,
+                        });
 
-                            const newDayId = `d_${crypto.randomUUID()}`;
-                            dayIdMap[oldDay.id] = newDayId;
-
-                            await tx.insert(ganttDaysSchema).values({
-                                id: newDayId,
-                                dayIndex: oldDay.dayIndex,
-                                totalWorkingMinutes: oldDay.totalWorkingMinutes || 0,
-                                comment: oldDay.comment || "",
-                                createdAt: now,
-                                updatedAt: now,
-                            });
-
-                            await tx.insert(ganttWeek2DaysSchema).values({
-                                weekId: newWeekId,
-                                dayId: newDayId,
-                            });
-                        }
+                        await tx.insert(ganttWeek2DaysSchema).values({
+                            weekId: newWeekId,
+                            dayId: newDayId,
+                        });
                     }
                 }
             }
+        }
 
-            // 3. Import Syllabuses, Modules, and Events
-            if (Array.isArray(curriculum.c2s)) {
-                for (const c2sItem of curriculum.c2s) {
-                    const oldSyllabus = c2sItem.syllabus;
-                    if (!oldSyllabus) continue;
+        // 3. Import Syllabuses, Modules, and Events
+        if (Array.isArray(curriculum.c2s)) {
+            for (const c2sItem of curriculum.c2s) {
+                const oldSyllabus = c2sItem.syllabus;
+                if (!oldSyllabus) continue;
 
-                    const newSyllabusId = `s_${crypto.randomUUID()}`;
-                    await tx.insert(ganttSyllabusesSchema).values({
-                        id: newSyllabusId,
-                        title: oldSyllabus.title,
-                        hiveIds: oldSyllabus.hiveIds || [],
-                        createdAt: now,
-                        updatedAt: now,
-                    });
+                const newSyllabusId = `s_${crypto.randomUUID()}`;
+                await tx.insert(ganttSyllabusesSchema).values({
+                    id: newSyllabusId,
+                    title: oldSyllabus.title,
+                    hiveIds: oldSyllabus.hiveIds || [],
+                    createdAt: now,
+                    updatedAt: now,
+                });
 
-                    await tx.insert(ganttCurriculum2SyllabusesSchema).values({
-                        curriculumId: newCurriculumId,
-                        syllabusId: newSyllabusId,
-                    });
+                await tx.insert(ganttCurriculum2SyllabusesSchema).values({
+                    curriculumId: newCurriculumId,
+                    syllabusId: newSyllabusId,
+                });
 
-                    if (Array.isArray(oldSyllabus.s2m)) {
-                        for (const s2mItem of oldSyllabus.s2m) {
-                            const oldModule = s2mItem.module;
-                            if (!oldModule) continue;
+                if (Array.isArray(oldSyllabus.s2m)) {
+                    for (const s2mItem of oldSyllabus.s2m) {
+                        const oldModule = s2mItem.module;
+                        if (!oldModule) continue;
 
-                            const newModuleId = `m_${crypto.randomUUID()}`;
-                            moduleIdMap[oldModule.id] = newModuleId;
+                        const newModuleId = `m_${crypto.randomUUID()}`;
+                        moduleIdMap[oldModule.id] = newModuleId;
 
-                            await tx.insert(ganttModulesSchema).values({
-                                id: newModuleId,
-                                title: oldModule.title,
-                                description: oldModule.description || "",
-                                hiveIds: oldModule.hiveIds || [],
-                                createdAt: now,
-                                updatedAt: now,
-                            });
+                        await tx.insert(ganttModulesSchema).values({
+                            id: newModuleId,
+                            title: oldModule.title,
+                            description: oldModule.description || "",
+                            hiveIds: oldModule.hiveIds || [],
+                            createdAt: now,
+                            updatedAt: now,
+                        });
 
-                            await tx.insert(ganttSyllabus2ModulesSchema).values({
-                                syllabusId: newSyllabusId,
-                                moduleId: newModuleId,
-                            });
+                        await tx.insert(ganttSyllabus2ModulesSchema).values({
+                            syllabusId: newSyllabusId,
+                            moduleId: newModuleId,
+                        });
 
-                            if (Array.isArray(oldModule.m2e)) {
-                                for (const m2eItem of oldModule.m2e) {
-                                    const oldEvent = m2eItem.event;
-                                    if (!oldEvent) continue;
+                        if (Array.isArray(oldModule.m2e)) {
+                            for (const m2eItem of oldModule.m2e) {
+                                const oldEvent = m2eItem.event;
+                                if (!oldEvent) continue;
 
-                                    const newEventId = `e_${crypto.randomUUID()}`;
-                                    eventIdMap[oldEvent.id] = newEventId;
+                                const newEventId = `e_${crypto.randomUUID()}`;
+                                eventIdMap[oldEvent.id] = newEventId;
 
-                                    await tx.insert(ganttEventsSchema).values({
-                                        id: newEventId,
-                                        title: oldEvent.title,
-                                        type: oldEvent.type,
-                                        minimumDuration: oldEvent.minimumDuration || 0,
-                                        createdAt: now,
-                                        updatedAt: now,
-                                    });
+                                await tx.insert(ganttEventsSchema).values({
+                                    id: newEventId,
+                                    title: oldEvent.title,
+                                    type: oldEvent.type,
+                                    minimumDuration: oldEvent.minimumDuration || 0,
+                                    createdAt: now,
+                                    updatedAt: now,
+                                });
 
-                                    await tx.insert(ganttModule2EventsSchema).values({
-                                        moduleId: newModuleId,
-                                        eventId: newEventId,
-                                    });
+                                await tx.insert(ganttModule2EventsSchema).values({
+                                    moduleId: newModuleId,
+                                    eventId: newEventId,
+                                });
 
-                                    // Extract and save event configurations (cEC)
-                                    if (Array.isArray(oldEvent.cEC)) {
-                                        const originalConfig = oldEvent.cEC.find(
-                                            (cfg: any) => cfg.curriculumId === oldCurriculumId
-                                        );
-                                        if (originalConfig) {
-                                            await tx
-                                                .insert(ganttCurriculumEventConfigurationsSchema)
-                                                .values({
-                                                    curriculumId: newCurriculumId,
-                                                    eventId: newEventId,
-                                                    allocatedDuration: originalConfig.allocatedDuration || 0,
-                                                    updatedAt: now,
-                                                });
-                                        }
+                                // Extract and save event configurations (cEC)
+                                if (Array.isArray(oldEvent.cEC)) {
+                                    const originalConfig = oldEvent.cEC.find(
+                                        (cfg: any) => cfg.curriculumId === oldCurriculumId
+                                    );
+                                    if (originalConfig) {
+                                        await tx
+                                            .insert(ganttCurriculumEventConfigurationsSchema)
+                                            .values({
+                                                curriculumId: newCurriculumId,
+                                                eventId: newEventId,
+                                                allocatedDuration: originalConfig.allocatedDuration || 0,
+                                                updatedAt: now,
+                                            });
                                     }
                                 }
                             }
@@ -238,76 +237,77 @@ export const POST = withApi(async (request: NextRequest) => {
                     }
                 }
             }
+        }
 
-            // 4. Import Mappings (cMDA)
-            if (Array.isArray(mappings)) {
-                for (const mapping of mappings) {
-                    const newModuleId = moduleIdMap[mapping.moduleId];
-                    const newDayId = dayIdMap[mapping.dayId];
-                    if (!newModuleId || !newDayId) continue;
+        // 4. Import Mappings (cMDA)
+        if (Array.isArray(mappings)) {
+            for (const mapping of mappings) {
+                const newModuleId = moduleIdMap[mapping.moduleId];
+                const newDayId = dayIdMap[mapping.dayId];
+                if (!newModuleId || !newDayId) continue;
 
-                    const newEventId = mapping.eventId ? eventIdMap[mapping.eventId] : null;
+                const newEventId = mapping.eventId ? eventIdMap[mapping.eventId] : null;
 
-                    await tx.insert(ganttCurriculumEventDayMappingsSchema).values({
-                        id: crypto.randomUUID(),
-                        curriculumId: newCurriculumId,
-                        moduleId: newModuleId,
-                        eventId: newEventId,
-                        dayId: newDayId,
-                        sortOrder: mapping.sortOrder || 0,
-                        createdAt: now,
-                        updatedAt: now,
-                    });
-                }
+                await tx.insert(ganttCurriculumEventDayMappingsSchema).values({
+                    id: crypto.randomUUID(),
+                    curriculumId: newCurriculumId,
+                    moduleId: newModuleId,
+                    eventId: newEventId,
+                    dayId: newDayId,
+                    sortOrder: mapping.sortOrder || 0,
+                    createdAt: now,
+                    updatedAt: now,
+                });
             }
+        }
 
-            // 5. Import Constraints
-            if (Array.isArray(constraints)) {
-                for (const constraint of constraints) {
-                    const ownerEventId = constraint.ownerEventId
-                        ? eventIdMap[constraint.ownerEventId]
-                        : null;
-                    const ownerModuleId = constraint.ownerModuleId
-                        ? moduleIdMap[constraint.ownerModuleId]
-                        : null;
+        // 5. Import Constraints
+        if (Array.isArray(constraints)) {
+            for (const constraint of constraints) {
+                const ownerEventId = constraint.ownerEventId
+                    ? eventIdMap[constraint.ownerEventId]
+                    : null;
+                const ownerModuleId = constraint.ownerModuleId
+                    ? moduleIdMap[constraint.ownerModuleId]
+                    : null;
 
-                    // A constraint must have at least one owner mapped to be relevant
-                    if (!ownerEventId && !ownerModuleId) continue;
+                // A constraint must have at least one owner mapped to be relevant
+                if (!ownerEventId && !ownerModuleId) continue;
 
-                    const targetEventId = constraint.targetEventId
-                        ? eventIdMap[constraint.targetEventId]
-                        : null;
-                    const targetModuleId = constraint.targetModuleId
-                        ? moduleIdMap[constraint.targetModuleId]
-                        : null;
+                const targetEventId = constraint.targetEventId
+                    ? eventIdMap[constraint.targetEventId]
+                    : null;
+                const targetModuleId = constraint.targetModuleId
+                    ? moduleIdMap[constraint.targetModuleId]
+                    : null;
 
-                    await tx.insert(ganttConstraintsSchema).values({
-                        id: crypto.randomUUID(),
-                        type: constraint.type,
-                        ownerEventId,
-                        ownerModuleId,
-                        relation: constraint.relation || null,
-                        targetEventId,
-                        targetModuleId,
-                        minDelayDays: constraint.minDelayDays || null,
-                        maxDelayDays: constraint.maxDelayDays || null,
-                        allowedDays: constraint.allowedDays || null,
-                        forbiddenDays: constraint.forbiddenDays || null,
-                        createdAt: now,
-                        updatedAt: now,
-                    });
-                }
+                await tx.insert(ganttConstraintsSchema).values({
+                    id: crypto.randomUUID(),
+                    type: constraint.type,
+                    ownerEventId,
+                    ownerModuleId,
+                    relation: constraint.relation || null,
+                    targetEventId,
+                    targetModuleId,
+                    minDelayDays: constraint.minDelayDays || null,
+                    maxDelayDays: constraint.maxDelayDays || null,
+                    allowedDays: constraint.allowedDays || null,
+                    forbiddenDays: constraint.forbiddenDays || null,
+                    createdAt: now,
+                    updatedAt: now,
+                });
             }
+        }
 
-            return newCurriculum;
-        });
+        return newCurriculum;
+    });
 
-        // Convert Dates to strings to match frontend client expectations for response data
-        const responseData = {
-            ...result,
-            createdAt: result.createdAt.toISOString(),
-            updatedAt: result.updatedAt.toISOString(),
-        };
+    // Convert Dates to strings to match frontend client expectations for response data
+    const responseData = {
+        ...result,
+        createdAt: result.createdAt.toISOString(),
+        updatedAt: result.updatedAt.toISOString(),
+    };
 
     return ApiSuccess(responseData);
 });
