@@ -11,10 +11,6 @@ concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
 
-env:
-    HIVE_REPO: hivelms/Hive
-    HIVE_REF: feature/sso
-
 jobs:
     full-test-suite:
         name: Full Test Suite (E2E) — shard ${{ matrix.shard }}/${{ strategy.job-total }}
@@ -37,163 +33,16 @@ jobs:
               uses: actions/checkout@v7
 
             # ── Hive (SSO identity provider + organizational data) ────────────
-            # The Hive repository is private — checkout needs a PAT with read
-            # access to hivelms/Hive. Prefers CLASSIC_ACCESS_TOKEN (classic
-            # PATs don't need org approval), falls back to HIVE_REPO_TOKEN.
-            - name: Verify Hive checkout token and SSO branch
-              env:
-                  HIVE_CHECKOUT_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
-              run: |
-                  if [ -z "$HIVE_CHECKOUT_TOKEN" ]; then
-                    echo "::error::No Hive checkout token configured. Add CLASSIC_ACCESS_TOKEN or HIVE_REPO_TOKEN (PAT with read access to hivelms/Hive) under Settings → Secrets and variables → Actions."
-                    exit 1
-                  fi
-                  repo_code=$(curl -s -o /dev/null -w "%{http_code}" \
-                    -H "Authorization: token ${HIVE_CHECKOUT_TOKEN}" \
-                    "https://api.github.com/repos/${HIVE_REPO}")
-                  if [ "$repo_code" = "401" ]; then
-                    echo "::error::The Hive checkout token is invalid, expired, or revoked (HTTP 401). Generate a new PAT and update the secret."
-                    exit 1
-                  fi
-                  if [ "$repo_code" != "200" ]; then
-                    echo "::error::The token cannot read ${HIVE_REPO} (HTTP $repo_code). Check: classic PAT has the 'repo' scope; the hivelms org allows classic PATs (or SSO-authorize the token for the org); a fine-grained PAT must be approved by the hivelms org admins."
-                    exit 1
-                  fi
-                  branch_code=$(curl -s -o /dev/null -w "%{http_code}" \
-                    -H "Authorization: token ${HIVE_CHECKOUT_TOKEN}" \
-                    "https://api.github.com/repos/${HIVE_REPO}/branches/${HIVE_REF}")
-                  if [ "$branch_code" != "200" ]; then
-                    echo "::error::The token can read ${HIVE_REPO}, but branch '${HIVE_REF}' was not found (HTTP $branch_code). Available branches:"
-                    curl -s -H "Authorization: token ${HIVE_CHECKOUT_TOKEN}" \
-                      "https://api.github.com/repos/${HIVE_REPO}/branches?per_page=100" \
-                      | python3 -c "import json,sys; [print(' -', b['name']) for b in json.load(sys.stdin)]"
-                    exit 1
-                  fi
-                  echo "Hive token OK — repository and branch '${HIVE_REF}' are reachable."
-
-            # blob:limit=50k mirrors Hive's documented clone (skips >1.5 GiB of
-            # large blobs; git lazy-fetches any that the checkout needs).
-            - name: Checkout Hive (SSO branch)
-              uses: actions/checkout@v7
+            # Shared org action: disk cleanup, token verify, Hive checkout,
+            # commit-keyed image cache (or registry pull once Hive publishes
+            # images), boot + init, readiness check. Hive repo/ref defaults
+            # live in the action — one place to update for all consumer repos.
+            - name: Set up Hive
+              uses: System-B15/.github/actions/setup-hive@main
               with:
-                  repository: ${{ env.HIVE_REPO }}
-                  ref: ${{ env.HIVE_REF }}
-                  token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
-                  path: hive
-                  filter: blob:limit=50k
-                  persist-credentials: false
-
-            - name: Map local hostnames
-              run: |
-                  echo "127.0.0.1 hive.org" | sudo tee -a /etc/hosts
-                  echo "127.0.0.3 bluz.dev" | sudo tee -a /etc/hosts
-
-            - name: Setup Python 3.13
-              uses: actions/setup-python@v6
-              with:
+                  hive-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+                  extra-hosts: 127.0.0.3 bluz.dev
                   python-version: "3.13"
-
-            # Hive rarely changes, so cache its built prod images keyed on the
-            # checked-out Hive commit. On a hit we `docker load` and skip the
-            # multi-minute build; when feature/sso advances, the key changes and
-            # we rebuild + re-cache. No restore-keys — an inexact hit would run
-            # stale images against a newer checkout, so only an exact SHA reuses.
-            - name: Resolve Hive commit
-              id: hive_sha
-              working-directory: hive
-              run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
-            - name: Cache Hive prod images
-              id: hive_images_cache
-              uses: actions/cache@v6
-              with:
-                  path: /tmp/hive-images.tar
-                  key: hive-prod-images-v1-${{ steps.hive_sha.outputs.sha }}
-
-            - name: Load cached Hive images
-              if: steps.hive_images_cache.outputs.cache-hit == 'true'
-              run: docker load -i /tmp/hive-images.tar
-
-            # Bring Hive up in PROD mode (manage_hive.py default env) and run its
-            # init non-interactively. This inlines manage_hive.py's prod
-            # update()+init() rather than calling them, so the build can be
-            # skipped entirely on a cache hit (a plain `docker compose build`
-            # would rebuild — `docker load` restores images, not layer cache).
-            #
-            # CI adaptations vs `manage_hive.py init`:
-            #  * build_deps first on a miss — prod's update skips it, but a
-            #    source build needs the base images (hive/*-base) built.
-            #  * createsuperuser --noinput — init's is interactive and hangs.
-            #  * dev-only `frontend yarn`/`dummy_db` omitted — prod serves a
-            #    pre-built frontend and Bluz reseeds Hive via pyhive.
-            # Prod omits the dev override, so pin -f docker-compose.yaml. Hive's
-            # committed .env sets HIVE_HOSTNAME_PLAIN=hive.org, ships sample SSL
-            # keys, and its nginx publishes 80/443.
-            - name: Build & Initialize Hive
-              working-directory: hive
-              env:
-                  HIVE_CACHE_HIT: ${{ steps.hive_images_cache.outputs.cache-hit }}
-              run: |
-                  # Cap Hive's prod resource footprint for CI. Hive's committed
-                  # .env sets HIVE_CORE_WORKERS=10 × HIVE_CORE_THREADS=8 gunicorn
-                  # workers, which on a 2-vCPU runner starves the Next.js prod
-                  # build in the Bluz UI container (OOM/crash-loop → never ready).
-                  # docker-compose.yaml loads .env.override (optional) after .env.
-                  cat > .env.override <<'EOF'
-                  HIVE_CORE_WORKERS=2
-                  HIVE_CORE_THREADS=2
-                  HIVE_NGINX_WORKERS=1
-                  EOF
-                  compose="docker compose -f docker-compose.yaml"
-
-                  if [ "$HIVE_CACHE_HIT" = "true" ]; then
-                    echo "Reusing cached Hive images — skipping build."
-                  else
-                    echo "No Hive image cache — building from source."
-                    python3 manage_hive.py build_deps
-                    $compose build
-                  fi
-
-                  # Start the stack from (cached or freshly built) images. The DB
-                  # volume is not cached, so migrations + seeding run every time.
-                  $compose up -d
-                  $compose exec -T core python manage.py migrate
-                  $compose exec -T core python manage.py collectstatic --noinput
-                  $compose exec -T database sh /update.sh
-                  $compose exec -T core python manage.py service_accounts
-                  $compose exec -T core python manage.py load_tags
-                  $compose exec -T \
-                    -e DJANGO_SUPERUSER_USERNAME=admin \
-                    -e DJANGO_SUPERUSER_PASSWORD=Password1 \
-                    -e DJANGO_SUPERUSER_EMAIL=admin@hive.org \
-                    core python manage.py createsuperuser --noinput
-                  $compose exec -T core python manage.py load_programs
-
-                  # On a miss, save the runtime images so the next run reuses
-                  # them (actions/cache uploads the tar in its post step). Base
-                  # images are excluded — they are only needed to build, which a
-                  # cache hit skips.
-                  if [ "$HIVE_CACHE_HIT" != "true" ]; then
-                    imgs=$(docker images 'hive/*' --format '{{.Repository}}:{{.Tag}}' | grep -v -- '-base' || true)
-                    if [ -n "$imgs" ]; then
-                      echo "Saving Hive images for cache:"; echo "$imgs"
-                      docker save -o /tmp/hive-images.tar $imgs
-                    fi
-                  fi
-
-            - name: Wait for Hive
-              run: |
-                  for i in $(seq 1 90); do
-                    code=$(curl -ks -o /dev/null -w "%{http_code}" https://hive.org/ || true)
-                    if [ "$code" -ge 200 ] && [ "$code" -lt 500 ]; then
-                      echo "Hive is up (HTTP $code)"
-                      exit 0
-                    fi
-                    echo "Attempt $i/90 - Hive not ready yet (HTTP $code), waiting 5s..."
-                    sleep 5
-                  done
-                  echo "::error::Hive failed to become ready in time"
-                  exit 1
 
             # PyHiveLMS (pyhive) drives SSO registration + Hive seeding below.
             - name: Install Python dependencies (pyhive)
@@ -244,17 +93,8 @@ jobs:
                   openssl req -x509 -newkey rsa:4096 -keyout nginx/ssl/key.pem \
                     -out nginx/ssl/cert.pem -sha256 -days 30 -nodes -subj "/CN=bluz.dev"
 
-            - name: Setup Node.js 24
-              uses: actions/setup-node@v6
-              with:
-                  node-version: "24"
-                  cache: "npm"
-
-            - name: Install Dependencies
-              run: npm ci
-
-            - name: Install Playwright Browsers
-              run: npx playwright install chromium --with-deps
+            - name: Set up Node + Playwright
+              uses: System-B15/.github/actions/setup-playwright@main
 
             # Pre-build the test images so the pipeline's `compose up` is fast.
             # TEST_* values only satisfy compose interpolation — the pipeline
