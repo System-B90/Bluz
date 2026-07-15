@@ -4,7 +4,7 @@ import assert from "assert";
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { ClientApiError, UserNotLoggedInError } from "@/api-shared/errors";
+import { ClientApiError, ForbiddenError, UserNotLoggedInError } from "@/api-shared/errors";
 import { CACHE_CONTROL_HTTP_HEADER, IMMUTABLE_CACHE_MAX_TTL } from "@/settings";
 
 export type ApiResponseHeaders = Record<string, string>;
@@ -128,6 +128,13 @@ export function catchHandler<T extends NextRequest>(request: T, e: any) {
         );
     }
 
+    if (e instanceof ForbiddenError) {
+        return NextResponse.json(
+            { status: -1, error: { name: "ForbiddenError", message: "אין הרשאה לפעולה זו" } },
+            { status: 403 },
+        );
+    }
+
     if (e instanceof ClientApiError) {
         return ApiErrorMaker(e, 400);
     }
@@ -164,10 +171,10 @@ export function catchHandler<T extends NextRequest>(request: T, e: any) {
  */
 export function withApi<TRequest extends Request, TContext = any>(
     handler: (request: TRequest, context: TContext) => Promise<Response>,
-): (request: TRequest, context: TContext) => Promise<Response> {
-    return async (request: TRequest, context: TContext) => {
+): (request: TRequest, context?: TContext) => Promise<Response> {
+    return async (request: TRequest, context?: TContext) => {
         try {
-            return await handler(request, context);
+            return await handler(request, context as TContext);
         } catch (e) {
             return catchHandler(request as never, e);
         }

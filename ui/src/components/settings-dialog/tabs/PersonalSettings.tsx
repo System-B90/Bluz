@@ -28,6 +28,7 @@ import
 import { Class, ClassTypeEnum } from "@/api-shared/types/hive";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
+import { iconBadgeSx, settingsCardSx } from "@/components/settings-dialog/tabs/global/common/styles";
 
 type PersonalState = {
     groups: Array<string>;
@@ -128,35 +129,10 @@ const SelectionCard = memo(function SelectionCard({
 {
     return (
         <Box
-            sx={ (theme) => ({
-                flex: 1,
-                minWidth: 0,
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: "16px",
-                p: 3,
-                boxShadow: `0 8px 24px rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`,
-                bgcolor: "background.paper",
-                display: "flex",
-                flexDirection: "column",
-                gap: 3,
-                height: "100%",
-                ...theme.applyStyles("dark", {
-                    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
-                }),
-            }) }
+            sx={ { ...settingsCardSx, flex: 1, minWidth: 0, gap: 3, height: "100%" } }
         >
             <Box alignItems="center" display="flex" gap={ 1.5 }>
-                <Box
-                    sx={ {
-                        p: 1,
-                        borderRadius: "10px",
-                        bgcolor: `${colorTheme}.light`,
-                        color: `${colorTheme}.contrastText`,
-                        display: "flex",
-                        alignItems: "center",
-                    } }
-                >
+                <Box sx={ iconBadgeSx(colorTheme) }>
                     { icon }
                 </Box>
                 <Box>

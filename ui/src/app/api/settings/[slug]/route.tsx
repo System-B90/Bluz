@@ -2,8 +2,8 @@ export const dynamic = "force-dynamic";
 
 import {
     ApiSuccess,
-    catchHandler,
     ServerApiWithParams,
+    withApi,
 } from "@/api-server/common";
 import { DbSettings } from "@/api-server/db-settings";
 import {
@@ -32,46 +32,38 @@ type ServerApiSettingUpdate = ServerApiWithParams<
     { slug: string }
 >;
 
-export const GET: ServerApiSettingGet = async (request, context) => {
-    try {
-        const { slug } = await context.params;
+export const GET: ServerApiSettingGet = withApi(async (request, context) => {
+    const { slug } = await context.params;
 
-        const { controller } = await resolveIterationFromRequest(request);
-        const data = await DbSettings.get(
-            slug as SettingName,
-            undefined,
-            controller,
-        );
+    const { controller } = await resolveIterationFromRequest(request);
+    const data = await DbSettings.get(
+        slug as SettingName,
+        undefined,
+        controller,
+    );
 
-        return ApiSuccess(data);
-    } catch (e) {
-        return catchHandler(request, e);
+    return ApiSuccess(data);
+});
+
+export const POST: ServerApiSettingUpdate = withApi(async (request, context) => {
+    const { slug } = await context.params;
+    const { controller } =
+        await resolveWritableIterationFromRequest(request);
+    const value: ApiSettingUpdatePayload = await request.json();
+
+    if (slug === "prayerTimes") {
+        inplaceDateFixup(value, "shacharit");
+        inplaceDateFixup(value, "mincha");
+        inplaceDateFixup(value, "arvit");
+        await DbSettings.set(slug as SettingName, value, undefined, controller);
+
+        await updatePrayerEvents({
+            startDate: new Date(Date.now()),
+            newConfig: value as PrayerSettings,
+        });
+    } else {
+        await DbSettings.set(slug as SettingName, value, undefined, controller);
     }
-};
 
-export const POST: ServerApiSettingUpdate = async (request, context) => {
-    try {
-        const { slug } = await context.params;
-        const { controller } =
-            await resolveWritableIterationFromRequest(request);
-        const value: ApiSettingUpdatePayload = await request.json();
-
-        if (slug === "prayerTimes") {
-            inplaceDateFixup(value, "shacharit");
-            inplaceDateFixup(value, "mincha");
-            inplaceDateFixup(value, "arvit");
-            await DbSettings.set(slug as SettingName, value, undefined, controller);
-
-            await updatePrayerEvents({
-                startDate: new Date(Date.now()),
-                newConfig: value as PrayerSettings,
-            });
-        } else {
-            await DbSettings.set(slug as SettingName, value, undefined, controller);
-        }
-
-        return ApiSuccess();
-    } catch (e) {
-        return catchHandler(request, e);
-    }
-};
+    return ApiSuccess();
+});

@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
+import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { DbIterations } from "@/api-server/db-iterations";
 import { DbRoomExtendedInfo } from "@/api-server/db-room-extended-info";
 import { DbRooms } from "@/api-server/db-rooms";
@@ -41,97 +41,77 @@ type ServerApiRoomExtendedInfoUpdate = ServerApi<
     ApiRoomExtendedInfoUpdateResponse
 >;
 
-export const GET: ServerApiRoomsGet = async (request) => {
-    try {
-        const { controller, iterationId } =
-            await resolveIterationFromRequest(request);
-        // Past iterations point at a different Hive instance; fall back to the
-        // names cached at creation if that instance is unreachable.
-        const iteration = iterationId
-            ? await DbIterations.get(iterationId)
-            : null;
-        const rooms = await getAllRooms(
-            controller,
-            iteration?.hiveUrl,
-            iteration?.hiveCache,
+export const GET: ServerApiRoomsGet = withApi(async (request) => {
+    const { controller, iterationId } =
+        await resolveIterationFromRequest(request);
+    // Past iterations point at a different Hive instance; fall back to the
+    // names cached at creation if that instance is unreachable.
+    const iteration = iterationId
+        ? await DbIterations.get(iterationId)
+        : null;
+    const rooms = await getAllRooms(
+        controller,
+        iteration?.hiveUrl,
+        iteration?.hiveCache,
+    );
+    return ApiSuccess(rooms);
+});
+
+export const POST: ServerApiRoomUpdate = withApi(async (request) => {
+    const { controller } =
+        await resolveWritableIterationFromRequest(request);
+    const room = await request.json();
+    if (!room) {
+        throw new ClientApiError("No data provided!");
+    }
+    await DbRooms.set(room, undefined, controller);
+    return ApiSuccess(room);
+});
+
+export const PUT: ServerApiRoomCreate = withApi(async (request) => {
+    const { controller } =
+        await resolveWritableIterationFromRequest(request);
+    const room = await request.json();
+    if (!room) {
+        throw new ClientApiError("No data provided!");
+    }
+    if (!room.id) {
+        throw new ClientApiError("Room id is not provided!");
+    }
+    const createdRoom = await DbRooms.create(room, controller);
+    return ApiSuccess(createdRoom);
+});
+
+export const DELETE: ServerApiRoomDelete = withApi(async (request) => {
+    const { controller } =
+        await resolveWritableIterationFromRequest(request);
+    const roomId = await request.json();
+    if (!roomId) {
+        throw new ClientApiError("No roomId provided!");
+    }
+    await DbRooms.del(roomId, controller);
+    return ApiSuccess();
+});
+
+export const PATCH: ServerApiRoomExtendedInfoUpdate = withApi(async (request) => {
+    const { controller } =
+        await resolveWritableIterationFromRequest(request);
+    const payload = await request.json();
+    if (
+        !payload ||
+        payload.roomId === undefined ||
+        payload.roomSource === undefined ||
+        !payload.extendedInfo
+    ) {
+        throw new ClientApiError(
+            "Invalid payload for room extended info update!",
         );
-        return ApiSuccess(rooms);
-    } catch (e) {
-        return catchHandler(request, e);
     }
-};
-
-export const POST: ServerApiRoomUpdate = async (request) => {
-    try {
-        const { controller } =
-            await resolveWritableIterationFromRequest(request);
-        const room = await request.json();
-        if (!room) {
-            throw new ClientApiError("No data provided!");
-        }
-        await DbRooms.set(room, undefined, controller);
-        return ApiSuccess(room);
-    } catch (e) {
-        return catchHandler(request, e);
-    }
-};
-
-export const PUT: ServerApiRoomCreate = async (request) => {
-    try {
-        const { controller } =
-            await resolveWritableIterationFromRequest(request);
-        const room = await request.json();
-        if (!room) {
-            throw new ClientApiError("No data provided!");
-        }
-        if (!room.id) {
-            throw new ClientApiError("Room id is not provided!");
-        }
-        const createdRoom = await DbRooms.create(room, controller);
-        return ApiSuccess(createdRoom);
-    } catch (e) {
-        return catchHandler(request, e);
-    }
-};
-
-export const DELETE: ServerApiRoomDelete = async (request) => {
-    try {
-        const { controller } =
-            await resolveWritableIterationFromRequest(request);
-        const roomId = await request.json();
-        if (!roomId) {
-            throw new ClientApiError("No roomId provided!");
-        }
-        await DbRooms.del(roomId, controller);
-        return ApiSuccess();
-    } catch (e) {
-        return catchHandler(request, e);
-    }
-};
-
-export const PATCH: ServerApiRoomExtendedInfoUpdate = async (request) => {
-    try {
-        const { controller } =
-            await resolveWritableIterationFromRequest(request);
-        const payload = await request.json();
-        if (
-            !payload ||
-            payload.roomId === undefined ||
-            payload.roomSource === undefined ||
-            !payload.extendedInfo
-        ) {
-            throw new ClientApiError(
-                "Invalid payload for room extended info update!",
-            );
-        }
-        await DbRoomExtendedInfo.upsert(
-            payload.roomId,
-            payload.roomSource,
-            payload.extendedInfo,
-            controller,
-        );
-        return ApiSuccess();
-    } catch (e) {
-        return catchHandler(request, e);
-    }
-};
+    await DbRoomExtendedInfo.upsert(
+        payload.roomId,
+        payload.roomSource,
+        payload.extendedInfo,
+        controller,
+    );
+    return ApiSuccess();
+});

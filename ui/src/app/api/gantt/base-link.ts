@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { ApiSuccess, withApi } from "@/api-server/common";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiT } from "@/api-shared/types/gantt/api-layer";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
@@ -24,58 +25,52 @@ export type RouteContext = {
 export function buildGantLinkRoutes<TEntity extends BaseGantItem>({
     dbSet,
 }: BuildGantLinkRoutesProps<TEntity>) {
-    async function POST(request: NextRequest, context: RouteContext) {
-        try {
-            const { id } = await context.params;
-            if (!id) {
-                throw new ClientApiError(
-                    "Item identifier (id) is missing from the request parameters.",
-                );
-            }
-
-            const textBody = await request.text();
-            if (!textBody) {
-                throw new ClientApiError("Payload cannot be empty.");
-            }
-
-            const { newParentId } = JSON.parse(textBody) as {
-                newParentId: string;
-            };
-            const linkedItem = await dbSet.linkItem(
-                newParentId,
-                id as TEntity["id"],
+    const POST = withApi(async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id } = await context.params;
+        if (!id) {
+            throw new ClientApiError(
+                "Item identifier (id) is missing from the request parameters.",
             );
-
-            return ApiSuccess(linkedItem);
-        } catch (error) {
-            return catchHandler(request, error);
         }
-    }
 
-    async function DELETE(request: NextRequest, context: RouteContext) {
-        try {
-            const { id } = await context.params;
-            if (!id) {
-                throw new ClientApiError(
-                    "Item identifier (id) is missing from the request parameters.",
-                );
-            }
-
-            const textBody = await request.text();
-            if (!textBody) {
-                throw new ClientApiError("Payload cannot be empty.");
-            }
-
-            const { oldParentId } = JSON.parse(textBody) as {
-                oldParentId: string;
-            };
-            await dbSet.unlinkItem(oldParentId, id as TEntity["id"]);
-
-            return ApiSuccess({ unlinked: true, id: id });
-        } catch (error) {
-            return catchHandler(request, error);
+        const textBody = await request.text();
+        if (!textBody) {
+            throw new ClientApiError("Payload cannot be empty.");
         }
-    }
+
+        const { newParentId } = JSON.parse(textBody) as {
+            newParentId: string;
+        };
+        const linkedItem = await dbSet.linkItem(
+            newParentId,
+            id as TEntity["id"],
+        );
+
+        return ApiSuccess(linkedItem);
+    });
+
+    const DELETE = withApi(async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id } = await context.params;
+        if (!id) {
+            throw new ClientApiError(
+                "Item identifier (id) is missing from the request parameters.",
+            );
+        }
+
+        const textBody = await request.text();
+        if (!textBody) {
+            throw new ClientApiError("Payload cannot be empty.");
+        }
+
+        const { oldParentId } = JSON.parse(textBody) as {
+            oldParentId: string;
+        };
+        await dbSet.unlinkItem(oldParentId, id as TEntity["id"]);
+
+        return ApiSuccess({ unlinked: true, id: id });
+    });
 
     return {
         POST,

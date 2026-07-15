@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { ApiSuccess, withApi } from "@/api-server/common";
 import { DbCalendarSnapshot } from "@/api-server/db-calendar-snapshot";
 import { resolveWritableIterationFromRequest } from "@/api-server/iteration-request";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 
 /**
@@ -14,6 +15,7 @@ import { ClientApiError } from "@/api-shared/errors";
  * WebSocket broadcasts.
  */
 export const POST = withApi(async (request: Request) => {
+    await requireStaffSession();
     const url = new URL(request.url);
     const id = url.searchParams.get("id");
     if (!id) {

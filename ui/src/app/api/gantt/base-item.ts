@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { ApiSuccess, withApi } from "@/api-server/common";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 import { BasicGantOperations } from "@/app/api/gantt/base-collection";
@@ -32,6 +33,7 @@ export function buildGantItemRoutes<
 >({ dbSet }: BuildGantItemRoutesProps<TEntity, TCreatePayload>) {
     const GET = withApi(
         async (_request: NextRequest, context: RouteContext) => {
+            await requireStaffSession();
             const id = await resolveItemId(context);
             const item = await dbSet.getItem(id as TEntity["id"]);
             return ApiSuccess(item);
@@ -40,6 +42,7 @@ export function buildGantItemRoutes<
 
     const PATCH = withApi(
         async (request: NextRequest, context: RouteContext) => {
+            await requireStaffSession();
             const id = await resolveItemId(context);
 
             const textBody = await request.text();
@@ -67,6 +70,7 @@ export function buildGantItemRoutes<
 
     const DELETE = withApi(
         async (_request: NextRequest, context: RouteContext) => {
+            await requireStaffSession();
             const id = await resolveItemId(context);
             await dbSet.deleteItem(id as TEntity["id"]);
             return ApiSuccess({ deleted: true, id: id });

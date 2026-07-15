@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { ApiSuccess, withApi } from "@/api-server/common";
 import { getCurriculumExecution } from "@/api-server/gantt/execution";
 import { ClientApiError } from "@/api-shared/errors";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
@@ -16,16 +16,12 @@ type RouteContext = {
  * gantt plan and the schedule events cut from it. Not-yet-cut curriculums
  * (or ones with no linked iteration) return `{ events: {} }` with a 200.
  */
-export async function GET(request: NextRequest, context: RouteContext) {
-    try {
-        const { id } = await context.params;
-        if (!id) throw new ClientApiError("Curriculum ID is missing.");
+export const GET = withApi(async (request: NextRequest, context: RouteContext) => {
+    const { id } = await context.params;
+    if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
-        const execution = await getCurriculumExecution(
-            id as GanttCurriculumId,
-        );
-        return ApiSuccess(execution);
-    } catch (error) {
-        return catchHandler(request, error);
-    }
-}
+    const execution = await getCurriculumExecution(
+        id as GanttCurriculumId,
+    );
+    return ApiSuccess(execution);
+});

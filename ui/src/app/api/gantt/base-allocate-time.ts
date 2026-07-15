@@ -7,7 +7,8 @@
 
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, catchHandler } from "@/api-server/common";
+import { ApiSuccess, withApi } from "@/api-server/common";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     BaseGantItem,
@@ -38,59 +39,53 @@ export type RouteContext = {
 export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
     dbSet,
 }: BuildGantAllocateTimeRoutesProps<TEntity>) {
-    async function GET(request: NextRequest, context: RouteContext) {
-        try {
-            const { id } = await context.params;
-            const { searchParams } = new URL(request.url);
-            const containerId = searchParams.get("containerId");
+    const GET = withApi(async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id } = await context.params;
+        const { searchParams } = new URL(request.url);
+        const containerId = searchParams.get("containerId");
 
-            if (!id || !containerId) {
-                throw new ClientApiError(
-                    "Both event id and containerId are required.",
-                );
-            }
-
-            const duration = await dbSet.getAllocatedTime(
-                id as GanttEventId,
-                containerId,
+        if (!id || !containerId) {
+            throw new ClientApiError(
+                "Both event id and containerId are required.",
             );
-
-            return ApiSuccess(duration);
-        } catch (error) {
-            return catchHandler(request, error);
         }
-    }
 
-    async function POST(request: NextRequest, context: RouteContext) {
-        try {
-            const { id } = await context.params;
-            if (!id) {
-                throw new ClientApiError("Item identifier (id) is missing.");
-            }
+        const duration = await dbSet.getAllocatedTime(
+            id as GanttEventId,
+            containerId,
+        );
 
-            const body = await request.json(); // Use .json() instead of parsing .text()
-            const { containerId, duration } = body as {
-                containerId: BaseGantItem["id"];
-                duration: number;
-            };
+        return ApiSuccess(duration);
+    });
 
-            if (!containerId || typeof duration !== "number") {
-                throw new ClientApiError(
-                    "Invalid payload: containerId and duration (number) are required.",
-                );
-            }
+    const POST = withApi(async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id } = await context.params;
+        if (!id) {
+            throw new ClientApiError("Item identifier (id) is missing.");
+        }
 
-            await dbSet.setAllocatedTime(
-                id as GanttEventId,
-                containerId,
-                duration,
+        const body = await request.json(); // Use .json() instead of parsing .text()
+        const { containerId, duration } = body as {
+            containerId: BaseGantItem["id"];
+            duration: number;
+        };
+
+        if (!containerId || typeof duration !== "number") {
+            throw new ClientApiError(
+                "Invalid payload: containerId and duration (number) are required.",
             );
-
-            return ApiSuccess({ success: true });
-        } catch (error) {
-            return catchHandler(request, error);
         }
-    }
+
+        await dbSet.setAllocatedTime(
+            id as GanttEventId,
+            containerId,
+            duration,
+        );
+
+        return ApiSuccess({ success: true });
+    });
 
     return {
         GET,

@@ -1,3 +1,5 @@
+name: bluz
+
 services:
     proxy:
         image: ghcr.io/system-b15/bluz/proxy:${BLUZ_VERSION:-latest}

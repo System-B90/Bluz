@@ -70,3 +70,10 @@ export class HiveClientError extends ClientApiError {
         this.name = "HiveClientError";
     }
 }
+
+export class ForbiddenError extends ClientApiError {
+    constructor(message?: string) {
+        super(message);
+        this.name = "ForbiddenError";
+    }
+}

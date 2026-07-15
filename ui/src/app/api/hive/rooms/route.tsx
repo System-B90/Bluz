@@ -1,4 +1,4 @@
-import { ApiSuccess, catchHandler, ServerApi } from "@/api-server/common";
+import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { createHiveClient } from "@/api-server/hive/session-client";
 import {
     ApiHiveRoomsGetPayload,
@@ -10,13 +10,9 @@ type ServerApiHiveRoomsGet = ServerApi<
     ApiHiveRoomsGetResponse
 >;
 
-export const GET: ServerApiHiveRoomsGet = async (request) => {
-    try {
-        const hiveClient = await createHiveClient();
-        const data = await hiveClient.getRooms();
+export const GET: ServerApiHiveRoomsGet = withApi(async (request) => {
+    const hiveClient = await createHiveClient();
+    const data = await hiveClient.getRooms();
 
-        return ApiSuccess(data);
-    } catch (e) {
-        return catchHandler(request, e);
-    }
-};
+    return ApiSuccess(data);
+});

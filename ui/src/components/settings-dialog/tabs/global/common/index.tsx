@@ -1,7 +1,8 @@
 import Box from "@mui/material/Box";
-import type { SxProps, Theme } from "@mui/material/styles";
 
 import { FormCardBaseProps } from "@/components/settings-dialog/tabs/global/common/FormCard";
+
+export { iconBadgeSx, settingsCardSx } from "@/components/settings-dialog/tabs/global/common/styles";
 
 export type ListCardBaseProps<TEntity> = {
     filteredEntities: Array<TEntity>;
@@ -48,21 +49,5 @@ export function SettingsTab<TEntity, FormCardProps extends Omit<FormCardBaseProp
         </Box>
     );
 }
-
-export const settingsCardSx: SxProps<Theme> = {
-    minWidth: 0,
-    border: "1px solid",
-    borderColor: "divider",
-    borderRadius: "16px",
-    p: 3,
-    boxShadow: (theme) =>
-        theme.palette.mode === "light"
-            ? `0 8px 24px rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`
-            : "0 8px 24px rgba(0, 0, 0, 0.2)",
-    bgcolor: "background.paper",
-    display: "flex",
-    flexDirection: "column",
-    gap: 2.5,
-};
 
 export * from "@/components/settings-dialog/tabs/global/common/BaseTimeSettingsCard";
