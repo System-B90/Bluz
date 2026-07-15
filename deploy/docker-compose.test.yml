@@ -6,6 +6,8 @@
 #   npx playwright test
 #   docker compose -f docker-compose.yml -f docker-compose.test.yml down -v
 
+name: bluz
+
 services:
     ui:
         build:

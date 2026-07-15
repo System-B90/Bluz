@@ -8,11 +8,9 @@ import
     Modifier,
     useDroppable,
 } from "@dnd-kit/core";
-import AddIcon from "@mui/icons-material/Add";
 import LayersIcon from "@mui/icons-material/Layers";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
@@ -22,6 +20,8 @@ import { Course } from "@/api-shared/types/course";
 import { CourseUser } from "@/api-shared/types/hive";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
+import { SettingsAddButton } from "@/components/settings-dialog/tabs/global/common/AddButton";
+import { iconBadgeSx, settingsCardSx } from "@/components/settings-dialog/tabs/global/common/styles";
 import { CourseItem } from "@/components/settings-dialog/tabs/global/course-settings/CourseItem";
 import
 {
@@ -334,20 +334,14 @@ export function CourseSettings()
         >
             <Box
                 sx={ {
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: "16px",
-                    boxShadow: (theme) =>
-                        theme.palette.mode === "light"
-                            ? `0 8px 24px rgb(${theme.vars.palette.primary.mainChannel} / 0.04)`
-                            : "0 8px 24px rgba(0, 0, 0, 0.2)",
-                    bgcolor: "background.paper",
-                    display: "flex",
+                    ...settingsCardSx,
                     flexDirection: "row",
                     height: "100%",
                     minHeight: 380,
                     overflow: "hidden",
                     alignItems: "stretch",
+                    p: 0,
+                    gap: 0,
                 } }
             >
                 {/* Available Instructors Side Drawer Panel */ }
@@ -365,16 +359,7 @@ export function CourseSettings()
                 >
                     {/* Header */ }
                     <Box alignItems="center" display="flex" gap={ 1.5 } mb={ 2.5 }>
-                        <Box
-                            sx={ {
-                                p: 1,
-                                borderRadius: "10px",
-                                bgcolor: "secondary.light",
-                                color: "secondary.contrastText",
-                                display: "flex",
-                                alignItems: "center",
-                            } }
-                        >
+                        <Box sx={ iconBadgeSx("secondary") }>
                             <LayersIcon className="text-[20px]" />
                         </Box>
                         <Box>
@@ -447,28 +432,9 @@ export function CourseSettings()
                         } }
                     >
                         {/* Create Course Button */ }
-                        <Button
-                            color="secondary"
-                            onClick={ handleCreate }
-                            startIcon={ <AddIcon className="me-1" /> }
-                            sx={ {
-                                flex: 1,
-                                borderRadius: "10px",
-                                py: 1,
-                                fontWeight: 700,
-                                fontSize: "0.82rem",
-                                boxShadow: "0 4px 12px rgb(var(--mui-palette-secondary-mainChannel) / 0.1)",
-                                transition: "all 0.2s ease",
-                                "&:hover": {
-                                    transform: "translateY(-1px)",
-                                    boxShadow:
-                                        "0 6px 16px rgb(var(--mui-palette-secondary-mainChannel) / 0.2)",
-                                },
-                            } }
-                            variant="contained"
-                        >
-                            יצירת מסלול ראשי חדש
-                        </Button>
+                        <Box sx={ { flex: 1, display: "flex" } }>
+                            <SettingsAddButton label="יצירת מסלול ראשי חדש" onClick={ handleCreate } />
+                        </Box>
 
                         {/* Un-nest / Move to Root Droppable Area */ }
                         { courses.some((c) => c.parentId) ? (
