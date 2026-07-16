@@ -1,7 +1,7 @@
 import {
     createHiveClient as createHiveClientShared,
     createHiveClientFromSession as createHiveClientFromSessionShared,
-} from "@system-b15/hive-nextauth";
+} from "@system-b90/hive-nextauth";
 
 import { HiveClient } from "@/api-server/hive/client";
 import { authOptions } from "@/api-server/hive/sso";

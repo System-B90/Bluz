@@ -1,6 +1,6 @@
 /*
  * Connection config, HMAC tickets, and the server core now live in
- * @system-b15/session-ws; this module remains the app-side import path
+ * @system-b90/session-ws; this module remains the app-side import path
  * (barrelled through `@/settings`) and keeps Bluz's wire vocabulary.
  */
 export {
@@ -14,11 +14,11 @@ export {
     WEBSOCKET_SESSION_SERVER_HOST,
     WEBSOCKET_SESSION_SERVER_PORT,
     WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
-} from "@system-b15/session-ws";
+} from "@system-b90/session-ws";
 
 /**
  * Bluz's complete wire vocabulary. The first four values mirror
- * CoreMessageTypes from @system-b15/session-ws (handled by the server core);
+ * CoreMessageTypes from @system-b90/session-ws (handled by the server core);
  * the rest are Bluz-specific broadcast types.
  */
 export enum MessageTypes {

@@ -1,7 +1,7 @@
 import {
     ClassTypeEnum,
     HiveClient as HiveClientBase,
-} from "@system-b15/hive-core";
+} from "@system-b90/hive-core";
 
 import {
     Class,
@@ -14,12 +14,12 @@ import { Module } from "@/api-shared/types/module";
 import { HiveRoom, RoomSource } from "@/api-shared/types/room";
 import { Subject } from "@/api-shared/types/subject";
 
-export { isTimeoutError } from "@system-b15/hive-core";
+export { isTimeoutError } from "@system-b90/hive-core";
 
 /**
  * Bluz's Hive client: the request core (token refresh, 401 retry, 500
  * backoff, cookie-auth fetch, users/classes) lives in
- * `@system-b15/hive-core`; this subclass adds the scheduling endpoints.
+ * `@system-b90/hive-core`; this subclass adds the scheduling endpoints.
  */
 export class HiveClient extends HiveClientBase {
     override async getClasses(): Promise<Array<Class>> {

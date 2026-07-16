@@ -15,7 +15,7 @@
     "*.{json,css,md}": "prettier --write"
   },
   "dependencies": {
-    "@system-b15/session-ws": "^0.1.0",
+    "@system-b90/session-ws": "^0.1.0",
     "tsx": "^4.23.0",
     "typescript": "^6.0.3",
     "ws": "^8.21.0"

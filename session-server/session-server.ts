@@ -1,9 +1,9 @@
 /*
- * Thin entry over the shared server core (@system-b15/session-ws/server):
+ * Thin entry over the shared server core (@system-b90/session-ws/server):
  * ticket-authenticated connects, session/sync registries, heartbeat, and
  * graceful shutdown live in the package; Bluz plugs in its lock-relay types.
  */
-import { startSessionServer } from "@system-b15/session-ws/server";
+import { startSessionServer } from "@system-b90/session-ws/server";
 
 import { MessageTypes } from "./session-common";
 

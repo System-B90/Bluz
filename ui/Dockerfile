@@ -3,7 +3,7 @@ FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# GitHub Packages read token for @system-b15/* (npm resolves ${NPM_TOKEN} from env)
+# GitHub Packages read token for @system-b90/* (npm resolves ${NPM_TOKEN} from env)
 ARG NPM_TOKEN
 ENV NPM_TOKEN=${NPM_TOKEN}
 

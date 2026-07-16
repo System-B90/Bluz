@@ -1,9 +1,9 @@
-import { Class, CourseUser, Lesson } from "@system-b15/hive-core";
+import { Class, CourseUser, Lesson } from "@system-b90/hive-core";
 
 import { HiveRoom } from "@/api-shared/types/room";
 
 /*
- * Hive entity types now live in @system-b15/hive-core; this module remains
+ * Hive entity types now live in @system-b90/hive-core; this module remains
  * the app-side import path (`@/api-shared/types/hive`) and keeps the
  * Bluz-specific API payload/response aliases.
  */
@@ -14,7 +14,7 @@ export {
     GenderEnum,
     QueueType,
     StatusEnum,
-} from "@system-b15/hive-core";
+} from "@system-b90/hive-core";
 export type {
     Class,
     CourseUser,
@@ -23,7 +23,7 @@ export type {
     LessonRule,
     LessonRuleRequest,
     Queue,
-} from "@system-b15/hive-core";
+} from "@system-b90/hive-core";
 
 export type ApiHiveStudentsGetPayload = void;
 export type ApiHiveStudentsGetResponse = Array<CourseUser>;

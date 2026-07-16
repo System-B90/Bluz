@@ -1,5 +1,5 @@
 /*
- * Shared error hierarchy now lives in @system-b15/hive-core; this module
+ * Shared error hierarchy now lives in @system-b90/hive-core; this module
  * remains the app-side import path (`@/api-shared/errors`).
  */
 export {
@@ -13,4 +13,4 @@ export {
     OperationAborted,
     ServerNetworkError,
     UserNotLoggedInError,
-} from "@system-b15/hive-core";
+} from "@system-b90/hive-core";

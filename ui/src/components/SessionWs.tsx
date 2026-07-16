@@ -1,16 +1,16 @@
 /*
- * The WS client hook now lives in @system-b15/session-ws/react; this module
+ * The WS client hook now lives in @system-b90/session-ws/react; this module
  * remains the app-side import path and binds the generic hook to Bluz's
  * MessageTypes vocabulary.
  */
 import {
     MessageHandlerType as SharedMessageHandlerType,
     useSessionWebSocketContext as useSharedSessionWebSocketContext,
-} from "@system-b15/session-ws/react";
+} from "@system-b90/session-ws/react";
 
 import { MessageTypes } from "@/settings";
 
-export { useMessageHandler } from "@system-b15/session-ws/react";
+export { useMessageHandler } from "@system-b90/session-ws/react";
 
 /**
  * Handler callback for processing incoming WebSocket messages on the client.
