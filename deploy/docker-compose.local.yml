@@ -2,7 +2,7 @@ name: bluz
 
 services:
     proxy:
-        image: ghcr.io/system-b15/bluz/proxy:${BLUZ_VERSION:-latest}
+        image: ghcr.io/system-b90/bluz/proxy:${BLUZ_VERSION:-latest}
         container_name: bluz-proxy-local
         restart: unless-stopped
         build:

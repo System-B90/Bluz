@@ -2,7 +2,7 @@ name: bluz
 
 services:
     ui:
-        image: ghcr.io/system-b15/bluz/ui:${BLUZ_VERSION:-latest}
+        image: ghcr.io/system-b90/bluz/ui:${BLUZ_VERSION:-latest}
         build:
             context: ./../
             dockerfile: ui/Dockerfile
@@ -72,7 +72,7 @@ services:
             start_period: 20s
 
     sessions:
-        image: ghcr.io/system-b15/bluz/sessions:${BLUZ_VERSION:-latest}
+        image: ghcr.io/system-b90/bluz/sessions:${BLUZ_VERSION:-latest}
         build:
             context: ../session-server
             dockerfile: Dockerfile.websocket
@@ -84,7 +84,7 @@ services:
             - bluz_net
 
     proxy:
-        image: ghcr.io/system-b15/bluz/proxy:${BLUZ_VERSION:-latest}
+        image: ghcr.io/system-b90/bluz/proxy:${BLUZ_VERSION:-latest}
         container_name: bluz-proxy
         restart: unless-stopped
         build:

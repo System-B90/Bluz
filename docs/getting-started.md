@@ -14,7 +14,7 @@ This guide walks you through setting up a Bluz development environment.
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/system-b15/bluz.git
+git clone https://github.com/system-b90/bluz.git
 cd bluz
 npm ci
 ```
