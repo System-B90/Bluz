@@ -1,113 +1,61 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
+import { CreateGanttSyllabusPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
     GanttCurriculumId,
     GanttSyllabus,
-    GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
-import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
+import { makeEntityActions } from "@/components/gantt/state/hooks/gantt-funcs/MakeEntityActions";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export function useSyllabusActions() {
     const { dispatch } = useCurriculumProviderActions();
 
+    const actions = useMemo(
+        () =>
+            makeEntityActions<
+                GanttSyllabus,
+                GanttCurriculumId,
+                CreateGanttSyllabusPayload
+            >({
+                api: ganttApi.syllabus,
+                dispatch,
+                label: "syllabus",
+                containerLabel: "curriculum",
+                builders: {
+                    add: (syllabus, curriculumId) => ({
+                        type: "ADD_SYLLABUS",
+                        payload: { syllabus, curriculumId },
+                    }),
+                    update: (id, updates) => ({
+                        type: "UPDATE_SYLLABUS",
+                        payload: { id, updates },
+                    }),
+                    remove: (curriculumId, syllabusId) => ({
+                        type: "REMOVE_SYLLABUS",
+                        payload: { curriculumId, syllabusId },
+                    }),
+                },
+            }),
+        [dispatch],
+    );
+
     const createSyllabus = useCallback(
-        async (
+        (
             title: string,
             curriculumId: GanttCurriculumId,
             hiveIds: Array<number> = [],
-        ) => {
-            return await withGantErrorHandling(async () => {
-                const newSyllabus = await ganttApi.syllabus.apiCreate({
-                    title,
-                    curriculumId,
-                    hiveIds,
-                });
-                dispatch({
-                    type: "ADD_SYLLABUS",
-                    payload: { syllabus: newSyllabus, curriculumId },
-                });
-                return newSyllabus;
-            }, "Failed to create syllabus:");
-        },
-        [dispatch],
-    );
-
-    const updateSyllabus = useCallback(
-        async (id: GanttSyllabusId, updates: Partial<GanttSyllabus>) => {
-            return await withGantErrorHandling(async () => {
-                const updatedSyllabus = await ganttApi.syllabus.apiUpdate({
-                    id,
-                    ...updates,
-                });
-                dispatch({
-                    type: "UPDATE_SYLLABUS",
-                    payload: { id, updates: updatedSyllabus },
-                });
-                return updatedSyllabus;
-            }, `Failed to update syllabus (ID: ${id}):`);
-        },
-        [dispatch],
-    );
-
-    const deleteSyllabus = useCallback(
-        async (
-            curriculumId: GanttCurriculumId,
-            syllabusId: GanttSyllabusId,
-        ) => {
-            return await withGantErrorHandling(async () => {
-                await ganttApi.syllabus.apiDelete(syllabusId);
-                dispatch({
-                    type: "REMOVE_SYLLABUS",
-                    payload: { curriculumId, syllabusId },
-                });
-            }, `Failed to remove syllabus (ID: ${syllabusId}):`);
-        },
-        [dispatch],
-    );
-
-    const linkSyllabusToCurriculum = useCallback(
-        async (
-            curriculumId: GanttCurriculumId,
-            syllabusId: GanttSyllabusId,
-        ) => {
-            return await withGantErrorHandling(async () => {
-                const linkedSyllabus = await ganttApi.syllabus.apiLink(
-                    syllabusId,
-                    curriculumId,
-                );
-                dispatch({
-                    type: "ADD_SYLLABUS",
-                    payload: { syllabus: linkedSyllabus, curriculumId },
-                });
-                return linkedSyllabus;
-            }, `Failed to link syllabus (ID: ${syllabusId}) to curriculum (ID: ${curriculumId}):`);
-        },
-        [dispatch],
-    );
-
-    const unlinkSyllabusFromCurriculum = useCallback(
-        async (
-            curriculumId: GanttCurriculumId,
-            syllabusId: GanttSyllabusId,
-        ) => {
-            return await withGantErrorHandling(async () => {
-                await ganttApi.syllabus.apiUnlink(syllabusId, curriculumId);
-                dispatch({
-                    type: "REMOVE_SYLLABUS",
-                    payload: { syllabusId, curriculumId },
-                });
-            }, `Failed to unlink syllabus (ID: ${syllabusId}) from curriculum (ID: ${curriculumId}):`);
-        },
-        [dispatch],
+        ) =>
+            actions.create({ title, curriculumId, hiveIds }, curriculumId),
+        [actions],
     );
 
     return {
         createSyllabus,
-        updateSyllabus,
-        deleteSyllabus,
-        linkSyllabusToCurriculum,
-        unlinkSyllabusFromCurriculum,
+        updateSyllabus: actions.update,
+        deleteSyllabus: actions.remove,
+        linkSyllabusToCurriculum: actions.link,
+        unlinkSyllabusFromCurriculum: actions.unlink,
     } as const;
 }
