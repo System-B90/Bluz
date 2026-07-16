@@ -5,7 +5,7 @@
 **Do not open a public issue for security problems.**
 
 Report privately via
-[GitHub Security Advisories](https://github.com/System-B15/Bluz/security/advisories/new)
+[GitHub Security Advisories](https://github.com/System-B90/Bluz/security/advisories/new)
 ("Report a vulnerability"). Include reproduction steps, impact, and the affected
 surface (Calendar, Gantt, Auth/SSO, session server, CLI, or infra).
 
