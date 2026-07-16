@@ -1,31 +1,65 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
+import { CreateGanttEventPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
     EventRecurrence,
-    GanttCurriculumId,
     GanttEvent,
     GanttEventId,
     GanttModuleId,
     ModuleEventType,
     RoomRequirement,
 } from "@/api-shared/types/gantt/models";
+import { makeEntityActions } from "@/components/gantt/state/hooks/gantt-funcs/MakeEntityActions";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 
 export function useModuleEventActions() {
     const { dispatch } = useCurriculumProviderActions();
 
+    const actions = useMemo(
+        () =>
+            makeEntityActions<
+                GanttEvent,
+                GanttModuleId,
+                CreateGanttEventPayload
+            >({
+                api: ganttApi.event,
+                dispatch,
+                label: "event",
+                containerLabel: "module",
+                builders: {
+                    add: (event, moduleId) => ({
+                        type: "ADD_EVENT",
+                        payload: { event, moduleId },
+                    }),
+                    update: (id, updates) => ({
+                        type: "UPDATE_EVENT",
+                        payload: { id, updates },
+                    }),
+                    remove: (moduleId, eventId) => ({
+                        type: "REMOVE_EVENT",
+                        payload: { moduleId, eventId },
+                    }),
+                    allocateTime: (eventId, curriculumId, duration) => ({
+                        type: "ALLOCATE_TIME",
+                        payload: { eventId, curriculumId, duration },
+                    }),
+                },
+            }),
+        [dispatch],
+    );
+
     const createEvent = useCallback(
-        async (
+        (
             title: string,
             moduleId: GanttModuleId,
             type: ModuleEventType = ModuleEventType.Lecture,
             minimumDuration: number = 0,
             allocatedDuration: number = 0,
-        ) => {
-            return await withGantErrorHandling(async () => {
-                const newEvent = await ganttApi.event.apiCreate({
+        ) =>
+            actions.create(
+                {
                     title,
                     moduleId,
                     type,
@@ -42,100 +76,10 @@ export function useModuleEventActions() {
                     hiveSubjectId: null,
                     hiveModuleId: null,
                     hiveLessonId: null,
-                });
-                dispatch({
-                    type: "ADD_EVENT",
-                    payload: { event: newEvent, moduleId },
-                });
-                return newEvent;
-            }, "Failed to create event:");
-        },
-        [dispatch],
-    );
-
-    const updateEvent = useCallback(
-        async (id: GanttEventId, updates: Partial<GanttEvent>) => {
-            return await withGantErrorHandling(async () => {
-                const updatedEvent = await ganttApi.event.apiUpdate({
-                    id,
-                    ...updates,
-                });
-                dispatch({
-                    type: "UPDATE_EVENT",
-                    payload: { id, updates: updatedEvent },
-                });
-                return updatedEvent;
-            }, `Failed to update event (ID: ${id}):`);
-        },
-        [dispatch],
-    );
-
-    const deleteEvent = useCallback(
-        async (moduleId: GanttModuleId, eventId: GanttEventId) => {
-            return await withGantErrorHandling(async () => {
-                await ganttApi.event.apiDelete(eventId);
-                dispatch({
-                    type: "REMOVE_EVENT",
-                    payload: { moduleId, eventId },
-                });
-            }, `Failed to remove event (ID: ${eventId}):`);
-        },
-        [dispatch],
-    );
-
-    const linkEventToModule = useCallback(
-        async (moduleId: GanttModuleId, eventId: GanttEventId) => {
-            return await withGantErrorHandling(async () => {
-                const linkedEvent = await ganttApi.event.apiLink(
-                    eventId,
-                    moduleId,
-                );
-                dispatch({
-                    type: "ADD_EVENT",
-                    payload: { event: linkedEvent, moduleId },
-                });
-                return linkedEvent;
-            }, `Failed to link event (ID: ${eventId}) to module (ID: ${moduleId}):`);
-        },
-        [dispatch],
-    );
-
-    const unlinkEventFromModule = useCallback(
-        async (moduleId: GanttModuleId, eventId: GanttEventId) => {
-            return await withGantErrorHandling(async () => {
-                await ganttApi.event.apiUnlink(eventId, moduleId);
-                dispatch({
-                    type: "REMOVE_EVENT",
-                    payload: { eventId, moduleId },
-                });
-            }, `Failed to unlink event (ID: ${eventId}) from module (ID: ${moduleId}):`);
-        },
-        [dispatch],
-    );
-
-    const allocateTimeToModuleEvent = useCallback(
-        async (
-            eventId: GanttEventId,
-            curriculumId: GanttCurriculumId,
-            allocatedDuration: number,
-        ) => {
-            return await withGantErrorHandling(async () => {
-                await ganttApi.event.apiSetAllocatedTime(
-                    eventId,
-                    curriculumId,
-                    allocatedDuration,
-                );
-                dispatch({
-                    type: "ALLOCATE_TIME",
-                    payload: {
-                        eventId,
-                        curriculumId,
-                        duration: allocatedDuration,
-                    },
-                });
-            }, `Failed to allocate time to event (ID: ${eventId}):`);
-        },
-        [dispatch],
+                },
+                moduleId,
+            ),
+        [actions],
     );
 
     const duplicateEvent = useCallback(
@@ -175,11 +119,11 @@ export function useModuleEventActions() {
 
     return {
         createEvent,
-        updateEvent,
-        deleteEvent,
-        linkEventToModule,
-        unlinkEventFromModule,
-        allocateTimeToModuleEvent,
+        updateEvent: actions.update,
+        deleteEvent: actions.remove,
+        linkEventToModule: actions.link,
+        unlinkEventFromModule: actions.unlink,
+        allocateTimeToModuleEvent: actions.allocateTime,
         duplicateEvent,
         moveEvent,
     } as const;
