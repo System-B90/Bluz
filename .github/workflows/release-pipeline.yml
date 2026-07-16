@@ -42,6 +42,8 @@ jobs:
 
             - name: Install Dependencies (Node)
               run: npm ci
+              env:
+                  NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
 
             - name: Install Dependencies (Python)
               run: pip install ruff
@@ -70,6 +72,8 @@ jobs:
 
             - name: Install Dependencies
               run: npm ci
+              env:
+                  NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
 
             - name: Run Unit Tests
               run: npm run test:unit
