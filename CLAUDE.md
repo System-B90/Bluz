@@ -10,6 +10,10 @@ engines, the server/client boundary).
 Each major directory also has its own `README.md` with a "should this file live here?"
 checklist — `AGENTS.md` links to all of them.
 
+Org-wide conventions (repo list, Hive rules, package scopes, CI secrets) live in
+[System-B90/.github CLAUDE.md](https://github.com/System-B90/.github/blob/main/CLAUDE.md) —
+this file only overrides/adds what's specific to bluz.
+
 ---
 
 ## Always-On Rules
@@ -23,8 +27,8 @@ Use `/caveman` mode. Less word do trick.
 
 **Git**
 - Run `git status` + `git diff` before any commit instructions.
-- All commit messages: `Vibe-<PastTenseVerb> <description>` (e.g. `Vibe-Implemented`, `Vibe-Fixed`). No `feat:`/`chore:` prefixes.
-- Auto-commit as single command: `pwsh -Command "git add <files> && git commit -m 'Vibe-...' -n"`. Use `-n` to skip linter.
+- All commit messages: `Vibe-<PastTenseVerb> <description>` (e.g. `Vibe-Implemented`, `Vibe-Fixed`). No `feat:`/`chore:` prefixes. This is the org-wide convention — see [System-B90/.github CLAUDE.md](https://github.com/System-B90/.github/blob/main/CLAUDE.md).
+- Auto-commit as single command: `pwsh -Command "git add <files> && git commit -m 'Vibe-...'"`. Never use `-n`/`--no-verify` — let the Husky pre-commit hook run; fix lint/format failures rather than bypassing them.
 
 **Output Formatting**
 - READMEs: "Quick Start" section with copy-paste commands.
