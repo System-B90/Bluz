@@ -22,7 +22,9 @@ async function setDbOutsider(
     options?: UpdateOptions,
     controller: DatabaseController = databaseController,
 ) {
-    const { _id: _, id: outsiderId, ...outsiderData } = outsider as any;
+    const { _id: _, id: outsiderId, ...outsiderData } = outsider as Outsider & {
+        _id?: unknown;
+    };
     const data = await controller.outsiders.updateOne(
         { id: outsiderId },
         { $set: outsiderData },
@@ -31,7 +33,7 @@ async function setDbOutsider(
     if (data.matchedCount === 0 && !options?.upsert) {
         throw new ClientApiError(`No outsider by id ${outsiderId} found!`);
     }
-    SendServerRequestToSessionServer(MessageTypes.OUTSIDERS_UPDATE as any, {
+    SendServerRequestToSessionServer(MessageTypes.OUTSIDERS_UPDATE, {
         outsiders: { [outsiderId]: outsider },
     });
 }
@@ -41,7 +43,7 @@ async function createDbOutsider(
     controller: DatabaseController = databaseController,
 ) {
     await controller.outsiders.insertOne(outsider as Outsider);
-    SendServerRequestToSessionServer(MessageTypes.OUTSIDERS_UPDATE as any, {
+    SendServerRequestToSessionServer(MessageTypes.OUTSIDERS_UPDATE, {
         outsiders: { [outsider.id]: outsider },
     });
     return outsider;
@@ -57,7 +59,7 @@ async function deleteDbOutsider(
     if (data.deletedCount === 0) {
         throw new ClientApiError(`No outsider by id ${outsiderId} found!`);
     }
-    SendServerRequestToSessionServer(MessageTypes.OUTSIDERS_UPDATE as any, {
+    SendServerRequestToSessionServer(MessageTypes.OUTSIDERS_UPDATE, {
         outsiders: { [outsiderId]: null },
     });
 }

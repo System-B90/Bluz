@@ -52,7 +52,7 @@ async function getFullModuleEvent(id: GanttModuleId): Promise<ApiModuleEvent> {
         throw new ClientApiError(`מופע עם מזהה ${id} לא נמצא`);
     }
 
-    return result as any;
+    return result as unknown as ApiModuleEvent;
 }
 
 /**
@@ -68,8 +68,8 @@ async function addEventToModule(
             eventId: eventId,
         });
         return await getFullModuleEvent(eventId);
-    } catch (error: any) {
-        const cause = error.cause as {
+    } catch (error: unknown) {
+        const cause = (error as { cause?: unknown }).cause as {
             name: string;
             severity: string;
             code: string;

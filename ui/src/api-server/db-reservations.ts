@@ -50,7 +50,7 @@ async function createReservation(
                 );
             }
             const result = await controller.reservations.insertOne(
-                reservation as any,
+                reservation as DbReservation,
                 { session },
             );
             created = { ...reservation, _id: result.insertedId.toString() };
@@ -66,7 +66,7 @@ async function cancelReservation(
     controller: DatabaseController = databaseController,
 ): Promise<void> {
     const result = await controller.reservations.deleteOne({
-        _id: new ObjectId(reservationId) as any,
+        _id: new ObjectId(reservationId),
     });
     if (result.deletedCount === 0) {
         throw new ClientApiError(`לא נמצאה הזמנה עם מזהה ${reservationId}`);
