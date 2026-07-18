@@ -7,7 +7,7 @@ Read it before your first change.
 ## Quick Start
 
 ```bash
-git clone --recurse-submodules https://github.com/System-B15/Bluz
+git clone --recurse-submodules https://github.com/System-B90/Bluz
 cd Bluz
 npm ci
 # create a root .env — see AGENTS.md §6 for the required variables

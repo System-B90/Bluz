@@ -14,9 +14,9 @@ concurrency:
 
 env:
     REGISTRY: ghcr.io
-    IMAGE_NAME_UI: system-b15/bluz/ui
-    IMAGE_NAME_SESSIONS: system-b15/bluz/sessions
-    IMAGE_NAME_PROXY: system-b15/bluz/proxy
+    IMAGE_NAME_UI: system-b90/bluz/ui
+    IMAGE_NAME_SESSIONS: system-b90/bluz/sessions
+    IMAGE_NAME_PROXY: system-b90/bluz/proxy
     # Public images required for the offline bundle
     IMAGE_POSTGRES: postgres:15-alpine
     IMAGE_MONGO: mongodb/mongodb-community-server:8.0-ubuntu2204
