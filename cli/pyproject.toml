@@ -24,8 +24,8 @@ dependencies = [
 bluz = "bluz_cli.main:run"
 
 [project.urls]
-Homepage = "https://github.com/system-b15/bluz"
-Repository = "https://github.com/system-b15/bluz"
+Homepage = "https://github.com/system-b90/bluz"
+Repository = "https://github.com/system-b90/bluz"
 
 [tool.hatch.build.targets.wheel]
 packages = ["bluz_cli"]
