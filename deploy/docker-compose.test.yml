@@ -13,6 +13,8 @@ services:
         build:
             context: ./../
             dockerfile: ui/Dockerfile
+            args:
+                NPM_TOKEN: ${NPM_TOKEN}
             target: runner
         container_name: ${TEST_PROJECT_NAME}-ui
         # Resolve hive.org to the host, where the local Hive instance publishes
