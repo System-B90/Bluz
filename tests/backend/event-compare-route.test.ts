@@ -11,7 +11,7 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
     })),
 }));
 
-import { DbEvent } from "@/api-server/db-event";
+import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import { resolveIterationDb } from "@/api-server/mongo-db-controller";
 import * as CompareRoute from "@/app/api/event/compare/route";
 
@@ -20,13 +20,13 @@ beforeEach(() => vi.clearAllMocks());
 describe("GET /api/event/compare", () => {
     it("returns events for both iterations over the same range", async () => {
         vi.mocked(DbEvent.getInRange)
-            .mockResolvedValueOnce([{ id: "a1" }] as any)
-            .mockResolvedValueOnce([{ id: "b1" }] as any);
+            .mockResolvedValueOnce([{ id: "a1" }] as Array<Partial<DbEventDocument>> as Array<DbEventDocument>)
+            .mockResolvedValueOnce([{ id: "b1" }] as Array<Partial<DbEventDocument>> as Array<DbEventDocument>);
 
         const req = new NextRequest(
             "http://localhost/api/event/compare?sd=2026-01-01T00:00:00.000Z&ed=2026-01-10T00:00:00.000Z&itA=2026a&itB=2026b",
         );
-        const res = await CompareRoute.GET(req as any);
+        const res = await CompareRoute.GET(req);
         const body = await res.json();
 
         expect(res.status).toBe(200);
@@ -40,7 +40,7 @@ describe("GET /api/event/compare", () => {
         const req = new NextRequest(
             "http://localhost/api/event/compare?itA=2026a&itB=2026b",
         );
-        const res = await CompareRoute.GET(req as any);
+        const res = await CompareRoute.GET(req);
         expect(res.status).toBe(400);
         expect(DbEvent.getInRange).not.toHaveBeenCalled();
     });
@@ -49,7 +49,7 @@ describe("GET /api/event/compare", () => {
         const req = new NextRequest(
             "http://localhost/api/event/compare?sd=notadate&ed=alsobad",
         );
-        const res = await CompareRoute.GET(req as any);
+        const res = await CompareRoute.GET(req);
         expect(res.status).toBe(400);
     });
 });

@@ -21,7 +21,7 @@ describe("personal-settings api-client", () => {
         global.fetch = vi.fn().mockResolvedValueOnce({
             redirected: false,
             json: async () => ({ status: 0, data: settings }),
-        } as any);
+        } as unknown as Response);
 
         const result = await apiGetPersonalSettings({});
 
@@ -41,7 +41,7 @@ describe("personal-settings api-client", () => {
         global.fetch = vi.fn().mockResolvedValueOnce({
             redirected: false,
             json: async () => ({ status: 0, data: settings }),
-        } as any);
+        } as unknown as Response);
 
         const result = await apiSetPersonalSettings(settings, {});
 
@@ -59,7 +59,7 @@ describe("personal-settings api-client", () => {
                 status: 1,
                 error: { name: "GenericError", message: "boom" },
             }),
-        } as any);
+        } as unknown as Response);
 
         await expect(apiGetPersonalSettings({})).rejects.toThrow();
     });

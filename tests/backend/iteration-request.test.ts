@@ -27,9 +27,9 @@ describe("resolveIterationFromRequest", () => {
     it("defaults to the current iteration when no `it` param is present", async () => {
         const req = new NextRequest("http://localhost/api/event");
         const { iterationId, controller } =
-            await resolveIterationFromRequest(req as any);
+            await resolveIterationFromRequest(req);
         expect(iterationId).toBeUndefined();
-        expect((controller as any).dbName).toBe("current");
+        expect(controller.dbName).toBe("current");
         expect(resolveIterationDb).toHaveBeenCalledWith(undefined);
     });
 
@@ -38,14 +38,14 @@ describe("resolveIterationFromRequest", () => {
             `http://localhost/api/event?${ITERATION_QUERY_PARAM}=2026b`,
         );
         const { iterationId, controller } =
-            await resolveIterationFromRequest(req as any);
+            await resolveIterationFromRequest(req);
         expect(iterationId).toBe("2026b");
-        expect((controller as any).dbName).toBe("db_2026b");
+        expect(controller.dbName).toBe("db_2026b");
     });
 
     it("treats an empty `it` param as the current iteration", async () => {
         const req = new NextRequest(`http://localhost/api/event?it=`);
-        const { iterationId } = await resolveIterationFromRequest(req as any);
+        const { iterationId } = await resolveIterationFromRequest(req);
         expect(iterationId).toBeUndefined();
     });
 
@@ -61,7 +61,7 @@ describe("resolveWritableIterationFromRequest", () => {
     it("resolves writes through the writable resolver", async () => {
         const req = new NextRequest("http://localhost/api/event?it=past");
         const { iterationId } =
-            await resolveWritableIterationFromRequest(req as any);
+            await resolveWritableIterationFromRequest(req);
         expect(iterationId).toBe("past");
         expect(resolveWritableIterationDb).toHaveBeenCalledWith("past");
     });
@@ -72,7 +72,7 @@ describe("resolveWritableIterationFromRequest", () => {
         );
         const req = new NextRequest("http://localhost/api/event?it=past");
         await expect(
-            resolveWritableIterationFromRequest(req as any),
+            resolveWritableIterationFromRequest(req),
         ).rejects.toThrow("read only");
     });
 });

@@ -6,7 +6,10 @@ vi.mock("@/api-client/common", () => ({
 }));
 
 import { safeApiFetcher } from "@/api-client/common";
-import { ganttConstraintsApi } from "@/api-client/gantt/constraints";
+import {
+    ganttConstraintsApi,
+    CreateConstraintPayload,
+} from "@/api-client/gantt/constraints";
 
 describe("GanttConstraints Client - Failure Paths", () => {
     beforeEach(() => {
@@ -29,7 +32,7 @@ describe("GanttConstraints Client - Failure Paths", () => {
             vi.mocked(safeApiFetcher).mockResolvedValueOnce(malformedConstraint);
 
             await expect(
-                ganttConstraintsApi.apiCreate("curr1", malformedConstraint as any)
+                ganttConstraintsApi.apiCreate("curr1", malformedConstraint as unknown as CreateConstraintPayload)
             ).rejects.toThrow(/Malformed constraint! Target type is "event"/);
         });
 
@@ -47,7 +50,7 @@ describe("GanttConstraints Client - Failure Paths", () => {
             vi.mocked(safeApiFetcher).mockResolvedValueOnce(malformedConstraint);
 
             await expect(
-                ganttConstraintsApi.apiCreate("curr1", malformedConstraint as any)
+                ganttConstraintsApi.apiCreate("curr1", malformedConstraint as unknown as CreateConstraintPayload)
             ).rejects.toThrow(/Malformed constraint! Owner type is "event"/);
         });
 
@@ -66,7 +69,7 @@ describe("GanttConstraints Client - Failure Paths", () => {
 
             const result = await ganttConstraintsApi.apiCreate(
                 "curr1",
-                ambiguousConstraint as any
+                ambiguousConstraint as unknown as CreateConstraintPayload
             );
 
             expect(result.targetType).toBe("module");
@@ -90,7 +93,7 @@ describe("GanttConstraints Client - Failure Paths", () => {
             vi.mocked(safeApiFetcher).mockResolvedValueOnce(malformedConstraint);
 
             await expect(
-                ganttConstraintsApi.apiCreate("curr1", malformedConstraint as any)
+                ganttConstraintsApi.apiCreate("curr1", malformedConstraint as unknown as CreateConstraintPayload)
             ).rejects.toThrow(/Malformed constraint! Owner type is "event"/);
         });
     });
@@ -108,7 +111,7 @@ describe("GanttConstraints Client - Failure Paths", () => {
             vi.mocked(safeApiFetcher).mockResolvedValueOnce(unknownConstraint);
 
             await expect(
-                ganttConstraintsApi.apiCreate("curr1", unknownConstraint as any)
+                ganttConstraintsApi.apiCreate("curr1", unknownConstraint as unknown as CreateConstraintPayload)
             ).rejects.toThrow(/Malformed constraint! Unknown constraint type/);
         });
 
@@ -124,7 +127,7 @@ describe("GanttConstraints Client - Failure Paths", () => {
             vi.mocked(safeApiFetcher).mockResolvedValueOnce(nullTypeConstraint);
 
             await expect(
-                ganttConstraintsApi.apiCreate("curr1", nullTypeConstraint as any)
+                ganttConstraintsApi.apiCreate("curr1", nullTypeConstraint as unknown as CreateConstraintPayload)
             ).rejects.toThrow(/Malformed constraint! Unknown constraint type/);
         });
     });
@@ -148,7 +151,7 @@ describe("GanttConstraints Client - Failure Paths", () => {
                     type: ConstraintType.Relational,
                     ownerEventId: "e1",
                     targetEventId: "e2",
-                } as any)
+                } as unknown as CreateConstraintPayload)
             ).rejects.toThrow("Server error");
         });
 
@@ -159,7 +162,7 @@ describe("GanttConstraints Client - Failure Paths", () => {
             await expect(
                 ganttConstraintsApi.apiUpdate("curr1", "c1", {
                     duration: 200,
-                } as any)
+                })
             ).rejects.toThrow("Update failed");
         });
 

@@ -7,14 +7,15 @@ vi.mock("@/api-server/gantt/execution", () => ({
 
 import { getCurriculumExecution } from "@/api-server/gantt/execution";
 import * as ExecutionRoute from "@/app/api/gantt/curriculums/[id]/execution/route";
+import { ApiCurriculumExecutionResponse } from "@/api-shared/types/gantt/execution";
 
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
 const get = (id: string) =>
     ExecutionRoute.GET(
         new NextRequest(
             `http://localhost/api/gantt/curriculums/${id}/execution`,
-        ) as any,
-        ctx(id) as any,
+        ),
+        ctx(id),
     );
 
 beforeEach(() => vi.clearAllMocks());
@@ -35,7 +36,7 @@ describe("GET /api/gantt/curriculums/[id]/execution", () => {
                     drifted: false,
                 },
             },
-        } as any);
+        } satisfies ApiCurriculumExecutionResponse);
 
         const res = await get("c1");
         const body = await res.json();

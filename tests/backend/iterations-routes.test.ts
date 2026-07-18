@@ -25,13 +25,14 @@ vi.mock("@/api-server/hive/session-client", () => ({
 }));
 
 import { DbIterations } from "@/api-server/db-iterations";
+import { Iteration } from "@/api-shared/types/iteration";
 import * as IterationsRoute from "@/app/api/iterations/route";
 import * as CurrentRoute from "@/app/api/iterations/current/route";
 import * as IterationByIdRoute from "@/app/api/iterations/[id]/route";
 
 beforeEach(() => vi.clearAllMocks());
 
-const sample = {
+const sample: Iteration = {
     id: "2026b",
     label: "B",
     dbName: "bluz_2026b",
@@ -44,9 +45,9 @@ const sample = {
 
 describe("GET /api/iterations", () => {
     it("returns the registry list", async () => {
-        vi.mocked(DbIterations.list).mockResolvedValueOnce([sample] as any);
+        vi.mocked(DbIterations.list).mockResolvedValueOnce([sample]);
         const res = await IterationsRoute.GET(
-            new NextRequest("http://localhost/api/iterations") as any,
+            new NextRequest("http://localhost/api/iterations"),
         );
         const body = await res.json();
         expect(res.status).toBe(200);
@@ -56,12 +57,12 @@ describe("GET /api/iterations", () => {
 
 describe("POST /api/iterations", () => {
     it("registers a new iteration", async () => {
-        vi.mocked(DbIterations.register).mockResolvedValueOnce(sample as any);
+        vi.mocked(DbIterations.register).mockResolvedValueOnce(sample);
         const req = new NextRequest("http://localhost/api/iterations", {
             method: "POST",
             body: JSON.stringify({ id: "2026b", label: "B" }),
         });
-        const res = await IterationsRoute.POST(req as any);
+        const res = await IterationsRoute.POST(req);
         const body = await res.json();
         expect(res.status).toBe(200);
         expect(body.data.id).toBe("2026b");
@@ -71,7 +72,7 @@ describe("POST /api/iterations", () => {
     });
 
     it("snapshots Hive module/subject/room names into the cache", async () => {
-        vi.mocked(DbIterations.register).mockResolvedValueOnce(sample as any);
+        vi.mocked(DbIterations.register).mockResolvedValueOnce(sample);
         const req = new NextRequest("http://localhost/api/iterations", {
             method: "POST",
             body: JSON.stringify({
@@ -80,7 +81,7 @@ describe("POST /api/iterations", () => {
                 hiveUrl: "https://hive-2026b.example",
             }),
         });
-        await IterationsRoute.POST(req as any);
+        await IterationsRoute.POST(req);
 
         const passed = vi.mocked(DbIterations.register).mock.calls[0][0];
         expect(passed.hiveCache?.modules).toEqual({ "10": "מודול א" });
@@ -94,7 +95,7 @@ describe("POST /api/iterations", () => {
             method: "POST",
             body: JSON.stringify({ label: "no id" }),
         });
-        const res = await IterationsRoute.POST(req as any);
+        const res = await IterationsRoute.POST(req);
         expect(res.status).toBe(400);
         expect(DbIterations.register).not.toHaveBeenCalled();
     });
@@ -105,9 +106,9 @@ describe("GET /api/iterations/current", () => {
         vi.mocked(DbIterations.current).mockResolvedValueOnce({
             ...sample,
             isCurrent: true,
-        } as any);
+        });
         const res = await CurrentRoute.GET(
-            new NextRequest("http://localhost/api/iterations/current") as any,
+            new NextRequest("http://localhost/api/iterations/current"),
         );
         const body = await res.json();
         expect(res.status).toBe(200);
@@ -120,12 +121,12 @@ describe("PATCH /api/iterations/[id]", () => {
         vi.mocked(DbIterations.patch).mockResolvedValueOnce({
             ...sample,
             isCurrent: true,
-        } as any);
+        });
         const req = new NextRequest("http://localhost/api/iterations/2026b", {
             method: "PATCH",
             body: JSON.stringify({ isCurrent: true }),
         });
-        const res = await IterationByIdRoute.PATCH(req as any, {
+        const res = await IterationByIdRoute.PATCH(req, {
             params: Promise.resolve({ id: "2026b" }),
         });
         const body = await res.json();

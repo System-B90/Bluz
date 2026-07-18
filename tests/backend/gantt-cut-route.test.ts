@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { CutOutcome } from "@/api-server/gantt/cut";
+
 vi.mock("@/api-server/gantt/cut", () => ({
     cutCurriculumToSchedule: vi.fn(),
 }));
@@ -13,8 +15,8 @@ const post = (id: string) =>
     CutRoute.POST(
         new NextRequest(`http://localhost/api/gantt/curriculums/${id}/cut`, {
             method: "POST",
-        }) as any,
-        ctx(id) as any,
+        }),
+        ctx(id),
     );
 
 beforeEach(() => vi.clearAllMocks());
@@ -24,7 +26,7 @@ describe("POST /api/gantt/curriculums/[id]/cut", () => {
         vi.mocked(cutCurriculumToSchedule).mockResolvedValue({
             ok: true,
             result: { createdEvents: 4, createdCourses: [], overlaps: 0 },
-        } as any);
+        } satisfies CutOutcome);
 
         const res = await post("c1");
         const body = await res.json();
@@ -42,7 +44,7 @@ describe("POST /api/gantt/curriculums/[id]/cut", () => {
         vi.mocked(cutCurriculumToSchedule).mockResolvedValue({
             ok: false,
             error: { code, message: "x" },
-        } as any);
+        } satisfies CutOutcome);
 
         const res = await post("c1");
         const body = await res.json();
@@ -57,7 +59,7 @@ describe("POST /api/gantt/curriculums/[id]/cut", () => {
                 code: "invalid-plan",
                 errors: [{ type: "missing-start-date" }],
             },
-        } as any);
+        } satisfies CutOutcome);
 
         const res = await post("c1");
         const body = await res.json();

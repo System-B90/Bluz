@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import ExcelJS from "exceljs";
 
 import { buildGanttExcelWorkbook, BOOL_ICON } from "@/app/api/gantt/curriculums/[id]/export/excel/workbook";
+import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 
 // ── Shared fixture ───────────────────────────────────────────────────────────
 // One syllabus, two modules:
@@ -11,7 +12,7 @@ import { buildGanttExcelWorkbook, BOOL_ICON } from "@/app/api/gantt/curriculums/
 // Week 1 / day 1 (Sunday) has two mappings (merge check); day 2 (Monday) has none (empty-day fallback).
 
 function buildFixture() {
-    const curriculum: any = {
+    const curriculum = {
         id: "c1",
         title: "Curriculum Test",
         description: "Test description",
@@ -114,7 +115,7 @@ function buildFixture() {
                 },
             },
         ],
-    };
+    } as unknown as ApiCurriculum;
 
     const mappings = [
         // modFull: placeholder + its one event, both on day d1 -> placeholder should be omitted.
@@ -129,7 +130,9 @@ function buildFixture() {
 }
 
 function getMerges(sheet: ExcelJS.Worksheet): Array<string> {
-    return Object.keys((sheet as any)._merges as Record<string, unknown>);
+    return Object.keys(
+        (sheet as unknown as { _merges: Record<string, unknown> })._merges,
+    );
 }
 
 describe("buildGanttExcelWorkbook", () => {
@@ -399,14 +402,14 @@ describe("buildGanttExcelWorkbook", () => {
 
     describe("edge cases", () => {
         it("handles a curriculum with no syllabuses, weeks, or mappings", async () => {
-            const curriculum: any = {
+            const curriculum = {
                 id: "empty",
                 title: "Empty Curriculum",
                 description: null,
                 startDate: null,
                 c2s: [],
                 c2w: [],
-            };
+            } as unknown as ApiCurriculum;
 
             const wb = await buildGanttExcelWorkbook(curriculum, []);
             expect(wb.worksheets.map((s) => s.name)).toEqual(["סקירה", "לוח זמנים", "פירוט סילבוסים"]);
@@ -419,7 +422,7 @@ describe("buildGanttExcelWorkbook", () => {
         });
 
         it("does not omit a module's placeholder row when it has zero events at all", async () => {
-            const curriculum: any = {
+            const curriculum = {
                 id: "c2",
                 title: "Curriculum",
                 startDate: null,
@@ -441,7 +444,7 @@ describe("buildGanttExcelWorkbook", () => {
                         },
                     },
                 ],
-            };
+            } as unknown as ApiCurriculum;
 
             const mappings = [{ dayId: "d1", moduleId: "modEmpty", eventId: null, sortOrder: 0 }];
 

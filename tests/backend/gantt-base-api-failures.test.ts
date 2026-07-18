@@ -9,10 +9,12 @@ import { safeApiFetcher } from "@/api-client/common";
 import {
     clientGantApiBuilder,
     baseDocumentFixup,
+    RawBaseDocument,
 } from "@/api-client/gantt/base";
+import { BaseGantItem } from "@/api-shared/types/gantt/models";
 
 describe("Gantt Base API - Failure Paths", () => {
-    const mockDateFixup = (doc: any) => {
+    const mockDateFixup = (doc: (BaseGantItem & RawBaseDocument) | null) => {
         if (doc === null) return null;
         return {
             ...doc,
@@ -21,7 +23,7 @@ describe("Gantt Base API - Failure Paths", () => {
         };
     };
 
-    const api = clientGantApiBuilder({
+    const api = clientGantApiBuilder<BaseGantItem>({
         apiBaseUrl: "/api/test",
         dateFixup: mockDateFixup,
     });
@@ -68,13 +70,15 @@ describe("Gantt Base API - Failure Paths", () => {
         });
 
         it("throws error when date fixup fails", async () => {
-            const badDateFixup = () => {
+            const badDateFixup = (
+                _doc: (BaseGantItem & RawBaseDocument) | null,
+            ): (BaseGantItem & RawBaseDocument) | null => {
                 throw new Error("Date parsing error");
             };
 
-            const badApi = clientGantApiBuilder({
+            const badApi = clientGantApiBuilder<BaseGantItem>({
                 apiBaseUrl: "/api/test",
-                dateFixup: badDateFixup as any,
+                dateFixup: badDateFixup,
             });
 
             vi.mocked(safeApiFetcher).mockResolvedValueOnce({
@@ -109,7 +113,7 @@ describe("Gantt Base API - Failure Paths", () => {
             await expect(
                 api.apiCreate({
                     title: "New Item",
-                } as any)
+                })
             ).rejects.toThrow("Server error");
         });
 
@@ -122,7 +126,7 @@ describe("Gantt Base API - Failure Paths", () => {
             });
 
             const payload = { title: "New Item" };
-            await api.apiCreate(payload as any);
+            await api.apiCreate(payload);
 
             expect(vi.mocked(safeApiFetcher)).toHaveBeenCalledWith(
                 "/api/test",
@@ -142,7 +146,7 @@ describe("Gantt Base API - Failure Paths", () => {
                 updatedAt: isoDate,
             });
 
-            const result = await api.apiCreate({ title: "New" } as any);
+            const result = await api.apiCreate({ title: "New" });
 
             expect(result.createdAt).toBeDefined();
             expect(result.updatedAt).toBeDefined();
@@ -158,7 +162,7 @@ describe("Gantt Base API - Failure Paths", () => {
                 api.apiUpdate({
                     id: "id1",
                     title: "Updated",
-                } as any)
+                })
             ).rejects.toThrow("Update failed");
         });
 
@@ -173,7 +177,7 @@ describe("Gantt Base API - Failure Paths", () => {
             await api.apiUpdate({
                 id: "id1",
                 title: "Updated",
-            } as any);
+            });
 
             expect(vi.mocked(safeApiFetcher)).toHaveBeenCalledWith(
                 "/api/test/id1",
@@ -191,7 +195,7 @@ describe("Gantt Base API - Failure Paths", () => {
                 updatedAt: new Date().toISOString(),
             });
 
-            await api.apiUpdate({ id: "id1" } as any);
+            await api.apiUpdate({ id: "id1" });
 
             expect(vi.mocked(safeApiFetcher)).toHaveBeenCalledWith(
                 "/api/test/id1",
@@ -425,11 +429,12 @@ describe("Gantt Base API - Failure Paths", () => {
 
         it("throws error when inplaceDateFixup fails", () => {
             const badDoc = {
+                id: "bad-doc",
                 createdAt: "invalid-date",
                 updatedAt: "invalid-date",
             };
 
-            expect(() => baseDocumentFixup(badDoc as any)).not.toThrow();
+            expect(() => baseDocumentFixup(badDoc)).not.toThrow();
         });
     });
 
