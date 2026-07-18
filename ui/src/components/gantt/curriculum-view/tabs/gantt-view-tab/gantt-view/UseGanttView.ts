@@ -6,6 +6,7 @@ import
     ConstraintType,
     hasConflictingTemporalConstraints,
 } from "@/api-shared/types/gantt/models/constraint";
+import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models";
 import
 {
     buildDayIndexMap,
@@ -247,7 +248,7 @@ export const useGanttView = (curriculumId: string) =>
     const moduleMappings = useMemo(() =>
     {
         const merged: Record<string, Array<string>> = {};
-        Object.values(globalMappings).forEach((mapping: any) =>
+        Object.values(globalMappings).forEach((mapping: GanttCurriculumModuleDayMapping) =>
         {
             if (mapping.curriculumId !== curriculumId) return;
             if (!mapping.eventId)
@@ -265,7 +266,7 @@ export const useGanttView = (curriculumId: string) =>
     const eventMappings = useMemo(() =>
     {
         const merged: Record<string, string> = {};
-        Object.values(globalMappings).forEach((mapping: any) =>
+        Object.values(globalMappings).forEach((mapping: GanttCurriculumModuleDayMapping) =>
         {
             if (mapping.curriculumId !== curriculumId) return;
             if (mapping.eventId)
@@ -278,8 +279,8 @@ export const useGanttView = (curriculumId: string) =>
 
     const curriculumMappings = useMemo(() =>
     {
-        const merged: Record<string, any> = {};
-        Object.entries(globalMappings).forEach(([ mappingId, mapping ]: [ string, any ]) =>
+        const merged: Record<string, GanttCurriculumModuleDayMapping> = {};
+        Object.entries(globalMappings).forEach(([ mappingId, mapping ]: [ string, GanttCurriculumModuleDayMapping ]) =>
         {
             if (mapping.curriculumId !== curriculumId) return;
             merged[ mappingId ] = mapping;
@@ -388,7 +389,7 @@ export const useGanttView = (curriculumId: string) =>
         };
 
         const processConstraints = (
-            entity: any,
+            entity: { constraintIds?: Array<string> },
             entityId: string,
             entityType: "event" | "module",
         ) =>

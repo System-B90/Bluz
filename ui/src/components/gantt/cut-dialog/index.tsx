@@ -92,8 +92,15 @@ function CutErrorContent({ error }: { error: CurriculumCutError }) {
                         לא ניתן לגזור את הלו&quot;ז — נמצאו בעיות בתוכנית:
                 </Alert>
                 <List dense disablePadding>
-                    {(error.errors ?? []).map((validationError, index) => (
-                        <ListItem disableGutters key={index}>
+                    {(error.errors ?? []).map((validationError) => (
+                        <ListItem
+                            disableGutters
+                            key={
+                                "eventId" in validationError
+                                    ? `${validationError.type}:${validationError.eventId}`
+                                    : validationError.type
+                            }
+                        >
                             <ListItemText
                                 primary={describeValidationError(
                                     validationError,

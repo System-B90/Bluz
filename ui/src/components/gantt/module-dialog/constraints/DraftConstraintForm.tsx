@@ -7,6 +7,7 @@ import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import { useCallback } from "react";
 
+import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { ConstraintType } from "@/api-shared/types/gantt/models/constraint";
 import { RelationalDraftFields } from "@/components/gantt/module-dialog/constraints/RelationalDraftFields";
 import { TemporalDraftFields } from "@/components/gantt/module-dialog/constraints/TemporalDraftFields";
@@ -28,7 +29,7 @@ export function DraftConstraintForm({
     onSubmit: () => void;
     onCancel: () => void;
     targetOptions: Record<string, Array<TargetOption>>;
-    curriculumState: any;
+    curriculumState: NormalizedStore;
 }) {
     const handleTypeChange = useCallback(
         (nextType: ConstraintType) => {
@@ -86,8 +87,8 @@ export function DraftConstraintForm({
                         />
                     ) : (
                         <TemporalDraftFields
-                            draft={draft as any}
-                            setDraft={setDraft as any}
+                            draft={draft}
+                            setDraft={setDraft}
                         />
                     )}
                 </Stack>

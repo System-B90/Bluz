@@ -75,9 +75,33 @@ export type GanttViewProps = {
 
 export type SpanVariant = "end" | "middle" | "none" | "single" | "start";
 
+/** Drag payload carried by a block (module/event chip or cell anchor). */
+export type GanttBlockPayload =
+    | { type: "module-map"; moduleId: string }
+    | { type: "module-shift"; moduleId: string; sourceDayId: string }
+    | { type: "event-map"; moduleId: string; eventId: string }
+    | {
+          type: "event-move";
+          moduleId: string;
+          eventId: string;
+          sourceDayId: string;
+      }
+    | {
+          type: "event-occurrence";
+          moduleId: string;
+          eventId: string;
+          dayId: string;
+      }
+    | { moduleId: string; eventId: string; type?: undefined };
+
+/** Drop-target payload identifying which module/event a cell resolves to. */
+export type GanttCellPayloadData =
+    | { targetType: "event"; eventId: string; dayId: string }
+    | { targetType: "module"; moduleId: string; dayId: string };
+
 export type GanttBlockProps = {
     id: string;
-    payload: any;
+    payload: GanttBlockPayload;
     title?: string;
     /** Required-time label shown on the block (zoomed single-week day view). */
     timeLabel?: string;
@@ -101,10 +125,10 @@ export type GanttBlockProps = {
 export type GanttCellProps = {
     dayId: string;
     dropId: string;
-    payloadData: any;
+    payloadData: GanttCellPayloadData;
     hasBlock?: boolean;
     blockId?: string;
-    blockPayload?: any;
+    blockPayload?: GanttBlockPayload;
     blockTitle?: string;
     /** Required-time label shown on the block (zoomed single-week day view). */
     blockTimeLabel?: string;

@@ -33,7 +33,7 @@ export function useCalendarHandlers(
     const [copiedEvent, setCopiedEvent] = useState<Event | null>(null);
     const [selectedSlotInfo, setSelectedSlotInfo] = useState<{
         start: Date;
-        resourceId?: any;
+        resourceId?: SlotInfo["resourceId"];
     } | null>(null);
 
     const copyPasteData = useRef({
@@ -155,7 +155,7 @@ export function useCalendarHandlers(
                         parsedRoomId.id === DUMMY_ROOM_ID ? [] : [parsedRoomId];
                 }
 
-                const { id: _, ...rest } = currentCopied as any;
+                const { id: _, ...rest } = currentCopied;
                 const newEvent = {
                     ...rest,
                     startTime: newStart, // Keep Dayjs objects to align with the Event type signature

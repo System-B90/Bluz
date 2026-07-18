@@ -21,7 +21,7 @@ function workWeekRange(
     { localizer }: { localizer: DateLocalizer },
 ): Array<Date> {
     return Week.range(date, { localizer }).filter(
-        (d: any) => ![5, 6].includes(d.getDay()), // Fri (5), Sat (6)
+        (d: Date) => ![5, 6].includes(d.getDay()), // Fri (5), Sat (6)
     );
 }
 
@@ -79,7 +79,15 @@ RawCustomWorkWeek.title = (date: Date, options: TitleOptions): string => {
     return localizer.format({ start, end }, "dayRangeHeaderFormat");
 };
 
-export const CustomWorkWeek: ((props: any) => ReactNode) &
+type CustomWorkWeekProps = TimeGridProps & {
+    date: Date;
+    localizer: DateLocalizer;
+    min?: Date;
+    max?: Date;
+    scrollToTime?: Date;
+};
+
+export const CustomWorkWeek: ((props: CustomWorkWeekProps) => ReactNode) &
     ViewStatic & {
         range: typeof workWeekRange;
         title: typeof Week.title;

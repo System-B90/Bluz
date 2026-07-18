@@ -118,10 +118,11 @@ export function VCardQrCode({
                     }}
                 >
                     {/* eslint-disable-next-line @next/next/no-img-element -- QR code is a data URL; next/image doesn't support data URIs */}
-                    <img
+                    <Box
                         alt="vCard QR Code"
+                        component="img"
                         src={qrCodeUrl}
-                        style={{
+                        sx={{
                             width: 64,
                             height: 64,
                             display: "block",
@@ -200,10 +201,11 @@ export function VCardQrCode({
                         }}
                     >
                         {/* eslint-disable-next-line @next/next/no-img-element -- High-res QR code is a data URL */}
-                        <img
+                        <Box
                             alt={`vCard QR Code for ${name}`}
+                            component="img"
                             src={highResQrCodeUrl || qrCodeUrl}
-                            style={{
+                            sx={{
                                 width: 360,
                                 height: 360,
                                 display: "block",

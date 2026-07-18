@@ -29,6 +29,18 @@ type WeeksTabProps = {
     curriculumId: GanttCurriculumId;
 };
 
+type ImportedWeekDay = {
+    dayIndex: number;
+    totalWorkingMinutes?: number;
+    comment?: string;
+};
+
+type ImportedWeek = {
+    comment?: string;
+    weekendDuty?: boolean;
+    days: Array<ImportedWeekDay>;
+};
+
 function WeeksTabInner({ curriculumId }: WeeksTabProps) {
     const curriculum = useCurriculum(curriculumId);
     const state = useCurriculumState();
@@ -96,7 +108,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
             const reader = new FileReader();
             reader.onload = async (event) => {
                 try {
-                    const importedWeeks = JSON.parse(
+                    const importedWeeks: Array<ImportedWeek> = JSON.parse(
                         event.target?.result as string,
                     );
                     if (!Array.isArray(importedWeeks)) {
@@ -157,7 +169,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                                 createdWeeksMap.get(weekId);
                             if (newlyCreatedWeek && newlyCreatedWeek.w2d) {
                                 dayIds = newlyCreatedWeek.w2d.map(
-                                    (link: any) => link.dayId,
+                                    (link) => link.dayId,
                                 );
                             }
                         }
@@ -177,7 +189,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                                     const link = createdWeeksMap
                                         .get(weekId)
                                         ?.w2d?.find(
-                                            (l: any) => l.dayId === dId,
+                                            (l) => l.dayId === dId,
                                         );
                                     if (link) {
                                         currentDayIndex = link.day.dayIndex;
@@ -185,7 +197,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                                 }
 
                                 const importedDay = importedWeek.days.find(
-                                    (d: any) => d.dayIndex === currentDayIndex,
+                                    (d) => d.dayIndex === currentDayIndex,
                                 );
                                 if (importedDay) {
                                     await updateDay(dId, {
@@ -202,7 +214,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                     enqueueSnackbar("ייבוא שבועות הגאנט הושלם בהצלחה!", {
                         variant: "success",
                     });
-                } catch (error: any) {
+                } catch (error: unknown) {
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
                         "ייבוא שבועות הגאנט נכשל!",
