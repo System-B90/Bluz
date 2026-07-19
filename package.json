@@ -39,7 +39,7 @@
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.3.5",
+    "@mui/icons-material": "^9.2.0",
     "@mui/material": "^7.3.6",
     "@mui/material-nextjs": "^7.3.10",
     "@mui/stylis-plugin-rtl": "^7.3.6",
