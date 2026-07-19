@@ -9,7 +9,6 @@ Author: Michael K. Steinberg
 from __future__ import annotations
 
 import random
-import socket
 import string
 import time
 import urllib.parse
@@ -46,21 +45,6 @@ def _run_callback_server(url: str) -> str | None:
     part2 = "".join(random.choices(chars, k=4))
     code = f"{part1}-{part2}"
 
-    port = None
-    for p in range(52400, 52411):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            try:
-                s.bind(("127.0.0.1", p))
-                port = p
-                break
-            except OSError:
-                continue
-
-    if port is None:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(("127.0.0.1", 0))
-            port = s.getsockname()[1]
-
     class CallbackHandler(BaseHTTPRequestHandler):
         def log_message(self, format: str, *args: Any) -> None:
             # Suppress normal HTTP request logging
@@ -82,12 +66,22 @@ def _run_callback_server(url: str) -> str | None:
                 self.end_headers()
                 self.wfile.write(b"No token found.")
 
-    try:
-        server = AuthHTTPServer(("127.0.0.1", port), CallbackHandler)
-        server.timeout = 0.5
-    except Exception as exc:
-        typer.echo(f"Could not start local server for auto-login: {exc}")
-        return None
+    server = None
+    for p in range(52400, 52411):
+        try:
+            server = AuthHTTPServer(("127.0.0.1", p), CallbackHandler)
+            port = p
+            break
+        except OSError:
+            continue
+    if server is None:
+        try:
+            server = AuthHTTPServer(("127.0.0.1", 0), CallbackHandler)
+            port = server.server_address[1]
+        except OSError as exc:
+            typer.echo(f"Could not start local server for auto-login: {exc}")
+            return None
+    server.timeout = 0.5
 
     login_url = f"{url.rstrip('/')}/cli-auth?port={port}&code={code}"
 
@@ -189,10 +183,14 @@ def logout() -> None:
 @app.command("config")
 def show_config() -> None:
     """Show the resolved configuration (token is masked)."""
+    from bluz_cli.commands._common import show
+
     config = load_config()
-    masked = "<set>" if config.token else "<none>"
-    typer.echo(f"Config file : {config_location()}")
-    typer.echo(f"URL         : {config.url or '<none>'}")
-    typer.echo(f"Token       : {masked}")
-    typer.echo(f"Cookie name : {config.cookie_name}")
-    typer.echo(f"Insecure    : {config.insecure}")
+    data = {
+        "configFile": str(config_location()),
+        "url": config.url,
+        "token": "<set>" if config.token else None,
+        "cookieName": config.cookie_name,
+        "insecure": config.insecure,
+    }
+    show(data, title="Config")

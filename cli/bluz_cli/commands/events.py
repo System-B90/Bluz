@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import typer
 
-from bluz_cli.commands._common import parse_json, show
+from bluz_cli.commands._common import LIMIT_OPTION, OFFSET_OPTION, parse_json, show
 from bluz_cli.context import state
 from bluz_cli.output import success
 
@@ -27,11 +27,18 @@ def list_events(
     iteration: str = typer.Option(
         None, "--iteration", "--it", help="Iteration id to scope to."
     ),
+    limit: int = LIMIT_OPTION,
+    offset: int = OFFSET_OPTION,
 ) -> None:
     """List events in a date range (optionally for a specific iteration)."""
     params = {"sd": start_date, "ed": end_date, "it": iteration}
     with state.client() as client:
-        show(client.get(_BASE, params=params), title="Events")
+        show(
+            client.get(_BASE, params=params),
+            title="Events",
+            limit=limit,
+            offset=offset,
+        )
 
 
 @app.command("get")
