@@ -298,3 +298,48 @@ jobs:
                   generate_release_notes: true
                   draft: false
                   prerelease: false
+
+    publish-cli-index:
+        name: Publish bluz CLI to org pip index
+        needs: craft-release
+        if: startsWith(github.ref, 'refs/tags/v')
+        runs-on: ubuntu-24.04
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v7
+
+            - name: Setup Python
+              uses: actions/setup-python@v6
+              with:
+                  python-version: "3.11"
+
+            - name: Build Python CLI
+              run: |
+                  python -m pip install --upgrade pip build
+                  python -m build cli/
+
+            # bluz is private; the .github repo is public and needs no Bluz
+            # source or auth to install from — mirrors pyhive's publish.yml.
+            - name: Checkout .github index repo
+              uses: actions/checkout@v7
+              with:
+                  repository: System-B90/.github
+                  token: ${{ secrets.CLASSIC_ACCESS_TOKEN }}
+                  path: org-github
+
+            - name: Copy distributions and regenerate index
+              run: |
+                  mkdir -p org-github/pypi/bluz-cli
+                  cp cli/dist/* org-github/pypi/bluz-cli/
+                  python org-github/pypi/generate_index.py bluz-cli
+
+            - name: Commit and push index update
+              working-directory: org-github
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git add pypi/
+                  git diff --cached --quiet && exit 0
+                  git commit -m "Vibe-Updated pip index for bluz-cli ${{ github.ref_name }}"
+                  git push

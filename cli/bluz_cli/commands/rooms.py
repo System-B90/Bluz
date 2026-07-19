@@ -12,7 +12,14 @@ import uuid
 
 import typer
 
-from bluz_cli.commands._common import merge_fields, parse_json, show
+from bluz_cli.commands._common import (
+    LIMIT_OPTION,
+    OFFSET_OPTION,
+    find_by_id,
+    merge_fields,
+    parse_json,
+    show,
+)
 from bluz_cli.context import state
 from bluz_cli.output import success
 
@@ -26,10 +33,21 @@ ROOM_SOURCE_HIVE = 1
 
 
 @app.command("list")
-def list_rooms() -> None:
+def list_rooms(
+    limit: int = LIMIT_OPTION,
+    offset: int = OFFSET_OPTION,
+) -> None:
     """List all rooms (custom and Hive-backed)."""
     with state.client() as client:
-        show(client.get(_BASE), title="Rooms")
+        show(client.get(_BASE), title="Rooms", limit=limit, offset=offset)
+
+
+@app.command()
+def get(room_id: str = typer.Argument(..., help="Room id.")) -> None:
+    """Fetch a single room by id (filtered client-side — no per-id route)."""
+    with state.client() as client:
+        items = client.get(_BASE)
+    show(find_by_id(items, room_id))
 
 
 @app.command()

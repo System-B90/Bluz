@@ -12,7 +12,13 @@ import uuid
 
 import typer
 
-from bluz_cli.commands._common import merge_fields, show
+from bluz_cli.commands._common import (
+    LIMIT_OPTION,
+    OFFSET_OPTION,
+    find_by_id,
+    merge_fields,
+    show,
+)
 from bluz_cli.context import state
 from bluz_cli.output import success
 
@@ -22,10 +28,21 @@ _BASE = "/api/outsiders"
 
 
 @app.command("list")
-def list_outsiders() -> None:
+def list_outsiders(
+    limit: int = LIMIT_OPTION,
+    offset: int = OFFSET_OPTION,
+) -> None:
     """List all outsiders."""
     with state.client() as client:
-        show(client.get(_BASE), title="Outsiders")
+        show(client.get(_BASE), title="Outsiders", limit=limit, offset=offset)
+
+
+@app.command()
+def get(outsider_id: str = typer.Argument(..., help="Outsider id.")) -> None:
+    """Fetch a single outsider by id (filtered client-side — no per-id route)."""
+    with state.client() as client:
+        items = client.get(_BASE)
+    show(find_by_id(items, outsider_id))
 
 
 @app.command()
