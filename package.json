@@ -114,5 +114,8 @@
   },
   "allowScripts": {
     "esbuild@0.27.7": true
+  },
+  "overrides": {
+    "uuid": "^14.0.1"
   }
 }
