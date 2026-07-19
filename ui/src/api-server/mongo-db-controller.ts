@@ -12,6 +12,7 @@ import {
     GanttModule,
     GanttSyllabus,
 } from "@/api-shared/types/gantt/models";
+import { GoogleCalendarLink } from "@/api-shared/types/google-calendar";
 import { Iteration, IterationId } from "@/api-shared/types/iteration";
 import { Outsider } from "@/api-shared/types/outsider";
 import { PersonalSettings } from "@/api-shared/types/personal-settings";
@@ -216,6 +217,12 @@ class MetaController {
     public get customColors(): Collection<CustomColor> {
         return this.metaDb.collection<CustomColor>("customColors");
     }
+    /** Per-user Google Calendar OAuth links (opt-in), shared across all iterations. */
+    public get googleCalendarLinks(): Collection<GoogleCalendarLink> {
+        return this.metaDb.collection<GoogleCalendarLink>(
+            "googleCalendarLinks",
+        );
+    }
     public get client(): MongoClient {
         return mongoClient;
     }
@@ -232,6 +239,10 @@ export function getMetaController(): MetaController {
             void Promise.all([
                 _metaController.iterations.createIndex({ id: 1 }),
                 _metaController.iterations.createIndex({ isCurrent: 1 }),
+                _metaController.googleCalendarLinks.createIndex(
+                    { userId: 1 },
+                    { unique: true },
+                ),
             ]).catch((error) => {
                 console.error("Failed to ensure iteration registry indexes", error);
             });

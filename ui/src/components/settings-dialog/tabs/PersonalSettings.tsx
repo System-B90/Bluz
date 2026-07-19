@@ -1,10 +1,13 @@
 "use client";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
+import EventIcon from "@mui/icons-material/Event";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
@@ -19,12 +22,20 @@ import
 } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import
+{
+    apiDisconnectGoogleCalendar,
+    apiGetGoogleCalendarConnectUrl,
+    apiGetGoogleCalendarStatus,
+    apiSyncGoogleCalendarNow,
+} from "@/api-client/google-calendar";
 import { apiGetClasses } from "@/api-client/hive";
 import
 {
     apiGetPersonalSettings,
     apiSetPersonalSettings,
 } from "@/api-client/personal-settings";
+import { GoogleCalendarStatus } from "@/api-shared/types/google-calendar";
 import { Class, ClassTypeEnum } from "@/api-shared/types/hive";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
@@ -34,6 +45,7 @@ type PersonalState = {
     groups: Array<string>;
     instructors: Array<string>;
     favoriteOutsiders: Array<string>;
+    googleCalendarEnabled: boolean;
 };
 type PersonalAction =
     | { type: "ADD_GROUP"; payload: string; }
@@ -42,7 +54,8 @@ type PersonalAction =
     | { type: "INITIALIZE"; payload: PersonalState; }
     | { type: "REMOVE_GROUP"; payload: string; }
     | { type: "REMOVE_INSTRUCTOR"; payload: string; }
-    | { type: "REMOVE_OUTSIDER"; payload: string; };
+    | { type: "REMOVE_OUTSIDER"; payload: string; }
+    | { type: "SET_GOOGLE_CALENDAR_ENABLED"; payload: boolean; };
 
 function personalSettingsReducer(
     state: PersonalState,
@@ -87,6 +100,8 @@ function personalSettingsReducer(
                 (o) => o !== action.payload,
             ),
         };
+    case "SET_GOOGLE_CALENDAR_ENABLED":
+        return { ...state, googleCalendarEnabled: action.payload };
     }
 }
 
@@ -237,8 +252,24 @@ export function PersonalSettings()
         groups: [],
         instructors: [],
         favoriteOutsiders: [],
+        googleCalendarEnabled: false,
     });
     const [ isLoaded, setIsLoaded ] = useState(false);
+    const [ googleStatus, setGoogleStatus ] = useState<GoogleCalendarStatus | null>(null);
+    const [ googleBusy, setGoogleBusy ] = useState(false);
+
+    const refreshGoogleStatus = useCallback(() =>
+    {
+        apiGetGoogleCalendarStatus({})
+            .then(setGoogleStatus)
+            // Offline deployments / unconfigured server: treat as "unavailable", not an error.
+            .catch(() => setGoogleStatus({ configured: false, connected: false, enabled: false }));
+    }, []);
+
+    useEffect(() =>
+    {
+        refreshGoogleStatus();
+    }, [ refreshGoogleStatus ]);
 
     // Load saved preferences from the server (once on mount)
     useEffect(() =>
@@ -353,6 +384,76 @@ export function PersonalSettings()
         [ enqueueSnackbar ],
     );
 
+    const handleToggleGoogleCalendar = useCallback(
+        async (enabled: boolean) =>
+        {
+            dispatch({ type: "SET_GOOGLE_CALENDAR_ENABLED", payload: enabled });
+            if (!enabled) return;
+
+            // Turning the toggle on with no linked Google account: kick off consent.
+            if (!googleStatus?.connected)
+            {
+                setGoogleBusy(true);
+                try
+                {
+                    const { url } = await apiGetGoogleCalendarConnectUrl({});
+                    window.location.href = url;
+                }
+                catch (e)
+                {
+                    dispatch({ type: "SET_GOOGLE_CALENDAR_ENABLED", payload: false });
+                    enqueueApiErrorSnackbar(enqueueSnackbar, "כשל בחיבור ל-Google Calendar", e);
+                }
+                finally
+                {
+                    setGoogleBusy(false);
+                }
+            }
+        },
+        [ enqueueSnackbar, googleStatus ],
+    );
+
+    const handleDisconnectGoogle = useCallback(async () =>
+    {
+        setGoogleBusy(true);
+        try
+        {
+            await apiDisconnectGoogleCalendar({});
+            dispatch({ type: "SET_GOOGLE_CALENDAR_ENABLED", payload: false });
+            refreshGoogleStatus();
+            enqueueSnackbar("החיבור ל-Google Calendar נותק.", { variant: "success" });
+        }
+        catch (e)
+        {
+            enqueueApiErrorSnackbar(enqueueSnackbar, "כשל בניתוק Google Calendar", e);
+        }
+        finally
+        {
+            setGoogleBusy(false);
+        }
+    }, [ enqueueSnackbar, refreshGoogleStatus ]);
+
+    const handleSyncGoogleNow = useCallback(async () =>
+    {
+        setGoogleBusy(true);
+        try
+        {
+            const result = await apiSyncGoogleCalendarNow({});
+            enqueueSnackbar(
+                `סונכרנו ${result.pushed} אירועים מ-Bluz, נמצאו ${result.pulled} חסימות עומס מ-Google.`,
+                { variant: "success" },
+            );
+        }
+        catch (e)
+        {
+            enqueueApiErrorSnackbar(enqueueSnackbar, "כשל בסנכרון עם Google Calendar", e);
+        }
+        finally
+        {
+            setGoogleBusy(false);
+        }
+    }, [ enqueueSnackbar ]);
+
     const availableGroups = hiveClasses
         .filter((c) => !state.groups.includes(String(c.id)))
         .map((c) => ({ id: String(c.id), label: c.display_name }));
@@ -443,6 +544,53 @@ export function PersonalSettings()
                     selectedItems={ selectedOutsiders }
                     title="אנשי חוץ מועדפים"
                 />
+            </Box>
+            <Box sx={ { display: "flex", width: "100%" } }>
+                <Box sx={ { ...settingsCardSx, flex: 1, minWidth: 0, gap: 2 } }>
+                    <Box alignItems="center" display="flex" gap={ 1.5 }>
+                        <Box sx={ iconBadgeSx("info") }>
+                            <EventIcon className="text-[20px]" />
+                        </Box>
+                        <Box flex={ 1 }>
+                            <Typography sx={ { fontWeight: 800, fontSize: "1.1rem", color: "text.primary" } }>
+                                Google Calendar
+                            </Typography>
+                            <Typography sx={ { fontSize: "0.75rem", color: "text.secondary" } }>
+                                סנכרון דו-כיווני אופציונלי: האירועים שלך נשלחים ליומן Google ייעודי,
+                                וזמני עומס מ-Google נקראים לאיתור התנגשויות.
+                            </Typography>
+                        </Box>
+                        <Switch
+                            checked={ state.googleCalendarEnabled }
+                            disabled={ googleBusy || !googleStatus?.configured }
+                            onChange={ (_e, checked) => handleToggleGoogleCalendar(checked) }
+                        />
+                    </Box>
+                    { !googleStatus?.configured && (
+                        <Typography sx={ { fontSize: "0.75rem", color: "text.secondary" } }>
+                            האינטגרציה אינה מוגדרת בשרת זה (מתאים לפריסות ללא גישה לאינטרנט).
+                        </Typography>
+                    ) }
+                    { state.googleCalendarEnabled && googleStatus?.connected ? <Box display="flex" gap={ 1.5 }>
+                        <Button
+                            disabled={ googleBusy }
+                            onClick={ handleSyncGoogleNow }
+                            size="small"
+                            variant="outlined"
+                        >
+                                סנכרן עכשיו
+                        </Button>
+                        <Button
+                            color="error"
+                            disabled={ googleBusy }
+                            onClick={ handleDisconnectGoogle }
+                            size="small"
+                            variant="text"
+                        >
+                                נתק חשבון
+                        </Button>
+                    </Box> : null }
+                </Box>
             </Box>
         </Box>
     );

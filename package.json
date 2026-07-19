@@ -57,6 +57,7 @@
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
     "exceljs": "^4.4.0",
+    "googleapis": "^163.0.0",
     "lightningcss": "^1.32.0",
     "lucide-react": "^0.553.0",
     "mongodb": "^7.5.0",
