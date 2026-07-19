@@ -7,6 +7,7 @@ import {
     GanttWeek,
 } from "@/api-shared/types/gantt/models";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
+import { GanttBlockPayload } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 
 /** Multi-day spillover info for a mapped event (#105). */
 export type EventSpanInfo = {
@@ -118,10 +119,10 @@ export function buildWeeklyEventCells(
             isRecurrenceReminder ||
             isModuleWaiting;
 
-        const blockPayload = isExplicitlyMappedHere
-            ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId }
+        const blockPayload: GanttBlockPayload = isExplicitlyMappedHere
+            ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId! }
             : isRecurrenceWeek
-                ? { type: "event-occurrence", moduleId, eventId, dayId: weekOccurrenceDayId }
+                ? { type: "event-occurrence", moduleId, eventId, dayId: weekOccurrenceDayId! }
                 : reminderIsMarker
                     ? { moduleId, eventId }
                     : { type: "event-map", moduleId, eventId };
@@ -286,7 +287,7 @@ export function buildDailyEventCells(
                 isRecurrenceReminder ||
                 isModuleWaiting;
 
-            const blockPayload = isExplicitlyMappedHere
+            const blockPayload: GanttBlockPayload = isExplicitlyMappedHere
                 ? { type: "event-move", moduleId, eventId, sourceDayId: dayId }
                 : isRecurrenceOccurrence
                     ? { type: "event-occurrence", moduleId, eventId, dayId }

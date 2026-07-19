@@ -42,7 +42,7 @@ export function formatValue(value: Event[keyof Event], key: string): string
     // Special case for startTime and endTime which might be ISO strings from server
     if (key === "startTime" || key === "endTime")
     {
-        const parsed = dayjs(value);
+        const parsed = dayjs(value as Date | number | string);
         if (parsed.isValid())
         {
             return parsed.format("DD/MM/YYYY HH:mm");
@@ -110,8 +110,8 @@ export function formatDateTimeChangeNote(
         return null;
     }
 
-    const fromDate = dayjs(from);
-    const toDate = dayjs(to);
+    const fromDate = dayjs(from as Date | number | string);
+    const toDate = dayjs(to as Date | number | string);
     if (!fromDate.isValid() || !toDate.isValid() || fromDate.isSame(toDate))
     {
         return null;

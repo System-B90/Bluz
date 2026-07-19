@@ -5,6 +5,7 @@ import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models
 import
 {
     ConstraintType,
+    GanttConstraint,
     hasConflictingTemporalConstraints,
 } from "@/api-shared/types/gantt/models/constraint";
 import
@@ -389,12 +390,14 @@ export const useGanttView = (curriculumId: string) =>
         };
 
         const processConstraints = (
-            entity: { constraintIds?: Array<string> },
+            entity: { constraints?: Array<GanttConstraint> },
             entityId: string,
             entityType: "event" | "module",
         ) =>
         {
-            const cIds: Array<string> = entity.constraintIds || [];
+            const cIds: Array<string> = (entity.constraints || []).map(
+                (c) => c.id,
+            );
 
             // Conflicting temporal constraints are flagged even before the
             // entity is mapped to a day (#104). Warning only — never blocks.
