@@ -185,7 +185,7 @@ export function drizzleOperationsBuilder<
 
         return results.reduce(
             (acc, row) => {
-                acc[row.id as T["id"]] = row.title;
+                acc[row.id as T["id"]] = row.title as T["title"];
                 return acc;
             },
             {} as Record<T["id"], T["title"]>,
