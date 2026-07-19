@@ -32,7 +32,7 @@ export const KEY_TRANSLATIONS: Record<string, string> = {
 /**
  * Formats event property values into elegant, human-readable Hebrew strings.
  */
-export function formatValue(value: any, key: string): string
+export function formatValue(value: Event[keyof Event], key: string): string
 {
     if (value === undefined || value === null)
     {
@@ -75,7 +75,7 @@ export function formatValue(value: any, key: string): string
                 {
                     if ("name" in item)
                     {
-                        return (item as any).name;
+                        return (item as { name: string }).name;
                     }
                     return JSON.stringify(item);
                 }
@@ -100,7 +100,10 @@ export function formatValue(value: any, key: string): string
  * / "נדחה מיום שני ה-6.4 ליום חמישי ה-9.4 (ב-3 ימים)" when the day changes.
  * Returns null when there's nothing meaningful to report.
  */
-export function formatDateTimeChangeNote(from: any, to: any): null | string
+export function formatDateTimeChangeNote(
+    from: Event[keyof Event] | undefined,
+    to: Event[keyof Event] | undefined,
+): null | string
 {
     if (from === undefined || from === null || to === undefined || to === null)
     {

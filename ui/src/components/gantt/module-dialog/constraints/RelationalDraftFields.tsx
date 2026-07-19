@@ -11,6 +11,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 
+import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import {
     DraftConstraint,
     RelationalDraft,
@@ -26,7 +27,7 @@ export function RelationalDraftFields({
     draft: RelationalDraft;
     setDraft: (draft: DraftConstraint) => void;
     targetOptions: Record<string, Array<TargetOption>>;
-    curriculumState: any;
+    curriculumState: NormalizedStore;
 }) {
     const minVal = draft.minDelay ? Number(draft.minDelay) : NaN;
     const maxVal = draft.maxDelay ? Number(draft.maxDelay) : NaN;

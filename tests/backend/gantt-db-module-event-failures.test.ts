@@ -20,25 +20,32 @@ import { DbModuleEvent } from "@/api-server/gantt/db-module-event";
 import { ClientApiError } from "@/api-shared/errors";
 
 /**
- * Builds a thenable proxy that mimics Drizzle's chainable query builder:
- * every property access returns a function that re-returns the same chain,
- * and awaiting the chain at any point resolves/rejects to `result`.
+ * Thenable/chainable Drizzle query-builder stand-in: every property access
+ * returns a function that re-returns the same chain, and awaiting the chain
+ * at any point resolves/rejects to `result`.
  */
-function createChain(result: unknown, shouldReject = false): any {
+interface DrizzleChain<T> extends PromiseLike<T> {
+    [key: string]: unknown;
+}
+
+function createChain<T>(result: T, shouldReject = false): DrizzleChain<T> {
     const methodCache = new Map<string | symbol, ReturnType<typeof vi.fn>>();
-    const chain: any = new Proxy(
+    const chain: DrizzleChain<T> = new Proxy(
         {},
         {
             get(_target, prop) {
                 if (prop === "then") {
-                    return (onFulfilled: any, onRejected: any) =>
+                    return (
+                        onFulfilled: (value: T) => unknown,
+                        onRejected: (reason: unknown) => unknown,
+                    ) =>
                         (shouldReject
                             ? Promise.reject(result)
                             : Promise.resolve(result)
                         ).then(onFulfilled, onRejected);
                 }
                 if (prop === "catch") {
-                    return (onRejected: any) =>
+                    return (onRejected: (reason: unknown) => unknown) =>
                         (shouldReject
                             ? Promise.reject(result)
                             : Promise.resolve(result)
@@ -50,9 +57,17 @@ function createChain(result: unknown, shouldReject = false): any {
                 return methodCache.get(prop);
             },
         },
-    );
+    ) as DrizzleChain<T>;
     return chain;
 }
+
+type DbErrorCause = {
+    code: string;
+    name: string;
+    severity?: string;
+    detail?: string;
+};
+type DbError = Error & { cause: DbErrorCause };
 
 describe("Gantt DB Module Event - Failure Paths", () => {
     beforeEach(() => {
@@ -113,8 +128,8 @@ describe("Gantt DB Module Event - Failure Paths", () => {
 
     describe("addEventToModule", () => {
         it("throws error when event already linked to module", async () => {
-            const uniqueViolationError = new Error("Unique constraint violation");
-            (uniqueViolationError as any).cause = {
+            const uniqueViolationError = new Error("Unique constraint violation") as DbError;
+            uniqueViolationError.cause = {
                 code: "23505", // UNIQUE_VIOLATION
                 name: "QueryFailedError",
                 severity: "ERROR",
@@ -131,8 +146,8 @@ describe("Gantt DB Module Event - Failure Paths", () => {
         });
 
         it("throws error when module or event does not exist", async () => {
-            const fkViolationError = new Error("Foreign key constraint violation");
-            (fkViolationError as any).cause = {
+            const fkViolationError = new Error("Foreign key constraint violation") as DbError;
+            fkViolationError.cause = {
                 code: "23503", // FOREIGN_KEY_VIOLATION
                 name: "QueryFailedError",
                 severity: "ERROR",
@@ -149,8 +164,8 @@ describe("Gantt DB Module Event - Failure Paths", () => {
         });
 
         it("throws generic error for unknown database error", async () => {
-            const unknownError = new Error("Unknown database error");
-            (unknownError as any).cause = {
+            const unknownError = new Error("Unknown database error") as DbError;
+            unknownError.cause = {
                 code: "99999",
                 name: "QueryFailedError",
             };

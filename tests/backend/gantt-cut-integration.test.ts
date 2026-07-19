@@ -46,11 +46,13 @@ vi.mock("@/api-server/web-socket-utils", () => ({
 import { DbCourses } from "@/api-server/db-courses";
 import { DbIterations } from "@/api-server/db-iterations";
 import { DbSettings } from "@/api-server/db-settings";
+import { Iteration } from "@/api-shared/types/iteration";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { getModuleDayMappingsForCurriculum } from "@/api-server/gantt/db-mappings";
 import { listRecurrenceExceptionsForCurriculum } from "@/api-server/gantt/db-recurrence-exceptions";
 import { cutCurriculumToSchedule } from "@/api-server/gantt/cut";
 import { DbEventDocument, EventType } from "@/api-shared/types/event";
+import { EventDataUpdateMessage } from "@/api-shared/types";
 import { ApiCurriculum, ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
 import {
     EventRecurrence,
@@ -150,14 +152,20 @@ function arrange(args: {
     curriculumOverrides?: Partial<ApiCurriculum>;
 }) {
     vi.mocked(DbCurriculum.getItem).mockResolvedValue(
-        makeCurriculum(args.events, args.curriculumOverrides) as any,
+        makeCurriculum(args.events, args.curriculumOverrides),
     );
-    vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(iteration as any);
+    vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(
+        iteration as Iteration,
+    );
     vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue(
-        (args.mappings ?? []) as any,
+        (args.mappings ?? []) as Awaited<
+            ReturnType<typeof getModuleDayMappingsForCurriculum>
+        >,
     );
     vi.mocked(listRecurrenceExceptionsForCurriculum).mockResolvedValue(
-        (args.exceptions ?? []) as any,
+        (args.exceptions ?? []) as Awaited<
+            ReturnType<typeof listRecurrenceExceptionsForCurriculum>
+        >,
     );
 }
 
@@ -169,8 +177,12 @@ function insertedDocs(): Array<DbEventDocument> {
 beforeEach(() => {
     vi.clearAllMocks();
     fakeEvents.countDocuments.mockResolvedValue(0);
-    vi.mocked(DbSettings.get).mockResolvedValue({ dayStartTime: "08:00" } as any);
-    vi.mocked(DbCourses.get).mockResolvedValue([] as any);
+    vi.mocked(DbSettings.get).mockResolvedValue({
+        dayStartTime: "08:00",
+    } as Awaited<ReturnType<typeof DbSettings.get>>);
+    vi.mocked(DbCourses.get).mockResolvedValue(
+        [] as Awaited<ReturnType<typeof DbCourses.get>>,
+    );
 });
 
 // ---- Recurring expansion ----------------------------------------------------
@@ -232,7 +244,9 @@ describe("cut — recurring expansion", () => {
 
 describe("cut — document stacking", () => {
     it("stacks same-day events sequentially by sortOrder from the configured day start", async () => {
-        vi.mocked(DbSettings.get).mockResolvedValue({ dayStartTime: "09:15" } as any);
+        vi.mocked(DbSettings.get).mockResolvedValue({
+            dayStartTime: "09:15",
+        } as Awaited<ReturnType<typeof DbSettings.get>>);
         arrange({
             events: [
                 makeEvent({ id: "first", cEC: [{ eventId: "first", curriculumId: "c1", allocatedDuration: 45 }] }),
@@ -285,7 +299,7 @@ describe("cut — course resolution", () => {
     it("matches an existing course by exact name instead of creating a duplicate", async () => {
         vi.mocked(DbCourses.get).mockResolvedValue([
             { id: "existing", name: "מחלקה א", color: null },
-        ] as any);
+        ] as Awaited<ReturnType<typeof DbCourses.get>>);
         arrange({
             events: [makeEvent({ id: "e1", shuffles: ["מחלקה א"] })],
             mappings: [{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }],
@@ -324,7 +338,7 @@ describe("cut — course resolution", () => {
     it("mixes matched and created courses on a multi-shuffle event", async () => {
         vi.mocked(DbCourses.get).mockResolvedValue([
             { id: "existing", name: "קיים", color: null },
-        ] as any);
+        ] as Awaited<ReturnType<typeof DbCourses.get>>);
         arrange({
             events: [makeEvent({ id: "e1", shuffles: ["קיים", "חדש"] })],
             mappings: [{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }],
@@ -375,7 +389,7 @@ describe("cut — websocket broadcast", () => {
 
         await cutCurriculumToSchedule("c1");
         expect(broadcast).toHaveBeenCalledTimes(1);
-        const payload = broadcast.mock.calls[0][1] as any;
+        const payload = broadcast.mock.calls[0][1] as EventDataUpdateMessage<DbEventDocument>;
         expect(payload.iterationId).toBeUndefined();
         const docs = insertedDocs();
         expect(Object.keys(payload.events)).toEqual([docs[0].id]);
@@ -389,10 +403,10 @@ describe("cut — websocket broadcast", () => {
         vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({
             ...iteration,
             isCurrent: false,
-        } as any);
+        } as Iteration);
 
         await cutCurriculumToSchedule("c1");
-        const payload = broadcast.mock.calls[0][1] as any;
+        const payload = broadcast.mock.calls[0][1] as EventDataUpdateMessage<DbEventDocument>;
         expect(payload.iterationId).toBe("2026a");
     });
 
@@ -412,7 +426,9 @@ describe("cut — websocket broadcast", () => {
 
 describe("cut — day-start setting", () => {
     it("falls back to the default 08:00 when the setting is missing", async () => {
-        vi.mocked(DbSettings.get).mockResolvedValue(null as any);
+        vi.mocked(DbSettings.get).mockResolvedValue(
+            null as unknown as Awaited<ReturnType<typeof DbSettings.get>>,
+        );
         arrange({
             events: [makeEvent({ id: "e1" })],
             mappings: [{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }],

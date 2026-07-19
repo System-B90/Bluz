@@ -354,12 +354,17 @@ export function UnifiedEvent({
 
             {rows.length > 0 && <AccentDivider />}
 
-            {rows.map((row, idx) => (
-                <React.Fragment key={idx}>
-                    {idx > 0 && <AccentDivider />}
-                    {row}
-                </React.Fragment>
-            ))}
+            {rows.map((row, idx) => {
+                const rowKey = React.isValidElement(row)
+                    ? (row.key ?? idx)
+                    : idx;
+                return (
+                    <React.Fragment key={rowKey}>
+                        {idx > 0 && <AccentDivider />}
+                        {row}
+                    </React.Fragment>
+                );
+            })}
 
             {/* ── Status icons (bottom-right) ─────────────────── */}
             <EventStatusIcons

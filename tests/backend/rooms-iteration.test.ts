@@ -24,6 +24,7 @@ vi.mock("@/api-server/db-iterations", () => ({
 }));
 
 import { DbIterations } from "@/api-server/db-iterations";
+import { Iteration } from "@/api-shared/types/iteration";
 import { getAllRooms } from "@/app/api/rooms/utils";
 import * as RoomsRoute from "@/app/api/rooms/route";
 
@@ -31,7 +32,7 @@ beforeEach(() => vi.clearAllMocks());
 
 describe("GET /api/rooms — per-iteration Hive instance", () => {
     it("uses the iteration's Hive URL when viewing a past iteration", async () => {
-        vi.mocked(getAllRooms).mockResolvedValueOnce([] as any);
+        vi.mocked(getAllRooms).mockResolvedValueOnce([]);
         const hiveCache = {
             modules: {},
             subjects: {},
@@ -42,10 +43,10 @@ describe("GET /api/rooms — per-iteration Hive instance", () => {
             id: "2026b",
             hiveUrl: "https://hive-2026b.example",
             hiveCache,
-        } as any);
+        } as Iteration);
 
         const req = new NextRequest("http://localhost/api/rooms?it=2026b");
-        const res = await RoomsRoute.GET(req as any);
+        const res = await RoomsRoute.GET(req);
 
         expect(res.status).toBe(200);
         expect(DbIterations.get).toHaveBeenCalledWith("2026b");
@@ -57,10 +58,10 @@ describe("GET /api/rooms — per-iteration Hive instance", () => {
     });
 
     it("uses the default Hive instance for the current run", async () => {
-        vi.mocked(getAllRooms).mockResolvedValueOnce([] as any);
+        vi.mocked(getAllRooms).mockResolvedValueOnce([]);
 
         const req = new NextRequest("http://localhost/api/rooms");
-        const res = await RoomsRoute.GET(req as any);
+        const res = await RoomsRoute.GET(req);
 
         expect(res.status).toBe(200);
         expect(DbIterations.get).not.toHaveBeenCalled();

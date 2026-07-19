@@ -1,13 +1,12 @@
-import { ButtonProps } from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
-import IconButton from "@mui/material/IconButton";
+import IconButton, { IconButtonProps } from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 
 export type ActionItemButtonProps = {
     tooltipTitle: string;
     startIcon?: React.ReactNode;
     loading?: boolean;
-} & Omit<ButtonProps, "size" | "sx" | "variant">;
+} & Omit<IconButtonProps, "size" | "sx">;
 
 export function ActionItemButton({
     tooltipTitle,
@@ -24,9 +23,9 @@ export function ActionItemButton({
             <span>
                 <IconButton
                     aria-label={ tooltipTitle }
-                    color={ props.color as any }
+                    color={ props.color }
                     disabled={ isDisabled }
-                    onClick={ props.onClick as any }
+                    onClick={ props.onClick }
                     sx={ {
                         border: "1px solid",
                         borderColor: (theme) =>

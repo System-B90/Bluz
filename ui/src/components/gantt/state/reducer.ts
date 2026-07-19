@@ -436,7 +436,7 @@ export function curriculumReducer(
                 [action.payload.week.id]: injectDocumentTimes({
                     ...action.payload.week,
                     curriculumId: action.payload.curriculumId,
-                }) as any,
+                }),
             },
             curriculums: {
                 ...state.curriculums,
@@ -482,18 +482,14 @@ export function curriculumReducer(
     }
 
     case "ADD_DAY": {
-        const daysRecord = state.days as Record<
-                GanttDayId,
-                GanttDay & { id: GanttDayId }
-            >;
         return {
             ...state,
             days: {
-                ...daysRecord,
+                ...state.days,
                 [action.payload.day.id]: injectDocumentTimes(
                     action.payload.day,
-                ) as any,
-            } as typeof state.days,
+                ),
+            },
         };
     }
 

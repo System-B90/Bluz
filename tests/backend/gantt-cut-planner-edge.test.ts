@@ -329,10 +329,13 @@ describe("planCut — recurrence", () => {
         const echo = day2.find((o) => o.ganttEventId === "daily");
         expect(own).toBeDefined();
         expect(echo).toBeDefined();
-        expect(echo!.isRecurrenceEcho).toBe(true);
+        if (!own || !echo) {
+            throw new Error("Expected both 'own' and 'echo' occurrences to be found on day2.");
+        }
+        expect(echo.isRecurrenceEcho).toBe(true);
         // Own event opens the day; the echo starts exactly when it ends.
-        expect(hhmm(own!.startTime)).toBe("08:00");
-        expect(echo!.startTime.getTime()).toBe(own!.endTime.getTime());
+        expect(hhmm(own.startTime)).toBe("08:00");
+        expect(echo.startTime.getTime()).toBe(own.endTime.getTime());
     });
 
     it("is deterministic: identical input yields identical output ordering", () => {

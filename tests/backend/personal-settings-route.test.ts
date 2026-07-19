@@ -31,7 +31,7 @@ describe("GET /api/personal-settings", () => {
         vi.mocked(DbPersonalSettings.get).mockResolvedValueOnce(settings);
 
         const req = new NextRequest("http://localhost/api/personal-settings");
-        const res = await PersonalSettingsRoute.GET(req as any);
+        const res = await PersonalSettingsRoute.GET(req);
         const body = await res.json();
 
         expect(DbPersonalSettings.get).toHaveBeenCalledWith("u1");
@@ -43,7 +43,7 @@ describe("GET /api/personal-settings", () => {
         vi.mocked(getSessionUser).mockResolvedValueOnce(null);
 
         const req = new NextRequest("http://localhost/api/personal-settings");
-        const res = await PersonalSettingsRoute.GET(req as any);
+        const res = await PersonalSettingsRoute.GET(req);
 
         expect(res.status).not.toBe(200);
         expect(DbPersonalSettings.get).not.toHaveBeenCalled();
@@ -59,7 +59,7 @@ describe("POST /api/personal-settings", () => {
             method: "POST",
             body: JSON.stringify(settings),
         });
-        const res = await PersonalSettingsRoute.POST(req as any);
+        const res = await PersonalSettingsRoute.POST(req);
         const body = await res.json();
 
         expect(DbPersonalSettings.set).toHaveBeenCalledWith("u1", settings);
@@ -74,7 +74,7 @@ describe("POST /api/personal-settings", () => {
             method: "POST",
             body: JSON.stringify(settings),
         });
-        const res = await PersonalSettingsRoute.POST(req as any);
+        const res = await PersonalSettingsRoute.POST(req);
 
         expect(res.status).not.toBe(200);
         expect(DbPersonalSettings.set).not.toHaveBeenCalled();

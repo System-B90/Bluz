@@ -70,7 +70,7 @@ async function getFullModule(id: GanttModuleId): Promise<ApiModule> {
         throw new ClientApiError(`מערך עם מזהה ${id} לא נמצא`);
     }
 
-    return result as any;
+    return result as unknown as ApiModule;
 }
 
 async function addModuleToSyllabus(
@@ -83,8 +83,8 @@ async function addModuleToSyllabus(
             moduleId: moduleId,
         });
         return await getFullModule(moduleId);
-    } catch (error: any) {
-        const cause = error.cause as {
+    } catch (error: unknown) {
+        const cause = (error as { cause?: unknown }).cause as {
             name: string;
             severity: string;
             code: string;

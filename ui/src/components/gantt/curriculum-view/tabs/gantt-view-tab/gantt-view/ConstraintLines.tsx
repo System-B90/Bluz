@@ -1,3 +1,4 @@
+import Box from "@mui/material/Box";
 import { useTheme } from "@mui/material/styles";
 import React, { useCallback, useEffect, useState } from "react";
 
@@ -104,11 +105,12 @@ export const ConstraintLines: React.FC<ConstraintLinesProps> = ({
         );
 
     return (
-        <svg
-            style={{
+        <Box
+            component="svg"
+            sx={{
                 position: "absolute",
                 top: 0,
-                left: 0,
+                insetInlineStart: 0,
                 width: "100%",
                 height: "100%",
                 pointerEvents: "none",
@@ -121,7 +123,8 @@ export const ConstraintLines: React.FC<ConstraintLinesProps> = ({
                     (l.sourceId === hoveredBlockId ||
                         l.targetId === hoveredBlockId);
                 return (
-                    <line
+                    <Box
+                        component="line"
                         key={l.id}
                         opacity={hasHoveredLines && !isConnected ? 0.15 : 1}
                         stroke={
@@ -133,9 +136,12 @@ export const ConstraintLines: React.FC<ConstraintLinesProps> = ({
                         }
                         strokeDasharray={l.isViolated ? "none" : "4 4"}
                         strokeWidth={isConnected ? 3 : 2}
-                        style={{
-                            transition:
-                                "opacity 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease",
+                        sx={{
+                            transition: (t) =>
+                                t.transitions.create(
+                                    ["opacity", "stroke", "stroke-width"],
+                                    { duration: 150 },
+                                ),
                         }}
                         x1={l.x1}
                         x2={l.x2}
@@ -144,6 +150,6 @@ export const ConstraintLines: React.FC<ConstraintLinesProps> = ({
                     />
                 );
             })}
-        </svg>
+        </Box>
     );
 };

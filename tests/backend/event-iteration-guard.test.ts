@@ -38,7 +38,7 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
     resolveWritableIterationDb,
 }));
 
-import { DbEvent } from "@/api-server/db-event";
+import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import * as EventRoute from "@/app/api/event/route";
 
 beforeEach(() => vi.clearAllMocks());
@@ -52,7 +52,7 @@ describe("event route — iteration read-only guard", () => {
                 body: JSON.stringify({ id: "e1", title: "x" }),
             },
         );
-        const res = await EventRoute.POST(req as any);
+        const res = await EventRoute.POST(req);
 
         expect(res.status).toBe(400);
         expect(resolveWritableIterationDb).toHaveBeenCalledWith("past");
@@ -62,12 +62,12 @@ describe("event route — iteration read-only guard", () => {
     it("allows a write to the current run and stamps no iterationId", async () => {
         vi.mocked(DbEvent.set).mockResolvedValueOnce({
             id: "e1",
-        } as any);
+        } as Partial<DbEventDocument> as DbEventDocument);
         const req = new NextRequest("http://localhost/api/event", {
             method: "POST",
             body: JSON.stringify({ id: "e1", title: "x" }),
         });
-        const res = await EventRoute.POST(req as any);
+        const res = await EventRoute.POST(req);
 
         expect(res.status).toBe(200);
         // 4th arg (iterationId) is undefined for the current run.
@@ -80,11 +80,11 @@ describe("event route — iteration read-only guard", () => {
     });
 
     it("scopes a range read to the requested iteration", async () => {
-        vi.mocked(DbEvent.getInRange).mockResolvedValueOnce([] as any);
+        vi.mocked(DbEvent.getInRange).mockResolvedValueOnce([]);
         const req = new NextRequest(
             "http://localhost/api/event?sd=2026-01-01T00:00:00.000Z&ed=2026-01-10T00:00:00.000Z&it=2026b",
         );
-        const res = await EventRoute.GET(req as any);
+        const res = await EventRoute.GET(req);
 
         expect(res.status).toBe(200);
         expect(resolveIterationDb).toHaveBeenCalledWith("2026b");

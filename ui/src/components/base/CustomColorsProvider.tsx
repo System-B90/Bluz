@@ -261,9 +261,9 @@ export const CustomColorsProvider = ({
     }, [ loadCustomColors ]);
 
     const onWebSocketMessage: MessageHandlerType = useCallback(
-        (messageType: MessageTypes, _data: any) =>
+        (messageType: MessageTypes, _data: unknown) =>
         {
-            if (messageType === (MessageTypes.CUSTOM_COLORS_UPDATE as any))
+            if (messageType === MessageTypes.CUSTOM_COLORS_UPDATE)
             {
                 loadCustomColors();
             }

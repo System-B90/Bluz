@@ -77,7 +77,7 @@ export function hasConflictingTemporalConstraints(
         if (constraint.allowedDays && constraint.allowedDays.length > 0) {
             allowed = new Set(
                 [...allowed].filter((day) =>
-                    constraint.allowedDays!.includes(day),
+                    constraint.allowedDays?.includes(day) ?? false,
                 ),
             );
         }
@@ -90,9 +90,14 @@ export function hasConflictingTemporalConstraints(
     return allowed.size === 0;
 }
 
+type ConstraintDisplayState = {
+    modules: Record<GanttModuleId, { title: string }>;
+    events: Record<GanttEventId, { title: string }>;
+};
+
 export function constraintToHumanReadableString(
     constraint: GanttConstraint,
-    state: any,
+    state: ConstraintDisplayState,
 ) {
     if (constraint.type === ConstraintType.Relational) {
         const target =

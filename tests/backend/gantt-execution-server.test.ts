@@ -37,6 +37,8 @@ import { getModuleDayMappingsForCurriculum } from "@/api-server/gantt/db-mapping
 import { getCurriculumExecution } from "@/api-server/gantt/execution";
 import { DbEventDocument } from "@/api-shared/types/event";
 import { ApiCurriculum, ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
+import { ScheduleSettings } from "@/api-shared/types/settings/schedule";
+import { Iteration } from "@/api-shared/types/iteration";
 import {
     EventRecurrence,
     GanttDayIndex,
@@ -139,18 +141,18 @@ function cutDoc(over: Partial<DbEventDocument> = {}): DbEventDocument {
 beforeEach(() => {
     vi.clearAllMocks();
     findToArray.mockResolvedValue([]);
-    vi.mocked(DbSettings.get).mockResolvedValue({ dayStartTime: "08:00" } as any);
+    vi.mocked(DbSettings.get).mockResolvedValue({ dayStartTime: "08:00" } as ScheduleSettings);
     vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({
         id: "2026a",
         dbName: "bluz_exec",
         isCurrent: true,
-    } as any);
+    } as Iteration);
     vi.mocked(DbCurriculum.getItem).mockResolvedValue(
-        makeCurriculum([makeEvent({ id: "e1" })]) as any,
+        makeCurriculum([makeEvent({ id: "e1" })]),
     );
     vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
         { eventId: "e1", dayId: "w0d0", sortOrder: 0 },
-    ] as any);
+    ]);
 });
 
 describe("getCurriculumExecution — short circuits", () => {
@@ -209,7 +211,7 @@ describe("getCurriculumExecution — drift detection", () => {
 
     it("detects instructor drift against the gantt orchestrator", async () => {
         vi.mocked(DbCurriculum.getItem).mockResolvedValue(
-            makeCurriculum([makeEvent({ id: "e1", orchestratorId: 42 })]) as any,
+            makeCurriculum([makeEvent({ id: "e1", orchestratorId: 42 })]),
         );
         findToArray.mockResolvedValue([cutDoc({ instructors: [42, 7] })]);
         const result = await getCurriculumExecution("c1");
@@ -221,7 +223,7 @@ describe("getCurriculumExecution — plan divergence after the cut", () => {
     it("keeps reporting cut events when the plan no longer validates (gantt edited)", async () => {
         // Event was unmapped after the cut → planCut fails → planned side empty,
         // but the cut schedule events must still be visible as orphans.
-        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([] as any);
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([]);
         findToArray.mockResolvedValue([cutDoc()]);
 
         const result = await getCurriculumExecution("c1");
@@ -248,12 +250,12 @@ describe("getCurriculumExecution — plan divergence after the cut", () => {
             makeCurriculum([
                 makeEvent({ id: "e1" }),
                 makeEvent({ id: "e2" }),
-            ]) as any,
+            ]),
         );
         vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
             { eventId: "e1", dayId: "w0d0", sortOrder: 0 },
             { eventId: "e2", dayId: "w0d0", sortOrder: 1 },
-        ] as any);
+        ]);
         findToArray.mockResolvedValue([
             cutDoc(),
             cutDoc({
