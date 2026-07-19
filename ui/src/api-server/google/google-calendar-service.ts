@@ -1,6 +1,7 @@
 import { calendar_v3, google } from "googleapis";
 
 import { getMetaController } from "@/api-server/mongo-db-controller";
+import { openSecret, sealSecret } from "@/api-server/secret-box";
 import { DbEventDocument } from "@/api-shared/types/event";
 import { GoogleCalendarLink } from "@/api-shared/types/google-calendar";
 
@@ -127,8 +128,8 @@ export async function connectGoogleCalendar(
 
     await saveLink(userId, {
         userId,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
+        accessToken: sealSecret(tokens.access_token),
+        refreshToken: sealSecret(tokens.refresh_token),
         expiryDate: tokens.expiry_date ?? Date.now(),
         calendarId,
         connectedAt: Date.now(),
@@ -148,14 +149,14 @@ async function getAuthorizedClient(
 
     const client = createOAuthClient();
     client.setCredentials({
-        access_token: link.accessToken,
-        refresh_token: link.refreshToken,
+        access_token: openSecret(link.accessToken),
+        refresh_token: openSecret(link.refreshToken),
         expiry_date: link.expiryDate,
     });
     client.on("tokens", (tokens) => {
         void saveLink(userId, {
-            ...(tokens.access_token ? { accessToken: tokens.access_token } : {}),
-            ...(tokens.refresh_token ? { refreshToken: tokens.refresh_token } : {}),
+            ...(tokens.access_token ? { accessToken: sealSecret(tokens.access_token) } : {}),
+            ...(tokens.refresh_token ? { refreshToken: sealSecret(tokens.refresh_token) } : {}),
             ...(tokens.expiry_date ? { expiryDate: tokens.expiry_date } : {}),
         });
     });

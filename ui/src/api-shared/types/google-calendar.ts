@@ -4,7 +4,9 @@
  */
 export type GoogleCalendarLink = {
     userId: string;
+    /** AES-GCM sealed (see api-server/secret-box.ts) — never stored in plaintext. */
     accessToken: string;
+    /** AES-GCM sealed (see api-server/secret-box.ts) — never stored in plaintext. */
     refreshToken: string;
     /** Epoch ms when `accessToken` expires. */
     expiryDate: number;

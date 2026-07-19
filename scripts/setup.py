@@ -21,7 +21,10 @@ except ImportError as e:
     print(f"Error: Missing required dependency '{e.name}'.", file=sys.stderr)
     print("Please install the required packages by running:\n", file=sys.stderr)
     print("    pip install typer InquirerPy python-dotenv\n", file=sys.stderr)
-    print("    pip install git+https://github.com/System-B15/pyhive.git@main\n", file=sys.stderr)
+    print(
+        "    pip install git+https://github.com/System-B15/pyhive.git@main\n",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 try:
@@ -283,9 +286,12 @@ def generate_env() -> None:
             message="Enter Google OAuth Client ID (GOOGLE_CLIENT_ID):",
             default=google_client_id,
         ).execute()
-        google_client_secret = inquirer.secret(
-            message="Enter Google OAuth Client Secret (GOOGLE_CLIENT_SECRET):",
-        ).execute() or google_client_secret
+        google_client_secret = (
+            inquirer.secret(
+                message="Enter Google OAuth Client Secret (GOOGLE_CLIENT_SECRET):",
+            ).execute()
+            or google_client_secret
+        )
 
     env_content: dict[str, str] = {
         "BLUZ_VERSION": existing_env.get("BLUZ_VERSION", "latest"),

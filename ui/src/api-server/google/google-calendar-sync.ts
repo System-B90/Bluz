@@ -13,7 +13,7 @@ export function syncEventToInstructorsGoogleCalendars(
 ): void {
     void (async () => {
         try {
-            const instructorIds = getPresentInstructors(event as any).filter(
+            const instructorIds = getPresentInstructors(event).filter(
                 (id): id is number => typeof id === "number",
             );
             if (instructorIds.length === 0) return;
