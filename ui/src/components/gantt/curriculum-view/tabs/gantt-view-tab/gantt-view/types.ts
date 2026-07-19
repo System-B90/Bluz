@@ -77,8 +77,7 @@ export type SpanVariant = "end" | "middle" | "none" | "single" | "start";
 
 /** Drag payload carried by a block (module/event chip or cell anchor). */
 export type GanttBlockPayload =
-    | { type: "module-map"; moduleId: string }
-    | { type: "module-shift"; moduleId: string; sourceDayId: string }
+    | { moduleId: string; eventId: string; type?: undefined }
     | { type: "event-map"; moduleId: string; eventId: string }
     | {
           type: "event-move";
@@ -92,7 +91,8 @@ export type GanttBlockPayload =
           eventId: string;
           dayId: string;
       }
-    | { moduleId: string; eventId: string; type?: undefined };
+    | { type: "module-map"; moduleId: string }
+    | { type: "module-shift"; moduleId: string; sourceDayId: string };
 
 /** Drop-target payload identifying which module/event a cell resolves to. */
 export type GanttCellPayloadData =

@@ -1,12 +1,12 @@
 import { DragEndEvent } from "@dnd-kit/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models";
 import
 {
     ConstraintType,
     hasConflictingTemporalConstraints,
 } from "@/api-shared/types/gantt/models/constraint";
-import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models";
 import
 {
     buildDayIndexMap,

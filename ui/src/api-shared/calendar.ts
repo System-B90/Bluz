@@ -12,12 +12,12 @@ export function eventDateFixup<T extends Partial<DbEventDocument | Event>>(
         // --- SERVER ENVIRONMENT (Target: Native Date) ---
         if (result.startTime !== undefined) {
             result.startTime = new Date(
-                result.startTime as string | number | Date,
+                result.startTime as Date | number | string,
             ) as T["startTime"];
         }
         if (result.endTime !== undefined) {
             result.endTime = new Date(
-                result.endTime as string | number | Date,
+                result.endTime as Date | number | string,
             ) as T["endTime"];
         }
     } else {
@@ -26,12 +26,12 @@ export function eventDateFixup<T extends Partial<DbEventDocument | Event>>(
         // independent of the viewer's browser timezone (#168).
         if (result.startTime !== undefined) {
             result.startTime = dayjs(
-                result.startTime as string | number | Date,
+                result.startTime as Date | number | string,
             ).tz(APP_TIMEZONE) as T["startTime"];
         }
         if (result.endTime !== undefined) {
             result.endTime = dayjs(
-                result.endTime as string | number | Date,
+                result.endTime as Date | number | string,
             ).tz(APP_TIMEZONE) as T["endTime"];
         }
     }

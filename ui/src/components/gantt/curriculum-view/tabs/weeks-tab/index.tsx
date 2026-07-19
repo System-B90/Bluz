@@ -28,13 +28,11 @@ import { useCurriculumState } from "@/components/gantt/state/provider";
 type WeeksTabProps = {
     curriculumId: GanttCurriculumId;
 };
-
 type ImportedWeekDay = {
     dayIndex: number;
     totalWorkingMinutes?: number;
     comment?: string;
 };
-
 type ImportedWeek = {
     comment?: string;
     weekendDuty?: boolean;
