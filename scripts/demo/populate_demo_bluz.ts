@@ -126,13 +126,14 @@ async function main() {
     const isRunningInDocker =
         fs.existsSync("/.dockerenv") || process.env.IS_DOCKER === "true";
     if (!isRunningInDocker) {
+        const mongoHost = process.env.MONGO_HOST || "127.0.0.1";
         const mongoPort = process.env.MONGO_PORT || "27018";
         console.log(
-            `Running on host machine. Translating MongoDB connection to local port-mapping (172.27.80.1:${mongoPort})...`
+            `Running on host machine. Translating MongoDB connection to local port-mapping (${mongoHost}:${mongoPort})...`
         );
         connectionString = connectionString.replace(
             /@([^/:]+)(:\d+)?/,
-            `@172.27.80.1:${mongoPort}`
+            `@${mongoHost}:${mongoPort}`
         );
     }
 

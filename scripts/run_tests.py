@@ -359,6 +359,7 @@ def main(
         "DATABASE_URL": db_url,
         "POSTGRES_PASSWORD": db_pass,
         "TEST_MONGO_PASSWORD": mongo_pass,
+        "MONGO_HOST": "127.0.0.3",
         "MONGO_PORT": str(ports["mongo"]),
         "BASE_URL": f"https://127.0.0.3:{ports['https']}",
         "TEST_PROJECT_NAME": project_name,
