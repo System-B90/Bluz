@@ -9,7 +9,6 @@ Author: Michael K. Steinberg
 from __future__ import annotations
 
 import random
-import socket
 import string
 import time
 import urllib.parse
