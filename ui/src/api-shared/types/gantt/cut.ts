@@ -1,5 +1,6 @@
 import { ClientApiError } from "@/api-shared/errors";
 import { CutValidationError } from "@/api-shared/gantt/cut-planner";
+import { ModuleEventType } from "@/api-shared/types/gantt/models";
 
 /**
  * API contract for the curriculum → schedule cut ("גזירה ללו"ז", #118).
@@ -18,6 +19,46 @@ export type ApiCurriculumCutResponse = {
     /** Occurrences that overlap each other after stacking (informational). */
     overlaps: number;
 };
+
+/**
+ * A single dated, timed occurrence in a cut preview — the pure planner's
+ * output enriched with display metadata. Dates are ISO strings so the payload
+ * survives JSON transport; the client re-hydrates with dayjs.
+ */
+export type ApiCutPreviewOccurrence = {
+    ganttEventId: string;
+    title: string;
+    /** ModuleEventType of the source gantt event. */
+    eventType: ModuleEventType;
+    syllabusTitle: string;
+    moduleTitle: string;
+    /** ISO date (yyyy-MM-dd) of the occurrence. */
+    occurrenceDate: string;
+    /** ISO datetime. */
+    startTime: string;
+    /** ISO datetime. */
+    endTime: string;
+    /** True when this is a recurrence echo rather than the mapped start day. */
+    isRecurrenceEcho: boolean;
+};
+
+/**
+ * Response of GET .../cut/preview — a dry-run of the cut planner. Never
+ * writes. `ok: false` carries the planner's validation errors (e.g. missing
+ * start date) so the preview UI can explain why nothing renders.
+ */
+export type ApiCurriculumCutPreviewResponse =
+    | { ok: false; errors: Array<CutValidationError> }
+    | {
+          ok: true;
+          occurrences: Array<ApiCutPreviewOccurrence>;
+          overlaps: number;
+          /**
+           * Events the real cut would reject (unmapped / unsatisfied
+           * recurrence) that the preview skipped instead of failing on.
+           */
+          skipped: Array<CutValidationError>;
+      };
 
 /**
  * Cut status for a curriculum, driving the UI toggle between the "cut" and
