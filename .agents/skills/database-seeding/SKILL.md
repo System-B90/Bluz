@@ -39,8 +39,8 @@ Confirm that the following containers are up:
 
 ### 2. Check Connection Variables
 Ensure local connection ports in `.env` match:
-- PostgreSQL: `127.0.0.3:5432`
-- MongoDB: `127.0.0.3:27018`
+- PostgreSQL: `172.27.80.1:5432`
+- MongoDB: `172.27.80.1:27018`
 
 ---
 

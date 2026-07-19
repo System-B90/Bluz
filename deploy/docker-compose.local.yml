@@ -9,8 +9,8 @@ services:
             context: ./../nginx
             dockerfile: Dockerfile.proxy
         ports:
-            - "127.0.0.3:80:80"
-            - "127.0.0.3:443:443"
+            - "172.27.80.1:80:80"
+            - "172.27.80.1:443:443"
         volumes:
             - ./../nginx/ssl:/etc/nginx/ssl:ro
             - ./../nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
