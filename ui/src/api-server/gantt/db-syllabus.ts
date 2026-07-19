@@ -73,6 +73,7 @@ async function getFullSyllabus(id: GanttSyllabusId): Promise<ApiSyllabus> {
         throw new ClientApiError(`סילבוס עם מזהה ${id} לא נמצא`);
     }
 
+    await basicOperations.attachParentIds([result]);
     return result as unknown as ApiSyllabus;
 }
 

@@ -12,6 +12,7 @@ vi.mock("@/api-server/gantt", () => ({
         },
         insert: vi.fn(),
         delete: vi.fn(),
+        select: vi.fn(),
     },
 }));
 
@@ -72,6 +73,10 @@ type DbError = Error & { cause: DbErrorCause };
 describe("Gantt DB Module Event - Failure Paths", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        // attachParentIds() looks up the parent junction row on every getItem
+        vi.mocked(postgresDb.select).mockReturnValue(
+            createChain([]) as unknown as ReturnType<typeof postgresDb.select>,
+        );
     });
 
     describe("getFullModuleEvent", () => {

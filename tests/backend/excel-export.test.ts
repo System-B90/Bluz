@@ -2,6 +2,26 @@ import { describe, it, expect, vi } from "vitest";
 import { NextRequest } from "next/server";
 import ExcelJS from "exceljs";
 
+// Bypass requireStaffSession()'s getServerSession() call, which touches
+// next/headers outside a request scope in vitest (#223).
+vi.mock("next-auth", async () => {
+    const { Clearance } = await import("@/api-shared/types/hive");
+    return {
+        default: vi.fn(() => vi.fn()),
+        getServerSession: vi.fn(async () => ({
+            user: {
+                id: "test-user",
+                display_name: "Test User",
+                clearance: Clearance.Admin,
+            },
+        })),
+    };
+});
+
+vi.mock("@/api-server/hive/sso", () => ({
+    authOptions: {},
+}));
+
 // Mock gantt schema/db (self-contained to prevent hoisting issues)
 vi.mock("@/api-server/gantt", () => {
     return {
@@ -31,11 +51,7 @@ import * as ExcelExportRoute from "@/app/api/gantt/curriculums/[id]/export/excel
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { getConstraintsForCurriculum } from "@/api-server/gantt/db-constraints";
 
-// TODO: tracked in https://github.com/System-B90/Bluz/issues/210
-// requireStaffSession() -> getServerSession() calls next/headers outside a
-// request scope in vitest; needs a next-auth mock like
-// hive-settings.test.ts uses before this can be un-skipped.
-describe.skip("Gantt Excel Export Route", () => {
+describe("Gantt Excel Export Route", () => {
     const routeContext = { params: Promise.resolve({ id: "c1" }) };
 
     it("GET - exports full curriculum to excel successfully", async () => {

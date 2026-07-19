@@ -1,15 +1,32 @@
 import { describe, it, expect, vi } from "vitest";
 import { NextRequest } from "next/server";
+
+// Bypass requireStaffSession()'s getServerSession() call, which touches
+// next/headers outside a request scope in vitest (#223).
+vi.mock("next-auth", async () => {
+    const { Clearance } = await import("@/api-shared/types/hive");
+    return {
+        default: vi.fn(() => vi.fn()),
+        getServerSession: vi.fn(async () => ({
+            user: {
+                id: "test-user",
+                display_name: "Test User",
+                clearance: Clearance.Admin,
+            },
+        })),
+    };
+});
+
+vi.mock("@/api-server/hive/sso", () => ({
+    authOptions: {},
+}));
+
 import { buildGantCollectionRoutes } from "@/app/api/gantt/base-collection";
 import { buildGantItemRoutes } from "@/app/api/gantt/base-item";
 import { buildGantAllocateTimeRoutes } from "@/app/api/gantt/base-allocate-time";
 import { buildGantLinkRoutes } from "@/app/api/gantt/base-link";
 
-// TODO: tracked in https://github.com/System-B90/Bluz/issues/210
-// requireStaffSession() -> getServerSession() calls next/headers outside a
-// request scope in vitest; these routes need a next-auth mock like
-// hive-settings.test.ts uses before they can be un-skipped.
-describe.skip("Base Gantt Collection Routes", () => {
+describe("Base Gantt Collection Routes", () => {
     const mockDbSet = {
         listItems: vi.fn(),
         getMultipleItems: vi.fn(),
@@ -52,8 +69,7 @@ describe.skip("Base Gantt Collection Routes", () => {
     });
 });
 
-// TODO: tracked in https://github.com/System-B90/Bluz/issues/210
-describe.skip("Base Gantt Item Routes", () => {
+describe("Base Gantt Item Routes", () => {
     const mockDbSet = {
         listItems: vi.fn(),
         getMultipleItems: vi.fn(),
@@ -100,8 +116,7 @@ describe.skip("Base Gantt Item Routes", () => {
     });
 });
 
-// TODO: tracked in https://github.com/System-B90/Bluz/issues/210
-describe.skip("Base Gantt Allocate Time Routes", () => {
+describe("Base Gantt Allocate Time Routes", () => {
     const mockDbSet = {
         getAllocatedTime: vi.fn(),
         setAllocatedTime: vi.fn(),
@@ -132,8 +147,7 @@ describe.skip("Base Gantt Allocate Time Routes", () => {
     });
 });
 
-// TODO: tracked in https://github.com/System-B90/Bluz/issues/210
-describe.skip("Base Gantt Link Routes", () => {
+describe("Base Gantt Link Routes", () => {
     const mockDbSet = {
         linkItem: vi.fn(),
         unlinkItem: vi.fn(),
