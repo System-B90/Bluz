@@ -6,6 +6,8 @@ services:
         build:
             context: ./../
             dockerfile: ui/Dockerfile
+            args:
+                NPM_TOKEN: ${NPM_TOKEN}
         container_name: bluz-ui
         restart: unless-stopped
         env_file:
@@ -76,6 +78,8 @@ services:
         build:
             context: ../session-server
             dockerfile: Dockerfile.websocket
+            args:
+                NPM_TOKEN: ${NPM_TOKEN}
         container_name: bluz-sessions
         restart: unless-stopped
         env_file:

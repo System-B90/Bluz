@@ -61,16 +61,22 @@ export function ApiResponseMaker<T>(
         },
     );
 }
+type ApiErrorPayload = { name: string; message: string; status?: unknown };
+
+function hasStatus(e: object): e is { status: unknown } {
+    return "status" in e;
+}
+
 export function ApiErrorMaker(
-    e: any,
+    e: unknown,
     httpStatus = 400,
-): NextResponse<{ status: number; error: any }> {
-    let errorPayload: any = {};
+): NextResponse<{ status: number; error: ApiErrorPayload | unknown }> {
+    let errorPayload: ApiErrorPayload | unknown = {};
     if (e instanceof Error) {
         errorPayload = {
             name: e.name,
             message: e.message,
-            status: (e as any).status,
+            status: hasStatus(e) ? e.status : undefined,
         };
     } else if (typeof e === "string") {
         errorPayload = {
@@ -86,11 +92,11 @@ export function ApiErrorMaker(
     );
 }
 
-export function ApiError(e: any) {
+export function ApiError(e: unknown) {
     return ApiErrorMaker(e, 500);
 }
 
-export function ApiAccessError(e: any) {
+export function ApiAccessError(e: unknown) {
     return ApiErrorMaker(e, 403);
 }
 
@@ -120,7 +126,7 @@ export function isDatabaseError(e: unknown): boolean {
     );
 }
 
-export function catchHandler<T extends NextRequest>(request: T, e: any) {
+export function catchHandler<T extends NextRequest>(request: T, e: unknown) {
     if (e instanceof UserNotLoggedInError) {
         return NextResponse.json(
             { status: -1, error: { name: "UserNotLoggedInError", message: "אינך מחובר" } },

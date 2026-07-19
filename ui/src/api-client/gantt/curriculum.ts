@@ -3,6 +3,8 @@ import {
     BaseDocument,
     baseDocumentFixup,
     clientGantApiBuilder,
+    DateFixup,
+    RawBaseDocument,
 } from "@/api-client/gantt/base";
 import { CreateGanttCurriculumPayload } from "@/api-shared/types/gantt/create-payloads";
 import { GanttCurriculum } from "@/api-shared/types/gantt/models";
@@ -14,7 +16,9 @@ const baseCurriculumApi = clientGantApiBuilder<
     CreateGanttCurriculumPayload
 >({
     apiBaseUrl: "/api/gantt/curriculums",
-    dateFixup: baseDocumentFixup as any,
+    dateFixup: baseDocumentFixup as DateFixup<
+        GanttCurriculum & RawBaseDocument
+    >,
 });
 
 async function apiExport(id: string, options?: ClientApiProps): Promise<any> {
@@ -22,7 +26,7 @@ async function apiExport(id: string, options?: ClientApiProps): Promise<any> {
 }
 
 async function apiImport(
-    payload: any,
+    payload: unknown,
     options?: ClientApiProps,
 ): Promise<GanttCurriculumDocument> {
     const rawData = await safeApiFetcher<any>(`/api/gantt/curriculums/import`, {

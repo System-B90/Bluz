@@ -42,6 +42,47 @@ if (fs.existsSync(rootEnvPath)) {
     }
 }
 
+interface HiveUser {
+    id: number;
+    username: string;
+}
+
+interface HiveSubject {
+    id: number;
+    name: string;
+}
+
+interface HiveModule {
+    id: number;
+    name: string;
+    parent_subject_id: number;
+}
+
+interface HiveRoom {
+    id: number;
+}
+
+interface DemoEvent {
+    id: string;
+    name: string;
+    subject: number;
+    hiveModule: number;
+    startTime: Date;
+    endTime: Date;
+    type: EventType;
+    prayerType?: string;
+    courses: string[];
+    rooms: Array<{ id: number; source: number }>;
+    instructors: Array<number | string>;
+    lecturers?: Array<number | string>;
+    tags: string[];
+    notes: string;
+    locked: boolean;
+    hidden: boolean;
+    required: boolean;
+    personalTalk: boolean;
+}
+
 // Hebrew event types mapping
 enum EventType {
     EXERCISE = 'ע"ע',
@@ -62,11 +103,11 @@ async function main() {
     }
 
     const hiveData = JSON.parse(fs.readFileSync(hiveDataPath, "utf-8"));
-    const segelUsers = hiveData.segel || [];
-    const adminUsers = hiveData.admins || [];
-    const subjects = hiveData.subjects || [];
-    const modules = hiveData.modules || [];
-    const rooms = hiveData.rooms || [];
+    const segelUsers: HiveUser[] = hiveData.segel || [];
+    const adminUsers: HiveUser[] = hiveData.admins || [];
+    const subjects: HiveSubject[] = hiveData.subjects || [];
+    const modules: HiveModule[] = hiveData.modules || [];
+    const rooms: HiveRoom[] = hiveData.rooms || [];
 
     if (segelUsers.length === 0) {
         console.error("Error: No segel users found in hive_data.json.");
@@ -74,7 +115,7 @@ async function main() {
     }
 
     const findAdminId = (username: string): number | undefined =>
-        adminUsers.find((u: any) => u.username === username)?.id;
+        adminUsers.find((u) => u.username === username)?.id;
 
     let connectionString =
         localConnectionString ||
@@ -111,7 +152,7 @@ async function main() {
         await db.collection("events").deleteMany({});
 
         // 4. Create courses (1 main course and 3 sub-courses)
-        const segelIds = segelUsers.map((u: any) => u.id);
+        const segelIds = segelUsers.map((u) => u.id);
         const getRandomSegel = (count: number): number[] => {
             const shuffled = [...segelIds].sort(() => 0.5 - Math.random());
             return shuffled.slice(0, Math.min(count, shuffled.length));
@@ -176,7 +217,7 @@ async function main() {
             return d;
         };
 
-        const eventsList: any[] = [];
+        const eventsList: DemoEvent[] = [];
         const subCourseIds = ["bis-90-apollo", "bis-90-mivtzar", "bis-90-sphinx"];
 
         // 5. Generate events for a 7-day schedule (today to today + 6)
@@ -234,14 +275,14 @@ async function main() {
                     subjects[Math.floor(Math.random() * subjects.length)];
                 // Find modules of this subject
                 const subjectModules = modules.filter(
-                    (m: any) => m.parent_subject_id === subject.id,
+                    (m) => m.parent_subject_id === subject.id,
                 );
                 const module =
                     subjectModules.length > 0
                         ? subjectModules[
                               Math.floor(Math.random() * subjectModules.length)
                           ]
-                        : { id: 0 };
+                        : { id: 0, name: "", parent_subject_id: subject.id };
 
                 // Select a room
                 const room =
@@ -284,14 +325,14 @@ async function main() {
                 const subject =
                     subjects[Math.floor(Math.random() * subjects.length)];
                 const subjectModules = modules.filter(
-                    (m: any) => m.parent_subject_id === subject.id,
+                    (m) => m.parent_subject_id === subject.id,
                 );
                 const module =
                     subjectModules.length > 0
                         ? subjectModules[
                               Math.floor(Math.random() * subjectModules.length)
                           ]
-                        : { id: 0 };
+                        : { id: 0, name: "", parent_subject_id: subject.id };
 
                 const room =
                     rooms.length > 0
@@ -367,14 +408,14 @@ async function main() {
                 const subject =
                     subjects[Math.floor(Math.random() * subjects.length)];
                 const subjectModules = modules.filter(
-                    (m: any) => m.parent_subject_id === subject.id,
+                    (m) => m.parent_subject_id === subject.id,
                 );
                 const module =
                     subjectModules.length > 0
                         ? subjectModules[
                               Math.floor(Math.random() * subjectModules.length)
                           ]
-                        : { id: 0 };
+                        : { id: 0, name: "", parent_subject_id: subject.id };
 
                 const room =
                     rooms.length > 0

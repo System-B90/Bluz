@@ -73,7 +73,7 @@ async function getFullSyllabus(id: GanttSyllabusId): Promise<ApiSyllabus> {
         throw new ClientApiError(`סילבוס עם מזהה ${id} לא נמצא`);
     }
 
-    return result as any;
+    return result as unknown as ApiSyllabus;
 }
 
 async function addSyllabusToCurriculum(
@@ -87,8 +87,8 @@ async function addSyllabusToCurriculum(
         });
 
         return await getFullSyllabus(syllabusId);
-    } catch (error: any) {
-        const cause = error.cause as {
+    } catch (error: unknown) {
+        const cause = (error as { cause?: unknown }).cause as {
             name: string;
             severity: string;
             code: string;

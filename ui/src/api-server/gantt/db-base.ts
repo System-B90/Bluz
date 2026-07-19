@@ -57,7 +57,12 @@ export function drizzleOperationsBuilder<
     "getItem"
 > {
     type DbTDocument = T & BaseDbDocument;
-    const cols = table as any;
+    type EntityColumns = {
+        id: AnyPgColumn;
+        title: AnyPgColumn;
+        updatedAt: AnyPgColumn;
+    };
+    const cols = table as unknown as EntityColumns;
 
     async function getMultipleItems(
         ids: Array<T["id"]>,
@@ -66,12 +71,14 @@ export function drizzleOperationsBuilder<
 
         return (await postgresDb
             .select()
-            .from(table as any)
+            .from(table as PgTableWithColumns<any>)
             .where(inArray(cols.id, ids))) as Array<DbTDocument>;
     }
 
     async function createNewItem(data: TCreatePayload): Promise<DbTDocument> {
-        const id = (data as any).id || `${idPrefix}_${crypto.randomUUID()}`;
+        const id =
+            (data as Partial<Pick<T, "id">>).id ||
+            `${idPrefix}_${crypto.randomUUID()}`;
         const now = new Date();
 
         const { curriculumId, syllabusId, moduleId, weekId, ...entityData } =
@@ -91,7 +98,7 @@ export function drizzleOperationsBuilder<
 
         return await postgresDb.transaction(async (tx) => {
             const [newItem] = await tx
-                .insert(table as any)
+                .insert(table as PgTableWithColumns<any>)
                 .values({
                     ...entityData,
                     id,
@@ -116,7 +123,7 @@ export function drizzleOperationsBuilder<
             const junctions = Array.isArray(junction) ? junction : [junction];
             for (const j of junctions) {
                 if (j?.apiKey) {
-                    (newItem as any)[j.apiKey] = [];
+                    (newItem as Record<string, unknown>)[j.apiKey] = [];
                 }
             }
 
@@ -135,10 +142,10 @@ export function drizzleOperationsBuilder<
             createdAt: _c,
             updatedAt: _u,
             ...safeData
-        } = updateData as any;
+        } = updateData as Partial<T> & Partial<BaseDbDocument>;
 
         const [updatedItem] = await postgresDb
-            .update(table as any)
+            .update(table as PgTableWithColumns<any>)
             .set({
                 ...safeData,
                 updatedAt: new Date(),
@@ -157,7 +164,7 @@ export function drizzleOperationsBuilder<
 
     async function deleteItem(id: T["id"]): Promise<void> {
         const result = await postgresDb
-            .delete(table as any)
+            .delete(table as PgTableWithColumns<any>)
             .where(eq(cols.id, id))
             .returning({ deletedId: cols.id });
         if (result.length === 0) {
@@ -173,12 +180,12 @@ export function drizzleOperationsBuilder<
                 id: cols.id,
                 title: cols.title,
             })
-            .from(table as any)
+            .from(table as PgTableWithColumns<any>)
             .orderBy(desc(cols.updatedAt));
 
         return results.reduce(
             (acc, row) => {
-                acc[row.id as T["id"]] = row.title;
+                acc[row.id as T["id"]] = row.title as T["title"];
                 return acc;
             },
             {} as Record<T["id"], T["title"]>,

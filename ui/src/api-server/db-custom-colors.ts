@@ -10,7 +10,9 @@ async function getDbCustomColors(): Promise<Array<CustomColor>> {
 }
 
 async function setDbCustomColor(customColor: CustomColor) {
-    const { _id: _, id: colorId, ...colorData } = customColor as any;
+    const { _id: _, id: colorId, ...colorData } = customColor as CustomColor & {
+        _id?: unknown;
+    };
     const data = await getMetaController().customColors.updateOne(
         { id: colorId },
         { $set: colorData },
@@ -18,12 +20,12 @@ async function setDbCustomColor(customColor: CustomColor) {
     if (data.matchedCount === 0) {
         throw new ClientApiError(`No custom color by id ${colorId} found!`);
     }
-    SendServerRequestToSessionServer(MessageTypes.CUSTOM_COLORS_UPDATE as any, {});
+    SendServerRequestToSessionServer(MessageTypes.CUSTOM_COLORS_UPDATE, {});
 }
 
 async function createDbCustomColor(customColor: CustomColor) {
     await getMetaController().customColors.insertOne(customColor);
-    SendServerRequestToSessionServer(MessageTypes.CUSTOM_COLORS_UPDATE as any, {});
+    SendServerRequestToSessionServer(MessageTypes.CUSTOM_COLORS_UPDATE, {});
     return customColor;
 }
 
@@ -32,7 +34,7 @@ async function deleteDbCustomColor(colorId: string) {
     if (data.deletedCount === 0) {
         throw new ClientApiError(`No custom color by id ${colorId} found!`);
     }
-    SendServerRequestToSessionServer(MessageTypes.CUSTOM_COLORS_UPDATE as any, {});
+    SendServerRequestToSessionServer(MessageTypes.CUSTOM_COLORS_UPDATE, {});
 }
 
 export namespace DbCustomColors {

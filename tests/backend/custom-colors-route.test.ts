@@ -27,7 +27,7 @@ function makeRequest(method: string, body?: unknown) {
 describe("GET /api/custom-colors", () => {
     it("returns the colors from DbCustomColors.get", async () => {
         const colors = [ { id: "c1", name: "Red", hex: "#ff0000" } ];
-        vi.mocked(DbCustomColors.get).mockResolvedValueOnce(colors as any);
+        vi.mocked(DbCustomColors.get).mockResolvedValueOnce(colors);
 
         const response = await CustomColorsRoute.GET(makeRequest("GET"));
         expect(response.status).toBe(200);
@@ -40,7 +40,7 @@ describe("GET /api/custom-colors", () => {
 describe("PUT /api/custom-colors (create)", () => {
     it("creates the color when an id is provided", async () => {
         const color = { id: "c1", name: "Red", hex: "#ff0000" };
-        vi.mocked(DbCustomColors.create).mockResolvedValueOnce(color as any);
+        vi.mocked(DbCustomColors.create).mockResolvedValueOnce(color);
 
         const response = await CustomColorsRoute.PUT(makeRequest("PUT", color));
         expect(response.status).toBe(200);
@@ -65,7 +65,7 @@ describe("PUT /api/custom-colors (create)", () => {
 describe("POST /api/custom-colors (update)", () => {
     it("updates the color", async () => {
         const color = { id: "c1", name: "Red Updated", hex: "#ee0000" };
-        vi.mocked(DbCustomColors.set).mockResolvedValueOnce(undefined as any);
+        vi.mocked(DbCustomColors.set).mockResolvedValueOnce(undefined);
 
         const response = await CustomColorsRoute.POST(makeRequest("POST", color));
         expect(response.status).toBe(200);
@@ -81,7 +81,7 @@ describe("POST /api/custom-colors (update)", () => {
 
 describe("DELETE /api/custom-colors", () => {
     it("deletes the color by id", async () => {
-        vi.mocked(DbCustomColors.del).mockResolvedValueOnce(undefined as any);
+        vi.mocked(DbCustomColors.del).mockResolvedValueOnce(undefined);
 
         const response = await CustomColorsRoute.DELETE(makeRequest("DELETE", "c1"));
         expect(response.status).toBe(200);

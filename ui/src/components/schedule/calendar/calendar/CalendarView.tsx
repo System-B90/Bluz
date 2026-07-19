@@ -2,7 +2,14 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import dayjs, { Dayjs } from "dayjs";
 import { useMemo } from "react";
-import { CalendarProps, View, Views } from "react-big-calendar";
+import {
+    CalendarProps,
+    SlotInfo,
+    ToolbarProps,
+    View,
+    Views,
+} from "react-big-calendar";
+import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
 import { GanttDayIndex, getDayNameDisplay, HEBREW_DAYS_SHORT } from "@/api-shared/types/gantt/models/day";
 import { Room, roomLikeToResourceKey, RoomSource } from "@/api-shared/types/room"; // Import the full Room type and the stable resource-key helper
@@ -94,8 +101,8 @@ type CalendarViewProps = {
     onNavigate: CalendarProps["onNavigate"];
     onSelectEvent: (event: Event) => void;
     onDoubleClickEvent: (event: Event) => void;
-    onSelectSlot: (slotInfo: any) => void;
-    onEventDrop: (args: any) => void;
+    onSelectSlot: (slotInfo: SlotInfo) => void;
+    onEventDrop: (args: EventInteractionArgs<Event>) => void;
     onToggleFullscreen: () => void;
     onToggleToolbar: () => void;
 };
@@ -118,7 +125,7 @@ export function CalendarView({
     const components = useMemo(
         () => ({
             event: BluzEventComponent,
-            toolbar: (props: any) => (
+            toolbar: (props: ToolbarProps<Event, object>) => (
                 <CalendarToolbar
                     {...props}
                     onToggleFullscreen={onToggleFullscreen}

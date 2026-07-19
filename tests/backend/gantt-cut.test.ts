@@ -52,6 +52,7 @@ import {
     moduleEventTypeToCalendarType,
     pullBackCutSchedule,
 } from "@/api-server/gantt/cut";
+import { Course } from "@/api-shared/types/course";
 import { PlannedOccurrence } from "@/api-shared/gantt/cut-planner";
 import { EventType } from "@/api-shared/types/event";
 import { ApiCurriculum, ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
@@ -60,6 +61,16 @@ import {
     GanttDayIndex,
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
+import { ScheduleSettings } from "@/api-shared/types/settings/schedule";
+import { Iteration } from "@/api-shared/types/iteration";
+
+const makeIteration = (overrides: Partial<Iteration> = {}): Iteration =>
+    ({
+        id: "2026a",
+        dbName: "bluz_cut",
+        isCurrent: true,
+        ...overrides,
+    }) as Iteration;
 
 // ---- Fixtures --------------------------------------------------------------
 
@@ -157,8 +168,8 @@ beforeEach(() => {
     fakeEvents.countDocuments.mockResolvedValue(0);
     fakeEvents.find.mockReturnValue({ toArray: async () => [] as Array<any> });
     fakeEvents.updateMany.mockResolvedValue({ matchedCount: 0, modifiedCount: 0 });
-    vi.mocked(DbSettings.get).mockResolvedValue({ dayStartTime: "08:00" } as any);
-    vi.mocked(DbCourses.get).mockResolvedValue([] as any);
+    vi.mocked(DbSettings.get).mockResolvedValue({ dayStartTime: "08:00" } as ScheduleSettings);
+    vi.mocked(DbCourses.get).mockResolvedValue([]);
 });
 
 // ---- Pure helpers ----------------------------------------------------------
@@ -208,7 +219,7 @@ describe("buildCutPlanInput", () => {
 
     it("threads weekendDuty and weekendHomeStartTime through per week, defaulting missing weekendDuty to true", () => {
         const curriculum = makeCurriculum([makeEvent({ id: "e1" })]);
-        (curriculum.c2w[0].week as any).weekendDuty = false; // "w1" (sorted second)
+        (curriculum.c2w[0].week as { weekendDuty?: boolean }).weekendDuty = false; // "w1" (sorted second)
         // "w0" (sorted first) intentionally left unset → defaults to true.
 
         const input = buildCutPlanInput({
@@ -287,7 +298,7 @@ describe("buildScheduleEvent", () => {
 describe("cutCurriculumToSchedule", () => {
     it("rejects a draft curriculum without writing", async () => {
         vi.mocked(DbCurriculum.getItem).mockResolvedValue(
-            makeCurriculum([makeEvent({ id: "e1" })], { isDraft: true }) as any,
+            makeCurriculum([makeEvent({ id: "e1" })], { isDraft: true }),
         );
         const outcome = await cutCurriculumToSchedule("c1");
         expect(outcome.ok).toBe(false);
@@ -298,7 +309,7 @@ describe("cutCurriculumToSchedule", () => {
     });
 
     it("rejects when no iteration is linked", async () => {
-        vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1" })]) as any);
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1" })]));
         vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(null);
         const outcome = await cutCurriculumToSchedule("c1");
         expect(outcome.ok).toBe(false);
@@ -308,8 +319,8 @@ describe("cutCurriculumToSchedule", () => {
     });
 
     it("rejects when the iteration already holds cut events (one-shot)", async () => {
-        vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1" })]) as any);
-        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1" })]));
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
         fakeEvents.countDocuments.mockResolvedValue(3);
 
         const outcome = await cutCurriculumToSchedule("c1");
@@ -321,8 +332,8 @@ describe("cutCurriculumToSchedule", () => {
     });
 
     it("propagates planner validation errors without writing", async () => {
-        vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1", title: "לא ממופה" })]) as any);
-        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(makeCurriculum([makeEvent({ id: "e1", title: "לא ממופה" })]));
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
         // no mappings → unmapped-event error
 
         const outcome = await cutCurriculumToSchedule("c1");
@@ -337,10 +348,10 @@ describe("cutCurriculumToSchedule", () => {
 
     it("cuts a mapped event, inserts documents and broadcasts once", async () => {
         vi.mocked(DbCurriculum.getItem).mockResolvedValue(
-            makeCurriculum([makeEvent({ id: "e1", allocatedDuration: 0, cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]) as any,
+            makeCurriculum([makeEvent({ id: "e1", allocatedDuration: 0, cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]),
         );
-        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
-        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }] as any);
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }]);
 
         const outcome = await cutCurriculumToSchedule("c1");
         expect(outcome.ok).toBe(true);
@@ -356,11 +367,11 @@ describe("cutCurriculumToSchedule", () => {
 
     it("creates a course per shuffle with provenance and assigns it to the event", async () => {
         vi.mocked(DbCurriculum.getItem).mockResolvedValue(
-            makeCurriculum([makeEvent({ id: "e1", shuffles: ["מחלקה א"], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]) as any,
+            makeCurriculum([makeEvent({ id: "e1", shuffles: ["מחלקה א"], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]),
         );
-        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
-        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }] as any);
-        vi.mocked(DbCourses.get).mockResolvedValue([] as any);
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }]);
+        vi.mocked(DbCourses.get).mockResolvedValue([]);
 
         const outcome = await cutCurriculumToSchedule("c1");
         expect(outcome.ok).toBe(true);
@@ -368,7 +379,7 @@ describe("cutCurriculumToSchedule", () => {
         expect(outcome.result.createdCourses).toHaveLength(1);
         expect(outcome.result.createdCourses[0].name).toBe("מחלקה א");
         expect(DbCourses.create).toHaveBeenCalledTimes(1);
-        const createdCourse = vi.mocked(DbCourses.create).mock.calls[0][0] as any;
+        const createdCourse = vi.mocked(DbCourses.create).mock.calls[0][0] as Course;
         expect(createdCourse.description).toBe('נגזר מסילבוס "סילבוס א"');
         const inserted = fakeEvents.insertMany.mock.calls[0][0] as Array<any>;
         expect(inserted[0].courses).toEqual([createdCourse.id]);
@@ -376,14 +387,14 @@ describe("cutCurriculumToSchedule", () => {
 
     it("assigns all iteration courses to an event with no shuffles", async () => {
         vi.mocked(DbCurriculum.getItem).mockResolvedValue(
-            makeCurriculum([makeEvent({ id: "e1", shuffles: [], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]) as any,
+            makeCurriculum([makeEvent({ id: "e1", shuffles: [], cEC: [{ eventId: "e1", curriculumId: "c1", allocatedDuration: 60 }] })]),
         );
-        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
-        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }] as any);
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }]);
         vi.mocked(DbCourses.get).mockResolvedValue([
             { id: "course-a", name: "A", color: null },
             { id: "course-b", name: "B", color: null },
-        ] as any);
+        ]);
 
         const outcome = await cutCurriculumToSchedule("c1");
         expect(outcome.ok).toBe(true);
@@ -401,7 +412,7 @@ describe("getCutStatus", () => {
     });
 
     it("reports cut with the live event count", async () => {
-        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
         fakeEvents.countDocuments.mockResolvedValue(5);
         expect(await getCutStatus("c1")).toEqual({ cut: true, count: 5 });
     });
@@ -418,7 +429,7 @@ describe("pullBackCutSchedule", () => {
     });
 
     it("rejects when there are no live cut events", async () => {
-        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
         fakeEvents.find.mockReturnValue({ toArray: async () => [] });
         const outcome = await pullBackCutSchedule("c1");
         expect(outcome.ok).toBe(false);
@@ -428,7 +439,7 @@ describe("pullBackCutSchedule", () => {
     });
 
     it("archives live cut events and broadcasts one removal each", async () => {
-        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({ id: "2026a", dbName: "bluz_cut", isCurrent: true } as any);
+        vi.mocked(DbIterations.getByCurriculum).mockResolvedValue(makeIteration());
         fakeEvents.find.mockReturnValue({
             toArray: async () => [{ id: "ev1" }, { id: "ev2" }],
         });

@@ -1,4 +1,5 @@
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import EventIcon from "@mui/icons-material/Event";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import InfoIcon from "@mui/icons-material/Info";
@@ -25,6 +26,7 @@ import { Filters } from "@/components/header/filters";
 import { DraftsMenu } from "@/components/schedule/calendar/calendar/DraftsMenu";
 import { IterationSelector } from "@/components/schedule/calendar/calendar/IterationSelector";
 import { SnapshotMenu } from "@/components/schedule/calendar/calendar/SnapshotMenu";
+import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 
 /**
  * Custom header toolbar for the calendar containing navigation controls, a date picker, and view selectors.
@@ -48,6 +50,7 @@ export function CalendarToolbar({
 })
 {
     const { offlineMode, setOfflineMode } = useOffline();
+    const { startDate, endDate } = useCalendar();
     const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
         useCalendarFilters();
     const [ open, setOpen ] = useState(false);
@@ -74,6 +77,15 @@ export function CalendarToolbar({
         },
         [ onNavigate ],
     );
+
+    const handleExportIcs = useCallback(() => {
+        if (!startDate || !endDate) return;
+        const params = new URLSearchParams({
+            sd: startDate.toISOString(),
+            ed: endDate.toISOString(),
+        });
+        window.open(`/api/event/export/ics?${params.toString()}`, "_blank");
+    }, [startDate, endDate]);
 
     const isTodayShown = useMemo(() =>
     {
@@ -210,6 +222,15 @@ export function CalendarToolbar({
                     <ButtonGroup size="small" sx={ { "& .MuiButton-root": { height: 32 } } } variant="outlined">
                         <DraftsMenu />
                         <SnapshotMenu />
+                        <Tooltip title="ייצוא לוח הזמנים המוצג ל-ICS">
+                            <Button
+                                disabled={ !startDate || !endDate }
+                                onClick={ handleExportIcs }
+                                sx={ { minWidth: 38 } }
+                            >
+                                <EventIcon fontSize="small" />
+                            </Button>
+                        </Tooltip>
                     </ButtonGroup>
                     <ButtonGroup size="small" sx={ { "& .MuiButton-root": { height: 32 } } } variant="outlined">
                         <Button

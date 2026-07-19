@@ -1,7 +1,7 @@
-export type ApiResponseJson = {
+export type ApiResponseJson<T = unknown> = {
     status: number;
-    data?: any;
-    error?: any;
+    data?: T;
+    error?: unknown;
 };
 
 export type Keys<T> = keyof T;

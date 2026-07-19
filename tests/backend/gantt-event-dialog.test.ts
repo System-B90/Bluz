@@ -99,6 +99,7 @@ import {
     ModuleEventType,
     RoomRequirement,
 } from "@/api-shared/types/gantt/models";
+import { ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
 
 const baseEvent = {
     id: "evt-1",
@@ -123,12 +124,12 @@ describe("POST /api/gantt/events/[id]/duplicate", () => {
     const context = { params: Promise.resolve({ id: "evt-1" }) };
 
     it("copies all new metadata fields to the duplicated event", async () => {
-        vi.mocked(DbModuleEvent.getItem).mockResolvedValueOnce(baseEvent as any);
+        vi.mocked(DbModuleEvent.getItem).mockResolvedValueOnce(baseEvent as ApiModuleEvent);
         vi.mocked(DbModuleEvent.createNewItem).mockResolvedValueOnce({
             ...baseEvent,
             id: "evt-2",
             title: "פיזיקה (2)",
-        } as any);
+        } as ApiModuleEvent);
 
         const request = new NextRequest("http://localhost/api/gantt/events/evt-1/duplicate", {
             method: "POST",
@@ -158,11 +159,11 @@ describe("POST /api/gantt/events/[id]/duplicate", () => {
         vi.mocked(DbModuleEvent.getItem).mockResolvedValueOnce({
             ...baseEvent,
             title: "פיזיקה (3)",
-        } as any);
+        } as ApiModuleEvent);
         vi.mocked(DbModuleEvent.createNewItem).mockResolvedValueOnce({
             ...baseEvent,
             title: "פיזיקה (4)",
-        } as any);
+        } as ApiModuleEvent);
 
         const request = new NextRequest("http://localhost/api/gantt/events/evt-1/duplicate", {
             method: "POST",

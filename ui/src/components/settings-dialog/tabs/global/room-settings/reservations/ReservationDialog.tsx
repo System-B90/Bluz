@@ -64,8 +64,8 @@ export function ReservationDialog({
                 roomSource: room.source,
             });
             setReservations(data);
-        } catch (e: any) {
-            setError(e?.message ?? "שגיאה בטעינת הזמנות");
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "שגיאה בטעינת הזמנות");
         } finally {
             setLoading(false);
         }
@@ -101,8 +101,8 @@ export function ReservationDialog({
                 });
                 setReservations((prev) => [...prev, created]);
                 setForm(EMPTY_FORM);
-            } catch (e: any) {
-                setError(e?.message ?? "שגיאה ביצירת הזמנה");
+            } catch (e: unknown) {
+                setError(e instanceof Error ? e.message : "שגיאה ביצירת הזמנה");
             } finally {
                 setSubmitting(false);
             }
@@ -117,8 +117,8 @@ export function ReservationDialog({
             setReservations((prev) =>
                 prev.filter((r) => r._id !== reservationId),
             );
-        } catch (e: any) {
-            setError(e?.message ?? "שגיאה בביטול הזמנה");
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "שגיאה בביטול הזמנה");
         }
     }, []);
 

@@ -1,9 +1,11 @@
 import { DragEndEvent } from "@dnd-kit/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models";
 import
 {
     ConstraintType,
+    GanttConstraint,
     hasConflictingTemporalConstraints,
 } from "@/api-shared/types/gantt/models/constraint";
 import
@@ -247,7 +249,7 @@ export const useGanttView = (curriculumId: string) =>
     const moduleMappings = useMemo(() =>
     {
         const merged: Record<string, Array<string>> = {};
-        Object.values(globalMappings).forEach((mapping: any) =>
+        Object.values(globalMappings).forEach((mapping: GanttCurriculumModuleDayMapping) =>
         {
             if (mapping.curriculumId !== curriculumId) return;
             if (!mapping.eventId)
@@ -265,7 +267,7 @@ export const useGanttView = (curriculumId: string) =>
     const eventMappings = useMemo(() =>
     {
         const merged: Record<string, string> = {};
-        Object.values(globalMappings).forEach((mapping: any) =>
+        Object.values(globalMappings).forEach((mapping: GanttCurriculumModuleDayMapping) =>
         {
             if (mapping.curriculumId !== curriculumId) return;
             if (mapping.eventId)
@@ -278,8 +280,8 @@ export const useGanttView = (curriculumId: string) =>
 
     const curriculumMappings = useMemo(() =>
     {
-        const merged: Record<string, any> = {};
-        Object.entries(globalMappings).forEach(([ mappingId, mapping ]: [ string, any ]) =>
+        const merged: Record<string, GanttCurriculumModuleDayMapping> = {};
+        Object.entries(globalMappings).forEach(([ mappingId, mapping ]: [ string, GanttCurriculumModuleDayMapping ]) =>
         {
             if (mapping.curriculumId !== curriculumId) return;
             merged[ mappingId ] = mapping;
@@ -388,12 +390,14 @@ export const useGanttView = (curriculumId: string) =>
         };
 
         const processConstraints = (
-            entity: any,
+            entity: { constraints?: Array<GanttConstraint> },
             entityId: string,
             entityType: "event" | "module",
         ) =>
         {
-            const cIds: Array<string> = entity.constraintIds || [];
+            const cIds: Array<string> = (entity.constraints || []).map(
+                (c) => c.id,
+            );
 
             // Conflicting temporal constraints are flagged even before the
             // entity is mapped to a day (#104). Warning only — never blocks.

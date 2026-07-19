@@ -2,7 +2,11 @@ FROM node:22-alpine AS deps
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# GitHub Packages read token for @system-b90/* (npm resolves ${NPM_TOKEN} from env)
+ARG NPM_TOKEN
+ENV NPM_TOKEN=${NPM_TOKEN}
+
+COPY package.json package-lock.json .npmrc ./
 RUN npm install --ignore-scripts
 
 FROM deps AS builder
@@ -16,8 +20,11 @@ FROM node:22-alpine AS prod-deps
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm install --omit=dev --ignore-scripts
+ARG NPM_TOKEN
+ENV NPM_TOKEN=${NPM_TOKEN}
+
+COPY package.json package-lock.json .npmrc ./
+RUN npm install --omit=dev --ignore-scripts && rm -f .npmrc
 
 FROM node:22-alpine AS runner
 

@@ -24,28 +24,39 @@ import {
     getConstraintsForCurriculum,
     getConstraintsForSyllabus,
     getConstraintsForModule,
+    EntityType,
 } from "@/api-server/gantt/db-constraints";
+import { ganttConstraintsSchema } from "@/api-server/gantt/schema";
+
+type ConstraintInsert = typeof ganttConstraintsSchema.$inferInsert;
 
 /**
- * Builds a thenable proxy that mimics Drizzle's chainable query builder:
- * every property access returns a function that re-returns the same chain,
- * and awaiting the chain at any point resolves/rejects to `result`.
+ * Thenable/chainable Drizzle query-builder stand-in: every property access
+ * returns a function that re-returns the same chain, and awaiting the chain
+ * at any point resolves/rejects to `result`.
  */
-function createChain(result: unknown, shouldReject = false): any {
+interface DrizzleChain<T> extends PromiseLike<T> {
+    [key: string]: unknown;
+}
+
+function createChain<T>(result: T, shouldReject = false): DrizzleChain<T> {
     const methodCache = new Map<string | symbol, ReturnType<typeof vi.fn>>();
-    const chain: any = new Proxy(
+    const chain: DrizzleChain<T> = new Proxy(
         {},
         {
             get(_target, prop) {
                 if (prop === "then") {
-                    return (onFulfilled: any, onRejected: any) =>
+                    return (
+                        onFulfilled: (value: T) => unknown,
+                        onRejected: (reason: unknown) => unknown,
+                    ) =>
                         (shouldReject
                             ? Promise.reject(result)
                             : Promise.resolve(result)
                         ).then(onFulfilled, onRejected);
                 }
                 if (prop === "catch") {
-                    return (onRejected: any) =>
+                    return (onRejected: (reason: unknown) => unknown) =>
                         (shouldReject
                             ? Promise.reject(result)
                             : Promise.resolve(result)
@@ -57,7 +68,7 @@ function createChain(result: unknown, shouldReject = false): any {
                 return methodCache.get(prop);
             },
         },
-    );
+    ) as DrizzleChain<T>;
     return chain;
 }
 
@@ -94,7 +105,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
 
             const result = await getConstraintsForOwner(
                 "owner-id",
-                "invalid" as any
+                "invalid" as unknown as EntityType
             );
             expect(result).toEqual([]);
         });
@@ -175,7 +186,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
                 createConstraint({
                     id: "c1",
                     ownerEventId: "e1",
-                } as any)
+                } as ConstraintInsert)
             ).rejects.toThrow("Constraint validation failed");
         });
 
@@ -186,7 +197,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
             );
 
             await expect(
-                createConstraint({ id: "c1" } as any)
+                createConstraint({ id: "c1" } as ConstraintInsert)
             ).rejects.toThrow("Database unavailable");
         });
 
@@ -200,7 +211,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
                 createChain([expectedConstraint])
             );
 
-            const result = await createConstraint({ id: "c1" } as any);
+            const result = await createConstraint({ id: "c1" } as ConstraintInsert);
 
             expect(result).toEqual(expectedConstraint);
         });
@@ -208,7 +219,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
         it("handles empty result from database", async () => {
             vi.mocked(postgresDb.insert).mockReturnValue(createChain([]));
 
-            const result = await createConstraint({ id: "c1" } as any);
+            const result = await createConstraint({ id: "c1" } as ConstraintInsert);
 
             expect(result).toBeUndefined();
         });
@@ -222,7 +233,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
             );
 
             await expect(
-                updateConstraint("c1", { duration: 100 } as any)
+                updateConstraint("c1", { duration: 100 } as Partial<ConstraintInsert>)
             ).rejects.toThrow("Update constraint failed");
         });
 
@@ -230,7 +241,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
             const chain = createChain([]);
             vi.mocked(postgresDb.update).mockReturnValue(chain);
 
-            await updateConstraint("c1", { duration: 100 } as any);
+            await updateConstraint("c1", { duration: 100 } as Partial<ConstraintInsert>);
 
             expect(chain.set).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -244,7 +255,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
             const chain = createChain([]);
             vi.mocked(postgresDb.update).mockReturnValue(chain);
 
-            await updateConstraint("c1", { duration: 200 } as any);
+            await updateConstraint("c1", { duration: 200 } as Partial<ConstraintInsert>);
 
             expect(chain.set).toHaveBeenCalled();
         });
@@ -255,7 +266,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
                 createChain([updatedConstraint])
             );
 
-            const result = await updateConstraint("c1", { duration: 200 } as any);
+            const result = await updateConstraint("c1", { duration: 200 } as Partial<ConstraintInsert>);
 
             expect(result).toEqual([updatedConstraint]);
         });
@@ -384,7 +395,7 @@ describe("Gantt DB Constraints - Failure Paths", () => {
         it("handles null constraint ID gracefully", async () => {
             vi.mocked(postgresDb.delete).mockReturnValue(createChain([]));
 
-            const result = await deleteConstraint(null as any);
+            const result = await deleteConstraint(null as unknown as string);
 
             expect(result).toEqual([]);
         });

@@ -12,7 +12,14 @@ import uuid
 
 import typer
 
-from bluz_cli.commands._common import merge_fields, parse_json, show
+from bluz_cli.commands._common import (
+    LIMIT_OPTION,
+    OFFSET_OPTION,
+    find_by_id,
+    merge_fields,
+    parse_json,
+    show,
+)
 from bluz_cli.context import state
 from bluz_cli.output import success
 
@@ -22,10 +29,21 @@ _BASE = "/api/course"
 
 
 @app.command("list")
-def list_courses() -> None:
+def list_courses(
+    limit: int = LIMIT_OPTION,
+    offset: int = OFFSET_OPTION,
+) -> None:
     """List all courses."""
     with state.client() as client:
-        show(client.get(_BASE), title="Courses")
+        show(client.get(_BASE), title="Courses", limit=limit, offset=offset)
+
+
+@app.command()
+def get(course_id: str = typer.Argument(..., help="Course id.")) -> None:
+    """Fetch a single course by id (filtered client-side — no per-id route)."""
+    with state.client() as client:
+        items = client.get(_BASE)
+    show(find_by_id(items, course_id))
 
 
 @app.command()

@@ -51,32 +51,16 @@ test.describe("Gantt Page", () => {
     // button ("מחיקה") stays disabled on freshly-seeded demo data, so the
     // delete-all cleanup loop times out. Re-enable once the seed provides a
     // deletable curriculum or the test selects one first to enable delete.
-    test.fixme("renders the Gantt page with placeholder text", async ({ page }) => {
-        const fab = page.getByRole("button", { name: "גאנטים" });
-
-        // Delete every curriculum in the list so the placeholder is visible.
-        // Each delete click may close the FAB (Tooltip-Portal / ClickAwayListener),
-        // so we reopen it at the top of each iteration.
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            await fab.click();
-            // Wait for item skeletons to resolve before looking for the button
-            await page.locator(".MuiSkeleton-root").waitFor({ state: "hidden", timeout: 10_000 });
-
-            const deleteButton = page.getByRole("button", { name: "מחיקה" });
-            if (!await deleteButton.isVisible()) {
-                await page.keyboard.press("Escape");
-                await page.waitForTimeout(300);
-                break;
-            }
-            await deleteButton.click();
-            await page.waitForTimeout(1_000);
-        }
-
-        // Without a selected curriculum, the placeholder should be visible
+test("renders the Gantt page with placeholder text", async ({ page }) => {
+        test.fixme(
+            true,
+            "#97-followup: flaky in hermetic CI, curriculum delete button stays disabled on freshly-seeded demo data",
+        );
+        // beforeEach navigates to /gantt without selecting a curriculum.
+        // No curriculum is selected in the URL, so the placeholder should be visible.
         await expect(
             page.getByText("בחרו גאנט כדי להתחיל לעבוד"),
-        ).toBeVisible();
+        ).toBeVisible({ timeout: 5_000 });
     });
 
     test("renders the AppBar on the Gantt page", async ({ page }) => {

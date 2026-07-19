@@ -1,4 +1,4 @@
-import { safeApiFetcher } from "@/api-client/common";
+import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import {
     ApiSettingGetResponse,
     ApiSettingUpdatePayload,
@@ -7,7 +7,7 @@ import {
 
 export async function apiGetSetting<T = ApiSettingGetResponse>(
     name: string,
-    props?: any,
+    props?: ClientApiProps,
 ): Promise<T> {
     return await safeApiFetcher<T>(`/api/settings/${name}`, props);
 }
@@ -15,7 +15,7 @@ export async function apiGetSetting<T = ApiSettingGetResponse>(
 export async function apiSetSetting<T = ApiSettingUpdatePayload>(
     name: string,
     value: T,
-    props?: any,
+    props?: ClientApiProps,
 ): Promise<ApiSettingUpdateResponse> {
     await safeApiFetcher<ApiSettingUpdateResponse>(`/api/settings/${name}`, {
         ...props,

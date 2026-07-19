@@ -13,6 +13,8 @@ services:
         build:
             context: ./../
             dockerfile: ui/Dockerfile
+            args:
+                NPM_TOKEN: ${NPM_TOKEN}
             target: runner
         container_name: ${TEST_PROJECT_NAME}-ui
         # Resolve hive.org to the host, where the local Hive instance publishes
@@ -21,7 +23,7 @@ services:
             - "hive.org:${HIVE_HOST_IP:-host-gateway}"
         environment:
             - NODE_ENV=production
-            - MONGO_CONNECTION_STRING=mongodb://mongo_admin:${TEST_MONGO_PASSWORD}@mongodb:27017/
+            - MONGO_CONNECTION_STRING=mongodb://mongo_admin:${TEST_MONGO_PASSWORD:-${MONGO_ROOT_PASSWORD}}@mongodb:27017/
             - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${TEST_PROJECT_NAME}-curriculum-db:5432/${POSTGRES_DB}
             - NEXTAUTH_URL=https://127.0.0.3:${TEST_PROXY_PORT_HTTPS}
             - HIVE_CLIENT_ID=${TEST_HIVE_CLIENT_ID}

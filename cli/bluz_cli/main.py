@@ -95,6 +95,13 @@ def main(
         help="Emit raw JSON instead of tables.",
         rich_help_panel="Global",
     ),
+    quiet: bool = typer.Option(
+        False,
+        "--quiet",
+        "-q",
+        help="Suppress success/warning chatter — only data and errors. For scripting/agents.",
+        rich_help_panel="Global",
+    ),
     _version: bool = typer.Option(
         None,
         "--version",
@@ -104,7 +111,7 @@ def main(
     ),
 ) -> None:
     """Resolve global configuration before any command runs."""
-    configure(url=url, token=token, insecure=insecure, as_json=json_output)
+    configure(url=url, token=token, insecure=insecure, as_json=json_output, quiet=quiet)
 
 
 @app.command()
@@ -113,8 +120,34 @@ def version() -> None:
     typer.echo(f"bluz-cli {__version__}")
 
 
+# Global flags Click only recognises before the subcommand. Recognised here so
+# `bluz gantt curriculums list --json` works the same as `bluz --json gantt
+# curriculums list` — flags shouldn't care where you put them when chaining.
+_GLOBAL_FLAGS = {"--json", "--quiet", "-q", "--insecure", "--secure"}
+_GLOBAL_OPTS_WITH_VALUE = {"--url", "--token"}
+
+
+def _reorder_global_flags(argv: list[str]) -> list[str]:
+    """Move recognised global flags to the front so they work in any position."""
+    front: list[str] = []
+    rest: list[str] = []
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg in _GLOBAL_FLAGS:
+            front.append(arg)
+        elif arg in _GLOBAL_OPTS_WITH_VALUE and i + 1 < len(argv):
+            front.extend([arg, argv[i + 1]])
+            i += 1
+        else:
+            rest.append(arg)
+        i += 1
+    return front + rest
+
+
 def run() -> None:
     """Console-script entry point with top-level error translation."""
+    sys.argv = [sys.argv[0]] + _reorder_global_flags(sys.argv[1:])
     try:
         app()
     except BluzCliError as exc:

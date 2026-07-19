@@ -15,8 +15,9 @@ from pathlib import Path
 
 import typer
 
-from bluz_cli.commands._common import parse_json, show
+from bluz_cli.commands._common import LIMIT_OPTION, OFFSET_OPTION, parse_json, show
 from bluz_cli.context import state
+from bluz_cli.errors import BluzApiError
 from bluz_cli.output import success
 
 app = typer.Typer(help="Gantt / curriculum engine.", no_args_is_help=True)
@@ -41,10 +42,15 @@ def _entity_app(
     base = f"{_BASE}/{entity}"
 
     @sub.command("list")
-    def list_items() -> None:
-        """List items (id → title map)."""
+    def list_items(
+        limit: int = LIMIT_OPTION,
+        offset: int = OFFSET_OPTION,
+    ) -> None:
+        """List items as an array of {id, title} (server returns an id→title map)."""
         with state.client() as client:
-            show(client.get(base), title=entity)
+            items = client.get(base)
+        rows = [{"id": item_id, "title": title} for item_id, title in items.items()]
+        show(rows, title=entity, limit=limit, offset=offset)
 
     @sub.command("get")
     def get_item(item_id: str = typer.Argument(..., help="Item id.")) -> None:
@@ -54,9 +60,10 @@ def _entity_app(
 
     @sub.command("get-many")
     def get_many(ids: str = typer.Argument(..., help="Comma-separated ids.")) -> None:
-        """Fetch several items by id."""
+        """Fetch several items by id, as an array (server returns an id→item map)."""
         with state.client() as client:
-            show(client.get(base, params={"ids": ids}))
+            items = client.get(base, params={"ids": ids})
+        show(list(items.values()))
 
     @sub.command("create")
     def create_item(
@@ -220,9 +227,13 @@ def export_curriculum_excel(
     """Export a curriculum as an Excel workbook."""
     with state.client() as client:
         data = client.get(f"{_BASE}/curriculums/{curriculum_id}/export/excel")
-    payload = data if isinstance(data, bytes) else str(data).encode("utf-8")
-    output.write_bytes(payload)
-    success(f"Exported curriculum {curriculum_id} → {output} ({len(payload)} bytes)")
+    if not isinstance(data, bytes):
+        raise BluzApiError(
+            "InvalidResponse",
+            f"Expected an .xlsx byte stream, got {type(data).__name__}: {str(data)[:200]}",
+        )
+    output.write_bytes(data)
+    success(f"Exported curriculum {curriculum_id} → {output} ({len(data)} bytes)")
 
 
 @curriculums_app.command("import")

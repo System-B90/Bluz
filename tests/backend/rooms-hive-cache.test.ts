@@ -6,7 +6,7 @@ const { getRooms, fakeController } = vi.hoisted(() => ({
     getRooms: vi.fn(),
     fakeController: {
         rooms: { find: () => ({ toArray: async () => [] }) },
-    } as any,
+    } as unknown as DatabaseController,
 }));
 
 vi.mock("@/api-server/hive/session-client", () => ({
@@ -23,6 +23,8 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
 }));
 
 import { getAllRooms } from "@/app/api/rooms/utils";
+import { DatabaseController } from "@/api-server/mongo-db-controller";
+import { HiveRoom } from "@/api-shared/types/room";
 
 const cache = {
     modules: {},
@@ -40,7 +42,7 @@ describe("getAllRooms — Hive cache fallback", () => {
         const rooms = await getAllRooms(fakeController, "https://dead", cache);
 
         expect(rooms).toHaveLength(2);
-        const names = rooms.map((r) => (r as any).display_name).sort();
+        const names = rooms.map((r) => (r as HiveRoom).display_name).sort();
         expect(names).toEqual(["חדר ג", "חדר ד"]);
     });
 
@@ -59,6 +61,6 @@ describe("getAllRooms — Hive cache fallback", () => {
         const rooms = await getAllRooms(fakeController, undefined, cache);
 
         expect(rooms).toHaveLength(1);
-        expect((rooms[0] as any).display_name).toBe("Live Room");
+        expect((rooms[0] as HiveRoom).display_name).toBe("Live Room");
     });
 });

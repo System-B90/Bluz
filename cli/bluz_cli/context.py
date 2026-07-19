@@ -21,6 +21,7 @@ class AppState:
 
     config: Config = field(default_factory=Config)
     as_json: bool = False
+    quiet: bool = False
 
     def client(self) -> BluzClient:
         """Build an authenticated client for the current configuration."""
@@ -37,7 +38,9 @@ def configure(
     token: str | None,
     insecure: bool | None,
     as_json: bool,
+    quiet: bool = False,
 ) -> None:
     """Resolve and store global configuration for the running command."""
     state.config = load_config(url=url, token=token, insecure=insecure)
     state.as_json = as_json
+    state.quiet = quiet

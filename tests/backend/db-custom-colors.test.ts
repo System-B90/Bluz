@@ -43,7 +43,7 @@ describe("DbCustomColors", () => {
         await DbCustomColors.create(color);
         expect(controller.customColors.insertOne).toHaveBeenCalledWith(color);
         expect(SendServerRequestToSessionServer).toHaveBeenCalledWith(
-            MessageTypes.CUSTOM_COLORS_UPDATE as any,
+            MessageTypes.CUSTOM_COLORS_UPDATE,
             {}
         );
     });
@@ -56,7 +56,7 @@ describe("DbCustomColors", () => {
             { $set: { name: "Red Updated", hex: "#ee0000" } }
         );
         expect(SendServerRequestToSessionServer).toHaveBeenCalledWith(
-            MessageTypes.CUSTOM_COLORS_UPDATE as any,
+            MessageTypes.CUSTOM_COLORS_UPDATE,
             {}
         );
     });
@@ -65,7 +65,7 @@ describe("DbCustomColors", () => {
         await DbCustomColors.del("c1");
         expect(controller.customColors.deleteOne).toHaveBeenCalledWith({ id: "c1" });
         expect(SendServerRequestToSessionServer).toHaveBeenCalledWith(
-            MessageTypes.CUSTOM_COLORS_UPDATE as any,
+            MessageTypes.CUSTOM_COLORS_UPDATE,
             {}
         );
     });

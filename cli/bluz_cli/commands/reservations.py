@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import typer
 
-from bluz_cli.commands._common import show
+from bluz_cli.commands._common import LIMIT_OPTION, OFFSET_OPTION, find_by_id, show
 from bluz_cli.context import state
 from bluz_cli.output import success
 
@@ -25,11 +25,26 @@ def list_reservations(
     room_source: int = typer.Option(None, "--room-source", help="0=custom, 1=hive."),
     from_: str = typer.Option(None, "--from", help="ISO start of range."),
     to: str = typer.Option(None, "--to", help="ISO end of range."),
+    limit: int = LIMIT_OPTION,
+    offset: int = OFFSET_OPTION,
 ) -> None:
     """List reservations, optionally filtered by room and date range."""
     params = {"roomId": room_id, "roomSource": room_source, "from": from_, "to": to}
     with state.client() as client:
-        show(client.get(_BASE, params=params), title="Reservations")
+        show(
+            client.get(_BASE, params=params),
+            title="Reservations",
+            limit=limit,
+            offset=offset,
+        )
+
+
+@app.command()
+def get(reservation_id: str = typer.Argument(..., help="Reservation _id.")) -> None:
+    """Fetch a single reservation by id (filtered client-side — no per-id route)."""
+    with state.client() as client:
+        items = client.get(_BASE, params={})
+    show(find_by_id(items, reservation_id, id_key="_id"))
 
 
 @app.command()
