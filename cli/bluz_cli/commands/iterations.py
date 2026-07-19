@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import typer
 
-from bluz_cli.commands._common import merge_fields, show
+from bluz_cli.commands._common import LIMIT_OPTION, OFFSET_OPTION, merge_fields, show
 from bluz_cli.context import state
 from bluz_cli.output import success
 
@@ -20,10 +20,13 @@ _BASE = "/api/iterations"
 
 
 @app.command("list")
-def list_iterations() -> None:
+def list_iterations(
+    limit: int = LIMIT_OPTION,
+    offset: int = OFFSET_OPTION,
+) -> None:
     """List all registered iterations."""
     with state.client() as client:
-        show(client.get(_BASE), title="Iterations")
+        show(client.get(_BASE), title="Iterations", limit=limit, offset=offset)
 
 
 @app.command()

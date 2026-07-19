@@ -22,6 +22,12 @@ _BASE = "/api/settings"
 PRAYER_TIMES_SETTING_KEY = "prayer-times"
 
 
+@app.command("list")
+def list_settings() -> None:
+    """List known setting keys (server has no enumeration route — this is a static list)."""
+    show([PRAYER_TIMES_SETTING_KEY], title="Known setting keys")
+
+
 @app.command()
 def get(
     name: str = typer.Argument(..., help="Setting key, e.g. prayer-times."),

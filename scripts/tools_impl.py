@@ -28,7 +28,10 @@ DEV_HOST = "bluz.dev"
 
 
 def _run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, cwd=ROOT, **kwargs)
+    # npm/npx on Windows are .cmd shims, not .exe -- CreateProcess can't find
+    # them without going through the shell.
+    shell = sys.platform == "win32" and cmd[0] in ("npm", "npx")
+    return subprocess.run(cmd, cwd=ROOT, shell=shell, **kwargs)
 
 
 def _spawn_background(cmd: list[str], log_file: Path, pid_file: Path) -> int:
@@ -39,10 +42,12 @@ def _spawn_background(cmd: list[str], log_file: Path, pid_file: Path) -> int:
         creationflags = (
             subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
         )
+    shell = sys.platform == "win32" and cmd[0] in ("npm", "npx")
     with log_file.open("w", encoding="utf-8") as log:
         proc = subprocess.Popen(
             cmd,
             cwd=ROOT,
+            shell=shell,
             stdout=log,
             stderr=subprocess.STDOUT,
             creationflags=creationflags,
