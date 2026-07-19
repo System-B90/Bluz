@@ -1,8 +1,8 @@
 import { MongoClient } from "mongodb";
-import { v4 as uuidv4 } from "uuid";
-import * as path from "node:path";
 import * as fs from "node:fs";
+import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { v4 as uuidv4 } from "uuid";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -87,11 +87,11 @@ async function main() {
     if (!isRunningInDocker) {
         const mongoPort = process.env.MONGO_PORT || "27018";
         console.log(
-            `Running on host machine. Translating MongoDB connection to local port-mapping (127.0.0.3:${mongoPort})...`
+            `Running on host machine. Translating MongoDB connection to local port-mapping (172.27.80.1:${mongoPort})...`
         );
         connectionString = connectionString.replace(
             /@([^/:]+)(:\d+)?/,
-            `@127.0.0.3:${mongoPort}`
+            `@172.27.80.1:${mongoPort}`
         );
     }
 

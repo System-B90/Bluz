@@ -5,7 +5,7 @@ tags: [docker, dev-env, playwright, diagnostics]
 ---
 
 ## Prerequisites
-- `bluz.dev` → `127.0.0.3` in `C:\Windows\System32\drivers\etc\hosts`
+- `bluz.dev` → `172.27.80.1` in `C:\Windows\System32\drivers\etc\hosts`
 - Generate `.env` once: `python setup.py`
 
 ## Dev Modes (agent-preferred: `tools.py`)
