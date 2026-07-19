@@ -59,7 +59,7 @@
     "exceljs": "^4.4.0",
     "googleapis": "^163.0.0",
     "lightningcss": "^1.32.0",
-    "lucide-react": "^0.553.0",
+    "lucide-react": "^1.25.0",
     "mongodb": "^7.5.0",
     "mui-color-input": "^7.0.0",
     "next": "^16.2.10",
