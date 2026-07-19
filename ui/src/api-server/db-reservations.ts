@@ -1,5 +1,3 @@
-import { ObjectId } from "mongodb";
-
 import {
     databaseController,
     DatabaseController,
@@ -66,7 +64,7 @@ async function cancelReservation(
     controller: DatabaseController = databaseController,
 ): Promise<void> {
     const result = await controller.reservations.deleteOne({
-        _id: new ObjectId(reservationId),
+        _id: reservationId,
     });
     if (result.deletedCount === 0) {
         throw new ClientApiError(`לא נמצאה הזמנה עם מזהה ${reservationId}`);
