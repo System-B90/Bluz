@@ -2,11 +2,15 @@ export const dynamic = "force-dynamic";
 
 import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { DbEvent } from "@/api-server/db-event";
-import { syncEventToInstructorsGoogleCalendars } from "@/api-server/google/google-calendar-sync";
+import {
+    pullGoogleEditsInBackground,
+    syncEventToInstructorsGoogleCalendars,
+} from "@/api-server/google/google-calendar-sync";
 import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
+import { getSessionUser } from "@/api-server/session-user";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import {
@@ -78,6 +82,10 @@ export const GET: ServerApiEventGet = withApi(async (request) => {
                 `טווח התאריכים חייב להיות בין 0 ל-${MAX_RANGE_DAYS} ימים`,
             );
         }
+        // Calendar range loads double as the trigger for pulling Google-side
+        // edits back in (throttled per user; no-op when sync isn't linked).
+        const user = await getSessionUser();
+        if (user) pullGoogleEditsInBackground(user.id);
         return ApiSuccess(
             await DbEvent.getInRange(
                 start,

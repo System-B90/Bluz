@@ -24,11 +24,12 @@ import
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
 {
+    apiConnectGoogleCalendar,
     apiDisconnectGoogleCalendar,
-    apiGetGoogleCalendarConnectUrl,
     apiGetGoogleCalendarStatus,
     apiSyncGoogleCalendarNow,
 } from "@/api-client/google-calendar";
+import { requestGoogleAuthCode } from "@/api-client/google-identity";
 import { apiGetClasses } from "@/api-client/hive";
 import
 {
@@ -263,7 +264,13 @@ export function PersonalSettings()
         apiGetGoogleCalendarStatus({})
             .then(setGoogleStatus)
             // Offline deployments / unconfigured server: treat as "unavailable", not an error.
-            .catch(() => setGoogleStatus({ configured: false, connected: false, enabled: false }));
+            .catch(() => setGoogleStatus({
+                configured: false,
+                connected: false,
+                enabled: false,
+                clientId: "",
+                scopes: [],
+            }));
     }, []);
 
     useEffect(() =>
@@ -390,14 +397,21 @@ export function PersonalSettings()
             dispatch({ type: "SET_GOOGLE_CALENDAR_ENABLED", payload: enabled });
             if (!enabled) return;
 
-            // Turning the toggle on with no linked Google account: kick off consent.
-            if (!googleStatus?.connected)
+            // Turning the toggle on with no linked Google account: run the
+            // "Continue with Google" popup (GIS code model) and hand the
+            // resulting authorization code to the server.
+            if (!googleStatus?.connected && googleStatus?.clientId)
             {
                 setGoogleBusy(true);
                 try
                 {
-                    const { url } = await apiGetGoogleCalendarConnectUrl({});
-                    window.location.href = url;
+                    const code = await requestGoogleAuthCode(
+                        googleStatus.clientId,
+                        googleStatus.scopes,
+                    );
+                    await apiConnectGoogleCalendar({ code }, {});
+                    refreshGoogleStatus();
+                    enqueueSnackbar("חשבון Google חובר בהצלחה.", { variant: "success" });
                 }
                 catch (e)
                 {
@@ -410,7 +424,7 @@ export function PersonalSettings()
                 }
             }
         },
-        [ enqueueSnackbar, googleStatus ],
+        [ enqueueSnackbar, googleStatus, refreshGoogleStatus ],
     );
 
     const handleDisconnectGoogle = useCallback(async () =>
@@ -440,7 +454,7 @@ export function PersonalSettings()
         {
             const result = await apiSyncGoogleCalendarNow({});
             enqueueSnackbar(
-                `סונכרנו ${result.pushed} אירועים מ-Bluz, נמצאו ${result.pulled} חסימות עומס מ-Google.`,
+                `סונכרנו ${result.pushed} אירועים מ-Bluz, עודכנו ${result.updated} אירועים מעריכות ב-Google, נמצאו ${result.pulled} חסימות עומס.`,
                 { variant: "success" },
             );
         }
@@ -556,8 +570,9 @@ export function PersonalSettings()
                                 Google Calendar
                             </Typography>
                             <Typography sx={ { fontSize: "0.75rem", color: "text.secondary" } }>
-                                סנכרון דו-כיווני אופציונלי: האירועים שלך נשלחים ליומן Google ייעודי,
-                                וזמני עומס מ-Google נקראים לאיתור התנגשויות.
+                                סנכרון דו-כיווני: האירועים שלך נשלחים ליומן Google ייעודי,
+                                ועריכות שתבצעו שם (שם, שעות, הערות) חוזרות ל-Bluz.
+                                החיבור בלחיצת &quot;התחברות עם Google&quot; — ללא הגדרה בצד השרת.
                             </Typography>
                         </Box>
                         <Switch

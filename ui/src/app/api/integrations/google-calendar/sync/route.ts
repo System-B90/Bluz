@@ -5,6 +5,7 @@ import { DbEvent } from "@/api-server/db-event";
 import {
     isGoogleCalendarConfigured,
     pullBusyBlocks,
+    pullEventEdits,
     pushAllEvents,
 } from "@/api-server/google/google-calendar-service";
 import { getSessionUser } from "@/api-server/session-user";
@@ -32,13 +33,16 @@ export const POST = withApi(async () => {
         now.getTime() + SYNC_WINDOW_DAYS * 24 * 60 * 60 * 1000,
     );
 
+    // Pull Google-side edits first so the push that follows doesn't overwrite
+    // changes the user just made in Google Calendar.
+    const updated = await pullEventEdits(user.id);
+
     const events = await DbEvent.getInRange(now, windowEnd, undefined, {
         $or: [
             { instructors: userIdAsNumber },
             { lecturers: userIdAsNumber },
         ],
     });
-
     const [pushed, busyBlocks] = await Promise.all([
         pushAllEvents(user.id, events),
         pullBusyBlocks(user.id),
@@ -47,6 +51,7 @@ export const POST = withApi(async () => {
     const response: ApiGoogleCalendarSyncResponse = {
         pushed,
         pulled: busyBlocks.length,
+        updated,
     };
     return ApiSuccess(response);
 });

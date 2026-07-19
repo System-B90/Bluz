@@ -1,6 +1,10 @@
-import { ClientApiNoPayload, safeApiFetcher } from "@/api-client/common";
 import {
-    ApiGoogleCalendarConnectResponse,
+    ClientApi,
+    ClientApiNoPayload,
+    safeApiFetcher,
+} from "@/api-client/common";
+import {
+    ApiGoogleCalendarConnectPayload,
     ApiGoogleCalendarStatusResponse,
     ApiGoogleCalendarSyncResponse,
 } from "@/api-shared/types/google-calendar";
@@ -14,12 +18,14 @@ export const apiGetGoogleCalendarStatus: ClientApiNoPayload<
     );
 };
 
-export const apiGetGoogleCalendarConnectUrl: ClientApiNoPayload<
-    ApiGoogleCalendarConnectResponse
-> = async (props) => {
-    return await safeApiFetcher<ApiGoogleCalendarConnectResponse>(
+/** Sends the GIS popup's authorization code to the server for token exchange. */
+export const apiConnectGoogleCalendar: ClientApi<
+    ApiGoogleCalendarConnectPayload,
+    void
+> = async (payload, props) => {
+    return await safeApiFetcher<void>(
         "/api/integrations/google-calendar/connect",
-        props,
+        { ...props, method: "POST", body: JSON.stringify(payload) },
     );
 };
 

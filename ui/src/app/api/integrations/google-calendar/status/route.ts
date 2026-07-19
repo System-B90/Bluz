@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 import { ApiSuccess, withApi } from "@/api-server/common";
 import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import {
+    getGoogleClientId,
+    getGoogleScopes,
     isGoogleCalendarConfigured,
     isGoogleCalendarConnected,
 } from "@/api-server/google/google-calendar-service";
@@ -24,6 +26,9 @@ export const GET = withApi(async () => {
         configured: isGoogleCalendarConfigured(),
         connected,
         enabled: settings.googleCalendarEnabled,
+        // Public OAuth client id + scopes for the browser-side GIS popup.
+        clientId: getGoogleClientId(),
+        scopes: getGoogleScopes(),
     };
     return ApiSuccess(response, "no-store");
 });
