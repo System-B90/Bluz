@@ -3,7 +3,11 @@ FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# GitHub Packages read token for @system-b90/* (npm resolves ${NPM_TOKEN} from env)
+ARG NPM_TOKEN
+ENV NPM_TOKEN=${NPM_TOKEN}
+
+COPY package.json package-lock.json .npmrc ./
 COPY ui/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 

@@ -12,7 +12,10 @@ vi.mock("@/api-server/web-socket-utils", () => ({
     SendServerRequestToSessionServer: vi.fn(),
 }));
 
-import { databaseController } from "@/api-server/mongo-db-controller";
+import {
+    databaseController,
+    DatabaseController,
+} from "@/api-server/mongo-db-controller";
 import { DbSettings } from "@/api-server/db-settings";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { PRAYER_TIMES_SETTING_KEY } from "@/api-shared/types/settings/prayer";
@@ -44,7 +47,7 @@ describe("DbSettings - Failure Paths", () => {
         it("returns null when setting not found", async () => {
             controller.settings.findOne.mockResolvedValueOnce(null);
 
-            const result = await DbSettings.get("prayer_times", {}, controller as any);
+            const result = await DbSettings.get("prayer_times", {}, controller as unknown as DatabaseController);
             expect(result).toBeNull();
         });
 
@@ -53,14 +56,14 @@ describe("DbSettings - Failure Paths", () => {
             controller.settings.findOne.mockRejectedValueOnce(dbError);
 
             await expect(
-                DbSettings.get("prayer_times", {}, controller as any)
+                DbSettings.get("prayer_times", {}, controller as unknown as DatabaseController)
             ).rejects.toThrow("Database connection lost");
         });
 
         it("returns null when findOne returns undefined", async () => {
             controller.settings.findOne.mockResolvedValueOnce(undefined);
 
-            const result = await DbSettings.get("prayer_times", {}, controller as any);
+            const result = await DbSettings.get("prayer_times", {}, controller as unknown as DatabaseController);
             expect(result).toBeNull();
         });
 
@@ -80,7 +83,7 @@ describe("DbSettings - Failure Paths", () => {
             const result = await DbSettings.get(
                 PRAYER_TIMES_SETTING_KEY,
                 {},
-                controller as any
+                controller as unknown as DatabaseController
             );
             expect(result).toEqual(settingValue);
         });
@@ -92,7 +95,7 @@ describe("DbSettings - Failure Paths", () => {
             controller.settings.updateOne.mockRejectedValueOnce(dbError);
 
             await expect(
-                DbSettings.set("prayer_times", {}, {}, controller as any)
+                DbSettings.set("prayer_times", {}, {}, controller as unknown as DatabaseController)
             ).rejects.toThrow("Update operation failed");
         });
 
@@ -103,7 +106,7 @@ describe("DbSettings - Failure Paths", () => {
                 PRAYER_TIMES_SETTING_KEY,
                 { arvit: new Date() },
                 {},
-                controller as any
+                controller as unknown as DatabaseController
             );
 
             expect(SendServerRequestToSessionServer).toHaveBeenCalled();
@@ -117,7 +120,7 @@ describe("DbSettings - Failure Paths", () => {
             controller.settings.updateOne.mockResolvedValueOnce({ ok: 1 });
 
             const partialSetting = { arvit: new Date("1970-01-01T19:00:00Z") };
-            await DbSettings.set("prayer_times", partialSetting, {}, controller as any);
+            await DbSettings.set("prayer_times", partialSetting, {}, controller as unknown as DatabaseController);
 
             expect(controller.settings.updateOne).toHaveBeenCalledWith(
                 { key: "prayer_times" },
@@ -132,7 +135,7 @@ describe("DbSettings - Failure Paths", () => {
                 modifiedCount: 0,
             });
 
-            await DbSettings.set("prayer_times", {}, {}, controller as any);
+            await DbSettings.set("prayer_times", {}, {}, controller as unknown as DatabaseController);
 
             expect(SendServerRequestToSessionServer).toHaveBeenCalled();
         });
@@ -208,7 +211,13 @@ describe("DbSettings - Failure Paths", () => {
 
     describe("Edge Cases", () => {
         it("handles null database controller gracefully", async () => {
-            await expect(DbSettings.get("prayer_times", {}, null as any)).rejects
+            await expect(
+                DbSettings.get(
+                    "prayer_times",
+                    {},
+                    null as unknown as DatabaseController,
+                ),
+            ).rejects
                 .toBeDefined();
         });
 
@@ -219,7 +228,7 @@ describe("DbSettings - Failure Paths", () => {
                 value: {},
             });
 
-            const result = await DbSettings.get("empty_setting", {}, controller as any);
+            const result = await DbSettings.get("empty_setting", {}, controller as unknown as DatabaseController);
             expect(result).toEqual({});
         });
 
@@ -227,7 +236,7 @@ describe("DbSettings - Failure Paths", () => {
             controller.settings.findOne.mockResolvedValueOnce(null);
             const options = { session: "some-session" };
 
-            await DbSettings.get("prayer_times", options, controller as any);
+            await DbSettings.get("prayer_times", options, controller as unknown as DatabaseController);
 
             expect(controller.settings.findOne).toHaveBeenCalledWith(
                 { key: "prayer_times" },
@@ -239,7 +248,7 @@ describe("DbSettings - Failure Paths", () => {
             controller.settings.updateOne.mockResolvedValueOnce({ ok: 1 });
             const options = { session: "some-session" };
 
-            await DbSettings.set("prayer_times", {}, options, controller as any);
+            await DbSettings.set("prayer_times", {}, options, controller as unknown as DatabaseController);
 
             expect(controller.settings.updateOne).toHaveBeenCalledWith(
                 { key: "prayer_times" },

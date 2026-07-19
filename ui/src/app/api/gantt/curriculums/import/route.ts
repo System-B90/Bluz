@@ -21,6 +21,7 @@ import {
     ganttConstraintsSchema,
 } from "@/api-server/gantt/schema";
 import { ClientApiError } from "@/api-shared/errors";
+import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ const MAX_IMPORT_NODES = 50_000;
  * oversized payload is rejected up front rather than mid-transaction.
  */
 function countImportNodes(
-    curriculum: any,
+    curriculum: ApiCurriculum,
     mappings: unknown,
     constraints: unknown,
 ): number {
@@ -219,7 +220,8 @@ export const POST = withApi(async (request: NextRequest) => {
                                 // Extract and save event configurations (cEC)
                                 if (Array.isArray(oldEvent.cEC)) {
                                     const originalConfig = oldEvent.cEC.find(
-                                        (cfg: any) => cfg.curriculumId === oldCurriculumId
+                                        (cfg: { curriculumId: string }) =>
+                                            cfg.curriculumId === oldCurriculumId,
                                     );
                                     if (originalConfig) {
                                         await tx

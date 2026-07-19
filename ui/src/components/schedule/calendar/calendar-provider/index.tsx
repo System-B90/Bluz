@@ -62,14 +62,19 @@ export const CalendarProvider = ({
     // Reset when leaving offline mode so the next entry gets a fresh capture.
     const didCaptureOfflineRef = useRef(false);
 
-    // Captures the first non-empty batch of events after entering offline mode,
-    // whether that batch is already loaded or arrives later.
+    // Captures the events snapshot as soon as offline mode is entered — even if
+    // still empty (e.g. the initial fetch hasn't resolved yet). `loadEvents`
+    // skips its SET_EVENTS dispatch entirely while offline, so no legitimate
+    // baseline batch can arrive later; waiting for a "first non-empty batch"
+    // instead let events created *after* going offline (while the initial
+    // fetch was still in flight) be mistaken for pre-existing ones, hiding
+    // them from the offline-changes diff entirely.
     useEffect(() => {
         if (!offlineMode) {
             didCaptureOfflineRef.current = false;
             return;
         }
-        if (!didCaptureOfflineRef.current && events.length > 0) {
+        if (!didCaptureOfflineRef.current) {
             captureInitialEvents(events);
             didCaptureOfflineRef.current = true;
         }

@@ -30,7 +30,11 @@ else
 fi
 
 # Image Resolution & Versioning (Offline vs Online)
-DETECTED_TAG="latest"
+if [ -f "VERSION" ]; then
+    DETECTED_TAG=$(cat VERSION)
+else
+    DETECTED_TAG="latest"
+fi
 IS_OFFLINE=false
 
 echo -e "\n\033[1;33m[WAIT] Resolving Docker images...\033[0m"

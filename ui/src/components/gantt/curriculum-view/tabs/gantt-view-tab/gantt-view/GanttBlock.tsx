@@ -73,7 +73,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
             return;
         }
 
-        if (payload.eventId) {
+        if ("eventId" in payload && payload.eventId) {
             openEventDialog(moduleObj.syllabusId, payload.moduleId, payload.eventId);
         } else {
             openModuleDialog(moduleObj.syllabusId, payload.moduleId);

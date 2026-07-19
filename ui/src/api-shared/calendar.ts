@@ -11,20 +11,28 @@ export function eventDateFixup<T extends Partial<DbEventDocument | Event>>(
     if (typeof window === "undefined") {
         // --- SERVER ENVIRONMENT (Target: Native Date) ---
         if (result.startTime !== undefined) {
-            result.startTime = new Date(result.startTime as any) as any;
+            result.startTime = new Date(
+                result.startTime as Date | number | string,
+            ) as T["startTime"];
         }
         if (result.endTime !== undefined) {
-            result.endTime = new Date(result.endTime as any) as any;
+            result.endTime = new Date(
+                result.endTime as Date | number | string,
+            ) as T["endTime"];
         }
     } else {
         // --- CLIENT ENVIRONMENT (Target: Dayjs) ---
         // Anchor to the app timezone so the wall-clock is DST-correct and
         // independent of the viewer's browser timezone (#168).
         if (result.startTime !== undefined) {
-            result.startTime = dayjs(result.startTime).tz(APP_TIMEZONE) as any;
+            result.startTime = dayjs(
+                result.startTime as Date | number | string,
+            ).tz(APP_TIMEZONE) as T["startTime"];
         }
         if (result.endTime !== undefined) {
-            result.endTime = dayjs(result.endTime).tz(APP_TIMEZONE) as any;
+            result.endTime = dayjs(
+                result.endTime as Date | number | string,
+            ).tz(APP_TIMEZONE) as T["endTime"];
         }
     }
 

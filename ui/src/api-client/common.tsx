@@ -53,7 +53,7 @@ export async function safeApiFetcher<T = unknown>(
                 );
             });
         })
-        .catch((e: any) => {
+        .catch((e: unknown) => {
             if (e instanceof ClientApiError) {
                 throw e;
             }
@@ -77,7 +77,9 @@ export function enqueueSnackbarWithSubtext(
             enqueueSnackbar(
                 <div className="flex flex-col">
                     <p>{mainText}</p>
-                    <p style={{ fontSize: "0.7em" }}>{subText}</p>
+                    <Typography component="p" sx={{ fontSize: "0.7em" }}>
+                        {subText}
+                    </Typography>
                 </div>,
                 options,
             );
@@ -85,7 +87,9 @@ export function enqueueSnackbarWithSubtext(
             enqueueSnackbar(
                 <div className="flex flex-col">
                     <p>{mainText}</p>
-                    <div style={{ fontSize: "0.7em" }}>{subText}</div>
+                    <Typography component="div" sx={{ fontSize: "0.7em" }}>
+                        {subText}
+                    </Typography>
                 </div>,
                 options,
             );
@@ -98,7 +102,7 @@ export function enqueueSnackbarWithSubtext(
 export function enqueueApiErrorSnackbar(
     enqueueSnackbar: EnqueueSnackbar | undefined,
     mainText: React.ReactNode | string,
-    error: any,
+    error: unknown,
 ) {
     if (error instanceof UserNotLoggedInError) {
         console.log(error.message);

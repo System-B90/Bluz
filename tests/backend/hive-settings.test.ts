@@ -1,12 +1,18 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
+import type { Mock } from "vitest";
+
+declare global {
+    // eslint-disable-next-line no-var
+    var mockNextAuthHandler: Mock<(...args: Array<unknown>) => unknown>;
+}
 
 // Mock next-auth and define the handler-returning factory during module resolution
 vi.mock("next-auth", () => {
-    const mockHandlerFn = vi.fn((...args: any[]) => {
-        return (globalThis as any).mockNextAuthHandler(...args);
+    const mockHandlerFn = vi.fn((...args: Array<unknown>) => {
+        return globalThis.mockNextAuthHandler(...args);
     });
-    (globalThis as any).mockNextAuthHandler = vi.fn();
+    globalThis.mockNextAuthHandler = vi.fn();
     return {
         default: vi.fn(() => mockHandlerFn),
     };
@@ -146,8 +152,8 @@ describe("Avatar Proxy Route", () => {
 
     it("GET - authenticated proxy fetch success", async () => {
         vi.mocked(getToken).mockResolvedValueOnce({
-            data: { accessToken: "mock-token" }
-        } as any);
+            data: { accessToken: "mock-token" },
+        } as unknown as Awaited<ReturnType<typeof getToken>>);
 
         global.fetch = vi.fn().mockResolvedValueOnce({
             ok: true,
@@ -155,7 +161,7 @@ describe("Avatar Proxy Route", () => {
             headers: {
                 get: (name: string) => name === "Content-Type" ? "image/png" : null,
             },
-        } as any);
+        } as unknown as Response);
 
         const request = new NextRequest("http://localhost/api/hive/users/avatars/user1");
         const context = { params: Promise.resolve({ slug: "user1" }) };
@@ -248,21 +254,21 @@ describe("Outsiders API Route", () => {
 
 describe("NextAuth API Route", () => {
     beforeEach(() => {
-        (globalThis as any).mockNextAuthHandler.mockReset();
+        globalThis.mockNextAuthHandler.mockReset();
     });
 
     it("GET - forwards to NextAuth handler", async () => {
         const mockResponse = new NextResponse(JSON.stringify({ user: "admin" }));
-        (globalThis as any).mockNextAuthHandler.mockResolvedValueOnce(mockResponse);
+        globalThis.mockNextAuthHandler.mockResolvedValueOnce(mockResponse);
 
         const request = new NextRequest("http://localhost/api/auth/session");
         const response = await NextAuthRoute.GET(request, {});
         expect(response).toBe(mockResponse);
-        expect((globalThis as any).mockNextAuthHandler).toHaveBeenCalled();
+        expect(globalThis.mockNextAuthHandler).toHaveBeenCalled();
     });
 
     it("GET - NextAuth failure returns 503 for session endpoint", async () => {
-        (globalThis as any).mockNextAuthHandler.mockRejectedValueOnce(new Error("SSO offline"));
+        globalThis.mockNextAuthHandler.mockRejectedValueOnce(new Error("SSO offline"));
 
         const request = new NextRequest("http://localhost/api/auth/session");
         const response = await NextAuthRoute.GET(request, {});

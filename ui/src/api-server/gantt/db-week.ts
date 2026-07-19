@@ -10,7 +10,10 @@ import { ganttDaysSchema } from "@/api-server/gantt/schema/days";
 import { ganttWeeksSchema } from "@/api-server/gantt/schema/weeks";
 import { ClientApiError } from "@/api-shared/errors";
 import { getDefaultWorkingMinutesForDay } from "@/api-shared/gantt/week-defaults";
-import { ApiCurriculumWeek } from "@/api-shared/types/gantt/api-layer";
+import {
+    ApiCurriculumDay,
+    ApiCurriculumWeek,
+} from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttWeekPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
     GanttDayIndex,
@@ -55,7 +58,7 @@ async function getFullWeek(id: GanttWeekId): Promise<ApiCurriculumWeek> {
         throw new ClientApiError(`שבוע עם מזהה ${id} לא נמצא`);
     }
 
-    return result as any;
+    return result as unknown as ApiCurriculumWeek;
 }
 
 async function createWeek(
@@ -112,7 +115,11 @@ async function createWeek(
 
         const w2d: ApiCurriculumWeek["w2d"] = insertedDays
             .sort((a, b) => a.dayIndex - b.dayIndex)
-            .map((day) => ({ day: day as any, weekId, dayId: day.id }));
+            .map((day) => ({
+                day: day as unknown as ApiCurriculumDay,
+                weekId,
+                dayId: day.id,
+            }));
 
         return { ...newWeek, w2d } as unknown as ApiCurriculumWeek;
     });

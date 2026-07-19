@@ -19,7 +19,7 @@ describe("custom-colors api-client", () => {
         global.fetch = vi.fn().mockResolvedValueOnce({
             redirected: false,
             json: async () => ({ status: 0, data: colors }),
-        } as any);
+        } as unknown as Response);
 
         const result = await apiGetCustomColors({});
 
@@ -33,7 +33,7 @@ describe("custom-colors api-client", () => {
         global.fetch = vi.fn().mockResolvedValueOnce({
             redirected: false,
             json: async () => ({ status: 0, data: color }),
-        } as any);
+        } as unknown as Response);
 
         const result = await apiCreateCustomColor(color, {});
 
@@ -49,7 +49,7 @@ describe("custom-colors api-client", () => {
         global.fetch = vi.fn().mockResolvedValueOnce({
             redirected: false,
             json: async () => ({ status: 0, data: color }),
-        } as any);
+        } as unknown as Response);
 
         const result = await apiUpdateCustomColor(color, {});
 
@@ -64,7 +64,7 @@ describe("custom-colors api-client", () => {
         global.fetch = vi.fn().mockResolvedValueOnce({
             redirected: false,
             json: async () => ({ status: 0, data: undefined }),
-        } as any);
+        } as unknown as Response);
 
         await apiDeleteCustomColor("c1", {});
 
@@ -81,7 +81,7 @@ describe("custom-colors api-client", () => {
                 status: 1,
                 error: { name: "GenericError", message: "boom" },
             }),
-        } as any);
+        } as unknown as Response);
 
         await expect(apiGetCustomColors({})).rejects.toThrow();
     });

@@ -349,7 +349,7 @@ export async function createEventInOfflineMode(
 
     const x = box.x + box.width / 2;
     const startY = box.y + box.height * 0.25;
-    const endY = box.y + box.height * 0.32;
+    const endY = box.y + box.height * 0.55;
 
     await page.mouse.move(x, startY);
     await page.mouse.down();
@@ -361,8 +361,14 @@ export async function createEventInOfflineMode(
     await expect(dialog).toBeVisible({ timeout: 5_000 });
     await dialog.locator("input").first().fill(name);
     await dialog.getByRole("button", { name: "שמירה" }).click();
-    await page.waitForTimeout(500);
+    await expect(dialog).not.toBeVisible({ timeout: 5_000 });
 
     // Restore interactivity so events created/edited afterwards are clickable.
     await restoreEventPointerEvents(page);
+
+    // Ensure the newly-created event is actually rendered before returning,
+    // so callers relying on it being present/tracked don't race the save.
+    await expect(
+        page.locator(SELECTORS.calendarEvent).filter({ hasText: name }),
+    ).toBeVisible({ timeout: 5_000 });
 }
