@@ -15,6 +15,7 @@ async function getPersonalSettings(
         groups: doc.groups,
         instructors: doc.instructors,
         favoriteOutsiders: doc.favoriteOutsiders,
+        googleCalendarEnabled: doc.googleCalendarEnabled ?? false,
     };
 }
 

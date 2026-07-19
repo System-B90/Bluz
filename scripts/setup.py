@@ -21,7 +21,10 @@ except ImportError as e:
     print(f"Error: Missing required dependency '{e.name}'.", file=sys.stderr)
     print("Please install the required packages by running:\n", file=sys.stderr)
     print("    pip install typer InquirerPy python-dotenv\n", file=sys.stderr)
-    print("    pip install git+https://github.com/System-B15/pyhive.git@main\n", file=sys.stderr)
+    print(
+        "    pip install git+https://github.com/System-B15/pyhive.git@main\n",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 try:
@@ -270,6 +273,26 @@ def generate_env() -> None:
                 hive_client_id = "MANUAL_ENTRY_REQUIRED"
                 hive_client_secret = "MANUAL_ENTRY_REQUIRED"
 
+    # Google Calendar sync is opt-in per user and entirely optional at the
+    # deployment level — offline / air-gapped installs just skip this.
+    google_client_id = existing_env.get("GOOGLE_CLIENT_ID", "")
+    google_client_secret = existing_env.get("GOOGLE_CLIENT_SECRET", "")
+    enable_google_calendar = inquirer.confirm(
+        message="Enable optional Google Calendar sync? (requires internet access; skip for offline deployments)",
+        default=bool(google_client_id),
+    ).execute()
+    if enable_google_calendar:
+        google_client_id = inquirer.text(
+            message="Enter Google OAuth Client ID (GOOGLE_CLIENT_ID):",
+            default=google_client_id,
+        ).execute()
+        google_client_secret = (
+            inquirer.secret(
+                message="Enter Google OAuth Client Secret (GOOGLE_CLIENT_SECRET):",
+            ).execute()
+            or google_client_secret
+        )
+
     env_content: dict[str, str] = {
         "BLUZ_VERSION": existing_env.get("BLUZ_VERSION", "latest"),
         "WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY": ws_auth_key,
@@ -288,6 +311,9 @@ def generate_env() -> None:
         "POSTGRES_PASSWORD": pg_pass,
         "POSTGRES_DB": pg_db,
         "DATABASE_URL": db_url,
+        "GOOGLE_CLIENT_ID": google_client_id,
+        "GOOGLE_CLIENT_SECRET": google_client_secret,
+        "GOOGLE_REDIRECT_URI": f"{nextauth_url}/api/integrations/google-calendar/callback",
     }
 
     with env_path.open("w", encoding="utf-8") as f:

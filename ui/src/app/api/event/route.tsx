@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { DbEvent } from "@/api-server/db-event";
+import { syncEventToInstructorsGoogleCalendars } from "@/api-server/google/google-calendar-sync";
 import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
@@ -98,9 +99,9 @@ export const POST: ServerApiEventUpdate = withApi(async (request) => {
     if (!event) {
         throw new ClientApiError("No data provided!");
     }
-    return ApiSuccess(
-        await DbEvent.set(event, undefined, controller, iterationId),
-    );
+    const updated = await DbEvent.set(event, undefined, controller, iterationId);
+    syncEventToInstructorsGoogleCalendars(updated, "upsert");
+    return ApiSuccess(updated);
 });
 
 export const PUT: ServerApiEventCreate = withApi(async (request) => {
@@ -112,9 +113,14 @@ export const PUT: ServerApiEventCreate = withApi(async (request) => {
     if (!event) {
         throw new ClientApiError("No data provided!");
     }
-    return ApiSuccess(
-        await DbEvent.create(event, undefined, controller, iterationId),
+    const created = await DbEvent.create(
+        event,
+        undefined,
+        controller,
+        iterationId,
     );
+    syncEventToInstructorsGoogleCalendars(created, "upsert");
+    return ApiSuccess(created);
 });
 
 export const DELETE: ServerApiEventDelete = withApi(async (request) => {
@@ -124,6 +130,10 @@ export const DELETE: ServerApiEventDelete = withApi(async (request) => {
     if (!eventId) {
         throw new ClientApiError("No eventId provided!");
     }
+    const existing = await DbEvent.get(eventId, undefined, controller);
     await DbEvent.del(eventId, undefined, controller, iterationId);
+    if (existing) {
+        syncEventToInstructorsGoogleCalendars(existing, "delete");
+    }
     return ApiSuccess();
 });
