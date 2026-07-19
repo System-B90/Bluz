@@ -12,10 +12,75 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
+    build-test-images:
+        name: Build Test Images
+        runs-on: ubuntu-24.04
+        if: github.event_name != 'pull_request' || github.head_ref == 'dev'
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v7
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v4
+
+            # Build once here instead of once per shard (#e2e-perf). Tags match
+            # exactly what deploy/docker-compose.yml resolves to with
+            # BLUZ_VERSION=latest, so each shard's `docker compose up` finds the
+            # image already present locally and skips building it again.
+            - name: Build UI Image
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  file: ui/Dockerfile
+                  target: runner
+                  load: true
+                  tags: ghcr.io/system-b90/bluz/ui:latest
+                  build-args: |
+                      NPM_TOKEN=${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+                  cache-from: type=gha,scope=e2e-ui
+                  cache-to: type=gha,mode=max,scope=e2e-ui
+
+            - name: Build Sessions Image
+              uses: docker/build-push-action@v7
+              with:
+                  context: session-server/
+                  file: session-server/Dockerfile.websocket
+                  load: true
+                  tags: ghcr.io/system-b90/bluz/sessions:latest
+                  build-args: |
+                      NPM_TOKEN=${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+                  cache-from: type=gha,scope=e2e-sessions
+                  cache-to: type=gha,mode=max,scope=e2e-sessions
+
+            - name: Build Proxy Image
+              uses: docker/build-push-action@v7
+              with:
+                  context: nginx/
+                  file: nginx/Dockerfile.proxy
+                  load: true
+                  tags: ghcr.io/system-b90/bluz/proxy:latest
+                  cache-from: type=gha,scope=e2e-proxy
+                  cache-to: type=gha,mode=max,scope=e2e-proxy
+
+            - name: Save images
+              run: |
+                  mkdir -p test-images
+                  docker save ghcr.io/system-b90/bluz/ui:latest -o test-images/ui.tar
+                  docker save ghcr.io/system-b90/bluz/sessions:latest -o test-images/sessions.tar
+                  docker save ghcr.io/system-b90/bluz/proxy:latest -o test-images/proxy.tar
+
+            - name: Upload images
+              uses: actions/upload-artifact@v6
+              with:
+                  name: test-images
+                  path: test-images/
+                  retention-days: 1
+
     full-test-suite:
         name: Full Test Suite (E2E) — shard ${{ matrix.shard }}/${{ strategy.job-total }}
         runs-on: ubuntu-24.04
         timeout-minutes: 90
+        needs: build-test-images
         if: github.event_name != 'pull_request' || github.head_ref == 'dev'
         strategy:
             fail-fast: false
@@ -97,22 +162,22 @@ jobs:
             - name: Set up Node + Playwright
               uses: System-B90/.github/actions/setup-playwright@main
 
-            # Pre-build the test images so the pipeline's `compose up` is fast.
-            # TEST_* values only satisfy compose interpolation — the pipeline
-            # assigns the real dynamic values at runtime.
-            - name: Pre-build Test Images
+            # Images are built once in build-test-images and loaded here instead
+            # of every shard rebuilding them from scratch (#e2e-perf). Tags
+            # match what BLUZ_VERSION=latest resolves to, so run_tests.py's
+            # `docker compose up` finds them present and skips building.
+            - name: Download Test Images
+              uses: actions/download-artifact@v6
+              with:
+                  name: test-images
+                  path: test-images/
+
+            - name: Load Test Images
               run: |
-                  docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.test.yml build
-              env:
-                  BLUZ_VERSION: latest
-                  NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
-                  TEST_PROJECT_NAME: bluz-test-ci
-                  TEST_POSTGRES_PORT: "0"
-                  TEST_MONGO_PORT: "0"
-                  TEST_PROXY_PORT_HTTP: "0"
-                  TEST_PROXY_PORT_HTTPS: "0"
-                  TEST_HIVE_CLIENT_ID: ci-placeholder
-                  TEST_HIVE_CLIENT_SECRET: ci-placeholder
+                  docker load -i test-images/ui.tar
+                  docker load -i test-images/sessions.tar
+                  docker load -i test-images/proxy.tar
+                  rm -rf test-images/
 
             # ── Run the full pipeline ──────────────────────────────────────────
             # scripts/run_tests.py: test composition (dynamic ports) → SSO
