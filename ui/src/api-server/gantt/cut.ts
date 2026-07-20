@@ -336,6 +336,7 @@ export async function previewCurriculumCut(
                 ganttEventId: occ.ganttEventId,
                 title: ganttEvent?.title ?? occ.ganttEventId,
                 eventType: ganttEvent?.type ?? ModuleEventType.Other,
+                hiveSubjectId: ganttEvent?.hiveSubjectId ?? null,
                 syllabusTitle: syllabusTitleByEvent.get(occ.ganttEventId) ?? "",
                 moduleTitle: moduleTitleByEvent.get(occ.ganttEventId) ?? "",
                 occurrenceDate: occ.occurrenceDate,
