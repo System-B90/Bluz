@@ -84,7 +84,9 @@ export const GET: ServerApiEventGet = withApi(async (request) => {
         }
         // Calendar range loads double as the trigger for pulling Google-side
         // edits back in (throttled per user; no-op when sync isn't linked).
-        const user = await getSessionUser();
+        // Session resolution must never break the read path (e.g. outside a
+        // request scope in unit tests).
+        const user = await getSessionUser().catch(() => null);
         if (user) pullGoogleEditsInBackground(user.id);
         return ApiSuccess(
             await DbEvent.getInRange(
