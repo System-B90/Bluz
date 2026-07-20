@@ -22,10 +22,11 @@ import { GoogleCalendarLink } from "@/api-shared/types/google-calendar";
  *
  * Connect flow: the browser runs Google Identity Services ("Continue with
  * Google" popup, ux_mode: "popup") and posts the authorization code here.
- * Per Google's GIS code-model docs, the code is exchanged with the page
- * origin as redirect_uri — so a deployment needs NO redirect-URI
- * registration and NO per-server OAuth setup: Bluz ships shared app
- * credentials below (env vars remain as optional overrides).
+ * Per Google's GIS code-model docs, a popup-mode code is exchanged with the
+ * special redirect_uri `"postmessage"` (NOT the page origin) — so a
+ * deployment needs NO redirect-URI registration and NO per-server OAuth
+ * setup: Bluz ships shared app credentials below (env vars remain as
+ * optional overrides).
  *
  * Entirely opt-in (personal setting) and entirely optional at the deployment
  * level: with no OAuth client configured, or with no network reachability
@@ -109,18 +110,21 @@ export function getGoogleScopes(): Array<string> {
     return SCOPES;
 }
 
+// GIS popup (ux_mode: "popup") code model: the browser has no redirect and
+// the code must be redeemed against this reserved literal, not a real URL.
+const GIS_POPUP_REDIRECT_URI = "postmessage";
+
 /**
  * Exchanges the GIS popup authorization `code` for tokens, creates (or finds)
  * the dedicated "Bluz" calendar in the user's account, and persists the link.
- * `origin` is the page origin that ran the popup — the GIS code model
- * requires it as the redirect_uri during token exchange.
+ * The popup code model requires the reserved `"postmessage"` redirect_uri
+ * during token exchange — passing the page origin fails with invalid_request.
  */
 export async function connectGoogleCalendar(
     userId: string,
     code: string,
-    origin: string,
 ): Promise<void> {
-    const client = createOAuthClient(origin);
+    const client = createOAuthClient(GIS_POPUP_REDIRECT_URI);
     const { tokens } = await client.getToken(code);
     if (!tokens.access_token || !tokens.refresh_token) {
         throw new Error(
