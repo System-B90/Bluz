@@ -116,26 +116,54 @@ function DeferredTabContent({
     curriculumId: GanttCurriculumId;
     selectedTabIndex: number;
 }) {
-    const [renderedTabIndex, setRenderedTabIndex] = useState(selectedTabIndex);
-    const isPendingTabContent = renderedTabIndex !== selectedTabIndex;
+    // Defer the *first* mount of each tab by a couple of frames so the tab
+    // switch animates smoothly (the old progressive-mount feel), then keep
+    // every visited tab mounted and toggle visibility with CSS — so each tab's
+    // internal state (expand/collapse, daily/weekly toggle, scroll, filters)
+    // survives switching away and back (#326).
+    const [visitedTabIndices, setVisitedTabIndices] = useState<Set<number>>(
+        () => new Set(),
+    );
+    const isActiveMounted = visitedTabIndices.has(selectedTabIndex);
 
     useEffect(() => {
-        if (!isPendingTabContent) {
+        if (isActiveMounted) {
             return;
         }
 
         return scheduleTabContentMount(() => {
             startTransition(() => {
-                setRenderedTabIndex(selectedTabIndex);
+                setVisitedTabIndices((prev) => {
+                    if (prev.has(selectedTabIndex)) {
+                        return prev;
+                    }
+                    const next = new Set(prev);
+                    next.add(selectedTabIndex);
+                    return next;
+                });
             });
         });
-    }, [isPendingTabContent, selectedTabIndex]);
+    }, [isActiveMounted, selectedTabIndex]);
 
-    if (isPendingTabContent) {
-        return <TabContentFallback />;
-    }
-
-    return renderTabContent(renderedTabIndex, curriculumId);
+    return (
+        <Fragment>
+            {!isActiveMounted ? <TabContentFallback /> : null}
+            {Array.from(visitedTabIndices).map((tabIndex) => (
+                <Box
+                    key={tabIndex}
+                    sx={{
+                        display:
+                            tabIndex === selectedTabIndex ? "flex" : "none",
+                        flexDirection: "column",
+                        height: "100%",
+                        minHeight: 0,
+                    }}
+                >
+                    {renderTabContent(tabIndex, curriculumId)}
+                </Box>
+            ))}
+        </Fragment>
+    );
 }
 
 export function CurriculumViewTabs({
