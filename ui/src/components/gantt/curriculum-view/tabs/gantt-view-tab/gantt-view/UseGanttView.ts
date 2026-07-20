@@ -20,12 +20,16 @@ import { ConstraintLink } from "@/components/gantt/curriculum-view/tabs/gantt-vi
 import { useGanttUndo } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-undo";
 import { useGanttConstraints } from "@/components/gantt/state/constraints/hooks";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
 export const useGanttView = (curriculumId: string) =>
 {
     const state = useCurriculumState();
+    const { registerRevealHandler } = useCurriculumProviderActions();
     const {
         state: { mappings: globalMappings },
         createMapping,
@@ -282,6 +286,13 @@ export const useGanttView = (curriculumId: string) =>
             );
         },
         [],
+    );
+
+    // Expose this view's reveal behavior so other flows (event create/
+    // duplicate) can scroll-to + flash a new row without a direct ref (#325).
+    useEffect(
+        () => registerRevealHandler(revealItem),
+        [ registerRevealHandler, revealItem ],
     );
 
     // After the target's ancestors expand, scroll to it and flash a highlight.
