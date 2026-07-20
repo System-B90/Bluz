@@ -1,16 +1,33 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { CreateGanttModulePayload } from "@/api-shared/types/gantt/create-payloads";
 import {
     GanttModule,
+    GanttModuleId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
 import { makeEntityActions } from "@/components/gantt/state/hooks/gantt-funcs/MakeEntityActions";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 
 export function useModuleActions() {
     const { dispatch } = useCurriculumProviderActions();
+
+    // Ref-backed store read so optimistic updates can snapshot current values
+    // without recreating the memoized actions each render (#327).
+    const state = useCurriculumState();
+    const stateRef = useRef(state);
+    useEffect(() => {
+        stateRef.current = state;
+    }, [state]);
+    const getEntity = useCallback(
+        (id: GanttModuleId): GanttModule | undefined =>
+            stateRef.current.modules[id],
+        [],
+    );
 
     const actions = useMemo(
         () =>
@@ -23,6 +40,7 @@ export function useModuleActions() {
                 dispatch,
                 label: "module",
                 containerLabel: "syllabus",
+                getEntity,
                 builders: {
                     add: (module, syllabusId) => ({
                         type: "ADD_MODULE",
@@ -42,7 +60,7 @@ export function useModuleActions() {
                     }),
                 },
             }),
-        [dispatch],
+        [dispatch, getEntity],
     );
 
     const createModule = useCallback(

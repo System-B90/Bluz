@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { normalizeApiSyllabus } from "@/api-client/gantt/drizzle-normalize";
@@ -11,10 +11,26 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { makeEntityActions } from "@/components/gantt/state/hooks/gantt-funcs/MakeEntityActions";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 
 export function useSyllabusActions() {
     const { dispatch } = useCurriculumProviderActions();
+
+    // Ref-backed store read so optimistic updates can snapshot current values
+    // without recreating the memoized actions each render (#327).
+    const state = useCurriculumState();
+    const stateRef = useRef(state);
+    useEffect(() => {
+        stateRef.current = state;
+    }, [state]);
+    const getEntity = useCallback(
+        (id: GanttSyllabusId): GanttSyllabus | undefined =>
+            stateRef.current.syllabuses[id],
+        [],
+    );
 
     const actions = useMemo(
         () =>
@@ -27,6 +43,7 @@ export function useSyllabusActions() {
                 dispatch,
                 label: "syllabus",
                 containerLabel: "curriculum",
+                getEntity,
                 builders: {
                     add: (syllabus, curriculumId) => ({
                         type: "ADD_SYLLABUS",
@@ -42,7 +59,7 @@ export function useSyllabusActions() {
                     }),
                 },
             }),
-        [dispatch],
+        [dispatch, getEntity],
     );
 
     const createSyllabus = useCallback(

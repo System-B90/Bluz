@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { CreateGanttEventPayload } from "@/api-shared/types/gantt/create-payloads";
@@ -12,10 +12,26 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { makeEntityActions } from "@/components/gantt/state/hooks/gantt-funcs/MakeEntityActions";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 
 export function useModuleEventActions() {
     const { dispatch } = useCurriculumProviderActions();
+
+    // Ref-backed store read so optimistic updates can snapshot current values
+    // without recreating the memoized actions each render (#327).
+    const state = useCurriculumState();
+    const stateRef = useRef(state);
+    useEffect(() => {
+        stateRef.current = state;
+    }, [state]);
+    const getEntity = useCallback(
+        (id: GanttEventId): GanttEvent | undefined =>
+            stateRef.current.events[id],
+        [],
+    );
 
     const actions = useMemo(
         () =>
@@ -28,6 +44,7 @@ export function useModuleEventActions() {
                 dispatch,
                 label: "event",
                 containerLabel: "module",
+                getEntity,
                 builders: {
                     add: (event, moduleId) => ({
                         type: "ADD_EVENT",
@@ -47,7 +64,7 @@ export function useModuleEventActions() {
                     }),
                 },
             }),
-        [dispatch],
+        [dispatch, getEntity],
     );
 
     const createEvent = useCallback(
