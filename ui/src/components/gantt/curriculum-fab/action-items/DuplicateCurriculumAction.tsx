@@ -3,7 +3,6 @@ import { useCallback } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
-import { CreateGanttCurriculumPayload } from "@/api-shared/types/gantt/create-payloads";
 import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items/ActionItemButton";
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 import { useAsyncAction } from "@/components/gantt/curriculum-fab/action-items/use-async-action";
@@ -23,19 +22,16 @@ export function DuplicateCurriculumAction({
 
     const clickHandler = useCallback(() => {
         if (!sourceCurriculum) return;
-        const payload: Omit<CreateGanttCurriculumPayload, "weeks"> & {
-            weeks: typeof sourceCurriculum.weeks;
-        } = {
-            title: `${sourceCurriculum.title} (Copy)`,
-            description: sourceCurriculum.description,
-            startDate: sourceCurriculum.startDate,
-            isDraft: true,
-            isArchived: false,
-            weeks: sourceCurriculum.weeks,
-        };
-        // Cast to proper type - duplication uses the same week IDs structure
+        // Server-side deep clone: weeks/days, syllabuses/modules/events, event
+        // configs and day mappings are all recreated with fresh IDs, so the
+        // copy is fully independent of the source (#319, #322).
         runAction(
-            () => ganttApi.curriculum.apiCreate(payload as CreateGanttCurriculumPayload),
+            () =>
+                ganttApi.curriculum.apiDuplicate(sourceCurriculum.id, {
+                    title: `${sourceCurriculum.title} (Copy)`,
+                    isDraft: true,
+                    isArchived: false,
+                }),
             (newCurriculum) => onCreate(newCurriculum),
             "שכפול הגאנט נכשל!",
         );

@@ -37,10 +37,37 @@ async function apiImport(
     return baseDocumentFixup(rawData) as GanttCurriculumDocument;
 }
 
+export type DuplicateCurriculumOverrides = {
+    title?: string;
+    isDraft?: boolean;
+    isArchived?: boolean;
+};
+
+/**
+ * Server-side deep clone of a curriculum into a fully independent copy (#319,
+ * #322). Returns the freshly created curriculum.
+ */
+async function apiDuplicate(
+    id: string,
+    overrides: DuplicateCurriculumOverrides = {},
+    options?: ClientApiProps,
+): Promise<GanttCurriculumDocument> {
+    const rawData = await safeApiFetcher<any>(
+        `/api/gantt/curriculums/${id}/duplicate`,
+        {
+            ...options,
+            method: "POST",
+            body: JSON.stringify(overrides),
+        },
+    );
+    return baseDocumentFixup(rawData) as GanttCurriculumDocument;
+}
+
 const curriculumApi = {
     ...baseCurriculumApi,
     apiExport,
     apiImport,
+    apiDuplicate,
 } as const;
 
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =

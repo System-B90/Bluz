@@ -4,8 +4,17 @@ import { postgresDb } from "@/api-server/gantt";
 import { drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
 import {
     ganttCurriculum2SyllabusesSchema,
+    ganttCurriculum2WeeksSchema,
+    ganttCurriculumEventConfigurationsSchema,
+    ganttCurriculumEventDayMappingsSchema,
+    ganttDaysSchema,
+    ganttEventsSchema,
     ganttModule2EventsSchema,
+    ganttModulesSchema,
     ganttSyllabus2ModulesSchema,
+    ganttSyllabusesSchema,
+    ganttWeek2DaysSchema,
+    ganttWeeksSchema,
 } from "@/api-server/gantt/schema";
 import { ganttCurriculumsSchema } from "@/api-server/gantt/schema/curriculums";
 import { ClientApiError } from "@/api-shared/errors";
@@ -97,7 +106,206 @@ async function getFullCurriculum(
     return result as any;
 }
 
+export type DuplicateCurriculumOverrides = {
+    title?: string;
+    isDraft?: boolean;
+    isArchived?: boolean;
+};
+
+/**
+ * Deep-clones a curriculum into a brand-new, fully independent copy (#319,
+ * #322). Every syllabus → module → event and week → day is recreated with a
+ * fresh id, junctions are relinked to the copy, and the per-curriculum event
+ * configurations (cEC) plus module/event → day mappings (cMDA) are cloned with
+ * their ids repointed at the copy's own rows — so no data is shared with the
+ * source. Constraints and recurrence exceptions are intentionally out of scope.
+ */
+async function duplicateCurriculum(
+    sourceId: GanttCurriculumId,
+    overrides: DuplicateCurriculumOverrides = {},
+): Promise<ApiCurriculum> {
+    const source = await getFullCurriculum(sourceId);
+
+    const now = new Date();
+    const newCurriculumId = `c_${crypto.randomUUID()}`;
+
+    // old id → freshly generated id, so the cloned cMDA mappings can be
+    // repointed at the copy's own modules/events/days.
+    const moduleIdMap = new Map<string, string>();
+    const eventIdMap = new Map<string, string>();
+    const dayIdMap = new Map<string, string>();
+
+    await postgresDb.transaction(async (tx) => {
+        await tx.insert(ganttCurriculumsSchema).values({
+            id: newCurriculumId,
+            title: overrides.title ?? source.title,
+            description: source.description,
+            startDate: source.startDate,
+            isDraft: overrides.isDraft ?? source.isDraft,
+            isArchived: overrides.isArchived ?? source.isArchived,
+            createdAt: now,
+            updatedAt: now,
+        });
+
+        // Syllabuses → modules → events (deep clone, all-new ids).
+        for (const c2sLink of source.c2s ?? []) {
+            const syllabus = c2sLink.syllabus;
+            const newSyllabusId = `s_${crypto.randomUUID()}`;
+
+            await tx.insert(ganttSyllabusesSchema).values({
+                id: newSyllabusId,
+                title: syllabus.title,
+                hiveIds: syllabus.hiveIds ?? [],
+                shuffles: syllabus.shuffles ?? [],
+                createdAt: now,
+                updatedAt: now,
+            });
+            await tx.insert(ganttCurriculum2SyllabusesSchema).values({
+                curriculumId: newCurriculumId,
+                syllabusId: newSyllabusId,
+            });
+
+            for (const s2mLink of syllabus.s2m ?? []) {
+                const ganttModule = s2mLink.module;
+                const newModuleId = `m_${crypto.randomUUID()}`;
+                moduleIdMap.set(ganttModule.id, newModuleId);
+
+                await tx.insert(ganttModulesSchema).values({
+                    id: newModuleId,
+                    title: ganttModule.title,
+                    description: ganttModule.description ?? "",
+                    hiveIds: ganttModule.hiveIds ?? [],
+                    shuffles: ganttModule.shuffles ?? [],
+                    createdAt: now,
+                    updatedAt: now,
+                });
+                await tx.insert(ganttSyllabus2ModulesSchema).values({
+                    syllabusId: newSyllabusId,
+                    moduleId: newModuleId,
+                    sortOrder: s2mLink.sortOrder,
+                });
+
+                for (const m2eLink of ganttModule.m2e ?? []) {
+                    const event = m2eLink.event;
+                    const newEventId = `e_${crypto.randomUUID()}`;
+                    eventIdMap.set(event.id, newEventId);
+
+                    await tx.insert(ganttEventsSchema).values({
+                        id: newEventId,
+                        title: event.title,
+                        type: event.type,
+                        minimumDuration: event.minimumDuration,
+                        orchestratorId: event.orchestratorId,
+                        recommendedLecturerIds:
+                            event.recommendedLecturerIds ?? [],
+                        systemRequirements: event.systemRequirements ?? [],
+                        roomRequirement: event.roomRequirement,
+                        recurrence: event.recurrence,
+                        isCritical: event.isCritical,
+                        isPaWindow: event.isPaWindow,
+                        comment: event.comment,
+                        shuffles: event.shuffles ?? [],
+                        hiveSubjectId: event.hiveSubjectId,
+                        hiveModuleId: event.hiveModuleId,
+                        hiveLessonId: event.hiveLessonId,
+                        createdAt: now,
+                        updatedAt: now,
+                    });
+                    await tx.insert(ganttModule2EventsSchema).values({
+                        moduleId: newModuleId,
+                        eventId: newEventId,
+                        sortOrder: m2eLink.sortOrder,
+                    });
+
+                    // Per-curriculum allocated durations, repointed at the copy.
+                    for (const config of event.cEC ?? []) {
+                        await tx
+                            .insert(ganttCurriculumEventConfigurationsSchema)
+                            .values({
+                                curriculumId: newCurriculumId,
+                                eventId: newEventId,
+                                allocatedDuration: config.allocatedDuration,
+                                updatedAt: now,
+                            });
+                    }
+                }
+            }
+        }
+
+        // Weeks → days (deep clone, all-new ids).
+        for (const c2wLink of source.c2w ?? []) {
+            const week = c2wLink.week;
+            const newWeekId = `w_${crypto.randomUUID()}`;
+
+            await tx.insert(ganttWeeksSchema).values({
+                id: newWeekId,
+                number: week.number,
+                comment: week.comment ?? "",
+                weekendDuty: week.weekendDuty,
+                createdAt: now,
+                updatedAt: now,
+            });
+            await tx.insert(ganttCurriculum2WeeksSchema).values({
+                curriculumId: newCurriculumId,
+                weekId: newWeekId,
+            });
+
+            for (const w2dLink of week.w2d ?? []) {
+                const day = w2dLink.day;
+                const newDayId = `d_${crypto.randomUUID()}`;
+                dayIdMap.set(day.id, newDayId);
+
+                await tx.insert(ganttDaysSchema).values({
+                    id: newDayId,
+                    dayIndex: day.dayIndex,
+                    totalWorkingMinutes: day.totalWorkingMinutes,
+                    comment: day.comment ?? "",
+                    createdAt: now,
+                    updatedAt: now,
+                });
+                await tx.insert(ganttWeek2DaysSchema).values({
+                    weekId: newWeekId,
+                    dayId: newDayId,
+                });
+            }
+        }
+
+        // Module/event → day mappings (cMDA): clone with every id repointed so
+        // the copy's events sit on the copy's own days (#322).
+        const sourceMappings = await tx
+            .select()
+            .from(ganttCurriculumEventDayMappingsSchema)
+            .where(
+                eq(
+                    ganttCurriculumEventDayMappingsSchema.curriculumId,
+                    sourceId,
+                ),
+            );
+
+        for (const mapping of sourceMappings) {
+            const newModuleId = moduleIdMap.get(mapping.moduleId);
+            const newDayId = dayIdMap.get(mapping.dayId);
+            // Skip mappings whose module/day fell outside the cloned tree.
+            if (!newModuleId || !newDayId) continue;
+
+            await tx.insert(ganttCurriculumEventDayMappingsSchema).values({
+                id: crypto.randomUUID(),
+                curriculumId: newCurriculumId,
+                moduleId: newModuleId,
+                eventId: mapping.eventId
+                    ? (eventIdMap.get(mapping.eventId) ?? null)
+                    : null,
+                dayId: newDayId,
+                sortOrder: mapping.sortOrder,
+            });
+        }
+    });
+
+    return await getFullCurriculum(newCurriculumId);
+}
+
 export const DbCurriculum = {
     ...basicOperations,
     getItem: getFullCurriculum,
+    duplicateCurriculum,
 } as const;
