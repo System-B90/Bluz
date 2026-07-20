@@ -5,7 +5,7 @@ import { ModuleDocument } from "@/api-client/gantt/module";
 import { ModuleEventDocument } from "@/api-client/gantt/module-event";
 import { SyllabusDocument } from "@/api-client/gantt/syllabus";
 import { CurriculumWeekDocument } from "@/api-client/gantt/week";
-import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
+import { ApiCurriculum, ApiSyllabus } from "@/api-shared/types/gantt/api-layer";
 import {
     DAY_NAME_DISPLAY,
     GanttCurriculumId,
@@ -43,6 +43,75 @@ export type NormalizedStore = {
     >;
 };
 
+/**
+ * Normalized store slices for a single syllabus and its module/event subtree.
+ * Reused both by full-curriculum normalization and by the link flow (#320),
+ * which receives one fully-populated `ApiSyllabus` and must fold its modules +
+ * events into the store — not just the bare syllabus record.
+ */
+export type NormalizedSyllabusSubtree = {
+    syllabus: SyllabusDocument & { curriculumId: GanttCurriculumId };
+    modules: Array<ModuleDocument & { syllabusId: GanttSyllabusId }>;
+    events: Array<ModuleEventDocument & { moduleId: GanttModuleId }>;
+};
+
+/**
+ * Flattens one `ApiSyllabus` (with nested `s2m → module → m2e → event`) into
+ * normalized store slices, resolving the reverse child-id arrays.
+ */
+export function normalizeApiSyllabus(
+    rawSyllabus: ApiSyllabus,
+    curriculumId: GanttCurriculumId,
+): NormalizedSyllabusSubtree {
+    const apiSyllabus = baseDocumentFixup(rawSyllabus);
+    const syllabusModuleIds: Array<GanttModuleId> = [];
+    const modules: NormalizedSyllabusSubtree["modules"] = [];
+    const events: NormalizedSyllabusSubtree["events"] = [];
+
+    for (const sMLink of apiSyllabus.s2m ?? []) {
+        const apiModule = baseDocumentFixup(sMLink.module);
+        syllabusModuleIds.push(apiModule.id);
+        const moduleEventIds: Array<GanttEventId> = [];
+
+        for (const mELink of apiModule.m2e ?? []) {
+            const apiEvent = baseDocumentFixup(mELink.event);
+            moduleEventIds.push(apiEvent.id);
+            events.push({
+                ...apiEvent,
+                moduleId: apiModule.id,
+                allocatedDuration: apiEvent.cEC[0]?.allocatedDuration ?? 0,
+                constraints: [],
+            });
+        }
+
+        modules.push({
+            id: apiModule.id,
+            title: apiModule.title,
+            description: apiModule.description,
+            updatedAt: apiModule.updatedAt,
+            createdAt: apiModule.createdAt,
+            hiveIds: [...(apiModule.hiveIds ?? [])],
+            events: moduleEventIds,
+            syllabusId: apiSyllabus.id,
+            constraints: [],
+        });
+    }
+
+    return {
+        syllabus: {
+            id: apiSyllabus.id,
+            title: apiSyllabus.title,
+            updatedAt: apiSyllabus.updatedAt,
+            createdAt: apiSyllabus.createdAt,
+            hiveIds: [...(apiSyllabus.hiveIds ?? [])],
+            modules: syllabusModuleIds,
+            curriculumId,
+        },
+        modules,
+        events,
+    };
+}
+
 export function normalizeCurriculumData(
     apiData: ApiCurriculum,
 ): NormalizedStore {
@@ -60,48 +129,19 @@ export function normalizeCurriculumData(
 
     const apiCurriculum = baseDocumentFixup(apiData);
     for (const link of apiData.c2s ?? []) {
-        const apiSyllabus = baseDocumentFixup(link.syllabus);
-        curriculumSyllabusIds.push(apiSyllabus.id);
-        const syllabusModuleIds: Array<GanttModuleId> = [];
+        const { syllabus, modules, events } = normalizeApiSyllabus(
+            link.syllabus,
+            apiCurriculum.id,
+        );
+        curriculumSyllabusIds.push(syllabus.id);
 
-        for (const sMLink of apiSyllabus.s2m ?? []) {
-            const apiModule = baseDocumentFixup(sMLink.module);
-            syllabusModuleIds.push(apiModule.id);
-            const moduleEventIds: Array<GanttEventId> = [];
-
-            for (const mELink of apiModule.m2e ?? []) {
-                const apiEvent = baseDocumentFixup(mELink.event);
-                moduleEventIds.push(apiEvent.id);
-                store.events[apiEvent.id] = {
-                    ...apiEvent,
-                    moduleId: apiModule.id,
-                    allocatedDuration: apiEvent.cEC[0]?.allocatedDuration ?? 0,
-                    constraints: [],
-                };
-            }
-
-            store.modules[apiModule.id] = {
-                id: apiModule.id,
-                title: apiModule.title,
-                description: apiModule.description,
-                updatedAt: apiModule.updatedAt,
-                createdAt: apiModule.createdAt,
-                hiveIds: [...(apiModule.hiveIds ?? [])],
-                events: moduleEventIds,
-                syllabusId: apiSyllabus.id,
-                constraints: [],
-            };
+        for (const eventDoc of events) {
+            store.events[eventDoc.id] = eventDoc;
         }
-
-        store.syllabuses[apiSyllabus.id] = {
-            id: apiSyllabus.id,
-            title: apiSyllabus.title,
-            updatedAt: apiSyllabus.updatedAt,
-            createdAt: apiSyllabus.createdAt,
-            hiveIds: [...(apiSyllabus.hiveIds ?? [])],
-            modules: syllabusModuleIds,
-            curriculumId: apiCurriculum.id,
-        };
+        for (const moduleDoc of modules) {
+            store.modules[moduleDoc.id] = moduleDoc;
+        }
+        store.syllabuses[syllabus.id] = syllabus;
     }
 
     // Normalize weeks
