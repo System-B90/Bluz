@@ -19,11 +19,22 @@ export type GoogleCalendarLink = {
 
 /** Client-safe view of the connection state — no tokens. */
 export type GoogleCalendarStatus = {
-    configured: boolean; // server has GOOGLE_CLIENT_ID/SECRET set
+    configured: boolean; // an OAuth client (shipped default or env override) is available
     connected: boolean;
     enabled: boolean;
+    /** Public OAuth client id the browser uses for the GIS "Continue with Google" popup. */
+    clientId: string;
+    /** OAuth scopes the GIS popup must request. */
+    scopes: Array<string>;
 };
 
 export type ApiGoogleCalendarStatusResponse = GoogleCalendarStatus;
-export type ApiGoogleCalendarConnectResponse = { url: string };
-export type ApiGoogleCalendarSyncResponse = { pushed: number; pulled: number };
+/** Authorization code minted by the browser-side GIS popup. */
+export type ApiGoogleCalendarConnectPayload = { code: string };
+export type ApiGoogleCalendarSyncResponse = {
+    pushed: number;
+    /** Google free/busy blocks found. */
+    pulled: number;
+    /** Bluz events updated from Google-side edits. */
+    updated: number;
+};

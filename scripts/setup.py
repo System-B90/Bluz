@@ -273,15 +273,18 @@ def generate_env() -> None:
                 hive_client_id = "MANUAL_ENTRY_REQUIRED"
                 hive_client_secret = "MANUAL_ENTRY_REQUIRED"
 
-    # Google Calendar sync is opt-in per user and entirely optional at the
-    # deployment level — offline / air-gapped installs just skip this.
+    # Google Calendar sync needs NO per-deployment setup: users connect with a
+    # "Continue with Google" popup and Bluz ships shared OAuth credentials.
+    # These env vars exist only as an optional override for admins who want
+    # their own Google Cloud project (e.g. custom branding on the consent
+    # screen). Leave blank to use the built-in defaults.
     google_client_id = existing_env.get("GOOGLE_CLIENT_ID", "")
     google_client_secret = existing_env.get("GOOGLE_CLIENT_SECRET", "")
-    enable_google_calendar = inquirer.confirm(
-        message="Enable optional Google Calendar sync? (requires internet access; skip for offline deployments)",
+    override_google_oauth = inquirer.confirm(
+        message="Override the built-in Google OAuth app for Calendar sync? (default: no — no setup needed)",
         default=bool(google_client_id),
     ).execute()
-    if enable_google_calendar:
+    if override_google_oauth:
         google_client_id = inquirer.text(
             message="Enter Google OAuth Client ID (GOOGLE_CLIENT_ID):",
             default=google_client_id,
@@ -313,7 +316,6 @@ def generate_env() -> None:
         "DATABASE_URL": db_url,
         "GOOGLE_CLIENT_ID": google_client_id,
         "GOOGLE_CLIENT_SECRET": google_client_secret,
-        "GOOGLE_REDIRECT_URI": f"{nextauth_url}/api/integrations/google-calendar/callback",
     }
 
     with env_path.open("w", encoding="utf-8") as f:

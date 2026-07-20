@@ -1,48 +1,69 @@
 import { calendar_v3, google } from "googleapis";
 
+import { DbEvent } from "@/api-server/db-event";
 import { getMetaController } from "@/api-server/mongo-db-controller";
 import { openSecret, sealSecret } from "@/api-server/secret-box";
 import { DbEventDocument } from "@/api-shared/types/event";
 import { GoogleCalendarLink } from "@/api-shared/types/google-calendar";
 
 /**
- * Two-way Google Calendar integration, scoped to what's safe to automate:
+ * Two-way Google Calendar integration:
  *  - PUSH: the signed-in user's own Bluz events (as instructor/lecturer) are
  *    mirrored into a dedicated "Bluz" calendar Bluz creates in their Google
- *    account. Bluz stays the source of truth for structured fields (course,
- *    room, subject...) — those can't be authored from a plain Google event.
- *  - PULL: the user's existing Google busy blocks are read (free/busy) so
- *    Bluz can flag scheduling conflicts. Google-side edits are never written
- *    back into Bluz's structured event data.
+ *    account.
+ *  - PULL (edits): events Bluz pushed (tagged with `bluzEventId`) that were
+ *    edited in Google Calendar are synced back into Bluz — title, notes,
+ *    start/end. Events created directly in Google are never imported, and
+ *    Bluz stays the source of truth for structured fields (course, room,
+ *    subject...). Uses the Calendar API incremental-sync protocol
+ *    (nextSyncToken / 410 GONE full resync).
+ *  - PULL (busy): the user's Google free/busy blocks are read so Bluz can
+ *    flag scheduling conflicts.
+ *
+ * Connect flow: the browser runs Google Identity Services ("Continue with
+ * Google" popup, ux_mode: "popup") and posts the authorization code here.
+ * Per Google's GIS code-model docs, the code is exchanged with the page
+ * origin as redirect_uri — so a deployment needs NO redirect-URI
+ * registration and NO per-server OAuth setup: Bluz ships shared app
+ * credentials below (env vars remain as optional overrides).
  *
  * Entirely opt-in (personal setting) and entirely optional at the deployment
- * level: with no GOOGLE_CLIENT_ID/SECRET set, or with no network reachability
+ * level: with no OAuth client configured, or with no network reachability
  * to Google, every method here is a safe no-op. Bluz must keep working in
  * offline / no-internet installs.
  */
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "";
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "";
-const GOOGLE_REDIRECT_URI =
-    process.env.GOOGLE_REDIRECT_URI ??
-    (process.env.NEXTAUTH_URL
-        ? `${process.env.NEXTAUTH_URL.replace(/\/$/, "")}/api/integrations/google-calendar/callback`
-        : "");
+// Bluz's shared OAuth app ("Bluz" project in Google Cloud). A GIS popup code
+// flow uses no redirect URI, so one client works for every deployment whose
+// origin is listed in the app's authorized JavaScript origins. Env vars
+// override for self-hosters who want their own Google project.
+const DEFAULT_GOOGLE_CLIENT_ID = "";
+const DEFAULT_GOOGLE_CLIENT_SECRET = "";
+
+const GOOGLE_CLIENT_ID =
+    process.env.GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET =
+    process.env.GOOGLE_CLIENT_SECRET || DEFAULT_GOOGLE_CLIENT_SECRET;
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 const BLUZ_CALENDAR_SUMMARY = "Bluz";
 
 export function isGoogleCalendarConfigured(): boolean {
-    return Boolean(
-        GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REDIRECT_URI,
-    );
+    return Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
 }
 
-function createOAuthClient(): InstanceType<typeof google.auth.OAuth2> {
+/** Public (non-secret) client id the browser needs to run the GIS popup. */
+export function getGoogleClientId(): string {
+    return GOOGLE_CLIENT_ID;
+}
+
+function createOAuthClient(
+    redirectUri?: string,
+): InstanceType<typeof google.auth.OAuth2> {
     return new google.auth.OAuth2(
         GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_SECRET,
-        GOOGLE_REDIRECT_URI,
+        redirectUri,
     );
 }
 
@@ -83,25 +104,23 @@ export async function isGoogleCalendarConnected(
     return Boolean(await getLink(userId));
 }
 
-export function getGoogleAuthUrl(userId: string): string {
-    const client = createOAuthClient();
-    return client.generateAuthUrl({
-        access_type: "offline",
-        prompt: "consent",
-        scope: SCOPES,
-        state: userId,
-    });
+/** Scopes the browser-side GIS popup must request. */
+export function getGoogleScopes(): Array<string> {
+    return SCOPES;
 }
 
 /**
- * Exchanges the OAuth `code` for tokens, creates (or finds) the dedicated
- * "Bluz" calendar in the user's account, and persists the link.
+ * Exchanges the GIS popup authorization `code` for tokens, creates (or finds)
+ * the dedicated "Bluz" calendar in the user's account, and persists the link.
+ * `origin` is the page origin that ran the popup — the GIS code model
+ * requires it as the redirect_uri during token exchange.
  */
 export async function connectGoogleCalendar(
     userId: string,
     code: string,
+    origin: string,
 ): Promise<void> {
-    const client = createOAuthClient();
+    const client = createOAuthClient(origin);
     const { tokens } = await client.getToken(code);
     if (!tokens.access_token || !tokens.refresh_token) {
         throw new Error(
@@ -234,6 +253,114 @@ export async function pushAllEvents(
         pushed += 1;
     }
     return pushed;
+}
+
+/**
+ * Applies one Google-side edit back onto the matching Bluz event. Only events
+ * Bluz itself pushed carry `bluzEventId`; anything else is ignored, so events
+ * authored directly in Google can never leak into Bluz.
+ * Returns true when a Bluz event was actually updated.
+ */
+async function applyGoogleEdit(
+    googleEvent: calendar_v3.Schema$Event,
+): Promise<boolean> {
+    const bluzEventId = googleEvent.extendedProperties?.private?.bluzEventId;
+    if (!bluzEventId) return false;
+    // Deleting the mirrored copy in Google is not a Bluz delete — Bluz stays
+    // the source of truth for an event's existence. The next push recreates it.
+    if (googleEvent.status === "cancelled") return false;
+
+    const existing = await DbEvent.get(bluzEventId);
+    if (!existing) return false;
+
+    const startRaw = googleEvent.start?.dateTime ?? googleEvent.start?.date;
+    const endRaw = googleEvent.end?.dateTime ?? googleEvent.end?.date;
+    const updated: DbEventDocument = {
+        ...existing,
+        name: googleEvent.summary ?? existing.name,
+        notes: googleEvent.description ?? "",
+        startTime: startRaw ? new Date(startRaw) : existing.startTime,
+        endTime: endRaw ? new Date(endRaw) : existing.endTime,
+    };
+
+    const changed =
+        updated.name !== existing.name ||
+        updated.notes !== (existing.notes ?? "") ||
+        new Date(updated.startTime as any).getTime() !==
+            new Date(existing.startTime as any).getTime() ||
+        new Date(updated.endTime as any).getTime() !==
+            new Date(existing.endTime as any).getTime();
+    if (!changed) return false;
+
+    await DbEvent.set(updated);
+    return true;
+}
+
+/**
+ * Pulls Google-side edits from the user's Bluz calendar back into Bluz using
+ * the Calendar API incremental-sync protocol: the first call does a full list
+ * and stores `nextSyncToken`; later calls send that token and receive only
+ * what changed since. A 410 GONE (expired token) clears the cursor and
+ * retries with a full resync, per Google's docs.
+ * Returns the number of Bluz events updated; 0 (never throws) on any failure.
+ */
+export async function pullEventEdits(userId: string): Promise<number> {
+    if (!isGoogleCalendarConfigured()) return 0;
+    try {
+        const authorized = await getAuthorizedClient(userId);
+        if (!authorized) return 0;
+        const calendarApi = google.calendar({
+            version: "v3",
+            auth: authorized.auth,
+        });
+
+        const listPage = (syncToken?: string, pageToken?: string) =>
+            calendarApi.events.list({
+                calendarId: authorized.link.calendarId,
+                singleEvents: false,
+                showDeleted: true,
+                ...(syncToken ? { syncToken } : {}),
+                ...(pageToken ? { pageToken } : {}),
+            });
+
+        let syncToken = authorized.link.syncToken;
+        let pageToken: string | undefined;
+        let updatedCount = 0;
+        let nextSyncToken: string | undefined;
+
+        do {
+            let response;
+            try {
+                response = await listPage(syncToken, pageToken);
+            } catch (error: any) {
+                const status = error?.code ?? error?.response?.status;
+                if (status === 410 && syncToken) {
+                    // Expired sync token: restart with a full resync.
+                    syncToken = undefined;
+                    pageToken = undefined;
+                    response = await listPage();
+                } else {
+                    throw error;
+                }
+            }
+            for (const item of response.data.items ?? []) {
+                if (await applyGoogleEdit(item)) updatedCount += 1;
+            }
+            pageToken = response.data.nextPageToken ?? undefined;
+            nextSyncToken = response.data.nextSyncToken ?? nextSyncToken;
+        } while (pageToken);
+
+        if (nextSyncToken) {
+            await saveLink(userId, { syncToken: nextSyncToken });
+        }
+        return updatedCount;
+    } catch (error) {
+        console.warn(
+            `Google Calendar edit pull skipped for user ${userId}:`,
+            error,
+        );
+        return 0;
+    }
 }
 
 /**
