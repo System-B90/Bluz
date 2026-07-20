@@ -14,9 +14,9 @@ import { ApiGoogleCalendarConnectPayload } from "@/api-shared/types/google-calen
 /**
  * POST /api/integrations/google-calendar/connect — receives the authorization
  * code produced by the browser-side Google Identity Services popup
- * ("Continue with Google") and exchanges it for tokens. The GIS code model
- * requires the popup page's origin as the redirect_uri during exchange, so
- * no redirect URI is ever registered or configured server-side.
+ * ("Continue with Google") and exchanges it for tokens. The GIS popup code
+ * model redeems the code against the reserved `"postmessage"` redirect_uri,
+ * so no redirect URI is ever registered or configured server-side.
  */
 export const POST = withApi(async (request: NextRequest) => {
     const user = await getSessionUser();
@@ -31,6 +31,6 @@ export const POST = withApi(async (request: NextRequest) => {
     const { code } = (await request.json()) as ApiGoogleCalendarConnectPayload;
     if (!code) throw new ClientApiError("Missing Google authorization code.");
 
-    await connectGoogleCalendar(user.id, code, request.nextUrl.origin);
+    await connectGoogleCalendar(user.id, code);
     return ApiSuccess();
 });
