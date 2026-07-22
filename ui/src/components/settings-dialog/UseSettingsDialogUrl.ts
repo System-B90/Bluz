@@ -7,6 +7,7 @@ export const SETTINGS_TABS = [
     "colors",
     "rooms",
     "outsiders",
+    "iterations",
 ] as const;
 export type SettingsTab = (typeof SETTINGS_TABS)[ number ];
 

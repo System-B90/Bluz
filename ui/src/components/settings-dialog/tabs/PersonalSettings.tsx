@@ -7,6 +7,8 @@ import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -47,6 +49,7 @@ type PersonalState = {
     instructors: Array<string>;
     favoriteOutsiders: Array<string>;
     googleCalendarEnabled: boolean;
+    googleCalendarSyncAllEvents: boolean;
 };
 type PersonalAction =
     | { type: "ADD_GROUP"; payload: string; }
@@ -56,7 +59,8 @@ type PersonalAction =
     | { type: "REMOVE_GROUP"; payload: string; }
     | { type: "REMOVE_INSTRUCTOR"; payload: string; }
     | { type: "REMOVE_OUTSIDER"; payload: string; }
-    | { type: "SET_GOOGLE_CALENDAR_ENABLED"; payload: boolean; };
+    | { type: "SET_GOOGLE_CALENDAR_ENABLED"; payload: boolean; }
+    | { type: "SET_GOOGLE_CALENDAR_SYNC_ALL_EVENTS"; payload: boolean; };
 
 function personalSettingsReducer(
     state: PersonalState,
@@ -103,6 +107,8 @@ function personalSettingsReducer(
         };
     case "SET_GOOGLE_CALENDAR_ENABLED":
         return { ...state, googleCalendarEnabled: action.payload };
+    case "SET_GOOGLE_CALENDAR_SYNC_ALL_EVENTS":
+        return { ...state, googleCalendarSyncAllEvents: action.payload };
     }
 }
 
@@ -254,10 +260,12 @@ export function PersonalSettings()
         instructors: [],
         favoriteOutsiders: [],
         googleCalendarEnabled: false,
+        googleCalendarSyncAllEvents: false,
     });
     const [ isLoaded, setIsLoaded ] = useState(false);
     const [ googleStatus, setGoogleStatus ] = useState<GoogleCalendarStatus | null>(null);
     const [ googleBusy, setGoogleBusy ] = useState(false);
+    const [ googleSyncing, setGoogleSyncing ] = useState(false);
 
     const refreshGoogleStatus = useCallback(() =>
     {
@@ -449,7 +457,7 @@ export function PersonalSettings()
 
     const handleSyncGoogleNow = useCallback(async () =>
     {
-        setGoogleBusy(true);
+        setGoogleSyncing(true);
         try
         {
             const result = await apiSyncGoogleCalendarNow({});
@@ -464,7 +472,7 @@ export function PersonalSettings()
         }
         finally
         {
-            setGoogleBusy(false);
+            setGoogleSyncing(false);
         }
     }, [ enqueueSnackbar ]);
 
@@ -586,25 +594,49 @@ export function PersonalSettings()
                             האינטגרציה אינה מוגדרת בשרת זה (מתאים לפריסות ללא גישה לאינטרנט).
                         </Typography>
                     ) }
-                    { state.googleCalendarEnabled && googleStatus?.connected ? <Box display="flex" gap={ 1.5 }>
-                        <Button
+                    { state.googleCalendarEnabled && googleStatus?.connected ? <>
+                    <Box alignItems="center" display="flex" gap={ 1.5 }>
+                        <Box flex={ 1 }>
+                            <Typography sx={ { fontWeight: 600, fontSize: "0.9rem", color: "text.primary" } }>
+                                סנכרון כל אירועי הלו&quot;ז
+                            </Typography>
+                            <Typography sx={ { fontSize: "0.75rem", color: "text.secondary" } }>
+                                כברירת מחדל מסונכרנים רק אירועים שבהם אתם משבצים כמדריכים/מרצים.
+                                הפעילו כדי לסנכרן את כל אירועי הלו&quot;ז, ללא קשר לשיבוץ.
+                            </Typography>
+                        </Box>
+                        <Switch
+                            checked={ state.googleCalendarSyncAllEvents }
                             disabled={ googleBusy }
-                            onClick={ handleSyncGoogleNow }
-                            size="small"
-                            variant="outlined"
-                        >
-                                סנכרן עכשיו
-                        </Button>
-                        <Button
-                            color="error"
-                            disabled={ googleBusy }
-                            onClick={ handleDisconnectGoogle }
-                            size="small"
-                            variant="text"
-                        >
-                                נתק חשבון
-                        </Button>
-                    </Box> : null }
+                            onChange={ (_e, checked) => dispatch({ type: "SET_GOOGLE_CALENDAR_SYNC_ALL_EVENTS", payload: checked }) }
+                        />
+                    </Box>
+                    <Box display="flex" flexDirection="column" gap={ 0.75 }>
+                        <Box display="flex" gap={ 1.5 }>
+                            <Button
+                                disabled={ googleBusy || googleSyncing }
+                                onClick={ handleSyncGoogleNow }
+                                size="small"
+                                startIcon={ googleSyncing ? <CircularProgress size={ 14 } /> : null }
+                                variant="outlined"
+                            >
+                                    { googleSyncing ? "מסנכרן..." : "סנכרן עכשיו" }
+                            </Button>
+                            <Button
+                                color="error"
+                                disabled={ googleBusy || googleSyncing }
+                                onClick={ handleDisconnectGoogle }
+                                size="small"
+                                variant="text"
+                            >
+                                    נתק חשבון
+                            </Button>
+                        </Box>
+                        { googleSyncing && (
+                            <LinearProgress sx={ { borderRadius: 1, height: 4 } } />
+                        ) }
+                    </Box>
+                    </> : null }
                 </Box>
             </Box>
         </Box>

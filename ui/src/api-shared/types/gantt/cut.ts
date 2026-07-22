@@ -9,7 +9,14 @@ import { ModuleEventType } from "@/api-shared/types/gantt/models";
  * from the curriculum id, so the request carries no payload.
  */
 
-export type ApiCurriculumCutPayload = void;
+export type ApiCurriculumCutPayload = {
+    /**
+     * Cut anyway despite unmapped events / unsatisfied recurrences (an
+     * unfinished gantt). The user explicitly acknowledges the gap; those
+     * events are dropped from the cut instead of blocking it.
+     */
+    force?: boolean;
+};
 
 export type ApiCurriculumCutResponse = {
     /** Number of schedule events created. */

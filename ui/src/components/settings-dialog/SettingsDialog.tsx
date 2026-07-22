@@ -1,5 +1,6 @@
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import CloseIcon from "@mui/icons-material/Close";
+import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import PaletteIcon from "@mui/icons-material/Palette";
 import PersonIcon from "@mui/icons-material/Person";
@@ -12,6 +13,7 @@ import Typography from "@mui/material/Typography";
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
 import { ColorSettings } from "@/components/settings-dialog/tabs/global/color-settings";
 import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalSettings";
+import { IterationSettings } from "@/components/settings-dialog/tabs/global/iteration-settings";
 import { OutsiderSettings } from "@/components/settings-dialog/tabs/global/outsider-settings";
 import { RoomSettings } from "@/components/settings-dialog/tabs/global/room-settings";
 import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
@@ -43,6 +45,11 @@ export function SettingsDialog({
                 label: "אנשי חוץ",
                 icon: <AssignmentIndIcon />,
                 value: "outsiders",
+            },
+            {
+                label: "מחזורים",
+                icon: <EventRepeatIcon />,
+                value: "iterations",
             },
         ];
 
@@ -246,6 +253,7 @@ export function SettingsDialog({
                         {activeTab === "colors" && <ColorSettings />}
                         {activeTab === "rooms" && <RoomSettings />}
                         {activeTab === "outsiders" && <OutsiderSettings />}
+                        {activeTab === "iterations" && <IterationSettings />}
                     </Box>
                 </Box>
             </Box>

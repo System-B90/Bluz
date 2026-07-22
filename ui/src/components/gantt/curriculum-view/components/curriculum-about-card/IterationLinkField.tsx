@@ -68,6 +68,32 @@ export function IterationLinkField({ curriculumId }: IterationLinkFieldProps) {
         [iterations],
     );
 
+    const currentIteration = useMemo(
+        () => iterations?.find((iteration) => iteration.isCurrent),
+        [iterations],
+    );
+
+    const [isOverriding, setIsOverriding] = useState(false);
+
+    const handleOverride = useCallback(() => {
+        if (!curriculumId || !currentIteration) {
+            return;
+        }
+        setIsOverriding(true);
+        apiPatchIteration(currentIteration.id, {
+            ganttCurriculumId: curriculumId,
+        })
+            .then(() => loadIterations())
+            .catch((error) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "קישור המחזור הנוכחי נכשל.",
+                    error,
+                ),
+            )
+            .finally(() => setIsOverriding(false));
+    }, [curriculumId, currentIteration, enqueueSnackbar, loadIterations]);
+
     const onChange = useCallback((event: SelectChangeEvent) => {
         setSelectedIterationId(event.target.value);
     }, []);
@@ -221,6 +247,30 @@ export function IterationLinkField({ curriculumId }: IterationLinkFieldProps) {
                                         }
                                         fontSize="small"
                                     />
+                                )}
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                </Box>
+            ) : currentIteration ? (
+                <Box alignItems="center" display="flex" gap={0.5}>
+                    <Typography color="textSecondary" sx={{ flexGrow: 1 }} variant="body2">
+                        המחזור הנוכחי ({currentIteration.label}) מקושר לתוכנית לימודים אחרת
+                    </Typography>
+                    <Tooltip title="קישור המחזור הנוכחי לתוכנית לימודים זו, במקום הקישור הקיים שלו">
+                        <span>
+                            <IconButton
+                                disabled={isOverriding}
+                                onClick={handleOverride}
+                                size="small"
+                            >
+                                {isOverriding ? (
+                                    <CircularProgress
+                                        color="inherit"
+                                        size={20}
+                                    />
+                                ) : (
+                                    <LinkIcon color="warning" fontSize="small" />
                                 )}
                             </IconButton>
                         </span>

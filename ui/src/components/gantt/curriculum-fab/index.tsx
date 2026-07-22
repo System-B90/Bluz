@@ -33,6 +33,7 @@ export type CurriculumDrawerProps = {
     setOpen?: Dispatch<SetStateAction<boolean>>;
     setCurrentCurriculum: Dispatch<SetStateAction<GanttCurriculumId | null>>;
     currentCurriculum?: GanttCurriculumId | null;
+    onLoadingChange?: (isFetchingDetails: boolean) => void;
 };
 
 const PANEL_WIDTH = 320;
@@ -40,6 +41,7 @@ const PANEL_WIDTH = 320;
 export function CurriculumFab({
     setCurrentCurriculum,
     currentCurriculum,
+    onLoadingChange,
 }: CurriculumDrawerProps) {
     const { enqueueSnackbar } = useSnackbar();
     const [curriculumsData, setCurriculumsData] = useState<
@@ -62,6 +64,10 @@ export function CurriculumFab({
             isMounted = false;
         };
     }, [enqueueSnackbar]);
+
+    useEffect(() => {
+        onLoadingChange?.(isFetchingDetails);
+    }, [isFetchingDetails, onLoadingChange]);
 
     useEffect(() => {
         if (!syncRef) return;

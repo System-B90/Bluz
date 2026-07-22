@@ -7,8 +7,10 @@ import { DbEventDocument, getPresentInstructors } from "@/api-shared/types/event
 
 /**
  * Fire-and-forget: pushes the given event to the Google Calendar of every
- * assigned instructor who opted into sync. Never throws — a Google outage or
- * missing configuration must never affect the Bluz event write it's attached to.
+ * assigned instructor who opted into sync, plus any user who opted into
+ * syncing every event regardless of assignment. Never throws — a Google
+ * outage or missing configuration must never affect the Bluz event write
+ * it's attached to.
  */
 export function syncEventToInstructorsGoogleCalendars(
     event: DbEventDocument,
@@ -16,16 +18,19 @@ export function syncEventToInstructorsGoogleCalendars(
 ): void {
     void (async () => {
         try {
-            const instructorIds = getPresentInstructors(event).filter(
-                (id): id is number => typeof id === "number",
+            const instructorIds = new Set(
+                getPresentInstructors(event)
+                    .filter((id): id is number => typeof id === "number")
+                    .map(String),
             );
-            if (instructorIds.length === 0) return;
 
-            const userIds = instructorIds.map(String);
             const settingsDocs = await getMetaController()
                 .personalSettings.find({
-                    userId: { $in: userIds },
                     googleCalendarEnabled: true,
+                    $or: [
+                        { userId: { $in: [...instructorIds] } },
+                        { googleCalendarSyncAllEvents: true },
+                    ],
                 })
                 .toArray();
 

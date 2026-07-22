@@ -6,6 +6,7 @@ import { DbSettings } from "@/api-server/db-settings";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { getModuleDayMappingsForCurriculum } from "@/api-server/gantt/db-mappings";
 import { listRecurrenceExceptionsForCurriculum } from "@/api-server/gantt/db-recurrence-exceptions";
+import { syncEventToInstructorsGoogleCalendars } from "@/api-server/google/google-calendar-sync";
 import {
     DatabaseController,
     getDatabaseController,
@@ -372,6 +373,7 @@ async function countCutEvents(
  */
 export async function cutCurriculumToSchedule(
     curriculumId: GanttCurriculumId,
+    force = false,
 ): Promise<CutOutcome> {
     // Throws ClientApiError (→ 400) when the curriculum does not exist.
     const curriculum = await DbCurriculum.getItem(curriculumId);
@@ -431,7 +433,7 @@ export async function cutCurriculumToSchedule(
         dayStartTime,
         weekendHomeStartTime,
     });
-    const plan = planCut(planInput);
+    const plan = planCut(planInput, { force });
     if (!plan.ok) {
         return {
             ok: false,
@@ -523,6 +525,9 @@ export async function cutCurriculumToSchedule(
 
     if (documents.length > 0) {
         await controller.events.insertMany(documents as Array<DbEventDocument>);
+        for (const document of documents) {
+            syncEventToInstructorsGoogleCalendars(document, "upsert");
+        }
         SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
             events: Object.fromEntries(documents.map((d) => [d.id, d])),
             iterationId: iteration.isCurrent ? undefined : iteration.id,

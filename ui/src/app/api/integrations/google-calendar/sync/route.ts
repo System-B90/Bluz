@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { ApiSuccess, withApi } from "@/api-server/common";
 import { DbEvent } from "@/api-server/db-event";
+import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import {
     isGoogleCalendarConfigured,
     pullBusyBlocks,
@@ -37,12 +38,20 @@ export const POST = withApi(async () => {
     // changes the user just made in Google Calendar.
     const updated = await pullEventEdits(user.id);
 
-    const events = await DbEvent.getInRange(now, windowEnd, undefined, {
-        $or: [
-            { instructors: userIdAsNumber },
-            { lecturers: userIdAsNumber },
-        ],
-    });
+    const settings = await DbPersonalSettings.get(user.id);
+    const events = await DbEvent.getInRange(
+        now,
+        windowEnd,
+        undefined,
+        settings.googleCalendarSyncAllEvents
+            ? undefined
+            : {
+                  $or: [
+                      { instructors: userIdAsNumber },
+                      { lecturers: userIdAsNumber },
+                  ],
+              },
+    );
     const [pushed, busyBlocks] = await Promise.all([
         pushAllEvents(user.id, events),
         pullBusyBlocks(user.id),

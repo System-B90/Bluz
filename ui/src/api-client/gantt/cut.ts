@@ -19,11 +19,12 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
  */
 export async function cutCurriculumToSchedule(
     curriculumId: GanttCurriculumId,
+    force = false,
 ): Promise<ApiCurriculumCutResponse> {
     try {
         return await safeApiFetcher<ApiCurriculumCutResponse>(
             `/api/gantt/curriculums/${curriculumId}/cut`,
-            { method: "POST" },
+            { method: "POST", body: JSON.stringify({ force }) },
         );
     } catch (error) {
         if (error instanceof ClientApiError && isCurriculumCutErrorPayload(error)) {

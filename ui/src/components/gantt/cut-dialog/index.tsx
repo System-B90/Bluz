@@ -1,12 +1,14 @@
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
 import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
@@ -48,6 +50,15 @@ type DialogPhase =
     | { kind: "generic-error"; message: string }
     | { kind: "loading" }
     | { kind: "success"; result: ApiCurriculumCutResponse };
+
+// Only unmapped events / unsatisfied recurrences can be dropped and cut
+// around — a missing start date leaves nothing datable, so it can't be forced.
+function isForceableError(error: CurriculumCutError): boolean {
+    return (
+        error.code === "invalid-plan" &&
+        (error.errors ?? []).every((e) => e.type !== "missing-start-date")
+    );
+}
 
 function describeValidationError(error: CutValidationError): string {
     switch (error.type) {
@@ -148,6 +159,7 @@ export function CutToScheduleDialog({
 }: CutToScheduleDialogProps) {
     const [phase, setPhase] = useState<DialogPhase>({ kind: "confirm" });
     const [loadingStep, setLoadingStep] = useState(0);
+    const [forceAcknowledged, setForceAcknowledged] = useState(false);
     const loadingIntervalRef = useRef<null | ReturnType<typeof setInterval>>(null);
 
     useEffect(() => {
@@ -173,13 +185,14 @@ export function CutToScheduleDialog({
         if (phase.kind === "loading") return;
         onClose();
         setPhase({ kind: "confirm" });
+        setForceAcknowledged(false);
     }, [onClose, phase.kind]);
 
-    const handleConfirm = useCallback(async () => {
+    const handleConfirm = useCallback(async (force = false) => {
         setLoadingStep(0);
         setPhase({ kind: "loading" });
         try {
-            const result = await ganttApi.cut.cut(curriculumId);
+            const result = await ganttApi.cut.cut(curriculumId, force);
             setPhase({ kind: "success", result });
             onSuccess?.();
         } catch (error) {
@@ -225,7 +238,36 @@ export function CutToScheduleDialog({
                     <CutSuccessContent result={phase.result} />
                 )}
                 {phase.kind === "cut-error" && (
-                    <CutErrorContent error={phase.error} />
+                    <>
+                        <CutErrorContent error={phase.error} />
+                        {isForceableError(phase.error) && (
+                            <Stack gap={1} sx={{ mt: 1 }}>
+                                <Alert severity="error">
+                                    <strong>
+                                        אזהרה — הגאנט אינו שלם.
+                                    </strong>{" "}
+                                    ייתכן שסילבוסים או מודולים שלמים אינם
+                                    משובצים לימים. גזירה בשלב הזה{" "}
+                                    <strong>תדלג לחלוטין</strong> על כל
+                                    אירוע לא משובץ — הוא לא ייכנס למערכת
+                                    השעות, בלי התראה נוספת מעבר לזו. פעולה זו
+                                    אינה מומלצת. השלימו את השיבוץ בגאנט לפני
+                                    גזירה, אלא אם כן אתם בטוחים שזה מכוון.
+                                </Alert>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={forceAcknowledged}
+                                            onChange={(e) =>
+                                                setForceAcknowledged(e.target.checked)
+                                            }
+                                        />
+                                    }
+                                    label="הבנתי את הסיכון, וברצוני לגזור בכל זאת תוך דילוג על האירועים הלא-משובצים."
+                                />
+                            </Stack>
+                        )}
+                    </>
                 )}
                 {phase.kind === "generic-error" && (
                     <Alert severity="error">{phase.message}</Alert>
@@ -237,13 +279,24 @@ export function CutToScheduleDialog({
                         <Button onClick={handleClose}>ביטול</Button>
                         <Button
                             color="primary"
-                            onClick={handleConfirm}
+                            onClick={() => handleConfirm()}
                             startIcon={<ContentCutIcon fontSize="small" />}
                             variant="contained"
                         >
                             גזירה
                         </Button>
                     </>
+                )}
+                {phase.kind === "cut-error" && isForceableError(phase.error) && (
+                    <Button
+                        color="warning"
+                        disabled={!forceAcknowledged}
+                        onClick={() => handleConfirm(true)}
+                        startIcon={<ContentCutIcon fontSize="small" />}
+                        variant="contained"
+                    >
+                        גזירה בכל זאת
+                    </Button>
                 )}
                 {isTerminal ? <Button onClick={handleClose} variant="contained">
                         סגירה
