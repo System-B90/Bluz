@@ -8,7 +8,7 @@
     "build": "next build ui",
     "start": "next start ui",
     "lint": "eslint --config ./ui/eslint.config.mts ui/",
-    "lint:fix": "eslint --config ./ui/eslint.config.mts --fix",
+    "lint:fix": "eslint --config ./ui/eslint.config.mts --fix ui/",
     "prepare": "husky",
     "db:generate": "drizzle-kit generate --config=drizzle/drizzle.config.ts",
     "db:push": "drizzle-kit push --config=drizzle/drizzle.config.ts",
