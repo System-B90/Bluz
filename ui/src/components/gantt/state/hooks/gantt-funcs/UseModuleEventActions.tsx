@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { CreateGanttEventPayload } from "@/api-shared/types/gantt/create-payloads";
@@ -12,10 +12,26 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { makeEntityActions } from "@/components/gantt/state/hooks/gantt-funcs/MakeEntityActions";
 import { withGantErrorHandling } from "@/components/gantt/state/hooks/gantt-funcs/WithGantErrorHandling";
-import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 
 export function useModuleEventActions() {
-    const { dispatch } = useCurriculumProviderActions();
+    const { dispatch, requestReveal } = useCurriculumProviderActions();
+
+    // Ref-backed store read so optimistic updates can snapshot current values
+    // without recreating the memoized actions each render (#327).
+    const state = useCurriculumState();
+    const stateRef = useRef(state);
+    useEffect(() => {
+        stateRef.current = state;
+    }, [state]);
+    const getEntity = useCallback(
+        (id: GanttEventId): GanttEvent | undefined =>
+            stateRef.current.events[id],
+        [],
+    );
 
     const actions = useMemo(
         () =>
@@ -28,6 +44,7 @@ export function useModuleEventActions() {
                 dispatch,
                 label: "event",
                 containerLabel: "module",
+                getEntity,
                 builders: {
                     add: (event, moduleId) => ({
                         type: "ADD_EVENT",
@@ -47,7 +64,19 @@ export function useModuleEventActions() {
                     }),
                 },
             }),
-        [dispatch],
+        [dispatch, getEntity],
+    );
+
+    // Scroll-to + flash a freshly created/duplicated event in the timeline,
+    // reusing the Gantt view's reveal mechanism (#325). No-op when the event's
+    // syllabus can't be resolved (e.g. store not yet populated).
+    const revealCreatedEvent = useCallback(
+        (moduleId: GanttModuleId, eventId?: GanttEventId) => {
+            if (!eventId) return;
+            const syllabusId = stateRef.current.modules[moduleId]?.syllabusId;
+            if (syllabusId) requestReveal(syllabusId, moduleId, eventId);
+        },
+        [requestReveal],
     );
 
     const createEvent = useCallback(
@@ -58,28 +87,33 @@ export function useModuleEventActions() {
             minimumDuration: number = 0,
             allocatedDuration: number = 0,
         ) =>
-            actions.create(
-                {
-                    title,
+            actions
+                .create(
+                    {
+                        title,
+                        moduleId,
+                        type,
+                        minimumDuration,
+                        allocatedDuration,
+                        orchestratorId: null,
+                        recommendedLecturerIds: [],
+                        systemRequirements: [],
+                        roomRequirement: RoomRequirement.Classified,
+                        recurrence: EventRecurrence.None,
+                        isCritical: false,
+                        isPaWindow: false,
+                        comment: null,
+                        hiveSubjectId: null,
+                        hiveModuleId: null,
+                        hiveLessonId: null,
+                    },
                     moduleId,
-                    type,
-                    minimumDuration,
-                    allocatedDuration,
-                    orchestratorId: null,
-                    recommendedLecturerIds: [],
-                    systemRequirements: [],
-                    roomRequirement: RoomRequirement.Classified,
-                    recurrence: EventRecurrence.None,
-                    isCritical: false,
-                    isPaWindow: false,
-                    comment: null,
-                    hiveSubjectId: null,
-                    hiveModuleId: null,
-                    hiveLessonId: null,
-                },
-                moduleId,
-            ),
-        [actions],
+                )
+                .then((event) => {
+                    revealCreatedEvent(moduleId, event?.id);
+                    return event;
+                }),
+        [actions, revealCreatedEvent],
     );
 
     const duplicateEvent = useCallback(
@@ -93,10 +127,11 @@ export function useModuleEventActions() {
                     type: "ADD_EVENT",
                     payload: { event: duplicatedEvent, moduleId },
                 });
+                revealCreatedEvent(moduleId, duplicatedEvent?.id);
                 return duplicatedEvent;
             }, `Failed to duplicate event (ID: ${eventId}):`);
         },
-        [dispatch],
+        [dispatch, revealCreatedEvent],
     );
 
     const moveEvent = useCallback(

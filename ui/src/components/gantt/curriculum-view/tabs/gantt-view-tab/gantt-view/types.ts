@@ -49,6 +49,12 @@ export type GanttContextType = {
     /** Per-module expand/collapse state, lifted so a chip can reveal an event row. */
     isModuleExpanded: (moduleId: string) => boolean;
     toggleModule: (moduleId: string) => void;
+    /** True while the first-column search filter is narrowing the row tree (#323). */
+    searchActive: boolean;
+    /** First-column search predicates: whether a row survives the active filter (#323). */
+    isSyllabusVisible: (syllabusId: string) => boolean;
+    isModuleVisible: (moduleId: string) => boolean;
+    isEventVisible: (eventId: string) => boolean;
     onMapModule: (moduleId: string, dayId: string) => Promise<void>;
     onMapEvent: (
         moduleId: string,

@@ -1,7 +1,9 @@
 import CalendarViewDayIcon from "@mui/icons-material/CalendarViewDay";
 import CalendarViewWeekIcon from "@mui/icons-material/CalendarViewWeek";
+import ClearIcon from "@mui/icons-material/Clear";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import RuleIcon from "@mui/icons-material/Rule";
+import SearchIcon from "@mui/icons-material/Search";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import WidthFullIcon from "@mui/icons-material/WidthFull";
@@ -11,8 +13,10 @@ import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
+import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
@@ -36,6 +40,8 @@ export type GanttToolbarProps = {
     expandAllSyllabuses: () => void;
     zoomedWeekId: null | string;
     setZoomedWeekId: (weekId: null | string) => void;
+    searchQuery: string;
+    onSearchChange: (value: string) => void;
 };
 
 export const GanttToolbar: React.FC<GanttToolbarProps> = ({
@@ -55,6 +61,8 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
     expandAllSyllabuses,
     zoomedWeekId,
     setZoomedWeekId,
+    searchQuery,
+    onSearchChange,
 }) =>
 {
     const theme = useTheme();
@@ -91,6 +99,37 @@ export const GanttToolbar: React.FC<GanttToolbarProps> = ({
                     rowGap: 1,
                 } }
             >
+                {/* First-column search: filter syllabus/module/event rows */ }
+                <TextField
+                    aria-label="חיפוש בסילבוסים, מודולים ואירועים"
+                    onChange={ (ev) => onSearchChange(ev.target.value) }
+                    placeholder="חיפוש..."
+                    size="small"
+                    slotProps={ {
+                        input: {
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon fontSize="small" />
+                                </InputAdornment>
+                            ),
+                            endAdornment: searchQuery ? (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        aria-label="ניקוי חיפוש"
+                                        edge="end"
+                                        onClick={ () => onSearchChange("") }
+                                        size="small"
+                                    >
+                                        <ClearIcon fontSize="small" />
+                                    </IconButton>
+                                </InputAdornment>
+                            ) : null,
+                        },
+                    } }
+                    sx={ { minWidth: 200 } }
+                    value={ searchQuery }
+                />
+
                 {/* View mode: weekly / daily */ }
                 <ToggleButtonGroup
                     aria-label="מצב תצוגה"

@@ -37,6 +37,12 @@ export type ApiCutPreviewOccurrence = {
     title: string;
     /** ModuleEventType of the source gantt event. */
     eventType: ModuleEventType;
+    /**
+     * Hive subject id the source gantt event is linked to, or null when the
+     * event is a non-Hive placeholder. Lets the preview color occurrences by
+     * their real subject color, matching the actual schedule (#331).
+     */
+    hiveSubjectId: null | number;
     syllabusTitle: string;
     moduleTitle: string;
     /** ISO date (yyyy-MM-dd) of the occurrence. */

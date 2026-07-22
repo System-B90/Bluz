@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
+import { getDefaultWorkingMinutesForDay } from "@/api-shared/gantt/week-defaults";
 import { ApiCurriculumWeek } from "@/api-shared/types/gantt/api-layer";
 import {
     CreateGanttDayPayload,
@@ -11,6 +12,7 @@ import {
     GanttCurriculumId,
     GanttDay,
     GanttDayId,
+    GanttDayIndex,
     GanttWeek,
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
@@ -38,6 +40,19 @@ export type UseWeekActionsReturn = {
     deleteDay: (dayId: GanttDayId) => Promise<void>;
 };
 
+// Server (db-week.ts createWeek) seeds every new week with these seven days.
+// The optimistic pre-render mirrors that structure so the placeholder matches
+// what comes back from the server, avoiding a layout jump on reconcile.
+const OPTIMISTIC_DAY_INDICES: ReadonlyArray<GanttDayIndex> = [
+    GanttDayIndex.Sunday,
+    GanttDayIndex.Monday,
+    GanttDayIndex.Tuesday,
+    GanttDayIndex.Wednesday,
+    GanttDayIndex.Thursday,
+    GanttDayIndex.Friday,
+    GanttDayIndex.Saturday,
+];
+
 export function useWeekActions(): UseWeekActionsReturn {
     const { dispatch } = useCurriculumProviderActions();
 
@@ -51,12 +66,68 @@ export function useWeekActions(): UseWeekActionsReturn {
 
     const createWeek = useCallback(
         async (payload: CreateGanttWeekPayload) => {
-            return await withGantErrorHandling(async () => {
+            // Optimistically render the new week (plus its seven placeholder
+            // days) immediately with temp IDs so the UI reacts without waiting
+            // on the server round-trip — which also inserts the linked days and
+            // so is slow. On success we swap the temp week for the real one; on
+            // failure we roll the optimistic week back. Mirrors the optimistic
+            // pattern already used by updateWeek below.
+            const tempWeekId = `temp-week-${crypto.randomUUID()}` as GanttWeekId;
+            const optimisticDays = OPTIMISTIC_DAY_INDICES.map((dayIndex) => ({
+                id: `temp-day-${crypto.randomUUID()}` as GanttDayId,
+                dayIndex,
+                totalWorkingMinutes: getDefaultWorkingMinutesForDay(dayIndex),
+            }));
+
+            for (const day of optimisticDays) {
+                dispatch({
+                    type: "ADD_DAY",
+                    payload: {
+                        day: {
+                            id: day.id,
+                            title:
+                                DAY_NAME_DISPLAY[day.dayIndex] ??
+                                `יום ${day.dayIndex + 1}`,
+                            weekId: tempWeekId,
+                            dayIndex: day.dayIndex,
+                            totalWorkingMinutes: day.totalWorkingMinutes,
+                            comment: "",
+                        },
+                    },
+                });
+            }
+
+            dispatch({
+                type: "ADD_WEEK",
+                payload: {
+                    week: {
+                        id: tempWeekId,
+                        title: `שבוע ${payload.number}`,
+                        number: payload.number,
+                        days: optimisticDays.map((day) => day.id),
+                        comment: payload.comment,
+                        weekendDuty: payload.weekendDuty,
+                    },
+                    curriculumId: payload.curriculumId,
+                },
+            });
+
+            try {
                 const newWeek = await ganttApi.week.apiCreate(payload);
                 const apiWeek = newWeek as unknown as ApiCurriculumWeek;
                 const linkedDays = [...(apiWeek.w2d ?? [])].sort(
                     (a, b) => a.day.dayIndex - b.day.dayIndex,
                 );
+
+                // Drop the optimistic placeholder (REMOVE_WEEK also purges its
+                // temp days) before inserting the server-backed week/days.
+                dispatch({
+                    type: "REMOVE_WEEK",
+                    payload: {
+                        weekId: tempWeekId,
+                        curriculumId: payload.curriculumId,
+                    },
+                });
 
                 for (const dayLink of linkedDays) {
                     dispatch({
@@ -92,7 +163,18 @@ export function useWeekActions(): UseWeekActionsReturn {
                     },
                 });
                 return newWeek;
-            }, "Failed to create week:");
+            } catch (error) {
+                // Roll back the optimistic week before surfacing the error.
+                dispatch({
+                    type: "REMOVE_WEEK",
+                    payload: {
+                        weekId: tempWeekId,
+                        curriculumId: payload.curriculumId,
+                    },
+                });
+                console.error("Failed to create week:", error);
+                throw error;
+            }
         },
         [dispatch],
     );

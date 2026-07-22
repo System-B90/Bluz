@@ -264,15 +264,18 @@ export async function previewCurriculumCut(
         DbIterations.getByCurriculum(curriculumId),
     ]);
 
-    let scheduleSetting: null | ScheduleSettings = null;
-    if (iteration) {
-        const controller = getDatabaseController(iteration.dbName);
-        scheduleSetting = (await DbSettings.get(
-            SCHEDULE_SETTINGS_KEY,
-            undefined,
-            controller,
-        )) as null | ScheduleSettings;
-    }
+    // Read the schedule settings (day start times) regardless of whether the
+    // curriculum is linked to an iteration yet: use the iteration's own db when
+    // it exists, otherwise the main/default db so draft curricula still honour
+    // the global dayStartTime instead of falling back to 08:00 (#324).
+    const settingsController = iteration
+        ? getDatabaseController(iteration.dbName)
+        : getDatabaseController();
+    const scheduleSetting = (await DbSettings.get(
+        SCHEDULE_SETTINGS_KEY,
+        undefined,
+        settingsController,
+    )) as null | ScheduleSettings;
     const dayStartTime =
         scheduleSetting?.dayStartTime ?? DEFAULT_DAY_START_TIME;
     const weekendHomeStartTime =
@@ -337,6 +340,7 @@ export async function previewCurriculumCut(
                 ganttEventId: occ.ganttEventId,
                 title: ganttEvent?.title ?? occ.ganttEventId,
                 eventType: ganttEvent?.type ?? ModuleEventType.Other,
+                hiveSubjectId: ganttEvent?.hiveSubjectId ?? null,
                 syllabusTitle: syllabusTitleByEvent.get(occ.ganttEventId) ?? "",
                 moduleTitle: moduleTitleByEvent.get(occ.ganttEventId) ?? "",
                 occurrenceDate: occ.occurrenceDate,
