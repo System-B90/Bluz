@@ -10,7 +10,7 @@ type ServerApiHiveUsersGet = ServerApi<
     ApiHiveUsersGetResponse
 >;
 
-export const GET: ServerApiHiveUsersGet = withApi(async (request) => {
+export const GET: ServerApiHiveUsersGet = withApi(async (_request) => {
     const hiveClient = await createHiveClient();
     return ApiSuccess(await hiveClient.getUsers());
 });

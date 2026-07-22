@@ -66,11 +66,17 @@ export function SettingsDialog({
                     bgcolor: "background.paper",
                     backgroundImage: "none",
                     boxShadow: "0 24px 50px rgba(0,0,0,0.15)",
+                    maxHeight: "calc(100vh - 64px)",
                 },
             }}
         >
             {/* Main Flex Container */}
-            <Box className="min-h-[480px]" display="flex" flexDirection="row">
+            <Box
+                className="min-h-[480px]"
+                display="flex"
+                flexDirection="row"
+                sx={{ maxHeight: "calc(100vh - 64px)" }}
+            >
                 {/* Sidebar Navigation */}
                 <Box
                     sx={(theme) => ({
@@ -214,6 +220,7 @@ export function SettingsDialog({
                         minWidth: 0,
                         display: "flex",
                         flexDirection: "column",
+                        overflowY: "auto",
                     }}
                 >
                     {/* Header Row with Close Button */}

@@ -51,14 +51,6 @@ export type Action =
           };
       }
     | {
-          type: "MERGE_SYLLABUS";
-          payload: {
-              curriculumId: GanttCurriculumId;
-          } & NormalizedSyllabusSubtree;
-      }
-
-    // Adds
-    | {
           type: "ALLOCATE_TIME_TO_MODULE";
           payload: {
               curriculumId: GanttCurriculumId;
@@ -66,6 +58,8 @@ export type Action =
               duration: number;
           };
       }
+
+    // Adds
     | {
           type: "ALLOCATE_TIME";
           payload: {
@@ -73,6 +67,12 @@ export type Action =
               eventId: GanttEventId;
               duration: number;
           };
+      }
+    | {
+          type: "MERGE_SYLLABUS";
+          payload: {
+              curriculumId: GanttCurriculumId;
+          } & NormalizedSyllabusSubtree;
       }
     | {
           type: "MOVE_EVENT";

@@ -10,6 +10,7 @@ import { useCallback } from "react";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { FilterCourses } from "@/components/header/FilterCourses";
 import { FilterInstructors } from "@/components/header/FilterInstructor";
+import { FilterRoom } from "@/components/header/FilterRoom";
 
 export function Filters({ ...props }: BoxProps)
 {
@@ -35,6 +36,11 @@ export function Filters({ ...props }: BoxProps)
                 width={ "100%" }
             />
             <FilterCourses
+                boxSizing={ "border-box" }
+                minWidth={ 200 }
+                width={ "100%" }
+            />
+            <FilterRoom
                 boxSizing={ "border-box" }
                 minWidth={ 200 }
                 width={ "100%" }

@@ -33,6 +33,7 @@ describe("DbPersonalSettings", () => {
             instructors: [],
             favoriteOutsiders: [],
             googleCalendarEnabled: false,
+            googleCalendarSyncAllEvents: false,
         });
     });
 
@@ -50,6 +51,7 @@ describe("DbPersonalSettings", () => {
             instructors: [ "i1" ],
             favoriteOutsiders: [ "o1" ],
             googleCalendarEnabled: true,
+            googleCalendarSyncAllEvents: false,
         });
     });
 
