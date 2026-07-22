@@ -43,7 +43,6 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         linearDays,
         dayIndexMap,
         weekIndexByDayId,
-        moduleMappings,
         eventMappings,
         eventSpans,
         violations,
@@ -132,36 +131,6 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
 
     const firstDayId = timelineWeeks[ 0 ]?.days[ 0 ] ?? null;
 
-    const { isModuleMapped, moduleStartDayId } = useMemo(() =>
-    {
-        const mappedDays = moduleMappings[ moduleId ] || [];
-        const dayIds = new Set<string>(mappedDays);
-
-        const ganttModule = state.modules[ moduleId ];
-        if (ganttModule && ganttModule.events)
-        {
-            ganttModule.events.forEach((eId) =>
-            {
-                if (eventMappings[ eId ]) dayIds.add(eventMappings[ eId ]);
-            });
-        }
-
-        const indices = Array.from(dayIds)
-            .map((id) => dayIndexMap.get(id) ?? -1)
-            .filter((i) => i !== -1);
-        const mapped = indices.length > 0;
-        const startId = mapped ? linearDays[ Math.min(...indices) ] : null;
-
-        return { isModuleMapped: mapped, moduleStartDayId: startId };
-    }, [ moduleId, state.modules, moduleMappings, eventMappings, linearDays, dayIndexMap ]);
-
-    // In weekly mode, find which week the module start falls in
-    const moduleStartWeekIdx = useMemo(() =>
-    {
-        if (!weeklyView || !moduleStartDayId) return -1;
-        return weekIndexByDayId.get(moduleStartDayId) ?? -1;
-    }, [ weeklyView, moduleStartDayId, weekIndexByDayId ]);
-
     const cells = useMemo(() =>
     {
         if (!event) return [];
@@ -174,8 +143,6 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 eventTitle: event.title,
                 currentDayId,
                 isEventUnmapped,
-                isModuleMapped,
-                moduleStartWeekIdx,
                 violations: myViolations,
                 spanInfo,
                 relativeDaySizing,
@@ -194,8 +161,6 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 eventTitle: event.title,
                 currentDayId,
                 isEventUnmapped,
-                isModuleMapped,
-                moduleStartDayId,
                 violations: myViolations,
                 spanInfo,
                 timeLabel,
@@ -213,9 +178,6 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         eventId,
         currentDayId,
         isEventUnmapped,
-        isModuleMapped,
-        moduleStartWeekIdx,
-        moduleStartDayId,
         myViolations,
         spanInfo,
         timeLabel,
@@ -244,11 +206,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 eventTitle={ event.title }
                 isRemoveOver={ isRemoveOver }
                 isUnmapped={
-                    isEventUnmapped
-                        ? isRecurring
-                            ? false
-                            : !isModuleMapped
-                        : null
+                    isEventUnmapped ? !isRecurring : null
                 }
                 moduleId={ moduleId }
                 onTitleClick={ () =>

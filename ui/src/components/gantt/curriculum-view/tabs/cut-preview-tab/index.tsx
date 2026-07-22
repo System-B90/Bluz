@@ -22,9 +22,12 @@ import {
     GanttCurriculumId,
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
+import { useCustomColors } from "@/components/base/CustomColorsProvider";
+import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { useCutPreview } from "@/components/gantt/curriculum-view/tabs/cut-preview-tab/UseCutPreview";
 import { localizer } from "@/components/schedule/calendar/calendar/DndLocalizer";
+import { resolveEventColor } from "@/components/schedule/event-component/event-colors";
 
 export type CutPreviewTabProps = {
     curriculumId: GanttCurriculumId;
@@ -97,6 +100,8 @@ export function PreviewLoading() {
  */
 export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
     const theme = useTheme();
+    const { getSubject } = useHiveSubjects();
+    const { getCustomColor } = useCustomColors();
     const preview = useCutPreview(curriculumId);
     const [view, setView] = useState<View>("week");
     const [date, setDate] = useState<Date | null>(null);
@@ -138,15 +143,27 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
 
     const eventPropGetter = useCallback(
         (event: PreviewCalendarEvent) => {
+            // Type palette is only the fallback for non-Hive events; Hive-linked
+            // events resolve to their real subject color via the same path the
+            // actual schedule uses, so the preview matches the calendar (#331).
             const COLOR_BY_TYPE: Record<ModuleEventType, string> = {
                 [ModuleEventType.Lecture]: theme.palette.primary.main,
                 [ModuleEventType.Exercise]: theme.palette.secondary.main,
                 [ModuleEventType.SelfTeaching]: theme.palette.success.main,
                 [ModuleEventType.Other]: theme.palette.grey[600],
             };
-            const backgroundColor =
+            const typeFallback =
                 COLOR_BY_TYPE[event.resource.eventType] ??
                 theme.palette.grey[600];
+            const { hiveSubjectId } = event.resource;
+            const subject =
+                hiveSubjectId != null ? getSubject(hiveSubjectId) : undefined;
+            const backgroundColor = resolveEventColor(
+                {},
+                subject,
+                { getCustomColor, getSubject },
+                typeFallback,
+            );
             return {
                 style: {
                     backgroundColor,
@@ -156,7 +173,7 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
                 },
             };
         },
-        [theme],
+        [theme, getSubject, getCustomColor],
     );
 
     if (preview.kind === "loading") return <PreviewLoading />;

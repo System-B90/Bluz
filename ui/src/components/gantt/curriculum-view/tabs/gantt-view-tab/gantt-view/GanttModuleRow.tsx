@@ -38,8 +38,11 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         violations,
         isModuleExpanded,
         toggleModule,
+        searchActive,
+        isEventVisible,
     } = useGanttContext();
-    const isExpanded = isModuleExpanded(moduleId);
+    // While searching, force the module open so matching events show (#323).
+    const isExpanded = searchActive || isModuleExpanded(moduleId);
     const { state: exceptionsState } = useGanttRecurrenceExceptions();
 
     const { isOver: isRemoveOver, setNodeRef: setRemoveNodeRef } = useDroppable(
@@ -352,13 +355,15 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
             </TableRow>
 
             {isExpanded && hasEvents
-                ? ganttModule?.events?.map((eventId) => (
-                    <GanttEventRow
-                        eventId={eventId}
-                        key={eventId}
-                        moduleId={moduleId}
-                    />
-                ))
+                ? ganttModule?.events
+                    ?.filter((eventId) => isEventVisible(eventId))
+                    .map((eventId) => (
+                        <GanttEventRow
+                            eventId={eventId}
+                            key={eventId}
+                            moduleId={moduleId}
+                        />
+                    ))
                 : null}
         </React.Fragment>
     );
