@@ -53,7 +53,7 @@ async function apiDuplicate(
     options?: ClientApiProps,
 ): Promise<GanttCurriculumDocument> {
     const rawData = await safeApiFetcher<any>(
-        `/api/gantt/curriculums/${id}/duplicate`,
+        `/api/gantt/curriculums/${encodeURIComponent(id)}/duplicate`,
         {
             ...options,
             method: "POST",

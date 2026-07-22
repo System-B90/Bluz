@@ -182,6 +182,7 @@ export function CurriculumViewTabs({
                 <Box flexGrow={1} height="100%" minHeight={0}>
                     <DeferredTabContent
                         curriculumId={curriculumId}
+                        key={curriculumId}
                         selectedTabIndex={selectedTabIndex}
                     />
                 </Box>

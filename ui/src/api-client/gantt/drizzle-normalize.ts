@@ -79,7 +79,10 @@ export function normalizeApiSyllabus(
             events.push({
                 ...apiEvent,
                 moduleId: apiModule.id,
-                allocatedDuration: apiEvent.cEC[0]?.allocatedDuration ?? 0,
+                allocatedDuration:
+                    apiEvent.cEC?.find(
+                        (c) => c.curriculumId === curriculumId,
+                    )?.allocatedDuration ?? 0,
                 constraints: [],
             });
         }

@@ -8,11 +8,8 @@ import {
     ganttCurriculumEventConfigurationsSchema,
     ganttCurriculumEventDayMappingsSchema,
     ganttDaysSchema,
-    ganttEventsSchema,
     ganttModule2EventsSchema,
-    ganttModulesSchema,
     ganttSyllabus2ModulesSchema,
-    ganttSyllabusesSchema,
     ganttWeek2DaysSchema,
     ganttWeeksSchema,
 } from "@/api-server/gantt/schema";
@@ -113,12 +110,13 @@ export type DuplicateCurriculumOverrides = {
 };
 
 /**
- * Deep-clones a curriculum into a brand-new, fully independent copy (#319,
- * #322). Every syllabus → module → event and week → day is recreated with a
- * fresh id, junctions are relinked to the copy, and the per-curriculum event
- * configurations (cEC) plus module/event → day mappings (cMDA) are cloned with
- * their ids repointed at the copy's own rows — so no data is shared with the
- * source. Constraints and recurrence exceptions are intentionally out of scope.
+ * Clones a curriculum into a brand-new copy (#319, #322). Syllabuses (and
+ * their modules/events) are shared, not cloned — the copy is linked to the
+ * same syllabus rows as the source. Weeks → days are deep-cloned with fresh
+ * ids, and the per-curriculum event configurations (cEC) plus module/event →
+ * day mappings (cMDA) are cloned and repointed at the copy's own curriculum
+ * id / day ids. Constraints and recurrence exceptions are intentionally out
+ * of scope.
  */
 async function duplicateCurriculum(
     sourceId: GanttCurriculumId,
@@ -129,8 +127,9 @@ async function duplicateCurriculum(
     const now = new Date();
     const newCurriculumId = `c_${crypto.randomUUID()}`;
 
-    // old id → freshly generated id, so the cloned cMDA mappings can be
-    // repointed at the copy's own modules/events/days.
+    // moduleIdMap/eventIdMap are identity maps of ids reachable from the
+    // source curriculum's syllabuses — used below to filter cMDA mappings
+    // down to that tree. dayIdMap maps old day id → freshly cloned day id.
     const moduleIdMap = new Map<string, string>();
     const eventIdMap = new Map<string, string>();
     const dayIdMap = new Map<string, string>();
@@ -147,75 +146,24 @@ async function duplicateCurriculum(
             updatedAt: now,
         });
 
-        // Syllabuses → modules → events (deep clone, all-new ids).
+        // Syllabuses are shared, not cloned: relink the existing syllabus (and
+        // its modules/events) to the copy, and clone only the per-curriculum
+        // event configs (cEC) so allocated durations stay independent.
         for (const c2sLink of source.c2s ?? []) {
             const syllabus = c2sLink.syllabus;
-            const newSyllabusId = `s_${crypto.randomUUID()}`;
 
-            await tx.insert(ganttSyllabusesSchema).values({
-                id: newSyllabusId,
-                title: syllabus.title,
-                hiveIds: syllabus.hiveIds ?? [],
-                shuffles: syllabus.shuffles ?? [],
-                createdAt: now,
-                updatedAt: now,
-            });
             await tx.insert(ganttCurriculum2SyllabusesSchema).values({
                 curriculumId: newCurriculumId,
-                syllabusId: newSyllabusId,
+                syllabusId: syllabus.id,
             });
 
             for (const s2mLink of syllabus.s2m ?? []) {
                 const ganttModule = s2mLink.module;
-                const newModuleId = `m_${crypto.randomUUID()}`;
-                moduleIdMap.set(ganttModule.id, newModuleId);
-
-                await tx.insert(ganttModulesSchema).values({
-                    id: newModuleId,
-                    title: ganttModule.title,
-                    description: ganttModule.description ?? "",
-                    hiveIds: ganttModule.hiveIds ?? [],
-                    shuffles: ganttModule.shuffles ?? [],
-                    createdAt: now,
-                    updatedAt: now,
-                });
-                await tx.insert(ganttSyllabus2ModulesSchema).values({
-                    syllabusId: newSyllabusId,
-                    moduleId: newModuleId,
-                    sortOrder: s2mLink.sortOrder,
-                });
+                moduleIdMap.set(ganttModule.id, ganttModule.id);
 
                 for (const m2eLink of ganttModule.m2e ?? []) {
                     const event = m2eLink.event;
-                    const newEventId = `e_${crypto.randomUUID()}`;
-                    eventIdMap.set(event.id, newEventId);
-
-                    await tx.insert(ganttEventsSchema).values({
-                        id: newEventId,
-                        title: event.title,
-                        type: event.type,
-                        minimumDuration: event.minimumDuration,
-                        orchestratorId: event.orchestratorId,
-                        recommendedLecturerIds:
-                            event.recommendedLecturerIds ?? [],
-                        systemRequirements: event.systemRequirements ?? [],
-                        roomRequirement: event.roomRequirement,
-                        recurrence: event.recurrence,
-                        isCritical: event.isCritical,
-                        isPaWindow: event.isPaWindow,
-                        comment: event.comment,
-                        shuffles: event.shuffles ?? [],
-                        hiveSubjectId: event.hiveSubjectId,
-                        hiveModuleId: event.hiveModuleId,
-                        hiveLessonId: event.hiveLessonId,
-                        createdAt: now,
-                        updatedAt: now,
-                    });
-                    await tx.insert(ganttModule2EventsSchema).values({
-                        moduleId: newModuleId,
-                        eventId: newEventId,
-                        sortOrder: m2eLink.sortOrder,
-                    });
+                    eventIdMap.set(event.id, event.id);
 
                     // Per-curriculum allocated durations, repointed at the copy.
                     for (const config of event.cEC ?? []) {
@@ -223,7 +171,7 @@ async function duplicateCurriculum(
                             .insert(ganttCurriculumEventConfigurationsSchema)
                             .values({
                                 curriculumId: newCurriculumId,
-                                eventId: newEventId,
+                                eventId: event.id,
                                 allocatedDuration: config.allocatedDuration,
                                 updatedAt: now,
                             });
