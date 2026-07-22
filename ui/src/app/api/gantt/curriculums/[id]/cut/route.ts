@@ -43,7 +43,7 @@ export const POST = withApi(async (request: NextRequest, context: RouteContext) 
     if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
     const body = await request.json().catch(() => null);
-    const force = Boolean((body as null | { force?: boolean })?.force);
+    const force = Boolean((body as { force?: boolean } | null)?.force);
 
     const outcome = await cutCurriculumToSchedule(id as GanttCurriculumId, force);
     if (!outcome.ok) {

@@ -66,7 +66,7 @@ const CurriculumActionsContext = createContext<{
     closeEventDialog: CloseEventDialog;
     requestReveal: RevealGanttItem;
     registerRevealHandler: (handler: RevealGanttItem) => () => void;
-} | null>(null);
+        } | null>(null);
 
 /**
  * Internal UI Wrapper to isolate dialog state.
@@ -269,7 +269,7 @@ export function CurriculumProvider({
     // Imperative reveal handle: the Gantt view registers its scroll+flash
     // behavior here, and other flows (event create/duplicate) trigger it
     // without a direct reference (#325).
-    const revealHandlerRef = useRef<RevealGanttItem | null>(null);
+    const revealHandlerRef = useRef<null | RevealGanttItem>(null);
     const registerRevealHandler = useCallback(
         (handler: RevealGanttItem) =>
         {
