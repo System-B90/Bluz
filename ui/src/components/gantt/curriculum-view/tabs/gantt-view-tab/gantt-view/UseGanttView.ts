@@ -1,7 +1,11 @@
 import { DragEndEvent } from "@dnd-kit/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models";
+import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
+import {
+    EventRecurrence,
+    GanttCurriculumModuleDayMapping,
+} from "@/api-shared/types/gantt/models";
 import
 {
     ConstraintType,
@@ -31,7 +35,7 @@ export const useGanttView = (curriculumId: string) =>
         moveMapping,
         removeMapping,
     } = useGanttMappings();
-    const { deleteOccurrence } = useGanttRecurrenceExceptions();
+    const { deleteOccurrence, state: recurrenceExceptionState } = useGanttRecurrenceExceptions();
     const {
         state: { constraints },
     } = useGanttConstraints();
@@ -301,10 +305,53 @@ export const useGanttView = (curriculumId: string) =>
         [ curriculumMappings, state, linearDays ],
     );
 
-    const scheduledMinutesByDay = useMemo(
-        () => getSpilloverMinutesByDay(eventSpans),
-        [ eventSpans ],
+    const dayIndexOf = useCallback(
+        (dayId: string) => state.days[ dayId ]?.dayIndex,
+        [ state.days ],
     );
+
+    // Recurring events echo onto following days/weeks without a mapping row
+    // for each occurrence, so their time must be added to those days
+    // separately from `eventSpans` (which only covers mapped rows).
+    const recurrenceMinutesByDay = useMemo(() =>
+    {
+        const byDay: Record<string, number> = {};
+        Object.entries(eventMappings).forEach(([ eventId, startDayId ]) =>
+        {
+            const event = state.events[ eventId ];
+            if (!event || event.recurrence === EventRecurrence.None) return;
+
+            const excludedDayIds = new Set<string>();
+            Object.values(recurrenceExceptionState.exceptions).forEach((e) =>
+            {
+                if (e.eventId === eventId) excludedDayIds.add(e.dayId);
+            });
+
+            const occurrenceDayIds = getRecurrenceOccurrenceDayIds({
+                recurrence: event.recurrence,
+                startDayId,
+                linearDays,
+                dayIndexOf,
+                excludedDayIds,
+            });
+
+            occurrenceDayIds.forEach((dayId) =>
+            {
+                byDay[ dayId ] = (byDay[ dayId ] ?? 0) + (event.minimumDuration ?? 0);
+            });
+        });
+        return byDay;
+    }, [ eventMappings, state.events, recurrenceExceptionState.exceptions, linearDays, dayIndexOf ]);
+
+    const scheduledMinutesByDay = useMemo(() =>
+    {
+        const merged = getSpilloverMinutesByDay(eventSpans);
+        Object.entries(recurrenceMinutesByDay).forEach(([ dayId, minutes ]) =>
+        {
+            merged[ dayId ] = (merged[ dayId ] ?? 0) + minutes;
+        });
+        return merged;
+    }, [ eventSpans, recurrenceMinutesByDay ]);
 
     // Modules/events with no day mapping yet, grouped by syllabus, for the
     // "unallocated" panel (#89).
