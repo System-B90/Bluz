@@ -6,8 +6,8 @@ import { SelectChangeEvent } from "@mui/material/Select";
 import Select from "@mui/material/Select";
 
 import { roomLikeToResourceKey } from "@/api-shared/types/room";
-import { useRooms } from "@/components/base/RoomsProvider";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
+import { useRooms } from "@/components/base/RoomsProvider";
 
 export function FilterRoom({ ...props }: BoxProps) {
     const { rooms } = useRooms();
