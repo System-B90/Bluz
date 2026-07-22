@@ -595,47 +595,45 @@ export function PersonalSettings()
                         </Typography>
                     ) }
                     { state.googleCalendarEnabled && googleStatus?.connected ? <>
-                    <Box alignItems="center" display="flex" gap={ 1.5 }>
-                        <Box flex={ 1 }>
-                            <Typography sx={ { fontWeight: 600, fontSize: "0.9rem", color: "text.primary" } }>
+                        <Box alignItems="center" display="flex" gap={ 1.5 }>
+                            <Box flex={ 1 }>
+                                <Typography sx={ { fontWeight: 600, fontSize: "0.9rem", color: "text.primary" } }>
                                 סנכרון כל אירועי הלו&quot;ז
-                            </Typography>
-                            <Typography sx={ { fontSize: "0.75rem", color: "text.secondary" } }>
+                                </Typography>
+                                <Typography sx={ { fontSize: "0.75rem", color: "text.secondary" } }>
                                 כברירת מחדל מסונכרנים רק אירועים שבהם אתם משבצים כמדריכים/מרצים.
                                 הפעילו כדי לסנכרן את כל אירועי הלו&quot;ז, ללא קשר לשיבוץ.
-                            </Typography>
+                                </Typography>
+                            </Box>
+                            <Switch
+                                checked={ state.googleCalendarSyncAllEvents }
+                                disabled={ googleBusy }
+                                onChange={ (_e, checked) => dispatch({ type: "SET_GOOGLE_CALENDAR_SYNC_ALL_EVENTS", payload: checked }) }
+                            />
                         </Box>
-                        <Switch
-                            checked={ state.googleCalendarSyncAllEvents }
-                            disabled={ googleBusy }
-                            onChange={ (_e, checked) => dispatch({ type: "SET_GOOGLE_CALENDAR_SYNC_ALL_EVENTS", payload: checked }) }
-                        />
-                    </Box>
-                    <Box display="flex" flexDirection="column" gap={ 0.75 }>
-                        <Box display="flex" gap={ 1.5 }>
-                            <Button
-                                disabled={ googleBusy || googleSyncing }
-                                onClick={ handleSyncGoogleNow }
-                                size="small"
-                                startIcon={ googleSyncing ? <CircularProgress size={ 14 } /> : null }
-                                variant="outlined"
-                            >
+                        <Box display="flex" flexDirection="column" gap={ 0.75 }>
+                            <Box display="flex" gap={ 1.5 }>
+                                <Button
+                                    disabled={ googleBusy || googleSyncing }
+                                    onClick={ handleSyncGoogleNow }
+                                    size="small"
+                                    startIcon={ googleSyncing ? <CircularProgress size={ 14 } /> : null }
+                                    variant="outlined"
+                                >
                                     { googleSyncing ? "מסנכרן..." : "סנכרן עכשיו" }
-                            </Button>
-                            <Button
-                                color="error"
-                                disabled={ googleBusy || googleSyncing }
-                                onClick={ handleDisconnectGoogle }
-                                size="small"
-                                variant="text"
-                            >
+                                </Button>
+                                <Button
+                                    color="error"
+                                    disabled={ googleBusy || googleSyncing }
+                                    onClick={ handleDisconnectGoogle }
+                                    size="small"
+                                    variant="text"
+                                >
                                     נתק חשבון
-                            </Button>
+                                </Button>
+                            </Box>
+                            { googleSyncing ? <LinearProgress sx={ { borderRadius: 1, height: 4 } } /> : null }
                         </Box>
-                        { googleSyncing && (
-                            <LinearProgress sx={ { borderRadius: 1, height: 4 } } />
-                        ) }
-                    </Box>
                     </> : null }
                 </Box>
             </Box>

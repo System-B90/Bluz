@@ -46,11 +46,11 @@ export const POST = withApi(async () => {
         settings.googleCalendarSyncAllEvents
             ? undefined
             : {
-                  $or: [
-                      { instructors: userIdAsNumber },
-                      { lecturers: userIdAsNumber },
-                  ],
-              },
+                $or: [
+                    { instructors: userIdAsNumber },
+                    { lecturers: userIdAsNumber },
+                ],
+            },
     );
     const [pushed, busyBlocks] = await Promise.all([
         pushAllEvents(user.id, events),
