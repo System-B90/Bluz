@@ -76,8 +76,11 @@ export async function materializeRecurrenceOccurrence(data: {
         isPaWindow: sourceEvent.isPaWindow,
         comment: sourceEvent.comment,
         shuffles: sourceEvent.shuffles,
+        hiveSubjectId: sourceEvent.hiveSubjectId,
+        hiveModuleId: sourceEvent.hiveModuleId,
+        hiveLessonId: sourceEvent.hiveLessonId,
         moduleId,
-    } as any);
+    });
 
     const [mapping] = await createCurriculumModuleDayMapping({
         curriculumId,
