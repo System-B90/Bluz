@@ -176,6 +176,12 @@ test.describe("Header / AppBar", () => {
     test("displays misconfigurations toggle in warning color when active", async ({
         page,
     }) => {
+        // This test runs ~6 sequential open→click→visibility cycles (each up to
+        // 5s). Under CI load that exceeds the 15s global test timeout, which
+        // then tears down the context mid-click ("Target page has been
+        // closed"). Give this heavier flow its own budget.
+        test.setTimeout(45_000);
+
         const filterToggle = page.getByRole("button", { name: /הצגת סננים|הסתרת סננים/ });
 
         const openAndFind = async () => {
