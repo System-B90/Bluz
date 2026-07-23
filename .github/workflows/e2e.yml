@@ -14,7 +14,7 @@ concurrency:
 jobs:
     build-test-images:
         name: Build Test Images
-        runs-on: ubuntu-24.04
+        runs-on: self-hosted
         if: github.event_name != 'pull_request' || github.head_ref == 'dev'
         steps:
             - name: Checkout repository
@@ -78,7 +78,7 @@ jobs:
 
     full-test-suite:
         name: Full Test Suite (E2E) — shard ${{ matrix.shard }}/${{ strategy.job-total }}
-        runs-on: ubuntu-24.04
+        runs-on: self-hosted
         timeout-minutes: 90
         needs: build-test-images
         if: github.event_name != 'pull_request' || github.head_ref == 'dev'
