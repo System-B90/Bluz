@@ -77,21 +77,19 @@ jobs:
                   retention-days: 1
 
     full-test-suite:
-        name: Full Test Suite (E2E) — shard ${{ matrix.shard }}/${{ strategy.job-total }}
+        name: Full Test Suite (E2E)
         runs-on: self-hosted
         timeout-minutes: 90
         needs: build-test-images
         if: github.event_name != 'pull_request' || github.head_ref == 'dev'
-        strategy:
-            fail-fast: false
-            # Each shard boots its own full Hive + Bluz stack (Hive images are
-            # cache-shared across shards, so this only multiplies the cheap
-            # part). Splitting keeps any one Playwright/Chromium process
-            # alive for less wall-clock time — the E2E job was observed
-            # crashing the browser process ~4 minutes into a single long
-            # single-worker run on this runner's 2 vCPUs.
-            matrix:
-                shard: [1, 2, 3]
+        # Single job, single Hive + Bluz stack. Sharding into 3 jobs booted 3
+        # full Hive stacks at once, which on this one 8-vCPU host saturated the
+        # CPU (load >11) and starved hive-postgres/redis past their healthcheck
+        # windows → "unhealthy" → migrate failed. The stack is the cost, not
+        # Playwright: the suite already runs one Chromium at a time
+        # (playwright.config.ts: workers=1, fullyParallel=false, retries=2), so
+        # a single stack is both lighter and green. The extra self-hosted
+        # runners parallelize ACROSS workflows/PRs instead.
 
         steps:
             - name: Checkout repository
@@ -196,11 +194,8 @@ jobs:
             # --skip-unit: backend unit tests already run in their own job
             # (release-pipeline.yml "Unit Tests") — no need to repeat them
             # per shard.
-            # --shard: splits the Playwright suite N/3 so no single shard
-            # keeps one Chromium process alive long enough to hit the
-            # memory-pressure crash seen in a full single-worker run.
             - name: Run Full Test Suite
-              run: python scripts/run_tests.py --seed-hive --skip-unit --shard ${{ matrix.shard }}/${{ strategy.job-total }}
+              run: python scripts/run_tests.py --seed-hive --skip-unit
               env:
                   CI: true
 
@@ -209,7 +204,7 @@ jobs:
               uses: actions/upload-artifact@v6
               if: ${{ !cancelled() }}
               with:
-                  name: playwright-report-${{ matrix.shard }}
+                  name: playwright-report
                   path: playwright-report/
                   retention-days: 14
 
@@ -217,7 +212,7 @@ jobs:
               uses: actions/upload-artifact@v6
               if: ${{ !cancelled() }}
               with:
-                  name: test-results-${{ matrix.shard }}
+                  name: test-results
                   path: test-results/
                   retention-days: 7
 
@@ -256,7 +251,7 @@ jobs:
               uses: actions/upload-artifact@v6
               if: failure()
               with:
-                  name: container-logs-${{ matrix.shard }}
+                  name: container-logs
                   path: container-logs/
                   retention-days: 7
 
