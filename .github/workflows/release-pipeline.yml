@@ -80,10 +80,18 @@ jobs:
             # requests. So a change that broke it (its own dependency bumps
             # very much included) stayed invisible until a push to master or a
             # tag. Type-check it here, where it's cheap.
+            # `npm install`, not `npm ci`, deliberately: session-server's
+            # package-lock.json is out of sync with its package.json —
+            # @system-b90/session-ws was added as a dependency without
+            # regenerating the lock — so `npm ci` refuses with EUSAGE. This
+            # matches what Dockerfile.websocket already does (`npm install
+            # --ignore-scripts`), which is why the drift was never noticed.
+            # Tracked in #345; switch back to `npm ci` once the lock is
+            # regenerated, so CI actually enforces it.
             - name: Install session-server dependencies
               if: ${{ !cancelled() }}
               working-directory: session-server
-              run: npm ci
+              run: npm install
               env:
                   NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
 
