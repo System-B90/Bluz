@@ -9,6 +9,7 @@ import React, {
     useEffect,
     useMemo,
     useReducer,
+    useRef,
     useState,
 } from "react";
 
@@ -44,6 +45,18 @@ export type OpenEventDialog = (
 ) => void;
 export type CloseEventDialog = () => void;
 
+/**
+ * Reveals a module/event row in the רצף זמן timeline: expands its ancestors,
+ * scrolls it into view and flash-highlights it. The actual behavior is
+ * registered by the Gantt view (`registerRevealHandler`); other flows (e.g.
+ * event create/duplicate) trigger it via `requestReveal` (#325).
+ */
+export type RevealGanttItem = (
+    syllabusId: GanttSyllabusId,
+    moduleId: GanttModuleId,
+    eventId?: GanttEventId,
+) => void;
+
 const CurriculumStateContext = createContext<NormalizedStore | null>(null);
 const CurriculumActionsContext = createContext<{
     dispatch: React.Dispatch<Action>;
@@ -51,7 +64,9 @@ const CurriculumActionsContext = createContext<{
     closeModuleDialog: CloseModuleDialog;
     openEventDialog: OpenEventDialog;
     closeEventDialog: CloseEventDialog;
-} | null>(null);
+    requestReveal: RevealGanttItem;
+    registerRevealHandler: (handler: RevealGanttItem) => () => void;
+        } | null>(null);
 
 /**
  * Internal UI Wrapper to isolate dialog state.
@@ -200,7 +215,8 @@ function CurriculumUIProviderInternal({
     closeEventDialog: CloseEventDialog;
 })
 {
-    const { dispatch } = useCurriculumProviderActions();
+    const { dispatch, requestReveal, registerRevealHandler } =
+        useCurriculumProviderActions();
 
     const actionsValue = useMemo(
         () => ({
@@ -209,6 +225,8 @@ function CurriculumUIProviderInternal({
             closeModuleDialog,
             openEventDialog,
             closeEventDialog,
+            requestReveal,
+            registerRevealHandler,
         }),
         [
             dispatch,
@@ -216,6 +234,8 @@ function CurriculumUIProviderInternal({
             closeModuleDialog,
             openEventDialog,
             closeEventDialog,
+            requestReveal,
+            registerRevealHandler,
         ],
     );
 
@@ -246,6 +266,32 @@ export function CurriculumProvider({
     // Dispatch is stable, so we wrap it in a provider that doesn't change
     const stateValue = useMemo(() => state, [ state ]);
 
+    // Imperative reveal handle: the Gantt view registers its scroll+flash
+    // behavior here, and other flows (event create/duplicate) trigger it
+    // without a direct reference (#325).
+    const revealHandlerRef = useRef<null | RevealGanttItem>(null);
+    const registerRevealHandler = useCallback(
+        (handler: RevealGanttItem) =>
+        {
+            revealHandlerRef.current = handler;
+            return () =>
+            {
+                if (revealHandlerRef.current === handler)
+                {
+                    revealHandlerRef.current = null;
+                }
+            };
+        },
+        [],
+    );
+    const requestReveal = useCallback<RevealGanttItem>(
+        (syllabusId, moduleId, eventId) =>
+        {
+            revealHandlerRef.current?.(syllabusId, moduleId, eventId);
+        },
+        [],
+    );
+
     return (
         <CurriculumStateContext.Provider value={ stateValue }>
             {/* Provide dispatch early so ModuleDialogManager can access it */ }
@@ -256,6 +302,8 @@ export function CurriculumProvider({
                     closeModuleDialog: () => { },
                     openEventDialog: () => { },
                     closeEventDialog: () => { },
+                    requestReveal,
+                    registerRevealHandler,
                 } }
             >
                 <GanttExecutionProvider curriculumId={ curriculumId }>

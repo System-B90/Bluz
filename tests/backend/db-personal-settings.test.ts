@@ -32,6 +32,8 @@ describe("DbPersonalSettings", () => {
             groups: [],
             instructors: [],
             favoriteOutsiders: [],
+            googleCalendarEnabled: false,
+            googleCalendarSyncAllEvents: false,
         });
     });
 
@@ -41,12 +43,15 @@ describe("DbPersonalSettings", () => {
             groups: [ "g1" ],
             instructors: [ "i1" ],
             favoriteOutsiders: [ "o1" ],
+            googleCalendarEnabled: true,
         });
         const result = await DbPersonalSettings.get("u1");
         expect(result).toEqual({
             groups: [ "g1" ],
             instructors: [ "i1" ],
             favoriteOutsiders: [ "o1" ],
+            googleCalendarEnabled: true,
+            googleCalendarSyncAllEvents: false,
         });
     });
 

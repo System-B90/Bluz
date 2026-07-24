@@ -32,7 +32,7 @@ describe("POST /api/gantt/curriculums/[id]/cut", () => {
         const body = await res.json();
         expect(res.status).toBe(200);
         expect(body.data.createdEvents).toBe(4);
-        expect(cutCurriculumToSchedule).toHaveBeenCalledWith("c1");
+        expect(cutCurriculumToSchedule).toHaveBeenCalledWith("c1", false);
     });
 
     it.each([

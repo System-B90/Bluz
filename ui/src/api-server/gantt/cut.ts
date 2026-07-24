@@ -6,6 +6,7 @@ import { DbSettings } from "@/api-server/db-settings";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { getModuleDayMappingsForCurriculum } from "@/api-server/gantt/db-mappings";
 import { listRecurrenceExceptionsForCurriculum } from "@/api-server/gantt/db-recurrence-exceptions";
+import { syncEventToInstructorsGoogleCalendars } from "@/api-server/google/google-calendar-sync";
 import {
     DatabaseController,
     getDatabaseController,
@@ -13,6 +14,7 @@ import {
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import {
     CutPlanInput,
+    CutValidationError,
     PlannedOccurrence,
     planCut,
 } from "@/api-shared/gantt/cut-planner";
@@ -22,10 +24,12 @@ import { DbEventDocument, EventType } from "@/api-shared/types/event";
 import { ApiCurriculum, ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
 import {
     ApiCurriculumCutError,
+    ApiCurriculumCutPreviewResponse,
     ApiCurriculumCutResponse,
     ApiCurriculumCutStatus,
     ApiCurriculumPullBackError,
     ApiCurriculumPullBackResponse,
+    ApiCutPreviewOccurrence,
 } from "@/api-shared/types/gantt/cut";
 import { GanttCurriculumId, ModuleEventType } from "@/api-shared/types/gantt/models";
 import {
@@ -242,6 +246,119 @@ export function buildScheduleEvent(
     };
 }
 
+/**
+ * Dry-run of the cut ("תצוגה מקדימה", preview tabs): runs the exact same
+ * pipeline as `cutCurriculumToSchedule` up to and including `planCut`, but
+ * skips every gate (draft, iteration link, already-cut) and writes nothing.
+ * Schedule timing settings come from the linked iteration when one exists,
+ * falling back to the defaults otherwise so drafts still preview.
+ */
+export async function previewCurriculumCut(
+    curriculumId: GanttCurriculumId,
+): Promise<ApiCurriculumCutPreviewResponse> {
+    const curriculum = await DbCurriculum.getItem(curriculumId);
+
+    const [mappings, exceptions, iteration] = await Promise.all([
+        getModuleDayMappingsForCurriculum(curriculumId, {}),
+        listRecurrenceExceptionsForCurriculum(curriculumId),
+        DbIterations.getByCurriculum(curriculumId),
+    ]);
+
+    // Read the schedule settings (day start times) regardless of whether the
+    // curriculum is linked to an iteration yet: use the iteration's own db when
+    // it exists, otherwise the main/default db so draft curricula still honour
+    // the global dayStartTime instead of falling back to 08:00 (#324).
+    const settingsController = iteration
+        ? getDatabaseController(iteration.dbName)
+        : getDatabaseController();
+    const scheduleSetting = (await DbSettings.get(
+        SCHEDULE_SETTINGS_KEY,
+        undefined,
+        settingsController,
+    )) as null | ScheduleSettings;
+    const dayStartTime =
+        scheduleSetting?.dayStartTime ?? DEFAULT_DAY_START_TIME;
+    const weekendHomeStartTime =
+        scheduleSetting?.weekendHomeStartTime ??
+        DEFAULT_WEEKEND_HOME_START_TIME;
+
+    const planInput = buildCutPlanInput({
+        curriculum,
+        mappings: mappings as Array<CutMappingRow>,
+        exceptions: exceptions as Array<CutExceptionRow>,
+        dayStartTime,
+        weekendHomeStartTime,
+    });
+
+    // Preview is tolerant where the real cut is strict: per-event problems
+    // (unmapped / unsatisfied recurrence) skip just that event and re-plan
+    // instead of failing the whole preview. Only a missing start date — which
+    // makes every occurrence undatable — is fatal.
+    let plan = planCut(planInput);
+    const skipped: Array<CutValidationError> = [];
+    if (!plan.ok) {
+        const fatal = plan.errors.filter(
+            (error) => error.type === "missing-start-date",
+        );
+        if (fatal.length > 0) {
+            return { ok: false, errors: plan.errors };
+        }
+        const skippedEventIds = new Set<string>();
+        for (const error of plan.errors) {
+            if ("eventId" in error) {
+                skipped.push(error);
+                skippedEventIds.add(error.eventId);
+            }
+        }
+        plan = planCut({
+            ...planInput,
+            events: planInput.events.filter(
+                (event) => !skippedEventIds.has(event.id),
+            ),
+        });
+        if (!plan.ok) {
+            return { ok: false, errors: plan.errors };
+        }
+    }
+
+    // Index titles for display metadata (event → syllabus / module).
+    const { eventsById, syllabusTitleByEvent } =
+        indexCurriculumEvents(curriculum);
+    const moduleTitleByEvent = new Map<string, string>();
+    for (const cLink of curriculum.c2s ?? []) {
+        for (const sLink of cLink.syllabus.s2m ?? []) {
+            for (const mLink of sLink.module.m2e ?? []) {
+                moduleTitleByEvent.set(mLink.event.id, sLink.module.title);
+            }
+        }
+    }
+
+    const occurrences: Array<ApiCutPreviewOccurrence> = plan.occurrences.map(
+        (occ) => {
+            const ganttEvent = eventsById.get(occ.ganttEventId);
+            return {
+                ganttEventId: occ.ganttEventId,
+                title: ganttEvent?.title ?? occ.ganttEventId,
+                eventType: ganttEvent?.type ?? ModuleEventType.Other,
+                hiveSubjectId: ganttEvent?.hiveSubjectId ?? null,
+                syllabusTitle: syllabusTitleByEvent.get(occ.ganttEventId) ?? "",
+                moduleTitle: moduleTitleByEvent.get(occ.ganttEventId) ?? "",
+                occurrenceDate: occ.occurrenceDate,
+                startTime: occ.startTime.toISOString(),
+                endTime: occ.endTime.toISOString(),
+                isRecurrenceEcho: occ.isRecurrenceEcho,
+            };
+        },
+    );
+
+    return {
+        ok: true,
+        occurrences,
+        overlaps: countOverlappingOccurrences(plan.occurrences),
+        skipped,
+    };
+}
+
 /** Count of already-cut, live events in the target iteration DB. */
 async function countCutEvents(
     controller: DatabaseController,
@@ -260,6 +377,7 @@ async function countCutEvents(
  */
 export async function cutCurriculumToSchedule(
     curriculumId: GanttCurriculumId,
+    force = false,
 ): Promise<CutOutcome> {
     // Throws ClientApiError (→ 400) when the curriculum does not exist.
     const curriculum = await DbCurriculum.getItem(curriculumId);
@@ -319,7 +437,7 @@ export async function cutCurriculumToSchedule(
         dayStartTime,
         weekendHomeStartTime,
     });
-    const plan = planCut(planInput);
+    const plan = planCut(planInput, { force });
     if (!plan.ok) {
         return {
             ok: false,
@@ -411,6 +529,9 @@ export async function cutCurriculumToSchedule(
 
     if (documents.length > 0) {
         await controller.events.insertMany(documents as Array<DbEventDocument>);
+        for (const document of documents) {
+            syncEventToInstructorsGoogleCalendars(document, "upsert");
+        }
         SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
             events: Object.fromEntries(documents.map((d) => [d.id, d])),
             iterationId: iteration.isCurrent ? undefined : iteration.id,

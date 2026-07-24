@@ -87,7 +87,17 @@ function eventDuration(event: CutPlanEventInput): number {
     return event.allocatedDuration || event.minimumDuration;
 }
 
-export function planCut(input: CutPlanInput): CutPlan {
+export type CutPlanOptions = {
+    /**
+     * When true, an unmapped event or an unsatisfied recurrence no longer
+     * fails the whole plan — the offending event is dropped and planning
+     * continues. Lets a user explicitly cut an unfinished gantt. A missing
+     * start date is still fatal (nothing is datable without it).
+     */
+    force?: boolean;
+};
+
+export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutPlan {
     const errors: Array<CutValidationError> = [];
 
     if (!input.startDate) {
@@ -115,6 +125,7 @@ export function planCut(input: CutPlanInput): CutPlan {
     }
 
     const startDayIdByEvent = new Map<string, string>();
+    const skippedEventIds = new Set<string>();
 
     for (const event of input.events) {
         const ownMappings = (mappingsByEvent.get(event.id) ?? [])
@@ -123,6 +134,7 @@ export function planCut(input: CutPlanInput): CutPlan {
 
         if (ownMappings.length === 0) {
             errors.push({ type: "unmapped-event", eventId: event.id, title: event.title });
+            skippedEventIds.add(event.id);
             continue;
         }
 
@@ -137,12 +149,19 @@ export function planCut(input: CutPlanInput): CutPlan {
                     eventId: event.id,
                     title: event.title,
                 });
+                skippedEventIds.add(event.id);
             }
         }
     }
 
-    if (errors.length > 0) {
-        return { ok: false, errors };
+    const fatalErrors = options.force
+        ? errors.filter((error) => error.type === "missing-start-date")
+        : errors;
+    if (fatalErrors.length > 0) {
+        return { ok: false, errors: fatalErrors };
+    }
+    if (options.force && skippedEventIds.size > 0) {
+        input = { ...input, events: input.events.filter((e) => !skippedEventIds.has(e.id)) };
     }
 
     // Real date for a day: curriculum start (anchoring week 1's Sunday) plus

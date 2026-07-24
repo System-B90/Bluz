@@ -1,7 +1,7 @@
 # Contributing to Bluz
 
 Thanks for contributing! This is the short version — the canonical, in-depth guide is
-**[AGENTS.md](../AGENTS.md)** (architecture, directory map, all commands, conventions).
+**[AGENTS.md](https://github.com/System-B90/Bluz/blob/master/AGENTS.md)** (architecture, directory map, all commands, conventions).
 Read it before your first change.
 
 ## Quick Start
@@ -15,7 +15,7 @@ npm run docker:dev     # full dev stack with hot reload
 ```
 
 Dev requires `bluz.dev` → `127.0.0.3` in your hosts file. See
-[docs/getting-started.md](../docs/getting-started.md) for details.
+[docs/getting-started.md](https://github.com/System-B90/Bluz/blob/master/docs/getting-started.md) for details.
 
 ## Workflow
 

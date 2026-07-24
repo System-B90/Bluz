@@ -5,6 +5,7 @@ import { createCurriculumModuleDayMapping } from "@/api-server/gantt/db-mappings
 import { DbModuleEvent } from "@/api-server/gantt/db-module-event";
 import { ganttEventRecurrenceExceptionsSchema } from "@/api-server/gantt/schema";
 import {
+    EventRecurrence,
     GanttCurriculumId,
     GanttDayId,
     GanttEventId,
@@ -71,13 +72,16 @@ export async function materializeRecurrenceOccurrence(data: {
         recommendedLecturerIds: sourceEvent.recommendedLecturerIds,
         systemRequirements: sourceEvent.systemRequirements,
         roomRequirement: sourceEvent.roomRequirement,
-        recurrence: "none",
+        recurrence: EventRecurrence.None,
         isCritical: sourceEvent.isCritical,
         isPaWindow: sourceEvent.isPaWindow,
         comment: sourceEvent.comment,
         shuffles: sourceEvent.shuffles,
+        hiveSubjectId: sourceEvent.hiveSubjectId,
+        hiveModuleId: sourceEvent.hiveModuleId,
+        hiveLessonId: sourceEvent.hiveLessonId,
         moduleId,
-    } as any);
+    });
 
     const [mapping] = await createCurriculumModuleDayMapping({
         curriculumId,

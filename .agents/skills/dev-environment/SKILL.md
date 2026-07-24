@@ -14,7 +14,7 @@ tags:
 
 ## Environment Setup & Spinning
 
-Always route `172.27.80.1` to `bluz.dev` in Windows hosts file (`C:\Windows\System32\drivers\etc\hosts`).
+Always route `127.0.0.3` to `bluz.dev` in Windows hosts file (`C:\Windows\System32\drivers\etc\hosts`).
 Generate environment file once: `python setup.py`
 
 ### 1. Host-Based Development (Recommended for Coding Agents)
@@ -36,8 +36,8 @@ Runs everything (frontend + backend) in containers.
 ## Database Management & Seeding
 
 Databases can run locally or on a remote server (e.g., `mks-srvu`). If local, they map to:
-- PostgreSQL: `172.27.80.1:5432`
-- MongoDB: `172.27.80.1:27018`
+- PostgreSQL: `127.0.0.3:5432`
+- MongoDB: `127.0.0.3:27018`
 
 ### Remote Host (mks-srvu) Verification
 If using remote databases/services on `mks-srvu`, check their status using the remote checker script:

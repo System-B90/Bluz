@@ -201,9 +201,11 @@ export function eventTypeToHebrew(type: EventType): string
  * const attendees = getPresentInstructors(event, true);
  * ```
  */
-export function getPresentInstructors(event: Event): Array<number>;
 export function getPresentInstructors(
-    event: Event,
+    event: Pick<Event, "instructors" | "lecturers">,
+): Array<number>;
+export function getPresentInstructors(
+    event: Pick<Event, "instructors" | "lecturers">,
     includeOutsiders: boolean = false,
 ): Array<PersonId>
 {

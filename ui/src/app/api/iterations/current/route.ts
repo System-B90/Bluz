@@ -8,7 +8,7 @@ import { Iteration, PatchIterationPayload } from "@/api-shared/types/iteration";
 type ServerApiCurrentIteration = ServerApi<void, Iteration>;
 type ServerApiCurrentIterationPatch = ServerApi<PatchIterationPayload, Iteration>;
 
-export const GET: ServerApiCurrentIteration = withApi(async (request) => {
+export const GET: ServerApiCurrentIteration = withApi(async (_request) => {
     return ApiSuccess(await DbIterations.current());
 });
 

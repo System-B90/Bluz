@@ -10,7 +10,7 @@ type ServerApiHiveStudentsGet = ServerApi<
     ApiHiveStudentsGetResponse
 >;
 
-export const GET: ServerApiHiveStudentsGet = withApi(async (request) => {
+export const GET: ServerApiHiveStudentsGet = withApi(async (_request) => {
     const data = await getHiveStudents();
     return ApiSuccess(data);
 });

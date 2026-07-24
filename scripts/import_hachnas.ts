@@ -652,7 +652,7 @@ class EnvironmentConfig {
         if (!fs.existsSync("/.dockerenv")) {
             connectionString = connectionString.replace(
                 "bluz-mongodb:27017",
-                "172.27.80.1:27018",
+                "127.0.0.3:27018",
             );
         }
 

@@ -167,7 +167,7 @@ export function CourseSettings()
     const [ activeDrag, setActiveDrag ] = useState<{
         id: string;
         type: "COURSE" | "INSTRUCTOR";
-        data: any;
+        data: DraggedItemData;
     } | null>(null);
 
     // Captured once per drag (on start) instead of measured on every pointer

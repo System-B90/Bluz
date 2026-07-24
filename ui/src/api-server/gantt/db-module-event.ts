@@ -52,6 +52,7 @@ async function getFullModuleEvent(id: GanttModuleId): Promise<ApiModuleEvent> {
         throw new ClientApiError(`מופע עם מזהה ${id} לא נמצא`);
     }
 
+    await basicOperations.attachParentIds([result]);
     return result as unknown as ApiModuleEvent;
 }
 

@@ -10,7 +10,7 @@ type ServerApiHiveModulesGet = ServerApi<
     ApiHiveModulesGetResponse
 >;
 
-export const GET: ServerApiHiveModulesGet = withApi(async (request) => {
+export const GET: ServerApiHiveModulesGet = withApi(async (_request) => {
     const hiveClient = await createHiveClient();
     const modules = await hiveClient.getModules();
     return ApiSuccess(modules);

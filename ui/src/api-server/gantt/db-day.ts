@@ -19,6 +19,7 @@ const basicOperations = drizzleOperationsBuilder<
     table: ganttDaysSchema,
     typeName: "יום",
     idPrefix: "d",
+    labelColumn: ganttDaysSchema.dayIndex,
     parentJunction: {
         table: ganttWeek2DaysSchema,
         parentKey: "weekId",
@@ -35,7 +36,8 @@ async function getFullDay(id: GanttDayId): Promise<ApiCurriculumDay> {
         throw new ClientApiError(`יום עם מזהה ${id} לא נמצא`);
     }
 
-    return result as any;
+    await basicOperations.attachParentIds([result]);
+    return result as unknown as ApiCurriculumDay;
 }
 export const DbDay = {
     getItem: getFullDay,

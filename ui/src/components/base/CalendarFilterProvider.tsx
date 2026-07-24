@@ -10,6 +10,7 @@ import {
 
 import { PotentialPA } from "@/api-shared/types";
 import { CourseId } from "@/api-shared/types/course";
+import { roomLikeToResourceKey } from "@/api-shared/types/room";
 import { Event, EventType } from "@/components/schedule/types/event";
 
 export type CalendarFiltersContextState = {
@@ -20,6 +21,8 @@ export type CalendarFiltersContextState = {
     setFilteredCourses: Dispatch<SetStateAction<Array<CourseId>>>;
     showPAsFor: null | number;
     setShowPAsFor: Dispatch<SetStateAction<null | number>>;
+    filteredRoom: null | string;
+    setFilteredRoom: Dispatch<SetStateAction<null | string>>;
     hidePrayers: boolean;
     setHidePrayers: Dispatch<SetStateAction<boolean>>;
     showMisconfigurations: boolean;
@@ -38,6 +41,8 @@ const CalendarFiltersContext = createContext<
     setFilteredCourses: () => {},
     showPAsFor: null,
     setShowPAsFor: () => {},
+    filteredRoom: null,
+    setFilteredRoom: () => {},
     hidePrayers: false,
     setHidePrayers: () => {},
     showMisconfigurations: true,
@@ -66,11 +71,21 @@ export const CalendarFiltersProvider = ({
         Array<number>
     >([]);
     const [filteredCourses, setFilteredCourses] = useState<Array<CourseId>>([]);
+    const [filteredRoom, setFilteredRoom] = useState<null | string>(null);
 
     const eventFilteredOpacity = useCallback(
         (event: Event): number => {
             // Desirec behaviour is that if hidePrayers is on, prayers should simply not exist on the calendar
             if (event.type === EventType.PRAYER && hidePrayers) {
+                return 0;
+            }
+
+            if (
+                filteredRoom !== null &&
+                !event.rooms.some(
+                    (room) => roomLikeToResourceKey(room) === filteredRoom,
+                )
+            ) {
                 return 0;
             }
 
@@ -134,7 +149,13 @@ export const CalendarFiltersProvider = ({
 
             return 1;
         },
-        [filteredInstructors, filteredCourses, showPAsFor, hidePrayers],
+        [
+            filteredInstructors,
+            filteredCourses,
+            showPAsFor,
+            hidePrayers,
+            filteredRoom,
+        ],
     );
 
     return (
@@ -147,6 +168,8 @@ export const CalendarFiltersProvider = ({
                 setFilteredCourses,
                 showPAsFor,
                 setShowPAsFor,
+                filteredRoom,
+                setFilteredRoom,
 
                 hidePrayers,
                 setHidePrayers,

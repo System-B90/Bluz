@@ -4,6 +4,7 @@ import { BaseDocument } from "@/api-client/gantt/base";
 import {
     NormalizedStore,
     normalizeCurriculumData,
+    NormalizedSyllabusSubtree,
 } from "@/api-client/gantt/drizzle-normalize";
 import {
     AllocateTimeToEventCallback,
@@ -49,8 +50,6 @@ export type Action =
               curriculumId: GanttCurriculumId;
           };
       }
-
-    // Adds
     | {
           type: "ALLOCATE_TIME_TO_MODULE";
           payload: {
@@ -59,6 +58,8 @@ export type Action =
               duration: number;
           };
       }
+
+    // Adds
     | {
           type: "ALLOCATE_TIME";
           payload: {
@@ -66,6 +67,12 @@ export type Action =
               eventId: GanttEventId;
               duration: number;
           };
+      }
+    | {
+          type: "MERGE_SYLLABUS";
+          payload: {
+              curriculumId: GanttCurriculumId;
+          } & NormalizedSyllabusSubtree;
       }
     | {
           type: "MOVE_EVENT";
@@ -343,6 +350,50 @@ export function curriculumReducer(
                 [parent.id]: {
                     ...parent,
                     events: [...parent.events, action.payload.event.id],
+                },
+            },
+        };
+    }
+
+    case "MERGE_SYLLABUS": {
+        // Fold a fully-populated syllabus (its modules + events already
+        // resolved) into the store. Used by the link flow so a linked
+        // syllabus shows its real module count immediately (#320), instead
+        // of an empty subtree until the next full refetch.
+        const parent = state.curriculums[action.payload.curriculumId];
+        if (!parent) return state;
+
+        const mergedModules = { ...state.modules };
+        for (const moduleDoc of action.payload.modules) {
+            mergedModules[moduleDoc.id] = injectDocumentTimes(moduleDoc);
+        }
+
+        const mergedEvents = { ...state.events };
+        for (const eventDoc of action.payload.events) {
+            mergedEvents[eventDoc.id] = injectDocumentTimes(eventDoc);
+        }
+
+        const alreadyLinked = parent.syllabuses.includes(
+            action.payload.syllabus.id,
+        );
+
+        return {
+            ...state,
+            events: mergedEvents,
+            modules: mergedModules,
+            syllabuses: {
+                ...state.syllabuses,
+                [action.payload.syllabus.id]: injectDocumentTimes(
+                    action.payload.syllabus,
+                ),
+            },
+            curriculums: {
+                ...state.curriculums,
+                [parent.id]: {
+                    ...parent,
+                    syllabuses: alreadyLinked
+                        ? parent.syllabuses
+                        : [...parent.syllabuses, action.payload.syllabus.id],
                 },
             },
         };

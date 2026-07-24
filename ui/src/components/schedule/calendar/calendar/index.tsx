@@ -124,6 +124,12 @@ export function BluzCalendar({
         [setStartDate, setEndDate],
     );
 
+    const handleToggleFullscreen = useCallback(() => setIsFullscreen(true), []);
+    const handleToggleToolbar = useCallback(
+        () => setShowToolbar((prev) => !prev),
+        [],
+    );
+
     const onNavigate = useCallback((newDate: Date) => {
         setCurrentDate(newDate);
     }, []);
@@ -353,8 +359,8 @@ export function BluzCalendar({
                 onNavigate={onNavigate}
                 onSelectEvent={handleSelectEvent}
                 onSelectSlot={handleSlotSelect}
-                onToggleFullscreen={() => setIsFullscreen(true)}
-                onToggleToolbar={() => setShowToolbar(!showToolbar)}
+                onToggleFullscreen={handleToggleFullscreen}
+                onToggleToolbar={handleToggleToolbar}
                 onView={handleViewChange}
                 rooms={rooms}
                 showToolbar={showToolbar && !isFullscreen ? true : false}

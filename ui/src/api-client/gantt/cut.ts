@@ -1,6 +1,7 @@
 import { safeApiFetcher } from "@/api-client/common";
 import { ClientApiError } from "@/api-shared/errors";
 import {
+    ApiCurriculumCutPreviewResponse,
     ApiCurriculumCutResponse,
     ApiCurriculumCutStatus,
     ApiCurriculumPullBackResponse,
@@ -18,11 +19,12 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
  */
 export async function cutCurriculumToSchedule(
     curriculumId: GanttCurriculumId,
+    force = false,
 ): Promise<ApiCurriculumCutResponse> {
     try {
         return await safeApiFetcher<ApiCurriculumCutResponse>(
             `/api/gantt/curriculums/${curriculumId}/cut`,
-            { method: "POST" },
+            { method: "POST", body: JSON.stringify({ force }) },
         );
     } catch (error) {
         if (error instanceof ClientApiError && isCurriculumCutErrorPayload(error)) {
@@ -68,8 +70,21 @@ export async function pullBackCurriculumSchedule(
     }
 }
 
+/**
+ * GET /api/gantt/curriculums/[id]/cut/preview — dry-run of the cut planner:
+ * dated, timed occurrences (or the planner's validation errors), no writes.
+ */
+export async function previewCurriculumCut(
+    curriculumId: GanttCurriculumId,
+): Promise<ApiCurriculumCutPreviewResponse> {
+    return await safeApiFetcher<ApiCurriculumCutPreviewResponse>(
+        `/api/gantt/curriculums/${curriculumId}/cut/preview`,
+    );
+}
+
 export const curriculumCutApi = {
     cut: cutCurriculumToSchedule,
     status: getCurriculumCutStatus,
     pullBack: pullBackCurriculumSchedule,
+    preview: previewCurriculumCut,
 } as const;

@@ -5,6 +5,7 @@ Created: 2026-04-11
 Author: Michael K. Steinberg
 """
 
+import os
 import re
 import secrets
 import shutil
@@ -21,7 +22,10 @@ except ImportError as e:
     print(f"Error: Missing required dependency '{e.name}'.", file=sys.stderr)
     print("Please install the required packages by running:\n", file=sys.stderr)
     print("    pip install typer InquirerPy python-dotenv\n", file=sys.stderr)
-    print("    pip install git+https://github.com/System-B15/pyhive.git@main\n", file=sys.stderr)
+    print(
+        "    pip install git+https://github.com/System-B15/pyhive.git@main\n",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 try:
@@ -30,6 +34,87 @@ except ImportError:
     HiveClient = None
 
 app = typer.Typer(help="Bluz interactive environment setup utility.")
+
+
+def is_ssh_only_session() -> bool:
+    """
+    Detects a terminal-only (SSH, no local browser) session.
+
+    Returns:
+        bool: True if running over SSH with no display available.
+    """
+    if not (
+        os.environ.get("SSH_CONNECTION")
+        or os.environ.get("SSH_TTY")
+        or os.environ.get("SSH_CLIENT")
+    ):
+        return False
+    if sys.platform.startswith("win"):
+        return True
+    return not os.environ.get("DISPLAY")
+
+
+def get_hive_client_via_password(hive_url: str, verify: bool) -> "HiveClient":
+    """
+    Authenticates to Hive with a username/password (resource-owner password
+    grant) instead of the interactive browser SSO flow. Used on terminal-only
+    (SSH) sessions where no local browser is reachable.
+
+    Args:
+        hive_url (str): The base URL of the Hive server.
+        verify (bool): SSL verification setting for the HTTP client.
+
+    Returns:
+        HiveClient: An authenticated HiveClient instance.
+
+    Raises:
+        RuntimeError: If the password grant request fails or the response is
+            missing required token fields.
+    """
+    import httpx
+
+    from pyhive.client.sso_utils import HIVE_SSO_CLIENT_ID, HIVE_SSO_CLIENT_SECRET
+
+    typer.secho(
+        "\nNo local browser reachable (SSH/terminal-only session).",
+        fg=typer.colors.YELLOW,
+    )
+    username = inquirer.text(message="Hive username:").execute()
+    password = inquirer.secret(message="Hive password:").execute()
+
+    token_url = f"{hive_url}/api/core/sso/token/"
+    payload = {
+        "grant_type": "password",
+        "username": username,
+        "password": password,
+    }
+    with httpx.Client(verify=verify, follow_redirects=True) as client:
+        response = client.post(
+            token_url,
+            data=payload,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            auth=(HIVE_SSO_CLIENT_ID, HIVE_SSO_CLIENT_SECRET),
+        )
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Password login failed (HTTP {response.status_code}): {response.text}"
+            )
+        token_data = response.json()
+
+    access_token = token_data.get("access_token")
+    refresh_token = token_data.get("refresh_token")
+    if not access_token or not refresh_token:
+        raise RuntimeError(
+            "Password login response missing 'access_token' or 'refresh_token'."
+        )
+
+    return HiveClient.from_api_token(
+        api_token=access_token,
+        refresh_token=refresh_token,
+        hive_url=hive_url,
+        verify=verify,
+        auth_strategy="sso",
+    )
 
 
 def generate_password(length: int = 32) -> str:
@@ -255,7 +340,11 @@ def generate_env() -> None:
         else:
             typer.echo(f"Registering Bluz SSO service with Hive at {hive_url}...")
             try:
-                client = HiveClient.from_sso(hive_url=hive_url, verify=False)
+                client = (
+                    get_hive_client_via_password(hive_url, verify=False)
+                    if is_ssh_only_session()
+                    else HiveClient.from_sso(hive_url=hive_url, verify=False)
+                )
                 sso_credentials = client.register_sso_service(
                     service_name="Bluz",
                     redirect_uris=f"{nextauth_url}/api/auth/callback/hive",
@@ -269,6 +358,29 @@ def generate_env() -> None:
                 typer.secho(f"Failed to register Hive SSO: {e}", fg=typer.colors.RED)
                 hive_client_id = "MANUAL_ENTRY_REQUIRED"
                 hive_client_secret = "MANUAL_ENTRY_REQUIRED"
+
+    # Google Calendar sync needs NO per-deployment setup: users connect with a
+    # "Continue with Google" popup and Bluz ships shared OAuth credentials.
+    # These env vars exist only as an optional override for admins who want
+    # their own Google Cloud project (e.g. custom branding on the consent
+    # screen). Leave blank to use the built-in defaults.
+    google_client_id = existing_env.get("GOOGLE_CLIENT_ID", "")
+    google_client_secret = existing_env.get("GOOGLE_CLIENT_SECRET", "")
+    override_google_oauth = inquirer.confirm(
+        message="Override the built-in Google OAuth app for Calendar sync? (default: no — no setup needed)",
+        default=bool(google_client_id),
+    ).execute()
+    if override_google_oauth:
+        google_client_id = inquirer.text(
+            message="Enter Google OAuth Client ID (GOOGLE_CLIENT_ID):",
+            default=google_client_id,
+        ).execute()
+        google_client_secret = (
+            inquirer.secret(
+                message="Enter Google OAuth Client Secret (GOOGLE_CLIENT_SECRET):",
+            ).execute()
+            or google_client_secret
+        )
 
     env_content: dict[str, str] = {
         "BLUZ_VERSION": existing_env.get("BLUZ_VERSION", "latest"),
@@ -288,6 +400,8 @@ def generate_env() -> None:
         "POSTGRES_PASSWORD": pg_pass,
         "POSTGRES_DB": pg_db,
         "DATABASE_URL": db_url,
+        "GOOGLE_CLIENT_ID": google_client_id,
+        "GOOGLE_CLIENT_SECRET": google_client_secret,
     }
 
     with env_path.open("w", encoding="utf-8") as f:

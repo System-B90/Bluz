@@ -112,6 +112,7 @@ function GanttPageInner()
     const [ initialData, setInitialData ] = useState<ApiCurriculum | null>(null);
     const [ isLoading, setIsLoading ] = useState(false);
     const [ error, setError ] = useState<null | string>(null);
+    const [ isLoadingCurriculums, setIsLoadingCurriculums ] = useState(true);
 
     useEffect(() =>
     {
@@ -189,6 +190,7 @@ function GanttPageInner()
             <CurriculumSyncContext.Provider value={ curriculumSyncRef }>
                 <CurriculumFab
                     currentCurriculum={ currentCurriculum }
+                    onLoadingChange={ setIsLoadingCurriculums }
                     open={ drawerOpen }
                     setCurrentCurriculum={ setCurrentCurriculum }
                     setOpen={ setDrawerOpen }
@@ -205,13 +207,13 @@ function GanttPageInner()
                         maxWidth: "100%",
                     } }
                 >
-                    { !currentCurriculum && !isLoading && (
+                    { !currentCurriculum && !isLoading && !isLoadingCurriculums && (
                         <Typography color="textSecondary">
                         בחרו גאנט כדי להתחיל לעבוד
                         </Typography>
                     ) }
 
-                    { isLoading ? <WindowsLoadingScreen /> : null }
+                    { isLoading || isLoadingCurriculums ? <WindowsLoadingScreen /> : null }
 
                     { error ? <Typography color="error">{ error }</Typography> : null }
 

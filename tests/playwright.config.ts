@@ -34,6 +34,12 @@ export default defineConfig({
     use: {
         baseURL: process.env.BASE_URL ?? "https://bluz.dev",
         ignoreHTTPSErrors: true,
+        // Chromium keeps shared-memory tabs in /dev/shm, which is only 64 MB
+        // by default inside containers — exhausting it crashes the tab/browser
+        // ("Target page/context/browser has been closed"), cascading to every
+        // later test in the worker. The self-hosted runner also raises
+        // shm_size, but this flag makes any container host safe.
+        launchOptions: { args: [ "--disable-dev-shm-usage" ] },
         screenshot: "only-on-failure",
         video: "on-first-retry",
         trace: "on-first-retry",

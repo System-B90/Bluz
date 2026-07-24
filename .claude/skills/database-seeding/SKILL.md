@@ -11,7 +11,7 @@ docker ps
 Verify running: `bluz-curriculum-db` (Postgres), `bluz-mongodb` (MongoDB).
 Test stack variants: `bluz-test-curriculum-db`, `bluz-test-mongodb`.
 
-Ports: `172.27.80.1:5432` (Postgres), `172.27.80.1:27018` (MongoDB)
+Ports: `127.0.0.3:5432` (Postgres), `127.0.0.3:27018` (MongoDB)
 
 ## Drizzle Commands
 ```powershell

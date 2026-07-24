@@ -24,7 +24,7 @@ env:
 jobs:
     lint:
         name: Lint Codebase
-        runs-on: ubuntu-24.04
+        runs-on: self-hosted
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -46,7 +46,7 @@ jobs:
                   NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
 
             - name: Install Dependencies (Python)
-              run: pip install ruff
+              run: pip install ruff==0.15.20
 
             - name: Run ESLint
               run: npm run lint
@@ -59,7 +59,7 @@ jobs:
 
     test:
         name: Unit Tests
-        runs-on: ubuntu-24.04
+        runs-on: self-hosted
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -84,7 +84,7 @@ jobs:
         name: Build UI Image
         needs: [lint, test]
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
-        runs-on: ubuntu-24.04
+        runs-on: self-hosted
         permissions:
             contents: read
             packages: write
@@ -132,7 +132,7 @@ jobs:
         name: Build Sessions Image
         needs: [lint, test]
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
-        runs-on: ubuntu-24.04
+        runs-on: self-hosted
         permissions:
             contents: read
             packages: write
@@ -178,7 +178,7 @@ jobs:
     build-proxy:
         name: Build Proxy Image
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
-        runs-on: ubuntu-24.04
+        runs-on: self-hosted
         permissions:
             contents: read
             packages: write
@@ -223,7 +223,7 @@ jobs:
         name: Craft Release Packages
         needs: [build-ui, build-sessions, build-proxy]
         if: startsWith(github.ref, 'refs/tags/v')
-        runs-on: ubuntu-24.04
+        runs-on: self-hosted
         permissions:
             contents: write
             packages: read
@@ -303,7 +303,7 @@ jobs:
         name: Publish bluz CLI to org pip index
         needs: craft-release
         if: startsWith(github.ref, 'refs/tags/v')
-        runs-on: ubuntu-24.04
+        runs-on: self-hosted
 
         steps:
             - name: Checkout repository
