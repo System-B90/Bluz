@@ -23,7 +23,8 @@ except ImportError as e:
     print("Please install the required packages by running:\n", file=sys.stderr)
     print("    pip install typer InquirerPy python-dotenv\n", file=sys.stderr)
     print(
-        "    pip install git+https://github.com/System-B15/pyhive.git@main\n",
+        "    pip install PyHiveLMS --index-url"
+        " https://raw.githubusercontent.com/System-B90/.github/main/pypi/\n",
         file=sys.stderr,
     )
     sys.exit(1)

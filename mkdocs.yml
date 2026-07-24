@@ -3,7 +3,7 @@ site_description: Internal developer documentation for the Bluz scheduling & cur
 site_url: https://system-b90.github.io/bluz/
 repo_url: https://github.com/system-b90/bluz
 repo_name: system-b90/bluz
-copyright: Copyright &copy; 2026 System B15
+copyright: Copyright &copy; 2026 System B90
 
 theme:
   name: material

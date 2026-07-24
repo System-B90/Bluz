@@ -22,9 +22,16 @@ env:
     IMAGE_MONGO: mongodb/mongodb-community-server:8.0-ubuntu2204
 
 jobs:
-    lint:
-        name: Lint Codebase
+    # Lint and unit tests were separate jobs, each with its own checkout, Node
+    # setup and `npm ci`. Both already run on the single self-hosted box, where
+    # they queue rather than overlap — so the split bought a second full
+    # install and no parallelism. `!cancelled()` on the later steps preserves
+    # the one thing it did provide: a lint failure still doesn't hide a test
+    # failure.
+    verify:
+        name: Lint + Unit Tests
         runs-on: self-hosted
+        timeout-minutes: 30
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -39,6 +46,7 @@ jobs:
               uses: actions/setup-python@v6
               with:
                   python-version: "3.11"
+                  cache: pip
 
             - name: Install Dependencies (Node)
               run: npm ci
@@ -52,39 +60,25 @@ jobs:
               run: npm run lint
 
             - name: Run Ruff (Python Linter)
+              if: ${{ !cancelled() }}
               run: ruff check .
 
             - name: Run Ruff (Python Formatter Check)
+              if: ${{ !cancelled() }}
               run: ruff format --check .
 
-    test:
-        name: Unit Tests
-        runs-on: self-hosted
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v7
-
-            - name: Setup Node.js 24
-              uses: actions/setup-node@v6
-              with:
-                  node-version: "24"
-                  cache: "npm"
-
-            - name: Install Dependencies
-              run: npm ci
-              env:
-                  NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
-
             - name: Run Unit Tests
+              if: ${{ !cancelled() }}
               run: npm run test:unit
               env:
                   NEXTAUTH_SECRET: ci_test_secret_key
 
     build-ui:
         name: Build UI Image
-        needs: [lint, test]
+        needs: [verify]
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
         runs-on: self-hosted
+        timeout-minutes: 45
         permissions:
             contents: read
             packages: write
@@ -130,9 +124,10 @@ jobs:
 
     build-sessions:
         name: Build Sessions Image
-        needs: [lint, test]
+        needs: [verify]
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
         runs-on: self-hosted
+        timeout-minutes: 45
         permissions:
             contents: read
             packages: write
@@ -179,6 +174,7 @@ jobs:
         name: Build Proxy Image
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
         runs-on: self-hosted
+        timeout-minutes: 45
         permissions:
             contents: read
             packages: write
@@ -224,6 +220,7 @@ jobs:
         needs: [build-ui, build-sessions, build-proxy]
         if: startsWith(github.ref, 'refs/tags/v')
         runs-on: self-hosted
+        timeout-minutes: 45
         permissions:
             contents: write
             packages: read
@@ -304,6 +301,7 @@ jobs:
         needs: craft-release
         if: startsWith(github.ref, 'refs/tags/v')
         runs-on: self-hosted
+        timeout-minutes: 45
 
         steps:
             - name: Checkout repository
