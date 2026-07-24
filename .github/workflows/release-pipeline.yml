@@ -73,6 +73,30 @@ jobs:
               env:
                   NEXTAUTH_SECRET: ci_test_secret_key
 
+            # session-server/ is a separate package with its own
+            # package.json, lockfile and tsconfig, and nothing checked it on a
+            # PR: the root lint/test jobs never touch it, and the only thing
+            # that compiled it — Build Sessions Image — is skipped on pull
+            # requests. So a change that broke it (its own dependency bumps
+            # very much included) stayed invisible until a push to master or a
+            # tag. Type-check it here, where it's cheap.
+            - name: Install session-server dependencies
+              if: ${{ !cancelled() }}
+              working-directory: session-server
+              run: npm ci
+              env:
+                  NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+
+            - name: Lint session-server
+              if: ${{ !cancelled() }}
+              working-directory: session-server
+              run: npm run lint
+
+            - name: Build session-server
+              if: ${{ !cancelled() }}
+              working-directory: session-server
+              run: npm run build
+
     build-ui:
         name: Build UI Image
         needs: [verify]
