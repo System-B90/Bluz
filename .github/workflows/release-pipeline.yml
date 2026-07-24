@@ -1,8 +1,14 @@
 name: Build and Release Bluz
 
 on:
+    # push is restricted to the long-lived branches on purpose. With
+    # `push: ["**"]` alongside `pull_request: ["**"]`, every commit on a PR
+    # branch ran this workflow twice — once per event — and the two runs did
+    # not cancel each other, because the concurrency key includes github.ref,
+    # which is refs/heads/<branch> for push but refs/pull/N/merge for
+    # pull_request. That doubled every PR's CI cost on a shared runner.
     push:
-        branches: ["**"]
+        branches: [master, dev]
         tags: ["v*.*.*", "v*.*.*-rc*", "ci-test"]
     pull_request:
         branches: ["**"]
