@@ -5,6 +5,7 @@ import {
     clickIconButton,
     gotoAppHome,
     openSettingsDialog,
+    openFilterPanel,
 } from "./fixtures";
 
 /**
@@ -72,58 +73,36 @@ test.describe("Header / AppBar", () => {
     });
 
     test("toggles prayer filter on click", async ({ page }) => {
-        const filterToggle = page.getByRole("button", { name: /הצגת סננים|הסתרת סננים/ });
+        await openFilterPanel(page);
 
-        // Panel may already be open from a previous test; open it if not
-        if (!await page.getByRole("button", { name: /הסתרת סננים/ }).isVisible()) {
-            await filterToggle.click();
-        }
-
+        // Prayers start shown → tooltip label reads "הסתרת תפילות" (hide prayers).
         const prayerToggle = page.getByRole("button", { name: /הסתרת תפילות|הצגת תפילות/ });
-        await expect(prayerToggle).toBeVisible();
+        await expect(prayerToggle).toHaveAttribute("aria-label", "הסתרת תפילות");
 
-        // Click to toggle prayer filter; Tooltip-Portal / ClickAwayListener may
-        // close the Popover — re-open it before asserting the overlay icon.
+        // Toggle ON: hidePrayers flips true → label becomes "הצגת תפילות" (show prayers).
+        // The label flip is the source-of-truth state signal (the overlay icon only
+        // changes opacity, which Playwright's visibility check ignores).
         await prayerToggle.click();
-        if (!await page.getByRole("button", { name: /הסתרת סננים/ }).isVisible()) {
-            await filterToggle.click();
-        }
+        await expect(page.getByRole("button", { name: "הצגת תפילות" })).toBeVisible();
 
-        // The DoNotDisturbAlt overlay icon should become visible
-        const overlayIcon = prayerToggle.locator("svg.absolute");
-        await expect(overlayIcon).toBeVisible({ timeout: 5_000 });
-
-        // Toggle back
-        await prayerToggle.click();
-        await page.waitForTimeout(300);
+        // Toggle back OFF → label returns to "הסתרת תפילות".
+        await page.getByRole("button", { name: "הצגת תפילות" }).click();
+        await expect(page.getByRole("button", { name: "הסתרת תפילות" })).toBeVisible();
     });
 
     test("toggles PA windows filter on click", async ({ page }) => {
-        const filterToggle = page.getByRole("button", { name: /הצגת סננים|הסתרת סננים/ });
-        await filterToggle.click();
+        await openFilterPanel(page);
 
-        // Initial state — "גלה" (show PA windows)
-        const showBtn = page.getByRole("button", { name: /גילוי חלונות פ"א/ });
-        await expect(showBtn).toBeVisible();
+        // Initial state — "גילוי חלונות פ\"א" (show PA windows).
+        await expect(page.getByRole("button", { name: /גילוי חלונות פ"א/ })).toBeVisible();
 
-        // Click to toggle; the filter Popover may close (Tooltip Portal / ClickAwayListener
-        // interaction) — re-open it before asserting the new label.
-        await showBtn.click();
-        if (!await page.getByRole("button", { name: /הסתרת סננים/ }).isVisible()) {
-            await filterToggle.click();
-        }
-        await expect(
-            page.getByRole("button", { name: /הסתרת חלונות פ"א/ }),
-        ).toBeVisible({ timeout: 5_000 });
+        // Toggle ON → label flips to "הסתרת חלונות פ\"א" (hide).
+        await page.getByRole("button", { name: /גילוי חלונות פ"א/ }).click();
+        await expect(page.getByRole("button", { name: /הסתרת חלונות פ"א/ })).toBeVisible();
 
-        // Toggle back — same pattern
+        // Toggle back OFF → label returns to "גילוי חלונות פ\"א".
         await page.getByRole("button", { name: /הסתרת חלונות פ"א/ }).click();
-        if (!await page.getByRole("button", { name: /הסתרת סננים/ }).isVisible()) {
-            await filterToggle.click();
-        }
-        await expect(
-            page.getByRole("button", { name: /גילוי חלונות פ"א/ }),
-        ).toBeVisible({ timeout: 5_000 });
+        await expect(page.getByRole("button", { name: /גילוי חלונות פ"א/ })).toBeVisible();
     });
 
     test("navigates to the Gantt page via curriculum icon", async ({
@@ -176,33 +155,29 @@ test.describe("Header / AppBar", () => {
     test("displays misconfigurations toggle in warning color when active", async ({
         page,
     }) => {
-        const filterToggle = page.getByRole("button", { name: /הצגת סננים|הסתרת סננים/ });
+        await openFilterPanel(page);
 
-        const openAndFind = async () => {
-            if (!await page.getByRole("button", { name: /הסתרת סננים/ }).isVisible()) {
-                await filterToggle.click();
-            }
-            return page.getByRole("button", { name: /הצגת פערי איוש|הסתרת פערי איוש/ });
-        };
-
-        let toggle = await openAndFind();
+        const toggle = page.getByRole("button", { name: /הצגת פערי איוש|הסתרת פערי איוש/ });
         await expect(toggle).toBeVisible();
 
-        // Normalise: start with misconfigurations hidden ("הצג" = currently off)
+        // Normalise: start with misconfigurations hidden ("הצגת" = currently off).
         if ((await toggle.getAttribute("aria-label"))?.includes("הסתר")) {
-            await toggle.click();
-            toggle = await openAndFind();
-            await expect(page.getByRole("button", { name: /הצגת פערי/ })).toBeVisible({ timeout: 5_000 });
+            await page.getByRole("button", { name: /הסתרת פערי/ }).click();
+            await expect(page.getByRole("button", { name: /הצגת פערי/ })).toBeVisible();
         }
 
-        // Toggle ON → label should become "הסתרת פערי איוש"
-        await page.getByRole("button", { name: /הצגת פערי/ }).click();
-        toggle = await openAndFind();
-        await expect(page.getByRole("button", { name: /הסתרת פערי/ })).toBeVisible({ timeout: 5_000 });
+        // Off state → color="inherit" (no warning class).
+        const offBtn = page.getByRole("button", { name: /הצגת פערי/ });
+        await expect(offBtn).not.toHaveClass(/MuiIconButton-colorWarning/);
 
-        // Toggle OFF → label should return to "הצגת פערי איוש"
-        await page.getByRole("button", { name: /הסתרת פערי/ }).click();
-        toggle = await openAndFind();
-        await expect(page.getByRole("button", { name: /הצגת פערי/ })).toBeVisible({ timeout: 5_000 });
+        // Toggle ON → label becomes "הסתרת פערי איוש" AND the icon turns warning-colored.
+        await offBtn.click();
+        const onBtn = page.getByRole("button", { name: /הסתרת פערי/ });
+        await expect(onBtn).toBeVisible();
+        await expect(onBtn).toHaveClass(/MuiIconButton-colorWarning/);
+
+        // Toggle OFF → label returns and warning color clears.
+        await onBtn.click();
+        await expect(page.getByRole("button", { name: /הצגת פערי/ })).toBeVisible();
     });
 });

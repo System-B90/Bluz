@@ -1,10 +1,15 @@
 import { DragEndEvent } from "@dnd-kit/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models";
+import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
+import {
+    EventRecurrence,
+    GanttCurriculumModuleDayMapping,
+} from "@/api-shared/types/gantt/models";
 import
 {
     ConstraintType,
+    GanttConstraint,
     hasConflictingTemporalConstraints,
 } from "@/api-shared/types/gantt/models/constraint";
 import
@@ -14,23 +19,28 @@ import
     computeEventDaySpans,
     getSpilloverMinutesByDay,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { fuzzyScore } from "@/components/gantt/curriculum-view/search/fuzzy";
 import { ConstraintLink } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGanttUndo } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-undo";
 import { useGanttConstraints } from "@/components/gantt/state/constraints/hooks";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
-import { useCurriculumState } from "@/components/gantt/state/provider";
+import {
+    useCurriculumProviderActions,
+    useCurriculumState,
+} from "@/components/gantt/state/provider";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 
 export const useGanttView = (curriculumId: string) =>
 {
     const state = useCurriculumState();
+    const { registerRevealHandler } = useCurriculumProviderActions();
     const {
         state: { mappings: globalMappings },
         createMapping,
         moveMapping,
         removeMapping,
     } = useGanttMappings();
-    const { deleteOccurrence } = useGanttRecurrenceExceptions();
+    const { deleteOccurrence, state: recurrenceExceptionState } = useGanttRecurrenceExceptions();
     const {
         state: { constraints },
     } = useGanttConstraints();
@@ -51,6 +61,9 @@ export const useGanttView = (curriculumId: string) =>
     const [ expandedModuleIds, setExpandedModuleIds ] = useState<Set<string>>(
         () => new Set(),
     );
+    // First-column search: filters the syllabus → module → event row tree by
+    // title. Empty string = no filter (#323).
+    const [ searchQuery, setSearchQuery ] = useState("");
     const [ containerWidth, setContainerWidth ] = useState(0);
     // DOM id of a row to scroll into view once its ancestors have expanded.
     const [ pendingScrollId, setPendingScrollId ] = useState<null | string>(null);
@@ -152,6 +165,86 @@ export const useGanttView = (curriculumId: string) =>
             collapsedSyllabusIds.has(id),
         );
 
+    // Resolve which rows survive the first-column search. A syllabus/module
+    // title match reveals its whole subtree; an event match reveals just that
+    // event plus its parent module + syllabus for context. null = not filtering
+    // (everything visible). (#323)
+    const searchActive = searchQuery.trim().length > 0;
+    const searchVisibility = useMemo(() =>
+    {
+        if (!searchActive) return null;
+
+        const syllabusIds = new Set<string>();
+        const moduleIds = new Set<string>();
+        const eventIds = new Set<string>();
+        // Reuse the app's fuzzy matcher so first-column filtering behaves like
+        // the navigate-to search (quote-insensitive, subsequence-tolerant).
+        const matches = (title?: string) =>
+            fuzzyScore(searchQuery, title ?? "") > 0;
+
+        for (const syllabusId of curriculum?.syllabuses ?? [])
+        {
+            const syllabus = state.syllabuses[ syllabusId ];
+            if (!syllabus) continue;
+
+            const syllabusMatches = matches(syllabus.title);
+            let anyChildVisible = false;
+
+            for (const moduleId of syllabus.modules)
+            {
+                const ganttModule = state.modules[ moduleId ];
+                if (!ganttModule) continue;
+
+                const showWholeModule =
+                    syllabusMatches || matches(ganttModule.title);
+                let anyEventVisible = false;
+
+                for (const eventId of ganttModule.events ?? [])
+                {
+                    const event = state.events[ eventId ];
+                    if (showWholeModule || (event && matches(event.title)))
+                    {
+                        eventIds.add(eventId);
+                        anyEventVisible = true;
+                    }
+                }
+
+                if (showWholeModule || anyEventVisible)
+                {
+                    moduleIds.add(moduleId);
+                    anyChildVisible = true;
+                }
+            }
+
+            if (syllabusMatches || anyChildVisible) syllabusIds.add(syllabusId);
+        }
+
+        return { syllabusIds, moduleIds, eventIds };
+    }, [
+        searchActive,
+        searchQuery,
+        curriculum?.syllabuses,
+        state.syllabuses,
+        state.modules,
+        state.events,
+    ]);
+
+    const isSyllabusVisible = useCallback(
+        (syllabusId: string) =>
+            !searchVisibility || searchVisibility.syllabusIds.has(syllabusId),
+        [ searchVisibility ],
+    );
+    const isModuleVisible = useCallback(
+        (moduleId: string) =>
+            !searchVisibility || searchVisibility.moduleIds.has(moduleId),
+        [ searchVisibility ],
+    );
+    const isEventVisible = useCallback(
+        (eventId: string) =>
+            !searchVisibility || searchVisibility.eventIds.has(eventId),
+        [ searchVisibility ],
+    );
+
     const isModuleExpanded = useCallback(
         (moduleId: string) => expandedModuleIds.has(moduleId),
         [ expandedModuleIds ],
@@ -197,6 +290,13 @@ export const useGanttView = (curriculumId: string) =>
             );
         },
         [],
+    );
+
+    // Expose this view's reveal behavior so other flows (event create/
+    // duplicate) can scroll-to + flash a new row without a direct ref (#325).
+    useEffect(
+        () => registerRevealHandler(revealItem),
+        [ registerRevealHandler, revealItem ],
     );
 
     // After the target's ancestors expand, scroll to it and flash a highlight.
@@ -300,10 +400,53 @@ export const useGanttView = (curriculumId: string) =>
         [ curriculumMappings, state, linearDays ],
     );
 
-    const scheduledMinutesByDay = useMemo(
-        () => getSpilloverMinutesByDay(eventSpans),
-        [ eventSpans ],
+    const dayIndexOf = useCallback(
+        (dayId: string) => state.days[ dayId ]?.dayIndex,
+        [ state.days ],
     );
+
+    // Recurring events echo onto following days/weeks without a mapping row
+    // for each occurrence, so their time must be added to those days
+    // separately from `eventSpans` (which only covers mapped rows).
+    const recurrenceMinutesByDay = useMemo(() =>
+    {
+        const byDay: Record<string, number> = {};
+        Object.entries(eventMappings).forEach(([ eventId, startDayId ]) =>
+        {
+            const event = state.events[ eventId ];
+            if (!event || event.recurrence === EventRecurrence.None) return;
+
+            const excludedDayIds = new Set<string>();
+            Object.values(recurrenceExceptionState.exceptions).forEach((e) =>
+            {
+                if (e.eventId === eventId) excludedDayIds.add(e.dayId);
+            });
+
+            const occurrenceDayIds = getRecurrenceOccurrenceDayIds({
+                recurrence: event.recurrence,
+                startDayId,
+                linearDays,
+                dayIndexOf,
+                excludedDayIds,
+            });
+
+            occurrenceDayIds.forEach((dayId) =>
+            {
+                byDay[ dayId ] = (byDay[ dayId ] ?? 0) + (event.minimumDuration ?? 0);
+            });
+        });
+        return byDay;
+    }, [ eventMappings, state.events, recurrenceExceptionState.exceptions, linearDays, dayIndexOf ]);
+
+    const scheduledMinutesByDay = useMemo(() =>
+    {
+        const merged = getSpilloverMinutesByDay(eventSpans);
+        Object.entries(recurrenceMinutesByDay).forEach(([ dayId, minutes ]) =>
+        {
+            merged[ dayId ] = (merged[ dayId ] ?? 0) + minutes;
+        });
+        return merged;
+    }, [ eventSpans, recurrenceMinutesByDay ]);
 
     // Modules/events with no day mapping yet, grouped by syllabus, for the
     // "unallocated" panel (#89).
@@ -389,12 +532,14 @@ export const useGanttView = (curriculumId: string) =>
         };
 
         const processConstraints = (
-            entity: { constraintIds?: Array<string> },
+            entity: { constraints?: Array<GanttConstraint> },
             entityId: string,
             entityType: "event" | "module",
         ) =>
         {
-            const cIds: Array<string> = entity.constraintIds || [];
+            const cIds: Array<string> = (entity.constraints || []).map(
+                (c) => c.id,
+            );
 
             // Conflicting temporal constraints are flagged even before the
             // entity is mapped to a day (#104). Warning only — never blocks.
@@ -844,6 +989,10 @@ export const useGanttView = (curriculumId: string) =>
             toggleSyllabus,
             isModuleExpanded,
             toggleModule,
+            searchActive,
+            isSyllabusVisible,
+            isModuleVisible,
+            isEventVisible,
             onMapModule: handleMapModule,
             onMapEvent: handleMapEvent,
             onMoveModule: handleMoveModule,
@@ -872,6 +1021,10 @@ export const useGanttView = (curriculumId: string) =>
             toggleSyllabus,
             isModuleExpanded,
             toggleModule,
+            searchActive,
+            isSyllabusVisible,
+            isModuleVisible,
+            isEventVisible,
             handleMapModule,
             handleMapEvent,
             handleMoveModule,
@@ -902,5 +1055,7 @@ export const useGanttView = (curriculumId: string) =>
         unallocatedCount,
         revealItem,
         activeLinks,
+        searchQuery,
+        setSearchQuery,
     };
 };

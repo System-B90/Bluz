@@ -7,6 +7,7 @@ import {
     GanttWeek,
 } from "@/api-shared/types/gantt/models";
 import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttCell";
+import { GanttBlockPayload } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 
 /** Multi-day spillover info for a mapped event (#105). */
 export type EventSpanInfo = {
@@ -23,8 +24,6 @@ type WeeklyCellsParams = {
     eventTitle?: string;
     currentDayId: null | string;
     isEventUnmapped: boolean;
-    isModuleMapped: boolean;
-    moduleStartWeekIdx: number;
     violations: Array<string>;
     spanInfo?: EventSpanInfo | null;
     relativeDaySizing: boolean;
@@ -54,8 +53,6 @@ export function buildWeeklyEventCells(
         eventTitle,
         currentDayId,
         isEventUnmapped,
-        isModuleMapped,
-        moduleStartWeekIdx,
         violations,
         spanInfo,
         relativeDaySizing,
@@ -103,25 +100,21 @@ export function buildWeeklyEventCells(
         const reminderIsStaged = isRecurrenceReminder && isEventUnmapped;
         const reminderIsMarker = isRecurrenceReminder && !isEventUnmapped;
 
-        // Non-recurring events keep waiting in their module's start column.
-        const isModuleWaiting =
-            isEventUnmapped &&
-            !isRecurring &&
-            isModuleMapped &&
-            weekIdx === moduleStartWeekIdx;
-        const isOpaqueBlock = reminderIsStaged || reminderIsMarker || isModuleWaiting;
-        const ownsAnchor = isExplicitlyMappedHere || reminderIsStaged || isModuleWaiting;
+        // Unmapped non-recurring events no longer stage a "waiting" shadow block
+        // in their module's start column — they stay unmapped (shown in the
+        // label cell / unallocated panel) until explicitly placed (#329).
+        const isOpaqueBlock = reminderIsStaged || reminderIsMarker;
+        const ownsAnchor = isExplicitlyMappedHere || reminderIsStaged;
 
         const hasBlock =
             isExplicitlyMappedHere ||
             isRecurrenceWeek ||
-            isRecurrenceReminder ||
-            isModuleWaiting;
+            isRecurrenceReminder;
 
-        const blockPayload = isExplicitlyMappedHere
-            ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId }
+        const blockPayload: GanttBlockPayload = isExplicitlyMappedHere
+            ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId! }
             : isRecurrenceWeek
-                ? { type: "event-occurrence", moduleId, eventId, dayId: weekOccurrenceDayId }
+                ? { type: "event-occurrence", moduleId, eventId, dayId: weekOccurrenceDayId! }
                 : reminderIsMarker
                     ? { moduleId, eventId }
                     : { type: "event-map", moduleId, eventId };
@@ -211,8 +204,6 @@ type DailyCellsParams = {
     eventTitle?: string;
     currentDayId: null | string;
     isEventUnmapped: boolean;
-    isModuleMapped: boolean;
-    moduleStartDayId: null | string;
     violations: Array<string>;
     spanInfo?: EventSpanInfo | null;
     /** Required-time label shown on the mapped block (zoomed single-week day view). */
@@ -237,8 +228,6 @@ export function buildDailyEventCells(
         eventTitle,
         currentDayId,
         isEventUnmapped,
-        isModuleMapped,
-        moduleStartDayId,
         violations,
         spanInfo,
         timeLabel,
@@ -269,24 +258,18 @@ export function buildDailyEventCells(
             const reminderIsStaged = isRecurrenceReminder && isEventUnmapped;
             const reminderIsMarker = isRecurrenceReminder && !isEventUnmapped;
 
-            // Non-recurring events keep waiting in their module's start column.
-            const isModuleWaiting =
-                isEventUnmapped &&
-                !isRecurring &&
-                isModuleMapped &&
-                moduleStartDayId === dayId;
-            const isOpaqueBlock =
-                reminderIsStaged || reminderIsMarker || isModuleWaiting;
-            const ownsAnchor =
-                isExplicitlyMappedHere || reminderIsStaged || isModuleWaiting;
+            // Unmapped non-recurring events no longer stage a "waiting" shadow
+            // block in their module's start column — they stay unmapped (shown
+            // in the label cell / unallocated panel) until placed (#329).
+            const isOpaqueBlock = reminderIsStaged || reminderIsMarker;
+            const ownsAnchor = isExplicitlyMappedHere || reminderIsStaged;
 
             const hasBlock =
                 isExplicitlyMappedHere ||
                 isRecurrenceOccurrence ||
-                isRecurrenceReminder ||
-                isModuleWaiting;
+                isRecurrenceReminder;
 
-            const blockPayload = isExplicitlyMappedHere
+            const blockPayload: GanttBlockPayload = isExplicitlyMappedHere
                 ? { type: "event-move", moduleId, eventId, sourceDayId: dayId }
                 : isRecurrenceOccurrence
                     ? { type: "event-occurrence", moduleId, eventId, dayId }

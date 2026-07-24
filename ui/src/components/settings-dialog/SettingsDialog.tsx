@@ -1,5 +1,6 @@
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import CloseIcon from "@mui/icons-material/Close";
+import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import PaletteIcon from "@mui/icons-material/Palette";
 import PersonIcon from "@mui/icons-material/Person";
@@ -12,6 +13,7 @@ import Typography from "@mui/material/Typography";
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
 import { ColorSettings } from "@/components/settings-dialog/tabs/global/color-settings";
 import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalSettings";
+import { IterationSettings } from "@/components/settings-dialog/tabs/global/iteration-settings";
 import { OutsiderSettings } from "@/components/settings-dialog/tabs/global/outsider-settings";
 import { RoomSettings } from "@/components/settings-dialog/tabs/global/room-settings";
 import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
@@ -44,6 +46,11 @@ export function SettingsDialog({
                 icon: <AssignmentIndIcon />,
                 value: "outsiders",
             },
+            {
+                label: "מחזורים",
+                icon: <EventRepeatIcon />,
+                value: "iterations",
+            },
         ];
 
     return (
@@ -59,11 +66,17 @@ export function SettingsDialog({
                     bgcolor: "background.paper",
                     backgroundImage: "none",
                     boxShadow: "0 24px 50px rgba(0,0,0,0.15)",
+                    maxHeight: "calc(100vh - 64px)",
                 },
             }}
         >
             {/* Main Flex Container */}
-            <Box className="min-h-[480px]" display="flex" flexDirection="row">
+            <Box
+                className="min-h-[480px]"
+                display="flex"
+                flexDirection="row"
+                sx={{ maxHeight: "calc(100vh - 64px)" }}
+            >
                 {/* Sidebar Navigation */}
                 <Box
                     sx={(theme) => ({
@@ -207,6 +220,7 @@ export function SettingsDialog({
                         minWidth: 0,
                         display: "flex",
                         flexDirection: "column",
+                        overflowY: "auto",
                     }}
                 >
                     {/* Header Row with Close Button */}
@@ -246,6 +260,7 @@ export function SettingsDialog({
                         {activeTab === "colors" && <ColorSettings />}
                         {activeTab === "rooms" && <RoomSettings />}
                         {activeTab === "outsiders" && <OutsiderSettings />}
+                        {activeTab === "iterations" && <IterationSettings />}
                     </Box>
                 </Box>
             </Box>

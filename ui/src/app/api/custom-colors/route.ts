@@ -31,7 +31,7 @@ type ServerApiCustomColorDelete = ServerApi<
     ApiCustomColorDeleteResponse
 >;
 
-export const GET: ServerApiCustomColorsGet = withApi(async (request) => {
+export const GET: ServerApiCustomColorsGet = withApi(async (_request) => {
     const colors = await DbCustomColors.get();
     return ApiSuccess(colors);
 });

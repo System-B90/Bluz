@@ -47,6 +47,8 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
         unallocatedCount,
         revealItem,
         activeLinks,
+        searchQuery,
+        setSearchQuery,
     } = useGanttView(curriculumId);
 
     // Require a small drag distance before activating, so a click never pays the
@@ -85,8 +87,10 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                             collapseAllSyllabuses={ collapseAllSyllabuses }
                             description={ curriculum.description }
                             expandAllSyllabuses={ expandAllSyllabuses }
+                            onSearchChange={ setSearchQuery }
                             onWeeklyViewChange={ handleWeeklyViewChange }
                             relativeDaySizing={ relativeDaySizing }
+                            searchQuery={ searchQuery }
                             setRelativeDaySizing={ setRelativeDaySizing }
                             setShowConstraints={ setShowConstraints }
                             setShowUnallocated={ setShowUnallocated }

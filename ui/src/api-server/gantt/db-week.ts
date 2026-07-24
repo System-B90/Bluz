@@ -29,6 +29,7 @@ const basicOperations = drizzleOperationsBuilder<
     table: ganttWeeksSchema,
     typeName: "שבוע",
     idPrefix: "w",
+    labelColumn: ganttWeeksSchema.number,
     junction: {
         table: ganttWeek2DaysSchema,
         localKey: ganttWeek2DaysSchema.weekId,
@@ -58,6 +59,7 @@ async function getFullWeek(id: GanttWeekId): Promise<ApiCurriculumWeek> {
         throw new ClientApiError(`שבוע עם מזהה ${id} לא נמצא`);
     }
 
+    await basicOperations.attachParentIds([result]);
     return result as unknown as ApiCurriculumWeek;
 }
 

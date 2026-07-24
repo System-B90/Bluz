@@ -47,7 +47,7 @@ type ServerApiIterationRegister = ServerApi<
     Iteration
 >;
 
-export const GET: ServerApiIterationsList = withApi(async (request) => {
+export const GET: ServerApiIterationsList = withApi(async (_request) => {
     return ApiSuccess(await DbIterations.list());
 });
 

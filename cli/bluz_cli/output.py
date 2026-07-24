@@ -116,11 +116,21 @@ def render(data: Any, *, as_json: bool, title: str | None = None) -> None:
         console.print(_cell(data))
 
 
+def _is_quiet() -> bool:
+    from bluz_cli.context import state
+
+    return state.quiet
+
+
 def success(message: str) -> None:
+    if _is_quiet():
+        return
     console.print(f"[green]✓[/green] {message}")
 
 
 def warn(message: str) -> None:
+    if _is_quiet():
+        return
     err_console.print(f"[yellow]![/yellow] {message}")
 
 

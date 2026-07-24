@@ -70,6 +70,7 @@ async function getFullModule(id: GanttModuleId): Promise<ApiModule> {
         throw new ClientApiError(`מערך עם מזהה ${id} לא נמצא`);
     }
 
+    await basicOperations.attachParentIds([result]);
     return result as unknown as ApiModule;
 }
 

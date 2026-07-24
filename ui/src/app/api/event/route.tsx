@@ -3,9 +3,14 @@ export const dynamic = "force-dynamic";
 import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { DbEvent } from "@/api-server/db-event";
 import {
+    pullGoogleEditsInBackground,
+    syncEventToInstructorsGoogleCalendars,
+} from "@/api-server/google/google-calendar-sync";
+import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
+import { getSessionUser } from "@/api-server/session-user";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import {
@@ -77,6 +82,12 @@ export const GET: ServerApiEventGet = withApi(async (request) => {
                 `טווח התאריכים חייב להיות בין 0 ל-${MAX_RANGE_DAYS} ימים`,
             );
         }
+        // Calendar range loads double as the trigger for pulling Google-side
+        // edits back in (throttled per user; no-op when sync isn't linked).
+        // Session resolution must never break the read path (e.g. outside a
+        // request scope in unit tests).
+        const user = await getSessionUser().catch(() => null);
+        if (user) pullGoogleEditsInBackground(user.id);
         return ApiSuccess(
             await DbEvent.getInRange(
                 start,
@@ -98,9 +109,9 @@ export const POST: ServerApiEventUpdate = withApi(async (request) => {
     if (!event) {
         throw new ClientApiError("No data provided!");
     }
-    return ApiSuccess(
-        await DbEvent.set(event, undefined, controller, iterationId),
-    );
+    const updated = await DbEvent.set(event, undefined, controller, iterationId);
+    syncEventToInstructorsGoogleCalendars(updated, "upsert");
+    return ApiSuccess(updated);
 });
 
 export const PUT: ServerApiEventCreate = withApi(async (request) => {
@@ -112,9 +123,14 @@ export const PUT: ServerApiEventCreate = withApi(async (request) => {
     if (!event) {
         throw new ClientApiError("No data provided!");
     }
-    return ApiSuccess(
-        await DbEvent.create(event, undefined, controller, iterationId),
+    const created = await DbEvent.create(
+        event,
+        undefined,
+        controller,
+        iterationId,
     );
+    syncEventToInstructorsGoogleCalendars(created, "upsert");
+    return ApiSuccess(created);
 });
 
 export const DELETE: ServerApiEventDelete = withApi(async (request) => {
@@ -124,6 +140,10 @@ export const DELETE: ServerApiEventDelete = withApi(async (request) => {
     if (!eventId) {
         throw new ClientApiError("No eventId provided!");
     }
+    const existing = await DbEvent.get(eventId, undefined, controller);
     await DbEvent.del(eventId, undefined, controller, iterationId);
+    if (existing) {
+        syncEventToInstructorsGoogleCalendars(existing, "delete");
+    }
     return ApiSuccess();
 });

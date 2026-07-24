@@ -2,6 +2,18 @@ name: E2E Tests
 
 on:
     workflow_dispatch:
+        inputs:
+            target:
+                description: >-
+                    Which runners to use. self-hosted runs one unified test job
+                    (single Hive+Bluz stack — the mks-srvu box can't host 3 at
+                    once). github-hosted runs the classic 3-shard matrix (each
+                    GitHub-hosted runner is a separate VM, so 3 stacks is free).
+                type: choice
+                options:
+                    - self-hosted
+                    - github-hosted
+                default: self-hosted
     pull_request:
         branches: [master]
     push:
@@ -12,39 +24,101 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    full-test-suite:
-        name: Full Test Suite (E2E) — shard ${{ matrix.shard }}/${{ strategy.job-total }}
-        runs-on: ubuntu-24.04
-        timeout-minutes: 90
+    # One build job, on whichever runner class the run targets. Its artifact
+    # (test-images) is portable, so it feeds whichever test job below runs.
+    # Default (push/PR, or dispatch target=self-hosted) → self-hosted; only an
+    # explicit dispatch with target=github-hosted uses ubuntu-24.04.
+    build-test-images:
+        name: Build Test Images
+        runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted') && 'ubuntu-24.04' || 'self-hosted' }}
         if: github.event_name != 'pull_request' || github.head_ref == 'dev'
-        strategy:
-            fail-fast: false
-            # Each shard boots its own full Hive + Bluz stack (Hive images are
-            # cache-shared across shards, so this only multiplies the cheap
-            # part). Splitting keeps any one Playwright/Chromium process
-            # alive for less wall-clock time — the E2E job was observed
-            # crashing the browser process ~4 minutes into a single long
-            # single-worker run on this runner's 2 vCPUs.
-            matrix:
-                shard: [1, 2, 3]
-
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
 
-            # ── Hive (SSO identity provider + organizational data) ────────────
-            # Shared org action: disk cleanup, token verify, Hive checkout,
-            # commit-keyed image cache (or registry pull once Hive publishes
-            # images), boot + init, readiness check. Hive repo/ref defaults
-            # live in the action — one place to update for all consumer repos.
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v4
+
+            # Build once here instead of once per shard (#e2e-perf). Tags match
+            # exactly what deploy/docker-compose.yml resolves to with
+            # BLUZ_VERSION=latest, so each shard's `docker compose up` finds the
+            # image already present locally and skips building it again.
+            - name: Build UI Image
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  file: ui/Dockerfile
+                  target: runner
+                  load: true
+                  tags: ghcr.io/system-b90/bluz/ui:latest
+                  build-args: |
+                      NPM_TOKEN=${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+                  cache-from: type=gha,scope=e2e-ui
+                  cache-to: type=gha,mode=max,scope=e2e-ui
+
+            - name: Build Sessions Image
+              uses: docker/build-push-action@v7
+              with:
+                  context: session-server/
+                  file: session-server/Dockerfile.websocket
+                  load: true
+                  tags: ghcr.io/system-b90/bluz/sessions:latest
+                  build-args: |
+                      NPM_TOKEN=${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+                  cache-from: type=gha,scope=e2e-sessions
+                  cache-to: type=gha,mode=max,scope=e2e-sessions
+
+            - name: Build Proxy Image
+              uses: docker/build-push-action@v7
+              with:
+                  context: nginx/
+                  file: nginx/Dockerfile.proxy
+                  load: true
+                  tags: ghcr.io/system-b90/bluz/proxy:latest
+                  cache-from: type=gha,scope=e2e-proxy
+                  cache-to: type=gha,mode=max,scope=e2e-proxy
+
+            - name: Save images
+              run: |
+                  mkdir -p test-images
+                  docker save ghcr.io/system-b90/bluz/ui:latest -o test-images/ui.tar
+                  docker save ghcr.io/system-b90/bluz/sessions:latest -o test-images/sessions.tar
+                  docker save ghcr.io/system-b90/bluz/proxy:latest -o test-images/proxy.tar
+
+            - name: Upload images
+              uses: actions/upload-artifact@v6
+              with:
+                  name: test-images
+                  path: test-images/
+                  retention-days: 1
+
+    # ── Self-hosted (mks-srvu): ONE unified job, ONE Hive+Bluz stack ─────────
+    # This box is a single 8-vCPU/23G host; 3 concurrent Hive stacks saturate
+    # the CPU and starve hive-postgres/redis past their healthchecks. The suite
+    # already runs one Chromium at a time (playwright.config.ts: workers=1,
+    # fullyParallel=false, retries=2), so a single stack is both lighter and
+    # green. Runs by default (push/PR) and on dispatch target=self-hosted.
+    full-test-suite-selfhosted:
+        name: Full Test Suite (E2E, self-hosted)
+        runs-on: self-hosted
+        timeout-minutes: 90
+        needs: build-test-images
+        if: >-
+            (github.event_name != 'pull_request' || github.head_ref == 'dev')
+            && !(github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted')
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v7
+
             - name: Set up Hive
               uses: System-B90/.github/actions/setup-hive@main
               with:
                   hive-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+                  registry-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+                  image-source: registry
                   extra-hosts: 127.0.0.3 bluz.dev
                   python-version: "3.13"
 
-            # PyHiveLMS (pyhive) drives SSO registration + Hive seeding below.
             - name: Install Python dependencies (pyhive)
               run: pip install -r scripts/requirements.txt
 
@@ -57,12 +131,6 @@ jobs:
                       print("Hive admin login OK. API version:", client.get_hive_version())
                   PY
 
-            # ── Bluz environment ───────────────────────────────────────────────
-            # Non-interactive stand-in for scripts/setup.py. HIVE_CLIENT_* are
-            # placeholders — the test pipeline registers a fresh SSO client with
-            # Hive per run and injects it via TEST_HIVE_CLIENT_*.
-            # The Mongo password must match the connection string hardcoded in
-            # deploy/docker-compose.test.yml.
             - name: Generate CI .env
               run: |
                   PG_PASS=$(openssl rand -hex 16)
@@ -95,40 +163,173 @@ jobs:
 
             - name: Set up Node + Playwright
               uses: System-B90/.github/actions/setup-playwright@main
-
-            # Pre-build the test images so the pipeline's `compose up` is fast.
-            # TEST_* values only satisfy compose interpolation — the pipeline
-            # assigns the real dynamic values at runtime.
-            - name: Pre-build Test Images
-              run: |
-                  docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.test.yml build
               env:
-                  BLUZ_VERSION: latest
-                  TEST_PROJECT_NAME: bluz-test-ci
-                  TEST_POSTGRES_PORT: "0"
-                  TEST_MONGO_PORT: "0"
-                  TEST_PROXY_PORT_HTTP: "0"
-                  TEST_PROXY_PORT_HTTPS: "0"
-                  TEST_HIVE_CLIENT_ID: ci-placeholder
-                  TEST_HIVE_CLIENT_SECRET: ci-placeholder
+                  # `npm ci` resolves the internal @system-b90/* packages from
+                  # GitHub Packages; .npmrc reads NPM_TOKEN. The default
+                  # GITHUB_TOKEN can't read cross-repo packages, so pass a PAT
+                  # with read:packages (same one the image builds use).
+                  NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
 
-            # ── Run the full pipeline ──────────────────────────────────────────
-            # scripts/run_tests.py: test composition (dynamic ports) → SSO
-            # client registration with Hive (pyhive) → drizzle schema push →
-            # Hive seeding (pyhive) + Bluz seeding → Playwright.
-            # --seed-hive forces a reseed of the fresh Hive instance.
-            # --skip-unit: backend unit tests already run in their own job
-            # (release-pipeline.yml "Unit Tests") — no need to repeat them
-            # per shard.
-            # --shard: splits the Playwright suite N/3 so no single shard
-            # keeps one Chromium process alive long enough to hit the
-            # memory-pressure crash seen in a full single-worker run.
+            - name: Download Test Images
+              uses: actions/download-artifact@v6
+              with:
+                  name: test-images
+                  path: test-images/
+
+            - name: Load Test Images
+              run: |
+                  docker load -i test-images/ui.tar
+                  docker load -i test-images/sessions.tar
+                  docker load -i test-images/proxy.tar
+                  rm -rf test-images/
+
+            - name: Run Full Test Suite
+              run: python scripts/run_tests.py --seed-hive --skip-unit
+              env:
+                  CI: true
+
+            - name: Upload Playwright Report
+              uses: actions/upload-artifact@v6
+              if: ${{ !cancelled() }}
+              with:
+                  name: playwright-report
+                  path: playwright-report/
+                  retention-days: 14
+
+            - name: Upload Test Results
+              uses: actions/upload-artifact@v6
+              if: ${{ !cancelled() }}
+              with:
+                  name: test-results
+                  path: test-results/
+                  retention-days: 7
+
+            - name: Dump Container Logs
+              if: failure()
+              run: |
+                  mkdir -p container-logs
+                  docker ps -a
+                  for c in $(docker ps -aq); do
+                    name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
+                    docker logs "$c" > "container-logs/$name.log" 2>&1 || true
+                  done
+                  echo "::group::Bluz UI container status + log (tail)"
+                  ui=$(docker ps -a --filter "name=-ui" --format '{{.Names}}' | head -1)
+                  if [ -n "$ui" ]; then
+                    docker inspect --format 'State={{.State.Status}} ExitCode={{.State.ExitCode}} OOMKilled={{.State.OOMKilled}} Restarts={{.RestartCount}}' "$ui" || true
+                    docker logs --tail 400 "$ui" 2>&1 || true
+                  else
+                    echo "No Bluz UI container found."
+                  fi
+                  echo "::endgroup::"
+                  echo "::group::Bluz UI migration errors (if any)"
+                  if [ -n "$ui" ]; then
+                    docker logs "$ui" 2>&1 | grep -iE "migration|Cannot find module|MODULE_NOT_FOUND" || echo "No migration-related errors found in UI container log."
+                  fi
+                  echo "::endgroup::"
+
+            - name: Upload Container Logs
+              uses: actions/upload-artifact@v6
+              if: failure()
+              with:
+                  name: container-logs
+                  path: container-logs/
+                  retention-days: 7
+
+    # ── GitHub-hosted: classic 3-shard matrix ───────────────────────────────
+    # Each GitHub-hosted runner is its own VM, so 3 shards = 3 isolated stacks
+    # in parallel at no shared-host cost. Runs only on an explicit dispatch
+    # with target=github-hosted.
+    full-test-suite-github:
+        name: Full Test Suite (E2E, github-hosted) — shard ${{ matrix.shard }}/${{ strategy.job-total }}
+        runs-on: ubuntu-24.04
+        timeout-minutes: 90
+        needs: build-test-images
+        if: >-
+            (github.event_name != 'pull_request' || github.head_ref == 'dev')
+            && github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted'
+        strategy:
+            fail-fast: false
+            matrix:
+                shard: [1, 2, 3]
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v7
+
+            - name: Set up Hive
+              uses: System-B90/.github/actions/setup-hive@main
+              with:
+                  hive-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+                  registry-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+                  image-source: registry
+                  extra-hosts: 127.0.0.3 bluz.dev
+                  python-version: "3.13"
+
+            - name: Install Python dependencies (pyhive)
+              run: pip install -r scripts/requirements.txt
+
+            - name: Verify Hive admin login via pyhive
+              run: |
+                  python - <<'PY'
+                  from pyhive import HiveClient
+
+                  with HiveClient("admin", "Password1", "https://hive.org", verify=False, timeout=30) as client:
+                      print("Hive admin login OK. API version:", client.get_hive_version())
+                  PY
+
+            - name: Generate CI .env
+              run: |
+                  PG_PASS=$(openssl rand -hex 16)
+                  MONGO_PASS=4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP
+                  cat > .env <<EOF
+                  BLUZ_VERSION=latest
+                  WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$(openssl rand -hex 32)
+                  NEXT_PUBLIC_HIVE_URL=https://hive.org
+                  NODE_TLS_REJECT_UNAUTHORIZED=0
+                  NEXTAUTH_URL=https://bluz.dev
+                  NEXTAUTH_SECRET=$(openssl rand -hex 32)
+                  HIVE_CLIENT_ID=ci-placeholder
+                  HIVE_CLIENT_SECRET=ci-placeholder
+                  MONGO_ROOT_USER=mongo_admin
+                  MONGO_ROOT_PASSWORD=${MONGO_PASS}
+                  MONGO_CONNECTION_STRING=mongodb://mongo_admin:${MONGO_PASS}@bluz-mongodb:27017/?authSource=admin
+                  JWT_SECRET=$(openssl rand -hex 32)
+                  SYM_ENC_KEY=$(openssl rand -hex 32)
+                  POSTGRES_USER=admin
+                  POSTGRES_PASSWORD=${PG_PASS}
+                  POSTGRES_DB=curriculum_db
+                  DATABASE_URL=postgres://admin:${PG_PASS}@bluz-curriculum-db:5432/curriculum_db
+                  EOF
+
+            - name: Generate self-signed SSL certificates
+              run: |
+                  mkdir -p nginx/ssl
+                  openssl req -x509 -newkey rsa:4096 -keyout nginx/ssl/key.pem \
+                    -out nginx/ssl/cert.pem -sha256 -days 30 -nodes -subj "/CN=bluz.dev"
+
+            - name: Set up Node + Playwright
+              uses: System-B90/.github/actions/setup-playwright@main
+              env:
+                  NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+
+            - name: Download Test Images
+              uses: actions/download-artifact@v6
+              with:
+                  name: test-images
+                  path: test-images/
+
+            - name: Load Test Images
+              run: |
+                  docker load -i test-images/ui.tar
+                  docker load -i test-images/sessions.tar
+                  docker load -i test-images/proxy.tar
+                  rm -rf test-images/
+
             - name: Run Full Test Suite
               run: python scripts/run_tests.py --seed-hive --skip-unit --shard ${{ matrix.shard }}/${{ strategy.job-total }}
               env:
                   CI: true
 
-            # ── Artifacts ──────────────────────────────────────────────────────
             - name: Upload Playwright Report
               uses: actions/upload-artifact@v6
               if: ${{ !cancelled() }}
@@ -154,8 +355,6 @@ jobs:
                     name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
                     docker logs "$c" > "container-logs/$name.log" 2>&1 || true
                   done
-                  # Echo the Bluz UI container log to stdout so failures are
-                  # diagnosable from the job log alone (no artifact download).
                   echo "::group::Bluz UI container status + log (tail)"
                   ui=$(docker ps -a --filter "name=-ui" --format '{{.Names}}' | head -1)
                   if [ -n "$ui" ]; then
@@ -165,11 +364,6 @@ jobs:
                     echo "No Bluz UI container found."
                   fi
                   echo "::endgroup::"
-
-                  # Migration failures (e.g. missing node_modules deps in the
-                  # runner image) crash the container before the app ever
-                  # serves traffic, which otherwise only shows up buried in
-                  # the full container-logs artifact. Surface it directly.
                   echo "::group::Bluz UI migration errors (if any)"
                   if [ -n "$ui" ]; then
                     docker logs "$ui" 2>&1 | grep -iE "migration|Cannot find module|MODULE_NOT_FOUND" || echo "No migration-related errors found in UI container log."
@@ -183,6 +377,3 @@ jobs:
                   name: container-logs-${{ matrix.shard }}
                   path: container-logs/
                   retention-days: 7
-
-            # No teardown step — the runner is ephemeral, and the compose
-            # project name is derived per-worktree inside run_tests.py.

@@ -167,7 +167,7 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                                 createdWeeksMap.get(weekId);
                             if (newlyCreatedWeek && newlyCreatedWeek.w2d) {
                                 dayIds = newlyCreatedWeek.w2d.map(
-                                    (link) => link.dayId,
+                                    (link: { dayId: string }) => link.dayId,
                                 );
                             }
                         }
@@ -187,7 +187,8 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
                                     const link = createdWeeksMap
                                         .get(weekId)
                                         ?.w2d?.find(
-                                            (l) => l.dayId === dId,
+                                            (l: { dayId: string }) =>
+                                                l.dayId === dId,
                                         );
                                     if (link) {
                                         currentDayIndex = link.day.dayIndex;

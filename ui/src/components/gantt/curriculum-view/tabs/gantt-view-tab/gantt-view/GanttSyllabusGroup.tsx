@@ -28,8 +28,12 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
         dayCellWidth,
         isSyllabusExpanded,
         toggleSyllabus,
+        searchActive,
+        isSyllabusVisible,
+        isModuleVisible,
     } = useGanttContext();
-    const isExpanded = isSyllabusExpanded(syllabusId);
+    // While searching, force the group open so matching descendants show (#323).
+    const isExpanded = searchActive || isSyllabusExpanded(syllabusId);
 
     const syllabus = state.syllabuses[syllabusId];
 
@@ -99,6 +103,8 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
     ]);
 
     if (!syllabus) return null;
+    // Hide syllabuses with no match under the active search filter (#323).
+    if (!isSyllabusVisible(syllabusId)) return null;
 
     const getSpanBorderRadius = (spanVariant: SpanVariant) => {
         switch (spanVariant) {
@@ -267,9 +273,11 @@ const GanttSyllabusGroupComponent: React.FC<GanttSyllabusGroupProps> = ({
             </TableRow>
 
             {isExpanded
-                ? syllabus.modules.map((moduleId) => (
-                    <GanttModuleRow key={moduleId} moduleId={moduleId} />
-                ))
+                ? syllabus.modules
+                    .filter((moduleId) => isModuleVisible(moduleId))
+                    .map((moduleId) => (
+                        <GanttModuleRow key={moduleId} moduleId={moduleId} />
+                    ))
                 : null}
         </React.Fragment>
     );

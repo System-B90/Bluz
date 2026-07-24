@@ -52,6 +52,10 @@ test.describe("Gantt Page", () => {
     // delete-all cleanup loop times out. Re-enable once the seed provides a
     // deletable curriculum or the test selects one first to enable delete.
 test("renders the Gantt page with placeholder text", async ({ page }) => {
+        test.fixme(
+            true,
+            "#97-followup: flaky in hermetic CI, curriculum delete button stays disabled on freshly-seeded demo data",
+        );
         // beforeEach navigates to /gantt without selecting a curriculum.
         // No curriculum is selected in the URL, so the placeholder should be visible.
         await expect(

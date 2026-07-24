@@ -141,6 +141,13 @@ export function createThemeOptions(): ThemeOptions
                     }),
                 },
             },
+            MuiToggleButtonGroup: {
+                styleOverrides: {
+                    root: {
+                        boxShadow: "none",
+                    },
+                },
+            },
             MuiAppBar: {
                 styleOverrides: {
                     root: ({ theme }) => ({

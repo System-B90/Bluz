@@ -9,8 +9,13 @@ import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { Filters } from "@/components/header/filters";
 
 export function FilterIcon() {
-    const { showPAsFor, filteredCourses, filteredInstructors, hidePrayers } =
-        useCalendarFilters();
+    const {
+        showPAsFor,
+        filteredCourses,
+        filteredInstructors,
+        filteredRoom,
+        hidePrayers,
+    } = useCalendarFilters();
 
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
@@ -29,8 +34,15 @@ export function FilterIcon() {
             hidePrayers ||
             filteredCourses.length !== 0 ||
             filteredInstructors.length !== 0 ||
+            filteredRoom !== null ||
             showPAsFor !== null,
-        [filteredCourses, filteredInstructors, showPAsFor, hidePrayers],
+        [
+            filteredCourses,
+            filteredInstructors,
+            filteredRoom,
+            showPAsFor,
+            hidePrayers,
+        ],
     );
 
     return (
