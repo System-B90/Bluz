@@ -1,32 +1,32 @@
 {
-    "name": "bluz-session-server",
-    "version": "0.4.1",
-    "private": true,
-    "scripts": {
-        "dev": "tsx watch session-server.ts",
-        "start": "tsx session-server.ts",
-        "build": "tsc",
-        "start:prod": "node dist/session-server.js",
-        "lint": "eslint .",
-        "lint:fix": "eslint . --fix",
-        "prepare": "husky"
-    },
-    "lint-staged": {
-        "*.{json,css,md}": "prettier --write"
-    },
-    "dependencies": {
-        "@system-b90/session-ws": "^0.1.0",
-        "tsx": "^4.23.0",
-        "typescript": "^6.0.3",
-        "ws": "^8.21.0"
-    },
-    "devDependencies": {
-        "@eslint/js": "^10.0.1",
-        "@types/ws": "^8.5.10",
-        "eslint": "^10.7.0",
-        "husky": "^9.0.11",
-        "lint-staged": "^15.2.2",
-        "prettier": "^3.9.5",
-        "typescript-eslint": "^8.63.0"
-    }
+  "name": "bluz-session-server",
+  "version": "0.4.1",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch session-server.ts",
+    "start": "tsx session-server.ts",
+    "build": "tsc",
+    "start:prod": "node dist/session-server.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{json,css,md}": "prettier --write"
+  },
+  "dependencies": {
+    "@system-b90/session-ws": "^0.1.0",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/ws": "^8.5.10",
+    "eslint": "^10.7.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.9.5",
+    "typescript-eslint": "^8.63.0"
+  }
 }
