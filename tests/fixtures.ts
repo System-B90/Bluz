@@ -227,6 +227,27 @@ export function getHeaderFilters(page: Page) {
     return page.getByRole("button", { name: /גילוי חלונות פ\"א|הסתרת חלונות פ\"א/ });
 }
 
+/** The header filter Popover paper (rendered in a body-level portal). */
+export function getFilterPanel(page: Page) {
+    return page.locator(".MuiPopover-paper");
+}
+
+/**
+ * Opens the header filter Popover and waits for it to settle.
+ *
+ * The Popover keeps itself open while its inner filter IconButtons are clicked
+ * (ClickAwayListener only fires on clicks *outside* the paper), so callers open
+ * it once and interact freely — no per-click re-open needed. Idempotent: returns
+ * immediately if the panel is already visible.
+ */
+export async function openFilterPanel(page: Page): Promise<void> {
+    const panel = getFilterPanel(page);
+    if (await panel.isVisible().catch(() => false)) return;
+    // Closed-state tooltip label is "הצגת סננים"; open-state is "הסתרת סננים".
+    await page.getByRole("button", { name: /הצגת סננים|הסתרת סננים/ }).click();
+    await expect(panel).toBeVisible({ timeout: 10_000 });
+}
+
 /**
  * Generates a unique test identifier to avoid collisions between test runs.
  */
