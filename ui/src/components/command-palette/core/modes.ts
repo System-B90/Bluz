@@ -21,9 +21,9 @@ export const PREFIX_BY_KIND: Record<CommandKind, string> = {
 /**
  * Split a raw input value into its lane prefix and the remaining search text.
  *
- * The input is rendered with `dir="auto"`, so an ASCII prefix visually anchors
- * to the left while Hebrew text still lays out RTL — but either way the prefix
- * is the first character of the *logical* string, which is what we read here.
+ * The prefix is the first character of the *logical* string. It never reaches
+ * the visible field — the dialog strips it into a lane chip — so its position
+ * is unaffected by the layout direction.
  */
 export function parseQuery(raw: string): CommandQuery {
     const prefix = raw.charAt(0);

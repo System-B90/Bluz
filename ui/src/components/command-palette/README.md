@@ -75,12 +75,13 @@ core/                      No React. Portable, testable on its own.
   rank.ts                  Filter → score → sort → group
 CommandPaletteContext.ts   React context + the guard hook
 CommandPaletteProvider.tsx Owns registry/recents/open state; renders the palette
-useCommands.ts             Contribute commands while mounted
-useCommandPalette.ts       Imperative open/close/toggle
-useOpenPaletteHotkeys.ts   Window-level open shortcuts
+use-commands.ts            Contribute commands while mounted
+use-command-palette.ts     Imperative open/close/toggle
+use-open-palette-hotkeys.ts Window-level open shortcuts
 CommandPaletteDialog.tsx   The MUI sheet
 CommandPaletteRow.tsx      One result row
 HighlightedText.tsx        Match highlighting
+KeyChip.tsx                Keycaps and key sequences
 ```
 
 ## Should this file live here?
@@ -102,8 +103,14 @@ command contributions live.
   recency bonus and a static `priority` nudge. Recency breaks ties; it never
   outranks a materially better text match.
 - **RTL** is handled with logical properties throughout, and the query field
-  uses `dir="auto"` so an ASCII lane prefix stays left-anchored while Hebrew
-  text still lays out right-to-left.
+  inherits the ambient direction rather than pinning its own, so it reads the
+  same way as the rest of the host app. Two things deliberately opt out:
+  - The lane prefix (`>` `@` `:`) never appears in the field — the dialog
+    strips it into a chip beside the input. An ASCII prefix left in an RTL
+    field would be stranded at the wrong visual end of the query.
+  - Key sequences render through `ShortcutKeys`, which pins itself to `ltr`. A
+    chord is written modifier-first everywhere, so inheriting RTL would flex
+    `Ctrl` `Z` into `Z` `Ctrl`.
 - **The matcher is intentionally duplicated** from
   `components/gantt/curriculum-view/search/fuzzy.ts`. That file is Bluz's
   in-page gantt search; sharing one implementation would couple this package to

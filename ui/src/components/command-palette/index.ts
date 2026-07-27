@@ -7,6 +7,7 @@
  */
 
 export { CommandPaletteProvider } from "./CommandPaletteProvider";
+export { KeyChip, ShortcutKeys } from "./KeyChip";
 export type { CommandPaletteProviderProps } from "./CommandPaletteProvider";
 export { useCommandPalette } from "./use-command-palette";
 export type { UseCommandPaletteResult } from "./use-command-palette";

@@ -5,7 +5,7 @@ import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
 import { useSyncExternalStore } from "react";
 
-import { useCommandPalette } from "@/components/command-palette";
+import { ShortcutKeys, useCommandPalette } from "@/components/command-palette";
 
 /** The platform never changes mid-session, so there is nothing to subscribe to. */
 const noopSubscribe = () => () => {};
@@ -65,20 +65,8 @@ export function CommandPaletteButton() {
                 חיפוש פקודה או פריט
             </Typography>
 
-            <Box
-                sx={{
-                    display: { xs: "none", sm: "block" },
-                    px: 0.75,
-                    borderRadius: "6px",
-                    border: "1px solid",
-                    borderColor: "divider",
-                    fontSize: "0.7rem",
-                    fontWeight: 600,
-                    // Latin key hint stays LTR inside the RTL toolbar.
-                    direction: "ltr",
-                }}
-            >
-                {isMac ? "⌘K" : "Ctrl+K"}
+            <Box sx={{ display: { xs: "none", sm: "flex" } }}>
+                <ShortcutKeys keys={isMac ? ["⌘", "K"] : ["Ctrl", "K"]} />
             </Box>
         </ButtonBase>
     );

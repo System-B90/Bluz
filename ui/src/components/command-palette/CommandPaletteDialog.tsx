@@ -1,5 +1,6 @@
 "use client";
 import SearchIcon from "@mui/icons-material/Search";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Dialog from "@mui/material/Dialog";
@@ -17,8 +18,9 @@ import {
 
 import { useCommandPaletteContext } from "./CommandPaletteContext";
 import { CommandPaletteRow } from "./CommandPaletteRow";
-import { parseQuery } from "./core/modes";
+import { buildRawQuery, parseQuery } from "./core/modes";
 import { flattenGroups, groupRanked, rankCommands } from "./core/rank";
+import { ShortcutKeys } from "./KeyChip";
 import type { RankedCommand } from "./types";
 
 export type CommandPaletteDialogProps = {
@@ -40,6 +42,16 @@ function nextSelectable(
 function firstSelectable(items: Array<RankedCommand>): number {
     const index = items.findIndex((item) => item.command.enabled !== false);
     return index === -1 ? 0 : index;
+}
+
+/** One `keys — label` pair in the footer. */
+function Hint({ keys, label }: { keys: Array<string>; label: string }) {
+    return (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.625 }}>
+            <ShortcutKeys keys={keys} />
+            <span>{label}</span>
+        </Box>
+    );
 }
 
 /**
@@ -163,11 +175,19 @@ export function CommandPaletteDialog({
                 event.preventDefault();
                 runCommand(items[selected]);
                 break;
+            case "Backspace":
+                // The lane prefix lives in the chip rather than in the field,
+                // so backspacing out of an empty field has to clear it.
+                if (query.kind && query.text === "") {
+                    event.preventDefault();
+                    setRawQuery("");
+                }
+                break;
             default:
                 break;
             }
         },
-        [items, selected, runCommand],
+        [items, selected, runCommand, query, setRawQuery],
     );
 
     return (
@@ -182,15 +202,17 @@ export function CommandPaletteDialog({
                         maxWidth: "calc(100vw - 32px)",
                         mt: "12vh",
                         mb: 2,
-                        borderRadius: "16px",
+                        borderRadius: "14px",
                         overflow: "hidden",
+                        border: "1px solid",
+                        borderColor: "divider",
                         bgcolor: "background.paper",
                         backgroundImage: "none",
-                        boxShadow: "0 24px 50px rgba(0,0,0,0.25)",
+                        boxShadow: "0 24px 64px rgba(0,0,0,0.32)",
                     },
                 },
                 backdrop: {
-                    sx: { backdropFilter: "blur(2px)" },
+                    sx: { backdropFilter: "blur(3px)" },
                 },
             }}
             sx={{
@@ -210,14 +232,22 @@ export function CommandPaletteDialog({
                     borderColor: "divider",
                 }}
             >
-                <SearchIcon sx={{ color: "text.secondary", fontSize: 22 }} />
+                <SearchIcon
+                    sx={{
+                        flexShrink: 0,
+                        fontSize: 22,
+                        color: query.text ? "primary.main" : "text.secondary",
+                        transition: "color 0.12s ease",
+                    }}
+                />
 
                 {query.kind ? (
                     <Chip
                         color="primary"
                         label={labels.kinds[query.kind]}
+                        onDelete={() => setRawQuery(query.text)}
                         size="small"
-                        sx={{ fontWeight: 700 }}
+                        sx={{ flexShrink: 0, fontWeight: 700 }}
                     />
                 ) : null}
 
@@ -233,15 +263,23 @@ export function CommandPaletteDialog({
                         "aria-expanded": true,
                         "aria-label": labels.placeholder,
                         role: "combobox",
-                        // Latin prefixes stay left-anchored while Hebrew input
-                        // still lays out right-to-left.
-                        dir: "auto",
                     }}
-                    onChange={(event) => setRawQuery(event.target.value)}
+                    onChange={(event) =>
+                        setRawQuery(
+                            buildRawQuery(query.kind, event.target.value),
+                        )
+                    }
                     onKeyDown={onKeyDown}
                     placeholder={labels.placeholder}
-                    sx={{ fontSize: "1.05rem" }}
-                    value={rawQuery}
+                    sx={{
+                        fontSize: "1.05rem",
+                        "& input::placeholder": { opacity: 0.7 },
+                    }}
+                    // The lane prefix is rendered as the chip beside the field,
+                    // so it is kept out of the visible text. Keeping an ASCII
+                    // prefix in an RTL field would otherwise leave it stranded
+                    // at the wrong visual end of the query.
+                    value={query.kind ? query.text : rawQuery}
                 />
             </Box>
 
@@ -255,38 +293,56 @@ export function CommandPaletteDialog({
                     maxHeight: "min(50vh, 420px)",
                     overflowY: "auto",
                     py: 1,
+                    overscrollBehavior: "contain",
+                    scrollbarWidth: "thin",
                 }}
             >
                 {items.length === 0 ? (
-                    <Typography
+                    <Box
                         sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: 1,
                             px: 3,
-                            py: 4,
-                            textAlign: "center",
+                            py: 5,
                             color: "text.secondary",
-                            fontSize: "0.9rem",
                         }}
                     >
-                        {labels.empty}
-                    </Typography>
+                        <SearchOffIcon sx={{ fontSize: 30, opacity: 0.6 }} />
+                        <Typography sx={{ fontSize: "0.9rem" }}>
+                            {labels.empty}
+                        </Typography>
+                    </Box>
                 ) : null}
 
-                {indexedGroups.map((group) => (
+                {indexedGroups.map((group, groupIndex) => (
                     <Box
                         aria-label={group.group || undefined}
                         key={group.group || "__ungrouped__"}
                         role="group"
+                        sx={
+                            groupIndex > 0
+                                ? {
+                                    mt: 0.75,
+                                    pt: 0.75,
+                                    borderTop: "1px solid",
+                                    borderColor: "divider",
+                                }
+                                : undefined
+                        }
                     >
                         {group.group ? (
                             <Typography
                                 aria-hidden
                                 sx={{
-                                    px: 3,
-                                    pt: 1.5,
+                                    px: 2.5,
+                                    pt: 0.75,
                                     pb: 0.5,
-                                    fontSize: "0.7rem",
+                                    fontSize: "0.68rem",
                                     fontWeight: 700,
-                                    letterSpacing: "0.04em",
+                                    letterSpacing: "0.06em",
+                                    textTransform: "uppercase",
                                     color: "text.secondary",
                                 }}
                             >
@@ -313,9 +369,10 @@ export function CommandPaletteDialog({
             <Box
                 sx={{
                     display: "flex",
+                    alignItems: "center",
                     gap: 2,
                     px: 2,
-                    py: 1,
+                    py: 0.875,
                     borderTop: "1px solid",
                     borderColor: "divider",
                     bgcolor: "action.hover",
@@ -324,9 +381,11 @@ export function CommandPaletteDialog({
                     flexWrap: "wrap",
                 }}
             >
-                <span>↑↓ {labels.hints.navigate}</span>
-                <span>Enter {labels.hints.run}</span>
-                <span>Esc {labels.hints.close}</span>
+                {/* Each hint keeps the ambient direction so the keycaps sit on
+                    the reading-start side of their label. */}
+                <Hint keys={["↑", "↓"]} label={labels.hints.navigate} />
+                <Hint keys={["Enter"]} label={labels.hints.run} />
+                <Hint keys={["Esc"]} label={labels.hints.close} />
             </Box>
         </Dialog>
     );

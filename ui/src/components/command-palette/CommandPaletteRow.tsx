@@ -3,6 +3,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
 import { HighlightedText } from "./HighlightedText";
+import { ShortcutKeys } from "./KeyChip";
 import type { RankedCommand } from "./types";
 
 export type CommandPaletteRowProps = {
@@ -46,8 +47,8 @@ export function CommandPaletteRow({
                 display: "flex",
                 alignItems: "center",
                 gap: 1.5,
-                px: 2,
-                py: 1.25,
+                px: 1.5,
+                py: 1,
                 mx: 1,
                 borderRadius: "10px",
                 cursor: disabled ? "default" : "pointer",
@@ -65,12 +66,21 @@ export function CommandPaletteRow({
         >
             {command.icon ? (
                 <Box
-                    sx={{
+                    sx={(theme) => ({
                         display: "flex",
                         alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        width: 32,
+                        height: 32,
+                        borderRadius: "8px",
+                        bgcolor: selected
+                            ? `rgb(${theme.vars.palette.primary.mainChannel} / 0.16)`
+                            : "action.hover",
                         color: selected ? "primary.main" : "text.secondary",
-                        "& svg": { fontSize: 20 },
-                    }}
+                        transition: "background-color 0.12s ease, color 0.12s ease",
+                        "& svg": { fontSize: 19 },
+                    })}
                 >
                     {command.icon}
                 </Box>
@@ -80,8 +90,9 @@ export function CommandPaletteRow({
                 <Typography
                     noWrap
                     sx={{
-                        fontSize: "0.95rem",
+                        fontSize: "0.925rem",
                         fontWeight: 600,
+                        lineHeight: 1.4,
                         color: "text.primary",
                     }}
                 >
@@ -94,7 +105,11 @@ export function CommandPaletteRow({
                 {command.subtitle ? (
                     <Typography
                         noWrap
-                        sx={{ fontSize: "0.75rem", color: "text.secondary" }}
+                        sx={{
+                            fontSize: "0.75rem",
+                            lineHeight: 1.4,
+                            color: "text.secondary",
+                        }}
                     >
                         {command.subtitle}
                     </Typography>
@@ -102,28 +117,7 @@ export function CommandPaletteRow({
             </Box>
 
             {command.shortcut?.length ? (
-                <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
-                    {command.shortcut.map((key) => (
-                        <Box
-                            key={key}
-                            sx={{
-                                px: 0.75,
-                                py: 0.125,
-                                borderRadius: "6px",
-                                border: "1px solid",
-                                borderColor: "divider",
-                                bgcolor: "action.hover",
-                                fontSize: "0.7rem",
-                                fontWeight: 600,
-                                color: "text.secondary",
-                                // Key names are Latin; keep them LTR inside the RTL row.
-                                direction: "ltr",
-                            }}
-                        >
-                            {key}
-                        </Box>
-                    ))}
-                </Box>
+                <ShortcutKeys keys={command.shortcut} />
             ) : null}
         </Box>
     );
