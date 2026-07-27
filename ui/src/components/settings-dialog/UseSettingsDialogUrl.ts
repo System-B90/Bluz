@@ -15,6 +15,11 @@ const SETTINGS_PARAM = "settings";
 const DEFAULT_TAB: SettingsTab = "personal";
 const EDIT_PARAMS = [ "editRoom", "editOutsider" ] as const;
 
+/** Deep-link target within a tab, e.g. `{ editRoom: "<id>" }`. */
+export type SettingsEditParams = Partial<
+    Record<(typeof EDIT_PARAMS)[ number ], string>
+>;
+
 function toValidTab(value: null | string): null | SettingsTab
 {
     return SETTINGS_TABS.includes(value as SettingsTab)
@@ -41,10 +46,15 @@ export function useSettingsDialogUrl()
     );
 
     const openDialog = useCallback(
-        (tab: SettingsTab = DEFAULT_TAB) =>
+        (tab: SettingsTab = DEFAULT_TAB, edit?: SettingsEditParams) =>
         {
             const params = new URLSearchParams(searchParams.toString());
             params.set(SETTINGS_PARAM, tab);
+            // Stale edit targets from a previous open would otherwise resurface.
+            EDIT_PARAMS.forEach((p) => params.delete(p));
+            Object.entries(edit ?? {}).forEach(([ key, value ]) =>
+                params.set(key, value),
+            );
             router.replace(`?${params.toString()}`, { scroll: false });
         },
         [ router, searchParams ],

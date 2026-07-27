@@ -1,7 +1,9 @@
 "use client";
 import Box from "@mui/material/Box";
+import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useScheduleCommands } from "@/components/app-commands/use-schedule-commands";
 import { BluzCalendar } from "@/components/schedule/calendar/calendar";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { LOCK_HEARTBEAT_MS } from "@/components/schedule/calendar/calendar-provider/lock-state";
@@ -106,6 +108,25 @@ export default function SchedulePage() {
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [undo, redo, deleteEvent, selectedEvent]);
+
+    // Opened without a calendar slot to seed it, so default to the next
+    // half-hour boundary for an hour — the same shape a slot drag produces.
+    const handleCreateEvent = useCallback(() => {
+        const startTime = dayjs()
+            .add(30 - (dayjs().minute() % 30), "minute")
+            .second(0)
+            .millisecond(0);
+
+        setSelectedEvent({ startTime, endTime: startTime.add(1, "hour") });
+        setOpenEventDialog(true);
+    }, []);
+
+    // Contributed from the page because the event dialog is page-local state.
+    useScheduleCommands({
+        createEvent: handleCreateEvent,
+        undo,
+        redo,
+    });
 
     const handleCloseEventDialog = useCallback(() => {
         setOpenEventDialog(false);

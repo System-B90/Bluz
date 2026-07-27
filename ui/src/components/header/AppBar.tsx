@@ -8,6 +8,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
 
+import { CommandPaletteButton } from "@/components/header/CommandPaletteButton";
 import { CurriculumIcon } from "@/components/header/CurriculumIcon";
 import { Logo } from "@/components/header/logo";
 import { UserAccessCard } from "@/components/header/UserAccessCard";
@@ -48,6 +49,10 @@ export function ScheduleAppBar({
 
                     <UserAccessCard />
                 </Box>
+
+                <Box flexGrow={1} />
+
+                <CommandPaletteButton />
 
                 <Box flexGrow={1} />
 
