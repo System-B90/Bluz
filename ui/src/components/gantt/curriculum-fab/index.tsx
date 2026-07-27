@@ -19,6 +19,7 @@ import {
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { useCurriculumCommands } from "@/components/app-commands/use-curriculum-commands";
 import { useCurriculumSyncRef } from "@/components/gantt/curriculum-fab/curriculum-sync-context";
 import { CurriculumActionItems } from "@/components/gantt/curriculum-fab/CurriculumActionItems";
 import { CurriculumListItems } from "@/components/gantt/curriculum-fab/CurriculumListItems";
@@ -78,6 +79,14 @@ export function CurriculumFab({
             }));
         };
     }, [syncRef]);
+
+    // The drawer already owns the fetched list, so it is also what contributes
+    // the curriculums to the command palette's entity lane.
+    useCurriculumCommands({
+        curriculums: curriculumsData,
+        currentCurriculum,
+        setCurrentCurriculum,
+    });
 
     const groups = useMemo(
         () => groupCurriculumsByStatus(curriculumsData),

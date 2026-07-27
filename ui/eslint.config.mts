@@ -186,6 +186,13 @@ export default defineConfig([
         },
     },
     {
+        // The command palette is a self-contained package staged for
+        // extraction into a shared library. It must not depend on this app's
+        // `@/*` alias, so its internal imports are relative by design.
+        files: [ "**/components/command-palette/**" ],
+        rules: { "no-restricted-imports": "off" },
+    },
+    {
         files: [
             "**/app/**/{page,layout,-layout,error,not-found,loading,template,default}.tsx",
             "**/app/**/route.ts",

@@ -5,6 +5,7 @@ import Fab from "@mui/material/Fab";
 import Tooltip from "@mui/material/Tooltip";
 import React from "react";
 
+import { BluzCommandPalette } from "@/components/app-commands/BluzCommandPalette";
 import { CoursesProvider } from "@/components/base/CoursesProvider";
 import { CustomColorsProvider } from "@/components/base/CustomColorsProvider";
 import { HiveLessonsProvider } from "@/components/base/HiveLessonsProvider";
@@ -25,60 +26,62 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     const { openDialog } = useSettingsDialogUrl();
 
     return (
-        <Box
-            bgcolor="background.default"
-            display="flex"
-            flexDirection="column"
-            height="100vh"
-            overflow={"hidden"}
-            sx={{ p: 0 }}
-            width="100vw"
-        >
-            <ScheduleAppBar openSettingsDialog={openDialog} />
-
+        <BluzCommandPalette>
             <Box
-                height="calc(100vh - 56px)"
-                sx={{
-                    position: "relative",
-                }}
+                bgcolor="background.default"
+                display="flex"
+                flexDirection="column"
+                height="100vh"
+                overflow={"hidden"}
+                sx={{ p: 0 }}
+                width="100vw"
             >
-                {children}
-            </Box>
+                <ScheduleAppBar openSettingsDialog={openDialog} />
 
-            {offlineMode ? (
-                <Tooltip placement="right" title="מצב עריכה לוקלי פעיל">
-                    <Fab
-                        aria-label="offline-status"
-                        color="warning"
-                        sx={{
-                            position: "fixed",
-                            bottom: 24,
-                            insetInlineStart: 24,
-                            zIndex: 1000,
-                            background:
-                                "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-                            color: "white",
-                            boxShadow: "0px 6px 20px rgba(217, 119, 6, 0.4)",
-                            transition: "all 0.2s ease-in-out",
-                            "&:hover": {
+                <Box
+                    height="calc(100vh - 56px)"
+                    sx={{
+                        position: "relative",
+                    }}
+                >
+                    {children}
+                </Box>
+
+                {offlineMode ? (
+                    <Tooltip placement="right" title="מצב עריכה לוקלי פעיל">
+                        <Fab
+                            aria-label="offline-status"
+                            color="warning"
+                            sx={{
+                                position: "fixed",
+                                bottom: 24,
+                                insetInlineStart: 24,
+                                zIndex: 1000,
                                 background:
-                                    "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
-                                boxShadow:
-                                    "0px 8px 24px rgba(217, 119, 6, 0.6)",
-                                scale: "1.05",
-                            },
-                            "&:active": {
-                                scale: "0.95",
-                            },
-                        }}
-                    >
-                        <WifiTetheringOffIcon className="text-[1.3rem]" />
-                    </Fab>
-                </Tooltip>
-            ) : null}
+                                    "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                                color: "white",
+                                boxShadow: "0px 6px 20px rgba(217, 119, 6, 0.4)",
+                                transition: "all 0.2s ease-in-out",
+                                "&:hover": {
+                                    background:
+                                        "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
+                                    boxShadow:
+                                        "0px 8px 24px rgba(217, 119, 6, 0.6)",
+                                    scale: "1.05",
+                                },
+                                "&:active": {
+                                    scale: "0.95",
+                                },
+                            }}
+                        >
+                            <WifiTetheringOffIcon className="text-[1.3rem]" />
+                        </Fab>
+                    </Tooltip>
+                ) : null}
 
-            <SettingsDialogUrl />
-        </Box>
+                <SettingsDialogUrl />
+            </Box>
+        </BluzCommandPalette>
     );
 }
 
