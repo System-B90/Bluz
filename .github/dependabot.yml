@@ -1,8 +1,21 @@
 version: 2
+
+# @system-b90/* packages resolve from GitHub Packages (see .npmrc); without
+# this, Dependabot can't authenticate to npm.pkg.github.com and any update
+# that touches the lockfile's transitive deps on those packages fails with
+# "401 Unauthorized - authentication token not provided".
+registries:
+    npm-github:
+        type: npm-registry
+        url: https://npm.pkg.github.com
+        token: ${{secrets.NPM_TOKEN}}
+
 updates:
     # Main app (root package.json covers ui/ via the monorepo layout)
     - package-ecosystem: "npm"
       directory: "/"
+      registries:
+          - npm-github
       schedule:
           interval: "weekly"
           day: "sunday"
@@ -16,6 +29,8 @@ updates:
     # Standalone WebSocket session server
     - package-ecosystem: "npm"
       directory: "/session-server"
+      registries:
+          - npm-github
       schedule:
           interval: "weekly"
           day: "sunday"
