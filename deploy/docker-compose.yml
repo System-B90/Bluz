@@ -12,10 +12,9 @@ services:
         restart: unless-stopped
         env_file:
             - ../.env
-        # extra_hosts:
-        # - "hive.org:host-gateway" # If running Hive locally
         networks:
             - bluz_net
+            - hive_net
         depends_on:
             curriculum-db:
                 condition: service_healthy
@@ -104,7 +103,9 @@ services:
             - sessions
         networks:
             - bluz_net
-
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+            - "hive.org:host-gateway"
 volumes:
     pgdata:
     mongodb_data:
@@ -112,3 +113,8 @@ volumes:
 networks:
     bluz_net:
         driver: bridge
+    hive_net:
+        # Only correct if hive-stack is running locally on this machine via Docker.
+        # hive-nginx must alias "hive.org" on this network (see pyhive/hive-stack/docker-compose.yaml).
+        name: hive-stack_hive-net
+        external: true

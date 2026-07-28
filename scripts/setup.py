@@ -22,8 +22,13 @@ except ImportError as e:
     print(f"Error: Missing required dependency '{e.name}'.", file=sys.stderr)
     print("Please install the required packages by running:\n", file=sys.stderr)
     print("    pip install typer InquirerPy python-dotenv\n", file=sys.stderr)
+    # Not the org pip index: raw.githubusercontent.com maps URLs 1:1 onto repo
+    # paths and has no directory-index fallback, so pip's request for the bare
+    # package directory 404s and the index is unusable. See System-B90/.github#10
+    # — once that lands and Pages is enabled, the --index-url form works and is
+    # the better hint. Everyone running this script has repo access already.
     print(
-        "    pip install git+https://github.com/System-B15/pyhive.git@main\n",
+        "    pip install git+https://github.com/System-B90/pyhive.git@master\n",
         file=sys.stderr,
     )
     sys.exit(1)
@@ -385,6 +390,7 @@ def generate_env() -> None:
     env_content: dict[str, str] = {
         "BLUZ_VERSION": existing_env.get("BLUZ_VERSION", "latest"),
         "WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY": ws_auth_key,
+        "NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST": domain_name,
         "NEXT_PUBLIC_HIVE_URL": hive_url,
         "NODE_TLS_REJECT_UNAUTHORIZED": "0",
         "NEXTAUTH_URL": nextauth_url,
