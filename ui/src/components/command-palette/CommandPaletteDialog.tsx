@@ -68,7 +68,14 @@ export function CommandPaletteDialog({
 
     const listboxId = useId();
     const listRef = useRef<HTMLDivElement | null>(null);
+    const inputRef = useRef<HTMLInputElement | null>(null);
     const [selected, setSelected] = useState(0);
+
+    // The dialog's own focus management runs after mount and can steal focus
+    // from `autoFocus` on the input, so grab it explicitly once open instead.
+    useEffect(() => {
+        if (isOpen) inputRef.current?.focus();
+    }, [isOpen]);
 
     // The registry mutates in place, so a version counter is the only signal
     // that its contents changed.
@@ -254,6 +261,7 @@ export function CommandPaletteDialog({
                 <InputBase
                     autoFocus
                     fullWidth
+                    inputRef={inputRef}
                     inputProps={{
                         "aria-activedescendant":
                             items.length > 0
@@ -271,10 +279,7 @@ export function CommandPaletteDialog({
                     }
                     onKeyDown={onKeyDown}
                     placeholder={labels.placeholder}
-                    sx={{
-                        fontSize: "1.05rem",
-                        "& input::placeholder": { opacity: 0.7 },
-                    }}
+                    sx={{ fontSize: "1.05rem" }}
                     // The lane prefix is rendered as the chip beside the field,
                     // so it is kept out of the visible text. Keeping an ASCII
                     // prefix in an RTL field would otherwise leave it stranded

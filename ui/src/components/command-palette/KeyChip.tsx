@@ -43,9 +43,11 @@ export type ShortcutKeysProps = {
 /**
  * A key sequence such as `Ctrl` `Z`.
  *
- * The container pins itself to `ltr` because a chord is written modifier-first
- * regardless of the surrounding layout — inheriting an RTL direction would flex
- * the caps into reverse order and render it as `Z` `Ctrl`.
+ * A chord is written modifier-first regardless of the surrounding layout.
+ * `direction: "ltr"` alone doesn't guarantee that — the RTL stylis plugin
+ * mirrors `flex-direction` for the whole page, caps included, so the source
+ * order is reversed here to come out modifier-first once that mirroring
+ * applies.
  */
 export function ShortcutKeys({ keys }: ShortcutKeysProps) {
     return (
@@ -58,7 +60,7 @@ export function ShortcutKeys({ keys }: ShortcutKeysProps) {
                 direction: "ltr",
             }}
         >
-            {keys.map((key) => (
+            {[...keys].reverse().map((key) => (
                 <KeyChip key={key}>{key}</KeyChip>
             ))}
         </Box>
