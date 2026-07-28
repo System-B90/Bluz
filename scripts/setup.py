@@ -385,6 +385,7 @@ def generate_env() -> None:
     env_content: dict[str, str] = {
         "BLUZ_VERSION": existing_env.get("BLUZ_VERSION", "latest"),
         "WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY": ws_auth_key,
+        "NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST": domain_name,
         "NEXT_PUBLIC_HIVE_URL": hive_url,
         "NODE_TLS_REJECT_UNAUTHORIZED": "0",
         "NEXTAUTH_URL": nextauth_url,
