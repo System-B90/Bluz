@@ -183,6 +183,33 @@ jobs:
                   docker load -i test-images/proxy.tar
                   rm -rf test-images/
 
+            # Frees the (~160MB) test-images artifact right away instead of
+            # waiting out retention-days, which only supports whole-day
+            # granularity and was already at its 1-day floor.
+            - name: Delete Test Images artifact
+              if: always()
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          run_id: context.runId,
+                      });
+                      const artifact = data.artifacts.find(a => a.name === 'test-images');
+                      if (artifact) {
+                          try {
+                              await github.rest.actions.deleteArtifact({
+                                  owner: context.repo.owner,
+                                  repo: context.repo.repo,
+                                  artifact_id: artifact.id,
+                              });
+                          } catch (e) {
+                              // Best-effort: another parallel shard may have deleted it first.
+                              core.warning(`Could not delete test-images artifact: ${e.message}`);
+                          }
+                      }
+
             - name: Run Full Test Suite
               run: python scripts/run_tests.py --seed-hive --skip-unit
               env:
@@ -324,6 +351,33 @@ jobs:
                   docker load -i test-images/sessions.tar
                   docker load -i test-images/proxy.tar
                   rm -rf test-images/
+
+            # Frees the (~160MB) test-images artifact right away instead of
+            # waiting out retention-days, which only supports whole-day
+            # granularity and was already at its 1-day floor.
+            - name: Delete Test Images artifact
+              if: always()
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          run_id: context.runId,
+                      });
+                      const artifact = data.artifacts.find(a => a.name === 'test-images');
+                      if (artifact) {
+                          try {
+                              await github.rest.actions.deleteArtifact({
+                                  owner: context.repo.owner,
+                                  repo: context.repo.repo,
+                                  artifact_id: artifact.id,
+                              });
+                          } catch (e) {
+                              // Best-effort: another parallel shard may have deleted it first.
+                              core.warning(`Could not delete test-images artifact: ${e.message}`);
+                          }
+                      }
 
             - name: Run Full Test Suite
               run: python scripts/run_tests.py --seed-hive --skip-unit --shard ${{ matrix.shard }}/${{ strategy.job-total }}
