@@ -1,8 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 
 describe("dayjs timezone setup (#168)", () => {
+    // The first .tz() call in a process builds Node's Intl timezone database;
+    // every later call is ~1ms. Without this warm-up that one-time cost lands
+    // on whichever test happens to run first, which timed out at 5s on the
+    // self-hosted runner while the next identical assertion took 1ms. Paying
+    // it in a hook keeps each test's budget measuring the assertion.
+    beforeAll(() => {
+        dayjs.utc("2026-01-15T08:00:00Z").tz(APP_TIMEZONE).format("HH:mm");
+    }, 60_000);
+
     it("loads the utc and timezone plugins", () => {
         expect(typeof dayjs.utc).toBe("function");
         expect(typeof dayjs.tz).toBe("function");
