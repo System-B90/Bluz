@@ -15,11 +15,21 @@ vi.mock("@/api-server/db-event", () => ({
 
 // Resolve any iteration to a stub controller, no Mongo needed. The writable
 // resolver enforces the read-only guard: reject the "past" iteration only.
-const { fakeController, resolveIterationDb, resolveWritableIterationDb } =
-    vi.hoisted(() => {
+const {
+    fakeController,
+    getMetaController,
+    resolveIterationDb,
+    resolveWritableIterationDb,
+} = vi.hoisted(() => {
         const fakeController = { dbName: "stub" };
         return {
             fakeController,
+            // Event writes fire Google Calendar sync off the meta controller.
+            getMetaController: vi.fn(() => ({
+                personalSettings: {
+                    find: vi.fn(() => ({ toArray: async () => [] })),
+                },
+            })),
             resolveIterationDb: vi.fn(async () => fakeController),
             resolveWritableIterationDb: vi.fn(async (id?: string) => {
                 if (id === "past") {
@@ -34,6 +44,7 @@ const { fakeController, resolveIterationDb, resolveWritableIterationDb } =
     });
 
 vi.mock("@/api-server/mongo-db-controller", () => ({
+    getMetaController,
     resolveIterationDb,
     resolveWritableIterationDb,
 }));

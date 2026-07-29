@@ -9,6 +9,11 @@ const fakeEvents = {
     updateMany: vi.fn(async () => ({ matchedCount: 0, modifiedCount: 0 })),
 };
 const fakeController = { dbName: "bluz_cut", events: fakeEvents };
+// Cut writes fire Google Calendar sync, which reads personal settings off the
+// meta controller. Stub it so the sync no-ops instead of throwing.
+const fakeMetaController = {
+    personalSettings: { find: vi.fn(() => ({ toArray: async () => [] })) },
+};
 
 vi.mock("@/api-server/gantt/db-curriculum", () => ({
     DbCurriculum: { getItem: vi.fn() },
@@ -30,6 +35,7 @@ vi.mock("@/api-server/db-courses", () => ({
 }));
 vi.mock("@/api-server/mongo-db-controller", () => ({
     getDatabaseController: vi.fn(() => fakeController),
+    getMetaController: vi.fn(() => fakeMetaController),
 }));
 const broadcast = vi.fn();
 vi.mock("@/api-server/web-socket-utils", () => ({
