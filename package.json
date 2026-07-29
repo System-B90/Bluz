@@ -7,6 +7,7 @@
     "dev": "node -e \"const fs = require('fs'); fs.copyFileSync(fs.existsSync('.env-mks-srvu') ? '.env-mks-srvu' : '.env', 'ui/.env')\" && docker compose --env-file .env -f deploy/docker-compose.local.yml up proxy -d && npm run next:dev",
     "build": "next build ui",
     "start": "next start ui",
+    "typecheck": "tsc -p ui/tsconfig.typecheck.json --noEmit",
     "lint": "eslint --config ./ui/eslint.config.mts ui/",
     "lint:fix": "eslint --config ./ui/eslint.config.mts --fix ui/",
     "prepare": "husky",
@@ -76,7 +77,7 @@
     "react-dom": "^19.2.7",
     "rimraf": "^6.1.3",
     "sass": "^1.101.0",
-    "stylis": "^4.4.0",
+    "stylis": "4.2.0",
     "stylis-plugin-rtl": "^2.1.1",
     "tsx": "^4.23.1",
     "uuid": "^14.0.1",
@@ -118,6 +119,7 @@
     "esbuild@0.27.7": true
   },
   "overrides": {
-    "uuid": "^14.0.1"
+    "uuid": "^14.0.1",
+    "stylis": "4.2.0"
   }
 }

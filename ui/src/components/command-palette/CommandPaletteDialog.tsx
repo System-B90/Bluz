@@ -261,7 +261,6 @@ export function CommandPaletteDialog({
                 <InputBase
                     autoFocus
                     fullWidth
-                    inputRef={inputRef}
                     inputProps={{
                         "aria-activedescendant":
                             items.length > 0
@@ -272,6 +271,7 @@ export function CommandPaletteDialog({
                         "aria-label": labels.placeholder,
                         role: "combobox",
                     }}
+                    inputRef={inputRef}
                     onChange={(event) =>
                         setRawQuery(
                             buildRawQuery(query.kind, event.target.value),
@@ -279,7 +279,10 @@ export function CommandPaletteDialog({
                     }
                     onKeyDown={onKeyDown}
                     placeholder={labels.placeholder}
-                    sx={{ fontSize: "1.05rem" }}
+                    sx={{
+                        fontSize: "1.05rem",
+                        "& input::placeholder": { opacity: 0.7 },
+                    }}
                     // The lane prefix is rendered as the chip beside the field,
                     // so it is kept out of the visible text. Keeping an ASCII
                     // prefix in an RTL field would otherwise leave it stranded
