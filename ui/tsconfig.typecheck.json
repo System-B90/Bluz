@@ -1,0 +1,15 @@
+{
+    // Standalone `tsc --noEmit` config for CI + `npm run typecheck`.
+    // Identical to tsconfig.json minus the Next-generated `.next/types`, which
+    // only exist after a build and go stale when routes move (they reference
+    // deleted route files and fail the check for no real reason).
+    "extends": "./tsconfig.json",
+    "include": [
+        "next-env.d.ts",
+        "**/*.ts",
+        "**/*.tsx",
+        "../tests/playwright.config.ts",
+        "tests/**/*.ts"
+    ],
+    "exclude": ["node_modules", ".next"]
+}

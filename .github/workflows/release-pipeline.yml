@@ -35,7 +35,7 @@ jobs:
     # the one thing it did provide: a lint failure still doesn't hide a test
     # failure.
     verify:
-        name: Lint + Unit Tests
+        name: Lint + Typecheck + Unit Tests
         runs-on: self-hosted
         timeout-minutes: 30
         steps:
@@ -73,6 +73,14 @@ jobs:
               if: ${{ !cancelled() }}
               run: ruff format --check .
 
+            # The only tsc invocation in this pipeline used to be inside
+            # `next build`, which is skipped on pull requests — so a PR with a
+            # type error passed every check and broke master. `tsc --noEmit` is
+            # far cheaper than a build and covers the gap. See #344.
+            - name: Type-check UI
+              if: ${{ !cancelled() }}
+              run: npm run typecheck
+
             - name: Run Unit Tests
               if: ${{ !cancelled() }}
               run: npm run test:unit
@@ -86,18 +94,13 @@ jobs:
             # requests. So a change that broke it (its own dependency bumps
             # very much included) stayed invisible until a push to master or a
             # tag. Type-check it here, where it's cheap.
-            # `npm install`, not `npm ci`, deliberately: session-server's
-            # package-lock.json is out of sync with its package.json —
-            # @system-b90/session-ws was added as a dependency without
-            # regenerating the lock — so `npm ci` refuses with EUSAGE. This
-            # matches what Dockerfile.websocket already does (`npm install
-            # --ignore-scripts`), which is why the drift was never noticed.
-            # Tracked in #345; switch back to `npm ci` once the lock is
-            # regenerated, so CI actually enforces it.
+            # `npm ci`, so lockfile drift fails the check loudly instead of
+            # being silently reconciled the way `npm install` does — that's how
+            # the lock went stale unnoticed in the first place (#345).
             - name: Install session-server dependencies
               if: ${{ !cancelled() }}
               working-directory: session-server
-              run: npm install
+              run: npm ci
               env:
                   NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
 
