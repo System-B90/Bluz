@@ -4,6 +4,15 @@ import { getToken } from "next-auth/jwt";
 import { getHiveBaseUrl } from "@/api-shared/common";
 import { AuthSessionData } from "@/api-shared/types/sso";
 
+/** Client cache lifetime for an avatar Hive actually served. */
+const FOUND_MAX_AGE_SECONDS = 3 * 24 * 60 * 60;
+/**
+ * Client cache lifetime for a miss. Shorter than a hit so an instructor who
+ * uploads an avatar starts showing it within a day, while still sparing Hive
+ * a request per render for the many users who never upload one.
+ */
+const NOT_FOUND_MAX_AGE_SECONDS = 24 * 60 * 60;
+
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ slug: string }> },
@@ -48,12 +57,17 @@ export async function GET(
             },
         });
 
-        // 6. Handle non-200 responses from Hive (e.g., user has no avatar)
+        // 6. Handle non-200 responses from Hive (e.g., user has no avatar).
+        //    A miss is cached too — most users never upload an avatar, and
+        //    without this every list re-asks Hive for each of them.
         if (!hiveResponse.ok) {
             return new NextResponse(
                 `Failed to fetch avatar: ${hiveResponse.statusText}`,
                 {
                     status: hiveResponse.status,
+                    headers: {
+                        "Cache-Control": `private, max-age=${NOT_FOUND_MAX_AGE_SECONDS}`,
+                    },
                 },
             );
         }
@@ -69,8 +83,9 @@ export async function GET(
                 "Content-Type":
                     hiveResponse.headers.get("Content-Type") ??
                     "application/octet-stream",
-                // Cache the image in the browser for 1 hour to reduce load on the Django server
-                "Cache-Control": "private, max-age=3600",
+                // Private: the response is gated on the caller's session, so
+                // only the browser may cache it — never a shared proxy.
+                "Cache-Control": `private, max-age=${FOUND_MAX_AGE_SECONDS}`,
             },
         });
     } catch (error) {
