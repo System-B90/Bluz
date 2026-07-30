@@ -32,6 +32,13 @@ export function useModuleEventActions() {
             stateRef.current.events[id],
         [],
     );
+    // `ALLOCATE_TIME` writes a single field, so a prior value is enough to
+    // roll back — which makes event time allocation optimistic (#328).
+    const getAllocatedTime = useCallback(
+        (id: GanttEventId): number | undefined =>
+            stateRef.current.events[id]?.allocatedDuration,
+        [],
+    );
 
     const actions = useMemo(
         () =>
@@ -45,6 +52,7 @@ export function useModuleEventActions() {
                 label: "event",
                 containerLabel: "module",
                 getEntity,
+                getAllocatedTime,
                 builders: {
                     add: (event, moduleId) => ({
                         type: "ADD_EVENT",
@@ -64,7 +72,7 @@ export function useModuleEventActions() {
                     }),
                 },
             }),
-        [dispatch, getEntity],
+        [dispatch, getEntity, getAllocatedTime],
     );
 
     // Scroll-to + flash a freshly created/duplicated event in the timeline,

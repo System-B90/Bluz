@@ -59,6 +59,69 @@ describe("Gantt Base API - Failure Paths", () => {
                 options
             );
         });
+
+        it("does not request parent ids by default", async () => {
+            vi.mocked(safeApiFetcher).mockResolvedValueOnce({});
+
+            await api.apiList();
+
+            // REGRESSION: the flat `Record<id, title>` is the published shape
+            // of this endpoint. Adding the flag here would change what every
+            // existing caller receives. See #310.
+            expect(vi.mocked(safeApiFetcher)).toHaveBeenCalledWith(
+                "/api/test",
+                undefined
+            );
+        });
+    });
+
+    describe("apiListWithParents (#310)", () => {
+        it("requests the parent-bearing shape", async () => {
+            vi.mocked(safeApiFetcher).mockResolvedValueOnce({});
+
+            await api.apiListWithParents();
+
+            expect(vi.mocked(safeApiFetcher)).toHaveBeenCalledWith(
+                "/api/test?withParents=1",
+                undefined
+            );
+        });
+
+        it("passes options through alongside the flag", async () => {
+            vi.mocked(safeApiFetcher).mockResolvedValueOnce({});
+            const options = { headers: { "X-Custom": "test" } };
+
+            await api.apiListWithParents(options);
+
+            expect(vi.mocked(safeApiFetcher)).toHaveBeenCalledWith(
+                "/api/test?withParents=1",
+                options
+            );
+        });
+
+        it("returns the object-valued entries untouched", async () => {
+            vi.mocked(safeApiFetcher).mockResolvedValueOnce({
+                s_1: { title: "Syllabus", curriculumIds: ["c_1", "c_2"] },
+            });
+
+            const result = await api.apiListWithParents();
+
+            // REGRESSION: no date fixup or reshaping belongs on this path —
+            // the values are label + parent ids, not documents.
+            expect(result).toEqual({
+                s_1: { title: "Syllabus", curriculumIds: ["c_1", "c_2"] },
+            });
+        });
+
+        it("propagates network errors", async () => {
+            vi.mocked(safeApiFetcher).mockRejectedValueOnce(
+                new Error("Network error")
+            );
+
+            await expect(api.apiListWithParents()).rejects.toThrow(
+                "Network error"
+            );
+        });
     });
 
     describe("apiGet", () => {

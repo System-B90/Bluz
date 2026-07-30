@@ -47,6 +47,18 @@ export type MakeEntityActionsProps<
      * ref-backed useCallback) so the returned actions stay memoized.
      */
     getEntity?: (id: TEntity["id"]) => TEntity | undefined;
+    /**
+     * Reads the entity's current allocated duration. When provided,
+     * `allocateTime` becomes optimistic and rolls back to this value on
+     * failure.
+     *
+     * Only supply it when `builders.allocateTime` maps to a *scalar* reducer
+     * action. Events qualify (`ALLOCATE_TIME` writes one field); modules do
+     * not — `ALLOCATE_TIME_TO_MODULE` redistributes time across every child
+     * event, so restoring a single number would not undo it. Modules
+     * therefore omit this and keep waiting on the server (#328).
+     */
+    getAllocatedTime?: (id: TEntity["id"]) => number | undefined;
 };
 
 /**
@@ -66,6 +78,7 @@ export function makeEntityActions<
     containerLabel,
     builders,
     getEntity,
+    getAllocatedTime,
 }: MakeEntityActionsProps<TEntity, TContainerId, TCreatePayload>) {
     // Per-id sequence guarding against out-of-order responses: a slow PATCH must
     // not clobber a newer edit made while it was in flight (#327). Persists for
@@ -124,24 +137,61 @@ export function makeEntityActions<
             return linked;
         }, `Failed to link ${label} (ID: ${id}) to ${containerLabel} (ID: ${containerId}):`);
 
-    const unlink = async (containerId: TContainerId, id: TEntity["id"]) =>
-        await withGantErrorHandling(async () => {
+    const unlink = async (containerId: TContainerId, id: TEntity["id"]) => {
+        // Snapshot before dispatching: `remove` drops the id from the
+        // container's list, so we need the entity to put it back on failure.
+        const snapshot = getEntity?.(id);
+        if (snapshot) dispatch(builders.remove(containerId, id));
+
+        try {
             await api.apiUnlink(id, containerId);
-            dispatch(builders.remove(containerId, id));
-        }, `Failed to unlink ${label} (ID: ${id}) from ${containerLabel} (ID: ${containerId}):`);
+            if (!snapshot) dispatch(builders.remove(containerId, id));
+        } catch (error) {
+            // Re-link on failure. `add` appends, so an item restored this way
+            // lands at the end of the container rather than its original
+            // index — accepted, since it only shows on the rare failure path.
+            if (snapshot) dispatch(builders.add(snapshot, containerId));
+            console.error(
+                `Failed to unlink ${label} (ID: ${id}) from ${containerLabel} (ID: ${containerId}):`,
+                error,
+            );
+            throw error;
+        }
+    };
 
     const allocateTime = async (
         id: TEntity["id"],
         curriculumId: GanttCurriculumId,
         allocatedDuration: number,
-    ) =>
-        await withGantErrorHandling(async () => {
+    ) => {
+        const buildAllocateTime = builders.allocateTime;
+        // Optimistic only when the caller can hand back a prior value to
+        // restore — see `getAllocatedTime`.
+        const previous = getAllocatedTime?.(id);
+        const isOptimistic = buildAllocateTime && previous !== undefined;
+
+        if (isOptimistic) {
+            dispatch(buildAllocateTime(id, curriculumId, allocatedDuration));
+        }
+
+        try {
             await api.apiSetAllocatedTime(id, curriculumId, allocatedDuration);
-            const buildAllocateTime = builders.allocateTime;
-            if (buildAllocateTime) {
-                dispatch(buildAllocateTime(id, curriculumId, allocatedDuration));
+            if (!isOptimistic && buildAllocateTime) {
+                dispatch(
+                    buildAllocateTime(id, curriculumId, allocatedDuration),
+                );
             }
-        }, `Failed to allocate time to ${label} (ID: ${id}):`);
+        } catch (error) {
+            if (isOptimistic) {
+                dispatch(buildAllocateTime(id, curriculumId, previous));
+            }
+            console.error(
+                `Failed to allocate time to ${label} (ID: ${id}):`,
+                error,
+            );
+            throw error;
+        }
+    };
 
     return { create, update, remove, link, unlink, allocateTime } as const;
 }
