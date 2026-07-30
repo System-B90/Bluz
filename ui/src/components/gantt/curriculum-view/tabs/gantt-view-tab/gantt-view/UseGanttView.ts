@@ -1,4 +1,3 @@
-import { DragEndEvent } from "@dnd-kit/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
@@ -12,16 +11,11 @@ import
     GanttConstraint,
     hasConflictingTemporalConstraints,
 } from "@/api-shared/types/gantt/models/constraint";
-import
-{
-    buildDayIndexMap,
-    buildWeekIndexByDayId,
-    computeEventDaySpans,
-    getSpilloverMinutesByDay,
-} from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { computeEventDaySpans, getSpilloverMinutesByDay } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { fuzzyScore } from "@/components/gantt/curriculum-view/search/fuzzy";
 import { ConstraintLink } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
-import { useGanttUndo } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-undo";
+import { useGanttDrag } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-drag";
+import { useGanttZoom } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-zoom";
 import { useGanttConstraints } from "@/components/gantt/state/constraints/hooks";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import {
@@ -46,15 +40,26 @@ export const useGanttView = (curriculumId: string) =>
     } = useGanttConstraints();
     const curriculum = state.curriculums[ curriculumId ];
 
-    // Strongly type as HTMLDivElement to satisfy MUI TableContainer
-    const containerRef = useRef<HTMLDivElement>(null);
+    const {
+        containerRef,
+        weeklyView,
+        handleWeeklyViewChange,
+        zoomedWeekId,
+        setZoomedWeekId,
+        timelineWeeks,
+        linearDays,
+        dayIndexMap,
+        weekIndexByDayId,
+        weekIndexOffset,
+        dayCellWidth,
+        singleWeekDayZoom,
+    } = useGanttZoom({ curriculum, weeksById: state.weeks });
+
     const pendingScrollRafs = useRef<Array<number>>([]);
 
     const [ showConstraints, setShowConstraints ] = useState(true);
-    const [ weeklyView, setWeeklyView ] = useState(true);
     const [ relativeDaySizing, setRelativeDaySizing ] = useState(false);
     const [ showUnallocated, setShowUnallocated ] = useState(false);
-    const [ zoomedWeekId, setZoomedWeekId ] = useState<null | string>(null);
     const [ collapsedSyllabusIds, setCollapsedSyllabusIds ] = useState<
         Set<string>
     >(() => new Set());
@@ -64,74 +69,8 @@ export const useGanttView = (curriculumId: string) =>
     // First-column search: filters the syllabus → module → event row tree by
     // title. Empty string = no filter (#323).
     const [ searchQuery, setSearchQuery ] = useState("");
-    const [ containerWidth, setContainerWidth ] = useState(0);
     // DOM id of a row to scroll into view once its ancestors have expanded.
     const [ pendingScrollId, setPendingScrollId ] = useState<null | string>(null);
-
-    const allTimelineWeeks = useMemo(() =>
-    {
-        if (!curriculum) return [];
-        return curriculum.weeks
-            .map((weekId) => state.weeks[ weekId ])
-            .filter((w) => !!w);
-    }, [ curriculum, state.weeks ]);
-
-    // Zoom only applies in days view. When active, restrict the grid to the one
-    // zoomed week so it can fill the available width (#90).
-    const timelineWeeks = useMemo(() =>
-    {
-        if (!weeklyView && zoomedWeekId)
-        {
-            const zoomed = allTimelineWeeks.find((w) => w.id === zoomedWeekId);
-            if (zoomed) return [ zoomed ];
-        }
-        return allTimelineWeeks;
-    }, [ allTimelineWeeks, weeklyView, zoomedWeekId ]);
-
-    const linearDays = useMemo(() =>
-    {
-        return timelineWeeks.flatMap((w) => w.days);
-    }, [ timelineWeeks ]);
-
-    // O(1) replacements for the linearDays.indexOf(...) / timelineWeeks.findIndex(...)
-    // scans that row/cell components previously ran per-item, per-render (#159).
-    const dayIndexMap = useMemo(
-        () => buildDayIndexMap(linearDays),
-        [ linearDays ],
-    );
-
-    const weekIndexByDayId = useMemo(
-        () => buildWeekIndexByDayId(timelineWeeks),
-        [ timelineWeeks ],
-    );
-
-    // When zoomed the grid holds a single week, but date labels are derived from a
-    // week's absolute position, so expose that offset to the header (#90).
-    const weekIndexOffset = useMemo(() =>
-    {
-        if (weeklyView || !zoomedWeekId) return 0;
-        const idx = allTimelineWeeks.findIndex((w) => w.id === zoomedWeekId);
-        return idx === -1 ? 0 : idx;
-    }, [ weeklyView, zoomedWeekId, allTimelineWeeks ]);
-
-    // Widen day columns to fill the container when a single week is zoomed (#90).
-    const dayCellWidth = useMemo(() =>
-    {
-        const DEFAULT_WIDTH = 80;
-        const LABEL_COL_WIDTH = 250;
-        if (weeklyView || !zoomedWeekId) return DEFAULT_WIDTH;
-        const dayCount = timelineWeeks[ 0 ]?.days.length ?? 0;
-        const available = containerWidth - LABEL_COL_WIDTH;
-        if (dayCount <= 0 || available <= 0) return DEFAULT_WIDTH;
-        return Math.max(DEFAULT_WIDTH, Math.floor(available / dayCount));
-    }, [ weeklyView, zoomedWeekId, timelineWeeks, containerWidth ]);
-
-    // Zoom is a days-view-only affordance: drop it when returning to weekly view.
-    const handleWeeklyViewChange = useCallback((checked: boolean) =>
-    {
-        setWeeklyView(checked);
-        if (checked) setZoomedWeekId(null);
-    }, []);
 
     const isSyllabusExpanded = useCallback(
         (syllabusId: string) => !collapsedSyllabusIds.has(syllabusId),
@@ -330,20 +269,6 @@ export const useGanttView = (curriculumId: string) =>
             pendingScrollRafs.current = [];
         };
     }, [ pendingScrollId ]);
-
-    // Track the scroll container width so a zoomed week can be sized to fill it (#90).
-    useEffect(() =>
-    {
-        const node = containerRef.current;
-        if (!node || typeof ResizeObserver === "undefined") return;
-        setContainerWidth(node.clientWidth);
-        const observer = new ResizeObserver((entries) =>
-        {
-            setContainerWidth(entries[ 0 ].contentRect.width);
-        });
-        observer.observe(node);
-        return () => observer.disconnect();
-    }, []);
 
     const moduleMappings = useMemo(() =>
     {
@@ -644,323 +569,23 @@ export const useGanttView = (curriculumId: string) =>
         state.days,
     ]);
 
-    const handleMapModule = useCallback(
-        async (moduleId: string, dayId: string) =>
-        {
-            await createMapping({ moduleId, eventId: null, dayId });
-        },
-        [ createMapping ],
-    );
-
-    const handleMapEvent = useCallback(
-        async (moduleId: string, eventId: string, dayId: string) =>
-        {
-            await createMapping({ moduleId, eventId, dayId });
-        },
-        [ createMapping ],
-    );
-
-    const handleMoveModule = useCallback(
-        async (moduleId: string, sourceDayId: string, targetDayId: string) =>
-        {
-            await moveMapping({
-                moduleId,
-                eventId: null,
-                from: { d: sourceDayId },
-                to: { d: targetDayId },
-            });
-        },
-        [ moveMapping ],
-    );
-
-    const handleMoveEvent = useCallback(
-        async (
-            moduleId: string,
-            eventId: string,
-            sourceDayId: string,
-            targetDayId: string,
-        ) =>
-        {
-            await moveMapping({
-                moduleId,
-                eventId,
-                from: { d: sourceDayId },
-                to: { d: targetDayId },
-            });
-        },
-        [ moveMapping ],
-    );
-
-    const handleShiftModule = useCallback(
-        async (moduleId: string, deltaDays: number) =>
-        {
-            if (deltaDays === 0) return;
-
-            const ganttModule = state.modules[ moduleId ];
-            const promises: Array<Promise<void>> = [];
-
-            const mDays = moduleMappings[ moduleId ] || [];
-            mDays.forEach((dayId) =>
-            {
-                const currentIdx = linearDays.indexOf(dayId);
-                const newIdx = currentIdx + deltaDays;
-                const targetDayId = linearDays[ newIdx ];
-                if (targetDayId)
-                {
-                    promises.push(
-                        moveMapping({
-                            moduleId,
-                            eventId: null,
-                            from: { d: dayId },
-                            to: { d: targetDayId },
-                        }),
-                    );
-                }
-            });
-
-            if (ganttModule && ganttModule.events)
-            {
-                ganttModule.events.forEach((eventId) =>
-                {
-                    const currentDayId = eventMappings[ eventId ];
-                    if (currentDayId)
-                    {
-                        const currentIdx = linearDays.indexOf(currentDayId);
-                        const newIdx = currentIdx + deltaDays;
-                        const targetDayId = linearDays[ newIdx ];
-                        if (targetDayId)
-                        {
-                            promises.push(
-                                moveMapping({
-                                    moduleId,
-                                    eventId,
-                                    from: { d: currentDayId },
-                                    to: { d: targetDayId },
-                                }),
-                            );
-                        }
-                    }
-                });
-            }
-
-            await Promise.all(promises);
-        },
-        [ linearDays, state.modules, moduleMappings, eventMappings, moveMapping ],
-    );
-
-    // Undo stack for drag actions in the timeline (#142). Each entry is the
-    // inverse of one completed user action; Ctrl+Z pops and executes it.
-    const { pushUndo } = useGanttUndo();
-
-    const handleDragEnd = useCallback(
-        async (event: DragEndEvent) =>
-        {
-            const { active, over } = event;
-            if (!over) return;
-
-            const payload = active.data.current;
-            const target = over.data.current;
-
-            if (!payload || !target) return;
-
-            if (target.targetType === "remove")
-            {
-                if (
-                    payload.type === "module-move" ||
-                    payload.type === "module-shift"
-                )
-                {
-                    const mDays = moduleMappings[ payload.moduleId ] || [];
-                    const promises: Array<Promise<void>> = [];
-                    // Snapshot for undo: everything this drop removes (#142).
-                    const removed: Array<{
-                        eventId: null | string;
-                        dayId: string;
-                    }> = [];
-
-                    mDays.forEach((d) =>
-                    {
-                        removed.push({ eventId: null, dayId: d });
-                        promises.push(
-                            removeMapping({
-                                moduleId: payload.moduleId,
-                                eventId: null,
-                                dayId: d,
-                            }),
-                        );
-                    });
-
-                    const ganttModule = state.modules[ payload.moduleId ];
-                    if (ganttModule && ganttModule.events)
-                    {
-                        ganttModule.events.forEach((eId) =>
-                        {
-                            const d = eventMappings[ eId ];
-                            if (d)
-                            {
-                                removed.push({ eventId: eId, dayId: d });
-                                promises.push(
-                                    removeMapping({
-                                        moduleId: payload.moduleId,
-                                        eventId: eId,
-                                        dayId: d,
-                                    }),
-                                );
-                            }
-                        });
-                    }
-                    await Promise.all(promises);
-                    if (removed.length > 0)
-                    {
-                        pushUndo(async () =>
-                        {
-                            await Promise.all(
-                                removed.map((r) =>
-                                    createMapping({
-                                        moduleId: payload.moduleId,
-                                        eventId: r.eventId,
-                                        dayId: r.dayId,
-                                    }),
-                                ),
-                            );
-                        });
-                    }
-                } else if (payload.type === "event-move")
-                {
-                    await removeMapping({
-                        moduleId: payload.moduleId,
-                        eventId: payload.eventId,
-                        dayId: payload.sourceDayId,
-                    });
-                    pushUndo(async () =>
-                    {
-                        await createMapping({
-                            moduleId: payload.moduleId,
-                            eventId: payload.eventId,
-                            dayId: payload.sourceDayId,
-                        });
-                    });
-                } else if (payload.type === "event-occurrence")
-                {
-                    await deleteOccurrence({
-                        eventId: payload.eventId,
-                        dayId: payload.dayId,
-                    });
-                }
-                return;
-            }
-
-            if (
-                payload.type === "module-map" &&
-                target.targetType === "module"
-            )
-            {
-                await handleMapModule(payload.moduleId, target.dayId);
-                pushUndo(async () =>
-                {
-                    await removeMapping({
-                        moduleId: payload.moduleId,
-                        eventId: null,
-                        dayId: target.dayId,
-                    });
-                });
-            } else if (
-                payload.type === "event-map" &&
-                target.targetType === "event"
-            )
-            {
-                await handleMapEvent(
-                    payload.moduleId,
-                    payload.eventId,
-                    target.dayId,
-                );
-                pushUndo(async () =>
-                {
-                    await removeMapping({
-                        moduleId: payload.moduleId,
-                        eventId: payload.eventId,
-                        dayId: target.dayId,
-                    });
-                });
-            } else if (
-                payload.type === "module-move" &&
-                target.targetType === "module"
-            )
-            {
-                if (payload.sourceDayId !== target.dayId)
-                {
-                    await handleMoveModule(
-                        payload.moduleId,
-                        payload.sourceDayId,
-                        target.dayId,
-                    );
-                    pushUndo(async () =>
-                    {
-                        await handleMoveModule(
-                            payload.moduleId,
-                            target.dayId,
-                            payload.sourceDayId,
-                        );
-                    });
-                }
-            } else if (
-                payload.type === "module-shift" &&
-                target.targetType === "module"
-            )
-            {
-                const sourceIdx = linearDays.indexOf(payload.sourceDayId);
-                const targetIdx = linearDays.indexOf(target.dayId);
-                const deltaDays = targetIdx - sourceIdx;
-
-                if (deltaDays !== 0)
-                {
-                    await handleShiftModule(payload.moduleId, deltaDays);
-                    pushUndo(async () =>
-                    {
-                        await handleShiftModule(payload.moduleId, -deltaDays);
-                    });
-                }
-            } else if (
-                payload.type === "event-move" &&
-                target.targetType === "event"
-            )
-            {
-                if (payload.sourceDayId !== target.dayId)
-                {
-                    await handleMoveEvent(
-                        payload.moduleId,
-                        payload.eventId,
-                        payload.sourceDayId,
-                        target.dayId,
-                    );
-                    pushUndo(async () =>
-                    {
-                        await handleMoveEvent(
-                            payload.moduleId,
-                            payload.eventId,
-                            target.dayId,
-                            payload.sourceDayId,
-                        );
-                    });
-                }
-            }
-        },
-        [
-            handleMapModule,
-            handleMapEvent,
-            handleMoveModule,
-            handleMoveEvent,
-            handleShiftModule,
-            linearDays,
-            moduleMappings,
-            eventMappings,
-            removeMapping,
-            createMapping,
-            pushUndo,
-            deleteOccurrence,
-            state.modules,
-        ],
-    );
+    const {
+        handleDragEnd,
+        handleMapModule,
+        handleMapEvent,
+        handleMoveModule,
+        handleMoveEvent,
+        handleShiftModule,
+    } = useGanttDrag({
+        linearDays,
+        modulesById: state.modules,
+        moduleMappings,
+        eventMappings,
+        createMapping,
+        moveMapping,
+        removeMapping,
+        deleteOccurrence,
+    });
 
     // Memoized so context consumers (every day cell) don't re-render on unrelated
     // parent renders (#88).
@@ -982,7 +607,7 @@ export const useGanttView = (curriculumId: string) =>
             violations,
             dayCellWidth,
             zoomedWeekId,
-            singleWeekDayZoom: !weeklyView && zoomedWeekId !== null,
+            singleWeekDayZoom,
             setZoomedWeekId,
             weekIndexOffset,
             isSyllabusExpanded,
@@ -1016,6 +641,7 @@ export const useGanttView = (curriculumId: string) =>
             violations,
             dayCellWidth,
             zoomedWeekId,
+            singleWeekDayZoom,
             weekIndexOffset,
             isSyllabusExpanded,
             toggleSyllabus,

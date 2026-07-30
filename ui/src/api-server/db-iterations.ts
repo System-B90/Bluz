@@ -6,6 +6,7 @@ import {
 } from "@/api-server/mongo-db-controller";
 import { ClientApiError } from "@/api-shared/errors";
 import {
+    HiveIterationCache,
     Iteration,
     IterationId,
     PatchIterationPayload,
@@ -202,6 +203,31 @@ async function patchIteration(
 }
 
 /**
+ * Overwrite an iteration's Hive name cache, e.g. after a manual "sync Hive
+ * info" request (#379).
+ */
+async function setIterationHiveCache(
+    id: IterationId,
+    hiveCache: HiveIterationCache,
+): Promise<Iteration> {
+    await ensureSeeded();
+    const meta = getMetaController();
+    const existing = await meta.iterations.findOne({ id });
+    if (!existing) {
+        throw new ClientApiError(`Iteration "${id}" not found!`);
+    }
+    await meta.iterations.updateOne(
+        { id },
+        { $set: { hiveCache, updatedAt: new Date() } },
+    );
+    const updated = await meta.iterations.findOne({ id });
+    if (!updated) {
+        throw new ClientApiError(`Iteration "${id}" disappeared during update!`);
+    }
+    return stripMongoId(updated);
+}
+
+/**
  * Guard for write paths: past iterations are reference-only. Throws unless the
  * resolved iteration is the current one. Omitted id ⇒ current ⇒ writable.
  */
@@ -226,5 +252,6 @@ export namespace DbIterations {
     export const getByCurriculum = getIterationByCurriculum;
     export const register = registerIteration;
     export const patch = patchIteration;
+    export const setHiveCache = setIterationHiveCache;
     export const assertWritable = assertWritableIteration;
 }

@@ -1,4 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
+import SyncIcon from "@mui/icons-material/Sync";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -18,27 +19,50 @@ export type IterationFormCardProps = Omit<FormCardBaseProps<Iteration>, "selecte
     ) => void;
     isSubmitting: boolean;
     handleStartCreate: () => void;
+    handleSyncHive: (iteration: Iteration) => void;
+    isSyncingHive: boolean;
 };
 
 /**
  * Submit plus a secondary button that switches straight from editing an
  * iteration to creating a new one — the room and outsider tabs cancel back to
- * the placeholder instead, but there is no "discard" to do here.
+ * the placeholder instead, but there is no "discard" to do here. When editing
+ * an existing iteration with a Hive URL, an uncommon "sync Hive info" action
+ * is also offered (#379) — a manual re-snapshot instead of the automatic one
+ * taken at creation time.
  */
 function IterationFormActions({
     isCreating,
     isSubmitting,
     handleStartCreate,
+    selectedIteration,
+    handleSyncHive,
+    isSyncingHive,
 }: {
     isCreating: boolean;
     isSubmitting: boolean;
     handleStartCreate: () => void;
+    selectedIteration: Iteration | null;
+    handleSyncHive: (iteration: Iteration) => void;
+    isSyncingHive: boolean;
 })
 {
     return (
         <>
             <Divider />
             <Box display="flex" gap={ 1.5 } justifyContent="flex-end">
+                { isCreating || !selectedIteration?.hiveUrl ? null : (
+                    <Button
+                        disabled={ isSyncingHive }
+                        onClick={ () => handleSyncHive(selectedIteration) }
+                        startIcon={ isSyncingHive
+                            ? <CircularProgress size={ 16 } />
+                            : <SyncIcon /> }
+                        type="button"
+                    >
+                        סנכרון פרטי הייב
+                    </Button>
+                ) }
                 { isCreating ? null : (
                     <Button onClick={ handleStartCreate } type="button">
                         מחזור חדש
@@ -69,14 +93,19 @@ export function IterationFormCard({
     handleSave,
     handleCancelEdit,
     handleStartCreate,
+    handleSyncHive,
+    isSyncingHive,
 }: IterationFormCardProps & { selectedEntity: Iteration | null; })
 {
     return (
         <BaseFormCard
             formActions={ <IterationFormActions
                 handleStartCreate={ handleStartCreate }
+                handleSyncHive={ handleSyncHive }
                 isCreating={ isCreating }
                 isSubmitting={ isSubmitting }
+                isSyncingHive={ isSyncingHive }
+                selectedIteration={ selectedIteration }
             /> }
             formFields={ <>
                 <SettingsTextField
