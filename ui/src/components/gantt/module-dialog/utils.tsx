@@ -5,6 +5,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMemo, useState } from "react";
 
+import { getHiveBaseUrl } from "@/api-shared/common";
 import { useHiveLessons } from "@/components/base/HiveLessonsProvider";
 import { HiveModuleSelect } from "@/components/base/HiveModuleSelect";
 import { useHiveModules } from "@/components/base/HiveModulesProvider";
@@ -41,10 +42,15 @@ export function HiveModulesView({
                     const mod = getModule(id);
                     return (
                         <Chip
+                            clickable
+                            component="a"
+                            href={`${getHiveBaseUrl()}/course/${mod?.parent_subject}/${id}`}
                             key={id}
                             label={mod?.name ?? `#${id}`}
                             onDelete={onRemove ? () => onRemove(id) : undefined}
+                            rel="noopener noreferrer"
                             size="small"
+                            target="_blank"
                             variant="outlined"
                         />
                     );

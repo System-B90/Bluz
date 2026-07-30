@@ -66,6 +66,9 @@ export function SyllabusesActionsBox({
                                         allocatedDuration:
                                             eventDoc.allocatedDuration,
                                         constraints: eventDoc.constraints,
+                                        hiveSubjectId: eventDoc.hiveSubjectId,
+                                        hiveModuleId: eventDoc.hiveModuleId,
+                                        hiveLessonId: eventDoc.hiveLessonId,
                                     };
                                 })
                                 .filter(Boolean);
@@ -158,6 +161,9 @@ export function SyllabusesActionsBox({
                                             eventData.type,
                                             eventData.minimumDuration || 0,
                                             eventData.allocatedDuration || 0,
+                                            eventData.hiveSubjectId ?? null,
+                                            eventData.hiveModuleId ?? null,
+                                            eventData.hiveLessonId ?? null,
                                         );
                                     }
                                 }

@@ -48,6 +48,11 @@ vi.mock("@/api-server/web-socket-utils", () => ({
     SendServerRequestToSessionServer: (...args: Array<unknown>) =>
         broadcast(...args),
 }));
+// Module-level Hive-link fallback (subject lookup for #hiveIds) — no live
+// Hive to talk to in this suite, so it just returns no modules.
+vi.mock("@/api-server/hive/session-client", () => ({
+    createHiveClient: vi.fn(async () => ({ getModules: async () => [] })),
+}));
 
 import { DbCourses } from "@/api-server/db-courses";
 import { DbIterations } from "@/api-server/db-iterations";

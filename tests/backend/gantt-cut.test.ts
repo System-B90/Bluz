@@ -272,7 +272,13 @@ describe("buildScheduleEvent", () => {
             hiveModuleId: 6,
             hiveLessonId: 7,
         });
-        const doc = buildScheduleEvent(occ({ ganttEventId: "e1" }), event, ["course-1"]);
+        const doc = buildScheduleEvent(
+            occ({ ganttEventId: "e1" }),
+            event,
+            ["course-1"],
+            [],
+            new Map(),
+        );
 
         expect(doc.name).toBe("הרצאת פתיחה");
         expect(doc.type).toBe(EventType.EXERCISE);
@@ -290,12 +296,26 @@ describe("buildScheduleEvent", () => {
 
     it("stores a non-Hive placeholder when linkage is absent", () => {
         const event = makeEvent({ id: "e1" });
-        const doc = buildScheduleEvent(occ({}), event, []);
+        const doc = buildScheduleEvent(occ({}), event, [], [], new Map());
         expect(doc.subject).toBe(0);
         expect(doc.hiveModule).toBe(0);
         expect(doc.hiveLesson).toBe(null);
         expect(doc.instructors).toEqual([]);
         expect(doc.notes).toBe("");
+    });
+
+    it("falls back to the containing module's Hive link when the event has none", () => {
+        const event = makeEvent({ id: "e1" });
+        const doc = buildScheduleEvent(
+            occ({}),
+            event,
+            [],
+            [6],
+            new Map([[6, 5]]),
+        );
+        expect(doc.subject).toBe(5);
+        expect(doc.hiveModule).toBe(6);
+        expect(doc.hiveLesson).toBe(null);
     });
 });
 

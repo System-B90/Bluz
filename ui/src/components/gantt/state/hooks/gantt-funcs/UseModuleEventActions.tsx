@@ -94,6 +94,9 @@ export function useModuleEventActions() {
             type: ModuleEventType = ModuleEventType.Lecture,
             minimumDuration: number = 0,
             allocatedDuration: number = 0,
+            hiveSubjectId: null | number = null,
+            hiveModuleId: null | number = null,
+            hiveLessonId: null | number = null,
         ) =>
             actions
                 .create(
@@ -111,9 +114,9 @@ export function useModuleEventActions() {
                         isCritical: false,
                         isPaWindow: false,
                         comment: null,
-                        hiveSubjectId: null,
-                        hiveModuleId: null,
-                        hiveLessonId: null,
+                        hiveSubjectId,
+                        hiveModuleId,
+                        hiveLessonId,
                     },
                     moduleId,
                 )

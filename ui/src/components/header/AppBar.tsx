@@ -28,7 +28,7 @@ export function ScheduleAppBar({
             sx={{ ...props.sx, zIndex: (theme) => theme.zIndex.drawer + 1 }}
             {...props}
         >
-            <Toolbar variant="dense">
+            <Toolbar sx={{ position: "relative" }} variant="dense">
                 <Box
                     alignItems="center"
                     display="flex"
@@ -52,7 +52,15 @@ export function ScheduleAppBar({
 
                 <Box flexGrow={1} />
 
-                <CommandPaletteButton />
+                <Box
+                    sx={{
+                        position: { xs: "static", md: "absolute" },
+                        insetInlineStart: { md: "50%" },
+                        transform: { md: "translateX(-50%)" },
+                    }}
+                >
+                    <CommandPaletteButton />
+                </Box>
 
                 <Box flexGrow={1} />
 

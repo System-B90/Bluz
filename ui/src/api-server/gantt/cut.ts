@@ -7,6 +7,7 @@ import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { getModuleDayMappingsForCurriculum } from "@/api-server/gantt/db-mappings";
 import { listRecurrenceExceptionsForCurriculum } from "@/api-server/gantt/db-recurrence-exceptions";
 import { syncEventToInstructorsGoogleCalendars } from "@/api-server/google/google-calendar-sync";
+import { createHiveClient } from "@/api-server/hive/session-client";
 import {
     DatabaseController,
     getDatabaseController,
@@ -90,9 +91,11 @@ export function moduleEventTypeToCalendarType(
 export function indexCurriculumEvents(curriculum: ApiCurriculum): {
     eventsById: Map<string, ApiModuleEvent>;
     syllabusTitleByEvent: Map<string, string>;
+    moduleHiveIdsByEvent: Map<string, Array<number>>;
 } {
     const eventsById = new Map<string, ApiModuleEvent>();
     const syllabusTitleByEvent = new Map<string, string>();
+    const moduleHiveIdsByEvent = new Map<string, Array<number>>();
 
     for (const cLink of curriculum.c2s ?? []) {
         const syllabus = cLink.syllabus;
@@ -101,11 +104,12 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
                 const event = mLink.event;
                 eventsById.set(event.id, event);
                 syllabusTitleByEvent.set(event.id, syllabus.title);
+                moduleHiveIdsByEvent.set(event.id, sLink.module.hiveIds ?? []);
             }
         }
     }
 
-    return { eventsById, syllabusTitleByEvent };
+    return { eventsById, syllabusTitleByEvent, moduleHiveIdsByEvent };
 }
 
 /**
@@ -210,21 +214,34 @@ export function countOverlappingOccurrences(
 
 /**
  * Build a single schedule-event document from a planned occurrence and its
- * source gantt event. Hive linkage is copied when present; when absent the
- * event is stored as a non-Hive placeholder (subject/module 0, lesson null),
- * matching how "fake" events represent "no Hive linkage".
+ * source gantt event. Hive linkage is copied when present on the event
+ * itself; when the event has no linkage of its own, it falls back to the
+ * first Hive module linked on its containing Gantt module (via
+ * `hiveModuleSubjectById`), since users commonly link Hive at the module
+ * level (module dialog chips) rather than per-event. Only when neither is
+ * set is the event stored as a non-Hive placeholder (subject/module 0,
+ * lesson null), matching how "fake" events represent "no Hive linkage".
  */
 export function buildScheduleEvent(
     occurrence: PlannedOccurrence,
     ganttEvent: ApiModuleEvent,
     courseIds: Array<string>,
+    moduleHiveIds: Array<number>,
+    hiveModuleSubjectById: Map<number, number>,
 ): DbEventDocument {
+    const fallbackHiveModuleId = ganttEvent.hiveModuleId ?? moduleHiveIds[0] ?? null;
+    const fallbackHiveSubjectId =
+        ganttEvent.hiveSubjectId ??
+        (fallbackHiveModuleId != null
+            ? hiveModuleSubjectById.get(fallbackHiveModuleId) ?? null
+            : null);
+
     return {
         id: randomUUID(),
         name: ganttEvent.title,
         type: moduleEventTypeToCalendarType(ganttEvent.type),
-        subject: ganttEvent.hiveSubjectId ?? 0,
-        hiveModule: ganttEvent.hiveModuleId ?? 0,
+        subject: fallbackHiveSubjectId ?? 0,
+        hiveModule: fallbackHiveModuleId ?? 0,
         hiveLesson: ganttEvent.hiveLessonId ?? null,
         startTime: occurrence.startTime,
         endTime: occurrence.endTime,
@@ -244,6 +261,25 @@ export function buildScheduleEvent(
         ganttEventId: ganttEvent.id,
         ganttOccurrenceDate: occurrence.occurrenceDate,
     };
+}
+
+/**
+ * Maps every Hive module id to its parent subject id, used to resolve the
+ * subject for events that only carry a module-level Hive link (#hiveIds set
+ * on the Gantt module, not on the event itself). Best-effort: a Hive failure
+ * must not block the cut, it just leaves the fallback empty.
+ */
+async function buildHiveModuleSubjectMap(
+    hiveUrl?: string,
+): Promise<Map<number, number>> {
+    try {
+        const hive = await createHiveClient(hiveUrl);
+        const modules = await hive.getModules();
+        return new Map(modules.map((m) => [Number(m.id), m.parent_subject]));
+    } catch (e) {
+        console.error("Failed to load Hive modules for cut subject fallback", e);
+        return new Map();
+    }
 }
 
 /**
@@ -427,8 +463,11 @@ export async function cutCurriculumToSchedule(
         (scheduleSetting as null | ScheduleSettings)?.weekendHomeStartTime ??
         DEFAULT_WEEKEND_HOME_START_TIME;
 
-    const { eventsById, syllabusTitleByEvent } =
+    const { eventsById, syllabusTitleByEvent, moduleHiveIdsByEvent } =
         indexCurriculumEvents(curriculum);
+    const hiveModuleSubjectById = await buildHiveModuleSubjectMap(
+        iteration.hiveUrl,
+    );
 
     const planInput = buildCutPlanInput({
         curriculum,
@@ -510,7 +549,15 @@ export async function cutCurriculumToSchedule(
                     .filter((id): id is string => Boolean(id))
                 : allCourseIds;
 
-        documents.push(buildScheduleEvent(occurrence, event, courseIds));
+        documents.push(
+            buildScheduleEvent(
+                occurrence,
+                event,
+                courseIds,
+                moduleHiveIdsByEvent.get(occurrence.ganttEventId) ?? [],
+                hiveModuleSubjectById,
+            ),
+        );
     }
 
     // Idempotency: re-check the one-shot guard immediately before writing so a

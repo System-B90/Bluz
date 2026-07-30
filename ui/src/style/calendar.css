@@ -220,13 +220,11 @@ button.rbc-input::-moz-focus-inner {
 
     cursor: grab;
     transition:
-        transform 0.2s cubic-bezier(0.165, 0.84, 0.44, 1),
         box-shadow 0.2s cubic-bezier(0.165, 0.84, 0.44, 1),
         outline-width 0.2s ease;
 }
 
 .rbc-event:hover {
-    transform: translateY(-2px) scale(1.01);
     box-shadow:
         0 8px 16px rgba(0, 0, 0, 0.15),
         0 4px 6px rgba(0, 0, 0, 0.08);
