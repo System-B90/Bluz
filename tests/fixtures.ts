@@ -98,15 +98,19 @@ export async function clickIconButton(button: Locator): Promise<void> {
 export async function openSettingsDialog(page: Page): Promise<void> {
     // The settings icon is an IconButton in the AppBar with class hover-rotate-subtle
     const settingsButton = page.locator(`${SELECTORS.appBar} button.hover-rotate-subtle`);
-    for (let attempt = 0; attempt < 3; attempt++) {
+    const dialog = page.getByRole("dialog").filter({ hasText: "הגדרות" });
+
+    // The gear renders before hydration attaches its handler, so an early click
+    // is a no-op and the dialog never opens. Retry with a short per-attempt
+    // wait: the previous loop waited 15s per attempt under a 15s test cap, so
+    // the first miss consumed the whole budget and attempts 2 and 3 never ran.
+    for (let attempt = 0; attempt < 5; attempt++) {
         await settingsButton.click();
         try {
-            await expect(
-                page.getByRole("dialog").filter({ hasText: "הגדרות" }),
-            ).toBeVisible({ timeout: 15_000 });
+            await expect(dialog).toBeVisible({ timeout: 3_000 });
             return;
         } catch {
-            if (attempt === 2) {
+            if (attempt === 4) {
                 throw new Error("Settings dialog did not open");
             }
         }
@@ -151,6 +155,10 @@ export async function waitForAppLoad(page: Page): Promise<void> {
     await expect(page.locator(SELECTORS.appBar)).toBeVisible({
         timeout: 60_000,
     });
+    // The AppBar is server-rendered, so its visibility says nothing about
+    // whether React has hydrated — clicks before hydration are silently
+    // dropped. Waiting for `load` covers the client bundle.
+    await page.waitForLoadState("load");
 }
 
 /**

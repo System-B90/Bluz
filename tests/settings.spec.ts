@@ -16,6 +16,11 @@ import {
  */
 
 test.describe("Settings Dialog", () => {
+    // A cold app load plus the hydration retry in `openSettingsDialog` doesn't
+    // fit the suite's global 15s budget — that cap is what turned a slow open
+    // into 13 hard failures.
+    test.describe.configure({ timeout: 60_000 });
+
     test.beforeEach(async ({ page }) => {
         await gotoAppHome(page);
     });
