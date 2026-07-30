@@ -1,14 +1,13 @@
 import path from "path";
 
-import tsconfigPaths from "vite-tsconfig-paths";
 import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
-    plugins: [
-        tsconfigPaths({
-            projects: [ path.resolve(__dirname, "../ui/tsconfig.json") ],
-        }),
-    ],
+    // Vite 8 resolves tsconfig `paths` natively, so the `vite-tsconfig-paths`
+    // plugin is gone — it was the only thing pulling in the deprecated,
+    // unmaintained `tsconfck`. Vitest had been emitting this exact advice on
+    // every run. See #380.
+    resolve: { tsconfigPaths: true },
     test: {
         environment: "node",
         include: [ "tests/backend/**/*.test.ts" ],

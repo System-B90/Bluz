@@ -58,7 +58,7 @@
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
     "exceljs": "^4.4.0",
-    "googleapis": "^163.0.0",
+    "googleapis": "^173.0.0",
     "lightningcss": "^1.33.0",
     "mongodb": "^7.5.0",
     "mui-color-input": "^7.0.0",
@@ -112,7 +112,6 @@
     "typedoc-plugin-markdown": "^4.12.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.65.0",
-    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.10"
   },
   "allowScripts": {
@@ -120,6 +119,7 @@
   },
   "overrides": {
     "uuid": "^14.0.1",
-    "stylis": "4.2.0"
+    "stylis": "4.2.0",
+    "gaxios": "^7.3.0"
   }
 }
