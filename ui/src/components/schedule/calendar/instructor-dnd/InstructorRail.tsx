@@ -176,7 +176,12 @@ export function InstructorRail() {
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    p: 1,
+                    py: 1,
+                    // The rail hugs the physical screen edge, which is the
+                    // inline-end side under RTL — give that side the breathing
+                    // room and keep the calendar-facing side tight.
+                    paddingInlineStart: 0.5,
+                    paddingInlineEnd: 1.5,
                     boxSizing: "border-box",
                     overflow: "hidden",
                 }}
