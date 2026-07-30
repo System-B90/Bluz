@@ -17,6 +17,7 @@ import { useEntityForm } from "@/components/settings-dialog/tabs/global/common/U
 import { IterationFormCard, IterationFormCardProps } from "@/components/settings-dialog/tabs/global/iteration-settings/IterationFormCard";
 import { IterationListCard, IterationListCardProps } from "@/components/settings-dialog/tabs/global/iteration-settings/IterationListCard";
 import {
+    describeHiveSyncChanges,
     EMPTY_ITERATION_VALUES,
     iterationToValues,
     IterationValues,
@@ -29,6 +30,9 @@ export function IterationSettings()
     const [ iterations, setIterations ] = useState<Array<Iteration> | null>(null);
     const [ searchQuery, setSearchQuery ] = useState("");
     const [ busyId, setBusyId ] = useState<null | string>(null);
+    // Tracked apart from `busyId` so "make current" on the selected iteration
+    // does not spin the sync button too.
+    const [ syncingId, setSyncingId ] = useState<null | string>(null);
 
     const load = useCallback(() =>
     {
@@ -124,11 +128,11 @@ export function IterationSettings()
     const handleSyncHive = useCallback(
         (iteration: Iteration) =>
         {
-            setBusyId(iteration.id);
+            setSyncingId(iteration.id);
             apiSyncIterationHive(iteration.id)
-                .then(() =>
+                .then(({ changes }) =>
                 {
-                    enqueueSnackbar("פרטי ההייב סונכרנו בהצלחה", {
+                    enqueueSnackbar(describeHiveSyncChanges(changes), {
                         variant: "success",
                     });
                     load();
@@ -140,7 +144,7 @@ export function IterationSettings()
                         error,
                     ),
                 )
-                .finally(() => setBusyId(null));
+                .finally(() => setSyncingId(null));
         },
         [ enqueueSnackbar, load ],
     );
@@ -181,7 +185,7 @@ export function IterationSettings()
                     handleSyncHive,
                     isCreating: form.isCreating,
                     isSubmitting: form.isSubmitting,
-                    isSyncingHive: busyId === form.selectedEntity?.id,
+                    isSyncingHive: syncingId === form.selectedEntity?.id,
                     setValue: form.setValue,
                     values: form.values,
                 } }

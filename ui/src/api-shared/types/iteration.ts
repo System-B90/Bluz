@@ -27,6 +27,27 @@ export type HiveIterationCache = {
 };
 
 /**
+ * How a manual "sync Hive info" (#379) changed the cached names. Counts are
+ * summed across modules, subjects and rooms.
+ */
+export type HiveCacheChanges = {
+    /** Ids present in Hive that the cache did not have. */
+    added: number;
+    /** Ids whose cached name differs from Hive's. */
+    updated: number;
+    /** Cached ids that Hive no longer returns. */
+    removed: number;
+    /** Ids whose cached name already matched. */
+    unchanged: number;
+};
+
+/** Response of `POST /api/iterations/[id]/sync-hive`. */
+export type SyncHiveResult = {
+    iteration: Iteration;
+    changes: HiveCacheChanges;
+};
+
+/**
  * A single course iteration (bi-annual run). The set of all iterations is
  * stored in the shared `bluz_meta` DB; the calendar data for each iteration
  * lives in the database named by `dbName`.
