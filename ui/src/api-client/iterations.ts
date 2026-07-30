@@ -39,3 +39,12 @@ export async function apiPatchIteration(
         },
     );
 }
+
+export async function apiSyncIterationHive(
+    id: IterationId,
+): Promise<Iteration> {
+    return await safeApiFetcher<Iteration>(
+        `/api/iterations/${encodeURIComponent(id)}/sync-hive`,
+        { method: "POST" },
+    );
+}

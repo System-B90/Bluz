@@ -9,6 +9,7 @@ import {
     apiListIterations,
     apiPatchIteration,
     apiRegisterIteration,
+    apiSyncIterationHive,
 } from "@/api-client/iterations";
 import { Iteration } from "@/api-shared/types/iteration";
 import { SettingsTab } from "@/components/settings-dialog/tabs/global/common";
@@ -120,6 +121,30 @@ export function IterationSettings()
         [ enqueueSnackbar, load ],
     );
 
+    const handleSyncHive = useCallback(
+        (iteration: Iteration) =>
+        {
+            setBusyId(iteration.id);
+            apiSyncIterationHive(iteration.id)
+                .then(() =>
+                {
+                    enqueueSnackbar("פרטי ההייב סונכרנו בהצלחה", {
+                        variant: "success",
+                    });
+                    load();
+                })
+                .catch((error) =>
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "סנכרון פרטי ההייב נכשל.",
+                        error,
+                    ),
+                )
+                .finally(() => setBusyId(null));
+        },
+        [ enqueueSnackbar, load ],
+    );
+
     const filteredIterations = useMemo(() =>
     {
         const all = iterations ?? [];
@@ -153,8 +178,10 @@ export function IterationSettings()
                     handleCancelEdit: form.handleCancelEdit,
                     handleSave: form.handleSave,
                     handleStartCreate: form.handleStartCreate,
+                    handleSyncHive,
                     isCreating: form.isCreating,
                     isSubmitting: form.isSubmitting,
+                    isSyncingHive: busyId === form.selectedEntity?.id,
                     setValue: form.setValue,
                     values: form.values,
                 } }
