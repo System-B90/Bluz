@@ -38,8 +38,13 @@ const basicOperations = drizzleOperationsBuilder<
     },
     parentJunction: {
         table: ganttCurriculum2SyllabusesSchema,
+        // A syllabus is shareable across curriculums — `addSyllabusToCurriculum`
+        // just inserts another c2s row — so this is the one parent link that
+        // must be surfaced as a list. See #310.
         parentKey: "curriculumId",
+        outputKey: "curriculumIds",
         selfKey: "syllabusId",
+        cardinality: "many",
     },
 });
 

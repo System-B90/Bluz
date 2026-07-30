@@ -47,6 +47,44 @@ describe("Base Gantt Collection Routes", () => {
         expect(data.data).toEqual({ "1": "Item 1" });
     });
 
+    it("GET - list defaults to the flat label map (no withParents)", async () => {
+        mockDbSet.listItems.mockResolvedValueOnce({ "1": "Item 1" });
+        const request = new NextRequest("http://localhost/api/gantt");
+        await routes.GET(request);
+        // The flat shape is the published contract; the parent-bearing shape
+        // must stay opt-in so existing callers are unaffected. See #310.
+        expect(mockDbSet.listItems).toHaveBeenCalledWith(false);
+    });
+
+    it("GET - ?withParents=1 asks the db layer for parent ids", async () => {
+        mockDbSet.listItems.mockResolvedValueOnce({
+            "1": { title: "Item 1", syllabusId: "s_1" },
+        });
+        const request = new NextRequest(
+            "http://localhost/api/gantt?withParents=1",
+        );
+        const response = await routes.GET(request);
+        const data = await response.json();
+        expect(mockDbSet.listItems).toHaveBeenCalledWith(true);
+        expect(response.status).toBe(200);
+        expect(data.data).toEqual({
+            "1": { title: "Item 1", syllabusId: "s_1" },
+        });
+    });
+
+    it.each([
+        ["withParents", true],
+        ["withParents=true", true],
+        ["withParents=yes", true],
+        ["withParents=0", false],
+        ["withParents=false", false],
+    ])("GET - ?%s parses to %s", async (query, expected) => {
+        mockDbSet.listItems.mockResolvedValueOnce({});
+        const request = new NextRequest(`http://localhost/api/gantt?${query}`);
+        await routes.GET(request);
+        expect(mockDbSet.listItems).toHaveBeenCalledWith(expected);
+    });
+
     it("GET - list multiple items by ids", async () => {
         mockDbSet.getMultipleItems.mockResolvedValueOnce([{ id: "1", title: "Item 1" }]);
         const request = new NextRequest("http://localhost/api/gantt?ids=1");

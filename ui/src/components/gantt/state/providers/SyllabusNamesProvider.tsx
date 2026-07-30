@@ -11,12 +11,25 @@ import React, {
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
-import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
+import {
+    GanttCurriculumId,
+    GanttSyllabusId,
+} from "@/api-shared/types/gantt/models";
 
 export type SyllabusDictionary = Record<GanttSyllabusId, string>;
 
+/**
+ * Which curriculums each syllabus is linked to. A syllabus is shareable, so
+ * this is a list — see #310.
+ */
+export type SyllabusCurriculumsDictionary = Record<
+    GanttSyllabusId,
+    Array<GanttCurriculumId>
+>;
+
 export type SyllabusProviderState = {
     syllabusNames: SyllabusDictionary;
+    syllabusCurriculums: SyllabusCurriculumsDictionary;
     isLoading: boolean;
     error: Error | null;
     refetch: () => Promise<void>;
@@ -33,6 +46,8 @@ export function SyllabusNamesProvider({
 }) {
     const { enqueueSnackbar } = useSnackbar();
     const [syllabusNames, setSyllabuses] = useState<SyllabusDictionary>({});
+    const [syllabusCurriculums, setSyllabusCurriculums] =
+        useState<SyllabusCurriculumsDictionary>({});
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<Error | null>(null);
 
@@ -40,8 +55,22 @@ export function SyllabusNamesProvider({
         setIsLoading(true);
         setError(null);
         try {
-            const data = await ganttApi.syllabus.apiList();
-            setSyllabuses(data);
+            // `withParents` costs one extra indexed join over the c2s junction
+            // and saves a per-syllabus fetch for callers that need to know
+            // which curriculums already use it. See #310.
+            const data = await ganttApi.syllabus.apiListWithParents();
+
+            const names: SyllabusDictionary = {};
+            const curriculums: SyllabusCurriculumsDictionary = {};
+            for (const [syllabusId, entry] of Object.entries(data)) {
+                names[syllabusId as GanttSyllabusId] = entry.title;
+                curriculums[syllabusId as GanttSyllabusId] =
+                    (entry.curriculumIds as unknown as
+                        | Array<GanttCurriculumId>
+                        | undefined) ?? [];
+            }
+            setSyllabuses(names);
+            setSyllabusCurriculums(curriculums);
         } catch (err) {
             setError(
                 err instanceof Error
@@ -66,11 +95,18 @@ export function SyllabusNamesProvider({
     const value = useMemo<SyllabusProviderState>(
         () => ({
             syllabusNames,
+            syllabusCurriculums,
             isLoading,
             error,
             refetch: fetchSyllabuses,
         }),
-        [syllabusNames, isLoading, error, fetchSyllabuses],
+        [
+            syllabusNames,
+            syllabusCurriculums,
+            isLoading,
+            error,
+            fetchSyllabuses,
+        ],
     );
 
     return (

@@ -10,7 +10,12 @@ export type BasicGantOperations<
     TEntity extends BaseGantItem,
     TCreatePayload = Omit<TEntity, "id">,
 > = {
-    listItems: () => Promise<Record<TEntity["id"], TEntity["title"]>>;
+    listItems: (
+        withParents?: boolean,
+    ) => Promise<
+        | Record<TEntity["id"], { title: TEntity["title"] }>
+        | Record<TEntity["id"], TEntity["title"]>
+    >;
     getMultipleItems: (ids: Array<string>) => Promise<Array<TEntity>>;
     getItem: (id: TEntity["id"]) => Promise<any>;
     createNewItem: (
@@ -22,6 +27,13 @@ export type BasicGantOperations<
     ) => Promise<TEntity>;
     deleteItem: (id: TEntity["id"]) => Promise<void>;
 };
+
+/** Accepts the usual truthy spellings for a boolean query flag. */
+function parseBooleanParam(raw: null | string): boolean {
+    if (raw === null) return false;
+    const value = raw.trim().toLowerCase();
+    return value === "" || value === "1" || value === "true" || value === "yes";
+}
 
 export type BuildGantCollectionRoutesProps<
     TEntity extends BaseGantItem,
@@ -37,10 +49,17 @@ export function buildGantCollectionRoutes<
     const GET = withApi(async (request: NextRequest) => {
         await requireStaffSession();
         const requestedIds = request.nextUrl.searchParams.get("ids");
-        let items: Record<TEntity["id"], TEntity | TEntity["title"]>;
+        // `?withParents=1` opts the label map into `{ title, <parentKey> }`
+        // values. Off by default — the flat `Record<id, title>` shape is the
+        // published contract and changing it unconditionally would break every
+        // existing caller. See #310.
+        const withParents = parseBooleanParam(
+            request.nextUrl.searchParams.get("withParents"),
+        );
+        let items: Record<TEntity["id"], unknown>;
 
         if (requestedIds === null) {
-            items = await dbSet.listItems();
+            items = await dbSet.listItems(withParents);
         } else {
             const itemArray = await dbSet.getMultipleItems(
                 requestedIds.split(","),

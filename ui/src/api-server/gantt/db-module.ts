@@ -46,6 +46,7 @@ const basicOperations = drizzleOperationsBuilder<
         table: ganttSyllabus2ModulesSchema,
         parentKey: "syllabusId",
         selfKey: "moduleId",
+        cardinality: "one",
     },
 });
 

@@ -8,6 +8,7 @@ import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material/Select";
 import Select from "@mui/material/Select";
 import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
@@ -31,7 +32,7 @@ export function SyllabusSelectionField({
     const { enqueueSnackbar } = useSnackbar();
     const curriculum = useCurriculum(curriculumId);
     const { linkSyllabusToCurriculum } = useSyllabusActions();
-    const { syllabusNames } = useSyllabusNames();
+    const { syllabusNames, syllabusCurriculums } = useSyllabusNames();
     const [currentSyllabusId, setCurrentSyllabusId] =
         useState<GanttSyllabusId>("");
     const [isLinking, setIsLinking] = useState<boolean>(false);
@@ -73,12 +74,34 @@ export function SyllabusSelectionField({
                         !curriculum?.syllabuses ||
                         !curriculum?.syllabuses.includes(syllabusId),
                 )
-                .map(([syllabusId, syllabusName]) => (
-                    <MenuItem key={syllabusId} value={syllabusId}>
-                        {syllabusName}
-                    </MenuItem>
-                )),
-        [curriculum?.syllabuses, syllabusNames],
+                .map(([syllabusId, syllabusName]) => {
+                    // A syllabus can belong to several curriculums. Linking one
+                    // that is already in use elsewhere is legitimate but worth
+                    // flagging, since edits to it are shared. The parent ids
+                    // come from the list response itself — no extra fetch. #310
+                    const otherCurriculums = (
+                        syllabusCurriculums[syllabusId] ?? []
+                    ).filter((id) => id !== curriculumId);
+
+                    return (
+                        <MenuItem key={syllabusId} value={syllabusId}>
+                            {syllabusName}
+                            {otherCurriculums.length > 0 ? (
+                                <Typography
+                                    color="text.secondary"
+                                    component="span"
+                                    sx={{ marginInlineStart: 1 }}
+                                    variant="caption"
+                                >
+                                    {otherCurriculums.length === 1
+                                        ? "(משותף עם גאנט נוסף)"
+                                        : `(משותף עם ${otherCurriculums.length} גאנטים)`}
+                                </Typography>
+                            ) : null}
+                        </MenuItem>
+                    );
+                }),
+        [curriculum?.syllabuses, curriculumId, syllabusCurriculums, syllabusNames],
     );
 
     return (

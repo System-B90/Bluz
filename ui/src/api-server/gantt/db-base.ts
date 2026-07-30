@@ -28,9 +28,47 @@ export type JunctionConfig = {
 
 export type ParentJunctionConfig = {
     table: PgTableWithColumns<any>;
+    /**
+     * Column on the junction table holding the parent id. Doubles as the key
+     * `createNewItem` reads the parent out of the create payload, so it must
+     * keep matching the payload field — use `outputKey` to surface it under a
+     * different name.
+     */
     parentKey: string;
     selfKey: string;
+    /**
+     * Field name the parent is surfaced under on read. Defaults to
+     * `parentKey`; set it when the read shape differs, e.g. a `"many"`
+     * junction that wants a plural name for its array.
+     */
+    outputKey?: string;
+    /**
+     * How many parents a child may have. Every junction table has a composite
+     * `(parent, child)` primary key, so the schema permits many everywhere;
+     * this records the *domain* rule the schema doesn't express.
+     *
+     * `"one"` — event→module, module→syllabus, day→week, week→curriculum.
+     *   Surfaced as a scalar id, or `null` when unlinked.
+     * `"many"` — syllabus→curriculum. A syllabus is deliberately shareable
+     *   across curricula (see `addSyllabusToCurriculum`), so collapsing it to
+     *   a scalar would pick an arbitrary parent. Surfaced as a sorted array.
+     */
+    cardinality: "many" | "one";
 };
+
+/**
+ * A `listItems({ withParents: true })` value: the label plus whichever parent
+ * key the entity's `parentJunction` is configured with (`syllabusId` for
+ * modules, `moduleId` for events, and so on), or `null` when the child has no
+ * junction row.
+ */
+export type ListItemWithParent<T extends BaseGantItem> = {
+    title: T["title"];
+} & Record<string, null | string>;
+
+export type ListItemsResult<T extends BaseGantItem> =
+    | Record<T["id"], ListItemWithParent<T>>
+    | Record<T["id"], T["title"]>;
 
 export type DrizzleOperationsBuilderProps<
     TTable extends PgTableWithColumns<any>,
@@ -94,13 +132,24 @@ export function drizzleOperationsBuilder<
                 ),
             );
 
-        const parentByChild = new Map<unknown, unknown>(
-            links.map((link) => [link.selfId, link.parentId]),
-        );
+        const parentsByChild = new Map<unknown, Array<unknown>>();
+        for (const link of links) {
+            const existing = parentsByChild.get(link.selfId);
+            if (existing) existing.push(link.parentId);
+            else parentsByChild.set(link.selfId, [link.parentId]);
+        }
 
         for (const item of items) {
-            (item as Record<string, unknown>)[parentJunction.parentKey] =
-                parentByChild.get(item.id) ?? null;
+            const parents = parentsByChild.get(item.id) ?? [];
+            // Sort so a shared child reports the same order every request; the
+            // junction query has no inherent ordering.
+            parents.sort();
+            const outputKey =
+                parentJunction.outputKey ?? parentJunction.parentKey;
+            (item as Record<string, unknown>)[outputKey] =
+                parentJunction.cardinality === "many"
+                    ? parents
+                    : (parents[0] ?? null);
         }
         return items;
     }
@@ -216,7 +265,22 @@ export function drizzleOperationsBuilder<
         }
     }
 
-    async function listItems(): Promise<Record<T["id"], T["title"]>> {
+    /**
+     * Lists every item as a label map.
+     *
+     * With `withParents`, each value becomes `{ title, [parentKey] }` instead
+     * of a bare title, so callers can walk child → parent without a second
+     * round trip. The flat shape is the default because it is the published
+     * contract of `GET /api/gantt/<entity>` and of `apiList` — see #310.
+     *
+     * Entities configured without a `parentJunction` (curriculums are the
+     * root) still return the object form under `withParents`, with no parent
+     * key, so the response shape stays predictable per request rather than
+     * per entity.
+     */
+    async function listItems(
+        withParents?: boolean,
+    ): Promise<ListItemsResult<T>> {
         const label = labelColumn ?? cols.title;
         if (!label) {
             throw new Error(
@@ -231,12 +295,31 @@ export function drizzleOperationsBuilder<
             .from(table as PgTableWithColumns<any>)
             .orderBy(desc(cols.updatedAt));
 
-        return results.reduce(
+        if (!withParents) {
+            return results.reduce(
+                (acc, row) => {
+                    acc[row.id as T["id"]] = row.title as T["title"];
+                    return acc;
+                },
+                {} as Record<T["id"], T["title"]>,
+            );
+        }
+
+        // `attachParentIds` mutates in place and keys off `id`, so feed it the
+        // same rows we are about to return rather than querying twice.
+        const rows = results.map((row) => ({
+            id: row.id as T["id"],
+            title: row.title as T["title"],
+        }));
+        await attachParentIds(rows);
+
+        return rows.reduce(
             (acc, row) => {
-                acc[row.id as T["id"]] = row.title as T["title"];
+                const { id, ...rest } = row;
+                acc[id] = rest as ListItemWithParent<T>;
                 return acc;
             },
-            {} as Record<T["id"], T["title"]>,
+            {} as Record<T["id"], ListItemWithParent<T>>,
         );
     }
 

@@ -39,6 +39,16 @@ export type ClientGantApiBuilderProps<
     dateFixup: DateFixup<TEntity & RawBaseDocument>;
 };
 
+/**
+ * One entry of `apiListWithParents`: the label plus the entity's parent key
+ * (`syllabusId` on modules, `moduleId` on events, `curriculumId` on
+ * syllabuses/weeks/days), `null` when the child is unlinked. Root entities
+ * (curriculums) carry no parent key at all.
+ */
+export type ListEntryWithParent<TEntity extends BaseGantItem> = {
+    title: TEntity["title"];
+} & Record<string, null | string>;
+
 export type BasicGantApi<
     TEntity extends BaseGantItem,
     TCreatePayload = Omit<TEntity, "id">,
@@ -46,6 +56,13 @@ export type BasicGantApi<
     readonly apiList: (
         options?: ClientApiProps,
     ) => Promise<Record<TEntity["id"], TEntity["title"]>>;
+    /**
+     * Same listing as `apiList`, but each value carries the parent id. Use
+     * when you need child → parent without fetching each item. See #310.
+     */
+    readonly apiListWithParents: (
+        options?: ClientApiProps,
+    ) => Promise<Record<TEntity["id"], ListEntryWithParent<TEntity>>>;
     readonly apiGet: (
         id: TEntity["id"],
         options?: ClientApiProps,
@@ -113,6 +130,14 @@ export function clientGantApiBuilder<
             buildUrl(),
             options,
         );
+    }
+
+    async function apiListWithParents(
+        options?: ClientApiProps,
+    ): Promise<Record<TEntity["id"], ListEntryWithParent<TEntity>>> {
+        return await safeApiFetcher<
+            Record<TEntity["id"], ListEntryWithParent<TEntity>>
+        >(`${buildUrl()}?withParents=1`, options);
     }
 
     async function apiGet(
@@ -241,6 +266,7 @@ export function clientGantApiBuilder<
 
     return {
         apiList,
+        apiListWithParents,
         apiGet,
         apiCreate,
         apiUpdate,

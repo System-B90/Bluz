@@ -24,6 +24,7 @@ const basicOperations = drizzleOperationsBuilder<
         table: ganttWeek2DaysSchema,
         parentKey: "weekId",
         selfKey: "dayId",
+        cardinality: "one",
     },
 });
 

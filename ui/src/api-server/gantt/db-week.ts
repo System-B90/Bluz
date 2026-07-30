@@ -40,6 +40,7 @@ const basicOperations = drizzleOperationsBuilder<
         table: ganttCurriculum2WeeksSchema,
         parentKey: "curriculumId",
         selfKey: "weekId",
+        cardinality: "one",
     },
 });
 

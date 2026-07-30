@@ -37,6 +37,7 @@ const basicOperations = drizzleOperationsBuilder<
         table: ganttModule2EventsSchema,
         parentKey: "moduleId",
         selfKey: "eventId",
+        cardinality: "one",
     },
 });
 
