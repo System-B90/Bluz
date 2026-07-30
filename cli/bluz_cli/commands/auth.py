@@ -21,6 +21,7 @@ import typer
 from InquirerPy import inquirer
 
 from bluz_cli.config import Config, config_location, load_config
+from bluz_cli.context import state
 from bluz_cli.output import success, warn
 
 app = typer.Typer(help="Authentication and CLI configuration.", no_args_is_help=True)
@@ -194,3 +195,12 @@ def show_config() -> None:
         "insecure": config.insecure,
     }
     show(data, title="Config")
+
+
+@app.command("hive-status")
+def hive_status() -> None:
+    """Check whether the server can reach Hive (drives the SSO outage banner)."""
+    from bluz_cli.commands._common import show
+
+    with state.client() as client:
+        show(client.get("/api/auth/hive-status"), title="Hive status")

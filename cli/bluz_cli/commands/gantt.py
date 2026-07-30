@@ -277,6 +277,169 @@ def list_mappings(
         )
 
 
+@curriculums_app.command("duplicate")
+def duplicate_curriculum(
+    curriculum_id: str = typer.Argument(..., help="Curriculum id to clone."),
+    overrides: str = typer.Option(
+        None,
+        "--overrides",
+        help="JSON object overriding the clone's fields (defaults to the source's).",
+    ),
+) -> None:
+    """Deep-clone a curriculum (syllabuses, modules, events, mappings)."""
+    with state.client() as client:
+        result = client.post(
+            f"{_BASE}/curriculums/{curriculum_id}/duplicate",
+            json=parse_json(overrides, what="--overrides") or {},
+        )
+    success(f"Duplicated curriculum {curriculum_id}")
+    show(result)
+
+
+@curriculums_app.command("cut-status")
+def cut_status(
+    curriculum_id: str = typer.Argument(..., help="Curriculum id."),
+) -> None:
+    """Show whether the curriculum's linked iteration currently holds cut events."""
+    with state.client() as client:
+        show(client.get(f"{_BASE}/curriculums/{curriculum_id}/cut"), title="Cut status")
+
+
+@curriculums_app.command("cut-preview")
+def cut_preview(
+    curriculum_id: str = typer.Argument(..., help="Curriculum id."),
+) -> None:
+    """Dry-run the cut: the planner's dated occurrences, with no gating and no writes."""
+    with state.client() as client:
+        show(client.get(f"{_BASE}/curriculums/{curriculum_id}/cut/preview"))
+
+
+@curriculums_app.command("cut")
+def cut_curriculum(
+    curriculum_id: str = typer.Argument(..., help="Curriculum id."),
+    force: bool = typer.Option(
+        False, "--force", help="Re-cut a curriculum that was already cut."
+    ),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation."),
+) -> None:
+    """Materialize a published, linked curriculum into schedule events.
+
+    Gating failures come back coded — `draft`, `no-iteration`, `already-cut`
+    (409) or `invalid-plan` (400) — and nothing is written when they fire.
+    """
+    if not yes:
+        typer.confirm(
+            f"Cut curriculum {curriculum_id} into its linked iteration?", abort=True
+        )
+    with state.client() as client:
+        result = client.post(
+            f"{_BASE}/curriculums/{curriculum_id}/cut", json={"force": force}
+        )
+    success(f"Cut curriculum {curriculum_id}")
+    show(result)
+
+
+@curriculums_app.command("pull-back")
+def pull_back_cut(
+    curriculum_id: str = typer.Argument(..., help="Curriculum id."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation."),
+) -> None:
+    """Undo a cut — soft-delete every live schedule event generated for it."""
+    if not yes:
+        typer.confirm(
+            f"Pull back the cut schedule for curriculum {curriculum_id}?", abort=True
+        )
+    with state.client() as client:
+        result = client.delete(f"{_BASE}/curriculums/{curriculum_id}/cut")
+    success(f"Pulled back cut for curriculum {curriculum_id}")
+    show(result)
+
+
+@curriculums_app.command("execution")
+def curriculum_execution(
+    curriculum_id: str = typer.Argument(..., help="Curriculum id."),
+) -> None:
+    """תכנון מול ביצוע — compare the gantt plan against the events cut from it.
+
+    A curriculum that has not been cut (or has no linked iteration) answers
+    `{"events": {}}` rather than erroring.
+    """
+    with state.client() as client:
+        show(client.get(f"{_BASE}/curriculums/{curriculum_id}/execution"))
+
+
+@curriculums_app.command("recurrence-exceptions")
+def curriculum_recurrence_exceptions(
+    curriculum_id: str = typer.Argument(..., help="Curriculum id."),
+    limit: int = LIMIT_OPTION,
+    offset: int = OFFSET_OPTION,
+) -> None:
+    """List every recurrence exception recorded for a curriculum."""
+    with state.client() as client:
+        show(
+            client.get(f"{_BASE}/curriculums/{curriculum_id}/recurrence-exceptions"),
+            title="Recurrence exceptions",
+            limit=limit,
+            offset=offset,
+        )
+
+
+# --- gantt-event-specific extras --------------------------------------------
+
+
+@events_app.command("duplicate")
+def duplicate_event(
+    event_id: str = typer.Argument(..., help="Gantt event id to clone."),
+    module_id: str = typer.Option(
+        ..., "--module-id", help="Module the copy is created under."
+    ),
+) -> None:
+    """Clone a gantt event into a module (the copy gets the next indexed title)."""
+    with state.client() as client:
+        result = client.post(
+            f"{_BASE}/events/{event_id}/duplicate", json={"moduleId": module_id}
+        )
+    success(f"Duplicated event {event_id}")
+    show(result)
+
+
+@events_app.command("except-occurrence")
+def except_occurrence(
+    event_id: str = typer.Argument(..., help="Recurring gantt event id."),
+    curriculum_id: str = typer.Option(..., "--curriculum-id", help="Curriculum id."),
+    day_id: str = typer.Option(..., "--day-id", help="Day the occurrence falls on."),
+) -> None:
+    """Drop a single occurrence of a recurring event; it keeps recurring elsewhere."""
+    with state.client() as client:
+        result = client.post(
+            f"{_BASE}/events/{event_id}/recurrence-exceptions",
+            json={"curriculumId": curriculum_id, "dayId": day_id},
+        )
+    success(f"Excepted event {event_id} from day {day_id}")
+    show(result)
+
+
+@events_app.command("materialize")
+def materialize_occurrence(
+    event_id: str = typer.Argument(..., help="Recurring gantt event id."),
+    curriculum_id: str = typer.Option(..., "--curriculum-id", help="Curriculum id."),
+    module_id: str = typer.Option(..., "--module-id", help="Module id."),
+    day_id: str = typer.Option(..., "--day-id", help="Day the occurrence falls on."),
+) -> None:
+    """Turn one recurring occurrence into a standalone event and except the source."""
+    with state.client() as client:
+        result = client.post(
+            f"{_BASE}/events/{event_id}/materialize",
+            json={
+                "curriculumId": curriculum_id,
+                "moduleId": module_id,
+                "dayId": day_id,
+            },
+        )
+    success(f"Materialized event {event_id} onto day {day_id}")
+    show(result)
+
+
 # --- register entity apps ---------------------------------------------------
 
 _ENTITIES: list[tuple[str, typer.Typer]] = [

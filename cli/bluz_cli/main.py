@@ -28,11 +28,16 @@ import typer  # noqa: E402
 from bluz_cli import __version__  # noqa: E402
 from bluz_cli.commands import (  # noqa: E402
     auth,
+    calendar,
+    colors,
     courses,
     events,
     gantt,
+    hive,
+    integrations,
     iterations,
     outsiders,
+    personal,
     reservations,
     rooms,
     settings,
@@ -55,8 +60,13 @@ app.add_typer(courses.app, name="courses")
 app.add_typer(reservations.app, name="reservations")
 app.add_typer(outsiders.app, name="outsiders")
 app.add_typer(events.app, name="events")
+app.add_typer(calendar.app, name="calendar")
 app.add_typer(settings.app, name="settings")
+app.add_typer(personal.app, name="personal")
+app.add_typer(colors.app, name="colors")
 app.add_typer(gantt.app, name="gantt")
+app.add_typer(hive.app, name="hive")
+app.add_typer(integrations.app, name="integrations")
 
 # `bluz login` / `bluz logout` as friendly top-level aliases for the most-used auth verbs.
 app.command("login")(auth.login)
