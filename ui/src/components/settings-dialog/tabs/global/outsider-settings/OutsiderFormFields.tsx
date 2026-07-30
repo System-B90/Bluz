@@ -6,45 +6,62 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import InputAdornment from "@mui/material/InputAdornment";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs from "dayjs";
+import { ReactNode } from "react";
+
+import { SettingsTextField } from "@/components/settings-dialog/tabs/global/common/SettingsTextField";
+import { OutsiderValues } from "@/components/settings-dialog/tabs/global/outsider-settings/values";
 
 type OutsiderFormFieldsProps = {
-    comment: string;
-    idNumber: string;
+    values: OutsiderValues;
+    setValue: <TKey extends keyof OutsiderValues>(
+        key: TKey,
+        value: OutsiderValues[TKey],
+    ) => void;
     idNumberWarning: string;
     isPhoneValid: boolean;
-    name: string;
-    personalNumber: string;
     personalNumberWarning: string;
-    phone: string;
-    releaseDate: Dayjs | null;
-    setComment: (v: string) => void;
-    setIdNumber: (v: string) => void;
-    setName: (v: string) => void;
-    setPersonalNumber: (v: string) => void;
-    setPhone: (v: string) => void;
-    setReleaseDate: (v: Dayjs | null) => void;
 };
 
+const startIcon = (icon: ReactNode, alignTop = false) => ({
+    startAdornment: (
+        <InputAdornment
+            position="start"
+            sx={ alignTop ? { alignSelf: "flex-start", mt: 1 } : undefined }
+        >
+            { icon }
+        </InputAdornment>
+    ),
+});
+
+/** Warning text with its icon, or "" when there is nothing to warn about. */
+function warningHelperText(warning: string)
+{
+    if (!warning) return "";
+    return (
+        <Box
+            alignItems="center"
+            component="span"
+            display="inline-flex"
+            gap={ 0.5 }
+            sx={ { color: "warning.main", mt: 0.2 } }
+        >
+            <WarningAmberIcon sx={ { fontSize: "14px" } } />
+            <span>{ warning }</span>
+        </Box>
+    );
+}
+
+const iconSx = { color: "text.secondary" };
+
 export function OutsiderFormFields({
-    comment,
-    idNumber,
+    values,
+    setValue,
     idNumberWarning,
     isPhoneValid,
-    name,
-    personalNumber,
     personalNumberWarning,
-    phone,
-    releaseDate,
-    setComment,
-    setIdNumber,
-    setName,
-    setPersonalNumber,
-    setPhone,
-    setReleaseDate,
 }: OutsiderFormFieldsProps)
 {
     return (
@@ -62,53 +79,28 @@ export function OutsiderFormFields({
             } }
         >
             {/* Full Name */ }
-            <TextField
-                fullWidth
+            <SettingsTextField
                 label="שם מלא"
-                onChange={ (e) => setName(e.target.value) }
+                onChange={ (e) => setValue("name", e.target.value) }
                 placeholder="לדוגמה: שלומי בוטנרו"
                 required
-                size="small"
-                sx={ {
-                    "& .MuiOutlinedInput-root": {
-                        borderRadius: "10px",
-                    },
-                } }
-                value={ name }
+                value={ values.name }
             />
 
             {/* Phone */ }
-            <TextField
+            <SettingsTextField
                 error={ !isPhoneValid }
-                fullWidth
-                helperText={
-                    !isPhoneValid ? "מספר טלפון לא תקין" : ""
-                }
+                helperText={ !isPhoneValid ? "מספר טלפון לא תקין" : "" }
                 label="מספר טלפון"
-                onChange={ (e) => setPhone(e.target.value) }
+                onChange={ (e) => setValue("phone", e.target.value) }
                 placeholder="לדוגמה: 0501234567"
                 required
-                size="small"
                 slotProps={ {
-                    input: {
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <PhoneIcon
-                                    fontSize="small"
-                                    sx={ {
-                                        color: "text.secondary",
-                                    } }
-                                />
-                            </InputAdornment>
-                        ),
-                    },
+                    input: startIcon(
+                        <PhoneIcon fontSize="small" sx={ iconSx } />,
+                    ),
                 } }
-                sx={ {
-                    "& .MuiOutlinedInput-root": {
-                        borderRadius: "10px",
-                    },
-                } }
-                value={ phone }
+                value={ values.phone }
             />
 
             <Divider className="my-1">
@@ -124,118 +116,43 @@ export function OutsiderFormFields({
             </Divider>
 
             {/* Personal Number */ }
-            <TextField
+            <SettingsTextField
                 error={
                     !!personalNumberWarning &&
-                    personalNumberWarning !==
-                    "שימו לב: מספר אישי לא הוגדר"
+                    personalNumberWarning !== "שימו לב: מספר אישי לא הוגדר"
                 }
-                fullWidth
-                helperText={
-                    personalNumberWarning ? (
-                        <Box
-                            alignItems="center"
-                            component="span"
-                            display="inline-flex"
-                            gap={ 0.5 }
-                            sx={ {
-                                color: "warning.main",
-                                mt: 0.2,
-                            } }
-                        >
-                            <WarningAmberIcon
-                                sx={ { fontSize: "14px" } }
-                            />
-                            <span>{ personalNumberWarning }</span>
-                        </Box>
-                    ) : (
-                        ""
-                    )
-                }
+                helperText={ warningHelperText(personalNumberWarning) }
                 label="מספר אישי (7 ספרות)"
                 onChange={ (e) =>
-                    setPersonalNumber(
-                        e.target.value.replace(/\D/g, ""),
-                    )
+                    setValue("personalNumber", e.target.value.replace(/\D/g, ""))
                 }
                 placeholder="לדוגמה: 9876543"
-                size="small"
                 slotProps={ {
-                    input: {
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <BadgeIcon
-                                    fontSize="small"
-                                    sx={ {
-                                        color: "text.secondary",
-                                    } }
-                                />
-                            </InputAdornment>
-                        ),
-                    },
+                    input: startIcon(
+                        <BadgeIcon fontSize="small" sx={ iconSx } />,
+                    ),
                 } }
-                sx={ {
-                    "& .MuiOutlinedInput-root": {
-                        borderRadius: "10px",
-                    },
-                } }
-                value={ personalNumber }
+                value={ values.personalNumber }
             />
 
             {/* ID Number */ }
-            <TextField
+            <SettingsTextField
                 error={
                     !!idNumberWarning &&
                     idNumberWarning !== "שימו לב: ת.ז. לא הוגדרה"
                 }
-                fullWidth
-                helperText={
-                    idNumberWarning ? (
-                        <Box
-                            alignItems="center"
-                            component="span"
-                            display="inline-flex"
-                            gap={ 0.5 }
-                            sx={ {
-                                color: "warning.main",
-                                mt: 0.2,
-                            } }
-                        >
-                            <WarningAmberIcon
-                                sx={ { fontSize: "14px" } }
-                            />
-                            <span>{ idNumberWarning }</span>
-                        </Box>
-                    ) : (
-                        ""
-                    )
-                }
+                helperText={ warningHelperText(idNumberWarning) }
                 label="תעודת זהות (9 ספרות)"
                 onChange={ (e) =>
-                    setIdNumber(e.target.value.replace(/\D/g, ""))
+                    setValue("idNumber", e.target.value.replace(/\D/g, ""))
                 }
                 placeholder="לדוגמה: 123456789"
-                size="small"
                 slotProps={ {
-                    input: {
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <BadgeIcon
-                                    fontSize="small"
-                                    sx={ {
-                                        color: "text.secondary",
-                                    } }
-                                />
-                            </InputAdornment>
-                        ),
-                    },
+                    input: startIcon(
+                        <BadgeIcon fontSize="small" sx={ iconSx } />,
+                    ),
                 } }
-                sx={ {
-                    "& .MuiOutlinedInput-root": {
-                        borderRadius: "10px",
-                    },
-                } }
-                value={ idNumber }
+                value={ values.idNumber }
             />
 
             {/* Release Date */ }
@@ -243,7 +160,7 @@ export function OutsiderFormFields({
                 <DatePicker
                     format="DD/MM/YYYY"
                     label="תאריך שחרור"
-                    onChange={ (val) => setReleaseDate(val) }
+                    onChange={ (val) => setValue("releaseDate", val) }
                     slotProps={ {
                         textField: {
                             size: "small",
@@ -254,11 +171,11 @@ export function OutsiderFormFields({
                             },
                         },
                     } }
-                    value={ releaseDate }
+                    value={ values.releaseDate }
                 />
-                { releaseDate &&
-                    releaseDate.isValid() &&
-                    releaseDate.isBefore(dayjs(), "day") ? (
+                { values.releaseDate &&
+                    values.releaseDate.isValid() &&
+                    values.releaseDate.isBefore(dayjs(), "day") ? (
                         <Box
                             alignItems="center"
                             display="flex"
@@ -277,40 +194,19 @@ export function OutsiderFormFields({
             </Box>
 
             {/* Comment */ }
-            <TextField
-                fullWidth
+            <SettingsTextField
                 label="הערה"
                 multiline
-                onChange={ (e) => setComment(e.target.value) }
+                onChange={ (e) => setValue("comment", e.target.value) }
                 placeholder="הערות לגבי המרצה..."
                 rows={ 2 }
-                size="small"
                 slotProps={ {
-                    input: {
-                        startAdornment: (
-                            <InputAdornment
-                                position="start"
-                                sx={ {
-                                    alignSelf: "flex-start",
-                                    mt: 1,
-                                } }
-                            >
-                                <CommentIcon
-                                    fontSize="small"
-                                    sx={ {
-                                        color: "text.secondary",
-                                    } }
-                                />
-                            </InputAdornment>
-                        ),
-                    },
+                    input: startIcon(
+                        <CommentIcon fontSize="small" sx={ iconSx } />,
+                        true,
+                    ),
                 } }
-                sx={ {
-                    "& .MuiOutlinedInput-root": {
-                        borderRadius: "10px",
-                    },
-                } }
-                value={ comment }
+                value={ values.comment }
             />
         </Box>
     );

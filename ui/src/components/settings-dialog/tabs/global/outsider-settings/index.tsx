@@ -1,37 +1,29 @@
 "use client";
-import dayjs, { Dayjs } from "dayjs";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSnackbar } from "notistack";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { Outsider } from "@/api-shared/types/outsider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 import { SettingsTab } from "@/components/settings-dialog/tabs/global/common";
-import { useConfirmDialog } from "@/components/settings-dialog/tabs/global/common/UseConfirmDialog";
+import { useEntityForm } from "@/components/settings-dialog/tabs/global/common/UseEntityForm";
 import { OutsiderFormCard, OutsiderFormCardProps } from "@/components/settings-dialog/tabs/global/outsider-settings/OutsiderFormCard";
 import { OutsiderListCard } from "@/components/settings-dialog/tabs/global/outsider-settings/OutsiderListCard";
+import {
+    EMPTY_OUTSIDER_VALUES,
+    outsiderToValues,
+    outsiderValuesToPayload,
+    OutsiderValues,
+    validateOutsider,
+} from "@/components/settings-dialog/tabs/global/outsider-settings/values";
 
 export function OutsiderSettings()
 {
     const { outsiders, addOutsider, updateOutsider, deleteOutsider } =
         useOutsiders();
-    const { enqueueSnackbar } = useSnackbar();
-    const { confirm, confirmDialog } = useConfirmDialog();
     const router = useRouter();
     const searchParams = useSearchParams();
 
     const [ searchQuery, setSearchQuery ] = useState("");
-    const [ selectedOutsider, setSelectedOutsider ] = useState<null | Outsider>(
-        null,
-    );
-    const [ isCreating, setIsCreating ] = useState(false);
-    const [ name, setName ] = useState("");
-    const [ phone, setPhone ] = useState("");
-    const [ personalNumber, setPersonalNumber ] = useState("");
-    const [ idNumber, setIdNumber ] = useState("");
-    const [ releaseDate, setReleaseDate ] = useState<Dayjs | null>(null);
-    const [ comment, setComment ] = useState("");
 
     const setOutsiderParam = useCallback(
         (outsiderId: null | string) =>
@@ -49,31 +41,49 @@ export function OutsiderSettings()
         [ router, searchParams ],
     );
 
-    const populateFormState = useCallback((outsider: Outsider) =>
-    {
-        setSelectedOutsider(outsider);
-        setIsCreating(false);
-        setName(outsider.name);
-        setPhone(outsider.phone);
-        setPersonalNumber(outsider.personalNumber ?? "");
-        setIdNumber(outsider.idNumber ?? "");
-        setReleaseDate(outsider.releaseDate ? dayjs(outsider.releaseDate) : null);
-        setComment(outsider.comment ?? "");
-    }, []);
+    const confirmDeleteMessage = useCallback(
+        (id: string) =>
+            `האם אתה בטוח שברצונך למחוק את איש החוץ ${outsiders.find((o) => o.id === id)?.name || id}?`,
+        [ outsiders ],
+    );
+
+    const form = useEntityForm<Outsider, OutsiderValues>({
+        confirmDeleteMessage,
+        emptyValues: EMPTY_OUTSIDER_VALUES,
+        errorMessages: {
+            create: "שגיאה ביצירת איש חוץ",
+            delete: "שגיאה במחיקת איש חוץ",
+            update: "שגיאה בעדכון איש חוץ",
+        },
+        onCreate: useCallback(
+            (values: OutsiderValues) => addOutsider(outsiderValuesToPayload(values)),
+            [ addOutsider ],
+        ),
+        onDelete: deleteOutsider,
+        onSelectionChange: setOutsiderParam,
+        onUpdate: useCallback(
+            (outsider: Outsider, values: OutsiderValues) =>
+                updateOutsider({ ...outsider, ...outsiderValuesToPayload(values) }),
+            [ updateOutsider ],
+        ),
+        toValues: outsiderToValues,
+        validate: validateOutsider,
+    });
+
+    const { populateFormState, selectedEntity } = form;
 
     useEffect(() =>
     {
         const outsiderId = searchParams.get("editOutsider");
         if (!outsiderId || outsiders.length === 0) return;
         const outsider = outsiders.find((o) => o.id === outsiderId);
-        if (
-            outsider &&
-            (!selectedOutsider || selectedOutsider.id !== outsiderId)
-        )
+        if (outsider && (!selectedEntity || selectedEntity.id !== outsiderId))
         {
+            // `populateFormState`, not `populateFormFrom`: the id came from the
+            // URL, so writing it back would loop.
             queueMicrotask(() => populateFormState(outsider));
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedOutsider intentionally excluded to avoid set→rerun loop
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedEntity intentionally excluded to avoid set→rerun loop
     }, [ outsiders, searchParams ]);
 
     const filteredOutsiders = useMemo(() =>
@@ -89,196 +99,29 @@ export function OutsiderSettings()
         );
     }, [ outsiders, searchQuery ]);
 
-    const populateFormFromOutsider = useCallback(
-        (outsider: Outsider) =>
-        {
-            populateFormState(outsider);
-            setOutsiderParam(outsider.id as string);
-        },
-        [ populateFormState, setOutsiderParam ],
-    );
-
-    const handleStartCreate = useCallback(() =>
-    {
-        setSelectedOutsider(null);
-        setIsCreating(true);
-        setName("");
-        setPhone("");
-        setPersonalNumber("");
-        setIdNumber("");
-        setReleaseDate(null);
-        setComment("");
-        setOutsiderParam(null);
-    }, [ setOutsiderParam ]);
-
-    const handleCancelEdit = useCallback(() =>
-    {
-        setSelectedOutsider(null);
-        setIsCreating(false);
-        setName("");
-        setPhone("");
-        setPersonalNumber("");
-        setIdNumber("");
-        setReleaseDate(null);
-        setComment("");
-        setOutsiderParam(null);
-    }, [ setOutsiderParam ]);
-
-    const handleSave = useCallback(
-        async (e: React.FormEvent) =>
-        {
-            e.preventDefault();
-            const trimmedName = name.trim();
-            const trimmedPhone = phone.trim();
-            const isPhoneValid = !phone || /^\+?[0-9\s-]{7,20}$/.test(phone);
-
-            if (!trimmedName)
-            {
-                enqueueSnackbar("שם איש חוץ הוא שדה חובה", { variant: "warning" });
-                return;
-            }
-            if (!trimmedPhone)
-            {
-                enqueueSnackbar("מספר טלפון הוא שדה חובה", { variant: "warning" });
-                return;
-            }
-            if (!isPhoneValid)
-            {
-                enqueueSnackbar("מספר טלפון לא תקין", { variant: "warning" });
-                return;
-            }
-
-            const payload = {
-                comment: comment.trim() || undefined,
-                idNumber: idNumber.trim() || undefined,
-                name: trimmedName,
-                personalNumber: personalNumber.trim() || undefined,
-                phone: trimmedPhone,
-                releaseDate:
-                    releaseDate && releaseDate.isValid()
-                        ? releaseDate.toISOString()
-                        : undefined,
-            };
-
-            if (isCreating)
-            {
-                try
-                {
-                    await addOutsider(payload);
-                    handleCancelEdit();
-                } catch (err)
-                {
-                    enqueueApiErrorSnackbar(
-                        enqueueSnackbar,
-                        "שגיאה ביצירת איש חוץ",
-                        err,
-                    );
-                }
-            } else if (selectedOutsider)
-            {
-                try
-                {
-                    await updateOutsider({
-                        ...selectedOutsider,
-                        ...payload,
-                    });
-                    handleCancelEdit();
-                } catch (err)
-                {
-                    enqueueApiErrorSnackbar(
-                        enqueueSnackbar,
-                        "שגיאה בעדכון איש חוץ",
-                        err,
-                    );
-                }
-            }
-        },
-        [
-            isCreating,
-            name,
-            phone,
-            personalNumber,
-            idNumber,
-            releaseDate,
-            comment,
-            selectedOutsider,
-            addOutsider,
-            updateOutsider,
-            handleCancelEdit,
-            enqueueSnackbar,
-        ],
-    );
-
-    const handleDelete = useCallback(
-        async (id: string) =>
-        {
-            const outsiderName = outsiders.find((o) => o.id === id)?.name || id;
-            if (
-                await confirm(
-                    `האם אתה בטוח שברצונך למחוק את איש החוץ ${outsiderName}?`,
-                )
-            )
-            {
-                try
-                {
-                    if (selectedOutsider && selectedOutsider.id === id)
-                    {
-                        handleCancelEdit();
-                    }
-                    await deleteOutsider(id);
-                } catch (err)
-                {
-                    enqueueApiErrorSnackbar(
-                        enqueueSnackbar,
-                        "שגיאה במחיקת איש חוץ",
-                        err,
-                    );
-                }
-            }
-        },
-        [
-            selectedOutsider,
-            handleCancelEdit,
-            deleteOutsider,
-            outsiders,
-            enqueueSnackbar,
-            confirm,
-        ],
-    );
-
     return (
         <>
             <SettingsTab<Outsider, OutsiderFormCardProps>
                 FormCard={ OutsiderFormCard }
                 formCardProps={ {
-                    comment,
-                    handleCancelEdit,
-                    handleSave,
-                    idNumber,
-                    isCreating,
-                    name,
-                    personalNumber,
-                    phone,
-                    releaseDate,
-                    setComment,
-                    setIdNumber,
-                    setName,
-                    setPersonalNumber,
-                    setPhone,
-                    setReleaseDate,
+                    handleCancelEdit: form.handleCancelEdit,
+                    handleSave: form.handleSave,
+                    isCreating: form.isCreating,
+                    setValue: form.setValue,
+                    values: form.values,
                 } }
                 ListCard={ OutsiderListCard }
                 listCardProps={ {
                     filteredEntities: filteredOutsiders,
-                    handleDelete,
-                    handleStartCreate,
-                    populateFormFrom: populateFormFromOutsider,
+                    handleDelete: form.handleDelete,
+                    handleStartCreate: form.handleStartCreate,
+                    populateFormFrom: form.populateFormFrom,
                     searchQuery,
                     setSearchQuery,
                 } }
-                selectedEntity={ selectedOutsider }
+                selectedEntity={ selectedEntity }
             />
-            { confirmDialog }
+            { form.confirmDialog }
         </>
     );
 }

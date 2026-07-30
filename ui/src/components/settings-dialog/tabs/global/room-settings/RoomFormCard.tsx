@@ -4,8 +4,8 @@ import EventSeatIcon from "@mui/icons-material/EventSeat";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import InputAdornment from "@mui/material/InputAdornment";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { ReactNode } from "react";
 
 import { Room, RoomSource } from "@/api-shared/types/room";
 import { HiveLogo } from "@/components/base/HiveLogo";
@@ -16,22 +16,19 @@ import
 import { SettingsFormActions } from "@/components/settings-dialog/tabs/global/common/FormActions";
 import { BaseFormCard, FormCardBaseProps } from "@/components/settings-dialog/tabs/global/common/FormCard";
 import { SettingsSectionHeader } from "@/components/settings-dialog/tabs/global/common/SectionHeader";
+import { SettingsTextField } from "@/components/settings-dialog/tabs/global/common/SettingsTextField";
 import { LectureComfortSwitch } from "@/components/settings-dialog/tabs/global/LectureComfortSwitch";
+import { RoomValues } from "@/components/settings-dialog/tabs/global/room-settings/values";
 import { RoomBooleanSwitch } from "@/components/settings-dialog/tabs/global/RoomBooleanSwitch";
 
+type SetRoomValue = <TKey extends keyof RoomValues>(
+    key: TKey,
+    value: RoomValues[TKey],
+) => void;
+
 export type RoomFormCardProps = Omit<FormCardBaseProps<Room>, "selectedEntity"> & {
-    name: string;
-    setName: (name: string) => void;
-    description: string;
-    setDescription: (desc: string) => void;
-    workstationCount: string;
-    setWorkstationCount: (count: string) => void;
-    lectureSeatCount: string;
-    setLectureSeatCount: (count: string) => void;
-    lectureComfortable: boolean;
-    setLectureComfortable: (comfortable: boolean) => void;
-    peAyin: boolean;
-    setPeAyin: (peAyin: boolean) => void;
+    values: RoomValues;
+    setValue: SetRoomValue;
 };
 
 type RoomFormHeaderProps = {
@@ -39,22 +36,9 @@ type RoomFormHeaderProps = {
     isEditing: boolean;
     isHiveSelected: boolean;
 };
-type RoomBasicDetailsProps = {
-    isHiveSelected: boolean;
-    name: string;
-    setName: (name: string) => void;
-    description: string;
-    setDescription: (desc: string) => void;
-};
-type RoomExtendedDetailsProps = {
-    workstationCount: string;
-    setWorkstationCount: (count: string) => void;
-    lectureSeatCount: string;
-    setLectureSeatCount: (count: string) => void;
-    lectureComfortable: boolean;
-    setLectureComfortable: (comfortable: boolean) => void;
-    peAyin: boolean;
-    setPeAyin: (peAyin: boolean) => void;
+type RoomFieldsProps = {
+    values: RoomValues;
+    setValue: SetRoomValue;
 };
 type RoomFormActionsProps = {
     isCreating: boolean;
@@ -96,22 +80,18 @@ function RoomFormHeader({
 
 function RoomBasicDetails({
     isHiveSelected,
-    name,
-    setName,
-    description,
-    setDescription,
-}: RoomBasicDetailsProps)
+    values,
+    setValue,
+}: RoomFieldsProps & { isHiveSelected: boolean })
 {
     return (
         <Box display="flex" flexDirection="column" gap={ 2.5 }>
-            <TextField
+            <SettingsTextField
                 disabled={ isHiveSelected }
-                fullWidth
                 label="שם החדר"
-                onChange={ (e) => setName(e.target.value) }
+                onChange={ (e) => setValue("name", e.target.value) }
                 placeholder="לדוגמה: כיתת הדרכה 3"
                 required={ !isHiveSelected }
-                size="small"
                 slotProps={ {
                     input: isHiveSelected
                         ? {
@@ -123,43 +103,70 @@ function RoomBasicDetails({
                         }
                         : undefined,
                 } }
-                sx={ {
-                    "& .MuiOutlinedInput-root": {
-                        borderRadius: "10px",
-                    },
-                } }
-                value={ name }
+                value={ values.name }
             />
-            <TextField
+            <SettingsTextField
                 disabled={ isHiveSelected }
-                fullWidth
                 label="תיאור"
                 multiline
-                onChange={ (e) => setDescription(e.target.value) }
+                onChange={ (e) => setValue("description", e.target.value) }
                 placeholder="תיאור קצר, מיקום או פרטים נוספים..."
                 rows={ 2 }
-                size="small"
-                sx={ {
-                    "& .MuiOutlinedInput-root": {
-                        borderRadius: "10px",
-                    },
-                } }
-                value={ description }
+                value={ values.description }
             />
         </Box>
     );
 }
 
-function RoomExtendedDetails({
-    workstationCount,
-    setWorkstationCount,
-    lectureSeatCount,
-    setLectureSeatCount,
-    lectureComfortable,
-    setLectureComfortable,
-    peAyin,
-    setPeAyin,
-}: RoomExtendedDetailsProps)
+/** Bordered row pairing a labelled description with a switch. */
+function RoomToggleRow({
+    title,
+    description,
+    control,
+}: {
+    title: string;
+    description: string;
+    control: ReactNode;
+})
+{
+    return (
+        <Box
+            alignItems="center"
+            display="flex"
+            justifyContent="space-between"
+            sx={ {
+                p: 1.5,
+                borderRadius: "10px",
+                border: "1px solid",
+                borderColor: "divider",
+                bgcolor: (theme) =>
+                    theme.palette.mode === "light"
+                        ? "rgba(0,0,0,0.01)"
+                        : "rgba(255,255,255,0.02)",
+            } }
+        >
+            <Box>
+                <Typography
+                    sx={ {
+                        fontWeight: 700,
+                        fontSize: "0.85rem",
+                        color: "text.primary",
+                    } }
+                >
+                    { title }
+                </Typography>
+                <Typography
+                    sx={ { fontSize: "0.7rem", color: "text.secondary" } }
+                >
+                    { description }
+                </Typography>
+            </Box>
+            { control }
+        </Box>
+    );
+}
+
+function RoomExtendedDetails({ values, setValue }: RoomFieldsProps)
 {
     return (
         <>
@@ -175,15 +182,16 @@ function RoomExtendedDetails({
                 </Typography>
             </Divider>
             <Box display="flex" flexDirection="column" gap={ 2.5 }>
-                <TextField
-                    fullWidth
+                <SettingsTextField
                     inputMode="numeric"
                     label="כמות עמדות עבודה"
                     onChange={ (e) =>
-                        setWorkstationCount(e.target.value.replace(/\D/g, ""))
+                        setValue(
+                            "workstationCount",
+                            e.target.value.replace(/\D/g, ""),
+                        )
                     }
                     placeholder="0"
-                    size="small"
                     slotProps={ {
                         input: {
                             startAdornment: (
@@ -196,23 +204,19 @@ function RoomExtendedDetails({
                             ),
                         },
                     } }
-                    sx={ {
-                        "& .MuiOutlinedInput-root": {
-                            borderRadius: "10px",
-                        },
-                    } }
                     type="text"
-                    value={ workstationCount }
+                    value={ values.workstationCount }
                 />
-                <TextField
-                    fullWidth
+                <SettingsTextField
                     inputMode="numeric"
                     label="מספר כסאות להרצאה"
                     onChange={ (e) =>
-                        setLectureSeatCount(e.target.value.replace(/\D/g, ""))
+                        setValue(
+                            "lectureSeatCount",
+                            e.target.value.replace(/\D/g, ""),
+                        )
                     }
                     placeholder="0"
-                    size="small"
                     slotProps={ {
                         input: {
                             startAdornment: (
@@ -225,98 +229,36 @@ function RoomExtendedDetails({
                             ),
                         },
                     } }
-                    sx={ {
-                        "& .MuiOutlinedInput-root": {
-                            borderRadius: "10px",
-                        },
-                    } }
                     type="text"
-                    value={ lectureSeatCount }
+                    value={ values.lectureSeatCount }
                 />
 
-                <Box
-                    alignItems="center"
-                    display="flex"
-                    justifyContent="space-between"
-                    sx={ {
-                        p: 1.5,
-                        borderRadius: "10px",
-                        border: "1px solid",
-                        borderColor: "divider",
-                        bgcolor: (theme) =>
-                            theme.palette.mode === "light"
-                                ? "rgba(0,0,0,0.01)"
-                                : "rgba(255,255,255,0.02)",
-                    } }
-                >
-                    <Box>
-                        <Typography
-                            sx={ {
-                                fontWeight: 700,
-                                fontSize: "0.85rem",
-                                color: "text.primary",
-                            } }
-                        >
-                            נוח להרצאה
-                        </Typography>
-                        <Typography
-                            sx={ {
-                                fontSize: "0.7rem",
-                                color: "text.secondary",
-                            } }
-                        >
-                            { lectureComfortable
-                                ? "החדר מתאים להרצאות"
-                                : "החדר אינו מתאים להרצאות" }
-                        </Typography>
-                    </Box>
-                    <LectureComfortSwitch
-                        onChange={ setLectureComfortable }
-                        value={ lectureComfortable }
-                    />
-                </Box>
+                <RoomToggleRow
+                    control={
+                        <LectureComfortSwitch
+                            onChange={ (value) =>
+                                setValue("lectureComfortable", value) }
+                            value={ values.lectureComfortable }
+                        />
+                    }
+                    description={ values.lectureComfortable
+                        ? "החדר מתאים להרצאות"
+                        : "החדר אינו מתאים להרצאות" }
+                    title="נוח להרצאה"
+                />
 
-                <Box
-                    alignItems="center"
-                    display="flex"
-                    justifyContent="space-between"
-                    sx={ {
-                        p: 1.5,
-                        borderRadius: "10px",
-                        border: "1px solid",
-                        borderColor: "divider",
-                        bgcolor: (theme) =>
-                            theme.palette.mode === "light"
-                                ? "rgba(0,0,0,0.01)"
-                                : "rgba(255,255,255,0.02)",
-                    } }
-                >
-                    <Box>
-                        <Typography
-                            sx={ {
-                                fontWeight: 700,
-                                fontSize: "0.85rem",
-                                color: "text.primary",
-                            } }
-                        >
-                            { 'מתאים ל-פ"ע' }
-                        </Typography>
-                        <Typography
-                            sx={ {
-                                fontSize: "0.7rem",
-                                color: "text.secondary",
-                            } }
-                        >
-                            { peAyin
-                                ? 'החדר נוח ל-פ"עים'
-                                : 'החדר אינו נוח ל-פ"עים' }
-                        </Typography>
-                    </Box>
-                    <RoomBooleanSwitch
-                        onChange={ setPeAyin }
-                        value={ peAyin }
-                    />
-                </Box>
+                <RoomToggleRow
+                    control={
+                        <RoomBooleanSwitch
+                            onChange={ (value) => setValue("peAyin", value) }
+                            value={ values.peAyin }
+                        />
+                    }
+                    description={ values.peAyin
+                        ? 'החדר נוח ל-פ"עים'
+                        : 'החדר אינו נוח ל-פ"עים' }
+                    title={ 'מתאים ל-פ"ע' }
+                />
             </Box>
         </>
     );
@@ -346,18 +288,8 @@ function RoomFormActions({
 export const RoomFormCard: FormCard<Room, RoomFormCardProps> = function RoomFormCard({
     selectedEntity: selectedRoom,
     isCreating,
-    name,
-    setName,
-    description,
-    setDescription,
-    workstationCount,
-    setWorkstationCount,
-    lectureSeatCount,
-    setLectureSeatCount,
-    lectureComfortable,
-    setLectureComfortable,
-    peAyin,
-    setPeAyin,
+    values,
+    setValue,
     handleSave,
     handleCancelEdit,
 }: RoomFormCardProps & { selectedEntity: null | Room; })
@@ -374,22 +306,11 @@ export const RoomFormCard: FormCard<Room, RoomFormCardProps> = function RoomForm
             /> }
             formFields={ <>
                 <RoomBasicDetails
-                    description={ description }
                     isHiveSelected={ isHiveSelected }
-                    name={ name }
-                    setDescription={ setDescription }
-                    setName={ setName }
+                    setValue={ setValue }
+                    values={ values }
                 />
-                <RoomExtendedDetails
-                    lectureComfortable={ lectureComfortable }
-                    lectureSeatCount={ lectureSeatCount }
-                    peAyin={ peAyin }
-                    setLectureComfortable={ setLectureComfortable }
-                    setLectureSeatCount={ setLectureSeatCount }
-                    setPeAyin={ setPeAyin }
-                    setWorkstationCount={ setWorkstationCount }
-                    workstationCount={ workstationCount }
-                />
+                <RoomExtendedDetails setValue={ setValue } values={ values } />
             </> }
             formHeader={ <RoomFormHeader
                 isCreating={ isCreating }
