@@ -12,16 +12,11 @@ import
     GanttConstraint,
     hasConflictingTemporalConstraints,
 } from "@/api-shared/types/gantt/models/constraint";
-import
-{
-    buildDayIndexMap,
-    buildWeekIndexByDayId,
-    computeEventDaySpans,
-    getSpilloverMinutesByDay,
-} from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { computeEventDaySpans, getSpilloverMinutesByDay } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { fuzzyScore } from "@/components/gantt/curriculum-view/search/fuzzy";
 import { ConstraintLink } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useGanttUndo } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-undo";
+import { useGanttZoom } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-zoom";
 import { useGanttConstraints } from "@/components/gantt/state/constraints/hooks";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import {
@@ -46,15 +41,26 @@ export const useGanttView = (curriculumId: string) =>
     } = useGanttConstraints();
     const curriculum = state.curriculums[ curriculumId ];
 
-    // Strongly type as HTMLDivElement to satisfy MUI TableContainer
-    const containerRef = useRef<HTMLDivElement>(null);
+    const {
+        containerRef,
+        weeklyView,
+        handleWeeklyViewChange,
+        zoomedWeekId,
+        setZoomedWeekId,
+        timelineWeeks,
+        linearDays,
+        dayIndexMap,
+        weekIndexByDayId,
+        weekIndexOffset,
+        dayCellWidth,
+        singleWeekDayZoom,
+    } = useGanttZoom({ curriculum, weeksById: state.weeks });
+
     const pendingScrollRafs = useRef<Array<number>>([]);
 
     const [ showConstraints, setShowConstraints ] = useState(true);
-    const [ weeklyView, setWeeklyView ] = useState(true);
     const [ relativeDaySizing, setRelativeDaySizing ] = useState(false);
     const [ showUnallocated, setShowUnallocated ] = useState(false);
-    const [ zoomedWeekId, setZoomedWeekId ] = useState<null | string>(null);
     const [ collapsedSyllabusIds, setCollapsedSyllabusIds ] = useState<
         Set<string>
     >(() => new Set());
@@ -64,74 +70,8 @@ export const useGanttView = (curriculumId: string) =>
     // First-column search: filters the syllabus → module → event row tree by
     // title. Empty string = no filter (#323).
     const [ searchQuery, setSearchQuery ] = useState("");
-    const [ containerWidth, setContainerWidth ] = useState(0);
     // DOM id of a row to scroll into view once its ancestors have expanded.
     const [ pendingScrollId, setPendingScrollId ] = useState<null | string>(null);
-
-    const allTimelineWeeks = useMemo(() =>
-    {
-        if (!curriculum) return [];
-        return curriculum.weeks
-            .map((weekId) => state.weeks[ weekId ])
-            .filter((w) => !!w);
-    }, [ curriculum, state.weeks ]);
-
-    // Zoom only applies in days view. When active, restrict the grid to the one
-    // zoomed week so it can fill the available width (#90).
-    const timelineWeeks = useMemo(() =>
-    {
-        if (!weeklyView && zoomedWeekId)
-        {
-            const zoomed = allTimelineWeeks.find((w) => w.id === zoomedWeekId);
-            if (zoomed) return [ zoomed ];
-        }
-        return allTimelineWeeks;
-    }, [ allTimelineWeeks, weeklyView, zoomedWeekId ]);
-
-    const linearDays = useMemo(() =>
-    {
-        return timelineWeeks.flatMap((w) => w.days);
-    }, [ timelineWeeks ]);
-
-    // O(1) replacements for the linearDays.indexOf(...) / timelineWeeks.findIndex(...)
-    // scans that row/cell components previously ran per-item, per-render (#159).
-    const dayIndexMap = useMemo(
-        () => buildDayIndexMap(linearDays),
-        [ linearDays ],
-    );
-
-    const weekIndexByDayId = useMemo(
-        () => buildWeekIndexByDayId(timelineWeeks),
-        [ timelineWeeks ],
-    );
-
-    // When zoomed the grid holds a single week, but date labels are derived from a
-    // week's absolute position, so expose that offset to the header (#90).
-    const weekIndexOffset = useMemo(() =>
-    {
-        if (weeklyView || !zoomedWeekId) return 0;
-        const idx = allTimelineWeeks.findIndex((w) => w.id === zoomedWeekId);
-        return idx === -1 ? 0 : idx;
-    }, [ weeklyView, zoomedWeekId, allTimelineWeeks ]);
-
-    // Widen day columns to fill the container when a single week is zoomed (#90).
-    const dayCellWidth = useMemo(() =>
-    {
-        const DEFAULT_WIDTH = 80;
-        const LABEL_COL_WIDTH = 250;
-        if (weeklyView || !zoomedWeekId) return DEFAULT_WIDTH;
-        const dayCount = timelineWeeks[ 0 ]?.days.length ?? 0;
-        const available = containerWidth - LABEL_COL_WIDTH;
-        if (dayCount <= 0 || available <= 0) return DEFAULT_WIDTH;
-        return Math.max(DEFAULT_WIDTH, Math.floor(available / dayCount));
-    }, [ weeklyView, zoomedWeekId, timelineWeeks, containerWidth ]);
-
-    // Zoom is a days-view-only affordance: drop it when returning to weekly view.
-    const handleWeeklyViewChange = useCallback((checked: boolean) =>
-    {
-        setWeeklyView(checked);
-        if (checked) setZoomedWeekId(null);
-    }, []);
 
     const isSyllabusExpanded = useCallback(
         (syllabusId: string) => !collapsedSyllabusIds.has(syllabusId),
@@ -330,20 +270,6 @@ export const useGanttView = (curriculumId: string) =>
             pendingScrollRafs.current = [];
         };
     }, [ pendingScrollId ]);
-
-    // Track the scroll container width so a zoomed week can be sized to fill it (#90).
-    useEffect(() =>
-    {
-        const node = containerRef.current;
-        if (!node || typeof ResizeObserver === "undefined") return;
-        setContainerWidth(node.clientWidth);
-        const observer = new ResizeObserver((entries) =>
-        {
-            setContainerWidth(entries[ 0 ].contentRect.width);
-        });
-        observer.observe(node);
-        return () => observer.disconnect();
-    }, []);
 
     const moduleMappings = useMemo(() =>
     {
@@ -982,7 +908,7 @@ export const useGanttView = (curriculumId: string) =>
             violations,
             dayCellWidth,
             zoomedWeekId,
-            singleWeekDayZoom: !weeklyView && zoomedWeekId !== null,
+            singleWeekDayZoom,
             setZoomedWeekId,
             weekIndexOffset,
             isSyllabusExpanded,
@@ -1016,6 +942,7 @@ export const useGanttView = (curriculumId: string) =>
             violations,
             dayCellWidth,
             zoomedWeekId,
+            singleWeekDayZoom,
             weekIndexOffset,
             isSyllabusExpanded,
             toggleSyllabus,
