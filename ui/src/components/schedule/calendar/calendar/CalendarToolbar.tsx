@@ -43,10 +43,12 @@ export function CalendarToolbar({
     showToolbar,
     onToggleFullscreen,
     onToggleToolbar,
+    onExportIcs,
 }: ToolbarProps<any, any> & {
     showToolbar: boolean;
     onToggleFullscreen: () => void;
     onToggleToolbar: () => void;
+    onExportIcs: () => void;
 })
 {
     const { offlineMode, setOfflineMode } = useOffline();
@@ -77,15 +79,6 @@ export function CalendarToolbar({
         },
         [ onNavigate ],
     );
-
-    const handleExportIcs = useCallback(() => {
-        if (!startDate || !endDate) return;
-        const params = new URLSearchParams({
-            sd: startDate.toISOString(),
-            ed: endDate.toISOString(),
-        });
-        window.open(`/api/event/export/ics?${params.toString()}`, "_blank");
-    }, [startDate, endDate]);
 
     const isTodayShown = useMemo(() =>
     {
@@ -225,7 +218,7 @@ export function CalendarToolbar({
                         <Tooltip title="ייצוא לוח הזמנים המוצג ל-ICS">
                             <Button
                                 disabled={ !startDate || !endDate }
-                                onClick={ handleExportIcs }
+                                onClick={ onExportIcs }
                                 sx={ { minWidth: 38 } }
                             >
                                 <EventIcon fontSize="small" />

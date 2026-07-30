@@ -10,6 +10,7 @@ import { buildRawQuery } from "./core/modes";
 import { RecentsStore } from "./core/recents";
 import { CommandRegistry } from "./core/registry";
 import type { CommandKind, CommandPaletteLabels } from "./types";
+import { useCommandHotkeys } from "./use-command-hotkeys";
 import {
     PaletteHotkeyOptions,
     useOpenPaletteHotkeys,
@@ -65,6 +66,7 @@ export function CommandPaletteProvider({
     );
 
     useOpenPaletteHotkeys(open, hotkeys);
+    useCommandHotkeys(registry);
 
     const value = useMemo<CommandPaletteContextValue>(
         () => ({

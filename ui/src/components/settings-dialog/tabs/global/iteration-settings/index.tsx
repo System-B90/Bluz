@@ -1,4 +1,3 @@
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useSnackbar } from "notistack";
@@ -55,10 +54,12 @@ export function IterationSettings()
                 id: values.id.trim(),
                 label: values.label.trim(),
                 hiveUrl: values.hiveUrl.trim() || undefined,
-                startDate: values.startDate
-                    ? new Date(values.startDate)
+                startDate: values.startDate && values.startDate.isValid()
+                    ? values.startDate.toDate()
                     : undefined,
-                endDate: values.endDate ? new Date(values.endDate) : null,
+                endDate: values.endDate && values.endDate.isValid()
+                    ? values.endDate.toDate()
+                    : null,
             });
             enqueueSnackbar("המחזור נוצר בהצלחה", { variant: "success" });
             load();
@@ -73,7 +74,9 @@ export function IterationSettings()
             const saved = await apiPatchIteration(iteration.id, {
                 label: values.label.trim(),
                 hiveUrl: values.hiveUrl.trim() || undefined,
-                endDate: values.endDate ? new Date(values.endDate) : null,
+                endDate: values.endDate && values.endDate.isValid()
+                    ? values.endDate.toDate()
+                    : null,
             });
             enqueueSnackbar("המחזור עודכן", { variant: "success" });
             load();
@@ -168,10 +171,6 @@ export function IterationSettings()
 
     return (
         <Box display="flex" flexDirection="column" gap={ 2 } width="100%">
-            <Alert severity="info">
-                כל מחזור מנוהל במסד נתונים נפרד. רק המחזור הפעיל ניתן לעריכה
-                בלוח השנה; מחזורים קודמים הם לקריאה בלבד.
-            </Alert>
             <SettingsTab<Iteration, IterationFormCardProps, IterationListCardProps>
                 FormCard={ IterationFormCard }
                 formCardProps={ {

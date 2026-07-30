@@ -1,3 +1,5 @@
+import dayjs, { Dayjs } from "dayjs";
+
 import { Iteration } from "@/api-shared/types/iteration";
 import { ValidationResult } from "@/components/settings-dialog/tabs/global/common/UseEntityForm";
 
@@ -15,16 +17,16 @@ export type IterationValues = {
     id: string;
     label: string;
     hiveUrl: string;
-    startDate: string;
-    endDate: string;
+    startDate: Dayjs | null;
+    endDate: Dayjs | null;
 };
 
 export const EMPTY_ITERATION_VALUES: IterationValues = {
     id: "",
     label: "",
     hiveUrl: "",
-    startDate: "",
-    endDate: "",
+    startDate: null,
+    endDate: null,
 };
 
 export function iterationToValues(iteration: Iteration): IterationValues {
@@ -32,8 +34,8 @@ export function iterationToValues(iteration: Iteration): IterationValues {
         id: iteration.id,
         label: iteration.label,
         hiveUrl: iteration.hiveUrl ?? "",
-        startDate: toDateInputValue(iteration.startDate),
-        endDate: toDateInputValue(iteration.endDate),
+        startDate: iteration.startDate ? dayjs(iteration.startDate) : null,
+        endDate: iteration.endDate ? dayjs(iteration.endDate) : null,
     };
 }
 

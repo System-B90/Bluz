@@ -19,14 +19,18 @@ export type PaletteHotkeyOptions = {
 export function useOpenPaletteHotkeys(
     open: (kind?: CommandKind | null) => void,
     { quickOpen = true, commandMode = true }: PaletteHotkeyOptions = {},
-): void {
-    useEffect(() => {
-        const onKeyDown = (event: KeyboardEvent) => {
+): void
+{
+    useEffect(() =>
+    {
+        const onKeyDown = (event: KeyboardEvent) =>
+        {
             if (!event.ctrlKey && !event.metaKey) return;
 
             const key = event.key.toLowerCase();
 
-            if (commandMode && event.shiftKey && key === "p") {
+            if (commandMode && event.shiftKey && (key === "p" || key === "פ"))
+            {
                 event.preventDefault();
                 open("command");
                 return;
@@ -34,7 +38,8 @@ export function useOpenPaletteHotkeys(
 
             // `event.key` is "k" regardless of Shift on most layouts; require it
             // to be absent so the two bindings stay distinct.
-            if (quickOpen && !event.shiftKey && key === "k") {
+            if (quickOpen && !event.shiftKey && (key === "k" || key === "ל"))
+            {
                 event.preventDefault();
                 open(null);
             }
@@ -42,5 +47,5 @@ export function useOpenPaletteHotkeys(
 
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
-    }, [open, quickOpen, commandMode]);
+    }, [ open, quickOpen, commandMode ]);
 }

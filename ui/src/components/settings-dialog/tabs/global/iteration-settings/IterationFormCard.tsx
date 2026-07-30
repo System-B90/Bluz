@@ -1,9 +1,10 @@
-import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
 import SyncIcon from "@mui/icons-material/Sync";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import { Iteration } from "@/api-shared/types/iteration";
 import { BaseFormCard, FormCardBaseProps } from "@/components/settings-dialog/tabs/global/common/FormCard";
@@ -136,32 +137,32 @@ export function IterationFormCard({
                     value={ values.hiveUrl }
                 />
                 <Box display="flex" gap={ 2 }>
-                    <SettingsTextField
+                    <DatePicker
                         // Start date is captured at creation: it anchors the
                         // iteration's calendar and cannot move afterwards.
                         disabled={ !isCreating }
+                        format="DD/MM/YYYY"
                         label="תאריך התחלה"
-                        onChange={ (e) => setValue("startDate", e.target.value) }
-                        slotProps={ { inputLabel: { shrink: true } } }
-                        type="date"
+                        onChange={ (val) => setValue("startDate", val) }
+                        slotProps={ { textField: { fullWidth: true } } }
                         value={ values.startDate }
                     />
-                    <SettingsTextField
+                    <DatePicker
+                        format="DD/MM/YYYY"
                         label="תאריך סיום"
-                        onChange={ (e) => setValue("endDate", e.target.value) }
-                        slotProps={ { inputLabel: { shrink: true } } }
-                        type="date"
+                        onChange={ (val) => setValue("endDate", val) }
+                        slotProps={ { textField: { fullWidth: true } } }
                         value={ values.endDate }
                     />
                 </Box>
             </> }
             formHeader={ <SettingsSectionHeader
                 color={ isCreating ? "secondary" : "primary" }
-                icon={ AddIcon }
+                icon={ EditIcon }
                 subtitle={ isCreating
                     ? "יצירת מחזור חדש עם מסד נתונים ייעודי"
                     : "עדכון פרטי המחזור הנבחר" }
-                title={ isCreating ? "מחזור חדש" : `עריכה — ${values.label}` }
+                title={ isCreating ? "מחזור חדש" : "עריכת מחזור" }
             /> }
             handleCancelEdit={ handleCancelEdit }
             handleSave={ handleSave }
