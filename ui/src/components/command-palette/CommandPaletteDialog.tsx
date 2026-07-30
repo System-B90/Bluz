@@ -221,6 +221,14 @@ export function CommandPaletteDialog({
                 backdrop: {
                     sx: { backdropFilter: "blur(3px)" },
                 },
+                // The dialog's focus trap moves focus to the paper once the
+                // transition ends, which lands after both `autoFocus` and the
+                // open effect — so grab the field back here, after it has had
+                // its say. Without this the palette opens unfocused when it was
+                // opened by click (the trigger button keeps focus).
+                transition: {
+                    onEntered: () => inputRef.current?.focus(),
+                },
             }}
             sx={{
                 "& .MuiDialog-container": { alignItems: "flex-start" },
