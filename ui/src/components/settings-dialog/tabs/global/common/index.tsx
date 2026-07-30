@@ -14,23 +14,43 @@ export type ListCardBaseProps<TEntity> = {
     handleDelete: (id: string) => Promise<void>;
 };
 
-export type ListCard<TEntity> = React.ComponentType<ListCardBaseProps<TEntity>>;
+/**
+ * List-card props for a tab whose entities cannot be deleted — iterations own
+ * a database each, so they are created and edited but never removed here.
+ */
+export type ReadOnlyListCardBaseProps<TEntity> = Omit<
+    ListCardBaseProps<TEntity>,
+    "handleDelete"
+>;
+
+export type ListCard<
+    TEntity,
+    ListCardProps extends Omit<ReadOnlyListCardBaseProps<TEntity>, "selectedEntity"> = Omit<ListCardBaseProps<TEntity>, "selectedEntity">,
+> = React.ComponentType<ListCardProps & { selectedEntity: null | TEntity; }>;
 export type FormCard<TEntity, FormCardProps extends Omit<FormCardBaseProps<TEntity>, "selectedEntity"> = Omit<FormCardBaseProps<TEntity>, "selectedEntity">> =
     React.ComponentType<FormCardProps & { selectedEntity: null | TEntity; }>;
 
-export type SettingsTabProps<TEntity, FormCardProps extends Omit<FormCardBaseProps<TEntity>, "selectedEntity">> = {
-    ListCard: ListCard<TEntity>;
+export type SettingsTabProps<
+    TEntity,
+    FormCardProps extends Omit<FormCardBaseProps<TEntity>, "selectedEntity">,
+    ListCardProps extends Omit<ReadOnlyListCardBaseProps<TEntity>, "selectedEntity"> = Omit<ListCardBaseProps<TEntity>, "selectedEntity">,
+> = {
+    ListCard: ListCard<TEntity, ListCardProps>;
     FormCard: FormCard<TEntity, FormCardProps>;
     selectedEntity: null | TEntity;
-    listCardProps: Omit<ListCardBaseProps<TEntity>, "selectedEntity">;
+    listCardProps: ListCardProps;
     formCardProps: FormCardProps;
 };
 
-export function SettingsTab<TEntity, FormCardProps extends Omit<FormCardBaseProps<TEntity>, "selectedEntity"> = Omit<FormCardBaseProps<TEntity>, "selectedEntity">>(
+export function SettingsTab<
+    TEntity,
+    FormCardProps extends Omit<FormCardBaseProps<TEntity>, "selectedEntity"> = Omit<FormCardBaseProps<TEntity>, "selectedEntity">,
+    ListCardProps extends Omit<ReadOnlyListCardBaseProps<TEntity>, "selectedEntity"> = Omit<ListCardBaseProps<TEntity>, "selectedEntity">,
+>(
     {
         ListCard, FormCard,
         selectedEntity, listCardProps, formCardProps,
-    }: SettingsTabProps<TEntity, FormCardProps>
+    }: SettingsTabProps<TEntity, FormCardProps, ListCardProps>
 )
 {
     return (

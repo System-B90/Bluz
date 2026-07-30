@@ -23,9 +23,20 @@ export type UseEntityFormProps<TEntity, TValues> = {
      * caller's business.
      */
     validate: (values: TValues) => ValidationResult;
-    onCreate: (values: TValues) => Promise<unknown>;
-    onUpdate: (entity: TEntity, values: TValues) => Promise<unknown>;
+    /**
+     * Returning the saved entity lets `keepSelectionAfterSave` re-populate the
+     * form from the server's version. Returning nothing is fine otherwise.
+     */
+    onCreate: (values: TValues) => Promise<TEntity | unknown>;
+    onUpdate: (entity: TEntity, values: TValues) => Promise<TEntity | unknown>;
     onDelete?: (id: string) => Promise<unknown>;
+    /**
+     * By default a successful save clears the form, which is what a
+     * list-and-add tab wants. Set this to keep the saved entity selected and
+     * the form populated from whatever `onCreate`/`onUpdate` returned — for
+     * tabs where saving is "apply my edits", not "add another".
+     */
+    keepSelectionAfterSave?: boolean;
     /** Error snackbar titles, e.g. `{ create: "שגיאה ביצירת איש חוץ" }`. */
     errorMessages: {
         create: string;
@@ -64,6 +75,7 @@ export function useEntityForm<
     errorMessages,
     confirmDeleteMessage,
     onSelectionChange,
+    keepSelectionAfterSave = false,
 }: UseEntityFormProps<TEntity, TValues>) {
     const { enqueueSnackbar } = useSnackbar();
     const { confirm, confirmDialog } = useConfirmDialog();
@@ -136,9 +148,17 @@ export function useEntityForm<
 
             setIsSubmitting(true);
             try {
-                if (isCreating) await onCreate(values);
-                else await onUpdate(selectedEntity as TEntity, values);
-                handleCancelEdit();
+                const saved = isCreating
+                    ? await onCreate(values)
+                    : await onUpdate(selectedEntity as TEntity, values);
+
+                if (!keepSelectionAfterSave) {
+                    handleCancelEdit();
+                } else if (saved) {
+                    // Re-read from the server's copy so any field it
+                    // normalised (ids, dates) is reflected in the form.
+                    populateFormState(saved as TEntity);
+                }
             } catch (error) {
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -157,6 +177,8 @@ export function useEntityForm<
             onCreate,
             onUpdate,
             handleCancelEdit,
+            keepSelectionAfterSave,
+            populateFormState,
             enqueueSnackbar,
             errorMessages,
         ],
