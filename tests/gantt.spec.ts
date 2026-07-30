@@ -47,20 +47,18 @@ test.describe("Gantt Page", () => {
 
     // ─── Page Load ──────────────────────────────────────────────────────────
 
-    // TODO(#97-followup): flaky/blocked in hermetic CI — the curriculum delete
-    // button ("מחיקה") stays disabled on freshly-seeded demo data, so the
-    // delete-all cleanup loop times out. Re-enable once the seed provides a
-    // deletable curriculum or the test selects one first to enable delete.
-test("renders the Gantt page with placeholder text", async ({ page }) => {
-        test.fixme(
-            true,
-            "#97-followup: flaky in hermetic CI, curriculum delete button stays disabled on freshly-seeded demo data",
-        );
-        // beforeEach navigates to /gantt without selecting a curriculum.
-        // No curriculum is selected in the URL, so the placeholder should be visible.
+    test("auto-selects the first curriculum on load", async ({ page }) => {
+        // `CurriculumFab` selects `sortedIds[0]` on mount whenever any
+        // curriculum exists (curriculum-fab/index.tsx), so landing on /gantt
+        // with no `cid` resolves to a selection rather than the
+        // "בחרו גאנט כדי להתחיל לעבוד" placeholder. That placeholder is only
+        // reachable with zero curricula, which `beforeEach` rules out — the
+        // old version of this test asserted it unconditionally and could
+        // never pass. See #176.
+        await expect(page).toHaveURL(/[?&]cid=/, { timeout: 10_000 });
         await expect(
             page.getByText("בחרו גאנט כדי להתחיל לעבוד"),
-        ).toBeVisible({ timeout: 5_000 });
+        ).toHaveCount(0);
     });
 
     test("renders the AppBar on the Gantt page", async ({ page }) => {

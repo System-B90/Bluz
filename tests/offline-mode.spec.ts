@@ -52,10 +52,7 @@ test.describe("Offline mode", () => {
 
     // ─── No changes ──────────────────────────────────────────────────────────
 
-    // TODO(#97-followup): fails in hermetic CI — the push-updates dialog does
-    // not auto-close on exit-without-changes within 3s (stays visible). Needs
-    // app-side investigation of the no-op offline-exit path.
-    test.fixme("exiting without changes auto-closes and shows info snackbar", async ({
+    test("exiting without changes auto-closes and shows info snackbar", async ({
         page,
     }) => {
         await enterOfflineMode(page);
@@ -203,11 +200,7 @@ test.describe("Offline mode", () => {
 
     // ─── Delete offline ───────────────────────────────────────────────────────
 
-    // TODO(#97-followup): flaky/blocked in hermetic CI — the event edit
-    // dialog's delete button ("מחק") stays disabled, so the offline delete
-    // can't be triggered and the test times out. Re-enable once the disabled
-    // state on freshly-created offline events is understood.
-    test.fixme("deleted event appears in push dialog", async ({ page }) => {
+    test("deleted event appears in push dialog", async ({ page }) => {
         // Create an event while online
         const name = testId("delete-offline");
 
