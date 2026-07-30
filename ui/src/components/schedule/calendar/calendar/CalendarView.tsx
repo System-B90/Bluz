@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import dayjs, { Dayjs } from "dayjs";
-import { useMemo } from "react";
+import { createContext, useContext, useMemo } from "react";
 import {
     CalendarProps,
     SlotInfo,
@@ -91,6 +91,42 @@ function CalendarHeader({ date }: { date: Date }) {
     );
 }
 
+type ToolbarExtras = {
+    showToolbar: boolean;
+    onToggleFullscreen: () => void;
+    onToggleToolbar: () => void;
+};
+
+const ToolbarExtrasContext = createContext<null | ToolbarExtras>(null);
+
+/**
+ * react-big-calendar treats `components` values as component *types*, so React
+ * reconciles the toolbar by function identity: a new reference remounts the
+ * whole subtree and re-runs its mount effects (IterationSelector's iteration
+ * fetch among them). Defining this at module scope keeps the identity fixed for
+ * the process lifetime, and the props that do change travel through context —
+ * which re-renders the toolbar without remounting it. See #337.
+ */
+function CalendarToolbarSlot(props: ToolbarProps<Event, object>) {
+    const extras = useContext(ToolbarExtrasContext);
+    if (!extras) return null;
+
+    return (
+        <CalendarToolbar
+            {...props}
+            onToggleFullscreen={extras.onToggleFullscreen}
+            onToggleToolbar={extras.onToggleToolbar}
+            showToolbar={extras.showToolbar}
+        />
+    );
+}
+
+const CALENDAR_COMPONENTS = {
+    event: BluzEventComponent,
+    toolbar: CalendarToolbarSlot,
+    header: CalendarHeader,
+};
+
 type CalendarViewProps = {
     events: Array<Event>;
     rooms: Array<Room>;
@@ -122,81 +158,72 @@ export function CalendarView({
     onToggleFullscreen,
     onToggleToolbar,
 }: CalendarViewProps) {
-    const components = useMemo(
-        () => ({
-            event: BluzEventComponent,
-            toolbar: (props: ToolbarProps<Event, object>) => (
-                <CalendarToolbar
-                    {...props}
-                    onToggleFullscreen={onToggleFullscreen}
-                    onToggleToolbar={onToggleToolbar}
-                    showToolbar={showToolbar}
-                />
-            ),
-            header: CalendarHeader,
-        }),
-        [onToggleFullscreen, onToggleToolbar, showToolbar],
+    const toolbarExtras = useMemo(
+        () => ({ showToolbar, onToggleFullscreen, onToggleToolbar }),
+        [showToolbar, onToggleFullscreen, onToggleToolbar],
     );
 
     return (
-        <DnDCalendar
-            className="relative grow h-full"
-            components={components}
-            date={date}
-            defaultView={Views.WEEK}
-            draggableAccessor={(e) => !e.locked}
-            endAccessor={(e) => (e.endTime as Dayjs).toDate()}
-            events={events}
-            formats={{
-                timeGutterFormat: "HH:mm",
-                dayRangeHeaderFormat: ({ start, end }) => {
-                    const s = dayjs(start).locale("he");
-                    const e = dayjs(end).locale("he");
-                    if (s.month() === e.month()) {
-                        return `${s.format("DD")} - ${e.format("DD")} ב${s.format("MMMM")} ${s.format("YYYY")}`;
-                    } else {
-                        return `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")} ${e.format("YYYY")}`;
-                    }
-                },
-            }}
-            localizer={localizer}
-            max={new Date(2025, 0, 1, 22, 0)}
-            messages={CALENDAR_MESSAGES}
-            min={new Date(2025, 0, 1, 7, 0)}
-            onDoubleClickEvent={onDoubleClickEvent}
-            onEventDrop={onEventDrop}
-            onEventResize={onEventDrop}
-            onNavigate={onNavigate}
-            onSelectEvent={onSelectEvent}
-            onSelectSlot={onSelectSlot}
-            onView={onView}
-            resizableAccessor={(e) => !e.locked}
-            resourceAccessor={(event: Event) =>
-                event.rooms.length > 0
-                    ? event.rooms.map((room) => roomLikeToResourceKey(room))
-                    : [
-                        roomLikeToResourceKey({
-                            id: DUMMY_ROOM_ID,
-                            source: RoomSource.Custom,
-                        }),
-                    ]
-            }
-            resourceIdAccessor={(room: Room) => roomLikeToResourceKey(room)}
-            // Resource logic
-            resources={
-                currentView === Views.DAY
-                    ? [NO_ROOM_RESOURCE, ...rooms]
-                    : undefined
-            }
-            resourceTitleAccessor="name"
-            rtl={true}
-            selectable
-            startAccessor={(e) => (e.startTime as Dayjs).toDate()}
-            step={5}
-            style={{ height: "100%" }}
-            timeslots={12}
-            view={currentView}
-            views={{ day: true, week: true, work_week: CustomWorkWeek }}
-        />
+        <ToolbarExtrasContext.Provider value={toolbarExtras}>
+            <DnDCalendar
+                className="relative grow h-full"
+                components={CALENDAR_COMPONENTS}
+                date={date}
+                defaultView={Views.WEEK}
+                draggableAccessor={(e) => !e.locked}
+                endAccessor={(e) => (e.endTime as Dayjs).toDate()}
+                events={events}
+                formats={{
+                    timeGutterFormat: "HH:mm",
+                    dayRangeHeaderFormat: ({ start, end }) => {
+                        const s = dayjs(start).locale("he");
+                        const e = dayjs(end).locale("he");
+                        if (s.month() === e.month()) {
+                            return `${s.format("DD")} - ${e.format("DD")} ב${s.format("MMMM")} ${s.format("YYYY")}`;
+                        } else {
+                            return `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")} ${e.format("YYYY")}`;
+                        }
+                    },
+                }}
+                localizer={localizer}
+                max={new Date(2025, 0, 1, 22, 0)}
+                messages={CALENDAR_MESSAGES}
+                min={new Date(2025, 0, 1, 7, 0)}
+                onDoubleClickEvent={onDoubleClickEvent}
+                onEventDrop={onEventDrop}
+                onEventResize={onEventDrop}
+                onNavigate={onNavigate}
+                onSelectEvent={onSelectEvent}
+                onSelectSlot={onSelectSlot}
+                onView={onView}
+                resizableAccessor={(e) => !e.locked}
+                resourceAccessor={(event: Event) =>
+                    event.rooms.length > 0
+                        ? event.rooms.map((room) => roomLikeToResourceKey(room))
+                        : [
+                            roomLikeToResourceKey({
+                                id: DUMMY_ROOM_ID,
+                                source: RoomSource.Custom,
+                            }),
+                        ]
+                }
+                resourceIdAccessor={(room: Room) => roomLikeToResourceKey(room)}
+                // Resource logic
+                resources={
+                    currentView === Views.DAY
+                        ? [NO_ROOM_RESOURCE, ...rooms]
+                        : undefined
+                }
+                resourceTitleAccessor="name"
+                rtl={true}
+                selectable
+                startAccessor={(e) => (e.startTime as Dayjs).toDate()}
+                step={5}
+                style={{ height: "100%" }}
+                timeslots={12}
+                view={currentView}
+                views={{ day: true, week: true, work_week: CustomWorkWeek }}
+            />
+        </ToolbarExtrasContext.Provider>
     );
 }
