@@ -10,6 +10,12 @@
 export type IterationId = string;
 
 /**
+ * Query-string key carrying the active iteration id. Lives here rather than in
+ * `api-server` so the browser can build the same URLs the routes parse.
+ */
+export const ITERATION_QUERY_PARAM = "it";
+
+/**
  * Snapshot of Hive names taken when an iteration is created. The Hive instance
  * changes every iteration, so numeric Hive ids are not stable across runs — we
  * cache the human names by id so a past iteration can be displayed even after

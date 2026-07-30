@@ -10,6 +10,13 @@ export const USER_AUTH_COOKIE_NAME = "auth";
 // HTTP Caching
 export const CACHE_CONTROL_HTTP_HEADER = "Cache-Control";
 export const IMMUTABLE_CACHE_MAX_TTL = SECONDS_IN_A_DAY * DAYS_IN_A_WEEK * 4; // 28 days
+/**
+ * A past iteration's Hive data is frozen — its Hive instance is gone or its ids
+ * have been reused, so the response is served from the snapshot taken at
+ * creation. Cache it for a week; a manual "sync Hive info" is the only thing
+ * that can change it, and that only applies to the current iteration.
+ */
+export const ARCHIVED_HIVE_CACHE_TTL = SECONDS_IN_A_DAY * DAYS_IN_A_WEEK; // 7 days
 
 export function getJwtSecret() {
     const jwtSecret = process.env.JWT_SECRET;

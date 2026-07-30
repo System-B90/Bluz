@@ -5,6 +5,7 @@ import { DbIterations } from "@/api-server/db-iterations";
 import { DbRoomExtendedInfo } from "@/api-server/db-room-extended-info";
 import { DbRooms } from "@/api-server/db-rooms";
 import {
+    archivedIterationCacheControl,
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
@@ -54,7 +55,10 @@ export const GET: ServerApiRoomsGet = withApi(async (request) => {
         iteration?.hiveUrl,
         iteration?.hiveCache,
     );
-    return ApiSuccess(rooms);
+    // An archived iteration is read-only end to end — its Hive snapshot and its
+    // custom rooms alike — so the response is good for a week. `private`: this
+    // sits behind Hive SSO and must not be held by a shared proxy.
+    return ApiSuccess(rooms, archivedIterationCacheControl(iteration));
 });
 
 export const POST: ServerApiRoomUpdate = withApi(async (request) => {

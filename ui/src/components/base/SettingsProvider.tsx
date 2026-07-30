@@ -28,6 +28,7 @@ import {
     DEFAULT_DAY_START_TIME,
     DEFAULT_WEEKEND_HOME_START_TIME,
 } from "@/api-shared/types/settings/schedule";
+import { useIterationScope } from "@/components/base/IterationProvider";
 
 export type SettingsContextState = {
     default: boolean;
@@ -38,6 +39,8 @@ export type SettingsContextState = {
     updateDayStartTime: (newDayStartTime: string) => void;
     weekendHomeStartTime: string;
     updateWeekendHomeStartTime: (newWeekendHomeStartTime: string) => void;
+    /** True while viewing a past iteration — its settings are read-only. */
+    isReadOnlyIteration: boolean;
 };
 
 const SettingsContext = createContext<SettingsContextState | undefined>({
@@ -49,6 +52,7 @@ const SettingsContext = createContext<SettingsContextState | undefined>({
     updateDayStartTime: (_newDayStartTime: string) => { },
     weekendHomeStartTime: DEFAULT_WEEKEND_HOME_START_TIME,
     updateWeekendHomeStartTime: (_newWeekendHomeStartTime: string) => { },
+    isReadOnlyIteration: false,
 });
 
 type PrayerSettingsState = {
@@ -96,6 +100,10 @@ export const SettingsProvider = ({
     children: React.ReactNode;
 }) =>
 {
+    // Settings live in the iteration's own database, so every call is scoped
+    // to the active iteration and reloaded whenever it changes.
+    const { iterationId, isReadOnlyIteration } = useIterationScope();
+
     const [ state, dispatch ] = useReducer(prayerSettingsReducer, {
         prayerTimes: {
             shacharit: dayjs().hour(6),
@@ -108,9 +116,17 @@ export const SettingsProvider = ({
     const loadPrayerSettings = useCallback(() =>
     {
         dispatch({ type: "SET_LOADING", payload: true });
-        apiGetPrayerSettings()
+        apiGetPrayerSettings(iterationId)
             .then((fetchedPrayerSettings) =>
             {
+                // Only the default database is seeded at startup, so an
+                // iteration that never had prayer times returns null — keep
+                // the defaults rather than choking on the date fixup.
+                if (!fetchedPrayerSettings)
+                {
+                    dispatch({ type: "SET_LOADING", payload: false });
+                    return;
+                }
                 inplaceDateFixup(fetchedPrayerSettings, "shacharit");
                 inplaceDateFixup(fetchedPrayerSettings, "mincha");
                 inplaceDateFixup(fetchedPrayerSettings, "arvit");
@@ -128,7 +144,7 @@ export const SettingsProvider = ({
                     error,
                 );
             });
-    }, [ dispatch ]);
+    }, [ dispatch, iterationId ]);
 
     const updatePrayerTimes = useCallback(
         async (newPrayerTimes: PrayerSettings) =>
@@ -138,7 +154,7 @@ export const SettingsProvider = ({
 
             try
             {
-                await apiSetPrayerSettings(newPrayerTimes);
+                await apiSetPrayerSettings(newPrayerTimes, iterationId);
                 enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", {
                     variant: "success",
                 });
@@ -155,7 +171,7 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ state.prayerTimes, dispatch ],
+        [ state.prayerTimes, dispatch, iterationId ],
     );
 
     const updatePrayerTime = useCallback(
@@ -171,7 +187,7 @@ export const SettingsProvider = ({
 
             try
             {
-                await apiSetPrayerSettings(updatedTimes);
+                await apiSetPrayerSettings(updatedTimes, iterationId);
                 enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", {
                     variant: "success",
                 });
@@ -188,7 +204,7 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ state.prayerTimes, dispatch ],
+        [ state.prayerTimes, dispatch, iterationId ],
     );
 
     const [ dayStartTime, setDayStartTime ] = useState<string>(
@@ -200,7 +216,7 @@ export const SettingsProvider = ({
 
     const loadScheduleSettings = useCallback(() =>
     {
-        apiGetScheduleSettings()
+        apiGetScheduleSettings(iterationId)
             .then((fetchedScheduleSettings) =>
             {
                 setDayStartTime(
@@ -220,7 +236,7 @@ export const SettingsProvider = ({
                     error,
                 );
             });
-    }, [ setDayStartTime, setWeekendHomeStartTime ]);
+    }, [ setDayStartTime, setWeekendHomeStartTime, iterationId ]);
 
     const updateDayStartTime = useCallback(
         async (newDayStartTime: string) =>
@@ -233,7 +249,7 @@ export const SettingsProvider = ({
                 await apiSetScheduleSettings({
                     dayStartTime: newDayStartTime,
                     weekendHomeStartTime,
-                });
+                }, iterationId);
                 enqueueSnackbar('שעת תחילת יום ברירת מחדל עודכנה בהצלחה.', {
                     variant: "success",
                 });
@@ -247,7 +263,7 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ dayStartTime, weekendHomeStartTime ],
+        [ dayStartTime, weekendHomeStartTime, iterationId ],
     );
 
     const updateWeekendHomeStartTime = useCallback(
@@ -261,7 +277,7 @@ export const SettingsProvider = ({
                 await apiSetScheduleSettings({
                     dayStartTime,
                     weekendHomeStartTime: newWeekendHomeStartTime,
-                });
+                }, iterationId);
                 enqueueSnackbar('שעת תחילת לו"ז אחרי סופ"ש עודכנה בהצלחה.', {
                     variant: "success",
                 });
@@ -275,7 +291,7 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ dayStartTime, weekendHomeStartTime ],
+        [ dayStartTime, weekendHomeStartTime, iterationId ],
     );
 
     useEffect(() =>
@@ -295,6 +311,7 @@ export const SettingsProvider = ({
                 updateDayStartTime,
                 weekendHomeStartTime,
                 updateWeekendHomeStartTime,
+                isReadOnlyIteration,
             } }
         >
             { children }

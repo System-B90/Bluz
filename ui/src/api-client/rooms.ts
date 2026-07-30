@@ -1,8 +1,10 @@
 import {
     ClientApi,
-    ClientApiNoPayload,
+    ClientApiProps,
     safeApiFetcher,
 } from "@/api-client/common";
+import { iterationEndpoint } from "@/api-client/iteration-query";
+import { IterationId } from "@/api-shared/types/iteration";
 import {
     ApiRoomCreatePayload,
     ApiRoomCreateResponse,
@@ -15,7 +17,10 @@ import {
     ApiRoomUpdateResponse,
 } from "@/api-shared/types/room";
 
-type ClientApiGetRooms = ClientApiNoPayload<ApiRoomsGetResponse>;
+type ClientApiGetRooms = (
+    props?: ClientApiProps,
+    iterationId?: IterationId,
+) => Promise<ApiRoomsGetResponse>;
 type ClientApiCreateRoom = ClientApi<
     ApiRoomCreatePayload,
     ApiRoomCreateResponse
@@ -33,8 +38,16 @@ type ClientApiUpdateRoomExtendedInfo = ClientApi<
     ApiRoomExtendedInfoUpdateResponse
 >;
 
-export const apiGetRooms: ClientApiGetRooms = async (props) => {
-    return await safeApiFetcher<ApiRoomsGetResponse>("/api/rooms", props);
+/**
+ * Rooms come from the iteration's own database, merged with its Hive
+ * instance. A past iteration answers from the frozen snapshot, and that
+ * response is cached for a week (see `archivedIterationCacheControl`).
+ */
+export const apiGetRooms: ClientApiGetRooms = async (props, iterationId) => {
+    return await safeApiFetcher<ApiRoomsGetResponse>(
+        iterationEndpoint("/api/rooms", iterationId),
+        props,
+    );
 };
 
 export const apiCreateRoom: ClientApiCreateRoom = async (room, props) => {

@@ -22,6 +22,7 @@ export function DayStartTimeSetting({
         updateDayStartTime,
         weekendHomeStartTime,
         updateWeekendHomeStartTime,
+        isReadOnlyIteration,
     } = useSettings();
 
     const handleDayStartChange = useCallback(
@@ -68,6 +69,7 @@ export function DayStartTimeSetting({
     return (
         <BaseTimeSettingsCard
             description='שעות התחלת לו"ז בגזירת גאנט'
+            disabled={ isReadOnlyIteration }
             icon={ <AlarmOnIcon /> }
             isShrunk={ isShrunk }
             onToggleShrink={ onToggleShrink }
