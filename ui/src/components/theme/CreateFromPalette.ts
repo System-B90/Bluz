@@ -141,10 +141,10 @@ export function createThemeOptions(): ThemeOptions
                     }),
                 },
             },
-            MuiToggleButtonGroup: {
+            MuiButtonGroup: {
                 styleOverrides: {
                     root: {
-                        boxShadow: "none",
+                        boxShadow: "none !important",
                     },
                 },
             },

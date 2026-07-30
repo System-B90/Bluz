@@ -1,3 +1,5 @@
+import assert from "assert";
+
 import type { Metadata } from "next";
 
 import { MuiEmotionCacheProvider } from "@/components/theme/MuiEmotionCacheProvider";
@@ -6,9 +8,11 @@ import { WebSocketConfigProvider } from "@/components/WebsocketConfigProvider";
 import { WEBSOCKET_PORT_SUFFIX, WEBSOCKET_PROTOCOL } from "@/settings";
 
 export const metadata: Metadata = {
-    title: "Bluz",
-    description: "Bis Luz",
+    title: "בלוז",
+    description: 'בי"ס לכל לו"ז',
 };
+
+assert(process.env.NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST || process.env.NODE_ENV === 'development', "NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST environment variable must be set in production!");
 
 export default function RootLayout({
     children,

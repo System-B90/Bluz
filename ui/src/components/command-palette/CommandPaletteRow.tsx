@@ -56,7 +56,7 @@ export function CommandPaletteRow({
                 opacity: disabled ? 0.45 : 1,
                 borderInlineStart: "3px solid",
                 borderInlineStartColor: selected
-                    ? "primary.main"
+                    ? `rgb(${theme.vars.palette.primary.mainChannel} / 0.22)`
                     : "transparent",
                 bgcolor: selected
                     ? `rgb(${theme.vars.palette.primary.mainChannel} / 0.12)`
