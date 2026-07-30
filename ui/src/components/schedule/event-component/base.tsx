@@ -2,6 +2,7 @@ import LockPersonIcon from "@mui/icons-material/LockPerson";
 import Box from "@mui/material/Box";
 import { alpha, useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
+import dayjs from "dayjs";
 import { useMemo } from "react";
 import { EventProps } from "react-big-calendar";
 
@@ -45,15 +46,48 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
         [event, eventFilteredOpacity],
     );
 
+    const dragPreview = event as Event & { __isPreview?: boolean; start?: Date; end?: Date };
+    const isDragging = Boolean(dragPreview.__isPreview);
+    const dragStart = isDragging && dragPreview.start ? dayjs(dragPreview.start) : null;
+    const dragEnd = isDragging && dragPreview.end ? dayjs(dragPreview.end) : null;
+    const dragDurationMinutes = dragStart && dragEnd ? dragEnd.diff(dragStart, "minute") : 0;
+
+    const calloutSx = {
+        position: "absolute" as const,
+        insetInlineStart: "50%",
+        transform: "translateX(-50%)",
+        whiteSpace: "nowrap" as const,
+        fontSize: "0.7rem",
+        fontWeight: 700,
+        color: theme.palette.common.white,
+        bgcolor: alpha(theme.palette.grey[900], 0.85),
+        borderRadius: "4px",
+        px: 0.6,
+        py: 0.15,
+        pointerEvents: "none" as const,
+        zIndex: 10,
+    };
+
     return (
-        <Tooltip
-            arrow
-            enterDelay={800}
-            enterNextDelay={500}
-            placement="top"
-            title={<EventTooltipContent event={event} />}
-        >
-            <Box
+        <Box sx={{ position: "relative", height: "100%" }}>
+            {dragStart ? (
+                <Box sx={{ ...calloutSx, bottom: "100%", mb: 0.5 }}>
+                    {dragStart.format("HH:mm")}
+                </Box>
+            ) : null}
+            {dragEnd && dragDurationMinutes > 60 ? (
+                <Box sx={{ ...calloutSx, top: "100%", mt: 0.5 }}>
+                    {dragEnd.format("HH:mm")}
+                </Box>
+            ) : null}
+            <Tooltip
+                arrow
+                enterDelay={800}
+                enterNextDelay={500}
+                placement="top"
+                title={<EventTooltipContent event={event} />}
+            >
+                <Box
                 data-filtered-out={filterOpacity}
                 ref={ref}
                 sx={{
@@ -160,7 +194,8 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
                         </Box>
                     </Tooltip>
                 ) : null}
-            </Box>
-        </Tooltip>
+                </Box>
+            </Tooltip>
+        </Box>
     );
 }
