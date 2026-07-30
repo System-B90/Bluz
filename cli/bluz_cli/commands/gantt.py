@@ -43,13 +43,27 @@ def _entity_app(
 
     @sub.command("list")
     def list_items(
+        with_parents: bool = typer.Option(
+            False,
+            "--with-parents",
+            help="Include each item's parent id (weeks/days label by number/index).",
+        ),
         limit: int = LIMIT_OPTION,
         offset: int = OFFSET_OPTION,
     ) -> None:
         """List items as an array of {id, title} (server returns an id→title map)."""
         with state.client() as client:
-            items = client.get(base)
-        rows = [{"id": item_id, "title": title} for item_id, title in items.items()]
+            items = client.get(
+                base, params={"withParents": 1 if with_parents else None}
+            )
+        # `?withParents=1` turns the map's values from a bare title into an
+        # object carrying the title plus the entity's parent key.
+        rows = [
+            {"id": item_id, **value}
+            if isinstance(value, dict)
+            else {"id": item_id, "title": value}
+            for item_id, value in items.items()
+        ]
         show(rows, title=entity, limit=limit, offset=offset)
 
     @sub.command("get")

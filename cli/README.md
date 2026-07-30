@@ -84,6 +84,16 @@ bluz gantt curriculums execution <id>    # תכנון מול ביצוע (plan vs
 Gating failures are coded, and nothing is written when they fire: `draft`,
 `no-iteration`, `already-cut` (HTTP 409) and `invalid-plan` (HTTP 400).
 
+### Parent ids on gantt lists
+
+`bluz gantt <entity> list` returns `{id, title}` rows. Add `--with-parents` to
+get each row's parent id too (`syllabusId` on modules, `moduleId` on events,
+and so on; `null` when the child has no junction row):
+
+```bash
+bluz gantt modules list --with-parents --json
+```
+
 ### Recurring gantt events
 
 ```bash
