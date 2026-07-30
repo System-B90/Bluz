@@ -4,19 +4,17 @@ import Select, { SelectProps } from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
 import React, { useMemo, useState } from "react";
 
-import { Course } from "@/api-shared/types/course";
-import { CourseUser } from "@/api-shared/types/hive";
-import { useCourses } from "@/components/base/CoursesProvider";
-import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
+import {
+    sortHe,
+    useGroupedInstructors,
+} from "@/components/base/use-grouped-instructors";
 
 type CustomInstructorSelectProps<T> = {
     showOutsiders?: boolean;
     favoriteOutsiders?: Array<string>;
     excludeTeachers?: boolean;
 } & SelectProps<T>;
-
-const sortHe = (a: string, b: string) => a.localeCompare(b, "he");
 
 const styles = {
     subheaderWarning: {
@@ -62,88 +60,6 @@ function useOutsiderData(
     }, [ outsiders, searchQuery, favoriteIds ]);
 }
 
-function useInstructorData(
-    courses: Array<Course>,
-    instructors: Array<CourseUser>,
-    getInstructor: (id: number) => CourseUser | undefined,
-    excludeTeachers: boolean,
-    searchQuery: string,
-)
-{
-    return useMemo(() =>
-    {
-        const query = searchQuery.trim().toLowerCase();
-        const coursesByParent: Record<string, Array<Course>> = {};
-        const rootCourses: Array<Course> = [];
-        const assignedIds = new Set<number>();
-
-        courses.forEach((course) =>
-        {
-            if (course.instructorIds)
-            {
-                course.instructorIds.forEach((id) => assignedIds.add(id));
-            }
-            if (course.parentId)
-            {
-                (coursesByParent[ course.parentId ] ??= []).push(course);
-            } else
-            {
-                rootCourses.push(course);
-            }
-        });
-
-        const filterInst = (inst: CourseUser) =>
-        {
-            const matchesSearch = inst.display_name
-                .toLowerCase()
-                .includes(query);
-            const matchesRole = !excludeTeachers || !inst.teacher;
-            return matchesSearch && matchesRole;
-        };
-
-        const courseGroups: Array<{
-            course: Course;
-            instructors: Array<CourseUser>;
-        }> = [];
-
-        const traverse = (parentId: null | string) =>
-        {
-            const siblings =
-                parentId === null
-                    ? rootCourses
-                    : coursesByParent[ parentId ] || [];
-            const sortedSiblings = [ ...siblings ].sort((a, b) =>
-                sortHe(a.name, b.name),
-            );
-
-            for (const course of sortedSiblings)
-            {
-                const resolved = (course.instructorIds || [])
-                    .map(getInstructor)
-                    .filter(
-                        (inst): inst is CourseUser =>
-                            inst !== undefined && filterInst(inst),
-                    )
-                    .sort((a, b) => sortHe(a.display_name, b.display_name));
-
-                if (resolved.length > 0)
-                {
-                    courseGroups.push({ course, instructors: resolved });
-                }
-                traverse(course.id);
-            }
-        };
-
-        traverse(null);
-
-        const unassigned = instructors
-            .filter((inst) => !assignedIds.has(inst.id) && filterInst(inst))
-            .sort((a, b) => sortHe(a.display_name, b.display_name));
-
-        return { courseGroups, unassigned };
-    }, [ courses, instructors, getInstructor, excludeTeachers, searchQuery ]);
-}
-
 export function InstructorSelect<T = unknown>({
     children,
     showOutsiders = false,
@@ -152,19 +68,14 @@ export function InstructorSelect<T = unknown>({
     ...props
 }: CustomInstructorSelectProps<T>)
 {
-    const { courses } = useCourses();
-    const { instructors, getInstructor } = useHiveUsers();
     const { outsiders } = useOutsiders();
 
     const [ searchQuery, setSearchQuery ] = useState("");
 
-    const { courseGroups, unassigned } = useInstructorData(
-        courses,
-        instructors,
-        getInstructor,
-        excludeTeachers,
+    const { courseGroups, unassigned } = useGroupedInstructors({
         searchQuery,
-    );
+        excludeTeachers,
+    });
 
     const { favorites, others } = useOutsiderData(
         outsiders,

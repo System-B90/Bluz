@@ -10,6 +10,7 @@ import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
+import { useEventDropTarget } from "@/components/schedule/calendar/instructor-dnd/use-event-drop-target";
 import { resolveEventColor } from "@/components/schedule/event-component/event-colors";
 import { EventTooltipContent } from "@/components/schedule/event-component/EventTooltip";
 import { UnifiedEvent } from "@/components/schedule/event-component/UnifiedEvent";
@@ -52,6 +53,13 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
     const dragEnd = isDragging && dragPreview.end ? dayjs(dragPreview.end) : null;
     const dragDurationMinutes = dragStart && dragEnd ? dragEnd.diff(dragStart, "minute") : 0;
 
+    // Preview clones share the real event's id; registering them as droppables
+    // would fight the original over the same droppable key.
+    const { setDropRef, isDropTarget, isOver } = useEventDropTarget(
+        event,
+        !isDragging,
+    );
+
     const calloutSx = {
         position: "absolute" as const,
         insetInlineStart: "50%",
@@ -69,7 +77,19 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
     };
 
     return (
-        <Box sx={{ position: "relative", height: "100%" }}>
+        <Box
+            ref={setDropRef}
+            sx={{
+                position: "relative",
+                height: "100%",
+                ...(isOver && {
+                    outline: `2px solid ${theme.palette.primary.main}`,
+                    outlineOffset: "-2px",
+                    borderRadius: "4px",
+                }),
+                ...(isDropTarget && !isOver && { opacity: 0.85 }),
+            }}
+        >
             {dragStart ? (
                 <Box sx={{ ...calloutSx, bottom: "100%", mb: 0.5 }}>
                     {dragStart.format("HH:mm")}
@@ -88,112 +108,112 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
                 title={<EventTooltipContent event={event} />}
             >
                 <Box
-                data-filtered-out={filterOpacity}
-                ref={ref}
-                sx={{
-                    textAlign: "left",
-                    p: 0.2,
-                    bgcolor: bgColor,
-                    color: textColor,
-                    transition: theme.transitions.create([
-                        "background-color",
-                        "transform",
-                    ]),
-                    "&:hover": {
-                        bgcolor: alpha(bgColor, 0.9),
-                    },
-                    height: "100%",
-                    boxSizing: "border-box",
-                    position: "relative",
-                    overflow: "hidden",
-                    /* Fake (פיקטיבי) events read as placeholders for
+                    data-filtered-out={filterOpacity}
+                    ref={ref}
+                    sx={{
+                        textAlign: "left",
+                        p: 0.2,
+                        bgcolor: bgColor,
+                        color: textColor,
+                        transition: theme.transitions.create([
+                            "background-color",
+                            "transform",
+                        ]),
+                        "&:hover": {
+                            bgcolor: alpha(bgColor, 0.9),
+                        },
+                        height: "100%",
+                        boxSizing: "border-box",
+                        position: "relative",
+                        overflow: "hidden",
+                        /* Fake (פיקטיבי) events read as placeholders for
                        Checkers/Segel: dashed outline + reduced opacity (#102). */
-                    ...(event.fake && {
-                        border: `2px dashed ${alpha(textColor, 0.65)}`,
-                        opacity: 0.75,
-                    }),
-                    /* Contrast-aware accent tokens for child components */
-                    "--event-border": alpha(textColor, 0.25),
-                    "--event-divider": alpha(textColor, 0.18),
-                    "--event-subtle-bg": alpha(textColor, 0.1),
-                    "--event-emphasis-bg": alpha(textColor, 0.15),
-                }}
-            >
-                <UnifiedEvent event={event} size={size} />
+                        ...(event.fake && {
+                            border: `2px dashed ${alpha(textColor, 0.65)}`,
+                            opacity: 0.75,
+                        }),
+                        /* Contrast-aware accent tokens for child components */
+                        "--event-border": alpha(textColor, 0.25),
+                        "--event-divider": alpha(textColor, 0.18),
+                        "--event-subtle-bg": alpha(textColor, 0.1),
+                        "--event-emphasis-bg": alpha(textColor, 0.15),
+                    }}
+                >
+                    <UnifiedEvent event={event} size={size} />
 
-                {event.fake ? (
-                    <Box
-                        sx={{
-                            position: "absolute",
-                            bottom: 2,
-                            insetInlineEnd: 4,
-                            fontSize: "0.6rem",
-                            fontWeight: 700,
-                            letterSpacing: "0.03em",
-                            color: alpha(textColor, 0.75),
-                            pointerEvents: "none",
-                        }}
-                    >
-                        פיקטיבי
-                    </Box>
-                ) : null}
-
-                {lock ? (
-                    <Tooltip
-                        arrow
-                        placement="top"
-                        title={`נערך כעת ע"י ${lock.lockedByName}`}
-                    >
+                    {event.fake ? (
                         <Box
                             sx={{
                                 position: "absolute",
-                                top: 2,
-                                insetInlineStart: 2,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                borderRadius: "50%",
-                                bgcolor: alpha(theme.palette.warning.main, 0.92),
-                                color: theme.palette.warning.contrastText,
-                                p: 0.15,
-                                lineHeight: 0,
-                                cursor: "default",
-                                transformOrigin: "center",
-                                /* Pop in on appearance, then breathe a soft ring
-                                   to signal that someone is actively editing. */
-                                animation:
-                                    "lock-badge-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), lock-badge-pulse 2.6s ease-in-out 0.22s infinite",
-                                "@keyframes lock-badge-in": {
-                                    from: {
-                                        transform: "scale(0)",
-                                        opacity: 0,
-                                    },
-                                    to: {
-                                        transform: "scale(1)",
-                                        opacity: 1,
-                                    },
-                                },
-                                "@keyframes lock-badge-pulse": {
-                                    "0%, 100%": {
-                                        boxShadow: `0 0 0 0 ${alpha(theme.palette.warning.main, 0.5)}`,
-                                    },
-                                    "50%": {
-                                        boxShadow: `0 0 0 4px ${alpha(theme.palette.warning.main, 0)}`,
-                                    },
-                                },
-                                "@media (prefers-reduced-motion: reduce)": {
-                                    animation: "none",
-                                },
-                                transition: "transform 0.15s ease-in-out",
-                                "&:hover": {
-                                    transform: "scale(1.15)",
-                                },
+                                bottom: 2,
+                                insetInlineEnd: 4,
+                                fontSize: "0.6rem",
+                                fontWeight: 700,
+                                letterSpacing: "0.03em",
+                                color: alpha(textColor, 0.75),
+                                pointerEvents: "none",
                             }}
                         >
-                            <LockPersonIcon sx={{ fontSize: "0.85rem" }} />
+                        פיקטיבי
                         </Box>
-                    </Tooltip>
-                ) : null}
+                    ) : null}
+
+                    {lock ? (
+                        <Tooltip
+                            arrow
+                            placement="top"
+                            title={`נערך כעת ע"י ${lock.lockedByName}`}
+                        >
+                            <Box
+                                sx={{
+                                    position: "absolute",
+                                    top: 2,
+                                    insetInlineStart: 2,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    borderRadius: "50%",
+                                    bgcolor: alpha(theme.palette.warning.main, 0.92),
+                                    color: theme.palette.warning.contrastText,
+                                    p: 0.15,
+                                    lineHeight: 0,
+                                    cursor: "default",
+                                    transformOrigin: "center",
+                                    /* Pop in on appearance, then breathe a soft ring
+                                   to signal that someone is actively editing. */
+                                    animation:
+                                    "lock-badge-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), lock-badge-pulse 2.6s ease-in-out 0.22s infinite",
+                                    "@keyframes lock-badge-in": {
+                                        from: {
+                                            transform: "scale(0)",
+                                            opacity: 0,
+                                        },
+                                        to: {
+                                            transform: "scale(1)",
+                                            opacity: 1,
+                                        },
+                                    },
+                                    "@keyframes lock-badge-pulse": {
+                                        "0%, 100%": {
+                                            boxShadow: `0 0 0 0 ${alpha(theme.palette.warning.main, 0.5)}`,
+                                        },
+                                        "50%": {
+                                            boxShadow: `0 0 0 4px ${alpha(theme.palette.warning.main, 0)}`,
+                                        },
+                                    },
+                                    "@media (prefers-reduced-motion: reduce)": {
+                                        animation: "none",
+                                    },
+                                    transition: "transform 0.15s ease-in-out",
+                                    "&:hover": {
+                                        transform: "scale(1.15)",
+                                    },
+                                }}
+                            >
+                                <LockPersonIcon sx={{ fontSize: "0.85rem" }} />
+                            </Box>
+                        </Tooltip>
+                    ) : null}
                 </Box>
             </Tooltip>
         </Box>

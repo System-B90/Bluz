@@ -7,6 +7,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import moment from "moment";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
     Dispatch,
@@ -18,11 +19,14 @@ import {
 } from "react";
 import { View, Views } from "react-big-calendar";
 
+import { useScheduleCommands } from "@/components/app-commands/use-schedule-commands";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
 import { CalendarView } from "@/components/schedule/calendar/calendar/CalendarView";
 import { useCalendarHandlers } from "@/components/schedule/calendar/calendar/UseCalendarHandlers";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
+import { InstructorDndProvider } from "@/components/schedule/calendar/instructor-dnd/InstructorDndProvider";
+import { InstructorRail } from "@/components/schedule/calendar/instructor-dnd/InstructorRail";
 import { getRangeForView } from "@/components/schedule/calendar/utils";
 import { Event } from "@/components/schedule/types/event";
 
@@ -32,6 +36,9 @@ type BluzCalendarProps = {
     setOpenEventDialog: (open: boolean) => void;
     setSelectedEvent: Dispatch<SetStateAction<Partial<Event> | undefined>>;
     events: Array<Event>;
+    createEvent: () => void;
+    undo: () => void;
+    redo: () => void;
 };
 
 /**
@@ -47,6 +54,9 @@ export function BluzCalendar({
     setOpenEventDialog,
     setSelectedEvent,
     events,
+    createEvent,
+    undo,
+    redo,
 }: BluzCalendarProps) {
     const router = useRouter();
     const pathname = usePathname();
@@ -134,6 +144,29 @@ export function BluzCalendar({
         setCurrentDate(newDate);
     }, []);
 
+    // Mirrors react-big-calendar's own PREV/NEXT stepping so palette
+    // navigation matches the toolbar buttons: a day at a time in day view,
+    // a week at a time otherwise.
+    const stepDate = useCallback(
+        (direction: -1 | 1) => {
+            const unit = currentView === Views.DAY ? "day" : "week";
+            setCurrentDate((prev) => moment(prev).add(direction, unit).toDate());
+        },
+        [currentView],
+    );
+    const navigatePrev = useCallback(() => stepDate(-1), [stepDate]);
+    const navigateNext = useCallback(() => stepDate(1), [stepDate]);
+    const navigateToday = useCallback(() => setCurrentDate(new Date()), []);
+
+    const exportIcs = useCallback(() => {
+        if (!startDate || !endDate) return;
+        const params = new URLSearchParams({
+            sd: startDate.toISOString(),
+            ed: endDate.toISOString(),
+        });
+        window.open(`/api/event/export/ics?${params.toString()}`, "_blank");
+    }, [startDate, endDate]);
+
     const handleViewChange = useCallback(
         (view: View) => {
             setCurrentView(view);
@@ -145,6 +178,19 @@ export function BluzCalendar({
         },
         [pathname, router, searchParams],
     );
+
+    useScheduleCommands({
+        createEvent,
+        undo,
+        redo,
+        navigatePrev,
+        navigateNext,
+        navigateToday,
+        setView: handleViewChange,
+        toggleToolbar: handleToggleToolbar,
+        toggleFullscreen: handleToggleFullscreen,
+        exportIcs,
+    });
 
     useEffect(() => {
         updateDateRange(currentDate, currentView);
@@ -350,21 +396,42 @@ export function BluzCalendar({
                 </Box>
             ) : null}
 
-            <CalendarView
-                currentView={currentView}
-                date={currentDate}
-                events={visibleEvents}
-                onDoubleClickEvent={handleEditEvent}
-                onEventDrop={handleEventDrag}
-                onNavigate={onNavigate}
-                onSelectEvent={handleSelectEvent}
-                onSelectSlot={handleSlotSelect}
-                onToggleFullscreen={handleToggleFullscreen}
-                onToggleToolbar={handleToggleToolbar}
-                onView={handleViewChange}
-                rooms={rooms}
-                showToolbar={showToolbar && !isFullscreen ? true : false}
-            />
+            <InstructorDndProvider
+                events={events}
+                handleSaveEvent={handleSaveEvent}
+            >
+                <Box
+                    sx={{
+                        flexGrow: 1,
+                        minHeight: 0,
+                        display: "flex",
+                        flexDirection: "row",
+                        overflow: "hidden",
+                    }}
+                >
+                    <CalendarView
+                        currentView={currentView}
+                        date={currentDate}
+                        events={visibleEvents}
+                        onDoubleClickEvent={handleEditEvent}
+                        onEventDrop={handleEventDrag}
+                        onExportIcs={exportIcs}
+                        onNavigate={onNavigate}
+                        onSelectEvent={handleSelectEvent}
+                        onSelectSlot={handleSlotSelect}
+                        onToggleFullscreen={handleToggleFullscreen}
+                        onToggleToolbar={handleToggleToolbar}
+                        onView={handleViewChange}
+                        rooms={rooms}
+                        showToolbar={
+                            showToolbar && !isFullscreen ? true : false
+                        }
+                    />
+                    {/* Rail renders after the grid so RTL flow puts it on the
+                        physical left edge. */}
+                    <InstructorRail />
+                </Box>
+            </InstructorDndProvider>
         </Box>
     );
 }
