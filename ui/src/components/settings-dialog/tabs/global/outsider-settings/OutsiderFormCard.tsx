@@ -4,8 +4,8 @@ import { Outsider } from "@/api-shared/types/outsider";
 import { FormCard } from "@/components/settings-dialog/tabs/global/common";
 import { BaseFormCard, FormCardBaseProps } from "@/components/settings-dialog/tabs/global/common/FormCard";
 import { OutsiderFormFields } from "@/components/settings-dialog/tabs/global/outsider-settings/OutsiderFormFields";
-import { OutsiderFormHeader } from "@/components/settings-dialog/tabs/global/outsider-settings/OutsiderFormHeader";
 import { isPhoneValid, OutsiderValues } from "@/components/settings-dialog/tabs/global/outsider-settings/values";
+import { VCardQrCode } from "@/components/settings-dialog/tabs/global/outsider-settings/VCardQrCode";
 
 export type OutsiderFormCardProps = Omit<FormCardBaseProps<Outsider>, "selectedEntity"> & {
     values: OutsiderValues;
@@ -52,6 +52,20 @@ export const OutsiderFormCard: FormCard<Outsider, OutsiderFormCardProps> = funct
         return "";
     }, [ values.idNumber ]);
 
+    // The QR is only meaningful for a saved outsider, so it rides along as the
+    // header's optional trailing action rather than as its own layout.
+    const outsiderHeaderAction = useMemo(() =>
+        !isCreating && selectedOutsider ? (
+            <VCardQrCode
+                comment={ values.comment }
+                idNumber={ values.idNumber }
+                name={ values.name }
+                personalNumber={ values.personalNumber }
+                phone={ values.phone }
+            />
+        ) : undefined,
+    [ isCreating, selectedOutsider, values ]);
+
     return (
         <BaseFormCard formActions={ { label: { creating: "הוספת איש חוץ", editing: "עדכון פרטים" } } }
             formFields={ <OutsiderFormFields
@@ -61,11 +75,18 @@ export const OutsiderFormCard: FormCard<Outsider, OutsiderFormCardProps> = funct
                 setValue={ setValue }
                 values={ values }
             /> }
-            formHeader={ <OutsiderFormHeader
-                isCreating={ isCreating }
-                selectedOutsider={ selectedOutsider }
-                values={ values }
-            /> }
+            formHeader={ {
+                action: outsiderHeaderAction,
+                subtitles: {
+                    creating: "יש למלא את הטופס ליצירת איש חוץ חדש",
+                    editing: "עדכון פרטי איש החוץ הנוכחי",
+                    empty: "בחרו איש חוץ מהרשימה לעריכה",
+                },
+                titles: {
+                    creating: "הוספת איש חוץ חדש",
+                    editing: "עריכת פרטי איש חוץ",
+                },
+            } }
             handleCancelEdit={ handleCancelEdit }
             handleSave={ handleSave }
             isCreating={ isCreating }

@@ -1,9 +1,12 @@
 import Box from "@mui/material/Box";
-import { isValidElement, ReactNode } from "react";
+import { ReactNode } from "react";
 
-import { settingsCardSx } from "@/components/settings-dialog/tabs/global/common";
 import { SettingsFormActions } from "@/components/settings-dialog/tabs/global/common/FormActions";
+import { SettingsFormHeader, SettingsFormHeaderProps } from "@/components/settings-dialog/tabs/global/common/FormHeader";
 import { SettingsFormPlaceholder } from "@/components/settings-dialog/tabs/global/common/FormPlaceholder";
+// From the leaf module, not the barrel: the barrel re-exports this card, so
+// going through it would make the pair a dependency cycle.
+import { settingsCardSx } from "@/components/settings-dialog/tabs/global/common/styles";
 
 export type FormCardBaseProps<TEntity> = {
     selectedEntity: null | TEntity;
@@ -12,33 +15,27 @@ export type FormCardBaseProps<TEntity> = {
     handleCancelEdit: () => void;
 };
 
+/**
+ * What a tab may vary about its action row: the submit wording, a pending
+ * flag, and extra buttons. The layout itself is not negotiable — that is the
+ * point of the shared panel. Tabs used to hand-roll their own rows and ended
+ * up with different button order, colours and cancel wording.
+ */
 export type FormActions = {
     label: { creating: string; editing: string; };
-} | ReactNode;
+    isSubmitting?: boolean;
+    extraActions?: ReactNode;
+};
+
+/** Header text, minus the two flags the panel already knows. */
+export type FormHeader = Omit<SettingsFormHeaderProps, "isCreating" | "isEditing">;
 
 export type BaseFormCardProps<TEntity> = {
     formActions: FormActions;
-    formHeader: ReactNode;
+    formHeader: FormHeader;
     placeholderMessage: string;
     formFields: ReactNode;
 } & FormCardBaseProps<TEntity>;
-
-function FormActionsWrapper<TEntity>({
-    isCreating,
-    handleCancelEdit,
-    formActions
-}: Pick<BaseFormCardProps<TEntity>, 'formActions' | 'handleCancelEdit' | 'isCreating'>)
-{
-    const isLabels = !isValidElement(formActions) && typeof formActions === "object" && formActions !== null && "label" in formActions;
-
-    return (
-        isLabels ? (<SettingsFormActions
-            onCancel={ handleCancelEdit }
-            submitColor={ isCreating ? "secondary" : "primary" }
-            submitLabel={ isCreating ? formActions.label.creating : formActions.label.editing }
-        />) : formActions
-    );
-}
 
 export function BaseFormCard<TEntity>({
     selectedEntity,
@@ -51,7 +48,8 @@ export function BaseFormCard<TEntity>({
     handleCancelEdit,
 }: BaseFormCardProps<TEntity>)
 {
-    const showForm = isCreating || selectedEntity !== null;
+    const isEditing = selectedEntity !== null;
+    const showForm = isCreating || isEditing;
 
     return (
         <Box
@@ -65,7 +63,11 @@ export function BaseFormCard<TEntity>({
                 transition: "opacity 0.3s ease",
             } }
         >
-            { formHeader }
+            <SettingsFormHeader
+                { ...formHeader }
+                isCreating={ isCreating }
+                isEditing={ isEditing }
+            />
 
             { !showForm ? (
                 <SettingsFormPlaceholder message={ placeholderMessage } />
@@ -73,7 +75,15 @@ export function BaseFormCard<TEntity>({
                 <>
                     { formFields }
 
-                    <FormActionsWrapper formActions={ formActions } handleCancelEdit={ handleCancelEdit } isCreating={ isCreating } />
+                    <SettingsFormActions
+                        extraActions={ formActions.extraActions }
+                        isSubmitting={ formActions.isSubmitting }
+                        onCancel={ handleCancelEdit }
+                        submitColor={ isCreating ? "secondary" : "primary" }
+                        submitLabel={ isCreating
+                            ? formActions.label.creating
+                            : formActions.label.editing }
+                    />
                 </>
             ) }
         </Box>

@@ -1,14 +1,11 @@
-import EditIcon from "@mui/icons-material/Edit";
 import SyncIcon from "@mui/icons-material/Sync";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
-import Divider from "@mui/material/Divider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import { Iteration } from "@/api-shared/types/iteration";
 import { BaseFormCard, FormCardBaseProps } from "@/components/settings-dialog/tabs/global/common/FormCard";
-import { SettingsSectionHeader } from "@/components/settings-dialog/tabs/global/common/SectionHeader";
 import { SettingsTextField } from "@/components/settings-dialog/tabs/global/common/SettingsTextField";
 import { IterationValues } from "@/components/settings-dialog/tabs/global/iteration-settings/values";
 
@@ -19,32 +16,25 @@ export type IterationFormCardProps = Omit<FormCardBaseProps<Iteration>, "selecte
         value: IterationValues[TKey],
     ) => void;
     isSubmitting: boolean;
-    handleStartCreate: () => void;
     handleSyncHive: (iteration: Iteration) => void;
     isSyncingHive: boolean;
 };
 
 /**
- * Submit plus a secondary button that switches straight from editing an
- * iteration to creating a new one — the room and outsider tabs cancel back to
- * the placeholder instead, but there is no "discard" to do here. When editing
- * the *current* iteration with a Hive URL, an uncommon "sync Hive info" action
- * is also offered (#379) — a manual re-snapshot instead of the automatic one
- * taken at creation time. Past iterations are read-only, and their snapshot is
- * what keeps them displayable after their Hive instance is gone, so they get
- * no button (the route rejects them too).
+ * When editing the *current* iteration with a Hive URL, an uncommon "sync Hive
+ * info" action is offered (#379) — a manual re-snapshot instead of the
+ * automatic one taken at creation time. Past iterations are read-only, and
+ * their snapshot is what keeps them displayable after their Hive instance is
+ * gone, so they get no button (the route rejects them too). It rides along as
+ * an extra action so submit and cancel stay where every other tab puts them.
  */
-function IterationFormActions({
+function IterationSyncHiveAction({
     isCreating,
-    isSubmitting,
-    handleStartCreate,
     selectedIteration,
     handleSyncHive,
     isSyncingHive,
 }: {
     isCreating: boolean;
-    isSubmitting: boolean;
-    handleStartCreate: () => void;
     selectedIteration: Iteration | null;
     handleSyncHive: (iteration: Iteration) => void;
     isSyncingHive: boolean;
@@ -54,40 +44,27 @@ function IterationFormActions({
         selectedIteration?.isCurrent && selectedIteration.hiveUrl,
     );
 
+    if (isCreating || !isSyncable || !selectedIteration) return null;
+
     return (
-        <>
-            <Divider />
-            <Box display="flex" gap={ 1.5 } justifyContent="flex-end">
-                { isCreating || !isSyncable || !selectedIteration ? null : (
-                    <Button
-                        disabled={ isSyncingHive }
-                        onClick={ () => handleSyncHive(selectedIteration) }
-                        startIcon={ isSyncingHive
-                            ? <CircularProgress size={ 16 } />
-                            : <SyncIcon /> }
-                        type="button"
-                    >
-                        סנכרון פרטי הייב
-                    </Button>
-                ) }
-                { isCreating ? null : (
-                    <Button onClick={ handleStartCreate } type="button">
-                        מחזור חדש
-                    </Button>
-                ) }
-                <Button
-                    color={ isCreating ? "secondary" : "primary" }
-                    disabled={ isSubmitting }
-                    startIcon={ isSubmitting
-                        ? <CircularProgress size={ 16 } />
-                        : undefined }
-                    type="submit"
-                    variant="contained"
-                >
-                    { isCreating ? "יצירת מחזור" : "שמירה" }
-                </Button>
-            </Box>
-        </>
+        <Button
+            color="inherit"
+            disabled={ isSyncingHive }
+            onClick={ () => handleSyncHive(selectedIteration) }
+            startIcon={ isSyncingHive
+                ? <CircularProgress size={ 16 } />
+                : <SyncIcon /> }
+            sx={ {
+                borderRadius: "10px",
+                py: 1,
+                fontWeight: 700,
+                fontSize: "0.82rem",
+            } }
+            type="button"
+            variant="outlined"
+        >
+            סנכרון פרטי הייב
+        </Button>
     );
 }
 
@@ -99,21 +76,22 @@ export function IterationFormCard({
     isSubmitting,
     handleSave,
     handleCancelEdit,
-    handleStartCreate,
     handleSyncHive,
     isSyncingHive,
 }: IterationFormCardProps & { selectedEntity: Iteration | null; })
 {
     return (
         <BaseFormCard
-            formActions={ <IterationFormActions
-                handleStartCreate={ handleStartCreate }
-                handleSyncHive={ handleSyncHive }
-                isCreating={ isCreating }
-                isSubmitting={ isSubmitting }
-                isSyncingHive={ isSyncingHive }
-                selectedIteration={ selectedIteration }
-            /> }
+            formActions={ {
+                extraActions: <IterationSyncHiveAction
+                    handleSyncHive={ handleSyncHive }
+                    isCreating={ isCreating }
+                    isSyncingHive={ isSyncingHive }
+                    selectedIteration={ selectedIteration }
+                />,
+                isSubmitting,
+                label: { creating: "יצירת מחזור", editing: "עדכון מחזור" },
+            } }
             formFields={ <>
                 <SettingsTextField
                     // The id names the iteration's database, so it is fixed
@@ -162,14 +140,14 @@ export function IterationFormCard({
                     />
                 </Box>
             </> }
-            formHeader={ <SettingsSectionHeader
-                color={ isCreating ? "secondary" : "primary" }
-                icon={ EditIcon }
-                subtitle={ isCreating
-                    ? "יצירת מחזור חדש עם מסד נתונים ייעודי"
-                    : "עדכון פרטי המחזור הנבחר" }
-                title={ isCreating ? "מחזור חדש" : "עריכת מחזור" }
-            /> }
+            formHeader={ {
+                subtitles: {
+                    creating: "יצירת מחזור חדש עם מסד נתונים ייעודי",
+                    editing: "עדכון פרטי המחזור הנבחר",
+                    empty: "בחרו מחזור מהרשימה לעריכה",
+                },
+                titles: { creating: "מחזור חדש", editing: "עריכת מחזור" },
+            } }
             handleCancelEdit={ handleCancelEdit }
             handleSave={ handleSave }
             isCreating={ isCreating }

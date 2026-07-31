@@ -1,5 +1,4 @@
 import ComputerIcon from "@mui/icons-material/Computer";
-import EditIcon from "@mui/icons-material/Edit";
 import EventSeatIcon from "@mui/icons-material/EventSeat";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
@@ -13,9 +12,7 @@ import
 {
     FormCard
 } from "@/components/settings-dialog/tabs/global/common";
-import { SettingsFormActions } from "@/components/settings-dialog/tabs/global/common/FormActions";
 import { BaseFormCard, FormCardBaseProps } from "@/components/settings-dialog/tabs/global/common/FormCard";
-import { SettingsSectionHeader } from "@/components/settings-dialog/tabs/global/common/SectionHeader";
 import { SettingsTextField } from "@/components/settings-dialog/tabs/global/common/SettingsTextField";
 import { LectureComfortSwitch } from "@/components/settings-dialog/tabs/global/LectureComfortSwitch";
 import { RoomValues } from "@/components/settings-dialog/tabs/global/room-settings/values";
@@ -31,52 +28,12 @@ export type RoomFormCardProps = Omit<FormCardBaseProps<Room>, "selectedEntity"> 
     setValue: SetRoomValue;
 };
 
-type RoomFormHeaderProps = {
-    isCreating: boolean;
-    isEditing: boolean;
-    isHiveSelected: boolean;
-};
 type RoomFieldsProps = {
     values: RoomValues;
     setValue: SetRoomValue;
 };
-type RoomFormActionsProps = {
-    isCreating: boolean;
-    isHiveSelected: boolean;
-    handleCancelEdit: () => void;
-};
 
 // --- Sub-components ---
-
-function RoomFormHeader({
-    isCreating,
-    isEditing,
-    isHiveSelected,
-}: RoomFormHeaderProps)
-{
-    return (
-        <SettingsSectionHeader
-            color={ isCreating ? "secondary" : "primary" }
-            icon={ EditIcon }
-            subtitle={
-                isCreating
-                    ? "יצירת חדר מותאם אישית חדש"
-                    : isHiveSelected
-                        ? "שם ותיאור נשלטים ע״י הייב. ניתן לערוך פרטים מורחבים."
-                        : isEditing
-                            ? "עדכון כל פרטי החדר"
-                            : "בחרו חדר מהרשימה כדי לערוך"
-            }
-            title={
-                isCreating
-                    ? "הוספת חדר חדש"
-                    : isHiveSelected
-                        ? "עריכת כיתה מהייב"
-                        : "עריכת חדר"
-            }
-        />
-    );
-}
 
 function RoomBasicDetails({
     isHiveSelected,
@@ -264,27 +221,6 @@ function RoomExtendedDetails({ values, setValue }: RoomFieldsProps)
     );
 }
 
-function RoomFormActions({
-    isCreating,
-    isHiveSelected,
-    handleCancelEdit,
-}: RoomFormActionsProps)
-{
-    return (
-        <SettingsFormActions
-            onCancel={ handleCancelEdit }
-            submitColor={ isCreating ? "secondary" : "primary" }
-            submitLabel={
-                isCreating
-                    ? "יצירת חדר"
-                    : isHiveSelected
-                        ? "שמירת פרטים מורחבים"
-                        : "עדכון חדר"
-            }
-        />
-    );
-}
-
 export const RoomFormCard: FormCard<Room, RoomFormCardProps> = function RoomFormCard({
     selectedEntity: selectedRoom,
     isCreating,
@@ -294,16 +230,20 @@ export const RoomFormCard: FormCard<Room, RoomFormCardProps> = function RoomForm
     handleCancelEdit,
 }: RoomFormCardProps & { selectedEntity: null | Room; })
 {
-    const isEditing = selectedRoom !== null;
     const isHiveSelected = selectedRoom?.source === RoomSource.Hive;
 
     return (
         <BaseFormCard
-            formActions={ <RoomFormActions
-                handleCancelEdit={ handleCancelEdit }
-                isCreating={ isCreating }
-                isHiveSelected={ isHiveSelected }
-            /> }
+            formActions={ {
+                label: {
+                    creating: "יצירת חדר",
+                    // A Hive room's name and description live in Hive, so only
+                    // the extended details are ours to save.
+                    editing: isHiveSelected
+                        ? "שמירת פרטים מורחבים"
+                        : "עדכון חדר",
+                },
+            } }
             formFields={ <>
                 <RoomBasicDetails
                     isHiveSelected={ isHiveSelected }
@@ -312,11 +252,19 @@ export const RoomFormCard: FormCard<Room, RoomFormCardProps> = function RoomForm
                 />
                 <RoomExtendedDetails setValue={ setValue } values={ values } />
             </> }
-            formHeader={ <RoomFormHeader
-                isCreating={ isCreating }
-                isEditing={ isEditing }
-                isHiveSelected={ isHiveSelected }
-            /> }
+            formHeader={ {
+                subtitles: {
+                    creating: "יצירת חדר מותאם אישית חדש",
+                    editing: isHiveSelected
+                        ? "שם ותיאור נשלטים ע״י הייב. ניתן לערוך פרטים מורחבים."
+                        : "עדכון כל פרטי החדר",
+                    empty: "בחרו חדר מהרשימה כדי לערוך",
+                },
+                titles: {
+                    creating: "הוספת חדר חדש",
+                    editing: isHiveSelected ? "עריכת כיתה מהייב" : "עריכת חדר",
+                },
+            } }
             handleCancelEdit={ handleCancelEdit }
             handleSave={ handleSave }
             isCreating={ isCreating }
