@@ -1,4 +1,8 @@
 "use client";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import Box from "@mui/material/Box";
 import type { ReactNode } from "react";
 
@@ -6,8 +10,25 @@ export type KeyChipProps = {
     children: ReactNode;
 };
 
+/** Keys better shown as an icon glyph than their raw name. */
+const KEY_ICONS: Record<string, ReactNode> = {
+    ArrowUp: <KeyboardArrowUpIcon sx={{ fontSize: 14 }} />,
+    ArrowDown: <KeyboardArrowDownIcon sx={{ fontSize: 14 }} />,
+    ArrowLeft: <KeyboardArrowLeftIcon sx={{ fontSize: 14 }} />,
+    ArrowRight: <KeyboardArrowRightIcon sx={{ fontSize: 14 }} />,
+    Enter: "↵",
+    Escape: "Esc",
+    Backspace: "⌫",
+    Shift: "⇧",
+};
+
 /** A single keycap. */
 export function KeyChip({ children }: KeyChipProps) {
+    const label =
+        typeof children === "string" && children in KEY_ICONS
+            ? KEY_ICONS[children]
+            : children;
+
     return (
         <Box
             component="kbd"
@@ -29,9 +50,10 @@ export function KeyChip({ children }: KeyChipProps) {
                 lineHeight: 1,
                 color: "text.secondary",
                 whiteSpace: "nowrap",
+                "& svg": { fontSize: "inherit" },
             }}
         >
-            {children}
+            {label}
         </Box>
     );
 }

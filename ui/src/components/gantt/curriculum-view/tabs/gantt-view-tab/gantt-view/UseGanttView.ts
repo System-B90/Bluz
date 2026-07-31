@@ -642,6 +642,7 @@ export const useGanttView = (curriculumId: string) =>
             dayCellWidth,
             zoomedWeekId,
             singleWeekDayZoom,
+            setZoomedWeekId,
             weekIndexOffset,
             isSyllabusExpanded,
             toggleSyllabus,
