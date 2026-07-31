@@ -1,7 +1,12 @@
 import { NextRequest } from "next/server";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const fakeController = { dbName: "stub" };
+// `vi.mock` factories are hoisted above module scope, so the stub controller
+// has to be created inside `vi.hoisted` to exist by the time they run.
+const { fakeController } = vi.hoisted(() => ({
+    fakeController: { dbName: "stub" },
+}));
+
 vi.mock("@/api-server/mongo-db-controller", () => ({
     databaseController: fakeController,
     getMetaController: vi.fn(),
