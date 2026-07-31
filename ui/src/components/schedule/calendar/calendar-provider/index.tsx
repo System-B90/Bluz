@@ -6,9 +6,9 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { apiGetEvents } from "@/api-client/calendar";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { EventLockMessage } from "@/api-shared/types";
-import { IterationId } from "@/api-shared/types/iteration";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { CalendarFiltersProvider } from "@/components/base/CalendarFilterProvider";
+import { useIterationScope } from "@/components/base/IterationProvider";
 import { useOffline } from "@/components/base/OfflineProvider";
 import { CalendarContext } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { useEventActions } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventActions";
@@ -41,10 +41,10 @@ export const CalendarProvider = ({
     const { userData, sendMessage } = useAuth();
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
-    // Active iteration. `undefined` ⇒ the current (writable) run.
-    const [iterationId, setIterationId] = useState<IterationId | undefined>(
-        undefined,
-    );
+    // Active iteration, owned by IterationProvider so the providers mounted
+    // above the calendar (settings, most of all) share the same scope.
+    const { iterationId, isReadOnlyIteration, setIterationId } =
+        useIterationScope();
     // Internal lock state carries per-lock expiry; the public `eventLocks` map
     // (below) strips that bookkeeping for consumers.
     const [lockState, setLockState] = useState<LockState>({});
@@ -198,7 +198,7 @@ export const CalendarProvider = ({
             startDate,
             endDate,
             iterationId,
-            isReadOnlyIteration: Boolean(iterationId),
+            isReadOnlyIteration,
             eventLocks,
             setStartDate,
             setEndDate,
@@ -216,6 +216,7 @@ export const CalendarProvider = ({
             startDate,
             endDate,
             iterationId,
+            isReadOnlyIteration,
             eventLocks,
             setStartDate,
             setEndDate,

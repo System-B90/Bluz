@@ -1,6 +1,6 @@
 import dayjs, { Dayjs } from "dayjs";
 
-import { Iteration } from "@/api-shared/types/iteration";
+import { HiveCacheChanges, Iteration } from "@/api-shared/types/iteration";
 import { ValidationResult } from "@/components/settings-dialog/tabs/global/common/UseEntityForm";
 
 /** Date/string → yyyy-mm-dd for a native date input; "" when unset/invalid. */
@@ -37,6 +37,21 @@ export function iterationToValues(iteration: Iteration): IterationValues {
         startDate: iteration.startDate ? dayjs(iteration.startDate) : null,
         endDate: iteration.endDate ? dayjs(iteration.endDate) : null,
     };
+}
+
+/**
+ * Human summary of a manual Hive sync (#379). A sync that changed nothing is
+ * still a result worth stating — silent success reads as a no-op.
+ */
+export function describeHiveSyncChanges(changes: HiveCacheChanges): string {
+    const parts: Array<string> = [];
+    if (changes.added > 0) parts.push(`${changes.added} נוספו`);
+    if (changes.updated > 0) parts.push(`${changes.updated} עודכנו`);
+    if (changes.removed > 0) parts.push(`${changes.removed} הוסרו`);
+    if (parts.length === 0) {
+        return "פרטי ההייב כבר היו מעודכנים — אין שינויים";
+    }
+    return `פרטי ההייב סונכרנו: ${parts.join(", ")}`;
 }
 
 /**

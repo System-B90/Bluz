@@ -1,4 +1,5 @@
 import { safeApiFetcher } from "@/api-client/common";
+import { withIteration } from "@/api-client/iteration-query";
 import { eventDateFixup } from "@/api-shared/calendar";
 import {
     CalendarSnapshot,
@@ -9,13 +10,6 @@ import { DbEventDocument, Event } from "@/api-shared/types/event";
 import { IterationId } from "@/api-shared/types/iteration";
 
 const SNAPSHOTS_PATH = "/api/calendar/snapshots";
-
-function withIteration(endpoint: URL, iterationId?: IterationId): URL {
-    if (iterationId) {
-        endpoint.searchParams.set("it", iterationId);
-    }
-    return endpoint;
-}
 
 /** Lists all calendar snapshots (newest first), without their events payload. */
 export async function apiListSnapshots(

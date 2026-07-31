@@ -10,6 +10,12 @@
 export type IterationId = string;
 
 /**
+ * Query-string key carrying the active iteration id. Lives here rather than in
+ * `api-server` so the browser can build the same URLs the routes parse.
+ */
+export const ITERATION_QUERY_PARAM = "it";
+
+/**
  * Snapshot of Hive names taken when an iteration is created. The Hive instance
  * changes every iteration, so numeric Hive ids are not stable across runs — we
  * cache the human names by id so a past iteration can be displayed even after
@@ -24,6 +30,27 @@ export type HiveIterationCache = {
     rooms: Record<string, string>;
     /** When this snapshot was taken (ISO string). */
     cachedAt: string;
+};
+
+/**
+ * How a manual "sync Hive info" (#379) changed the cached names. Counts are
+ * summed across modules, subjects and rooms.
+ */
+export type HiveCacheChanges = {
+    /** Ids present in Hive that the cache did not have. */
+    added: number;
+    /** Ids whose cached name differs from Hive's. */
+    updated: number;
+    /** Cached ids that Hive no longer returns. */
+    removed: number;
+    /** Ids whose cached name already matched. */
+    unchanged: number;
+};
+
+/** Response of `POST /api/iterations/[id]/sync-hive`. */
+export type SyncHiveResult = {
+    iteration: Iteration;
+    changes: HiveCacheChanges;
 };
 
 /**

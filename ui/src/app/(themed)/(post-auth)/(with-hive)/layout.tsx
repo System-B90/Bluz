@@ -12,6 +12,7 @@ import { HiveLessonsProvider } from "@/components/base/HiveLessonsProvider";
 import { HiveModulesProvider } from "@/components/base/HiveModulesProvider";
 import { HiveSubjectsProvider } from "@/components/base/HiveSubjectsProvider";
 import { HiveUsersProvider } from "@/components/base/HiveUsersProvider";
+import { IterationProvider } from "@/components/base/IterationProvider";
 import { OfflineProvider, useOffline } from "@/components/base/OfflineProvider";
 import { OutsidersProvider } from "@/components/base/OutsidersProvider";
 import { RoomsProvider } from "@/components/base/RoomsProvider";
@@ -91,30 +92,32 @@ export default function PostAuthLayout({
     children: React.ReactNode;
 }) {
     return (
-        <HiveUsersProvider>
-            <HiveSubjectsProvider>
-                <HiveModulesProvider>
-                    <HiveLessonsProvider>
-                        <RoomsProvider>
-                            <CustomColorsProvider>
-                                <OutsidersProvider>
-                                    <SettingsProvider>
-                                        <CoursesProvider>
-                                            <OfflineProvider>
-                                                <CalendarProvider>
-                                                    <LayoutContent>
-                                                        {children}
-                                                    </LayoutContent>
-                                                </CalendarProvider>
-                                            </OfflineProvider>
-                                        </CoursesProvider>
-                                    </SettingsProvider>
-                                </OutsidersProvider>
-                            </CustomColorsProvider>
-                        </RoomsProvider>
-                    </HiveLessonsProvider>
-                </HiveModulesProvider>
-            </HiveSubjectsProvider>
-        </HiveUsersProvider>
+        <IterationProvider>
+            <HiveUsersProvider>
+                <HiveSubjectsProvider>
+                    <HiveModulesProvider>
+                        <HiveLessonsProvider>
+                            <RoomsProvider>
+                                <CustomColorsProvider>
+                                    <OutsidersProvider>
+                                        <SettingsProvider>
+                                            <CoursesProvider>
+                                                <OfflineProvider>
+                                                    <CalendarProvider>
+                                                        <LayoutContent>
+                                                            {children}
+                                                        </LayoutContent>
+                                                    </CalendarProvider>
+                                                </OfflineProvider>
+                                            </CoursesProvider>
+                                        </SettingsProvider>
+                                    </OutsidersProvider>
+                                </CustomColorsProvider>
+                            </RoomsProvider>
+                        </HiveLessonsProvider>
+                    </HiveModulesProvider>
+                </HiveSubjectsProvider>
+            </HiveUsersProvider>
+        </IterationProvider>
     );
 }

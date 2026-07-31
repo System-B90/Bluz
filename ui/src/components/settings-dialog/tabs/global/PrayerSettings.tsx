@@ -18,7 +18,8 @@ export function PrayerSettings({
     onToggleShrink,
 }: PrayerSettingsProps)
 {
-    const { prayerTimes, updatePrayerTime } = useSettings();
+    const { prayerTimes, updatePrayerTime, isReadOnlyIteration } =
+        useSettings();
 
     const handleTimeChange = useCallback(
         (key: keyof IPrayerSettings, newValue: Dayjs | null) =>
@@ -63,6 +64,7 @@ export function PrayerSettings({
     return (
         <BaseTimeSettingsCard
             description="זמני תפילות קבועים המשתקפים ביומן"
+            disabled={ isReadOnlyIteration }
             isShrunk={ isShrunk }
             onToggleShrink={ onToggleShrink }
             rows={ rows }

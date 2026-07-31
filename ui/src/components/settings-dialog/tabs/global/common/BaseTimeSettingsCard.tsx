@@ -29,6 +29,8 @@ export type BaseTimeSettingsCardProps = {
     isShrunk?: boolean;
     onToggleShrink?: () => void;
     rows: Array<TimeSettingRow>;
+    /** Locks the pickers, e.g. while a past iteration is being viewed. */
+    disabled?: boolean;
     sx?: SxProps<Theme>;
 };
 
@@ -39,6 +41,7 @@ export function BaseTimeSettingsCard({
     isShrunk = false,
     onToggleShrink,
     rows,
+    disabled = false,
     sx,
 }: BaseTimeSettingsCardProps)
 {
@@ -238,6 +241,7 @@ export function BaseTimeSettingsCard({
                             {/* Picker Control */ }
                             <Box className="grow min-w-0">
                                 <TimePicker
+                                    disabled={ disabled }
                                     label={ row.label }
                                     onChange={ row.onChange }
                                     slotProps={ {

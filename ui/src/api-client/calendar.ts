@@ -1,4 +1,5 @@
 import { ClientApi, safeApiFetcher } from "@/api-client/common";
+import { withIteration } from "@/api-client/iteration-query";
 import { eventDateFixup } from "@/api-shared/calendar";
 import {
     ApiEventCreatePayload,
@@ -12,14 +13,6 @@ import {
     EventId,
 } from "@/api-shared/types/event";
 import { IterationId } from "@/api-shared/types/iteration";
-
-/** Append the active iteration to a request, when one is selected. */
-function withIteration(endpoint: URL, iterationId?: IterationId): URL {
-    if (iterationId) {
-        endpoint.searchParams.set("it", iterationId);
-    }
-    return endpoint;
-}
 
 type ClientApiGetEventsProps = {
     startDate?: Date;

@@ -1,17 +1,11 @@
 import { safeApiFetcher } from "@/api-client/common";
+import { withIteration } from "@/api-client/iteration-query";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { CalendarDraft, CalendarDraftSummary } from "@/api-shared/types";
 import { DbEventDocument, Event } from "@/api-shared/types/event";
 import { IterationId } from "@/api-shared/types/iteration";
 
 const DRAFTS_PATH = "/api/calendar/drafts";
-
-function withIteration(endpoint: URL, iterationId?: IterationId): URL {
-    if (iterationId) {
-        endpoint.searchParams.set("it", iterationId);
-    }
-    return endpoint;
-}
 
 /** Lists all shared drafts (newest-updated first), without their events payload. */
 export async function apiListDrafts(

@@ -4,6 +4,7 @@ import {
     IterationId,
     PatchIterationPayload,
     RegisterIterationPayload,
+    SyncHiveResult,
 } from "@/api-shared/types/iteration";
 
 export async function apiListIterations(): Promise<Array<Iteration>> {
@@ -42,8 +43,8 @@ export async function apiPatchIteration(
 
 export async function apiSyncIterationHive(
     id: IterationId,
-): Promise<Iteration> {
-    return await safeApiFetcher<Iteration>(
+): Promise<SyncHiveResult> {
+    return await safeApiFetcher<SyncHiveResult>(
         `/api/iterations/${encodeURIComponent(id)}/sync-hive`,
         { method: "POST" },
     );

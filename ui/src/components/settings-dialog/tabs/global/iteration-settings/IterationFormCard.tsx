@@ -28,9 +28,11 @@ export type IterationFormCardProps = Omit<FormCardBaseProps<Iteration>, "selecte
  * Submit plus a secondary button that switches straight from editing an
  * iteration to creating a new one — the room and outsider tabs cancel back to
  * the placeholder instead, but there is no "discard" to do here. When editing
- * an existing iteration with a Hive URL, an uncommon "sync Hive info" action
+ * the *current* iteration with a Hive URL, an uncommon "sync Hive info" action
  * is also offered (#379) — a manual re-snapshot instead of the automatic one
- * taken at creation time.
+ * taken at creation time. Past iterations are read-only, and their snapshot is
+ * what keeps them displayable after their Hive instance is gone, so they get
+ * no button (the route rejects them too).
  */
 function IterationFormActions({
     isCreating,
@@ -48,11 +50,15 @@ function IterationFormActions({
     isSyncingHive: boolean;
 })
 {
+    const isSyncable = Boolean(
+        selectedIteration?.isCurrent && selectedIteration.hiveUrl,
+    );
+
     return (
         <>
             <Divider />
             <Box display="flex" gap={ 1.5 } justifyContent="flex-end">
-                { isCreating || !selectedIteration?.hiveUrl ? null : (
+                { isCreating || !isSyncable || !selectedIteration ? null : (
                     <Button
                         disabled={ isSyncingHive }
                         onClick={ () => handleSyncHive(selectedIteration) }
@@ -130,7 +136,7 @@ export function IterationFormCard({
                     value={ values.label }
                 />
                 <SettingsTextField
-                    helperText="כתובת מופע ההייב של המחזור. שמות ההייב יישמרו בזמן היצירה."
+                    helperText="כתובת מופע ההייב של המחזור. שמות ההייב נשמרים בזמן היצירה, וניתן לרענן אותם בכפתור הסנכרון."
                     label="כתובת הייב (אופציונלי)"
                     onChange={ (e) => setValue("hiveUrl", e.target.value) }
                     placeholder="https://..."
