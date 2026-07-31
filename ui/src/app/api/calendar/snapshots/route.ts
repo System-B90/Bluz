@@ -1,5 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import {
+    normalizeStoredEvents,
+    requireIdParam,
+} from "@/api-server/calendar-store-request";
 import { ApiSuccess, withApi } from "@/api-server/common";
 import { DbCalendarSnapshot } from "@/api-server/db-calendar-snapshot";
 import {
@@ -7,7 +11,6 @@ import {
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
 import { requireStaffSession } from "@/api-server/session-user";
-import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import { DbEventDocument } from "@/api-shared/types/event";
 
@@ -49,9 +52,7 @@ export const POST = withApi(async (request: Request) => {
     if (!body || typeof body.label !== "string") {
         throw new ClientApiError("A snapshot label is required.");
     }
-    const events = Array.isArray(body.events)
-        ? body.events.map(eventDateFixup)
-        : [];
+    const events = normalizeStoredEvents(body.events);
 
     return ApiSuccess(
         await DbCalendarSnapshot.create(
@@ -66,11 +67,7 @@ export const POST = withApi(async (request: Request) => {
 /** DELETE /api/calendar/snapshots?id=<uuid> — remove a snapshot. */
 export const DELETE = withApi(async (request: Request) => {
     await requireStaffSession();
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
-    if (!id) {
-        throw new ClientApiError("No snapshot id provided.");
-    }
+    const id = requireIdParam(request, "No snapshot id provided.");
     const { controller } = await resolveWritableIterationFromRequest(
         request,
     );

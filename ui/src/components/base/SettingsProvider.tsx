@@ -146,15 +146,16 @@ export const SettingsProvider = ({
             });
     }, [ dispatch, iterationId ]);
 
-    const updatePrayerTimes = useCallback(
-        async (newPrayerTimes: PrayerSettings) =>
+    /**
+     * Persist an already-dispatched optimistic prayer-times change, rolling the
+     * reducer back to `previous` if the server rejects it.
+     */
+    const persistPrayerTimes = useCallback(
+        async (nextTimes: PrayerSettings, previous: PrayerSettings) =>
         {
-            const previousPrayerTimes = state.prayerTimes;
-            dispatch({ type: "SET_PRAYER_TIMES", payload: newPrayerTimes });
-
             try
             {
-                await apiSetPrayerSettings(newPrayerTimes, iterationId);
+                await apiSetPrayerSettings(nextTimes, iterationId);
                 enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", {
                     variant: "success",
                 });
@@ -162,7 +163,7 @@ export const SettingsProvider = ({
             {
                 dispatch({
                     type: "ROLLBACK_PRAYER_TIMES",
-                    payload: previousPrayerTimes,
+                    payload: previous,
                 });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -171,7 +172,17 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ state.prayerTimes, dispatch, iterationId ],
+        [ dispatch, iterationId ],
+    );
+
+    const updatePrayerTimes = useCallback(
+        async (newPrayerTimes: PrayerSettings) =>
+        {
+            const previousPrayerTimes = state.prayerTimes;
+            dispatch({ type: "SET_PRAYER_TIMES", payload: newPrayerTimes });
+            await persistPrayerTimes(newPrayerTimes, previousPrayerTimes);
+        },
+        [ state.prayerTimes, dispatch, persistPrayerTimes ],
     );
 
     const updatePrayerTime = useCallback(
@@ -179,32 +190,12 @@ export const SettingsProvider = ({
         {
             const previousPrayerTimes = state.prayerTimes;
             dispatch({ type: "UPDATE_PRAYER_TIME", payload: { key, value } });
-
-            const updatedTimes = {
-                ...state.prayerTimes,
-                [ key ]: value,
-            };
-
-            try
-            {
-                await apiSetPrayerSettings(updatedTimes, iterationId);
-                enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", {
-                    variant: "success",
-                });
-            } catch (error)
-            {
-                dispatch({
-                    type: "ROLLBACK_PRAYER_TIMES",
-                    payload: previousPrayerTimes,
-                });
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "עדכון שעות תפילה נכשל!",
-                    error,
-                );
-            }
+            await persistPrayerTimes(
+                { ...state.prayerTimes, [ key ]: value },
+                previousPrayerTimes,
+            );
         },
-        [ state.prayerTimes, dispatch, iterationId ],
+        [ state.prayerTimes, dispatch, persistPrayerTimes ],
     );
 
     const [ dayStartTime, setDayStartTime ] = useState<string>(

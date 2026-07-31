@@ -1,5 +1,9 @@
 export const dynamic = "force-dynamic";
 
+import {
+    normalizeStoredEvents,
+    requireIdParam,
+} from "@/api-server/calendar-store-request";
 import { ApiSuccess, withApi } from "@/api-server/common";
 import {
     DbCalendarDraft,
@@ -10,7 +14,6 @@ import {
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
 import { getSessionUser, requireStaffSession } from "@/api-server/session-user";
-import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import { DbEventDocument } from "@/api-shared/types/event";
 
@@ -27,14 +30,6 @@ type UpdateDraftBody = {
 async function resolveAuthor(): Promise<DraftAuthor> {
     const user = await getSessionUser();
     return { id: user?.id, displayName: user?.displayName ?? "משתמש" };
-}
-
-function normalizeEvents(
-    events: unknown,
-): Array<DbEventDocument> {
-    return Array.isArray(events)
-        ? (events as Array<DbEventDocument>).map(eventDateFixup)
-        : [];
 }
 
 /**
@@ -74,7 +69,7 @@ export const POST = withApi(async (request: Request) => {
     return ApiSuccess(
         await DbCalendarDraft.create(
             body.label,
-            normalizeEvents(body.events),
+            normalizeStoredEvents(body.events),
             author,
             controller,
             iterationId,
@@ -102,7 +97,7 @@ export const PUT = withApi(async (request: Request) => {
     return ApiSuccess(
         await DbCalendarDraft.update(
             body.id,
-            normalizeEvents(body.events),
+            normalizeStoredEvents(body.events),
             author,
             controller,
             body.label,
@@ -113,11 +108,7 @@ export const PUT = withApi(async (request: Request) => {
 /** DELETE /api/calendar/drafts?id=<uuid> — remove a shared draft. */
 export const DELETE = withApi(async (request: Request) => {
     await requireStaffSession();
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
-    if (!id) {
-        throw new ClientApiError("No draft id provided.");
-    }
+    const id = requireIdParam(request, "No draft id provided.");
     const { controller } = await resolveWritableIterationFromRequest(
         request,
     );

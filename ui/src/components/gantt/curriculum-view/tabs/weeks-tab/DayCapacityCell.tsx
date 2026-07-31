@@ -53,6 +53,54 @@ function getStatusColor(
     return "default";
 }
 
+/**
+ * Day name + date, with the Saturday-only "closing / going home" switch. Both
+ * the muted (weekend) and the editable cell render exactly this header.
+ */
+function DayHeaderRow({
+    dayIndex,
+    label,
+    muted,
+    weekendDuty,
+    onToggleWeekendDuty,
+}: {
+    dayIndex: GanttDayIndex;
+    label: string;
+    muted: boolean;
+    weekendDuty: boolean;
+    onToggleWeekendDuty: (checked: boolean) => void;
+}) {
+    return (
+        <Box alignItems="center" display="flex" justifyContent="space-between">
+            <Typography
+                fontWeight={700}
+                sx={{
+                    color: muted ? "text.secondary" : "text.primary",
+                    letterSpacing: "0.01em",
+                    fontSize: "0.78rem",
+                }}
+                variant="caption"
+            >
+                {label}
+            </Typography>
+            {dayIndex === GanttDayIndex.Saturday && (
+                <Tooltip
+                    arrow
+                    title={weekendDuty ? "יציאה הביתה" : "סגירת שבת"}
+                >
+                    <Switch
+                        checked={weekendDuty}
+                        onChange={(event) =>
+                            onToggleWeekendDuty(event.target.checked)
+                        }
+                        size="small"
+                    />
+                </Tooltip>
+            )}
+        </Box>
+    );
+}
+
 export function DayCapacityCell({
     dayId,
     isCompact = false,
@@ -213,6 +261,27 @@ export function DayCapacityCell({
     const hasComment = Boolean(localComment);
     const isEditing = isTimeFocused || isCommentFocused;
 
+    // Padding/background shared by the muted and editable variants of the cell.
+    const cellSx = {
+        pt: isCompact ? 0.35 : 1.25,
+        pb: isCompact ? 0.15 : 0.75,
+        px: isCompact ? 0.5 : 1.25,
+        bgcolor: backgroundColor ?? "background.paper",
+        borderInlineStart: "1px solid",
+        borderColor: "divider",
+        verticalAlign: "top",
+    };
+
+    const header = (
+        <DayHeaderRow
+            dayIndex={day.dayIndex}
+            label={`${dayName}${dateLabel ? ` (${dateLabel})` : ""}`}
+            muted={isMuted}
+            onToggleWeekendDuty={toggleWeekendDuty}
+            weekendDuty={week?.weekendDuty ?? false}
+        />
+    );
+
     // Stable, consistent container height and flex settings to prevent shifting/collapsing
     const cellBoxStyles = {
         minHeight: isCompact ? 68 : 120,
@@ -225,52 +294,10 @@ export function DayCapacityCell({
         return (
             <TableCell
                 className="day-capacity-cell"
-                sx={{
-                    pt: isCompact ? 0.35 : 1.25,
-                    pb: isCompact ? 0.15 : 0.75,
-                    px: isCompact ? 0.5 : 1.25,
-                    bgcolor: backgroundColor ?? "background.paper",
-                    borderInlineStart: "1px solid",
-                    borderColor: "divider",
-                    opacity: 0.72,
-                    verticalAlign: "top",
-                }}
+                sx={{ ...cellSx, opacity: 0.72 }}
             >
                 <Box sx={cellBoxStyles}>
-                    <Box
-                        alignItems="center"
-                        display="flex"
-                        justifyContent="space-between"
-                    >
-                        <Typography
-                            fontWeight={700}
-                            sx={{
-                                color: "text.secondary",
-                                letterSpacing: "0.01em",
-                                fontSize: "0.78rem",
-                            }}
-                            variant="caption"
-                        >
-                            {dayName}
-                            {dateLabel ? ` (${dateLabel})` : ""}
-                        </Typography>
-                        {day?.dayIndex === GanttDayIndex.Saturday && (
-                            <Tooltip
-                                arrow
-                                title={
-                                    week?.weekendDuty ? "יציאה הביתה" : "סגירת שבת"
-                                }
-                            >
-                                <Switch
-                                    checked={week?.weekendDuty ?? false}
-                                    onChange={(event) =>
-                                        toggleWeekendDuty(event.target.checked)
-                                    }
-                                    size="small"
-                                />
-                            </Tooltip>
-                        )}
-                    </Box>
+                    {header}
 
                     <Box
                         alignItems="center"
@@ -306,13 +333,7 @@ export function DayCapacityCell({
         <TableCell
             className="day-capacity-cell group/cell"
             sx={{
-                pt: isCompact ? 0.35 : 1.25,
-                pb: isCompact ? 0.15 : 0.75,
-                px: isCompact ? 0.5 : 1.25,
-                bgcolor: backgroundColor ?? "background.paper",
-                borderInlineStart: "1px solid",
-                borderColor: "divider",
-                verticalAlign: "top",
+                ...cellSx,
                 position: "relative",
                 transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:hover": {
@@ -322,40 +343,7 @@ export function DayCapacityCell({
         >
             <Box sx={cellBoxStyles}>
                 <Box display="flex" flexDirection="column" gap={0.75}>
-                    <Box
-                        alignItems="center"
-                        display="flex"
-                        justifyContent="space-between"
-                    >
-                        <Typography
-                            fontWeight={700}
-                            sx={{
-                                color: "text.primary",
-                                letterSpacing: "0.01em",
-                                fontSize: "0.78rem",
-                            }}
-                            variant="caption"
-                        >
-                            {dayName}
-                            {dateLabel ? ` (${dateLabel})` : ""}
-                        </Typography>
-                        {day?.dayIndex === GanttDayIndex.Saturday && (
-                            <Tooltip
-                                arrow
-                                title={
-                                    week?.weekendDuty ? "יציאה הביתה" : "סגירת שבת"
-                                }
-                            >
-                                <Switch
-                                    checked={week?.weekendDuty ?? false}
-                                    onChange={(event) =>
-                                        toggleWeekendDuty(event.target.checked)
-                                    }
-                                    size="small"
-                                />
-                            </Tooltip>
-                        )}
-                    </Box>
+                    {header}
                     <Box
                         alignItems="center"
                         display="grid"

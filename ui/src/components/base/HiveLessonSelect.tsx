@@ -1,9 +1,7 @@
-import FormControl, { FormControlProps } from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
+import { FormControlProps } from "@mui/material/FormControl";
 import { useMemo } from "react";
 
+import { EntitySelect } from "@/components/base/EntitySelect";
 import { useHiveLessons } from "@/components/base/HiveLessonsProvider";
 
 export type HiveLessonSelectProps = {
@@ -29,49 +27,28 @@ export type HiveLessonSelectProps = {
  * Data comes from HiveLessonsProvider; pass `module` to scope the list.
  */
 export function HiveLessonSelect({
-    value,
-    onChange,
     module,
     label = "שיעור",
-    allowEmpty = false,
     emptyLabel = "ללא שיעור",
-    disabled,
-    ...formControlProps
+    ...rest
 }: HiveLessonSelectProps) {
     const { lessons, getLessonsOfModule } = useHiveLessons();
 
-    const options = useMemo(() => {
-        const scoped =
+    const options = useMemo(
+        () =>
             module !== undefined && module !== null
                 ? getLessonsOfModule(Number(module))
-                : lessons;
-        return [...scoped].sort((a, b) => a.name.localeCompare(b.name, "he"));
-    }, [module, lessons, getLessonsOfModule]);
+                : lessons,
+        [module, lessons, getLessonsOfModule],
+    );
 
     return (
-        <FormControl
-            disabled={disabled || options.length === 0}
-            {...formControlProps}
-        >
-            <InputLabel>{label}</InputLabel>
-            <Select
-                label={label}
-                onChange={(e) =>
-                    onChange(e.target.value ? Number(e.target.value) : null)
-                }
-                value={value ?? ""}
-            >
-                {allowEmpty ? (
-                    <MenuItem value="">
-                        <em>{emptyLabel}</em>
-                    </MenuItem>
-                ) : null}
-                {options.map((lesson) => (
-                    <MenuItem key={lesson.id} value={lesson.id}>
-                        {lesson.name}
-                    </MenuItem>
-                ))}
-            </Select>
-        </FormControl>
+        <EntitySelect<number>
+            emptyLabel={emptyLabel}
+            label={label}
+            options={options}
+            parseValue={Number}
+            {...rest}
+        />
     );
 }

@@ -22,26 +22,39 @@ export type RouteContext = {
     params: Promise<{ id: string }>;
 };
 
+/**
+ * Staff-gate the request, then pull the item id and the parsed JSON body out of
+ * it. Both link routes need exactly this and reject the same way without it.
+ */
+async function readLinkRequest<TBody>(
+    request: NextRequest,
+    context: RouteContext,
+): Promise<{ id: string; body: TBody }> {
+    await requireStaffSession();
+    const { id } = await context.params;
+    if (!id) {
+        throw new ClientApiError(
+            "Item identifier (id) is missing from the request parameters.",
+        );
+    }
+
+    const textBody = await request.text();
+    if (!textBody) {
+        throw new ClientApiError("Payload cannot be empty.");
+    }
+
+    return { id, body: JSON.parse(textBody) as TBody };
+}
+
 export function buildGantLinkRoutes<TEntity extends BaseGantItem>({
     dbSet,
 }: BuildGantLinkRoutesProps<TEntity>) {
     const POST = withApi(async (request: NextRequest, context: RouteContext) => {
-        await requireStaffSession();
-        const { id } = await context.params;
-        if (!id) {
-            throw new ClientApiError(
-                "Item identifier (id) is missing from the request parameters.",
-            );
-        }
-
-        const textBody = await request.text();
-        if (!textBody) {
-            throw new ClientApiError("Payload cannot be empty.");
-        }
-
-        const { newParentId } = JSON.parse(textBody) as {
-            newParentId: string;
-        };
+        const { id, body } = await readLinkRequest<{ newParentId: string }>(
+            request,
+            context,
+        );
+        const { newParentId } = body;
         const linkedItem = await dbSet.linkItem(
             newParentId,
             id as TEntity["id"],
@@ -51,23 +64,11 @@ export function buildGantLinkRoutes<TEntity extends BaseGantItem>({
     });
 
     const DELETE = withApi(async (request: NextRequest, context: RouteContext) => {
-        await requireStaffSession();
-        const { id } = await context.params;
-        if (!id) {
-            throw new ClientApiError(
-                "Item identifier (id) is missing from the request parameters.",
-            );
-        }
-
-        const textBody = await request.text();
-        if (!textBody) {
-            throw new ClientApiError("Payload cannot be empty.");
-        }
-
-        const { oldParentId } = JSON.parse(textBody) as {
-            oldParentId: string;
-        };
-        await dbSet.unlinkItem(oldParentId, id as TEntity["id"]);
+        const { id, body } = await readLinkRequest<{ oldParentId: string }>(
+            request,
+            context,
+        );
+        await dbSet.unlinkItem(body.oldParentId, id as TEntity["id"]);
 
         return ApiSuccess({ unlinked: true, id: id });
     });

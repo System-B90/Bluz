@@ -31,16 +31,19 @@ export type ModuleItemProps = {
     syllabusId?: GanttSyllabusId;
 } & PaperProps;
 
-// Sidebar sort variant
-function SortableModuleItem({
-    moduleId,
-    syllabusId,
-    ...props
-}: ModuleItemProps & { syllabusId: GanttSyllabusId }) {
+/**
+ * Everything both drag variants of a module card display: its syllabus tint,
+ * the owning syllabus title, and the module's minimum required hours.
+ */
+function useModuleItemPresentation(
+    moduleId: GanttModuleId,
+    syllabusId: GanttSyllabusId | undefined,
+) {
     const theme = useTheme();
     const state = useCurriculumState();
     const { syllabusNames } = useSyllabusNames();
     const moduleDoc = useModule(moduleId);
+
     const color = useMemo(
         () =>
             syllabusId
@@ -59,6 +62,37 @@ function SortableModuleItem({
                 : 0,
         [moduleDoc, state],
     );
+
+    return { moduleDoc, color, syllabusTitle, totalHours };
+}
+
+/** Syllabus name + work-time chip, shown on the trailing edge of a card. */
+function ModuleItemMeta({
+    syllabusTitle,
+    totalHours,
+}: {
+    syllabusTitle: string;
+    totalHours: number;
+}) {
+    return (
+        <Box className="flex flex-row items-center">
+            <Typography className="select-none font-medium" variant="body2">
+                {syllabusTitle}
+            </Typography>
+            <Box width="0.3rem" />
+            <WorkTimeChip totalHours={totalHours} />
+        </Box>
+    );
+}
+
+// Sidebar sort variant
+function SortableModuleItem({
+    moduleId,
+    syllabusId,
+    ...props
+}: ModuleItemProps & { syllabusId: GanttSyllabusId }) {
+    const { moduleDoc, color, syllabusTitle, totalHours } =
+        useModuleItemPresentation(moduleId, syllabusId);
 
     const {
         attributes,
@@ -108,42 +142,19 @@ function SortableModuleItem({
             <Typography className="select-none font-medium flex-1" variant="body2">
                 {moduleDoc?.title ?? "Unknown Module"}
             </Typography>
-            <Box className="flex flex-row items-center">
-                <Typography className="select-none font-medium" variant="body2">
-                    {syllabusTitle}
-                </Typography>
-                <Box width="0.3rem" />
-                <WorkTimeChip totalHours={totalHours} />
-            </Box>
+            <ModuleItemMeta
+                syllabusTitle={syllabusTitle}
+                totalHours={totalHours}
+            />
         </Paper>
     );
 }
 
 // Week-panel draggable variant (unchanged behaviour)
 function DraggableModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
-    const theme = useTheme();
-    const state = useCurriculumState();
-    const { syllabusNames } = useSyllabusNames();
-    const moduleDoc = useModule(moduleId);
-    const syllabusId = moduleDoc?.syllabusId;
-    const color = useMemo(
-        () =>
-            syllabusId
-                ? hashSyllabusToColor(syllabusId, theme.palette.primary.main, 0.2)
-                : undefined,
-        [syllabusId, theme.palette.primary.main],
-    );
-    const syllabusTitle = useMemo(
-        () => (syllabusId ? syllabusNames[syllabusId] : "סילבוס"),
-        [syllabusId, syllabusNames],
-    );
-    const totalHours = useMemo(
-        () =>
-            moduleDoc
-                ? calculateMinimumRequiredTimeForModule(moduleDoc, state) / 60
-                : 0,
-        [moduleDoc, state],
-    );
+    const syllabusId = useModule(moduleId)?.syllabusId;
+    const { moduleDoc, color, syllabusTitle, totalHours } =
+        useModuleItemPresentation(moduleId, syllabusId);
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
         useDraggable({
@@ -181,13 +192,10 @@ function DraggableModuleItem({ moduleId, dayId, ...props }: ModuleItemProps) {
             <Typography className="select-none font-medium" variant="body2">
                 {moduleDoc?.title ?? "Unknown Module"}
             </Typography>
-            <Box className="flex flex-row items-center">
-                <Typography className="select-none font-medium" variant="body2">
-                    {syllabusTitle}
-                </Typography>
-                <Box width="0.3rem" />
-                <WorkTimeChip totalHours={totalHours} />
-            </Box>
+            <ModuleItemMeta
+                syllabusTitle={syllabusTitle}
+                totalHours={totalHours}
+            />
         </Paper>
     );
 }

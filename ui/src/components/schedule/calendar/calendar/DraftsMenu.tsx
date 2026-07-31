@@ -2,19 +2,6 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import SaveIcon from "@mui/icons-material/Save";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
-import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import Popover from "@mui/material/Popover";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
 import dayjs from "dayjs";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
@@ -29,6 +16,7 @@ import
 } from "@/api-client/calendar-drafts";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CalendarDraftSummary } from "@/api-shared/types";
+import { CalendarStoreMenu } from "@/components/schedule/calendar/calendar/CalendarStoreMenu";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 
 /**
@@ -41,13 +29,9 @@ export function DraftsMenu()
     const { enqueueSnackbar } = useSnackbar();
     const { events, dispatch, iterationId } = useCalendar();
 
-    const [ anchorEl, setAnchorEl ] = useState<HTMLButtonElement | null>(null);
     const [ drafts, setDrafts ] = useState<Array<CalendarDraftSummary>>([]);
-    const [ label, setLabel ] = useState("");
     const [ loading, setLoading ] = useState(false);
     const [ busyId, setBusyId ] = useState<null | string>(null);
-
-    const open = Boolean(anchorEl);
 
     const refresh = useCallback(async () =>
     {
@@ -68,26 +52,12 @@ export function DraftsMenu()
         }
     }, [ iterationId, enqueueSnackbar ]);
 
-    const handleOpen = useCallback(
-        (e: React.MouseEvent<HTMLButtonElement>) =>
-        {
-            setAnchorEl(e.currentTarget);
-            void refresh();
-        },
-        [ refresh ],
-    );
-
-    const handleClose = useCallback(() => setAnchorEl(null), []);
-
-    const handleCreate = useCallback(async () =>
+    const handleCreate = useCallback(async (label: string) =>
     {
-        const trimmed = label.trim();
-        if (!trimmed) return;
         setLoading(true);
         try
         {
-            await apiCreateDraft(trimmed, events, iterationId);
-            setLabel("");
+            await apiCreateDraft(label, events, iterationId);
             enqueueSnackbar("הטיוטה נשמרה לשרת.", { variant: "success" });
             await refresh();
         } catch (error)
@@ -101,10 +71,10 @@ export function DraftsMenu()
         {
             setLoading(false);
         }
-    }, [ label, events, iterationId, enqueueSnackbar, refresh ]);
+    }, [ events, iterationId, enqueueSnackbar, refresh ]);
 
     const handleLoad = useCallback(
-        async (draftId: string) =>
+        async (draftId: string, close: () => void) =>
         {
             setBusyId(draftId);
             try
@@ -118,7 +88,7 @@ export function DraftsMenu()
                     `הטיוטה נטענה (${loaded.length} מופעים).`,
                     { variant: "success" },
                 );
-                handleClose();
+                close();
             } catch (error)
             {
                 enqueueApiErrorSnackbar(
@@ -131,7 +101,7 @@ export function DraftsMenu()
                 setBusyId(null);
             }
         },
-        [ iterationId, dispatch, enqueueSnackbar, handleClose ],
+        [ iterationId, dispatch, enqueueSnackbar ],
     );
 
     const handleOverwrite = useCallback(
@@ -184,149 +154,44 @@ export function DraftsMenu()
     );
 
     return (
-        <>
-            <Tooltip title="טיוטות משותפות">
-                <Button
-                    onClick={ handleOpen }
-                    sx={ {
-                        minWidth: 38,
-                        transition: "all 0.2s ease-in-out",
-                        "&:hover": {
-                            color: "primary.main",
-                        },
-                        "&:active": {
-                            transform: "scale(0.95)",
-                        },
-                    } }
-                    variant="outlined"
-                >
-                    <DriveFileRenameOutlineIcon fontSize="small" />
-                </Button>
-            </Tooltip>
-
-            <Popover
-                anchorEl={ anchorEl }
-                anchorOrigin={ { vertical: "bottom", horizontal: "left" } }
-                onClose={ handleClose }
-                open={ open }
-                slotProps={ {
-                    paper: { sx: { p: 2, mt: 1, width: 400, borderRadius: 2 } },
-                } }
-                transformOrigin={ { vertical: "top", horizontal: "left" } }
-            >
-                <Typography sx={ { fontWeight: 700, mb: 1 } } variant="subtitle1">
-                    טיוטות משותפות
-                </Typography>
-
-                <Stack alignItems="stretch" direction="row" spacing={ 1 } sx={ { mb: 1 } }>
-                    <TextField
-                        fullWidth
-                        label="שם הטיוטה"
-                        onChange={ (e) => setLabel(e.target.value) }
-                        onKeyDown={ (e) =>
-                        {
-                            if (e.key === "Enter") void handleCreate();
-                        } }
-                        size="small"
-                        value={ label }
-                    />
-                    <Button
-                        disabled={ !label.trim() || loading }
-                        onClick={ () => void handleCreate() }
-                        size="small"
-                        startIcon={ <SaveIcon /> }
-                        variant="contained"
-                    >
-                        שמירה
-                    </Button>
-                </Stack>
-
-                <Divider sx={ { my: 1 } } />
-
-                { loading && drafts.length === 0 ? (
-                    <Box sx={ { display: "flex", justifyContent: "center", py: 3 } }>
-                        <CircularProgress size={ 24 } />
-                    </Box>
-                ) : drafts.length === 0 ? (
-                    <Typography
-                        color="text.secondary"
-                        sx={ { py: 2, textAlign: "center" } }
-                        variant="body2"
-                    >
-                        אין טיוטות משותפות.
-                    </Typography>
-                ) : (
-                    <List dense sx={ { maxHeight: 320, overflowY: "auto" } }>
-                        { drafts.map((draft) => (
-                            <ListItem
-                                disableGutters
-                                key={ draft.id }
-                                secondaryAction={
-                                    <Stack direction="row" spacing={ 0.5 }>
-                                        <Tooltip title="טעינת טיוטה">
-                                            <span>
-                                                <IconButton
-                                                    disabled={ busyId !== null }
-                                                    edge="end"
-                                                    onClick={ () =>
-                                                        void handleLoad(
-                                                            draft.id,
-                                                        )
-                                                    }
-                                                    size="small"
-                                                >
-                                                    <FolderOpenIcon fontSize="small" />
-                                                </IconButton>
-                                            </span>
-                                        </Tooltip>
-                                        <Tooltip title="עדכון למצב הנוכחי">
-                                            <span>
-                                                <IconButton
-                                                    disabled={ busyId !== null }
-                                                    edge="end"
-                                                    onClick={ () =>
-                                                        void handleOverwrite(
-                                                            draft.id,
-                                                        )
-                                                    }
-                                                    size="small"
-                                                >
-                                                    <SaveIcon fontSize="small" />
-                                                </IconButton>
-                                            </span>
-                                        </Tooltip>
-                                        <Tooltip title="מחיקה">
-                                            <span>
-                                                <IconButton
-                                                    color="error"
-                                                    disabled={ busyId !== null }
-                                                    edge="end"
-                                                    onClick={ () =>
-                                                        void handleDelete(
-                                                            draft.id,
-                                                        )
-                                                    }
-                                                    size="small"
-                                                >
-                                                    <DeleteOutlineIcon fontSize="small" />
-                                                </IconButton>
-                                            </span>
-                                        </Tooltip>
-                                    </Stack>
-                                }
-                            >
-                                <ListItemText
-                                    primary={ draft.label }
-                                    secondary={ `${draft.updatedBy} · ${dayjs(
-                                        draft.updatedAt,
-                                    ).format("DD/MM/YYYY HH:mm")} · ${draft.eventCount
-                                    } מופעים` }
-                                />
-                            </ListItem>
-                        )) }
-                    </List>
-                ) }
-            </Popover>
-        </>
+        <CalendarStoreMenu<CalendarDraftSummary>
+            actions={ [
+                {
+                    tooltip: "טעינת טיוטה",
+                    icon: <FolderOpenIcon fontSize="small" />,
+                    onClick: (draft, close) =>
+                        void handleLoad(draft.id, close),
+                },
+                {
+                    tooltip: "עדכון למצב הנוכחי",
+                    icon: <SaveIcon fontSize="small" />,
+                    onClick: (draft) => void handleOverwrite(draft.id),
+                },
+                {
+                    tooltip: "מחיקה",
+                    icon: <DeleteOutlineIcon fontSize="small" />,
+                    color: "error",
+                    onClick: (draft) => void handleDelete(draft.id),
+                },
+            ] }
+            busyId={ busyId }
+            createIcon={ <SaveIcon /> }
+            createLabel="שמירה"
+            emptyText="אין טיוטות משותפות."
+            entries={ drafts }
+            icon={ <DriveFileRenameOutlineIcon fontSize="small" /> }
+            loading={ loading }
+            nameLabel="שם הטיוטה"
+            onCreate={ handleCreate }
+            onRefresh={ refresh }
+            renderEntry={ (draft) => ({
+                primary: draft.label,
+                secondary: `${draft.updatedBy} · ${dayjs(draft.updatedAt).format(
+                    "DD/MM/YYYY HH:mm",
+                )} · ${draft.eventCount} מופעים`,
+            }) }
+            title="טיוטות משותפות"
+            tooltip="טיוטות משותפות"
+        />
     );
 }
