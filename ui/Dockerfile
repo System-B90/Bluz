@@ -26,7 +26,6 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXTAUTH_SECRET=ci_build_placeholder
-ENV NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST=ci_build_placeholder
 
 RUN npm run build
 # Bundle (not just transpile) so migrate.js carries its own deps
