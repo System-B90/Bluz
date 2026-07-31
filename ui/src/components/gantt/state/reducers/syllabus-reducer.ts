@@ -9,10 +9,10 @@ export function syllabusDomainReducer(
         {
             type:
                 | "ADD_SYLLABUS"
-                | "UPDATE_SYLLABUS"
-                | "REMOVE_SYLLABUS"
                 | "MERGE_SYLLABUS"
-                | "REORDER_MODULES";
+                | "REMOVE_SYLLABUS"
+                | "REORDER_MODULES"
+                | "UPDATE_SYLLABUS";
         }
     >,
 ): NormalizedStore {

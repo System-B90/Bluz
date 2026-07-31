@@ -6,7 +6,7 @@ export function eventDomainReducer(
     state: NormalizedStore,
     action: Extract<
         Action,
-        { type: "ADD_EVENT" | "UPDATE_EVENT" | "REMOVE_EVENT" | "ALLOCATE_TIME" }
+        { type: "ADD_EVENT" | "ALLOCATE_TIME" | "REMOVE_EVENT" | "UPDATE_EVENT" }
     >,
 ): NormalizedStore {
     switch (action.type) {

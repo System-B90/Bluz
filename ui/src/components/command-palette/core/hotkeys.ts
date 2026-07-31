@@ -1,6 +1,6 @@
 const MODIFIER_KEYS: Record<string, keyof Pick<
     KeyboardEvent,
-    "ctrlKey" | "shiftKey" | "altKey" | "metaKey"
+    "altKey" | "ctrlKey" | "metaKey" | "shiftKey"
 >> = {
     ctrl: "ctrlKey",
     control: "ctrlKey",
@@ -20,7 +20,7 @@ export function matchesShortcut(
     if (shortcut.length === 0) return false;
 
     const modifiers = new Set<string>();
-    let key: string | null = null;
+    let key: null | string = null;
 
     for (const token of shortcut) {
         const modifier = MODIFIER_KEYS[token.toLowerCase()];

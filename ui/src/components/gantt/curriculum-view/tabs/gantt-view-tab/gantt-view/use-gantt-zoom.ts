@@ -7,8 +7,7 @@ import
     buildWeekIndexByDayId,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 
-interface UseGanttZoomArgs
-{
+type UseGanttZoomArgs = {
     curriculum: GanttCurriculum | undefined;
     weeksById: Record<string, GanttWeek>;
 }

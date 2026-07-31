@@ -4,7 +4,7 @@ import { injectDocumentTimes } from "@/components/gantt/state/reducers/inject-do
 
 export function dayDomainReducer(
     state: NormalizedStore,
-    action: Extract<Action, { type: "ADD_DAY" | "UPDATE_DAY" | "REMOVE_DAY" }>,
+    action: Extract<Action, { type: "ADD_DAY" | "REMOVE_DAY" | "UPDATE_DAY" }>,
 ): NormalizedStore {
     switch (action.type) {
     case "UPDATE_DAY": {

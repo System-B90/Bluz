@@ -1,14 +1,13 @@
 import { DragEndEvent } from "@dnd-kit/core";
 import { useCallback } from "react";
 
+import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { GanttDayId, GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
 import { useGanttUndo } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-undo";
-import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { CreateMapping, MoveMapping, RemoveMapping } from "@/components/gantt/state/mappings/context";
 import { DeleteOccurrence } from "@/components/gantt/state/recurrence-exceptions/context";
 
-interface UseGanttDragArgs
-{
+type UseGanttDragArgs = {
     linearDays: Array<GanttDayId>;
     modulesById: NormalizedStore[ "modules" ];
     moduleMappings: Record<string, Array<GanttDayId>>;

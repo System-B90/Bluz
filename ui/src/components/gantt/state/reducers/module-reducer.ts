@@ -13,11 +13,11 @@ export function moduleDomainReducer(
         {
             type:
                 | "ADD_MODULE"
-                | "UPDATE_MODULE"
-                | "REMOVE_MODULE"
                 | "ALLOCATE_TIME_TO_MODULE"
+                | "MOVE_EVENT"
+                | "REMOVE_MODULE"
                 | "REORDER_EVENTS"
-                | "MOVE_EVENT";
+                | "UPDATE_MODULE";
         }
     >,
 ): NormalizedStore {
