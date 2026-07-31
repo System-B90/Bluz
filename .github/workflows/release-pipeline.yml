@@ -52,7 +52,7 @@ jobs:
             # pruned it) and uploading it at self-hosted bandwidth exceeded
             # the 30m job timeout every time, cancelling the whole release.
             - name: Setup Node.js 24
-              uses: actions/setup-node@v6
+              uses: actions/setup-node@v7
               with:
                   node-version: "24"
 
