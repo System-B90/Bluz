@@ -18,14 +18,18 @@ app = typer.Typer(help="Application settings.", no_args_is_help=True)
 
 _BASE = "/api/settings"
 
-# Well-known setting keys for convenience subcommands.
+# Well-known setting keys for convenience subcommands. Kept in step with
+# api-shared/types/settings/* — the server has no enumeration route.
 PRAYER_TIMES_SETTING_KEY = "prayer-times"
+SCHEDULE_SETTING_KEY = "schedule"
+
+KNOWN_SETTING_KEYS = [PRAYER_TIMES_SETTING_KEY, SCHEDULE_SETTING_KEY]
 
 
 @app.command("list")
 def list_settings() -> None:
     """List known setting keys (server has no enumeration route — this is a static list)."""
-    show([PRAYER_TIMES_SETTING_KEY], title="Known setting keys")
+    show(KNOWN_SETTING_KEYS, title="Known setting keys")
 
 
 @app.command()
@@ -66,3 +70,22 @@ def set_prayer(
             json=parse_json(value, what="--value"),
         )
     success("Saved prayer-times setting")
+
+
+@app.command("get-schedule")
+def get_schedule() -> None:
+    """Read the schedule settings (day bounds, slot sizes, working days)."""
+    with state.client() as client:
+        show(client.get(f"{_BASE}/{SCHEDULE_SETTING_KEY}"), title="Schedule settings")
+
+
+@app.command("set-schedule")
+def set_schedule(
+    value: str = typer.Option(..., "--value", help="Schedule settings as JSON."),
+) -> None:
+    """Write the schedule settings."""
+    with state.client() as client:
+        client.post(
+            f"{_BASE}/{SCHEDULE_SETTING_KEY}", json=parse_json(value, what="--value")
+        )
+    success("Saved schedule setting")

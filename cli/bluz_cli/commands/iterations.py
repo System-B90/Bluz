@@ -130,3 +130,14 @@ def delete(
     with state.client() as client:
         client.delete(f"{_BASE}/{iteration_id}")
     success(f"Deleted iteration {iteration_id}")
+
+
+@app.command("sync-hive")
+def sync_hive(
+    iteration_id: str = typer.Argument(..., help="Iteration id to re-snapshot."),
+) -> None:
+    """Re-snapshot the iteration's Hive module/subject/room names."""
+    with state.client() as client:
+        result = client.post(f"{_BASE}/{iteration_id}/sync-hive")
+    success(f"Synced iteration {iteration_id} against Hive")
+    show(result)
