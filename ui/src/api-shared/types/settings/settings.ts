@@ -14,9 +14,9 @@ import {
 export type Setting = PrayerSettings & ScheduleSettings & MealSettings;
 
 export type SettingName =
+    | typeof MEAL_TIMES_SETTING_KEY
     | typeof PRAYER_TIMES_SETTING_KEY
-    | typeof SCHEDULE_SETTINGS_KEY
-    | typeof MEAL_TIMES_SETTING_KEY;
+    | typeof SCHEDULE_SETTINGS_KEY;
 
 export type ApiSettingGetPayload = void;
 export type ApiSettingGetResponse = Setting;
