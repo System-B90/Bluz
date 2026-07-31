@@ -135,8 +135,15 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v7
 
+            # All self-hosted runners on this box run as the same OS user, so
+            # ~/.docker/buildx state is shared. Without a unique builder name,
+            # this job's builder can collide with — and get torn down by — a
+            # concurrent build-sessions/build-proxy job's cleanup step,
+            # killing this build mid-flight. See incident on v0.5.0 release.
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v4
+              with:
+                  name: builder-ui-${{ github.run_id }}
 
             - name: Log in to GitHub Container Registry
               if: startsWith(github.ref, 'refs/tags/v')
@@ -186,6 +193,8 @@ jobs:
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v4
+              with:
+                  name: builder-sessions-${{ github.run_id }}
 
             - name: Log in to GitHub Container Registry
               if: startsWith(github.ref, 'refs/tags/v')
@@ -233,6 +242,8 @@ jobs:
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v4
+              with:
+                  name: builder-proxy-${{ github.run_id }}
 
             - name: Log in to GitHub Container Registry
               if: startsWith(github.ref, 'refs/tags/v')
