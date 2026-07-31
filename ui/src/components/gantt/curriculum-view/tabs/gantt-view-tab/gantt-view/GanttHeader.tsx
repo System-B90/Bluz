@@ -29,14 +29,15 @@ function getCapacityColor(status: CapacityStatus): string {
     return "text.secondary";
 }
 
-export const GanttHeader: React.FC = () => {
+export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
+    showConstraints,
+}) => {
     const theme = useTheme();
     const state = useCurriculumState();
     const {
         dayCellWidth,
         scheduledMinutesByDay,
         setZoomedWeekId,
-        showConstraints,
         singleWeekDayZoom,
         startDate,
         timelineWeeks,

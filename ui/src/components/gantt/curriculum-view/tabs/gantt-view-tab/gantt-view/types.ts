@@ -13,7 +13,6 @@ export type GanttConstraintState = {
 
 export type GanttContextType = {
     weeklyView: boolean;
-    showConstraints: boolean;
     /** Weekly view only: size/position blocks by the day they occupy instead of filling the whole cell. */
     relativeDaySizing: boolean;
     startDate: null | string;

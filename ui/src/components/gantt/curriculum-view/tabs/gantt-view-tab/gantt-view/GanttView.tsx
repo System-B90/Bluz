@@ -137,7 +137,9 @@ export const GanttView: React.FC<GanttViewProps> = ({ curriculumId }) =>
                                         tableLayout: "fixed",
                                     } }
                                 >
-                                    <GanttHeader />
+                                    <GanttHeader
+                                        showConstraints={ showConstraints }
+                                    />
                                     <TableBody>
                                         { curriculum.syllabuses.map(
                                             (syllabusId) => (
