@@ -38,21 +38,28 @@ jobs:
         name: Lint + Typecheck + Unit Tests
         runs-on: self-hosted
         timeout-minutes: 30
+        # Dependabot PRs are single dep bumps; CI on them wastes runner
+        # minutes. Run this only for humans.
+        if: github.actor != 'dependabot[bot]'
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
 
+            # Runner is self-hosted with persistent disk — npm/pip already
+            # survive between runs on disk. The actions/cache-backed `cache:`
+            # option instead uploads/downloads a GH Actions cache blob every
+            # run; on this box that blob had grown to 26GB (nothing ever
+            # pruned it) and uploading it at self-hosted bandwidth exceeded
+            # the 30m job timeout every time, cancelling the whole release.
             - name: Setup Node.js 24
               uses: actions/setup-node@v6
               with:
                   node-version: "24"
-                  cache: "npm"
 
             - name: Setup Python
               uses: actions/setup-python@v6
               with:
                   python-version: "3.11"
-                  cache: pip
 
             - name: Install Dependencies (Node)
               run: npm ci
