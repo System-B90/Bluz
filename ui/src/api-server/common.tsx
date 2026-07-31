@@ -20,11 +20,11 @@ export type ApiResponseInit =
  * serve it on.
  */
 export type ApiCacheControl =
-    | { immutable?: boolean; maxAge: number; scope: "private" | "public" }
     | "immutable"
     | "must-revalidate"
     | "no-cache"
     | "no-store"
+    | { immutable?: boolean; maxAge: number; scope: "private" | "public" }
     | number;
 export function ApiResponseMaker<T>(
     data: T,
