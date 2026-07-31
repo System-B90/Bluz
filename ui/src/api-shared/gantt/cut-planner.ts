@@ -5,6 +5,7 @@ import {
     isRecurrenceSatisfied,
 } from "@/api-shared/gantt/recurrence";
 import { EventRecurrence, GanttDayIndex } from "@/api-shared/types/gantt/models";
+import { MEAL_EVENT_TITLES } from "@/api-shared/types/settings/meal";
 
 /**
  * Pure "cut" planner (#117): expands a curriculum's gantt data into dated,
@@ -62,7 +63,14 @@ export type CutPlanInput = {
      * weekend duty). Falls back to `dayStartTime` when omitted.
      */
     weekendHomeStartTime?: string;
+    /** Preferred meal times (`"HH:mm"`), blocked out as breaks during stacking. Any subset may be omitted. */
+    breakfastTime?: string;
+    lunchTime?: string;
+    dinnerTime?: string;
 };
+
+/** Meal break length (minutes) blocked out around each configured meal time. */
+export const MEAL_BREAK_DURATION_MINUTES = 30;
 
 export type PlannedOccurrence = {
     ganttEventId: string;
@@ -244,6 +252,20 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     }
 
     const eventsById = new Map(input.events.map((e) => [ e.id, e ]));
+
+    // Auto-seeded meal events (titles from MEAL_EVENT_TITLES) are pinned to
+    // their exact clock time from settings instead of being stacked; every
+    // other event gets bumped past that window instead of overlapping it.
+    const fixedTimeMinutesByEventId = new Map<string, number>();
+    for (const [ settingKey, title ] of Object.entries(MEAL_EVENT_TITLES)) {
+        const time = input[ settingKey as keyof typeof MEAL_EVENT_TITLES ];
+        if (!time) continue;
+        const matchedEvent = input.events.find((e) => e.title === title);
+        if (!matchedEvent) continue;
+        const [ hour, minute ] = parseTime(time);
+        fixedTimeMinutesByEventId.set(matchedEvent.id, hour * 60 + minute);
+    }
+
     const occurrences: Array<PlannedOccurrence> = [];
 
     for (const [ dayId, slots ] of slotsByDay) {
@@ -251,13 +273,58 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
         const [ startHour, startMinute ] = startTimeForDay(dayId);
         let cursor = date.hour(startHour).minute(startMinute).second(0).millisecond(0);
 
+        // Only block out windows for meal events actually present on this
+        // day (a recurrence exception may skip a meal event for one day) —
+        // other days without a matching event stack normally, unaffected.
+        const slottedEventIds = new Set(slots.map((s) => s.eventId));
+        const mealWindows: Array<{ startMinutes: number; endMinutes: number }> = [
+            ...fixedTimeMinutesByEventId.entries(),
+        ]
+            .filter(([ eventId ]) => slottedEventIds.has(eventId))
+            .map(([ eventId, startMinutes ]) => {
+                const event = eventsById.get(eventId);
+                const duration = event ? eventDuration(event) : MEAL_BREAK_DURATION_MINUTES;
+                return { startMinutes, endMinutes: startMinutes + duration };
+            })
+            .sort((a, b) => a.startMinutes - b.startMinutes);
+
         for (const slot of slots) {
             const event = eventsById.get(slot.eventId);
             if (!event) continue;
 
             const duration = eventDuration(event);
-            const startTime = cursor;
-            const endTime = cursor.add(duration, "minute");
+            const fixedStartMinutes = fixedTimeMinutesByEventId.get(event.id);
+
+            let startTime: dayjs.Dayjs;
+            let endTime: dayjs.Dayjs;
+
+            if (fixedStartMinutes !== undefined) {
+                // Pinned meal event: placed at its configured clock time,
+                // independent of and without consuming the stacking cursor.
+                startTime = date
+                    .hour(Math.floor(fixedStartMinutes / 60))
+                    .minute(fixedStartMinutes % 60)
+                    .second(0)
+                    .millisecond(0);
+                endTime = startTime.add(duration, "minute");
+            } else {
+                // Bump the cursor past any meal window it would otherwise overlap.
+                for (const window of mealWindows) {
+                    const cursorMinutes = cursor.hour() * 60 + cursor.minute();
+                    const eventEndMinutes = cursorMinutes + duration;
+                    if (cursorMinutes < window.endMinutes && eventEndMinutes > window.startMinutes) {
+                        cursor = date
+                            .hour(Math.floor(window.endMinutes / 60))
+                            .minute(window.endMinutes % 60)
+                            .second(0)
+                            .millisecond(0);
+                    }
+                }
+
+                startTime = cursor;
+                endTime = cursor.add(duration, "minute");
+                cursor = endTime;
+            }
 
             occurrences.push({
                 ganttEventId: event.id,
@@ -266,8 +333,6 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
                 endTime: endTime.toDate(),
                 isRecurrenceEcho: slot.isRecurrenceEcho,
             });
-
-            cursor = endTime;
         }
     }
 

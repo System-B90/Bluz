@@ -1,8 +1,10 @@
 import Box from "@mui/material/Box";
 import { useState } from "react";
 
+import { CalendarHoursSetting } from "@/components/settings-dialog/tabs/global/CalendarHoursSetting";
 import { CourseSettings } from "@/components/settings-dialog/tabs/global/course-settings";
 import { DayStartTimeSetting } from "@/components/settings-dialog/tabs/global/DayStartTimeSetting";
+import { MealTimesSetting } from "@/components/settings-dialog/tabs/global/MealTimesSetting";
 import { PrayerSettings } from "@/components/settings-dialog/tabs/global/PrayerSettings";
 
 export function GlobalSettings()
@@ -37,6 +39,14 @@ export function GlobalSettings()
                     onToggleShrink={ () => setIsPrayerShrunk(!isPrayerShrunk) }
                 />
                 <DayStartTimeSetting
+                    isShrunk={ isPrayerShrunk }
+                    onToggleShrink={ () => setIsPrayerShrunk(!isPrayerShrunk) }
+                />
+                <MealTimesSetting
+                    isShrunk={ isPrayerShrunk }
+                    onToggleShrink={ () => setIsPrayerShrunk(!isPrayerShrunk) }
+                />
+                <CalendarHoursSetting
                     isShrunk={ isPrayerShrunk }
                     onToggleShrink={ () => setIsPrayerShrunk(!isPrayerShrunk) }
                 />

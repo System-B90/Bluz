@@ -13,6 +13,7 @@ import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAnd
 
 import { GanttDayIndex, getDayNameDisplay, HEBREW_DAYS_SHORT } from "@/api-shared/types/gantt/models/day";
 import { Room, roomLikeToResourceKey, RoomSource } from "@/api-shared/types/room"; // Import the full Room type and the stable resource-key helper
+import { useSettings } from "@/components/base/SettingsProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
 import {
@@ -167,6 +168,16 @@ export function CalendarView({
         [showToolbar, onToggleFullscreen, onToggleToolbar, onExportIcs],
     );
 
+    const { calendarDayStartTime, calendarDayEndTime } = useSettings();
+    const calendarMin = useMemo(
+        () => dayjs(calendarDayStartTime, "HH:mm").toDate(),
+        [calendarDayStartTime],
+    );
+    const calendarMax = useMemo(
+        () => dayjs(calendarDayEndTime, "HH:mm").toDate(),
+        [calendarDayEndTime],
+    );
+
     return (
         <ToolbarExtrasContext.Provider value={toolbarExtras}>
             <DnDCalendar
@@ -190,9 +201,9 @@ export function CalendarView({
                     },
                 }}
                 localizer={localizer}
-                max={new Date(2025, 0, 1, 22, 0)}
+                max={calendarMax}
                 messages={CALENDAR_MESSAGES}
-                min={new Date(2025, 0, 1, 7, 0)}
+                min={calendarMin}
                 onDoubleClickEvent={onDoubleClickEvent}
                 onEventDrop={onEventDrop}
                 onEventResize={onEventDrop}

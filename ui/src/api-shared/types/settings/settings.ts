@@ -1,4 +1,8 @@
 import {
+    MealSettings,
+    MEAL_TIMES_SETTING_KEY,
+} from "@/api-shared/types/settings/meal";
+import {
     PrayerSettings,
     PRAYER_TIMES_SETTING_KEY,
 } from "@/api-shared/types/settings/prayer";
@@ -7,11 +11,12 @@ import {
     SCHEDULE_SETTINGS_KEY,
 } from "@/api-shared/types/settings/schedule";
 
-export type Setting = PrayerSettings & ScheduleSettings;
+export type Setting = PrayerSettings & ScheduleSettings & MealSettings;
 
 export type SettingName =
     | typeof PRAYER_TIMES_SETTING_KEY
-    | typeof SCHEDULE_SETTINGS_KEY;
+    | typeof SCHEDULE_SETTINGS_KEY
+    | typeof MEAL_TIMES_SETTING_KEY;
 
 export type ApiSettingGetPayload = void;
 export type ApiSettingGetResponse = Setting;

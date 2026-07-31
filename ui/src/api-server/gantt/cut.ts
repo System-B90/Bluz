@@ -34,6 +34,10 @@ import {
 } from "@/api-shared/types/gantt/cut";
 import { GanttCurriculumId, ModuleEventType } from "@/api-shared/types/gantt/models";
 import {
+    MealSettings,
+    MEAL_TIMES_SETTING_KEY,
+} from "@/api-shared/types/settings/meal";
+import {
     DEFAULT_DAY_START_TIME,
     DEFAULT_WEEKEND_HOME_START_TIME,
     SCHEDULE_SETTINGS_KEY,
@@ -123,8 +127,20 @@ export function buildCutPlanInput(args: {
     exceptions: Array<CutExceptionRow>;
     dayStartTime: string;
     weekendHomeStartTime?: string;
+    breakfastTime?: string;
+    lunchTime?: string;
+    dinnerTime?: string;
 }): CutPlanInput {
-    const { curriculum, mappings, exceptions, dayStartTime, weekendHomeStartTime } = args;
+    const {
+        curriculum,
+        mappings,
+        exceptions,
+        dayStartTime,
+        weekendHomeStartTime,
+        breakfastTime,
+        lunchTime,
+        dinnerTime,
+    } = args;
 
     const days: CutPlanInput["days"] = {};
     const weekLinks = [...(curriculum.c2w ?? [])].sort(
@@ -177,6 +193,9 @@ export function buildCutPlanInput(args: {
         })),
         dayStartTime,
         weekendHomeStartTime,
+        breakfastTime,
+        lunchTime,
+        dinnerTime,
     };
 }
 
@@ -307,11 +326,12 @@ export async function previewCurriculumCut(
     const settingsController = iteration
         ? getDatabaseController(iteration.dbName)
         : getDatabaseController();
-    const scheduleSetting = (await DbSettings.get(
-        SCHEDULE_SETTINGS_KEY,
-        undefined,
-        settingsController,
-    )) as null | ScheduleSettings;
+    const [ scheduleSetting, mealSetting ] = await Promise.all([
+        DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, settingsController) as
+            Promise<null | ScheduleSettings>,
+        DbSettings.get(MEAL_TIMES_SETTING_KEY, undefined, settingsController) as
+            Promise<MealSettings | null>,
+    ]);
     const dayStartTime =
         scheduleSetting?.dayStartTime ?? DEFAULT_DAY_START_TIME;
     const weekendHomeStartTime =
@@ -324,6 +344,9 @@ export async function previewCurriculumCut(
         exceptions: exceptions as Array<CutExceptionRow>,
         dayStartTime,
         weekendHomeStartTime,
+        breakfastTime: mealSetting?.breakfastTime,
+        lunchTime: mealSetting?.lunchTime,
+        dinnerTime: mealSetting?.dinnerTime,
     });
 
     // Preview is tolerant where the real cut is strict: per-event problems
@@ -451,10 +474,11 @@ export async function cutCurriculumToSchedule(
         };
     }
 
-    const [mappings, exceptions, scheduleSetting] = await Promise.all([
+    const [mappings, exceptions, scheduleSetting, mealSetting] = await Promise.all([
         getModuleDayMappingsForCurriculum(curriculumId, {}),
         listRecurrenceExceptionsForCurriculum(curriculumId),
         DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, controller),
+        DbSettings.get(MEAL_TIMES_SETTING_KEY, undefined, controller),
     ]);
     const dayStartTime =
         (scheduleSetting as null | ScheduleSettings)?.dayStartTime ??
@@ -462,6 +486,9 @@ export async function cutCurriculumToSchedule(
     const weekendHomeStartTime =
         (scheduleSetting as null | ScheduleSettings)?.weekendHomeStartTime ??
         DEFAULT_WEEKEND_HOME_START_TIME;
+    const breakfastTime = (mealSetting as MealSettings | null)?.breakfastTime;
+    const lunchTime = (mealSetting as MealSettings | null)?.lunchTime;
+    const dinnerTime = (mealSetting as MealSettings | null)?.dinnerTime;
 
     const { eventsById, syllabusTitleByEvent, moduleHiveIdsByEvent } =
         indexCurriculumEvents(curriculum);
@@ -475,6 +502,9 @@ export async function cutCurriculumToSchedule(
         exceptions: exceptions as Array<CutExceptionRow>,
         dayStartTime,
         weekendHomeStartTime,
+        breakfastTime,
+        lunchTime,
+        dinnerTime,
     });
     const plan = planCut(planInput, { force });
     if (!plan.ok) {
