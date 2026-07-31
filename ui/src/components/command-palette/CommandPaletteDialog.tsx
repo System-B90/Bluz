@@ -305,13 +305,17 @@ export function CommandPaletteDialog({
                 id={listboxId}
                 ref={listRef}
                 role="listbox"
-                sx={{
+                sx={ (theme) => ({
                     maxHeight: "min(50vh, 420px)",
                     overflowY: "auto",
                     py: 1,
                     overscrollBehavior: "contain",
                     scrollbarWidth: "thin",
-                }}
+                    scrollbarColor: `${
+                        theme.vars?.palette.action.disabledBackground ??
+                        theme.palette.action.disabledBackground
+                    } transparent`,
+                }) }
             >
                 {items.length === 0 ? (
                     <Box

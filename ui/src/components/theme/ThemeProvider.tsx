@@ -76,6 +76,8 @@ export function BluzThemeProvider({
                         },
                         "*::-webkit-scrollbar-button": {
                             display: "none",
+                            width: 0,
+                            height: 0,
                         },
                     }) }
                 />

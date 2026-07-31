@@ -135,6 +135,12 @@ export function useCalendarHandlers(
                 setCopiedEvent(currentActive);
             }
 
+            if (isCmdOrCtrl && e.key === "x" && currentActive) {
+                setCopiedEvent(currentActive);
+                handleDeleteEvent(currentActive.id);
+                setActiveEvent(null);
+            }
+
             if (isCmdOrCtrl && e.key === "v" && currentCopied) {
                 e.preventDefault();
                 const originalStart = dayjs(currentCopied.startTime);

@@ -95,6 +95,7 @@ type ToolbarExtras = {
     showToolbar: boolean;
     onToggleFullscreen: () => void;
     onToggleToolbar: () => void;
+    onExportIcs: () => void;
 };
 
 const ToolbarExtrasContext = createContext<null | ToolbarExtras>(null);
@@ -114,6 +115,7 @@ function CalendarToolbarSlot(props: ToolbarProps<Event, object>) {
     return (
         <CalendarToolbar
             {...props}
+            onExportIcs={extras.onExportIcs}
             onToggleFullscreen={extras.onToggleFullscreen}
             onToggleToolbar={extras.onToggleToolbar}
             showToolbar={extras.showToolbar}
@@ -141,6 +143,7 @@ type CalendarViewProps = {
     onEventDrop: (args: EventInteractionArgs<Event>) => void;
     onToggleFullscreen: () => void;
     onToggleToolbar: () => void;
+    onExportIcs: () => void;
 };
 
 export function CalendarView({
@@ -157,10 +160,11 @@ export function CalendarView({
     onEventDrop,
     onToggleFullscreen,
     onToggleToolbar,
+    onExportIcs,
 }: CalendarViewProps) {
     const toolbarExtras = useMemo(
-        () => ({ showToolbar, onToggleFullscreen, onToggleToolbar }),
-        [showToolbar, onToggleFullscreen, onToggleToolbar],
+        () => ({ showToolbar, onToggleFullscreen, onToggleToolbar, onExportIcs }),
+        [showToolbar, onToggleFullscreen, onToggleToolbar, onExportIcs],
     );
 
     return (

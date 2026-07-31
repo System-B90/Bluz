@@ -1,5 +1,6 @@
 import assert from "assert";
 
+import { useDraggable } from "@dnd-kit/core";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import Box, { BoxProps } from "@mui/material/Box";
@@ -10,12 +11,14 @@ import { useMemo } from "react";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
+import { eventPersonDraggableId } from "@/components/schedule/calendar/instructor-dnd/types";
 import { shortenInstructorName } from "@/components/schedule/event-component/NameUtils";
 import { tagSx } from "@/components/schedule/event-component/parts/tag-sx";
 import {
     Event,
     eventHasLecturers,
     getPresentInstructors,
+    PersonId,
 } from "@/components/schedule/types/event";
 
 export function PersonChip({
@@ -55,10 +58,40 @@ export function PersonChip({
         [fullName, instructors],
     );
 
+    const personId: PersonId = instructorId ?? personData;
+    // Dragging a chip out of an event is the unassign gesture. Pointer events
+    // stop here so react-big-calendar's own DnD does not also start moving the
+    // event under the cursor.
+    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+        id: eventPersonDraggableId(event.id, personId),
+        disabled: event.locked,
+        data: { kind: "event-person", personId, eventId: event.id },
+    });
+
     return (
         <Tooltip title={fullName}>
-            <Box component="span" sx={tagSx({ isLecturer: !!isLecturer })}>
-                <Link color="inherit" href="a" underline="hover">
+            <Box
+                component="span"
+                ref={setNodeRef}
+                {...listeners}
+                {...attributes}
+                onPointerDown={(e: React.PointerEvent) => {
+                    e.stopPropagation();
+                    listeners?.onPointerDown?.(e);
+                }}
+                sx={{
+                    ...tagSx({ isLecturer: !!isLecturer }),
+                    cursor: event.locked ? "inherit" : "grab",
+                    touchAction: "none",
+                    opacity: isDragging ? 0.4 : 1,
+                }}
+            >
+                <Link
+                    color="inherit"
+                    draggable={false}
+                    href="a"
+                    underline="hover"
+                >
                     {shortName}
                 </Link>
             </Box>

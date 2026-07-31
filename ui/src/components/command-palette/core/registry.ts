@@ -61,6 +61,20 @@ export class CommandRegistry {
         return commands;
     }
 
+    /**
+     * Look up a currently-contributed command by id and run it. Used by
+     * hosts that want to invoke a palette command from outside the palette
+     * UI itself (a keyboard shortcut, say) without duplicating its `run`.
+     */
+    run(id: string): void {
+        const command = this.collect({ text: "", kind: null }).find(
+            (c) => c.id === id,
+        );
+        if (command && command.enabled !== false) {
+            void command.run();
+        }
+    }
+
     private emit(): void {
         for (const listener of this.listeners) listener();
     }

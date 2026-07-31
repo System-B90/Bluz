@@ -3,7 +3,6 @@ import Box from "@mui/material/Box";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useScheduleCommands } from "@/components/app-commands/use-schedule-commands";
 import { BluzCalendar } from "@/components/schedule/calendar/calendar";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { LOCK_HEARTBEAT_MS } from "@/components/schedule/calendar/calendar-provider/lock-state";
@@ -80,20 +79,15 @@ export default function SchedulePage() {
             ? eventLocks[selectedEvent.id]?.lockedByName
             : undefined;
 
+    // Undo/redo hotkeys are declared on the schedule.undo/redo palette
+    // commands (see use-schedule-commands.tsx) and captured globally by
+    // useCommandHotkeys — only the Delete key stays local, since it isn't a
+    // palette command.
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Guard: Don't trigger undo/redo if the user is typing inside an input/textarea
             const activeTag = document.activeElement?.tagName.toLowerCase();
             const isInput = activeTag === "input" || activeTag === "textarea";
 
-            if (!isInput && e.ctrlKey && e.key === "z") {
-                e.preventDefault();
-                undo();
-            }
-            if (!isInput && e.ctrlKey && e.key === "y") {
-                e.preventDefault();
-                redo();
-            }
             if (
                 !isInput &&
                 e.key === "Delete" &&
@@ -107,7 +101,7 @@ export default function SchedulePage() {
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [undo, redo, deleteEvent, selectedEvent]);
+    }, [deleteEvent, selectedEvent]);
 
     // Opened without a calendar slot to seed it, so default to the next
     // half-hour boundary for an hour — the same shape a slot drag produces.
@@ -120,13 +114,6 @@ export default function SchedulePage() {
         setSelectedEvent({ startTime, endTime: startTime.add(1, "hour") });
         setOpenEventDialog(true);
     }, []);
-
-    // Contributed from the page because the event dialog is page-local state.
-    useScheduleCommands({
-        createEvent: handleCreateEvent,
-        undo,
-        redo,
-    });
 
     const handleCloseEventDialog = useCallback(() => {
         setOpenEventDialog(false);
@@ -152,11 +139,14 @@ export default function SchedulePage() {
     return (
         <Box display={"flex"} flexDirection={"column"} height={"100%"}>
             <BluzCalendar
+                createEvent={handleCreateEvent}
                 events={events}
                 handleDeleteEvent={handleDelete}
                 handleSaveEvent={handleSave}
+                redo={redo}
                 setOpenEventDialog={setOpenEventDialog}
                 setSelectedEvent={setSelectedEvent}
+                undo={undo}
             />
 
             <EventDialog
