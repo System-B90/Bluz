@@ -200,20 +200,30 @@ export function BluzCalendar({
         updateDateRange(currentDate, currentView);
     }, [currentDate, currentView, updateDateRange]);
 
+    // A click may land on a synthetic continuation block (rendered past a
+    // break for a split event, sharing the real event's id but carrying only
+    // its own segment's start/end) — always resolve back to the canonical
+    // stored event so edits/selection see the true full time range.
+    const resolveCanonicalEvent = useCallback(
+        (event: Event) => events.find((e) => e.id === event.id) ?? event,
+        [events],
+    );
+
     const handleEditEvent = useCallback(
         (event: Event) => {
-            setSelectedEvent(event);
+            setSelectedEvent(resolveCanonicalEvent(event));
             setOpenEventDialog(true);
         },
-        [setSelectedEvent, setOpenEventDialog],
+        [setSelectedEvent, setOpenEventDialog, resolveCanonicalEvent],
     );
 
     const handleSelectEvent = useCallback(
         (event: Event) => {
-            setActiveEvent(event);
-            setSelectedEvent(event);
+            const canonical = resolveCanonicalEvent(event);
+            setActiveEvent(canonical);
+            setSelectedEvent(canonical);
         },
-        [setSelectedEvent, setActiveEvent],
+        [setSelectedEvent, setActiveEvent, resolveCanonicalEvent],
     );
 
     if (!mounted) {

@@ -33,6 +33,12 @@ export type CutPlanEventInput = {
     minimumDuration: number;
     /** Per-curriculum allocated duration (minutes); falls back to `minimumDuration` when falsy. */
     allocatedDuration: number;
+    /**
+     * When true, an overlapping meal/break window splits this event instead
+     * of bumping it past the window: runs up to the window's start, resumes
+     * after it ends (end time pushed out by the window's length).
+     */
+    splitAcrossBreaks: boolean;
 };
 
 export type CutPlanMappingInput = {
@@ -307,6 +313,24 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
                     .second(0)
                     .millisecond(0);
                 endTime = startTime.add(duration, "minute");
+            } else if (event.splitAcrossBreaks) {
+                // Keep the start where it is; any overlapping window's length
+                // is added onto the end instead of bumping the start past it.
+                const cursorMinutes = cursor.hour() * 60 + cursor.minute();
+                let endMinutes = cursorMinutes + duration;
+                for (const window of mealWindows) {
+                    if (cursorMinutes < window.endMinutes && endMinutes > window.startMinutes) {
+                        endMinutes += window.endMinutes - window.startMinutes;
+                    }
+                }
+
+                startTime = cursor;
+                endTime = date
+                    .hour(Math.floor(endMinutes / 60))
+                    .minute(endMinutes % 60)
+                    .second(0)
+                    .millisecond(0);
+                cursor = endTime;
             } else {
                 // Bump the cursor past any meal window it would otherwise overlap.
                 for (const window of mealWindows) {

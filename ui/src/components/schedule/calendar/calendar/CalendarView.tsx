@@ -22,7 +22,7 @@ import {
 } from "@/components/schedule/calendar/calendar/DndLocalizer";
 import { CustomWorkWeek } from "@/components/schedule/calendar/CustomWorkWeek";
 import { BluzEventComponent } from "@/components/schedule/event-component/base";
-import { Event } from "@/components/schedule/types/event";
+import { Event, EventType } from "@/components/schedule/types/event";
 
 const DUMMY_ROOM_ID = "no-room-unassigned";
 const NO_ROOM_RESOURCE: Room = {
@@ -130,6 +130,73 @@ const CALENDAR_COMPONENTS = {
     header: CalendarHeader,
 };
 
+/**
+ * Expands events flagged `splitAcrossBreaks` that overlap a same-day break
+ * (הפסקה) event into multiple render-only blocks — one per side of each
+ * break window they span — so the calendar shows a visible gap instead of
+ * overlapping the break. All blocks share the real event's id (clicking any
+ * of them opens the same edit dialog); every block after the first is
+ * flagged `continuationOfBreak` so it renders as bare color, no text (#feat
+ * split-across-breaks). Purely a display transform: the underlying event
+ * keeps its single stored startTime/endTime.
+ */
+function splitEventsAroundBreaks(events: Array<Event>): Array<Event> {
+    const breakWindowsByDay = new Map<string, Array<{ start: Dayjs; end: Dayjs }>>();
+    for (const event of events) {
+        if (event.type !== EventType.BREAK) continue;
+        const day = (event.startTime as Dayjs).format("YYYY-MM-DD");
+        const arr = breakWindowsByDay.get(day) ?? [];
+        arr.push({ start: event.startTime as Dayjs, end: event.endTime as Dayjs });
+        breakWindowsByDay.set(day, arr);
+    }
+
+    const result: Array<Event> = [];
+    for (const event of events) {
+        if (!event.splitAcrossBreaks || event.type === EventType.BREAK) {
+            result.push(event);
+            continue;
+        }
+
+        const day = (event.startTime as Dayjs).format("YYYY-MM-DD");
+        const windows = (breakWindowsByDay.get(day) ?? [])
+            .filter(
+                (w) =>
+                    (event.startTime as Dayjs).isBefore(w.end) &&
+                    (event.endTime as Dayjs).isAfter(w.start),
+            )
+            .sort((a, b) => a.start.valueOf() - b.start.valueOf());
+
+        if (windows.length === 0) {
+            result.push(event);
+            continue;
+        }
+
+        let cursor = event.startTime as Dayjs;
+        let isFirst = true;
+        for (const window of windows) {
+            if (cursor.isBefore(window.start)) {
+                result.push({
+                    ...event,
+                    startTime: cursor,
+                    endTime: window.start,
+                    ...(isFirst ? {} : { continuationOfBreak: true }),
+                });
+                isFirst = false;
+            }
+            cursor = window.end;
+        }
+        if (cursor.isBefore(event.endTime as Dayjs)) {
+            result.push({
+                ...event,
+                startTime: cursor,
+                endTime: event.endTime,
+                ...(isFirst ? {} : { continuationOfBreak: true }),
+            });
+        }
+    }
+    return result;
+}
+
 type CalendarViewProps = {
     events: Array<Event>;
     rooms: Array<Room>;
@@ -168,6 +235,8 @@ export function CalendarView({
         [showToolbar, onToggleFullscreen, onToggleToolbar, onExportIcs],
     );
 
+    const displayEvents = useMemo(() => splitEventsAroundBreaks(events), [events]);
+
     const { calendarDayStartTime, calendarDayEndTime } = useSettings();
     const calendarMin = useMemo(
         () => dayjs(calendarDayStartTime, "HH:mm").toDate(),
@@ -185,9 +254,9 @@ export function CalendarView({
                 components={CALENDAR_COMPONENTS}
                 date={date}
                 defaultView={Views.WEEK}
-                draggableAccessor={(e) => !e.locked}
+                draggableAccessor={(e) => !e.locked && !e.continuationOfBreak}
                 endAccessor={(e) => (e.endTime as Dayjs).toDate()}
-                events={events}
+                events={displayEvents}
                 formats={{
                     timeGutterFormat: "HH:mm",
                     dayRangeHeaderFormat: ({ start, end }) => {
@@ -211,7 +280,7 @@ export function CalendarView({
                 onSelectEvent={onSelectEvent}
                 onSelectSlot={onSelectSlot}
                 onView={onView}
-                resizableAccessor={(e) => !e.locked}
+                resizableAccessor={(e) => !e.locked && !e.continuationOfBreak}
                 resourceAccessor={(event: Event) =>
                     event.rooms.length > 0
                         ? event.rooms.map((room) => roomLikeToResourceKey(room))

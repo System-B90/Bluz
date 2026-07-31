@@ -75,6 +75,7 @@ export async function materializeRecurrenceOccurrence(data: {
         recurrence: EventRecurrence.None,
         isCritical: sourceEvent.isCritical,
         isPaWindow: sourceEvent.isPaWindow,
+        splitAcrossBreaks: sourceEvent.splitAcrossBreaks,
         comment: sourceEvent.comment,
         shuffles: sourceEvent.shuffles,
         hiveSubjectId: sourceEvent.hiveSubjectId,

@@ -53,11 +53,12 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
     const dragEnd = isDragging && dragPreview.end ? dayjs(dragPreview.end) : null;
     const dragDurationMinutes = dragStart && dragEnd ? dragEnd.diff(dragStart, "minute") : 0;
 
-    // Preview clones share the real event's id; registering them as droppables
-    // would fight the original over the same droppable key.
+    // Preview clones and split-event continuation blocks share the real
+    // event's id; registering them as droppables would fight the original
+    // over the same droppable key.
     const { setDropRef, isDropTarget, isOver } = useEventDropTarget(
         event,
-        !isDragging,
+        !isDragging && !event.continuationOfBreak,
     );
 
     const calloutSx = {
@@ -75,6 +76,21 @@ export function BluzEventComponent({ event, ..._props }: EventProps<Event>) {
         pointerEvents: "none" as const,
         zIndex: 10,
     };
+
+    if (event.continuationOfBreak) {
+        // Bare-color continuation of a split event past a break: no title,
+        // icons or tooltip — the real (first) block already carries those.
+        return (
+            <Box
+                data-filtered-out={filterOpacity}
+                sx={{
+                    height: "100%",
+                    bgcolor: bgColor,
+                    boxSizing: "border-box",
+                }}
+            />
+        );
+    }
 
     return (
         <Box

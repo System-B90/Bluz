@@ -5,13 +5,15 @@ import {
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
+import { extendEndPastBreaks } from "@/api-shared/break-split";
 import { eventDateFixup } from "@/api-shared/calendar";
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     EventAddedOrRemovedMessage,
     EventDataUpdateMessage,
 } from "@/api-shared/types";
-import { DbEventDocument, EventId } from "@/api-shared/types/event";
+import { DbEventDocument, EventId, EventType } from "@/api-shared/types/event";
 import { IterationId } from "@/api-shared/types/iteration";
 import { MessageTypes } from "@/settings";
 
@@ -71,6 +73,46 @@ async function getDbEventsInRange(
 }
 
 /**
+ * When `splitAcrossBreaks` is set, pushes the event's `endTime` past any
+ * same-day break (הפסקה) event it overlaps, so its working duration survives
+ * the break instead of being eaten by it. No-op for break events themselves
+ * or when the flag is off.
+ */
+async function applySplitAcrossBreaks(
+    eventData: DbEventDocument,
+    controller: DatabaseController,
+): Promise<DbEventDocument> {
+    if (!eventData.splitAcrossBreaks || eventData.type === EventType.BREAK) {
+        return eventData;
+    }
+
+    // Day boundaries must be computed in the app's wall-clock timezone, not
+    // the server process's local timezone (typically UTC in prod) — otherwise
+    // an event near Israel midnight can miss/misjudge same-day breaks.
+    const dayStart = dayjs(eventData.startTime).tz(APP_TIMEZONE).startOf("day").toDate();
+    const dayEnd = dayjs(dayStart).tz(APP_TIMEZONE).add(1, "day").toDate();
+
+    const breakDocs = await controller.events
+        .find({
+            type: EventType.BREAK,
+            startTime: { $lt: dayEnd },
+            endTime: { $gt: dayStart },
+            ...NOT_ARCHIVED,
+        })
+        .toArray();
+
+    if (breakDocs.length === 0) return eventData;
+
+    const endTime = extendEndPastBreaks(
+        eventData.startTime,
+        eventData.endTime,
+        breakDocs.map((b) => ({ start: b.startTime, end: b.endTime })),
+    );
+
+    return { ...eventData, endTime };
+}
+
+/**
  * Updates an existing calendar event in the MongoDB collection.
  * Triggers a real-time WebSocket broadcast to all connected clients.
  *
@@ -95,7 +137,8 @@ async function setDbEvent(
         );
     }
 
-    const fixedEvent = eventDateFixup(eventData);
+    const splitEvent = await applySplitAcrossBreaks(eventData, controller);
+    const fixedEvent = eventDateFixup(splitEvent);
     const { id: eventId, ...updatePayload } = fixedEvent;
 
     // Because the client generates the ID, we don't inherently know if this is new or an update.
@@ -145,7 +188,8 @@ async function createDbEvent(
         );
     }
 
-    const { id: eventId, ...updatePayload } = eventData;
+    const splitEvent = await applySplitAcrossBreaks(eventData, controller);
+    const { id: eventId, ...updatePayload } = splitEvent;
 
     // Fix dates and explicitly preserve the client-generated UUID in the id field
     const fixedEvent = {

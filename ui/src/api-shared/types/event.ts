@@ -51,6 +51,20 @@ export type Event = {
     hidden: boolean;
     required: boolean;
     personalTalk: boolean;
+    /**
+     * When true and this event overlaps a break (הפסקה) event, it's split
+     * around the break instead of overlapping it: runs up to the break's
+     * start, then resumes after the break ends (endTime pushed out by the
+     * break's length).
+     */
+    splitAcrossBreaks: boolean;
+    /**
+     * Display-only marker (never persisted): set on the synthetic block(s)
+     * the calendar renders after the first segment of a split event, so they
+     * paint as bare color with no title/icons while still sharing the real
+     * event's id (clicking one opens the same edit dialog as the real event).
+     */
+    continuationOfBreak?: boolean;
     color?: string;
     /**
      * "פיקטיבי" marker (issue #102): shown to students as a normal event but
@@ -155,6 +169,17 @@ export function lecturersLabelForType(type: EventType): string
 export function eventHasRoom(type: EventType): boolean
 {
     return type !== EventType.PRAYER;
+}
+
+/**
+ * Default value for `splitAcrossBreaks` when an event's type is picked/changed:
+ * on for exercises and workshops, off for everything else (lectures included).
+ * @param type The EventType to check.
+ * @returns The default `splitAcrossBreaks` value for that type.
+ */
+export function defaultSplitAcrossBreaks(type: EventType): boolean
+{
+    return type === EventType.EXERCISE || type === EventType.WORKSHOP;
 }
 
 /**

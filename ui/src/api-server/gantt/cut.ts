@@ -171,6 +171,7 @@ export function buildCutPlanInput(args: {
         recurrence: event.recurrence,
         minimumDuration: event.minimumDuration,
         allocatedDuration: event.cEC?.[0]?.allocatedDuration ?? 0,
+        splitAcrossBreaks: event.splitAcrossBreaks,
     }));
 
     return {
@@ -277,6 +278,7 @@ export function buildScheduleEvent(
         hidden: false,
         required: false,
         personalTalk: false,
+        splitAcrossBreaks: ganttEvent.splitAcrossBreaks,
         ganttEventId: ganttEvent.id,
         ganttOccurrenceDate: occurrence.occurrenceDate,
     };

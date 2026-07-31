@@ -45,6 +45,7 @@ function makeEvent(
         recurrence: EventRecurrence.None,
         minimumDuration: 60,
         allocatedDuration: 60,
+        splitAcrossBreaks: false,
         ...overrides,
     };
 }
