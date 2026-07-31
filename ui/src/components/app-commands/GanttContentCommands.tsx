@@ -2,10 +2,10 @@
 import EventIcon from "@mui/icons-material/Event";
 import SchoolIcon from "@mui/icons-material/School";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import { Command, useCommands } from "@system-b90/command-palette";
 import { ReactNode, useCallback } from "react";
 
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
-import { Command, useCommands } from "@/components/command-palette";
 import { useGanttSearchNav } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import {
     GanttSearchItem,

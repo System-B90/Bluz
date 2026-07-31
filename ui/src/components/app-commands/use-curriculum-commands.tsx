@@ -1,11 +1,11 @@
 "use client";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import { Command, useCommands } from "@system-b90/command-palette";
 import { useMemo } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
-import { Command, useCommands } from "@/components/command-palette";
 
 export type CurriculumCommandActions = {
     curriculums: Record<GanttCurriculumId, GanttCurriculumDocument>;

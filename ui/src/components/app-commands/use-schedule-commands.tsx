@@ -13,12 +13,12 @@ import RedoIcon from "@mui/icons-material/Redo";
 import UndoIcon from "@mui/icons-material/Undo";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import WestIcon from "@mui/icons-material/West";
+import { Command, useCommands } from "@system-b90/command-palette";
 import { useMemo } from "react";
 import { View } from "react-big-calendar";
 
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
 import { useOffline } from "@/components/base/OfflineProvider";
-import { Command, useCommands } from "@/components/command-palette";
 
 export type ScheduleCommandActions = {
     createEvent: () => void;

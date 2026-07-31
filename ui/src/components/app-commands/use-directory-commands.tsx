@@ -1,12 +1,12 @@
 "use client";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
+import { Command, useCommands } from "@system-b90/command-palette";
 import { useMemo } from "react";
 
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
-import { Command, useCommands } from "@/components/command-palette";
 import { useSettingsDialogUrl } from "@/components/settings-dialog/UseSettingsDialogUrl";
 
 /**

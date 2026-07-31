@@ -1,11 +1,11 @@
 "use client";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ViewTimelineIcon from "@mui/icons-material/ViewTimeline";
+import { useCommands } from "@system-b90/command-palette";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useMemo } from "react";
 
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
-import { useCommands } from "@/components/command-palette";
 
 type Destination = {
     id: string;

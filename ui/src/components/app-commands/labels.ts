@@ -1,24 +1,26 @@
-import type { CommandPaletteLabels } from "@/components/command-palette";
+import { withLabelOverrides } from "@system-b90/command-palette";
+import { HE_LABELS } from "@system-b90/command-palette/he";
 
 /**
- * Every string the palette renders. The package itself ships no copy, so this
- * is the single place Bluz's palette wording lives.
+ * Bluz's palette wording.
+ *
+ * Starts from the package's Hebrew table and overrides only what Bluz says
+ * differently — most of it a matter of house voice, plus a placeholder that
+ * names the things this app actually holds. Importing `/he` and never `/en` is
+ * what keeps the English strings out of the bundle.
  */
-export const PALETTE_LABELS: CommandPaletteLabels = {
+export const PALETTE_LABELS = withLabelOverrides(HE_LABELS, {
     placeholder: "הקלידו פקודה, או חפשו סילבוס, חדר, גאנט…",
     empty: "לא נמצאו תוצאות",
     recents: "בשימוש לאחרונה",
     kinds: {
-        command: "פקודות",
         entity: "פריטים",
         goto: "ניווט",
     },
     hints: {
-        navigate: "ניווט",
         run: "ביצוע",
-        close: "סגירה",
     },
-};
+});
 
 /**
  * Section headings. Centralised so two contributors never disagree on the
