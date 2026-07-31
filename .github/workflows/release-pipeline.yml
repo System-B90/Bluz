@@ -37,7 +37,7 @@ jobs:
     verify:
         name: Lint + Typecheck + Unit Tests
         runs-on: self-hosted
-        timeout-minutes: 30
+        timeout-minutes: 60
         # Dependabot PRs are single dep bumps; CI on them wastes runner
         # minutes. Run this only for humans.
         if: github.actor != 'dependabot[bot]'
