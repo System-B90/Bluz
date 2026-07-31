@@ -50,13 +50,15 @@ function IterationFormActions({
     isSyncingHive: boolean;
 })
 {
+    const isSyncable = Boolean(
+        selectedIteration?.isCurrent && selectedIteration.hiveUrl,
+    );
+
     return (
         <>
             <Divider />
             <Box display="flex" gap={ 1.5 } justifyContent="flex-end">
-                { isCreating
-                    || !selectedIteration?.hiveUrl
-                    || !selectedIteration.isCurrent ? null : (
+                { isCreating || !isSyncable || !selectedIteration ? null : (
                     <Button
                         disabled={ isSyncingHive }
                         onClick={ () => handleSyncHive(selectedIteration) }

@@ -13,18 +13,19 @@ export type ApiResponseInit =
           headers: ApiResponseHeaders;
       })
     | undefined;
+/**
+ * The object form is explicit, for responses that must not land in a shared
+ * cache. Every API route sits behind Hive SSO, so anything user- or
+ * tenant-visible has to be `private` — a proxy holding a `public` copy would
+ * serve it on.
+ */
 export type ApiCacheControl =
+    | { immutable?: boolean; maxAge: number; scope: "private" | "public" }
     | "immutable"
     | "must-revalidate"
     | "no-cache"
     | "no-store"
-    | number
-    /**
-     * Explicit form, for responses that must not land in a shared cache. Every
-     * API route sits behind Hive SSO, so anything user- or tenant-visible has
-     * to be `private` — a proxy holding a `public` copy would serve it on.
-     */
-    | { maxAge: number; scope: "private" | "public"; immutable?: boolean };
+    | number;
 export function ApiResponseMaker<T>(
     data: T,
     cacheControl?: ApiCacheControl,
