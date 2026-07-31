@@ -1,4 +1,5 @@
 "use client";
+import { CommandPaletteProvider } from "@system-b90/command-palette";
 import { ReactNode } from "react";
 
 import { PALETTE_LABELS } from "@/components/app-commands/labels";
@@ -6,7 +7,6 @@ import { useAppearanceCommands } from "@/components/app-commands/use-appearance-
 import { useDirectoryCommands } from "@/components/app-commands/use-directory-commands";
 import { useNavigationCommands } from "@/components/app-commands/use-navigation-commands";
 import { useSettingsCommands } from "@/components/app-commands/use-settings-commands";
-import { CommandPaletteProvider } from "@/components/command-palette";
 
 /** Registers the commands that are available from anywhere in the app. */
 function AppCommands() {

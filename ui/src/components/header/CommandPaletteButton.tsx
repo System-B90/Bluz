@@ -3,9 +3,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
+import { ShortcutKeys, useCommandPalette } from "@system-b90/command-palette";
 import { useSyncExternalStore } from "react";
-
-import { ShortcutKeys, useCommandPalette } from "@/components/command-palette";
 
 /** The platform never changes mid-session, so there is nothing to subscribe to. */
 const noopSubscribe = () => () => {};

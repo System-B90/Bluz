@@ -5,10 +5,10 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import PaletteIcon from "@mui/icons-material/Palette";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
+import { useCommands } from "@system-b90/command-palette";
 import { ReactNode, useMemo } from "react";
 
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
-import { useCommands } from "@/components/command-palette";
 import {
     SettingsTab,
     useSettingsDialogUrl,

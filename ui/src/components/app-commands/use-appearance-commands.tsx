@@ -2,10 +2,10 @@
 import BrightnessAutoIcon from "@mui/icons-material/BrightnessAuto";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
+import { useCommands } from "@system-b90/command-palette";
 import { useMemo } from "react";
 
 import { COMMAND_GROUPS } from "@/components/app-commands/labels";
-import { useCommands } from "@/components/command-palette";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 /** Theme switching. Registered app-wide. */
