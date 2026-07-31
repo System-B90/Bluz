@@ -1,7 +1,8 @@
 import Button, { ButtonProps } from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import Typography, { TypographyProps } from "@mui/material/Typography";
 import { signIn, SignInOptions } from "next-auth/react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import { HiveLogo } from "@/components/base/HiveLogo";
 
@@ -22,21 +23,29 @@ export function LoginWithHive({
     ...props
 }: LoginWithHiveProps)
 {
+    const [ isSigningIn, setIsSigningIn ] = useState(false);
+
     // Added callbackUrl to the dependency array to prevent stale closures
-    const defaultClickCallback = useCallback(
-        () => signIn("hive", { callbackUrl }),
-        [ callbackUrl ],
-    );
+    const defaultClickCallback = useCallback(() =>
+    {
+        setIsSigningIn(true);
+        void signIn("hive", { callbackUrl }).catch(() => setIsSigningIn(false));
+    }, [ callbackUrl ]);
 
     const clickCallback = onClick ?? defaultClickCallback;
 
     return (
         <Button
+            disabled={ isSigningIn }
             fullWidth={ fullWidth }
             onClick={ clickCallback }
             size={ size }
             startIcon={
-                <HiveLogo generic={ false } size={ 24 } />
+                isSigningIn ? (
+                    <CircularProgress color="inherit" size={ 20 } />
+                ) : (
+                    <HiveLogo generic={ false } size={ 24 } />
+                )
             }
             variant={ variant }
             { ...props }
@@ -46,7 +55,7 @@ export function LoginWithHive({
                 fontSize={ fontSize }
                 fontWeight={ fontWeight }
             >
-                התחברות עם הייב
+                { isSigningIn ? "מתחברים..." : "התחברות עם הייב" }
             </Typography>
         </Button>
     );
