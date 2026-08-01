@@ -85,6 +85,10 @@ export function EventPrimaryDetails({
         <>
             <Box display="flex" gap={ 2 } width="100%">
                 <TextField
+                    // First meaningful field in the event dialog: without this
+                    // MUI parks focus on the dialog paper, and the first Tab
+                    // lands on the close/delete action instead of the form.
+                    autoFocus
                     fullWidth
                     label="שם"
                     onChange={ (e) => onUpdate({ name: e.target.value }) }

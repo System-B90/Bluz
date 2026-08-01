@@ -128,9 +128,20 @@ export function SettingsDialog({
                         const isActive = activeTab === t.value;
                         return (
                             <Box
+                                aria-current={isActive ? "page" : undefined}
+                                // Rendered as a real <button>: a
+                                // plain onClick Box is unreachable by keyboard,
+                                // which stranded keyboard-only users on the tab
+                                // the dialog happened to open on.
+                                component="button"
                                 key={t.value}
                                 onClick={() => onTabChange(t.value)}
                                 sx={{
+                                    appearance: "none",
+                                    border: "none",
+                                    font: "inherit",
+                                    textAlign: "start",
+                                    width: "100%",
                                     display: "flex",
                                     alignItems: "center",
                                     gap: 1.5,
