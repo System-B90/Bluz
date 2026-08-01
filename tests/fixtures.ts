@@ -100,21 +100,12 @@ export async function openSettingsDialog(page: Page): Promise<void> {
     const settingsButton = page.locator(`${SELECTORS.appBar} button.hover-rotate-subtle`);
     const dialog = page.getByRole("dialog").filter({ hasText: "הגדרות" });
 
-    // The gear renders before hydration attaches its handler, so an early click
-    // is a no-op and the dialog never opens. Retry with a short per-attempt
-    // wait: the previous loop waited 15s per attempt under a 15s test cap, so
-    // the first miss consumed the whole budget and attempts 2 and 3 never ran.
-    for (let attempt = 0; attempt < 5; attempt++) {
-        await settingsButton.click();
-        try {
-            await expect(dialog).toBeVisible({ timeout: 3_000 });
-            return;
-        } catch {
-            if (attempt === 4) {
-                throw new Error("Settings dialog did not open");
-            }
-        }
-    }
+    // Single deterministic click: waitForAppLoad has already gated on the
+    // hydration marker, so the handler is attached by the time we get here.
+    // The old retry loop existed only because that gate did not.
+    await waitForHydration(page);
+    await settingsButton.click();
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
 }
 
 /**
@@ -157,8 +148,25 @@ export async function waitForAppLoad(page: Page): Promise<void> {
     });
     // The AppBar is server-rendered, so its visibility says nothing about
     // whether React has hydrated — clicks before hydration are silently
-    // dropped. Waiting for `load` covers the client bundle.
+    // dropped. `load` only covers the bundle arriving, not React attaching,
+    // which is why helpers used to retry clicks. The themed layout sets
+    // data-hydrated in an effect, so this waits on the real signal.
     await page.waitForLoadState("load");
+    await waitForHydration(page);
+}
+
+/**
+ * Gates on the hydration marker the themed layout sets in an effect.
+ *
+ * Missing marker (an image built before it landed) is not fatal — the wait is
+ * simply skipped. `networkidle` is deliberately *not* the fallback: the app
+ * holds a WebSocket open, so it never goes idle and the wait would burn the
+ * whole per-test budget.
+ */
+export async function waitForHydration(page: Page): Promise<void> {
+    await page
+        .waitForSelector("body[data-hydrated='true']", { timeout: 5_000 })
+        .catch(() => undefined);
 }
 
 /**

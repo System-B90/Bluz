@@ -112,18 +112,9 @@ test.describe("Header / AppBar", () => {
 
         const ganttButton = appBar.getByRole("button", { name: "עבור לבניית גאנט" });
         await expect(ganttButton).toBeVisible();
-        for (let attempt = 0; attempt < 3; attempt++) {
-            await ganttButton.click();
-            try {
-                await page.waitForURL(/\/gantt/, { timeout: 15_000 });
-                break;
-            } catch {
-                if (attempt === 2) {
-                    throw new Error("Failed to navigate to /gantt");
-                }
-            }
-        }
-        await expect(page).toHaveURL(/\/gantt/);
+        // gotoAppHome gates on the hydration marker, so one click is enough.
+        await ganttButton.click();
+        await page.waitForURL(/\/gantt/, { timeout: 30_000 });
     });
 
     test("opens settings dialog via gear icon", async ({ page }) => {

@@ -14,6 +14,15 @@ export default function ThemedLayout({
     children: React.ReactNode;
 })
 {
+    // Hydration marker. Server-rendered markup is fully painted and clickable
+    // before React attaches handlers, so an early click is a silent no-op —
+    // the cause of the retry-until-it-works loops the e2e helpers used to
+    // carry. Tests wait for this attribute instead.
+    React.useEffect(() =>
+    {
+        document.body.dataset.hydrated = "true";
+    }, []);
+
     return (
         <LocalizationProvider adapterLocale="he" dateAdapter={ AdapterDayjs }>
             <SnackbarProvider
