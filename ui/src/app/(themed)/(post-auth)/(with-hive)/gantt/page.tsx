@@ -12,6 +12,8 @@ import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
+import { ErrorSurface } from "@/components/errors/ErrorSurface";
 import { CurriculumFab } from "@/components/gantt/curriculum-fab";
 import {
     CurriculumSyncContext,
@@ -218,15 +220,29 @@ function GanttPageInner()
                     { error ? <Typography color="error">{ error }</Typography> : null }
 
                     { currentCurriculum && !isLoading && initialData ? (
-                        <CurriculumProvider
-                            curriculumId={ currentCurriculum }
-                            initialData={ initialData }
+                        <ErrorBoundary
+                            fallback={ (boundaryError, reset) => (
+                                <ErrorSurface
+                                    actions={ [
+                                        { label: "נסו שוב", onClick: reset, variant: "contained" },
+                                    ] }
+                                    description="הצגת הגאנט נכשלה. ניתן לנסות שוב, או לבחור גאנט אחר."
+                                    details={ boundaryError.message }
+                                    title="שגיאה בהצגת הגאנט"
+                                />
+                            ) }
                             key={ currentCurriculum }
+                            scope="gantt"
                         >
-                            <GanttMappingProvider curriculumId={ currentCurriculum }>
-                                <CurriculumView curriculumId={ currentCurriculum } />
-                            </GanttMappingProvider>
-                        </CurriculumProvider>
+                            <CurriculumProvider
+                                curriculumId={ currentCurriculum }
+                                initialData={ initialData }
+                            >
+                                <GanttMappingProvider curriculumId={ currentCurriculum }>
+                                    <CurriculumView curriculumId={ currentCurriculum } />
+                                </GanttMappingProvider>
+                            </CurriculumProvider>
+                        </ErrorBoundary>
                     ) : null }
                 </Box>
             </CurriculumSyncContext.Provider>

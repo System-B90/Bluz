@@ -3,6 +3,8 @@ import Box from "@mui/material/Box";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
+import { ErrorSurface } from "@/components/errors/ErrorSurface";
 import { BluzCalendar } from "@/components/schedule/calendar/calendar";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { LOCK_HEARTBEAT_MS } from "@/components/schedule/calendar/calendar-provider/lock-state";
@@ -138,16 +140,30 @@ export default function SchedulePage() {
 
     return (
         <Box display={"flex"} flexDirection={"column"} height={"100%"}>
-            <BluzCalendar
-                createEvent={handleCreateEvent}
-                events={events}
-                handleDeleteEvent={handleDelete}
-                handleSaveEvent={handleSave}
-                redo={redo}
-                setOpenEventDialog={setOpenEventDialog}
-                setSelectedEvent={setSelectedEvent}
-                undo={undo}
-            />
+            <ErrorBoundary
+                fallback={(error, reset) => (
+                    <ErrorSurface
+                        actions={[
+                            { label: "נסו שוב", onClick: reset, variant: "contained" },
+                        ]}
+                        description="לוח הזמנים נתקל בשגיאה ולא ניתן להציגו כרגע."
+                        details={error.message}
+                        title="שגיאה בטעינת לוח הזמנים"
+                    />
+                )}
+                scope="calendar"
+            >
+                <BluzCalendar
+                    createEvent={handleCreateEvent}
+                    events={events}
+                    handleDeleteEvent={handleDelete}
+                    handleSaveEvent={handleSave}
+                    redo={redo}
+                    setOpenEventDialog={setOpenEventDialog}
+                    setSelectedEvent={setSelectedEvent}
+                    undo={undo}
+                />
+            </ErrorBoundary>
 
             <EventDialog
                 event={selectedEvent ?? {}}

@@ -187,7 +187,7 @@ export default defineConfig([
     },
     {
         files: [
-            "**/app/**/{page,layout,-layout,error,not-found,loading,template,default}.tsx",
+            "**/app/**/{page,layout,-layout,error,global-error,not-found,loading,template,default}.tsx",
             "**/app/**/route.ts",
             "**/*.config.{ts,js,mjs,mts}",
             "**/manifest.{ts,js,mjs,mts}",

@@ -18,6 +18,7 @@ import {
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
+import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { useEventDropTarget } from "@/components/schedule/calendar/instructor-dnd/use-event-drop-target";
 import {
@@ -98,7 +99,37 @@ function selectionRingSx(theme: Theme, isFirst: boolean, isLast: boolean) {
  * box per drawn piece of an event — and it renders either a real grid piece or
  * the live drag preview of the whole event.
  */
-export function BluzEventComponent({ event: segment }: EventProps<EventSegment>) {
+export function BluzEventComponent(props: EventProps<EventSegment>) {
+    return (
+        <ErrorBoundary fallback={<BrokenEventTile />} scope="event-tile">
+            <BluzEventComponentInner {...props} />
+        </ErrorBoundary>
+    );
+}
+
+/** Degraded placeholder so one bad tile cannot take the whole grid down. */
+function BrokenEventTile() {
+    return (
+        <Box
+            alignItems="center"
+            bgcolor="action.disabledBackground"
+            border="1px dashed"
+            borderColor="error.main"
+            display="flex"
+            height="100%"
+            justifyContent="center"
+            overflow="hidden"
+            sx={{ borderRadius: CORNER_RADIUS }}
+            width="100%"
+        >
+            <Typography color="error" fontSize={10} noWrap>
+                שגיאה בהצגת האירוע
+            </Typography>
+        </Box>
+    );
+}
+
+function BluzEventComponentInner({ event: segment }: EventProps<EventSegment>) {
     const preview = asDragPreview(segment);
     return preview ? (
         <SplitDragPreview preview={preview} />
