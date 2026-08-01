@@ -1,0 +1,10 @@
+[Unit]
+Description=Nightly Bluz database backup
+
+[Timer]
+# 02:30 UTC daily. Sunday runs land in the weekly retention tier.
+OnCalendar=*-*-* 02:30:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

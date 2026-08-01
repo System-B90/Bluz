@@ -1,0 +1,11 @@
+[Unit]
+Description=Bluz database backup (Postgres + MongoDB)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+# Adjust to the checkout location on the app host.
+WorkingDirectory=/opt/bluz
+Environment=BLUZ_BACKUP_DIR=/var/backups/bluz
+ExecStart=/opt/bluz/deploy/backup/bluz-backup.sh

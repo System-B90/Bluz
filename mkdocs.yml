@@ -74,6 +74,7 @@ nav:
   - Getting Started: getting-started.md
   - Architecture: architecture.md
   - Performance & Scaling: performance-and-scaling.md
+  - Backup & Restore: backup-and-restore.md
   - Code Quality Review: code-quality.md
   - Duplication Audit: duplication-audit.md
   - API Reference: api/index.md
