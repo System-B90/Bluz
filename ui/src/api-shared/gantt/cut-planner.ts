@@ -4,6 +4,7 @@ import {
     getRecurrenceOccurrenceDayIds,
     isRecurrenceSatisfied,
 } from "@/api-shared/gantt/recurrence";
+import { layoutAroundWindows, layoutEnd } from "@/api-shared/interval-layout";
 import { EventRecurrence, GanttDayIndex } from "@/api-shared/types/gantt/models";
 import { MEAL_EVENT_TITLES } from "@/api-shared/types/settings/meal";
 
@@ -99,6 +100,15 @@ export type CutPlan =
 
 function eventDuration(event: CutPlanEventInput): number {
     return event.allocatedDuration || event.minimumDuration;
+}
+
+/** That day at a given minute-of-day offset, truncated to the minute. */
+function minutesOfDay(date: dayjs.Dayjs, minutes: number): dayjs.Dayjs {
+    return date
+        .hour(Math.floor(minutes / 60))
+        .minute(minutes % 60)
+        .second(0)
+        .millisecond(0);
 }
 
 export type CutPlanOptions = {
@@ -307,41 +317,35 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
             if (fixedStartMinutes !== undefined) {
                 // Pinned meal event: placed at its configured clock time,
                 // independent of and without consuming the stacking cursor.
-                startTime = date
-                    .hour(Math.floor(fixedStartMinutes / 60))
-                    .minute(fixedStartMinutes % 60)
-                    .second(0)
-                    .millisecond(0);
+                startTime = minutesOfDay(date, fixedStartMinutes);
                 endTime = startTime.add(duration, "minute");
             } else if (event.splitAcrossBreaks) {
-                // Keep the start where it is; any overlapping window's length
-                // is added onto the end instead of bumping the start past it.
-                const cursorMinutes = cursor.hour() * 60 + cursor.minute();
-                let endMinutes = cursorMinutes + duration;
-                for (const window of mealWindows) {
-                    if (cursorMinutes < window.endMinutes && endMinutes > window.startMinutes) {
-                        endMinutes += window.endMinutes - window.startMinutes;
-                    }
-                }
+                // The event runs through the meal windows in pieces instead of
+                // being bumped past them. Only the *net* span is recorded —
+                // the pieces are a rendering concern — but the stacking cursor
+                // must clear the last piece so the next event doesn't land on
+                // top of it.
+                const pieces = layoutAroundWindows(
+                    cursor.valueOf(),
+                    duration * 60_000,
+                    mealWindows.map((window) => ({
+                        start: minutesOfDay(date, window.startMinutes).valueOf(),
+                        end: minutesOfDay(date, window.endMinutes).valueOf(),
+                    })),
+                );
 
-                startTime = cursor;
-                endTime = date
-                    .hour(Math.floor(endMinutes / 60))
-                    .minute(endMinutes % 60)
-                    .second(0)
-                    .millisecond(0);
-                cursor = endTime;
+                // A cursor sitting inside a window is pushed out by the layout,
+                // so the first piece — not the cursor — is the real start.
+                startTime = dayjs(pieces[ 0 ].start);
+                endTime = startTime.add(duration, "minute");
+                cursor = dayjs(layoutEnd(pieces));
             } else {
                 // Bump the cursor past any meal window it would otherwise overlap.
                 for (const window of mealWindows) {
                     const cursorMinutes = cursor.hour() * 60 + cursor.minute();
                     const eventEndMinutes = cursorMinutes + duration;
                     if (cursorMinutes < window.endMinutes && eventEndMinutes > window.startMinutes) {
-                        cursor = date
-                            .hour(Math.floor(window.endMinutes / 60))
-                            .minute(window.endMinutes % 60)
-                            .second(0)
-                            .millisecond(0);
+                        cursor = minutesOfDay(date, window.endMinutes);
                     }
                 }
 

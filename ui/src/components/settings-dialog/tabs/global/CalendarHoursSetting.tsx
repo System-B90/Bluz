@@ -7,15 +7,7 @@ import { useCallback, useMemo } from "react";
 import { useSettings } from "@/components/base/SettingsProvider";
 import { BaseTimeSettingsCard, TimeSettingRow } from "@/components/settings-dialog/tabs/global/common";
 
-type CalendarHoursSettingProps = {
-    isShrunk?: boolean;
-    onToggleShrink?: () => void;
-};
-
-export function CalendarHoursSetting({
-    isShrunk = false,
-    onToggleShrink,
-}: CalendarHoursSettingProps)
+export function CalendarHoursSetting()
 {
     const {
         calendarDayStartTime,
@@ -71,8 +63,6 @@ export function CalendarHoursSetting({
             description="טווח השעות המוצג ביומן"
             disabled={ isReadOnlyIteration }
             icon={ <CalendarViewDayIcon /> }
-            isShrunk={ isShrunk }
-            onToggleShrink={ onToggleShrink }
             rows={ rows }
             title="שעות תצוגת יומן"
         />

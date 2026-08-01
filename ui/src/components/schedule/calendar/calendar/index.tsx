@@ -112,17 +112,6 @@ export function BluzCalendar({
             setOpenEventDialog,
         );
 
-    // Scope to the visible date range so WS broadcasts for events outside
-    // the current view don't force react-big-calendar to re-lay-out the grid.
-    const visibleEvents = useMemo(() => {
-        if (!startDate || !endDate) return events;
-        return events.filter(
-            (event) =>
-                event.endTime.toDate() >= startDate &&
-                event.startTime.toDate() <= endDate,
-        );
-    }, [events, startDate, endDate]);
-
     // Only render the calendar after the component has mounted on the client.
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- Standard hydration guard: must set mounted state after client mount
@@ -200,30 +189,22 @@ export function BluzCalendar({
         updateDateRange(currentDate, currentView);
     }, [currentDate, currentView, updateDateRange]);
 
-    // A click may land on a synthetic continuation block (rendered past a
-    // break for a split event, sharing the real event's id but carrying only
-    // its own segment's start/end) — always resolve back to the canonical
-    // stored event so edits/selection see the true full time range.
-    const resolveCanonicalEvent = useCallback(
-        (event: Event) => events.find((e) => e.id === event.id) ?? event,
-        [events],
-    );
-
+    // The calendar resolves its own split pieces back to the canonical event
+    // before calling out, so these only ever see whole events.
     const handleEditEvent = useCallback(
         (event: Event) => {
-            setSelectedEvent(resolveCanonicalEvent(event));
+            setSelectedEvent(event);
             setOpenEventDialog(true);
         },
-        [setSelectedEvent, setOpenEventDialog, resolveCanonicalEvent],
+        [setSelectedEvent, setOpenEventDialog],
     );
 
     const handleSelectEvent = useCallback(
         (event: Event) => {
-            const canonical = resolveCanonicalEvent(event);
-            setActiveEvent(canonical);
-            setSelectedEvent(canonical);
+            setActiveEvent(event);
+            setSelectedEvent(event);
         },
-        [setSelectedEvent, setActiveEvent, resolveCanonicalEvent],
+        [setSelectedEvent, setActiveEvent],
     );
 
     if (!mounted) {
@@ -377,7 +358,7 @@ export function BluzCalendar({
                     <CalendarView
                         currentView={currentView}
                         date={currentDate}
-                        events={visibleEvents}
+                        events={events}
                         onDoubleClickEvent={handleEditEvent}
                         onEventDrop={handleEventDrag}
                         onExportIcs={exportIcs}

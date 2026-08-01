@@ -6,7 +6,7 @@ import {
     SELECTORS,
     getEventDialog,
     gotoAppHome,
-    selectCalendarTimeRange,
+    switchToDayView,
     testId,
 } from "./fixtures";
 
@@ -48,7 +48,7 @@ async function deleteCourses(
 ): Promise<void> {
     // Children first — deleting a parent first can orphan its children.
     for (const course of [ ...courses ].reverse()) {
-        await request.delete("/api/course", { data: course.id });
+        await request.delete("/api/course", { data: JSON.stringify(course.id) });
     }
 }
 
@@ -58,7 +58,11 @@ async function selectCourses(
     names: Array<string>,
 ): Promise<void> {
     const dialog = getEventDialog(page);
-    await dialog.getByLabel("מסלולים").click();
+    await dialog
+        .locator(".MuiFormControl-root")
+        .filter({ hasText: "מסלולים" })
+        .getByRole("combobox")
+        .click();
 
     const listbox = page.getByRole("listbox");
     await expect(listbox).toBeVisible();
@@ -71,13 +75,58 @@ async function selectCourses(
     await expect(listbox).toBeHidden();
 }
 
+/**
+ * Drag-selects a taller-than-default time range on the calendar to open the
+ * event dialog. `fixtures.ts`'s `selectCalendarTimeRange` only spans ~50min,
+ * which at the calendar's pixel scale draws a tile just under the 55px
+ * threshold `UnifiedEvent` uses to decide whether to render the course row at
+ * all (see `size.height >= 55` in UnifiedEvent.tsx) — too short for the
+ * course-roll-up assertions in this file to see anything on the tile
+ * regardless of whether roll-up itself is working.
+ */
+async function selectTallCalendarTimeRange(
+    page: Parameters<typeof gotoAppHome>[0],
+): Promise<void> {
+    await switchToDayView(page);
+
+    await page.evaluate(() => {
+        document.querySelectorAll(".rbc-events-container").forEach((el) => {
+            (el as HTMLElement).style.pointerEvents = "none";
+        });
+    });
+
+    const daySlot = page.locator(".rbc-time-content .rbc-day-slot").first();
+    await daySlot.scrollIntoViewIfNeeded();
+
+    const box = await daySlot.boundingBox();
+    if (!box) {
+        throw new Error("Calendar day slot not found");
+    }
+
+    const x = box.x + box.width / 2;
+    const startY = box.y + box.height * 0.25;
+    const endY = box.y + box.height * 0.4;
+
+    await page.mouse.move(x, startY);
+    await page.mouse.down();
+    await page.mouse.move(x, endY, { steps: 8 });
+    await page.mouse.up();
+    await page.waitForTimeout(500);
+
+    await page.evaluate(() => {
+        document.querySelectorAll(".rbc-events-container").forEach((el) => {
+            (el as HTMLElement).style.pointerEvents = "";
+        });
+    });
+}
+
 /** Creates an event at a free slot with the given name and course selection. */
 async function createEventWithCourses(
     page: Parameters<typeof gotoAppHome>[0],
     eventName: string,
     courseNames: Array<string>,
 ): Promise<void> {
-    await selectCalendarTimeRange(page);
+    await selectTallCalendarTimeRange(page);
 
     const dialog = getEventDialog(page);
     await expect(dialog).toBeVisible();
@@ -111,6 +160,10 @@ async function deleteEvent(
 }
 
 test.describe("Course roll-up on schedule events", () => {
+    // A cold app load plus the hydration retry in event-dialog interactions
+    // doesn't fit the suite's global 15s budget (see settings.spec.ts).
+    test.describe.configure({ timeout: 60_000 });
+
     // A tree of: parent ── childA
     //                   └─ childB
     //                   └─ childC
@@ -152,11 +205,15 @@ test.describe("Course roll-up on schedule events", () => {
     test("shows the created course tree in the event dialog", async ({
         page,
     }) => {
-        await selectCalendarTimeRange(page);
+        await selectTallCalendarTimeRange(page);
 
         const dialog = getEventDialog(page);
         await expect(dialog).toBeVisible();
-        await dialog.getByLabel("מסלולים").click();
+        await dialog
+            .locator(".MuiFormControl-root")
+            .filter({ hasText: "מסלולים" })
+            .getByRole("combobox")
+            .click();
 
         const listbox = page.getByRole("listbox");
         await expect(

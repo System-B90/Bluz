@@ -69,8 +69,7 @@ async function createModuleWithEvents(page: Page): Promise<string> {
     await page.getByRole("button", { name: "סילבוס חדש" }).click();
     await page.waitForTimeout(300);
 
-    // The new syllabus card starts collapsed — expand it to reveal its actions.
-    await page.getByRole("button", { name: "עוד" }).first().click();
+    // The new syllabus card starts expanded — its actions are already visible.
 
     // Plain Tooltip+IconButton (no aria-label on the button itself — MUI's
     // Tooltip puts aria-label on the wrapping <span>, not the inner <button>).
@@ -149,14 +148,20 @@ async function setEventRecurrence(
 }
 
 /**
- * Expands the (single) module row on the "רצף זמן" timeline so its event rows
- * render, then locates the event's row by its label text.
+ * Expands the module row created by `createModuleWithEvents` on the "רצף זמן"
+ * timeline so its event rows render, then locates the event's row by its label
+ * text.
+ *
+ * Curricula now seed a default "פסקות" (breaks) module alongside the one this
+ * test creates, so the module-row locator must exclude it to stay unambiguous.
  */
 async function getTimelineEventRow(
     page: Page,
     eventTitle: string,
 ): Promise<Locator> {
-    const moduleRow = page.locator('[id^="gantt-row-module-"]');
+    const moduleRow = page
+        .locator('[id^="gantt-row-module-"]')
+        .filter({ hasNotText: "פסקות" });
     await expect(moduleRow).toBeVisible({ timeout: 10_000 });
 
     const eventRow = page
@@ -385,6 +390,7 @@ test.describe("Gantt Recurring Events (#111)", () => {
 
         const moduleBlockBox = await page
             .locator('[id^="block-module-"]')
+            .filter({ hasNotText: "פסקות" })
             .boundingBox();
         const eventBlockBox = await page
             .locator('[id^="block-event-"]')

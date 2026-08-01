@@ -52,19 +52,16 @@ export type Event = {
     required: boolean;
     personalTalk: boolean;
     /**
-     * When true and this event overlaps a break (הפסקה) event, it's split
-     * around the break instead of overlapping it: runs up to the break's
-     * start, then resumes after the break ends (endTime pushed out by the
-     * break's length).
+     * When true, a break (הפסקה) the event runs into interrupts it instead of
+     * overlapping it: the event pauses at the break's start and resumes when
+     * it ends, as many times as needed.
+     *
+     * This changes only how the event is *drawn*. `startTime` and `endTime`
+     * always describe the net working span, so an event's duration can never
+     * change as a side effect of a break being added, moved or removed — the
+     * calendar simply re-lays it out. See `api-shared/break-windows.ts`.
      */
     splitAcrossBreaks: boolean;
-    /**
-     * Display-only marker (never persisted): set on the synthetic block(s)
-     * the calendar renders after the first segment of a split event, so they
-     * paint as bare color with no title/icons while still sharing the real
-     * event's id (clicking one opens the same edit dialog as the real event).
-     */
-    continuationOfBreak?: boolean;
     color?: string;
     /**
      * "פיקטיבי" marker (issue #102): shown to students as a normal event but

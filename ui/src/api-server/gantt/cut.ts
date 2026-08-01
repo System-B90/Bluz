@@ -35,6 +35,7 @@ import {
 import { GanttCurriculumId, ModuleEventType } from "@/api-shared/types/gantt/models";
 import {
     MealSettings,
+    MEAL_EVENT_TITLES,
     MEAL_TIMES_SETTING_KEY,
 } from "@/api-shared/types/settings/meal";
 import {
@@ -86,6 +87,23 @@ export function moduleEventTypeToCalendarType(
         [ModuleEventType.Other]: EventType.OTHER,
     };
     return LOOKUP[type] ?? EventType.OTHER;
+}
+
+const MEAL_TITLES = new Set<string>(Object.values(MEAL_EVENT_TITLES));
+
+/**
+ * Calendar type of a cut occurrence. The auto-seeded meal events become real
+ * break (הפסקה) events rather than generic "אחר" ones: the planner already
+ * treats their windows as breaks while stacking, and once in the schedule they
+ * must keep interrupting the events that split across breaks.
+ */
+export function scheduleEventTypeFor(ganttEvent: {
+    title: string;
+    type: ModuleEventType;
+}): EventType {
+    return MEAL_TITLES.has(ganttEvent.title)
+        ? EventType.BREAK
+        : moduleEventTypeToCalendarType(ganttEvent.type);
 }
 
 /**
@@ -259,7 +277,7 @@ export function buildScheduleEvent(
     return {
         id: randomUUID(),
         name: ganttEvent.title,
-        type: moduleEventTypeToCalendarType(ganttEvent.type),
+        type: scheduleEventTypeFor(ganttEvent),
         subject: fallbackHiveSubjectId ?? 0,
         hiveModule: fallbackHiveModuleId ?? 0,
         hiveLesson: ganttEvent.hiveLessonId ?? null,

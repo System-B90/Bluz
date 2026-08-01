@@ -7,15 +7,7 @@ import { useCallback, useMemo } from "react";
 import { useSettings } from "@/components/base/SettingsProvider";
 import { BaseTimeSettingsCard, TimeSettingRow } from "@/components/settings-dialog/tabs/global/common";
 
-type MealTimesSettingProps = {
-    isShrunk?: boolean;
-    onToggleShrink?: () => void;
-};
-
-export function MealTimesSetting({
-    isShrunk = false,
-    onToggleShrink,
-}: MealTimesSettingProps)
+export function MealTimesSetting()
 {
     const {
         breakfastTime,
@@ -91,8 +83,6 @@ export function MealTimesSetting({
         <BaseTimeSettingsCard
             description="זמני ארוחות מועדפים"
             disabled={ isReadOnlyIteration }
-            isShrunk={ isShrunk }
-            onToggleShrink={ onToggleShrink }
             rows={ rows }
             title="שעות ארוחות"
         />

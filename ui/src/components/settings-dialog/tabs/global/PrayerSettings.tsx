@@ -8,15 +8,7 @@ import { PrayerSettings as IPrayerSettings } from "@/api-shared/types/settings/p
 import { useSettings } from "@/components/base/SettingsProvider";
 import { BaseTimeSettingsCard, TimeSettingRow } from "@/components/settings-dialog/tabs/global/common";
 
-type PrayerSettingsProps = {
-    isShrunk?: boolean;
-    onToggleShrink?: () => void;
-};
-
-export function PrayerSettings({
-    isShrunk = false,
-    onToggleShrink,
-}: PrayerSettingsProps)
+export function PrayerSettings()
 {
     const { prayerTimes, updatePrayerTime, isReadOnlyIteration } =
         useSettings();
@@ -65,8 +57,6 @@ export function PrayerSettings({
         <BaseTimeSettingsCard
             description="זמני תפילות קבועים המשתקפים ביומן"
             disabled={ isReadOnlyIteration }
-            isShrunk={ isShrunk }
-            onToggleShrink={ onToggleShrink }
             rows={ rows }
             sx={ { height: "100%" } }
             title="זמני תפילות"

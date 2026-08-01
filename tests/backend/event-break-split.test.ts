@@ -9,6 +9,14 @@ import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import { DatabaseController } from "@/api-server/mongo-db-controller";
 import { EventType } from "@/api-shared/types/event";
 
+/**
+ * An event's stored span is its *net working time*, whatever breaks it happens
+ * to run into — those are drawn around at render time. Persistence must
+ * therefore keep its hands off `endTime`: writing break length into it is what
+ * made an event grow a little on every save, and would let one event's move
+ * silently change another's duration.
+ */
+
 type MockController = {
     events: {
         findOne: ReturnType<typeof vi.fn>;
@@ -56,9 +64,11 @@ function makeEvent(overrides: Partial<DbEventDocument> = {}): DbEventDocument {
     };
 }
 
+const NINETY_MINUTES = 90 * 60 * 1000;
+
 let controller: MockController;
 
-describe("split-across-breaks wiring in DbEvent.create/set", () => {
+describe("DbEvent persists the net working span, breaks or not", () => {
     beforeEach(() => {
         controller = makeController([
             {
@@ -69,50 +79,59 @@ describe("split-across-breaks wiring in DbEvent.create/set", () => {
         ]);
     });
 
-    it("extends endTime past an overlapping break on create when splitAcrossBreaks is set", async () => {
+    it("stores the given span on create, even with an overlapping break", async () => {
         const created = await DbEvent.create(
             makeEvent(),
             undefined,
             controller as unknown as DatabaseController,
         );
-        expect(created.endTime).toEqual(new Date("2026-06-01T14:15:00"));
+
         expect(created.startTime).toEqual(new Date("2026-06-01T12:15:00"));
+        expect(created.endTime).toEqual(new Date("2026-06-01T13:45:00"));
     });
 
-    it("extends endTime past an overlapping break on update when splitAcrossBreaks is set", async () => {
+    it("stores the given span on update, even with an overlapping break", async () => {
         const updated = await DbEvent.set(
             makeEvent(),
             undefined,
             controller as unknown as DatabaseController,
         );
-        expect(updated.endTime).toEqual(new Date("2026-06-01T14:15:00"));
+
+        expect(updated.endTime).toEqual(new Date("2026-06-01T13:45:00"));
     });
 
-    it("leaves endTime untouched when splitAcrossBreaks is off", async () => {
+    it("is idempotent: re-saving an unchanged event never grows it", async () => {
+        let event = makeEvent();
+        for (let save = 0; save < 5; save++) {
+            event = await DbEvent.set(
+                event,
+                undefined,
+                controller as unknown as DatabaseController,
+            );
+        }
+
+        expect(event.endTime.getTime() - event.startTime.getTime()).toBe(
+            NINETY_MINUTES,
+        );
+    });
+
+    it("treats a split-disabled event identically", async () => {
         const created = await DbEvent.create(
             makeEvent({ splitAcrossBreaks: false }),
             undefined,
             controller as unknown as DatabaseController,
         );
+
         expect(created.endTime).toEqual(new Date("2026-06-01T13:45:00"));
     });
 
-    it("never adjusts a break event itself, even if flagged", async () => {
-        const created = await DbEvent.create(
-            makeEvent({ type: EventType.BREAK, splitAcrossBreaks: true }),
-            undefined,
-            controller as unknown as DatabaseController,
-        );
-        expect(created.endTime).toEqual(new Date("2026-06-01T13:45:00"));
-    });
-
-    it("leaves endTime untouched when no break overlaps that day", async () => {
-        controller = makeController([]);
-        const created = await DbEvent.create(
+    it("does not query for breaks at all", async () => {
+        await DbEvent.create(
             makeEvent(),
             undefined,
             controller as unknown as DatabaseController,
         );
-        expect(created.endTime).toEqual(new Date("2026-06-01T13:45:00"));
+
+        expect(controller.events.find).not.toHaveBeenCalled();
     });
 });

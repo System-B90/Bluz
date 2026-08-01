@@ -1,67 +1,32 @@
 import Box from "@mui/material/Box";
-import { useState } from "react";
 
 import { CalendarHoursSetting } from "@/components/settings-dialog/tabs/global/CalendarHoursSetting";
-import { CourseSettings } from "@/components/settings-dialog/tabs/global/course-settings";
 import { DayStartTimeSetting } from "@/components/settings-dialog/tabs/global/DayStartTimeSetting";
 import { MealTimesSetting } from "@/components/settings-dialog/tabs/global/MealTimesSetting";
 import { PrayerSettings } from "@/components/settings-dialog/tabs/global/PrayerSettings";
 
 export function GlobalSettings()
 {
-    const [ isPrayerShrunk, setIsPrayerShrunk ] = useState(false);
-
     return (
         <Box
             sx={ {
                 display: "flex",
-                flexDirection: { xs: "column", lg: "row" },
+                flexWrap: "wrap",
                 gap: 3,
-                alignItems: "stretch",
-                justifyContent: "center",
                 width: "100%",
             } }
         >
-            <Box
-                sx={ {
-                    flex: isPrayerShrunk ? "0 0 auto" : 1,
-                    width: isPrayerShrunk ? 80 : "auto",
-                    minWidth: isPrayerShrunk ? 80 : 280,
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 3,
-                    height: '100%',
-                } }
-            >
-                <PrayerSettings
-                    isShrunk={ isPrayerShrunk }
-                    onToggleShrink={ () => setIsPrayerShrunk(!isPrayerShrunk) }
-                />
-                <DayStartTimeSetting
-                    isShrunk={ isPrayerShrunk }
-                    onToggleShrink={ () => setIsPrayerShrunk(!isPrayerShrunk) }
-                />
-                <MealTimesSetting
-                    isShrunk={ isPrayerShrunk }
-                    onToggleShrink={ () => setIsPrayerShrunk(!isPrayerShrunk) }
-                />
-                <CalendarHoursSetting
-                    isShrunk={ isPrayerShrunk }
-                    onToggleShrink={ () => setIsPrayerShrunk(!isPrayerShrunk) }
-                />
+            <Box sx={ { flex: "1 1 340px", minWidth: 300 } }>
+                <PrayerSettings />
             </Box>
-            <Box
-                sx={ {
-                    flex: isPrayerShrunk ? 2.6 : 1.6,
-                    minWidth: 0,
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    display: "flex",
-                    flexDirection: "column",
-                    height: '100%',
-                } }
-            >
-                <CourseSettings />
+            <Box sx={ { flex: "1 1 340px", minWidth: 300 } }>
+                <DayStartTimeSetting />
+            </Box>
+            <Box sx={ { flex: "1 1 340px", minWidth: 300 } }>
+                <MealTimesSetting />
+            </Box>
+            <Box sx={ { flex: "1 1 340px", minWidth: 300 } }>
+                <CalendarHoursSetting />
             </Box>
         </Box>
     );
