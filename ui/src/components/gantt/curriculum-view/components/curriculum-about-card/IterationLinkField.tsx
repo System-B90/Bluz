@@ -1,14 +1,12 @@
 import LinkIcon from "@mui/icons-material/Link";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
+import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
-import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Skeleton from "@mui/material/Skeleton";
+import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
@@ -34,8 +32,6 @@ export function IterationLinkField({ curriculumId }: IterationLinkFieldProps) {
     const [iterations, setIterations] = useState<Array<Iteration> | null>(
         null,
     );
-    const [selectedIterationId, setSelectedIterationId] =
-        useState<IterationId>("");
     const [isLinking, setIsLinking] = useState(false);
     const [isUnlinking, setIsUnlinking] = useState(false);
 
@@ -94,31 +90,27 @@ export function IterationLinkField({ curriculumId }: IterationLinkFieldProps) {
             .finally(() => setIsOverriding(false));
     }, [curriculumId, currentIteration, enqueueSnackbar, loadIterations]);
 
-    const onChange = useCallback((event: SelectChangeEvent) => {
-        setSelectedIterationId(event.target.value);
-    }, []);
-
-    const handleLink = useCallback(() => {
-        if (!curriculumId || !selectedIterationId) {
-            return;
-        }
-        setIsLinking(true);
-        apiPatchIteration(selectedIterationId, {
-            ganttCurriculumId: curriculumId,
-        })
-            .then(() => {
-                setSelectedIterationId("");
-                loadIterations();
+    const handleLink = useCallback(
+        (iterationId: IterationId) => {
+            if (!curriculumId || !iterationId) {
+                return;
+            }
+            setIsLinking(true);
+            apiPatchIteration(iterationId, {
+                ganttCurriculumId: curriculumId,
             })
-            .catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "קישור המחזור לתוכנית הלימודים נכשל.",
-                    error,
-                ),
-            )
-            .finally(() => setIsLinking(false));
-    }, [curriculumId, selectedIterationId, enqueueSnackbar, loadIterations]);
+                .then(() => loadIterations())
+                .catch((error) =>
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "קישור המחזור לתוכנית הלימודים נכשל.",
+                        error,
+                    ),
+                )
+                .finally(() => setIsLinking(false));
+        },
+        [curriculumId, enqueueSnackbar, loadIterations],
+    );
 
     const handleUnlink = useCallback(() => {
         if (!linkedIteration) {
@@ -206,52 +198,40 @@ export function IterationLinkField({ curriculumId }: IterationLinkFieldProps) {
                     </Tooltip>
                 </Box>
             ) : availableIterations.length > 0 ? (
-                <Box alignItems="center" display="flex" gap={0.5}>
-                    <FormControl fullWidth size="small">
-                        <InputLabel>מחזורים זמינים</InputLabel>
-                        <Select
-                            label="מחזורים זמינים"
-                            onChange={onChange}
-                            value={selectedIterationId}
-                        >
-                            {availableIterations.map((iteration) => (
-                                <MenuItem
-                                    key={iteration.id}
-                                    value={iteration.id}
-                                >
-                                    {iteration.label}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <Tooltip title="קישור מחזור לתוכנית הלימודים">
-                        <span>
-                            <IconButton
-                                disabled={
-                                    selectedIterationId.length === 0
-                                }
-                                onClick={handleLink}
-                                size="small"
-                            >
-                                {isLinking ? (
-                                    <CircularProgress
-                                        color="inherit"
-                                        size={20}
-                                    />
-                                ) : (
-                                    <LinkIcon
-                                        color={
-                                            selectedIterationId.length > 0
-                                                ? "info"
-                                                : "disabled"
-                                        }
-                                        fontSize="small"
-                                    />
-                                )}
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                </Box>
+                <Autocomplete
+                    disableClearable
+                    disabled={isLinking}
+                    getOptionLabel={(iteration) => iteration.label}
+                    loading={isLinking}
+                    onChange={(_event, iteration) =>
+                        iteration && handleLink(iteration.id)
+                    }
+                    options={availableIterations}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            placeholder="בחר מחזור לקישור..."
+                            slotProps={{
+                                input: {
+                                    ...params.InputProps,
+                                    endAdornment: isLinking ? (
+                                        <CircularProgress
+                                            color="inherit"
+                                            size={16}
+                                        />
+                                    ) : (
+                                        <LinkIcon
+                                            color="disabled"
+                                            fontSize="small"
+                                        />
+                                    ),
+                                },
+                            }}
+                        />
+                    )}
+                    size="small"
+                    value={undefined}
+                />
             ) : currentIteration ? (
                 <Box alignItems="center" display="flex" gap={0.5}>
                     <Typography color="textSecondary" sx={{ flexGrow: 1 }} variant="body2">

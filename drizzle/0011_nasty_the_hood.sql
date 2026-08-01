@@ -1,0 +1,1 @@
+ALTER TABLE "e" ADD COLUMN "split_across_breaks" boolean DEFAULT false NOT NULL;

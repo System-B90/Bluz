@@ -180,7 +180,6 @@ export function IterationSettings()
                 formCardProps={ {
                     handleCancelEdit: form.handleCancelEdit,
                     handleSave: form.handleSave,
-                    handleStartCreate: form.handleStartCreate,
                     handleSyncHive,
                     isCreating: form.isCreating,
                     isSubmitting: form.isSubmitting,

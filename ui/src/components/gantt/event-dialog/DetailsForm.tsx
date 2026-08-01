@@ -9,7 +9,11 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import { GanttEvent, ModuleEventType } from "@/api-shared/types/gantt/models";
+import {
+    defaultSplitAcrossBreaks,
+    GanttEvent,
+    ModuleEventType,
+} from "@/api-shared/types/gantt/models";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { EventOrchestratorField } from "@/components/gantt/event-dialog/EventOrchestratorField";
 import { ShuffleSelect } from "@/components/gantt/ShuffleSelect";
@@ -52,8 +56,13 @@ export function EventDetailsForm({
                     <Select
                         label="סוג"
                         onChange={ (e) =>
-                            commit({ type: e.target.value as ModuleEventType })
-                        }
+                        {
+                            const type = e.target.value as ModuleEventType;
+                            commit({
+                                type,
+                                splitAcrossBreaks: defaultSplitAcrossBreaks(type),
+                            });
+                        } }
                         value={ event.type }
                     >
                         { Object.values(ModuleEventType).map((t) => (
@@ -124,6 +133,18 @@ export function EventDetailsForm({
                             />
                         }
                         label='חלון פ"א'
+                    />
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={ event.splitAcrossBreaks }
+                                onChange={ (e) =>
+                                    commit({ splitAcrossBreaks: e.target.checked })
+                                }
+                                size="small"
+                            />
+                        }
+                        label="פיצול הפסקות"
                     />
                 </Stack>
             </Box>

@@ -3,10 +3,6 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
-import CircularProgress from "@mui/material/CircularProgress";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
 import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
@@ -14,10 +10,7 @@ import dayjs from "dayjs";
 import { useCallback, useMemo, useState } from "react";
 import { Calendar, Messages, View } from "react-big-calendar";
 
-import { CutValidationError } from "@/api-shared/gantt/cut-planner";
-import {
-    ApiCutPreviewOccurrence,
-} from "@/api-shared/types/gantt/cut";
+import { ApiCutPreviewOccurrence } from "@/api-shared/types/gantt/cut";
 import {
     GanttCurriculumId,
     ModuleEventType,
@@ -25,9 +18,20 @@ import {
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
+import {
+    PREVIEW_BUTTON_GROUP_SX,
+    PreviewLayout,
+    PreviewToolbar,
+    renderPreviewBlockers,
+} from "@/components/gantt/curriculum-view/tabs/cut-preview-tab/PreviewShell";
 import { useCutPreview } from "@/components/gantt/curriculum-view/tabs/cut-preview-tab/UseCutPreview";
 import { localizer } from "@/components/schedule/calendar/calendar/DndLocalizer";
 import { resolveEventColor } from "@/components/schedule/event-component/event-colors";
+
+export {
+    PreviewLoading,
+    PreviewValidationErrors,
+} from "@/components/gantt/curriculum-view/tabs/cut-preview-tab/PreviewShell";
 
 export type CutPreviewTabProps = {
     curriculumId: GanttCurriculumId;
@@ -39,59 +43,6 @@ type PreviewCalendarEvent = {
     end: Date;
     resource: ApiCutPreviewOccurrence;
 };
-
-function describeValidationError(error: CutValidationError): string {
-    switch (error.type) {
-    case "missing-start-date":
-        return "לתוכנית הלימודים אין תאריך התחלה — קבעו תאריך התחלה כדי לראות תצוגה מקדימה";
-    case "unmapped-event":
-        return `האירוע "${error.title}" אינו משובץ ליום כלשהו`;
-    case "unsatisfied-recurrence":
-        return `לאירוע המחזורי "${error.title}" אין שיבוץ פתיחה בשבוע הראשון`;
-    }
-}
-
-export function PreviewValidationErrors({
-    errors,
-}: {
-    errors: Array<CutValidationError>;
-}) {
-    return (
-        <Stack gap={1} sx={{ p: 2 }}>
-            <Alert severity="warning">
-                לא ניתן להציג תצוגה מקדימה — נמצאו בעיות בתוכנית:
-            </Alert>
-            <List dense disablePadding>
-                {errors.map((error) => (
-                    <ListItem
-                        disableGutters
-                        key={
-                            "eventId" in error
-                                ? `${error.type}:${error.eventId}`
-                                : error.type
-                        }
-                    >
-                        <ListItemText primary={describeValidationError(error)} />
-                    </ListItem>
-                ))}
-            </List>
-        </Stack>
-    );
-}
-
-export function PreviewLoading() {
-    return (
-        <Box
-            alignItems="center"
-            display="flex"
-            height="100%"
-            justifyContent="center"
-            width="100%"
-        >
-            <CircularProgress size={28} />
-        </Box>
-    );
-}
 
 /**
  * Read-only week timetable of the cut plan ("תצוגה מקדימה") — how each week
@@ -176,48 +127,22 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
         [theme, getSubject, getCustomColor],
     );
 
-    if (preview.kind === "loading") return <PreviewLoading />;
-    if (preview.kind === "error") {
-        return (
-            <Alert severity="error" sx={{ m: 2 }}>
-                {preview.message}
-            </Alert>
-        );
-    }
-    if (!preview.data.ok) {
-        return <PreviewValidationErrors errors={preview.data.errors} />;
-    }
+    const blockers = renderPreviewBlockers(preview);
+    if (blockers) return blockers;
+    if (preview.kind !== "ready" || !preview.data.ok) return null;
 
     const weekLabel = dayjs(shownDate).format("DD/MM/YYYY");
 
     return (
-        <Box display="flex" flexDirection="column" height="100%" minHeight={0}>
-            <Box
-                alignItems="center"
-                display="flex"
-                flexWrap="wrap"
-                gap={1.5}
-                justifyContent="space-between"
-                pb={1}
+        <PreviewLayout>
+            <PreviewToolbar
+                onNavigate={navigate}
+                title={
+                    <Typography fontWeight="bold" variant="subtitle1">
+                        שבוע {weekLabel}
+                    </Typography>
+                }
             >
-                <ButtonGroup
-                    size="small"
-                    sx={{ "& .MuiButton-root": { height: 32 } }}
-                    variant="outlined"
-                >
-                    <Button onClick={() => navigate("prev")}>
-                        {CALENDAR_MESSAGES.previous}
-                    </Button>
-                    <Button onClick={() => navigate("start")}>
-                        תחילת הגאנט
-                    </Button>
-                    <Button onClick={() => navigate("next")}>
-                        {CALENDAR_MESSAGES.next}
-                    </Button>
-                </ButtonGroup>
-                <Typography fontWeight="bold" variant="subtitle1">
-                    שבוע {weekLabel}
-                </Typography>
                 <Stack alignItems="center" direction="row" gap={1.5}>
                     {preview.data.skipped.length > 0 ? (
                         <Alert
@@ -238,7 +163,7 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
                     ) : null}
                     <ButtonGroup
                         size="small"
-                        sx={{ "& .MuiButton-root": { height: 32 } }}
+                        sx={PREVIEW_BUTTON_GROUP_SX}
                         variant="outlined"
                     >
                         <Button
@@ -255,7 +180,7 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
                         </Button>
                     </ButtonGroup>
                 </Stack>
-            </Box>
+            </PreviewToolbar>
             <Box flexGrow={1} minHeight={0}>
                 <Calendar<PreviewCalendarEvent>
                     date={shownDate}
@@ -275,6 +200,6 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
                     views={["day", "week"]}
                 />
             </Box>
-        </Box>
+        </PreviewLayout>
     );
 }

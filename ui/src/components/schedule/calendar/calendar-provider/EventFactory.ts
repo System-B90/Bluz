@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 
 import
 {
+    defaultSplitAcrossBreaks,
     Event,
     eventHasLecturers,
     EventType,
@@ -34,6 +35,8 @@ export const createEventFactory = (
         required: eventPartial.required ?? false,
         hidden: eventPartial.hidden ?? false,
         personalTalk: eventPartial.personalTalk ?? false,
+        splitAcrossBreaks:
+            eventPartial.splitAcrossBreaks ?? defaultSplitAcrossBreaks(type),
         fake: eventPartial.fake ?? false,
         color: eventPartial.color,
     };

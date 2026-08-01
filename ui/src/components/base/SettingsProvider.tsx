@@ -14,6 +14,11 @@ import
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
 {
+    apiGetMealSettings,
+    apiSetMealSettings,
+} from "@/api-client/meal-settings";
+import
+{
     apiGetPrayerSettings,
     apiSetPrayerSettings,
 } from "@/api-client/prayer";
@@ -23,12 +28,67 @@ import
     apiSetScheduleSettings,
 } from "@/api-client/schedule-settings";
 import { inplaceDateFixup } from "@/api-shared/date-fixer";
+import {
+    DEFAULT_BREAKFAST_TIME,
+    DEFAULT_DINNER_TIME,
+    DEFAULT_LUNCH_TIME,
+} from "@/api-shared/types/settings/meal";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
 import {
+    DEFAULT_CALENDAR_DAY_END_TIME,
+    DEFAULT_CALENDAR_DAY_START_TIME,
     DEFAULT_DAY_START_TIME,
     DEFAULT_WEEKEND_HOME_START_TIME,
 } from "@/api-shared/types/settings/schedule";
 import { useIterationScope } from "@/components/base/IterationProvider";
+
+// Calendar hours change very rarely, so the last known value is cached in
+// localStorage and read synchronously on mount — the calendar renders with
+// real bounds immediately instead of flashing the hardcoded defaults while
+// the settings API call is in flight.
+const CALENDAR_HOURS_CACHE_KEY = "bluz.calendarHours";
+
+type CachedCalendarHours = {
+    calendarDayStartTime: string;
+    calendarDayEndTime: string;
+};
+
+function readCachedCalendarHours(): CachedCalendarHours | null
+{
+    if (typeof window === "undefined") return null;
+    try
+    {
+        const raw = window.localStorage.getItem(CALENDAR_HOURS_CACHE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (
+            typeof parsed?.calendarDayStartTime !== "string" ||
+            typeof parsed?.calendarDayEndTime !== "string"
+        )
+        {
+            return null;
+        }
+        return parsed;
+    } catch
+    {
+        return null;
+    }
+}
+
+function writeCachedCalendarHours(hours: CachedCalendarHours): void
+{
+    if (typeof window === "undefined") return;
+    try
+    {
+        window.localStorage.setItem(
+            CALENDAR_HOURS_CACHE_KEY,
+            JSON.stringify(hours),
+        );
+    } catch
+    {
+        // Best-effort cache — private browsing / full quota just skips it.
+    }
+}
 
 export type SettingsContextState = {
     default: boolean;
@@ -39,6 +99,16 @@ export type SettingsContextState = {
     updateDayStartTime: (newDayStartTime: string) => void;
     weekendHomeStartTime: string;
     updateWeekendHomeStartTime: (newWeekendHomeStartTime: string) => void;
+    calendarDayStartTime: string;
+    updateCalendarDayStartTime: (newCalendarDayStartTime: string) => void;
+    calendarDayEndTime: string;
+    updateCalendarDayEndTime: (newCalendarDayEndTime: string) => void;
+    breakfastTime: string;
+    updateBreakfastTime: (newBreakfastTime: string) => void;
+    lunchTime: string;
+    updateLunchTime: (newLunchTime: string) => void;
+    dinnerTime: string;
+    updateDinnerTime: (newDinnerTime: string) => void;
     /** True while viewing a past iteration — its settings are read-only. */
     isReadOnlyIteration: boolean;
 };
@@ -52,6 +122,16 @@ const SettingsContext = createContext<SettingsContextState | undefined>({
     updateDayStartTime: (_newDayStartTime: string) => { },
     weekendHomeStartTime: DEFAULT_WEEKEND_HOME_START_TIME,
     updateWeekendHomeStartTime: (_newWeekendHomeStartTime: string) => { },
+    calendarDayStartTime: DEFAULT_CALENDAR_DAY_START_TIME,
+    updateCalendarDayStartTime: (_newCalendarDayStartTime: string) => { },
+    calendarDayEndTime: DEFAULT_CALENDAR_DAY_END_TIME,
+    updateCalendarDayEndTime: (_newCalendarDayEndTime: string) => { },
+    breakfastTime: DEFAULT_BREAKFAST_TIME,
+    updateBreakfastTime: (_newBreakfastTime: string) => { },
+    lunchTime: DEFAULT_LUNCH_TIME,
+    updateLunchTime: (_newLunchTime: string) => { },
+    dinnerTime: DEFAULT_DINNER_TIME,
+    updateDinnerTime: (_newDinnerTime: string) => { },
     isReadOnlyIteration: false,
 });
 
@@ -146,15 +226,16 @@ export const SettingsProvider = ({
             });
     }, [ dispatch, iterationId ]);
 
-    const updatePrayerTimes = useCallback(
-        async (newPrayerTimes: PrayerSettings) =>
+    /**
+     * Persist an already-dispatched optimistic prayer-times change, rolling the
+     * reducer back to `previous` if the server rejects it.
+     */
+    const persistPrayerTimes = useCallback(
+        async (nextTimes: PrayerSettings, previous: PrayerSettings) =>
         {
-            const previousPrayerTimes = state.prayerTimes;
-            dispatch({ type: "SET_PRAYER_TIMES", payload: newPrayerTimes });
-
             try
             {
-                await apiSetPrayerSettings(newPrayerTimes, iterationId);
+                await apiSetPrayerSettings(nextTimes, iterationId);
                 enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", {
                     variant: "success",
                 });
@@ -162,7 +243,7 @@ export const SettingsProvider = ({
             {
                 dispatch({
                     type: "ROLLBACK_PRAYER_TIMES",
-                    payload: previousPrayerTimes,
+                    payload: previous,
                 });
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
@@ -171,7 +252,17 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ state.prayerTimes, dispatch, iterationId ],
+        [ dispatch, iterationId ],
+    );
+
+    const updatePrayerTimes = useCallback(
+        async (newPrayerTimes: PrayerSettings) =>
+        {
+            const previousPrayerTimes = state.prayerTimes;
+            dispatch({ type: "SET_PRAYER_TIMES", payload: newPrayerTimes });
+            await persistPrayerTimes(newPrayerTimes, previousPrayerTimes);
+        },
+        [ state.prayerTimes, dispatch, persistPrayerTimes ],
     );
 
     const updatePrayerTime = useCallback(
@@ -179,32 +270,12 @@ export const SettingsProvider = ({
         {
             const previousPrayerTimes = state.prayerTimes;
             dispatch({ type: "UPDATE_PRAYER_TIME", payload: { key, value } });
-
-            const updatedTimes = {
-                ...state.prayerTimes,
-                [ key ]: value,
-            };
-
-            try
-            {
-                await apiSetPrayerSettings(updatedTimes, iterationId);
-                enqueueSnackbar("שעות תפילה עודכנו בהצלחה.", {
-                    variant: "success",
-                });
-            } catch (error)
-            {
-                dispatch({
-                    type: "ROLLBACK_PRAYER_TIMES",
-                    payload: previousPrayerTimes,
-                });
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "עדכון שעות תפילה נכשל!",
-                    error,
-                );
-            }
+            await persistPrayerTimes(
+                { ...state.prayerTimes, [ key ]: value },
+                previousPrayerTimes,
+            );
         },
-        [ state.prayerTimes, dispatch, iterationId ],
+        [ state.prayerTimes, dispatch, persistPrayerTimes ],
     );
 
     const [ dayStartTime, setDayStartTime ] = useState<string>(
@@ -212,6 +283,13 @@ export const SettingsProvider = ({
     );
     const [ weekendHomeStartTime, setWeekendHomeStartTime ] = useState<string>(
         DEFAULT_WEEKEND_HOME_START_TIME,
+    );
+    const [ cachedCalendarHours ] = useState(readCachedCalendarHours);
+    const [ calendarDayStartTime, setCalendarDayStartTime ] = useState<string>(
+        cachedCalendarHours?.calendarDayStartTime ?? DEFAULT_CALENDAR_DAY_START_TIME,
+    );
+    const [ calendarDayEndTime, setCalendarDayEndTime ] = useState<string>(
+        cachedCalendarHours?.calendarDayEndTime ?? DEFAULT_CALENDAR_DAY_END_TIME,
     );
 
     const loadScheduleSettings = useCallback(() =>
@@ -227,6 +305,19 @@ export const SettingsProvider = ({
                     fetchedScheduleSettings?.weekendHomeStartTime ??
                         DEFAULT_WEEKEND_HOME_START_TIME,
                 );
+
+                const nextCalendarDayStartTime =
+                    fetchedScheduleSettings?.calendarDayStartTime ??
+                        DEFAULT_CALENDAR_DAY_START_TIME;
+                const nextCalendarDayEndTime =
+                    fetchedScheduleSettings?.calendarDayEndTime ??
+                        DEFAULT_CALENDAR_DAY_END_TIME;
+                setCalendarDayStartTime(nextCalendarDayStartTime);
+                setCalendarDayEndTime(nextCalendarDayEndTime);
+                writeCachedCalendarHours({
+                    calendarDayStartTime: nextCalendarDayStartTime,
+                    calendarDayEndTime: nextCalendarDayEndTime,
+                });
             })
             .catch((error) =>
             {
@@ -236,7 +327,7 @@ export const SettingsProvider = ({
                     error,
                 );
             });
-    }, [ setDayStartTime, setWeekendHomeStartTime, iterationId ]);
+    }, [ setDayStartTime, setWeekendHomeStartTime, setCalendarDayStartTime, setCalendarDayEndTime, iterationId ]);
 
     const updateDayStartTime = useCallback(
         async (newDayStartTime: string) =>
@@ -249,6 +340,8 @@ export const SettingsProvider = ({
                 await apiSetScheduleSettings({
                     dayStartTime: newDayStartTime,
                     weekendHomeStartTime,
+                    calendarDayStartTime,
+                    calendarDayEndTime,
                 }, iterationId);
                 enqueueSnackbar('שעת תחילת יום ברירת מחדל עודכנה בהצלחה.', {
                     variant: "success",
@@ -263,7 +356,7 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ dayStartTime, weekendHomeStartTime, iterationId ],
+        [ dayStartTime, weekendHomeStartTime, calendarDayStartTime, calendarDayEndTime, iterationId ],
     );
 
     const updateWeekendHomeStartTime = useCallback(
@@ -277,6 +370,8 @@ export const SettingsProvider = ({
                 await apiSetScheduleSettings({
                     dayStartTime,
                     weekendHomeStartTime: newWeekendHomeStartTime,
+                    calendarDayStartTime,
+                    calendarDayEndTime,
                 }, iterationId);
                 enqueueSnackbar('שעת תחילת לו"ז אחרי סופ"ש עודכנה בהצלחה.', {
                     variant: "success",
@@ -291,14 +386,210 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ dayStartTime, weekendHomeStartTime, iterationId ],
+        [ dayStartTime, weekendHomeStartTime, calendarDayStartTime, calendarDayEndTime, iterationId ],
+    );
+
+    const updateCalendarDayStartTime = useCallback(
+        async (newCalendarDayStartTime: string) =>
+        {
+            const previousCalendarDayStartTime = calendarDayStartTime;
+            setCalendarDayStartTime(newCalendarDayStartTime);
+            writeCachedCalendarHours({
+                calendarDayStartTime: newCalendarDayStartTime,
+                calendarDayEndTime,
+            });
+
+            try
+            {
+                await apiSetScheduleSettings({
+                    dayStartTime,
+                    weekendHomeStartTime,
+                    calendarDayStartTime: newCalendarDayStartTime,
+                    calendarDayEndTime,
+                }, iterationId);
+                enqueueSnackbar("שעת תחילת יום ביומן עודכנה בהצלחה.", {
+                    variant: "success",
+                });
+            } catch (error)
+            {
+                setCalendarDayStartTime(previousCalendarDayStartTime);
+                writeCachedCalendarHours({
+                    calendarDayStartTime: previousCalendarDayStartTime,
+                    calendarDayEndTime,
+                });
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "עדכון שעת תחילת יום ביומן נכשל!",
+                    error,
+                );
+            }
+        },
+        [ dayStartTime, weekendHomeStartTime, calendarDayStartTime, calendarDayEndTime, iterationId ],
+    );
+
+    const updateCalendarDayEndTime = useCallback(
+        async (newCalendarDayEndTime: string) =>
+        {
+            const previousCalendarDayEndTime = calendarDayEndTime;
+            setCalendarDayEndTime(newCalendarDayEndTime);
+            writeCachedCalendarHours({
+                calendarDayStartTime,
+                calendarDayEndTime: newCalendarDayEndTime,
+            });
+
+            try
+            {
+                await apiSetScheduleSettings({
+                    dayStartTime,
+                    weekendHomeStartTime,
+                    calendarDayStartTime,
+                    calendarDayEndTime: newCalendarDayEndTime,
+                }, iterationId);
+                enqueueSnackbar("שעת סיום יום ביומן עודכנה בהצלחה.", {
+                    variant: "success",
+                });
+            } catch (error)
+            {
+                setCalendarDayEndTime(previousCalendarDayEndTime);
+                writeCachedCalendarHours({
+                    calendarDayStartTime,
+                    calendarDayEndTime: previousCalendarDayEndTime,
+                });
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "עדכון שעת סיום יום ביומן נכשל!",
+                    error,
+                );
+            }
+        },
+        [ dayStartTime, weekendHomeStartTime, calendarDayStartTime, calendarDayEndTime, iterationId ],
+    );
+
+    const [ breakfastTime, setBreakfastTime ] = useState<string>(
+        DEFAULT_BREAKFAST_TIME,
+    );
+    const [ lunchTime, setLunchTime ] = useState<string>(DEFAULT_LUNCH_TIME);
+    const [ dinnerTime, setDinnerTime ] = useState<string>(DEFAULT_DINNER_TIME);
+
+    const loadMealSettings = useCallback(() =>
+    {
+        apiGetMealSettings(iterationId)
+            .then((fetchedMealSettings) =>
+            {
+                setBreakfastTime(
+                    fetchedMealSettings?.breakfastTime ??
+                        DEFAULT_BREAKFAST_TIME,
+                );
+                setLunchTime(
+                    fetchedMealSettings?.lunchTime ?? DEFAULT_LUNCH_TIME,
+                );
+                setDinnerTime(
+                    fetchedMealSettings?.dinnerTime ?? DEFAULT_DINNER_TIME,
+                );
+            })
+            .catch((error) =>
+            {
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "טעינת הגדרות זמני ארוחות נכשלה.",
+                    error,
+                );
+            });
+    }, [ setBreakfastTime, setLunchTime, setDinnerTime, iterationId ]);
+
+    const updateBreakfastTime = useCallback(
+        async (newBreakfastTime: string) =>
+        {
+            const previousBreakfastTime = breakfastTime;
+            setBreakfastTime(newBreakfastTime);
+
+            try
+            {
+                await apiSetMealSettings({
+                    breakfastTime: newBreakfastTime,
+                    lunchTime,
+                    dinnerTime,
+                }, iterationId);
+                enqueueSnackbar("שעת ארוחת בוקר עודכנה בהצלחה.", {
+                    variant: "success",
+                });
+            } catch (error)
+            {
+                setBreakfastTime(previousBreakfastTime);
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "עדכון שעת ארוחת בוקר נכשל!",
+                    error,
+                );
+            }
+        },
+        [ breakfastTime, lunchTime, dinnerTime, iterationId ],
+    );
+
+    const updateLunchTime = useCallback(
+        async (newLunchTime: string) =>
+        {
+            const previousLunchTime = lunchTime;
+            setLunchTime(newLunchTime);
+
+            try
+            {
+                await apiSetMealSettings({
+                    breakfastTime,
+                    lunchTime: newLunchTime,
+                    dinnerTime,
+                }, iterationId);
+                enqueueSnackbar("שעת ארוחת צהריים עודכנה בהצלחה.", {
+                    variant: "success",
+                });
+            } catch (error)
+            {
+                setLunchTime(previousLunchTime);
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "עדכון שעת ארוחת צהריים נכשל!",
+                    error,
+                );
+            }
+        },
+        [ breakfastTime, lunchTime, dinnerTime, iterationId ],
+    );
+
+    const updateDinnerTime = useCallback(
+        async (newDinnerTime: string) =>
+        {
+            const previousDinnerTime = dinnerTime;
+            setDinnerTime(newDinnerTime);
+
+            try
+            {
+                await apiSetMealSettings({
+                    breakfastTime,
+                    lunchTime,
+                    dinnerTime: newDinnerTime,
+                }, iterationId);
+                enqueueSnackbar("שעת ארוחת ערב עודכנה בהצלחה.", {
+                    variant: "success",
+                });
+            } catch (error)
+            {
+                setDinnerTime(previousDinnerTime);
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "עדכון שעת ארוחת ערב נכשל!",
+                    error,
+                );
+            }
+        },
+        [ breakfastTime, lunchTime, dinnerTime, iterationId ],
     );
 
     useEffect(() =>
     {
         loadPrayerSettings();
         loadScheduleSettings();
-    }, [ loadPrayerSettings, loadScheduleSettings ]);
+        loadMealSettings();
+    }, [ loadPrayerSettings, loadScheduleSettings, loadMealSettings ]);
 
     return (
         <SettingsContext.Provider
@@ -311,6 +602,16 @@ export const SettingsProvider = ({
                 updateDayStartTime,
                 weekendHomeStartTime,
                 updateWeekendHomeStartTime,
+                calendarDayStartTime,
+                updateCalendarDayStartTime,
+                calendarDayEndTime,
+                updateCalendarDayEndTime,
+                breakfastTime,
+                updateBreakfastTime,
+                lunchTime,
+                updateLunchTime,
+                dinnerTime,
+                updateDinnerTime,
                 isReadOnlyIteration,
             } }
         >

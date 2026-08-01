@@ -2,24 +2,12 @@ import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import HistoryIcon from "@mui/icons-material/History";
 import RestoreIcon from "@mui/icons-material/Restore";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import Popover from "@mui/material/Popover";
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
 import dayjs from "dayjs";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
@@ -34,6 +22,7 @@ import
 } from "@/api-client/calendar-snapshots";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CalendarSnapshotSummary } from "@/api-shared/types";
+import { CalendarStoreMenu } from "@/components/schedule/calendar/calendar/CalendarStoreMenu";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { Event } from "@/components/schedule/types/event";
 
@@ -44,6 +33,7 @@ type PendingRestore = {
     events: Array<Event>;
     rangeStart: Date;
     rangeEnd: Date;
+    close: () => void;
 };
 
 /**
@@ -64,17 +54,13 @@ export function SnapshotMenu()
         setEndDate,
     } = useCalendar();
 
-    const [ anchorEl, setAnchorEl ] = useState<HTMLButtonElement | null>(null);
     const [ snapshots, setSnapshots ] = useState<Array<CalendarSnapshotSummary>>(
         [],
     );
-    const [ label, setLabel ] = useState("");
     const [ loading, setLoading ] = useState(false);
     const [ busyId, setBusyId ] = useState<null | string>(null);
     const [ pendingRestore, setPendingRestore ] =
         useState<null | PendingRestore>(null);
-
-    const open = Boolean(anchorEl);
 
     const refresh = useCallback(async () =>
     {
@@ -95,26 +81,12 @@ export function SnapshotMenu()
         }
     }, [ iterationId, enqueueSnackbar ]);
 
-    const handleOpen = useCallback(
-        (e: React.MouseEvent<HTMLButtonElement>) =>
-        {
-            setAnchorEl(e.currentTarget);
-            void refresh();
-        },
-        [ refresh ],
-    );
-
-    const handleClose = useCallback(() => setAnchorEl(null), []);
-
-    const handleCreate = useCallback(async () =>
+    const handleCreate = useCallback(async (label: string) =>
     {
-        const trimmed = label.trim();
-        if (!trimmed) return;
         setLoading(true);
         try
         {
-            await apiCreateSnapshot(trimmed, events, iterationId);
-            setLabel("");
+            await apiCreateSnapshot(label, events, iterationId);
             enqueueSnackbar("צילום המצב נשמר בהצלחה.", { variant: "success" });
             await refresh();
         } catch (error)
@@ -128,11 +100,15 @@ export function SnapshotMenu()
         {
             setLoading(false);
         }
-    }, [ label, events, iterationId, enqueueSnackbar, refresh ]);
+    }, [ events, iterationId, enqueueSnackbar, refresh ]);
 
     /** Runs the server-side restore and syncs the local view. */
     const performRestore = useCallback(
-        async (snapshotId: string, restored: Array<Event>) =>
+        async (
+            snapshotId: string,
+            restored: Array<Event>,
+            close: () => void,
+        ) =>
         {
             setBusyId(snapshotId);
             try
@@ -146,7 +122,7 @@ export function SnapshotMenu()
                     `המצב שוחזר (${result.restoredCount} מופעים).`,
                     { variant: "success" },
                 );
-                handleClose();
+                close();
             } catch (error)
             {
                 enqueueApiErrorSnackbar(
@@ -159,11 +135,11 @@ export function SnapshotMenu()
                 setBusyId(null);
             }
         },
-        [ iterationId, dispatch, enqueueSnackbar, handleClose ],
+        [ iterationId, dispatch, enqueueSnackbar ],
     );
 
     const handleRestore = useCallback(
-        async (snapshotId: string) =>
+        async (snapshotId: string, close: () => void) =>
         {
             setBusyId(snapshotId);
             try
@@ -200,11 +176,12 @@ export function SnapshotMenu()
                         events: restored,
                         rangeStart,
                         rangeEnd,
+                        close,
                     });
                     return;
                 }
 
-                await performRestore(snapshotId, restored);
+                await performRestore(snapshotId, restored, close);
             } catch (error)
             {
                 enqueueApiErrorSnackbar(
@@ -231,12 +208,12 @@ export function SnapshotMenu()
     const handleConfirmPendingRestore = useCallback(async () =>
     {
         if (!pendingRestore) return;
-        const { snapshotId, events: restored, rangeStart, rangeEnd } =
+        const { snapshotId, events: restored, rangeStart, rangeEnd, close } =
             pendingRestore;
         setPendingRestore(null);
         setStartDate(dayjs(rangeStart).startOf("day").toDate());
         setEndDate(dayjs(rangeEnd).endOf("day").toDate());
-        await performRestore(snapshotId, restored);
+        await performRestore(snapshotId, restored, close);
     }, [ pendingRestore, setStartDate, setEndDate, performRestore ]);
 
     const handleDelete = useCallback(
@@ -265,133 +242,40 @@ export function SnapshotMenu()
     );
 
     return (
-        <>
-            <Tooltip title="צילומי מצב (נקודות שחזור)">
-                <Button
-                    onClick={ handleOpen }
-                    sx={ {
-                        minWidth: 38,
-                        transition: "all 0.2s ease-in-out",
-                        "&:hover": {
-                            color: "primary.main",
-                        },
-                        "&:active": {
-                            transform: "scale(0.95)",
-                        },
-                    } }
-                    variant="outlined"
-                >
-                    <HistoryIcon fontSize="small" />
-                </Button>
-            </Tooltip>
-
-            <Popover
-                anchorEl={ anchorEl }
-                anchorOrigin={ { vertical: "bottom", horizontal: "left" } }
-                onClose={ handleClose }
-                open={ open }
-                slotProps={ {
-                    paper: { sx: { p: 2, mt: 1, width: 400, borderRadius: 2 } },
-                } }
-                transformOrigin={ { vertical: "top", horizontal: "left" } }
-            >
-                <Typography sx={ { fontWeight: 700, mb: 1 } } variant="subtitle1">
-                    צילומי מצב
-                </Typography>
-
-                <Stack alignItems="stretch" direction="row" spacing={ 1 } sx={ { mb: 1 } }>
-                    <TextField
-                        fullWidth
-                        label="שם נקודת שחזור"
-                        onChange={ (e) => setLabel(e.target.value) }
-                        onKeyDown={ (e) =>
-                        {
-                            if (e.key === "Enter") void handleCreate();
-                        } }
-                        size="small"
-                        value={ label }
-                    />
-                    <Button
-                        disabled={ !label.trim() || loading }
-                        onClick={ () => void handleCreate() }
-                        size="small"
-                        startIcon={ <AddAPhotoIcon /> }
-                        variant="contained"
-                    >
-                        יצירה
-                    </Button>
-                </Stack>
-
-                <Divider sx={ { my: 1 } } />
-
-                { loading && snapshots.length === 0 ? (
-                    <Box sx={ { display: "flex", justifyContent: "center", py: 3 } }>
-                        <CircularProgress size={ 24 } />
-                    </Box>
-                ) : snapshots.length === 0 ? (
-                    <Typography
-                        color="text.secondary"
-                        sx={ { py: 2, textAlign: "center" } }
-                        variant="body2"
-                    >
-                        אין צילומי מצב שמורים.
-                    </Typography>
-                ) : (
-                    <List dense sx={ { maxHeight: 320, overflowY: "auto" } }>
-                        { snapshots.map((snap) => (
-                            <ListItem
-                                disableGutters
-                                key={ snap.id }
-                                secondaryAction={
-                                    <Stack direction="row" spacing={ 0.5 }>
-                                        <Tooltip title="שחזור">
-                                            <span>
-                                                <IconButton
-                                                    disabled={ busyId !== null }
-                                                    edge="end"
-                                                    onClick={ () =>
-                                                        void handleRestore(
-                                                            snap.id,
-                                                        )
-                                                    }
-                                                    size="small"
-                                                >
-                                                    <RestoreIcon fontSize="small" />
-                                                </IconButton>
-                                            </span>
-                                        </Tooltip>
-                                        <Tooltip title="מחיקה">
-                                            <span>
-                                                <IconButton
-                                                    color="error"
-                                                    disabled={ busyId !== null }
-                                                    edge="end"
-                                                    onClick={ () =>
-                                                        void handleDelete(
-                                                            snap.id,
-                                                        )
-                                                    }
-                                                    size="small"
-                                                >
-                                                    <DeleteOutlineIcon fontSize="small" />
-                                                </IconButton>
-                                            </span>
-                                        </Tooltip>
-                                    </Stack>
-                                }
-                            >
-                                <ListItemText
-                                    primary={ snap.label }
-                                    secondary={ `${dayjs(snap.createdAt).format(
-                                        "DD/MM/YYYY HH:mm",
-                                    )} · ${snap.eventCount} מופעים` }
-                                />
-                            </ListItem>
-                        )) }
-                    </List>
-                ) }
-            </Popover>
-
+        <CalendarStoreMenu<CalendarSnapshotSummary>
+            actions={ [
+                {
+                    tooltip: "שחזור",
+                    icon: <RestoreIcon fontSize="small" />,
+                    onClick: (snap, close) =>
+                        void handleRestore(snap.id, close),
+                },
+                {
+                    tooltip: "מחיקה",
+                    icon: <DeleteOutlineIcon fontSize="small" />,
+                    color: "error",
+                    onClick: (snap) => void handleDelete(snap.id),
+                },
+            ] }
+            busyId={ busyId }
+            createIcon={ <AddAPhotoIcon /> }
+            createLabel="יצירה"
+            emptyText="אין צילומי מצב שמורים."
+            entries={ snapshots }
+            icon={ <HistoryIcon fontSize="small" /> }
+            loading={ loading }
+            nameLabel="שם נקודת שחזור"
+            onCreate={ handleCreate }
+            onRefresh={ refresh }
+            renderEntry={ (snap) => ({
+                primary: snap.label,
+                secondary: `${dayjs(snap.createdAt).format(
+                    "DD/MM/YYYY HH:mm",
+                )} · ${snap.eventCount} מופעים`,
+            }) }
+            title="צילומי מצב"
+            tooltip="צילומי מצב (נקודות שחזור)"
+        >
             <Dialog
                 onClose={ () => setPendingRestore(null) }
                 open={ pendingRestore !== null }
@@ -420,6 +304,6 @@ export function SnapshotMenu()
                     </Button>
                 </DialogActions>
             </Dialog>
-        </>
+        </CalendarStoreMenu>
     );
 }

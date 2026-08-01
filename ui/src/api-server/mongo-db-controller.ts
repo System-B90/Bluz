@@ -302,18 +302,7 @@ export function getCurrentIterationDbName(): string {
 export async function resolveIterationDb(
     iterationId?: IterationId,
 ): Promise<DatabaseController> {
-    if (!iterationId) {
-        await ensureCurrentIterationResolved();
-        return getDatabaseController(_currentIterationDbName);
-    }
-
-    const iteration = await getMetaController().iterations.findOne({
-        id: iterationId,
-    });
-    if (!iteration) {
-        throw new ClientApiError(`Unknown iteration "${iterationId}"`);
-    }
-    return getDatabaseController(iteration.dbName);
+    return await lookupIterationDb(iterationId, false);
 }
 
 /**
@@ -322,6 +311,14 @@ export async function resolveIterationDb(
  */
 export async function resolveWritableIterationDb(
     iterationId?: IterationId,
+): Promise<DatabaseController> {
+    return await lookupIterationDb(iterationId, true);
+}
+
+/** Single registry lookup behind both iteration resolvers. */
+async function lookupIterationDb(
+    iterationId: IterationId | undefined,
+    writable: boolean,
 ): Promise<DatabaseController> {
     if (!iterationId) {
         await ensureCurrentIterationResolved();
@@ -334,7 +331,7 @@ export async function resolveWritableIterationDb(
     if (!iteration) {
         throw new ClientApiError(`Unknown iteration "${iterationId}"`);
     }
-    if (!iteration.isCurrent) {
+    if (writable && !iteration.isCurrent) {
         throw new ClientApiError(
             "מחזור קודם הוא לקריאה בלבד ולא ניתן לעריכה",
         );

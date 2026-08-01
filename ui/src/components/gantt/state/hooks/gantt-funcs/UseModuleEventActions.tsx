@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ganttApi } from "@/api-client/gantt";
 import { CreateGanttEventPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
+    defaultSplitAcrossBreaks,
     EventRecurrence,
     GanttEvent,
     GanttEventId,
@@ -113,6 +114,7 @@ export function useModuleEventActions() {
                         recurrence: EventRecurrence.None,
                         isCritical: false,
                         isPaWindow: false,
+                        splitAcrossBreaks: defaultSplitAcrossBreaks(type),
                         comment: null,
                         hiveSubjectId,
                         hiveModuleId,

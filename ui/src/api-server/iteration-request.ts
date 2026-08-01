@@ -35,21 +35,32 @@ export type ResolvedIteration = {
     controller: DatabaseController;
 };
 
+/** Request shapes a handler can hand to the resolvers below. */
+type IterationRequestLike = { nextUrl: URL } | { url: string } | NextRequest;
+
 /**
- * Resolve the iteration a calendar request targets. An absent `it` query param
- * means the current iteration (backward compatible). Use for read paths.
+ * Read the `it` query param off a request. Absent or empty means the current
+ * iteration (backward compatible with single-iteration callers).
  */
-export async function resolveIterationFromRequest(
-    request: { nextUrl: URL } | { url: string } | NextRequest,
-): Promise<ResolvedIteration> {
+export function iterationIdFromRequest(
+    request: IterationRequestLike,
+): IterationId | undefined {
     const url =
         "nextUrl" in request
             ? (request.nextUrl as URL)
             : new URL((request as { url: string }).url);
     const raw = url.searchParams.get(ITERATION_QUERY_PARAM);
-    const iterationId = raw && raw.length > 0 ? raw : undefined;
-    const controller = await resolveIterationDb(iterationId);
-    return { iterationId, controller };
+    return raw && raw.length > 0 ? raw : undefined;
+}
+
+/**
+ * Resolve the iteration a calendar request targets. Use for read paths.
+ */
+export async function resolveIterationFromRequest(
+    request: IterationRequestLike,
+): Promise<ResolvedIteration> {
+    const iterationId = iterationIdFromRequest(request);
+    return { iterationId, controller: await resolveIterationDb(iterationId) };
 }
 
 /**
@@ -58,14 +69,11 @@ export async function resolveIterationFromRequest(
  * Uses a single DB lookup (existence + isCurrent check combined).
  */
 export async function resolveWritableIterationFromRequest(
-    request: { nextUrl: URL } | { url: string } | NextRequest,
+    request: IterationRequestLike,
 ): Promise<ResolvedIteration> {
-    const url =
-        "nextUrl" in request
-            ? (request.nextUrl as URL)
-            : new URL((request as { url: string }).url);
-    const raw = url.searchParams.get(ITERATION_QUERY_PARAM);
-    const iterationId = raw && raw.length > 0 ? raw : undefined;
-    const controller = await resolveWritableIterationDb(iterationId);
-    return { iterationId, controller };
+    const iterationId = iterationIdFromRequest(request);
+    return {
+        iterationId,
+        controller: await resolveWritableIterationDb(iterationId),
+    };
 }

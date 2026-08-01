@@ -39,6 +39,12 @@ export type GanttEvent = {
     isCritical: boolean;
     /** Marked חלון פ"א. */
     isPaWindow: boolean;
+    /**
+     * When true and this event overlaps a meal/break window during cutting,
+     * it's split around the break instead of bumped past it: runs up to the
+     * break's start, then resumes after it ends.
+     */
+    splitAcrossBreaks: boolean;
     comment: null | string;
     constraints: Array<GanttConstraint>;
     /**
@@ -54,3 +60,14 @@ export type GanttEvent = {
     hiveLessonId: null | number;
 } & BaseGantItem;
 export type GanttEventId = GanttEvent["id"];
+
+/**
+ * Default value for `splitAcrossBreaks` when an event's type is picked/changed:
+ * on for exercises, off for everything else.
+ * @param type The ModuleEventType to check.
+ * @returns The default `splitAcrossBreaks` value for that type.
+ */
+export function defaultSplitAcrossBreaks(type: ModuleEventType): boolean
+{
+    return type === ModuleEventType.Exercise;
+}

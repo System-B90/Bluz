@@ -1,6 +1,4 @@
-import EditIcon from "@mui/icons-material/Edit";
 import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
 import { memo } from "react";
 
 import { ColorEntry } from "@/components/settings-dialog/tabs/global/color-settings/types";
@@ -9,7 +7,7 @@ import
     FormCard,
 } from "@/components/settings-dialog/tabs/global/common";
 import { BaseFormCard, FormCardBaseProps } from "@/components/settings-dialog/tabs/global/common/FormCard";
-import { SettingsSectionHeader } from "@/components/settings-dialog/tabs/global/common/SectionHeader";
+import { SettingsTextField } from "@/components/settings-dialog/tabs/global/common/SettingsTextField";
 
 const DEFAULT_NEW_COLOR_HEX = "#3f51b5";
 
@@ -24,26 +22,22 @@ const FormCardFields = memo(function FormCardFields({
     name,
     setName,
     hex,
-    setHex 
+    setHex
 }: Pick<ColorFormCardProps, "hex" | "name" | "setHex" | "setName">)
 {
     return (
         <>
-            <TextField
-                fullWidth
+            <SettingsTextField
                 label="שם הצבע"
                 onChange={ (e) => setName(e.target.value) }
                 required
-                size="small"
                 value={ name }
             />
             <Box alignItems="center" display="flex" gap={ 2 }>
-                <TextField
-                    fullWidth
+                <SettingsTextField
                     label="קוד צבע (Hex)"
                     onChange={ (e) => setHex(e.target.value) }
                     required
-                    size="small"
                     value={ hex }
                 />
                 <input
@@ -87,24 +81,17 @@ export const ColorFormCard: FormCard<ColorEntry, ColorFormCardProps> = function 
             formFields={
                 <FormCardFields hex={ hex } name={ name } setHex={ setHex } setName={ setName } />
             }
-            formHeader={
-                <SettingsSectionHeader
-                    color={ isCreating ? "secondary" : "primary" }
-                    icon={ EditIcon }
-                    subtitle={
-                        isCreating
-                            ? "יצירת צבע מותאם אישית חדש"
-                            : selectedColor
-                                ? "עדכון פרטי הצבע הנוכחי"
-                                : "בחרו צבע מהרשימה לעריכה"
-                    }
-                    title={
-                        isCreating
-                            ? "הוספת צבע מותאם אישית"
-                            : 'עריכת צבעים מיוחדים'
-                    }
-                />
-            }
+            formHeader={ {
+                subtitles: {
+                    creating: "יצירת צבע מותאם אישית חדש",
+                    editing: "עדכון פרטי הצבע הנוכחי",
+                    empty: "בחרו צבע מהרשימה לעריכה",
+                },
+                titles: {
+                    creating: "הוספת צבע מותאם אישית",
+                    editing: "עריכת צבעים מיוחדים",
+                },
+            } }
             handleCancelEdit={ handleCancelEdit }
             handleSave={ handleSave }
             isCreating={ isCreating }

@@ -26,6 +26,10 @@ import { Filters } from "@/components/header/filters";
 import { DraftsMenu } from "@/components/schedule/calendar/calendar/DraftsMenu";
 import { IterationSelector } from "@/components/schedule/calendar/calendar/IterationSelector";
 import { SnapshotMenu } from "@/components/schedule/calendar/calendar/SnapshotMenu";
+import {
+    CONTROL_BUTTON_SX,
+    PULSING_ICON_BUTTON_SX,
+} from "@/components/schedule/calendar/calendar/toolbar-button-sx";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 
 /**
@@ -351,16 +355,7 @@ export function CalendarToolbar({
                         <Tooltip title="הסתרת סרגל כלים">
                             <Button
                                 onClick={ onToggleToolbar }
-                                sx={ {
-                                    minWidth: 38,
-                                    transition: "all 0.2s ease-in-out",
-                                    "&:hover": {
-                                        color: "primary.main",
-                                    },
-                                    "&:active": {
-                                        transform: "scale(0.95)",
-                                    },
-                                } }
+                                sx={ { minWidth: 38, ...CONTROL_BUTTON_SX } }
                             >
                                 <VisibilityOffIcon fontSize="small" />
                             </Button>
@@ -368,28 +363,7 @@ export function CalendarToolbar({
                         <Tooltip title="מסך מלא">
                             <Button
                                 onClick={ onToggleFullscreen }
-                                sx={ {
-                                    minWidth: 38,
-                                    transition: "all 0.2s ease-in-out",
-                                    "&:hover": {
-                                        color: "primary.main",
-                                    },
-                                    "&:hover .MuiSvgIcon-root": {
-                                        animation:
-                                            "pulse-expand 1.2s infinite ease-in-out",
-                                    },
-                                    "@keyframes pulse-expand": {
-                                        "0%, 100%": {
-                                            transform: "scale(1)",
-                                        },
-                                        "50%": {
-                                            transform: "scale(1.25)",
-                                        },
-                                    },
-                                    "&:active": {
-                                        transform: "scale(0.95)",
-                                    },
-                                } }
+                                sx={ { minWidth: 38, ...PULSING_ICON_BUTTON_SX } }
                             >
                                 <FullscreenIcon fontSize="small" />
                             </Button>

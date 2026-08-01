@@ -19,10 +19,10 @@ updates:
       schedule:
           interval: "cron"
           cronjob: "0 6 1,15 * *"
-      open-pull-requests-limit: 4
+      open-pull-requests-limit: 1
       groups:
-          minor-and-patch:
-              update-types: ["minor", "patch"]
+          all:
+              patterns: ["*"]
       commit-message:
           prefix: "Vibe-Bumped"
 
@@ -34,10 +34,10 @@ updates:
       schedule:
           interval: "cron"
           cronjob: "0 6 1,15 * *"
-      open-pull-requests-limit: 4
+      open-pull-requests-limit: 1
       groups:
-          minor-and-patch:
-              update-types: ["minor", "patch"]
+          all:
+              patterns: ["*"]
       commit-message:
           prefix: "Vibe-Bumped"
 
@@ -47,10 +47,10 @@ updates:
       schedule:
           interval: "cron"
           cronjob: "0 6 1,15 * *"
-      open-pull-requests-limit: 4
+      open-pull-requests-limit: 1
       groups:
-          minor-and-patch:
-              update-types: ["minor", "patch"]
+          all:
+              patterns: ["*"]
       commit-message:
           prefix: "Vibe-Bumped"
 
@@ -59,10 +59,10 @@ updates:
       schedule:
           interval: "cron"
           cronjob: "0 6 1,15 * *"
-      open-pull-requests-limit: 4
+      open-pull-requests-limit: 1
       groups:
-          minor-and-patch:
-              update-types: ["minor", "patch"]
+          all:
+              patterns: ["*"]
       commit-message:
           prefix: "Vibe-Bumped"
 
@@ -72,6 +72,9 @@ updates:
       schedule:
           interval: "cron"
           cronjob: "0 6 1,15 * *"
-      open-pull-requests-limit: 4
+      open-pull-requests-limit: 1
+      groups:
+          all:
+              patterns: ["*"]
       commit-message:
           prefix: "Vibe-Bumped"

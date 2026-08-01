@@ -21,11 +21,15 @@ function getAuthenticationErrorMessage(error: null | string)
         return "כתובת המייל משויכת לחשבון קיים. יש להתחבר באמצעות שיטת ההתחברות המקורית.";
     case "OAuthCallback":
     case "OAuthSignin":
-        return "לא ניתן היה להשלים את תהליך ההזדהות מול הייב.";
+        return "לא ניתן היה להשלים את תהליך ההזדהות מול הייב. ייתכן ששרת הייב אינו זמין כרגע.";
+    case "Configuration":
+        return "תקלת הגדרות בצד השרת. יש לפנות לצוות התמיכה.";
     case "SessionRequired":
         return "נדרשת התחברות מחדש כדי להמשיך.";
+    case "Verification":
+        return "קישור ההתחברות פג תוקף או שכבר נעשה בו שימוש.";
     default:
-        return "אירעה שגיאה במהלך תהליך ההתחברות.";
+        return "אירעה שגיאה במהלך תהליך ההתחברות. ניתן לנסות שוב.";
     }
 }
 
@@ -35,9 +39,7 @@ function LoginWidget()
     const authError = searchParams.get("error");
     const authErrorMessage = getAuthenticationErrorMessage(authError);
     const authErrorDetails =
-        searchParams.get("error_description") ??
-        searchParams.get("message") ??
-        authError;
+        searchParams.get("error_description") ?? searchParams.get("message");
 
     return (
         <Box
@@ -95,8 +97,25 @@ function LoginWidget()
                         <AlertTitle>ההתחברות נכשלה</AlertTitle>
                         { authErrorMessage }
                         { authErrorDetails ? (
-                            <Typography component="p" fontSize={ 13 } mt={ 1 }>
-                                קוד שגיאה: { authErrorDetails }
+                            <Typography
+                                color="text.secondary"
+                                component="p"
+                                fontFamily="monospace"
+                                fontSize={ 12 }
+                                mt={ 1 }
+                            >
+                                { authErrorDetails }
+                            </Typography>
+                        ) : null }
+                        { authError ? (
+                            <Typography
+                                color="text.secondary"
+                                component="p"
+                                fontFamily="monospace"
+                                fontSize={ 11 }
+                                mt={ 0.5 }
+                            >
+                                קוד: { authError }
                             </Typography>
                         ) : null }
                     </Alert>

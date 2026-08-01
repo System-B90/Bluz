@@ -7,6 +7,7 @@ import {
     CutPlanWeekInput,
     planCut,
 } from "@/api-shared/gantt/cut-planner";
+import { MEAL_EVENT_TITLES } from "@/api-shared/types/settings/meal";
 import { EventRecurrence, GanttDayIndex } from "@/api-shared/types/gantt/models";
 
 // Two 7-day weeks anchored on a Sunday, dayIds `w{week}d{dayIndex}`.
@@ -38,6 +39,7 @@ function makeEvent(overrides: Partial<CutPlanEventInput> & { id: string }): CutP
         recurrence: EventRecurrence.None,
         minimumDuration: 60,
         allocatedDuration: 60,
+        splitAcrossBreaks: false,
         ...overrides,
     };
 }
@@ -166,6 +168,189 @@ describe("planCut", () => {
         expect(plan.occurrences).toHaveLength(2);
         const dates = plan.occurrences.map((o) => o.occurrenceDate).sort();
         expect(dates).toEqual([ "2024-01-09", "2024-01-16" ]); // both Tuesdays
+    });
+
+    it("bumps a non-split event past a meal window it would overlap", () => {
+        const lunch = makeEvent({
+            id: "lunch",
+            title: MEAL_EVENT_TITLES.lunchTime,
+            minimumDuration: 30,
+            allocatedDuration: 30,
+        });
+        const exercise = makeEvent({
+            id: "ex",
+            minimumDuration: 90,
+            allocatedDuration: 90,
+            splitAcrossBreaks: false,
+        });
+        const input = baseInput({
+            events: [ lunch, exercise ],
+            mappings: [
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
+                { eventId: "ex", dayId: "w0d0", sortOrder: 1 },
+            ],
+            dayStartTime: "12:15", // overlaps the 13:00 lunch window
+            lunchTime: "13:00",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        const occ = plan.occurrences.find((o) => o.ganttEventId === "ex");
+        expect(occ).toBeDefined();
+        // Bumped to start right after the 30-minute lunch window (13:30),
+        // duration unaffected.
+        expect(occ!.startTime.toISOString()).toBe(
+            new Date("2024-01-07T13:30:00").toISOString(),
+        );
+        expect(occ!.endTime.getTime() - occ!.startTime.getTime()).toBe(90 * 60 * 1000);
+    });
+
+    it("runs a split event through a meal window instead of bumping it past", () => {
+        const lunch = makeEvent({
+            id: "lunch",
+            title: MEAL_EVENT_TITLES.lunchTime,
+            minimumDuration: 30,
+            allocatedDuration: 30,
+        });
+        const exercise = makeEvent({
+            id: "ex",
+            minimumDuration: 90,
+            allocatedDuration: 90,
+            splitAcrossBreaks: true,
+        });
+        const input = baseInput({
+            events: [ lunch, exercise ],
+            mappings: [
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
+                { eventId: "ex", dayId: "w0d0", sortOrder: 1 },
+            ],
+            dayStartTime: "12:15", // overlaps the 13:00 lunch window
+            lunchTime: "13:00",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        const occ = plan.occurrences.find((o) => o.ganttEventId === "ex");
+        expect(occ).toBeDefined();
+        // Start untouched (still 12:15) and the stored span stays the net 90
+        // minutes — the two drawn pieces (12:15-13:00, 13:30-14:15) are a
+        // rendering concern, not a duration change.
+        expect(occ!.startTime.toISOString()).toBe(
+            new Date("2024-01-07T12:15:00").toISOString(),
+        );
+        expect(occ!.endTime.toISOString()).toBe(
+            new Date("2024-01-07T13:45:00").toISOString(),
+        );
+    });
+
+    it("stacks the next event after the last drawn piece of a split event", () => {
+        const lunch = makeEvent({
+            id: "lunch",
+            title: MEAL_EVENT_TITLES.lunchTime,
+            minimumDuration: 30,
+            allocatedDuration: 30,
+        });
+        const exercise = makeEvent({
+            id: "ex",
+            minimumDuration: 90,
+            allocatedDuration: 90,
+            splitAcrossBreaks: true,
+        });
+        const next = makeEvent({
+            id: "next",
+            minimumDuration: 60,
+            allocatedDuration: 60,
+        });
+        const input = baseInput({
+            events: [ lunch, exercise, next ],
+            mappings: [
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
+                { eventId: "ex", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "next", dayId: "w0d0", sortOrder: 2 },
+            ],
+            dayStartTime: "12:15",
+            lunchTime: "13:00",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        // The exercise is drawn up to 14:15, so the next event may not begin
+        // at its stored 13:45 end — that would overlap it on screen.
+        const occ = plan.occurrences.find((o) => o.ganttEventId === "next");
+        expect(occ!.startTime.toISOString()).toBe(
+            new Date("2024-01-07T14:15:00").toISOString(),
+        );
+    });
+
+    it("starts a split event after a window its slot began inside", () => {
+        const lunch = makeEvent({
+            id: "lunch",
+            title: MEAL_EVENT_TITLES.lunchTime,
+            minimumDuration: 60,
+            allocatedDuration: 60,
+        });
+        const exercise = makeEvent({
+            id: "ex",
+            minimumDuration: 90,
+            allocatedDuration: 90,
+            splitAcrossBreaks: true,
+        });
+        const input = baseInput({
+            events: [ lunch, exercise ],
+            mappings: [
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
+                { eventId: "ex", dayId: "w0d0", sortOrder: 1 },
+            ],
+            dayStartTime: "13:15", // inside the 13:00-14:00 lunch window
+            lunchTime: "13:00",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        const occ = plan.occurrences.find((o) => o.ganttEventId === "ex");
+        expect(occ!.startTime.toISOString()).toBe(
+            new Date("2024-01-07T14:00:00").toISOString(),
+        );
+        expect(occ!.endTime.getTime() - occ!.startTime.getTime()).toBe(90 * 60 * 1000);
+    });
+
+    it("does not extend a split event that doesn't overlap any break window", () => {
+        const lunch = makeEvent({
+            id: "lunch",
+            title: MEAL_EVENT_TITLES.lunchTime,
+            minimumDuration: 30,
+            allocatedDuration: 30,
+        });
+        const exercise = makeEvent({
+            id: "ex",
+            minimumDuration: 60,
+            allocatedDuration: 60,
+            splitAcrossBreaks: true,
+        });
+        const input = baseInput({
+            events: [ lunch, exercise ],
+            mappings: [
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
+                { eventId: "ex", dayId: "w0d0", sortOrder: 1 },
+            ],
+            dayStartTime: "08:00", // nowhere near the 13:00 lunch window
+            lunchTime: "13:00",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        const occ = plan.occurrences.find((o) => o.ganttEventId === "ex");
+        expect(occ!.endTime.getTime() - occ!.startTime.getTime()).toBe(60 * 60 * 1000);
     });
 
     it("returns a missing-start-date error", () => {

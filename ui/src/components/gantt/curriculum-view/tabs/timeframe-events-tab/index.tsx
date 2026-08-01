@@ -12,11 +12,12 @@ import { useCallback, useMemo, useState } from "react";
 
 import { ApiCutPreviewOccurrence } from "@/api-shared/types/gantt/cut";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
-import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import {
-    PreviewLoading,
-    PreviewValidationErrors,
-} from "@/components/gantt/curriculum-view/tabs/cut-preview-tab";
+    PREVIEW_BUTTON_GROUP_SX,
+    PreviewLayout,
+    PreviewToolbar,
+    renderPreviewBlockers,
+} from "@/components/gantt/curriculum-view/tabs/cut-preview-tab/PreviewShell";
 import { useCutPreview } from "@/components/gantt/curriculum-view/tabs/cut-preview-tab/UseCutPreview";
 
 export type TimeframeEventsTabProps = {
@@ -162,55 +163,23 @@ export function TimeframeEventsTab({ curriculumId }: TimeframeEventsTabProps) {
             }));
     }, [occurrences, rangeStart, rangeEnd]);
 
-    if (preview.kind === "loading") return <PreviewLoading />;
-    if (preview.kind === "error") {
-        return (
-            <Alert severity="error" sx={{ m: 2 }}>
-                {preview.message}
-            </Alert>
-        );
-    }
-    if (preview.kind === "ready" && !preview.data.ok) {
-        return <PreviewValidationErrors errors={preview.data.errors} />;
-    }
+    const blockers = renderPreviewBlockers(preview);
+    if (blockers) return blockers;
 
     return (
-        <Box
-            display="flex"
-            flexDirection="column"
-            height="100%"
-            minHeight={0}
-        >
-            <Box
-                alignItems="center"
-                display="flex"
-                flexWrap="wrap"
-                gap={1.5}
-                justifyContent="space-between"
-                pb={1}
+        <PreviewLayout>
+            <PreviewToolbar
+                onNavigate={navigate}
+                title={
+                    <Typography fontWeight="bold" variant="subtitle1">
+                        {rangeStart.format("DD/MM/YYYY")} –{" "}
+                        {rangeEnd.subtract(1, "day").format("DD/MM/YYYY")}
+                    </Typography>
+                }
             >
                 <ButtonGroup
                     size="small"
-                    sx={{ "& .MuiButton-root": { height: 32 } }}
-                    variant="outlined"
-                >
-                    <Button onClick={() => navigate("prev")}>
-                        {CALENDAR_MESSAGES.previous}
-                    </Button>
-                    <Button onClick={() => navigate("start")}>
-                        תחילת הגאנט
-                    </Button>
-                    <Button onClick={() => navigate("next")}>
-                        {CALENDAR_MESSAGES.next}
-                    </Button>
-                </ButtonGroup>
-                <Typography fontWeight="bold" variant="subtitle1">
-                    {rangeStart.format("DD/MM/YYYY")} –{" "}
-                    {rangeEnd.subtract(1, "day").format("DD/MM/YYYY")}
-                </Typography>
-                <ButtonGroup
-                    size="small"
-                    sx={{ "& .MuiButton-root": { height: 32 } }}
+                    sx={PREVIEW_BUTTON_GROUP_SX}
                     variant="outlined"
                 >
                     {(
@@ -227,7 +196,7 @@ export function TimeframeEventsTab({ curriculumId }: TimeframeEventsTabProps) {
                         </Button>
                     ))}
                 </ButtonGroup>
-            </Box>
+            </PreviewToolbar>
             {preview.kind === "ready" &&
             preview.data.ok &&
             preview.data.skipped.length > 0 ? (
@@ -272,6 +241,6 @@ export function TimeframeEventsTab({ curriculumId }: TimeframeEventsTabProps) {
                     </Stack>
                 )}
             </Box>
-        </Box>
+        </PreviewLayout>
     );
 }
