@@ -19,6 +19,7 @@ import { SettingsListItemSecondaryAction } from "@/components/settings-dialog/ta
 
 export const OutsiderListCard: ListCard<Outsider> = function OutsiderListCard({
     filteredEntities: filteredOutsiders,
+    isLoading,
     searchQuery,
     setSearchQuery,
     selectedEntity: selectedOutsider,
@@ -129,6 +130,7 @@ export const OutsiderListCard: ListCard<Outsider> = function OutsiderListCard({
                 subtitle: "ניהול רשימת אנשי חוץ ומרצים חיצוניים במערכת",
                 title: "אנשי חוץ",
             } }
+            isLoading={ isLoading }
             items={ outsiderItems }
             searchMessages={ {
                 noMatches: "לא נמצאו אנשי חוץ התואמים את החיפוש",

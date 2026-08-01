@@ -26,6 +26,7 @@ import { MessageTypes } from "@/settings";
 export type CustomColorsContextState = {
     default: boolean;
     customColors: Array<CustomColor>;
+    isLoading: boolean;
     getCustomColor: (id: string) => CustomColor | null;
     addCustomColor: (colorData: Omit<CustomColor, "id">) => Promise<void>;
     updateCustomColor: (color: CustomColor) => Promise<void>;
@@ -35,6 +36,7 @@ export type CustomColorsContextState = {
 const CustomColorsContext = createContext<CustomColorsContextState>({
     default: true,
     customColors: [],
+    isLoading: false,
     getCustomColor: (_id: string) => null,
     addCustomColor: async () => { },
     updateCustomColor: async () => { },
@@ -286,6 +288,7 @@ export const CustomColorsProvider = ({
             value={ {
                 default: false,
                 customColors,
+                isLoading: state.isLoading,
                 getCustomColor,
                 addCustomColor,
                 updateCustomColor,

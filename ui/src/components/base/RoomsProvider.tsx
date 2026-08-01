@@ -23,6 +23,7 @@ import { MessageTypes } from "@/settings";
 export type RoomsContextState = {
     default: boolean;
     rooms: Array<Room>;
+    isLoading: boolean;
     getRoom: (id: RoomLike) => null | Room;
     addRoom: (roomData: Omit<CustomRoom, "id" | "source">) => Promise<void>;
     updateRoom: (room: CustomRoom) => Promise<void>;
@@ -129,6 +130,7 @@ export const useRooms = (): RoomsContextState => {
         () => ({
             default: false,
             rooms: collection.items,
+            isLoading: collection.isLoading,
             getRoom,
             addRoom: collection.addItem,
             updateRoom: collection.updateItem,

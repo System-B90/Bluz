@@ -6,6 +6,8 @@ export { iconBadgeSx, settingsCardSx } from "@/components/settings-dialog/tabs/g
 
 export type ListCardBaseProps<TEntity> = {
     filteredEntities: Array<TEntity>;
+    /** Renders skeleton rows instead of "no entries" while the fetch is in flight. */
+    isLoading?: boolean;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     selectedEntity: null | TEntity;

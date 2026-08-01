@@ -18,7 +18,7 @@ import {
 
 export function OutsiderSettings()
 {
-    const { outsiders, addOutsider, updateOutsider, deleteOutsider } =
+    const { outsiders, isLoading, addOutsider, updateOutsider, deleteOutsider } =
         useOutsiders();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -113,6 +113,7 @@ export function OutsiderSettings()
                 ListCard={ OutsiderListCard }
                 listCardProps={ {
                     filteredEntities: filteredOutsiders,
+                    isLoading,
                     handleDelete: form.handleDelete,
                     handleStartCreate: form.handleStartCreate,
                     populateFormFrom: form.populateFormFrom,

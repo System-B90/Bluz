@@ -148,6 +148,11 @@ export const CalendarProvider = ({
         remoteDispatch,
     );
 
+    // Drives the calendar skeleton. Only the *first* load is a blank surface;
+    // later range changes redraw over events already on screen, so this latches
+    // once and never flips back.
+    const [hasLoadedEvents, setHasLoadedEvents] = useState(false);
+
     /** Fetches events for the given date range and dispatches them remotely; skips dispatch when offline. */
     const loadEvents = useCallback(
         (s?: Date, e?: Date) => {
@@ -168,7 +173,8 @@ export const CalendarProvider = ({
                         'טעינת לו"ז נכשלה.',
                         error,
                     ),
-                );
+                )
+                .finally(() => setHasLoadedEvents(true));
         },
         [remoteDispatch, iterationId],
     );
@@ -199,6 +205,7 @@ export const CalendarProvider = ({
             endDate,
             iterationId,
             isReadOnlyIteration,
+            isLoadingEvents: !hasLoadedEvents,
             eventLocks,
             setStartDate,
             setEndDate,
@@ -217,6 +224,7 @@ export const CalendarProvider = ({
             endDate,
             iterationId,
             isReadOnlyIteration,
+            hasLoadedEvents,
             eventLocks,
             setStartDate,
             setEndDate,

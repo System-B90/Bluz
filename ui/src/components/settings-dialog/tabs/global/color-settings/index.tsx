@@ -15,7 +15,7 @@ const DEFAULT_NEW_COLOR_HEX = "#3f51b5";
 
 export function ColorSettings()
 {
-    const { customColors, addCustomColor, updateCustomColor, deleteCustomColor } =
+    const { customColors, isLoading, addCustomColor, updateCustomColor, deleteCustomColor } =
         useCustomColors();
     const { subjects } = useHiveSubjects();
     const { enqueueSnackbar } = useSnackbar();
@@ -198,6 +198,7 @@ export function ColorSettings()
                 ListCard={ ColorListCard }
                 listCardProps={ {
                     filteredEntities: filteredColors,
+                    isLoading,
                     handleDelete,
                     handleStartCreate,
                     populateFormFrom: handleSelectColor,

@@ -8,6 +8,7 @@ import { ErrorSurface } from "@/components/errors/ErrorSurface";
 import { BluzCalendar } from "@/components/schedule/calendar/calendar";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { LOCK_HEARTBEAT_MS } from "@/components/schedule/calendar/calendar-provider/lock-state";
+import { CalendarSkeleton } from "@/components/schedule/calendar/CalendarSkeleton";
 import { EventDialog } from "@/components/schedule/event-dialog";
 import { PushOfflineUpdatesDialog } from "@/components/schedule/offline-dialogs/push-updates-dialog";
 import { Event, EventId } from "@/components/schedule/types/event";
@@ -22,6 +23,7 @@ export default function SchedulePage() {
         unlockEvent,
         undo,
         redo,
+        isLoadingEvents,
     } = useCalendar();
 
     const [selectedEvent, setSelectedEvent] = useState<Partial<Event>>();
@@ -139,7 +141,13 @@ export default function SchedulePage() {
     );
 
     return (
-        <Box display={"flex"} flexDirection={"column"} height={"100%"}>
+        <Box
+            display={"flex"}
+            flexDirection={"column"}
+            height={"100%"}
+            position={"relative"}
+        >
+            {isLoadingEvents ? <CalendarSkeleton /> : null}
             <ErrorBoundary
                 fallback={(error, reset) => (
                     <ErrorSurface

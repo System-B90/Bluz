@@ -19,6 +19,10 @@ export type CalendarContextState = {
     // True when viewing a past iteration (writes are rejected server-side).
     isReadOnlyIteration: boolean;
 
+    // True only until the first event fetch settles — the window in which the
+    // grid would otherwise render blank and read as broken.
+    isLoadingEvents: boolean;
+
     // Period locking: maps eventId → lock info for events currently being edited by any user
     eventLocks: Record<EventId, EventLockMessage>;
 

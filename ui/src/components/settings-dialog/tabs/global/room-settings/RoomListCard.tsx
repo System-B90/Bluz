@@ -11,6 +11,7 @@ import { RoomListItem } from "@/components/settings-dialog/tabs/global/room-sett
 
 export const RoomListCard: ListCard<Room> = function RoomListCard({
     filteredEntities: filteredRooms,
+    isLoading,
     searchQuery,
     setSearchQuery,
     selectedEntity: selectedRoom,
@@ -51,6 +52,7 @@ export const RoomListCard: ListCard<Room> = function RoomListCard({
                 subtitle: "ניהול חדרים מהייב וחדרים מותאמים אישית",
                 title: "כל החדרים",
             } }
+            isLoading={ isLoading }
             items={ roomItems }
             searchMessages={ {
                 noMatches: "לא נמצאו חדרים התואמים את החיפוש",

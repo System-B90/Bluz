@@ -14,6 +14,7 @@ import { MessageTypes } from "@/settings";
 export type OutsidersContextState = {
     default: boolean;
     outsiders: Array<Outsider>;
+    isLoading: boolean;
     getOutsider: (id: string) => null | Outsider;
     addOutsider: (outsiderData: Omit<Outsider, "id">) => Promise<void>;
     updateOutsider: (outsider: Outsider) => Promise<void>;
@@ -64,6 +65,7 @@ export const useOutsiders = (): OutsidersContextState => {
         () => ({
             default: false,
             outsiders: collection.items,
+            isLoading: collection.isLoading,
             getOutsider,
             addOutsider: collection.addItem,
             updateOutsider: collection.updateItem,

@@ -22,7 +22,7 @@ import {
 
 export function RoomSettings()
 {
-    const { rooms, addRoom, updateRoom, deleteRoom, updateRoomExtendedInfo } =
+    const { rooms, isLoading, addRoom, updateRoom, deleteRoom, updateRoomExtendedInfo } =
         useRooms();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -144,6 +144,7 @@ export function RoomSettings()
                 ListCard={ RoomListCard }
                 listCardProps={ {
                     filteredEntities: filteredRooms,
+                    isLoading,
                     handleDelete: form.handleDelete,
                     handleStartCreate: form.handleStartCreate,
                     populateFormFrom: form.populateFormFrom,

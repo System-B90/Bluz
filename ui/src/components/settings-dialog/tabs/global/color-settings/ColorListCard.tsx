@@ -84,6 +84,7 @@ const ColorListItem = memo(function ColorListItem({
 
 export const ColorListCard: ListCard<ColorEntry> = function ColorListCard({
     filteredEntities: filteredColors,
+    isLoading,
     searchQuery,
     setSearchQuery,
     selectedEntity: selectedColor,
@@ -111,6 +112,7 @@ export const ColorListCard: ListCard<ColorEntry> = function ColorListCard({
                 subtitle: 'ניהול צבעים מיוחדים למופעים בלו\"ז',
                 title: "צבעי מופעים",
             } }
+            isLoading={ isLoading }
             items={ colorItems }
             searchMessages={ {
                 noMatches: "לא נמצאו צבעים התואמים את החיפוש",

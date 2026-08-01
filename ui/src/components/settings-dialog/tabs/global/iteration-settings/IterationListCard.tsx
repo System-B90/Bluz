@@ -28,6 +28,7 @@ export type IterationListCardProps = Omit<
 
 export const IterationListCard: ListCard<Iteration, IterationListCardProps> = function IterationListCard({
     filteredEntities: filteredIterations,
+    isLoading,
     searchQuery,
     setSearchQuery,
     selectedEntity: selectedIteration,
@@ -115,6 +116,7 @@ export const IterationListCard: ListCard<Iteration, IterationListCardProps> = fu
                 subtitle: "בחרו מחזור כדי לערוך, או קבעו את המחזור הפעיל",
                 title: "מחזורים",
             } }
+            isLoading={ isLoading }
             items={ iterationItems }
             searchMessages={ {
                 noMatches: "לא נמצאו מחזורים התואמים את החיפוש",
