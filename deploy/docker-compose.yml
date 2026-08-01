@@ -22,6 +22,20 @@ services:
                 condition: service_healthy
             sessions:
                 condition: service_started
+        healthcheck:
+            # No curl/wget in the distroless-ish runner image; node is the only
+            # HTTP client available. 503 (a dependency is down) exits non-zero.
+            test:
+                [
+                    "CMD",
+                    "node",
+                    "-e",
+                    "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 60s
 
     curriculum-db:
         image: postgres:15-alpine
@@ -85,6 +99,20 @@ services:
             - ../.env
         networks:
             - bluz_net
+        healthcheck:
+            # Pure WebSocket server — no HTTP route to probe, so accepting a TCP
+            # connection on the listen port is the readiness signal.
+            test:
+                [
+                    "CMD",
+                    "node",
+                    "-e",
+                    "require('net').connect(28199,'127.0.0.1').on('connect',function(){process.exit(0)}).on('error',function(){process.exit(1)})",
+                ]
+            interval: 30s
+            timeout: 5s
+            retries: 3
+            start_period: 20s
 
     proxy:
         image: ghcr.io/system-b90/bluz/proxy:${BLUZ_VERSION:-latest}
