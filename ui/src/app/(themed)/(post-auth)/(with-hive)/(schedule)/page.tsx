@@ -3,6 +3,8 @@ import Box from "@mui/material/Box";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
+import { EmptyState } from "@/components/base/EmptyState";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { ErrorSurface } from "@/components/errors/ErrorSurface";
 import { BluzCalendar } from "@/components/schedule/calendar/calendar";
@@ -25,6 +27,18 @@ export default function SchedulePage() {
         redo,
         isLoadingEvents,
     } = useCalendar();
+
+    const { clearFilters, eventFilteredOpacity, hasActiveFilters } =
+        useCalendarFilters();
+
+    // "No events in this range" is the calendar's own (correct) blank week.
+    // "Your filters hid all of them" is a different problem with a different
+    // fix, so it gets its own surface and a way out.
+    const allEventsFiltered =
+        !isLoadingEvents &&
+        hasActiveFilters &&
+        events.length > 0 &&
+        events.every((event) => eventFilteredOpacity(event) === 0);
 
     const [selectedEvent, setSelectedEvent] = useState<Partial<Event>>();
     const [openEventDialog, setOpenEventDialog] = useState<boolean>(false);
@@ -148,6 +162,29 @@ export default function SchedulePage() {
             position={"relative"}
         >
             {isLoadingEvents ? <CalendarSkeleton /> : null}
+            {allEventsFiltered ? (
+                <Box
+                    sx={{
+                        position: "absolute",
+                        insetInline: 0,
+                        top: "40%",
+                        zIndex: 3,
+                        pointerEvents: "auto",
+                        display: "flex",
+                        justifyContent: "center",
+                    }}
+                >
+                    <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 3 }}>
+                        <EmptyState
+                            actionLabel="ניקוי הסינון"
+                            hint="יש אירועים בטווח התאריכים הזה, אך הסינון הנוכחי מסתיר את כולם."
+                            message="הסינון הסתיר את כל האירועים"
+                            onAction={clearFilters}
+                            variant="filtered"
+                        />
+                    </Box>
+                </Box>
+            ) : null}
             <ErrorBoundary
                 fallback={(error, reset) => (
                     <ErrorSurface

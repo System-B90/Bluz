@@ -9,6 +9,7 @@ import
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import { EmptyState } from "@/components/base/EmptyState";
 import { SyllabusesActionsBox } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box";
 import { useProgressiveItemCount } from "@/components/gantt/curriculum-view/tabs/UseProgressiveItemCount";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
@@ -150,6 +151,12 @@ export const SyllabusesTab = memo(function SyllabusesTab({
                     pt={ 1 }
                     sx={ { overflowX: "scroll" } }
                 >
+                    { syllabuses.length === 0 ? (
+                        <EmptyState
+                            hint="הוספת סילבוס תתחיל את בניית הגאנט."
+                            message="לגאנט הזה אין עדיין סילבוסים"
+                        />
+                    ) : null }
                     { syllabusCards }
                     { Array.from({
                         length: Math.min(

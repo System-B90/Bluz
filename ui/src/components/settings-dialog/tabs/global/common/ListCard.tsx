@@ -3,9 +3,9 @@ import List from "@mui/material/List";
 import Skeleton from "@mui/material/Skeleton";
 import { ReactNode, useMemo } from "react";
 
+import { EmptyState } from "@/components/base/EmptyState";
 import { settingsCardSx } from "@/components/settings-dialog/tabs/global/common";
 import { SettingsAddButton, SettingsAddButtonProps } from "@/components/settings-dialog/tabs/global/common/AddButton";
-import { SettingsEmptyState } from "@/components/settings-dialog/tabs/global/common/EmptyState";
 import { SettingsScrollArea } from "@/components/settings-dialog/tabs/global/common/ScrollArea";
 import { SettingsSearchField, SettingsSearchFieldProps } from "@/components/settings-dialog/tabs/global/common/SearchField";
 import { SettingsSectionHeader, SettingsSectionHeaderProps } from "@/components/settings-dialog/tabs/global/common/SectionHeader";
@@ -54,15 +54,22 @@ export function SettingsListCardContent({ items, isLoading = false, headerProps,
         isLoading ? (
             <SettingsListSkeleton />
         ) : items.length === 0 ? (
-            <SettingsEmptyState
-                message={
-                    searchQuery
-                        ? searchMessages.noMatches
-                        : searchMessages.noEntries
-                }
-            />
+            searchQuery ? (
+                <EmptyState
+                    actionLabel="ניקוי החיפוש"
+                    message={ searchMessages.noMatches }
+                    onAction={ () => setSearchQuery("") }
+                    variant="filtered"
+                />
+            ) : (
+                <EmptyState
+                    actionLabel={ addButtonLabel }
+                    message={ searchMessages.noEntries }
+                    onAction={ handleStartCreate }
+                />
+            )
         ) : <List disablePadding>{ items }</List>
-    ), [ isLoading, items, searchQuery, searchMessages ]);
+    ), [ isLoading, items, searchQuery, searchMessages, setSearchQuery, addButtonLabel, handleStartCreate ]);
 
     return (
         <Box sx={ { ...settingsCardSx, flex: 1.4 } }>

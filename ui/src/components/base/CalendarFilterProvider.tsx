@@ -29,6 +29,11 @@ export type CalendarFiltersContextState = {
     setShowMisconfigurations: Dispatch<SetStateAction<boolean>>;
 
     eventFilteredOpacity: (event: Event) => number;
+
+    /** True when any filter is narrowing the calendar. */
+    hasActiveFilters: boolean;
+    /** Resets every filter to its default, showing the full calendar again. */
+    clearFilters: () => void;
 };
 
 const CalendarFiltersContext = createContext<
@@ -49,6 +54,8 @@ const CalendarFiltersContext = createContext<
     setShowMisconfigurations: () => {},
 
     eventFilteredOpacity: () => 1,
+    hasActiveFilters: false,
+    clearFilters: () => {},
 });
 
 export function isInstructorBusy(instructor: number, event: Event): boolean {
@@ -158,6 +165,23 @@ export const CalendarFiltersProvider = ({
         ],
     );
 
+    // showMisconfigurations is deliberately excluded: it decorates events
+    // rather than removing them, so it can never empty the calendar.
+    const hasActiveFilters =
+        filteredInstructors.length > 0 ||
+        filteredCourses.length > 0 ||
+        filteredRoom !== null ||
+        showPAsFor !== null ||
+        hidePrayers;
+
+    const clearFilters = useCallback(() => {
+        setFilteredInstructors([]);
+        setFilteredCourses([]);
+        setFilteredRoom(null);
+        setShowPAsFor(null);
+        setHidePrayers(false);
+    }, []);
+
     return (
         <CalendarFiltersContext.Provider
             value={{
@@ -177,6 +201,8 @@ export const CalendarFiltersProvider = ({
                 setShowMisconfigurations,
 
                 eventFilteredOpacity,
+                hasActiveFilters,
+                clearFilters,
             }}
         >
             {children}

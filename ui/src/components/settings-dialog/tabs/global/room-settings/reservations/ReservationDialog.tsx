@@ -29,6 +29,7 @@ import {
 } from "@/api-client/reservations";
 import { Reservation } from "@/api-shared/types/reservation";
 import { Room } from "@/api-shared/types/room";
+import { EmptyState } from "@/components/base/EmptyState";
 
 type ReservationDialogProps = {
     open: boolean;
@@ -276,16 +277,10 @@ export function ReservationDialog({
                         <CircularProgress size={24} />
                     </Box>
                 ) : reservations.length === 0 ? (
-                    <Typography
-                        sx={{
-                            textAlign: "center",
-                            color: "text.secondary",
-                            fontSize: "0.85rem",
-                            mt: 2,
-                        }}
-                    >
-                        אין הזמנות לחדר זה
-                    </Typography>
+                    <EmptyState
+                        hint="ניתן להוסיף הזמנה בטופס שלמעלה."
+                        message="אין הזמנות לחדר זה"
+                    />
                 ) : (
                     <List dense disablePadding sx={{ mt: 1 }}>
                         {reservations.map((r) => (

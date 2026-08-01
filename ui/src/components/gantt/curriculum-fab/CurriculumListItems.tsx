@@ -7,6 +7,7 @@ import { Dispatch, Fragment, SetStateAction } from "react";
 
 import { GanttCurriculumDocument } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { EmptyState } from "@/components/base/EmptyState";
 import { CurriculumEntry } from "@/components/gantt/curriculum-fab/CurriculumEntry";
 import { CurriculumGroups } from "@/components/gantt/curriculum-fab/utils";
 
@@ -47,6 +48,18 @@ export function CurriculumListItems({
                 </ListItemButton>
             </ListItem>
         ));
+    }
+
+    const isEmpty = SECTIONS.every(({ key }) => groups[key].length === 0);
+    if (isEmpty) {
+        // The create action lives in CurriculumActionItems directly above this
+        // list, so the empty state points at it instead of duplicating it.
+        return (
+            <EmptyState
+                hint='ניתן ליצור גאנט חדש בעזרת הכפתור "חדש" שלמעלה.'
+                message="עדיין לא נוצרו גאנטים"
+            />
+        );
     }
 
     return SECTIONS.map(({ key, label }) => {
