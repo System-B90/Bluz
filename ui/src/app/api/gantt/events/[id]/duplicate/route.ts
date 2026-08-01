@@ -48,6 +48,7 @@ export const POST = withApi(async (request: NextRequest, context: RouteContext) 
         recurrence: originalEvent.recurrence,
         isCritical: originalEvent.isCritical,
         isPaWindow: originalEvent.isPaWindow,
+        splitAcrossBreaks: originalEvent.splitAcrossBreaks,
         comment: originalEvent.comment,
         hiveSubjectId: originalEvent.hiveSubjectId,
         hiveModuleId: originalEvent.hiveModuleId,

@@ -2,6 +2,7 @@ import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import CloseIcon from "@mui/icons-material/Close";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import PaletteIcon from "@mui/icons-material/Palette";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -12,6 +13,7 @@ import Typography from "@mui/material/Typography";
 
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
 import { ColorSettings } from "@/components/settings-dialog/tabs/global/color-settings";
+import { CourseBuilderSettings } from "@/components/settings-dialog/tabs/global/CourseBuilderSettings";
 import { GlobalSettings } from "@/components/settings-dialog/tabs/global/GlobalSettings";
 import { IterationSettings } from "@/components/settings-dialog/tabs/global/iteration-settings";
 import { OutsiderSettings } from "@/components/settings-dialog/tabs/global/outsider-settings";
@@ -38,7 +40,12 @@ export function SettingsDialog({
     const tabs: Array<{ label: string; icon: React.ReactNode; value: SettingsTab }> =
         [
             { label: "אישי", icon: <PersonIcon />, value: "personal" },
-            { label: "כללי", icon: <SettingsIcon />, value: "global" },
+            { label: "העדפות זמן", icon: <SettingsIcon />, value: "global" },
+            {
+                label: "בניית קורסים",
+                icon: <MenuBookIcon />,
+                value: "courses",
+            },
             { label: "צבעים", icon: <PaletteIcon />, value: "colors" },
             { label: "חדרים", icon: <MeetingRoomIcon />, value: "rooms" },
             {
@@ -257,6 +264,7 @@ export function SettingsDialog({
                     >
                         {activeTab === "personal" && <PersonalSettings />}
                         {activeTab === "global" && <GlobalSettings />}
+                        {activeTab === "courses" && <CourseBuilderSettings />}
                         {activeTab === "colors" && <ColorSettings />}
                         {activeTab === "rooms" && <RoomSettings />}
                         {activeTab === "outsiders" && <OutsiderSettings />}

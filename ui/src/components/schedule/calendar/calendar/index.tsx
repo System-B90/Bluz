@@ -23,6 +23,10 @@ import { useScheduleCommands } from "@/components/app-commands/use-schedule-comm
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
 import { CalendarView } from "@/components/schedule/calendar/calendar/CalendarView";
+import {
+    GROWING_CONTROL_BUTTON_SX,
+    PULSING_ICON_BUTTON_SX,
+} from "@/components/schedule/calendar/calendar/toolbar-button-sx";
 import { useCalendarHandlers } from "@/components/schedule/calendar/calendar/UseCalendarHandlers";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { InstructorDndProvider } from "@/components/schedule/calendar/instructor-dnd/InstructorDndProvider";
@@ -108,17 +112,6 @@ export function BluzCalendar({
             setOpenEventDialog,
         );
 
-    // Scope to the visible date range so WS broadcasts for events outside
-    // the current view don't force react-big-calendar to re-lay-out the grid.
-    const visibleEvents = useMemo(() => {
-        if (!startDate || !endDate) return events;
-        return events.filter(
-            (event) =>
-                event.endTime.toDate() >= startDate &&
-                event.startTime.toDate() <= endDate,
-        );
-    }, [events, startDate, endDate]);
-
     // Only render the calendar after the component has mounted on the client.
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- Standard hydration guard: must set mounted state after client mount
@@ -196,6 +189,8 @@ export function BluzCalendar({
         updateDateRange(currentDate, currentView);
     }, [currentDate, currentView, updateDateRange]);
 
+    // The calendar resolves its own split pieces back to the canonical event
+    // before calling out, so these only ever see whole events.
     const handleEditEvent = useCallback(
         (event: Event) => {
             setSelectedEvent(event);
@@ -307,27 +302,7 @@ export function BluzCalendar({
                             <IconButton
                                 onClick={() => setIsFullscreen(false)}
                                 size="small"
-                                sx={{
-                                    transition: "all 0.2s ease-in-out",
-                                    "&:hover": {
-                                        color: "primary.main",
-                                    },
-                                    "&:hover .MuiSvgIcon-root": {
-                                        animation:
-                                            "pulse-expand 1.2s infinite ease-in-out",
-                                    },
-                                    "@keyframes pulse-expand": {
-                                        "0%, 100%": {
-                                            transform: "scale(1)",
-                                        },
-                                        "50%": {
-                                            transform: "scale(1.25)",
-                                        },
-                                    },
-                                    "&:active": {
-                                        transform: "scale(0.95)",
-                                    },
-                                }}
+                                sx={PULSING_ICON_BUTTON_SX}
                             >
                                 <FullscreenExitIcon fontSize="small" />
                             </IconButton>
@@ -344,16 +319,7 @@ export function BluzCalendar({
                                 <IconButton
                                     onClick={() => setShowToolbar(!showToolbar)}
                                     size="small"
-                                    sx={{
-                                        transition: "all 0.2s ease-in-out",
-                                        "&:hover": {
-                                            transform: "scale(1.15)",
-                                            color: "primary.main",
-                                        },
-                                        "&:active": {
-                                            transform: "scale(0.95)",
-                                        },
-                                    }}
+                                    sx={GROWING_CONTROL_BUTTON_SX}
                                 >
                                     {showToolbar ? (
                                         <VisibilityOffIcon fontSize="small" />
@@ -366,27 +332,7 @@ export function BluzCalendar({
                                 <IconButton
                                     onClick={() => setIsFullscreen(true)}
                                     size="small"
-                                    sx={{
-                                        transition: "all 0.2s ease-in-out",
-                                        "&:hover": {
-                                            color: "primary.main",
-                                        },
-                                        "&:hover .MuiSvgIcon-root": {
-                                            animation:
-                                                "pulse-expand 1.2s infinite ease-in-out",
-                                        },
-                                        "@keyframes pulse-expand": {
-                                            "0%, 100%": {
-                                                transform: "scale(1)",
-                                            },
-                                            "50%": {
-                                                transform: "scale(1.25)",
-                                            },
-                                        },
-                                        "&:active": {
-                                            transform: "scale(0.95)",
-                                        },
-                                    }}
+                                    sx={PULSING_ICON_BUTTON_SX}
                                 >
                                     <FullscreenIcon fontSize="small" />
                                 </IconButton>
@@ -412,7 +358,7 @@ export function BluzCalendar({
                     <CalendarView
                         currentView={currentView}
                         date={currentDate}
-                        events={visibleEvents}
+                        events={events}
                         onDoubleClickEvent={handleEditEvent}
                         onEventDrop={handleEventDrag}
                         onExportIcs={exportIcs}

@@ -1,10 +1,8 @@
-import FormControl, { FormControlProps } from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
+import { FormControlProps } from "@mui/material/FormControl";
 import { useMemo } from "react";
 
 import { SubjectLike } from "@/api-shared/types/subject";
+import { EntitySelect } from "@/components/base/EntitySelect";
 import { useHiveModules } from "@/components/base/HiveModulesProvider";
 
 export type HiveModuleSelectProps = {
@@ -30,45 +28,25 @@ export type HiveModuleSelectProps = {
  * Data comes from HiveModulesProvider; pass `subject` to scope the list.
  */
 export function HiveModuleSelect({
-    value,
-    onChange,
     subject,
     label = "מערך",
-    allowEmpty = false,
     emptyLabel = "ללא מערך",
-    disabled,
-    ...formControlProps
+    ...rest
 }: HiveModuleSelectProps) {
     const { modules, getModulesOfSubject } = useHiveModules();
 
-    const options = useMemo(() => {
-        const scoped =
-            subject !== undefined ? getModulesOfSubject(subject) : modules;
-        return [...scoped].sort((a, b) => a.name.localeCompare(b.name, "he"));
-    }, [subject, modules, getModulesOfSubject]);
+    const options = useMemo(
+        () => (subject !== undefined ? getModulesOfSubject(subject) : modules),
+        [subject, modules, getModulesOfSubject],
+    );
 
     return (
-        <FormControl
-            disabled={disabled || options.length === 0}
-            {...formControlProps}
-        >
-            <InputLabel>{label}</InputLabel>
-            <Select
-                label={label}
-                onChange={(e) => onChange(e.target.value || null)}
-                value={value ?? ""}
-            >
-                {allowEmpty ? (
-                    <MenuItem value="">
-                        <em>{emptyLabel}</em>
-                    </MenuItem>
-                ) : null}
-                {options.map((module) => (
-                    <MenuItem key={module.id} value={module.id}>
-                        {module.name}
-                    </MenuItem>
-                ))}
-            </Select>
-        </FormControl>
+        <EntitySelect<string>
+            emptyLabel={emptyLabel}
+            label={label}
+            options={options}
+            parseValue={String}
+            {...rest}
+        />
     );
 }

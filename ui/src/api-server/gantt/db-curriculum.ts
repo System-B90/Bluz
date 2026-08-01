@@ -8,8 +8,11 @@ import {
     ganttCurriculumEventConfigurationsSchema,
     ganttCurriculumEventDayMappingsSchema,
     ganttDaysSchema,
+    ganttEventsSchema,
     ganttModule2EventsSchema,
+    ganttModulesSchema,
     ganttSyllabus2ModulesSchema,
+    ganttSyllabusesSchema,
     ganttWeek2DaysSchema,
     ganttWeeksSchema,
 } from "@/api-server/gantt/schema";
@@ -18,9 +21,16 @@ import { ClientApiError } from "@/api-shared/errors";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import { CreateGanttCurriculumPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
+    EventRecurrence,
     GanttCurriculum,
     GanttCurriculumId,
+    ModuleEventType,
 } from "@/api-shared/types/gantt/models";
+import {
+    MEAL_BREAKS_SYLLABUS_TITLE,
+    MEAL_EVENT_DURATIONS_MINUTES,
+    MEAL_EVENT_TITLES,
+} from "@/api-shared/types/settings/meal";
 
 const basicOperations = drizzleOperationsBuilder<
     GanttCurriculum,
@@ -101,6 +111,61 @@ async function getFullCurriculum(
     }
 
     return result as any;
+}
+
+/**
+ * Seeds every new curriculum with a "פסקות" syllabus/module holding 3 daily
+ * meal events (breakfast/lunch/dinner). The cut planner (`cut-planner.ts`)
+ * recognizes these by title and pins them to the exact clock time configured
+ * in the global meal-time settings instead of stacking them.
+ */
+async function seedMealBreaksSyllabus(
+    curriculumId: GanttCurriculumId,
+): Promise<void> {
+    const now = new Date();
+    const syllabusId = `s_${crypto.randomUUID()}`;
+    const moduleId = `m_${crypto.randomUUID()}`;
+
+    await postgresDb.transaction(async (tx) => {
+        await tx.insert(ganttSyllabusesSchema).values({
+            id: syllabusId,
+            title: MEAL_BREAKS_SYLLABUS_TITLE,
+            createdAt: now,
+            updatedAt: now,
+        });
+        await tx
+            .insert(ganttCurriculum2SyllabusesSchema)
+            .values({ curriculumId, syllabusId });
+
+        await tx.insert(ganttModulesSchema).values({
+            id: moduleId,
+            title: MEAL_BREAKS_SYLLABUS_TITLE,
+            createdAt: now,
+            updatedAt: now,
+        });
+        await tx
+            .insert(ganttSyllabus2ModulesSchema)
+            .values({ syllabusId, moduleId, sortOrder: 0 });
+
+        for (const [ settingKey, title ] of Object.entries(MEAL_EVENT_TITLES)) {
+            const eventId = `e_${crypto.randomUUID()}`;
+            await tx.insert(ganttEventsSchema).values({
+                id: eventId,
+                title,
+                type: ModuleEventType.Other,
+                minimumDuration:
+                    MEAL_EVENT_DURATIONS_MINUTES[
+                        settingKey as keyof typeof MEAL_EVENT_DURATIONS_MINUTES
+                    ],
+                recurrence: EventRecurrence.Daily,
+                createdAt: now,
+                updatedAt: now,
+            });
+            await tx
+                .insert(ganttModule2EventsSchema)
+                .values({ moduleId, eventId, sortOrder: 0 });
+        }
+    });
 }
 
 export type DuplicateCurriculumOverrides = {
@@ -252,8 +317,16 @@ async function duplicateCurriculum(
     return await getFullCurriculum(newCurriculumId);
 }
 
+async function createCurriculum(data: CreateGanttCurriculumPayload) {
+    const newItem = await basicOperations.createNewItem(data);
+    await seedMealBreaksSyllabus(newItem.id as GanttCurriculumId);
+    return newItem;
+}
+
 export const DbCurriculum = {
     ...basicOperations,
     getItem: getFullCurriculum,
+    createNewItem: createCurriculum,
     duplicateCurriculum,
+    seedMealBreaksSyllabus,
 } as const;

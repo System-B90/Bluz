@@ -12,9 +12,6 @@ import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { Dayjs } from "dayjs";
-import moment from "moment";
-import { useMemo } from "react";
 
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveLessons } from "@/components/base/HiveLessonsProvider";
@@ -23,6 +20,7 @@ import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
 import { EventTypeIcon } from "@/components/schedule/event-component/EventTypeIcon";
+import { useEventDuration } from "@/components/schedule/event-component/use-event-duration";
 import {
     Event,
     eventHasLecturers,
@@ -42,14 +40,7 @@ export function EventTooltipContent({ event }: { event: Event }) {
     const { getCourse } = useCourses();
     const { getRoom } = useRooms();
 
-    const start = moment((event.startTime as Dayjs).toDate());
-    const end = moment((event.endTime as Dayjs).toDate());
-    const durationMinutes = useMemo(
-        () => Math.max(0, end.diff(start, "minutes")),
-        [start, end],
-    );
-    const hours = Math.floor(durationMinutes / 60);
-    const minutes = durationMinutes % 60;
+    const { start, end, hours, minutes } = useEventDuration(event);
     const durationLabel =
         hours && minutes
             ? `${hours} ש׳ ${minutes} ד׳`

@@ -1,8 +1,8 @@
 import { Messages } from "react-big-calendar";
 
-import { Event } from "@/components/schedule/types/event";
-
-const CALENDAR_MESSAGES: Messages<Event> = {
+// Purely textual: nothing here depends on what the calendar is rendering, so
+// the item type stays open rather than pinned to a concrete event shape.
+const CALENDAR_MESSAGES: Messages<object> = {
     date: "תאריך",
     time: "זמן",
     event: "מופע",

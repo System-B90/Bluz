@@ -70,6 +70,14 @@ async function getDbEventsInRange(
     return data;
 }
 
+/*
+ * Note: `splitAcrossBreaks` is deliberately *not* honoured here. An event's
+ * stored span is its net working time; where breaks cut it is decided at
+ * render time by the client (`api-shared/break-windows.ts`). Baking break
+ * length into `endTime` on write is what made an event grow on every save,
+ * and would let one event's move change another's duration.
+ */
+
 /**
  * Updates an existing calendar event in the MongoDB collection.
  * Triggers a real-time WebSocket broadcast to all connected clients.

@@ -16,6 +16,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
 import {
+    defaultSplitAcrossBreaks,
     eventHasLecturers,
     EventType,
     eventTypeToHebrew,
@@ -63,11 +64,15 @@ export function EventTypeField({
     }, []);
 
     const onClose = useCallback(() => {
-        if (!eventHasLecturers(latestTypeRef.current)) {
-            onBlurCallback({ type: latestTypeRef.current, lecturers: [] });
-        } else {
-            onBlurCallback({ type: latestTypeRef.current });
+        const newType = latestTypeRef.current;
+        const update: Record<string, unknown> = {
+            type: newType,
+            splitAcrossBreaks: defaultSplitAcrossBreaks(newType),
+        };
+        if (!eventHasLecturers(newType)) {
+            update.lecturers = [];
         }
+        onBlurCallback(update);
     }, [onBlurCallback]);
 
     return (

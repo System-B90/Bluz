@@ -7,15 +7,7 @@ import { useCallback, useMemo } from "react";
 import { useSettings } from "@/components/base/SettingsProvider";
 import { BaseTimeSettingsCard, TimeSettingRow } from "@/components/settings-dialog/tabs/global/common";
 
-type DayStartTimeSettingProps = {
-    isShrunk?: boolean;
-    onToggleShrink?: () => void;
-};
-
-export function DayStartTimeSetting({
-    isShrunk = false,
-    onToggleShrink,
-}: DayStartTimeSettingProps)
+export function DayStartTimeSetting()
 {
     const {
         dayStartTime,
@@ -71,8 +63,6 @@ export function DayStartTimeSetting({
             description='שעות התחלת לו"ז בגזירת גאנט'
             disabled={ isReadOnlyIteration }
             icon={ <AlarmOnIcon /> }
-            isShrunk={ isShrunk }
-            onToggleShrink={ onToggleShrink }
             rows={ rows }
             title="שעות תחילת יום"
         />

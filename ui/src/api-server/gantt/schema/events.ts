@@ -40,6 +40,7 @@ export const ganttEventsSchema = pgTable("e", {
     recurrence: recurrenceEnumSchema("recurrence").notNull().default("none"),
     isCritical: boolean("is_critical").notNull().default(false),
     isPaWindow: boolean("is_pa_window").notNull().default(false),
+    splitAcrossBreaks: boolean("split_across_breaks").notNull().default(false),
     comment: text("comment"),
     // Shuffle names this event applies to. Empty ⇒ all shuffles.
     shuffles: text("shuffles").array().notNull().default([]),

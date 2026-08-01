@@ -1,6 +1,7 @@
 "use client";
 
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import CallSplitIcon from "@mui/icons-material/CallSplit";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PriorityHighIcon from "@mui/icons-material/PriorityHigh";
 import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
@@ -106,6 +107,12 @@ export function EventToggles({
             Icon: RecordVoiceOverIcon,
         },
         { label: "מוסתר", key: "hidden", hue: "#616161", Icon: VisibilityOffIcon },
+        {
+            label: "פיצול הפסקות",
+            key: "splitAcrossBreaks",
+            hue: "#ef6c00",
+            Icon: CallSplitIcon,
+        },
     ];
 
     return (

@@ -57,7 +57,8 @@ test.describe("Settings Dialog", () => {
         // Tab labels and expected content markers
         const tabs = [
             { label: "אישי", marker: "קבוצות שלי" },
-            { label: "כללי", marker: "זמני תפילות" },
+            { label: "העדפות זמן", marker: "זמני תפילות" },
+            { label: "בניית קורסים", marker: "היררכיית מסלולים ומדריכים" },
             { label: "חדרים", marker: "חדרים" },
             { label: "אנשי חוץ", marker: "אנשי חוץ" },
         ];
@@ -177,18 +178,55 @@ test.describe("Settings Dialog", () => {
         }
     });
 
-    // ─── Global Settings ────────────────────────────────────────────────────
+    // ─── Global Settings (העדפות זמן) ───────────────────────────────────────
 
-    test("global tab displays prayer and course settings", async ({ page }) => {
+    test("global tab displays prayer, meal, and calendar-hours settings", async ({ page }) => {
         await openSettingsDialog(page);
-        await navigateToSettingsTab(page, "כללי");
+        await navigateToSettingsTab(page, "העדפות זמן");
 
         const dialog = page.locator(SELECTORS.settingsDialog).first();
 
         await expect(dialog.getByText("זמני תפילות").first()).toBeVisible();
+        await expect(dialog.getByText("שעות ארוחות").first()).toBeVisible();
+        await expect(dialog.getByText("שעות תצוגת יומן").first()).toBeVisible();
+    });
+
+    test("meal times card shows breakfast, lunch, and dinner rows", async ({ page }) => {
+        await openSettingsDialog(page);
+        await navigateToSettingsTab(page, "העדפות זמן");
+
+        const dialog = page.locator(SELECTORS.settingsDialog).first();
+
+        await expect(dialog.getByText("ארוחת בוקר").first()).toBeVisible();
+        await expect(dialog.getByText("ארוחת צהריים").first()).toBeVisible();
+        await expect(dialog.getByText("ארוחת ערב").first()).toBeVisible();
+    });
+
+    // ─── Course Builder Settings (בניית קורסים) ─────────────────────────────
+
+    test("course builder tab displays the course hierarchy panel", async ({ page }) => {
+        await openSettingsDialog(page);
+        await navigateToSettingsTab(page, "בניית קורסים");
+
+        const dialog = page.locator(SELECTORS.settingsDialog).first();
+
         await expect(
             dialog.getByText("היררכיית מסלולים ומדריכים").first(),
         ).toBeVisible();
+        await expect(
+            dialog.getByText("הגדרת מבנה ההיררכיה ושיוך מדריכים למסלולים").first(),
+        ).toBeVisible();
+    });
+
+    // ─── Iteration Settings (מחזורים) ───────────────────────────────────────
+
+    test("iterations tab renders", async ({ page }) => {
+        await openSettingsDialog(page);
+        await navigateToSettingsTab(page, "מחזורים");
+
+        const dialog = page.locator(SELECTORS.settingsDialog).first();
+        const tabContent = dialog.locator(".animate-slide-up-fade").last();
+        await expect(tabContent).toBeVisible();
     });
 
     // ─── Room Settings ──────────────────────────────────────────────────────

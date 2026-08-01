@@ -2,10 +2,8 @@ import Chip, { ChipProps } from "@mui/material/Chip";
 import { SxProps, Theme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { Dayjs } from "dayjs";
-import moment from "moment";
-import { useMemo } from "react";
 
+import { useEventDuration } from "@/components/schedule/event-component/use-event-duration";
 import { Event } from "@/components/schedule/types/event";
 
 type EventDurationLabelProps = {
@@ -22,16 +20,7 @@ export function EventDurationLabel({
     sx,
     size,
 }: EventDurationLabelProps) {
-    const start = moment((event.startTime as Dayjs).toDate());
-    const end = moment((event.endTime as Dayjs).toDate());
-
-    const durationMinutes = useMemo(
-        () => Math.max(0, end.diff(start, "minutes")),
-        [start, end],
-    );
-
-    const hours = Math.floor(durationMinutes / 60);
-    const minutes = durationMinutes % 60;
+    const { hours, minutes, timeRange } = useEventDuration(event);
 
     const durationLabel =
         hours && minutes
@@ -39,8 +28,6 @@ export function EventDurationLabel({
             : hours
                 ? `${hours} ש׳`
                 : `${minutes} ד׳`;
-
-    const timeRange = `${start.format("HH:mm")} - ${end.format("HH:mm")}`;
 
     if (variant === "text") {
         return (

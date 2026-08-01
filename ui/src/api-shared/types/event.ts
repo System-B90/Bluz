@@ -51,6 +51,17 @@ export type Event = {
     hidden: boolean;
     required: boolean;
     personalTalk: boolean;
+    /**
+     * When true, a break (הפסקה) the event runs into interrupts it instead of
+     * overlapping it: the event pauses at the break's start and resumes when
+     * it ends, as many times as needed.
+     *
+     * This changes only how the event is *drawn*. `startTime` and `endTime`
+     * always describe the net working span, so an event's duration can never
+     * change as a side effect of a break being added, moved or removed — the
+     * calendar simply re-lays it out. See `api-shared/break-windows.ts`.
+     */
+    splitAcrossBreaks: boolean;
     color?: string;
     /**
      * "פיקטיבי" marker (issue #102): shown to students as a normal event but
@@ -155,6 +166,17 @@ export function lecturersLabelForType(type: EventType): string
 export function eventHasRoom(type: EventType): boolean
 {
     return type !== EventType.PRAYER;
+}
+
+/**
+ * Default value for `splitAcrossBreaks` when an event's type is picked/changed:
+ * on for exercises and workshops, off for everything else (lectures included).
+ * @param type The EventType to check.
+ * @returns The default `splitAcrossBreaks` value for that type.
+ */
+export function defaultSplitAcrossBreaks(type: EventType): boolean
+{
+    return type === EventType.EXERCISE || type === EventType.WORKSHOP;
 }
 
 /**

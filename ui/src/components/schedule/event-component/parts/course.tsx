@@ -5,6 +5,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { useMemo } from "react";
 
 import { Course, CourseId } from "@/api-shared/types/course";
+import { collapseCourseSelection } from "@/components/base/collapse-course-selection";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { tagSx } from "@/components/schedule/event-component/parts/tag-sx";
 
@@ -26,10 +27,10 @@ export function CourseComponent({
     showCaption?: boolean;
     chipSize?: ChipProps["size"];
 } & BoxProps) {
-    const { getCourse } = useCourses();
+    const { courses: allCourses } = useCourses();
     const courses = useMemo(
-        () => courseIds.map(getCourse).filter((v) => !!v),
-        [courseIds, getCourse],
+        () => collapseCourseSelection(courseIds, allCourses),
+        [courseIds, allCourses],
     );
 
     return (
@@ -42,7 +43,7 @@ export function CourseComponent({
             {...props}
         >
             {showCaption !== false && (
-                <Tooltip title={courseIds.length === 1 ? "מסלול" : "מסלולים"}>
+                <Tooltip title={courses.length === 1 ? "מסלול" : "מסלולים"}>
                     <MenuBookIcon sx={{ fontSize: "0.85rem", opacity: 0.6 }} />
                 </Tooltip>
             )}

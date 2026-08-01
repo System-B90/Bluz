@@ -34,6 +34,11 @@ import {
 } from "@/api-shared/types/gantt/cut";
 import { GanttCurriculumId, ModuleEventType } from "@/api-shared/types/gantt/models";
 import {
+    MealSettings,
+    MEAL_EVENT_TITLES,
+    MEAL_TIMES_SETTING_KEY,
+} from "@/api-shared/types/settings/meal";
+import {
     DEFAULT_DAY_START_TIME,
     DEFAULT_WEEKEND_HOME_START_TIME,
     SCHEDULE_SETTINGS_KEY,
@@ -84,6 +89,23 @@ export function moduleEventTypeToCalendarType(
     return LOOKUP[type] ?? EventType.OTHER;
 }
 
+const MEAL_TITLES = new Set<string>(Object.values(MEAL_EVENT_TITLES));
+
+/**
+ * Calendar type of a cut occurrence. The auto-seeded meal events become real
+ * break (הפסקה) events rather than generic "אחר" ones: the planner already
+ * treats their windows as breaks while stacking, and once in the schedule they
+ * must keep interrupting the events that split across breaks.
+ */
+export function scheduleEventTypeFor(ganttEvent: {
+    title: string;
+    type: ModuleEventType;
+}): EventType {
+    return MEAL_TITLES.has(ganttEvent.title)
+        ? EventType.BREAK
+        : moduleEventTypeToCalendarType(ganttEvent.type);
+}
+
 /**
  * Walk the full curriculum tree once, indexing every event by id and recording
  * the title of the syllabus each event lives under (used as course provenance).
@@ -123,8 +145,20 @@ export function buildCutPlanInput(args: {
     exceptions: Array<CutExceptionRow>;
     dayStartTime: string;
     weekendHomeStartTime?: string;
+    breakfastTime?: string;
+    lunchTime?: string;
+    dinnerTime?: string;
 }): CutPlanInput {
-    const { curriculum, mappings, exceptions, dayStartTime, weekendHomeStartTime } = args;
+    const {
+        curriculum,
+        mappings,
+        exceptions,
+        dayStartTime,
+        weekendHomeStartTime,
+        breakfastTime,
+        lunchTime,
+        dinnerTime,
+    } = args;
 
     const days: CutPlanInput["days"] = {};
     const weekLinks = [...(curriculum.c2w ?? [])].sort(
@@ -155,6 +189,7 @@ export function buildCutPlanInput(args: {
         recurrence: event.recurrence,
         minimumDuration: event.minimumDuration,
         allocatedDuration: event.cEC?.[0]?.allocatedDuration ?? 0,
+        splitAcrossBreaks: event.splitAcrossBreaks,
     }));
 
     return {
@@ -177,6 +212,9 @@ export function buildCutPlanInput(args: {
         })),
         dayStartTime,
         weekendHomeStartTime,
+        breakfastTime,
+        lunchTime,
+        dinnerTime,
     };
 }
 
@@ -239,7 +277,7 @@ export function buildScheduleEvent(
     return {
         id: randomUUID(),
         name: ganttEvent.title,
-        type: moduleEventTypeToCalendarType(ganttEvent.type),
+        type: scheduleEventTypeFor(ganttEvent),
         subject: fallbackHiveSubjectId ?? 0,
         hiveModule: fallbackHiveModuleId ?? 0,
         hiveLesson: ganttEvent.hiveLessonId ?? null,
@@ -258,6 +296,7 @@ export function buildScheduleEvent(
         hidden: false,
         required: false,
         personalTalk: false,
+        splitAcrossBreaks: ganttEvent.splitAcrossBreaks,
         ganttEventId: ganttEvent.id,
         ganttOccurrenceDate: occurrence.occurrenceDate,
     };
@@ -307,11 +346,12 @@ export async function previewCurriculumCut(
     const settingsController = iteration
         ? getDatabaseController(iteration.dbName)
         : getDatabaseController();
-    const scheduleSetting = (await DbSettings.get(
-        SCHEDULE_SETTINGS_KEY,
-        undefined,
-        settingsController,
-    )) as null | ScheduleSettings;
+    const [ scheduleSetting, mealSetting ] = await Promise.all([
+        DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, settingsController) as
+            Promise<null | ScheduleSettings>,
+        DbSettings.get(MEAL_TIMES_SETTING_KEY, undefined, settingsController) as
+            Promise<MealSettings | null>,
+    ]);
     const dayStartTime =
         scheduleSetting?.dayStartTime ?? DEFAULT_DAY_START_TIME;
     const weekendHomeStartTime =
@@ -324,6 +364,9 @@ export async function previewCurriculumCut(
         exceptions: exceptions as Array<CutExceptionRow>,
         dayStartTime,
         weekendHomeStartTime,
+        breakfastTime: mealSetting?.breakfastTime,
+        lunchTime: mealSetting?.lunchTime,
+        dinnerTime: mealSetting?.dinnerTime,
     });
 
     // Preview is tolerant where the real cut is strict: per-event problems
@@ -451,10 +494,11 @@ export async function cutCurriculumToSchedule(
         };
     }
 
-    const [mappings, exceptions, scheduleSetting] = await Promise.all([
+    const [mappings, exceptions, scheduleSetting, mealSetting] = await Promise.all([
         getModuleDayMappingsForCurriculum(curriculumId, {}),
         listRecurrenceExceptionsForCurriculum(curriculumId),
         DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, controller),
+        DbSettings.get(MEAL_TIMES_SETTING_KEY, undefined, controller),
     ]);
     const dayStartTime =
         (scheduleSetting as null | ScheduleSettings)?.dayStartTime ??
@@ -462,6 +506,9 @@ export async function cutCurriculumToSchedule(
     const weekendHomeStartTime =
         (scheduleSetting as null | ScheduleSettings)?.weekendHomeStartTime ??
         DEFAULT_WEEKEND_HOME_START_TIME;
+    const breakfastTime = (mealSetting as MealSettings | null)?.breakfastTime;
+    const lunchTime = (mealSetting as MealSettings | null)?.lunchTime;
+    const dinnerTime = (mealSetting as MealSettings | null)?.dinnerTime;
 
     const { eventsById, syllabusTitleByEvent, moduleHiveIdsByEvent } =
         indexCurriculumEvents(curriculum);
@@ -475,6 +522,9 @@ export async function cutCurriculumToSchedule(
         exceptions: exceptions as Array<CutExceptionRow>,
         dayStartTime,
         weekendHomeStartTime,
+        breakfastTime,
+        lunchTime,
+        dinnerTime,
     });
     const plan = planCut(planInput, { force });
     if (!plan.ok) {

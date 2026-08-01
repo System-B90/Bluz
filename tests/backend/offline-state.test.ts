@@ -27,6 +27,7 @@ function makeEvent(overrides: Partial<Event> = {}): Event {
         hidden: false,
         required: false,
         personalTalk: false,
+        splitAcrossBreaks: false,
         ...overrides,
     };
 }

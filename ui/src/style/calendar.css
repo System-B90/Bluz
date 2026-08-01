@@ -874,3 +874,33 @@ button.rbc-input::-moz-focus-inner {
     align-items: center;
     justify-content: center;
 }
+
+/*
+ * A split event's drag preview draws every piece of the event — including the
+ * ones above and below the piece the user grabbed — positioned relative to the
+ * box react-big-calendar gives it. That box must therefore neither clip its
+ * children nor paint a background of its own.
+ */
+.rbc-day-slot .rbc-event.rbc-addons-dnd-drag-preview {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+}
+
+/*
+ * One piece of an event that jumps over a break. The edge where it was cut is
+ * squared off so a run of pieces reads as a single object interrupted by the
+ * break, rather than as several unrelated events stacked in a column.
+ */
+.rbc-day-slot .rbc-event.bluz-cut-block-start {
+    border-start-start-radius: 0;
+    border-start-end-radius: 0;
+}
+
+.rbc-day-slot .rbc-event.bluz-cut-block-end {
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+}
