@@ -96,7 +96,7 @@
         "@types/react-dom": "^19.2.2",
         "@types/stylis": "^4.2.7",
         "@types/ws": "^8.18.1",
-        "eslint": "^9.39.4",
+        "eslint": "^10.8.0",
         "eslint-config-next": "^16.2.12",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-mui": "^0.1.1",
