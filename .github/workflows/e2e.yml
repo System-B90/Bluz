@@ -86,7 +86,7 @@ jobs:
                   docker save ghcr.io/system-b90/bluz/proxy:latest -o test-images/proxy.tar
 
             - name: Upload images
-              uses: actions/upload-artifact@v6
+              uses: actions/upload-artifact@v7
               with:
                   name: test-images
                   path: test-images/
@@ -216,7 +216,7 @@ jobs:
                   CI: true
 
             - name: Upload Playwright Report
-              uses: actions/upload-artifact@v6
+              uses: actions/upload-artifact@v7
               if: ${{ !cancelled() }}
               with:
                   name: playwright-report
@@ -224,7 +224,7 @@ jobs:
                   retention-days: 14
 
             - name: Upload Test Results
-              uses: actions/upload-artifact@v6
+              uses: actions/upload-artifact@v7
               if: ${{ !cancelled() }}
               with:
                   name: test-results
@@ -256,7 +256,7 @@ jobs:
                   echo "::endgroup::"
 
             - name: Upload Container Logs
-              uses: actions/upload-artifact@v6
+              uses: actions/upload-artifact@v7
               if: failure()
               with:
                   name: container-logs
@@ -385,7 +385,7 @@ jobs:
                   CI: true
 
             - name: Upload Playwright Report
-              uses: actions/upload-artifact@v6
+              uses: actions/upload-artifact@v7
               if: ${{ !cancelled() }}
               with:
                   name: playwright-report-${{ matrix.shard }}
@@ -393,7 +393,7 @@ jobs:
                   retention-days: 14
 
             - name: Upload Test Results
-              uses: actions/upload-artifact@v6
+              uses: actions/upload-artifact@v7
               if: ${{ !cancelled() }}
               with:
                   name: test-results-${{ matrix.shard }}
@@ -425,7 +425,7 @@ jobs:
                   echo "::endgroup::"
 
             - name: Upload Container Logs
-              uses: actions/upload-artifact@v6
+              uses: actions/upload-artifact@v7
               if: failure()
               with:
                   name: container-logs-${{ matrix.shard }}
