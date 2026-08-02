@@ -38,7 +38,14 @@ jobs:
             # take down a run that had nothing to do with Hive. Clear it before
             # checkout touches it. No-op on GitHub-hosted runners.
             - name: Clear stale Hive workspace (self-hosted)
-              run: sudo rm -rf hive || rm -rf hive || true
+              # A surviving hive-* container (prometheus/tempo publish no ports,
+              # so they outlive a cancelled run) holds its bind-mounted data
+              # open. On NTFS that leaves .fuse_hidden* entries that defeat even
+              # `sudo rm -rf`, so drop the containers first.
+              run: |
+                  leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
+                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
+                  sudo rm -rf hive || rm -rf hive || true
 
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -119,7 +126,14 @@ jobs:
             # take down a run that had nothing to do with Hive. Clear it before
             # checkout touches it. No-op on GitHub-hosted runners.
             - name: Clear stale Hive workspace (self-hosted)
-              run: sudo rm -rf hive || rm -rf hive || true
+              # A surviving hive-* container (prometheus/tempo publish no ports,
+              # so they outlive a cancelled run) holds its bind-mounted data
+              # open. On NTFS that leaves .fuse_hidden* entries that defeat even
+              # `sudo rm -rf`, so drop the containers first.
+              run: |
+                  leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
+                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
+                  sudo rm -rf hive || rm -rf hive || true
 
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -306,7 +320,14 @@ jobs:
             # take down a run that had nothing to do with Hive. Clear it before
             # checkout touches it. No-op on GitHub-hosted runners.
             - name: Clear stale Hive workspace (self-hosted)
-              run: sudo rm -rf hive || rm -rf hive || true
+              # A surviving hive-* container (prometheus/tempo publish no ports,
+              # so they outlive a cancelled run) holds its bind-mounted data
+              # open. On NTFS that leaves .fuse_hidden* entries that defeat even
+              # `sudo rm -rf`, so drop the containers first.
+              run: |
+                  leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
+                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
+                  sudo rm -rf hive || rm -rf hive || true
 
             - name: Checkout repository
               uses: actions/checkout@v7
