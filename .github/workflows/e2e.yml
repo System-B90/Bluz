@@ -33,6 +33,13 @@ jobs:
         runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted') && 'ubuntu-24.04' || 'self-hosted' }}
         if: github.event_name != 'pull_request' || github.head_ref == 'dev'
         steps:
+            # Hive's containers write into hive/ as root, so actions/checkout's
+            # clean step can fail with "ENOTEMPTY ... hive/metrics/data/wal" and
+            # take down a run that had nothing to do with Hive. Clear it before
+            # checkout touches it. No-op on GitHub-hosted runners.
+            - name: Clear stale Hive workspace (self-hosted)
+              run: sudo rm -rf hive || rm -rf hive || true
+
             - name: Checkout repository
               uses: actions/checkout@v7
 
@@ -107,6 +114,13 @@ jobs:
             (github.event_name != 'pull_request' || github.head_ref == 'dev')
             && !(github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted')
         steps:
+            # Hive's containers write into hive/ as root, so actions/checkout's
+            # clean step can fail with "ENOTEMPTY ... hive/metrics/data/wal" and
+            # take down a run that had nothing to do with Hive. Clear it before
+            # checkout touches it. No-op on GitHub-hosted runners.
+            - name: Clear stale Hive workspace (self-hosted)
+              run: sudo rm -rf hive || rm -rf hive || true
+
             - name: Checkout repository
               uses: actions/checkout@v7
 
@@ -287,6 +301,13 @@ jobs:
             matrix:
                 shard: [1, 2, 3]
         steps:
+            # Hive's containers write into hive/ as root, so actions/checkout's
+            # clean step can fail with "ENOTEMPTY ... hive/metrics/data/wal" and
+            # take down a run that had nothing to do with Hive. Clear it before
+            # checkout touches it. No-op on GitHub-hosted runners.
+            - name: Clear stale Hive workspace (self-hosted)
+              run: sudo rm -rf hive || rm -rf hive || true
+
             - name: Checkout repository
               uses: actions/checkout@v7
 
