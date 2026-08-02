@@ -120,7 +120,14 @@ jobs:
                   python-version: "3.13"
 
             - name: Install Python dependencies (pyhive)
-              run: pip install -r scripts/requirements.txt
+              # The self-hosted runner's interpreter is PEP 668
+              # externally-managed, so a bare `pip install` aborts. A venv on
+              # PATH keeps later steps calling plain `python`/`pip` unchanged.
+              run: |
+                  python -m venv "${RUNNER_TEMP}/pyhive-venv"
+                  echo "${RUNNER_TEMP}/pyhive-venv/bin" >> "$GITHUB_PATH"
+                  "${RUNNER_TEMP}/pyhive-venv/bin/pip" install --upgrade pip
+                  "${RUNNER_TEMP}/pyhive-venv/bin/pip" install -r scripts/requirements.txt
 
             - name: Verify Hive admin login via pyhive
               run: |
@@ -293,7 +300,14 @@ jobs:
                   python-version: "3.13"
 
             - name: Install Python dependencies (pyhive)
-              run: pip install -r scripts/requirements.txt
+              # The self-hosted runner's interpreter is PEP 668
+              # externally-managed, so a bare `pip install` aborts. A venv on
+              # PATH keeps later steps calling plain `python`/`pip` unchanged.
+              run: |
+                  python -m venv "${RUNNER_TEMP}/pyhive-venv"
+                  echo "${RUNNER_TEMP}/pyhive-venv/bin" >> "$GITHUB_PATH"
+                  "${RUNNER_TEMP}/pyhive-venv/bin/pip" install --upgrade pip
+                  "${RUNNER_TEMP}/pyhive-venv/bin/pip" install -r scripts/requirements.txt
 
             - name: Verify Hive admin login via pyhive
               run: |
