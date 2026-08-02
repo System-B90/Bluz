@@ -33,20 +33,6 @@ jobs:
         runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted') && 'ubuntu-24.04' || 'self-hosted' }}
         if: github.event_name != 'pull_request' || github.head_ref == 'dev'
         steps:
-            # Hive's containers write into hive/ as root, so actions/checkout's
-            # clean step can fail with "ENOTEMPTY ... hive/metrics/data/wal" and
-            # take down a run that had nothing to do with Hive. Clear it before
-            # checkout touches it. No-op on GitHub-hosted runners.
-            - name: Clear stale Hive workspace (self-hosted)
-              # A surviving hive-* container (prometheus/tempo publish no ports,
-              # so they outlive a cancelled run) holds its bind-mounted data
-              # open. On NTFS that leaves .fuse_hidden* entries that defeat even
-              # `sudo rm -rf`, so drop the containers first.
-              run: |
-                  leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
-                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
-                  sudo rm -rf hive || rm -rf hive || true
-
             - name: Checkout repository
               uses: actions/checkout@v7
 
@@ -121,20 +107,6 @@ jobs:
             (github.event_name != 'pull_request' || github.head_ref == 'dev')
             && !(github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted')
         steps:
-            # Hive's containers write into hive/ as root, so actions/checkout's
-            # clean step can fail with "ENOTEMPTY ... hive/metrics/data/wal" and
-            # take down a run that had nothing to do with Hive. Clear it before
-            # checkout touches it. No-op on GitHub-hosted runners.
-            - name: Clear stale Hive workspace (self-hosted)
-              # A surviving hive-* container (prometheus/tempo publish no ports,
-              # so they outlive a cancelled run) holds its bind-mounted data
-              # open. On NTFS that leaves .fuse_hidden* entries that defeat even
-              # `sudo rm -rf`, so drop the containers first.
-              run: |
-                  leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
-                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
-                  sudo rm -rf hive || rm -rf hive || true
-
             - name: Checkout repository
               uses: actions/checkout@v7
 
@@ -315,20 +287,6 @@ jobs:
             matrix:
                 shard: [1, 2, 3]
         steps:
-            # Hive's containers write into hive/ as root, so actions/checkout's
-            # clean step can fail with "ENOTEMPTY ... hive/metrics/data/wal" and
-            # take down a run that had nothing to do with Hive. Clear it before
-            # checkout touches it. No-op on GitHub-hosted runners.
-            - name: Clear stale Hive workspace (self-hosted)
-              # A surviving hive-* container (prometheus/tempo publish no ports,
-              # so they outlive a cancelled run) holds its bind-mounted data
-              # open. On NTFS that leaves .fuse_hidden* entries that defeat even
-              # `sudo rm -rf`, so drop the containers first.
-              run: |
-                  leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
-                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
-                  sudo rm -rf hive || rm -rf hive || true
-
             - name: Checkout repository
               uses: actions/checkout@v7
 
