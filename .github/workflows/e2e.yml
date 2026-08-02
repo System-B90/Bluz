@@ -16,8 +16,20 @@ on:
                 default: self-hosted
     pull_request:
         branches: [master]
+    # A full e2e run occupies the single self-hosted box for the best part of
+    # an hour, so it must not be spent on commits that cannot change behaviour.
+    # Documentation, the CI config itself, and dependency manifests that only
+    # matter at build time are excluded here; anything under ui/, tests/,
+    # scripts/, deploy/ or nginx/ still triggers it.
     push:
         branches: [master]
+        paths-ignore:
+            - 'docs/**'
+            - '**/*.md'
+            - 'mkdocs.yml'
+            - 'typedoc.json'
+            - '.github/**'
+            - 'LICENSE'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
