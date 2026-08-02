@@ -142,7 +142,11 @@ networks:
     bluz_net:
         driver: bridge
     hive_net:
-        # Only correct if hive-stack is running locally on this machine via Docker.
-        # hive-nginx must alias "hive.org" on this network (see pyhive/hive-stack/docker-compose.yaml).
-        name: hive-stack_hive-net
+        # The Hive stack's network, which hive-nginx aliases "hive.org" onto
+        # (see pyhive/hive-stack/docker-compose.yaml). Compose derives the name
+        # from the directory Hive was brought up in, so it differs by
+        # environment: locally that is hive-stack/, while CI checks Hive out to
+        # hive/ and gets hive_hive-net. The default keeps the local flow
+        # working with no configuration; CI sets HIVE_NETWORK_NAME.
+        name: ${HIVE_NETWORK_NAME:-hive-stack_hive-net}
         external: true

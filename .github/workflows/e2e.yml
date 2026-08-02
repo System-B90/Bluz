@@ -157,6 +157,10 @@ jobs:
                   MONGO_PASS=4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP
                   cat > .env <<EOF
                   BLUZ_VERSION=latest
+                  # setup-hive checks Hive out to hive/, so its compose network
+                  # is hive_hive-net, not the hive-stack_hive-net a local
+                  # checkout produces.
+                  HIVE_NETWORK_NAME=hive_hive-net
                   WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$(openssl rand -hex 32)
                   NEXT_PUBLIC_HIVE_URL=https://hive.org
                   NODE_TLS_REJECT_UNAUTHORIZED=0
@@ -337,6 +341,10 @@ jobs:
                   MONGO_PASS=4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP
                   cat > .env <<EOF
                   BLUZ_VERSION=latest
+                  # setup-hive checks Hive out to hive/, so its compose network
+                  # is hive_hive-net, not the hive-stack_hive-net a local
+                  # checkout produces.
+                  HIVE_NETWORK_NAME=hive_hive-net
                   WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=$(openssl rand -hex 32)
                   NEXT_PUBLIC_HIVE_URL=https://hive.org
                   NODE_TLS_REJECT_UNAUTHORIZED=0
