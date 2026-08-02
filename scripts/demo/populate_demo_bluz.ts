@@ -122,14 +122,26 @@ async function main() {
         process.env.MONGO_CONNECTION_STRING ||
         "mongodb://127.0.0.1:27017/";
 
-    // If running on host machine outside Docker, translate Docker service/remote hostnames to local port-mapping
+    // The connection string names the compose service (bluz-mongodb), which
+    // only resolves from inside that network. Anything else has to go through
+    // the published port instead.
+    //
+    // "Am I in a container?" is the wrong question: a DinD CI runner has
+    // /.dockerenv but is *not* on the Bluz compose network, and there the old
+    // check skipped the translation and failed with
+    // "getaddrinfo EAI_AGAIN bluz-mongodb". An explicit MONGO_HOST/MONGO_PORT
+    // is the caller stating where the database actually is, so it always wins.
+    const hasExplicitEndpoint = Boolean(
+        process.env.MONGO_HOST || process.env.MONGO_PORT
+    );
     const isRunningInDocker =
-        fs.existsSync("/.dockerenv") || process.env.IS_DOCKER === "true";
+        !hasExplicitEndpoint &&
+        (fs.existsSync("/.dockerenv") || process.env.IS_DOCKER === "true");
     if (!isRunningInDocker) {
         const mongoHost = process.env.MONGO_HOST || "127.0.0.1";
         const mongoPort = process.env.MONGO_PORT || "27018";
         console.log(
-            `Running on host machine. Translating MongoDB connection to local port-mapping (${mongoHost}:${mongoPort})...`
+            `Using the published MongoDB endpoint (${mongoHost}:${mongoPort})...`
         );
         connectionString = connectionString.replace(
             /@([^/:]+)(:\d+)?/,
