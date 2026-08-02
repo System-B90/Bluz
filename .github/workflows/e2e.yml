@@ -17,19 +17,20 @@ on:
     pull_request:
         branches: [master]
     # A full e2e run occupies the single self-hosted box for the best part of
-    # an hour, so it must not be spent on commits that cannot change behaviour.
-    # Documentation, the CI config itself, and dependency manifests that only
-    # matter at build time are excluded here; anything under ui/, tests/,
-    # scripts/, deploy/ or nginx/ still triggers it.
+    # an hour, so it is spent only on the paths that can actually change what
+    # the suite exercises: the app, the specs, and the runtime topology.
+    # Everything else — docs, workflow config, the CLI, tooling — reaches e2e
+    # through a pull request or an explicit dispatch instead.
     push:
         branches: [master]
-        paths-ignore:
-            - 'docs/**'
-            - '**/*.md'
-            - 'mkdocs.yml'
-            - 'typedoc.json'
-            - '.github/**'
-            - 'LICENSE'
+        paths:
+            - 'ui/**'
+            - 'tests/**'
+            - 'deploy/**'
+            - 'nginx/**'
+            - 'session-server/**'
+            - 'package.json'
+            - 'package-lock.json'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
