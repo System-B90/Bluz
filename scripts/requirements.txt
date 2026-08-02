@@ -1,17 +1,14 @@
-# PyHiveLMS is published to a small index in System-B90/.github, not to PyPI,
-# which stops at 2.1.1. Neither pip index mechanism can read that index over
-# raw.githubusercontent.com:
-#   --extra-index-url → pip requests `<index>/pyhivelms/`, and raw does not
-#     resolve a directory to its index.html (404), so the resolver silently
-#     falls back to the stale PyPI copy.
-#   --find-links → raw serves index.html as text/plain with nosniff, so pip
-#     refuses to scrape links out of it.
-# So the wheel is referenced directly. Bump this URL when pyhive releases.
+# PyHiveLMS is published to a small PEP 503 index in System-B90/.github, not to
+# PyPI, which stops at 2.1.1. The index is served by GitHub Pages — NOT by
+# raw.githubusercontent.com, which cannot back a pip index at all: it 404s the
+# directory URL pip requests, and serves index.html as text/plain with nosniff
+# so --find-links will not scrape it either.
+--extra-index-url https://system-b90.github.io/.github/pypi/
 
 InquirerPy>=0.3.4
 prompt-toolkit>=3.0.53
 python-dotenv==1.2.2
 typer==0.27.0
-PyHiveLMS @ https://raw.githubusercontent.com/System-B90/.github/main/pypi/pyhivelms/pyhivelms-2.1.3-py3-none-any.whl
+PyHiveLMS>=2.1.3
 tqdm>=4.70.0
 ruff>=0.9.0
