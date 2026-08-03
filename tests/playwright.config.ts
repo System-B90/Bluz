@@ -42,7 +42,11 @@ export default defineConfig({
         launchOptions: { args: [ "--disable-dev-shm-usage" ] },
         screenshot: "only-on-failure",
         video: "on-first-retry",
-        trace: "on-first-retry",
+        // retain-on-failure, not on-first-retry: with retries enabled the
+        // first (failing) attempt is the one that carries the evidence, and
+        // "on-first-retry" only traces the *re-run* — which usually passes,
+        // so a flake investigation ends up staring at a green trace.
+        trace: "retain-on-failure",
         locale: "he-IL",
         timezoneId: "Asia/Jerusalem",
     },
