@@ -80,7 +80,12 @@ test.describe("Custom colors settings", () => {
                     const body = await response.json();
                     return JSON.stringify(body.data ?? []).includes(name);
                 },
-                { timeout: 10_000 },
+                // 20s, not 10: one CI run had the DELETE return 200 while
+                // reads still listed the colour past the 10s mark. Either the
+                // delete takes longer to become visible than expected, or it
+                // is genuinely lost sometimes — a longer window separates the
+                // two instead of reporting "flaky" either way.
+                { timeout: 20_000 },
             )
             .toBe(false);
 
