@@ -44,6 +44,7 @@ jobs:
     build-test-images:
         name: Build Test Images
         runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted') && 'ubuntu-24.04' || 'self-hosted' }}
+        timeout-minutes: 25
         if: github.event_name != 'pull_request' || github.head_ref == 'dev'
         steps:
             - name: Checkout repository
