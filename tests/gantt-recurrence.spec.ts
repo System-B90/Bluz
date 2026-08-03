@@ -39,7 +39,16 @@ async function createAndSelectCurriculum(page: Page): Promise<void> {
 
     await expect(page).toHaveURL(/cid=/, { timeout: 10_000 });
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(300);
+
+    // Escape starts the popover's exit transition; its backdrop stays mounted
+    // and keeps swallowing pointer events until that finishes. A fixed 300ms
+    // was enough on an idle machine but not on a loaded one, and the next
+    // click then waited out the whole test budget on an element that was
+    // visible and enabled but could never receive the click — reported as
+    // "Target page, context or browser has been closed" after teardown.
+    await expect(page.locator(".MuiBackdrop-root")).toHaveCount(0, {
+        timeout: 15_000,
+    });
 }
 
 /** Adds `count` weeks to the currently-selected curriculum via the weeks tab. */
