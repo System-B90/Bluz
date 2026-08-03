@@ -68,11 +68,21 @@ test.describe("Custom colors settings", () => {
 
         // The delete is optimistic locally but the list is also refreshed from
         // the websocket broadcast, so clearing the search too early can render
-        // the pre-delete snapshot again. Gate on the server having confirmed
-        // the delete rather than on a fixed wait.
-        await expect(
-            page.getByText(`מחיקת צבע ${name} הסתיימה בהצלחה.`),
-        ).toBeVisible({ timeout: 10_000 });
+        // the pre-delete snapshot again. Gate on the server, not on the
+        // snackbar: that toast auto-dismisses, so asserting on it just traded
+        // one race for another.
+        await expect
+            .poll(
+                async () => {
+                    const response = await page.request.get(
+                        "/api/custom-colors",
+                    );
+                    const body = await response.json();
+                    return JSON.stringify(body.data ?? []).includes(name);
+                },
+                { timeout: 10_000 },
+            )
+            .toBe(false);
 
         await searchInput.fill("");
         await expect(dialog.getByText(name)).toBeHidden({ timeout: 10_000 });
