@@ -59,7 +59,10 @@ test.describe("Dialog keyboard behaviour", () => {
         await timeTab.focus();
         await page.keyboard.press("Enter");
 
-        await expect(dialog.getByText("זמני תפילות")).toBeVisible();
+        // exact: the tab's own description starts with the same words.
+        await expect(
+            dialog.getByText("זמני תפילות", { exact: true }),
+        ).toBeVisible();
     });
 
     test("event dialog focuses the name field and closes on Escape", async ({

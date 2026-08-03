@@ -63,13 +63,17 @@ export function SettingsListCardContent({ items, isLoading = false, headerProps,
                 />
             ) : (
                 <EmptyState
-                    actionLabel={ addButtonLabel }
+                    // Deliberately not addButtonLabel: the add button below is
+                    // always on screen, and two buttons sharing an accessible
+                    // name make every getByRole("button", { name }) ambiguous —
+                    // it broke three outsiders specs on strict-mode violations.
+                    actionLabel="התחילו כאן"
                     message={ searchMessages.noEntries }
                     onAction={ handleStartCreate }
                 />
             )
         ) : <List disablePadding>{ items }</List>
-    ), [ isLoading, items, searchQuery, searchMessages, setSearchQuery, addButtonLabel, handleStartCreate ]);
+    ), [ isLoading, items, searchQuery, searchMessages, setSearchQuery, handleStartCreate ]);
 
     return (
         <Box sx={ { ...settingsCardSx, flex: 1.4 } }>
