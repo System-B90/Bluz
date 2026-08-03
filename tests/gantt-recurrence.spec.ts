@@ -69,7 +69,11 @@ async function addWeeks(page: Page, count: number): Promise<void> {
     });
 
     for (let i = 0; i < count; i++) {
-        await manageButton.click();
+        // Explicit timeout so an unactionable button is reported as such —
+        // with the element that intercepts the click — instead of consuming
+        // the whole test budget and surfacing as "Target page, context or
+        // browser has been closed" once Playwright tears the run down.
+        await manageButton.click({ timeout: 20_000 });
         await page
             .getByRole("menuitem", { name: "הוספת שבוע לסוף הקורס" })
             .click();
