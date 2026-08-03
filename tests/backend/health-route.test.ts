@@ -75,3 +75,34 @@ describe("GET /api/health", () => {
         expect(body).not.toContain("5432");
     });
 });
+
+describe("health check timeouts", () => {
+    it("does not leave an unhandled rejection when a probe loses the race", async () => {
+        // The probe rejecting *after* the timeout already won is what crashed
+        // the server: Node throws on an unhandled rejection, so the container
+        // restart-looped whenever a database was briefly slow.
+        const unhandled: Array<unknown> = [];
+        const onUnhandled = (reason: unknown) => unhandled.push(reason);
+        process.on("unhandledRejection", onUnhandled);
+
+        // Must outlast the 2.5s per-check budget: the point is a probe that
+        // rejects once the timeout has already decided the result.
+        executeMock.mockImplementation(
+            () =>
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("slow then failed")), 2_700),
+                ),
+        );
+
+        try {
+            const response = await HealthRoute.GET();
+            expect(response.status).toBe(503);
+
+            // Give the late rejection a turn to surface.
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            expect(unhandled).toEqual([]);
+        } finally {
+            process.off("unhandledRejection", onUnhandled);
+        }
+    }, 10_000);
+});

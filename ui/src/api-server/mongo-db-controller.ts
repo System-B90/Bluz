@@ -50,97 +50,110 @@ function readIntEnv(name: string, fallback: number): number {
 // instead of leaking a new connection pool on every module re-evaluation.
 const globalCache = globalThis as unknown as { __bluzMongoClient?: MongoClient };
 
-const mongoClient =
-    globalCache.__bluzMongoClient ??
-    new MongoClient(MONGO_CONNECTION_STRING, {
+function createMongoClient(): MongoClient {
+    return new MongoClient(MONGO_CONNECTION_STRING, {
         maxPoolSize: readIntEnv("MONGO_MAX_POOL_SIZE", 50),
         minPoolSize: readIntEnv("MONGO_MIN_POOL_SIZE", 0),
         maxIdleTimeMS: readIntEnv("MONGO_MAX_IDLE_TIME_MS", 60_000),
     });
+}
+
+let mongoClient = globalCache.__bluzMongoClient ?? createMongoClient();
 
 if (process.env.NODE_ENV !== "production") {
     globalCache.__bluzMongoClient = mongoClient;
 }
 
+/**
+ * The live client — never hold on to the result.
+ *
+ * A MongoClient whose *first* connection attempt fails closes its topology,
+ * and the driver does not reopen it: every later operation throws
+ * "MongoTopologyClosedError: Topology is closed", forever. In a container that
+ * boots beside its database, that first attempt regularly happens while Mongo
+ * is still starting, so the app came up permanently unable to reach Mongo
+ * while looking otherwise fine — only /api/health caught it.
+ *
+ * Replacing the closed client here makes the app recover by itself once Mongo
+ * is up. Handles derived from it (`db()`, `collection()`) are bound to the
+ * client that produced them, which is why the controller resolves them per
+ * access rather than caching them in the constructor.
+ */
+function getMongoClient(): MongoClient {
+    // `topology` is undefined before the first connect and carries an
+    // `isDestroyed()` once one has happened.
+    const topology = (
+        mongoClient as unknown as {
+            topology?: { isDestroyed?: () => boolean };
+        }
+    ).topology;
+
+    if (topology?.isDestroyed?.()) {
+        mongoClient = createMongoClient();
+        if (process.env.NODE_ENV !== "production") {
+            globalCache.__bluzMongoClient = mongoClient;
+        }
+    }
+
+    return mongoClient;
+}
+
 class DatabaseController {
-    private mongoClient: MongoClient;
-    private bluzDb: Db;
-    private _events: Collection<DbEventDocument>;
-    private _settings: Collection<Setting>;
-    private _courses: Collection<Course>;
-    private _rooms: Collection<CustomRoom>;
-    private _curriculums: Collection<GanttCurriculum & BaseDbDocument>;
-    private _syllabuses: Collection<GanttSyllabus & BaseDbDocument>;
-    private _modules: Collection<GanttModule & BaseDbDocument>;
-    private _moduleEvents: Collection<GanttEvent & BaseDbDocument>;
-    private _roomExtendedInfo: Collection<RoomExtendedInfoDocument>;
-    private _outsiders: Collection<Outsider>;
-    private _reservations: Collection<DbReservation>;
-    private _calendarSnapshots: Collection<CalendarSnapshot>;
-    private _calendarDrafts: Collection<CalendarDraft>;
     public readonly dbName: string;
 
     constructor(dbName: string = DEFAULT_ITERATION_DB_NAME) {
         this.dbName = dbName;
-        this.mongoClient = mongoClient;
-        this.bluzDb = this.mongoClient.db(dbName);
-        this._events = this.bluzDb.collection("events");
-        this._settings = this.bluzDb.collection("settings");
-        this._courses = this.bluzDb.collection("courses");
-        this._rooms = this.bluzDb.collection("rooms");
-        this._curriculums = this.bluzDb.collection("curriculums");
-        this._syllabuses = this.bluzDb.collection("syllabuses");
-        this._modules = this.bluzDb.collection("modules");
-        this._moduleEvents = this.bluzDb.collection("moduleEvents");
-        this._roomExtendedInfo = this.bluzDb.collection("roomExtendedInfo");
-        this._outsiders = this.bluzDb.collection("outsiders");
-        this._reservations = this.bluzDb.collection("reservations");
-        this._calendarSnapshots =
-            this.bluzDb.collection("calendarSnapshots");
-        this._calendarDrafts = this.bluzDb.collection("calendarDrafts");
+    }
+
+    // Resolved per access rather than cached in the constructor: a handle is
+    // bound to the client that created it, so a controller built while Mongo
+    // was unreachable would keep serving handles from the dead client for the
+    // life of the process. `db()`/`collection()` are cheap wrappers.
+    private get bluzDb(): Db {
+        return getMongoClient().db(this.dbName);
     }
 
     public get events(): Collection<DbEventDocument> {
-        return this._events;
+        return this.bluzDb.collection("events");
     }
     public get settings(): Collection<Setting> {
-        return this._settings;
+        return this.bluzDb.collection("settings");
     }
     public get courses(): Collection<Course> {
-        return this._courses;
+        return this.bluzDb.collection("courses");
     }
     public get rooms(): Collection<CustomRoom> {
-        return this._rooms;
+        return this.bluzDb.collection("rooms");
     }
-    public get curriculums() {
-        return this._curriculums;
+    public get curriculums(): Collection<GanttCurriculum & BaseDbDocument> {
+        return this.bluzDb.collection("curriculums");
     }
-    public get syllabuses() {
-        return this._syllabuses;
+    public get syllabuses(): Collection<GanttSyllabus & BaseDbDocument> {
+        return this.bluzDb.collection("syllabuses");
     }
-    public get modules() {
-        return this._modules;
+    public get modules(): Collection<GanttModule & BaseDbDocument> {
+        return this.bluzDb.collection("modules");
     }
-    public get moduleEvents() {
-        return this._moduleEvents;
+    public get moduleEvents(): Collection<GanttEvent & BaseDbDocument> {
+        return this.bluzDb.collection("moduleEvents");
     }
     public get roomExtendedInfo(): Collection<RoomExtendedInfoDocument> {
-        return this._roomExtendedInfo;
+        return this.bluzDb.collection("roomExtendedInfo");
     }
     public get outsiders(): Collection<Outsider> {
-        return this._outsiders;
+        return this.bluzDb.collection("outsiders");
     }
     public get reservations(): Collection<DbReservation> {
-        return this._reservations;
+        return this.bluzDb.collection("reservations");
     }
     public get calendarSnapshots(): Collection<CalendarSnapshot> {
-        return this._calendarSnapshots;
+        return this.bluzDb.collection("calendarSnapshots");
     }
     public get calendarDrafts(): Collection<CalendarDraft> {
-        return this._calendarDrafts;
+        return this.bluzDb.collection("calendarDrafts");
     }
     public get client(): MongoClient {
-        return this.mongoClient;
+        return getMongoClient();
     }
 }
 
@@ -201,9 +214,10 @@ export { databaseController };
 
 /** Lightweight controller over the shared `bluz_meta` database. */
 class MetaController {
-    private readonly metaDb: Db;
-    constructor() {
-        this.metaDb = mongoClient.db(META_DB_NAME);
+    // Same reason as DatabaseController: never cache a handle from a client
+    // that may have closed its topology.
+    private get metaDb(): Db {
+        return getMongoClient().db(META_DB_NAME);
     }
     public get iterations(): Collection<Iteration> {
         return this.metaDb.collection<Iteration>("iterations");

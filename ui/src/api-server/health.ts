@@ -19,19 +19,34 @@ export type HealthReport = {
  * own timeout is the only bound and the container reports "starting" forever.
  */
 async function withTimeout(probe: () => Promise<void>): Promise<boolean> {
+    // The probe's own rejection must be swallowed here, not just at the race:
+    // when the timeout wins, the probe is still running, and its later
+    // rejection has no handler left. Node's default for an unhandled rejection
+    // is to throw, which killed the whole server — the container crash-looped
+    // every time a database was briefly slow, which is exactly when the
+    // healthcheck matters.
+    let timer: NodeJS.Timeout | undefined;
+    const settled = probe().catch(() => {
+        throw new Error("health check failed");
+    });
+
     try {
         await Promise.race([
-            probe(),
-            new Promise<never>((_, reject) =>
-                setTimeout(
+            settled,
+            new Promise<never>((_, reject) => {
+                timer = setTimeout(
                     () => reject(new Error("health check timed out")),
                     CHECK_TIMEOUT_MS,
-                ),
-            ),
+                );
+            }),
         ]);
         return true;
     } catch {
         return false;
+    } finally {
+        // Without this the process stays awake for the full timeout on every
+        // successful check.
+        clearTimeout(timer);
     }
 }
 
