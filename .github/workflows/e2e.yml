@@ -309,6 +309,20 @@ jobs:
                   path: container-logs/
                   retention-days: 7
 
+            # Hive's services are restart: always, so nothing stops them when
+            # the job ends and they come back with the (ephemeral) runner
+            # container. Three idle runners were each holding a full Hive
+            # stack, which left the box in disk-wait at load ~30 with no jobs
+            # running — and that is what made the next run's nested containerd
+            # time out on startup. Runs after the log upload so a failing run
+            # still gets its diagnostics.
+            - name: Tear down Hive stack
+              if: always()
+              run: |
+                  docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
+                  leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
+                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
+
     # ── GitHub-hosted: classic 3-shard matrix ───────────────────────────────
     # Each GitHub-hosted runner is its own VM, so 3 shards = 3 isolated stacks
     # in parallel at no shared-host cost. Runs only on an explicit dispatch
@@ -488,3 +502,11 @@ jobs:
                   name: container-logs-${{ matrix.shard }}
                   path: container-logs/
                   retention-days: 7
+
+            # Harmless on a throwaway VM, but keeps the two paths identical.
+            - name: Tear down Hive stack
+              if: always()
+              run: |
+                  docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
+                  leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
+                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
