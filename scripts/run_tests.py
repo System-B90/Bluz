@@ -20,6 +20,12 @@ from pyhive import HiveClient
 
 app = typer.Typer(help="Bluz E2E testing pipeline utility.")
 
+# Hostname the app is reached by. It has to be one name everywhere — the SSO
+# redirect URI, NEXTAUTH_URL and Playwright's baseURL — because Hive matches
+# the callback origin exactly. Resolves to 127.0.0.3 via the hosts file (CI
+# maps it in setup-hive; locally see the dev setup docs).
+APP_HOST = os.environ.get("BLUZ_APP_HOST", "bluz.dev")
+
 
 def get_worktree_slug() -> str:
     """Generates a unique identifier for the current worktree directory."""
@@ -202,6 +208,9 @@ def main(
         # (set by the base compose file) is MONGO_ROOT_PASSWORD -- reuse it
         # so the ui container can authenticate against the real password.
         "TEST_MONGO_PASSWORD": root_env.get("MONGO_ROOT_PASSWORD", ""),
+        # docker-compose.test.yml builds NEXTAUTH_URL from this, so the app
+        # announces the same host the SSO client was registered with.
+        "BLUZ_APP_HOST": APP_HOST,
     }
 
     new_ui_container = True
@@ -290,9 +299,14 @@ def main(
             with HiveClient(
                 "admin", "Password1", hive_url, verify=False, timeout=10
             ) as client:
+                # The redirect URI must match NEXTAUTH_URL exactly, host
+                # included, because Hive rejects a callback to any other
+                # origin. Registering 127.0.0.3 while the app announced
+                # bluz.dev left the browser parked on the login page until
+                # auth.setup.ts timed out.
                 sso_credentials = client.register_sso_service(
                     service_name=f"Bluz Test {slug}",
-                    redirect_uris=f"https://127.0.0.3:{ports['https']}/api/auth/callback/hive",
+                    redirect_uris=f"https://{APP_HOST}:{ports['https']}/api/auth/callback/hive",
                 )
                 client_id = sso_credentials.get("client_id")
                 client_secret = sso_credentials.get("client_secret")
@@ -361,7 +375,7 @@ def main(
         "TEST_MONGO_PASSWORD": mongo_pass,
         "MONGO_HOST": "127.0.0.3",
         "MONGO_PORT": str(ports["mongo"]),
-        "BASE_URL": f"https://127.0.0.3:{ports['https']}",
+        "BASE_URL": f"https://{APP_HOST}:{ports['https']}",
         "TEST_PROJECT_NAME": project_name,
         "TEST_POSTGRES_PORT": str(ports["postgres"]),
         "TEST_MONGO_PORT": str(ports["mongo"]),
