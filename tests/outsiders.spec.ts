@@ -65,8 +65,24 @@ test.describe("Outsiders settings", () => {
         await expect(confirmDialog).toBeVisible();
         await confirmDialog.getByRole("button", { name: "מחיקה" }).click();
 
+        // Same shape as the custom-colors delete: the row is removed
+        // optimistically but the list is also refreshed from the websocket
+        // broadcast, so clearing the search too early can re-render the
+        // pre-delete snapshot. Gate on the server, which is the condition the
+        // assertion below actually depends on.
+        await expect
+            .poll(
+                async () => {
+                    const response = await page.request.get("/api/outsiders");
+                    const body = await response.json();
+                    return JSON.stringify(body.data ?? []).includes(name);
+                },
+                { timeout: 20_000 },
+            )
+            .toBe(false);
+
         await searchInput.fill("");
-        await expect(dialog.getByText(name)).toBeHidden();
+        await expect(dialog.getByText(name)).toBeHidden({ timeout: 10_000 });
     });
 
     test("edits an existing outsider's phone number", async ({ page }) => {
