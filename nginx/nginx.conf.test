@@ -3,13 +3,19 @@ events {
 }
 
 http {
-    upstream bluz_frontend {
-        server ui:3000;
-    }
-
-    upstream bluz_websocket {
-        server sessions:28199;
-    }
+    # nginx resolves a name in `upstream` (or a literal proxy_pass) exactly
+    # once, at startup, and caches the address forever. The ui container spends
+    # its first minutes retrying migrations against a database that is still
+    # starting, so the proxy is regularly up first — and once the address it
+    # cached stops answering, every request 502s for the rest of the run even
+    # though the app is healthy. That is what timed out the readiness probe
+    # after 20 minutes with a container reporting (healthy).
+    #
+    # 127.0.0.11 is Docker's embedded DNS. Resolving through a *variable*
+    # forces nginx to look the name up per request and honour the TTL, so the
+    # proxy recovers on its own instead of needing a restart.
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    resolver_timeout 5s;
 
     # Redirect all HTTP traffic to HTTPS
     server {
@@ -33,7 +39,10 @@ http {
 
         # Next.js Frontend Routing
         location / {
-            proxy_pass http://bluz_frontend;
+            # $request_uri is required: a variable proxy_pass does not pass the
+            # original URI on by itself.
+            set $bluz_frontend ui:3000;
+            proxy_pass http://$bluz_frontend$request_uri;
             proxy_http_version 1.1;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
@@ -42,7 +51,8 @@ http {
         }
 
         location /_next/webpack-hmr {
-            proxy_pass http://bluz_frontend;
+            set $bluz_hmr ui:3000;
+            proxy_pass http://$bluz_hmr$request_uri;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -60,7 +70,8 @@ http {
 
         # WebSocket Server Routing
         location /ws/ {
-            proxy_pass http://bluz_websocket;
+            set $bluz_websocket sessions:28199;
+            proxy_pass http://$bluz_websocket$request_uri;
             proxy_http_version 1.1;
 
             # Required headers to establish and maintain WebSocket connections
