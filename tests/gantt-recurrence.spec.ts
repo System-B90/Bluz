@@ -49,6 +49,16 @@ async function addWeeks(page: Page, count: number): Promise<void> {
     const manageButton = page.getByRole("button", { name: "ניהול אורך קורס" });
     await expect(manageButton).toBeVisible({ timeout: 10_000 });
 
+    // The gantt renders its cards progressively (useProgressiveItemCount), so
+    // the layout keeps shifting while skeletons are still being replaced.
+    // Playwright requires an element to hold still before it will click it, and
+    // under load that never happened inside the test budget — surfacing as
+    // "Target page, context or browser has been closed" once the run was torn
+    // down. Wait for the skeletons to go instead.
+    await expect(page.locator(".MuiSkeleton-root")).toHaveCount(0, {
+        timeout: 30_000,
+    });
+
     for (let i = 0; i < count; i++) {
         await manageButton.click();
         await page

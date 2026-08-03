@@ -96,7 +96,14 @@ def check_project_running(project_name: str) -> bool:
 
 
 def wait_for_ui_ready(port: int, timeout: int = 120) -> bool:
-    """Polls the UI login page until it returns 200 OK (handling self-signed SSL)."""
+    """Polls the UI login page until it returns 200 OK (handling self-signed SSL).
+
+    One 200 only proves the route can be served, not that it is warm: the very
+    first browser navigation still paid for the server-render and regularly
+    lost the race against login.spec's 5s assertion, which is why that spec
+    kept coming back "flaky" as the suite's first test. Serving the page a few
+    times here settles it before Playwright starts.
+    """
     url = f"https://127.0.0.3:{port}/login"
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
@@ -107,6 +114,11 @@ def wait_for_ui_ready(port: int, timeout: int = 120) -> bool:
         try:
             with urllib.request.urlopen(url, context=ctx, timeout=15) as response:
                 if response.status == 200:
+                    for _ in range(2):
+                        try:
+                            urllib.request.urlopen(url, context=ctx, timeout=15).read()
+                        except Exception:
+                            break
                     return True
         except Exception:
             pass

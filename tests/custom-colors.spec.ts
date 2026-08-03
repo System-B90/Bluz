@@ -66,8 +66,16 @@ test.describe("Custom colors settings", () => {
         await expect(confirmDialog).toBeVisible();
         await confirmDialog.getByRole("button", { name: "מחיקה" }).click();
 
+        // The delete is optimistic locally but the list is also refreshed from
+        // the websocket broadcast, so clearing the search too early can render
+        // the pre-delete snapshot again. Gate on the server having confirmed
+        // the delete rather than on a fixed wait.
+        await expect(
+            page.getByText(`מחיקת צבע ${name} הסתיימה בהצלחה.`),
+        ).toBeVisible({ timeout: 10_000 });
+
         await searchInput.fill("");
-        await expect(dialog.getByText(name)).toBeHidden();
+        await expect(dialog.getByText(name)).toBeHidden({ timeout: 10_000 });
     });
 
     test("edits an existing custom color's hex value", async ({ page }) => {
