@@ -187,7 +187,7 @@ async function setEventRecurrence(
  * timeline so its event rows render, then locates the event's row by its label
  * text.
  *
- * Curricula now seed a default "פסקות" (breaks) module alongside the one this
+ * Curricula now seed a default "הפסקות" (breaks) module alongside the one this
  * test creates, so the module-row locator must exclude it to stay unambiguous.
  */
 async function getTimelineEventRow(
@@ -196,7 +196,7 @@ async function getTimelineEventRow(
 ): Promise<Locator> {
     const moduleRow = page
         .locator('[id^="gantt-row-module-"]')
-        .filter({ hasNotText: "פסקות" });
+        .filter({ hasNotText: "הפסקות" });
     await expect(moduleRow).toBeVisible({ timeout: 10_000 });
 
     const eventRow = page
@@ -425,7 +425,7 @@ test.describe("Gantt Recurring Events (#111)", () => {
 
         const moduleBlockBox = await page
             .locator('[id^="block-module-"]')
-            .filter({ hasNotText: "פסקות" })
+            .filter({ hasNotText: "הפסקות" })
             .boundingBox();
         const eventBlockBox = await page
             .locator('[id^="block-event-"]')

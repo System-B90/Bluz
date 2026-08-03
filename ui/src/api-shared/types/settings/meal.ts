@@ -14,7 +14,7 @@ export const DEFAULT_LUNCH_TIME = "13:00";
 export const DEFAULT_DINNER_TIME = "19:00";
 
 /** Title of the syllabus auto-seeded into every new curriculum for meal breaks. */
-export const MEAL_BREAKS_SYLLABUS_TITLE = "פסקות";
+export const MEAL_BREAKS_SYLLABUS_TITLE = "הפסקות";
 
 /** Titles of the 3 auto-seeded meal events, keyed by the settings field that pins their time. */
 export const MEAL_EVENT_TITLES: Record<keyof MealSettings, string> = {
