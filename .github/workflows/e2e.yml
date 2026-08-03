@@ -56,7 +56,29 @@ jobs:
             # exactly what deploy/docker-compose.yml resolves to with
             # BLUZ_VERSION=latest, so each shard's `docker compose up` finds the
             # image already present locally and skips building it again.
+            # buildkit occasionally dies mid-build on the self-hosted box
+            # ("frontend grpc server closed unexpectedly", "closing transport
+            # due to: EOF") under memory pressure, which threw away an
+            # otherwise good ~40 minute run. The second attempt reuses the
+            # layers the first one already cached, so a retry is cheap and a
+            # green first attempt costs nothing.
             - name: Build UI Image
+              id: build_ui
+              continue-on-error: true
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  file: ui/Dockerfile
+                  target: runner
+                  load: true
+                  tags: ghcr.io/system-b90/bluz/ui:latest
+                  build-args: |
+                      NPM_TOKEN=${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+                  cache-from: type=gha,scope=e2e-ui
+                  cache-to: type=gha,mode=max,scope=e2e-ui
+
+            - name: Build UI Image (retry)
+              if: steps.build_ui.outcome == 'failure'
               uses: docker/build-push-action@v7
               with:
                   context: .
