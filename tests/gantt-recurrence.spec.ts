@@ -74,10 +74,22 @@ async function addWeeks(page: Page, count: number): Promise<void> {
         // the whole test budget and surfacing as "Target page, context or
         // browser has been closed" once Playwright tears the run down.
         await manageButton.click({ timeout: 20_000 });
-        await page
-            .getByRole("menuitem", { name: "הוספת שבוע לסוף הקורס" })
-            .click();
-        await page.waitForTimeout(300);
+
+        // Wait for the menu rather than assuming the click opened it. Adding a
+        // week re-renders the weeks tab, and with only a fixed 300ms between
+        // iterations the next click could land while the previous menu was
+        // still closing — which toggles the freshly opened menu shut, so the
+        // item never appears and the whole beforeEach burns its 60s budget.
+        const addWeekItem = page.getByRole("menuitem", {
+            name: "הוספת שבוע לסוף הקורס",
+        });
+        await expect(addWeekItem).toBeVisible({ timeout: 15_000 });
+        await addWeekItem.click();
+
+        // And wait for it to actually close before the next iteration.
+        await expect(page.getByRole("menu")).toHaveCount(0, {
+            timeout: 15_000,
+        });
     }
 }
 
