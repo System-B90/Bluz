@@ -63,6 +63,7 @@ services:
         image: mongodb/mongodb-community-server:8.0-ubuntu2204
         container_name: bluz-mongodb
         restart: unless-stopped
+        command: ["--wiredTigerCacheSizeGB", "${MONGO_CACHE_SIZE_GB:-0.5}"]
         env_file:
             - ../.env
         environment:
@@ -72,6 +73,13 @@ services:
             - mongodb_data:/data/db
         networks:
             - bluz_net
+        deploy:
+            resources:
+                limits:
+                    cpus: "1.0"
+                    memory: 1g
+                reservations:
+                    memory: 256m
         healthcheck:
             test:
                 [
