@@ -18,7 +18,7 @@ permissions:
 jobs:
   build:
     name: Build Documentation
-    runs-on: self-hosted
+    runs-on: [self-hosted, node, python]
     timeout-minutes: 20
     steps:
       - name: Checkout repository
@@ -60,7 +60,7 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: build
-    runs-on: self-hosted
+    runs-on: [self-hosted, light]
     timeout-minutes: 10
     environment:
       name: github-pages
