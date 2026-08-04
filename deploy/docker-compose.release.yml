@@ -1,0 +1,165 @@
+# Bluz — release bundle compose file.
+#
+# This is the file shipped INSIDE the release tarball, where it sits at the
+# bundle root next to .env, nginx/ssl/ and install.sh. It is deliberately NOT
+# docker-compose.yml (the dev file), because the two have irreconcilable
+# differences and quietly reusing the dev file is what broke every from-scratch
+# install up to v1.0.0-rc.1 (see #412):
+#
+#   * paths here are relative to the bundle root, not to a deploy/ subdirectory
+#   * no build: contexts — a release bundle ships no source to build from
+#   * no external hive_net — a customer running Hive on another machine has no
+#     such network, and `external: true` makes compose abort before it starts
+#     anything. Co-located installs layer docker-compose.hive-local.yml on top.
+#   * every required variable uses ${VAR:?} so a missing .env fails loudly with
+#     the variable name instead of silently resolving to a blank string or to
+#     the never-published `latest` image tag.
+#
+# deploy/README.md documents how this file relates to the dev one; CI keeps the
+# service/image lists in sync (see .github/workflows/release-pipeline.yml).
+
+name: bluz
+
+services:
+    ui:
+        image: ghcr.io/system-b90/bluz/ui:${BLUZ_VERSION:?BLUZ_VERSION is not set — run ./install.sh, which writes it into .env from the bundle's VERSION file}
+        container_name: bluz-ui
+        restart: unless-stopped
+        env_file:
+            - .env
+        networks:
+            - bluz_net
+        # ui makes SERVER-SIDE calls to NEXT_PUBLIC_HIVE_URL during NextAuth's
+        # OAuth token/profile exchange, so it — not just the proxy — needs to be
+        # able to resolve the Hive host. Without this, sign-in fails with a bare
+        # SIGNIN_OAUTH_ERROR and nothing else in the logs (#412).
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        depends_on:
+            curriculum-db:
+                condition: service_healthy
+            mongodb:
+                condition: service_healthy
+            sessions:
+                condition: service_started
+        healthcheck:
+            # No curl/wget in the distroless-ish runner image; node is the only
+            # HTTP client available. 503 (a dependency is down) exits non-zero.
+            test:
+                [
+                    "CMD",
+                    "node",
+                    "-e",
+                    "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 60s
+
+    curriculum-db:
+        image: postgres:15-alpine
+        container_name: bluz-curriculum-db
+        restart: always
+        env_file:
+            - .env
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is not set — .env must sit next to this compose file}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set — .env must sit next to this compose file}
+            POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is not set — .env must sit next to this compose file}
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        networks:
+            - bluz_net
+        healthcheck:
+            test:
+                ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+
+    mongodb:
+        image: mongodb/mongodb-community-server:8.0-ubuntu2204
+        container_name: bluz-mongodb
+        restart: unless-stopped
+        env_file:
+            - .env
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:?MONGO_ROOT_USER is not set — .env must sit next to this compose file}
+            MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD is not set — .env must sit next to this compose file}
+        volumes:
+            - mongodb_data:/data/db
+        networks:
+            - bluz_net
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "mongosh",
+                    "--eval",
+                    "db.adminCommand('ping')",
+                    "--quiet",
+                ]
+            interval: 10s
+            timeout: 10s
+            retries: 5
+            start_period: 20s
+
+    sessions:
+        image: ghcr.io/system-b90/bluz/sessions:${BLUZ_VERSION:?BLUZ_VERSION is not set — run ./install.sh, which writes it into .env from the bundle's VERSION file}
+        container_name: bluz-sessions
+        restart: unless-stopped
+        env_file:
+            - .env
+        networks:
+            - bluz_net
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        healthcheck:
+            # Pure WebSocket server — no HTTP route to probe, so accepting a TCP
+            # connection on the listen port is the readiness signal.
+            test:
+                [
+                    "CMD",
+                    "node",
+                    "-e",
+                    "require('net').connect(28199,'127.0.0.1').on('connect',function(){process.exit(0)}).on('error',function(){process.exit(1)})",
+                ]
+            interval: 30s
+            timeout: 5s
+            retries: 3
+            start_period: 20s
+
+    proxy:
+        image: ghcr.io/system-b90/bluz/proxy:${BLUZ_VERSION:?BLUZ_VERSION is not set — run ./install.sh, which writes it into .env from the bundle's VERSION file}
+        container_name: bluz-proxy
+        restart: unless-stopped
+        # Bind address and ports are configurable because the old hardcoded
+        # 127.0.0.3:80 needed an OS-level loopback alias that does not exist by
+        # default on Windows, and failed with an opaque "port is already
+        # allocated" whenever anything else held :80 on 0.0.0.0 — Docker
+        # Desktop's Windows port forwarder reserves by port number, not per-IP
+        # the way Linux iptables NAT does (#412). Defaults now work unaided on a
+        # machine that is not already serving :80/:443; install.sh preflights the
+        # bind and explains both failure modes before compose is ever invoked.
+        ports:
+            - "${BLUZ_BIND_IP:-0.0.0.0}:${BLUZ_HTTP_PORT:-80}:80"
+            - "${BLUZ_BIND_IP:-0.0.0.0}:${BLUZ_HTTPS_PORT:-443}:443"
+        volumes:
+            - ./nginx/ssl:/etc/nginx/ssl:ro
+        depends_on:
+            - ui
+            - sessions
+        networks:
+            - bluz_net
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+
+volumes:
+    pgdata:
+    mongodb_data:
+
+networks:
+    bluz_net:
+        driver: bridge

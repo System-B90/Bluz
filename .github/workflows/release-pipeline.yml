@@ -300,12 +300,71 @@ jobs:
                   mkdir -p release-online/images
                   mkdir -p release-offline/images
 
-                  # Copy deployment scripts into both bundles
-                  cp ./scripts/install.sh deploy/docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-online/
-                  cp ./scripts/install.sh deploy/docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-offline/
+                  for BUNDLE in release-online release-offline; do
+                      # docker-compose.release.yml — NOT deploy/docker-compose.yml.
+                      # The dev file's paths (../.env, ./../nginx/ssl) are relative to
+                      # a deploy/ subdirectory that no bundle has, and its build:
+                      # contexts point at source no bundle ships. Shipping it is what
+                      # made a from-scratch install fail immediately (#412).
+                      cp deploy/docker-compose.release.yml "$BUNDLE/docker-compose.yml"
+                      cp deploy/docker-compose.hive-local.yml "$BUNDLE/"
 
-                  # Pin online bundle to this release's tag (the "latest" GHCR tag is never published)
-                  echo "${{ github.ref_name }}" > release-online/VERSION
+                      cp ./scripts/install.sh ./scripts/install.ps1 "$BUNDLE/"
+                      cp ./scripts/link-hive.sh ./scripts/link-hive.ps1 "$BUNDLE/"
+                      cp ./scripts/setup.py ./scripts/requirements.txt "$BUNDLE/"
+                      cp ./docs/deployment/TROUBLESHOOTING.md "$BUNDLE/"
+                      cp ./docs/deployment/INSTALL.md "$BUNDLE/README.md"
+
+                      chmod +x "$BUNDLE/install.sh" "$BUNDLE/link-hive.sh"
+
+                      # Both bundles get a VERSION file. The offline installer can
+                      # recover the tag from the loaded images, but only if every
+                      # archive loads cleanly — VERSION makes it unconditional, and
+                      # there is no safe fallback (the "latest" GHCR tag is never
+                      # published).
+                      echo "${{ github.ref_name }}" > "$BUNDLE/VERSION"
+                  done
+
+            - name: Verify release bundle is self-contained
+              run: |
+                  # Guards the class of bug behind #412: the bundle referencing paths
+                  # or build contexts that only exist in the source tree.
+                  cd release-online
+
+                  if grep -qE '(\.\./|build:)' docker-compose.yml; then
+                      echo "::error::docker-compose.yml references parent paths or build contexts, which do not exist in a release bundle."
+                      grep -nE '(\.\./|build:)' docker-compose.yml
+                      exit 1
+                  fi
+
+                  for REQUIRED in docker-compose.yml docker-compose.hive-local.yml \
+                                  install.sh install.ps1 link-hive.sh link-hive.ps1 \
+                                  setup.py requirements.txt VERSION README.md TROUBLESHOOTING.md; do
+                      [ -f "$REQUIRED" ] || { echo "::error::Release bundle is missing $REQUIRED"; exit 1; }
+                  done
+
+                  # Compose must parse and resolve every ${VAR} against a realistic
+                  # .env — the failure mode in #412 was silent substitution, not a
+                  # parse error, so a bare `config` check would have passed.
+                  cat > .env <<'ENVEOF'
+                  BLUZ_VERSION=${{ github.ref_name }}
+                  POSTGRES_USER=ci
+                  POSTGRES_PASSWORD=ci
+                  POSTGRES_DB=curriculum_db
+                  MONGO_ROOT_USER=ci
+                  MONGO_ROOT_PASSWORD=ci
+                  ENVEOF
+                  mkdir -p nginx/ssl
+
+                  docker compose config > resolved.yml
+
+                  if grep -q ':latest' resolved.yml; then
+                      echo "::error::An image resolved to :latest, a tag that is never published."
+                      grep -n ':latest' resolved.yml
+                      exit 1
+                  fi
+
+                  rm -f .env resolved.yml
 
             - name: Export Offline Images
               run: |
