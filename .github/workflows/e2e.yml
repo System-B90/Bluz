@@ -43,7 +43,7 @@ jobs:
     # explicit dispatch with target=github-hosted uses ubuntu-24.04.
     build-test-images:
         name: Build Test Images
-        runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted') && 'ubuntu-24.04' || 'self-hosted' }}
+        runs-on: ${{ fromJSON((github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted') && '["ubuntu-24.04"]' || '["self-hosted","dind"]') }}
         if: github.event_name != 'pull_request' || github.head_ref == 'dev'
         steps:
             - name: Checkout repository
@@ -135,7 +135,7 @@ jobs:
     # green. Runs by default (push/PR) and on dispatch target=self-hosted.
     full-test-suite-selfhosted:
         name: Full Test Suite (E2E, self-hosted)
-        runs-on: self-hosted
+        runs-on: [self-hosted, dind]
         timeout-minutes: 90
         needs: build-test-images
         if: >-
