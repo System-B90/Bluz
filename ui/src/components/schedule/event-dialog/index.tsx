@@ -13,6 +13,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { FormEvent, useCallback, useState } from "react";
 
+import { EventHistoryPanel } from "@/components/schedule/event-dialog/event-history";
 import { EventClassification } from "@/components/schedule/event-dialog/EventClassification";
 import { EventPrimaryDetails } from "@/components/schedule/event-dialog/EventPrimaryDetails";
 import { EventToggles } from "@/components/schedule/event-dialog/EventToggles";
@@ -152,6 +153,11 @@ export function EventDialog({
                         />
 
                         <EventToggles event={ event } onUpdate={ handleUpdate } />
+
+                        {/* Saved events only: an unsaved one has no log yet. */}
+                        { "id" in event && event.id ? (
+                            <EventHistoryPanel eventId={ event.id } />
+                        ) : null }
                     </Box>
                 </DialogContent>
 

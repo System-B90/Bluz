@@ -97,6 +97,45 @@ export function lastManualEdit<
     return latest;
 }
 
+/**
+ * Hebrew labels for the event fields a change row can name. Shared by the
+ * history panel and the reload-conflicts dialog so a field is never called
+ * two different things in two places.
+ */
+export const EVENT_FIELD_LABELS: Record<string, string> = {
+    archived: "מחיקה",
+    color: "צבע",
+    courses: "מסלולים",
+    endTime: "שעת סיום",
+    fake: "מופע פיקטיבי",
+    hidden: "מוסתר",
+    hiveLesson: "שיעור",
+    hiveModule: "מודול",
+    instructors: "מדריכים",
+    lecturers: "מרצים",
+    locked: "נעול",
+    name: "שם",
+    notes: "הערות",
+    personalTalk: 'שיחה אישית',
+    prayerType: "סוג תפילה",
+    required: "חובה",
+    rooms: "חדרים",
+    splitAcrossBreaks: "פיצול סביב הפסקות",
+    startTime: "שעת התחלה",
+    subject: "מקצוע",
+    tags: "תגיות",
+    type: "סוג",
+};
+
+/**
+ * Display label for a changed field, falling back to the raw key so a field
+ * added later still renders something meaningful.
+ * @param field The field key from a change row.
+ */
+export function eventFieldLabel(field: string): string {
+    return EVENT_FIELD_LABELS[field] ?? field;
+}
+
 /** Hebrew label for an initiator, for history and conflict UIs. */
 export const INITIATOR_LABELS: Record<EventChangeInitiator, string> = {
     [EventChangeInitiator.GanttCut]: 'גזירה ללו"ז',

@@ -17,7 +17,10 @@ import Typography from "@mui/material/Typography";
 import { useCallback, useState } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
-import { INITIATOR_LABELS } from "@/api-shared/event-history";
+import {
+    eventFieldLabel,
+    INITIATOR_LABELS,
+} from "@/api-shared/event-history";
 import { CutValidationError } from "@/api-shared/gantt/cut-planner";
 import {
     EventChangeInitiator,
@@ -80,21 +83,6 @@ function describeValidationError(error: CutValidationError): string {
     }
 }
 
-/** Hebrew field labels for the conflict diff rows. */
-const FIELD_LABELS: Record<string, string> = {
-    courses: "קורסים",
-    endTime: "שעת סיום",
-    hiveLesson: "שיעור",
-    hiveModule: "מודול",
-    instructors: "מדריכים",
-    name: "שם",
-    notes: "הערות",
-    splitAcrossBreaks: "פיצול סביב הפסקות",
-    startTime: "שעת התחלה",
-    subject: "מקצוע",
-    type: "סוג",
-};
-
 function formatValue(value: unknown): string {
     if (value === null || value === undefined || value === "") return "—";
     if (Array.isArray(value)) return value.length === 0 ? "—" : `${value.length} פריטים`;
@@ -106,8 +94,7 @@ function formatValue(value: unknown): string {
 }
 
 function describeChange(change: EventFieldChange): string {
-    const label = FIELD_LABELS[change.field] ?? change.field;
-    return `${label}: ${formatValue(change.from)} ← ${formatValue(change.to)}`;
+    return `${eventFieldLabel(change.field)}: ${formatValue(change.from)} ← ${formatValue(change.to)}`;
 }
 
 function describeConflictSource(conflict: ReloadConflict): string {

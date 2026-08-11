@@ -13,6 +13,7 @@ import {
     EventId,
 } from "@/api-shared/types/event";
 import {
+    ApiEventHistoryResponse,
     EVENT_INITIATOR_HEADER,
     EventChangeInitiator,
 } from "@/api-shared/types/event-history";
@@ -135,6 +136,25 @@ export const apiDeleteEvent: ClientApiDeleteEvent = async (
         body: JSON.stringify(eventId),
     });
 };
+
+/**
+ * Fetch one event's change log ("היסטוריית שינויים"), newest first.
+ * @param eventId Event whose log is requested.
+ * @param iterationId Iteration to read from; defaults to the current run.
+ */
+export async function apiGetEventHistory(
+    eventId: EventId,
+    iterationId?: IterationId,
+): Promise<ApiEventHistoryResponse> {
+    const endpoint = withIteration(
+        new URL("/api/event/history", window.location.origin),
+        iterationId,
+    );
+    endpoint.searchParams.set("id", eventId);
+    return await safeApiFetcher<ApiEventHistoryResponse>(endpoint.toString(), {
+        method: "GET",
+    });
+}
 
 /**
  * Fetch the events of two iterations over the same date range in one round-trip,
