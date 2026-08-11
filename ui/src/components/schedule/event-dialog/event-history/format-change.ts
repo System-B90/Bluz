@@ -106,23 +106,46 @@ export function formatChange(
 }
 
 /**
+ * Hebrew counts one, two and many differently, so a naive `לפני ${n} דקות`
+ * reads wrong for the two most common cases. Each unit carries its singular,
+ * dual and plural form.
+ */
+const UNIT_FORMS = {
+    day: { dual: "יומיים", plural: "ימים", singular: "יום" },
+    hour: { dual: "שעתיים", plural: "שעות", singular: "שעה" },
+    minute: { dual: "שתי דקות", plural: "דקות", singular: "דקה" },
+} as const;
+
+function agoIn(count: number, unit: keyof typeof UNIT_FORMS): string {
+    const forms = UNIT_FORMS[unit];
+    if (count === 1) return `לפני ${forms.singular}`;
+    if (count === 2) return `לפני ${forms.dual}`;
+    return `לפני ${count} ${forms.plural}`;
+}
+
+/**
  * Relative wording for a timestamp ("לפני 5 דקות"), with day granularity past
  * a week. Kept local rather than pulling in dayjs' relativeTime plugin and a
  * Hebrew locale bundle for one label.
  * @param iso ISO timestamp of the change.
+ * @returns A Hebrew phrase, or an absolute date once older than a week.
+ * @example
+ * ```typescript
+ * relativeTime(oneMinuteAgo); // "לפני דקה"
+ * ```
  */
 export function relativeTime(iso: string): string {
     const then = dayjs(iso);
     const minutes = dayjs().diff(then, "minute");
 
     if (minutes < 1) return "הרגע";
-    if (minutes < 60) return `לפני ${minutes} דקות`;
+    if (minutes < 60) return agoIn(minutes, "minute");
 
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `לפני ${hours} שעות`;
+    if (hours < 24) return agoIn(hours, "hour");
 
     const days = Math.floor(hours / 24);
-    if (days < 7) return `לפני ${days} ימים`;
+    if (days < 7) return agoIn(days, "day");
 
     return then.format("DD/MM/YYYY");
 }

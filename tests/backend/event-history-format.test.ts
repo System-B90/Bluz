@@ -132,7 +132,16 @@ describe("relativeTime", () => {
     it("reports minutes, hours and days", () => {
         expect(relativeTime(minutesAgo(5))).toBe("לפני 5 דקות");
         expect(relativeTime(minutesAgo(3 * 60))).toBe("לפני 3 שעות");
-        expect(relativeTime(minutesAgo(2 * 24 * 60))).toBe("לפני 2 ימים");
+        expect(relativeTime(minutesAgo(4 * 24 * 60))).toBe("לפני 4 ימים");
+    });
+
+    it("uses the singular and dual forms Hebrew expects", () => {
+        expect(relativeTime(minutesAgo(1))).toBe("לפני דקה");
+        expect(relativeTime(minutesAgo(2))).toBe("לפני שתי דקות");
+        expect(relativeTime(minutesAgo(60))).toBe("לפני שעה");
+        expect(relativeTime(minutesAgo(2 * 60))).toBe("לפני שעתיים");
+        expect(relativeTime(minutesAgo(24 * 60))).toBe("לפני יום");
+        expect(relativeTime(minutesAgo(2 * 24 * 60))).toBe("לפני יומיים");
     });
 
     it("falls back to a date past a week", () => {
