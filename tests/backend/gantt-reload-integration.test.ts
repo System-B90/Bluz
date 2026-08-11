@@ -531,6 +531,97 @@ describe("reload — reconciliation", () => {
     });
 });
 
+// ---- Unfinished gantt (force) ----------------------------------------------
+
+describe("reload — unfinished gantt", () => {
+    /** One mapped event plus one the user never scheduled. */
+    const arrangeUnfinished = () =>
+        arrange({
+            actual: [
+                makeCutEvent({
+                    ganttEventId: "g1",
+                    ganttOccurrenceDate: "2024-01-07",
+                    id: "e1",
+                }),
+            ],
+            events: [makeGanttEvent({ id: "g1" }), makeGanttEvent({ id: "g2" })],
+            history: [cutRow("e1")],
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+        });
+
+    it("refuses the reload and names the unmapped event", async () => {
+        arrangeUnfinished();
+
+        const outcome = await reloadCurriculumSchedule("c1");
+        expect(outcome.ok).toBe(false);
+        if (outcome.ok) return;
+        expect(outcome.error.code).toBe("invalid-plan");
+        expect(outcome.error.errors).toEqual([
+            expect.objectContaining({ eventId: "g2", type: "unmapped-event" }),
+        ]);
+    });
+
+    it("writes nothing when it refuses", async () => {
+        arrangeUnfinished();
+
+        await reloadCurriculumSchedule("c1");
+        expect(fakeEvents.insertMany).not.toHaveBeenCalled();
+        expect(fakeEvents.updateOne).not.toHaveBeenCalled();
+        expect(fakeEvents.updateMany).not.toHaveBeenCalled();
+        expect(fakeHistory.insertMany).not.toHaveBeenCalled();
+    });
+
+    it("applies the reload around the unmapped event once forced", async () => {
+        arrangeUnfinished();
+
+        const outcome = await reloadCurriculumSchedule("c1", { force: true });
+        expect(outcome.ok).toBe(true);
+        if (!outcome.ok) return;
+
+        // The mapped event still matches, and the unmapped one contributes no
+        // occurrence — so there is nothing to add and nothing to remove.
+        expect(outcome.result).toMatchObject({
+            addedEvents: 0,
+            applied: true,
+            removedEvents: 0,
+        });
+        expect(outcome.result.diff.unchanged).toBe(1);
+    });
+
+    it("removes a previously cut event once its gantt event goes unmapped", async () => {
+        arrange({
+            actual: [
+                makeCutEvent({
+                    ganttEventId: "g1",
+                    ganttOccurrenceDate: "2024-01-07",
+                    id: "e1",
+                }),
+                makeCutEvent({
+                    ganttEventId: "g2",
+                    ganttOccurrenceDate: "2024-01-08",
+                    id: "e2",
+                }),
+            ],
+            events: [makeGanttEvent({ id: "g1" }), makeGanttEvent({ id: "g2" })],
+            history: [cutRow("e1"), cutRow("e2")],
+            // g2 lost its mapping since the cut.
+            mappings: [{ dayId: "w0d0", eventId: "g1", sortOrder: 0 }],
+        });
+
+        const outcome = await reloadCurriculumSchedule("c1", { force: true });
+        expect(outcome.ok).toBe(true);
+        if (!outcome.ok) return;
+
+        // Forcing skips the event *and* drops the occurrence it used to have —
+        // the consequence the dialog warns about before forcing.
+        expect(outcome.result.removedEvents).toBe(1);
+        expect(fakeEvents.updateMany).toHaveBeenCalledWith(
+            { id: { $in: ["e2"] } },
+            { $set: { archived: true } },
+        );
+    });
+});
+
 // ---- Manual-edit precedence ------------------------------------------------
 
 describe("reload — manual-edit precedence", () => {
