@@ -8,12 +8,17 @@ import {
     getCutStatus,
     pullBackCutSchedule,
 } from "@/api-server/gantt/cut";
+import { reloadCurriculumSchedule } from "@/api-server/gantt/reload";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     CurriculumCutErrorCode,
     CurriculumPullBackErrorCode,
 } from "@/api-shared/types/gantt/cut";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import {
+    ApiCurriculumReloadPayload,
+    CurriculumReloadErrorCode,
+} from "@/api-shared/types/gantt/reload";
 
 type RouteContext = {
     params: Promise<{ id: string }>;
@@ -26,6 +31,15 @@ const STATUS_BY_CODE: Record<CurriculumCutErrorCode, number> = {
     "no-iteration": 409,
     "already-cut": 409,
     "invalid-plan": 400,
+};
+
+// Reload state conflicts (draft / unlinked / never cut) are 409; an invalid
+// plan is a 400, matching the cut.
+const RELOAD_STATUS_BY_CODE: Record<CurriculumReloadErrorCode, number> = {
+    draft: 409,
+    "invalid-plan": 400,
+    "no-iteration": 409,
+    "not-cut": 409,
 };
 
 // Pull-back conflicts (no linked iteration / nothing cut) are 409.
@@ -65,6 +79,35 @@ export const GET = withApi(async (request: NextRequest, context: RouteContext) =
     if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
     return ApiSuccess(await getCutStatus(id as GanttCurriculumId));
+});
+
+/**
+ * PATCH: reload an already-cut schedule from the current gantt — add new
+ * occurrences, retime changed ones, archive dropped ones. Manually edited
+ * events are skipped and reported as conflicts unless listed in
+ * `overrideEventIds`. `dryRun` returns the same diff without writing.
+ */
+export const PATCH = withApi(async (request: NextRequest, context: RouteContext) => {
+    const { id } = await context.params;
+    if (!id) throw new ClientApiError("Curriculum ID is missing.");
+
+    const body = (await request
+        .json()
+        .catch(() => null)) as ApiCurriculumReloadPayload | null;
+
+    const outcome = await reloadCurriculumSchedule(id as GanttCurriculumId, {
+        dryRun: Boolean(body?.dryRun),
+        force: Boolean(body?.force),
+        overrideEventIds: body?.overrideEventIds ?? [],
+    });
+    if (!outcome.ok) {
+        return ApiErrorMaker(
+            outcome.error,
+            RELOAD_STATUS_BY_CODE[outcome.error.code] ?? 400,
+        );
+    }
+
+    return ApiSuccess(outcome.result);
 });
 
 /**

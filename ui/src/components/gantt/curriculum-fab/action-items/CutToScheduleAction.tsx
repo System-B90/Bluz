@@ -1,4 +1,5 @@
 import ContentCutIcon from "@mui/icons-material/ContentCut";
+import SyncIcon from "@mui/icons-material/Sync";
 import UndoIcon from "@mui/icons-material/Undo";
 import { Fragment, useCallback, useEffect, useState } from "react";
 
@@ -7,8 +8,9 @@ import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 import { CutToScheduleDialog } from "@/components/gantt/cut-dialog";
 import { PullBackScheduleDialog } from "@/components/gantt/cut-dialog/PullBackScheduleDialog";
+import { ReloadScheduleDialog } from "@/components/gantt/cut-dialog/ReloadScheduleDialog";
 
-type DialogMode = "cut" | "pullBack" | null;
+type DialogMode = "cut" | "pullBack" | "reload" | null;
 
 /**
  * "גזירה ללו"ז" / "משיכה חזרה" — a single status-aware action. Once a
@@ -27,6 +29,12 @@ export function CutToScheduleAction({
     // The open dialog is driven by a captured mode, not by `isCut` directly, so
     // flipping `isCut` on success does not unmount the dialog mid-message.
     const [dialogMode, setDialogMode] = useState<DialogMode>(null);
+    // Bumped on every open so each dialog remounts with a clean slate. The
+    // dialogs stay mounted while closed (so their exit transition plays), and
+    // without this a phase from an earlier attempt — an "already-cut" error,
+    // a finished reload summary — would resurface on the next open, e.g.
+    // after a pull-back and re-cut where it no longer describes reality.
+    const [openCount, setOpenCount] = useState(0);
     const [isCut, setIsCut] = useState(false);
     const isDraft = sourceCurriculum?.isDraft !== false;
     const curriculumId = sourceCurriculum?.id;
@@ -49,8 +57,14 @@ export function CutToScheduleAction({
 
     const handleClick = useCallback(() => {
         if (!sourceCurriculum) return;
+        setOpenCount((count) => count + 1);
         setDialogMode(isCut ? "pullBack" : "cut");
     }, [sourceCurriculum, isCut]);
+
+    const handleReloadClick = useCallback(() => {
+        setOpenCount((count) => count + 1);
+        setDialogMode("reload");
+    }, []);
 
     const handleClose = useCallback(() => setDialogMode(null), []);
 
@@ -81,19 +95,40 @@ export function CutToScheduleAction({
                 }
                 {...props}
             />
+            {isCut ? (
+                <ActionItemButton
+                    disabled={disabled}
+                    loading={loading}
+                    onClick={handleReloadClick}
+                    startIcon={<SyncIcon fontSize="small" />}
+                    tooltipTitle='עדכון הלו"ז לפי הגאנט'
+                    {...props}
+                />
+            ) : null}
             {sourceCurriculum ? (
                 <CutToScheduleDialog
                     curriculumId={sourceCurriculum.id}
                     curriculumTitle={sourceCurriculum.title}
+                    key={`cut-${openCount}`}
                     onClose={handleClose}
                     onSuccess={() => setIsCut(true)}
                     open={dialogMode === "cut"}
                 />
             ) : null}
             {sourceCurriculum ? (
+                <ReloadScheduleDialog
+                    curriculumId={sourceCurriculum.id}
+                    curriculumTitle={sourceCurriculum.title}
+                    key={`reload-${openCount}`}
+                    onClose={handleClose}
+                    open={dialogMode === "reload"}
+                />
+            ) : null}
+            {sourceCurriculum ? (
                 <PullBackScheduleDialog
                     curriculumId={sourceCurriculum.id}
                     curriculumTitle={sourceCurriculum.title}
+                    key={`pull-back-${openCount}`}
                     onClose={handleClose}
                     onSuccess={() => setIsCut(false)}
                     open={dialogMode === "pullBack"}
