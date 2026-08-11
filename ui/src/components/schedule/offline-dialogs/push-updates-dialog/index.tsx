@@ -16,6 +16,7 @@ import {
     apiUpdateEvent,
 } from "@/api-client/calendar";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { useOffline } from "@/components/base/OfflineProvider";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { EventCollisionsList } from "@/components/schedule/offline-dialogs/push-updates-dialog/EventCollisionsList";
@@ -116,9 +117,21 @@ export function PushOfflineUpdatesDialog() {
                         collisionStates,
                         selectedKeys,
                         {
-                            createEvent: apiCreateEvent,
-                            updateEvent: apiUpdateEvent,
-                            deleteEvent: apiDeleteEvent,
+                            createEvent: (event) =>
+                                apiCreateEvent(
+                                    event,
+                                    EventChangeInitiator.OfflinePush,
+                                ),
+                            updateEvent: (event) =>
+                                apiUpdateEvent(
+                                    event,
+                                    EventChangeInitiator.OfflinePush,
+                                ),
+                            deleteEvent: (eventId) =>
+                                apiDeleteEvent(
+                                    eventId,
+                                    EventChangeInitiator.OfflinePush,
+                                ),
                         },
                     );
 

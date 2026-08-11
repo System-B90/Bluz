@@ -1,4 +1,4 @@
-import { ClientApi, safeApiFetcher } from "@/api-client/common";
+import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { withIteration } from "@/api-client/iteration-query";
 import { eventDateFixup } from "@/api-shared/calendar";
 import {
@@ -12,6 +12,10 @@ import {
     Event,
     EventId,
 } from "@/api-shared/types/event";
+import {
+    EVENT_INITIATOR_HEADER,
+    EventChangeInitiator,
+} from "@/api-shared/types/event-history";
 import { IterationId } from "@/api-shared/types/iteration";
 
 type ClientApiGetEventsProps = {
@@ -60,33 +64,73 @@ export async function apiGetMultipleEvents(
     return rawData as unknown as Record<EventId, Event>;
 }
 
-type ClientApiCreateEvent = ClientApi<ApiEventCreatePayload | Event, Event>;
-export const apiCreateEvent: ClientApiCreateEvent = async (event, props) => {
+/**
+ * Declares which user action produced a write, so the server can log it in the
+ * event change log (`api-server/db-event-history.ts`). Sent as a header rather
+ * than in the body: the body is the event document itself, and DELETE carries
+ * only an id. The server never trusts the client for *who* acted — only for
+ * *what kind of action* this was.
+ * @param props Caller-supplied request props to merge into.
+ * @param initiator The action being performed; omitted ⇒ server logs "unknown".
+ */
+export function withInitiator(
+    props: ClientApiProps | undefined,
+    initiator?: EventChangeInitiator,
+): ClientApiProps {
+    if (!initiator) return props ?? {};
+    const headers = new Headers(props?.headers);
+    headers.set(EVENT_INITIATOR_HEADER, initiator);
+    return { ...props, headers };
+}
+
+type ClientApiCreateEvent = (
+    event: ApiEventCreatePayload | Event,
+    initiator?: EventChangeInitiator,
+    props?: ClientApiProps,
+) => Promise<Event>;
+export const apiCreateEvent: ClientApiCreateEvent = async (
+    event,
+    initiator,
+    props,
+) => {
     const rawData = await safeApiFetcher<ApiEventCreateResponse>("/api/event", {
-        ...props,
+        ...withInitiator(props, initiator),
         method: "PUT",
         body: JSON.stringify(event),
     });
     return eventDateFixup(rawData) as unknown as Event;
 };
 
-type ClientApiUpdateEvent = ClientApi<ApiEventUpdatePayload | Event, Event>;
-export const apiUpdateEvent: ClientApiUpdateEvent = async (event, props) => {
+type ClientApiUpdateEvent = (
+    event: ApiEventUpdatePayload | Event,
+    initiator?: EventChangeInitiator,
+    props?: ClientApiProps,
+) => Promise<Event>;
+export const apiUpdateEvent: ClientApiUpdateEvent = async (
+    event,
+    initiator,
+    props,
+) => {
     const rawData = await safeApiFetcher<ApiEventUpdateResponse>("/api/event", {
-        ...props,
+        ...withInitiator(props, initiator),
         method: "POST",
         body: JSON.stringify(event),
     });
     return eventDateFixup(rawData) as unknown as Event;
 };
 
-type ClientApiDeleteEvent = ClientApi<
-    ApiEventDeletePayload,
-    ApiEventDeleteResponse
->;
-export const apiDeleteEvent: ClientApiDeleteEvent = async (eventId, props) => {
+type ClientApiDeleteEvent = (
+    eventId: ApiEventDeletePayload,
+    initiator?: EventChangeInitiator,
+    props?: ClientApiProps,
+) => Promise<ApiEventDeleteResponse>;
+export const apiDeleteEvent: ClientApiDeleteEvent = async (
+    eventId,
+    initiator,
+    props,
+) => {
     await safeApiFetcher<ApiEventDeleteResponse>("/api/event", {
-        ...props,
+        ...withInitiator(props, initiator),
         method: "DELETE",
         body: JSON.stringify(eventId),
     });

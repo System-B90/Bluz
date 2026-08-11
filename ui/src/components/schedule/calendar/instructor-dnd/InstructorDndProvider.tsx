@@ -20,6 +20,7 @@ import {
     useState,
 } from "react";
 
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { HiveAvatar } from "@/components/header/HiveAvatarImage";
 import {
@@ -63,7 +64,7 @@ function personLabel(
 
 type InstructorDndProviderProps = {
     events: Array<Event>;
-    handleSaveEvent: (event: Event) => void;
+    handleSaveEvent: (event: Event, initiator?: EventChangeInitiator) => void;
     children: React.ReactNode;
 };
 
@@ -133,7 +134,7 @@ export function InstructorDndProvider({
             }
 
             const conflicts = findPersonConflicts(events, personId, target);
-            handleSaveEvent(updated);
+            handleSaveEvent(updated, EventChangeInitiator.InstructorAssign);
 
             if (conflicts.length > 0) {
                 enqueueSnackbar(
@@ -153,7 +154,9 @@ export function InstructorDndProvider({
             if (!source || source.locked) return;
 
             const updated = withPersonRemoved(source, personId);
-            if (updated) handleSaveEvent(updated);
+            if (updated) {
+                handleSaveEvent(updated, EventChangeInitiator.InstructorAssign);
+            }
         },
         [events, handleSaveEvent],
     );

@@ -1,6 +1,7 @@
 import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { EventDataUpdateMessage } from "@/api-shared/types";
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
 import {
     Event,
@@ -35,7 +36,13 @@ async function updatePrayerEvent({
     (updatedEvent.startTime as unknown as Date) = startTime;
     (updatedEvent.endTime as unknown as Date) = endTime;
 
-    await DbEvent.set(updatedEvent as unknown as DbEventDocument);
+    await DbEvent.set(
+        updatedEvent as unknown as DbEventDocument,
+        undefined,
+        undefined,
+        undefined,
+        { initiator: EventChangeInitiator.PrayerSettings },
+    );
     return updatedEvent;
 }
 
@@ -109,7 +116,13 @@ async function updatePrayerEventsInDay({
 
         for (const prayer of prayersToCreate) {
             prayer.id = (
-                await DbEvent.create(prayer as unknown as DbEventDocument)
+                await DbEvent.create(
+                    prayer as unknown as DbEventDocument,
+                    undefined,
+                    undefined,
+                    undefined,
+                    { initiator: EventChangeInitiator.PrayerSettings },
+                )
             ).id;
         }
         broadcastEvents = prayersToCreate;

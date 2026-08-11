@@ -4,6 +4,7 @@ import { DbEvent } from "@/api-server/db-event";
 import { getMetaController } from "@/api-server/mongo-db-controller";
 import { openSecret, sealSecret } from "@/api-server/secret-box";
 import { DbEventDocument } from "@/api-shared/types/event";
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { GoogleCalendarLink } from "@/api-shared/types/google-calendar";
 
 /**
@@ -296,7 +297,9 @@ async function applyGoogleEdit(
             new Date(existing.endTime as any).getTime();
     if (!changed) return false;
 
-    await DbEvent.set(updated);
+    await DbEvent.set(updated, undefined, undefined, undefined, {
+        initiator: EventChangeInitiator.GoogleSync,
+    });
     return true;
 }
 

@@ -193,7 +193,15 @@ type CalendarViewProps = {
     onSelectEvent: (event: Event) => void;
     onDoubleClickEvent: (event: Event) => void;
     onSelectSlot: (slotInfo: SlotInfo) => void;
-    onEventDrop: (args: EventInteractionArgs<Event>) => void;
+    /**
+     * Reports a committed grid interaction in event-space. `interaction`
+     * distinguishes a move from a resize so the write can be attributed
+     * correctly in the event change log.
+     */
+    onEventDrop: (
+        args: EventInteractionArgs<Event>,
+        interaction: "move" | "resize",
+    ) => void;
     onToggleFullscreen: () => void;
     onToggleToolbar: () => void;
     onExportIcs: () => void;
@@ -286,14 +294,18 @@ export function CalendarView({
             args: EventInteractionArgs<EventSegment>,
             startMs: number,
             workingMs: number,
+            interaction: "move" | "resize",
         ) => {
             setActiveDrag(null);
-            onEventDrop({
-                ...args,
-                event: args.event.event,
-                start: new Date(startMs),
-                end: new Date(startMs + Math.max(MIN_WORKING_MS, workingMs)),
-            } as unknown as EventInteractionArgs<Event>);
+            onEventDrop(
+                {
+                    ...args,
+                    event: args.event.event,
+                    start: new Date(startMs),
+                    end: new Date(startMs + Math.max(MIN_WORKING_MS, workingMs)),
+                } as unknown as EventInteractionArgs<Event>,
+                interaction,
+            );
         },
         [onEventDrop],
     );
@@ -306,7 +318,12 @@ export function CalendarView({
             // and keeps its working duration; where the breaks fall after the
             // move is a pure re-layout.
             const delta = toMs(args.start) - from.valueOf();
-            commit(args, event.startTime.valueOf() + delta, workingMsOf(event));
+            commit(
+                args,
+                event.startTime.valueOf() + delta,
+                workingMsOf(event),
+                "move",
+            );
         },
         [commit],
     );
@@ -331,7 +348,12 @@ export function CalendarView({
                     ),
                 );
                 const startMs = toMs(args.start);
-                commit(args, startMs, workingMsUpTo(startMs, displayEnd, windows));
+                commit(
+                    args,
+                    startMs,
+                    workingMsUpTo(startMs, displayEnd, windows),
+                    "resize",
+                );
                 return;
             }
 
@@ -339,7 +361,12 @@ export function CalendarView({
             // the drawn end — measured in working time, so the breaks the
             // event steps over are not counted as duration.
             const startMs = event.startTime.valueOf();
-            commit(args, startMs, workingMsUpTo(startMs, toMs(args.end), windows));
+            commit(
+                args,
+                startMs,
+                workingMsUpTo(startMs, toMs(args.end), windows),
+                "resize",
+            );
         },
         [breakWindows, commit],
     );

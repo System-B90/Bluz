@@ -1,6 +1,11 @@
 import { Filter, FindOptions } from "mongodb";
 
 import {
+    DbEventHistory,
+    EventWriteOrigin,
+    UNKNOWN_ORIGIN,
+} from "@/api-server/db-event-history";
+import {
     databaseController,
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
@@ -12,6 +17,7 @@ import {
     EventDataUpdateMessage,
 } from "@/api-shared/types";
 import { DbEventDocument, EventId } from "@/api-shared/types/event";
+import { EventChangeAction } from "@/api-shared/types/event-history";
 import { IterationId } from "@/api-shared/types/iteration";
 import { MessageTypes } from "@/settings";
 
@@ -96,6 +102,7 @@ async function setDbEvent(
     options?: FindOptions,
     controller: DatabaseController = databaseController,
     iterationId?: IterationId,
+    origin: EventWriteOrigin = UNKNOWN_ORIGIN,
 ): Promise<DbEventDocument> {
     if (!eventData.id) {
         throw new ClientApiError(
@@ -105,6 +112,13 @@ async function setDbEvent(
 
     const fixedEvent = eventDateFixup(eventData);
     const { id: eventId, ...updatePayload } = fixedEvent;
+
+    // Read the stored copy first so the change log can diff before/after. The
+    // events collection itself stays audit-free (see db-event-history.ts).
+    const before = await controller.events.findOne({
+        id: eventId,
+        ...NOT_ARCHIVED,
+    });
 
     // Because the client generates the ID, we don't inherently know if this is new or an update.
     // So, we try to update it first.
@@ -119,6 +133,15 @@ async function setDbEvent(
     if (updateResult.matchedCount === 0) {
         throw new ClientApiError(`Event ${eventId} not found!`);
     }
+
+    await DbEventHistory.add({
+        action: EventChangeAction.Updated,
+        after: fixedEvent,
+        before,
+        controller,
+        eventId,
+        origin,
+    });
 
     SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
         events: { [eventId]: fixedEvent },
@@ -146,6 +169,7 @@ async function createDbEvent(
     options?: FindOptions,
     controller: DatabaseController = databaseController,
     iterationId?: IterationId,
+    origin: EventWriteOrigin = UNKNOWN_ORIGIN,
 ): Promise<DbEventDocument> {
     if (!eventData.id) {
         throw new ClientApiError(
@@ -162,6 +186,14 @@ async function createDbEvent(
     };
 
     await controller.events.insertOne(fixedEvent as any, options);
+
+    await DbEventHistory.add({
+        action: EventChangeAction.Created,
+        after: fixedEvent as DbEventDocument,
+        controller,
+        eventId,
+        origin,
+    });
 
     SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
         action: "added",
@@ -185,6 +217,7 @@ async function deleteDbEvent(
     options?: FindOptions,
     controller: DatabaseController = databaseController,
     iterationId?: IterationId,
+    origin: EventWriteOrigin = UNKNOWN_ORIGIN,
 ): Promise<void> {
     if (!eventId) {
         throw new ClientApiError("Event id is missing!");
@@ -199,6 +232,13 @@ async function deleteDbEvent(
     if (data.matchedCount === 0) {
         throw new ClientApiError("Failed to delete event!");
     }
+
+    await DbEventHistory.add({
+        action: EventChangeAction.Archived,
+        controller,
+        eventId,
+        origin,
+    });
 
     SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
         action: "removed",
