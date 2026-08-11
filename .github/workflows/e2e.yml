@@ -44,7 +44,9 @@ jobs:
     build-test-images:
         name: Build Test Images
         runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted') && 'ubuntu-24.04' || 'self-hosted' }}
-        if: github.event_name != 'pull_request' || github.head_ref == 'dev'
+        # Version-bump commits on master (chore: bump version to *) only touch
+        # package.json, so they'd otherwise trigger a full e2e run for nothing.
+        if: (github.event_name != 'pull_request' || github.head_ref == 'dev') && !startsWith(github.event.head_commit.message, 'chore: bump version to')
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -141,6 +143,7 @@ jobs:
         if: >-
             (github.event_name != 'pull_request' || github.head_ref == 'dev')
             && !(github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted')
+            && !startsWith(github.event.head_commit.message, 'chore: bump version to')
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -335,6 +338,7 @@ jobs:
         if: >-
             (github.event_name != 'pull_request' || github.head_ref == 'dev')
             && github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted'
+            && !startsWith(github.event.head_commit.message, 'chore: bump version to')
         strategy:
             fail-fast: false
             matrix:

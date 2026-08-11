@@ -39,8 +39,9 @@ jobs:
         runs-on: self-hosted
         timeout-minutes: 60
         # Dependabot PRs are single dep bumps; CI on them wastes runner
-        # minutes. Run this only for humans.
-        if: github.actor != 'dependabot[bot]'
+        # minutes. Run this only for humans. Version-bump commits on master
+        # (chore: bump version to *) are metadata-only, so skip CI on them too.
+        if: github.actor != 'dependabot[bot]' && !startsWith(github.event.head_commit.message, 'chore: bump version to')
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -229,7 +230,7 @@ jobs:
 
     build-proxy:
         name: Build Proxy Image
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
+        if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')) && !startsWith(github.event.head_commit.message, 'chore: bump version to')
         runs-on: self-hosted
         timeout-minutes: 45
         permissions:
