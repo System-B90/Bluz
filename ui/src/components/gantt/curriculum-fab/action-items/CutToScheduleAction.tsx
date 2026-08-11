@@ -29,12 +29,6 @@ export function CutToScheduleAction({
     // The open dialog is driven by a captured mode, not by `isCut` directly, so
     // flipping `isCut` on success does not unmount the dialog mid-message.
     const [dialogMode, setDialogMode] = useState<DialogMode>(null);
-    // Bumped on every open so each dialog remounts with a clean slate. The
-    // dialogs stay mounted while closed (so their exit transition plays), and
-    // without this a phase from an earlier attempt — an "already-cut" error,
-    // a finished reload summary — would resurface on the next open, e.g.
-    // after a pull-back and re-cut where it no longer describes reality.
-    const [openCount, setOpenCount] = useState(0);
     const [isCut, setIsCut] = useState(false);
     const isDraft = sourceCurriculum?.isDraft !== false;
     const curriculumId = sourceCurriculum?.id;
@@ -57,14 +51,10 @@ export function CutToScheduleAction({
 
     const handleClick = useCallback(() => {
         if (!sourceCurriculum) return;
-        setOpenCount((count) => count + 1);
         setDialogMode(isCut ? "pullBack" : "cut");
     }, [sourceCurriculum, isCut]);
 
-    const handleReloadClick = useCallback(() => {
-        setOpenCount((count) => count + 1);
-        setDialogMode("reload");
-    }, []);
+    const handleReloadClick = useCallback(() => setDialogMode("reload"), []);
 
     const handleClose = useCallback(() => setDialogMode(null), []);
 
@@ -109,7 +99,6 @@ export function CutToScheduleAction({
                 <CutToScheduleDialog
                     curriculumId={sourceCurriculum.id}
                     curriculumTitle={sourceCurriculum.title}
-                    key={`cut-${openCount}`}
                     onClose={handleClose}
                     onSuccess={() => setIsCut(true)}
                     open={dialogMode === "cut"}
@@ -119,7 +108,6 @@ export function CutToScheduleAction({
                 <ReloadScheduleDialog
                     curriculumId={sourceCurriculum.id}
                     curriculumTitle={sourceCurriculum.title}
-                    key={`reload-${openCount}`}
                     onClose={handleClose}
                     open={dialogMode === "reload"}
                 />
@@ -128,7 +116,6 @@ export function CutToScheduleAction({
                 <PullBackScheduleDialog
                     curriculumId={sourceCurriculum.id}
                     curriculumTitle={sourceCurriculum.title}
-                    key={`pull-back-${openCount}`}
                     onClose={handleClose}
                     onSuccess={() => setIsCut(false)}
                     open={dialogMode === "pullBack"}

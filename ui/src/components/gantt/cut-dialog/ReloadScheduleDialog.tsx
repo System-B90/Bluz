@@ -155,6 +155,23 @@ export function ReloadScheduleDialog({
     const [overrideIds, setOverrideIds] = useState<Array<string>>([]);
     const [forceAcknowledged, setForceAcknowledged] = useState(false);
 
+    // Reset while rendering the open transition, not in an effect (React's
+    // "adjusting state when a prop changes" pattern). The dialog stays mounted
+    // while closed so its exit animation can play, and it is not always closed
+    // through `handleClose` — the parent can simply flip `open` to switch
+    // actions. Without this, the phase from an earlier attempt (an error, a
+    // finished summary) is what greets the user on the next open, most
+    // visibly after a pull-back and re-cut where it is plainly stale.
+    const [wasOpen, setWasOpen] = useState(open);
+    if (open !== wasOpen) {
+        setWasOpen(open);
+        if (open) {
+            setPhase({ kind: "confirm" });
+            setOverrideIds([]);
+            setForceAcknowledged(false);
+        }
+    }
+
     const handleClose = useCallback(() => {
         if (phase.kind === "loading") return;
         onClose();
