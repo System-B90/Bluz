@@ -3,6 +3,8 @@ import {
     ApiHiveClassesGetResponse,
     ApiHiveLessonsGetPayload,
     ApiHiveLessonsGetResponse,
+    ApiHiveQueuesGetPayload,
+    ApiHiveQueuesGetResponse,
     ApiHiveStudentsGetResponse,
     ApiHiveUsersGetResponse,
 } from "@/api-shared/types/hive";
@@ -15,6 +17,7 @@ type ClientApiGetSubjects = ClientApiNoPayload<ApiHiveSubjectsGetResponse>;
 type ClientApiGetHiveUsers = ClientApiNoPayload<ApiHiveUsersGetResponse>;
 type ClientApiGetModules = ClientApiNoPayload<ApiHiveModulesGetResponse>;
 type ClientApiGetLessons = ClientApi<ApiHiveLessonsGetPayload, ApiHiveLessonsGetResponse>;
+type ClientApiGetQueues = ClientApi<ApiHiveQueuesGetPayload, ApiHiveQueuesGetResponse>;
 
 export const apiGetStudents: ClientApiGetStudents = async (props) => {
     return await safeApiFetcher<ApiHiveStudentsGetResponse>(
@@ -47,6 +50,13 @@ export const getHiveUsers: ClientApiGetHiveUsers = async (props) => {
 export const apiGetModules: ClientApiGetModules = async (props) => {
     return await safeApiFetcher<ApiHiveModulesGetResponse>(
         "/api/hive/modules",
+        props,
+    );
+};
+
+export const apiGetQueues: ClientApiGetQueues = async (payload, props) => {
+    return await safeApiFetcher<ApiHiveQueuesGetResponse>(
+        `/api/hive/queues?module=${payload.module}`,
         props,
     );
 };

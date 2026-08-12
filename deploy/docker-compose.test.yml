@@ -29,6 +29,9 @@ services:
             - HIVE_CLIENT_ID=${TEST_HIVE_CLIENT_ID}
             - HIVE_CLIENT_SECRET=${TEST_HIVE_CLIENT_SECRET}
             - NEXT_PUBLIC_HIVE_URL=${NEXT_PUBLIC_HIVE_URL}
+            # Service account behind the lesson activator (queue-on-live).
+            - HIVE_API_USERNAME=${HIVE_API_USERNAME:-api}
+            - HIVE_API_PASSWORD=${HIVE_API_PASSWORD:-Password1}
         depends_on:
             - curriculum-db
             - sessions

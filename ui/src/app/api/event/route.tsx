@@ -6,6 +6,7 @@ import {
     pullGoogleEditsInBackground,
     syncEventToInstructorsGoogleCalendars,
 } from "@/api-server/google/google-calendar-sync";
+import { syncEventLessonToHive } from "@/api-server/hive/lesson-sync";
 import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
@@ -119,6 +120,7 @@ export const POST: ServerApiEventUpdate = withApi(async (request) => {
         ),
     });
     syncEventToInstructorsGoogleCalendars(updated, "upsert");
+    syncEventLessonToHive(updated, "upsert", controller);
     return ApiSuccess(updated);
 });
 
@@ -143,6 +145,7 @@ export const PUT: ServerApiEventCreate = withApi(async (request) => {
         },
     );
     syncEventToInstructorsGoogleCalendars(created, "upsert");
+    syncEventLessonToHive(created, "upsert", controller);
     return ApiSuccess(created);
 });
 
@@ -161,6 +164,7 @@ export const DELETE: ServerApiEventDelete = withApi(async (request) => {
     });
     if (existing) {
         syncEventToInstructorsGoogleCalendars(existing, "delete");
+        syncEventLessonToHive(existing, "delete", controller);
     }
     return ApiSuccess();
 });

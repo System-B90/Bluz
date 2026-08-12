@@ -11,13 +11,13 @@ import {
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { apiGetLessons } from "@/api-client/hive";
-import { Lesson } from "@/api-shared/types/hive";
+import { HiveLesson, lessonModuleId } from "@/api-shared/types/hive";
 
 export type HiveLessonsContextState = {
     default: boolean;
-    lessons: Array<Lesson>;
-    getLesson: (id: number) => Lesson | undefined;
-    getLessonsOfModule: (moduleId: number) => Array<Lesson>;
+    lessons: Array<HiveLesson>;
+    getLesson: (id: number) => HiveLesson | undefined;
+    getLessonsOfModule: (moduleId: number) => Array<HiveLesson>;
 };
 
 const HiveLessonsContext = createContext<HiveLessonsContextState | undefined>({
@@ -32,7 +32,7 @@ export const HiveLessonsProvider = ({
 }: {
     children: React.ReactNode;
 }) => {
-    const [lessonLookup, setLessonLookup] = useState<Record<number, Lesson>>(
+    const [lessonLookup, setLessonLookup] = useState<Record<number, HiveLesson>>(
         {},
     );
 
@@ -43,16 +43,18 @@ export const HiveLessonsProvider = ({
         [lessonLookup],
     );
 
+    // Hive returns the module as `module_id` on newer instances and `module`
+    // on older ones; comparing against only one silently yields no lessons.
     const getLessonsOfModule = useCallback(
         (moduleId: number) =>
-            lessons.filter((lesson) => lesson.module === moduleId),
+            lessons.filter((lesson) => lessonModuleId(lesson) === moduleId),
         [lessons],
     );
 
     const loadLessons = useCallback(() => {
         apiGetLessons()
             .then((fetchedLessons) => {
-                const lessonsMap: Record<number, Lesson> = {};
+                const lessonsMap: Record<number, HiveLesson> = {};
                 fetchedLessons.forEach((lesson) => {
                     lessonsMap[lesson.id] = lesson;
                 });
