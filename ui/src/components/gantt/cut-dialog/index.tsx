@@ -162,6 +162,19 @@ export function CutToScheduleDialog({
     const [forceAcknowledged, setForceAcknowledged] = useState(false);
     const loadingIntervalRef = useRef<null | ReturnType<typeof setInterval>>(null);
 
+    // See ReloadScheduleDialog: the dialog outlives its own close, and the
+    // parent can flip `open` without going through `handleClose`, so an
+    // "already-cut" error would otherwise reappear after a pull-back.
+    const [wasOpen, setWasOpen] = useState(open);
+    if (open !== wasOpen) {
+        setWasOpen(open);
+        if (open) {
+            setPhase({ kind: "confirm" });
+            setForceAcknowledged(false);
+            setLoadingStep(0);
+        }
+    }
+
     useEffect(() => {
         if (phase.kind === "loading") {
             loadingIntervalRef.current = setInterval(() => {

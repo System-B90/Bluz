@@ -36,12 +36,14 @@ jobs:
     # failure.
     verify:
         name: Lint + Typecheck + Unit Tests
-        runs-on: self-hosted
+        runs-on: [self-hosted, node, python]
         timeout-minutes: 60
         # Dependabot PRs are single dep bumps; CI on them wastes runner
         # minutes. Run this only for humans. Version-bump commits on master
         # (chore: bump version to *) are metadata-only, so skip CI on them too.
-        if: github.actor != 'dependabot[bot]' && !startsWith(github.event.head_commit.message, 'chore: bump version to')
+        if: >-
+            github.actor != 'dependabot[bot]'
+            && !startsWith(github.event.head_commit.message, 'chore: bump version to')
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -126,7 +128,7 @@ jobs:
         name: Build UI Image
         needs: [verify]
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
-        runs-on: self-hosted
+        runs-on: [self-hosted, dind]
         timeout-minutes: 45
         permissions:
             contents: read
@@ -182,7 +184,7 @@ jobs:
         name: Build Sessions Image
         needs: [verify]
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
-        runs-on: self-hosted
+        runs-on: [self-hosted, dind]
         timeout-minutes: 45
         permissions:
             contents: read
@@ -230,8 +232,10 @@ jobs:
 
     build-proxy:
         name: Build Proxy Image
-        if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')) && !startsWith(github.event.head_commit.message, 'chore: bump version to')
-        runs-on: self-hosted
+        if: >-
+            (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v'))
+            && !startsWith(github.event.head_commit.message, 'chore: bump version to')
+        runs-on: [self-hosted, dind]
         timeout-minutes: 45
         permissions:
             contents: read
@@ -279,7 +283,7 @@ jobs:
         name: Craft Release Packages
         needs: [build-ui, build-sessions, build-proxy]
         if: startsWith(github.ref, 'refs/tags/v')
-        runs-on: self-hosted
+        runs-on: [self-hosted, dind]
         timeout-minutes: 45
         permissions:
             contents: write
@@ -360,7 +364,7 @@ jobs:
         name: Publish bluz CLI to org pip index
         needs: craft-release
         if: startsWith(github.ref, 'refs/tags/v')
-        runs-on: self-hosted
+        runs-on: [self-hosted, python]
         timeout-minutes: 45
 
         steps:

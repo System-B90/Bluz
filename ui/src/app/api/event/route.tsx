@@ -25,6 +25,10 @@ import {
     DbEventDocument,
     EventId,
 } from "@/api-shared/types/event";
+import {
+    EVENT_INITIATOR_HEADER,
+    parseEventInitiator,
+} from "@/api-shared/types/event-history";
 
 type ServerApiEventGet = ServerApi<ApiEventGetPayload, ApiEventGetResponse>;
 type ServerApiEventUpdate = ServerApi<
@@ -109,7 +113,11 @@ export const POST: ServerApiEventUpdate = withApi(async (request) => {
     if (!event) {
         throw new ClientApiError("No data provided!");
     }
-    const updated = await DbEvent.set(event, undefined, controller, iterationId);
+    const updated = await DbEvent.set(event, undefined, controller, iterationId, {
+        initiator: parseEventInitiator(
+            request.headers.get(EVENT_INITIATOR_HEADER),
+        ),
+    });
     syncEventToInstructorsGoogleCalendars(updated, "upsert");
     return ApiSuccess(updated);
 });
@@ -128,6 +136,11 @@ export const PUT: ServerApiEventCreate = withApi(async (request) => {
         undefined,
         controller,
         iterationId,
+        {
+            initiator: parseEventInitiator(
+                request.headers.get(EVENT_INITIATOR_HEADER),
+            ),
+        },
     );
     syncEventToInstructorsGoogleCalendars(created, "upsert");
     return ApiSuccess(created);
@@ -141,7 +154,11 @@ export const DELETE: ServerApiEventDelete = withApi(async (request) => {
         throw new ClientApiError("No eventId provided!");
     }
     const existing = await DbEvent.get(eventId, undefined, controller);
-    await DbEvent.del(eventId, undefined, controller, iterationId);
+    await DbEvent.del(eventId, undefined, controller, iterationId, {
+        initiator: parseEventInitiator(
+            request.headers.get(EVENT_INITIATOR_HEADER),
+        ),
+    });
     if (existing) {
         syncEventToInstructorsGoogleCalendars(existing, "delete");
     }

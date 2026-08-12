@@ -59,67 +59,128 @@ def is_ssh_only_session() -> bool:
     return not os.environ.get("DISPLAY")
 
 
-def get_hive_client_via_password(hive_url: str, verify: bool) -> "HiveClient":
+def get_hive_client_via_password(
+    hive_url: str, verify: bool, reason: str = ""
+) -> "HiveClient":
     """
-    Authenticates to Hive with a username/password (resource-owner password
-    grant) instead of the interactive browser SSO flow. Used on terminal-only
-    (SSH) sessions where no local browser is reachable.
+    Authenticates to Hive with a username/password instead of the interactive
+    browser SSO flow. Used when no local browser is reachable, and as the
+    fallback when the browser flow fails.
 
     Args:
         hive_url (str): The base URL of the Hive server.
         verify (bool): SSL verification setting for the HTTP client.
+        reason (str): Why the password path is being used, shown to the user.
 
     Returns:
         HiveClient: An authenticated HiveClient instance.
-
-    Raises:
-        RuntimeError: If the password grant request fails or the response is
-            missing required token fields.
     """
-    import httpx
+    # This deliberately goes through HiveClient's own constructor, which
+    # authenticates against /api/core/token/. The previous implementation
+    # hand-rolled an OAuth2 resource-owner-password-grant POST to
+    # /api/core/sso/token/ instead — Hive's default SSO client only permits the
+    # authorization-code grant, so that path returned unauthorized_client for
+    # every credential and the installer silently fell through to
+    # MANUAL_ENTRY_REQUIRED (#412).
+    if reason:
+        typer.secho(f"\n{reason}", fg=typer.colors.YELLOW)
+    typer.echo("Sign in with a Hive account that can register SSO applications.")
 
-    from pyhive.client.sso_utils import HIVE_SSO_CLIENT_ID, HIVE_SSO_CLIENT_SECRET
-
-    typer.secho(
-        "\nNo local browser reachable (SSH/terminal-only session).",
-        fg=typer.colors.YELLOW,
-    )
     username = inquirer.text(message="Hive username:").execute()
     password = inquirer.secret(message="Hive password:").execute()
 
-    token_url = f"{hive_url}/api/core/sso/token/"
-    payload = {
-        "grant_type": "password",
-        "username": username,
-        "password": password,
-    }
-    with httpx.Client(verify=verify, follow_redirects=True) as client:
-        response = client.post(
-            token_url,
-            data=payload,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            auth=(HIVE_SSO_CLIENT_ID, HIVE_SSO_CLIENT_SECRET),
-        )
-        if response.status_code != 200:
-            raise RuntimeError(
-                f"Password login failed (HTTP {response.status_code}): {response.text}"
-            )
-        token_data = response.json()
-
-    access_token = token_data.get("access_token")
-    refresh_token = token_data.get("refresh_token")
-    if not access_token or not refresh_token:
-        raise RuntimeError(
-            "Password login response missing 'access_token' or 'refresh_token'."
-        )
-
-    return HiveClient.from_api_token(
-        api_token=access_token,
-        refresh_token=refresh_token,
+    return HiveClient(
+        username=username,
+        password=password,
         hive_url=hive_url,
         verify=verify,
-        auth_strategy="sso",
     )
+
+
+def register_sso_with_retry(hive_url: str, redirect_uri: str) -> tuple[str, str]:
+    """
+    Registers Bluz as an SSO application with Hive, falling back between the
+    browser and password flows and offering a retry before giving up.
+
+    Args:
+        hive_url (str): The base URL of the Hive server.
+        redirect_uri (str): The OAuth callback URI to register for Bluz.
+
+    Returns:
+        tuple[str, str]: The (client_id, client_secret) pair, or a pair of
+            MANUAL_ENTRY_REQUIRED placeholders if every attempt failed.
+    """
+    # A failure here used to end the attempt outright and leave placeholders in
+    # .env, which meant sign-in was broken post-install with no further prompt
+    # (#412). The browser flow and the password flow fail for unrelated reasons
+    # — no reachable browser vs. wrong credentials — so each is worth trying
+    # when the other fails.
+    browser_first = not is_ssh_only_session()
+
+    attempts: list[tuple[str, object]] = []
+    if browser_first:
+        attempts.append(
+            ("browser", lambda: HiveClient.from_sso(hive_url=hive_url, verify=False))
+        )
+        attempts.append(
+            (
+                "password",
+                lambda: get_hive_client_via_password(
+                    hive_url,
+                    verify=False,
+                    reason="Browser sign-in did not complete. Falling back to username/password.",
+                ),
+            )
+        )
+    else:
+        attempts.append(
+            (
+                "password",
+                lambda: get_hive_client_via_password(
+                    hive_url,
+                    verify=False,
+                    reason="No local browser reachable (SSH/terminal-only session).",
+                ),
+            )
+        )
+
+    last_error: Exception | None = None
+    for _name, build_client in attempts:
+        try:
+            client = build_client()  # type: ignore[operator]
+            credentials = client.register_sso_service(
+                service_name="Bluz",
+                redirect_uris=redirect_uri,
+            )
+            client_id = credentials.get("client_id", "")
+            client_secret = credentials.get("client_secret", "")
+            if client_id and client_secret:
+                typer.secho("Hive SSO registration successful.", fg=typer.colors.GREEN)
+                return client_id, client_secret
+            last_error = RuntimeError(
+                "Hive accepted the registration but returned no client_id/client_secret."
+            )
+        except Exception as e:  # noqa: BLE001 - every failure mode is retryable here
+            last_error = e
+            typer.secho(f"  Attempt failed: {e}", fg=typer.colors.YELLOW)
+
+    typer.secho(f"\nFailed to register Hive SSO: {last_error}", fg=typer.colors.RED)
+    typer.secho(
+        "Sign-in will NOT work until HIVE_CLIENT_ID and HIVE_CLIENT_SECRET are set.",
+        fg=typer.colors.RED,
+    )
+    typer.echo(
+        "\nRegister by hand instead (this uses the same working endpoint):\n"
+        "    pip install PyHiveLMS --index-url "
+        "https://raw.githubusercontent.com/System-B90/.github/main/pypi/\n"
+        f"    pyhive -u <admin-user> -p <password> register Bluz --hive-url {hive_url}\n"
+        "then copy the returned client_id / client_secret into .env."
+    )
+
+    if inquirer.confirm(message="Try registering again now?", default=True).execute():
+        return register_sso_with_retry(hive_url, redirect_uri)
+
+    return "MANUAL_ENTRY_REQUIRED", "MANUAL_ENTRY_REQUIRED"
 
 
 def generate_password(length: int = 32) -> str:
@@ -292,6 +353,44 @@ def generate_env() -> None:
     # Handle SSL Validation and Generation
     handle_ssl_certs(domain_name)
 
+    # Where the proxy publishes. Defaults bind every address on :80/:443, which
+    # is right for the recommended setup (Bluz alone on its own host). Sharing a
+    # machine with another web stack is the case that needs a decision, so ask
+    # rather than hardcoding a loopback alias that does not exist on Windows
+    # (#412).
+    bind_ip = existing_env.get("BLUZ_BIND_IP", "0.0.0.0")
+    http_port = existing_env.get("BLUZ_HTTP_PORT", "80")
+    https_port = existing_env.get("BLUZ_HTTPS_PORT", "443")
+
+    shares_host = inquirer.confirm(
+        message=(
+            "Is another web server (e.g. a local Hive stack) already using "
+            "ports 80/443 on this machine?"
+        ),
+        default=http_port != "80",
+    ).execute()
+
+    if shares_host:
+        typer.secho(
+            "\nGiving Bluz its own ports is the portable way to share a host.\n"
+            "Binding a separate loopback IP also works on Linux, but on Windows it\n"
+            "needs an admin-added loopback alias AND the other stack must stop\n"
+            "binding 0.0.0.0 — Docker Desktop reserves published ports by number.",
+            fg=typer.colors.YELLOW,
+        )
+        http_port = inquirer.text(
+            message="HTTP port for Bluz (BLUZ_HTTP_PORT):",
+            default=http_port if http_port != "80" else "8080",
+        ).execute()
+        https_port = inquirer.text(
+            message="HTTPS port for Bluz (BLUZ_HTTPS_PORT):",
+            default=https_port if https_port != "443" else "8443",
+        ).execute()
+        bind_ip = inquirer.text(
+            message="Bind address (BLUZ_BIND_IP, 0.0.0.0 = all interfaces):",
+            default=bind_ip,
+        ).execute()
+
     # Hive & Auth Setup
     default_hive_url = existing_env.get("NEXT_PUBLIC_HIVE_URL", "https://hive.org")
     hive_url = inquirer.text(
@@ -344,25 +443,10 @@ def generate_env() -> None:
             hive_client_secret = "MANUAL_ENTRY_REQUIRED"
         else:
             typer.echo(f"Registering Bluz SSO service with Hive at {hive_url}...")
-            try:
-                client = (
-                    get_hive_client_via_password(hive_url, verify=False)
-                    if is_ssh_only_session()
-                    else HiveClient.from_sso(hive_url=hive_url, verify=False)
-                )
-                sso_credentials = client.register_sso_service(
-                    service_name="Bluz",
-                    redirect_uris=f"{nextauth_url}/api/auth/callback/hive",
-                )
-                hive_client_id = sso_credentials.get("client_id", "ERROR_FETCHING_ID")
-                hive_client_secret = sso_credentials.get(
-                    "client_secret", "ERROR_FETCHING_SECRET"
-                )
-                typer.secho("Hive SSO registration successful.", fg=typer.colors.GREEN)
-            except Exception as e:
-                typer.secho(f"Failed to register Hive SSO: {e}", fg=typer.colors.RED)
-                hive_client_id = "MANUAL_ENTRY_REQUIRED"
-                hive_client_secret = "MANUAL_ENTRY_REQUIRED"
+            hive_client_id, hive_client_secret = register_sso_with_retry(
+                hive_url=hive_url,
+                redirect_uri=f"{nextauth_url}/api/auth/callback/hive",
+            )
 
     # Google Calendar sync needs NO per-deployment setup: users connect with a
     # "Continue with Google" popup and Bluz ships shared OAuth credentials.
@@ -388,7 +472,14 @@ def generate_env() -> None:
         )
 
     env_content: dict[str, str] = {
-        "BLUZ_VERSION": existing_env.get("BLUZ_VERSION", "latest"),
+        # No "latest" default: that tag is never published (only tagged v*
+        # builds push images), so defaulting to it turns a missing version into
+        # a manifest-not-found much later instead of an error here. install.sh /
+        # install.ps1 fill this in from the bundle's VERSION file.
+        "BLUZ_VERSION": existing_env.get("BLUZ_VERSION", ""),
+        "BLUZ_BIND_IP": bind_ip,
+        "BLUZ_HTTP_PORT": http_port,
+        "BLUZ_HTTPS_PORT": https_port,
         "WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY": ws_auth_key,
         "WEBSOCKET_SESSION_SERVER_HOST": domain_name,
         "NEXT_PUBLIC_HIVE_URL": hive_url,

@@ -1,0 +1,51 @@
+# Bluz — overlay for running Bluz and Hive on the SAME machine.
+#
+# The recommended topology is Hive and Bluz on separate hosts, which needs
+# nothing from this file: NEXT_PUBLIC_HIVE_URL points at Hive's real hostname
+# and ordinary DNS does the rest. This overlay exists for the co-located case
+# (dev boxes, demo machines, and the "cheap" single-machine customer install),
+# where Bluz's containers have to reach a Hive stack living on the same Docker
+# daemon.
+#
+# Usage — from the bundle root, after ./install.sh has written .env:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.hive-local.yml up -d
+#
+# ./link-hive.sh does this for you, including the network-alias step below.
+#
+# Why an alias on Hive's nginx rather than extra_hosts on ours: `extra_hosts:
+# hive.org:host-gateway` resolves to the host's gateway IP, which does not reach
+# Hive at all when Hive's own nginx is bound to a specific loopback address on
+# the host. Joining Hive's network and letting Docker's embedded DNS resolve a
+# container alias has no dependency on host bind addresses or the host hosts
+# file. Without it, ui's server-side OAuth call resolves hive.org via the host's
+# hosts file to 127.0.0.1, which inside ui's own network namespace is ui itself
+# — so it tries to talk OAuth to itself and sign-in dies with a bare
+# SIGNIN_OAUTH_ERROR (#412).
+#
+# The alias itself lives on Hive's container, so it cannot be declared here:
+#
+#   docker network connect --alias hive.org <hive-net> <hive-nginx-container>
+#
+# ./link-hive.sh runs exactly that, idempotently, before bringing the stack up.
+
+services:
+    ui:
+        networks:
+            - bluz_net
+            - hive_net
+
+    sessions:
+        networks:
+            - bluz_net
+            - hive_net
+
+networks:
+    hive_net:
+        # Compose derives a network's name from the directory the stack was
+        # brought up in, so Hive's differs by environment: locally that is
+        # hive-stack/ (hive-stack_hive-net), while CI checks Hive out to hive/
+        # and gets hive_hive-net. ./link-hive.sh detects it; override manually
+        # with HIVE_NETWORK_NAME if you brought Hive up somewhere else.
+        name: ${HIVE_NETWORK_NAME:-hive-stack_hive-net}
+        external: true

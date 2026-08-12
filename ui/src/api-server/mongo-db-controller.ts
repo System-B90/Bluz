@@ -6,6 +6,7 @@ import { ClientApiError } from "@/api-shared/errors";
 import { CalendarDraft, CalendarSnapshot } from "@/api-shared/types";
 import { Course } from "@/api-shared/types/course";
 import { CustomColor } from "@/api-shared/types/custom-color";
+import { EventHistoryEntry } from "@/api-shared/types/event-history";
 import {
     GanttCurriculum,
     GanttEvent,
@@ -116,6 +117,13 @@ class DatabaseController {
     public get events(): Collection<DbEventDocument> {
         return this.bluzDb.collection("events");
     }
+    /**
+     * Append-only change log for events. Rows reference events by id and never
+     * copy event state, so the events collection stays free of audit columns.
+     */
+    public get eventHistory(): Collection<EventHistoryEntry> {
+        return this.bluzDb.collection("eventHistory");
+    }
     public get settings(): Collection<Setting> {
         return this.bluzDb.collection("settings");
     }
@@ -177,6 +185,8 @@ function ensureIndexesInBackground(controller: DatabaseController): void {
         controller.events.createIndex({ startTime: 1, endTime: 1 }),
         // Snapshot listing sorts newest-first.
         controller.calendarSnapshots.createIndex({ createdAt: -1 }),
+        // History is always read per event, newest-first.
+        controller.eventHistory.createIndex({ eventId: 1, changedAt: -1 }),
     ]).catch((error) => {
         console.error(
             `Failed to ensure Mongo indexes on "${controller.dbName}"`,

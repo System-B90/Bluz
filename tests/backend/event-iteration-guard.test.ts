@@ -49,6 +49,7 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
     resolveWritableIterationDb,
 }));
 
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import * as EventRoute from "@/app/api/event/route";
 
@@ -81,12 +82,14 @@ describe("event route — iteration read-only guard", () => {
         const res = await EventRoute.POST(req);
 
         expect(res.status).toBe(200);
-        // 4th arg (iterationId) is undefined for the current run.
+        // 4th arg (iterationId) is undefined for the current run; the 5th is
+        // the change-log origin derived from the initiator header (absent here).
         expect(DbEvent.set).toHaveBeenCalledWith(
             expect.anything(),
             undefined,
             fakeController,
             undefined,
+            { initiator: EventChangeInitiator.Unknown },
         );
     });
 

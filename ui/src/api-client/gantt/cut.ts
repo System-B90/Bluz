@@ -11,6 +11,12 @@ import {
     isCurriculumPullBackErrorPayload,
 } from "@/api-shared/types/gantt/cut";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import {
+    ApiCurriculumReloadPayload,
+    ApiCurriculumReloadResponse,
+    CurriculumReloadError,
+    isCurriculumReloadErrorPayload,
+} from "@/api-shared/types/gantt/reload";
 
 /**
  * POST /api/gantt/curriculums/[id]/cut — materialize a published, linked
@@ -82,8 +88,37 @@ export async function previewCurriculumCut(
     );
 }
 
+/**
+ * PATCH /api/gantt/curriculums/[id]/cut — reload an already-cut schedule from
+ * the current gantt. With `dryRun` the server only computes the diff.
+ * @param curriculumId Curriculum to reload from.
+ * @param options.dryRun Preview only, nothing is written.
+ * @param options.overrideEventIds Manually-edited events to overwrite anyway.
+ * @param options.force Plan around unmapped / unsatisfied-recurrence events.
+ */
+export async function reloadCurriculumSchedule(
+    curriculumId: GanttCurriculumId,
+    options: ApiCurriculumReloadPayload = {},
+): Promise<ApiCurriculumReloadResponse> {
+    try {
+        return await safeApiFetcher<ApiCurriculumReloadResponse>(
+            `/api/gantt/curriculums/${curriculumId}/cut`,
+            { method: "PATCH", body: JSON.stringify(options) },
+        );
+    } catch (error) {
+        if (
+            error instanceof ClientApiError &&
+            isCurriculumReloadErrorPayload(error)
+        ) {
+            throw new CurriculumReloadError(error);
+        }
+        throw error;
+    }
+}
+
 export const curriculumCutApi = {
     cut: cutCurriculumToSchedule,
+    reload: reloadCurriculumSchedule,
     status: getCurriculumCutStatus,
     pullBack: pullBackCurriculumSchedule,
     preview: previewCurriculumCut,

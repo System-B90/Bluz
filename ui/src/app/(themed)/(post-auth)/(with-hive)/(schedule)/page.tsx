@@ -3,6 +3,7 @@ import Box from "@mui/material/Box";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { EmptyState } from "@/components/base/EmptyState";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
@@ -112,7 +113,7 @@ export default function SchedulePage() {
                 selectedEvent?.id !== undefined
             ) {
                 e.preventDefault();
-                deleteEvent(selectedEvent.id);
+                deleteEvent(selectedEvent.id, EventChangeInitiator.Keyboard);
                 setSelectedEvent(undefined);
             }
         };
@@ -139,16 +140,18 @@ export default function SchedulePage() {
     }, []);
 
     const handleSave = useCallback(
-        (event: Partial<Event>) => {
-            saveEvent(event); // Provider handles API, offline, and history tracking
+        (event: Partial<Event>, initiator?: EventChangeInitiator) => {
+            // Provider handles API, offline, and history tracking.
+            saveEvent(event, initiator);
             handleCloseEventDialog();
         },
         [saveEvent, handleCloseEventDialog],
     );
 
     const handleDelete = useCallback(
-        (eventId: EventId) => {
-            deleteEvent(eventId); // Provider handles API, offline, and history tracking
+        (eventId: EventId, initiator?: EventChangeInitiator) => {
+            // Provider handles API, offline, and history tracking.
+            deleteEvent(eventId, initiator);
             handleCloseEventDialog();
         },
         [deleteEvent, handleCloseEventDialog],

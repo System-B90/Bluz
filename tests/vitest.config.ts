@@ -10,7 +10,9 @@ export default defineConfig({
     resolve: { tsconfigPaths: true },
     test: {
         environment: "node",
-        include: [ "tests/backend/**/*.test.ts" ],
+        // `.tsx` too: component tests for the gantt dialogs opt into jsdom
+        // per file (`// @vitest-environment jsdom`).
+        include: [ "tests/backend/**/*.test.ts", "tests/backend/**/*.test.tsx" ],
         exclude: [ ...configDefaults.exclude, "**/.claude/**", "**/worktrees/**" ],
         alias: {
             "@": path.resolve(__dirname, "../ui/src"),

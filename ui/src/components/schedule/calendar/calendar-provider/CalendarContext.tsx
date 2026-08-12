@@ -3,6 +3,7 @@
 import { createContext, Dispatch, SetStateAction, useContext } from "react";
 
 import { EventLockMessage } from "@/api-shared/types";
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { IterationId } from "@/api-shared/types/iteration";
 import { CalendarAction } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { Event, EventId } from "@/components/schedule/types/event";
@@ -32,8 +33,13 @@ export type CalendarContextState = {
     setIterationId: Dispatch<SetStateAction<IterationId | undefined>>;
 
     // Actions
-    saveEvent: (event: Partial<Event>) => void;
-    deleteEvent: (eventId: EventId) => void;
+    /**
+     * Persists an event. `initiator` names the user action behind the write so
+     * the server can log it (see api-shared/types/event-history.ts); it
+     * defaults to an event-dialog edit.
+     */
+    saveEvent: (event: Partial<Event>, initiator?: EventChangeInitiator) => void;
+    deleteEvent: (eventId: EventId, initiator?: EventChangeInitiator) => void;
     undo: () => void;
     redo: () => void;
     dispatch: (action: CalendarAction) => void;

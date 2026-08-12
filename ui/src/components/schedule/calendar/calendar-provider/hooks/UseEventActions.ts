@@ -7,6 +7,7 @@ import {
     apiUpdateEvent,
 } from "@/api-client/calendar";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { createEventFactory } from "@/components/schedule/calendar/calendar-provider/EventFactory";
 import { CalendarAction } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { Event, EventId } from "@/components/schedule/types/event";
@@ -20,7 +21,10 @@ export const useEventActions = (
     remoteDispatch: (action: CalendarAction) => void,
 ) => {
     const saveEvent = useCallback(
-        (eventPartial: Partial<Event>) => {
+        (
+            eventPartial: Partial<Event>,
+            initiator: EventChangeInitiator = EventChangeInitiator.EventDialog,
+        ) => {
             if (!eventPartial || eventPartial.name === "") return;
 
             const isNewEvent = typeof eventPartial.id === "undefined";
@@ -48,7 +52,7 @@ export const useEventActions = (
                     ? "יצירת המופע נכשלה!"
                     : "שמירת המופע נכשלה!";
 
-                apiCall(newEvent)
+                apiCall(newEvent, initiator)
                     .then((res) => {
                         enqueueSnackbar(successMsg, { variant: "success" });
                         // Server confirmation. Skip the redundant re-upsert when
@@ -85,11 +89,14 @@ export const useEventActions = (
     );
 
     const deleteEvent = useCallback(
-        (eventId: EventId) => {
+        (
+            eventId: EventId,
+            initiator: EventChangeInitiator = EventChangeInitiator.EventDialog,
+        ) => {
             dispatch({ type: "DELETE_EVENT", payload: eventId });
 
             if (!offlineMode) {
-                apiDeleteEvent(eventId)
+                apiDeleteEvent(eventId, initiator)
                     .then(() =>
                         enqueueSnackbar("המופע נמחק בהצלחה.", {
                             variant: "success",

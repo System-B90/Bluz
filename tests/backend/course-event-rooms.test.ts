@@ -43,6 +43,7 @@ vi.mock("@/app/api/rooms/utils", () => ({
     getAllRooms: vi.fn(),
 }));
 
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import * as CourseRoute from "@/app/api/course/route";
 import * as EventRoute from "@/app/api/event/route";
 import * as RoomsRoute from "@/app/api/rooms/route";
@@ -208,6 +209,7 @@ describe("Event API Route", () => {
             undefined,
             expect.anything(),
             undefined,
+            { initiator: EventChangeInitiator.Unknown },
         );
     });
 });

@@ -42,6 +42,14 @@ export function PullBackScheduleDialog({
 }: PullBackScheduleDialogProps) {
     const [phase, setPhase] = useState<DialogPhase>({ kind: "confirm" });
 
+    // See ReloadScheduleDialog: reset on the open transition so a previous
+    // result/error cannot resurface on the next pull-back.
+    const [wasOpen, setWasOpen] = useState(open);
+    if (open !== wasOpen) {
+        setWasOpen(open);
+        if (open) setPhase({ kind: "confirm" });
+    }
+
     const handleClose = useCallback(() => {
         if (phase.kind === "loading") return;
         onClose();
