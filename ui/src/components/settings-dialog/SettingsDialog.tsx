@@ -1,3 +1,4 @@
+import AlarmIcon from '@mui/icons-material/Alarm';
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import CloseIcon from "@mui/icons-material/Close";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
@@ -5,7 +6,6 @@ import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import PaletteIcon from "@mui/icons-material/Palette";
 import PersonIcon from "@mui/icons-material/Person";
-import SettingsIcon from "@mui/icons-material/Settings";
 import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
 import IconButton from "@mui/material/IconButton";
@@ -19,8 +19,7 @@ import { IterationSettings } from "@/components/settings-dialog/tabs/global/iter
 import { OutsiderSettings } from "@/components/settings-dialog/tabs/global/outsider-settings";
 import { RoomSettings } from "@/components/settings-dialog/tabs/global/room-settings";
 import { PersonalSettings } from "@/components/settings-dialog/tabs/PersonalSettings";
-import
-{
+import {
     SettingsTab,
 } from "@/components/settings-dialog/UseSettingsDialogUrl";
 
@@ -36,22 +35,23 @@ export function SettingsDialog({
     onClose,
     onTabChange,
     open,
-}: SettingsDialogProps) {
-    const tabs: Array<{ label: string; icon: React.ReactNode; value: SettingsTab }> =
+}: SettingsDialogProps)
+{
+    const tabs: Array<{ label: string; icon: React.ReactNode; value: SettingsTab; }> =
         [
             { label: "אישי", icon: <PersonIcon />, value: "personal" },
-            { label: "העדפות זמן", icon: <SettingsIcon />, value: "global" },
-            {
-                label: "בניית קורסים",
-                icon: <MenuBookIcon />,
-                value: "courses",
-            },
-            { label: "צבעים", icon: <PaletteIcon />, value: "colors" },
-            { label: "חדרים", icon: <MeetingRoomIcon />, value: "rooms" },
             {
                 label: "אנשי חוץ",
                 icon: <AssignmentIndIcon />,
                 value: "outsiders",
+            },
+            { label: "צבעים", icon: <PaletteIcon />, value: "colors" },
+            { label: "העדפות זמן", icon: <AlarmIcon />, value: "global" },
+            { label: "חדרים", icon: <MeetingRoomIcon />, value: "rooms" },
+            {
+                label: "בניית קורסים",
+                icon: <MenuBookIcon />,
+                value: "courses",
             },
             {
                 label: "מחזורים",
@@ -64,9 +64,9 @@ export function SettingsDialog({
         <Dialog
             fullWidth
             maxWidth="lg"
-            onClose={onClose}
-            open={open}
-            PaperProps={{
+            onClose={ onClose }
+            open={ open }
+            PaperProps={ {
                 sx: {
                     borderRadius: "20px",
                     overflow: "hidden",
@@ -75,18 +75,18 @@ export function SettingsDialog({
                     boxShadow: "0 24px 50px rgba(0,0,0,0.15)",
                     maxHeight: "calc(100vh - 64px)",
                 },
-            }}
+            } }
         >
-            {/* Main Flex Container */}
+            {/* Main Flex Container */ }
             <Box
-                className="min-h-[480px]"
+                className="min-h-120"
                 display="flex"
                 flexDirection="row"
-                sx={{ maxHeight: "calc(100vh - 64px)" }}
+                sx={ { maxHeight: "calc(100vh - 64px)" } }
             >
-                {/* Sidebar Navigation */}
+                {/* Sidebar Navigation */ }
                 <Box
-                    sx={(theme) => ({
+                    sx={ (theme) => ({
                         width: 220,
                         flexShrink: 0,
                         bgcolor: `rgb(${theme.vars.palette.primary.mainChannel} / 0.08)`,
@@ -99,44 +99,45 @@ export function SettingsDialog({
                         ...theme.applyStyles("dark", {
                             bgcolor: "rgba(12, 34, 55, 0.6)",
                         }),
-                    })}
+                    }) }
                 >
-                    {/* Header Title */}
+                    {/* Header Title */ }
                     <Box className="mb-4">
                         <Typography
-                            sx={{
+                            sx={ {
                                 fontWeight: 800,
                                 fontSize: "1.3rem",
                                 color: "text.primary",
-                            }}
+                            } }
                         >
                             הגדרות
                         </Typography>
                         <Typography
-                            sx={{
+                            sx={ {
                                 fontSize: "0.78rem",
                                 color: "text.secondary",
                                 mt: 0.5,
-                            }}
+                            } }
                         >
                             ניהול העדפות המערכת
                         </Typography>
                     </Box>
 
-                    {/* Navigation Items */}
-                    {tabs.map((t) => {
+                    {/* Navigation Items */ }
+                    { tabs.map((t) =>
+                    {
                         const isActive = activeTab === t.value;
                         return (
                             <Box
-                                aria-current={isActive ? "page" : undefined}
+                                aria-current={ isActive ? "page" : undefined }
                                 // Rendered as a real <button>: a
                                 // plain onClick Box is unreachable by keyboard,
                                 // which stranded keyboard-only users on the tab
                                 // the dialog happened to open on.
                                 component="button"
-                                key={t.value}
-                                onClick={() => onTabChange(t.value)}
-                                sx={{
+                                key={ t.value }
+                                onClick={ () => onTabChange(t.value) }
+                                sx={ {
                                     appearance: "none",
                                     border: "none",
                                     font: "inherit",
@@ -179,35 +180,35 @@ export function SettingsDialog({
                                             ? "none"
                                             : "translateX(-4px)",
                                     },
-                                }}
+                                } }
                             >
                                 <Box
-                                    sx={{
+                                    sx={ {
                                         display: "flex",
                                         alignItems: "center",
                                         color: "inherit",
                                         "& svg": { fontSize: 20 },
-                                    }}
+                                    } }
                                 >
-                                    {t.icon}
+                                    { t.icon }
                                 </Box>
                                 <Typography
-                                    sx={{
+                                    sx={ {
                                         fontWeight: isActive ? 700 : 600,
                                         fontSize: "0.95rem",
-                                    }}
+                                    } }
                                 >
-                                    {t.label}
+                                    { t.label }
                                 </Typography>
                             </Box>
                         );
-                    })}
+                    }) }
 
                     <Box className="grow" />
 
-                    {/* Theme Selector Container */}
+                    {/* Theme Selector Container */ }
                     <Box
-                        sx={{
+                        sx={ {
                             display: "flex",
                             flexDirection: "column",
                             alignItems: "center",
@@ -215,14 +216,14 @@ export function SettingsDialog({
                             pt: 2,
                             borderTop: "1px solid",
                             borderColor: "divider",
-                        }}
+                        } }
                     >
                         <Typography
-                            sx={{
+                            sx={ {
                                 fontSize: "0.78rem",
                                 color: "text.secondary",
                                 fontWeight: 600,
-                            }}
+                            } }
                         >
                             מצב תצוגה
                         </Typography>
@@ -230,30 +231,30 @@ export function SettingsDialog({
                     </Box>
                 </Box>
 
-                {/* Content Pane */}
+                {/* Content Pane */ }
                 <Box
-                    sx={{
+                    sx={ {
                         flexGrow: 1,
                         p: 4,
                         minWidth: 0,
                         display: "flex",
                         flexDirection: "column",
                         overflowY: "auto",
-                    }}
+                    } }
                 >
-                    {/* Header Row with Close Button */}
+                    {/* Header Row with Close Button */ }
                     <Box
-                        sx={{
+                        sx={ {
                             display: "flex",
                             justifyContent: "flex-end",
                             mb: 2.5,
                             mt: -1.5,
-                        }}
+                        } }
                     >
                         <IconButton
                             className="hover-rotate-90"
-                            onClick={onClose}
-                            sx={{
+                            onClick={ onClose }
+                            sx={ {
                                 bgcolor: "action.hover",
                                 color: "text.secondary",
                                 transition: "all 0.2s ease",
@@ -262,24 +263,24 @@ export function SettingsDialog({
                                     color: "text.primary",
                                     transform: "scale(1.1)",
                                 },
-                            }}
+                            } }
                         >
                             <CloseIcon className="text-[18px]" />
                         </IconButton>
                     </Box>
 
-                    {/* Active Tab Panel with Entry Animation */}
+                    {/* Active Tab Panel with Entry Animation */ }
                     <Box
                         className="animate-slide-up-fade grow h-full"
-                        key={activeTab}
+                        key={ activeTab }
                     >
-                        {activeTab === "personal" && <PersonalSettings />}
-                        {activeTab === "global" && <GlobalSettings />}
-                        {activeTab === "courses" && <CourseBuilderSettings />}
-                        {activeTab === "colors" && <ColorSettings />}
-                        {activeTab === "rooms" && <RoomSettings />}
-                        {activeTab === "outsiders" && <OutsiderSettings />}
-                        {activeTab === "iterations" && <IterationSettings />}
+                        { activeTab === "personal" && <PersonalSettings /> }
+                        { activeTab === "global" && <GlobalSettings /> }
+                        { activeTab === "courses" && <CourseBuilderSettings /> }
+                        { activeTab === "colors" && <ColorSettings /> }
+                        { activeTab === "rooms" && <RoomSettings /> }
+                        { activeTab === "outsiders" && <OutsiderSettings /> }
+                        { activeTab === "iterations" && <IterationSettings /> }
                     </Box>
                 </Box>
             </Box>
