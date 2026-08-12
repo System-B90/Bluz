@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 
+import { DbEventHistory } from "@/api-server/db-event-history";
 import {
     databaseController,
     DatabaseController,
@@ -15,6 +16,10 @@ import {
     EventDataUpdateMessage,
 } from "@/api-shared/types";
 import { DbEventDocument } from "@/api-shared/types/event";
+import {
+    EventChangeAction,
+    EventChangeInitiator,
+} from "@/api-shared/types/event-history";
 import { IterationId } from "@/api-shared/types/iteration";
 import { MessageTypes } from "@/settings";
 
@@ -185,6 +190,26 @@ async function restoreSnapshot(
 
     const restoredIds = new Set(events.map((e) => e.id));
     const removedIds = existingIds.filter((id) => !restoredIds.has(id));
+
+    // A restore is a human decision about every event it touches, so it must
+    // land in the change log — that log is what protects edited events from
+    // being overwritten by a later gantt reload.
+    const restoreOrigin = {
+        context: { snapshotId },
+        initiator: EventChangeInitiator.SnapshotRestore,
+    };
+    await DbEventHistory.recordBulk({
+        action: EventChangeAction.Created,
+        controller,
+        events: events.map((event) => ({ after: event, eventId: event.id })),
+        origin: restoreOrigin,
+    });
+    await DbEventHistory.recordBulk({
+        action: EventChangeAction.Archived,
+        controller,
+        events: removedIds.map((eventId) => ({ eventId })),
+        origin: restoreOrigin,
+    });
 
     SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
         events: Object.fromEntries(events.map((e) => [e.id, e])),

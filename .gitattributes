@@ -1,4 +1,10 @@
 # .gitattributes
+
+# Every text file is stored and checked out with LF, on every platform. The
+# repo used to be mixed (most files LF, some CRLF), which made whole-file
+# rewrites show up as thousands of phantom changed lines in a diff.
+* text=auto eol=lf
+
 ui/docker-entrypoint.sh text eol=lf
 *.sh text eol=lf
 *.yml text eol=lf

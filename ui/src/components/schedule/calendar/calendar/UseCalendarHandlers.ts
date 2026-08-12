@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { SlotInfo } from "react-big-calendar";
 import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { ResolvableRoom, resourceKeyToResolvable } from "@/api-shared/types/room";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { Event } from "@/components/schedule/types/event";
@@ -22,8 +23,11 @@ const DUMMY_ROOM_ID = "no-room-unassigned";
  */
 export function useCalendarHandlers(
     events: Array<Event>,
-    handleSaveEvent: (event: Event) => void,
-    handleDeleteEvent: (eventId: Event["id"]) => void,
+    handleSaveEvent: (event: Event, initiator?: EventChangeInitiator) => void,
+    handleDeleteEvent: (
+        eventId: Event["id"],
+        initiator?: EventChangeInitiator,
+    ) => void,
     setSelectedEvent: (event: Partial<Event> | undefined) => void,
     setOpenEventDialog: (open: boolean) => void,
 ) {
@@ -47,7 +51,10 @@ export function useCalendarHandlers(
     }, [activeEvent, copiedEvent, selectedSlotInfo]);
 
     const handleEventDrag = useCallback(
-        (changes: EventInteractionArgs<Event>): void => {
+        (
+            changes: EventInteractionArgs<Event>,
+            interaction: "move" | "resize" = "move",
+        ): void => {
             if (changes.event.locked) return;
 
             const roomId: null | ResolvableRoom = changes.resourceId
@@ -70,7 +77,12 @@ export function useCalendarHandlers(
                 rooms: newRooms,
             };
 
-            handleSaveEvent(updatedEvent);
+            handleSaveEvent(
+                updatedEvent,
+                interaction === "resize"
+                    ? EventChangeInitiator.Resize
+                    : EventChangeInitiator.DragDrop,
+            );
         },
         [handleSaveEvent],
     );
@@ -128,7 +140,10 @@ export function useCalendarHandlers(
             const isCmdOrCtrl = e.ctrlKey || e.metaKey;
 
             if (e.key === "Delete" && currentActive?.id) {
-                handleDeleteEvent(currentActive.id);
+                handleDeleteEvent(
+                    currentActive.id,
+                    EventChangeInitiator.Keyboard,
+                );
             }
 
             if (isCmdOrCtrl && e.key === "c" && currentActive) {
@@ -137,7 +152,10 @@ export function useCalendarHandlers(
 
             if (isCmdOrCtrl && e.key === "x" && currentActive) {
                 setCopiedEvent(currentActive);
-                handleDeleteEvent(currentActive.id);
+                handleDeleteEvent(
+                    currentActive.id,
+                    EventChangeInitiator.CopyPaste,
+                );
                 setActiveEvent(null);
             }
 
@@ -169,7 +187,7 @@ export function useCalendarHandlers(
                     rooms: newRooms,
                 } as Event;
 
-                handleSaveEvent(newEvent);
+                handleSaveEvent(newEvent, EventChangeInitiator.CopyPaste);
                 setActiveEvent(newEvent);
                 setSelectedSlotInfo(null);
             }

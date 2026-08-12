@@ -19,6 +19,7 @@ import {
 } from "react";
 import { View, Views } from "react-big-calendar";
 
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { useScheduleCommands } from "@/components/app-commands/use-schedule-commands";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
@@ -35,8 +36,11 @@ import { getRangeForView } from "@/components/schedule/calendar/utils";
 import { Event } from "@/components/schedule/types/event";
 
 type BluzCalendarProps = {
-    handleSaveEvent: (event: Event) => void;
-    handleDeleteEvent: (eventId: Event["id"]) => void;
+    handleSaveEvent: (event: Event, initiator?: EventChangeInitiator) => void;
+    handleDeleteEvent: (
+        eventId: Event["id"],
+        initiator?: EventChangeInitiator,
+    ) => void;
     setOpenEventDialog: (open: boolean) => void;
     setSelectedEvent: Dispatch<SetStateAction<Partial<Event> | undefined>>;
     events: Array<Event>;

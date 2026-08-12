@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 
 import { DbCourses } from "@/api-server/db-courses";
+import { DbEventHistory } from "@/api-server/db-event-history";
 import { DbIterations } from "@/api-server/db-iterations";
 import { DbSettings } from "@/api-server/db-settings";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
@@ -22,6 +23,10 @@ import {
 import { EventAddedOrRemovedMessage, EventDataUpdateMessage } from "@/api-shared/types";
 import { Course } from "@/api-shared/types/course";
 import { DbEventDocument, EventType } from "@/api-shared/types/event";
+import {
+    EventChangeAction,
+    EventChangeInitiator,
+} from "@/api-shared/types/event-history";
 import { ApiCurriculum, ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
 import {
     ApiCurriculumCutError,
@@ -450,6 +455,159 @@ async function countCutEvents(
     });
 }
 
+/** The documents a plan materializes into, plus what producing them created. */
+export type MaterializationOutcome =
+    | { ok: false; errors: Array<CutValidationError> }
+    | {
+          ok: true;
+          documents: Array<DbEventDocument>;
+          createdCourses: Array<{ id: string; name: string }>;
+          overlaps: number;
+      };
+
+/**
+ * Plan a curriculum and turn the planned occurrences into schedule-event
+ * documents. Shared by the one-shot cut and the reload (#…): both need exactly
+ * the same "what should the schedule look like" computation, and only differ in
+ * what they do with the result.
+ *
+ * @param curriculum The loaded curriculum tree.
+ * @param iteration The linked iteration (its db supplies settings and courses).
+ * @param controller Controller for the iteration database.
+ * @param options.force Plan around unmapped / unsatisfied-recurrence events.
+ * @param options.createMissingCourses When false (dry runs) shuffles with no
+ * existing course are simply left out instead of creating a course.
+ * @returns The intended documents, or the planner's validation errors.
+ */
+export async function materializeCurriculumEvents(
+    curriculum: ApiCurriculum,
+    iteration: { dbName: string; hiveUrl?: string },
+    controller: DatabaseController,
+    options: { createMissingCourses?: boolean; force?: boolean } = {},
+): Promise<MaterializationOutcome> {
+    const { createMissingCourses = true, force = false } = options;
+    const curriculumId = curriculum.id as GanttCurriculumId;
+
+    const [mappings, exceptions, scheduleSetting, mealSetting] = await Promise.all([
+        getModuleDayMappingsForCurriculum(curriculumId, {}),
+        listRecurrenceExceptionsForCurriculum(curriculumId),
+        DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, controller),
+        DbSettings.get(MEAL_TIMES_SETTING_KEY, undefined, controller),
+    ]);
+    const dayStartTime =
+        (scheduleSetting as null | ScheduleSettings)?.dayStartTime ??
+        DEFAULT_DAY_START_TIME;
+    const weekendHomeStartTime =
+        (scheduleSetting as null | ScheduleSettings)?.weekendHomeStartTime ??
+        DEFAULT_WEEKEND_HOME_START_TIME;
+    const breakfastTime = (mealSetting as MealSettings | null)?.breakfastTime;
+    const lunchTime = (mealSetting as MealSettings | null)?.lunchTime;
+    const dinnerTime = (mealSetting as MealSettings | null)?.dinnerTime;
+
+    const { eventsById, syllabusTitleByEvent, moduleHiveIdsByEvent } =
+        indexCurriculumEvents(curriculum);
+    const hiveModuleSubjectById = await buildHiveModuleSubjectMap(
+        iteration.hiveUrl,
+    );
+
+    const planInput = buildCutPlanInput({
+        curriculum,
+        mappings: mappings as Array<CutMappingRow>,
+        exceptions: exceptions as Array<CutExceptionRow>,
+        dayStartTime,
+        weekendHomeStartTime,
+        breakfastTime,
+        lunchTime,
+        dinnerTime,
+    });
+    const plan = planCut(planInput, { force });
+    if (!plan.ok) {
+        return { ok: false, errors: plan.errors };
+    }
+
+    // Resolve / create courses for the shuffles referenced by cut events.
+    const cutEventIds = new Set(
+        plan.occurrences.map((occ) => occ.ganttEventId),
+    );
+    const shuffleNames = new Set<string>();
+    const syllabusTitleForShuffle = new Map<string, string>();
+    for (const eventId of cutEventIds) {
+        const event = eventsById.get(eventId);
+        for (const name of event?.shuffles ?? []) {
+            shuffleNames.add(name);
+            if (!syllabusTitleForShuffle.has(name)) {
+                syllabusTitleForShuffle.set(
+                    name,
+                    syllabusTitleByEvent.get(eventId) ?? "",
+                );
+            }
+        }
+    }
+
+    const existingCourses = await DbCourses.get(undefined, controller);
+    const courseIdByName = new Map(
+        existingCourses.map((c) => [c.name, c.id]),
+    );
+    const createdCourses: Array<{ id: string; name: string }> = [];
+    const shuffleCourseId = new Map<string, string>();
+
+    for (const name of shuffleNames) {
+        let id = courseIdByName.get(name);
+        if (!id) {
+            // Dry runs must not write: an unknown shuffle simply contributes no
+            // course id, which is what the diff would show anyway.
+            if (!createMissingCourses) continue;
+            const course: Course = {
+                id: randomUUID(),
+                name,
+                color: null,
+                description: `נגזר מסילבוס "${syllabusTitleForShuffle.get(name) ?? ""}"`,
+            };
+            await DbCourses.create(course, controller);
+            id = course.id;
+            courseIdByName.set(name, id);
+            createdCourses.push({ id, name });
+        }
+        shuffleCourseId.set(name, id);
+    }
+
+    const allCourseIds = [
+        ...existingCourses.map((c) => c.id),
+        ...createdCourses.map((c) => c.id),
+    ];
+
+    // Build one schedule event per planned occurrence.
+    const documents: Array<DbEventDocument> = [];
+    for (const occurrence of plan.occurrences) {
+        const event = eventsById.get(occurrence.ganttEventId);
+        if (!event) continue;
+
+        const courseIds =
+            event.shuffles && event.shuffles.length > 0
+                ? event.shuffles
+                    .map((name) => shuffleCourseId.get(name))
+                    .filter((id): id is string => Boolean(id))
+                : allCourseIds;
+
+        documents.push(
+            buildScheduleEvent(
+                occurrence,
+                event,
+                courseIds,
+                moduleHiveIdsByEvent.get(occurrence.ganttEventId) ?? [],
+                hiveModuleSubjectById,
+            ),
+        );
+    }
+
+    return {
+        ok: true,
+        createdCourses,
+        documents,
+        overlaps: countOverlappingOccurrences(plan.occurrences),
+    };
+}
+
 /**
  * Materialize a published, linked curriculum into schedule events. Any gating
  * violation returns a structured error and writes nothing.
@@ -494,121 +652,23 @@ export async function cutCurriculumToSchedule(
         };
     }
 
-    const [mappings, exceptions, scheduleSetting, mealSetting] = await Promise.all([
-        getModuleDayMappingsForCurriculum(curriculumId, {}),
-        listRecurrenceExceptionsForCurriculum(curriculumId),
-        DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, controller),
-        DbSettings.get(MEAL_TIMES_SETTING_KEY, undefined, controller),
-    ]);
-    const dayStartTime =
-        (scheduleSetting as null | ScheduleSettings)?.dayStartTime ??
-        DEFAULT_DAY_START_TIME;
-    const weekendHomeStartTime =
-        (scheduleSetting as null | ScheduleSettings)?.weekendHomeStartTime ??
-        DEFAULT_WEEKEND_HOME_START_TIME;
-    const breakfastTime = (mealSetting as MealSettings | null)?.breakfastTime;
-    const lunchTime = (mealSetting as MealSettings | null)?.lunchTime;
-    const dinnerTime = (mealSetting as MealSettings | null)?.dinnerTime;
-
-    const { eventsById, syllabusTitleByEvent, moduleHiveIdsByEvent } =
-        indexCurriculumEvents(curriculum);
-    const hiveModuleSubjectById = await buildHiveModuleSubjectMap(
-        iteration.hiveUrl,
-    );
-
-    const planInput = buildCutPlanInput({
+    const materialized = await materializeCurriculumEvents(
         curriculum,
-        mappings: mappings as Array<CutMappingRow>,
-        exceptions: exceptions as Array<CutExceptionRow>,
-        dayStartTime,
-        weekendHomeStartTime,
-        breakfastTime,
-        lunchTime,
-        dinnerTime,
-    });
-    const plan = planCut(planInput, { force });
-    if (!plan.ok) {
+        iteration,
+        controller,
+        { force },
+    );
+    if (!materialized.ok) {
         return {
             ok: false,
             error: {
                 code: "invalid-plan",
-                errors: plan.errors,
+                errors: materialized.errors,
                 message: "תוכנית הגזירה אינה תקינה",
             },
         };
     }
-
-    // Resolve / create courses for the shuffles referenced by cut events.
-    const cutEventIds = new Set(
-        plan.occurrences.map((occ) => occ.ganttEventId),
-    );
-    const shuffleNames = new Set<string>();
-    const syllabusTitleForShuffle = new Map<string, string>();
-    for (const eventId of cutEventIds) {
-        const event = eventsById.get(eventId);
-        for (const name of event?.shuffles ?? []) {
-            shuffleNames.add(name);
-            if (!syllabusTitleForShuffle.has(name)) {
-                syllabusTitleForShuffle.set(
-                    name,
-                    syllabusTitleByEvent.get(eventId) ?? "",
-                );
-            }
-        }
-    }
-
-    const existingCourses = await DbCourses.get(undefined, controller);
-    const courseIdByName = new Map(
-        existingCourses.map((c) => [c.name, c.id]),
-    );
-    const createdCourses: Array<{ id: string; name: string }> = [];
-    const shuffleCourseId = new Map<string, string>();
-
-    for (const name of shuffleNames) {
-        let id = courseIdByName.get(name);
-        if (!id) {
-            const course: Course = {
-                id: randomUUID(),
-                name,
-                color: null,
-                description: `נגזר מסילבוס "${syllabusTitleForShuffle.get(name) ?? ""}"`,
-            };
-            await DbCourses.create(course, controller);
-            id = course.id;
-            courseIdByName.set(name, id);
-            createdCourses.push({ id, name });
-        }
-        shuffleCourseId.set(name, id);
-    }
-
-    const allCourseIds = [
-        ...existingCourses.map((c) => c.id),
-        ...createdCourses.map((c) => c.id),
-    ];
-
-    // Build one schedule event per planned occurrence.
-    const documents: Array<DbEventDocument> = [];
-    for (const occurrence of plan.occurrences) {
-        const event = eventsById.get(occurrence.ganttEventId);
-        if (!event) continue;
-
-        const courseIds =
-            event.shuffles && event.shuffles.length > 0
-                ? event.shuffles
-                    .map((name) => shuffleCourseId.get(name))
-                    .filter((id): id is string => Boolean(id))
-                : allCourseIds;
-
-        documents.push(
-            buildScheduleEvent(
-                occurrence,
-                event,
-                courseIds,
-                moduleHiveIdsByEvent.get(occurrence.ganttEventId) ?? [],
-                hiveModuleSubjectById,
-            ),
-        );
-    }
+    const { createdCourses, documents, overlaps } = materialized;
 
     // Idempotency: re-check the one-shot guard immediately before writing so a
     // concurrent cut cannot double-insert.
@@ -626,6 +686,18 @@ export async function cutCurriculumToSchedule(
 
     if (documents.length > 0) {
         await controller.events.insertMany(documents as Array<DbEventDocument>);
+        await DbEventHistory.recordBulk({
+            action: EventChangeAction.Created,
+            controller,
+            events: documents.map((document) => ({
+                after: document,
+                eventId: document.id,
+            })),
+            origin: {
+                context: { curriculumId },
+                initiator: EventChangeInitiator.GanttCut,
+            },
+        });
         for (const document of documents) {
             syncEventToInstructorsGoogleCalendars(document, "upsert");
         }
@@ -640,7 +712,7 @@ export async function cutCurriculumToSchedule(
         result: {
             createdEvents: documents.length,
             createdCourses,
-            overlaps: countOverlappingOccurrences(plan.occurrences),
+            overlaps,
         },
     };
 }
@@ -703,6 +775,16 @@ export async function pullBackCutSchedule(
         { ganttEventId: { $exists: true }, archived: { $ne: true } },
         { $set: { archived: true } },
     );
+
+    await DbEventHistory.recordBulk({
+        action: EventChangeAction.Archived,
+        controller,
+        events: liveCutEvents.map((event) => ({ eventId: event.id })),
+        origin: {
+            context: { curriculumId },
+            initiator: EventChangeInitiator.GanttPullBack,
+        },
+    });
 
     // Broadcast one removal per event so connected calendars drop them, mirroring
     // the single-event soft-delete path (db-event.deleteDbEvent).

@@ -1,4 +1,5 @@
 import ContentCutIcon from "@mui/icons-material/ContentCut";
+import SyncIcon from "@mui/icons-material/Sync";
 import UndoIcon from "@mui/icons-material/Undo";
 import { Fragment, useCallback, useEffect, useState } from "react";
 
@@ -7,8 +8,9 @@ import { ActionItemButton } from "@/components/gantt/curriculum-fab/action-items
 import { CurriculumAwareActionItemProps } from "@/components/gantt/curriculum-fab/action-items/ActionItemProps";
 import { CutToScheduleDialog } from "@/components/gantt/cut-dialog";
 import { PullBackScheduleDialog } from "@/components/gantt/cut-dialog/PullBackScheduleDialog";
+import { ReloadScheduleDialog } from "@/components/gantt/cut-dialog/ReloadScheduleDialog";
 
-type DialogMode = "cut" | "pullBack" | null;
+type DialogMode = "cut" | "pullBack" | "reload" | null;
 
 /**
  * "גזירה ללו"ז" / "משיכה חזרה" — a single status-aware action. Once a
@@ -52,6 +54,8 @@ export function CutToScheduleAction({
         setDialogMode(isCut ? "pullBack" : "cut");
     }, [sourceCurriculum, isCut]);
 
+    const handleReloadClick = useCallback(() => setDialogMode("reload"), []);
+
     const handleClose = useCallback(() => setDialogMode(null), []);
 
     // A cut is disabled without a curriculum or while still a draft; a pull-back
@@ -81,6 +85,16 @@ export function CutToScheduleAction({
                 }
                 {...props}
             />
+            {isCut ? (
+                <ActionItemButton
+                    disabled={disabled}
+                    loading={loading}
+                    onClick={handleReloadClick}
+                    startIcon={<SyncIcon fontSize="small" />}
+                    tooltipTitle='עדכון הלו"ז לפי הגאנט'
+                    {...props}
+                />
+            ) : null}
             {sourceCurriculum ? (
                 <CutToScheduleDialog
                     curriculumId={sourceCurriculum.id}
@@ -88,6 +102,14 @@ export function CutToScheduleAction({
                     onClose={handleClose}
                     onSuccess={() => setIsCut(true)}
                     open={dialogMode === "cut"}
+                />
+            ) : null}
+            {sourceCurriculum ? (
+                <ReloadScheduleDialog
+                    curriculumId={sourceCurriculum.id}
+                    curriculumTitle={sourceCurriculum.title}
+                    onClose={handleClose}
+                    open={dialogMode === "reload"}
                 />
             ) : null}
             {sourceCurriculum ? (
