@@ -114,7 +114,7 @@ async function getFullCurriculum(
 }
 
 /**
- * Seeds every new curriculum with a "פסקות" syllabus/module holding 3 daily
+ * Seeds every new curriculum with a "הפסקות" syllabus/module holding 3 daily
  * meal events (breakfast/lunch/dinner). The cut planner (`cut-planner.ts`)
  * recognizes these by title and pins them to the exact clock time configured
  * in the global meal-time settings instead of stacking them.
