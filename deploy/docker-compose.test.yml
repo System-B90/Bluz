@@ -17,10 +17,14 @@ services:
                 NPM_TOKEN: ${NPM_TOKEN}
             target: runner
         container_name: ${TEST_PROJECT_NAME}-ui
-        # Resolve hive.org to the host, where the local Hive instance publishes
-        # its proxy. Override HIVE_HOST_IP if Hive runs elsewhere.
-        extra_hosts:
-            - "hive.org:${HIVE_HOST_IP:-host-gateway}"
+        # No hive.org entry here on purpose. Hive's nginx publishes on its own
+        # loopback alias (127.0.0.6) so it does not collide with our proxy on
+        # 127.0.0.3 — and a host-gateway route cannot reach a loopback-bound
+        # port at all. ui joins Hive's network (hive_net in the base compose)
+        # and resolves the hive.org container alias over Docker's DNS instead.
+        # An extra_hosts line would defeat that: /etc/hosts wins over DNS, so
+        # the server-side OAuth call would go to an unreachable address and
+        # sign-in would fail with a bare SIGNIN_OAUTH_ERROR (#412).
         environment:
             - NODE_ENV=production
             - MONGO_CONNECTION_STRING=mongodb://mongo_admin:${TEST_MONGO_PASSWORD:-${MONGO_ROOT_PASSWORD}}@mongodb:27017/
