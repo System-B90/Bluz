@@ -5,7 +5,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type ConfirmOptions = {
     title?: string;
@@ -24,6 +24,12 @@ export function useConfirmDialog()
 
     const confirm = useCallback((message: string, options: ConfirmOptions = {}) =>
     {
+        // A single ref holds the pending resolver, so opening a second confirm
+        // would otherwise overwrite the first one and leave its `await` hanging
+        // forever — the caller's action (a delete, say) then never runs and
+        // never reports an error either (#407). Settle the outgoing prompt as
+        // "cancelled" instead.
+        resolveRef.current?.(false);
         setState({ message, options });
         return new Promise<boolean>((resolve) =>
         {
@@ -36,6 +42,14 @@ export function useConfirmDialog()
         resolveRef.current?.(result);
         resolveRef.current = null;
         setState(null);
+    }, []);
+
+    // Unmounting with a prompt open (the settings dialog closing, a tab swap)
+    // must settle the promise too, for the same reason.
+    useEffect(() => () =>
+    {
+        resolveRef.current?.(false);
+        resolveRef.current = null;
     }, []);
 
     const confirmDialog = (

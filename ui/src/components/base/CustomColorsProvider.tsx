@@ -156,6 +156,27 @@ export const CustomColorsProvider = ({
             });
     }, []);
 
+    /**
+     * Undo an optimistic edit whose request failed, then reconcile with the
+     * server (#407).
+     *
+     * The snapshot alone is not a safe resting state: it was taken before the
+     * request, so restoring it re-adds colours the server has *already* deleted
+     * (the delete failing with "no custom color by id … found" is exactly that
+     * case). The list then shows a phantom row, and every later action on it —
+     * another delete included — fails against an id that no longer exists. The
+     * snapshot restores the UI immediately; the reload is what makes the store
+     * converge on what the server actually holds.
+     */
+    const rollbackAndResync = useCallback(
+        (previous: Record<string, CustomColor>) =>
+        {
+            dispatch({ type: "ROLLBACK_COLORS", payload: previous });
+            loadCustomColors();
+        },
+        [ loadCustomColors ],
+    );
+
     const addCustomColor = useCallback(
         async (colorData: Omit<CustomColor, "id">) =>
         {
@@ -180,10 +201,7 @@ export const CustomColorsProvider = ({
                 loadCustomColors();
             } catch (error)
             {
-                dispatch({
-                    type: "ROLLBACK_COLORS",
-                    payload: previous,
-                });
+                rollbackAndResync(previous);
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     `יצירת צבע ${colorData.name} נכשלה!`,
@@ -191,7 +209,7 @@ export const CustomColorsProvider = ({
                 );
             }
         },
-        [ state.customColors, loadCustomColors ],
+        [ state.customColors, loadCustomColors, rollbackAndResync ],
     );
 
     const updateCustomColor = useCallback(
@@ -212,10 +230,7 @@ export const CustomColorsProvider = ({
                 loadCustomColors();
             } catch (error)
             {
-                dispatch({
-                    type: "ROLLBACK_COLORS",
-                    payload: previous,
-                });
+                rollbackAndResync(previous);
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     `עדכון צבע ${color.name} נכשל!`,
@@ -223,7 +238,7 @@ export const CustomColorsProvider = ({
                 );
             }
         },
-        [ state.customColors, loadCustomColors ],
+        [ state.customColors, loadCustomColors, rollbackAndResync ],
     );
 
     const deleteCustomColor = useCallback(
@@ -243,10 +258,7 @@ export const CustomColorsProvider = ({
                 loadCustomColors();
             } catch (error)
             {
-                dispatch({
-                    type: "ROLLBACK_COLORS",
-                    payload: previous,
-                });
+                rollbackAndResync(previous);
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     `מחיקת צבע ${name} נכשלה!`,
@@ -254,7 +266,7 @@ export const CustomColorsProvider = ({
                 );
             }
         },
-        [ state.customColors, loadCustomColors ],
+        [ state.customColors, loadCustomColors, rollbackAndResync ],
     );
 
     useEffect(() =>
