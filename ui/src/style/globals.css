@@ -261,3 +261,24 @@
 .rotate-y-180 {
     transform: rotateY(180deg);
 }
+
+/*
+ * Snackbar stack alignment under RTL (#416).
+ *
+ * notistack pins its container to a *physical* edge (`right: 24px` for the
+ * `right` horizontal origin) but aligns the snackbars inside it with
+ * `align-items: flex-end`. Flexbox alignment is direction-relative, so under
+ * `dir="rtl"` flex-end resolves to the physical left: the container sits on the
+ * right while anything narrower than the widest snackbar hugs the left. Logical
+ * keywords (`start`/`end`) don't help here — they resolve exactly like
+ * `flex-start`/`flex-end`. The fix is to align to the same physical edge the
+ * container is pinned to, which under RTL is the cross-axis start.
+ *
+ * Applied through the provider's `containerRoot` class rather than to
+ * `.notistack-SnackbarContainer` globally, so it stays tied to the
+ * `anchorOrigin` it corrects. The `html[dir="rtl"]` prefix is what outranks
+ * notistack's own emotion class, injected after this stylesheet.
+ */
+html[dir="rtl"] .snackbar-container-physical-right {
+    align-items: flex-start;
+}
