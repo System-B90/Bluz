@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
 import {
@@ -10,6 +10,7 @@ import {
     ganttCurriculum2WeeksSchema,
     ganttWeek2DaysSchema,
 } from "@/api-server/gantt/schema";
+import { ganttCurriculumsSchema } from "@/api-server/gantt/schema/curriculums";
 import { ganttDaysSchema } from "@/api-server/gantt/schema/days";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
 import { ganttWeeksSchema } from "@/api-server/gantt/schema/weeks";
@@ -74,19 +75,36 @@ async function getFullWeek(id: GanttWeekId): Promise<ApiCurriculumWeek> {
  * The number a newly created week should take: one past the highest number
  * already in the curriculum, or 1 for the first week (and for a week created
  * without a parent curriculum).
+ *
+ * Must run inside the same transaction as the insert, and takes a row lock on
+ * the parent curriculum before reading. Nothing enforces uniqueness at the
+ * schema level — `number` sits on the weeks table while the curriculum link
+ * sits in a junction table, so no single-table constraint can span the pair —
+ * and under READ COMMITTED a concurrent create's uncommitted week is invisible.
+ * Without the lock, two simultaneous creates both read the same maximum and
+ * both write max + 1, leaving a duplicate that nothing detects. The lock is
+ * per-curriculum, so unrelated curricula never wait on each other.
  */
-async function nextWeekNumber(curriculumId?: string): Promise<number> {
+async function nextWeekNumber(
+    tx: Parameters<Parameters<typeof postgresDb.transaction>[0]>[0],
+    curriculumId?: string,
+): Promise<number> {
     if (!curriculumId) return 1;
 
-    const links = await postgresDb.query.ganttCurriculum2WeeksSchema.findMany({
-        where: eq(ganttCurriculum2WeeksSchema.curriculumId, curriculumId),
-        with: { week: true },
-    });
-    const highest = links.reduce(
-        (max, link) => Math.max(max, link.week?.number ?? 0),
-        0,
+    await tx.execute(
+        sql`SELECT 1 FROM ${ganttCurriculumsSchema} WHERE ${ganttCurriculumsSchema.id} = ${curriculumId} FOR UPDATE`,
     );
-    return highest + 1;
+
+    const [row] = await tx
+        .select({ highest: sql<null | number>`MAX(${ganttWeeksSchema.number})` })
+        .from(ganttCurriculum2WeeksSchema)
+        .innerJoin(
+            ganttWeeksSchema,
+            eq(ganttCurriculum2WeeksSchema.weekId, ganttWeeksSchema.id),
+        )
+        .where(eq(ganttCurriculum2WeeksSchema.curriculumId, curriculumId));
+
+    return (row?.highest ?? 0) + 1;
 }
 
 async function createWeek(
@@ -108,19 +126,21 @@ async function createWeek(
     const weekId = `w_${crypto.randomUUID()}`;
     const now = new Date();
 
-    // `number` is NOT NULL with no default, so an omitted one used to reach the
-    // insert and come back as a bare 500 (#434). It is a positional field, not
-    // a caller decision, so derive it: the next slot in the curriculum.
-    const number =
-        weekData.number ?? (await nextWeekNumber(curriculumId));
-
-    const insertData = sanitizeCreatePayload(
-        ganttWeeksSchema,
-        { ...weekData, number },
-        "שבוע",
-    );
-
     return await postgresDb.transaction(async (tx) => {
+        // `number` is NOT NULL with no default, so an omitted one used to reach
+        // the insert and come back as a bare 500 (#434). It is a positional
+        // field, not a caller decision, so derive it: the next slot in the
+        // curriculum. Derived inside the transaction that inserts it, under the
+        // curriculum's row lock — see nextWeekNumber.
+        const number =
+            weekData.number ?? (await nextWeekNumber(tx, curriculumId));
+
+        const insertData = sanitizeCreatePayload(
+            ganttWeeksSchema,
+            { ...weekData, number },
+            "שבוע",
+        );
+
         const [newWeek] = await tx
             .insert(ganttWeeksSchema)
             .values({
