@@ -10,8 +10,17 @@ export function deepCopyEvent(event: Event): Event {
     cpy.courses = [...event.courses];
     cpy.rooms = [...event.rooms];
     cpy.instructors = [...event.instructors];
-    cpy.lecturers = [...(event.lecturers ?? [])];
     cpy.tags = [...event.tags];
+
+    // `lecturers` is optional and absent on event types that have no lecturers.
+    // Materializing it as `[]` made the copy differ from its own source under
+    // `areValuesEqual` — either an extra key or `[]` against `undefined` — so
+    // the offline snapshot reported every untouched event as locally modified
+    // and the push dialog opened with nothing to push (#386). Copy the array
+    // only when there is one.
+    if (event.lecturers !== undefined) {
+        cpy.lecturers = [...event.lecturers];
+    }
 
     return cpy;
 }
