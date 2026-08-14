@@ -1,7 +1,10 @@
 import { and, eq } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
-import { drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
+import {
+    drizzleOperationsBuilder,
+    sanitizeCreatePayload,
+} from "@/api-server/gantt/db-base";
 import {
     ganttCurriculum2SyllabusesSchema,
     ganttCurriculum2WeeksSchema,
@@ -67,6 +70,25 @@ async function getFullWeek(id: GanttWeekId): Promise<ApiCurriculumWeek> {
     return result as unknown as ApiCurriculumWeek;
 }
 
+/**
+ * The number a newly created week should take: one past the highest number
+ * already in the curriculum, or 1 for the first week (and for a week created
+ * without a parent curriculum).
+ */
+async function nextWeekNumber(curriculumId?: string): Promise<number> {
+    if (!curriculumId) return 1;
+
+    const links = await postgresDb.query.ganttCurriculum2WeeksSchema.findMany({
+        where: eq(ganttCurriculum2WeeksSchema.curriculumId, curriculumId),
+        with: { week: true },
+    });
+    const highest = links.reduce(
+        (max, link) => Math.max(max, link.week?.number ?? 0),
+        0,
+    );
+    return highest + 1;
+}
+
 async function createWeek(
     data: CreateGanttWeekPayload,
 ): Promise<ApiCurriculumWeek> {
@@ -86,10 +108,28 @@ async function createWeek(
     const weekId = `w_${crypto.randomUUID()}`;
     const now = new Date();
 
+    // `number` is NOT NULL with no default, so an omitted one used to reach the
+    // insert and come back as a bare 500 (#434). It is a positional field, not
+    // a caller decision, so derive it: the next slot in the curriculum.
+    const number =
+        weekData.number ?? (await nextWeekNumber(curriculumId));
+
+    const insertData = sanitizeCreatePayload(
+        ganttWeeksSchema,
+        { ...weekData, number },
+        "שבוע",
+    );
+
     return await postgresDb.transaction(async (tx) => {
         const [newWeek] = await tx
             .insert(ganttWeeksSchema)
-            .values({ ...weekData, id: weekId, createdAt: now, updatedAt: now })
+            .values({
+                ...insertData,
+                number,
+                id: weekId,
+                createdAt: now,
+                updatedAt: now,
+            })
             .returning();
 
         if (curriculumId) {
