@@ -423,6 +423,28 @@ def generate_env() -> None:
     hive_client_id = existing_env.get("HIVE_CLIENT_ID", "")
     hive_client_secret = existing_env.get("HIVE_CLIENT_SECRET", "")
 
+    # Service account used by the lesson activator, which opens a Hive queue
+    # the moment a Bluz event starts. SSO tokens belong to a logged-in human;
+    # that job runs on a timer, so it needs an account of its own.
+    hive_api_username = inquirer.text(
+        message="Hive API user for background lesson assignment (HIVE_API_USERNAME):",
+        default=existing_env.get("HIVE_API_USERNAME", "api"),
+    ).execute()
+    # No default password on purpose: a guessable one baked into a real .env
+    # is worse than no activator at all, and an unset password simply leaves
+    # the activator switched off (see api-server/hive/service-client.ts).
+    hive_api_password = inquirer.secret(
+        message=(
+            "Hive API user password (HIVE_API_PASSWORD, blank to keep "
+            "existing; leave unset to disable the lesson activator):"
+        ),
+    ).execute() or existing_env.get("HIVE_API_PASSWORD", "")
+    if not hive_api_password:
+        print(
+            "  No Hive API password set — the lesson activator will stay off "
+            "and queues will not open automatically."
+        )
+
     register_sso = True
     if (
         hive_client_id
@@ -488,6 +510,8 @@ def generate_env() -> None:
         "NEXTAUTH_SECRET": nextauth_secret,
         "HIVE_CLIENT_ID": hive_client_id,
         "HIVE_CLIENT_SECRET": hive_client_secret,
+        "HIVE_API_USERNAME": hive_api_username,
+        "HIVE_API_PASSWORD": hive_api_password,
         "MONGO_ROOT_USER": mongo_user,
         "MONGO_ROOT_PASSWORD": mongo_pass,
         "MONGO_CONNECTION_STRING": mongo_url,

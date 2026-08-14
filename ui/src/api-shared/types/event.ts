@@ -38,6 +38,17 @@ export type Event = {
     subject: number; // Subject ID
     hiveModule: number; // Module ID
     hiveLesson?: null | number; // Lesson ID
+    /**
+     * Per-shuffle Hive queue mapping: Bluz course id → Hive queue id. A course
+     * is a shuffle, which is 1:1 with a Hive student group, so this is what
+     * decides *which students* get *which queue* when the event goes live.
+     *
+     * Setting it makes Bluz own a Hive lesson for this event: on every write
+     * `api-server/hive/lesson-sync` reconciles a `Lesson` under `hiveModule`
+     * plus one `LessonRule` per mapped shuffle, and stores the lesson id back
+     * into `hiveLesson`. Clearing it (or archiving the event) deletes them.
+     */
+    hiveQueues?: Record<CourseId, number>;
     startTime: Dayjs;
     endTime: Dayjs;
     type: EventType;
@@ -89,6 +100,36 @@ export type Event = {
      */
     updatedAt?: number;
 };
+
+/**
+ * The shuffles (Bluz course ids) of an event that carry a Hive queue, i.e. the
+ * groups whose students should get a queue opened when the event goes live.
+ * Only courses the event is actually assigned to count — a stale mapping left
+ * behind by removing a course must not open a queue for it.
+ * @param event The event to inspect.
+ * @returns The mapped course ids, in the event's own course order.
+ */
+export function eventQueueCourseIds(
+    event: Pick<Event, "courses" | "hiveQueues">,
+): Array<CourseId>
+{
+    const queues = event.hiveQueues;
+    if (!queues) return [];
+    return event.courses.filter((courseId) => Boolean(queues[ courseId ]));
+}
+
+/**
+ * True when an event opens a Hive queue for at least one shuffle — the gate
+ * for both the lesson sync and the go-live activator.
+ * @param event The event to inspect.
+ * @returns Whether the event has a usable queue mapping.
+ */
+export function eventOpensHiveQueue(
+    event: Pick<Event, "courses" | "hiveModule" | "hiveQueues">,
+): boolean
+{
+    return Boolean(event.hiveModule) && eventQueueCourseIds(event).length > 0;
+}
 
 /**
  * Standardized types of prayers.

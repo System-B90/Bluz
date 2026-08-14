@@ -17,6 +17,7 @@ import { EventHistoryPanel } from "@/components/schedule/event-dialog/event-hist
 import { EventClassification } from "@/components/schedule/event-dialog/EventClassification";
 import { EventPrimaryDetails } from "@/components/schedule/event-dialog/EventPrimaryDetails";
 import { EventToggles } from "@/components/schedule/event-dialog/EventToggles";
+import { HiveQueueMapping } from "@/components/schedule/event-dialog/HiveQueueMapping";
 import { InstructorsField } from "@/components/schedule/event-dialog/InstructorsField";
 import { Event, EventId } from "@/components/schedule/types/event";
 
@@ -143,6 +144,11 @@ export function EventDialog({
                         />
 
                         <EventClassification
+                            event={ event }
+                            onUpdate={ handleUpdate }
+                        />
+
+                        <HiveQueueMapping
                             event={ event }
                             onUpdate={ handleUpdate }
                         />

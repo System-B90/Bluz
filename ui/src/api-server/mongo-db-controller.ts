@@ -14,6 +14,7 @@ import {
     GanttSyllabus,
 } from "@/api-shared/types/gantt/models";
 import { GoogleCalendarLink } from "@/api-shared/types/google-calendar";
+import { HiveLessonActivation } from "@/api-shared/types/hive-activation";
 import { Iteration, IterationId } from "@/api-shared/types/iteration";
 import { Outsider } from "@/api-shared/types/outsider";
 import { PersonalSettings } from "@/api-shared/types/personal-settings";
@@ -160,6 +161,15 @@ class DatabaseController {
     public get calendarDrafts(): Collection<CalendarDraft> {
         return this.bluzDb.collection("calendarDrafts");
     }
+    /**
+     * Ledger of Hive queue openings: one row per (event, occurrence, student
+     * group) that the activator has already pushed to Hive. Its unique index
+     * is what makes the activator idempotent and safe to run in more than one
+     * replica — the insert, not a lock, decides who acts.
+     */
+    public get hiveLessonActivations(): Collection<HiveLessonActivation> {
+        return this.bluzDb.collection("hiveLessonActivations");
+    }
     public get client(): MongoClient {
         return getMongoClient();
     }
@@ -187,6 +197,20 @@ function ensureIndexesInBackground(controller: DatabaseController): void {
         controller.calendarSnapshots.createIndex({ createdAt: -1 }),
         // History is always read per event, newest-first.
         controller.eventHistory.createIndex({ eventId: 1, changedAt: -1 }),
+        // The activation ledger's uniqueness *is* the concurrency control for
+        // opening queues — without it two replicas could both assign, and a
+        // restart could re-assign a class that already moved on.
+        controller.hiveLessonActivations.createIndex(
+            { eventId: 1, hiveClassId: 1, occurrenceStart: 1 },
+            { unique: true },
+        ),
+        // A row only has to outlive the occurrence it guards, which the
+        // activator caps at ten minutes. A week is a generous audit trail and
+        // keeps the ledger from growing without bound.
+        controller.hiveLessonActivations.createIndex(
+            { activatedAt: 1 },
+            { expireAfterSeconds: 7 * 24 * 60 * 60 },
+        ),
     ]).catch((error) => {
         console.error(
             `Failed to ensure Mongo indexes on "${controller.dbName}"`,

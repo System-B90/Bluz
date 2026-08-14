@@ -21,19 +21,20 @@ const DESTINATIONS: Array<Destination> = [
         title: "לוח זמנים",
         href: "/",
         icon: <CalendarMonthIcon />,
-        keywords: ["schedule", "calendar", "לוח", "יומן"],
+        keywords: [ "schedule", "calendar", "לוח", "יומן" ],
     },
     {
         id: "goto.gantt",
         title: "גאנט",
         href: "/gantt",
         icon: <ViewTimelineIcon />,
-        keywords: ["gantt", "curriculum", "תכנית", "מערכת"],
+        keywords: [ "gantt", "curriculum", "תכנית", "מערכת" ],
     },
 ];
 
 /** Top-level page navigation. Registered app-wide. */
-export function useNavigationCommands(): void {
+export function useNavigationCommands(): void
+{
     const router = useRouter();
     const pathname = usePathname();
 
@@ -51,7 +52,7 @@ export function useNavigationCommands(): void {
                 enabled: pathname !== destination.href,
                 run: () => router.push(destination.href),
             })),
-        [router, pathname],
+        [ router, pathname ],
     );
 
     useCommands(commands);

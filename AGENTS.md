@@ -223,6 +223,7 @@ Runtime config comes from the root **`.env`** (consumed by docker-compose and co
 | `DATABASE_URL`, `POSTGRES_*` | PostgreSQL (Gantt engine). |
 | `MONGO_CONNECTION_STRING`, `MONGO_ROOT_*` | MongoDB (Calendar engine). |
 | `NEXT_PUBLIC_HIVE_URL`, `HIVE_CLIENT_ID`, `HIVE_CLIENT_SECRET` | Hive microservice + SSO. |
+| `HIVE_API_USERNAME`, `HIVE_API_PASSWORD` | Hive service account (default `api`) used by the lesson activator to open queues when an event goes live. Unset ⇒ the activator stays off. |
 | `NEXTAUTH_URL`, `NEXTAUTH_SECRET` | next-auth. |
 | `JWT_SECRET`, `SYM_ENC_KEY` | Session JWT signing + AES-GCM token encryption (`ui/src/settings.tsx`). |
 | `WEBSOCKET_SESSION_SERVER_*` | WebSocket session server host/auth/port/heartbeat. |

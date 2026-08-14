@@ -5,16 +5,31 @@ import {
 
 import {
     Class,
-    Lesson,
+    HiveLesson,
     LessonRequest,
     LessonRule,
     LessonRuleRequest,
+    Queue,
 } from "@/api-shared/types/hive";
 import { Module } from "@/api-shared/types/module";
 import { HiveRoom, RoomSource } from "@/api-shared/types/room";
 import { Subject } from "@/api-shared/types/subject";
 
 export { isTimeoutError } from "@system-b90/hive-core";
+
+/**
+ * Hive's lesson serializer names the module foreign key `module_id`; older
+ * instances (and `@system-b90/hive-core`'s types) call it `module`. Sending
+ * both satisfies either one — DRF ignores the field it does not declare —
+ * so Bluz does not have to know which Hive it is talking to.
+ */
+function withModuleId(
+    data: Partial<LessonRequest>,
+): Partial<LessonRequest> & { module_id?: number } {
+    return data.module === undefined
+        ? data
+        : { ...data, module_id: data.module };
+}
 
 /**
  * Bluz's Hive client: the request core (token refresh, 401 retry, 500
@@ -46,42 +61,55 @@ export class HiveClient extends HiveClientBase {
         );
     }
 
-    async getLessons(params?: Record<string, any>): Promise<Array<Lesson>> {
+    /**
+     * The queues of one Hive module — the only queues a lesson rule may point
+     * at (Hive rejects user queues on a rule).
+     */
+    async getModuleQueues(moduleId: number): Promise<Array<Queue>> {
+        return await this._get<Array<Queue>>(
+            this.buildUrl(`/api/core/queues/?module=${moduleId}`),
+        );
+    }
+
+    async getLessons(params?: Record<string, any>): Promise<Array<HiveLesson>> {
         const queryString = new URLSearchParams(params).toString();
-        return await this._request<Array<Lesson>>(
+        return await this._request<Array<HiveLesson>>(
             this.buildUrl(`/api/core/schedule/lessons/?${queryString}`),
             "GET",
         );
     }
 
-    async getLesson(id: number): Promise<Lesson> {
-        return await this._request<Lesson>(
+    async getLesson(id: number): Promise<HiveLesson> {
+        return await this._request<HiveLesson>(
             this.buildUrl(`/api/core/schedule/lessons/${id}/`),
             "GET",
         );
     }
 
-    async createLesson(data: LessonRequest): Promise<Lesson> {
-        return await this._request<Lesson>(
+    async createLesson(data: LessonRequest): Promise<HiveLesson> {
+        return await this._request<HiveLesson>(
             this.buildUrl("/api/core/schedule/lessons/"),
             "POST",
-            data,
+            withModuleId(data),
         );
     }
 
-    async updateLesson(id: number, data: LessonRequest): Promise<Lesson> {
-        return await this._request<Lesson>(
+    async updateLesson(id: number, data: LessonRequest): Promise<HiveLesson> {
+        return await this._request<HiveLesson>(
             this.buildUrl(`/api/core/schedule/lessons/${id}/`),
             "PUT",
-            data,
+            withModuleId(data),
         );
     }
 
-    async patchLesson(id: number, data: Partial<LessonRequest>): Promise<Lesson> {
-        return await this._request<Lesson>(
+    async patchLesson(
+        id: number,
+        data: Partial<LessonRequest>,
+    ): Promise<HiveLesson> {
+        return await this._request<HiveLesson>(
             this.buildUrl(`/api/core/schedule/lessons/${id}/`),
             "PATCH",
-            data,
+            withModuleId(data),
         );
     }
 
