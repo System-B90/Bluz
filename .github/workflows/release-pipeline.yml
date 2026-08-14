@@ -323,8 +323,15 @@ jobs:
                   mkdir -p release-offline/images
 
                   # Copy deployment scripts into both bundles
-                  cp ./scripts/install.sh deploy/docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-online/
-                  cp ./scripts/install.sh deploy/docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-offline/
+                  cp ./scripts/install.sh ./scripts/update.sh deploy/docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-online/
+                  cp ./scripts/install.sh ./scripts/update.sh deploy/docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-offline/
+
+                  # update.sh shells out to the backup scripts before it touches
+                  # anything, and they are the documented restore path, so both
+                  # bundles ship them at the location update.sh looks in first.
+                  mkdir -p release-online/backup release-offline/backup
+                  cp deploy/backup/bluz-backup.sh deploy/backup/bluz-restore.sh release-online/backup/
+                  cp deploy/backup/bluz-backup.sh deploy/backup/bluz-restore.sh release-offline/backup/
 
                   # Pin online bundle to this release's tag (the "latest" GHCR tag is never published)
                   echo "${{ github.ref_name }}" > release-online/VERSION

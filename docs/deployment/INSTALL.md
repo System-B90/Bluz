@@ -61,6 +61,7 @@ bluz/
 ├── docker-compose.hive-local.yml   # overlay, co-located Hive only
 ├── .env                            # written by the wizard — contains secrets
 ├── install.sh / install.ps1
+├── update.sh                       # in-place upgrade to a newer release
 ├── link-hive.sh / link-hive.ps1
 ├── setup.py, requirements.txt      # the configuration wizard
 ├── nginx/ssl/                      # cert.pem + key.pem
@@ -138,8 +139,28 @@ docker compose down          # stop (data volumes are kept)
 docker compose down -v       # stop AND DELETE all data
 ```
 
-Upgrading: extract the new bundle over a copy of your existing `.env` and
-`nginx/ssl/`, then re-run the installer. It skips the wizard when `.env` already
-exists and updates `BLUZ_VERSION` from the new `VERSION` file.
+### Upgrading a live deployment
+
+```bash
+tar -xzf bluz-online-v1.1.0.tar.gz -C bluz   # keeps your .env and nginx/ssl/
+cd bluz && ./update.sh
+```
+
+`update.sh` upgrades in place with near-zero downtime: it backs up both engines
+first, pulls the new images while the old containers keep serving, then rolls
+`ui` → `sessions` → `proxy` one at a time, waiting for each to pass its
+healthcheck. Postgres migrations run inside the new `ui` image's entrypoint, so
+they happen between the pull and the healthcheck; Mongo has no migration
+mechanism today. If any step fails it stops and prints the rollback command plus
+the path of the backup it took at the start.
+
+It takes the target version from the bundle's `VERSION` file, or `--version
+<tag>`. `--skip-backup` accepts the risk of an unrecoverable migration;
+`--yes` skips the confirmation prompt. It refuses to run against a stopped
+stack — use `./install.sh` for a first install.
+
+Re-running the installer over an existing `.env` also works and is the fallback
+when the stack is down: it skips the wizard and updates `BLUZ_VERSION` from the
+new `VERSION` file, but it does not back up or roll services one at a time.
 
 Backups: see `docs/backup-and-restore.md` in the repository.
