@@ -41,9 +41,16 @@ jobs:
         # Dependabot PRs are single dep bumps; CI on them wastes runner
         # minutes. Run this only for humans. Version-bump commits on master
         # (chore: bump version to *) are metadata-only, so skip CI on them too.
+        #
+        # The bump-commit skip is scoped to branch pushes. publish.py tags the
+        # very commit it bumps, so the release tag arrives carrying the same
+        # head_commit.message — and an unscoped check skipped the entire release
+        # pipeline, taking build-ui/sessions/proxy and craft-release down with
+        # it. v1.0.0-rc.2 was tagged into that hole and published nothing.
         if: >-
             github.actor != 'dependabot[bot]'
-            && !startsWith(github.event.head_commit.message, 'chore: bump version to')
+            && !(github.ref_type == 'branch'
+                 && startsWith(github.event.head_commit.message, 'chore: bump version to'))
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -238,9 +245,12 @@ jobs:
 
     build-proxy:
         name: Build Proxy Image
+        # Same branch-only scoping as `verify` above: without it a release tag,
+        # which points at the bump commit, skips its own proxy build.
         if: >-
             (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v'))
-            && !startsWith(github.event.head_commit.message, 'chore: bump version to')
+            && !(github.ref_type == 'branch'
+                 && startsWith(github.event.head_commit.message, 'chore: bump version to'))
         runs-on: [self-hosted, dind]
         timeout-minutes: 45
         permissions:
