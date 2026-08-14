@@ -14,12 +14,14 @@ import { useSettingsDialogUrl } from "@/components/settings-dialog/UseSettingsDi
  * rooms and outsiders. Selecting one deep-links into its settings tab with the
  * record already open for editing.
  */
-export function useDirectoryCommands(): void {
+export function useDirectoryCommands(): void
+{
     const { rooms } = useRooms();
     const { outsiders } = useOutsiders();
     const { openDialog } = useSettingsDialogUrl();
 
-    const commands = useMemo<Array<Command>>(() => {
+    const commands = useMemo<Array<Command>>(() =>
+    {
         const roomCommands = rooms.map((room) => ({
             id: `room.${room.source}.${room.id}`,
             title: room.name,
@@ -27,7 +29,7 @@ export function useDirectoryCommands(): void {
             group: COMMAND_GROUPS.rooms,
             kind: "entity" as const,
             icon: <MeetingRoomIcon />,
-            keywords: ["room", "חדר"],
+            keywords: [ "room", "חדר" ],
             run: () =>
                 // Only custom rooms carry a string id, which is what the rooms
                 // tab matches `editRoom` against; Hive rooms just open the tab.
@@ -46,13 +48,13 @@ export function useDirectoryCommands(): void {
             group: COMMAND_GROUPS.outsiders,
             kind: "entity" as const,
             icon: <AssignmentIndIcon />,
-            keywords: ["outsider", "איש חוץ"],
+            keywords: [ "outsider", "איש חוץ", "אנשי חוץ", "אשת חוץ", "חותכים", "חותך", "חותכת", ],
             run: () =>
                 openDialog("outsiders", { editOutsider: outsider.id }),
         }));
 
-        return [...roomCommands, ...outsiderCommands];
-    }, [rooms, outsiders, openDialog]);
+        return [ ...roomCommands, ...outsiderCommands ];
+    }, [ rooms, outsiders, openDialog ]);
 
     useCommands(commands);
 }
