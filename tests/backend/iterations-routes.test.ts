@@ -8,6 +8,7 @@ vi.mock("@/api-server/db-iterations", () => ({
         get: vi.fn(),
         register: vi.fn(),
         patch: vi.fn(),
+        remove: vi.fn(),
     },
 }));
 
@@ -135,5 +136,21 @@ describe("PATCH /api/iterations/[id]", () => {
         expect(DbIterations.patch).toHaveBeenCalledWith("2026b", {
             isCurrent: true,
         });
+    });
+});
+
+describe("DELETE /api/iterations/[id]", () => {
+    it("deletes an iteration", async () => {
+        vi.mocked(DbIterations.remove).mockResolvedValueOnce(undefined);
+        const req = new NextRequest("http://localhost/api/iterations/2026b", {
+            method: "DELETE",
+        });
+        const res = await IterationByIdRoute.DELETE(req, {
+            params: Promise.resolve({ id: "2026b" }),
+        });
+        const body = await res.json();
+        expect(res.status).toBe(200);
+        expect(body.data.deleted).toBe(true);
+        expect(DbIterations.remove).toHaveBeenCalledWith("2026b");
     });
 });

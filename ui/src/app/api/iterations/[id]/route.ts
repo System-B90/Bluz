@@ -22,6 +22,11 @@ type ServerApiIterationPatch = ServerApiWithParams<
     Iteration,
     { id: string }
 >;
+type ServerApiIterationDelete = ServerApiWithParams<
+    void,
+    { deleted: true },
+    { id: string }
+>;
 
 export const GET: ServerApiIterationGet = withApi(async (request, context) => {
     const { id } = await context.params;
@@ -36,3 +41,11 @@ export const PATCH: ServerApiIterationPatch = withApi(async (request, context) =
     }
     return ApiSuccess(await DbIterations.patch(id, patch));
 });
+
+export const DELETE: ServerApiIterationDelete = withApi(
+    async (request, context) => {
+        const { id } = await context.params;
+        await DbIterations.remove(id);
+        return ApiSuccess({ deleted: true });
+    },
+);

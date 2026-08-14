@@ -96,6 +96,7 @@ export type RegisterIterationPayload = {
 export type PatchIterationPayload = {
     label?: string;
     hiveUrl?: string;
+    startDate?: Date | string;
     endDate?: Date | null | string;
     isCurrent?: boolean;
     /** Pass null to unlink the curriculum. */

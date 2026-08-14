@@ -84,6 +84,7 @@ def patch(
     iteration_id: str = typer.Argument(..., help="Iteration id to update."),
     label: str = typer.Option(None, "--label", help="New label."),
     hive_url: str = typer.Option(None, "--hive-url", help="New Hive URL."),
+    start_date: str = typer.Option(None, "--start-date", help="New ISO start date."),
     end_date: str = typer.Option(None, "--end-date", help="New ISO end date."),
     gantt_curriculum_id: str = typer.Option(
         None, "--gantt-curriculum-id", help="Linked curriculum id."
@@ -96,6 +97,7 @@ def patch(
     payload = merge_fields(
         ("label", label),
         ("hiveUrl", hive_url),
+        ("startDate", start_date),
         ("endDate", end_date),
         ("ganttCurriculumId", gantt_curriculum_id),
         ("isCurrent", set_current),

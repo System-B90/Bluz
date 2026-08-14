@@ -44,6 +44,12 @@ const { docs, iterations, client, setCurrentIterationDbName } = vi.hoisted(
                 targets.forEach((d) => Object.assign(d, update.$set));
                 return { matchedCount: targets.length };
             }),
+            deleteOne: vi.fn(async (filter: Doc) => {
+                const idx = docs.findIndex((d) => matches(d, filter));
+                if (idx === -1) return { deletedCount: 0 };
+                docs.splice(idx, 1);
+                return { deletedCount: 1 };
+            }),
         };
 
         // Transaction stub for the atomic promotion path in patchIteration.
@@ -116,6 +122,17 @@ describe("DbIterations.register", () => {
             DbIterations.register({ id: "", label: "" } as any),
         ).rejects.toBeInstanceOf(ClientApiError);
     });
+
+    it("rejects an endDate at or before startDate", async () => {
+        await expect(
+            DbIterations.register({
+                id: "bad",
+                label: "Bad",
+                startDate: "2026-08-14",
+                endDate: "2025-09-05",
+            }),
+        ).rejects.toBeInstanceOf(ClientApiError);
+    });
 });
 
 describe("DbIterations.patch (set current)", () => {
@@ -135,6 +152,66 @@ describe("DbIterations.patch (set current)", () => {
         await expect(
             DbIterations.patch("nope", { label: "x" }),
         ).rejects.toBeInstanceOf(ClientApiError);
+    });
+
+    it("allows correcting startDate", async () => {
+        await DbIterations.ensure();
+        await DbIterations.register({ id: "2026b", label: "B" });
+        const updated = await DbIterations.patch("2026b", {
+            startDate: "2026-01-01",
+        });
+        expect(new Date(updated.startDate).toISOString()).toContain(
+            "2026-01-01",
+        );
+    });
+
+    it("rejects a patched endDate at or before the effective startDate", async () => {
+        await DbIterations.ensure();
+        await DbIterations.register({
+            id: "2026b",
+            label: "B",
+            startDate: "2026-08-14",
+        });
+        await expect(
+            DbIterations.patch("2026b", { endDate: "2025-09-05" }),
+        ).rejects.toBeInstanceOf(ClientApiError);
+    });
+
+    it("rejects a patched startDate that moves past the existing endDate", async () => {
+        await DbIterations.ensure();
+        await DbIterations.register({
+            id: "2026b",
+            label: "B",
+            startDate: "2026-01-01",
+            endDate: "2026-06-01",
+        });
+        await expect(
+            DbIterations.patch("2026b", { startDate: "2026-08-01" }),
+        ).rejects.toBeInstanceOf(ClientApiError);
+    });
+});
+
+describe("DbIterations.remove (delete)", () => {
+    it("deletes a non-current iteration", async () => {
+        await DbIterations.ensure();
+        await DbIterations.register({ id: "2026b", label: "B" });
+        await DbIterations.remove("2026b");
+        expect(await DbIterations.get("2026b")).toBeNull();
+    });
+
+    it("refuses to delete the current iteration", async () => {
+        await DbIterations.ensure();
+        const current = await DbIterations.current();
+        await expect(
+            DbIterations.remove(current.id),
+        ).rejects.toBeInstanceOf(ClientApiError);
+    });
+
+    it("throws for an unknown iteration", async () => {
+        await DbIterations.ensure();
+        await expect(DbIterations.remove("nope")).rejects.toBeInstanceOf(
+            ClientApiError,
+        );
     });
 });
 

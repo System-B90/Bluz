@@ -96,6 +96,19 @@ function deriveDbName(id: IterationId): string {
     return `bluz_${safe}`;
 }
 
+/** Throws unless `end` is strictly after `start` (null end ⇒ open-ended, always valid). */
+function assertDateOrder(
+    start: Date | string,
+    end: Date | null | string | undefined,
+): void {
+    if (end === null || end === undefined) return;
+    const startMs = new Date(start).getTime();
+    const endMs = new Date(end).getTime();
+    if (endMs <= startMs) {
+        throw new ClientApiError("תאריך הסיום חייב להיות אחרי תאריך ההתחלה");
+    }
+}
+
 /**
  * Register a new iteration and lazily provision its database. Mongo creates the
  * database on first write, so no explicit creation is needed here.
@@ -115,13 +128,15 @@ async function registerIteration(
     }
 
     const now = new Date();
+    const startDate = payload.startDate ?? now;
+    assertDateOrder(startDate, payload.endDate);
     const iteration: Iteration = {
         id: payload.id,
         label: payload.label,
         dbName: payload.dbName ?? deriveDbName(payload.id),
         hiveUrl: payload.hiveUrl,
         hiveCache: payload.hiveCache,
-        startDate: payload.startDate ?? now,
+        startDate,
         endDate: payload.endDate ?? null,
         isCurrent: false,
         ganttCurriculumId: payload.ganttCurriculumId,
@@ -150,10 +165,16 @@ async function patchIteration(
         throw new ClientApiError(`Iteration "${id}" not found!`);
     }
 
+    const effectiveStart = patch.startDate ?? existing.startDate;
+    const effectiveEnd =
+        patch.endDate !== undefined ? patch.endDate : existing.endDate;
+    assertDateOrder(effectiveStart, effectiveEnd);
+
     const update: Record<string, unknown> = { updatedAt: new Date() };
     const unset: Partial<Record<keyof Iteration, "">> = {};
     if (patch.label !== undefined) update.label = patch.label;
     if (patch.hiveUrl !== undefined) update.hiveUrl = patch.hiveUrl;
+    if (patch.startDate !== undefined) update.startDate = patch.startDate;
     if (patch.endDate !== undefined) update.endDate = patch.endDate;
     if (patch.ganttCurriculumId !== undefined) {
         if (patch.ganttCurriculumId === null) {
@@ -200,6 +221,27 @@ async function patchIteration(
         throw new ClientApiError(`Iteration "${id}" disappeared during update!`);
     }
     return stripMongoId(updated);
+}
+
+/**
+ * Delete an iteration from the registry. The current iteration can never be
+ * deleted (there must always be exactly one writable iteration). The backing
+ * Mongo database is left in place — orphaned, not dropped — since it may hold
+ * calendar/curriculum history worth keeping around for reference.
+ */
+async function deleteIteration(id: IterationId): Promise<void> {
+    await ensureSeeded();
+    const meta = getMetaController();
+    const existing = await meta.iterations.findOne({ id });
+    if (!existing) {
+        throw new ClientApiError(`Iteration "${id}" not found!`);
+    }
+    if (existing.isCurrent) {
+        throw new ClientApiError(
+            "לא ניתן למחוק את המחזור הנוכחי",
+        );
+    }
+    await meta.iterations.deleteOne({ id });
 }
 
 /**
@@ -252,6 +294,7 @@ export namespace DbIterations {
     export const getByCurriculum = getIterationByCurriculum;
     export const register = registerIteration;
     export const patch = patchIteration;
+    export const remove = deleteIteration;
     export const setHiveCache = setIterationHiveCache;
     export const assertWritable = assertWritableIteration;
 }
