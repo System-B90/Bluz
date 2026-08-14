@@ -4,6 +4,7 @@ import {
     getMetaController,
     setCurrentIterationDbName,
 } from "@/api-server/mongo-db-controller";
+import { withOptionalTransaction } from "@/api-server/mongo-transactions";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     HiveIterationCache,
@@ -186,9 +187,13 @@ async function patchIteration(
 
     if (patch.isCurrent === true) {
         update.isCurrent = true;
-        const session = meta.client.startSession();
-        try {
-            await session.withTransaction(async () => {
+        await withOptionalTransaction(
+            meta.client,
+            async (session) => {
+                // Demote first, promote second. Without a transaction (a
+                // standalone Mongo) a crash between the two leaves zero current
+                // iterations, which the next request re-seeds, rather than two,
+                // which nothing resolves on its own.
                 await meta.iterations.updateMany(
                     { isCurrent: true },
                     { $set: { isCurrent: false, updatedAt: new Date() } },
@@ -201,10 +206,9 @@ async function patchIteration(
                         : { $set: update },
                     { session },
                 );
-            });
-        } finally {
-            await session.endSession();
-        }
+            },
+            `promoting iteration "${id}" to current`,
+        );
         // Update in-process cache only after the transaction commits.
         setCurrentIterationDbName(existing.dbName);
     } else {
