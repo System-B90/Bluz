@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { venueTime } from "./helpers/venue-time";
 import {
     CutPlanDayInput,
     CutPlanEventInput,
@@ -76,7 +77,7 @@ describe("planCut", () => {
         expect(occ.occurrenceDate).toBe("2024-01-09"); // Sunday + 2 days = Tuesday
         expect(occ.isRecurrenceEcho).toBe(false);
         expect(occ.startTime.toISOString()).toBe(
-            new Date("2024-01-09T08:00:00").toISOString(),
+            venueTime("2024-01-09T08:00"),
         );
         expect(occ.endTime.getTime() - occ.startTime.getTime()).toBe(90 * 60 * 1000);
     });
@@ -101,7 +102,7 @@ describe("planCut", () => {
         expect(first.ganttEventId).toBe("e1");
         expect(second.ganttEventId).toBe("e2");
         expect(first.startTime.toISOString()).toBe(
-            new Date("2024-01-07T08:00:00").toISOString(),
+            venueTime("2024-01-07T08:00"),
         );
         expect(second.startTime.getTime()).toBe(first.endTime.getTime());
         expect(second.endTime.getTime() - second.startTime.getTime()).toBe(30 * 60 * 1000);
@@ -202,7 +203,7 @@ describe("planCut", () => {
         // Bumped to start right after the 30-minute lunch window (13:30),
         // duration unaffected.
         expect(occ!.startTime.toISOString()).toBe(
-            new Date("2024-01-07T13:30:00").toISOString(),
+            venueTime("2024-01-07T13:30"),
         );
         expect(occ!.endTime.getTime() - occ!.startTime.getTime()).toBe(90 * 60 * 1000);
     });
@@ -240,10 +241,10 @@ describe("planCut", () => {
         // minutes — the two drawn pieces (12:15-13:00, 13:30-14:15) are a
         // rendering concern, not a duration change.
         expect(occ!.startTime.toISOString()).toBe(
-            new Date("2024-01-07T12:15:00").toISOString(),
+            venueTime("2024-01-07T12:15"),
         );
         expect(occ!.endTime.toISOString()).toBe(
-            new Date("2024-01-07T13:45:00").toISOString(),
+            venueTime("2024-01-07T13:45"),
         );
     });
 
@@ -284,7 +285,7 @@ describe("planCut", () => {
         // at its stored 13:45 end — that would overlap it on screen.
         const occ = plan.occurrences.find((o) => o.ganttEventId === "next");
         expect(occ!.startTime.toISOString()).toBe(
-            new Date("2024-01-07T14:15:00").toISOString(),
+            venueTime("2024-01-07T14:15"),
         );
     });
 
@@ -317,7 +318,7 @@ describe("planCut", () => {
 
         const occ = plan.occurrences.find((o) => o.ganttEventId === "ex");
         expect(occ!.startTime.toISOString()).toBe(
-            new Date("2024-01-07T14:00:00").toISOString(),
+            venueTime("2024-01-07T14:00"),
         );
         expect(occ!.endTime.getTime() - occ!.startTime.getTime()).toBe(90 * 60 * 1000);
     });
@@ -462,7 +463,7 @@ describe("planCut", () => {
         if (!plan.ok) return;
 
         expect(plan.occurrences[0].startTime.toISOString()).toBe(
-            new Date("2024-01-07T10:00:00").toISOString(),
+            venueTime("2024-01-07T10:00"),
         );
     });
 
@@ -484,7 +485,7 @@ describe("planCut", () => {
         if (!plan.ok) return;
 
         expect(plan.occurrences[0].startTime.toISOString()).toBe(
-            new Date("2024-01-07T08:00:00").toISOString(),
+            venueTime("2024-01-07T08:00"),
         );
     });
 
@@ -506,7 +507,7 @@ describe("planCut", () => {
         if (!plan.ok) return;
 
         expect(plan.occurrences[0].startTime.toISOString()).toBe(
-            new Date("2024-01-08T08:00:00").toISOString(),
+            venueTime("2024-01-08T08:00"),
         );
     });
 
@@ -527,7 +528,61 @@ describe("planCut", () => {
         if (!plan.ok) return;
 
         expect(plan.occurrences[0].startTime.toISOString()).toBe(
-            new Date("2024-01-07T08:00:00").toISOString(),
+            venueTime("2024-01-07T08:00"),
+        );
+    });
+});
+
+describe("planCut — venue timezone anchoring (#415)", () => {
+    // The planner used to build wall-clock times through the ambient process
+    // timezone, so a UTC server (the Docker default) emitted 09:30 UTC for a
+    // 09:30 Asia/Jerusalem day start — displayed as 12:30 by every client.
+    const withProcessTz = <T,>(tz: string, body: () => T): T => {
+        const original = process.env.TZ;
+        process.env.TZ = tz;
+        try {
+            return body();
+        } finally {
+            process.env.TZ = original;
+        }
+    };
+
+    const planStartInstant = (): string => {
+        const input = baseInput({
+            events: [ makeEvent({ id: "e1" }) ],
+            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0 } ],
+            dayStartTime: "09:30",
+        });
+        const plan = planCut(input);
+        if (!plan.ok) throw new Error("plan failed");
+        return plan.occurrences[0].startTime.toISOString();
+    };
+
+    it("computes 09:30 in the venue timezone regardless of the process TZ", () => {
+        // 2024-01-07 is IST (UTC+2), so 09:30 local is 07:30Z.
+        const expected = "2024-01-07T07:30:00.000Z";
+
+        expect(withProcessTz("UTC", planStartInstant)).toBe(expected);
+        expect(withProcessTz("America/New_York", planStartInstant)).toBe(expected);
+        expect(withProcessTz("Asia/Jerusalem", planStartInstant)).toBe(expected);
+    });
+
+    it("stays DST-correct across the Israeli summer transition", () => {
+        // 2024-08-04 is IDT (UTC+3), so the same 09:30 local is 06:30Z — the
+        // exact ~3h offset reported in the bug.
+        const input = baseInput({
+            startDate: "2024-08-04",
+            events: [ makeEvent({ id: "e1" }) ],
+            mappings: [ { eventId: "e1", dayId: "w0d0", sortOrder: 0 } ],
+            dayStartTime: "09:30",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        expect(plan.occurrences[0].startTime.toISOString()).toBe(
+            "2024-08-04T06:30:00.000Z",
         );
     });
 });

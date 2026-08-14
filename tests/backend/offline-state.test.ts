@@ -204,6 +204,43 @@ describe("deepCopyEvent", () => {
 
         expect(original.courses).toHaveLength(1);
     });
+
+    // `lecturers` is optional and absent on most seeded events. The copy used
+    // to materialize it as `[]`, so the offline snapshot never compared equal
+    // to the event it was taken from and every untouched event looked locally
+    // modified — the push dialog then opened with nothing to push (#386).
+    it("compares equal to its source when the optional lecturers field is absent", () => {
+        const original = makeEvent();
+        delete (original as Partial<Event>).lecturers;
+
+        const copy = deepCopyEvent(original);
+
+        expect("lecturers" in copy).toBe(false);
+        expect(areValuesEqual(original, copy)).toBe(true);
+    });
+
+    // Stored events can carry an explicit null here. Spreading it threw
+    // "e.lecturers is not iterable" and took the calendar down through the
+    // error boundary, so the guard has to be nullish, not just undefined.
+    it("does not throw when lecturers is null", () => {
+        const original = makeEvent({
+            lecturers: null as unknown as Array<number>,
+        });
+
+        const copy = deepCopyEvent(original);
+
+        expect(copy.lecturers).toBeNull();
+        expect(areValuesEqual(original, copy)).toBe(true);
+    });
+
+    it("still copies the lecturers array when the field is present", () => {
+        const original = makeEvent({ lecturers: [7] });
+        const copy = deepCopyEvent(original);
+        (copy.lecturers as number[]).push(99);
+
+        expect(original.lecturers).toEqual([7]);
+        expect(areValuesEqual(original, deepCopyEvent(original))).toBe(true);
+    });
 });
 
 // ─── Offline capture invariants ───────────────────────────────────────────────

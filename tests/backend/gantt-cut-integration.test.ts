@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { venueHour, venueMinute } from "./helpers/venue-time";
+
 /**
  * Integration-level tests for the full cut pipeline: real planner + real
  * orchestration, with only the DB/session-server boundaries mocked. Covers
@@ -274,8 +276,8 @@ describe("cut — document stacking", () => {
         const docs = insertedDocs();
         const byId = Object.fromEntries(docs.map((d) => [d.ganttEventId, d]));
 
-        expect(byId.first.startTime.getHours()).toBe(9);
-        expect(byId.first.startTime.getMinutes()).toBe(15);
+        expect(venueHour(byId.first.startTime)).toBe(9);
+        expect(venueMinute(byId.first.startTime)).toBe(15);
         expect(byId.second.startTime.getTime()).toBe(byId.first.endTime.getTime());
         expect(outcome.ok && outcome.result.overlaps).toBe(0);
     });
@@ -448,8 +450,8 @@ describe("cut — day-start setting", () => {
         const outcome = await cutCurriculumToSchedule("c1");
         expect(outcome.ok).toBe(true);
         const doc = insertedDocs()[0];
-        expect(doc.startTime.getHours()).toBe(8);
-        expect(doc.startTime.getMinutes()).toBe(0);
+        expect(venueHour(doc.startTime)).toBe(8);
+        expect(venueMinute(doc.startTime)).toBe(0);
     });
 });
 

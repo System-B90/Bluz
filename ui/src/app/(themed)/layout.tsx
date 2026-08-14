@@ -27,6 +27,10 @@ export default function ThemedLayout({
         <LocalizationProvider adapterLocale="he" dateAdapter={ AdapterDayjs }>
             <SnackbarProvider
                 anchorOrigin={ { horizontal: "right", vertical: "bottom" } }
+                // The stack is pinned to the physical right edge, but notistack
+                // aligns its children with direction-relative `flex-end`, which
+                // sends short snackbars to the left under RTL (#416).
+                classes={ { containerRoot: "snackbar-container-physical-right" } }
             >
                 <SessionProvider>{ children }</SessionProvider>
             </SnackbarProvider>

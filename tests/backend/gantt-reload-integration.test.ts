@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { venueDate } from "./helpers/venue-time";
+
 /**
  * Integration-level tests for the schedule reload: real planner + real
  * orchestration, only the DB / session-server / Hive boundaries mocked.
@@ -174,15 +176,17 @@ function makeCurriculum(
 
 /**
  * A cut schedule event as it would already exist in the iteration db. Times
- * default to the planner's own output for a first-of-day occurrence: local
- * 08:00–09:00 (the planner works in local time, so the fixtures must too).
+ * default to the planner's own output for a first-of-day occurrence: 08:00–09:00
+ * on the venue clock. The planner anchors to `APP_TIMEZONE` rather than the
+ * process timezone (#415), so the fixtures must too — building these with a
+ * bare `new Date` made the suite pass locally and drift on a UTC CI runner.
  */
 function makeCutEvent(
     overrides: { ganttEventId: string; id: string; ganttOccurrenceDate: string } & Partial<DbEventDocument>,
 ): DbEventDocument {
     return {
         courses: [],
-        endTime: new Date(`${overrides.ganttOccurrenceDate}T09:00:00`),
+        endTime: venueDate(`${overrides.ganttOccurrenceDate}T09:00`),
         hidden: false,
         hiveLesson: null,
         hiveModule: 0,
@@ -195,7 +199,7 @@ function makeCutEvent(
         required: false,
         rooms: [],
         splitAcrossBreaks: false,
-        startTime: new Date(`${overrides.ganttOccurrenceDate}T08:00:00`),
+        startTime: venueDate(`${overrides.ganttOccurrenceDate}T08:00`),
         subject: 0,
         tags: [],
         type: EventType.LECTURE,

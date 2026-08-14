@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { venueHhmm } from "./helpers/venue-time";
 import {
     CutPlanDayInput,
     CutPlanEventInput,
@@ -71,8 +72,7 @@ function occurrencesOf(
     return plan.ok ? plan.occurrences : [];
 }
 
-const hhmm = (d: Date) =>
-    `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+const hhmm = venueHhmm;
 
 describe("planCut — date anchoring", () => {
     it("extrapolates dates across weeks: week N, dayIndex D → start + 7N + D days", () => {

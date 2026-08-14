@@ -52,11 +52,9 @@ test.describe("Offline mode", () => {
 
     // ─── No changes ──────────────────────────────────────────────────────────
 
-    // FIXME(#386): the push-updates dialog stays visible when exiting offline
-    // mode with no local edits. Fails deterministically, in a full run and in
-    // isolation. Unresolved: whether checkEventCollisionStates() returns a
-    // non-empty map (real bug) or just resolves slower than the 3s budget.
-    test.fixme("exiting without changes auto-closes and shows info snackbar", async ({
+    // REGRESSION #386: the offline snapshot used to report every untouched
+    // event as locally modified, so this dialog opened with nothing to push.
+    test("exiting without changes auto-closes and shows info snackbar", async ({
         page,
     }) => {
         await enterOfflineMode(page);

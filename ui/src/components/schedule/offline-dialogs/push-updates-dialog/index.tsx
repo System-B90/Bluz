@@ -46,6 +46,10 @@ export function PushOfflineUpdatesDialog() {
     const [collisionStates, setCollisionStates] = useState<CollisionStates>({});
     const [selectedIds, setSelectedIds] = useState<Array<EventId>>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    // True while the collision check for a freshly-opened dialog is in flight.
+    // Rendering the dialog open before that resolves flashes it on screen even
+    // when there is nothing to sync and it is about to close itself (#386).
+    const [checking, setChecking] = useState<boolean>(false);
 
     // Cancel: keep the edits and stay in offline mode
     const handleCancel = useCallback(() => {
@@ -258,6 +262,11 @@ export function PushOfflineUpdatesDialog() {
         if (!pushDialogOpen) {
             return;
         }
+        // Marking the check as in-flight is the whole point of this effect —
+        // the dialog must stay closed until it resolves — so the cascading
+        // render the rule warns about is the intended behaviour here.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setChecking(true);
         checkRef.current()
             .then((states) => {
                 const keys = Object.keys(states);
@@ -282,7 +291,8 @@ export function PushOfflineUpdatesDialog() {
                     `טעינת המצב העדכני בשרת נכשלה!`,
                     error,
                 ),
-            );
+            )
+            .finally(() => setChecking(false));
         // Only re-run when the dialog opens — not on every localEvents change.
         // checkRef holds the latest checkEventCollisionStates without causing re-fires.
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -299,6 +309,9 @@ export function PushOfflineUpdatesDialog() {
         [collisionStates],
     );
 
+    // Held closed until the collision check resolves, so a dialog that is about
+    // to close itself for having nothing to sync never flashes on screen (#386).
+    const dialogOpen = pushDialogOpen && !checking;
     const hasChanges = Object.keys(collisionStates).length > 0;
     const submitLabel = getSubmitLabel(collisionStates, selectedIds);
 
@@ -307,7 +320,7 @@ export function PushOfflineUpdatesDialog() {
             fullWidth
             maxWidth="lg"
             onClose={handleCancel}
-            open={pushDialogOpen}
+            open={dialogOpen}
         >
             <DialogTitle sx={{ fontWeight: 600 }}>
                 שמירת שינויים לוקליים

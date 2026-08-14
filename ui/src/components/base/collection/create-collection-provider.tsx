@@ -176,6 +176,10 @@ export function createCollectionProvider<T, TId, TCreate>(
             itemsRef.current = state.items;
         }, [state.items]);
 
+        // `mutate` reloads on failure but is declared before `load`; the ref
+        // breaks the cycle without making every mutation callback depend on it.
+        const loadRef = useRef<() => void>(() => {});
+
         const ops: CollectionOps<T> = useMemo(
             () => ({
                 put: (key, item) =>
@@ -200,7 +204,15 @@ export function createCollectionProvider<T, TId, TCreate>(
                     await request();
                     enqueueSnackbar(successMessage, { variant: "success" });
                 } catch (error) {
+                    // The snapshot predates the request, so restoring it also
+                    // restores items the server has *already* dropped — a
+                    // delete that failed with "no such id" is exactly that.
+                    // Those phantom rows then make every later action on them
+                    // fail too, so reload instead of resting on the snapshot
+                    // (#407). The snapshot still goes back first, to undo the
+                    // optimistic edit without waiting for the round trip.
                     dispatch({ type: "ROLLBACK", payload: snapshot });
+                    loadRef.current();
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
                         failureMessage,
@@ -230,6 +242,8 @@ export function createCollectionProvider<T, TId, TCreate>(
                     );
                 });
         }, [enqueueSnackbar]);
+
+        loadRef.current = load;
 
         const addItem = useCallback(
             async (data: TCreate) => {
@@ -281,7 +295,15 @@ export function createCollectionProvider<T, TId, TCreate>(
         const deleteItem = useCallback(
             async (key: string) => {
                 const existing = itemsRef.current[key];
-                if (!existing) return;
+                if (!existing) {
+                    // The row the user clicked is not in the store, so there is
+                    // no id to delete by. Returning silently here is what made a
+                    // delete look like it worked and then have the item come
+                    // back (#407) — resync so the list stops showing rows that
+                    // cannot be acted on.
+                    loadRef.current();
+                    return;
+                }
                 const label = getLabel(existing);
 
                 await mutate({
