@@ -16,9 +16,14 @@ export function deepCopyEvent(event: Event): Event {
     // Materializing it as `[]` made the copy differ from its own source under
     // `areValuesEqual` — either an extra key or `[]` against `undefined` — so
     // the offline snapshot reported every untouched event as locally modified
-    // and the push dialog opened with nothing to push (#386). Copy the array
-    // only when there is one.
-    if (event.lecturers !== undefined) {
+    // and the push dialog opened with nothing to push (#386).
+    //
+    // The check is `Array.isArray` rather than a comparison against `undefined`:
+    // stored events can carry an explicit `lecturers: null`, and spreading that
+    // throws "not iterable" and takes the whole page down through the error
+    // boundary. Anything that is not an array is left exactly as the spread
+    // copied it, which is also what keeps the copy comparing equal to its source.
+    if (Array.isArray(event.lecturers)) {
         cpy.lecturers = [...event.lecturers];
     }
 

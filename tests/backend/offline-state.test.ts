@@ -219,6 +219,20 @@ describe("deepCopyEvent", () => {
         expect(areValuesEqual(original, copy)).toBe(true);
     });
 
+    // Stored events can carry an explicit null here. Spreading it threw
+    // "e.lecturers is not iterable" and took the calendar down through the
+    // error boundary, so the guard has to be nullish, not just undefined.
+    it("does not throw when lecturers is null", () => {
+        const original = makeEvent({
+            lecturers: null as unknown as Array<number>,
+        });
+
+        const copy = deepCopyEvent(original);
+
+        expect(copy.lecturers).toBeNull();
+        expect(areValuesEqual(original, copy)).toBe(true);
+    });
+
     it("still copies the lecturers array when the field is present", () => {
         const original = makeEvent({ lecturers: [7] });
         const copy = deepCopyEvent(original);
