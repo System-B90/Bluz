@@ -181,6 +181,15 @@ def login(
     """
     existing = load_config()
 
+    # `bluz --url X login` binds --url/--token/--insecure to the *root*
+    # callback (they are reordered to the front of argv so they work in any
+    # position), leaving this command's own options None. Fall back to what the
+    # root actually resolved so the flags are not silently dropped here (#433).
+    url = url or state.explicit_url
+    token = token or state.explicit_token
+    if insecure is None:
+        insecure = state.explicit_insecure
+
     if not url:
         url = inquirer.text(
             message="Bluz server URL:",

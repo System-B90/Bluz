@@ -22,6 +22,13 @@ class AppState:
     config: Config = field(default_factory=Config)
     as_json: bool = False
     quiet: bool = False
+    # The values passed explicitly as global flags, kept apart from `config`
+    # (which also folds in env vars and the config file). `login` needs the
+    # distinction: an explicit `--url` must skip the prompt, a config-file url
+    # must only be offered as the prompt's default.
+    explicit_url: str | None = None
+    explicit_token: str | None = None
+    explicit_insecure: bool | None = None
 
     def client(self) -> BluzClient:
         """Build an authenticated client for the current configuration."""
@@ -44,3 +51,6 @@ def configure(
     state.config = load_config(url=url, token=token, insecure=insecure)
     state.as_json = as_json
     state.quiet = quiet
+    state.explicit_url = url
+    state.explicit_token = token
+    state.explicit_insecure = insecure
