@@ -1,4 +1,4 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, getTableColumns, inArray } from "drizzle-orm";
 import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
 import { postgresDb } from "@/api-server/gantt";
@@ -14,6 +14,74 @@ import { BasicGantOperations } from "@/app/api/gantt/base-collection";
 
 export const FOREIGN_KEY_VIOLATION = "23503";
 export const UNIQUE_VIOLATION = "23505";
+
+// Columns the create path always fills in itself, so a payload is not required
+// (nor expected) to carry them.
+const SERVER_OWNED_COLUMNS = new Set([
+    "id",
+    "createdAt",
+    "updatedAt",
+]);
+
+/**
+ * Check a create payload against the target table *before* it reaches the
+ * insert, and return only the fields the table actually has.
+ *
+ * Without this, an unknown field, a missing NOT NULL column or a bad enum value
+ * all reach the driver and come back as an opaque HTTP 500 (#432, #434).
+ *
+ * Unknown fields are dropped rather than rejected: several create payloads
+ * legitimately carry values that live in a junction table instead of on the
+ * entity — `allocatedDuration` on an event is written through
+ * `DbModuleEvent.setAllocatedTime`, not the events table — and the app itself
+ * sends them. A missing required field or a bad enum value, by contrast, is
+ * always a caller mistake, so those become a 400 naming the offending field.
+ *
+ * Parent foreign keys (`curriculumId`, `moduleId`, …) live in junction tables
+ * too, so callers must strip them out before calling.
+ */
+export function sanitizeCreatePayload(
+    table: PgTableWithColumns<any>,
+    data: Record<string, unknown>,
+    typeName: string,
+): Record<string, unknown> {
+    const columns = getTableColumns(table) as Record<string, AnyPgColumn>;
+
+    const missingFields = Object.entries(columns)
+        .filter(
+            ([name, column]) =>
+                column.notNull &&
+                !column.hasDefault &&
+                !SERVER_OWNED_COLUMNS.has(name) &&
+                (data[name] === undefined || data[name] === null),
+        )
+        .map(([name]) => name);
+    if (missingFields.length > 0) {
+        throw new ClientApiError(
+            `שדות חובה חסרים ביצירת ${typeName}: ${missingFields.join(", ")}`,
+        );
+    }
+
+    for (const [name, column] of Object.entries(columns)) {
+        const allowed = (column as { enumValues?: Array<string> }).enumValues;
+        const value = data[name];
+        if (
+            allowed &&
+            allowed.length > 0 &&
+            typeof value === "string" &&
+            !allowed.includes(value)
+        ) {
+            throw new ClientApiError(
+                `ערך לא חוקי לשדה ${name} ביצירת ${typeName}: "${value}". ` +
+                    `ערכים אפשריים: ${allowed.join(", ")}`,
+            );
+        }
+    }
+
+    return Object.fromEntries(
+        Object.entries(data).filter(([field]) => field in columns),
+    );
+}
 export type BaseDbDocument = {
     createdAt: Date;
     updatedAt: Date;
@@ -187,11 +255,17 @@ export function drizzleOperationsBuilder<
             weekId,
         };
 
+        const insertData = sanitizeCreatePayload(
+            table as PgTableWithColumns<any>,
+            entityData as Record<string, unknown>,
+            typeName,
+        );
+
         return await postgresDb.transaction(async (tx) => {
             const [newItem] = await tx
                 .insert(table as PgTableWithColumns<any>)
                 .values({
-                    ...entityData,
+                    ...insertData,
                     id,
                     createdAt: now,
                     updatedAt: now,
