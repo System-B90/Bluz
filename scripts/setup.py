@@ -430,13 +430,23 @@ def generate_env() -> None:
         message="Hive API user for background lesson assignment (HIVE_API_USERNAME):",
         default=existing_env.get("HIVE_API_USERNAME", "api"),
     ).execute()
+    # No default password on purpose: a guessable one baked into a real .env
+    # is worse than no activator at all, and an unset password simply leaves
+    # the activator switched off (see api-server/hive/service-client.ts).
     hive_api_password = (
         inquirer.secret(
-            message="Hive API user password (HIVE_API_PASSWORD, blank to keep existing):",
+            message=(
+                "Hive API user password (HIVE_API_PASSWORD, blank to keep "
+                "existing; leave unset to disable the lesson activator):"
+            ),
         ).execute()
         or existing_env.get("HIVE_API_PASSWORD", "")
-        or "Password1"
     )
+    if not hive_api_password:
+        print(
+            "  No Hive API password set — the lesson activator will stay off "
+            "and queues will not open automatically."
+        )
 
     register_sso = True
     if (

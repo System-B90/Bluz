@@ -111,6 +111,13 @@ function makeEvent(overrides: Partial<DbEventDocument> = {}): DbEventDocument {
 function makeHiveStub() {
     return {
         getClasses: vi.fn(async () => HIVE_CLASSES),
+        // Assigning a lesson only opens a queue through the lesson's rules, so
+        // the activator refuses to act on a rule-less lesson. The default stub
+        // is the healthy case: the event-time sync already wrote them.
+        getLessonRules: vi.fn(async () => [
+            { id: 1, queue: 700, student_groups: [11] },
+            { id: 2, queue: 800, student_groups: [22] },
+        ]),
         setLessonForClass: vi.fn(async () => undefined),
     } as any;
 }
@@ -247,6 +254,41 @@ describe("runLessonActivationTick", () => {
 
         expect(second.activated).toBe(1);
         expect(hive.setLessonForClass).toHaveBeenCalledExactlyOnceWith(11, 500);
+    });
+
+    it("refuses to assign a lesson that has no rules, and says why", async () => {
+        // The event-time sync is fire-and-forget: when it fails, the lesson
+        // exists with no rules. Assigning it would report success and open
+        // nothing at all — the failure nobody would otherwise notice.
+        fakeController.events.setAll([makeEvent()]);
+        const hive = makeHiveStub();
+        hive.getLessonRules.mockResolvedValue([]);
+
+        const result = await runLessonActivationTick(
+            NOW,
+            fakeController as any,
+            hive,
+        );
+
+        expect(result.activated).toBe(0);
+        expect(result.failed).toBe(1);
+        expect(result.errors[0]).toContain("no rules");
+        expect(hive.setLessonForClass).not.toHaveBeenCalled();
+    });
+
+    it("re-arms once the missing rules appear", async () => {
+        fakeController.events.setAll([makeEvent()]);
+        const hive = makeHiveStub();
+        hive.getLessonRules.mockResolvedValueOnce([]);
+
+        await runLessonActivationTick(NOW, fakeController as any, hive);
+        const second = await runLessonActivationTick(
+            new Date(NOW.getTime() + 30_000),
+            fakeController as any,
+            hive,
+        );
+
+        expect(second.activated).toBe(2);
     });
 
     it("reports a Hive outage instead of throwing", async () => {

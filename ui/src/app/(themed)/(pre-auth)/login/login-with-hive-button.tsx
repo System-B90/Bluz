@@ -38,16 +38,19 @@ export function LoginWithHive({
         setIsSigningIn(true);
         setErrorMessage(null);
 
+        let timer: ReturnType<typeof setTimeout>;
         const timeout = new Promise<never>((_, reject) =>
         {
-            setTimeout(() => reject(new Error("timeout")), SIGN_IN_TIMEOUT_MS);
+            timer = setTimeout(() => reject(new Error("timeout")), SIGN_IN_TIMEOUT_MS);
         });
 
-        void Promise.race([ signIn("hive", { callbackUrl }), timeout ]).catch(() =>
-        {
-            setIsSigningIn(false);
-            setErrorMessage("ההתחברות נכשלה. נסו שוב מאוחר יותר.");
-        });
+        void Promise.race([ signIn("hive", { callbackUrl }), timeout ])
+            .catch(() =>
+            {
+                setIsSigningIn(false);
+                setErrorMessage("ההתחברות נכשלה. נסו שוב מאוחר יותר.");
+            })
+            .finally(() => clearTimeout(timer));
     }, [ callbackUrl ]);
 
     const clickCallback = onClick ?? defaultClickCallback;

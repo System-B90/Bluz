@@ -294,13 +294,34 @@ async function ensureLesson(
 
     try {
         return (await client.createLesson(payload)).id;
-    } catch {
+    } catch (error) {
+        // Only a rejected *payload* is worth retrying under another name. A
+        // 401, a 500 or a dead socket would fail again identically, and
+        // swallowing them here would turn a Hive outage into a mystery
+        // duplicate-name error one round-trip later.
+        if (!isBadRequest(error)) throw error;
+
         const created = await client.createLesson({
             ...payload,
             name: `${event.name} (${event.id.slice(0, 8)})`,
         });
         return created.id;
     }
+}
+
+/**
+ * Whether a Hive client error came from a 400.
+ *
+ * `@system-b90/hive-core` puts only `statusText` in the message — no status
+ * code and no response body — so this matches on that text. It is coarse by
+ * necessity: it stays true for every 400 regardless of which field Hive
+ * objected to, but 401/500/network failures carry their own distinct
+ * messages and are correctly excluded.
+ */
+function isBadRequest(error: unknown): boolean {
+    return (
+        error instanceof Error && error.message.includes("Bad Request")
+    );
 }
 
 /** Deletes the event's lesson, but only if Bluz created it for this event. */

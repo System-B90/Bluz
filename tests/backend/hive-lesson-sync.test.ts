@@ -310,8 +310,12 @@ describe("reconcileEventLesson", () => {
 
     it("falls back to a suffixed name when the name is taken", async () => {
         const hive = makeHiveStub([]);
+        // hive-core surfaces only the statusText, so a rejected payload looks
+        // exactly like this and nothing more specific is available.
         hive.createLesson
-            .mockRejectedValueOnce(new Error("Lesson name must be unique"))
+            .mockRejectedValueOnce(
+                new Error("פעולה מול הייב נכשלה: Bad Request"),
+            )
             .mockResolvedValueOnce({ id: 901 } as Lesson);
 
         const event = makeEvent();
@@ -326,6 +330,20 @@ describe("reconcileEventLesson", () => {
         expect(hive.createLesson.mock.calls[1][0].name).toBe(
             `${event.name} (${event.id.slice(0, 8)})`,
         );
+    });
+
+    it("does not retry under another name when Hive is simply down", async () => {
+        // A 401/500/socket error would fail identically on the retry; masking
+        // it as a name clash turns an outage into a confusing second failure.
+        const hive = makeHiveStub([]);
+        hive.createLesson.mockRejectedValue(
+            new Error("שגיאה בשרת הייב לאחר 3 ניסיונות: Internal Server Error"),
+        );
+
+        await expect(
+            reconcileEventLesson(hive, makeEvent(), "upsert", fakeController as any),
+        ).rejects.toThrow("Internal Server Error");
+        expect(hive.createLesson).toHaveBeenCalledTimes(1);
     });
 
     it("deletes its lesson when the event is deleted", async () => {

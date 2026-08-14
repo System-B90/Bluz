@@ -48,6 +48,11 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
     const moduleId = event.hiveModule ?? null;
     const applies = Boolean(event.type && eventHasSubject(event.type)) && !event.fake;
     const courseIds = useMemo(() => event.courses ?? [], [event.courses]);
+    // Declared above the `applies` early return: hooks cannot be conditional.
+    const classIdByName = useMemo(
+        () => new Map(hiveClasses.map((c) => [c.name, c.id])),
+        [hiveClasses],
+    );
 
     useEffect(() => {
         if (!applies || !moduleId) return;
@@ -89,7 +94,6 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
     // No entry yet for the chosen module ⇒ its queues are still in flight.
     const loading = Boolean(moduleId) && queuesByModule[moduleId!] === undefined;
     const queues = (moduleId && queuesByModule[moduleId]) || [];
-    const classIdByName = new Map(hiveClasses.map((c) => [c.name, c.id]));
     const mapping = event.hiveQueues ?? {};
     const mappedCount = courseIds.filter((id) => mapping[id]).length;
     const lesson = event.hiveLesson ? getLesson(event.hiveLesson) : undefined;

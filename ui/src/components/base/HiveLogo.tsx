@@ -32,10 +32,15 @@ export type HiveLogoProps =
  * The server-rendered <img> starts loading before React hydrates, so a fast
  * failure (e.g. a 503) fires and finishes before hydration attaches the
  * onError listener to that same DOM node — the event is missed entirely,
- * and the browser never refires it. A HEAD request in an effect sidesteps
+ * and the browser never refires it. A second probe in an effect sidesteps
  * that race: it starts fresh after mount, independent of the <img>'s own
  * (already-lost) load lifecycle. onError stays as a fallback for a failure
  * that happens after mount instead.
+ *
+ * The probe is an Image, not a fetch: Hive serves /static/ without any
+ * Access-Control-Allow-Origin, so a cross-origin fetch is rejected by the
+ * browser whether or not the icon exists — which would fall back to the
+ * generic logo on every deploy. Image loads are not subject to CORS.
  */
 function RuntimeHiveLogo({ size, className }: Omit<HiveLogoProps, "color" | "generic">)
 {
@@ -46,21 +51,15 @@ function RuntimeHiveLogo({ size, className }: Omit<HiveLogoProps, "color" | "gen
     {
         let cancelled = false;
 
-        fetch(url, { method: "HEAD" })
-            .then((res) =>
+        const probe = new Image();
+        probe.onerror = () =>
+        {
+            if (!cancelled)
             {
-                if (!cancelled && !res.ok)
-                {
-                    setFailed(true);
-                }
-            })
-            .catch(() =>
-            {
-                if (!cancelled)
-                {
-                    setFailed(true);
-                }
-            });
+                setFailed(true);
+            }
+        };
+        probe.src = url;
 
         return () => { cancelled = true; };
     }, [ url ]);

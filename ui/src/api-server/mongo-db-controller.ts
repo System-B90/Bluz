@@ -204,6 +204,13 @@ function ensureIndexesInBackground(controller: DatabaseController): void {
             { eventId: 1, hiveClassId: 1, occurrenceStart: 1 },
             { unique: true },
         ),
+        // A row only has to outlive the occurrence it guards, which the
+        // activator caps at ten minutes. A week is a generous audit trail and
+        // keeps the ledger from growing without bound.
+        controller.hiveLessonActivations.createIndex(
+            { activatedAt: 1 },
+            { expireAfterSeconds: 7 * 24 * 60 * 60 },
+        ),
     ]).catch((error) => {
         console.error(
             `Failed to ensure Mongo indexes on "${controller.dbName}"`,

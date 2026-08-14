@@ -139,6 +139,24 @@ export async function runLessonActivationTick(
             );
             const occurrenceStart = new Date(event.startTime).toISOString();
 
+            // Assigning a lesson only opens a queue through the lesson's
+            // rules, and those are written by the (fire-and-forget) event-time
+            // sync. If that sync failed, assigning here would look like a
+            // success and open nothing — the one failure mode nobody would
+            // notice. Say so instead, and leave the claim unmade so a later
+            // tick can still act once the rules land.
+            const rules = await hive
+                .getLessonRules(event.hiveLesson!)
+                .catch(() => null);
+            if (rules === null || rules.length === 0) {
+                result.failed += 1;
+                result.errors.push(
+                    `event ${event.id}: lesson ${event.hiveLesson} has no rules — ` +
+                        "the event-time Hive sync did not complete, so no queue would open",
+                );
+                continue;
+            }
+
             for (const hiveClassId of desired.keys()) {
                 const claimed = await claimActivation(
                     db,
@@ -167,7 +185,17 @@ export async function runLessonActivationTick(
                             hiveClassId,
                             occurrenceStart,
                         })
-                        .catch(() => undefined);
+                        .catch((releaseError) => {
+                            // Both the push and its compensation failed: the
+                            // ledger now claims an opening that never
+                            // happened, and no later tick will retry it. Only
+                            // a human can unstick that, so make it loud.
+                            result.errors.push(
+                                `event ${event.id} → class ${hiveClassId}: ` +
+                                    "activation failed AND its claim could not be released, " +
+                                    `so it will not retry: ${String(releaseError)}`,
+                            );
+                        });
                     result.failed += 1;
                     result.errors.push(
                         `event ${event.id} → class ${hiveClassId}: ${String(error)}`,
