@@ -46,10 +46,26 @@ export function PushOfflineUpdatesDialog() {
     const [collisionStates, setCollisionStates] = useState<CollisionStates>({});
     const [selectedIds, setSelectedIds] = useState<Array<EventId>>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    // True while the collision check for a freshly-opened dialog is in flight.
-    // Rendering the dialog open before that resolves flashes it on screen even
-    // when there is nothing to sync and it is about to close itself (#386).
-    const [checking, setChecking] = useState<boolean>(false);
+
+    // Clearing the previous exit's results happens during render, not in an
+    // effect, and the dialog opens off `collisionStates` rather than off a flag
+    // an effect has to set. Both exist for the same reason: an effect runs only
+    // after a frame has already been committed with `open`, and MUI's modal
+    // manager marks the app container `aria-hidden` on that frame. If `open`
+    // flips back in the very next commit, the manager's restore path — which
+    // hangs off the exit transition — never runs, and the entire app stays out
+    // of the accessibility tree while looking perfectly normal on screen.
+    // Gating on results means the dialog is simply never committed open with
+    // nothing to show, so that pairing can't happen (#386).
+    const [wasPushDialogOpen, setWasPushDialogOpen] =
+        useState<boolean>(pushDialogOpen);
+    if (pushDialogOpen !== wasPushDialogOpen) {
+        setWasPushDialogOpen(pushDialogOpen);
+        if (pushDialogOpen) {
+            setCollisionStates({});
+            setSelectedIds([]);
+        }
+    }
 
     // Cancel: keep the edits and stay in offline mode
     const handleCancel = useCallback(() => {
@@ -262,11 +278,6 @@ export function PushOfflineUpdatesDialog() {
         if (!pushDialogOpen) {
             return;
         }
-        // Marking the check as in-flight is the whole point of this effect —
-        // the dialog must stay closed until it resolves — so the cascading
-        // render the rule warns about is the intended behaviour here.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setChecking(true);
         checkRef.current()
             .then((states) => {
                 const keys = Object.keys(states);
@@ -291,8 +302,7 @@ export function PushOfflineUpdatesDialog() {
                     `טעינת המצב העדכני בשרת נכשלה!`,
                     error,
                 ),
-            )
-            .finally(() => setChecking(false));
+            );
         // Only re-run when the dialog opens — not on every localEvents change.
         // checkRef holds the latest checkEventCollisionStates without causing re-fires.
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -309,10 +319,13 @@ export function PushOfflineUpdatesDialog() {
         [collisionStates],
     );
 
-    // Held closed until the collision check resolves, so a dialog that is about
-    // to close itself for having nothing to sync never flashes on screen (#386).
-    const dialogOpen = pushDialogOpen && !checking;
     const hasChanges = Object.keys(collisionStates).length > 0;
+    // Opens only once the check has produced something to sync. When it finds
+    // nothing the effect closes `pushDialogOpen` and this never became true, so
+    // the dialog neither flashes nor engages the modal manager at all (#386).
+    // The empty-state body below is still reachable — it renders through the
+    // exit transition after a revert empties `collisionStates`.
+    const dialogOpen = pushDialogOpen && hasChanges;
     const submitLabel = getSubmitLabel(collisionStates, selectedIds);
 
     return (
