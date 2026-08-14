@@ -78,6 +78,9 @@ export function IterationSettings()
             const saved = await apiPatchIteration(iteration.id, {
                 label: values.label.trim(),
                 hiveUrl: values.hiveUrl.trim() || undefined,
+                startDate: values.startDate && values.startDate.isValid()
+                    ? values.startDate.toDate()
+                    : undefined,
                 endDate: values.endDate && values.endDate.isValid()
                     ? values.endDate.toDate()
                     : null,

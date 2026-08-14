@@ -122,9 +122,6 @@ export function IterationFormCard({
                 />
                 <Box display="flex" gap={ 2 }>
                     <DatePicker
-                        // Start date is captured at creation: it anchors the
-                        // iteration's calendar and cannot move afterwards.
-                        disabled={ !isCreating }
                         format="DD/MM/YYYY"
                         label="תאריך התחלה"
                         onChange={ (val) => setValue("startDate", val) }
