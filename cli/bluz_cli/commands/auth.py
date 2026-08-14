@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import random
 import string
+import threading
 import time
 import urllib.parse
 import webbrowser
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 import tqdm
@@ -27,12 +28,23 @@ from bluz_cli.output import success, warn
 app = typer.Typer(help="Authentication and CLI configuration.", no_args_is_help=True)
 
 
-class AuthHTTPServer(HTTPServer):
-    """Simple HTTP server with a token attribute for CLI callback."""
+class AuthHTTPServer(ThreadingHTTPServer):
+    """
+    Callback HTTP server for the CLI login handshake.
+
+    Threading matters here: Chrome routinely opens speculative pre-connect
+    sockets that send no bytes. A single-threaded server blocks inside the
+    handler reading from such a socket and never accepts the real callback
+    connection, which is what made `bluz login` sit out the full 60s timeout
+    even after the browser reported success.
+    """
+
+    daemon_threads = True
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.token: str | None = None
+        self.token_received = threading.Event()
 
 
 def _run_callback_server(url: str) -> str | None:
@@ -47,9 +59,28 @@ def _run_callback_server(url: str) -> str | None:
     code = f"{part1}-{part2}"
 
     class CallbackHandler(BaseHTTPRequestHandler):
+        # Bound the read on an idle connection so a stray socket cannot hold a
+        # worker thread (and the login) open indefinitely.
+        timeout = 5
+
         def log_message(self, format: str, *args: Any) -> None:
             # Suppress normal HTTP request logging
             pass
+
+        def _send_cors_headers(self) -> None:
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "*")
+            # Chrome's Private Network Access checks: an HTTPS page calling
+            # 127.0.0.1 is a public -> private request and is blocked outright
+            # unless the local server opts in with these headers.
+            self.send_header("Access-Control-Allow-Private-Network", "true")
+            self.send_header("Access-Control-Max-Age", "600")
+
+        def do_OPTIONS(self) -> None:
+            self.send_response(204)
+            self._send_cors_headers()
+            self.end_headers()
 
         def do_GET(self) -> None:
             parsed = urllib.parse.urlparse(self.path)
@@ -58,12 +89,14 @@ def _run_callback_server(url: str) -> str | None:
             if token_list:
                 self.server.token = token_list[0]  # type: ignore[attr-defined]
                 self.send_response(200)
-                self.send_header("Access-Control-Allow-Origin", "*")
+                self._send_cors_headers()
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
                 self.wfile.write(b'{"status":"success"}')
+                self.server.token_received.set()  # type: ignore[attr-defined]
             else:
                 self.send_response(400)
+                self._send_cors_headers()
                 self.end_headers()
                 self.wfile.write(b"No token found.")
 
@@ -82,8 +115,6 @@ def _run_callback_server(url: str) -> str | None:
         except OSError as exc:
             typer.echo(f"Could not start local server for auto-login: {exc}")
             return None
-    server.timeout = 0.5
-
     login_url = f"{url.rstrip('/')}/cli-auth?port={port}&code={code}"
 
     typer.echo("\n==================================================")
@@ -97,22 +128,36 @@ def _run_callback_server(url: str) -> str | None:
     start_time = time.time()
     last_elapsed = 0.0
 
-    with tqdm.tqdm(
-        total=timeout,
-        desc="Waiting for authentication",
-        unit="s",
-        bar_format="{desc}: |{bar}| {n:.0f}/{total_fmt}s",
-    ) as pbar:
-        while not server.token and (time.time() - start_time) < timeout:
-            server.handle_request()
-            elapsed = time.time() - start_time
-            if elapsed - last_elapsed >= 1.0:
-                pbar.update(int(elapsed - last_elapsed))
-                last_elapsed = elapsed
+    serve_thread = threading.Thread(
+        target=server.serve_forever, kwargs={"poll_interval": 0.1}
+    )
+    serve_thread.daemon = True
+    serve_thread.start()
 
-    token = server.token
-    server.server_close()
-    return token
+    try:
+        with tqdm.tqdm(
+            total=timeout,
+            desc="Waiting for authentication",
+            unit="s",
+            bar_format="{desc}: |{bar}| {n:.0f}/{total_fmt}s",
+        ) as pbar:
+            # Wait in short slices so the bar keeps moving, but return the
+            # instant the callback lands instead of running out the clock.
+            while not server.token_received.is_set():
+                elapsed = time.time() - start_time
+                if elapsed >= timeout:
+                    break
+                server.token_received.wait(min(0.2, timeout - elapsed))
+                elapsed = time.time() - start_time
+                if elapsed - last_elapsed >= 1.0:
+                    pbar.update(int(elapsed - last_elapsed))
+                    last_elapsed = elapsed
+    finally:
+        server.shutdown()
+        serve_thread.join(timeout=5)
+        server.server_close()
+
+    return server.token
 
 
 @app.command()
