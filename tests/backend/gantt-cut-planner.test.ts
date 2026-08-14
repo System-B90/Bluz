@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
+import { venueTime } from "./helpers/venue-time";
 import {
     CutPlanDayInput,
     CutPlanEventInput,
@@ -13,15 +13,6 @@ import { EventRecurrence, GanttDayIndex } from "@/api-shared/types/gantt/models"
 
 // Two 7-day weeks anchored on a Sunday, dayIds `w{week}d{dayIndex}`.
 const START_DATE = "2024-01-07"; // Sunday
-
-/**
- * A venue wall-clock time (`YYYY-MM-DDTHH:mm`) as an ISO instant. The planner
- * anchors every occurrence to `APP_TIMEZONE`, so assertions must too — building
- * the expectation with `new Date(...)` would silently re-introduce the machine
- * timezone the planner was fixed to ignore (#415).
- */
-const venueTime = (wallClock: string): string =>
-    dayjs.tz(`${wallClock}:00`, APP_TIMEZONE).toISOString();
 
 function buildWeeks(weekCount: number): {
     days: Record<string, CutPlanDayInput>;

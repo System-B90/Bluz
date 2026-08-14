@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
+import { venueHhmm } from "./helpers/venue-time";
 import {
     CutPlanDayInput,
     CutPlanEventInput,
@@ -72,9 +72,7 @@ function occurrencesOf(
     return plan.ok ? plan.occurrences : [];
 }
 
-// Read the clock back in the venue timezone, not the machine's — the planner
-// anchors occurrences to `APP_TIMEZONE` regardless of the host `TZ` (#415).
-const hhmm = (d: Date) => dayjs(d).tz(APP_TIMEZONE).format("HH:mm");
+const hhmm = venueHhmm;
 
 describe("planCut — date anchoring", () => {
     it("extrapolates dates across weeks: week N, dayIndex D → start + 7N + D days", () => {

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { venueDate } from "./helpers/venue-time";
+
 /**
  * Integration-level tests for the execution read path (#120): real planner +
  * real join, mocked DB boundaries. Verifies the endpoint semantics — not-cut
@@ -123,14 +125,14 @@ function makeCurriculum(events: Array<ApiModuleEvent>): ApiCurriculum {
     } as unknown as ApiCurriculum;
 }
 
-/** A schedule event as the cut would have created it (08:00 + 60m local). */
+/** A schedule event as the cut would have created it (08:00 + 60m venue time). */
 function cutDoc(over: Partial<DbEventDocument> = {}): DbEventDocument {
     const date = (over.ganttOccurrenceDate as string) ?? "2024-01-07";
     return {
         id: `sched-${date}`,
         name: "e1",
-        startTime: new Date(`${date}T08:00:00`),
-        endTime: new Date(`${date}T09:00:00`),
+        startTime: venueDate(`${date}T08:00`),
+        endTime: venueDate(`${date}T09:00`),
         instructors: [],
         ganttEventId: "e1",
         ganttOccurrenceDate: date,
@@ -192,8 +194,8 @@ describe("getCurriculumExecution — drift detection", () => {
     it("marks a moved schedule event as drifted", async () => {
         findToArray.mockResolvedValue([
             cutDoc({
-                startTime: new Date("2024-01-07T13:00:00"),
-                endTime: new Date("2024-01-07T14:00:00"),
+                startTime: venueDate("2024-01-07T13:00"),
+                endTime: venueDate("2024-01-07T14:00"),
             }),
         ]);
         const result = await getCurriculumExecution("c1");
@@ -261,8 +263,8 @@ describe("getCurriculumExecution — plan divergence after the cut", () => {
             cutDoc({
                 id: "sched-e2",
                 ganttEventId: "e2",
-                startTime: new Date("2024-01-07T09:00:00"),
-                endTime: new Date("2024-01-07T10:00:00"),
+                startTime: venueDate("2024-01-07T09:00"),
+                endTime: venueDate("2024-01-07T10:00"),
             }),
         ]);
 
