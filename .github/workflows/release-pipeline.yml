@@ -143,10 +143,15 @@ jobs:
             # this job's builder can collide with — and get torn down by — a
             # concurrent build-sessions/build-proxy job's cleanup step,
             # killing this build mid-flight. See incident on v0.5.0 release.
+            # The name is per-job but NOT per-run, and cleanup is off, so the
+            # buildkit container stays warm between runs: a cold boot on this
+            # contended box can overrun buildx's readiness window and fail with
+            # "dial unix /run/buildkit/buildkitd.sock: no such file".
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v4
               with:
-                  name: builder-ui-${{ github.run_id }}
+                  name: builder-ui
+                  cleanup: false
 
             - name: Log in to GitHub Container Registry
               if: startsWith(github.ref, 'refs/tags/v')
@@ -197,7 +202,8 @@ jobs:
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v4
               with:
-                  name: builder-sessions-${{ github.run_id }}
+                  name: builder-sessions
+                  cleanup: false
 
             - name: Log in to GitHub Container Registry
               if: startsWith(github.ref, 'refs/tags/v')
@@ -248,7 +254,8 @@ jobs:
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v4
               with:
-                  name: builder-proxy-${{ github.run_id }}
+                  name: builder-proxy
+                  cleanup: false
 
             - name: Log in to GitHub Container Registry
               if: startsWith(github.ref, 'refs/tags/v')

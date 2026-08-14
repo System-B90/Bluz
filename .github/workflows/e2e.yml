@@ -53,8 +53,33 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v7
 
+            # An unnamed builder gets a fresh random name per run, and so a
+            # fresh buildkit container — image pull plus container boot — every
+            # single time. On the self-hosted
+            # box that boot has to share 8 vCPUs with the release pipeline's
+            # lint job and 14 Hive containers, and when the inner dockerd is
+            # starved the boot overruns buildx's readiness window:
+            #   failed to list workers: ... dial unix
+            #   /run/buildkit/buildkitd.sock: no such file or directory
+            # A stable name plus cleanup: false keeps one warm buildkit around,
+            # so subsequent runs attach to it instead of racing a cold boot.
+            # (It also kills the "failed to remove one or more builders"
+            # annotation the teardown step used to emit.) The first run after a
+            # box reboot still boots cold, hence the retry below.
             - name: Set up Docker Buildx
+              id: buildx
+              continue-on-error: true
               uses: docker/setup-buildx-action@v4
+              with:
+                  name: bluz-e2e-builder
+                  cleanup: false
+
+            - name: Set up Docker Buildx (retry)
+              if: steps.buildx.outcome == 'failure'
+              uses: docker/setup-buildx-action@v4
+              with:
+                  name: bluz-e2e-builder
+                  cleanup: false
 
             # Build once here instead of once per shard (#e2e-perf). Tags match
             # exactly what deploy/docker-compose.yml resolves to with
