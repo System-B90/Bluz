@@ -1,5 +1,4 @@
-import dayjs from "dayjs";
-
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import {
     getRecurrenceOccurrenceDayIds,
     isRecurrenceSatisfied,
@@ -102,13 +101,33 @@ function eventDuration(event: CutPlanEventInput): number {
     return event.allocatedDuration || event.minimumDuration;
 }
 
-/** That day at a given minute-of-day offset, truncated to the minute. */
-function minutesOfDay(date: dayjs.Dayjs, minutes: number): dayjs.Dayjs {
-    return date
-        .hour(Math.floor(minutes / 60))
-        .minute(minutes % 60)
-        .second(0)
-        .millisecond(0);
+const MINUTES_PER_DAY = 24 * 60;
+
+const pad2 = (value: number): string => String(value).padStart(2, "0");
+
+/** `date` (`YYYY-MM-DD`) shifted by whole days, timezone-free. */
+function shiftDate(date: string, days: number): string {
+    return dayjs.utc(date).add(days, "day").format("YYYY-MM-DD");
+}
+
+/**
+ * That calendar day at a given minute-of-day offset, as an instant anchored in
+ * the venue timezone (#415).
+ *
+ * The day is carried around as a bare `YYYY-MM-DD` string rather than a Dayjs
+ * object on purpose: building the wall clock from scratch through `dayjs.tz`
+ * keeps every occurrence DST-correct, whereas `.hour()/.minute()` on a
+ * tz-anchored object reuses the offset that object was created with.
+ */
+function minutesOfDay(date: string, minutes: number): dayjs.Dayjs {
+    // A meal window can end past midnight, so normalize the overflow onto the
+    // following calendar day instead of emitting an out-of-range hour.
+    const dayOffset = Math.floor(minutes / MINUTES_PER_DAY);
+    const withinDay = minutes - dayOffset * MINUTES_PER_DAY;
+    return dayjs.tz(
+        `${shiftDate(date, dayOffset)}T${pad2(Math.floor(withinDay / 60))}:${pad2(withinDay % 60)}:00`,
+        APP_TIMEZONE,
+    );
 }
 
 export type CutPlanOptions = {
@@ -189,13 +208,13 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     }
 
     // Real date for a day: curriculum start (anchoring week 1's Sunday) plus
-    // the week's ordinal offset and the day's weekday offset.
-    const dayDate = (dayId: string): dayjs.Dayjs => {
+    // the week's ordinal offset and the day's weekday offset. Kept as a bare
+    // `YYYY-MM-DD` string — the clock time is attached later, in the venue
+    // timezone, by `minutesOfDay` (#415).
+    const dayDate = (dayId: string): string => {
         const weekIdx = weekIndexOfDay(dayId);
         const dow = dayIndexOf(dayId) ?? 0;
-        return dayjs(input.startDate as string)
-            .startOf("day")
-            .add(weekIdx * 7 + dow, "day");
+        return shiftDate(input.startDate as string, weekIdx * 7 + dow);
     };
 
     const parseTime = (time: string): [number, number] => {
@@ -287,7 +306,7 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     for (const [ dayId, slots ] of slotsByDay) {
         const date = dayDate(dayId);
         const [ startHour, startMinute ] = startTimeForDay(dayId);
-        let cursor = date.hour(startHour).minute(startMinute).second(0).millisecond(0);
+        let cursor = minutesOfDay(date, startHour * 60 + startMinute);
 
         // Only block out windows for meal events actually present on this
         // day (a recurrence exception may skip a meal event for one day) —
@@ -336,9 +355,9 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
 
                 // A cursor sitting inside a window is pushed out by the layout,
                 // so the first piece — not the cursor — is the real start.
-                startTime = dayjs(pieces[ 0 ].start);
+                startTime = dayjs(pieces[ 0 ].start).tz(APP_TIMEZONE);
                 endTime = startTime.add(duration, "minute");
-                cursor = dayjs(layoutEnd(pieces));
+                cursor = dayjs(layoutEnd(pieces)).tz(APP_TIMEZONE);
             } else {
                 // Bump the cursor past any meal window it would otherwise overlap.
                 for (const window of mealWindows) {
@@ -356,7 +375,7 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
 
             occurrences.push({
                 ganttEventId: event.id,
-                occurrenceDate: date.format("YYYY-MM-DD"),
+                occurrenceDate: date,
                 startTime: startTime.toDate(),
                 endTime: endTime.toDate(),
                 isRecurrenceEcho: slot.isRecurrenceEcho,
