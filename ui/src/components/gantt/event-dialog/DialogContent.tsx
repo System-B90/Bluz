@@ -11,11 +11,12 @@ import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { EventRecurrence, GanttEvent, GanttEventId, GanttModuleId, GanttSyllabus } from "@/api-shared/types/gantt/models";
+import { EventRecurrence, GanttCurriculumId, GanttEvent, GanttEventId, GanttModuleId, GanttSyllabus } from "@/api-shared/types/gantt/models";
 import { CollapsibleSection } from "@/components/gantt/event-dialog/CollapsibleSection";
 import { EventConstraintsView } from "@/components/gantt/event-dialog/constraints/EventConstraintsView";
 import { EventDetailsForm } from "@/components/gantt/event-dialog/DetailsForm";
 import { EventHiveLinkageFields } from "@/components/gantt/event-dialog/EventHiveLinkageFields";
+import { EventMappingField } from "@/components/gantt/event-dialog/EventMappingField";
 import { EventRecurrenceField, RECURRENCE_LABELS } from "@/components/gantt/event-dialog/EventRecurrenceField";
 import { EventRoomRequirementsField } from "@/components/gantt/event-dialog/EventRoomRequirementsField";
 import { ExecutionComparisonSection } from "@/components/gantt/event-dialog/ExecutionComparisonSection";
@@ -27,6 +28,7 @@ export type EventDialogContentProps = {
     event: GanttEvent | undefined;
     eventId: GanttEventId;
     moduleId: GanttModuleId;
+    curriculumId: GanttCurriculumId | null;
     syllabus: GanttSyllabus | null | undefined;
     isContentReady: boolean;
 };
@@ -48,6 +50,7 @@ export function EventDialogContent({
     event,
     eventId,
     moduleId,
+    curriculumId,
     syllabus,
     isContentReady,
 }: EventDialogContentProps)
@@ -167,6 +170,13 @@ export function EventDialogContent({
                                         sx={ { flex: 1 } }
                                     />
                                 </Stack>
+                                { curriculumId && (
+                                    <EventMappingField
+                                        curriculumId={ curriculumId }
+                                        eventId={ eventId }
+                                        moduleId={ moduleId }
+                                    />
+                                ) }
                                 <SystemRequirementsField
                                     onChange={ (reqs) =>
                                         commit({ systemRequirements: reqs })

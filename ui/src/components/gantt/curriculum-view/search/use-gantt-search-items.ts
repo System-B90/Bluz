@@ -5,6 +5,7 @@ import {
     GanttModuleId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 export type GanttSearchItemType = "event" | "module" | "syllabus";
@@ -20,6 +21,8 @@ export type GanttSearchItem = {
     syllabusId: GanttSyllabusId;
     moduleId?: GanttModuleId;
     eventId?: GanttEventId;
+    /** Responsible instructor's display name, for events — also matched against. */
+    orchestratorName?: string;
 };
 
 /**
@@ -30,6 +33,7 @@ export type GanttSearchItem = {
  */
 export function useGanttSearchItems(): Array<GanttSearchItem> {
     const state = useCurriculumState();
+    const { getInstructor } = useHiveUsers();
 
     return useMemo(() => {
         const items: Array<GanttSearchItem> = [];
@@ -60,6 +64,11 @@ export function useGanttSearchItems(): Array<GanttSearchItem> {
                     const event = state.events[eventId];
                     if (!event) continue;
 
+                    const orchestrator =
+                        event.orchestratorId != null
+                            ? getInstructor(event.orchestratorId)
+                            : undefined;
+
                     items.push({
                         id: event.id,
                         type: "event",
@@ -68,11 +77,12 @@ export function useGanttSearchItems(): Array<GanttSearchItem> {
                         syllabusId: syllabus.id,
                         moduleId: ganttModule.id,
                         eventId: event.id,
+                        orchestratorName: orchestrator?.display_name,
                     });
                 }
             }
         }
 
         return items;
-    }, [state]);
+    }, [state, getInstructor]);
 }

@@ -47,7 +47,12 @@ export function GanttSearchField()
         {
             const query = state.inputValue.trim();
             if (!query) return options;
-            return options.filter((option) => fuzzyScore(query, option.title) > 0);
+            return options.filter(
+                (option) =>
+                    fuzzyScore(query, option.title) > 0 ||
+                    (!!option.orchestratorName &&
+                        fuzzyScore(query, option.orchestratorName) > 0),
+            );
         },
         [],
     );
@@ -96,7 +101,7 @@ export function GanttSearchField()
                         { ...params }
                         onBlur={ () => setFocused(false) }
                         onFocus={ () => setFocused(true) }
-                        placeholder="חיפוש סילבוס, מערך או מופע..."
+                        placeholder="חיפוש סילבוס, מערך, מופע או אחראי..."
                         size="small"
                         slotProps={ {
                             input: {
@@ -168,6 +173,16 @@ export function GanttSearchField()
                                             variant="caption"
                                         >
                                             { parentPath }
+                                        </Typography>
+                                    ) }
+                                    { !!option.orchestratorName && (
+                                        <Typography
+                                            color="text.disabled"
+                                            display="block"
+                                            noWrap
+                                            variant="caption"
+                                        >
+                                            אחראי: { option.orchestratorName }
                                         </Typography>
                                     ) }
                                 </Box>

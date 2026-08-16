@@ -21,6 +21,7 @@ import
 } from "@/api-shared/types/gantt/models";
 import { EventDialogContent } from "@/components/gantt/event-dialog/DialogContent";
 import { EventDialogHeader } from "@/components/gantt/event-dialog/DialogHeader";
+import { MoveEventDialog } from "@/components/gantt/module-dialog/MoveEventDialog";
 import { GanttConstraintProvider } from "@/components/gantt/state/constraints/Provider";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useEvent } from "@/components/gantt/state/hooks/UseEvent";
@@ -47,6 +48,7 @@ function EventDialogInner({
     const { openModuleDialog } = useCurriculumProviderActions();
 
     const [ isContentReady, setIsContentReady ] = useState(false);
+    const [ moveDialogOpen, setMoveDialogOpen ] = useState(false);
     const event = useEvent(eventId ?? "");
     const state = useCurriculumState();
     const ganttModule = moduleId ? state.modules[ moduleId ] : null;
@@ -101,11 +103,18 @@ function EventDialogInner({
                 syllabusTitle={ syllabus?.title }
             />
 
-            <EventDialogContent event={ event } eventId={ eventId } isContentReady={ isContentReady } moduleId={ moduleId } syllabus={ syllabus } />
+            <EventDialogContent curriculumId={ syllabus?.curriculumId ?? null } event={ event } eventId={ eventId } isContentReady={ isContentReady } moduleId={ moduleId } syllabus={ syllabus } />
 
             <DialogActions>
                 <Button color="error" disabled={ isActionLoading } onClick={ handleDelete }>
                     מחיקה
+                </Button>
+                <Button
+                    disabled={ isActionLoading }
+                    onClick={ () => setMoveDialogOpen(true) }
+                    sx={ { marginInlineEnd: "auto" } }
+                >
+                    העבר למערך אחר
                 </Button>
                 <Button
                     color="primary"
@@ -116,6 +125,12 @@ function EventDialogInner({
                     סגירה
                 </Button>
             </DialogActions>
+            <MoveEventDialog
+                currentModuleId={ moduleId }
+                eventId={ eventId }
+                onClose={ () => setMoveDialogOpen(false) }
+                open={ moveDialogOpen }
+            />
         </Dialog>
     );
 }

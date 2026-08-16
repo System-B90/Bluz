@@ -37,6 +37,7 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
     const {
         dayCellWidth,
         scheduledMinutesByDay,
+        setWeeklyView,
         setZoomedWeekId,
         singleWeekDayZoom,
         startDate,
@@ -45,7 +46,9 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
         weekIndexOffset,
         zoomedWeekId,
     } = useGanttContext();
-    const canZoom = !weeklyView;
+    // Clicking a week header always zooms into that week's day view (#445) —
+    // including from the compact weekly view, which this used to disallow.
+    const canZoom = true;
 
     return (
         <TableHead>
@@ -100,12 +103,20 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                             key={week.id}
                             onClick={
                                 canZoom
-                                    ? () =>
+                                    ? () => {
+                                        if (weeklyView) {
+                                            // Already in weekly view: always zoom
+                                            // into this week's day view (#445).
+                                            setWeeklyView(false);
+                                            setZoomedWeekId(week.id);
+                                            return;
+                                        }
                                         setZoomedWeekId(
                                             zoomedWeekId === week.id
                                                 ? null
                                                 : week.id,
-                                        )
+                                        );
+                                    }
                                     : undefined
                             }
                             sx={{

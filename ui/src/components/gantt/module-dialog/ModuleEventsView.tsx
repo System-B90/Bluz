@@ -165,6 +165,9 @@ export function ModuleEventsView({
                                 </Typography>
                             </TableCell>
                             <TableCell>
+                                <Typography variant="h6">אחראי</Typography>
+                            </TableCell>
+                            <TableCell>
                                 <CreateModuleEventButton moduleId={moduleId} />
                             </TableCell>
                         </TableRow>

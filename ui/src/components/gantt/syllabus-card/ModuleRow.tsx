@@ -77,11 +77,13 @@ export function ModuleRow({
     return (
         <TableRow
             hover
+            onDoubleClick={editClickHandler}
             ref={setNodeRef}
             style={{
                 transform: CSS.Transform.toString(transform),
                 transition,
                 opacity: isDragging ? 0.4 : 1,
+                cursor: "pointer",
             }}
         >
             <TableCell sx={{ width: "1rem", pr: 0, cursor: "grab" }} {...attributes} {...listeners}>

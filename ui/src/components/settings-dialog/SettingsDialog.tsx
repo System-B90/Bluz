@@ -229,6 +229,19 @@ export function SettingsDialog({
                         </Typography>
                         <ThemeSelectorIcon />
                     </Box>
+
+                    { process.env.NEXT_PUBLIC_APP_VERSION && (
+                        <Typography
+                            sx={ {
+                                fontSize: "0.7rem",
+                                color: "text.disabled",
+                                textAlign: "center",
+                                pt: 0.5,
+                            } }
+                        >
+                            v{ process.env.NEXT_PUBLIC_APP_VERSION }
+                        </Typography>
+                    ) }
                 </Box>
 
                 {/* Content Pane */ }

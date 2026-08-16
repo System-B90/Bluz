@@ -39,6 +39,7 @@ export const useGanttView = (curriculumId: string) =>
     const {
         containerRef,
         weeklyView,
+        setWeeklyView,
         handleWeeklyViewChange,
         zoomedWeekId,
         setZoomedWeekId,
@@ -142,6 +143,7 @@ export const useGanttView = (curriculumId: string) =>
     const contextValue = useMemo(
         () => ({
             weeklyView,
+            setWeeklyView,
             relativeDaySizing,
             startDate: curriculum?.startDate ?? null,
             timelineWeeks,
@@ -175,6 +177,7 @@ export const useGanttView = (curriculumId: string) =>
         }),
         [
             weeklyView,
+            setWeeklyView,
             relativeDaySizing,
             curriculum?.startDate,
             timelineWeeks,
