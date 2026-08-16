@@ -5,6 +5,7 @@ import {
     SetStateAction,
     useCallback,
     useContext,
+    useMemo,
     useState,
 } from "react";
 
@@ -182,28 +183,51 @@ export const CalendarFiltersProvider = ({
         setHidePrayers(false);
     }, []);
 
+    // Memoized: a fresh object here re-renders every consumer of this
+    // context on each render of the provider, app-wide.
+    const filtersValue = useMemo(
+        () => ({
+            default: false,
+            filteredInstructors,
+            setFilteredInstructors,
+            filteredCourses,
+            setFilteredCourses,
+            showPAsFor,
+            setShowPAsFor,
+            filteredRoom,
+            setFilteredRoom,
+
+            hidePrayers,
+            setHidePrayers,
+            showMisconfigurations,
+            setShowMisconfigurations,
+
+            eventFilteredOpacity,
+            hasActiveFilters,
+            clearFilters,
+        }),
+        [
+            filteredInstructors,
+            setFilteredInstructors,
+            filteredCourses,
+            setFilteredCourses,
+            showPAsFor,
+            setShowPAsFor,
+            filteredRoom,
+            setFilteredRoom,
+            hidePrayers,
+            setHidePrayers,
+            showMisconfigurations,
+            setShowMisconfigurations,
+            eventFilteredOpacity,
+            hasActiveFilters,
+            clearFilters,
+        ],
+    );
+
     return (
         <CalendarFiltersContext.Provider
-            value={{
-                default: false,
-                filteredInstructors,
-                setFilteredInstructors,
-                filteredCourses,
-                setFilteredCourses,
-                showPAsFor,
-                setShowPAsFor,
-                filteredRoom,
-                setFilteredRoom,
-
-                hidePrayers,
-                setHidePrayers,
-                showMisconfigurations,
-                setShowMisconfigurations,
-
-                eventFilteredOpacity,
-                hasActiveFilters,
-                clearFilters,
-            }}
+            value={filtersValue}
         >
             {children}
         </CalendarFiltersContext.Provider>

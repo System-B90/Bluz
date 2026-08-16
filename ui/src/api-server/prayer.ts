@@ -1,5 +1,8 @@
+import { Dayjs } from "dayjs";
+
 import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
+import { ClientApiError } from "@/api-shared/errors";
 import { EventDataUpdateMessage } from "@/api-shared/types";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
@@ -12,6 +15,30 @@ import {
 } from "@/components/schedule/types/event";
 import { MessageTypes } from "@/settings";
 
+/**
+ * The configured clock time for one prayer, as a Date.
+ *
+ * Prayer times reach the server as whatever JSON carried them — an ISO string
+ * — not as the `Date | Dayjs` the settings type promises, so reading
+ * `.getHours()` off the raw value throws. Normalize once, here.
+ */
+function prayerTimeOf(
+    config: PrayerSettings,
+    prayerType: keyof PrayerSettings,
+): Date {
+    const value = config[prayerType] as Date | Dayjs | number | string;
+    const parsed =
+        value instanceof Date
+            ? value
+            : typeof value === "object" && value !== null && "toDate" in value
+                ? value.toDate()
+                : new Date(value);
+    if (isNaN(parsed.getTime())) {
+        throw new ClientApiError(`שעת תפילה לא תקינה עבור ${prayerType}`);
+    }
+    return parsed;
+}
+
 async function updatePrayerEvent({
     day,
     prayerEvent,
@@ -23,13 +50,17 @@ async function updatePrayerEvent({
 }): Promise<PrayerEvent> {
     const updatedEvent: PrayerEvent = { ...prayerEvent } as PrayerEvent;
 
+    const prayerTime = prayerTimeOf(
+        newConfig,
+        updatedEvent.prayerType as keyof PrayerSettings,
+    );
     const startTime = new Date(
         day.getFullYear(),
         day.getMonth(),
         day.getDate(),
-        (newConfig[updatedEvent.prayerType] as Date).getHours(),
-        (newConfig[updatedEvent.prayerType] as Date).getMinutes(),
-        (newConfig[updatedEvent.prayerType] as Date).getSeconds(),
+        prayerTime.getHours(),
+        prayerTime.getMinutes(),
+        prayerTime.getSeconds(),
     );
     const endTime = new Date(startTime.getTime() + 20 * 60 * 1000); // Add 20min
 
@@ -77,19 +108,17 @@ async function updatePrayerEventsInDay({
         const prayersToCreate: Array<PrayerEvent> = Object.values(
             PrayerType,
         ).map((prayerType) => {
+            const prayerTime = prayerTimeOf(
+                newConfig,
+                prayerType as keyof PrayerSettings,
+            );
             const startTime = new Date(
                 dayStart.getFullYear(),
                 dayStart.getMonth(),
                 dayStart.getDate(),
-                (
-                    newConfig[prayerType as keyof PrayerSettings] as Date
-                ).getHours(),
-                (
-                    newConfig[prayerType as keyof PrayerSettings] as Date
-                ).getMinutes(),
-                (
-                    newConfig[prayerType as keyof PrayerSettings] as Date
-                ).getSeconds(),
+                prayerTime.getHours(),
+                prayerTime.getMinutes(),
+                prayerTime.getSeconds(),
             );
 
             return {

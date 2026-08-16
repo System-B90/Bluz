@@ -4,6 +4,7 @@ import { postgresDb } from "@/api-server/gantt";
 import {
     drizzleOperationsBuilder,
     FOREIGN_KEY_VIOLATION,
+    postgresErrorCode,
     UNIQUE_VIOLATION,
 } from "@/api-server/gantt/db-base";
 import {
@@ -94,23 +95,18 @@ async function addSyllabusToCurriculum(
 
         return await getFullSyllabus(syllabusId);
     } catch (error: unknown) {
-        const cause = (error as { cause?: unknown }).cause as {
-            name: string;
-            severity: string;
-            code: string;
-            detail: string;
-        };
+        const code = postgresErrorCode(error);
 
-        if (cause?.code === UNIQUE_VIOLATION) {
+        if (code === UNIQUE_VIOLATION) {
             throw new ClientApiError(`הסילבוס כבר משויך לגאנט זה`);
         }
 
-        if (cause?.code === FOREIGN_KEY_VIOLATION) {
+        if (code === FOREIGN_KEY_VIOLATION) {
             throw new ClientApiError(`גאנט או סילבוס לא קיימים במערכת`);
         }
 
         throw new ClientApiError(
-            `Failed to add ${syllabusId} to ${curriculumId}. Error[${cause?.code}]: ${cause?.detail}`,
+            `Failed to add syllabus ${syllabusId} to curriculum ${curriculumId}`,
         );
     }
 }

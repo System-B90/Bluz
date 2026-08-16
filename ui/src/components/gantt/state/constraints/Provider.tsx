@@ -59,6 +59,15 @@ export function GanttConstraintProvider({
     });
 
     const curriculumId = context.curriculumId;
+    // Callers pass the scope as an object literal, which is a fresh reference
+    // on every render. Depending on it directly would re-create
+    // `refreshConstraints` each cycle and re-run the fetch effect forever, so
+    // the query keys are read as primitives.
+    const contextType = context.type;
+    const contextSyllabusId =
+        context.type === "curriculum" ? undefined : context.syllabusId;
+    const contextModuleId =
+        context.type === "curriculum" ? undefined : context.moduleId;
 
     // Helper to determine if the current scope has mutation rights over a constraint
     const canModify = useCallback(
@@ -96,10 +105,10 @@ export function GanttConstraintProvider({
             // returns every constraint owned by the module's events, which we
             // then filter down to this event in the view.
             const queryOptions =
-                context.type === "module" || context.type === "event"
+                contextType === "module" || contextType === "event"
                     ? {
-                        moduleId: context.moduleId,
-                        syllabusId: context.syllabusId,
+                        moduleId: contextModuleId,
+                        syllabusId: contextSyllabusId,
                     }
                     : {};
             const data = await ganttApi.constraints.apiGet(
@@ -116,7 +125,14 @@ export function GanttConstraintProvider({
             );
             dispatch({ type: "SET_LOADING", payload: false });
         }
-    }, [dispatch, curriculumId, context, enqueueSnackbar]);
+    }, [
+        dispatch,
+        curriculumId,
+        contextType,
+        contextModuleId,
+        contextSyllabusId,
+        enqueueSnackbar,
+    ]);
 
     const createConstraint = useCallback(
         async (payload: Omit<CreateConstraintPayload, "id">) => {

@@ -7,6 +7,7 @@ import {
 } from "@/api-server/common";
 import { DbIterations } from "@/api-server/db-iterations";
 import { buildHiveCache, diffHiveCache } from "@/api-server/hive/build-cache";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { SyncHiveResult } from "@/api-shared/types/iteration";
 
@@ -27,6 +28,7 @@ type ServerApiIterationSyncHive = ServerApiWithParams<
  */
 export const POST: ServerApiIterationSyncHive = withApi(
     async (_request, context) => {
+        await requireStaffSession();
         const { id } = await context.params;
         await DbIterations.assertWritable(id);
 

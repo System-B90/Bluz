@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, withApi } from "@/api-server/common";
+import { ApiSuccess, parseJsonBody, withApi } from "@/api-server/common";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
@@ -51,7 +51,7 @@ export function buildGantItemRoutes<
             }
 
             // Strongly typed to Partial<TEntity> to ensure we only update valid frontend properties
-            const payload = JSON.parse(textBody) as Partial<TEntity>;
+            const payload = parseJsonBody<Partial<TEntity>>(textBody);
             if (
                 typeof payload !== "object" ||
                 payload === null ||

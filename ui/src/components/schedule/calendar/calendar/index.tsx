@@ -262,7 +262,7 @@ export function BluzCalendar({
                     style={{
                         position: "absolute",
                         top: 12,
-                        left: 16,
+                        insetInlineStart: 16,
                     }}
                     sx={{
                         zIndex: 100,

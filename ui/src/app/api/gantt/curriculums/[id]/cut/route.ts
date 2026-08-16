@@ -9,6 +9,7 @@ import {
     pullBackCutSchedule,
 } from "@/api-server/gantt/cut";
 import { reloadCurriculumSchedule } from "@/api-server/gantt/reload";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     CurriculumCutErrorCode,
@@ -53,6 +54,7 @@ const PULL_BACK_STATUS_BY_CODE: Record<CurriculumPullBackErrorCode, number> = {
  * linked iteration's database. All inputs are derived server-side from the id.
  */
 export const POST = withApi(async (request: NextRequest, context: RouteContext) => {
+    await requireStaffSession();
     const { id } = await context.params;
     if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
@@ -75,6 +77,7 @@ export const POST = withApi(async (request: NextRequest, context: RouteContext) 
  * holds live cut events, driving the UI toggle between "cut" and "pull back".
  */
 export const GET = withApi(async (request: NextRequest, context: RouteContext) => {
+    await requireStaffSession();
     const { id } = await context.params;
     if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
@@ -88,6 +91,7 @@ export const GET = withApi(async (request: NextRequest, context: RouteContext) =
  * `overrideEventIds`. `dryRun` returns the same diff without writing.
  */
 export const PATCH = withApi(async (request: NextRequest, context: RouteContext) => {
+    await requireStaffSession();
     const { id } = await context.params;
     if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
@@ -115,6 +119,7 @@ export const PATCH = withApi(async (request: NextRequest, context: RouteContext)
  * was generated for this curriculum in the linked iteration.
  */
 export const DELETE = withApi(async (request: NextRequest, context: RouteContext) => {
+    await requireStaffSession();
     const { id } = await context.params;
     if (!id) throw new ClientApiError("Curriculum ID is missing.");
 

@@ -1,8 +1,8 @@
 import { DbEventDocument, eventTypeToHebrew } from "@/api-shared/types/event";
 
 // Escapes text per RFC 5545 §3.3.11 (COMMA, SEMICOLON, BACKSLASH, newline).
-function escapeIcsText(text: string): string {
-    return text
+function escapeIcsText(text: null | string | undefined): string {
+    return (text ?? "")
         .replace(/\\/g, "\\\\")
         .replace(/,/g, "\\,")
         .replace(/;/g, "\\;")

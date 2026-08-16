@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { DbIterations } from "@/api-server/db-iterations";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { Iteration, PatchIterationPayload } from "@/api-shared/types/iteration";
 
@@ -18,6 +19,7 @@ export const GET: ServerApiCurrentIteration = withApi(async (_request) => {
  * Handle PATCH here too so linking/editing the current iteration works.
  */
 export const PATCH: ServerApiCurrentIterationPatch = withApi(async (request) => {
+    await requireStaffSession();
     const patch = await request.json();
     if (!patch || typeof patch !== "object") {
         throw new ClientApiError("No patch data provided!");

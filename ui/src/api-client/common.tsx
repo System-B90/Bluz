@@ -62,7 +62,11 @@ export async function safeApiFetcher<T = unknown>(
                     throw new OperationAbortedWarning();
                 }
             }
-            throw new ServerNetworkError(JSON.stringify(e));
+            // `JSON.stringify` on an Error yields "{}" — its properties are
+            // non-enumerable — which hides the actual failure from the user.
+            throw new ServerNetworkError(
+                e instanceof Error ? e.message : String(e),
+            );
         });
 }
 

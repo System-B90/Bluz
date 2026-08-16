@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 
 import { ApiSuccess, withApi } from "@/api-server/common";
 import { createRecurrenceException } from "@/api-server/gantt/db-recurrence-exceptions";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { GanttCurriculumId, GanttDayId } from "@/api-shared/types/gantt/models";
 
@@ -16,6 +17,7 @@ type RouteContext = {
  * everywhere else — only this day is excepted).
  */
 export const POST = withApi(async (request: NextRequest, context: RouteContext) => {
+    await requireStaffSession();
     const { id: eventId } = await context.params;
     const body = await request.json();
 

@@ -4,6 +4,7 @@ import { postgresDb } from "@/api-server/gantt";
 import {
     drizzleOperationsBuilder,
     FOREIGN_KEY_VIOLATION,
+    postgresErrorCode,
     UNIQUE_VIOLATION,
 } from "@/api-server/gantt/db-base";
 import {
@@ -71,19 +72,14 @@ async function addEventToModule(
         });
         return await getFullModuleEvent(eventId);
     } catch (error: unknown) {
-        const cause = (error as { cause?: unknown }).cause as {
-            name: string;
-            severity: string;
-            code: string;
-            detail: string;
-        };
+        const code = postgresErrorCode(error);
 
         // Unique Violation: Event already linked to this module
-        if (cause?.code === UNIQUE_VIOLATION) {
+        if (code === UNIQUE_VIOLATION) {
             throw new ClientApiError(`האירוע כבר משויך למערך זה`);
         }
         // Foreign Key Violation: Module or Event missing
-        if (cause?.code === FOREIGN_KEY_VIOLATION) {
+        if (code === FOREIGN_KEY_VIOLATION) {
             throw new ClientApiError(`מערך או אירוע לא קיימים במערכת`);
         }
 

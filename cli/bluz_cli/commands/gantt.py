@@ -24,6 +24,22 @@ app = typer.Typer(help="Gantt / curriculum engine.", no_args_is_help=True)
 
 _BASE = "/api/gantt"
 
+# Naive de-pluralisation turns "syllabuses" into "syllabuse"; spell out the
+# entity names whose singular is not just the plural minus an "s".
+_SINGULAR_BY_ENTITY = {
+    "curriculums": "curriculum",
+    "syllabuses": "syllabus",
+    "modules": "module",
+    "events": "event",
+    "days": "day",
+    "weeks": "week",
+}
+
+
+def _singular(entity: str) -> str:
+    """The singular entity name used in user-facing messages."""
+    return _SINGULAR_BY_ENTITY.get(entity, entity.removesuffix("s") or entity)
+
 
 def _entity_app(
     entity: str,
@@ -86,7 +102,7 @@ def _entity_app(
         """Create an item from a JSON payload."""
         with state.client() as client:
             result = client.post(base, json=parse_json(data, what="--data"))
-        success(f"Created {entity[:-1] if entity.endswith('s') else entity}")
+        success(f"Created {_singular(entity)}")
         show(result)
 
     @sub.command("update")

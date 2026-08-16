@@ -28,7 +28,7 @@ export async function apiSetSetting<T = ApiSettingUpdatePayload>(
     iterationId?: IterationId,
     props?: ClientApiProps,
 ): Promise<ApiSettingUpdateResponse> {
-    await safeApiFetcher<ApiSettingUpdateResponse>(
+    return await safeApiFetcher<ApiSettingUpdateResponse>(
         iterationEndpoint(`/api/settings/${name}`, iterationId),
         {
             ...props,

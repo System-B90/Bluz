@@ -40,6 +40,13 @@ export const useEventActions = (
                 if (oldEvent) captureEventBeforeEdit(oldEvent);
             }
 
+            // Kept for the rollback below: if the server refuses the write, the
+            // optimistic copy has to go back to what the server still holds,
+            // otherwise the calendar shows an edit that was never persisted.
+            const previousEvent = isNewEvent
+                ? undefined
+                : events.find((ev) => ev.id === newEvent.id);
+
             // Optimistic local update — pushed to undo history
             dispatch({ type: "UPSERT_EVENT", payload: newEvent });
 
@@ -77,6 +84,27 @@ export const useEventActions = (
                         }
                     })
                     .catch((error) => {
+                        // Undo the optimistic write. A failed creation is
+                        // dropped; a failed update goes back to the version we
+                        // replaced (nothing to restore to if it was not in
+                        // local state, in which case dropping it is right).
+                        if (isNewEvent) {
+                            remoteDispatch({
+                                type: "DELETE_EVENT",
+                                payload: newEvent.id,
+                            });
+                        } else if (previousEvent) {
+                            remoteDispatch({
+                                type: "UPSERT_EVENT",
+                                payload: {
+                                    ...previousEvent,
+                                    updatedAt: Math.max(
+                                        Date.now(),
+                                        (newEvent.updatedAt ?? 0) + 1,
+                                    ),
+                                },
+                            });
+                        }
                         enqueueApiErrorSnackbar(
                             enqueueSnackbar,
                             errorMsg,
@@ -93,6 +121,10 @@ export const useEventActions = (
             eventId: EventId,
             initiator: EventChangeInitiator = EventChangeInitiator.EventDialog,
         ) => {
+            // Captured before the optimistic removal so a rejected delete can
+            // put the event back rather than leaving the UI claiming it is gone.
+            const deletedEvent = events.find((ev) => ev.id === eventId);
+
             dispatch({ type: "DELETE_EVENT", payload: eventId });
 
             if (!offlineMode) {
@@ -102,16 +134,25 @@ export const useEventActions = (
                             variant: "success",
                         }),
                     )
-                    .catch((error) =>
+                    .catch((error) => {
+                        if (deletedEvent) {
+                            remoteDispatch({
+                                type: "UPSERT_EVENT",
+                                payload: {
+                                    ...deletedEvent,
+                                    updatedAt: Date.now(),
+                                },
+                            });
+                        }
                         enqueueApiErrorSnackbar(
                             enqueueSnackbar,
                             "מחיקת המופע נכשלה!",
                             error,
-                        ),
-                    );
+                        );
+                    });
             }
         },
-        [offlineMode, dispatch],
+        [events, offlineMode, dispatch, remoteDispatch],
     );
 
     return { saveEvent, deleteEvent };

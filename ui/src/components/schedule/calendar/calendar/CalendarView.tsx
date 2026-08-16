@@ -389,10 +389,15 @@ export function CalendarView({
         () => dayjs(calendarDayStartTime, "HH:mm").toDate(),
         [calendarDayStartTime],
     );
-    const calendarMax = useMemo(
-        () => dayjs(calendarDayEndTime, "HH:mm").toDate(),
-        [calendarDayEndTime],
-    );
+    const calendarMax = useMemo(() => {
+        const end = dayjs(calendarDayEndTime, "HH:mm");
+        // "00:00" parses to the *start* of today, which lands before the min
+        // and leaves react-big-calendar with an inverted range and no slots.
+        // Read a midnight end as the end of the day it closes.
+        return end.isAfter(dayjs(calendarDayStartTime, "HH:mm"))
+            ? end.toDate()
+            : end.add(1, "day").subtract(1, "second").toDate();
+    }, [calendarDayEndTime, calendarDayStartTime]);
 
     return (
         <ToolbarExtrasContext.Provider value={toolbarExtras}>

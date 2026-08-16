@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { DbIterations } from "@/api-server/db-iterations";
 import { buildHiveCache } from "@/api-server/hive/build-cache";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     Iteration,
@@ -20,6 +21,7 @@ export const GET: ServerApiIterationsList = withApi(async (_request) => {
 });
 
 export const POST: ServerApiIterationRegister = withApi(async (request) => {
+    await requireStaffSession();
     const payload = await request.json();
     if (!payload || !payload.id || !payload.label) {
         throw new ClientApiError("Iteration id and label are required!");

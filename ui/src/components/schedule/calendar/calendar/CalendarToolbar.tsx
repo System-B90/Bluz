@@ -163,7 +163,11 @@ export function CalendarToolbar({
                     gap={ 1 }
                     sx={ {
                         position: { xs: "static", md: "absolute" },
-                        insetInlineStart: { md: "50%" },
+                        // Physical `left` on purpose: centering is
+                        // direction-agnostic, but pairing the *logical* inset
+                        // with a physical translate moves the box the same way
+                        // twice under RTL and throws the title off-centre.
+                        left: { md: "50%" },
                         transform: { md: "translateX(-50%)" },
                     } }
                 >
@@ -323,7 +327,9 @@ export function CalendarToolbar({
                         anchorEl={ filterAnchorEl }
                         anchorOrigin={ {
                             vertical: "bottom",
-                            horizontal: "left",
+                            // The UI is RTL: hang the panel from the anchor's
+                            // start (right) edge so it opens inward.
+                            horizontal: "right",
                         } }
                         onClose={ () => setFilterAnchorEl(null) }
                         open={ filterOpen }
@@ -340,7 +346,7 @@ export function CalendarToolbar({
                         } }
                         transformOrigin={ {
                             vertical: "top",
-                            horizontal: "left",
+                            horizontal: "right",
                         } }
                     >
                         <Filters

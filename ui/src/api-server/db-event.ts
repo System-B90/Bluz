@@ -64,8 +64,11 @@ async function getDbEventsInRange(
     const cursor = controller.events
         .find(
             {
-                startTime: { $gte: startDate },
-                endTime: { $lte: endDate },
+                // Interval *overlap*, not containment: an event that starts
+                // before the window and ends inside it (or spans it entirely)
+                // still belongs on the calendar for that range.
+                startTime: { $lt: endDate },
+                endTime: { $gt: startDate },
                 ...NOT_ARCHIVED,
                 ...filter,
             },

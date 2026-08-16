@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useMemo } from "react";
 
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { CurriculumGanttViewInner } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/CurriculumGanttViewInner";
@@ -26,15 +26,19 @@ export function CurriculumGanttView({
     curriculumId,
 }: CurriculumGanttViewProps): null | React.ReactElement {
     const curriculum = useCurriculum(curriculumId);
+    // Stable identity: GanttConstraintProvider refetches whenever this
+    // changes, and an inline literal changes on every render.
+    const constraintContext = useMemo(
+        () => ({ curriculumId, type: "curriculum" }) as const,
+        [curriculumId],
+    );
 
     if (!curriculum) return null;
 
     return (
         <GanttMappingProvider curriculumId={curriculumId}>
             <GanttRecurrenceExceptionProvider curriculumId={curriculumId}>
-                <GanttConstraintProvider
-                    context={{ curriculumId, type: "curriculum" }}
-                >
+                <GanttConstraintProvider context={constraintContext}>
                     <CurriculumGanttViewInner curriculumId={curriculumId} />
                 </GanttConstraintProvider>
             </GanttRecurrenceExceptionProvider>

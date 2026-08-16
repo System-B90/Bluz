@@ -31,6 +31,15 @@ export const GET: ServerApiEventCompare = withApi(async (request) => {
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         throw new ClientApiError("תאריך לא תקין");
     }
+    // Same ceiling as /api/event: without it a caller can ask two iterations
+    // for an unbounded span and turn one request into two full scans.
+    const MAX_RANGE_DAYS = 366;
+    const rangeDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+    if (rangeDays > MAX_RANGE_DAYS || rangeDays < 0) {
+        throw new ClientApiError(
+            `טווח התאריכים חייב להיות בין 0 ל-${MAX_RANGE_DAYS} ימים`,
+        );
+    }
 
     const [controllerA, controllerB] = await Promise.all([
         resolveIterationDb(itA),

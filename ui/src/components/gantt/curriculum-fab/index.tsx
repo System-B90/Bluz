@@ -168,7 +168,7 @@ export function CurriculumFab({
                 onClick={handleTogglePanel}
                 sx={{
                     position: "fixed",
-                    right: 16,
+                    insetInlineEnd: 16,
                     bottom: 16,
                     zIndex: (theme) => theme.zIndex.speedDial,
                     transition:

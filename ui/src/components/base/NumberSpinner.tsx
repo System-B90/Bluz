@@ -55,11 +55,15 @@ export function NumberSpinner({
                             aria-label="Decrease"
                             size={size}
                             sx={{
-                                borderTopRightRadius: 0,
-                                borderBottomRightRadius: 0,
-                                borderRight: "0px",
+                                // Logical, not physical: in RTL the decrement
+                                // button sits on the right, so squaring the
+                                // physical right corners rounds the joint with
+                                // the input and squares the group's outer edge.
+                                borderStartEndRadius: 0,
+                                borderEndEndRadius: 0,
+                                borderInlineEnd: "0px",
                                 "&.Mui-disabled": {
-                                    borderRight: "0px",
+                                    borderInlineEnd: "0px",
                                 },
                             }}
                             variant="outlined"
@@ -105,11 +109,11 @@ export function NumberSpinner({
                             aria-label="Increase"
                             size={size}
                             sx={{
-                                borderTopLeftRadius: 0,
-                                borderBottomLeftRadius: 0,
-                                borderLeft: "0px",
+                                borderStartStartRadius: 0,
+                                borderEndStartRadius: 0,
+                                borderInlineStart: "0px",
                                 "&.Mui-disabled": {
-                                    borderLeft: "0px",
+                                    borderInlineStart: "0px",
                                 },
                             }}
                             variant="outlined"
