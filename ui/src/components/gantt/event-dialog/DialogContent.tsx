@@ -170,13 +170,13 @@ export function EventDialogContent({
                                         sx={ { flex: 1 } }
                                     />
                                 </Stack>
-                                { curriculumId && (
+                                { curriculumId ? (
                                     <EventMappingField
                                         curriculumId={ curriculumId }
                                         eventId={ eventId }
                                         moduleId={ moduleId }
                                     />
-                                ) }
+                                ) : null }
                                 <SystemRequirementsField
                                     onChange={ (reqs) =>
                                         commit({ systemRequirements: reqs })

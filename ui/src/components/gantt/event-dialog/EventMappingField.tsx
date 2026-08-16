@@ -49,6 +49,7 @@ export function EventMappingField({
     useEffect(() =>
     {
         let cancelled = false;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- reset loading for the new curriculumId/moduleId/eventId key
         setLoading(true);
         ganttApi.mappings.apiGet(curriculumId)
             .then((mappings) =>
@@ -165,7 +166,7 @@ export function EventMappingField({
                 </Select>
             </FormControl>
 
-            { mapping && (
+            { mapping ? (
                 <Button
                     color="error"
                     disabled={ saving }
@@ -175,7 +176,7 @@ export function EventMappingField({
                 >
                     בטל שיבוץ
                 </Button>
-            ) }
+            ) : null }
         </Stack>
     );
 }

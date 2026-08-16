@@ -230,7 +230,7 @@ export function SettingsDialog({
                         <ThemeSelectorIcon />
                     </Box>
 
-                    { process.env.NEXT_PUBLIC_APP_VERSION && (
+                    { process.env.NEXT_PUBLIC_APP_VERSION ? (
                         <Typography
                             sx={ {
                                 fontSize: "0.7rem",
@@ -241,7 +241,7 @@ export function SettingsDialog({
                         >
                             v{ process.env.NEXT_PUBLIC_APP_VERSION }
                         </Typography>
-                    ) }
+                    ) : null }
                 </Box>
 
                 {/* Content Pane */ }

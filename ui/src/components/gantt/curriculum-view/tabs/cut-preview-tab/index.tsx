@@ -17,8 +17,8 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
-import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { useSettings } from "@/components/base/SettingsProvider";
+import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import {
     PREVIEW_BUTTON_GROUP_SX,
     PreviewLayout,

@@ -1,7 +1,10 @@
 
+import { readFileSync } from "fs";
+import { join } from "path";
+
 import type { NextConfig } from "next";
 
-import packageJson from "../package.json";
+const packageJson = JSON.parse(readFileSync(join(process.cwd(), "..", "package.json"), "utf-8"));
 
 const nextConfig: NextConfig = {
     env: {
