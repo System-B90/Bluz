@@ -5,6 +5,10 @@ import { DbEvent } from "@/api-server/db-event";
 import { resolveIterationFromRequest } from "@/api-server/iteration-request";
 import { ClientApiError } from "@/api-shared/errors";
 import { buildScheduleIcsCalendar } from "@/app/api/event/export/ics/calendar";
+import {
+    MAX_EVENT_RANGE_DAYS,
+    MILLISECONDS_IN_A_DAY,
+} from "@/settings";
 
 /** GET /api/event/export/ics?sd=<ISO>&ed=<ISO> — exports the events in range as an ICS calendar. */
 export const GET = withApi(async (request: Request) => {
@@ -21,10 +25,11 @@ export const GET = withApi(async (request: Request) => {
         throw new ClientApiError("תאריך לא תקין — יש לספק startDate ו-endDate תקינים");
     }
 
-    const MAX_RANGE_DAYS = 366;
-    const rangeDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-    if (rangeDays > MAX_RANGE_DAYS || rangeDays < 0) {
-        throw new ClientApiError(`טווח התאריכים חייב להיות בין 0 ל-${MAX_RANGE_DAYS} ימים`);
+    const rangeDays = (end.getTime() - start.getTime()) / MILLISECONDS_IN_A_DAY;
+    if (rangeDays > MAX_EVENT_RANGE_DAYS || rangeDays < 0) {
+        throw new ClientApiError(
+            `טווח התאריכים חייב להיות בין 0 ל-${MAX_EVENT_RANGE_DAYS} ימים`,
+        );
     }
 
     const { controller } = await resolveIterationFromRequest(request);

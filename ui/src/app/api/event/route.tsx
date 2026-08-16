@@ -30,6 +30,10 @@ import {
     EVENT_INITIATOR_HEADER,
     parseEventInitiator,
 } from "@/api-shared/types/event-history";
+import {
+    MAX_EVENT_RANGE_DAYS,
+    MILLISECONDS_IN_A_DAY,
+} from "@/settings";
 
 type ServerApiEventGet = ServerApi<ApiEventGetPayload, ApiEventGetResponse>;
 type ServerApiEventUpdate = ServerApi<
@@ -79,12 +83,11 @@ export const GET: ServerApiEventGet = withApi(async (request) => {
                 "תאריך לא תקין — יש לספק startDate ו-endDate תקינים",
             );
         }
-        const MAX_RANGE_DAYS = 366;
         const rangeDays =
-            (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-        if (rangeDays > MAX_RANGE_DAYS || rangeDays < 0) {
+            (end.getTime() - start.getTime()) / MILLISECONDS_IN_A_DAY;
+        if (rangeDays > MAX_EVENT_RANGE_DAYS || rangeDays < 0) {
             throw new ClientApiError(
-                `טווח התאריכים חייב להיות בין 0 ל-${MAX_RANGE_DAYS} ימים`,
+                `טווח התאריכים חייב להיות בין 0 ל-${MAX_EVENT_RANGE_DAYS} ימים`,
             );
         }
         // Calendar range loads double as the trigger for pulling Google-side
