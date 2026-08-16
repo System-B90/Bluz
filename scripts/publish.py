@@ -265,7 +265,11 @@ def main(
                 fg=typer.colors.RED,
             )
             raise typer.Exit(code=1)
-        new_version = version_override[1:] if version_override.startswith("v") else version_override
+        new_version = (
+            version_override[1:]
+            if version_override.startswith("v")
+            else version_override
+        )
         new_tag = f"v{new_version}"
         latest_tuple = (major, minor, patch, curr_rc if curr_rc is not None else -1)
         new_tuple = (
