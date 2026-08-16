@@ -63,5 +63,14 @@ export function validateIteration(values: IterationValues): ValidationResult {
     if (!values.label.trim() || !values.id.trim()) {
         return "מזהה ושם תצוגה הם שדות חובה";
     }
+    if (
+        values.startDate &&
+        values.endDate &&
+        values.startDate.isValid() &&
+        values.endDate.isValid() &&
+        !values.endDate.isAfter(values.startDate)
+    ) {
+        return "תאריך הסיום חייב להיות אחרי תאריך ההתחלה";
+    }
     return null;
 }

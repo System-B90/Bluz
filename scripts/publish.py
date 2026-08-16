@@ -5,7 +5,6 @@ Created: 2026-04-12
 Author: Michael K. Steinberg (Modified by Gemini)
 """
 
-import json
 import logging
 import re
 import subprocess
@@ -152,6 +151,9 @@ def update_cli_version(version: str) -> Optional[Path]:
     return CLI_VERSION_FILE
 
 
+VERSION_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)(?:-rc\.?(\d+))?$")
+
+
 def update_manifests(version: str) -> List[Path]:
     """
     Writes the new version to project package.json files and the Python CLI tool.
@@ -168,14 +170,15 @@ def update_manifests(version: str) -> List[Path]:
             logger.warning("File %s not found. Skipping.", path)
             continue
 
-        with path.open("r", encoding="utf-8") as f:
-            data = json.load(f)
+        content = path.read_text(encoding="utf-8")
+        new_content, count = re.subn(
+            r'("version"\s*:\s*)"[^"]*"', rf'\g<1>"{version}"', content, count=1
+        )
+        if count == 0:
+            logger.warning('No "version" field in %s. Skipping.', path)
+            continue
 
-        data["version"] = version
-
-        with path.open("w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-            f.write("\n")
+        path.write_text(new_content, encoding="utf-8")
         updated.append(path)
 
     cli_path = update_cli_version(version)
@@ -197,6 +200,31 @@ def main(
         False,
         "--dry",
         help="Perform a dry run: execute all local steps but skip pushing and delete the tag afterward.",
+    ),
+    bump: Optional[str] = typer.Option(
+        None,
+        "--bump",
+        help="Bump type: patch, minor, or major. Bypasses the interactive prompt.",
+    ),
+    rc: Optional[bool] = typer.Option(
+        None,
+        "--rc/--no-rc",
+        help="Whether this is a release candidate. Bypasses the interactive prompt.",
+    ),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        help="Skip the final confirmation prompt. Required for non-interactive runs.",
+    ),
+    version_override: Optional[str] = typer.Option(
+        None,
+        "--version",
+        help="Explicit version to publish, bypassing the derived version math.",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Allow --version to publish a version that is not strictly greater than the latest tag.",
     ),
 ) -> None:
     """
@@ -221,41 +249,88 @@ def main(
         typer.secho("❌ Error: Working directory is not clean.", fg=typer.colors.RED)
         raise typer.Exit(code=1)
 
-    major, minor, patch, rc = get_version_info()
-    curr_str = f"{major}.{minor}.{patch}" + (f"-rc.{rc}" if rc is not None else "")
+    major, minor, patch, curr_rc = get_version_info()
+    curr_str = f"{major}.{minor}.{patch}" + (
+        f"-rc.{curr_rc}" if curr_rc is not None else ""
+    )
     typer.echo(
         f"Current Version: {typer.style(f'v{curr_str}', fg=typer.colors.YELLOW)}"
     )
 
-    bump_type = inquirer.select(
-        message="What type of update is this?",
-        choices=[
-            Choice("patch", name="Patch (Bug Fixes)"),
-            Choice("minor", name="Minor (New Features)"),
-            Choice("major", name="Major (Breaking API Changes)"),
-        ],
-        default="patch",
-    ).execute()
-
-    is_rc = inquirer.confirm(
-        message="Is this a release candidate?", default=False
-    ).execute()
-
-    if bump_type == "major":
-        major, minor, patch, rc = major + 1, 0, 0, None
-    elif bump_type == "minor":
-        minor, patch, rc = minor + 1, 0, None
+    if version_override is not None:
+        match = VERSION_RE.match(version_override)
+        if not match:
+            typer.secho(
+                f"❌ Error: --version '{version_override}' does not match semver format.",
+                fg=typer.colors.RED,
+            )
+            raise typer.Exit(code=1)
+        new_version = (
+            version_override[1:]
+            if version_override.startswith("v")
+            else version_override
+        )
+        new_tag = f"v{new_version}"
+        latest_tuple = (major, minor, patch, curr_rc if curr_rc is not None else -1)
+        new_tuple = (
+            int(match.group(1)),
+            int(match.group(2)),
+            int(match.group(3)),
+            int(match.group(4)) if match.group(4) else -1,
+        )
+        if new_tuple <= latest_tuple and not force:
+            typer.secho(
+                f"❌ Error: --version {new_tag} is not strictly greater than the latest tag v{curr_str}. Use --force to override.",
+                fg=typer.colors.RED,
+            )
+            raise typer.Exit(code=1)
     else:
-        if rc is None:
-            patch += 1
+        if bump is not None:
+            if bump not in ("patch", "minor", "major"):
+                typer.secho(
+                    "❌ Error: --bump must be one of: patch, minor, major.",
+                    fg=typer.colors.RED,
+                )
+                raise typer.Exit(code=1)
+            bump_type = bump
+        else:
+            bump_type = inquirer.select(
+                message="What type of update is this?",
+                choices=[
+                    Choice("patch", name="Patch (Bug Fixes)"),
+                    Choice("minor", name="Minor (New Features)"),
+                    Choice("major", name="Major (Breaking API Changes)"),
+                ],
+                default="patch",
+            ).execute()
 
-    rc = (rc + 1 if rc is not None else 1) if is_rc else None
-    new_version = f"{major}.{minor}.{patch}" + (f"-rc.{rc}" if rc is not None else "")
-    new_tag = f"v{new_version}"
+        is_rc = (
+            rc
+            if rc is not None
+            else inquirer.confirm(
+                message="Is this a release candidate?", default=False
+            ).execute()
+        )
 
-    if not inquirer.confirm(message=f"Publish {new_tag}?", default=True).execute():
-        typer.echo("Aborted.")
-        raise typer.Exit()
+        new_rc = curr_rc
+        if bump_type == "major":
+            major, minor, patch, new_rc = major + 1, 0, 0, None
+        elif bump_type == "minor":
+            minor, patch, new_rc = minor + 1, 0, None
+        else:
+            if new_rc is None:
+                patch += 1
+
+        new_rc = (new_rc + 1 if new_rc is not None else 1) if is_rc else None
+        new_version = f"{major}.{minor}.{patch}" + (
+            f"-rc.{new_rc}" if new_rc is not None else ""
+        )
+        new_tag = f"v{new_version}"
+
+    if not yes:
+        if not inquirer.confirm(message=f"Publish {new_tag}?", default=True).execute():
+            typer.echo("Aborted.")
+            raise typer.Exit()
 
     updated_files = update_manifests(new_version)
     run_git(f"add {' '.join(p.as_posix() for p in updated_files)}")

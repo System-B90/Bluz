@@ -489,7 +489,13 @@ def main(
     if shard:
         playwright_cmd += f" --shard={shard}"
 
-    result = subprocess.run(playwright_cmd, env=test_env, shell=True, timeout=600)
+    # 131 tests at workers=1 already sit close to 600s on a clean run; CI's
+    # retries=2 means one flaky test alone can add another 60-180s (each
+    # retry re-pays the 15-20s locator timeout). The old 600s cap SIGKILLed
+    # the whole Playwright process mid-suite the moment any single test
+    # needed a retry, discarding every test that hadn't run yet and reporting
+    # a bare TimeoutExpired instead of Playwright's real pass/fail summary.
+    result = subprocess.run(playwright_cmd, env=test_env, shell=True, timeout=1800)
 
     if result.returncode == 0:
         typer.secho("All tests passed!", fg=typer.colors.GREEN, bold=True)
