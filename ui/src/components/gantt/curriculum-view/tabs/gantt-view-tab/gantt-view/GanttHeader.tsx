@@ -188,9 +188,14 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                         minWidth: dayCellWidth,
                                         boxSizing: "border-box",
                                         borderLeft: `1px solid ${theme.vars.palette.divider}`,
-                                        backgroundColor: isOverAllocated
-                                            ? alpha(theme.palette.error.main, 0.12)
-                                            : theme.vars.palette.background.paper,
+                                        // Opaque base first: `alpha()` alone leaves the sticky
+                                        // header translucent, so body rows show through it while
+                                        // scrolling (#446). Layer the tint as a backgroundImage
+                                        // on top of a solid backgroundColor instead.
+                                        backgroundColor: theme.vars.palette.background.paper,
+                                        backgroundImage: isOverAllocated
+                                            ? `linear-gradient(${alpha(theme.palette.error.main, 0.12)}, ${alpha(theme.palette.error.main, 0.12)})`
+                                            : "none",
                                         zIndex: 2,
                                     }}
                                 >
