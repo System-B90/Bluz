@@ -43,6 +43,15 @@ if [ -z "$HIVE_NETWORK_NAME" ]; then
 fi
 echo -e "${GREEN}[OK] Using Hive network: $HIVE_NETWORK_NAME${NC}"
 
+# Persist it: compose resolves ${HIVE_NETWORK_NAME} on EVERY invocation, not just
+# this one. Left unpersisted, the next unrelated compose command (restart,
+# update.sh) falls back to the default and aborts before starting anything (#454).
+if grep -q '^HIVE_NETWORK_NAME=' .env; then
+    sed -i.bak "s|^HIVE_NETWORK_NAME=.*|HIVE_NETWORK_NAME=$HIVE_NETWORK_NAME|" .env && rm -f .env.bak
+else
+    echo "HIVE_NETWORK_NAME=$HIVE_NETWORK_NAME" >> .env
+fi
+
 # Locate Hive's nginx container — the one that must answer to $HIVE_HOSTNAME.
 if [ -z "$HIVE_NGINX_CONTAINER" ]; then
     HIVE_NGINX_CONTAINER=$(docker ps --format '{{.Names}}' \

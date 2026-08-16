@@ -151,6 +151,17 @@ else
     echo "BLUZ_VERSION=$DETECTED_TAG" >> .env
 fi
 
+# Persist HIVE_NETWORK_NAME if the operator set it (co-located installs). Without
+# this it evaporates after this run and the NEXT compose command — a restart, an
+# upgrade — falls back to the default, which does not exist. See #454.
+if [ -n "${HIVE_NETWORK_NAME:-}" ]; then
+    if grep -q "^HIVE_NETWORK_NAME=" .env; then
+        sed -i.bak "s|^HIVE_NETWORK_NAME=.*|HIVE_NETWORK_NAME=${HIVE_NETWORK_NAME}|" .env && rm -f .env.bak
+    else
+        echo "HIVE_NETWORK_NAME=${HIVE_NETWORK_NAME}" >> .env
+    fi
+fi
+
 # ---------------------------------------------------------------------------
 # Boot
 # ---------------------------------------------------------------------------

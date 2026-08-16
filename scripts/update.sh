@@ -11,10 +11,12 @@
 # holding docker-compose.yml and .env.
 #
 # Usage: ./update.sh [--version <tag>] [--skip-backup] [--yes]
-# Env:   BLUZ_COMPOSE_FILE   compose file (default ./docker-compose.yml)
-#        BLUZ_ENV_FILE       env file (default ./.env)
-#        BLUZ_BACKUP_SCRIPT  backup script (default: found next to this one)
-#        BLUZ_HEALTH_RETRIES health-check attempts after the roll (default 30)
+# Env:   BLUZ_COMPOSE_FILE    compose file (default ./docker-compose.yml)
+#        BLUZ_COMPOSE_OVERLAY optional extra compose file (e.g. co-located Hive
+#                              overlay docker-compose.hive-local.yml)
+#        BLUZ_ENV_FILE        env file (default ./.env)
+#        BLUZ_BACKUP_SCRIPT   backup script (default: found next to this one)
+#        BLUZ_HEALTH_RETRIES  health-check attempts after the roll (default 30)
 
 set -euo pipefail
 
@@ -50,7 +52,7 @@ abort_with_rollback() {
     if [ -n "${PREVIOUS_VERSION}" ]; then
         echo -e "        The stack is left as-is for inspection. To roll the images back:"
         echo -e "          1. set BLUZ_VERSION=${PREVIOUS_VERSION} in ${ENV_FILE}"
-        echo -e "          2. docker compose -f ${COMPOSE_FILE} up -d --wait"
+        echo -e "          2. docker compose -f ${COMPOSE_FILE} ${OVERLAY_ARGS[*]} up -d --wait"
     fi
     if [ -n "${BACKUP_DIR}" ]; then
         echo -e "        A migration may have already changed the databases. To restore this run's backup:"
@@ -69,7 +71,13 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-compose() { docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" "$@"; }
+# Co-located Bluz+Hive deployments run with docker-compose.hive-local.yml
+# layered on top; without it the rolled ui/sessions/proxy lose their route to
+# Hive and sign-in breaks (#412) while every health check still passes.
+OVERLAY_ARGS=()
+[ -n "${BLUZ_COMPOSE_OVERLAY:-}" ] && OVERLAY_ARGS=(-f "${BLUZ_COMPOSE_OVERLAY}")
+
+compose() { docker compose -f "${COMPOSE_FILE}" "${OVERLAY_ARGS[@]}" --env-file "${ENV_FILE}" "$@"; }
 
 # ---------------------------------------------------------------------------
 # Preflight — everything checkable before anything is touched
@@ -205,11 +213,24 @@ else
     echo "BLUZ_VERSION=${TARGET_VERSION}" >> "${ENV_FILE}"
 fi
 
+# The preflight's `set -a && . "${ENV_FILE}"` exported BLUZ_VERSION= into this
+# shell, and a real env var outranks --env-file in Compose's ${VAR} substitution
+# — so without this the roll below resolves image tags to the OLD version while
+# `pull` (which overrides inline) fetched the new one.
+export BLUZ_VERSION="${TARGET_VERSION}"
+
 for service in ui sessions proxy; do
     log "rolling ${service}..."
     # --no-deps keeps the databases from being recreated as a side effect.
     compose up -d --wait --no-deps "${service}" \
         || abort_with_rollback "rolling ${service}"
+    # Guard against a silent variable-precedence regression: confirm the
+    # container that just came up actually carries the target tag.
+    running="$(compose ps --format '{{.Image}}' "${service}")"
+    case "${running}" in
+        *":${TARGET_VERSION}") ;;
+        *) abort_with_rollback "post-roll verification: ${service} is running ${running}, expected ${TARGET_VERSION}" ;;
+    esac
     ok "${service} is up"
 done
 
