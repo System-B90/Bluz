@@ -323,8 +323,20 @@ jobs:
                   mkdir -p release-offline/images
 
                   # Copy deployment scripts into both bundles
-                  cp ./scripts/install.sh ./scripts/update.sh deploy/docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-online/
-                  cp ./scripts/install.sh ./scripts/update.sh deploy/docker-compose.yml ./scripts/setup.py ./scripts/requirements.txt release-offline/
+                  cp ./scripts/install.sh ./scripts/update.sh ./scripts/setup.py ./scripts/requirements.txt release-online/
+                  cp ./scripts/install.sh ./scripts/update.sh ./scripts/setup.py ./scripts/requirements.txt release-offline/
+
+                  # Ship the release compose file (not the dev one) as docker-compose.yml
+                  # at the bundle root — see #451, the dev file breaks every documented
+                  # topology when shipped as-is.
+                  cp deploy/docker-compose.release.yml release-online/docker-compose.yml
+                  cp deploy/docker-compose.release.yml release-offline/docker-compose.yml
+
+                  # install.sh's closing message points at ./link-hive.sh, and link-hive.sh
+                  # reads docker-compose.hive-local.yml from the bundle root. Both must ship
+                  # or the co-located Hive topology is uninstallable from a release (#452).
+                  cp ./scripts/link-hive.sh ./scripts/link-hive.ps1 deploy/docker-compose.hive-local.yml release-online/
+                  cp ./scripts/link-hive.sh ./scripts/link-hive.ps1 deploy/docker-compose.hive-local.yml release-offline/
 
                   # update.sh shells out to the backup scripts before it touches
                   # anything, and they are the documented restore path, so both
@@ -332,6 +344,16 @@ jobs:
                   mkdir -p release-online/backup release-offline/backup
                   cp deploy/backup/bluz-backup.sh deploy/backup/bluz-restore.sh release-online/backup/
                   cp deploy/backup/bluz-backup.sh deploy/backup/bluz-restore.sh release-offline/backup/
+
+                  # Guard: fail loudly if the bundle ever ships the dev compose file or is
+                  # missing anything install.sh references (see #451, #452).
+                  for dir in release-online release-offline; do
+                      grep -q '\.\./\.env' "${dir}/docker-compose.yml" \
+                          && { echo "::error::${dir} shipped the dev compose file"; exit 1; }
+                      for f in link-hive.sh docker-compose.hive-local.yml; do
+                          [ -f "${dir}/${f}" ] || { echo "::error::install.sh references ${f} but it is not in ${dir}"; exit 1; }
+                      done
+                  done
 
                   # Pin online bundle to this release's tag (the "latest" GHCR tag is never published)
                   echo "${{ github.ref_name }}" > release-online/VERSION

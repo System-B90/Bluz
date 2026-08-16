@@ -9,6 +9,8 @@
 #        BLUZ_KEEP_DAILY      daily dumps to retain (default 14)
 #        BLUZ_KEEP_WEEKLY     weekly dumps to retain (default 8)
 #        BLUZ_COMPOSE_FILE    compose file (default alongside this script)
+#        BLUZ_COMPOSE_OVERLAY optional extra compose file (e.g. co-located Hive
+#                              overlay docker-compose.hive-local.yml)
 #        BLUZ_ENV_FILE        env file (default: the .env beside the compose file)
 
 set -euo pipefail
@@ -75,7 +77,10 @@ TIER="daily"
 OUT_DIR="${DEST_ROOT}/${TIER}/${STAMP}"
 mkdir -p "${OUT_DIR}"
 
-compose() { docker compose -f "${COMPOSE_FILE}" "$@"; }
+OVERLAY_ARGS=()
+[ -n "${BLUZ_COMPOSE_OVERLAY:-}" ] && OVERLAY_ARGS=(-f "${BLUZ_COMPOSE_OVERLAY}")
+
+compose() { docker compose -f "${COMPOSE_FILE}" "${OVERLAY_ARGS[@]}" "$@"; }
 
 log() { printf '[bluz-backup] %s\n' "$*"; }
 

@@ -37,7 +37,7 @@ export function PreviewValidationErrors({
 }) {
     return (
         <Stack gap={1} sx={{ p: 2 }}>
-            <Alert severity="warning">
+            <Alert severity="warning" sx={{ alignItems: "center" }}>
                 לא ניתן להציג תצוגה מקדימה — נמצאו בעיות בתוכנית:
             </Alert>
             <List dense disablePadding>

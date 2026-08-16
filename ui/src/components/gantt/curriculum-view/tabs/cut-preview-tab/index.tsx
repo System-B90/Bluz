@@ -17,6 +17,7 @@ import {
 } from "@/api-shared/types/gantt/models";
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
+import { useSettings } from "@/components/base/SettingsProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import {
     PREVIEW_BUTTON_GROUP_SX,
@@ -56,6 +57,20 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
     const preview = useCutPreview(curriculumId);
     const [view, setView] = useState<View>("week");
     const [date, setDate] = useState<Date | null>(null);
+    const { calendarDayStartTime, calendarDayEndTime } = useSettings();
+    const calendarMin = useMemo(
+        () => dayjs(calendarDayStartTime, "HH:mm").toDate(),
+        [calendarDayStartTime],
+    );
+    const calendarMax = useMemo(() => {
+        const end = dayjs(calendarDayEndTime, "HH:mm");
+        // "00:00" parses to the *start* of today, which lands before the min
+        // and leaves react-big-calendar with an inverted range and no slots.
+        // Read a midnight end as the end of the day it closes.
+        return end.isAfter(dayjs(calendarDayStartTime, "HH:mm"))
+            ? end.toDate()
+            : end.add(1, "day").subtract(1, "second").toDate();
+    }, [calendarDayEndTime, calendarDayStartTime]);
 
     const events = useMemo<Array<PreviewCalendarEvent>>(() => {
         if (preview.kind !== "ready" || !preview.data.ok) return [];
@@ -188,9 +203,11 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
                     eventPropGetter={eventPropGetter}
                     events={events}
                     localizer={localizer}
+                    max={calendarMax}
                     messages={
                         CALENDAR_MESSAGES as unknown as Messages<PreviewCalendarEvent>
                     }
+                    min={calendarMin}
                     onNavigate={(newDate) => setDate(newDate)}
                     onView={setView}
                     rtl

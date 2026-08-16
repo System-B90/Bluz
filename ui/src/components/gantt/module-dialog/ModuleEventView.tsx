@@ -22,6 +22,7 @@ import {
     GanttModuleId,
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
+import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { EVENT_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { MoveEventDialog } from "@/components/gantt/module-dialog/MoveEventDialog";
@@ -184,6 +185,26 @@ export function ModuleEventView({
                         step={5}
                         value={moduleEvent?.minimumDuration ?? 0}
                     />
+                </FormControl>
+            </TableCell>
+            <TableCell>
+                <FormControl disabled={!moduleEvent} fullWidth size="small">
+                    <InstructorSelect<"" | number>
+                        excludeTeachers
+                        onChange={(e) =>
+                            handleCommit({
+                                orchestratorId:
+                                    e.target.value === ""
+                                        ? null
+                                        : Number(e.target.value),
+                            })
+                        }
+                        value={moduleEvent?.orchestratorId ?? ""}
+                    >
+                        <MenuItem value="">
+                            <em>ללא אחראי</em>
+                        </MenuItem>
+                    </InstructorSelect>
                 </FormControl>
             </TableCell>
             <TableCell>
