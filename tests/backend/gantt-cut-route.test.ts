@@ -1,6 +1,27 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// The routes exercised below are staff-gated. Bypass requireStaffSession()'s
+// getServerSession() call, which touches next/headers outside a request scope
+// in vitest — same shim as base-gantt.test.ts (#223).
+vi.mock("next-auth", async () => {
+    const { Clearance } = await import("@/api-shared/types/hive");
+    return {
+        default: vi.fn(() => vi.fn()),
+        getServerSession: vi.fn(async () => ({
+            user: {
+                id: "test-user",
+                display_name: "Test User",
+                clearance: Clearance.Admin,
+            },
+        })),
+    };
+});
+
+vi.mock("@/api-server/hive/sso", () => ({
+    authOptions: {},
+}));
+
 import type { CutOutcome } from "@/api-server/gantt/cut";
 
 vi.mock("@/api-server/gantt/cut", () => ({

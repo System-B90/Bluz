@@ -7,6 +7,7 @@ import
     useCallback,
     useContext,
     useEffect,
+    useMemo,
     useReducer,
     useState,
 } from "react";
@@ -591,29 +592,55 @@ export const SettingsProvider = ({
         loadMealSettings();
     }, [ loadPrayerSettings, loadScheduleSettings, loadMealSettings ]);
 
+    // Memoized: a fresh object here re-renders every consumer of this
+    // context on each render of the provider, app-wide.
+    const settingsValue = useMemo(
+        () => ({
+            default: false,
+            prayerTimes: state.prayerTimes,
+            updatePrayerTimes,
+            updatePrayerTime,
+            dayStartTime,
+            updateDayStartTime,
+            weekendHomeStartTime,
+            updateWeekendHomeStartTime,
+            calendarDayStartTime,
+            updateCalendarDayStartTime,
+            calendarDayEndTime,
+            updateCalendarDayEndTime,
+            breakfastTime,
+            updateBreakfastTime,
+            lunchTime,
+            updateLunchTime,
+            dinnerTime,
+            updateDinnerTime,
+            isReadOnlyIteration,
+        }),
+        [
+            state.prayerTimes,
+            updatePrayerTimes,
+            updatePrayerTime,
+            dayStartTime,
+            updateDayStartTime,
+            weekendHomeStartTime,
+            updateWeekendHomeStartTime,
+            calendarDayStartTime,
+            updateCalendarDayStartTime,
+            calendarDayEndTime,
+            updateCalendarDayEndTime,
+            breakfastTime,
+            updateBreakfastTime,
+            lunchTime,
+            updateLunchTime,
+            dinnerTime,
+            updateDinnerTime,
+            isReadOnlyIteration,
+        ],
+    );
+
     return (
         <SettingsContext.Provider
-            value={ {
-                default: false,
-                prayerTimes: state.prayerTimes,
-                updatePrayerTimes,
-                updatePrayerTime,
-                dayStartTime,
-                updateDayStartTime,
-                weekendHomeStartTime,
-                updateWeekendHomeStartTime,
-                calendarDayStartTime,
-                updateCalendarDayStartTime,
-                calendarDayEndTime,
-                updateCalendarDayEndTime,
-                breakfastTime,
-                updateBreakfastTime,
-                lunchTime,
-                updateLunchTime,
-                dinnerTime,
-                updateDinnerTime,
-                isReadOnlyIteration,
-            } }
+            value={settingsValue}
         >
             { children }
         </SettingsContext.Provider>

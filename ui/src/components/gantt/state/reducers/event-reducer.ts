@@ -65,8 +65,13 @@ export function eventDomainReducer(
     case "REMOVE_EVENT": {
         const parent = state.modules[action.payload.moduleId];
         if (!parent) return state;
+        // Also drop the record itself: leaving it in `events` keeps a removed
+        // event alive for anything that reads the map directly.
+        const { [action.payload.eventId]: _, ...remainingEvents } =
+                state.events;
         return {
             ...state,
+            events: remainingEvents,
             modules: {
                 ...state.modules,
                 [parent.id]: {

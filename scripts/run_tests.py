@@ -211,15 +211,25 @@ def main(
     is_running = check_project_running(project_name)
     ports: dict[str, int] = {}
 
+    # One password per run, decided *before* the containers start: the value
+    # baked into the container and the one in the connection string must be the
+    # same string, or `npm run db:push` authenticates against a password that
+    # was never set. Ephemeral when .env does not pin one -- no static secret
+    # to leak from the repo or CI logs.
+    db_pass = root_env.get("POSTGRES_PASSWORD") or secrets.token_urlsafe(24)
+    mongo_pass = root_env.get("MONGO_ROOT_PASSWORD") or secrets.token_urlsafe(24)
+
     compose_env: dict[str, str] = {
         **merged_env,
+        "POSTGRES_PASSWORD": db_pass,
         "TEST_PROJECT_NAME": project_name,
         "BLUZ_VERSION": "latest",
         # docker-compose.test.yml points the ui container's Mongo connection
         # string at TEST_MONGO_PASSWORD, but mongodb's actual root password
         # (set by the base compose file) is MONGO_ROOT_PASSWORD -- reuse it
         # so the ui container can authenticate against the real password.
-        "TEST_MONGO_PASSWORD": root_env.get("MONGO_ROOT_PASSWORD", ""),
+        "TEST_MONGO_PASSWORD": mongo_pass,
+        "MONGO_ROOT_PASSWORD": mongo_pass,
         # docker-compose.test.yml builds NEXTAUTH_URL from this, so the app
         # announces the same host the SSO client was registered with.
         "BLUZ_APP_HOST": APP_HOST,
@@ -372,11 +382,8 @@ def main(
         else:
             raise RuntimeError("Timeout waiting for application to be ready.")
 
-    # Setup connection strings/configs for host scripts
-    # Ephemeral per-run credentials for the disposable test containers — no
-    # static secret to leak from the repo/CI logs.
-    db_pass = root_env.get("POSTGRES_PASSWORD") or secrets.token_urlsafe(24)
-    mongo_pass = root_env.get("MONGO_ROOT_PASSWORD") or secrets.token_urlsafe(24)
+    # Setup connection strings/configs for host scripts, reusing the very
+    # credentials the containers were started with above.
     db_url = f"postgres://admin:{db_pass}@127.0.0.3:{ports['postgres']}/curriculum_db"
 
     assert db_pass is not None, "Postgres DB password is unset!"

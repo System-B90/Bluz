@@ -125,10 +125,21 @@ export function useCalendarHandlers(
 
     const handleKeyDown = useCallback(
         (e: KeyboardEvent) => {
+            // These shortcuts act on the calendar, so they must stay out of the
+            // way of anything the user is actually typing into — including
+            // rich-text hosts and MUI's Autocomplete/Select listboxes — and out
+            // of any open dialog, where Delete and Ctrl+V belong to the form on
+            // screen rather than to the events behind it.
+            const target = e.target as HTMLElement | null;
             if (
-                ["INPUT", "TEXTAREA"].includes(
-                    (e.target as HTMLElement).tagName,
-                )
+                !target ||
+                ["INPUT", "TEXTAREA"].includes(target.tagName) ||
+                target.isContentEditable ||
+                target.closest(
+                    '[contenteditable="true"], [role="combobox"], [role="listbox"], [role="textbox"], .MuiInputBase-root',
+                ) !== null ||
+                document.querySelector('.MuiDialog-root, [role="dialog"]') !==
+                    null
             )
                 return;
 

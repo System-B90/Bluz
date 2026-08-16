@@ -26,12 +26,29 @@ export type ApiCacheControl =
     | "no-store"
     | { immutable?: boolean; maxAge: number; scope: "private" | "public" }
     | number;
+/**
+ * `JSON.parse` on a request body, with a malformed payload reported as the
+ * 400 it is. Parsing straight through leaks a `SyntaxError` into the generic
+ * error handler, which answers an opaque 500 for what is a caller mistake.
+ */
+export function parseJsonBody<T>(text: string): T {
+    try {
+        return JSON.parse(text) as T;
+    } catch {
+        throw new ClientApiError("Malformed JSON payload.");
+    }
+}
+
 export function ApiResponseMaker<T>(
     data: T,
     cacheControl?: ApiCacheControl,
     init?: ApiResponseInit,
 ) {
-    const additionalHeaders: ApiResponseHeaders = {};
+    // `new NextResponse(string)` defaults to `text/plain`; the body here is
+    // always JSON, so say so or clients are free to mis-sniff it.
+    const additionalHeaders: ApiResponseHeaders = {
+        "Content-Type": "application/json",
+    };
     if (cacheControl !== undefined) {
         assert(
             !init ||
@@ -58,11 +75,10 @@ export function ApiResponseMaker<T>(
         }
     }
 
-    if (init === undefined) {
-        init = { headers: additionalHeaders };
-    } else if (init !== undefined && init.headers) {
-        init.headers = { ...init.headers, ...additionalHeaders };
-    }
+    init =
+        init === undefined
+            ? { headers: additionalHeaders }
+            : { ...init, headers: { ...init.headers, ...additionalHeaders } };
 
     return new NextResponse<{ status: number; data: T }>(
         JSON.stringify({ status: 0, data: data }),
@@ -99,7 +115,10 @@ export function ApiErrorMaker(
     }
     return new NextResponse(
         JSON.stringify({ status: -1, error: errorPayload }),
-        { status: httpStatus },
+        {
+            status: httpStatus,
+            headers: { "Content-Type": "application/json" },
+        },
     );
 }
 

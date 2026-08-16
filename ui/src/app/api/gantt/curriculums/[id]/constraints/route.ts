@@ -17,6 +17,7 @@ import {
     getConstraintsForSyllabus,
     updateConstraint,
 } from "@/api-server/gantt/db-constraints";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 
@@ -53,6 +54,7 @@ export const POST = withApi(async (
     request: NextRequest,
     _context: RouteContext /** Constraints are not unique to a curriculum, but to a syllabus. The API is under curriculum for efficiency when fetching */,
 ) => {
+    await requireStaffSession();
     const body: CreateConstraintPayload = await request.json();
 
     if (!body.type) {
@@ -107,6 +109,7 @@ export const POST = withApi(async (
  * PATCH: Updates an existing constraint.
  */
 export const PATCH = withApi(async (request: NextRequest, _context: RouteContext) => {
+    await requireStaffSession();
     const body = await request.json();
 
     const { id: constraintId, ...newValues } = body;
@@ -152,6 +155,7 @@ export const PATCH = withApi(async (request: NextRequest, _context: RouteContext
  * DELETE: Removes a constraint.
  */
 export const DELETE = withApi(async (request: NextRequest, _context: RouteContext) => {
+    await requireStaffSession();
     const body = await request.json();
 
     const { id: constraintId } = body;

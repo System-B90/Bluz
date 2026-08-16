@@ -15,6 +15,23 @@ import { BasicGantOperations } from "@/app/api/gantt/base-collection";
 export const FOREIGN_KEY_VIOLATION = "23503";
 export const UNIQUE_VIOLATION = "23505";
 
+/**
+ * The SQLSTATE of a failed query, wherever the driver put it.
+ *
+ * postgres.js sets `code` on the error itself; Drizzle wraps that error and
+ * exposes the original under `cause`. Reading only one of the two silently
+ * misses every constraint violation raised through the other path, so the
+ * caller falls through to its generic "something failed" message.
+ */
+export function postgresErrorCode(error: unknown): string | undefined {
+    const candidate = error as
+        | { cause?: { code?: unknown }; code?: unknown }
+        | null
+        | undefined;
+    const code = candidate?.code ?? candidate?.cause?.code;
+    return typeof code === "string" ? code : undefined;
+}
+
 // Columns the create path always fills in itself, so a payload is not required
 // (nor expected) to carry them.
 const SERVER_OWNED_COLUMNS = new Set([

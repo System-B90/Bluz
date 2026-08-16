@@ -295,17 +295,31 @@ export const CustomColorsProvider = ({
         return addMessageHandler(onWebSocketMessage);
     }, [ addMessageHandler, onWebSocketMessage ]);
 
+    // Memoized: a fresh object here re-renders every consumer of this
+    // context on each render of the provider, app-wide.
+    const colorsValue = useMemo(
+        () => ({
+            default: false,
+            customColors,
+            isLoading: state.isLoading,
+            getCustomColor,
+            addCustomColor,
+            updateCustomColor,
+            deleteCustomColor,
+        }),
+        [
+            customColors,
+            state.isLoading,
+            getCustomColor,
+            addCustomColor,
+            updateCustomColor,
+            deleteCustomColor,
+        ],
+    );
+
     return (
         <CustomColorsContext.Provider
-            value={ {
-                default: false,
-                customColors,
-                isLoading: state.isLoading,
-                getCustomColor,
-                addCustomColor,
-                updateCustomColor,
-                deleteCustomColor,
-            } }
+            value={colorsValue}
         >
             { children }
         </CustomColorsContext.Provider>

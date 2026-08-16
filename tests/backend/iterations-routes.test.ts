@@ -1,6 +1,27 @@
 import { NextRequest } from "next/server";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+// The iteration write routes are staff-gated. Bypass requireStaffSession()'s
+// getServerSession() call, which touches next/headers outside a request scope
+// in vitest — same shim as base-gantt.test.ts (#223).
+vi.mock("next-auth", async () => {
+    const { Clearance } = await import("@/api-shared/types/hive");
+    return {
+        default: vi.fn(() => vi.fn()),
+        getServerSession: vi.fn(async () => ({
+            user: {
+                id: "test-user",
+                display_name: "Test User",
+                clearance: Clearance.Admin,
+            },
+        })),
+    };
+});
+
+vi.mock("@/api-server/hive/sso", () => ({
+    authOptions: {},
+}));
+
 vi.mock("@/api-server/db-iterations", () => ({
     DbIterations: {
         list: vi.fn(),

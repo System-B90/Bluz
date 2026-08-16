@@ -6,6 +6,7 @@ import {
     withApi,
 } from "@/api-server/common";
 import { DbIterations } from "@/api-server/db-iterations";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     Iteration,
@@ -34,6 +35,7 @@ export const GET: ServerApiIterationGet = withApi(async (request, context) => {
 });
 
 export const PATCH: ServerApiIterationPatch = withApi(async (request, context) => {
+    await requireStaffSession();
     const { id } = await context.params;
     const patch = await request.json();
     if (!patch || typeof patch !== "object") {
@@ -44,6 +46,7 @@ export const PATCH: ServerApiIterationPatch = withApi(async (request, context) =
 
 export const DELETE: ServerApiIterationDelete = withApi(
     async (request, context) => {
+        await requireStaffSession();
         const { id } = await context.params;
         await DbIterations.remove(id);
         return ApiSuccess({ deleted: true });

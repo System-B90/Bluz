@@ -2,8 +2,9 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, withApi } from "@/api-server/common";
+import { ApiSuccess, parseJsonBody, withApi } from "@/api-server/common";
 import { DbModuleEvent } from "@/api-server/gantt/db-module-event";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { getNextIndexedTitle } from "@/app/api/gantt/events/[id]/duplicate/title-utils";
 
@@ -13,6 +14,7 @@ type RouteContext = {
 
 export const POST = withApi(async (request: NextRequest, context: RouteContext) =>
 {
+    await requireStaffSession();
     const { id } = await context.params;
     if (!id)
     {
@@ -23,7 +25,7 @@ export const POST = withApi(async (request: NextRequest, context: RouteContext) 
 
     const textBody = await request.text();
     const payload = textBody
-        ? (JSON.parse(textBody) as { moduleId: string; })
+        ? parseJsonBody<{ moduleId: string; }>(textBody)
         : null;
 
     if (!payload?.moduleId)

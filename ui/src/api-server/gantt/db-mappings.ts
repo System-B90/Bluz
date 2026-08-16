@@ -40,12 +40,18 @@ export async function getModuleDayMappingsForCurriculum(
         const weekDayIds = w2dRows.map((r) => r.dayId) as Array<GanttDayId>;
 
         resolvedDayIds =
-            resolvedDayIds !== undefined && resolvedDayIds.length > 0
+            resolvedDayIds !== undefined
                 ? resolvedDayIds.filter((id) => weekDayIds.includes(id))
                 : weekDayIds;
     }
 
-    if (resolvedDayIds !== undefined && resolvedDayIds.length > 0) {
+    // An empty set of days is a real filter — "these days, of which there are
+    // none" — not the absence of one. Dropping it here would widen the query
+    // back to every mapping in the curriculum.
+    if (resolvedDayIds !== undefined && resolvedDayIds.length === 0) {
+        return [];
+    }
+    if (resolvedDayIds !== undefined) {
         filters.push(
             inArray(ganttCurriculumEventDayMappingsSchema.dayId, resolvedDayIds),
         );

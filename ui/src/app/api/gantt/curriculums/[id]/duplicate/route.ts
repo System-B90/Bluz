@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, withApi } from "@/api-server/common";
+import { ApiSuccess, parseJsonBody, withApi } from "@/api-server/common";
 import {
     DbCurriculum,
     DuplicateCurriculumOverrides,
@@ -27,7 +27,7 @@ export const POST = withApi(
         let overrides: DuplicateCurriculumOverrides = {};
         const textBody = await request.text();
         if (textBody) {
-            overrides = JSON.parse(textBody) as DuplicateCurriculumOverrides;
+            overrides = parseJsonBody<DuplicateCurriculumOverrides>(textBody);
         }
 
         const duplicated = await DbCurriculum.duplicateCurriculum(

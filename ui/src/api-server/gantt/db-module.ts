@@ -4,6 +4,7 @@ import { postgresDb } from "@/api-server/gantt";
 import {
     drizzleOperationsBuilder,
     FOREIGN_KEY_VIOLATION,
+    postgresErrorCode,
     UNIQUE_VIOLATION,
 } from "@/api-server/gantt/db-base";
 import {
@@ -86,19 +87,14 @@ async function addModuleToSyllabus(
         });
         return await getFullModule(moduleId);
     } catch (error: unknown) {
-        const cause = (error as { cause?: unknown }).cause as {
-            name: string;
-            severity: string;
-            code: string;
-            detail: string;
-        };
+        const code = postgresErrorCode(error);
 
         // Unique Violation: Module already linked
-        if (cause?.code === UNIQUE_VIOLATION) {
+        if (code === UNIQUE_VIOLATION) {
             throw new ClientApiError(`המערך כבר משויך לסילבוס זה`);
         }
         // Foreign Key Violation: Syllabus or Module missing
-        if (cause?.code === FOREIGN_KEY_VIOLATION) {
+        if (code === FOREIGN_KEY_VIOLATION) {
             throw new ClientApiError(`סילבוס או מערך לא קיימים במערכת`);
         }
 

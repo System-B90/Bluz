@@ -373,7 +373,7 @@ export function UnifiedEvent({
                 sx={{
                     position: "absolute",
                     bottom: 3,
-                    right: 3,
+                    insetInlineEnd: 3,
                 }}
             />
         </Box>

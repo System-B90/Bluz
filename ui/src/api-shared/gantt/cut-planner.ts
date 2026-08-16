@@ -360,10 +360,22 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
                 cursor = dayjs(layoutEnd(pieces)).tz(APP_TIMEZONE);
             } else {
                 // Bump the cursor past any meal window it would otherwise overlap.
+                // Absolute timestamps, not minutes-of-day: once the stack runs
+                // past midnight the clock wraps to 00:00 and every morning
+                // meal window looks like an overlap again, which drags the
+                // cursor back to the previous morning.
                 for (const window of mealWindows) {
-                    const cursorMinutes = cursor.hour() * 60 + cursor.minute();
-                    const eventEndMinutes = cursorMinutes + duration;
-                    if (cursorMinutes < window.endMinutes && eventEndMinutes > window.startMinutes) {
+                    const cursorAt = cursor.valueOf();
+                    const eventEndAt = cursorAt + duration * 60_000;
+                    const windowStartAt = minutesOfDay(
+                        date,
+                        window.startMinutes,
+                    ).valueOf();
+                    const windowEndAt = minutesOfDay(
+                        date,
+                        window.endMinutes,
+                    ).valueOf();
+                    if (cursorAt < windowEndAt && eventEndAt > windowStartAt) {
                         cursor = minutesOfDay(date, window.endMinutes);
                     }
                 }

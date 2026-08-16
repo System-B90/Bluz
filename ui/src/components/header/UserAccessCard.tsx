@@ -94,7 +94,7 @@ export function UserAccessCard() {
                     backgroundColor: "action.hover",
                 },
                 "& .MuiChip-label": {
-                    paddingLeft: 0,
+                    paddingInlineStart: 0,
                 },
             }}
             variant="outlined"

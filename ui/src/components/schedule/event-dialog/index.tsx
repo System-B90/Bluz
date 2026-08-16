@@ -43,12 +43,16 @@ export function EventDialog({
 {
     const [ event, setEventRaw ] = useState<EventOrPartial>({ ...inputEvent });
     const [ prevOpen, setPrevOpen ] = useState(open);
-    const [ prevInputEvent, setPrevInputEvent ] = useState(inputEvent);
+    // Identity, not reference: the parent hands over a fresh object on every
+    // render, and resetting on that would wipe whatever the user is currently
+    // typing. Only a genuinely different event (or a reopen) reloads the form.
+    const inputEventId = "id" in inputEvent ? inputEvent.id : undefined;
+    const [ prevInputEventId, setPrevInputEventId ] = useState(inputEventId);
 
-    if (open !== prevOpen || inputEvent !== prevInputEvent)
+    if (open !== prevOpen || inputEventId !== prevInputEventId)
     {
         setPrevOpen(open);
-        setPrevInputEvent(inputEvent);
+        setPrevInputEventId(inputEventId);
         if (open)
         {
             setEventRaw({ ...inputEvent });

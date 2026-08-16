@@ -5,6 +5,18 @@ const SECONDS_IN_AN_HOUR = 3600;
 const HOURS_IN_A_DAY = 24;
 const SECONDS_IN_A_DAY = SECONDS_IN_AN_HOUR * HOURS_IN_A_DAY;
 const DAYS_IN_A_WEEK = 7;
+const MILLISECONDS_IN_A_SECOND = 1000;
+
+/** Milliseconds per day, for turning a timestamp delta into whole days. */
+export const MILLISECONDS_IN_A_DAY =
+    SECONDS_IN_A_DAY * MILLISECONDS_IN_A_SECOND;
+
+/**
+ * Widest date range a single event query may ask for. A leap year, so a
+ * legitimate "one full year" export is never rejected, while an unbounded
+ * range that would turn one request into a full scan still is.
+ */
+export const MAX_EVENT_RANGE_DAYS = 366;
 
 export const USER_AUTH_COOKIE_NAME = "auth";
 // HTTP Caching

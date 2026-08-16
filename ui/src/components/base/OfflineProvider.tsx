@@ -5,6 +5,7 @@ import {
     SetStateAction,
     useCallback,
     useContext,
+    useMemo,
     useState,
 } from "react";
 
@@ -128,21 +129,39 @@ export const OfflineProvider = ({
         return capturedStateBeforeOffline;
     }, [capturedStateBeforeOffline]);
 
+    // Memoized: a fresh object here re-renders every consumer of this
+    // context on each render of the provider, app-wide.
+    const offlineValue = useMemo(
+        () => ({
+            default: false,
+            offlineMode,
+            setOfflineMode: setOfflineModeWrapper,
+            pushDialogOpen,
+            setPushDialogOpen,
+            captureEventBeforeEdit,
+            captureInitialEvents,
+            purgeCapturedState,
+            purgeCapturedEvents,
+            getCapturedEvent,
+            getCapturedState,
+        }),
+        [
+            offlineMode,
+            setOfflineModeWrapper,
+            pushDialogOpen,
+            setPushDialogOpen,
+            captureEventBeforeEdit,
+            captureInitialEvents,
+            purgeCapturedState,
+            purgeCapturedEvents,
+            getCapturedEvent,
+            getCapturedState,
+        ],
+    );
+
     return (
         <OfflineContext.Provider
-            value={{
-                default: false,
-                offlineMode,
-                setOfflineMode: setOfflineModeWrapper,
-                pushDialogOpen,
-                setPushDialogOpen,
-                captureEventBeforeEdit,
-                captureInitialEvents,
-                purgeCapturedState,
-                purgeCapturedEvents,
-                getCapturedEvent,
-                getCapturedState,
-            }}
+            value={offlineValue}
         >
             {children}
         </OfflineContext.Provider>

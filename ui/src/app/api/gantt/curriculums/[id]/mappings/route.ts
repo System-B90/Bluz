@@ -14,6 +14,7 @@ import {
     getModuleDayMappingsForCurriculum,
     updateCurriculumModuleDayMapping,
 } from "@/api-server/gantt/db-mappings";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { CreateGanttCurriculumEventDayMapping } from "@/api-shared/types/gantt/create-payloads";
 import {
@@ -33,10 +34,12 @@ export const GET = withApi(async (request: NextRequest, context: RouteContext) =
     const { id } = await context.params;
     if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
+    // `getAll` yields [] when the caller passed no `dayId` at all, which means
+    // "every day", not "no days" — only forward it as a filter when present.
     const dayIds = request.nextUrl.searchParams.getAll("dayId");
 
     const mappings = await getModuleDayMappingsForCurriculum(id, {
-        dayIds,
+        dayIds: dayIds.length > 0 ? dayIds : undefined,
     });
     return ApiSuccess(mappings);
 });
@@ -45,6 +48,7 @@ export const GET = withApi(async (request: NextRequest, context: RouteContext) =
  * POST: Creates a new module-to-day mapping.
  */
 export const POST = withApi(async (request: NextRequest, context: RouteContext) => {
+    await requireStaffSession();
     const { id: curriculumId } = await context.params;
     const body: CreateGanttCurriculumEventDayMapping = await request.json();
 
@@ -70,6 +74,7 @@ export const POST = withApi(async (request: NextRequest, context: RouteContext) 
  * PATCH: Updates or reorders an existing mapping.
  */
 export const PATCH = withApi(async (request: NextRequest, context: RouteContext) => {
+    await requireStaffSession();
     const { id: curriculumId } = await context.params;
     const body = await request.json();
 
@@ -99,6 +104,7 @@ export const PATCH = withApi(async (request: NextRequest, context: RouteContext)
  * DELETE: Removes a module mapping.
  */
 export const DELETE = withApi(async (request: NextRequest, context: RouteContext) => {
+    await requireStaffSession();
     const { id: curriculumId } = await context.params;
     const body = await request.json();
 

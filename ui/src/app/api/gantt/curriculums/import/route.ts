@@ -20,6 +20,7 @@ import {
     ganttCurriculumEventDayMappingsSchema,
     ganttConstraintsSchema,
 } from "@/api-server/gantt/schema";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 
@@ -67,6 +68,7 @@ function countImportNodes(
 }
 
 export const POST = withApi(async (request: NextRequest) => {
+    await requireStaffSession();
     const body = await request.json();
     const { curriculum, mappings, constraints } = body;
 

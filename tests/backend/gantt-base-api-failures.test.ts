@@ -465,13 +465,14 @@ describe("Gantt Base API - Failure Paths", () => {
             ).rejects.toThrow("Get time failed");
         });
 
-        it("constructs URL with curriculum ID query param", async () => {
+        it("constructs URL with the containerId query param the route reads", async () => {
             vi.mocked(safeApiFetcher).mockResolvedValueOnce(100);
 
             await api.apiGetAllocatedTime("item1", "container1");
 
             const [url] = vi.mocked(safeApiFetcher).mock.calls[0];
-            expect(url).toContain("curriculumId=container1");
+            expect(url).toContain("containerId=container1");
+            expect(url).not.toContain("curriculumId=");
         });
 
         it("returns numeric allocated time", async () => {

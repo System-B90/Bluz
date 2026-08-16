@@ -91,8 +91,19 @@ export function moduleDomainReducer(
     case "REMOVE_MODULE": {
         const parent = state.syllabuses[action.payload.syllabusId];
         if (!parent) return state;
+        // A module owns its events; dropping only the id from the syllabus
+        // leaves both the module and its events orphaned in the store.
+        const existingModule = state.modules[action.payload.moduleId];
+        const { [action.payload.moduleId]: _, ...remainingModules } =
+                state.modules;
+        const remainingEvents = { ...state.events };
+        for (const eventId of existingModule?.events ?? []) {
+            delete remainingEvents[eventId];
+        }
         return {
             ...state,
+            events: remainingEvents,
+            modules: remainingModules,
             syllabuses: {
                 ...state.syllabuses,
                 [parent.id]: {

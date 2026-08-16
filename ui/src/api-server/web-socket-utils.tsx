@@ -114,7 +114,14 @@ export function SendServerRequestToSessionServer(
     }
     pendingMessages.push(message);
 
-    if (!socket || socket.readyState === WebSocket.CLOSED) {
+    // CLOSING counts as gone: the socket will never carry another frame, and
+    // treating it as live parks every queued broadcast until something else
+    // happens to trigger a reconnect.
+    if (
+        !socket ||
+        socket.readyState === WebSocket.CLOSED ||
+        socket.readyState === WebSocket.CLOSING
+    ) {
         socket = connect();
     }
 }

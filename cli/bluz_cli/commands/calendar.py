@@ -39,8 +39,13 @@ ITERATION_OPTION = typer.Option(
 )
 
 
-def _events_from(data: str | None, file: Path | None) -> list:
-    """Read an events array from --events JSON or --events-file."""
+def _events_from(data: str | None, file: Path | None) -> list | None:
+    """
+    Read an events array from --events JSON or --events-file.
+
+    Returns None when neither flag was passed, so an update that only touches
+    the label leaves the draft's events alone instead of clearing them.
+    """
     if data is not None and file is not None:
         raise typer.BadParameter("Pass --events or --events-file, not both.")
     if file is not None:
@@ -48,7 +53,7 @@ def _events_from(data: str | None, file: Path | None) -> list:
     elif data is not None:
         payload = parse_json(data, what="--events")
     else:
-        return []
+        return None
     if not isinstance(payload, list):
         raise typer.BadParameter("Events payload must be a JSON array of events.")
     return payload
@@ -93,7 +98,7 @@ def create_draft(
     iteration: str = ITERATION_OPTION,
 ) -> None:
     """Create a shared draft from a set of events."""
-    body = {"label": label, "events": _events_from(events, events_file)}
+    body = {"label": label, "events": _events_from(events, events_file) or []}
     with state.client() as client:
         result = client.post(_DRAFTS, json=body, params={"it": iteration})
     success(f"Created draft {label!r}")
@@ -175,7 +180,7 @@ def create_snapshot(
     iteration: str = ITERATION_OPTION,
 ) -> None:
     """Capture a snapshot from the supplied events."""
-    body = {"label": label, "events": _events_from(events, events_file)}
+    body = {"label": label, "events": _events_from(events, events_file) or []}
     with state.client() as client:
         result = client.post(_SNAPSHOTS, json=body, params={"it": iteration})
     success(f"Created snapshot {label!r}")

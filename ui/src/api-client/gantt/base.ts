@@ -259,7 +259,8 @@ export function clientGantApiBuilder<
     ): Promise<number> {
         const baseUrl = `${window.location.origin}${buildItemUrl(itemId, "allocate-time")}`;
         const fetchUrl = new URL(baseUrl);
-        fetchUrl.searchParams.set("curriculumId", containerId);
+        // The route reads `containerId`; anything else is a 400.
+        fetchUrl.searchParams.set("containerId", containerId);
 
         return await safeApiFetcher<number>(fetchUrl.toString(), options);
     }

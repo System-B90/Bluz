@@ -6,6 +6,7 @@ import { postgresDb } from "@/api-server/gantt";
 import { getConstraintsForCurriculum } from "@/api-server/gantt/db-constraints";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 
@@ -16,6 +17,7 @@ export type RouteContext = {
 };
 
 export const GET = withApi(async (request: NextRequest, context: RouteContext) => {
+    await requireStaffSession();
     const { id } = await context.params;
     if (!id) throw new ClientApiError("Curriculum ID is missing.");
 

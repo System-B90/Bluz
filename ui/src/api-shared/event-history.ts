@@ -21,9 +21,25 @@ const IGNORED_FIELDS: ReadonlySet<string> = new Set([
     "_id",
 ]);
 
+/**
+ * Duck-typed rather than `instanceof dayjs`: this module is shared by both
+ * sides and must not pull a client date library into the server bundle.
+ */
+function isDayjsLike(value: unknown): value is { valueOf: () => number } {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        ("$isDayjsObject" in value || "$d" in value) &&
+        typeof (value as { valueOf?: unknown }).valueOf === "function"
+    );
+}
+
 /** Normalize a value to a stable, comparable JSON primitive. */
 function normalize(value: unknown): unknown {
     if (value instanceof Date) return value.getTime();
+    // The client hands times over as Dayjs, the server as Date. Comparing the
+    // two shapes as-is reports a change on every save and floods the log.
+    if (isDayjsLike(value)) return value.valueOf();
     if (value === undefined) return null;
     if (Array.isArray(value)) return value.map(normalize);
     return value;

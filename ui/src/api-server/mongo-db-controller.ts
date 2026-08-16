@@ -272,7 +272,9 @@ class MetaController {
         );
     }
     public get client(): MongoClient {
-        return mongoClient;
+        // Never the module-level handle: if the first connect failed, that one
+        // is a closed topology forever, and `client.startSession()` throws.
+        return getMongoClient();
     }
 }
 
@@ -314,7 +316,8 @@ async function ensureCurrentIterationResolved(): Promise<void> {
     // skip the probe to keep the default fast and deterministic.
     if (process.env.VITEST) return;
     if (_currentInitPromise) return await _currentInitPromise;
-    _currentInitPromise = (async () => {
+    let failed = false;
+    const probe: Promise<void> = (async () => {
         try {
             const current = await getMetaController().iterations.findOne({
                 isCurrent: true,
@@ -323,10 +326,16 @@ async function ensureCurrentIterationResolved(): Promise<void> {
                 _currentIterationDbName = current.dbName;
             }
         } catch {
-            // Registry unreachable or unseeded — keep the default database.
+            // Registry unreachable or unseeded — keep the default database for
+            // now, but do not let a one-off failure pin the process to it.
+            failed = true;
         }
     })();
-    return await _currentInitPromise;
+    _currentInitPromise = probe;
+    await probe;
+    // Clear the memo so a later request probes again. An explicit switch that
+    // landed meanwhile owns the memo, so only drop it if it is still ours.
+    if (failed && _currentInitPromise === probe) _currentInitPromise = null;
 }
 
 /** Update the cached current-iteration database (called after a setCurrent). */

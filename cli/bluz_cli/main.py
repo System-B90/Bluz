@@ -138,19 +138,49 @@ _GLOBAL_OPTS_WITH_VALUE = {"--url", "--token"}
 
 
 def _reorder_global_flags(argv: list[str]) -> list[str]:
-    """Move recognised global flags to the front so they work in any position."""
+    """
+    Move recognised global flags to the front so they work in any position.
+
+    A token only counts as a flag when it is in flag position. The value of
+    some other option can spell one exactly (`--name --json`), and hoisting it
+    would both enable a global the user never asked for and leave the option it
+    belonged to holding the next token instead. So a token preceded by an
+    unrecognised option is treated as that option's value and left alone.
+    """
     front: list[str] = []
     rest: list[str] = []
+    previous_may_take_value = False
     i = 0
     while i < len(argv):
         arg = argv[i]
-        if arg in _GLOBAL_FLAGS:
+        # Everything after a bare `--` is positional data by convention.
+        if arg == "--":
+            rest.extend(argv[i:])
+            break
+
+        is_value_of_previous = previous_may_take_value
+        if not is_value_of_previous and arg in _GLOBAL_FLAGS:
             front.append(arg)
-        elif arg in _GLOBAL_OPTS_WITH_VALUE and i + 1 < len(argv):
+        elif (
+            not is_value_of_previous
+            and arg in _GLOBAL_OPTS_WITH_VALUE
+            and i + 1 < len(argv)
+        ):
             front.extend([arg, argv[i + 1]])
-            i += 1
+            i += 2
+            previous_may_take_value = False
+            continue
         else:
             rest.append(arg)
+
+        # An unrecognised `-x` / `--xyz` may be an option expecting a value.
+        # `--xyz=value` carries its own, and a bare `--` was handled above.
+        previous_may_take_value = (
+            not is_value_of_previous
+            and arg.startswith("-")
+            and "=" not in arg
+            and arg not in _GLOBAL_FLAGS
+        )
         i += 1
     return front + rest
 
