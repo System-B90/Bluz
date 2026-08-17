@@ -5,13 +5,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
+    apiDeleteIteration,
+    apiGetIterationUsage,
     apiListIterations,
     apiPatchIteration,
     apiRegisterIteration,
     apiSyncIterationHive,
 } from "@/api-client/iterations";
-import { Iteration } from "@/api-shared/types/iteration";
+import { Iteration, IterationUsage } from "@/api-shared/types/iteration";
 import { SettingsTab } from "@/components/settings-dialog/tabs/global/common";
+import { useConfirmDialog } from "@/components/settings-dialog/tabs/global/common/UseConfirmDialog";
 import { useEntityForm } from "@/components/settings-dialog/tabs/global/common/UseEntityForm";
 import { IterationFormCard, IterationFormCardProps } from "@/components/settings-dialog/tabs/global/iteration-settings/IterationFormCard";
 import { IterationListCard, IterationListCardProps } from "@/components/settings-dialog/tabs/global/iteration-settings/IterationListCard";
@@ -32,6 +35,13 @@ export function IterationSettings()
     // Tracked apart from `busyId` so "make current" on the selected iteration
     // does not spin the sync button too.
     const [ syncingId, setSyncingId ] = useState<null | string>(null);
+    const [ deletingId, setDeletingId ] = useState<null | string>(null);
+    // What the selected iteration still owns, tagged with the id it was probed
+    // for so a stale result can never license a delete on another iteration.
+    const [ usageResult, setUsageResult ] = useState<
+        { id: string; usage: IterationUsage } | null
+    >(null);
+    const { confirm, confirmDialog } = useConfirmDialog();
 
     const load = useCallback(() =>
     {
@@ -106,6 +116,66 @@ export function IterationSettings()
         toValues: iterationToValues,
         validate: validateIteration,
     });
+
+    // Re-probed on every selection change and after a promote/edit, since both
+    // can flip whether the iteration is deletable.
+    const selectedId = form.selectedEntity?.id;
+    useEffect(() =>
+    {
+        if (!selectedId) return;
+        let mounted = true;
+        apiGetIterationUsage(selectedId)
+            .then((result) =>
+            {
+                if (mounted) setUsageResult({ id: selectedId, usage: result });
+            })
+            .catch(() =>
+            {
+                // A failed probe must not offer a delete it cannot justify.
+                if (mounted) setUsageResult(null);
+            });
+        return () =>
+        {
+            mounted = false;
+        };
+    }, [ iterations, selectedId ]);
+
+    const usage = usageResult && usageResult.id === selectedId
+        ? usageResult.usage
+        : null;
+
+    const handleDelete = useCallback(
+        async (iteration: Iteration) =>
+        {
+            const approved = await confirm(
+                `למחוק את המחזור "${iteration.label}"? מסד הנתונים עצמו יישמר.`,
+                { title: "מחיקת מחזור" },
+            );
+            if (!approved) return;
+
+            setDeletingId(iteration.id);
+            try
+            {
+                await apiDeleteIteration(iteration.id);
+                enqueueSnackbar("המחזור נמחק", { variant: "success" });
+                form.handleCancelEdit();
+                load();
+            }
+            catch (error)
+            {
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "מחיקת המחזור נכשלה.",
+                    error,
+                );
+            }
+            finally
+            {
+                setDeletingId(null);
+            }
+        },
+        [ confirm, enqueueSnackbar, form, load ],
+    );
 
     const handleMakeCurrent = useCallback(
         (iteration: Iteration) =>
@@ -182,12 +252,15 @@ export function IterationSettings()
                 FormCard={ IterationFormCard }
                 formCardProps={ {
                     handleCancelEdit: form.handleCancelEdit,
+                    handleDelete,
                     handleSave: form.handleSave,
                     handleSyncHive,
                     isCreating: form.isCreating,
+                    isDeleting: deletingId === form.selectedEntity?.id,
                     isSubmitting: form.isSubmitting,
                     isSyncingHive: syncingId === form.selectedEntity?.id,
                     setValue: form.setValue,
+                    usage,
                     values: form.values,
                 } }
                 ListCard={ IterationListCard }
@@ -202,6 +275,7 @@ export function IterationSettings()
                 } }
                 selectedEntity={ form.selectedEntity }
             />
+            { confirmDialog }
         </Box>
     );
 }

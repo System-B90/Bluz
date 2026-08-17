@@ -83,6 +83,58 @@ export const useGanttZoom = ({ curriculum, weeksById }: UseGanttZoomArgs) =>
         if (checked) setZoomedWeekId(null);
     }, []);
 
+    /**
+     * Move the zoomed week by `delta` weeks, clamped to the curriculum. In
+     * day view without a zoomed week yet, the first step picks a week to zoom
+     * (stepping forward starts at the first week, back at the last).
+     */
+    const stepZoomedWeek = useCallback((delta: number) =>
+    {
+        setZoomedWeekId((current) =>
+        {
+            if (allTimelineWeeks.length === 0) return current;
+            if (current === null)
+            {
+                return delta > 0
+                    ? allTimelineWeeks[ 0 ].id
+                    : allTimelineWeeks[ allTimelineWeeks.length - 1 ].id;
+            }
+            const index = allTimelineWeeks.findIndex((w) => w.id === current);
+            if (index === -1) return allTimelineWeeks[ 0 ].id;
+            const next = Math.min(
+                allTimelineWeeks.length - 1,
+                Math.max(0, index + delta),
+            );
+            return allTimelineWeeks[ next ].id;
+        });
+    }, [ allTimelineWeeks ]);
+
+    // Ctrl+←/→ walks the weeks in day view, matching the schedule page's period
+    // navigation (#481). RTL, so → is backwards and ← is forwards, exactly as
+    // the calendar's own shortcuts are bound.
+    useEffect(() =>
+    {
+        if (weeklyView) return;
+        const onKeyDown = (event: KeyboardEvent) =>
+        {
+            if (!event.ctrlKey && !event.metaKey) return;
+            if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+
+            // Never steal the shortcut from a field the user is typing in.
+            const target = event.target as HTMLElement | null;
+            if (
+                target &&
+                ([ "INPUT", "TEXTAREA" ].includes(target.tagName) ||
+                    target.isContentEditable)
+            ) return;
+
+            event.preventDefault();
+            stepZoomedWeek(event.key === "ArrowLeft" ? 1 : -1);
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [ stepZoomedWeek, weeklyView ]);
+
     // Track the scroll container width so a zoomed week can be sized to fill it (#90).
     useEffect(() =>
     {
@@ -104,6 +156,7 @@ export const useGanttZoom = ({ curriculum, weeksById }: UseGanttZoomArgs) =>
         handleWeeklyViewChange,
         zoomedWeekId,
         setZoomedWeekId,
+        stepZoomedWeek,
         allTimelineWeeks,
         timelineWeeks,
         linearDays,

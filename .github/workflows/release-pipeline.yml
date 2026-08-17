@@ -392,8 +392,18 @@ jobs:
 
             - name: Compress Final Packages
               run: |
-                  tar -czvf bluz-online-${{ github.ref_name }}.tar.gz -C release-online .
-                  tar -czvf bluz-offline-${{ github.ref_name }}.tar.gz -C release-offline .
+                  # The online bundle extracts into a versionless "bluz/" (#479).
+                  # Online upgrades are in place — same directory, same .env,
+                  # same nginx/ssl — so a version in the directory name would
+                  # only ever be a lie after the first update.sh run.
+                  #
+                  # The offline bundle keeps its versioned directory until
+                  # offline upgrades exist; the moment they do it should move to
+                  # the versionless name for exactly the same reason.
+                  mv release-online bluz
+                  mv release-offline bluz-${{ github.ref_name }}
+                  tar -czvf bluz-online-${{ github.ref_name }}.tar.gz bluz
+                  tar -czvf bluz-offline-${{ github.ref_name }}.tar.gz bluz-${{ github.ref_name }}
 
             - name: Publish GitHub Release
               uses: softprops/action-gh-release@v3

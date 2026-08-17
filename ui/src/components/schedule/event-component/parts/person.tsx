@@ -7,7 +7,7 @@ import Box, { BoxProps } from "@mui/material/Box";
 import { ChipProps } from "@mui/material/Chip";
 import Link from "@mui/material/Link";
 import Tooltip from "@mui/material/Tooltip";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
@@ -59,6 +59,31 @@ export function PersonChip({
     );
 
     const personId: PersonId = instructorId ?? personData;
+
+    // The chip used to be a link to "a" — a dead relative URL that navigated
+    // away from the calendar (#470). Clicking a person is a filter gesture:
+    // it toggles that instructor in the calendar's instructor filter. Only
+    // real Hive instructors can be filtered; an outsider ("איש חוץ") has no
+    // id to filter by, so its chip stays plain text.
+    const { filteredInstructors, setFilteredInstructors } = useCalendarFilters();
+    const filterableId = typeof personId === "number" ? personId : null;
+    const isFiltered =
+        filterableId !== null && filteredInstructors.includes(filterableId);
+
+    const toggleInstructorFilter = useCallback(
+        (mouseEvent: React.MouseEvent) => {
+            if (filterableId === null) return;
+            // Without this the click also opens the event's edit dialog.
+            mouseEvent.stopPropagation();
+            mouseEvent.preventDefault();
+            setFilteredInstructors((current) =>
+                current.includes(filterableId)
+                    ? current.filter((id) => id !== filterableId)
+                    : [...current, filterableId],
+            );
+        },
+        [filterableId, setFilteredInstructors],
+    );
     // Dragging a chip out of an event is the unassign gesture. Pointer events
     // stop here so react-big-calendar's own DnD does not also start moving the
     // event under the cursor.
@@ -69,7 +94,15 @@ export function PersonChip({
     });
 
     return (
-        <Tooltip title={fullName}>
+        <Tooltip
+            title={
+                filterableId === null
+                    ? fullName
+                    : isFiltered
+                        ? `${fullName} — ביטול הסינון`
+                        : `${fullName} — סינון לפי מבוזר זה`
+            }
+        >
             <Box
                 component="span"
                 ref={setNodeRef}
@@ -86,14 +119,24 @@ export function PersonChip({
                     opacity: isDragging ? 0.4 : 1,
                 }}
             >
-                <Link
-                    color="inherit"
-                    draggable={false}
-                    href="a"
-                    underline="hover"
-                >
-                    {shortName}
-                </Link>
+                {filterableId === null ? (
+                    shortName
+                ) : (
+                    <Link
+                        color="inherit"
+                        component="button"
+                        draggable={false}
+                        onClick={toggleInstructorFilter}
+                        sx={{
+                            font: "inherit",
+                            fontWeight: isFiltered ? 700 : "inherit",
+                        }}
+                        type="button"
+                        underline={isFiltered ? "always" : "hover"}
+                    >
+                        {shortName}
+                    </Link>
+                )}
             </Box>
         </Tooltip>
     );
