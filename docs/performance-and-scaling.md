@@ -32,7 +32,7 @@ iteration databases:
 ### Real-time broadcast path
 
 - The Next.js server keeps **one persistent WebSocket** to the session server
-  (`ui/src/api-server/web-socket-utils.tsx`). Broadcasts cost a single `send()`
+  (`ui/src/api-server/web-socket-utils.ts`). Broadcasts cost a single `send()`
   instead of a TCP + WebSocket handshake per message. Messages sent while
   (re)connecting are queued (bounded at 1000) and flushed on open.
 - The session server (`session-server/session-server.ts`) tracks connections in
