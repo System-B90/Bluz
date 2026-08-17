@@ -15,25 +15,24 @@ import { buildGanttExcelWorkbook } from "@/app/api/gantt/curriculums/[id]/export
 
 export const dynamic = "force-dynamic";
 
-/**
- * Hive user id → display name, for the "אחראי" column, which used to print the
- * raw id (#466). Hive is the only source of names, so if it is unreachable the
- * export still goes out — the workbook falls back to the ids on its own.
- */
-async function getOrchestratorNames(): Promise<ReadonlyMap<number, string>> {
-    try {
-        const hiveClient = await createHiveClient();
-        const users = await hiveClient.getUsers();
-        return new Map(users.map((user) => [user.id, user.display_name]));
-    } catch (e) {
-        console.error("excel export: could not resolve Hive user names", e);
-        return new Map();
-    }
-}
-
 export type RouteContext = {
     params: Promise<{ id: string }>;
 };
+
+/**
+ * Hive user id → display name for the export's "אחראי" column. Hive being
+ * unreachable degrades the column to raw ids rather than failing the whole
+ * export, which is the more useful outcome for the person downloading it.
+ */
+async function getHiveUserNames(): Promise<Map<number, string>> {
+    try {
+        const hiveClient = await createHiveClient();
+        const users = await hiveClient.getUsers();
+        return new Map(users.map((user) => [ user.id, user.display_name ]));
+    } catch {
+        return new Map();
+    }
+}
 
 export const GET = withApi(async (request: NextRequest, context: RouteContext) => {
     await requireStaffSession();
@@ -53,7 +52,7 @@ export const GET = withApi(async (request: NextRequest, context: RouteContext) =
     const workbook = await buildGanttExcelWorkbook(
         curriculum,
         mappings,
-        await getOrchestratorNames(),
+        await getHiveUserNames(),
     );
 
     const buffer = await workbook.xlsx.writeBuffer();

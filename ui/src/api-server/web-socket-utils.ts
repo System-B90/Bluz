@@ -31,16 +31,16 @@ function flushPending(ws: WebSocket) {
 }
 
 function connect(): WebSocket {
-    // The session server authenticates every connect with an HMAC ticket and
-    // closes ticketless sockets with 1008, so the server-to-server sender has
-    // to present one too. Tickets are short-lived and only checked at connect,
-    // so a fresh one is signed on every (re)connect.
+    // The session server rejects any unticketed connection with 1008, which
+    // silently killed every server→client broadcast. Signed per connect
+    // attempt, not once at module load, because tickets expire and this
+    // reconnects for the life of the process.
     const url = new URL(INTERNAL_SESSION_SERVER_URI);
     url.searchParams.set(
         "ticket",
         signWsTicket(WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC),
     );
-    const ws = new WebSocket(url);
+    const ws = new WebSocket(url.toString());
 
     const timeout = setTimeout(() => {
         if (ws.readyState !== WebSocket.OPEN) {

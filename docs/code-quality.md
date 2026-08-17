@@ -19,7 +19,7 @@ refactor. Use it as a map of what is healthy, what is debt, and where to work ne
 - `buildGantCollectionRoutes` / `buildGantItemRoutes` + `drizzleOperationsBuilder`
   mean a new Gantt entity is added by *composition* (wire a table into the
   builders), not by editing shared handler code.
-- `withApi` (in `api-server/common.tsx`) extends error handling without touching
+- `withApi` (in `api-server/common.ts`) extends error handling without touching
   handlers.
 
 ### Liskov Substitution — one known violation

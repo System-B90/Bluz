@@ -83,17 +83,25 @@ function mergeConsecutiveIdenticalCells(
     }
 }
 
+/**
+ * The "אחראי" column shows a person, so it must read as one. Hive is the
+ * source of names; an id that Hive does not know still prints, so the export
+ * never silently loses the assignment (#466).
+ */
+function makeOrchestratorLabel(userNamesById: Map<number, string>) {
+    return (orchestratorId: null | number | undefined): string => {
+        if (orchestratorId === null || orchestratorId === undefined) return "-";
+        return userNamesById.get(orchestratorId) ?? String(orchestratorId);
+    };
+}
+
 export async function buildGanttExcelWorkbook(
     curriculum: ApiCurriculum,
     mappings: Array<DayMapping>,
-    // Hive user id → display name. An unknown id (or an unreachable Hive) falls
-    // back to the raw id, which is still better than an empty cell (#466).
-    orchestratorNames: ReadonlyMap<number, string> = new Map(),
+    /** Hive user id → display name. Missing ids fall back to the raw id. */
+    userNamesById: Map<number, string> = new Map(),
 ): Promise<ExcelJS.Workbook> {
-    const orchestratorDisplay = (orchestratorId: null | number | undefined) =>
-        orchestratorId == null
-            ? "-"
-            : orchestratorNames.get(orchestratorId) ?? String(orchestratorId);
+    const orchestratorLabel = makeOrchestratorLabel(userNamesById);
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "Bluz Gantt System";
@@ -431,7 +439,7 @@ export async function buildGanttExcelWorkbook(
                     isAllocated:  allocatedEventIds.has(event.id) ? BOOL_ICON.yes : BOOL_ICON.no,
                     minHours:     minutesToHours(event.minimumDuration ?? 0),
                     requiredHours: minutesToHours(requiredMinutes),
-                    orchestrator: orchestratorDisplay(event.orchestratorId),
+                    orchestrator: orchestratorLabel(event.orchestratorId),
                     room:         event.roomRequirement ?? "-",
                     recurrence:   RECURRENCE_DISPLAY[event.recurrence] ?? event.recurrence ?? "-",
                     isCritical:   event.isCritical ? BOOL_ICON.yes : BOOL_ICON.no,

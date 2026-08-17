@@ -63,6 +63,9 @@ describe("EventDialog scrolling", () => {
         // The whole point: `auto` (the default) would size the form to its
         // content and defeat the Paper's max-height.
         expect(parseFloat(style.minHeight)).toBe(0);
+        // The form, not the Paper, is what clips — so the scrollbar lands on
+        // DialogContent inside it.
+        expect(style.overflow).toBe("hidden");
     });
 
     it("puts the scrollbar on the content, not the clipped Paper", () => {
@@ -72,7 +75,6 @@ describe("EventDialog scrolling", () => {
         expect(content).not.toBeNull();
         const style = getComputedStyle(content!);
         expect(style.overflowY).toBe("auto");
-        expect(parseFloat(style.minHeight)).toBe(0);
     });
 
     it("keeps the actions outside the scrolling area", () => {

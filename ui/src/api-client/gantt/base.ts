@@ -2,7 +2,7 @@ import { Dayjs } from "dayjs";
 
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { inplaceDateFixup } from "@/api-shared/date-fixer";
-import { ApiT } from "@/api-shared/types/gantt/api-layer";
+import { ApiT, RawBaseDocument } from "@/api-shared/types/gantt/api-layer";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 
 export type BaseDocument = {
@@ -10,10 +10,7 @@ export type BaseDocument = {
     updatedAt: Dayjs;
 };
 
-export type RawBaseDocument = {
-    createdAt: string;
-    updatedAt: string;
-};
+export type { RawBaseDocument };
 
 export type DateFixup<T extends RawBaseDocument> = <U extends T>(
     rawItem: unknown,
