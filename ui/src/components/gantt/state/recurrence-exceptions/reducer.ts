@@ -27,6 +27,14 @@ export function ganttRecurrenceExceptionReducer(
             },
         };
 
+    case "REMOVE_EXCEPTION": {
+        const key = getRecurrenceExceptionKey(action.payload);
+        if (!(key in state.exceptions)) return state;
+        const exceptions = { ...state.exceptions };
+        delete exceptions[key];
+        return { ...state, exceptions };
+    }
+
     case "SET_LOADING":
         return { ...state, isLoading: action.payload };
 

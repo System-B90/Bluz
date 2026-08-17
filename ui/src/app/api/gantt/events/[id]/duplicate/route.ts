@@ -48,6 +48,8 @@ export const POST = withApi(async (request: NextRequest, context: RouteContext) 
         systemRequirements: originalEvent.systemRequirements,
         roomRequirement: originalEvent.roomRequirement,
         recurrence: originalEvent.recurrence,
+        recurrenceStartDate: originalEvent.recurrenceStartDate,
+        recurrenceEndDate: originalEvent.recurrenceEndDate,
         isCritical: originalEvent.isCritical,
         isPaWindow: originalEvent.isPaWindow,
         splitAcrossBreaks: originalEvent.splitAcrossBreaks,

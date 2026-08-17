@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
+import { getDayDate } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttDrag } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-drag";
 import { useGanttExpansion } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-expansion";
 import { useGanttMappingsMerge } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/use-gantt-mappings-merge";
@@ -52,6 +53,36 @@ export const useGanttView = (curriculumId: string) =>
         singleWeekDayZoom,
     } = useGanttZoom({ curriculum, weeksById: state.weeks });
 
+    // Calendar date of every visible day, so the recurrence window can be
+    // evaluated against real dates rather than week indices (#468).
+    const dateByDayId = useMemo(() =>
+    {
+        const map = new Map<string, string>();
+        const startDate = curriculum?.startDate ?? null;
+        if (!startDate) return map;
+
+        timelineWeeks.forEach((week, weekIdx) =>
+        {
+            week.days.forEach((dayId) =>
+            {
+                const day = state.days[ dayId ];
+                if (!day) return;
+                const date = getDayDate(
+                    startDate,
+                    weekIdx + weekIndexOffset,
+                    day.dayIndex,
+                );
+                if (date) map.set(dayId, date.format("YYYY-MM-DD"));
+            });
+        });
+        return map;
+    }, [ curriculum?.startDate, timelineWeeks, weekIndexOffset, state.days ]);
+
+    const dateOfDayId = useCallback(
+        (dayId: string) => dateByDayId.get(dayId),
+        [ dateByDayId ],
+    );
+
     const [ showConstraints, setShowConstraints ] = useState(true);
     const [ relativeDaySizing, setRelativeDaySizing ] = useState(false);
     const [ showUnallocated, setShowUnallocated ] = useState(false);
@@ -95,6 +126,7 @@ export const useGanttView = (curriculumId: string) =>
 
     const { eventSpans, scheduledMinutesByDay } = useGanttScheduling({
         curriculumMappings,
+        dateOfDayId,
         eventMappings,
         linearDays,
         recurrenceExceptionState,
@@ -150,6 +182,7 @@ export const useGanttView = (curriculumId: string) =>
             linearDays,
             dayIndexMap,
             weekIndexByDayId,
+            dateOfDayId,
             moduleMappings,
             eventMappings,
             curriculumMappings,
@@ -184,6 +217,7 @@ export const useGanttView = (curriculumId: string) =>
             linearDays,
             dayIndexMap,
             weekIndexByDayId,
+            dateOfDayId,
             moduleMappings,
             eventMappings,
             curriculumMappings,

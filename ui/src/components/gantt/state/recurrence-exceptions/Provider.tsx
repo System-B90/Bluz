@@ -62,6 +62,38 @@ export function GanttRecurrenceExceptionProvider({
         [curriculumId, enqueueSnackbar],
     );
 
+    // Undo of deleteOccurrence: the day is no longer excepted, so the event
+    // echoes onto it again (#469).
+    const restoreOccurrence = useCallback(
+        async ({
+            eventId,
+            dayId,
+        }: {
+            eventId: GanttEventId;
+            dayId: GanttDayId;
+        }) => {
+            try {
+                await ganttApi.recurrenceExceptions.apiRestoreOccurrence(
+                    eventId,
+                    { curriculumId, dayId },
+                );
+                dispatchState({
+                    type: "REMOVE_EXCEPTION",
+                    payload: { eventId, dayId },
+                });
+                return true;
+            } catch (e) {
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "שחזור המופע נכשל!",
+                    e,
+                );
+                return false;
+            }
+        },
+        [curriculumId, enqueueSnackbar],
+    );
+
     const materializeOccurrence = useCallback(
         async ({
             moduleId,
@@ -116,8 +148,15 @@ export function GanttRecurrenceExceptionProvider({
             refreshExceptions,
             deleteOccurrence,
             materializeOccurrence,
+            restoreOccurrence,
         }),
-        [state, refreshExceptions, deleteOccurrence, materializeOccurrence],
+        [
+            state,
+            refreshExceptions,
+            deleteOccurrence,
+            materializeOccurrence,
+            restoreOccurrence,
+        ],
     );
 
     return (

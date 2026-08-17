@@ -112,6 +112,8 @@ export function useModuleEventActions() {
                         systemRequirements: [],
                         roomRequirement: RoomRequirement.Classified,
                         recurrence: EventRecurrence.None,
+                        recurrenceStartDate: null,
+                        recurrenceEndDate: null,
                         isCritical: false,
                         isPaWindow: false,
                         splitAcrossBreaks: defaultSplitAcrossBreaks(type),

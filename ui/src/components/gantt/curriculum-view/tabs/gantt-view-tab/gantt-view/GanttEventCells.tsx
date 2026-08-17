@@ -39,6 +39,10 @@ type WeeklyCellsParams = {
     dayIndexOf: (dayId: string) => GanttDayIndex | undefined;
     /** Occurrence days deleted or materialized into a standalone event. */
     excludedDayIds: Set<string>;
+    /** Skipped (restorable) occurrence days — rendered as ghosts (#469). */
+    skippedDayIds: Set<string>;
+    /** Whether a day falls inside the event's configured recurrence window (#468). */
+    isDayInWindow: (dayId: string) => boolean;
     /** O(1) lookup of a dayId's owning week index within timelineWeeks (#159). */
     weekIndexByDayId: Map<string, number>;
 };
@@ -62,6 +66,8 @@ export function buildWeeklyEventCells(
         currentWeekIdx,
         dayIndexOf,
         excludedDayIds,
+        skippedDayIds,
+        isDayInWindow,
         weekIndexByDayId,
     } = params;
 
@@ -87,7 +93,21 @@ export function buildWeeklyEventCells(
             !isExplicitlyMappedHere &&
             currentWeekIdx !== -1 &&
             weekIdx > currentWeekIdx &&
-            !(weekOccurrenceDayId && excludedDayIds.has(weekOccurrenceDayId));
+            !(weekOccurrenceDayId && excludedDayIds.has(weekOccurrenceDayId)) &&
+            // Outside the configured recurrence window ⇒ no echo here (#468).
+            !!weekOccurrenceDayId &&
+            isDayInWindow(weekOccurrenceDayId);
+
+        // A skipped occurrence still gets a cell, so the hole in the series is
+        // visible and can be undone (#469).
+        const isSkippedWeek =
+            isRecurring &&
+            !isExplicitlyMappedHere &&
+            currentWeekIdx !== -1 &&
+            weekIdx > currentWeekIdx &&
+            !!weekOccurrenceDayId &&
+            skippedDayIds.has(weekOccurrenceDayId) &&
+            isDayInWindow(weekOccurrenceDayId);
 
         // Recurrence not yet satisfied ⇒ an "unallocated" marker sits in the
         // first column. Draggable staging when unmapped; a non-interactive cue
@@ -109,23 +129,33 @@ export function buildWeeklyEventCells(
         const hasBlock =
             isExplicitlyMappedHere ||
             isRecurrenceWeek ||
+            isSkippedWeek ||
             isRecurrenceReminder;
 
         const blockPayload: GanttBlockPayload = isExplicitlyMappedHere
             ? { type: "event-move", moduleId, eventId, sourceDayId: currentDayId! }
             : isRecurrenceWeek
                 ? { type: "event-occurrence", moduleId, eventId, dayId: weekOccurrenceDayId! }
-                : reminderIsMarker
-                    ? { moduleId, eventId }
-                    : { type: "event-map", moduleId, eventId };
+                : isSkippedWeek
+                    ? {
+                        type: "event-skipped-occurrence",
+                        moduleId,
+                        eventId,
+                        dayId: weekOccurrenceDayId!,
+                    }
+                    : reminderIsMarker
+                        ? { moduleId, eventId }
+                        : { type: "event-map", moduleId, eventId };
 
         const blockId = isExplicitlyMappedHere
             ? `drag-event-${eventId}-${currentDayId}`
             : isRecurrenceWeek
                 ? `recur-event-${eventId}-${week.id}`
-                : reminderIsMarker
-                    ? `recur-staged-${eventId}-${week.id}`
-                    : `drag-event-staged-${eventId}`;
+                : isSkippedWeek
+                    ? `recur-skipped-${eventId}-${week.id}`
+                    : reminderIsMarker
+                        ? `recur-staged-${eventId}-${week.id}`
+                        : `drag-event-staged-${eventId}`;
 
         // Positioned as percentages of the anchor cell's own width — week
         // columns render wider than their nominal size (the table stretches
@@ -184,6 +214,7 @@ export function buildWeeklyEventCells(
                 isAbsoluteBlock={ true }
                 isOpaque={ isOpaqueBlock }
                 isRecurrence={ isRecurrenceWeek || reminderIsMarker }
+                isSkipped={ isSkippedWeek }
                 isSpillover={ Boolean(isExplicitlyMappedHere && spanInfo) }
                 key={ `week-${week.id}-${eventId}` }
                 payloadData={ {
@@ -214,6 +245,8 @@ type DailyCellsParams = {
     recurrenceSatisfied: boolean;
     /** Days a recurring event repeats onto, excluding its start day and excepted days (#111). */
     recurrenceDayIds: Set<string>;
+    /** Occurrence days the user skipped — rendered as restorable ghosts (#469). */
+    skippedRecurrenceDayIds: Set<string>;
     /** First day of the timeline — where an unallocated recurring event is staged (#111). */
     firstDayId: null | string;
 };
@@ -234,6 +267,7 @@ export function buildDailyEventCells(
         isRecurring,
         recurrenceSatisfied,
         recurrenceDayIds,
+        skippedRecurrenceDayIds,
         firstDayId,
     } = params;
 
@@ -246,6 +280,12 @@ export function buildDailyEventCells(
                 isRecurring &&
                 !isExplicitlyMappedHere &&
                 recurrenceDayIds.has(dayId);
+
+            // Skipped occurrence: a ghost marks the hole in the series (#469).
+            const isSkippedOccurrence =
+                isRecurring &&
+                !isExplicitlyMappedHere &&
+                skippedRecurrenceDayIds.has(dayId);
 
             // Recurrence not yet satisfied ⇒ an "unallocated" marker sits on the
             // first day. Draggable staging when unmapped; a non-interactive cue
@@ -267,23 +307,33 @@ export function buildDailyEventCells(
             const hasBlock =
                 isExplicitlyMappedHere ||
                 isRecurrenceOccurrence ||
+                isSkippedOccurrence ||
                 isRecurrenceReminder;
 
             const blockPayload: GanttBlockPayload = isExplicitlyMappedHere
                 ? { type: "event-move", moduleId, eventId, sourceDayId: dayId }
                 : isRecurrenceOccurrence
                     ? { type: "event-occurrence", moduleId, eventId, dayId }
-                    : reminderIsMarker
-                        ? { moduleId, eventId }
-                        : { type: "event-map", moduleId, eventId };
+                    : isSkippedOccurrence
+                        ? {
+                            type: "event-skipped-occurrence",
+                            moduleId,
+                            eventId,
+                            dayId,
+                        }
+                        : reminderIsMarker
+                            ? { moduleId, eventId }
+                            : { type: "event-map", moduleId, eventId };
 
             const blockId = isExplicitlyMappedHere
                 ? `drag-event-${eventId}-${dayId}`
                 : isRecurrenceOccurrence
                     ? `recur-event-${eventId}-${dayId}`
-                    : reminderIsMarker
-                        ? `recur-staged-${eventId}-${dayId}`
-                        : `drag-event-staged-${eventId}`;
+                    : isSkippedOccurrence
+                        ? `recur-skipped-${eventId}-${dayId}`
+                        : reminderIsMarker
+                            ? `recur-staged-${eventId}-${dayId}`
+                            : `drag-event-staged-${eventId}`;
 
             return (
                 <GanttCell
@@ -302,6 +352,7 @@ export function buildDailyEventCells(
                     isAbsoluteBlock={ true }
                     isOpaque={ isOpaqueBlock }
                     isRecurrence={ isRecurrenceOccurrence || reminderIsMarker }
+                    isSkipped={ isSkippedOccurrence }
                     isSpillover={ Boolean(isExplicitlyMappedHere && spanInfo) }
                     key={ `${dayId}-${eventId}` }
                     payloadData={ { targetType: "event", eventId, dayId } }

@@ -11,12 +11,15 @@ import { GanttRecurrenceExceptionState } from "@/components/gantt/state/recurren
 // echoes onto days that have no mapping row of their own (#105).
 export const useGanttScheduling = ({
     curriculumMappings,
+    dateOfDayId,
     eventMappings,
     linearDays,
     recurrenceExceptionState,
     state,
 }: {
     curriculumMappings: Record<string, GanttCurriculumModuleDayMapping>;
+    /** Calendar date of a day, for the recurrence window (#468). */
+    dateOfDayId: (dayId: string) => string | undefined;
     eventMappings: Record<string, string>;
     linearDays: Array<string>;
     recurrenceExceptionState: GanttRecurrenceExceptionState;
@@ -58,6 +61,9 @@ export const useGanttScheduling = ({
                 linearDays,
                 dayIndexOf,
                 excludedDayIds,
+                recurrenceStartDate: event.recurrenceStartDate,
+                recurrenceEndDate: event.recurrenceEndDate,
+                dateOf: dateOfDayId,
             });
 
             occurrenceDayIds.forEach((dayId) =>
@@ -66,7 +72,14 @@ export const useGanttScheduling = ({
             });
         });
         return byDay;
-    }, [ eventMappings, state.events, recurrenceExceptionState.exceptions, linearDays, dayIndexOf ]);
+    }, [
+        eventMappings,
+        state.events,
+        recurrenceExceptionState.exceptions,
+        linearDays,
+        dayIndexOf,
+        dateOfDayId,
+    ]);
 
     const scheduledMinutesByDay = useMemo(() =>
     {

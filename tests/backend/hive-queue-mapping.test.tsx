@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+    cleanup,
+    fireEvent,
+    render,
+    screen,
+    waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
@@ -57,25 +63,43 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
+/**
+ * The card ships collapsed — the Hive side is a check, not the main edit — so
+ * every assertion about its body has to open it first.
+ */
+function renderExpanded(
+    event: Partial<Parameters<typeof HiveQueueMapping>[0]["event"]>,
+) {
+    const utils = render(<HiveQueueMapping event={event} onUpdate={vi.fn()} />);
+    fireEvent.click(screen.getByText("תורים בהייב לפי שיבוץ"));
+    return utils;
+}
+
 describe("HiveQueueMapping", () => {
-    it("names the lesson and how many shuffles will get a queue", async () => {
-        render(
-            <HiveQueueMapping
-                event={{ ...BASE_EVENT, hiveLesson: 500 }}
-                onUpdate={vi.fn()}
-            />,
+    it("starts collapsed, summarising the mapping in one chip", async () => {
+        render(<HiveQueueMapping event={BASE_EVENT} onUpdate={vi.fn()} />);
+
+        expect(screen.getByText("2/2 תורים")).toBeTruthy();
+        expect(screen.queryByText(/שיעור בהייב/)).toBeNull();
+
+        fireEvent.click(screen.getByText("תורים בהייב לפי שיבוץ"));
+        await waitFor(() =>
+            expect(screen.getByText(/שיעור בהייב/)).toBeTruthy(),
         );
+        expect(screen.queryByText("2/2 תורים")).toBeNull();
+    });
+
+    it("names the lesson and how many shuffles will get a queue", async () => {
+        renderExpanded({ ...BASE_EVENT, hiveLesson: 500 });
 
         await waitFor(() =>
-            expect(
-                screen.getByText(/שיעור בהייב: "תרגול רשתות"/),
-            ).toBeTruthy(),
+            expect(screen.getByText(/שיעור בהייב: "תרגול רשתות"/)).toBeTruthy(),
         );
         expect(screen.getByText(/ייפתח ל-2 שיבוצים/)).toBeTruthy();
     });
 
     it("says the lesson will be created when the event is not saved yet", async () => {
-        render(<HiveQueueMapping event={BASE_EVENT} onUpdate={vi.fn()} />);
+        renderExpanded(BASE_EVENT);
 
         await waitFor(() =>
             expect(screen.getByText(/שיעור בהייב ייווצר בשמירה/)).toBeTruthy(),
@@ -83,12 +107,7 @@ describe("HiveQueueMapping", () => {
     });
 
     it("warns plainly when no queue is mapped — nothing will open", async () => {
-        render(
-            <HiveQueueMapping
-                event={{ ...BASE_EVENT, hiveQueues: {} }}
-                onUpdate={vi.fn()}
-            />,
-        );
+        renderExpanded({ ...BASE_EVENT, hiveQueues: {} });
 
         await waitFor(() =>
             expect(
@@ -98,12 +117,7 @@ describe("HiveQueueMapping", () => {
     });
 
     it("tells the user a module is required before queues can be picked", async () => {
-        render(
-            <HiveQueueMapping
-                event={{ ...BASE_EVENT, hiveModule: 0, hiveQueues: {} }}
-                onUpdate={vi.fn()}
-            />,
-        );
+        renderExpanded({ ...BASE_EVENT, hiveModule: 0, hiveQueues: {} });
 
         await waitFor(() =>
             expect(screen.getByText(/בחרו מודול/)).toBeTruthy(),
@@ -111,16 +125,11 @@ describe("HiveQueueMapping", () => {
     });
 
     it("flags a shuffle that has no matching Hive student group", async () => {
-        render(
-            <HiveQueueMapping
-                event={{
-                    ...BASE_EVENT,
-                    courses: ["c-nitza", "c-ghost"],
-                    hiveQueues: { "c-ghost": 200, "c-nitza": 100 },
-                }}
-                onUpdate={vi.fn()}
-            />,
-        );
+        renderExpanded({
+            ...BASE_EVENT,
+            courses: ["c-nitza", "c-ghost"],
+            hiveQueues: { "c-ghost": 200, "c-nitza": 100 },
+        });
 
         await waitFor(() =>
             expect(screen.getByText("לא נמצא בהייב")).toBeTruthy(),
@@ -128,12 +137,7 @@ describe("HiveQueueMapping", () => {
     });
 
     it("shows each shuffle with the queue it will receive", async () => {
-        render(
-            <HiveQueueMapping
-                event={{ ...BASE_EVENT, hiveLesson: 500 }}
-                onUpdate={vi.fn()}
-            />,
-        );
+        renderExpanded({ ...BASE_EVENT, hiveLesson: 500 });
 
         await waitFor(() => expect(apiGetQueues).toHaveBeenCalled());
         expect(screen.getByText("ניצה")).toBeTruthy();
@@ -145,12 +149,10 @@ describe("HiveQueueMapping", () => {
     });
 
     it("links into Hive by id for the module and each group", async () => {
-        const { container } = render(
-            <HiveQueueMapping
-                event={{ ...BASE_EVENT, hiveLesson: 500 }}
-                onUpdate={vi.fn()}
-            />,
-        );
+        const { container } = renderExpanded({
+            ...BASE_EVENT,
+            hiveLesson: 500,
+        });
 
         await waitFor(() => expect(apiGetClasses).toHaveBeenCalled());
         const hrefs = [...container.querySelectorAll("a")].map((a) =>
@@ -163,6 +165,7 @@ describe("HiveQueueMapping", () => {
     });
 
     it("stays out of the way for event types with no Hive subject", () => {
+        // Nothing renders at all here, so there is no header to expand.
         const { container } = render(
             <HiveQueueMapping
                 event={{ ...BASE_EVENT, type: EventType.PRAYER }}

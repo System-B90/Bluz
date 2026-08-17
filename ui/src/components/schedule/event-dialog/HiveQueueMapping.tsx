@@ -1,8 +1,10 @@
 "use client";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
+import Collapse from "@mui/material/Collapse";
 import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
@@ -44,9 +46,12 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
         Record<number, Array<Queue>>
     >({});
     const [hiveClasses, setHiveClasses] = useState<Array<Class>>([]);
+    // Collapsed by default: the Hive side is a check, not the main edit.
+    const [expanded, setExpanded] = useState(false);
 
     const moduleId = event.hiveModule ?? null;
-    const applies = Boolean(event.type && eventHasSubject(event.type)) && !event.fake;
+    const applies =
+        Boolean(event.type && eventHasSubject(event.type)) && !event.fake;
     const courseIds = useMemo(() => event.courses ?? [], [event.courses]);
     // Declared above the `applies` early return: hooks cannot be conditional.
     const classIdByName = useMemo(
@@ -92,7 +97,8 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
     if (!applies) return null;
 
     // No entry yet for the chosen module ⇒ its queues are still in flight.
-    const loading = Boolean(moduleId) && queuesByModule[moduleId!] === undefined;
+    const loading =
+        Boolean(moduleId) && queuesByModule[moduleId!] === undefined;
     const queues = (moduleId && queuesByModule[moduleId]) || [];
     const mapping = event.hiveQueues ?? {};
     const mappedCount = courseIds.filter((id) => mapping[id]).length;
@@ -112,14 +118,40 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
                 alignItems="center"
                 direction="row"
                 justifyContent="space-between"
+                onClick={() => setExpanded((open) => !open)}
                 spacing={1}
+                sx={{ cursor: "pointer" }}
             >
-                <Typography variant="subtitle2">
-                    תורים בהייב לפי שיבוץ
-                </Typography>
+                <Stack alignItems="center" direction="row" spacing={1}>
+                    <IconButton
+                        aria-expanded={expanded}
+                        aria-label={expanded ? "כיווץ" : "הרחבה"}
+                        size="small"
+                        sx={{
+                            transform: expanded
+                                ? "rotate(180deg)"
+                                : "rotate(0deg)",
+                            transition: "transform 150ms",
+                        }}
+                    >
+                        <ExpandMoreIcon fontSize="small" />
+                    </IconButton>
+                    <Typography variant="subtitle2">
+                        תורים בהייב לפי שיבוץ
+                    </Typography>
+                    {!expanded && moduleId ? (
+                        <Chip
+                            color={mappedCount > 0 ? "success" : "warning"}
+                            label={`${mappedCount}/${courseIds.length} תורים`}
+                            size="small"
+                            variant="outlined"
+                        />
+                    ) : null}
+                </Stack>
                 {moduleLink ? (
                     <Link
                         href={moduleLink}
+                        onClick={(e) => e.stopPropagation()}
                         rel="noopener"
                         target="_blank"
                         underline="hover"
@@ -134,100 +166,105 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
                 ) : null}
             </Stack>
 
-            <Box sx={{ mt: 1 }}>
-                <HiveLessonStatus
-                    lessonName={lesson?.name}
-                    mappedCount={mappedCount}
-                    moduleId={moduleId}
-                />
-            </Box>
+            <Collapse in={expanded} unmountOnExit>
+                <Box sx={{ mt: 1 }}>
+                    <HiveLessonStatus
+                        lessonName={lesson?.name}
+                        mappedCount={mappedCount}
+                        moduleId={moduleId}
+                    />
+                </Box>
 
-            {moduleId && !loading && queues.length === 0 ? (
-                <Alert severity="warning" sx={{ mt: 1 }} variant="outlined">
-                    לא נמצאו תורים למודול הזה בהייב — ייתכן שהמודול אינו קיים
-                    בהייב הנוכחי, או שלא הוגדרו לו תורים.
-                </Alert>
-            ) : null}
+                {moduleId && !loading && queues.length === 0 ? (
+                    <Alert severity="warning" sx={{ mt: 1 }} variant="outlined">
+                        לא נמצאו תורים למודול הזה בהייב — ייתכן שהמודול אינו
+                        קיים בהייב הנוכחי, או שלא הוגדרו לו תורים.
+                    </Alert>
+                ) : null}
 
-            {moduleId && courseIds.length === 0 ? (
-                <Alert severity="info" sx={{ mt: 1 }} variant="outlined">
-                    בחרו מסלולים כדי לשייך להם תורים.
-                </Alert>
-            ) : null}
+                {moduleId && courseIds.length === 0 ? (
+                    <Alert severity="info" sx={{ mt: 1 }} variant="outlined">
+                        בחרו מסלולים כדי לשייך להם תורים.
+                    </Alert>
+                ) : null}
 
-            <Stack spacing={1} sx={{ mt: 1 }}>
-                {courseIds.map((courseId) => {
-                    const course = getCourse(courseId);
-                    const name = course?.name ?? courseId;
-                    const hiveClassId = classIdByName.get(name);
-                    const classLink = hiveClassUrl(hiveClassId);
+                <Stack spacing={1} sx={{ mt: 1 }}>
+                    {courseIds.map((courseId) => {
+                        const course = getCourse(courseId);
+                        const name = course?.name ?? courseId;
+                        const hiveClassId = classIdByName.get(name);
+                        const classLink = hiveClassUrl(hiveClassId);
 
-                    return (
-                        <Stack
-                            alignItems="center"
-                            direction="row"
-                            key={courseId}
-                            spacing={1}
-                        >
-                            <Chip
-                                label={name}
-                                size="small"
-                                sx={{ minWidth: 110 }}
-                            />
-
-                            <FormControl
-                                disabled={!moduleId || loading}
-                                fullWidth
-                                size="small"
+                        return (
+                            <Stack
+                                alignItems="center"
+                                direction="row"
+                                key={courseId}
+                                spacing={1}
                             >
-                                <InputLabel>תור</InputLabel>
-                                <Select<"" | number>
-                                    label="תור"
-                                    onChange={(e) =>
-                                        setQueueForCourse(
-                                            courseId,
-                                            Number(e.target.value) || "",
-                                        )
-                                    }
-                                    value={mapping[courseId] ?? ""}
-                                >
-                                    <MenuItem value="">
-                                        <em>ללא תור</em>
-                                    </MenuItem>
-                                    {queues.map((queue) => (
-                                        <MenuItem key={queue.id} value={queue.id}>
-                                            {queue.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                                <Chip
+                                    label={name}
+                                    size="small"
+                                    sx={{ minWidth: 110 }}
+                                />
 
-                            {hiveClassId === undefined ? (
-                                <Tooltip title="אין בהייב קבוצת תלמידים בשם זה — לא ייפתח תור לשיבוץ הזה">
-                                    <Chip
-                                        color="warning"
-                                        label="לא נמצא בהייב"
-                                        size="small"
-                                        variant="outlined"
-                                    />
-                                </Tooltip>
-                            ) : (
-                                <Tooltip title="פתיחת הקבוצה בהייב">
-                                    <IconButton
-                                        component="a"
-                                        href={classLink ?? undefined}
-                                        rel="noopener"
-                                        size="small"
-                                        target="_blank"
+                                <FormControl
+                                    disabled={!moduleId || loading}
+                                    fullWidth
+                                    size="small"
+                                >
+                                    <InputLabel>תור</InputLabel>
+                                    <Select<"" | number>
+                                        label="תור"
+                                        onChange={(e) =>
+                                            setQueueForCourse(
+                                                courseId,
+                                                Number(e.target.value) || "",
+                                            )
+                                        }
+                                        value={mapping[courseId] ?? ""}
                                     >
-                                        <OpenInNewIcon fontSize="small" />
-                                    </IconButton>
-                                </Tooltip>
-                            )}
-                        </Stack>
-                    );
-                })}
-            </Stack>
+                                        <MenuItem value="">
+                                            <em>ללא תור</em>
+                                        </MenuItem>
+                                        {queues.map((queue) => (
+                                            <MenuItem
+                                                key={queue.id}
+                                                value={queue.id}
+                                            >
+                                                {queue.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+
+                                {hiveClassId === undefined ? (
+                                    <Tooltip title="אין בהייב קבוצת תלמידים בשם זה — לא ייפתח תור לשיבוץ הזה">
+                                        <Chip
+                                            color="warning"
+                                            label="לא נמצא בהייב"
+                                            size="small"
+                                            variant="outlined"
+                                        />
+                                    </Tooltip>
+                                ) : (
+                                    <Tooltip title="פתיחת הקבוצה בהייב">
+                                        <IconButton
+                                            component="a"
+                                            href={classLink ?? undefined}
+                                            rel="noopener"
+                                            size="small"
+                                            target="_blank"
+                                        >
+                                            <OpenInNewIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                )}
+                            </Stack>
+                        );
+                    })}
+                </Stack>
+            </Collapse>
         </Paper>
     );
 }

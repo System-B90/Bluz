@@ -1,4 +1,5 @@
 import { useDraggable } from "@dnd-kit/core";
+import EventBusyIcon from "@mui/icons-material/EventBusy";
 import RepeatIcon from "@mui/icons-material/Repeat";
 import Box from "@mui/material/Box";
 import { alpha, useTheme } from "@mui/material/styles";
@@ -27,33 +28,49 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     blockWidthPercent,
     isSpillover = false,
     isRecurrence = false,
+    isSkipped = false,
 }) => {
     const theme = useTheme();
     const state = useCurriculumState();
     const { openModuleDialog, openEventDialog } = useCurriculumProviderActions();
-    const { materializeOccurrence } = useGanttRecurrenceExceptions();
+    const { materializeOccurrence, restoreOccurrence } =
+        useGanttRecurrenceExceptions();
 
     // A concrete occurrence (as opposed to the non-interactive "unallocated"
     // reminder marker) carries its own dayId and can be dragged/materialized.
     const isOccurrence = payload?.type === "event-occurrence";
+    // A skipped occurrence is a placeholder for something that is *not* there:
+    // never draggable, but double-click brings it back (#469).
+    const isSkippedOccurrence = payload?.type === "event-skipped-occurrence";
 
     const { attributes, listeners, setNodeRef, transform, isDragging } =
         useDraggable({
             id,
             // The reminder marker is a pure display cue with no day of its own —
             // never draggable. Occurrence blocks *are* draggable (drag-to-remove).
-            disabled: isRecurrence && !isOccurrence,
+            disabled: (isRecurrence && !isOccurrence) || isSkippedOccurrence,
             data: payload,
         });
 
     const dragProps =
-        isRecurrence && !isOccurrence ? {} : { ...listeners, ...attributes };
+        (isRecurrence && !isOccurrence) || isSkippedOccurrence
+            ? {}
+            : { ...listeners, ...attributes };
 
     const handleDoubleClick = async (e: React.MouseEvent) => {
         if (!payload || !payload.moduleId) return;
 
         e.stopPropagation();
         e.preventDefault();
+
+        if (isSkippedOccurrence) {
+            await restoreOccurrence({
+                eventId: payload.eventId,
+                dayId: payload.dayId,
+            });
+            return;
+        }
+
         const moduleObj = state.modules[payload.moduleId];
         if (!moduleObj?.syllabusId) return;
 
@@ -110,6 +127,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     const block = (
         <Box
             data-gantt-recurrence={isRecurrence ? true : undefined}
+            data-gantt-skipped={isSkipped ? true : undefined}
             id={elementId}
             ref={setNodeRef}
             {...dragProps}
@@ -125,25 +143,31 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
                     : "auto",
                 width: blockWidth,
                 height: "24px",
-                backgroundColor: isOpaque
+                backgroundColor: isSkipped
                     ? "transparent"
-                    : isRecurrence
-                        ? alpha(theme.palette.primary.main, 0.4)
-                        : theme.palette.primary.main,
+                    : isOpaque
+                        ? "transparent"
+                        : isRecurrence
+                            ? alpha(theme.palette.primary.main, 0.4)
+                            : theme.palette.primary.main,
                 backgroundImage: spilloverBackground,
                 borderRadius: "4px",
-                border: isViolated
-                    ? `2px solid ${theme.palette.error.main}`
-                    : isOpaque
-                        ? `1px solid ${theme.palette.primary.main}`
-                        : isRecurrence
-                            ? `1px dashed ${theme.palette.primary.main}`
-                            : "none",
-                cursor: isRecurrence && !isOccurrence
-                    ? "default"
-                    : isDragging
-                        ? "grabbing"
-                        : "grab",
+                border: isSkipped
+                    ? `1px dashed ${theme.palette.text.disabled}`
+                    : isViolated
+                        ? `2px solid ${theme.palette.error.main}`
+                        : isOpaque
+                            ? `1px solid ${theme.palette.primary.main}`
+                            : isRecurrence
+                                ? `1px dashed ${theme.palette.primary.main}`
+                                : "none",
+                cursor: isSkippedOccurrence
+                    ? "pointer"
+                    : isRecurrence && !isOccurrence
+                        ? "default"
+                        : isDragging
+                            ? "grabbing"
+                            : "grab",
                 opacity: isDragging ? 0.8 : 1,
                 boxShadow: isDragging
                     ? "0 10px 25px rgba(0, 0, 0, 0.2)"
@@ -159,7 +183,15 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
                 ...style,
             }}
         >
-            {isRecurrence ? (
+            {isSkipped ? (
+                <EventBusyIcon
+                    sx={{
+                        color: "text.disabled",
+                        fontSize: "0.9rem",
+                        flexShrink: 0,
+                    }}
+                />
+            ) : isRecurrence ? (
                 <RepeatIcon
                     sx={{
                         color: "primary.main",
@@ -171,10 +203,12 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
             {title ? (
                 <Typography
                     sx={{
-                        color:
-                            isOpaque || isRecurrence
+                        color: isSkipped
+                            ? "text.disabled"
+                            : isOpaque || isRecurrence
                                 ? "primary.main"
                                 : "primary.contrastText",
+                        textDecoration: isSkipped ? "line-through" : undefined,
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -204,8 +238,13 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     );
 
     const spilloverNote = isSpillover ? "גולש על פני מספר ימים" : "";
-    const recurrenceNote = isRecurrence ? "מופע חוזר" : "";
-    const tooltipContent = [title ?? "", recurrenceNote, spilloverNote, ...violations]
+    const recurrenceNote = isRecurrence && !isSkipped ? "מופע חוזר" : "";
+    // The skipped ghost has to explain itself: it looks like an absence, and
+    // the way back is a double-click (#469).
+    const skippedNote = isSkipped
+        ? "מופע חוזר שדולג — לחיצה כפולה תחזיר אותו"
+        : "";
+    const tooltipContent = [title ?? "", recurrenceNote, skippedNote, spilloverNote, ...violations]
         .filter(Boolean)
         .join("\n")
         .trim();

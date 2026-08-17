@@ -121,12 +121,13 @@ export function EventDialog({
                 onSubmit={ handleSubmit }
                 sx={ {
                     display: "flex",
+                    flex: "1 1 auto",
                     flexDirection: "column",
                     minHeight: 0,
                     overflow: "hidden",
                 } }
             >
-                <DialogContent>
+                <DialogContent sx={ { minHeight: 0, overflowY: "auto" } }>
                     <Box
                         sx={ {
                             display: "flex",
@@ -168,11 +169,6 @@ export function EventDialog({
                             onUpdate={ handleUpdate }
                         />
 
-                        <HiveQueueMapping
-                            event={ event }
-                            onUpdate={ handleUpdate }
-                        />
-
                         <InstructorsField
                             event={ event }
                             onBlurCallback={ handleUpdate }
@@ -180,7 +176,12 @@ export function EventDialog({
 
                         <EventToggles event={ event } onUpdate={ handleUpdate } />
 
-                        {/* Saved events only: an unsaved one has no log yet. */}
+                        <HiveQueueMapping
+                            event={ event }
+                            onUpdate={ handleUpdate }
+                        />
+
+                        {/* Saved events only: an unsaved one has no log yet. */ }
                         { "id" in event && event.id ? (
                             <EventHistoryPanel eventId={ event.id } />
                         ) : null }

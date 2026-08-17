@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
     boolean,
+    date,
     integer,
     pgTable,
     text,
@@ -38,6 +39,10 @@ export const ganttEventsSchema = pgTable("e", {
         .notNull()
         .default("בחדר מסווג"),
     recurrence: recurrenceEnumSchema("recurrence").notNull().default("none"),
+    // Recurrence window (#468). Null start ⇒ echo from wherever the event is
+    // mapped; null end ⇒ echo to the end of the timeline.
+    recurrenceStartDate: date("recurrence_start_date"),
+    recurrenceEndDate: date("recurrence_end_date"),
     isCritical: boolean("is_critical").notNull().default(false),
     isPaWindow: boolean("is_pa_window").notNull().default(false),
     splitAcrossBreaks: boolean("split_across_breaks").notNull().default(false),
