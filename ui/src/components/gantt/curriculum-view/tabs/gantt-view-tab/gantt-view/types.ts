@@ -23,6 +23,11 @@ export type GanttContextType = {
     dayIndexMap: Map<string, number>;
     /** O(1) lookup of a dayId's owning week index within timelineWeeks (#159). */
     weekIndexByDayId: Map<string, number>;
+    /**
+     * Calendar date of a timeline day as "YYYY-MM-DD", or undefined when the
+     * curriculum has no start date. Drives the recurrence window (#468).
+     */
+    dateOfDayId: (dayId: string) => string | undefined;
     eventMappings: Record<string, string>;
     moduleMappings: Record<string, Array<string>>;
     curriculumMappings: Record<string, GanttCurriculumModuleDayMapping>;

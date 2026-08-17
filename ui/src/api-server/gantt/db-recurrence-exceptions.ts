@@ -73,6 +73,8 @@ export async function materializeRecurrenceOccurrence(data: {
         systemRequirements: sourceEvent.systemRequirements,
         roomRequirement: sourceEvent.roomRequirement,
         recurrence: EventRecurrence.None,
+        recurrenceStartDate: null,
+        recurrenceEndDate: null,
         isCritical: sourceEvent.isCritical,
         isPaWindow: sourceEvent.isPaWindow,
         splitAcrossBreaks: sourceEvent.splitAcrossBreaks,

@@ -3,6 +3,7 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack, { StackProps } from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import { EventRecurrence, GanttEvent } from "@/api-shared/types/gantt/models";
@@ -48,6 +49,35 @@ export function EventRecurrenceField({
                     )) }
                 </Select>
             </FormControl>
+            { /* Recurrence window (#468): the echo no longer has to start in the
+                 first week, and can be stopped before the course ends. Both
+                 bounds are optional — empty means unbounded in that direction. */ }
+            { event.recurrence !== EventRecurrence.None && (
+                <Stack direction="row" spacing={ 1 }>
+                    <TextField
+                        fullWidth
+                        InputLabelProps={ { shrink: true } }
+                        label="תחילת חזרתיות"
+                        onChange={ (e) =>
+                            commit({ recurrenceStartDate: e.target.value || null })
+                        }
+                        size="small"
+                        type="date"
+                        value={ event.recurrenceStartDate ?? "" }
+                    />
+                    <TextField
+                        fullWidth
+                        InputLabelProps={ { shrink: true } }
+                        label="סיום חזרתיות"
+                        onChange={ (e) =>
+                            commit({ recurrenceEndDate: e.target.value || null })
+                        }
+                        size="small"
+                        type="date"
+                        value={ event.recurrenceEndDate ?? "" }
+                    />
+                </Stack>
+            ) }
             { /* Always rendered so the section height stays constant when
                  switching recurrence — an empty line reserves the space. */ }
             <Typography

@@ -33,6 +33,9 @@ export type CutPlanEventInput = {
     minimumDuration: number;
     /** Per-curriculum allocated duration (minutes); falls back to `minimumDuration` when falsy. */
     allocatedDuration: number;
+    /** Recurrence window bounds ("YYYY-MM-DD"); null/absent ⇒ unbounded (#468). */
+    recurrenceStartDate?: null | string;
+    recurrenceEndDate?: null | string;
     /**
      * When true, an overlapping meal/break window splits this event instead
      * of bumping it past the window: runs up to the window's start, resumes
@@ -271,6 +274,9 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
             linearDays: linearDayIds,
             dayIndexOf,
             excludedDayIds: exceptionsByEvent.get(event.id),
+            recurrenceStartDate: event.recurrenceStartDate,
+            recurrenceEndDate: event.recurrenceEndDate,
+            dateOf: dayDate,
         });
 
         for (const dayId of echoDayIds) {

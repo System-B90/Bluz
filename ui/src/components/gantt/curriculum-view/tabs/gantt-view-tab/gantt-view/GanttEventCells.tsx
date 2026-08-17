@@ -39,6 +39,8 @@ type WeeklyCellsParams = {
     dayIndexOf: (dayId: string) => GanttDayIndex | undefined;
     /** Occurrence days deleted or materialized into a standalone event. */
     excludedDayIds: Set<string>;
+    /** Whether a day falls inside the event's configured recurrence window (#468). */
+    isDayInWindow: (dayId: string) => boolean;
     /** O(1) lookup of a dayId's owning week index within timelineWeeks (#159). */
     weekIndexByDayId: Map<string, number>;
 };
@@ -62,6 +64,7 @@ export function buildWeeklyEventCells(
         currentWeekIdx,
         dayIndexOf,
         excludedDayIds,
+        isDayInWindow,
         weekIndexByDayId,
     } = params;
 
@@ -87,7 +90,10 @@ export function buildWeeklyEventCells(
             !isExplicitlyMappedHere &&
             currentWeekIdx !== -1 &&
             weekIdx > currentWeekIdx &&
-            !(weekOccurrenceDayId && excludedDayIds.has(weekOccurrenceDayId));
+            !(weekOccurrenceDayId && excludedDayIds.has(weekOccurrenceDayId)) &&
+            // Outside the configured recurrence window ⇒ no echo here (#468).
+            !!weekOccurrenceDayId &&
+            isDayInWindow(weekOccurrenceDayId);
 
         // Recurrence not yet satisfied ⇒ an "unallocated" marker sits in the
         // first column. Draggable staging when unmapped; a non-interactive cue
