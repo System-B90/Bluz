@@ -259,13 +259,15 @@ function WeeksTabInner({ curriculumId }: WeeksTabProps) {
             gap={1.5}
             height="100%"
             minHeight={0}
-            sx={{ pl: 3.5 }}
+            sx={{ pl: 3.5, overflowY: "auto" }}
         >
+            { /* Scrolls away with the table rather than pinning to the top
+                 (#477): on a short screen a pinned card left almost nothing
+                 for the weeks themselves. The day header row still sticks. */ }
             <Paper
                 elevation={0}
                 sx={{
-                    position: "sticky",
-                    top: 0,
+                    flexShrink: 0,
                     zIndex: 8,
                     p: 2,
                     border: "1px solid",

@@ -30,6 +30,7 @@ import
     getDayDate,
     parseTimeInputToMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { useDaySelection } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DaySelectionContext";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumDay } from "@/components/gantt/state/hooks/UseDay";
 import { useCurriculumState } from "@/components/gantt/state/provider";
@@ -115,6 +116,28 @@ export function DayCapacityCell({
     const day = useCurriculumDay(dayId);
     const { updateDay, updateWeek } = useWeekActions();
     const week = day ? state.weeks[day.weekId] : undefined;
+    const { extendTo, selectedDayIds } = useDaySelection();
+    const isSelected = selectedDayIds.has(dayId);
+
+    // Shift-click anywhere on the cell joins it to the bulk-edit selection
+    // (#476). Only Shift-click: a plain click still belongs to the inputs the
+    // cell is made of.
+    const handleShiftClick = useCallback(
+        (event: React.MouseEvent) => {
+            if (!event.shiftKey) return;
+            event.stopPropagation();
+            extendTo(dayId);
+        },
+        [dayId, extendTo],
+    );
+
+    // Focus and text selection are decided on mousedown, so suppressing them
+    // has to happen there — by click time the input underneath already has both.
+    const handleShiftMouseDown = useCallback((event: React.MouseEvent) => {
+        if (!event.shiftKey) return;
+        event.preventDefault();
+        event.stopPropagation();
+    }, []);
 
     const toggleWeekendDuty = useCallback(
         (checked: boolean) => {
@@ -332,10 +355,20 @@ export function DayCapacityCell({
     return (
         <TableCell
             className="day-capacity-cell group/cell"
+            onClickCapture={handleShiftClick}
+            onMouseDownCapture={handleShiftMouseDown}
             sx={{
                 ...cellSx,
                 position: "relative",
                 transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                ...(isSelected
+                    ? {
+                        outline: "2px solid",
+                        outlineColor: "primary.main",
+                        outlineOffset: "-2px",
+                        bgcolor: alpha(theme.palette.primary.main, 0.16),
+                    }
+                    : {}),
                 "&:hover": {
                     bgcolor: backgroundColor ? alpha(backgroundColor, 0.18) : "action.hover",
                 },

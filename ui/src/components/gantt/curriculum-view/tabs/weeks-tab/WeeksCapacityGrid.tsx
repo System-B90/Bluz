@@ -9,7 +9,7 @@ import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
-import { KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
@@ -24,16 +24,16 @@ import {
 import {
     computeEventDaySpans,
     formatHoursLabel,
-    formatMinutesAsTimeInput,
     formatWeekDateRange,
     getCapacityStatus,
     getSpilloverMinutesByDay,
     getWeekDateRange,
     getWeekScheduledMinutes,
     getWeekTotalMinutes,
-    parseTimeInputToMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
+import { BulkDayHoursBar } from "@/components/gantt/curriculum-view/tabs/weeks-tab/BulkDayHoursBar";
 import { DayCapacityCell } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DayCapacityCell";
+import { DaySelectionProvider } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DaySelectionContext";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 
 export type WeeksCapacityGridProps = {
@@ -251,138 +251,12 @@ function WeekRow({
     );
 }
 
-function DayHeaderCell({
-    dayIndex,
-    curriculum,
-    state,
-}: {
-    dayIndex: GanttDayIndex;
-    curriculum: GanttCurriculum;
-    state: NormalizedStore;
-}) {
-    const { enqueueSnackbar } = useSnackbar();
-    const { updateDay } = useWeekActions();
-
-    const firstWeekId = curriculum.weeks[0];
-    const firstWeek = firstWeekId ? state.weeks[firstWeekId] : undefined;
-    const firstDayId = firstWeek?.days.find(
-        (dId) => state.days[dId]?.dayIndex === dayIndex,
-    );
-    const firstDay = firstDayId ? state.days[firstDayId] : undefined;
-    const currentMinutes = firstDay ? firstDay.totalWorkingMinutes : null;
-
-    // Default fallbacks: Saturday is typically 0 (closed), others 8 hours (480 mins)
-    const fallbackMinutes = dayIndex === GanttDayIndex.Saturday ? 0 : 480;
-    const localStorageKey = `bluz_gantt_default_hours_${dayIndex}`;
-    // Same value on server and first client render — no localStorage read
-    // during render, so no hydration mismatch.
-    const lastValidMinutesRef = useRef(currentMinutes ?? fallbackMinutes);
-
-    const [inputValue, setInputValue] = useState(() =>
-        formatMinutesAsTimeInput(currentMinutes ?? fallbackMinutes),
-    );
-
-    // Reconcile local input with server state when it changes externally
-    // (another user's edit, or our own commit round-tripping back). Only
-    // fires when currentMinutes itself changes, so it never clobbers
-    // in-progress typing.
-    useEffect(() => {
-        if (currentMinutes !== null) {
-            lastValidMinutesRef.current = currentMinutes;
-            // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing local editable state to an external (server) value change, not derived render state.
-            setInputValue(formatMinutesAsTimeInput(currentMinutes));
-        }
-    }, [currentMinutes]);
-
-    // Client-only: hydrate the remembered default from localStorage once the
-    // day has no server value yet. Runs post-mount, never during render.
-    useEffect(() => {
-        if (currentMinutes !== null) return;
-        const stored = localStorage.getItem(localStorageKey);
-        if (stored === null) return;
-        const parsed = parseFloat(stored);
-        if (isNaN(parsed) || parsed < 0) return;
-        // Handle legacy format (hours) vs minutes in localStorage
-        const minutes = parsed <= 24 ? Math.round(parsed * 60) : Math.round(parsed);
-        lastValidMinutesRef.current = minutes;
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- One-time hydration from localStorage, not derived render state.
-        setInputValue(formatMinutesAsTimeInput(minutes));
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally runs once per mount; re-running after the server value arrives would clobber it.
-    }, [localStorageKey]);
-
-    const handleBlur = useCallback(async () => {
-        const parsedMinutes = parseTimeInputToMinutes(inputValue);
-        if (parsedMinutes === null) {
-            // Revert on invalid input
-            setInputValue(formatMinutesAsTimeInput(lastValidMinutesRef.current));
-            return;
-        }
-
-        // Save to localStorage
-        localStorage.setItem(localStorageKey, parsedMinutes.toString());
-        lastValidMinutesRef.current = parsedMinutes;
-        setInputValue(formatMinutesAsTimeInput(parsedMinutes));
-
-        // Perform bulk update on all weeks for that day in the current curriculum
-        const dayIdsToUpdate: Array<string> = [];
-        for (const weekId of curriculum.weeks) {
-            const week = state.weeks[weekId];
-            if (week) {
-                const dayId = week.days.find(
-                    (dId) => state.days[dId]?.dayIndex === dayIndex,
-                );
-                if (dayId) {
-                    const currentDay = state.days[dayId];
-                    if (
-                        currentDay &&
-                        currentDay.totalWorkingMinutes !== parsedMinutes
-                    ) {
-                        dayIdsToUpdate.push(dayId);
-                    }
-                }
-            }
-        }
-
-        if (dayIdsToUpdate.length === 0) return;
-
-        try {
-            await Promise.all(
-                dayIdsToUpdate.map((dayId) =>
-                    updateDay(dayId, { totalWorkingMinutes: parsedMinutes }),
-                ),
-            );
-            enqueueSnackbar("שעות העבודה עודכנו בהצלחה לכל השבועות!", {
-                variant: "success",
-            });
-        } catch (error) {
-            enqueueApiErrorSnackbar(
-                enqueueSnackbar,
-                "עדכון שעות העבודה נכשל!",
-                error,
-            );
-        }
-    }, [
-        inputValue,
-        localStorageKey,
-        curriculum.weeks,
-        state.weeks,
-        state.days,
-        dayIndex,
-        updateDay,
-        enqueueSnackbar,
-    ]);
-
-    const handleKeyDown = useCallback(
-        (e: KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                void handleBlur();
-                e.currentTarget.blur();
-            }
-        },
-        [handleBlur],
-    );
-
+/**
+ * Just the weekday's name. The column used to carry an hours field that wrote
+ * that weekday across every week at once; shift-selecting the actual cells
+ * covers that and every range it could not express (#476).
+ */
+function DayHeaderCell({ dayIndex }: { dayIndex: GanttDayIndex }) {
     return (
         <TableCell
             align="center"
@@ -391,49 +265,16 @@ function DayHeaderCell({
                 minWidth: "90px",
                 bgcolor: "background.default",
                 fontWeight: 800,
-                py: 1,
+                py: 1.5,
                 fontSize: "0.85rem",
             }}
         >
-            <Box
-                alignItems="center"
-                display="flex"
-                flexDirection="column"
-                gap={0.5}
+            <Typography
+                sx={{ fontWeight: 800, fontSize: "0.85rem" }}
+                variant="subtitle2"
             >
-                <Typography
-                    sx={{ fontWeight: 700, fontSize: "0.82rem" }}
-                    variant="subtitle2"
-                >
-                    {getDayNameDisplay(dayIndex)}
-                </Typography>
-                <TextField
-                    onBlur={handleBlur}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    size="small"
-                    slotProps={{
-                        htmlInput: {
-                            style: {
-                                textAlign: "center",
-                                fontSize: "0.72rem",
-                                padding: "2px 4px",
-                                fontFamily: "monospace",
-                                fontWeight: 700,
-                            },
-                        },
-                    }}
-                    sx={{
-                        width: "auto",
-                        "& .MuiOutlinedInput-root": {
-                            borderRadius: "4px",
-                            bgcolor: "background.paper",
-                            textAlign: "center",
-                        },
-                    }}
-                    value={inputValue}
-                />
-            </Box>
+                {getDayNameDisplay(dayIndex)}
+            </Typography>
         </TableCell>
     );
 }
@@ -466,98 +307,112 @@ export function WeeksCapacityGrid({
         );
     }, [weeks, mappings, state]);
 
-    return (
-        <TableContainer
-            className="animate-slide-up-fade"
-            sx={{
-                flex: 1,
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: "16px",
-                overflowX: "hidden",
-                overflowY: "auto",
-                bgcolor: "background.paper",
-                boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
-                clipPath: "inset(0 round 16px)",
-            }}
-        >
-            <Table
-                size="small"
-                stickyHeader
-                sx={{ width: "100%", tableLayout: "fixed" }}
-            >
-                <TableHead>
-                    <TableRow>
-                        <TableCell
-                            sx={{
-                                position: "sticky",
-                                insetInlineStart: 0,
-                                zIndex: 5,
-                                width: "8%",
-                                minWidth: "80px",
-                                bgcolor: "background.default",
-                                borderInlineEnd: "1px solid",
-                                borderColor: "divider",
-                                fontWeight: 800,
-                                py: 1.5,
-                                fontSize: "0.85rem",
-                            }}
-                        >
-                            שבוע
-                        </TableCell>
-                        <TableCell
-                            sx={{
-                                width: "11%",
-                                minWidth: "100px",
-                                bgcolor: "background.default",
-                                fontWeight: 800,
-                                py: 1.5,
-                                fontSize: "0.85rem",
-                            }}
-                        >
-                            שם / הערת שבוע
-                        </TableCell>
+    // Calendar order of every rendered day — the order a shift-selected range
+    // is defined over (#476). Week order comes from the curriculum; within a
+    // week the grid's own column order decides, not the stored day order.
+    const orderedDayIds = useMemo(
+        () =>
+            weeks.flatMap((week) =>
+                DAY_COLUMNS.map((dayIndex) =>
+                    getDayIdByIndex(week, state, dayIndex),
+                ).filter((dayId): dayId is GanttDayId => Boolean(dayId)),
+            ),
+        [state, weeks],
+    );
 
-                        {DAY_COLUMNS.map((dayIndex) => (
-                            <DayHeaderCell
-                                curriculum={curriculum}
-                                dayIndex={dayIndex}
-                                key={dayIndex}
-                                state={state}
-                            />
-                        ))}
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {weeks.length > 0 ? (
-                        weeks.map((week, weekIndex) => (
-                            <WeekRow
-                                isCompact={isCompact}
-                                key={week.id}
-                                mappings={mappings}
-                                scheduledMinutesByDay={scheduledMinutesByDay}
-                                startDate={curriculum.startDate}
-                                state={state}
-                                week={week}
-                                weekIndex={weekIndex}
-                            />
-                        ))
-                    ) : (
+    return (
+        <DaySelectionProvider orderedDayIds={orderedDayIds}>
+            <TableContainer
+                className="animate-slide-up-fade"
+                sx={{
+                // The tab itself is the scroll container now (#477), so the
+                // grid must grow instead of scrolling inside it — two nested
+                // scrollers would leave the summary card pinned after all.
+                    flex: "0 0 auto",
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: "16px",
+                    overflowX: "hidden",
+                    overflowY: "visible",
+                    bgcolor: "background.paper",
+                    boxShadow: "0 4px 24px rgba(0, 0, 0, 0.03)",
+                    clipPath: "inset(0 round 16px)",
+                }}
+            >
+                <Table
+                    size="small"
+                    stickyHeader
+                    sx={{ width: "100%", tableLayout: "fixed" }}
+                >
+                    <TableHead>
                         <TableRow>
                             <TableCell
-                                align="center"
-                                colSpan={10}
-                                sx={{ py: 5 }}
+                                sx={{
+                                    position: "sticky",
+                                    insetInlineStart: 0,
+                                    zIndex: 5,
+                                    width: "8%",
+                                    minWidth: "80px",
+                                    bgcolor: "background.default",
+                                    borderInlineEnd: "1px solid",
+                                    borderColor: "divider",
+                                    fontWeight: 800,
+                                    py: 1.5,
+                                    fontSize: "0.85rem",
+                                }}
                             >
-                                <Typography color="text.secondary">
+                            שבוע
+                            </TableCell>
+                            <TableCell
+                                sx={{
+                                    width: "11%",
+                                    minWidth: "100px",
+                                    bgcolor: "background.default",
+                                    fontWeight: 800,
+                                    py: 1.5,
+                                    fontSize: "0.85rem",
+                                }}
+                            >
+                            שם / הערת שבוע
+                            </TableCell>
+
+                            {DAY_COLUMNS.map((dayIndex) => (
+                                <DayHeaderCell dayIndex={dayIndex} key={dayIndex} />
+                            ))}
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {weeks.length > 0 ? (
+                            weeks.map((week, weekIndex) => (
+                                <WeekRow
+                                    isCompact={isCompact}
+                                    key={week.id}
+                                    mappings={mappings}
+                                    scheduledMinutesByDay={scheduledMinutesByDay}
+                                    startDate={curriculum.startDate}
+                                    state={state}
+                                    week={week}
+                                    weekIndex={weekIndex}
+                                />
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell
+                                    align="center"
+                                    colSpan={10}
+                                    sx={{ py: 5 }}
+                                >
+                                    <Typography color="text.secondary">
                                     אין עדיין שבועות בגאנט. הוסיפו שבוע דרך
                                     ניהול אורך קורס.
-                                </Typography>
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
-        </TableContainer>
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+                <BulkDayHoursBar />
+            </TableContainer>
+        </DaySelectionProvider>
     );
 }
