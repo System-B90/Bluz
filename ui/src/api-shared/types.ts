@@ -1,5 +1,4 @@
-import { DbEventDocument } from "@/api-server/db-event";
-import { Event } from "@/components/schedule/types/event";
+import { DbEventDocument, Event } from "@/api-shared/types/event";
 
 export type EventDataUpdateMessage<T extends DbEventDocument | Event> = {
     events: Record<string, T>;

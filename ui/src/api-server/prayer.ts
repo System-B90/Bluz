@@ -4,15 +4,15 @@ import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { ClientApiError } from "@/api-shared/errors";
 import { EventDataUpdateMessage } from "@/api-shared/types";
-import { EventChangeInitiator } from "@/api-shared/types/event-history";
-import { PrayerSettings } from "@/api-shared/types/settings/prayer";
 import {
     Event,
     EventType,
     PrayerEvent,
     PrayerType,
     prayerTypeToHebrew,
-} from "@/components/schedule/types/event";
+} from "@/api-shared/types/event";
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
+import { PrayerSettings } from "@/api-shared/types/settings/prayer";
 import { MessageTypes } from "@/settings";
 
 /**

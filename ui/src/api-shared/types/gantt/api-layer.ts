@@ -1,5 +1,5 @@
-import { RawBaseDocument } from "@/api-client/gantt/base";
 import {
+    BaseGantItem,
     GanttCurriculum,
     GanttCurriculumId,
 } from "@/api-shared/types/gantt/models";
@@ -17,6 +17,44 @@ import {
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models/syllabus";
 import { GanttWeek, GanttWeekId } from "@/api-shared/types/gantt/models/week";
+
+/**
+ * A document as it comes off the wire: timestamps are still ISO strings, before
+ * the client's date fixup turns them into Dayjs. Lives here rather than in
+ * `api-client` because `api-shared` describes the wire shape and must not
+ * depend on either side of it.
+ */
+export type RawBaseDocument = {
+    createdAt: string;
+    updatedAt: string;
+};
+
+/**
+ * The DB-facing operations a Gantt entity must provide for the generic
+ * collection/item route builders. Declared here so `api-server` can implement
+ * it without importing from the route layer that consumes it.
+ */
+export type BasicGantOperations<
+    TEntity extends BaseGantItem,
+    TCreatePayload = Omit<TEntity, "id">,
+> = {
+    listItems: (
+        withParents?: boolean,
+    ) => Promise<
+        | Record<TEntity["id"], { title: TEntity["title"] }>
+        | Record<TEntity["id"], TEntity["title"]>
+    >;
+    getMultipleItems: (ids: Array<string>) => Promise<Array<TEntity>>;
+    getItem: (id: TEntity["id"]) => Promise<any>;
+    createNewItem: (
+        payload: TCreatePayload,
+    ) => Promise<ApiT<TEntity> | TEntity>; // TODO: This should always be ApiT<TEntity>
+    updateItem: (
+        id: TEntity["id"],
+        updates: Partial<TEntity>,
+    ) => Promise<TEntity>;
+    deleteItem: (id: TEntity["id"]) => Promise<void>;
+};
 
 export type ApiModuleEvent = {
     cEC: Array<{
