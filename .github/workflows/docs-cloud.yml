@@ -30,6 +30,7 @@ permissions:
 jobs:
   build:
     name: Build Documentation
+    if: vars.BLUZ_CI_RUNNER == 'cloud'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -71,6 +72,7 @@ jobs:
   publish:
     name: Publish to System-B90/.github
     needs: build
+    if: vars.BLUZ_CI_RUNNER == 'cloud'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
