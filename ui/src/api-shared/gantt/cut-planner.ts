@@ -370,6 +370,14 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
                 // past midnight the clock wraps to 00:00 and every morning
                 // meal window looks like an overlap again, which drags the
                 // cursor back to the previous morning.
+                //
+                // A bump that would carry the event past midnight is refused
+                // (#474): an 8-hour event with only 6 hours between lunch and
+                // dinner used to be shoved past dinner and end after midnight,
+                // which is never what was meant. Overlapping the break is the
+                // lesser wrong — it stays on the right day and is visible in
+                // the schedule, so the user can resolve it deliberately.
+                const midnightAt = minutesOfDay(date, MINUTES_PER_DAY).valueOf();
                 for (const window of mealWindows) {
                     const cursorAt = cursor.valueOf();
                     const eventEndAt = cursorAt + duration * 60_000;
@@ -382,6 +390,11 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
                         window.endMinutes,
                     ).valueOf();
                     if (cursorAt < windowEndAt && eventEndAt > windowStartAt) {
+                        const bumpedAt = minutesOfDay(
+                            date,
+                            window.endMinutes,
+                        ).valueOf();
+                        if (bumpedAt + duration * 60_000 > midnightAt) continue;
                         cursor = minutesOfDay(date, window.endMinutes);
                     }
                 }

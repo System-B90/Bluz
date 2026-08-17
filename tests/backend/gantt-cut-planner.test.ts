@@ -208,6 +208,80 @@ describe("planCut", () => {
         expect(occ!.endTime.getTime() - occ!.startTime.getTime()).toBe(90 * 60 * 1000);
     });
 
+    // #474: an event that cannot fit after the break overlaps it rather than
+    // being pushed past midnight, which put it on the wrong day entirely.
+    it("overlaps a break rather than bumping an event past midnight", () => {
+        const dinner = makeEvent({
+            id: "dinner",
+            title: MEAL_EVENT_TITLES.dinnerTime,
+            minimumDuration: 30,
+            allocatedDuration: 30,
+        });
+        const marathon = makeEvent({
+            id: "long",
+            minimumDuration: 480,
+            allocatedDuration: 480,
+            splitAcrossBreaks: false,
+        });
+        const input = baseInput({
+            events: [ dinner, marathon ],
+            mappings: [
+                { eventId: "dinner", dayId: "w0d0", sortOrder: 0 },
+                { eventId: "long", dayId: "w0d0", sortOrder: 1 },
+            ],
+            // 8 hours from 18:00 runs to 02:00; bumping past the 19:00 dinner
+            // would end at 03:30 the next day.
+            dayStartTime: "18:00",
+            dinnerTime: "19:00",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        const occ = plan.occurrences.find((o) => o.ganttEventId === "long");
+        expect(occ!.startTime.toISOString()).toBe(
+            venueTime("2024-01-07T18:00"),
+        );
+        expect(occ!.endTime.getTime() - occ!.startTime.getTime()).toBe(
+            480 * 60 * 1000,
+        );
+    });
+
+    it("still bumps past the break when the event fits before midnight", () => {
+        const lunch = makeEvent({
+            id: "lunch",
+            title: MEAL_EVENT_TITLES.lunchTime,
+            minimumDuration: 30,
+            allocatedDuration: 30,
+        });
+        const long = makeEvent({
+            id: "long",
+            minimumDuration: 300,
+            allocatedDuration: 300,
+            splitAcrossBreaks: false,
+        });
+        const input = baseInput({
+            events: [ lunch, long ],
+            mappings: [
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
+                { eventId: "long", dayId: "w0d0", sortOrder: 1 },
+            ],
+            dayStartTime: "12:15",
+            lunchTime: "13:00",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        const occ = plan.occurrences.find((o) => o.ganttEventId === "long");
+        // 13:30 + 5h = 18:30, comfortably inside the day.
+        expect(occ!.startTime.toISOString()).toBe(
+            venueTime("2024-01-07T13:30"),
+        );
+    });
+
     it("runs a split event through a meal window instead of bumping it past", () => {
         const lunch = makeEvent({
             id: "lunch",
