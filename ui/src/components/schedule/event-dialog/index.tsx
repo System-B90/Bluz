@@ -109,8 +109,26 @@ export function EventDialog({
                 </Stack>
             </DialogTitle>
 
-            <form onSubmit={ handleSubmit }>
-                <DialogContent>
+            { /*
+              * The form — not DialogContent — is the Paper's flex child, so it
+              * is the one that has to carry the column layout and the
+              * `minHeight: 0` that lets it shrink under the Paper's max height.
+              * Without that the form grows to its content, DialogContent never
+              * overflows, and the theme's `overflow: hidden` on the Paper (it
+              * keeps the 20px radius clipped) silently swallows everything
+              * below the fold.
+              */ }
+            <Box
+                component="form"
+                onSubmit={ handleSubmit }
+                sx={ {
+                    display: "flex",
+                    flex: "1 1 auto",
+                    flexDirection: "column",
+                    minHeight: 0,
+                } }
+            >
+                <DialogContent sx={ { minHeight: 0, overflowY: "auto" } }>
                     <Box
                         sx={ {
                             display: "flex",
@@ -152,11 +170,6 @@ export function EventDialog({
                             onUpdate={ handleUpdate }
                         />
 
-                        <HiveQueueMapping
-                            event={ event }
-                            onUpdate={ handleUpdate }
-                        />
-
                         <InstructorsField
                             event={ event }
                             onBlurCallback={ handleUpdate }
@@ -164,7 +177,12 @@ export function EventDialog({
 
                         <EventToggles event={ event } onUpdate={ handleUpdate } />
 
-                        {/* Saved events only: an unsaved one has no log yet. */}
+                        <HiveQueueMapping
+                            event={ event }
+                            onUpdate={ handleUpdate }
+                        />
+
+                        {/* Saved events only: an unsaved one has no log yet. */ }
                         { "id" in event && event.id ? (
                             <EventHistoryPanel eventId={ event.id } />
                         ) : null }
@@ -196,7 +214,7 @@ export function EventDialog({
                         שמירה
                     </Button>
                 </DialogActions>
-            </form>
+            </Box>
         </Dialog>
     );
 }
