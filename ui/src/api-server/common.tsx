@@ -175,6 +175,17 @@ export function catchHandler<T extends NextRequest>(request: T, e: unknown) {
         return ApiErrorMaker(e, 400);
     }
 
+    // `request.json()` on an empty or malformed body rejects with a
+    // `SyntaxError`. That is a caller mistake, not a server fault, so it must
+    // not fall through to the opaque 500 below (#465). Routes that parse the
+    // body themselves get the same treatment via {@link parseJsonBody}.
+    if (e instanceof SyntaxError) {
+        return ApiErrorMaker(
+            { name: "ClientApiError", message: "Malformed JSON payload." },
+            400,
+        );
+    }
+
     // Raw DB errors are logged server-side but returned as an opaque 500 so no
     // internal schema/constraint details leak to the client (#162).
     if (isDatabaseError(e)) {
