@@ -1,10 +1,15 @@
 
 import { readFileSync } from "fs";
-import { join } from "path";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 
 import type { NextConfig } from "next";
 
-const packageJson = JSON.parse(readFileSync(join(process.cwd(), "..", "package.json"), "utf-8"));
+// Resolved relative to this file's own location (not process.cwd(), which
+// varies depending on whether Next is invoked from the repo root or ui/).
+const packageJson = JSON.parse(
+    readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "package.json"), "utf-8"),
+);
 
 const nextConfig: NextConfig = {
     env: {
