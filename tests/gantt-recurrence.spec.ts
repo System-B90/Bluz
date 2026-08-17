@@ -258,6 +258,36 @@ async function mapEventToFirstWeek(page: Page, eventRow: Locator): Promise<void>
     await dragBlockWithinItsCell(page, stagedBlock);
 }
 
+/** Drags an unmapped event's staged block onto `weekIndex`'s cell in the row (weekly view). */
+async function mapEventToWeek(
+    page: Page,
+    eventRow: Locator,
+    weekIndex: number,
+): Promise<void> {
+    const stagedBlock = eventRow.locator('[id^="block-event-"]');
+    await expect(stagedBlock).toBeVisible({ timeout: 10_000 });
+    const blockBox = await stagedBlock.boundingBox();
+    // Column 0 is the sticky label cell; week columns follow in order.
+    const targetCell = eventRow.locator("td").nth(weekIndex + 1);
+    const cellBox = await targetCell.boundingBox();
+    if (!blockBox || !cellBox) throw new Error("Block or week cell not found for drag");
+
+    await page.mouse.move(blockBox.x + blockBox.width / 2, blockBox.y + blockBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(cellBox.x + cellBox.width / 2, cellBox.y + cellBox.height / 2, {
+        steps: 10,
+    });
+    await page.mouse.up();
+    await page.waitForTimeout(500);
+}
+
+/** Clicks `weekIndex`'s column in the timeline header, zooming into its day view (#445). */
+async function zoomIntoWeek(page: Page, weekIndex: number): Promise<void> {
+    const headerRow = page.locator("thead tr").first();
+    await headerRow.locator("th, td").nth(weekIndex + 1).click();
+    await page.waitForTimeout(300);
+}
+
 test.describe("Gantt Recurring Events (#111)", () => {
     // Each test builds a syllabus/module/event hierarchy from scratch (several
     // sequential API round-trips) before touching the timeline — comfortably
@@ -435,5 +465,48 @@ test.describe("Gantt Recurring Events (#111)", () => {
         expect(moduleBlockBox).not.toBeNull();
         expect(eventBlockBox).not.toBeNull();
         expect(moduleBlockBox!.width).toBeGreaterThan(eventBlockBox!.width);
+    });
+
+    test("day-view sidebar hides events mapped outside the zoomed week (#445)", async ({
+        page,
+    }) => {
+        const lectureTitle = await createModuleWithEvents(page);
+        // Leave recurrence at its default (ללא) — just open+close to close the
+        // module dialog without setting anything.
+        const eventDialog = await openEventEditDialog(page, lectureTitle);
+        await closeEventAndModuleDialogs(page, eventDialog);
+
+        const exerciseTitle = 'ע"ע';
+
+        await page.getByRole("tab", { name: "רצף זמן" }).click();
+        await page.waitForTimeout(500);
+
+        const lectureRow = await getTimelineEventRow(page, lectureTitle);
+        await mapEventToFirstWeek(page, lectureRow);
+
+        const exerciseRow = await getTimelineEventRow(page, exerciseTitle);
+        await mapEventToWeek(page, exerciseRow, 1);
+
+        // Zoom into week 1's day view: only the lecture (mapped there) should
+        // stay in the sidebar; the exercise (mapped to week 2) drops out.
+        await zoomIntoWeek(page, 0);
+        await expect(page.locator('[id^="gantt-row-event-"]').filter({ hasText: lectureTitle })).toBeVisible({
+            timeout: 10_000,
+        });
+        await expect(
+            page.locator('[id^="gantt-row-event-"]').filter({ hasText: exerciseTitle }),
+        ).toHaveCount(0);
+
+        // Back to weekly view, then zoom into week 2: the opposite holds.
+        await page.getByRole("button", { name: "תצוגה שבועית" }).click();
+        await page.waitForTimeout(300);
+        await zoomIntoWeek(page, 1);
+
+        await expect(
+            page.locator('[id^="gantt-row-event-"]').filter({ hasText: exerciseTitle }),
+        ).toBeVisible({ timeout: 10_000 });
+        await expect(
+            page.locator('[id^="gantt-row-event-"]').filter({ hasText: lectureTitle }),
+        ).toHaveCount(0);
     });
 });
