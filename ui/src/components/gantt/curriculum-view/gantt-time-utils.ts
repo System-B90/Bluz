@@ -371,6 +371,30 @@ export function getCapacityStatus(
     return "ok";
 }
 
+/**
+ * Severity of a week's over-allocation, for the weeks-view week header (#467).
+ *
+ * A single day spilling over its own hours is recoverable — the work can move
+ * to another day in the same week — so it is amber. Red is reserved for the
+ * case that no reshuffle can fix: the week needs more hours than it has in
+ * total. `null` means no day is over its capacity at all.
+ */
+export function getWeekOverAllocationSeverity(
+    days: ReadonlyArray<{ availableMinutes: number; scheduledMinutes: number }>,
+): "error" | "warning" | null {
+    const hasOverloadedDay = days.some(
+        (day) => day.scheduledMinutes > day.availableMinutes,
+    );
+    if (!hasOverloadedDay) return null;
+
+    const sum = (pick: (day: (typeof days)[number]) => number) =>
+        days.reduce((total, day) => total + pick(day), 0);
+
+    return sum((day) => day.scheduledMinutes) > sum((day) => day.availableMinutes)
+        ? "error"
+        : "warning";
+}
+
 export function getSaturdayForWeek(
     week: GanttWeek | undefined,
     state: NormalizedStore,

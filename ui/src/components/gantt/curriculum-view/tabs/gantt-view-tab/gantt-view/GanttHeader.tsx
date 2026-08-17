@@ -17,6 +17,7 @@ import {
     getCapacityStatus,
     getDayDate,
     getWeekDateRange,
+    getWeekOverAllocationSeverity,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { useCurriculumState } from "@/components/gantt/state/provider";
@@ -82,19 +83,29 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                         ),
                     );
 
-                    const overAllocatedDayNames = showConstraints
+                    const weekDays = showConstraints
                         ? week.days
                             .map((dayId) => state.days[dayId])
-                            .filter(
-                                (day) =>
-                                    !!day &&
-                                    getCapacityStatus(
-                                        day.totalWorkingMinutes,
-                                        scheduledMinutesByDay[day.id] ?? 0,
-                                    ) === "error",
-                            )
-                            .map((day) => getDayNameDisplay(day!.dayIndex))
+                            .filter((day) => !!day)
                         : [];
+                    const overAllocatedDayNames = weekDays
+                        .filter(
+                            (day) =>
+                                getCapacityStatus(
+                                    day.totalWorkingMinutes,
+                                    scheduledMinutesByDay[day.id] ?? 0,
+                                ) === "error",
+                        )
+                        .map((day) => getDayNameDisplay(day.dayIndex));
+                    // Amber for a single overloaded day (the work can still
+                    // move within the week), red only when the week as a whole
+                    // is short of hours (#467).
+                    const weekSeverity = getWeekOverAllocationSeverity(
+                        weekDays.map((day) => ({
+                            availableMinutes: day.totalWorkingMinutes,
+                            scheduledMinutes: scheduledMinutesByDay[day.id] ?? 0,
+                        })),
+                    );
 
                     return (
                         <TableCell
@@ -149,12 +160,16 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                 <Typography fontWeight="bold" variant="subtitle2">
                                     {week.title}
                                 </Typography>
-                                {weeklyView && overAllocatedDayNames.length > 0 ? <Tooltip
+                                {weeklyView && weekSeverity ? <Tooltip
                                     arrow
-                                    title={`חריגה בהקצאה: ${overAllocatedDayNames.join(", ")}`}
+                                    title={
+                                        weekSeverity === "error"
+                                            ? `חריגה בהקצאה השבועית: ${overAllocatedDayNames.join(", ")}`
+                                            : `חריגה בהקצאה: ${overAllocatedDayNames.join(", ")}`
+                                    }
                                 >
                                     <WarningAmberIcon
-                                        color="error"
+                                        color={weekSeverity}
                                         sx={{ fontSize: 16 }}
                                     />
                                 </Tooltip> : null}
