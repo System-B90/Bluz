@@ -17,7 +17,7 @@ export function GlobalSettings()
             } }
         >
             <Box sx={ { flex: "1 1 340px", minWidth: 300 } }>
-                <PrayerSettings />
+                <CalendarHoursSetting />
             </Box>
             <Box sx={ { flex: "1 1 340px", minWidth: 300 } }>
                 <DayStartTimeSetting />
@@ -26,7 +26,7 @@ export function GlobalSettings()
                 <MealTimesSetting />
             </Box>
             <Box sx={ { flex: "1 1 340px", minWidth: 300 } }>
-                <CalendarHoursSetting />
+                <PrayerSettings />
             </Box>
         </Box>
     );
