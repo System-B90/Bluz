@@ -8,14 +8,14 @@ install of `bluz-online-*.tar.gz` or `bluz-offline-*.tar.gz`.
 **Linux / macOS**
 
 ```bash
-tar -xzf bluz-online-v1.0.0.tar.gz -C bluz && cd bluz
+tar -xzf bluz-online-v1.0.0.tar.gz && cd bluz
 ./install.sh
 ```
 
 **Windows (PowerShell)**
 
 ```powershell
-tar -xzf bluz-online-v1.0.0.tar.gz -C bluz; cd bluz
+tar -xzf bluz-online-v1.0.0.tar.gz; cd bluz
 .\install.ps1
 ```
 
@@ -142,7 +142,7 @@ docker compose down -v       # stop AND DELETE all data
 ### Upgrading a live deployment
 
 ```bash
-tar -xzf bluz-online-v1.1.0.tar.gz -C bluz   # keeps your .env and nginx/ssl/
+tar -xzf bluz-online-v1.1.0.tar.gz   # extracts into bluz/, keeps your .env and nginx/ssl/
 cd bluz && ./update.sh
 ```
 
@@ -154,8 +154,9 @@ they happen between the pull and the healthcheck; Mongo has no migration
 mechanism today. If any step fails it stops and prints the rollback command plus
 the path of the backup it took at the start.
 
-It takes the target version from the bundle's `VERSION` file, or `--version
-<tag>`. `--skip-backup` accepts the risk of an unrecoverable migration;
+Without `--version` it upgrades to the newest published release, falling back
+to the bundle's `VERSION` file when GitHub is unreachable; `--version <tag>`
+pins it explicitly. `--skip-backup` accepts the risk of an unrecoverable migration;
 `--yes` skips the confirmation prompt. It refuses to run against a stopped
 stack — use `./install.sh` for a first install.
 

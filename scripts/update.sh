@@ -11,7 +11,10 @@
 # holding docker-compose.yml and .env.
 #
 # Usage: ./update.sh [--version <tag>] [--skip-backup] [--yes]
-# Env:   BLUZ_COMPOSE_FILE    compose file (default ./docker-compose.yml)
+#        Without --version it upgrades to the latest published release.
+# Env:   BLUZ_RELEASE_REPO    GitHub repo to read releases from
+#                              (default System-B90/Bluz)
+#        BLUZ_COMPOSE_FILE    compose file (default ./docker-compose.yml)
 #        BLUZ_COMPOSE_OVERLAY optional extra compose file (e.g. co-located Hive
 #                              overlay docker-compose.hive-local.yml)
 #        BLUZ_ENV_FILE        env file (default ./.env)
@@ -26,6 +29,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="${BLUZ_COMPOSE_FILE:-./docker-compose.yml}"
 ENV_FILE="${BLUZ_ENV_FILE:-./.env}"
 HEALTH_RETRIES="${BLUZ_HEALTH_RETRIES:-30}"
+RELEASE_REPO="${BLUZ_RELEASE_REPO:-System-B90/Bluz}"
 
 TARGET_VERSION=""
 SKIP_BACKUP=0
@@ -66,7 +70,7 @@ while [ $# -gt 0 ]; do
         --version) TARGET_VERSION="${2:-}"; shift 2 ;;
         --skip-backup) SKIP_BACKUP=1; shift ;;
         --yes|-y) ASSUME_YES=1; shift ;;
-        -h|--help) sed -n '2,18p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,22p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) fail "Unknown argument: $1" "Run ./update.sh --help." ;;
     esac
 done
@@ -110,11 +114,28 @@ PREVIOUS_VERSION="${BLUZ_VERSION:-}"
             "Compose resolves the image tags from it, so an upgrade has no" \
             "'from' version to roll back to. Set it to the running release first."
 
+# With no --version, upgrade to the newest published release (#479). The
+# bundle's own VERSION file is only a fallback: an online deployment upgrades in
+# place, so after the first run that file names the release already installed
+# and defaulting to it made a bare `./update.sh` a no-op.
 if [ -z "${TARGET_VERSION}" ]; then
-    [ -f "VERSION" ] \
-        || fail "No target version given and no VERSION file in $(pwd)." \
-                "Pass it explicitly: ./update.sh --version v1.0.0"
-    TARGET_VERSION="$(tr -d '[:space:]' < VERSION)"
+    log "resolving latest release from ${RELEASE_REPO}..."
+    if command -v curl &> /dev/null; then
+        TARGET_VERSION="$(curl -fsSL --max-time 15 \
+            "https://api.github.com/repos/${RELEASE_REPO}/releases/latest" 2>/dev/null \
+            | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+            | head -n 1)" || TARGET_VERSION=""
+    fi
+
+    if [ -n "${TARGET_VERSION}" ]; then
+        ok "latest release is ${TARGET_VERSION}"
+    else
+        warn "could not reach GitHub — falling back to the bundle's VERSION file"
+        [ -f "VERSION" ] \
+            || fail "No target version given, GitHub unreachable, and no VERSION file in $(pwd)." \
+                    "Pass it explicitly: ./update.sh --version v1.0.0"
+        TARGET_VERSION="$(tr -d '[:space:]' < VERSION)"
+    fi
 fi
 
 [ "${TARGET_VERSION}" != "${PREVIOUS_VERSION}" ] \
