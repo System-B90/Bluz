@@ -3,6 +3,7 @@ import { WebSocket } from "ws";
 import {
     getWsAuthKey,
     MessageTypes,
+    signWsTicket,
     WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
 } from "@/settings";
 
@@ -30,7 +31,16 @@ function flushPending(ws: WebSocket) {
 }
 
 function connect(): WebSocket {
-    const ws = new WebSocket(INTERNAL_SESSION_SERVER_URI);
+    // The session server authenticates every connect with an HMAC ticket and
+    // closes ticketless sockets with 1008, so the server-to-server sender has
+    // to present one too. Tickets are short-lived and only checked at connect,
+    // so a fresh one is signed on every (re)connect.
+    const url = new URL(INTERNAL_SESSION_SERVER_URI);
+    url.searchParams.set(
+        "ticket",
+        signWsTicket(WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC),
+    );
+    const ws = new WebSocket(url);
 
     const timeout = setTimeout(() => {
         if (ws.readyState !== WebSocket.OPEN) {
