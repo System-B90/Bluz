@@ -77,6 +77,17 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         return set;
     }, [ exceptionsState.exceptions, eventId ]);
 
+    // Of those, the ones that were merely skipped: a materialized occurrence
+    // already has a standalone block on that day, so only these get a ghost
+    // and can be restored (#469).
+    const skippedDayIds = useMemo(() => {
+        const set = new Set<string>();
+        Object.values(exceptionsState.exceptions).forEach((e) => {
+            if (e.eventId === eventId && !e.materializedEventId) set.add(e.dayId);
+        });
+        return set;
+    }, [ exceptionsState.exceptions, eventId ]);
+
     // Multi-day spillover: last occupied day + total covered days (#105).
     const spanInfo = useMemo(() =>
     {
@@ -161,6 +172,34 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         firstRequiredWeekIdx,
     );
 
+    // Day-view ghosts: days the pattern would have hit, minus the window and
+    // minus materialized days, intersected with the skipped set (#469).
+    const skippedRecurrenceDayIds = useMemo(() => {
+        const pattern = getRecurrenceOccurrenceDayIds({
+            recurrence,
+            startDayId: currentDayId,
+            linearDays,
+            dayIndexOf,
+            recurrenceStartDate,
+            recurrenceEndDate,
+            dateOf: dateOfDayId,
+        });
+        const set = new Set<string>();
+        pattern.forEach((dayId) => {
+            if (skippedDayIds.has(dayId)) set.add(dayId);
+        });
+        return set;
+    }, [
+        recurrence,
+        currentDayId,
+        linearDays,
+        dayIndexOf,
+        recurrenceStartDate,
+        recurrenceEndDate,
+        dateOfDayId,
+        skippedDayIds,
+    ]);
+
     const isDayInWindow = useCallback(
         (dayId: string) =>
             isDayInRecurrenceWindow(dayId, {
@@ -194,6 +233,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 currentWeekIdx,
                 dayIndexOf,
                 excludedDayIds,
+                skippedDayIds,
                 isDayInWindow,
                 weekIndexByDayId,
             })
@@ -210,6 +250,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 isRecurring,
                 recurrenceSatisfied,
                 recurrenceDayIds,
+                skippedRecurrenceDayIds,
                 firstDayId,
             });
     }, [
@@ -232,6 +273,8 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         firstDayId,
         dayIndexOf,
         excludedDayIds,
+        skippedDayIds,
+        skippedRecurrenceDayIds,
         isDayInWindow,
         weekIndexByDayId,
     ]);

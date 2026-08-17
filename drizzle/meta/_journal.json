@@ -92,6 +92,13 @@
       "when": 1786996225698,
       "tag": "0012_wild_swarm",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1786996985387,
+      "tag": "0013_slow_hydra",
+      "breakpoints": true
     }
   ]
 }

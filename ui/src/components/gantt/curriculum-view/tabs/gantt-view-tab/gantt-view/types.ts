@@ -102,6 +102,12 @@ export type GanttBlockPayload =
           eventId: string;
           dayId: string;
       }
+    | {
+          type: "event-skipped-occurrence";
+          moduleId: string;
+          eventId: string;
+          dayId: string;
+      }
     | { type: "module-map"; moduleId: string }
     | { type: "module-shift"; moduleId: string; sourceDayId: string };
 
@@ -131,6 +137,11 @@ export type GanttBlockProps = {
      * start block). Rendered as a faded, non-draggable indicator (#111).
      */
     isRecurrence?: boolean;
+    /**
+     * A recurrence occurrence the user skipped. Shown as a hollow, struck-out
+     * ghost so the gap is visible, and restored on double-click (#469).
+     */
+    isSkipped?: boolean;
 };
 
 export type GanttCellProps = {
@@ -155,6 +166,8 @@ export type GanttCellProps = {
     isSpillover?: boolean;
     /** Auto-generated recurrence occurrence indicator (#111). */
     isRecurrence?: boolean;
+    /** Skipped recurrence occurrence — a restorable ghost block (#469). */
+    isSkipped?: boolean;
 };
 
 export type GanttModuleRowProps = {

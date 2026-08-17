@@ -12,6 +12,10 @@ export type GanttRecurrenceExceptionState = {
 
 export type GanttRecurrenceExceptionAction =
     | {
+          type: "REMOVE_EXCEPTION";
+          payload: { eventId: GanttEventId; dayId: GanttDayId };
+      }
+    | {
           type: "SET_EXCEPTIONS";
           payload: Array<GanttEventRecurrenceException>;
       }

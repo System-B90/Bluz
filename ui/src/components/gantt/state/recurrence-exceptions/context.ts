@@ -29,11 +29,20 @@ export type MaterializeOccurrence = ({
     dayId: GanttDayId;
 }) => Promise<{ event: GanttEvent & { id: GanttEventId } } | undefined>;
 
+export type RestoreOccurrence = ({
+    eventId,
+    dayId,
+}: {
+    eventId: GanttEventId;
+    dayId: GanttDayId;
+}) => Promise<boolean>;
+
 export type GanttRecurrenceExceptionContextType = {
     state: GanttRecurrenceExceptionState;
     refreshExceptions: RefreshRecurrenceExceptions;
     deleteOccurrence: DeleteOccurrence;
     materializeOccurrence: MaterializeOccurrence;
+    restoreOccurrence: RestoreOccurrence;
 };
 
 export const GanttRecurrenceExceptionContext = createContext<

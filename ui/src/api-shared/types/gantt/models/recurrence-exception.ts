@@ -15,4 +15,9 @@ export type GanttEventRecurrenceException = {
     curriculumId: GanttCurriculumId;
     eventId: GanttEventId;
     dayId: GanttDayId;
+    /**
+     * Event the occurrence was materialized into, or null when it was merely
+     * skipped. Only skipped occurrences can be restored (#469).
+     */
+    materializedEventId?: GanttEventId | null;
 };
