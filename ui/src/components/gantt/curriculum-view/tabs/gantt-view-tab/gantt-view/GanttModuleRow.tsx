@@ -40,7 +40,6 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         toggleModule,
         searchActive,
         isEventVisible,
-        singleWeekDayZoom,
     } = useGanttContext();
     // While searching, force the module open so matching events show (#323).
     const isExpanded = searchActive || isModuleExpanded(moduleId);
