@@ -357,6 +357,13 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
             {isExpanded && hasEvents
                 ? ganttModule?.events
                     ?.filter((eventId) => isEventVisible(eventId))
+                    .filter((eventId) => {
+                        if (!singleWeekDayZoom) return true;
+                        const mappedDayId = eventMappings[eventId];
+                        // Unmapped events stay visible (draggable placeholder);
+                        // mapped events only show while their day is in view.
+                        return !mappedDayId || dayIndexMap.has(mappedDayId);
+                    })
                     .map((eventId) => (
                         <GanttEventRow
                             eventId={eventId}

@@ -64,8 +64,31 @@ async function apiMaterializeOccurrence(
     );
 }
 
+/**
+ * DELETE: Restores a previously skipped occurrence (#469).
+ */
+async function apiRestoreOccurrence(
+    eventId: GanttEventId,
+    payload: { curriculumId: GanttCurriculumId; dayId: GanttDayId },
+    options?: ClientApiProps,
+): Promise<{
+    curriculumId: GanttCurriculumId;
+    dayId: GanttDayId;
+    eventId: GanttEventId;
+}> {
+    return await safeApiFetcher(
+        `/api/gantt/events/${eventId}/recurrence-exceptions`,
+        {
+            ...options,
+            method: "DELETE",
+            body: JSON.stringify(payload),
+        },
+    );
+}
+
 export const recurrenceExceptionApi = {
     apiGet: apiGetRecurrenceExceptions,
     apiDeleteOccurrence,
     apiMaterializeOccurrence,
+    apiRestoreOccurrence,
 } as const;

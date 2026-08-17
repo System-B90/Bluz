@@ -1,0 +1,2 @@
+ALTER TABLE "eRE" ADD COLUMN "materialized_event_id" text;--> statement-breakpoint
+ALTER TABLE "eRE" ADD CONSTRAINT "eRE_materialized_event_id_e_id_fk" FOREIGN KEY ("materialized_event_id") REFERENCES "public"."e"("id") ON DELETE set null ON UPDATE no action;

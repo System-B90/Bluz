@@ -35,6 +35,7 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
     blockWidthPercent,
     isSpillover,
     isRecurrence,
+    isSkipped,
 }) => {
     const theme = useTheme();
     const { dayCellWidth } = useGanttContext();
@@ -73,6 +74,7 @@ const GanttCellComponent: React.FC<GanttCellProps> = ({
                         isAbsolute={isAbsoluteBlock}
                         isOpaque={isOpaque}
                         isRecurrence={isRecurrence}
+                        isSkipped={isSkipped}
                         isSpillover={isSpillover}
                         payload={blockPayload}
                         spanLength={spanLength}

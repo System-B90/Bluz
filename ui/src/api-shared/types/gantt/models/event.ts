@@ -35,6 +35,17 @@ export type GanttEvent = {
     systemRequirements: Array<string>;
     roomRequirement: RoomRequirement;
     recurrence: EventRecurrence;
+    /**
+     * First date the recurrence may echo onto ("YYYY-MM-DD"), or null for "from
+     * wherever the event is mapped". Lets a recurring event start mid-course
+     * instead of being pinned to the first week (#468).
+     */
+    recurrenceStartDate: null | string;
+    /**
+     * Last date the recurrence may echo onto ("YYYY-MM-DD"), or null for "to the
+     * end of the timeline" (#468).
+     */
+    recurrenceEndDate: null | string;
     /** Marked קריטי. */
     isCritical: boolean;
     /** Marked חלון פ"א. */

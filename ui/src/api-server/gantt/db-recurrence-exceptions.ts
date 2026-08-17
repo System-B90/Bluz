@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
 import { createCurriculumModuleDayMapping } from "@/api-server/gantt/db-mappings";
@@ -37,6 +37,7 @@ export async function createRecurrenceException(data: {
     curriculumId: GanttCurriculumId;
     eventId: GanttEventId;
     dayId: GanttDayId;
+    materializedEventId?: GanttEventId | null;
 }) {
     const [exception] = await postgresDb
         .insert(ganttEventRecurrenceExceptionsSchema)
@@ -73,6 +74,8 @@ export async function materializeRecurrenceOccurrence(data: {
         systemRequirements: sourceEvent.systemRequirements,
         roomRequirement: sourceEvent.roomRequirement,
         recurrence: EventRecurrence.None,
+        recurrenceStartDate: null,
+        recurrenceEndDate: null,
         isCritical: sourceEvent.isCritical,
         isPaWindow: sourceEvent.isPaWindow,
         splitAcrossBreaks: sourceEvent.splitAcrossBreaks,
@@ -91,7 +94,43 @@ export async function materializeRecurrenceOccurrence(data: {
         dayId,
     });
 
-    await createRecurrenceException({ curriculumId, eventId, dayId });
+    await createRecurrenceException({
+        curriculumId,
+        eventId,
+        dayId,
+        materializedEventId: newEvent.id as GanttEventId,
+    });
 
     return { event: newEvent, mapping };
+}
+
+/**
+ * Restores a skipped occurrence: drops the exception so the event echoes onto
+ * that day again (#469). Materialized occurrences are left alone — their
+ * standalone event still holds the day, so removing the exception would
+ * double-book it. Returns whether a row was actually removed.
+ */
+export async function deleteRecurrenceException(data: {
+    curriculumId: GanttCurriculumId;
+    eventId: GanttEventId;
+    dayId: GanttDayId;
+}): Promise<boolean> {
+    const removed = await postgresDb
+        .delete(ganttEventRecurrenceExceptionsSchema)
+        .where(
+            and(
+                eq(
+                    ganttEventRecurrenceExceptionsSchema.curriculumId,
+                    data.curriculumId,
+                ),
+                eq(ganttEventRecurrenceExceptionsSchema.eventId, data.eventId),
+                eq(ganttEventRecurrenceExceptionsSchema.dayId, data.dayId),
+                isNull(
+                    ganttEventRecurrenceExceptionsSchema.materializedEventId,
+                ),
+            ),
+        )
+        .returning();
+
+    return removed.length > 0;
 }

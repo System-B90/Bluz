@@ -28,6 +28,12 @@ export const ganttEventRecurrenceExceptionsSchema = pgTable(
         dayId: text("day_id")
             .notNull()
             .references(() => ganttDaysSchema.id, { onDelete: "cascade" }),
+        // Set when the occurrence was materialized into its own standalone
+        // event; null means it was simply skipped and can be restored (#469).
+        materializedEventId: text("materialized_event_id").references(
+            () => ganttEventsSchema.id,
+            { onDelete: "set null" },
+        ),
         createdAt: timestamp("ca").defaultNow().notNull(),
     },
     (t) => ({

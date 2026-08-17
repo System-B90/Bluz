@@ -11,7 +11,16 @@ import { EventRecurrence, GanttDayIndex } from "@/api-shared/types/gantt/models"
  * Until then an "unallocated" marker is shown in the first column.
  */
 
-export type GetRecurrenceOccurrenceDayIdsParams = {
+export type RecurrenceWindow = {
+    /** First date the recurrence may echo onto ("YYYY-MM-DD"), or null. */
+    recurrenceStartDate?: null | string;
+    /** Last date the recurrence may echo onto ("YYYY-MM-DD"), or null. */
+    recurrenceEndDate?: null | string;
+    /** Date of a timeline day ("YYYY-MM-DD"), or undefined when unknown. */
+    dateOf?: (dayId: string) => string | undefined;
+};
+
+export type GetRecurrenceOccurrenceDayIdsParams = RecurrenceWindow & {
     recurrence: EventRecurrence;
     /** Day the event is mapped to, or null when unmapped. */
     startDayId: null | string;
@@ -22,6 +31,28 @@ export type GetRecurrenceOccurrenceDayIdsParams = {
     /** Occurrence days to skip — deleted or materialized into their own event. */
     excludedDayIds?: Set<string>;
 };
+
+/**
+ * Whether a timeline day falls inside an event's configured recurrence window
+ * (#468). A missing bound is open-ended, and a day whose date cannot be
+ * resolved is let through rather than silently dropped — the window is a
+ * restriction on top of the echo, not a second source of truth for it.
+ * Dates are "YYYY-MM-DD", so lexicographic comparison is chronological.
+ */
+export function isDayInRecurrenceWindow(
+    dayId: string,
+    { recurrenceStartDate, recurrenceEndDate, dateOf }: RecurrenceWindow,
+): boolean {
+    if (!recurrenceStartDate && !recurrenceEndDate) return true;
+
+    const date = dateOf?.(dayId);
+    if (!date) return true;
+
+    if (recurrenceStartDate && date < recurrenceStartDate) return false;
+    if (recurrenceEndDate && date > recurrenceEndDate) return false;
+
+    return true;
+}
 
 /**
  * The day ids a recurring event echoes onto, excluding its start day and any
@@ -35,6 +66,9 @@ export function getRecurrenceOccurrenceDayIds({
     linearDays,
     dayIndexOf,
     excludedDayIds,
+    recurrenceStartDate,
+    recurrenceEndDate,
+    dateOf,
 }: GetRecurrenceOccurrenceDayIdsParams): Set<string> {
     const ids = new Set<string>();
     if (recurrence === EventRecurrence.None || !startDayId) return ids;
@@ -46,6 +80,15 @@ export function getRecurrenceOccurrenceDayIds({
     for (let i = startIdx + 1; i < linearDays.length; i++) {
         const dayId = linearDays[ i ];
         if (excludedDayIds?.has(dayId)) continue;
+        if (
+            !isDayInRecurrenceWindow(dayId, {
+                recurrenceStartDate,
+                recurrenceEndDate,
+                dateOf,
+            })
+        ) {
+            continue;
+        }
         if (recurrence === EventRecurrence.Daily) {
             ids.add(dayId);
         } else if (recurrence === EventRecurrence.Weekly) {
@@ -75,16 +118,41 @@ export function getOccurrenceDayIdForWeek(
 
 /**
  * Whether a recurring event's obligation is met: an occurrence exists in every
- * week of the timeline. Since occurrences echo forward from the start week, this
- * holds exactly when the event starts in the first week (`startWeekIdx === 0`).
+ * week the recurrence is supposed to cover. Since occurrences echo forward from
+ * the start week, this holds exactly when the event starts on or before the
+ * first required week — week 0 by default, or the week holding the configured
+ * recurrence start date when one is set (#468).
  * Unmapped events (`startWeekIdx < 0`) are never satisfied. Non-recurring events
  * carry no obligation and are always considered satisfied.
  */
 export function isRecurrenceSatisfied(
     recurrence: EventRecurrence,
     startWeekIdx: number,
+    firstRequiredWeekIdx: number = 0,
 ): boolean {
     if (recurrence === EventRecurrence.None) return true;
     if (startWeekIdx < 0) return false;
-    return startWeekIdx === 0;
+    return startWeekIdx <= Math.max(firstRequiredWeekIdx, 0);
+}
+
+/**
+ * Index of the first timeline week the recurrence must cover, given its
+ * configured start date (#468). Returns 0 when there is no start date or it
+ * cannot be resolved to a week, preserving the "must start in week 1" rule.
+ */
+export function getFirstRequiredRecurrenceWeekIdx(
+    recurrenceStartDate: null | string | undefined,
+    weeks: ReadonlyArray<{ days: ReadonlyArray<string> }>,
+    dateOf: (dayId: string) => string | undefined,
+): number {
+    if (!recurrenceStartDate) return 0;
+
+    const idx = weeks.findIndex((week) =>
+        week.days.some((dayId) => {
+            const date = dateOf(dayId);
+            return !!date && date >= recurrenceStartDate;
+        }),
+    );
+
+    return idx === -1 ? 0 : idx;
 }

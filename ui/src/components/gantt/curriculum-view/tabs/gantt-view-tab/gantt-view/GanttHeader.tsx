@@ -17,6 +17,7 @@ import {
     getCapacityStatus,
     getDayDate,
     getWeekDateRange,
+    getWeekOverAllocationSeverity,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { useCurriculumState } from "@/components/gantt/state/provider";
@@ -111,8 +112,13 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                             total + (scheduledMinutesByDay[day.id] ?? 0),
                         0,
                     );
-                    const weekOverAllocated =
-                        weekScheduledMinutes > weekAvailableMinutes;
+                    const weekSeverity = getWeekOverAllocationSeverity(
+                        weekDays.map((day) => ({
+                            availableMinutes: day.totalWorkingMinutes,
+                            scheduledMinutes: scheduledMinutesByDay[day.id] ?? 0,
+                        })),
+                    );
+                    const weekOverAllocated = weekSeverity === "error";
 
                     return (
                         <TableCell
@@ -167,25 +173,19 @@ export const GanttHeader: React.FC<{ showConstraints: boolean }> = ({
                                 <Typography fontWeight="bold" variant="subtitle2">
                                     {week.title}
                                 </Typography>
-                                {weeklyView &&
-                                (overAllocatedDayNames.length > 0 ||
-                                    weekOverAllocated) ? <Tooltip
-                                        arrow
-                                        title={
-                                            weekOverAllocated
-                                                ? `חריגה בהקצאת השבוע: ${formatHoursLabel(weekScheduledMinutes)} מתוך ${formatHoursLabel(weekAvailableMinutes)}`
-                                                : `חריגה בהקצאה: ${overAllocatedDayNames.join(", ")}`
-                                        }
-                                    >
-                                        <WarningAmberIcon
-                                            color={
-                                                weekOverAllocated
-                                                    ? "error"
-                                                    : "warning"
-                                            }
-                                            sx={{ fontSize: 16 }}
-                                        />
-                                    </Tooltip> : null}
+                                {weeklyView && weekSeverity ? <Tooltip
+                                    arrow
+                                    title={
+                                        weekOverAllocated
+                                            ? `חריגה בהקצאת השבוע: ${formatHoursLabel(weekScheduledMinutes)} מתוך ${formatHoursLabel(weekAvailableMinutes)}`
+                                            : `חריגה בהקצאה: ${overAllocatedDayNames.join(", ")}`
+                                    }
+                                >
+                                    <WarningAmberIcon
+                                        color={weekSeverity}
+                                        sx={{ fontSize: 16 }}
+                                    />
+                                </Tooltip> : null}
                             </Box>
                             {dateRangeLabel ? (
                                 <Typography
