@@ -1,5 +1,9 @@
 name: Deploy Documentation
 
+# GitHub Pages for the org is served from System-B90/.github, not from this
+# (private) repo, so all repos' docs live under one public site. This build
+# lands the built site at bluz/ in that repo instead of deploying its own
+# Pages environment.
 on:
   push:
     tags: ['*']
@@ -12,8 +16,6 @@ concurrency:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   build:
@@ -50,20 +52,43 @@ jobs:
           NO_MKDOCS_2_WARNING: "true"
         run: python -m mkdocs build
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
+      - name: Upload built site
+        uses: actions/upload-artifact@v4
         with:
+          name: bluz-docs-site
           path: site/
 
-  deploy:
-    name: Deploy to GitHub Pages
+  publish:
+    name: Publish to System-B90/.github
     needs: build
     runs-on: [self-hosted, light]
     timeout-minutes: 10
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
+      - name: Download built site
+        uses: actions/download-artifact@v4
+        with:
+          name: bluz-docs-site
+          path: site/
+
+      - name: Checkout System-B90/.github
+        uses: actions/checkout@v7
+        with:
+          repository: System-B90/.github
+          token: ${{ secrets.CLASSIC_ACCESS_TOKEN }}
+          path: dot-github
+
+      - name: Sync bluz/ docs and push
+        run: |
+          rm -rf dot-github/bluz
+          mkdir -p dot-github/bluz
+          cp -r site/. dot-github/bluz/
+          cd dot-github
+          git config user.name "bluz-docs-bot"
+          git config user.email "actions@github.com"
+          git add bluz
+          if git diff --cached --quiet; then
+            echo "No doc changes to publish."
+            exit 0
+          fi
+          git commit -m "docs(bluz): sync from System-B90/Bluz@${GITHUB_SHA}"
+          git push origin main
