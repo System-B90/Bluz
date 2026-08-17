@@ -319,7 +319,8 @@ describe("buildGanttExcelWorkbook", () => {
             expect(eventRow[4]).toBe(BOOL_ICON.yes); // isAllocated (e1 is mapped)
             expect(eventRow[5]).toBe(1); // minHours (60min)
             expect(eventRow[6]).toBe(1.5); // requiredHours (allocated 90min via cEC)
-            expect(eventRow[7]).toBe(1); // orchestrator id
+            // No name map passed, so the raw id is the fallback (#466).
+            expect(eventRow[7]).toBe("1");
             expect(eventRow[8]).toBe("בחוץ"); // room
             expect(eventRow[9]).toBe("שבועי"); // recurrence
             expect(eventRow[10]).toBe(BOOL_ICON.yes); // isCritical
@@ -331,6 +332,48 @@ describe("buildGanttExcelWorkbook", () => {
             expect(unallocatedRow[4]).toBe(BOOL_ICON.no); // e3 was never mapped
             expect(unallocatedRow[8]).toBe("-"); // no room requirement
             expect(unallocatedRow[9]).toBe("יומי");
+        });
+
+        it("shows the orchestrator's Hive name, not the id (#466)", async () => {
+            const { curriculum, mappings } = buildFixture();
+            const wb = await buildGanttExcelWorkbook(
+                curriculum,
+                mappings,
+                new Map([[1, "רס\"ן ישראלה ישראלי"]]),
+            );
+            const detail = wb.getWorksheet("פירוט סילבוסים")!;
+
+            const rows: Array<Array<unknown>> = [];
+            detail.eachRow((row, rowNumber) => {
+                if (rowNumber === 1) return;
+                const cells: Array<unknown> = [];
+                row.eachCell({ includeEmpty: true }, (cell) => cells.push(cell.value));
+                rows.push(cells);
+            });
+
+            expect(rows.find((r) => r[2] === "Event 1")![7]).toBe("רס\"ן ישראלה ישראלי");
+            // No orchestrator at all still reads as a dash, not "null".
+            expect(rows.find((r) => r[2] === "Event 2")![7]).toBe("-");
+        });
+
+        it("falls back to the id when Hive does not know the user (#466)", async () => {
+            const { curriculum, mappings } = buildFixture();
+            const wb = await buildGanttExcelWorkbook(
+                curriculum,
+                mappings,
+                new Map([[999, "Someone Else"]]),
+            );
+            const detail = wb.getWorksheet("פירוט סילבוסים")!;
+
+            const rows: Array<Array<unknown>> = [];
+            detail.eachRow((row, rowNumber) => {
+                if (rowNumber === 1) return;
+                const cells: Array<unknown> = [];
+                row.eachCell({ includeEmpty: true }, (cell) => cells.push(cell.value));
+                rows.push(cells);
+            });
+
+            expect(rows.find((r) => r[2] === "Event 1")![7]).toBe("1");
         });
 
         it("uses the renamed מערך/מופע headers instead of מודול/אירוע", async () => {

@@ -86,7 +86,15 @@ function mergeConsecutiveIdenticalCells(
 export async function buildGanttExcelWorkbook(
     curriculum: ApiCurriculum,
     mappings: Array<DayMapping>,
+    // Hive user id → display name. An unknown id (or an unreachable Hive) falls
+    // back to the raw id, which is still better than an empty cell (#466).
+    orchestratorNames: ReadonlyMap<number, string> = new Map(),
 ): Promise<ExcelJS.Workbook> {
+    const orchestratorDisplay = (orchestratorId: null | number | undefined) =>
+        orchestratorId == null
+            ? "-"
+            : orchestratorNames.get(orchestratorId) ?? String(orchestratorId);
+
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "Bluz Gantt System";
     workbook.created = new Date();
@@ -369,7 +377,7 @@ export async function buildGanttExcelWorkbook(
         { header: "משובץ",         key: "isAllocated",   width: 10 },
         { header: "שעות מינ'",     key: "minHours",      width: 11 },
         { header: "שעות נדרשות",   key: "requiredHours", width: 12 },
-        { header: "אחראי",         key: "orchestrator",  width: 12 },
+        { header: "אחראי",         key: "orchestrator",  width: 20 },
         { header: "דרישת חדר",     key: "room",          width: 16 },
         { header: "חזרתיות",       key: "recurrence",    width: 11 },
         { header: "קריטי",         key: "isCritical",    width: 9 },
@@ -423,7 +431,7 @@ export async function buildGanttExcelWorkbook(
                     isAllocated:  allocatedEventIds.has(event.id) ? BOOL_ICON.yes : BOOL_ICON.no,
                     minHours:     minutesToHours(event.minimumDuration ?? 0),
                     requiredHours: minutesToHours(requiredMinutes),
-                    orchestrator: event.orchestratorId ?? "-",
+                    orchestrator: orchestratorDisplay(event.orchestratorId),
                     room:         event.roomRequirement ?? "-",
                     recurrence:   RECURRENCE_DISPLAY[event.recurrence] ?? event.recurrence ?? "-",
                     isCritical:   event.isCritical ? BOOL_ICON.yes : BOOL_ICON.no,

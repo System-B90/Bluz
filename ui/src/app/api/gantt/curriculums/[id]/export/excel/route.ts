@@ -6,6 +6,7 @@ import { postgresDb } from "@/api-server/gantt";
 import { getConstraintsForCurriculum } from "@/api-server/gantt/db-constraints";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
+import { createHiveClient } from "@/api-server/hive/session-client";
 import { requireStaffSession } from "@/api-server/session-user";
 import { safeTitle } from "@/api-shared/common";
 import { ClientApiError } from "@/api-shared/errors";
@@ -13,6 +14,22 @@ import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { buildGanttExcelWorkbook } from "@/app/api/gantt/curriculums/[id]/export/excel/workbook";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Hive user id → display name, for the "אחראי" column, which used to print the
+ * raw id (#466). Hive is the only source of names, so if it is unreachable the
+ * export still goes out — the workbook falls back to the ids on its own.
+ */
+async function getOrchestratorNames(): Promise<ReadonlyMap<number, string>> {
+    try {
+        const hiveClient = await createHiveClient();
+        const users = await hiveClient.getUsers();
+        return new Map(users.map((user) => [user.id, user.display_name]));
+    } catch (e) {
+        console.error("excel export: could not resolve Hive user names", e);
+        return new Map();
+    }
+}
 
 export type RouteContext = {
     params: Promise<{ id: string }>;
@@ -33,7 +50,11 @@ export const GET = withApi(async (request: NextRequest, context: RouteContext) =
 
     await getConstraintsForCurriculum(cid);
 
-    const workbook = await buildGanttExcelWorkbook(curriculum, mappings);
+    const workbook = await buildGanttExcelWorkbook(
+        curriculum,
+        mappings,
+        await getOrchestratorNames(),
+    );
 
     const buffer = await workbook.xlsx.writeBuffer();
     const filename = `bluz-gantt-${safeTitle(curriculum.title)}.xlsx`;
