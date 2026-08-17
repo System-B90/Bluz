@@ -11,6 +11,18 @@ import {
     GanttWeek,
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
+import {
+    RelationalConstraint,
+    TemporalConstraint,
+} from "@/api-shared/types/gantt/models/constraint";
+
+/**
+ * Payload to create a new Gantt constraint: a relational or temporal
+ * constraint minus the timestamps the database assigns.
+ */
+export type CreateConstraintPayload =
+    | Omit<RelationalConstraint, "createdAt" | "updatedAt">
+    | Omit<TemporalConstraint, "createdAt" | "updatedAt">;
 
 /**
  * Payload to create a new Curriculum.

@@ -1,5 +1,6 @@
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { baseDocumentFixup, RawBaseDocument } from "@/api-client/gantt/base";
+import { CreateConstraintPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
     GanttCurriculumId,
     GanttModuleId,
@@ -8,18 +9,9 @@ import {
 import {
     ConstraintType,
     GanttConstraint,
-    RelationalConstraint,
-    TemporalConstraint,
 } from "@/api-shared/types/gantt/models/constraint";
 
-// Matches the Omit type used in the Provider context
-/**
- * Represents the payload structure required to create a new Gantt constraint.
- * Can be either a relational or temporal constraint, excluding timestamp fields.
- */
-export type CreateConstraintPayload =
-    | Omit<RelationalConstraint, "createdAt" | "updatedAt">
-    | Omit<TemporalConstraint, "createdAt" | "updatedAt">;
+export type { CreateConstraintPayload };
 
 function normalizeConstraintObject(serverConstraint: any): GanttConstraint {
     if (serverConstraint.type === ConstraintType.Relational) {

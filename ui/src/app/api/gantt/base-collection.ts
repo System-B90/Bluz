@@ -3,30 +3,12 @@ import { NextRequest } from "next/server";
 import { ApiSuccess, withApi } from "@/api-server/common";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
-import { ApiT } from "@/api-shared/types/gantt/api-layer";
+import {
+    BasicGantOperations,
+} from "@/api-shared/types/gantt/api-layer";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 
-export type BasicGantOperations<
-    TEntity extends BaseGantItem,
-    TCreatePayload = Omit<TEntity, "id">,
-> = {
-    listItems: (
-        withParents?: boolean,
-    ) => Promise<
-        | Record<TEntity["id"], { title: TEntity["title"] }>
-        | Record<TEntity["id"], TEntity["title"]>
-    >;
-    getMultipleItems: (ids: Array<string>) => Promise<Array<TEntity>>;
-    getItem: (id: TEntity["id"]) => Promise<any>;
-    createNewItem: (
-        payload: TCreatePayload,
-    ) => Promise<ApiT<TEntity> | TEntity>; // TODO: This should always be ApiT<TEntity>
-    updateItem: (
-        id: TEntity["id"],
-        updates: Partial<TEntity>,
-    ) => Promise<TEntity>;
-    deleteItem: (id: TEntity["id"]) => Promise<void>;
-};
+export type { BasicGantOperations };
 
 /** Accepts the usual truthy spellings for a boolean query flag. */
 function parseBooleanParam(raw: null | string): boolean {

@@ -109,7 +109,23 @@ export function EventDialog({
                 </Stack>
             </DialogTitle>
 
-            <form onSubmit={ handleSubmit }>
+            { /*
+              * The form sits between the Dialog paper's flex column and the
+              * content, so it has to carry the column itself — otherwise
+              * DialogContent never gets a scroll bound, the form grows past
+              * the paper, and DialogActions (with שמירה) is pushed out of
+              * reach with no way to scroll to it (#463).
+              */ }
+            <Box
+                component="form"
+                onSubmit={ handleSubmit }
+                sx={ {
+                    display: "flex",
+                    flexDirection: "column",
+                    minHeight: 0,
+                    overflow: "hidden",
+                } }
+            >
                 <DialogContent>
                     <Box
                         sx={ {
@@ -196,7 +212,7 @@ export function EventDialog({
                         שמירה
                     </Button>
                 </DialogActions>
-            </form>
+            </Box>
         </Dialog>
     );
 }

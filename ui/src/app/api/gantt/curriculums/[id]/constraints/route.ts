@@ -7,7 +7,6 @@
 
 import { NextRequest } from "next/server";
 
-import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
 import { ApiSuccess, withApi } from "@/api-server/common";
 import {
     createConstraint,
@@ -19,6 +18,7 @@ import {
 } from "@/api-server/gantt/db-constraints";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
+import { CreateConstraintPayload } from "@/api-shared/types/gantt/create-payloads";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 
 export type RouteContext = {

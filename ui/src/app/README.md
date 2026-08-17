@@ -18,7 +18,7 @@ This directory is the core of the Next.js routing structure. It utilizes the App
 ### ✅ YES, put it here if:
 
 - It is a Next.js routing primitive: a page (`page.tsx`), layout (`layout.tsx`), error page (`error.tsx`), or middleware wrapper.
-- It is an HTTP backend API handler file (`route.ts` or `route.tsx`) responsible for processing REST endpoints (e.g. `/api/...`).
+- It is an HTTP backend API handler file (`route.ts`, or `route.tsx` only when it actually renders JSX) responsible for processing REST endpoints (e.g. `/api/...`).
 
 ### ❌ NO, do NOT put it here if:
 

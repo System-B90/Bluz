@@ -3,6 +3,7 @@ import { WebSocket } from "ws";
 import {
     getWsAuthKey,
     MessageTypes,
+    signWsTicket,
     WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
 } from "@/settings";
 
@@ -30,7 +31,16 @@ function flushPending(ws: WebSocket) {
 }
 
 function connect(): WebSocket {
-    const ws = new WebSocket(INTERNAL_SESSION_SERVER_URI);
+    // The session server rejects any unticketed connection with 1008, which
+    // silently killed every server→client broadcast. Signed per connect
+    // attempt, not once at module load, because tickets expire and this
+    // reconnects for the life of the process.
+    const url = new URL(INTERNAL_SESSION_SERVER_URI);
+    url.searchParams.set(
+        "ticket",
+        signWsTicket(WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC),
+    );
+    const ws = new WebSocket(url.toString());
 
     const timeout = setTimeout(() => {
         if (ws.readyState !== WebSocket.OPEN) {

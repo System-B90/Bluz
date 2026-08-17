@@ -3,6 +3,7 @@ import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
 import { postgresDb } from "@/api-server/gantt";
 import { ClientApiError } from "@/api-shared/errors";
+import { BasicGantOperations } from "@/api-shared/types/gantt/api-layer";
 import {
     BaseGantItem,
     GanttCurriculumId,
@@ -10,7 +11,6 @@ import {
     GanttSyllabusId,
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
-import { BasicGantOperations } from "@/app/api/gantt/base-collection";
 
 export const FOREIGN_KEY_VIOLATION = "23503";
 export const UNIQUE_VIOLATION = "23505";

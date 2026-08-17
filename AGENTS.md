@@ -251,7 +251,7 @@ Runtime config comes from the root **`.env`** (consumed by docker-compose and co
   `tsconfig.tsbuildinfo`.
 - **Don't touch `.agents/` submodules** as part of Bluz changes.
 - **Prefer the existing patterns:** `buildGantCollectionRoutes` for Gantt CRUD,
-  `withApi` + `ApiSuccess` (`ui/src/api-server/common.tsx`) for route handlers and
+  `withApi` + `ApiSuccess` (`ui/src/api-server/common.ts`) for route handlers and
   error handling, the reducer/context pattern in `components/gantt/state/` for Gantt
   UI state.
 - **Platform:** primary dev is Windows + PowerShell, but Docker is the source of truth for
