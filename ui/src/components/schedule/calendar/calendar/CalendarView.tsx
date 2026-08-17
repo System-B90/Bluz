@@ -31,6 +31,7 @@ import {
     DnDCalendar,
     localizer,
 } from "@/components/schedule/calendar/calendar/DndLocalizer";
+import { usePrecisionDrag } from "@/components/schedule/calendar/calendar/UsePrecisionDrag";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { CustomWorkWeek } from "@/components/schedule/calendar/CustomWorkWeek";
 import { splitAwareDayLayout } from "@/components/schedule/calendar/split/segment-layout";
@@ -273,6 +274,9 @@ export function CalendarView({
         return () => window.removeEventListener("mouseup", clear);
     }, [activeDrag]);
 
+    // Ctrl held during a drag damps it into a fine adjustment (#475).
+    const { applyPrecision } = usePrecisionDrag();
+
     const handleDragStart = useCallback(
         ({ event: segment, action, direction }: ActiveDragStart) => {
             setActiveDrag({
@@ -317,7 +321,7 @@ export function CalendarView({
             // Whichever piece was grabbed, the event moves by the same delta
             // and keeps its working duration; where the breaks fall after the
             // move is a pure re-layout.
-            const delta = toMs(args.start) - from.valueOf();
+            const delta = applyPrecision(toMs(args.start) - from.valueOf());
             commit(
                 args,
                 event.startTime.valueOf() + delta,
@@ -325,7 +329,7 @@ export function CalendarView({
                 "move",
             );
         },
-        [commit],
+        [applyPrecision, commit],
     );
 
     const handleSegmentResize = useCallback(
