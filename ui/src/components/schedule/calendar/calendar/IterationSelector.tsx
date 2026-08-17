@@ -14,7 +14,10 @@ import { apiListIterations } from "@/api-client/iterations";
 import { Iteration } from "@/api-shared/types/iteration";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 
-const CURRENT_VALUE = "__current__";
+// `undefined` (no `?iteration=` param) means "the current run". The select
+// still has to show *which* iteration that is, so it resolves the current
+// iteration's own id rather than a sentinel value — a sentinel matches no menu
+// item and MUI logs an out-of-range warning for it on every render.
 
 /**
  * Lets the user switch the calendar between the current run and past iterations.
@@ -44,12 +47,16 @@ export function IterationSelector() {
         };
     }, [enqueueSnackbar]);
 
+    const currentId = iterations.find((iteration) => iteration.isCurrent)?.id;
+
     const handleChange = useCallback(
         (event: SelectChangeEvent) => {
             const value = event.target.value;
-            setIterationId(value === CURRENT_VALUE ? undefined : value);
+            // Picking the current run clears the param, so it is scoped as the
+            // writable iteration rather than as a read-only past one.
+            setIterationId(value === currentId ? undefined : value);
         },
-        [setIterationId],
+        [currentId, setIterationId],
     );
 
     // Nothing to switch between until a second iteration exists.
@@ -60,7 +67,7 @@ export function IterationSelector() {
             <FormControl size="small" sx={{ minWidth: 160 }}>
                 <Select
                     onChange={handleChange}
-                    value={iterationId ?? CURRENT_VALUE}
+                    value={iterationId ?? currentId ?? ""}
                 >
                     {iterations.map((iteration) => (
                         <MenuItem key={iteration.id} value={iteration.id}>

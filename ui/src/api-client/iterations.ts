@@ -2,6 +2,7 @@ import { safeApiFetcher } from "@/api-client/common";
 import {
     Iteration,
     IterationId,
+    IterationUsage,
     PatchIterationPayload,
     RegisterIterationPayload,
     SyncHiveResult,
@@ -13,10 +14,27 @@ export async function apiListIterations(): Promise<Array<Iteration>> {
     });
 }
 
-export async function apiGetCurrentIteration(): Promise<Iteration> {
-    return await safeApiFetcher<Iteration>("/api/iterations/current", {
+/** Null when no iteration has been created yet (#471). */
+export async function apiGetCurrentIteration(): Promise<Iteration | null> {
+    return await safeApiFetcher<Iteration | null>("/api/iterations/current", {
         method: "GET",
     });
+}
+
+export async function apiGetIterationUsage(
+    id: IterationId,
+): Promise<IterationUsage> {
+    return await safeApiFetcher<IterationUsage>(
+        `/api/iterations/${encodeURIComponent(id)}/usage`,
+        { method: "GET" },
+    );
+}
+
+export async function apiDeleteIteration(id: IterationId): Promise<void> {
+    await safeApiFetcher<{ deleted: true }>(
+        `/api/iterations/${encodeURIComponent(id)}`,
+        { method: "DELETE" },
+    );
 }
 
 export async function apiRegisterIteration(

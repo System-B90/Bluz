@@ -3,7 +3,14 @@ import { beforeEach, describe, it, expect, vi } from "vitest";
 // In-memory fake of the meta `iterations` collection, supporting just the query
 // shapes DbIterations actually uses ({} / {id} / {isCurrent:true}). Defined via
 // vi.hoisted so it is available inside the hoisted vi.mock factory below.
-const { docs, iterations, client, setCurrentIterationDbName } = vi.hoisted(
+const {
+    client,
+    docs,
+    events,
+    getDatabaseController,
+    iterations,
+    setCurrentIterationDbName,
+} = vi.hoisted(
     () => {
         type Doc = Record<string, any>;
         const docs: Array<Doc> = [];
@@ -60,14 +67,34 @@ const { docs, iterations, client, setCurrentIterationDbName } = vi.hoisted(
             }),
         };
 
-        return { docs, iterations, client, setCurrentIterationDbName: vi.fn() };
+        // Per-database event stores, keyed by db name. The migration seed only
+        // fires for an install whose default database already holds events, and
+        // the delete guard counts an iteration's own events, so both need a
+        // real (if tiny) events collection behind getDatabaseController.
+        const events = new Map<string, Array<Doc>>();
+        const getDatabaseController = vi.fn((name: string = "bluz") => ({
+            dbName: name,
+            events: {
+                findOne: async () => events.get(name)?.[0] ?? null,
+                countDocuments: async () => events.get(name)?.length ?? 0,
+            },
+        }));
+
+        return {
+            client,
+            docs,
+            events,
+            getDatabaseController,
+            iterations,
+            setCurrentIterationDbName: vi.fn(),
+        };
     },
 );
 
 vi.mock("@/api-server/mongo-db-controller", () => ({
     DEFAULT_ITERATION_DB_NAME: "bluz",
     getMetaController: () => ({ iterations, client }),
-    getDatabaseController: vi.fn((name: string) => ({ dbName: name })),
+    getDatabaseController,
     setCurrentIterationDbName,
 }));
 
@@ -76,6 +103,10 @@ import { ClientApiError } from "@/api-shared/errors";
 
 beforeEach(() => {
     docs.length = 0;
+    events.clear();
+    // Default to an install that predates the registry: the `bluz` database
+    // already holds calendar data, so the migration seed applies.
+    events.set("bluz", [{ id: "legacy-event" }]);
     vi.clearAllMocks();
 });
 
@@ -94,6 +125,23 @@ describe("DbIterations.ensure (migration seed)", () => {
         await DbIterations.ensure();
         await DbIterations.ensure();
         expect(docs).toHaveLength(1);
+    });
+
+    it("leaves a fresh install with an empty registry (#471)", async () => {
+        events.clear();
+        await DbIterations.ensure();
+        expect(docs).toHaveLength(0);
+        expect(await DbIterations.currentOrNull()).toBeNull();
+    });
+
+    it("does not re-seed once a real iteration exists (#471)", async () => {
+        events.clear();
+        await DbIterations.register({ id: "2026b", label: "B" });
+        // Data arriving in the legacy database later must not resurrect the
+        // auto-created "current" iteration.
+        events.set("bluz", [{ id: "stray" }]);
+        await DbIterations.ensure();
+        expect(docs.map((doc) => doc.id)).toEqual(["2026b"]);
     });
 });
 
@@ -212,6 +260,58 @@ describe("DbIterations.remove (delete)", () => {
         await expect(DbIterations.remove("nope")).rejects.toBeInstanceOf(
             ClientApiError,
         );
+    });
+
+    it("refuses to delete an iteration that still owns events (#473)", async () => {
+        await DbIterations.ensure();
+        await DbIterations.register({ id: "2026b", label: "B" });
+        events.set("bluz_2026b", [{ id: "e1" }]);
+        await expect(DbIterations.remove("2026b")).rejects.toBeInstanceOf(
+            ClientApiError,
+        );
+    });
+
+    it("refuses to delete an iteration linked to a curriculum (#473)", async () => {
+        await DbIterations.ensure();
+        await DbIterations.register({
+            ganttCurriculumId: "cur-1",
+            id: "2026b",
+            label: "B",
+        });
+        await expect(DbIterations.remove("2026b")).rejects.toBeInstanceOf(
+            ClientApiError,
+        );
+    });
+});
+
+describe("DbIterations.usage (delete affordance)", () => {
+    it("reports an orphaned iteration as deletable", async () => {
+        await DbIterations.ensure();
+        await DbIterations.register({ id: "2026b", label: "B" });
+        expect(await DbIterations.usage("2026b")).toMatchObject({
+            curriculums: 0,
+            events: 0,
+            isCurrent: false,
+            orphaned: true,
+        });
+    });
+
+    it("never reports the current iteration as orphaned", async () => {
+        await DbIterations.ensure();
+        const current = await DbIterations.current();
+        const usage = await DbIterations.usage(current.id);
+        expect(usage.isCurrent).toBe(true);
+        expect(usage.orphaned).toBe(false);
+    });
+
+    it("counts the iteration's own events, not another's", async () => {
+        await DbIterations.ensure();
+        await DbIterations.register({ id: "2026b", label: "B" });
+        events.set("bluz_2026b", [{ id: "e1" }]);
+        expect(await DbIterations.usage("2026b")).toMatchObject({
+            events: 1,
+            orphaned: false,
+        });
     });
 });
 

@@ -10,6 +10,7 @@ import {
     HiveIterationCache,
     Iteration,
     IterationId,
+    IterationUsage,
     PatchIterationPayload,
     RegisterIterationPayload,
 } from "@/api-shared/types/iteration";
@@ -20,13 +21,31 @@ function stripMongoId(iteration: any): Iteration {
 }
 
 /**
- * One-off migration: make sure the `bluz_meta.iterations` registry exists and
- * holds the existing `bluz` database as the first, current iteration. No
- * documents are moved — the existing data stays exactly where it is.
+ * One-off migration for installs that predate the registry: the existing `bluz`
+ * database is registered as the first, current iteration so its data stays
+ * reachable. No documents are moved.
+ *
+ * A *fresh* install is deliberately left with an empty registry (#471) — an
+ * auto-created "current" iteration has no real name or id, and its literal id
+ * collided with the `/api/iterations/current` route segment (#472). The UI
+ * prompts for a real iteration instead.
+ *
  * Uses upsert to avoid a TOCTOU race on concurrent cold starts.
  */
 async function ensureSeeded(): Promise<void> {
     const meta = getMetaController();
+    const anyIteration = await meta.iterations.findOne(
+        {},
+        { projection: { _id: 1 } },
+    );
+    if (anyIteration) return;
+
+    // Empty registry: migrate only when the default database already holds
+    // calendar data, i.e. this is an upgrade rather than a first boot.
+    const legacyEvent = await getDatabaseController(DEFAULT_ITERATION_DB_NAME)
+        .events.findOne({}, { projection: { _id: 1 } });
+    if (!legacyEvent) return;
+
     const now = new Date();
     const result = await meta.iterations.updateOne(
         { id: "current" },
@@ -58,15 +77,26 @@ async function listIterations(): Promise<Array<Iteration>> {
     return docs.map(stripMongoId);
 }
 
-async function getCurrentIteration(): Promise<Iteration> {
+/**
+ * The current iteration, or null when the registry is still empty — a fresh
+ * install before the user has created their first iteration (#471). Read paths
+ * use this and prompt; write paths use {@link getCurrentIteration}, which
+ * refuses to guess.
+ */
+async function getCurrentIterationOrNull(): Promise<Iteration | null> {
     await ensureSeeded();
     const current = await getMetaController().iterations.findOne({
         isCurrent: true,
     });
+    return current ? stripMongoId(current) : null;
+}
+
+async function getCurrentIteration(): Promise<Iteration> {
+    const current = await getCurrentIterationOrNull();
     if (!current) {
         throw new ClientApiError("No current iteration is configured!");
     }
-    return stripMongoId(current);
+    return current;
 }
 
 async function getIteration(id: IterationId): Promise<Iteration | null> {
@@ -228,24 +258,47 @@ async function patchIteration(
 }
 
 /**
- * Delete an iteration from the registry. The current iteration can never be
- * deleted (there must always be exactly one writable iteration). The backing
- * Mongo database is left in place — orphaned, not dropped — since it may hold
- * calendar/curriculum history worth keeping around for reference.
+ * What still hangs off an iteration. Only a fully orphaned iteration may be
+ * deleted (#473), so the UI asks for this to decide whether to enable its
+ * delete button rather than letting the user discover the rule from an error.
+ */
+async function describeIterationUsage(
+    id: IterationId,
+): Promise<IterationUsage> {
+    const iteration = await getIteration(id);
+    if (!iteration) {
+        throw new ClientApiError(`Iteration "${id}" not found!`);
+    }
+    const events = await getDatabaseController(
+        iteration.dbName,
+    ).events.countDocuments({}, { limit: 1 });
+    const curriculums = iteration.ganttCurriculumId ? 1 : 0;
+    return {
+        curriculums,
+        events,
+        isCurrent: iteration.isCurrent,
+        orphaned: !iteration.isCurrent && events === 0 && curriculums === 0,
+    };
+}
+
+/**
+ * Delete an iteration from the registry. Only an orphaned iteration qualifies:
+ * the current one is never deletable (there must always be exactly one writable
+ * iteration), and neither is one that still owns events or a linked curriculum.
+ * The backing Mongo database is left in place — orphaned, not dropped.
  */
 async function deleteIteration(id: IterationId): Promise<void> {
     await ensureSeeded();
-    const meta = getMetaController();
-    const existing = await meta.iterations.findOne({ id });
-    if (!existing) {
-        throw new ClientApiError(`Iteration "${id}" not found!`);
+    const usage = await describeIterationUsage(id);
+    if (usage.isCurrent) {
+        throw new ClientApiError("לא ניתן למחוק את המחזור הנוכחי");
     }
-    if (existing.isCurrent) {
+    if (!usage.orphaned) {
         throw new ClientApiError(
-            "לא ניתן למחוק את המחזור הנוכחי",
+            "לא ניתן למחוק מחזור שמשויכים אליו אירועים או תכנית לימודים",
         );
     }
-    await meta.iterations.deleteOne({ id });
+    await getMetaController().iterations.deleteOne({ id });
 }
 
 /**
@@ -294,6 +347,8 @@ export namespace DbIterations {
     export const ensure = ensureSeeded;
     export const list = listIterations;
     export const current = getCurrentIteration;
+    export const currentOrNull = getCurrentIterationOrNull;
+    export const usage = describeIterationUsage;
     export const get = getIteration;
     export const getByCurriculum = getIterationByCurriculum;
     export const register = registerIteration;

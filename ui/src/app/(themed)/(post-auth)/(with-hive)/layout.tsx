@@ -13,6 +13,7 @@ import { HiveModulesProvider } from "@/components/base/HiveModulesProvider";
 import { HiveSubjectsProvider } from "@/components/base/HiveSubjectsProvider";
 import { HiveUsersProvider } from "@/components/base/HiveUsersProvider";
 import { IterationProvider } from "@/components/base/IterationProvider";
+import { NoIterationPrompt } from "@/components/base/NoIterationPrompt";
 import { OfflineProvider, useOffline } from "@/components/base/OfflineProvider";
 import { OutsidersProvider } from "@/components/base/OutsidersProvider";
 import { RoomsProvider } from "@/components/base/RoomsProvider";
@@ -81,6 +82,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 ) : null}
 
                 <SettingsDialogUrl />
+                <NoIterationPrompt />
             </Box>
         </BluzCommandPalette>
     );

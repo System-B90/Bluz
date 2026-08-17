@@ -1,6 +1,7 @@
 import { calendar_v3, google } from "googleapis";
 
 import { DbEvent } from "@/api-server/db-event";
+import { DbIterations } from "@/api-server/db-iterations";
 import { getMetaController } from "@/api-server/mongo-db-controller";
 import { openSecret, sealSecret } from "@/api-server/secret-box";
 import { DbEventDocument } from "@/api-shared/types/event";
@@ -48,7 +49,24 @@ const GOOGLE_CLIENT_SECRET =
     process.env.GOOGLE_CLIENT_SECRET || DEFAULT_GOOGLE_CLIENT_SECRET;
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
-const BLUZ_CALENDAR_SUMMARY = "Bluz";
+/** Name of the calendar created before it was named after the iteration (#482). */
+const LEGACY_CALENDAR_SUMMARY = "Bluz";
+
+/**
+ * What the mirrored calendar is called in the user's Google account. A user
+ * runs several iterations over the years, so "Bluz" said nothing about which
+ * run the events belong to — the iteration's own label does (#482). Falls back
+ * to the legacy name when no iteration is registered yet or the registry is
+ * unreachable; naming must never be what breaks the connect flow.
+ */
+async function resolveCalendarSummary(): Promise<string> {
+    try {
+        const current = await DbIterations.currentOrNull();
+        return current?.label || LEGACY_CALENDAR_SUMMARY;
+    } catch {
+        return LEGACY_CALENDAR_SUMMARY;
+    }
+}
 
 export function isGoogleCalendarConfigured(): boolean {
     return Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
@@ -135,19 +153,28 @@ export async function connectGoogleCalendar(
     client.setCredentials(tokens);
 
     const calendarApi = google.calendar({ version: "v3", auth: client });
+    const summary = await resolveCalendarSummary();
     const existing = await calendarApi.calendarList.list();
+    // A reconnect must reuse the calendar it already filled, whether that was
+    // named after the iteration or by the legacy "Bluz" name.
     const bluzCalendar = existing.data.items?.find(
-        (c) => c.summary === BLUZ_CALENDAR_SUMMARY,
+        (c) => c.summary === summary || c.summary === LEGACY_CALENDAR_SUMMARY,
     );
     const calendarId =
         bluzCalendar?.id ??
         (
-            await calendarApi.calendars.insert({
-                requestBody: { summary: BLUZ_CALENDAR_SUMMARY },
-            })
+            await calendarApi.calendars.insert({ requestBody: { summary } })
         ).data.id;
     if (!calendarId) {
         throw new Error("Failed to create the Bluz Google calendar.");
+    }
+
+    // Adopt the iteration's name on an existing calendar too (a legacy one, or
+    // one from before the iteration was renamed). A rename failure is cosmetic.
+    if (bluzCalendar && bluzCalendar.summary !== summary) {
+        await calendarApi.calendars
+            .patch({ calendarId, requestBody: { summary } })
+            .catch(() => undefined);
     }
 
     await saveLink(userId, {

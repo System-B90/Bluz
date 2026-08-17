@@ -79,6 +79,19 @@ export type Iteration = {
     updatedAt: Date | string;
 };
 
+/**
+ * What an iteration still owns, as reported by `GET /api/iterations/[id]/usage`.
+ * Drives the delete affordance (#473) — only an orphaned iteration is deletable.
+ */
+export type IterationUsage = {
+    /** 1 when a Gantt curriculum is linked, 0 otherwise. */
+    curriculums: number;
+    /** Capped existence probe over the iteration's events (0 or 1). */
+    events: number;
+    isCurrent: boolean;
+    orphaned: boolean;
+};
+
 /** Payload to register a new iteration. `dbName` is derived from `id` when omitted. */
 export type RegisterIterationPayload = {
     id: IterationId;

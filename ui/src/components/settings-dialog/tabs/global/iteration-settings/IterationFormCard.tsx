@@ -1,10 +1,12 @@
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SyncIcon from "@mui/icons-material/Sync";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import Tooltip from "@mui/material/Tooltip";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-import { Iteration } from "@/api-shared/types/iteration";
+import { Iteration, IterationUsage } from "@/api-shared/types/iteration";
 import { BaseFormCard, FormCardBaseProps } from "@/components/settings-dialog/tabs/global/common/FormCard";
 import { SettingsTextField } from "@/components/settings-dialog/tabs/global/common/SettingsTextField";
 import { IterationValues } from "@/components/settings-dialog/tabs/global/iteration-settings/values";
@@ -18,7 +20,72 @@ export type IterationFormCardProps = Omit<FormCardBaseProps<Iteration>, "selecte
     isSubmitting: boolean;
     handleSyncHive: (iteration: Iteration) => void;
     isSyncingHive: boolean;
+    handleDelete: (iteration: Iteration) => void;
+    /** Null while the usage probe is still in flight. */
+    usage: IterationUsage | null;
+    isDeleting: boolean;
 };
+
+/**
+ * Deleting an iteration is only offered once it is orphaned (#473): no events
+ * of its own and no linked curriculum, and never the current run. The button
+ * stays visible but disabled in every other case, with the reason in its
+ * tooltip — a hidden button reads as a missing feature.
+ */
+function IterationDeleteAction({
+    isCreating,
+    selectedIteration,
+    handleDelete,
+    usage,
+    isDeleting,
+}: {
+    isCreating: boolean;
+    selectedIteration: Iteration | null;
+    handleDelete: (iteration: Iteration) => void;
+    usage: IterationUsage | null;
+    isDeleting: boolean;
+})
+{
+    if (isCreating || !selectedIteration) return null;
+
+    const orphaned = usage?.orphaned === true;
+    const reason = !usage
+        ? "בודק שיוכים…"
+        : usage.isCurrent
+            ? "לא ניתן למחוק את המחזור הנוכחי"
+            : usage.events > 0
+                ? "למחזור משויכים אירועים"
+                : usage.curriculums > 0
+                    ? "למחזור משויכת תכנית לימודים"
+                    : "מחיקת המחזור מהרישום";
+
+    return (
+        <Tooltip title={ reason }>
+            { /* A disabled button swallows pointer events, so the tooltip needs
+                 a wrapper that still receives them. */ }
+            <span>
+                <Button
+                    color="error"
+                    disabled={ !orphaned || isDeleting }
+                    onClick={ () => handleDelete(selectedIteration) }
+                    startIcon={ isDeleting
+                        ? <CircularProgress size={ 16 } />
+                        : <DeleteOutlineIcon /> }
+                    sx={ {
+                        borderRadius: "10px",
+                        py: 1,
+                        fontWeight: 700,
+                        fontSize: "0.82rem",
+                    } }
+                    type="button"
+                    variant="outlined"
+                >
+                    מחיקת מחזור
+                </Button>
+            </span>
+        </Tooltip>
+    );
+}
 
 /**
  * When editing the *current* iteration with a Hive URL, an uncommon "sync Hive
@@ -78,17 +145,29 @@ export function IterationFormCard({
     handleCancelEdit,
     handleSyncHive,
     isSyncingHive,
+    handleDelete,
+    usage,
+    isDeleting,
 }: IterationFormCardProps & { selectedEntity: Iteration | null; })
 {
     return (
         <BaseFormCard
             formActions={ {
-                extraActions: <IterationSyncHiveAction
-                    handleSyncHive={ handleSyncHive }
-                    isCreating={ isCreating }
-                    isSyncingHive={ isSyncingHive }
-                    selectedIteration={ selectedIteration }
-                />,
+                extraActions: <>
+                    <IterationSyncHiveAction
+                        handleSyncHive={ handleSyncHive }
+                        isCreating={ isCreating }
+                        isSyncingHive={ isSyncingHive }
+                        selectedIteration={ selectedIteration }
+                    />
+                    <IterationDeleteAction
+                        handleDelete={ handleDelete }
+                        isCreating={ isCreating }
+                        isDeleting={ isDeleting }
+                        selectedIteration={ selectedIteration }
+                        usage={ usage }
+                    />
+                </>,
                 isSubmitting,
                 label: { creating: "יצירת מחזור", editing: "עדכון מחזור" },
             } }
