@@ -83,10 +83,26 @@ function mergeConsecutiveIdenticalCells(
     }
 }
 
+/**
+ * The "אחראי" column shows a person, so it must read as one. Hive is the
+ * source of names; an id that Hive does not know still prints, so the export
+ * never silently loses the assignment (#466).
+ */
+function makeOrchestratorLabel(userNamesById: Map<number, string>) {
+    return (orchestratorId: null | number | undefined): string => {
+        if (orchestratorId === null || orchestratorId === undefined) return "-";
+        return userNamesById.get(orchestratorId) ?? String(orchestratorId);
+    };
+}
+
 export async function buildGanttExcelWorkbook(
     curriculum: ApiCurriculum,
     mappings: Array<DayMapping>,
+    /** Hive user id → display name. Missing ids fall back to the raw id. */
+    userNamesById: Map<number, string> = new Map(),
 ): Promise<ExcelJS.Workbook> {
+    const orchestratorLabel = makeOrchestratorLabel(userNamesById);
+
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "Bluz Gantt System";
     workbook.created = new Date();
@@ -369,7 +385,7 @@ export async function buildGanttExcelWorkbook(
         { header: "משובץ",         key: "isAllocated",   width: 10 },
         { header: "שעות מינ'",     key: "minHours",      width: 11 },
         { header: "שעות נדרשות",   key: "requiredHours", width: 12 },
-        { header: "אחראי",         key: "orchestrator",  width: 12 },
+        { header: "אחראי",         key: "orchestrator",  width: 20 },
         { header: "דרישת חדר",     key: "room",          width: 16 },
         { header: "חזרתיות",       key: "recurrence",    width: 11 },
         { header: "קריטי",         key: "isCritical",    width: 9 },
@@ -423,7 +439,7 @@ export async function buildGanttExcelWorkbook(
                     isAllocated:  allocatedEventIds.has(event.id) ? BOOL_ICON.yes : BOOL_ICON.no,
                     minHours:     minutesToHours(event.minimumDuration ?? 0),
                     requiredHours: minutesToHours(requiredMinutes),
-                    orchestrator: event.orchestratorId ?? "-",
+                    orchestrator: orchestratorLabel(event.orchestratorId),
                     room:         event.roomRequirement ?? "-",
                     recurrence:   RECURRENCE_DISPLAY[event.recurrence] ?? event.recurrence ?? "-",
                     isCritical:   event.isCritical ? BOOL_ICON.yes : BOOL_ICON.no,

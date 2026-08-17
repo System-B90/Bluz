@@ -6,6 +6,7 @@ import { postgresDb } from "@/api-server/gantt";
 import { getConstraintsForCurriculum } from "@/api-server/gantt/db-constraints";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
+import { createHiveClient } from "@/api-server/hive/session-client";
 import { requireStaffSession } from "@/api-server/session-user";
 import { safeTitle } from "@/api-shared/common";
 import { ClientApiError } from "@/api-shared/errors";
@@ -17,6 +18,21 @@ export const dynamic = "force-dynamic";
 export type RouteContext = {
     params: Promise<{ id: string }>;
 };
+
+/**
+ * Hive user id → display name for the export's "אחראי" column. Hive being
+ * unreachable degrades the column to raw ids rather than failing the whole
+ * export, which is the more useful outcome for the person downloading it.
+ */
+async function getHiveUserNames(): Promise<Map<number, string>> {
+    try {
+        const hiveClient = await createHiveClient();
+        const users = await hiveClient.getUsers();
+        return new Map(users.map((user) => [ user.id, user.display_name ]));
+    } catch {
+        return new Map();
+    }
+}
 
 export const GET = withApi(async (request: NextRequest, context: RouteContext) => {
     await requireStaffSession();
@@ -33,7 +49,11 @@ export const GET = withApi(async (request: NextRequest, context: RouteContext) =
 
     await getConstraintsForCurriculum(cid);
 
-    const workbook = await buildGanttExcelWorkbook(curriculum, mappings);
+    const workbook = await buildGanttExcelWorkbook(
+        curriculum,
+        mappings,
+        await getHiveUserNames(),
+    );
 
     const buffer = await workbook.xlsx.writeBuffer();
     const filename = `bluz-gantt-${safeTitle(curriculum.title)}.xlsx`;
