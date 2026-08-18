@@ -173,8 +173,38 @@ jobs:
                           --filter "label=com.docker.compose.project=$proj" \
                           | xargs -r docker network rm || true
                   done
+                  # Reclaiming the containers is not enough on its own: the
+                  # box sat at 100% disk (455G, 0 bytes free) even after every
+                  # leaked stack was gone, and setup-hive refuses to start Hive
+                  # under 10GB free. Its own cleanup is deliberately
+                  # conservative on self-hosted runners — `docker image prune`
+                  # without -a, `volume prune` without -a — and a plain
+                  # `volume prune` skips *named* volumes, which is precisely
+                  # what a leaked compose stack leaves behind. That left
+                  # 11.75GB of volumes and 8.19GB of images reported as
+                  # reclaimable while the run failed for want of space.
+                  #
+                  # Between runs nothing on this box is meant to be alive, so
+                  # "unused" here means "garbage". Images and build cache are
+                  # re-pulled and rebuilt on demand; disk is the scarce thing.
+                  docker volume prune -af || true
+                  docker builder prune -af || true
+                  docker image prune -af || true
+
                   docker ps -a --format 'table {{.Names}}\t{{.Status}}'
+                  docker system df || true
                   df -h / || true
+
+                  # Surface the host-level shortfall explicitly. If this still
+                  # reads under 10GB, the space is held outside this daemon —
+                  # stale _work/ directories or /opt/hive on the runner host —
+                  # and needs hands on the box; setup-hive will fail straight
+                  # after this with the same number.
+                  avail_gb=$(($(df -Pk / | awk 'NR==2 {print $4}') / 1024 / 1024))
+                  echo "Free disk after reclaim: ${avail_gb} GB"
+                  if [ "$avail_gb" -lt 10 ]; then
+                      echo "::warning::Only ${avail_gb} GB free after reclaiming every leaked stack, volume, image and build cache this daemon can see. The remaining space is held by the runner host itself (stale _work/ directories, /opt/hive), which CI cannot reach — the box needs manual cleanup."
+                  fi
 
             - name: Set up Hive
               uses: System-B90/.github/actions/setup-hive@main
@@ -427,8 +457,38 @@ jobs:
                           --filter "label=com.docker.compose.project=$proj" \
                           | xargs -r docker network rm || true
                   done
+                  # Reclaiming the containers is not enough on its own: the
+                  # box sat at 100% disk (455G, 0 bytes free) even after every
+                  # leaked stack was gone, and setup-hive refuses to start Hive
+                  # under 10GB free. Its own cleanup is deliberately
+                  # conservative on self-hosted runners — `docker image prune`
+                  # without -a, `volume prune` without -a — and a plain
+                  # `volume prune` skips *named* volumes, which is precisely
+                  # what a leaked compose stack leaves behind. That left
+                  # 11.75GB of volumes and 8.19GB of images reported as
+                  # reclaimable while the run failed for want of space.
+                  #
+                  # Between runs nothing on this box is meant to be alive, so
+                  # "unused" here means "garbage". Images and build cache are
+                  # re-pulled and rebuilt on demand; disk is the scarce thing.
+                  docker volume prune -af || true
+                  docker builder prune -af || true
+                  docker image prune -af || true
+
                   docker ps -a --format 'table {{.Names}}\t{{.Status}}'
+                  docker system df || true
                   df -h / || true
+
+                  # Surface the host-level shortfall explicitly. If this still
+                  # reads under 10GB, the space is held outside this daemon —
+                  # stale _work/ directories or /opt/hive on the runner host —
+                  # and needs hands on the box; setup-hive will fail straight
+                  # after this with the same number.
+                  avail_gb=$(($(df -Pk / | awk 'NR==2 {print $4}') / 1024 / 1024))
+                  echo "Free disk after reclaim: ${avail_gb} GB"
+                  if [ "$avail_gb" -lt 10 ]; then
+                      echo "::warning::Only ${avail_gb} GB free after reclaiming every leaked stack, volume, image and build cache this daemon can see. The remaining space is held by the runner host itself (stale _work/ directories, /opt/hive), which CI cannot reach — the box needs manual cleanup."
+                  fi
 
             - name: Set up Hive
               uses: System-B90/.github/actions/setup-hive@main
