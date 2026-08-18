@@ -39,7 +39,19 @@ export default defineConfig({
         // ("Target page/context/browser has been closed"), cascading to every
         // later test in the worker. The self-hosted runner also raises
         // shm_size, but this flag makes any container host safe.
-        launchOptions: { args: [ "--disable-dev-shm-usage" ] },
+        launchOptions: {
+            args: [ "--disable-dev-shm-usage" ],
+            // Escape hatch for hosts that ship their own Chromium instead of
+            // letting Playwright download one. A cloud agent container
+            // preinstalls a browser under PLAYWRIGHT_BROWSERS_PATH and blocks
+            // `playwright install`, so when its build number does not match
+            // the one this @playwright/test expects, every test dies at
+            // launch with "Executable doesn't exist at …". Pointing this at
+            // the browser that is actually present costs nothing anywhere
+            // else: unset (CI, workstations) it stays undefined and Playwright
+            // resolves its own managed build exactly as before.
+            executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined,
+        },
         screenshot: "only-on-failure",
         video: "on-first-retry",
         // retain-on-failure, not on-first-retry: with retries enabled the

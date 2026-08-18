@@ -60,8 +60,10 @@ $c exec -T core python manage.py load_programs
 cd /home/user/Bluz
 python3 -m venv /tmp/venv && /tmp/venv/bin/pip install -q -r scripts/requirements.txt
 
-# 7. Run the suite.
+# 7. Point Playwright at the Chromium this image actually ships (see below),
+#    then run the suite.
 export CI=true PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
+export PLAYWRIGHT_CHROMIUM_EXECUTABLE=$(ls -d /opt/pw-browsers/chromium-*/chrome-linux/chrome | head -1)
 /tmp/venv/bin/python scripts/run_tests.py --seed-hive --skip-unit
 ```
 
@@ -160,7 +162,27 @@ an OAuth client in Hive, builds and starts the Bluz test stack, seeds both
 databases, and then invokes Playwright. Calling `npm run test:e2e` directly
 skips all of that — and `npm run docker:test` is Windows-only (`set VAR=…&&`).
 
-Chromium is preinstalled at `/opt/pw-browsers`; never run `playwright install`.
+**Chromium version skew — this will bite you.** Chromium is preinstalled under
+`/opt/pw-browsers` and `playwright install` is blocked, but the browser build
+the image ships is pinned independently of the `@playwright/test` version in
+`package.json`. When they disagree, all 157 tests fail identically at launch:
+
+```
+Error: browserType.launch: Executable doesn't exist at
+/opt/pw-browsers/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+```
+
+(Playwright 1.62 wanted build 1234; the image had 1194.) The playwright config
+honours `PLAYWRIGHT_CHROMIUM_EXECUTABLE` for exactly this — set it to the
+binary that is present and the run proceeds. Do **not** run
+`playwright install`, and do not pin the dependency down to match the image:
+
+```bash
+export PLAYWRIGHT_CHROMIUM_EXECUTABLE=$(ls -d /opt/pw-browsers/chromium-*/chrome-linux/chrome | head -1)
+```
+
+Use the full `chromium-*/chrome-linux/chrome` binary rather than
+`chromium_headless_shell-*`; headless works fine through it.
 
 Useful flags: `--spec gantt` / `--grep <pattern>` to narrow the run,
 `--seed-only` to stop after the stack is up and seeded, `--rebuild` to force
@@ -173,7 +195,7 @@ fresh images.
 | `NPM_TOKEN` | Set — used for both `npm ci` and `docker login ghcr.io` |
 | `.env` | Present at the repo root, already CI-shaped |
 | `nginx/ssl/{cert,key}.pem` | Present (self-signed) |
-| Chromium for Playwright | `/opt/pw-browsers`, with `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` |
+| Chromium for Playwright | `/opt/pw-browsers`, with `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` — **build may not match `@playwright/test`; see below** |
 | Docker + compose | Installed; **daemon is not running** |
 
 ## Resource notes
