@@ -210,6 +210,22 @@ first-run failure as suspect until you have matched it against the actual
 failure signature; do not assume the code is at fault before checking whether
 the stack came up cleanly.
 
+## Do not commit the seed snapshot
+
+`--seed-hive` rewrites the tracked file `scripts/demo/hive_data.json`. It is a
+generated export of whatever Hive instance you just seeded, so it carries that
+instance's auto-increment IDs — a throwaway Hive in a fresh container produces
+different ids for the same users. It is tracked so a run *without*
+`--seed-hive` can reuse it, but your local churn is not a change anyone wants:
+
+```bash
+git checkout -- scripts/demo/hive_data.json
+```
+
+Revert it before committing anything else from an E2E session. A stop hook that
+nags about uncommitted changes will point at this file — it is the one thing
+here that should be discarded rather than committed.
+
 ## Teardown
 
 ```bash
