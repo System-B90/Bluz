@@ -433,6 +433,41 @@ def duplicate_event(
     show(result)
 
 
+@events_app.command("set-day")
+def set_event_day(
+    event_id: str = typer.Argument(..., help="Gantt event id."),
+    curriculum_id: str = typer.Option(..., "--curriculum-id", help="Curriculum id."),
+    module_id: str = typer.Option(..., "--module-id", help="Module id."),
+    day_id: str = typer.Option(..., "--day-id", help="Day to place the event on."),
+    sort_order: float = typer.Option(
+        None, "--sort-order", help="Sort order weight within the day."
+    ),
+) -> None:
+    """Place (or move) an event onto a day for a curriculum (writes cMDA)."""
+    payload = {"curriculumId": curriculum_id, "moduleId": module_id, "dayId": day_id}
+    if sort_order is not None:
+        payload["sortOrder"] = sort_order
+    with state.client() as client:
+        result = client.post(f"{_BASE}/events/{event_id}/day", json=payload)
+    success(f"Placed event {event_id} on day {day_id}")
+    show(result)
+
+
+@events_app.command("unset-day")
+def unset_event_day(
+    event_id: str = typer.Argument(..., help="Gantt event id."),
+    curriculum_id: str = typer.Option(..., "--curriculum-id", help="Curriculum id."),
+    module_id: str = typer.Option(..., "--module-id", help="Module id."),
+) -> None:
+    """Clear an event's day placement for a curriculum (deletes its cMDA row)."""
+    with state.client() as client:
+        client.delete(
+            f"{_BASE}/events/{event_id}/day",
+            json={"curriculumId": curriculum_id, "moduleId": module_id},
+        )
+    success(f"Cleared day placement for event {event_id}")
+
+
 @events_app.command("except-occurrence")
 def except_occurrence(
     event_id: str = typer.Argument(..., help="Recurring gantt event id."),

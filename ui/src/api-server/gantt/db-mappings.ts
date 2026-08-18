@@ -167,6 +167,89 @@ export async function reorderCurriculumModuleMappingInDay(
 }
 
 /**
+ * Sets which day an event (or module) falls on for a curriculum: moves the
+ * existing mapping if one is already present for this
+ * (curriculumId, moduleId, eventId), otherwise creates one. This is the
+ * single write path event-scoped callers (the `events/[id]/day` route) use —
+ * they know only the target day, not whichever day the mapping used to sit
+ * on, so they cannot supply `oldMapping` the way the curriculum-scoped PATCH
+ * route requires.
+ *
+ * @param curriculumId - The curriculum identifier.
+ * @param moduleId - The module identifier.
+ * @param eventId - The event identifier (or null if mapping a module only).
+ * @param dayId - The day to place the event/module on.
+ * @param sortOrder - Optional sort order weight (defaults to 0 on create).
+ * @returns The created or updated mapping record.
+ */
+export async function setEventDayMapping(
+    curriculumId: GanttCurriculumId,
+    moduleId: GanttModuleId,
+    eventId: GanttEventId | null,
+    dayId: GanttDayId,
+    sortOrder?: number,
+) {
+    const existing = await postgresDb.query.ganttCurriculumEventDayMappingsSchema.findFirst({
+        where: and(
+            eq(ganttCurriculumEventDayMappingsSchema.curriculumId, curriculumId),
+            eq(ganttCurriculumEventDayMappingsSchema.moduleId, moduleId),
+            eventId
+                ? eq(ganttCurriculumEventDayMappingsSchema.eventId, eventId)
+                : isNull(ganttCurriculumEventDayMappingsSchema.eventId),
+        ),
+    });
+
+    if (!existing) {
+        return await createCurriculumModuleDayMapping({
+            curriculumId,
+            moduleId,
+            eventId,
+            dayId,
+            sortOrder,
+        });
+    }
+
+    return await updateCurriculumModuleDayMapping(
+        curriculumId,
+        moduleId,
+        eventId,
+        { dayId: existing.dayId },
+        { dayId, ...(sortOrder !== undefined ? { sortOrder } : {}) },
+    );
+}
+
+/**
+ * Clears an event's (or module's) day placement for a curriculum, regardless
+ * of which day it currently sits on.
+ *
+ * @param curriculumId - The curriculum identifier.
+ * @param moduleId - The module identifier.
+ * @param eventId - The event identifier (or null if unsetting a module mapping).
+ * @returns The deleted mapping record.
+ */
+export async function unsetEventDayMapping(
+    curriculumId: GanttCurriculumId,
+    moduleId: GanttModuleId,
+    eventId: GanttEventId | null,
+) {
+    return await postgresDb
+        .delete(ganttCurriculumEventDayMappingsSchema)
+        .where(
+            and(
+                eq(
+                    ganttCurriculumEventDayMappingsSchema.curriculumId,
+                    curriculumId,
+                ),
+                eq(ganttCurriculumEventDayMappingsSchema.moduleId, moduleId),
+                eventId
+                    ? eq(ganttCurriculumEventDayMappingsSchema.eventId, eventId)
+                    : isNull(ganttCurriculumEventDayMappingsSchema.eventId),
+            ),
+        )
+        .returning();
+}
+
+/**
  * Deletes an existing curriculum day mapping.
  * 
  * @param curriculumId - The curriculum identifier.
