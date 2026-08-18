@@ -136,6 +136,46 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v7
 
+            # run_tests.py brings the Bluz stack up as compose project
+            # `bluz-test-<worktree-slug>` and never tears it down, while
+            # deploy/docker-compose.yml marks the services `restart: always`.
+            # So any run that dies before its teardown — a cancel, a timeout, a
+            # failed setup — leaves a full Bluz stack running on the box
+            # forever, and the teardown below only ever cleaned up `hive-*`.
+            # Four such stacks (two 4 days old, two 5 days old) had piled up by
+            # 0d7b947, several stuck in restart loops, and they starved this
+            # box badly enough that setup-hive hit its own 60-minute timeout
+            # without ever bringing Hive up.
+            #
+            # This box runs one e2e job at a time by design (see the job
+            # comment above), so anything matching these names at the start of
+            # a run is leaked, not live — the same assumption the `hive-*`
+            # cleanup already makes.
+            - name: Reclaim leaked test stacks
+              run: |
+                  projects=$(docker ps -aq --filter "name=^/bluz-test-" \
+                      | xargs -r docker inspect \
+                        --format '{{index .Config.Labels "com.docker.compose.project"}}' \
+                      | sort -u || true)
+                  for proj in $projects; do
+                      echo "Removing leaked compose project: $proj"
+                      docker compose -p "$proj" down -v --remove-orphans || true
+                  done
+                  # Force-remove whatever survived the compose down (a project
+                  # whose compose file is gone still leaves labelled containers).
+                  leftovers=$(docker ps -aq --filter "name=^/bluz-test-" || true)
+                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
+                  for proj in $projects; do
+                      docker volume ls -q \
+                          --filter "label=com.docker.compose.project=$proj" \
+                          | xargs -r docker volume rm -f || true
+                      docker network ls -q \
+                          --filter "label=com.docker.compose.project=$proj" \
+                          | xargs -r docker network rm || true
+                  done
+                  docker ps -a --format 'table {{.Names}}\t{{.Status}}'
+                  df -h / || true
+
             - name: Set up Hive
               uses: System-B90/.github/actions/setup-hive@main
               with:
@@ -274,9 +314,14 @@ jobs:
               run: |
                   mkdir -p container-logs
                   docker ps -a
+                  # Bounded: this loop ran against every container on the box
+                  # and spent 28 minutes on a wedged daemon at 0d7b947, eating
+                  # the rest of the job's timeout and delaying the teardown
+                  # below — which is what leaks the next stack.
                   for c in $(docker ps -aq); do
                     name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
-                    docker logs "$c" > "container-logs/$name.log" 2>&1 || true
+                    timeout 30 docker logs --tail 2000 "$c" \
+                      > "container-logs/$name.log" 2>&1 || true
                   done
                   echo "::group::Bluz UI container status + log (tail)"
                   ui=$(docker ps -a --filter "name=-ui" --format '{{.Names}}' | head -1)
@@ -308,9 +353,18 @@ jobs:
             # running — and that is what made the next run's nested containerd
             # time out on startup. Runs after the log upload so a failing run
             # still gets its diagnostics.
-            - name: Tear down Hive stack
+            - name: Tear down test + Hive stacks
               if: always()
               run: |
+                  # The Bluz stack goes first and unconditionally: leaving it up
+                  # is what wedged this box for five days (see "Reclaim leaked
+                  # test stacks" above). `docker compose down` alone is not
+                  # enough — on a run that died before checkout finished, the
+                  # compose file may not even be on disk — so each cleanup ends
+                  # with a name-filtered `rm -f`.
+                  bluz=$(docker ps -aq --filter "name=^/bluz-test-" || true)
+                  [ -n "$bluz" ] && docker rm -f $bluz || true
+
                   docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
                   leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
                   [ -n "$leftovers" ] && docker rm -f $leftovers || true
@@ -335,6 +389,46 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
+
+            # run_tests.py brings the Bluz stack up as compose project
+            # `bluz-test-<worktree-slug>` and never tears it down, while
+            # deploy/docker-compose.yml marks the services `restart: always`.
+            # So any run that dies before its teardown — a cancel, a timeout, a
+            # failed setup — leaves a full Bluz stack running on the box
+            # forever, and the teardown below only ever cleaned up `hive-*`.
+            # Four such stacks (two 4 days old, two 5 days old) had piled up by
+            # 0d7b947, several stuck in restart loops, and they starved this
+            # box badly enough that setup-hive hit its own 60-minute timeout
+            # without ever bringing Hive up.
+            #
+            # This box runs one e2e job at a time by design (see the job
+            # comment above), so anything matching these names at the start of
+            # a run is leaked, not live — the same assumption the `hive-*`
+            # cleanup already makes.
+            - name: Reclaim leaked test stacks
+              run: |
+                  projects=$(docker ps -aq --filter "name=^/bluz-test-" \
+                      | xargs -r docker inspect \
+                        --format '{{index .Config.Labels "com.docker.compose.project"}}' \
+                      | sort -u || true)
+                  for proj in $projects; do
+                      echo "Removing leaked compose project: $proj"
+                      docker compose -p "$proj" down -v --remove-orphans || true
+                  done
+                  # Force-remove whatever survived the compose down (a project
+                  # whose compose file is gone still leaves labelled containers).
+                  leftovers=$(docker ps -aq --filter "name=^/bluz-test-" || true)
+                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
+                  for proj in $projects; do
+                      docker volume ls -q \
+                          --filter "label=com.docker.compose.project=$proj" \
+                          | xargs -r docker volume rm -f || true
+                      docker network ls -q \
+                          --filter "label=com.docker.compose.project=$proj" \
+                          | xargs -r docker network rm || true
+                  done
+                  docker ps -a --format 'table {{.Names}}\t{{.Status}}'
+                  df -h / || true
 
             - name: Set up Hive
               uses: System-B90/.github/actions/setup-hive@main
@@ -470,9 +564,14 @@ jobs:
               run: |
                   mkdir -p container-logs
                   docker ps -a
+                  # Bounded: this loop ran against every container on the box
+                  # and spent 28 minutes on a wedged daemon at 0d7b947, eating
+                  # the rest of the job's timeout and delaying the teardown
+                  # below — which is what leaks the next stack.
                   for c in $(docker ps -aq); do
                     name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
-                    docker logs "$c" > "container-logs/$name.log" 2>&1 || true
+                    timeout 30 docker logs --tail 2000 "$c" \
+                      > "container-logs/$name.log" 2>&1 || true
                   done
                   echo "::group::Bluz UI container status + log (tail)"
                   ui=$(docker ps -a --filter "name=-ui" --format '{{.Names}}' | head -1)
@@ -498,9 +597,12 @@ jobs:
                   retention-days: 7
 
             # Harmless on a throwaway VM, but keeps the two paths identical.
-            - name: Tear down Hive stack
+            - name: Tear down test + Hive stacks
               if: always()
               run: |
+                  bluz=$(docker ps -aq --filter "name=^/bluz-test-" || true)
+                  [ -n "$bluz" ] && docker rm -f $bluz || true
+
                   docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
                   leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
                   [ -n "$leftovers" ] && docker rm -f $leftovers || true
