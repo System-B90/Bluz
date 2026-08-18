@@ -326,8 +326,12 @@ def set_mapping(
     if sort_order is not None:
         payload["sortOrder"] = sort_order
     with state.client() as client:
-        result = client.post(f"{_BASE}/curriculums/{curriculum_id}/mappings", json=payload)
-    success(f"Placed {'event ' + event_id if event_id else 'module ' + module_id} on day {day_id}")
+        result = client.post(
+            f"{_BASE}/curriculums/{curriculum_id}/mappings", json=payload
+        )
+    success(
+        f"Placed {'event ' + event_id if event_id else 'module ' + module_id} on day {day_id}"
+    )
     show(result)
 
 
@@ -335,7 +339,9 @@ def set_mapping(
 def move_mapping(
     curriculum_id: str = typer.Argument(..., help="Curriculum id."),
     module_id: str = typer.Option(..., "--module-id", help="Module id."),
-    old_day_id: str = typer.Option(..., "--old-day-id", help="Day the mapping is currently on."),
+    old_day_id: str = typer.Option(
+        ..., "--old-day-id", help="Day the mapping is currently on."
+    ),
     new_day_id: str = typer.Option(
         None, "--new-day-id", help="Day to move the mapping to."
     ),
@@ -361,8 +367,12 @@ def move_mapping(
         "newValues": new_values,
     }
     with state.client() as client:
-        result = client.patch(f"{_BASE}/curriculums/{curriculum_id}/mappings", json=payload)
-    success(f"Moved mapping for {'event ' + event_id if event_id else 'module ' + module_id}")
+        result = client.patch(
+            f"{_BASE}/curriculums/{curriculum_id}/mappings", json=payload
+        )
+    success(
+        f"Moved mapping for {'event ' + event_id if event_id else 'module ' + module_id}"
+    )
     show(result)
 
 
@@ -370,7 +380,9 @@ def move_mapping(
 def unset_mapping(
     curriculum_id: str = typer.Argument(..., help="Curriculum id."),
     module_id: str = typer.Option(..., "--module-id", help="Module id."),
-    day_id: str = typer.Option(..., "--day-id", help="Day the mapping is currently on."),
+    day_id: str = typer.Option(
+        ..., "--day-id", help="Day the mapping is currently on."
+    ),
     event_id: str = typer.Option(
         None, "--event-id", help="Event id (omit to unset the module itself)."
     ),
@@ -379,7 +391,9 @@ def unset_mapping(
     payload = {"moduleId": module_id, "eventId": event_id, "dayId": day_id}
     with state.client() as client:
         client.delete(f"{_BASE}/curriculums/{curriculum_id}/mappings", json=payload)
-    success(f"Cleared mapping for {'event ' + event_id if event_id else 'module ' + module_id}")
+    success(
+        f"Cleared mapping for {'event ' + event_id if event_id else 'module ' + module_id}"
+    )
 
 
 @curriculums_app.command("duplicate")
