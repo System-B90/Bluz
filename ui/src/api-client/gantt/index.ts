@@ -8,6 +8,10 @@ import { moduleApi } from "@/api-client/gantt/module";
 import { moduleEventApi } from "@/api-client/gantt/module-event";
 import { recurrenceExceptionApi } from "@/api-client/gantt/recurrence-exceptions";
 import { apiReorderEvents, apiReorderModules } from "@/api-client/gantt/reorder";
+import {
+    apiApplyShuffles,
+    apiGetShuffleUsages,
+} from "@/api-client/gantt/shuffles";
 import { syllabusApi } from "@/api-client/gantt/syllabus";
 import { weekApi } from "@/api-client/gantt/week";
 
@@ -25,6 +29,8 @@ const ganttApi = {
     execution: curriculumExecutionApi,
     reorderModules: apiReorderModules,
     reorderEvents: apiReorderEvents,
+    applyShuffles: apiApplyShuffles,
+    getShuffleUsages: apiGetShuffleUsages,
 } as const;
 export { ganttApi };
 export type GanttApi = typeof ganttApi;
