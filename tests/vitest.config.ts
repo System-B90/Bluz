@@ -17,6 +17,13 @@ export default defineConfig({
         alias: {
             "@": path.resolve(__dirname, "../ui/src"),
         },
+        // Self-hosted CI runners are shared/resource-constrained; spawning
+        // many forks at once starves worker startup and vitest kills them
+        // with "Timeout waiting for worker to respond" (flaky CI failures,
+        // not real test bugs). Capping concurrent forks avoids that.
+        poolOptions: {
+            forks: { maxForks: 4 },
+        },
         // Mock fallbacks so `npm run test:unit` runs without a configured
         // environment (NextAuth/SSO modules throw at import if these are unset).
         env: {
