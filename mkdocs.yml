@@ -78,5 +78,6 @@ nav:
   - Code Quality Review: code-quality.md
   - Duplication Audit: duplication-audit.md
   - Gantt Cut Rules: gantt-cut-rules.md
+  - E2E Cloud Runbook: e2e-cloud-runbook.md
   - API Reference: api/index.md
   - CLI Reference: cli/index.md

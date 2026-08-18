@@ -48,6 +48,27 @@ npm run test:e2e:ui        # interactive
 npm run docker:test:down   # stop test containers
 ```
 
+### E2E in a cloud agent session (Linux container)
+The commands above assume a Windows workstation with images already built.
+A Claude Code cloud session starts with **no docker daemon running, no images,
+and no Hive stack**, so E2E needs a setup pass first — read
+**[`docs/e2e-cloud-runbook.md`](../../../docs/e2e-cloud-runbook.md)** before
+trying. Four things bite immediately and are not guessable:
+
+- `dockerd` is installed but **not running** — start it yourself.
+- The agent HTTPS proxy intercepts `hive.org`/`bluz.dev` and returns **403**;
+  extend `NO_PROXY`/`no_proxy` with those hostnames.
+- Hive source (`hivelms/Hive`) is unreachable — pull prebuilt images from
+  `ghcr.io/system-b90/hive/*` instead, using `NPM_TOKEN` for `docker login`.
+- The Hive stack directory **must be named `hive`**, or the compose network
+  becomes `hive-stack_hive-net` and Bluz cannot attach.
+
+Then run the pipeline the same way CI does — never `npm run test:e2e` directly,
+and never `npm run docker:test` (it is Windows-only `set VAR=…&&` syntax):
+```bash
+python scripts/run_tests.py --seed-hive --skip-unit
+```
+
 ## Container Log Reference
 | Service    | Dev container          | Test container              |
 |------------|------------------------|-----------------------------|
