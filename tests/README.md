@@ -25,6 +25,7 @@ The table below maps every major Bluz feature to the test file that covers it.
 | **Offline Mode**          | `OfflineProvider`, `PushOfflineUpdatesDialog`                                                    | `header.spec.ts`   | Toggle offline mode, verify offline FAB indicator                                                                                                                                                 |
 | **Keyboard Shortcuts**    | Schedule page key handlers                                                                       | `calendar.spec.ts` | Ctrl+Z undo, Ctrl+Y redo, Delete key removes selected event, Escape exits fullscreen                                                                                                              |
 | **Hive lesson / queue**   | `HiveQueueMapping`, `lesson-sync`, `lesson-activation`                                          | `hive-lesson-queue.spec.ts` | Against a real Hive: saving an event creates the lesson + one rule per shuffle, the activator puts the shuffle's students on the chosen queue when the event goes live, clearing the mapping removes the lesson |
+| **Dialog keyboard behaviour** | `SettingsDialog`, `EventDialog`                                                              | `dialog-keyboard.spec.ts` | Settings dialog traps focus and restores it to the trigger, settings tabs reachable/activatable by keyboard, event dialog autoFocuses the name field and closes on Escape, event dialog fillable and submittable keyboard-only (#402) |
 
 ---
 
