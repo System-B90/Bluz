@@ -5,10 +5,12 @@ on:
         inputs:
             target:
                 description: >-
-                    Which runners to use. self-hosted runs one unified test job
-                    (single Hive+Bluz stack — the mks-srvu box can't host 3 at
-                    once). github-hosted runs the classic 3-shard matrix (each
-                    GitHub-hosted runner is a separate VM, so 3 stacks is free).
+                    Where the test suite runs. The images are always built on
+                    GitHub-hosted runners. self-hosted runs one unified test
+                    job (single Hive+Bluz stack — the mks-srvu box can't host 3
+                    at once). github-hosted runs the classic 3-shard matrix
+                    (each GitHub-hosted runner is a separate VM, so 3 stacks is
+                    free).
                 type: choice
                 options:
                     - self-hosted
@@ -37,13 +39,19 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    # One build job, on whichever runner class the run targets. Its artifact
-    # (test-images) is portable, so it feeds whichever test job below runs.
-    # Default (push/PR, or dispatch target=self-hosted) → self-hosted; only an
-    # explicit dispatch with target=github-hosted uses ubuntu-24.04.
+    # Image builds are pure CPU with no Hive dependency and their artifact is
+    # portable, so they run on GitHub-hosted runners no matter where the suite
+    # itself lands. That keeps the one thing the self-hosted box is actually
+    # needed for — the long test run — off a builder that kept dying under its
+    # own load: three named, warm buildkits shared one 8-vCPU host with the
+    # release pipeline's lint job and 14 Hive containers, and the UI build
+    # failed with "frontend grpc server closed unexpectedly" often enough that
+    # a continue-on-error retry was papering over it (the retry then failed the
+    # job anyway, master 23f3af5). An ephemeral VM per run has none of that
+    # contention, so the builder pinning and the retries are gone with it.
     build-test-images:
         name: Build Test Images
-        runs-on: ${{ fromJSON((github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted') && '["ubuntu-24.04"]' || '["self-hosted","dind"]') }}
+        runs-on: ubuntu-24.04
         # Version-bump commits on master (chore: bump version to *) only touch
         # package.json, so they'd otherwise trigger a full e2e run for nothing.
         if: >-
@@ -53,61 +61,14 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v7
 
-            # An unnamed builder gets a fresh random name per run, and so a
-            # fresh buildkit container — image pull plus container boot — every
-            # single time. On the self-hosted
-            # box that boot has to share 8 vCPUs with the release pipeline's
-            # lint job and 14 Hive containers, and when the inner dockerd is
-            # starved the boot overruns buildx's readiness window:
-            #   failed to list workers: ... dial unix
-            #   /run/buildkit/buildkitd.sock: no such file or directory
-            # A stable name plus cleanup: false keeps one warm buildkit around,
-            # so subsequent runs attach to it instead of racing a cold boot.
-            # (It also kills the "failed to remove one or more builders"
-            # annotation the teardown step used to emit.) The first run after a
-            # box reboot still boots cold, hence the retry below.
             - name: Set up Docker Buildx
-              id: buildx
-              continue-on-error: true
               uses: docker/setup-buildx-action@v4
-              with:
-                  name: bluz-e2e-builder
-                  cleanup: false
-
-            - name: Set up Docker Buildx (retry)
-              if: steps.buildx.outcome == 'failure'
-              uses: docker/setup-buildx-action@v4
-              with:
-                  name: bluz-e2e-builder
-                  cleanup: false
 
             # Build once here instead of once per shard (#e2e-perf). Tags match
             # exactly what deploy/docker-compose.yml resolves to with
             # BLUZ_VERSION=latest, so each shard's `docker compose up` finds the
             # image already present locally and skips building it again.
-            # buildkit occasionally dies mid-build on the self-hosted box
-            # ("frontend grpc server closed unexpectedly", "closing transport
-            # due to: EOF") under memory pressure, which threw away an
-            # otherwise good ~40 minute run. The second attempt reuses the
-            # layers the first one already cached, so a retry is cheap and a
-            # green first attempt costs nothing.
             - name: Build UI Image
-              id: build_ui
-              continue-on-error: true
-              uses: docker/build-push-action@v7
-              with:
-                  context: .
-                  file: ui/Dockerfile
-                  target: runner
-                  load: true
-                  tags: ghcr.io/system-b90/bluz/ui:latest
-                  build-args: |
-                      NPM_TOKEN=${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
-                  cache-from: type=gha,scope=e2e-ui
-                  cache-to: type=gha,mode=max,scope=e2e-ui
-
-            - name: Build UI Image (retry)
-              if: steps.build_ui.outcome == 'failure'
               uses: docker/build-push-action@v7
               with:
                   context: .
@@ -185,9 +146,10 @@ jobs:
                   python-version: "3.13"
 
             - name: Install Python dependencies (pyhive)
-              # The self-hosted runner's interpreter is PEP 668
-              # externally-managed, so a bare `pip install` aborts. A venv on
-              # PATH keeps later steps calling plain `python`/`pip` unchanged.
+              # A venv, not a bare `pip install`: the self-hosted runner's
+              # interpreter is PEP 668 externally-managed, so the bare install
+              # aborts there. Putting it on PATH keeps later steps calling
+              # plain `python`/`pip` unchanged on either runner class.
               run: |
                   python -m venv "${RUNNER_TEMP}/pyhive-venv"
                   echo "${RUNNER_TEMP}/pyhive-venv/bin" >> "$GITHUB_PATH"
@@ -384,9 +346,10 @@ jobs:
                   python-version: "3.13"
 
             - name: Install Python dependencies (pyhive)
-              # The self-hosted runner's interpreter is PEP 668
-              # externally-managed, so a bare `pip install` aborts. A venv on
-              # PATH keeps later steps calling plain `python`/`pip` unchanged.
+              # A venv, not a bare `pip install`: the self-hosted runner's
+              # interpreter is PEP 668 externally-managed, so the bare install
+              # aborts there. Putting it on PATH keeps later steps calling
+              # plain `python`/`pip` unchanged on either runner class.
               run: |
                   python -m venv "${RUNNER_TEMP}/pyhive-venv"
                   echo "${RUNNER_TEMP}/pyhive-venv/bin" >> "$GITHUB_PATH"

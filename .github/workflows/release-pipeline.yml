@@ -29,14 +29,12 @@ env:
 
 jobs:
     # Lint and unit tests were separate jobs, each with its own checkout, Node
-    # setup and `npm ci`. Both already run on the single self-hosted box, where
-    # they queue rather than overlap — so the split bought a second full
-    # install and no parallelism. `!cancelled()` on the later steps preserves
-    # the one thing it did provide: a lint failure still doesn't hide a test
-    # failure.
+    # setup and `npm ci` — a second full install for no parallelism worth
+    # paying for. `!cancelled()` on the later steps preserves the one thing the
+    # split did provide: a lint failure still doesn't hide a test failure.
     verify:
         name: Lint + Typecheck + Unit Tests
-        runs-on: [self-hosted, node, python]
+        runs-on: ubuntu-latest
         timeout-minutes: 60
         # Dependabot PRs are single dep bumps; CI on them wastes runner
         # minutes. Run this only for humans. Version-bump commits on master
@@ -55,16 +53,20 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v7
 
-            # Runner is self-hosted with persistent disk — npm/pip already
-            # survive between runs on disk. The actions/cache-backed `cache:`
-            # option instead uploads/downloads a GH Actions cache blob every
-            # run; on this box that blob had grown to 26GB (nothing ever
-            # pruned it) and uploading it at self-hosted bandwidth exceeded
-            # the 30m job timeout every time, cancelling the whole release.
+            # `cache:` was off while this job ran on the self-hosted box: that
+            # runner had persistent disk, so the npm cache already survived
+            # between runs, while the actions/cache blob grew to 26GB and
+            # uploading it at self-hosted bandwidth overran the job timeout.
+            # GitHub-hosted runners are ephemeral — nothing survives — so the
+            # cache is now the only thing keeping `npm ci` off a cold install.
             - name: Setup Node.js 24
               uses: actions/setup-node@v7
               with:
                   node-version: "24"
+                  cache: npm
+                  cache-dependency-path: |
+                      package-lock.json
+                      session-server/package-lock.json
 
             - name: Setup Python
               uses: actions/setup-python@v7
@@ -135,7 +137,7 @@ jobs:
         name: Build UI Image
         needs: [verify]
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
-        runs-on: [self-hosted, dind]
+        runs-on: ubuntu-latest
         timeout-minutes: 45
         permissions:
             contents: read
@@ -145,20 +147,14 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v7
 
-            # All self-hosted runners on this box run as the same OS user, so
-            # ~/.docker/buildx state is shared. Without a unique builder name,
-            # this job's builder can collide with — and get torn down by — a
-            # concurrent build-sessions/build-proxy job's cleanup step,
-            # killing this build mid-flight. See incident on v0.5.0 release.
-            # The name is per-job but NOT per-run, and cleanup is off, so the
-            # buildkit container stays warm between runs: a cold boot on this
-            # contended box can overrun buildx's readiness window and fail with
-            # "dial unix /run/buildkit/buildkitd.sock: no such file".
+            # The named, never-cleaned-up builders this step used to declare
+            # existed only to keep the three image jobs from tearing down each
+            # other's buildkit on the shared self-hosted box, where they ran as
+            # one OS user against one ~/.docker/buildx (v0.5.0 incident). Each
+            # GitHub-hosted job is its own VM, so a default ephemeral builder
+            # is both correct and one less thing to leak.
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v4
-              with:
-                  name: builder-ui
-                  cleanup: false
 
             - name: Log in to GitHub Container Registry
               if: startsWith(github.ref, 'refs/tags/v')
@@ -196,7 +192,7 @@ jobs:
         name: Build Sessions Image
         needs: [verify]
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v')
-        runs-on: [self-hosted, dind]
+        runs-on: ubuntu-latest
         timeout-minutes: 45
         permissions:
             contents: read
@@ -208,9 +204,6 @@ jobs:
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v4
-              with:
-                  name: builder-sessions
-                  cleanup: false
 
             - name: Log in to GitHub Container Registry
               if: startsWith(github.ref, 'refs/tags/v')
@@ -251,7 +244,7 @@ jobs:
             (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v'))
             && !(github.ref_type == 'branch'
                  && startsWith(github.event.head_commit.message, 'chore: bump version to'))
-        runs-on: [self-hosted, dind]
+        runs-on: ubuntu-latest
         timeout-minutes: 45
         permissions:
             contents: read
@@ -263,9 +256,6 @@ jobs:
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v4
-              with:
-                  name: builder-proxy
-                  cleanup: false
 
             - name: Log in to GitHub Container Registry
               if: startsWith(github.ref, 'refs/tags/v')
@@ -300,7 +290,7 @@ jobs:
         name: Craft Release Packages
         needs: [build-ui, build-sessions, build-proxy]
         if: startsWith(github.ref, 'refs/tags/v')
-        runs-on: [self-hosted, dind]
+        runs-on: ubuntu-latest
         timeout-minutes: 45
         permissions:
             contents: write
@@ -309,6 +299,18 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
+
+            # This job pulls five images and writes each one out twice — once
+            # as a flat tar under release-offline/images, once inside the
+            # gzipped bundle. The self-hosted box had room to spare for that;
+            # a GitHub-hosted runner ships ~14GB free, which the toolchains
+            # below eat into for no benefit to a job that only needs docker,
+            # python and tar.
+            - name: Free up disk space
+              run: |
+                  sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost /usr/local/share/powershell
+                  df -h /
 
             - name: Log in to GitHub Container Registry
               uses: docker/login-action@v4
@@ -420,7 +422,7 @@ jobs:
         name: Publish bluz CLI to org pip index
         needs: craft-release
         if: startsWith(github.ref, 'refs/tags/v')
-        runs-on: [self-hosted, python]
+        runs-on: ubuntu-latest
         timeout-minutes: 45
 
         steps:
