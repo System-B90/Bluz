@@ -11,6 +11,7 @@ import {
     ganttCurriculum2SyllabusesSchema,
     ganttEventsSchema,
     ganttModule2EventsSchema,
+    ganttModulesSchema,
     ganttSyllabus2ModulesSchema,
     ganttSyllabusesSchema,
 } from "@/api-server/gantt/schema";
@@ -23,6 +24,7 @@ import {
     GanttSyllabus,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import { ShuffleUsages } from "@/api-shared/types/gantt/shuffles";
 
 const basicOperations = drizzleOperationsBuilder<
     GanttSyllabus,
@@ -157,28 +159,39 @@ async function reorderModules(
 }
 
 /**
- * Events under `syllabusId` that are tagged with any of `shuffleNames`.
+ * Modules and events under `syllabusId` tagged with any of `shuffleNames`.
  *
- * Walks s2m → m2e → e so the check stays scoped to the syllabus that owns the
- * shuffle names; an event reached through another syllabus keeps its own tags.
+ * Walks s2m → m2e so the scan stays scoped to the syllabus that owns the
+ * names; an event reached through another syllabus keeps its own tags.
  */
-async function findEventsUsingShuffles(
+async function findShuffleUsages(
     syllabusId: GanttSyllabusId,
     shuffleNames: Array<string>,
-): Promise<Array<{ id: string; title: string }>> {
-    if (shuffleNames.length === 0) return [];
+): Promise<ShuffleUsages> {
+    const empty: ShuffleUsages = { events: [], modules: [] };
+    if (shuffleNames.length === 0) return empty;
 
-    const moduleRows = await postgresDb
-        .select({ moduleId: ganttSyllabus2ModulesSchema.moduleId })
-        .from(ganttSyllabus2ModulesSchema)
-        .where(eq(ganttSyllabus2ModulesSchema.syllabusId, syllabusId));
+    const moduleIds = await syllabusModuleIds(syllabusId);
+    if (moduleIds.length === 0) return empty;
 
-    const moduleIds = moduleRows.map((row) => row.moduleId);
-    if (moduleIds.length === 0) return [];
+    const modules = await postgresDb
+        .select({
+            id: ganttModulesSchema.id,
+            shuffles: ganttModulesSchema.shuffles,
+            title: ganttModulesSchema.title,
+        })
+        .from(ganttModulesSchema)
+        .where(
+            and(
+                inArray(ganttModulesSchema.id, moduleIds),
+                arrayOverlaps(ganttModulesSchema.shuffles, shuffleNames),
+            ),
+        );
 
-    const rows = await postgresDb
+    const events = await postgresDb
         .selectDistinct({
             id: ganttEventsSchema.id,
+            shuffles: ganttEventsSchema.shuffles,
             title: ganttEventsSchema.title,
         })
         .from(ganttEventsSchema)
@@ -193,43 +206,107 @@ async function findEventsUsingShuffles(
             ),
         );
 
-    return rows;
+    return { events, modules };
+}
+
+async function syllabusModuleIds(
+    syllabusId: GanttSyllabusId,
+): Promise<Array<GanttModuleId>> {
+    const rows = await postgresDb
+        .select({ moduleId: ganttSyllabus2ModulesSchema.moduleId })
+        .from(ganttSyllabus2ModulesSchema)
+        .where(eq(ganttSyllabus2ModulesSchema.syllabusId, syllabusId));
+    return rows.map((row) => row.moduleId);
+}
+
+async function readShuffles(id: GanttSyllabusId): Promise<Array<string>> {
+    const current = await postgresDb.query.ganttSyllabusesSchema.findFirst({
+        columns: { shuffles: true },
+        where: eq(ganttSyllabusesSchema.id, id),
+    });
+
+    if (!current) {
+        throw new ClientApiError(`סילבוס עם מזהה ${id} לא נמצא לעדכון`);
+    }
+
+    return current.shuffles ?? [];
+}
+
+function removedShuffles(
+    current: Array<string>,
+    next: Array<string>,
+): Array<string> {
+    const kept = new Set(next);
+    return current.filter((name) => !kept.has(name));
 }
 
 /**
- * Blocks removing a shuffle name that events still reference (#485).
+ * Replaces the syllabus' shuffle list, cascading every removed name off the
+ * modules and events that carry it (#485).
  *
- * Without this the event keeps a dangling name and the UI only offers to clear
- * it once the user retypes the deleted shuffle on the syllabus.
+ * Without the cascade the child keeps a dangling name and the UI only offers
+ * to clear it once the user retypes the deleted shuffle on the syllabus — so
+ * the caller confirms first (see `SyllabusShuffles`) and this applies both
+ * sides in one transaction.
+ */
+async function applyShuffles(
+    id: GanttSyllabusId,
+    shuffles: Array<string>,
+): Promise<ShuffleUsages> {
+    const removed = removedShuffles(await readShuffles(id), shuffles);
+    const usages = await findShuffleUsages(id, removed);
+    const strip = (names: Array<string>) =>
+        names.filter((name) => !removed.includes(name));
+
+    await postgresDb.transaction(async (tx) => {
+        for (const usedModule of usages.modules) {
+            await tx
+                .update(ganttModulesSchema)
+                .set({
+                    shuffles: strip(usedModule.shuffles),
+                    updatedAt: new Date(),
+                })
+                .where(eq(ganttModulesSchema.id, usedModule.id));
+        }
+
+        for (const event of usages.events) {
+            await tx
+                .update(ganttEventsSchema)
+                .set({ shuffles: strip(event.shuffles), updatedAt: new Date() })
+                .where(eq(ganttEventsSchema.id, event.id));
+        }
+
+        await tx
+            .update(ganttSyllabusesSchema)
+            .set({ shuffles, updatedAt: new Date() })
+            .where(eq(ganttSyllabusesSchema.id, id));
+    });
+
+    return usages;
+}
+
+/**
+ * Blocks a plain PATCH that drops a shuffle still in use (#485). Callers that
+ * mean to cascade go through `applyShuffles` after confirming with the user.
  */
 async function updateSyllabus(
     id: GanttSyllabusId,
     updateData: Partial<GanttSyllabus>,
 ): Promise<GanttSyllabus> {
     if (updateData.shuffles !== undefined) {
-        const current = await postgresDb.query.ganttSyllabusesSchema.findFirst({
-            where: eq(ganttSyllabusesSchema.id, id),
-            columns: { shuffles: true },
-        });
-
-        if (!current) {
-            throw new ClientApiError(`סילבוס עם מזהה ${id} לא נמצא לעדכון`);
-        }
-
-        const next = new Set(updateData.shuffles);
-        const removed = (current.shuffles ?? []).filter(
-            (name) => !next.has(name),
+        const removed = removedShuffles(
+            await readShuffles(id),
+            updateData.shuffles,
         );
+        const usages = await findShuffleUsages(id, removed);
+        const blocking = [...usages.modules, ...usages.events];
 
-        const blockingEvents = await findEventsUsingShuffles(id, removed);
-        if (blockingEvents.length > 0) {
-            const titles = blockingEvents
-                .map((event) => `"${event.title}"`)
-                .join(", ");
+        if (blocking.length > 0) {
+            const quoted = (names: Array<string>) =>
+                names.map((name) => `"${name}"`).join(", ");
             throw new ClientApiError(
-                `לא ניתן למחוק את השאפלים ${removed
-                    .map((name) => `"${name}"`)
-                    .join(", ")} — הם בשימוש באירועים הבאים: ${titles}`,
+                `לא ניתן למחוק את השאפלים ${quoted(removed)} — הם בשימוש ב: ` +
+                    quoted(blocking.map((item) => item.title)),
             );
         }
     }
@@ -240,6 +317,8 @@ async function updateSyllabus(
 export const DbSyllabus = {
     getItem: getFullSyllabus,
     ...basicOperations,
+    applyShuffles,
+    findShuffleUsages,
     updateItem: updateSyllabus,
     linkItem: addSyllabusToCurriculum,
     unlinkItem: removeSyllabusFromCurriculum,
