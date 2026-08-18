@@ -1,0 +1,1 @@
+ALTER TABLE "d" ADD COLUMN "day_end_time" text;
