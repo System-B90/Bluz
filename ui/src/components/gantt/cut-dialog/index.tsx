@@ -17,12 +17,18 @@ import Typography from "@mui/material/Typography";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
-import { CutValidationError } from "@/api-shared/gantt/cut-planner";
+import { CutDecision, CutValidationError } from "@/api-shared/gantt/cut-planner";
+import { WeekOverflowResolution } from "@/api-shared/gantt/cut-rules";
 import {
+    ApiCurriculumCutPayload,
     ApiCurriculumCutResponse,
     CurriculumCutError,
 } from "@/api-shared/types/gantt/cut";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import {
+    CutDecisionAnswer,
+    CutDecisionStep,
+} from "@/components/gantt/cut-dialog/CutDecisionStep";
 
 export type CutToScheduleDialogProps = {
     open: boolean;
@@ -40,6 +46,8 @@ const LOADING_STEPS = [
     "טוען את נתוני הגאנט…",
     "בודק שיבוצים ליום…",
     "פותר אירועים מחזוריים…",
+    "מאזן את העומס בין ימי השבוע…",
+    "מפזר הפסקות…",
     "ממפה לימי לוח השנה…",
     "יוצר אירועים במערכת השעות…",
 ] as const;
@@ -47,8 +55,15 @@ const LOADING_STEPS = [
 type DialogPhase =
     | { kind: "confirm" }
     | { kind: "cut-error"; error: CurriculumCutError }
+    | {
+          kind: "decisions";
+          decisions: Array<CutDecision>;
+          index: number;
+          plannedEvents: number;
+      }
     | { kind: "generic-error"; message: string }
     | { kind: "loading" }
+    | { kind: "planning" }
     | { kind: "success"; result: ApiCurriculumCutResponse };
 
 // Only unmapped events / unsatisfied recurrences can be dropped and cut
@@ -132,6 +147,16 @@ function CutSuccessContent({ result }: { result: ApiCurriculumCutResponse }) {
                 הלו&quot;ז נגזר בהצלחה! נוצרו {result.createdEvents} אירועים
                 במערכת השעות.
             </Alert>
+            {result.spilledEvents > 0 && (
+                <Typography variant="body2">
+                    אוזנו {result.spilledEvents} אירועים ליום אחר באותו שבוע.
+                </Typography>
+            )}
+            {result.insertedBreaks > 0 && (
+                <Typography variant="body2">
+                    נוספו {result.insertedBreaks} הפסקות לאורך הימים.
+                </Typography>
+            )}
             {result.createdCourses.length > 0 && (
                 <Typography variant="body2">
                     קורסים שנוצרו:{" "}
@@ -160,6 +185,11 @@ export function CutToScheduleDialog({
     const [phase, setPhase] = useState<DialogPhase>({ kind: "confirm" });
     const [loadingStep, setLoadingStep] = useState(0);
     const [forceAcknowledged, setForceAcknowledged] = useState(false);
+    // Balancing and break-spreading are on by default; unchecking either falls
+    // back to raw stacking, which is how the cut behaved before #…
+    const [autoSpillover, setAutoSpillover] = useState(true);
+    const [insertBreaks, setInsertBreaks] = useState(true);
+    const [answers, setAnswers] = useState<Array<CutDecisionAnswer>>([]);
     const loadingIntervalRef = useRef<null | ReturnType<typeof setInterval>>(null);
 
     // See ReloadScheduleDialog: the dialog outlives its own close, and the
@@ -172,11 +202,14 @@ export function CutToScheduleDialog({
             setPhase({ kind: "confirm" });
             setForceAcknowledged(false);
             setLoadingStep(0);
+            setAutoSpillover(true);
+            setInsertBreaks(true);
+            setAnswers([]);
         }
     }
 
     useEffect(() => {
-        if (phase.kind === "loading") {
+        if (phase.kind === "loading" || phase.kind === "planning") {
             loadingIntervalRef.current = setInterval(() => {
                 setLoadingStep((step) =>
                     Math.min(step + 1, LOADING_STEPS.length - 1),
@@ -195,30 +228,147 @@ export function CutToScheduleDialog({
     }, [phase.kind]);
 
     const handleClose = useCallback(() => {
-        if (phase.kind === "loading") return;
+        if (phase.kind === "loading" || phase.kind === "planning") return;
         onClose();
         setPhase({ kind: "confirm" });
         setForceAcknowledged(false);
+        setAnswers([]);
     }, [onClose, phase.kind]);
 
-    const handleConfirm = useCallback(async (force = false) => {
-        setLoadingStep(0);
-        setPhase({ kind: "loading" });
-        try {
-            const result = await ganttApi.cut.cut(curriculumId, force);
-            setPhase({ kind: "success", result });
-            onSuccess?.();
-        } catch (error) {
-            if (error instanceof CurriculumCutError) {
-                setPhase({ kind: "cut-error", error });
-            } else {
-                setPhase({
-                    kind: "generic-error",
-                    message: 'גזירת הלו"ז נכשלה. נסו שוב מאוחר יותר.',
-                });
+    /** The options a plan/commit request carries, including answered decisions. */
+    const payloadFor = useCallback(
+        (force: boolean, collected: Array<CutDecisionAnswer>): ApiCurriculumCutPayload => ({
+            force,
+            autoSpillover,
+            insertBreaks,
+            acceptedConstraintMoves: collected.flatMap((answer) =>
+                answer.type === "constraint-moves" ? answer.acceptedEventIds : [],
+            ),
+            weekOverflowResolutions: Object.fromEntries(
+                collected
+                    .filter(
+                        (answer): answer is Extract<
+                            CutDecisionAnswer,
+                            { type: "week-overflow" }
+                        > => answer.type === "week-overflow",
+                    )
+                    .map((answer) => [answer.weekId, answer.resolution]),
+            ) as Record<string, WeekOverflowResolution>,
+        }),
+        [autoSpillover, insertBreaks],
+    );
+
+    /** Commit half of plan-then-confirm: writes, carrying the user's answers. */
+    const commit = useCallback(
+        async (force: boolean, collected: Array<CutDecisionAnswer>) => {
+            setLoadingStep(0);
+            setPhase({ kind: "loading" });
+            try {
+                const result = await ganttApi.cut.cut(
+                    curriculumId,
+                    payloadFor(force, collected),
+                );
+                setPhase({ kind: "success", result });
+                onSuccess?.();
+            } catch (error) {
+                if (error instanceof CurriculumCutError) {
+                    setPhase({ kind: "cut-error", error });
+                } else {
+                    setPhase({
+                        kind: "generic-error",
+                        message: 'גזירת הלו"ז נכשלה. נסו שוב מאוחר יותר.',
+                    });
+                }
             }
+        },
+        [curriculumId, onSuccess, payloadFor],
+    );
+
+    /**
+     * Plan half of plan-then-confirm: nothing is written. When the plan raises
+     * questions the dialog walks them one at a time; when it raises none it
+     * goes straight to the commit, so the common case is still one click.
+     */
+    const handleConfirm = useCallback(
+        async (force = false) => {
+            setLoadingStep(0);
+            setPhase({ kind: "planning" });
+            try {
+                const plan = await ganttApi.cut.plan(
+                    curriculumId,
+                    payloadFor(force, []),
+                );
+                if (!plan.ok) {
+                    setPhase({
+                        kind: "cut-error",
+                        error: new CurriculumCutError({
+                            code: "invalid-plan",
+                            errors: plan.errors,
+                            message: "תוכנית הגזירה אינה תקינה",
+                        }),
+                    });
+                    return;
+                }
+                if (plan.report.decisions.length === 0) {
+                    await commit(force, []);
+                    return;
+                }
+                setAnswers([]);
+                setPhase({
+                    kind: "decisions",
+                    decisions: plan.report.decisions,
+                    index: 0,
+                    plannedEvents: plan.plannedEvents,
+                });
+            } catch (error) {
+                if (error instanceof CurriculumCutError) {
+                    setPhase({ kind: "cut-error", error });
+                } else {
+                    setPhase({
+                        kind: "generic-error",
+                        message: 'גזירת הלו"ז נכשלה. נסו שוב מאוחר יותר.',
+                    });
+                }
+            }
+        },
+        [commit, curriculumId, payloadFor],
+    );
+
+    /** Record the current question's answer and advance, or commit when done. */
+    const handleDecisionNext = useCallback(() => {
+        if (phase.kind !== "decisions") return;
+        const isLast = phase.index === phase.decisions.length - 1;
+        if (isLast) {
+            void commit(forceAcknowledged, answers);
+            return;
         }
-    }, [curriculumId, onSuccess]);
+        setPhase({ ...phase, index: phase.index + 1 });
+    }, [answers, commit, forceAcknowledged, phase]);
+
+    const answerFor = useCallback(
+        (decision: CutDecision): CutDecisionAnswer | undefined =>
+            answers.find((answer) => {
+                if (decision.type === "week-overflow") {
+                    return (
+                        answer.type === "week-overflow" &&
+                        answer.weekId === decision.weekId
+                    );
+                }
+                return answer.type === decision.type;
+            }),
+        [answers],
+    );
+
+    const recordAnswer = useCallback((answer: CutDecisionAnswer) => {
+        setAnswers((previous) => [
+            ...previous.filter((existing) =>
+                answer.type === "week-overflow" && existing.type === "week-overflow"
+                    ? existing.weekId !== answer.weekId
+                    : existing.type !== answer.type,
+            ),
+            answer,
+        ]);
+    }, []);
 
     const isTerminal =
         phase.kind === "success" ||
@@ -233,11 +383,57 @@ export function CutToScheduleDialog({
             </DialogTitle>
             <DialogContent>
                 {phase.kind === "confirm" && (
-                    <DialogContentText>
-                        פעולה זו תיצור אירוע במערכת השעות של המחזור המקושר עבור
-                        כל מופע מתוכנן בגאנט. הפעולה חד־פעמית — גזירה חוזרת
-                        מחייבת מחיקת האירועים שנוצרו. להמשיך?
-                    </DialogContentText>
+                    <Stack gap={1}>
+                        <DialogContentText>
+                            פעולה זו תיצור אירוע במערכת השעות של המחזור המקושר
+                            עבור כל מופע מתוכנן בגאנט. הפעולה חד־פעמית — גזירה
+                            חוזרת מחייבת מחיקת האירועים שנוצרו. להמשיך?
+                        </DialogContentText>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={autoSpillover}
+                                    onChange={(e) =>
+                                        setAutoSpillover(e.target.checked)
+                                    }
+                                />
+                            }
+                            label="איזון אוטומטי של השבוע — לגלוש אירועים שלא נכנסים ליום לימים פנויים באותו שבוע"
+                        />
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={insertBreaks}
+                                    onChange={(e) =>
+                                        setInsertBreaks(e.target.checked)
+                                    }
+                                />
+                            }
+                            label="פיזור הפסקות — לפזר את הזמן הפנוי כהפסקות לאורך היום במקום להשאירו בסופו"
+                        />
+                    </Stack>
+                )}
+                {phase.kind === "planning" && (
+                    <Stack alignItems="center" gap={1} sx={{ py: 2 }}>
+                        <CircularProgress />
+                        <Typography variant="body2">
+                            מתכנן את הגזירה…
+                        </Typography>
+                    </Stack>
+                )}
+                {phase.kind === "decisions" && (
+                    <Stack gap={1.5}>
+                        <Typography color="text.secondary" variant="caption">
+                            שאלה {phase.index + 1} מתוך {phase.decisions.length}
+                            {" · "}
+                            {phase.plannedEvents} אירועים מתוכננים
+                        </Typography>
+                        <CutDecisionStep
+                            answer={answerFor(phase.decisions[phase.index])}
+                            decision={phase.decisions[phase.index]}
+                            onAnswer={recordAnswer}
+                        />
+                    </Stack>
                 )}
                 {phase.kind === "loading" && (
                     <Stack alignItems="center" gap={1} sx={{ py: 2 }}>
@@ -297,6 +493,25 @@ export function CutToScheduleDialog({
                             variant="contained"
                         >
                             גזירה
+                        </Button>
+                    </>
+                )}
+                {phase.kind === "decisions" && (
+                    <>
+                        <Button onClick={handleClose}>ביטול</Button>
+                        <Button
+                            color="primary"
+                            onClick={handleDecisionNext}
+                            startIcon={
+                                phase.index === phase.decisions.length - 1 ? (
+                                    <ContentCutIcon fontSize="small" />
+                                ) : undefined
+                            }
+                            variant="contained"
+                        >
+                            {phase.index === phase.decisions.length - 1
+                                ? "גזירה"
+                                : "הבא"}
                         </Button>
                     </>
                 )}

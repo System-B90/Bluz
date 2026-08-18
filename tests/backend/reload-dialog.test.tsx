@@ -14,15 +14,30 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  *     most visibly after a pull-back and re-cut, where it was plainly stale.
  */
 
-const { reload, cut, pullBack, status } = vi.hoisted(() => ({
+const { reload, cut, plan, pullBack, status } = vi.hoisted(() => ({
     cut: vi.fn(),
+    // The dialog is plan-then-confirm: it plans first, and commits straight
+    // away when the plan raises no questions.
+    plan: vi.fn(async () => ({
+        ok: true as const,
+        plannedEvents: 0,
+        overlaps: 0,
+        report: {
+            moves: [],
+            overflows: [],
+            breaks: [],
+            constraintProposals: [],
+            constraintViolations: [],
+            decisions: [],
+        },
+    })),
     pullBack: vi.fn(),
     reload: vi.fn(),
     status: vi.fn(async () => ({ count: 1, cut: true })),
 }));
 
 vi.mock("@/api-client/gantt", () => ({
-    ganttApi: { cut: { cut, pullBack, reload, status } },
+    ganttApi: { cut: { cut, plan, pullBack, reload, status } },
 }));
 
 import { CurriculumCutError } from "@/api-shared/types/gantt/cut";

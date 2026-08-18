@@ -1,5 +1,6 @@
 import { ClientApiError } from "@/api-shared/errors";
-import { CutValidationError } from "@/api-shared/gantt/cut-planner";
+import { CutPlanReport, CutValidationError } from "@/api-shared/gantt/cut-planner";
+import { WeekOverflowResolution } from "@/api-shared/gantt/cut-rules";
 import { ModuleEventType } from "@/api-shared/types/gantt/models";
 
 /**
@@ -16,7 +17,44 @@ export type ApiCurriculumCutPayload = {
      * events are dropped from the cut instead of blocking it.
      */
     force?: boolean;
+    /**
+     * Rebalance each week so no day exceeds its working window, cascading work
+     * forward within the week. Defaults to on.
+     */
+    autoSpillover?: boolean;
+    /**
+     * Spread each day's leftover slack through the day as real הפסקה events
+     * instead of leaving it as an empty tail. Defaults to on.
+     */
+    insertBreaks?: boolean;
+    /**
+     * Event ids whose constraint-solver moves the user accepted in the dialog.
+     * Anything not listed is reported but never moved.
+     */
+    acceptedConstraintMoves?: Array<string>;
+    /**
+     * The user's answer to each `week-overflow` decision, keyed by week id.
+     * Weeks left out fall back to `OVERFLOW_RULES.defaultResolution`.
+     */
+    weekOverflowResolutions?: Record<string, WeekOverflowResolution>;
 };
+
+/**
+ * Response of POST .../cut/plan — the "plan" half of the plan-then-confirm
+ * flow. Runs the whole pipeline without writing and reports what the cut would
+ * do plus every open question, so the dialog can ask them one at a time before
+ * committing. Never writes.
+ */
+export type ApiCurriculumCutPlanResponse =
+    | { ok: false; errors: Array<CutValidationError> }
+    | {
+          ok: true;
+          /** Schedule events the commit would create. */
+          plannedEvents: number;
+          overlaps: number;
+          /** What the balancer, break pass and constraint solver did. */
+          report: CutPlanReport;
+      };
 
 export type ApiCurriculumCutResponse = {
     /** Number of schedule events created. */
@@ -25,6 +63,10 @@ export type ApiCurriculumCutResponse = {
     createdCourses: Array<{ id: string; name: string }>;
     /** Occurrences that overlap each other after stacking (informational). */
     overlaps: number;
+    /** Events the balancer moved to a later day in the same week. */
+    spilledEvents: number;
+    /** הפסקה events the break post-pass created. */
+    insertedBreaks: number;
 };
 
 /**
@@ -53,6 +95,15 @@ export type ApiCutPreviewOccurrence = {
     endTime: string;
     /** True when this is a recurrence echo rather than the mapped start day. */
     isRecurrenceEcho: boolean;
+    /** True for a break the post-pass invented rather than a gantt event. */
+    isGeneratedBreak: boolean;
+    /** Which break rule produced it (`BreakKind`), or null for a real event. */
+    breakKind: null | string;
+    /**
+     * True when the balancer relocated this occurrence off the day it was
+     * mapped to. Drives the preview's moved/unmoved highlight.
+     */
+    spilled: boolean;
 };
 
 /**
@@ -66,6 +117,8 @@ export type ApiCurriculumCutPreviewResponse =
           ok: true;
           occurrences: Array<ApiCutPreviewOccurrence>;
           overlaps: number;
+          /** What the balancer, break pass and constraint solver did. */
+          report: CutPlanReport;
           /**
            * Events the real cut would reject (unmapped / unsatisfied
            * recurrence) that the preview skipped instead of failing on.

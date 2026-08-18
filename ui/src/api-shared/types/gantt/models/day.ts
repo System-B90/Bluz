@@ -76,6 +76,13 @@ export type GanttDay = {
     weekId: GanttWeekId;
     dayIndex: GanttDayIndex;
     totalWorkingMinutes: number;
+    /**
+     * End of this day's working window ("HH:mm"). The cut treats the span from
+     * the day's start time to this as the day's capacity, and never places an
+     * event past it. `null` ⇒ derive as start + {@link GanttDay.totalWorkingMinutes},
+     * which is how days behaved before the field existed.
+     */
+    dayEndTime?: null | string;
     comment?: string;
 } & BaseGantItem;
 export type GanttDayId = string;

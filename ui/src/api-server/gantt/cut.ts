@@ -4,6 +4,7 @@ import { DbCourses } from "@/api-server/db-courses";
 import { DbEventHistory } from "@/api-server/db-event-history";
 import { DbIterations } from "@/api-server/db-iterations";
 import { DbSettings } from "@/api-server/db-settings";
+import { getConstraintsForCurriculum } from "@/api-server/gantt/db-constraints";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { getModuleDayMappingsForCurriculum } from "@/api-server/gantt/db-mappings";
 import { listRecurrenceExceptionsForCurriculum } from "@/api-server/gantt/db-recurrence-exceptions";
@@ -14,9 +15,13 @@ import {
     getDatabaseController,
 } from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import {
     CutPlanInput,
+    CutPlanOptions,
+    CutPlanReport,
     CutValidationError,
+    isGeneratedBreakEventId,
     PlannedOccurrence,
     planCut,
 } from "@/api-shared/gantt/cut-planner";
@@ -30,6 +35,7 @@ import {
 import { ApiCurriculum, ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
 import {
     ApiCurriculumCutError,
+    ApiCurriculumCutPlanResponse,
     ApiCurriculumCutPreviewResponse,
     ApiCurriculumCutResponse,
     ApiCurriculumCutStatus,
@@ -39,10 +45,16 @@ import {
 } from "@/api-shared/types/gantt/cut";
 import { GanttCurriculumId, ModuleEventType } from "@/api-shared/types/gantt/models";
 import {
+    ConstraintType,
+    GanttConstraint,
+} from "@/api-shared/types/gantt/models/constraint";
+import { GanttDayIndex } from "@/api-shared/types/gantt/models/day";
+import {
     MealSettings,
     MEAL_EVENT_TITLES,
     MEAL_TIMES_SETTING_KEY,
 } from "@/api-shared/types/settings/meal";
+import { PRAYER_TIMES_SETTING_KEY, PrayerSettings } from "@/api-shared/types/settings/prayer";
 import {
     DEFAULT_DAY_START_TIME,
     DEFAULT_WEEKEND_HOME_START_TIME,
@@ -76,6 +88,72 @@ export type CutMappingRow = {
 
 /** Plain-data recurrence-exception row. */
 export type CutExceptionRow = { eventId: string; dayId: string };
+
+/** Plain-data constraint row (subset of the Drizzle `cntrs` row). */
+export type CutConstraintRow = {
+    id: string;
+    type: "RELATIONAL" | "TEMPORAL";
+    ownerEventId: null | string;
+    ownerModuleId: null | string;
+    relation: "after" | "before" | null;
+    targetEventId: null | string;
+    targetModuleId: null | string;
+    minDelayDays: null | number;
+    maxDelayDays: null | number;
+    allowedDays: Array<number> | null;
+    forbiddenDays: Array<number> | null;
+};
+
+/**
+ * Adapt stored constraint rows into the domain `GanttConstraint` union the
+ * solver consumes. The table is a single flat shape covering both variants, so
+ * a row that does not carry the columns its own type requires (a relational
+ * row with no target, an ownerless row) is dropped rather than fed to the
+ * solver as a half-built constraint.
+ */
+export function toGanttConstraints(
+    rows: Array<CutConstraintRow>,
+): Array<GanttConstraint> {
+    const constraints: Array<GanttConstraint> = [];
+
+    for (const row of rows) {
+        const owner = row.ownerEventId
+            ? ({ ownerType: "event", ownerEventId: row.ownerEventId } as const)
+            : row.ownerModuleId
+                ? ({ ownerType: "module", ownerModuleId: row.ownerModuleId } as const)
+                : null;
+        if (!owner) continue;
+
+        if (row.type === "TEMPORAL") {
+            constraints.push({
+                ...owner,
+                id: row.id,
+                type: ConstraintType.Temporal,
+                allowedDays: (row.allowedDays ?? undefined) as
+                    Array<GanttDayIndex> | undefined,
+                forbiddenDays: (row.forbiddenDays ?? undefined) as
+                    Array<GanttDayIndex> | undefined,
+            } as GanttConstraint);
+            continue;
+        }
+
+        const targetId = row.targetEventId ?? row.targetModuleId;
+        if (!targetId || !row.relation) continue;
+
+        constraints.push({
+            ...owner,
+            id: row.id,
+            type: ConstraintType.Relational,
+            targetId,
+            targetType: row.targetEventId ? "event" : "module",
+            relation: row.relation,
+            ...(row.minDelayDays !== null ? { minDelayDays: row.minDelayDays } : {}),
+            ...(row.maxDelayDays !== null ? { maxDelayDays: row.maxDelayDays } : {}),
+        } as GanttConstraint);
+    }
+
+    return constraints;
+}
 
 /**
  * Maps a Gantt module event type to its calendar counterpart. The enum values
@@ -119,24 +197,82 @@ export function indexCurriculumEvents(curriculum: ApiCurriculum): {
     eventsById: Map<string, ApiModuleEvent>;
     syllabusTitleByEvent: Map<string, string>;
     moduleHiveIdsByEvent: Map<string, Array<number>>;
+    /** Owning gantt module id per event — spillover keeps a module together. */
+    moduleIdByEvent: Map<string, string>;
+    /** Owning syllabus id per event — drives the between-syllabuses break rule. */
+    syllabusIdByEvent: Map<string, string>;
+    /** Module id → its event ids, for fanning out module-level constraints. */
+    eventIdsByModule: Map<string, Array<string>>;
+    /** Module titles, used in constraint-violation messages. */
+    moduleTitleById: Map<string, string>;
 } {
     const eventsById = new Map<string, ApiModuleEvent>();
     const syllabusTitleByEvent = new Map<string, string>();
     const moduleHiveIdsByEvent = new Map<string, Array<number>>();
+    const moduleIdByEvent = new Map<string, string>();
+    const syllabusIdByEvent = new Map<string, string>();
+    const eventIdsByModule = new Map<string, Array<string>>();
+    const moduleTitleById = new Map<string, string>();
 
     for (const cLink of curriculum.c2s ?? []) {
         const syllabus = cLink.syllabus;
         for (const sLink of syllabus.s2m ?? []) {
-            for (const mLink of sLink.module.m2e ?? []) {
+            const ganttModule = sLink.module;
+            moduleTitleById.set(ganttModule.id, ganttModule.title);
+            for (const mLink of ganttModule.m2e ?? []) {
                 const event = mLink.event;
                 eventsById.set(event.id, event);
                 syllabusTitleByEvent.set(event.id, syllabus.title);
-                moduleHiveIdsByEvent.set(event.id, sLink.module.hiveIds ?? []);
+                moduleHiveIdsByEvent.set(event.id, ganttModule.hiveIds ?? []);
+                moduleIdByEvent.set(event.id, ganttModule.id);
+                syllabusIdByEvent.set(event.id, syllabus.id);
+                eventIdsByModule.set(ganttModule.id, [
+                    ...(eventIdsByModule.get(ganttModule.id) ?? []),
+                    event.id,
+                ]);
             }
         }
     }
 
-    return { eventsById, syllabusTitleByEvent, moduleHiveIdsByEvent };
+    return {
+        eventsById,
+        syllabusTitleByEvent,
+        moduleHiveIdsByEvent,
+        moduleIdByEvent,
+        syllabusIdByEvent,
+        eventIdsByModule,
+        moduleTitleById,
+    };
+}
+
+/**
+ * Prayer windows for the planner, read out of the MongoDB schedule settings.
+ *
+ * The Gantt/Postgres side has no prayer data of its own, so the server is the
+ * only layer that can bridge the two engines — the pure planner just receives
+ * `"HH:mm"` strings. A malformed or missing setting simply contributes no
+ * window: prayers are a soft preference and must never fail a cut.
+ */
+export function prayerWindowsFromSettings(
+    settings: null | PrayerSettings,
+): Array<{ name: string; time: string }> {
+    if (!settings) return [];
+
+    const LABELS: Record<keyof PrayerSettings, string> = {
+        shacharit: "שחרית",
+        mincha: "מנחה",
+        arvit: "ערבית",
+    };
+
+    const windows: Array<{ name: string; time: string }> = [];
+    for (const key of Object.keys(LABELS) as Array<keyof PrayerSettings>) {
+        const raw = settings[key] as Date | number | string | undefined;
+        if (raw === undefined || raw === null) continue;
+        const parsed = dayjs(raw as never).tz(APP_TIMEZONE);
+        if (!parsed.isValid()) continue;
+        windows.push({ name: LABELS[key], time: parsed.format("HH:mm") });
+    }
+    return windows;
 }
 
 /**
@@ -153,6 +289,10 @@ export function buildCutPlanInput(args: {
     breakfastTime?: string;
     lunchTime?: string;
     dinnerTime?: string;
+    /** Prayer windows bridged over from the MongoDB schedule settings. */
+    prayerTimes?: Array<{ name: string; time: string }>;
+    /** Constraint rows for this curriculum (owned by its events and modules). */
+    constraints?: Array<GanttConstraint>;
 }): CutPlanInput {
     const {
         curriculum,
@@ -163,6 +303,8 @@ export function buildCutPlanInput(args: {
         breakfastTime,
         lunchTime,
         dinnerTime,
+        prayerTimes,
+        constraints = [],
     } = args;
 
     const days: CutPlanInput["days"] = {};
@@ -177,6 +319,8 @@ export function buildCutPlanInput(args: {
             days[dLink.day.id] = {
                 id: dLink.day.id,
                 dayIndex: dLink.day.dayIndex,
+                totalWorkingMinutes: dLink.day.totalWorkingMinutes,
+                dayEndTime: dLink.day.dayEndTime ?? null,
             };
             return dLink.day.id;
         });
@@ -187,7 +331,32 @@ export function buildCutPlanInput(args: {
         };
     });
 
-    const { eventsById } = indexCurriculumEvents(curriculum);
+    const {
+        eventsById,
+        moduleIdByEvent,
+        syllabusIdByEvent,
+        eventIdsByModule,
+        moduleTitleById,
+    } = indexCurriculumEvents(curriculum);
+
+    // Constraints arrive as a flat list; index them by owner so each event
+    // carries its own and each module contributes one fan-out entry.
+    const constraintsByEvent = new Map<string, Array<GanttConstraint>>();
+    const constraintsByModule = new Map<string, Array<GanttConstraint>>();
+    for (const constraint of constraints) {
+        if (constraint.ownerType === "event") {
+            constraintsByEvent.set(constraint.ownerEventId, [
+                ...(constraintsByEvent.get(constraint.ownerEventId) ?? []),
+                constraint,
+            ]);
+        } else {
+            constraintsByModule.set(constraint.ownerModuleId, [
+                ...(constraintsByModule.get(constraint.ownerModuleId) ?? []),
+                constraint,
+            ]);
+        }
+    }
+
     const events = Array.from(eventsById.values()).map((event) => ({
         id: event.id,
         title: event.title,
@@ -195,6 +364,13 @@ export function buildCutPlanInput(args: {
         minimumDuration: event.minimumDuration,
         allocatedDuration: event.cEC?.[0]?.allocatedDuration ?? 0,
         splitAcrossBreaks: event.splitAcrossBreaks,
+        type: event.type,
+        moduleId: moduleIdByEvent.get(event.id) ?? null,
+        syllabusId: syllabusIdByEvent.get(event.id) ?? null,
+        // The cut assigns no rooms yet, so the room-change break rule stays
+        // inert (it is disabled in `cut-rules.ts` to match).
+        roomName: null,
+        constraints: constraintsByEvent.get(event.id) ?? [],
     }));
 
     return {
@@ -220,6 +396,15 @@ export function buildCutPlanInput(args: {
         breakfastTime,
         lunchTime,
         dinnerTime,
+        prayerTimes,
+        moduleConstraints: [...constraintsByModule.entries()].map(
+            ([moduleId, moduleConstraints]) => ({
+                moduleId,
+                title: moduleTitleById.get(moduleId) ?? moduleId,
+                constraints: moduleConstraints,
+            }),
+        ),
+        eventIdsByModule: Object.fromEntries(eventIdsByModule),
     };
 }
 
@@ -308,6 +493,44 @@ export function buildScheduleEvent(
 }
 
 /**
+ * Build a schedule event for a break the post-pass invented. It has no gantt
+ * event behind it, so everything comes from the occurrence itself. The
+ * synthetic `ganttEventId` marks it as cut-generated, which is exactly what
+ * `pullBackCutSchedule` matches on — breaks are archived with the rest of the
+ * cut and never survive to be duplicated by a re-cut.
+ */
+export function buildGeneratedBreakEvent(
+    occurrence: PlannedOccurrence,
+    courseIds: Array<string>,
+): DbEventDocument {
+    return {
+        id: randomUUID(),
+        name: occurrence.generatedBreak?.title ?? "הפסקה",
+        type: EventType.BREAK,
+        subject: 0,
+        hiveModule: 0,
+        hiveLesson: null,
+        startTime: occurrence.startTime,
+        endTime: occurrence.endTime,
+        courses: courseIds,
+        rooms: [],
+        instructors: [],
+        lecturers: [],
+        tags: [],
+        notes: occurrence.generatedBreak?.coversPrayer
+            ? `הפסקה שנוצרה אוטומטית (${occurrence.generatedBreak.kind}), מכסה ${occurrence.generatedBreak.coversPrayer}`
+            : `הפסקה שנוצרה אוטומטית (${occurrence.generatedBreak?.kind ?? ""})`,
+        locked: false,
+        hidden: false,
+        required: false,
+        personalTalk: false,
+        splitAcrossBreaks: false,
+        ganttEventId: occurrence.ganttEventId,
+        ganttOccurrenceDate: occurrence.occurrenceDate,
+    };
+}
+
+/**
  * Maps every Hive module id to its parent subject id, used to resolve the
  * subject for events that only carry a module-level Hive link (#hiveIds set
  * on the Gantt module, not on the event itself). Best-effort: a Hive failure
@@ -335,13 +558,15 @@ async function buildHiveModuleSubjectMap(
  */
 export async function previewCurriculumCut(
     curriculumId: GanttCurriculumId,
+    options: CutPlanOptions = {},
 ): Promise<ApiCurriculumCutPreviewResponse> {
     const curriculum = await DbCurriculum.getItem(curriculumId);
 
-    const [mappings, exceptions, iteration] = await Promise.all([
+    const [mappings, exceptions, iteration, constraints] = await Promise.all([
         getModuleDayMappingsForCurriculum(curriculumId, {}),
         listRecurrenceExceptionsForCurriculum(curriculumId),
         DbIterations.getByCurriculum(curriculumId),
+        getConstraintsForCurriculum(curriculumId),
     ]);
 
     // Read the schedule settings (day start times) regardless of whether the
@@ -351,11 +576,13 @@ export async function previewCurriculumCut(
     const settingsController = iteration
         ? getDatabaseController(iteration.dbName)
         : getDatabaseController();
-    const [ scheduleSetting, mealSetting ] = await Promise.all([
+    const [ scheduleSetting, mealSetting, prayerSetting ] = await Promise.all([
         DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, settingsController) as
             Promise<null | ScheduleSettings>,
         DbSettings.get(MEAL_TIMES_SETTING_KEY, undefined, settingsController) as
             Promise<MealSettings | null>,
+        DbSettings.get(PRAYER_TIMES_SETTING_KEY, undefined, settingsController) as
+            Promise<null | PrayerSettings>,
     ]);
     const dayStartTime =
         scheduleSetting?.dayStartTime ?? DEFAULT_DAY_START_TIME;
@@ -372,13 +599,15 @@ export async function previewCurriculumCut(
         breakfastTime: mealSetting?.breakfastTime,
         lunchTime: mealSetting?.lunchTime,
         dinnerTime: mealSetting?.dinnerTime,
+        prayerTimes: prayerWindowsFromSettings(prayerSetting),
+        constraints: toGanttConstraints(constraints as Array<CutConstraintRow>),
     });
 
     // Preview is tolerant where the real cut is strict: per-event problems
     // (unmapped / unsatisfied recurrence) skip just that event and re-plan
     // instead of failing the whole preview. Only a missing start date — which
     // makes every occurrence undatable — is fatal.
-    let plan = planCut(planInput);
+    let plan = planCut(planInput, options);
     const skipped: Array<CutValidationError> = [];
     if (!plan.ok) {
         const fatal = plan.errors.filter(
@@ -394,12 +623,15 @@ export async function previewCurriculumCut(
                 skippedEventIds.add(error.eventId);
             }
         }
-        plan = planCut({
-            ...planInput,
-            events: planInput.events.filter(
-                (event) => !skippedEventIds.has(event.id),
-            ),
-        });
+        plan = planCut(
+            {
+                ...planInput,
+                events: planInput.events.filter(
+                    (event) => !skippedEventIds.has(event.id),
+                ),
+            },
+            options,
+        );
         if (!plan.ok) {
             return { ok: false, errors: plan.errors };
         }
@@ -420,9 +652,13 @@ export async function previewCurriculumCut(
     const occurrences: Array<ApiCutPreviewOccurrence> = plan.occurrences.map(
         (occ) => {
             const ganttEvent = eventsById.get(occ.ganttEventId);
+            const isGenerated = isGeneratedBreakEventId(occ.ganttEventId);
             return {
                 ganttEventId: occ.ganttEventId,
-                title: ganttEvent?.title ?? occ.ganttEventId,
+                title:
+                    occ.generatedBreak?.title ??
+                    ganttEvent?.title ??
+                    occ.ganttEventId,
                 eventType: ganttEvent?.type ?? ModuleEventType.Other,
                 hiveSubjectId: ganttEvent?.hiveSubjectId ?? null,
                 syllabusTitle: syllabusTitleByEvent.get(occ.ganttEventId) ?? "",
@@ -431,6 +667,9 @@ export async function previewCurriculumCut(
                 startTime: occ.startTime.toISOString(),
                 endTime: occ.endTime.toISOString(),
                 isRecurrenceEcho: occ.isRecurrenceEcho,
+                isGeneratedBreak: isGenerated,
+                breakKind: occ.generatedBreak?.kind ?? null,
+                spilled: Boolean(occ.spilledFromDayId),
             };
         },
     );
@@ -440,6 +679,7 @@ export async function previewCurriculumCut(
         occurrences,
         overlaps: countOverlappingOccurrences(plan.occurrences),
         skipped,
+        report: plan.report,
     };
 }
 
@@ -463,6 +703,8 @@ export type MaterializationOutcome =
           documents: Array<DbEventDocument>;
           createdCourses: Array<{ id: string; name: string }>;
           overlaps: number;
+          /** What the balancer, break pass and constraint solver did. */
+          report: CutPlanReport;
       };
 
 /**
@@ -483,16 +725,25 @@ export async function materializeCurriculumEvents(
     curriculum: ApiCurriculum,
     iteration: { dbName: string; hiveUrl?: string },
     controller: DatabaseController,
-    options: { createMissingCourses?: boolean; force?: boolean } = {},
+    options: CutPlanOptions & { createMissingCourses?: boolean } = {},
 ): Promise<MaterializationOutcome> {
-    const { createMissingCourses = true, force = false } = options;
+    const { createMissingCourses = true, ...planOptions } = options;
     const curriculumId = curriculum.id as GanttCurriculumId;
 
-    const [mappings, exceptions, scheduleSetting, mealSetting] = await Promise.all([
+    const [
+        mappings,
+        exceptions,
+        constraints,
+        scheduleSetting,
+        mealSetting,
+        prayerSetting,
+    ] = await Promise.all([
         getModuleDayMappingsForCurriculum(curriculumId, {}),
         listRecurrenceExceptionsForCurriculum(curriculumId),
+        getConstraintsForCurriculum(curriculumId),
         DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, controller),
         DbSettings.get(MEAL_TIMES_SETTING_KEY, undefined, controller),
+        DbSettings.get(PRAYER_TIMES_SETTING_KEY, undefined, controller),
     ]);
     const dayStartTime =
         (scheduleSetting as null | ScheduleSettings)?.dayStartTime ??
@@ -519,8 +770,12 @@ export async function materializeCurriculumEvents(
         breakfastTime,
         lunchTime,
         dinnerTime,
+        prayerTimes: prayerWindowsFromSettings(
+            prayerSetting as null | PrayerSettings,
+        ),
+        constraints: toGanttConstraints(constraints as Array<CutConstraintRow>),
     });
-    const plan = planCut(planInput, { force });
+    const plan = planCut(planInput, planOptions);
     if (!plan.ok) {
         return { ok: false, errors: plan.errors };
     }
@@ -579,6 +834,12 @@ export async function materializeCurriculumEvents(
     // Build one schedule event per planned occurrence.
     const documents: Array<DbEventDocument> = [];
     for (const occurrence of plan.occurrences) {
+        // Breaks the post-pass invented have no gantt event behind them.
+        if (isGeneratedBreakEventId(occurrence.ganttEventId)) {
+            documents.push(buildGeneratedBreakEvent(occurrence, allCourseIds));
+            continue;
+        }
+
         const event = eventsById.get(occurrence.ganttEventId);
         if (!event) continue;
 
@@ -605,6 +866,70 @@ export async function materializeCurriculumEvents(
         createdCourses,
         documents,
         overlaps: countOverlappingOccurrences(plan.occurrences),
+        report: plan.report,
+    };
+}
+
+/**
+ * The "plan" half of the plan-then-confirm cut flow.
+ *
+ * Runs the entire pipeline the commit would run — balance, constraint solve,
+ * break pass — against the real iteration settings, and returns what it would
+ * do plus every question it could not answer on its own. Writes nothing (no
+ * courses are created either), so the dialog can walk the user through the
+ * decisions one at a time and only then POST the commit with their answers.
+ *
+ * Gating mirrors the commit so the dialog never asks questions about a cut that
+ * would be refused anyway.
+ */
+export async function planCurriculumCut(
+    curriculumId: GanttCurriculumId,
+    options: CutPlanOptions = {},
+): Promise<{ ok: false; error: ApiCurriculumCutError } | {
+    ok: true;
+    result: ApiCurriculumCutPlanResponse;
+}> {
+    const curriculum = await DbCurriculum.getItem(curriculumId);
+
+    if (curriculum.isDraft) {
+        return {
+            ok: false,
+            error: { code: "draft", message: 'לא ניתן לגזור גאנט טיוטה ללו"ז' },
+        };
+    }
+
+    const iteration = await DbIterations.getByCurriculum(curriculumId);
+    if (!iteration) {
+        return {
+            ok: false,
+            error: {
+                code: "no-iteration",
+                message: "לא נמצא מחזור המקושר לגאנט זה",
+            },
+        };
+    }
+
+    const materialized = await materializeCurriculumEvents(
+        curriculum,
+        iteration,
+        getDatabaseController(iteration.dbName),
+        { ...options, createMissingCourses: false },
+    );
+    if (!materialized.ok) {
+        return {
+            ok: true,
+            result: { ok: false, errors: materialized.errors },
+        };
+    }
+
+    return {
+        ok: true,
+        result: {
+            ok: true,
+            plannedEvents: materialized.documents.length,
+            overlaps: materialized.overlaps,
+            report: materialized.report,
+        },
     };
 }
 
@@ -614,7 +939,7 @@ export async function materializeCurriculumEvents(
  */
 export async function cutCurriculumToSchedule(
     curriculumId: GanttCurriculumId,
-    force = false,
+    options: CutPlanOptions = {},
 ): Promise<CutOutcome> {
     // Throws ClientApiError (→ 400) when the curriculum does not exist.
     const curriculum = await DbCurriculum.getItem(curriculumId);
@@ -656,7 +981,7 @@ export async function cutCurriculumToSchedule(
         curriculum,
         iteration,
         controller,
-        { force },
+        options,
     );
     if (!materialized.ok) {
         return {
@@ -668,7 +993,7 @@ export async function cutCurriculumToSchedule(
             },
         };
     }
-    const { createdCourses, documents, overlaps } = materialized;
+    const { createdCourses, documents, overlaps, report } = materialized;
 
     // Idempotency: re-check the one-shot guard immediately before writing so a
     // concurrent cut cannot double-insert.
@@ -713,6 +1038,8 @@ export async function cutCurriculumToSchedule(
             createdEvents: documents.length,
             createdCourses,
             overlaps,
+            spilledEvents: report.moves.length,
+            insertedBreaks: report.breaks.length,
         },
     };
 }

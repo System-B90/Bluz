@@ -272,6 +272,7 @@ async function duplicateCurriculum(
                     id: newDayId,
                     dayIndex: day.dayIndex,
                     totalWorkingMinutes: day.totalWorkingMinutes,
+                    dayEndTime: day.dayEndTime ?? null,
                     comment: day.comment ?? "",
                     createdAt: now,
                     updatedAt: now,
