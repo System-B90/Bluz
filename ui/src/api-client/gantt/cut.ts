@@ -1,6 +1,8 @@
 import { safeApiFetcher } from "@/api-client/common";
 import { ClientApiError } from "@/api-shared/errors";
 import {
+    ApiCurriculumCutPayload,
+    ApiCurriculumCutPlanResponse,
     ApiCurriculumCutPreviewResponse,
     ApiCurriculumCutResponse,
     ApiCurriculumCutStatus,
@@ -25,12 +27,34 @@ import {
  */
 export async function cutCurriculumToSchedule(
     curriculumId: GanttCurriculumId,
-    force = false,
+    options: ApiCurriculumCutPayload = {},
 ): Promise<ApiCurriculumCutResponse> {
     try {
         return await safeApiFetcher<ApiCurriculumCutResponse>(
             `/api/gantt/curriculums/${curriculumId}/cut`,
-            { method: "POST", body: JSON.stringify({ force }) },
+            { method: "POST", body: JSON.stringify(options) },
+        );
+    } catch (error) {
+        if (error instanceof ClientApiError && isCurriculumCutErrorPayload(error)) {
+            throw new CurriculumCutError(error);
+        }
+        throw error;
+    }
+}
+
+/**
+ * POST /api/gantt/curriculums/[id]/cut/plan — the "plan" half of the
+ * plan-then-confirm flow. Runs the full cut pipeline without writing and
+ * returns what it would do plus the open decisions the dialog must ask about.
+ */
+export async function planCurriculumCut(
+    curriculumId: GanttCurriculumId,
+    options: ApiCurriculumCutPayload = {},
+): Promise<ApiCurriculumCutPlanResponse> {
+    try {
+        return await safeApiFetcher<ApiCurriculumCutPlanResponse>(
+            `/api/gantt/curriculums/${curriculumId}/cut/plan`,
+            { method: "POST", body: JSON.stringify(options) },
         );
     } catch (error) {
         if (error instanceof ClientApiError && isCurriculumCutErrorPayload(error)) {
@@ -118,6 +142,7 @@ export async function reloadCurriculumSchedule(
 
 export const curriculumCutApi = {
     cut: cutCurriculumToSchedule,
+    plan: planCurriculumCut,
     reload: reloadCurriculumSchedule,
     status: getCurriculumCutStatus,
     pullBack: pullBackCurriculumSchedule,

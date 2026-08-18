@@ -42,6 +42,11 @@ vi.mock("@/api-server/db-iterations", () => ({
 vi.mock("@/api-server/gantt/db-mappings", () => ({
     getModuleDayMappingsForCurriculum: vi.fn(async () => []),
 }));
+
+vi.mock("@/api-server/gantt/db-constraints", () => ({
+    getConstraintsForCurriculum: vi.fn(async () => []),
+}));
+
 vi.mock("@/api-server/gantt/db-recurrence-exceptions", () => ({
     listRecurrenceExceptionsForCurriculum: vi.fn(async () => []),
 }));

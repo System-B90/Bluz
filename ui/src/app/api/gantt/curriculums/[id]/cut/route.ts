@@ -12,6 +12,7 @@ import { reloadCurriculumSchedule } from "@/api-server/gantt/reload";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
+    ApiCurriculumCutPayload,
     CurriculumCutErrorCode,
     CurriculumPullBackErrorCode,
 } from "@/api-shared/types/gantt/cut";
@@ -58,10 +59,18 @@ export const POST = withApi(async (request: NextRequest, context: RouteContext) 
     const { id } = await context.params;
     if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
-    const body = await request.json().catch(() => null);
-    const force = Boolean((body as { force?: boolean } | null)?.force);
+    const body = (await request
+        .json()
+        .catch(() => null)) as ApiCurriculumCutPayload | null;
 
-    const outcome = await cutCurriculumToSchedule(id as GanttCurriculumId, force);
+    // Balancing and breaks default to on; the dialog sends explicit booleans.
+    const outcome = await cutCurriculumToSchedule(id as GanttCurriculumId, {
+        force: Boolean(body?.force),
+        autoSpillover: body?.autoSpillover ?? true,
+        insertBreaks: body?.insertBreaks ?? true,
+        acceptedConstraintMoves: body?.acceptedConstraintMoves ?? [],
+        weekOverflowResolutions: body?.weekOverflowResolutions ?? {},
+    });
     if (!outcome.ok) {
         return ApiErrorMaker(
             outcome.error,

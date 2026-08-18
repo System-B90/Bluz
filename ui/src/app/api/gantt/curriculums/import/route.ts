@@ -141,6 +141,7 @@ export const POST = withApi(async (request: NextRequest) => {
                             id: newDayId,
                             dayIndex: oldDay.dayIndex,
                             totalWorkingMinutes: oldDay.totalWorkingMinutes || 0,
+                            dayEndTime: oldDay.dayEndTime ?? null,
                             comment: oldDay.comment || "",
                             createdAt: now,
                             updatedAt: now,

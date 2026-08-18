@@ -78,6 +78,29 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
         [dayId, updateDay, day?.totalWorkingMinutes, enqueueSnackbar],
     );
 
+    // Explicit end of the day's working window. Empty means "derive it" —
+    // the day's start time plus its working minutes — which is what the cut
+    // balancer falls back to and how days behaved before the field existed.
+    const [localEnd, setLocalEnd] = useState(day?.dayEndTime ?? "");
+
+    const handleEndSync = useCallback(() => {
+        const trimmed = localEnd.trim();
+        const normalized = trimmed === "" ? null : trimmed;
+        if (normalized !== null && !/^\d{1,2}:\d{2}$/.test(normalized)) {
+            setLocalEnd(day?.dayEndTime ?? "");
+            return;
+        }
+        if (normalized === (day?.dayEndTime ?? null)) return;
+
+        void updateDay(dayId, { dayEndTime: normalized }).catch((error) =>
+            enqueueApiErrorSnackbar(
+                enqueueSnackbar,
+                "שמירת שעת סיום נכשלה!",
+                error,
+            ),
+        );
+    }, [localEnd, day?.dayEndTime, updateDay, dayId, enqueueSnackbar]);
+
     const isSaturday = day?.dayIndex === GanttDayIndex.Saturday;
     const isDisabled = isSaturday && (day?.totalWorkingMinutes ?? 0) === 0;
 
@@ -124,6 +147,23 @@ export const DayEntry = React.memo(({ dayId }: DayEntryProps) => {
                         <Add className="text-[1rem]" />
                     </IconButton>
                 </div>
+            </div>
+
+            <div className="flex justify-between items-center mt-1">
+                <Typography
+                    className="text-slate-500 tracking-tight"
+                    variant="caption"
+                >
+                    שעת סיום
+                </Typography>
+                <input
+                    className="w-16 text-center font-mono text-xs bg-white rounded-md border border-slate-200 px-1 py-0.5 focus:ring-0 focus:outline-none text-slate-800"
+                    onBlur={handleEndSync}
+                    onChange={(e) => setLocalEnd(e.target.value)}
+                    placeholder="אוטומטי"
+                    title='סוף חלון העבודה של היום. ריק = נגזר משעת ההתחלה + שעות העבודה. הגזירה לעולם לא תציב אירוע אחרי השעה הזו.'
+                    value={localEnd}
+                />
             </div>
 
             <TextField

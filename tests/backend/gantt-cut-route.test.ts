@@ -46,14 +46,28 @@ describe("POST /api/gantt/curriculums/[id]/cut", () => {
     it("returns 200 with the cut summary on success", async () => {
         vi.mocked(cutCurriculumToSchedule).mockResolvedValue({
             ok: true,
-            result: { createdEvents: 4, createdCourses: [], overlaps: 0 },
+            result: {
+                createdEvents: 4,
+                createdCourses: [],
+                overlaps: 0,
+                spilledEvents: 0,
+                insertedBreaks: 0,
+            },
         } satisfies CutOutcome);
 
         const res = await post("c1");
         const body = await res.json();
         expect(res.status).toBe(200);
         expect(body.data.createdEvents).toBe(4);
-        expect(cutCurriculumToSchedule).toHaveBeenCalledWith("c1", false);
+        // The route now forwards the full plan-option payload; balancing and
+        // break spreading default to on when the body omits them.
+        expect(cutCurriculumToSchedule).toHaveBeenCalledWith("c1", {
+            force: false,
+            autoSpillover: true,
+            insertBreaks: true,
+            acceptedConstraintMoves: [],
+            weekOverflowResolutions: {},
+        });
     });
 
     it.each([

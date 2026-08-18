@@ -130,12 +130,25 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
                 { getCustomColor, getSubject },
                 typeFallback,
             );
+            const { isGeneratedBreak, spilled } = event.resource;
             return {
                 style: {
-                    backgroundColor,
+                    // A generated break is not a lesson — render it as neutral
+                    // filler so it reads as space, not content.
+                    backgroundColor: isGeneratedBreak
+                        ? theme.palette.action.disabledBackground
+                        : backgroundColor,
+                    color: isGeneratedBreak
+                        ? theme.palette.text.secondary
+                        : undefined,
                     opacity: event.resource.isRecurrenceEcho ? 0.65 : 1,
                     borderRadius: "6px",
-                    border: "none",
+                    // Moved/unmoved diff: everything the balancer relocated is
+                    // outlined, so the user can see at a glance what auto
+                    // spillover changed versus what stayed where they mapped it.
+                    border: spilled
+                        ? `2px dashed ${theme.palette.warning.main}`
+                        : "none",
                 },
             };
         },
@@ -166,6 +179,23 @@ export function CutPreviewTab({ curriculumId }: CutPreviewTabProps) {
                         >
                             {preview.data.skipped.length} אירועים לא משובצים
                             הושמטו מהתצוגה
+                        </Alert>
+                    ) : null}
+                    {preview.data.report.moves.length > 0 ? (
+                        <Alert
+                            severity="info"
+                            sx={{ py: 0, "& .MuiAlert-message": { py: 0.5 } }}
+                        >
+                            {preview.data.report.moves.length} אירועים אוזנו
+                            ליום אחר (מסומנים במסגרת מקווקוות)
+                        </Alert>
+                    ) : null}
+                    {preview.data.report.breaks.length > 0 ? (
+                        <Alert
+                            severity="success"
+                            sx={{ py: 0, "& .MuiAlert-message": { py: 0.5 } }}
+                        >
+                            {preview.data.report.breaks.length} הפסקות נוספו
                         </Alert>
                     ) : null}
                     {preview.data.overlaps > 0 ? (

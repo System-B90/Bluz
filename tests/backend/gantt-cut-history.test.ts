@@ -40,6 +40,11 @@ vi.mock("@/api-server/gantt/db-mappings", () => ({
         { dayId: "w0d0", eventId: "g1", sortOrder: 0 },
     ]),
 }));
+
+vi.mock("@/api-server/gantt/db-constraints", () => ({
+    getConstraintsForCurriculum: vi.fn(async () => []),
+}));
+
 vi.mock("@/api-server/gantt/db-recurrence-exceptions", () => ({
     listRecurrenceExceptionsForCurriculum: vi.fn(async () => []),
 }));

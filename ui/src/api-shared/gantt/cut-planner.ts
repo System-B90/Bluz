@@ -1,10 +1,40 @@
 import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import {
+    BalancerSlot,
+    balanceWeeks,
+    SpillMove,
+    WeekOverflow,
+} from "@/api-shared/gantt/cut-balancer";
+import {
+    GeneratedBreak,
+    insertBreaksForDay,
+    PlacedItem,
+    PrayerWindow,
+} from "@/api-shared/gantt/cut-breaks";
+import {
+    ConstraintDayInfo,
+    ConstraintMoveProposal,
+    ConstraintPlacement,
+    ConstraintViolation,
+    solveConstraints,
+} from "@/api-shared/gantt/cut-constraints";
+import {
+    CAPACITY_RULES,
+    OVERFLOW_RULES,
+    PRAYER_RULES,
+    WeekOverflowResolution,
+} from "@/api-shared/gantt/cut-rules";
+import {
     getRecurrenceOccurrenceDayIds,
     isRecurrenceSatisfied,
 } from "@/api-shared/gantt/recurrence";
 import { layoutAroundWindows, layoutEnd } from "@/api-shared/interval-layout";
-import { EventRecurrence, GanttDayIndex } from "@/api-shared/types/gantt/models";
+import {
+    EventRecurrence,
+    GanttDayIndex,
+    ModuleEventType,
+} from "@/api-shared/types/gantt/models";
+import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 import { MEAL_EVENT_TITLES } from "@/api-shared/types/settings/meal";
 
 /**
@@ -16,6 +46,14 @@ import { MEAL_EVENT_TITLES } from "@/api-shared/types/settings/meal";
 export type CutPlanDayInput = {
     id: string;
     dayIndex: GanttDayIndex;
+    /** Configured working minutes for this day; the fallback for a null end time. */
+    totalWorkingMinutes?: number;
+    /**
+     * Explicit end of this day's working window (`"HH:mm"`). Null/absent ⇒
+     * derived as the day's start time plus `totalWorkingMinutes`, which is how
+     * days behaved before the field existed.
+     */
+    dayEndTime?: null | string;
 };
 
 export type CutPlanWeekInput = {
@@ -42,6 +80,16 @@ export type CutPlanEventInput = {
      * after it ends (end time pushed out by the window's length).
      */
     splitAcrossBreaks: boolean;
+    /** Drives the break rules (long ע"ע runs, post-lecture, prayer avoidance). */
+    type?: ModuleEventType;
+    /** Owning gantt module — drives module cohesion during spillover. */
+    moduleId?: null | string;
+    /** Owning syllabus — drives the between-syllabuses break rule. */
+    syllabusId?: null | string;
+    /** Assigned room name once the cut assigns rooms; null today. */
+    roomName?: null | string;
+    /** Constraints owned by this event. */
+    constraints?: Array<GanttConstraint>;
 };
 
 export type CutPlanMappingInput = {
@@ -76,7 +124,35 @@ export type CutPlanInput = {
     breakfastTime?: string;
     lunchTime?: string;
     dinnerTime?: string;
+    /**
+     * Prayer windows (`"HH:mm"` starts) read from the schedule settings by the
+     * server and handed in here — the pure planner has no way to reach Mongo.
+     * Soft windows: breaks prefer to cover them, lectures prefer to avoid them,
+     * and neither ever extends a day. See `PRAYER_RULES`.
+     */
+    prayerTimes?: Array<{ name: string; time: string; durationMinutes?: number }>;
+    /** Constraints owned by gantt modules, fanned out to their events. */
+    moduleConstraints?: Array<{
+        moduleId: string;
+        title: string;
+        constraints: Array<GanttConstraint>;
+    }>;
+    /** Module id → the event ids it contains, for module-level constraints. */
+    eventIdsByModule?: Record<string, Array<string>>;
 };
+
+/**
+ * Synthetic `ganttEventId` prefix for breaks the post-pass generated. They are
+ * real schedule events with no gantt event behind them; the prefix marks their
+ * provenance so a pull-back archives them with the rest of the cut and a
+ * re-cut never duplicates them.
+ */
+export const GENERATED_BREAK_EVENT_ID_PREFIX = "cut-break:";
+
+/** True for a `ganttEventId` the break post-pass invented. */
+export function isGeneratedBreakEventId(ganttEventId: string): boolean {
+    return ganttEventId.startsWith(GENERATED_BREAK_EVENT_ID_PREFIX);
+}
 
 /** Meal break length (minutes) blocked out around each configured meal time. */
 export const MEAL_BREAK_DURATION_MINUTES = 30;
@@ -89,16 +165,76 @@ export type PlannedOccurrence = {
     endTime: Date;
     /** True when this is a recurrence echo rather than the mapped start day. */
     isRecurrenceEcho: boolean;
+    /**
+     * Set when the balancer relocated this occurrence off the day it was mapped
+     * to — the id of that original day. Drives the preview's moved/unmoved
+     * highlight.
+     */
+    spilledFromDayId?: string;
+    /**
+     * Set on occurrences the break post-pass generated rather than the gantt.
+     * These are real הפסקה events in the schedule, tagged so a pull-back
+     * archives them alongside everything else the cut created.
+     */
+    generatedBreak?: {
+        kind: string;
+        title: string;
+        /** Prayer this break was positioned to cover, when any. */
+        coversPrayer: null | string;
+    };
 };
+
+/**
+ * A question the cut could not answer on its own. The dialog walks these one at
+ * a time rather than presenting a switchboard, and sends the answers back with
+ * the commit. See `docs/gantt-cut-rules.md`.
+ */
+export type CutDecision =
+    | {
+          type: "constraint-moves";
+          proposals: Array<ConstraintMoveProposal>;
+      }
+    | {
+          type: "constraint-violation";
+          violation: ConstraintViolation;
+      }
+    | {
+          type: "week-overflow";
+          weekId: string;
+          /** 1-based week number, for the Hebrew prompt. */
+          weekNumber: number;
+          excessMinutes: number;
+          overloadedDays: Array<{ dayId: string; overflowMinutes: number }>;
+      };
 
 export type CutValidationError =
     | { type: "missing-start-date" }
     | { type: "unmapped-event"; eventId: string; title: string }
     | { type: "unsatisfied-recurrence"; eventId: string; title: string };
 
+/** Everything the balancer and the break pass did, for the preview and dialog. */
+export type CutPlanReport = {
+    /** Occurrences the balancer relocated to a later day in the same week. */
+    moves: Array<SpillMove>;
+    /** Weeks that still exceed their working hours after balancing. */
+    overflows: Array<WeekOverflow>;
+    /** Breaks the post-pass inserted, keyed to the day they landed on. */
+    breaks: Array<GeneratedBreak & { dayId: string; occurrenceDate: string }>;
+    /** Cross-day moves the constraint solver would like to make. */
+    constraintProposals: Array<ConstraintMoveProposal>;
+    /** Constraints no legal placement satisfies. */
+    constraintViolations: Array<ConstraintViolation>;
+    /** Open questions for the dialog, in the order they should be asked. */
+    decisions: Array<CutDecision>;
+};
+
 export type CutPlan =
     | { ok: false; errors: Array<CutValidationError> }
-    | { ok: true; occurrences: Array<PlannedOccurrence> };
+    | {
+          ok: true;
+          occurrences: Array<PlannedOccurrence>;
+          report: CutPlanReport;
+      };
 
 function eventDuration(event: CutPlanEventInput): number {
     return event.allocatedDuration || event.minimumDuration;
@@ -141,6 +277,28 @@ export type CutPlanOptions = {
      * start date is still fatal (nothing is datable without it).
      */
     force?: boolean;
+    /**
+     * Auto-spillover: rebalance each week so no day carries more than its
+     * working window, cascading work forward within the week. Defaults to on —
+     * pass `false` for the pre-#… raw stacking behaviour.
+     */
+    autoSpillover?: boolean;
+    /**
+     * Break post-pass: spread a day's leftover slack through the day as real
+     * הפסקה events instead of leaving it as an empty tail. Defaults to on.
+     */
+    insertBreaks?: boolean;
+    /**
+     * Constraint-solver moves the user accepted, by event id. Proposals not
+     * listed here are reported but not applied — the cut never silently moves
+     * an event the user mapped deliberately.
+     */
+    acceptedConstraintMoves?: Array<string>;
+    /**
+     * Per-week answer to a `week-overflow` decision. Absent weeks use
+     * `OVERFLOW_RULES.defaultResolution` (`overlap-source`).
+     */
+    weekOverflowResolutions?: Record<string, WeekOverflowResolution>;
 };
 
 export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutPlan {
@@ -307,17 +465,244 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
         fixedTimeMinutesByEventId.set(matchedEvent.id, hour * 60 + minute);
     }
 
-    const occurrences: Array<PlannedOccurrence> = [];
+    const startMinutesOf = (dayId: string): number => {
+        const [ hour, minute ] = startTimeForDay(dayId);
+        return hour * 60 + minute;
+    };
 
-    for (const [ dayId, slots ] of slotsByDay) {
+    /**
+     * Whether a day declares a working window at all. A day with neither an
+     * explicit `dayEndTime` nor any configured `totalWorkingMinutes` has no
+     * capacity the user ever stated, and the cut refuses to invent one for it:
+     * such a day is unbounded, stacks exactly as it always did, and is never
+     * balanced, wrapped or break-filled.
+     */
+    const hasDeclaredWindow = (dayId: string): boolean => {
+        const day = input.days[ dayId ];
+        return Boolean(day?.dayEndTime) || (day?.totalWorkingMinutes ?? 0) > 0;
+    };
+
+    /**
+     * End of a day's working window, in minutes-of-day. An explicit
+     * `dayEndTime` wins; otherwise it is derived as the day's start plus its
+     * configured `totalWorkingMinutes`, which reproduces exactly how days
+     * behaved before the field existed. An undeclared day falls back to
+     * `CAPACITY_RULES.fallbackDayEndTime`, which is only ever read for display
+     * — `hasDeclaredWindow` gates every rule that would act on it.
+     */
+    const endMinutesOf = (dayId: string): number => {
+        const day = input.days[ dayId ];
+        if (day?.dayEndTime) {
+            const [ hour, minute ] = parseTime(day.dayEndTime);
+            return hour * 60 + minute;
+        }
+        if (day?.totalWorkingMinutes) {
+            return startMinutesOf(dayId) + day.totalWorkingMinutes;
+        }
+        const [ hour, minute ] = parseTime(CAPACITY_RULES.fallbackDayEndTime);
+        return hour * 60 + minute;
+    };
+
+    /** Minutes between a day's start and end — the capacity rules pack into. */
+    const capacityOf = (dayId: string): number =>
+        Math.max(0, endMinutesOf(dayId) - startMinutesOf(dayId));
+
+    // ---------------------------------------------------------------------
+    // Balance: spill over-full days forward within their own week.
+    // ---------------------------------------------------------------------
+
+    const balancerSlotsByDay = new Map<string, Array<BalancerSlot>>();
+    const originalDayIdBySlotKey = new Map<string, string>();
+    for (const [ dayId, daySlots ] of slotsByDay) {
+        const built = daySlots.map((slot, ordinal) => {
+            const event = eventsById.get(slot.eventId);
+            const key = `${slot.eventId}@${dayId}#${ordinal}`;
+            originalDayIdBySlotKey.set(key, dayId);
+            return {
+                key,
+                eventId: slot.eventId,
+                durationMinutes: event ? eventDuration(event) : 0,
+                moduleId: event?.moduleId ?? null,
+                isRecurrenceEcho: slot.isRecurrenceEcho,
+                isDailyRecurrence: event?.recurrence === EventRecurrence.Daily,
+                isPinnedMeal: fixedTimeMinutesByEventId.has(slot.eventId),
+                sortOrder: ordinal,
+            } satisfies BalancerSlot;
+        });
+        balancerSlotsByDay.set(dayId, built);
+    }
+
+    // Only days that declare a working window take part in balancing. An
+    // undeclared day states no limit to exceed and no room to offer, so it is
+    // neither a spill source nor a spill target — it stacks as it always did.
+    const balancerDays = Object.fromEntries(
+        Object.values(input.days)
+            .filter((day) => hasDeclaredWindow(day.id))
+            .map((day) => [
+                day.id,
+                {
+                    id: day.id,
+                    dayIndex: day.dayIndex,
+                    capacityMinutes: capacityOf(day.id),
+                },
+            ]),
+    );
+
+    const autoSpillover = options.autoSpillover ?? true;
+    const balanced = autoSpillover
+        ? balanceWeeks({
+            weeks: input.weeks.map((week) => ({ id: week.id, dayIds: week.dayIds })),
+            days: balancerDays,
+            slotsByDay: balancerSlotsByDay,
+        })
+        : { slotsByDay: balancerSlotsByDay, moves: [], overflows: [] };
+
+    let placedSlotsByDay = balanced.slotsByDay;
+
+    // ---------------------------------------------------------------------
+    // Constraints: reorder within a day, and propose cross-day moves.
+    // ---------------------------------------------------------------------
+
+    const dayOrdinalById = new Map(linearDayIds.map((dayId, index) => [ dayId, index ]));
+    const weekIdOfDay = (dayId: string): string =>
+        weekByDayId.get(dayId)?.id ?? "";
+
+    const constraintDays: Record<string, ConstraintDayInfo> = {};
+    for (const dayId of linearDayIds) {
+        const day = input.days[ dayId ];
+        // Same rule as the balancer: the solver may not move work onto a day
+        // whose capacity nobody declared.
+        if (!day || !hasDeclaredWindow(dayId)) continue;
+        constraintDays[ dayId ] = {
+            id: dayId,
+            dayIndex: day.dayIndex,
+            weekId: weekIdOfDay(dayId),
+            dayOrdinal: dayOrdinalById.get(dayId) ?? 0,
+            capacityMinutes: capacityOf(dayId),
+            loadMinutes: (placedSlotsByDay.get(dayId) ?? []).reduce(
+                (sum, slot) => sum + slot.durationMinutes,
+                0,
+            ),
+        };
+    }
+
+    const constraintPlacements: Array<ConstraintPlacement> = [];
+    for (const [ dayId, daySlots ] of placedSlotsByDay) {
+        for (const slot of daySlots) {
+            if (slot.isRecurrenceEcho || slot.isPinnedMeal) continue;
+            const day = input.days[ dayId ];
+            if (!day) continue;
+            constraintPlacements.push({
+                eventId: slot.eventId,
+                moduleId: slot.moduleId,
+                dayId,
+                dayOrdinal: dayOrdinalById.get(dayId) ?? 0,
+                dayIndex: day.dayIndex,
+                weekId: weekIdOfDay(dayId),
+                durationMinutes: slot.durationMinutes,
+            });
+        }
+    }
+
+    const constraintOutcome = solveConstraints({
+        placements: constraintPlacements,
+        days: constraintDays,
+        entities: [
+            ...input.events
+                .filter((event) => (event.constraints ?? []).length > 0)
+                .map((event) => ({
+                    id: event.id,
+                    title: event.title,
+                    constraints: event.constraints ?? [],
+                })),
+            ...(input.moduleConstraints ?? []).map((module) => ({
+                id: module.moduleId,
+                title: module.title,
+                constraints: module.constraints,
+            })),
+        ],
+        eventIdsByModule: input.eventIdsByModule ?? {},
+        titleByEventId: Object.fromEntries(
+            input.events.map((event) => [ event.id, event.title ]),
+        ),
+    });
+
+    // Only moves the caller explicitly accepted are applied; the rest are
+    // reported so the dialog can ask about them one at a time.
+    const acceptedMoves = new Set(options.acceptedConstraintMoves ?? []);
+    if (acceptedMoves.size > 0) {
+        const relocated = new Map(placedSlotsByDay);
+        for (const proposal of constraintOutcome.proposals) {
+            if (!acceptedMoves.has(proposal.eventId)) continue;
+            const from = relocated.get(proposal.fromDayId) ?? [];
+            const moving = from.filter(
+                (slot) => slot.eventId === proposal.eventId && !slot.isRecurrenceEcho,
+            );
+            if (moving.length === 0) continue;
+            relocated.set(
+                proposal.fromDayId,
+                from.filter((slot) => !moving.includes(slot)),
+            );
+            relocated.set(proposal.toDayId, [
+                ...(relocated.get(proposal.toDayId) ?? []),
+                ...moving,
+            ]);
+        }
+        for (const [ dayId, daySlots ] of relocated) {
+            relocated.set(
+                dayId,
+                [ ...daySlots ].sort((a, b) => a.sortOrder - b.sortOrder),
+            );
+        }
+        placedSlotsByDay = relocated;
+    }
+
+    // ---------------------------------------------------------------------
+    // Materialize: give every slot a clock time inside its day.
+    // ---------------------------------------------------------------------
+
+    const prayerWindows: Array<PrayerWindow> = (input.prayerTimes ?? []).map(
+        (prayer) => {
+            const [ hour, minute ] = parseTime(prayer.time);
+            const startMinutes = hour * 60 + minute;
+            return {
+                name: prayer.name,
+                startMinutes,
+                endMinutes:
+                    startMinutes +
+                    (prayer.durationMinutes ?? PRAYER_RULES.defaultDurationMinutes),
+            };
+        },
+    );
+
+    const occurrences: Array<PlannedOccurrence> = [];
+    const reportedBreaks: CutPlanReport["breaks"] = [];
+
+    for (const [ dayId, daySlots ] of placedSlotsByDay) {
+        if (daySlots.length === 0) continue;
         const date = dayDate(dayId);
-        const [ startHour, startMinute ] = startTimeForDay(dayId);
-        let cursor = minutesOfDay(date, startHour * 60 + startMinute);
+        const dayStartMinutes = startMinutesOf(dayId);
+        const dayEndMinutes = endMinutesOf(dayId);
+        let cursor = dayStartMinutes;
+
+        // How this day handles work that does not fit its window. `extend-day`
+        // is the only resolution that lets the stack run past the end time;
+        // every other one keeps the day inside its hours and overlaps instead.
+        const resolution: WeekOverflowResolution =
+            options.weekOverflowResolutions?.[ weekIdOfDay(dayId) ] ??
+            OVERFLOW_RULES.defaultResolution;
+        // An undeclared day has no window to stay inside, so the wrap never
+        // applies to it — it stacks exactly as it always did.
+        const mayExtendDay =
+            resolution === "extend-day" || !hasDeclaredWindow(dayId);
+        // Overflowing events restart from the day's start, stacking as a second
+        // (third, …) overlapping layer rather than spilling past the end time.
+        let overlapCursor = dayStartMinutes;
 
         // Only block out windows for meal events actually present on this
         // day (a recurrence exception may skip a meal event for one day) —
         // other days without a matching event stack normally, unaffected.
-        const slottedEventIds = new Set(slots.map((s) => s.eventId));
+        const slottedEventIds = new Set(daySlots.map((s) => s.eventId));
         const mealWindows: Array<{ startMinutes: number; endMinutes: number }> = [
             ...fixedTimeMinutesByEventId.entries(),
         ]
@@ -329,21 +714,21 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
             })
             .sort((a, b) => a.startMinutes - b.startMinutes);
 
-        for (const slot of slots) {
+        const placed: Array<PlacedItem & { slot: BalancerSlot }> = [];
+
+        for (const slot of daySlots) {
             const event = eventsById.get(slot.eventId);
             if (!event) continue;
 
             const duration = eventDuration(event);
             const fixedStartMinutes = fixedTimeMinutesByEventId.get(event.id);
 
-            let startTime: dayjs.Dayjs;
-            let endTime: dayjs.Dayjs;
+            let startMinutes: number;
 
             if (fixedStartMinutes !== undefined) {
                 // Pinned meal event: placed at its configured clock time,
                 // independent of and without consuming the stacking cursor.
-                startTime = minutesOfDay(date, fixedStartMinutes);
-                endTime = startTime.add(duration, "minute");
+                startMinutes = fixedStartMinutes;
             } else if (event.splitAcrossBreaks) {
                 // The event runs through the meal windows in pieces instead of
                 // being bumped past them. Only the *net* span is recorded —
@@ -351,68 +736,154 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
                 // must clear the last piece so the next event doesn't land on
                 // top of it.
                 const pieces = layoutAroundWindows(
-                    cursor.valueOf(),
+                    cursor * 60_000,
                     duration * 60_000,
                     mealWindows.map((window) => ({
-                        start: minutesOfDay(date, window.startMinutes).valueOf(),
-                        end: minutesOfDay(date, window.endMinutes).valueOf(),
+                        start: window.startMinutes * 60_000,
+                        end: window.endMinutes * 60_000,
                     })),
                 );
-
                 // A cursor sitting inside a window is pushed out by the layout,
                 // so the first piece — not the cursor — is the real start.
-                startTime = dayjs(pieces[ 0 ].start).tz(APP_TIMEZONE);
-                endTime = startTime.add(duration, "minute");
-                cursor = dayjs(layoutEnd(pieces)).tz(APP_TIMEZONE);
+                startMinutes = pieces[ 0 ].start / 60_000;
+                cursor = layoutEnd(pieces) / 60_000;
             } else {
-                // Bump the cursor past any meal window it would otherwise overlap.
-                // Absolute timestamps, not minutes-of-day: once the stack runs
-                // past midnight the clock wraps to 00:00 and every morning
-                // meal window looks like an overlap again, which drags the
-                // cursor back to the previous morning.
-                //
-                // A bump that would carry the event past midnight is refused
-                // (#474): an 8-hour event with only 6 hours between lunch and
-                // dinner used to be shoved past dinner and end after midnight,
-                // which is never what was meant. Overlapping the break is the
-                // lesser wrong — it stays on the right day and is visible in
-                // the schedule, so the user can resolve it deliberately.
-                const midnightAt = minutesOfDay(date, MINUTES_PER_DAY).valueOf();
+                // Bump the cursor past any meal window it would otherwise
+                // overlap. A bump that would carry the event past midnight is
+                // refused (#474): overlapping the break is the lesser wrong —
+                // it stays on the right day and is visible in the schedule, so
+                // the user can resolve it deliberately.
                 for (const window of mealWindows) {
-                    const cursorAt = cursor.valueOf();
-                    const eventEndAt = cursorAt + duration * 60_000;
-                    const windowStartAt = minutesOfDay(
-                        date,
-                        window.startMinutes,
-                    ).valueOf();
-                    const windowEndAt = minutesOfDay(
-                        date,
-                        window.endMinutes,
-                    ).valueOf();
-                    if (cursorAt < windowEndAt && eventEndAt > windowStartAt) {
-                        const bumpedAt = minutesOfDay(
-                            date,
-                            window.endMinutes,
-                        ).valueOf();
-                        if (bumpedAt + duration * 60_000 > midnightAt) continue;
-                        cursor = minutesOfDay(date, window.endMinutes);
+                    if (
+                        cursor < window.endMinutes &&
+                        cursor + duration > window.startMinutes
+                    ) {
+                        if (window.endMinutes + duration > MINUTES_PER_DAY) continue;
+                        cursor = window.endMinutes;
                     }
                 }
+                startMinutes = cursor;
+                cursor = startMinutes + duration;
 
-                startTime = cursor;
-                endTime = cursor.add(duration, "minute");
-                cursor = endTime;
+                // The day is full. Rather than run past its end time — which
+                // the cut never does — wrap back to the day's start and let
+                // this event overlap what is already there. It stays visible,
+                // on the right day, for the user to resolve deliberately.
+                if (!mayExtendDay && startMinutes + duration > dayEndMinutes) {
+                    startMinutes = overlapCursor;
+                    overlapCursor = startMinutes + duration;
+                    if (overlapCursor > dayEndMinutes) {
+                        overlapCursor = dayStartMinutes;
+                    }
+                    cursor = dayEndMinutes;
+                }
             }
 
-            occurrences.push({
-                ganttEventId: event.id,
-                occurrenceDate: date,
-                startTime: startTime.toDate(),
-                endTime: endTime.toDate(),
-                isRecurrenceEcho: slot.isRecurrenceEcho,
+            placed.push({
+                slot,
+                key: slot.key,
+                startMinutes,
+                endMinutes: startMinutes + duration,
+                eventType: event.type ?? ModuleEventType.Other,
+                syllabusId: event.syllabusId ?? null,
+                roomName: event.roomName ?? null,
+                isExistingBreak: fixedStartMinutes !== undefined,
+                isPinned: fixedStartMinutes !== undefined,
             });
+        }
+
+        // -----------------------------------------------------------------
+        // Break post-pass: spread the day's leftover slack through the day.
+        // -----------------------------------------------------------------
+        let finalItems: Array<PlacedItem> = placed;
+        let generatedBreaks: Array<GeneratedBreak> = [];
+        // No declared window means no slack to spread: the break pass would be
+        // budgeting against a number the user never set.
+        if ((options.insertBreaks ?? true) && hasDeclaredWindow(dayId)) {
+            const pass = insertBreaksForDay({
+                items: placed,
+                dayEndMinutes: endMinutesOf(dayId),
+                prayers: prayerWindows,
+            });
+            finalItems = pass.items;
+            generatedBreaks = pass.breaks;
+        }
+
+        const slotByKey = new Map(placed.map((item) => [ item.key, item.slot ]));
+        for (const item of finalItems) {
+            const slot = slotByKey.get(item.key);
+            if (!slot) continue;
+            const originalDayId = originalDayIdBySlotKey.get(slot.key);
+            occurrences.push({
+                ganttEventId: slot.eventId,
+                occurrenceDate: date,
+                startTime: minutesOfDay(date, item.startMinutes).toDate(),
+                endTime: minutesOfDay(date, item.endMinutes).toDate(),
+                isRecurrenceEcho: slot.isRecurrenceEcho,
+                ...(originalDayId && originalDayId !== dayId
+                    ? { spilledFromDayId: originalDayId }
+                    : {}),
+            });
+        }
+
+        for (const generated of generatedBreaks) {
+            occurrences.push({
+                ganttEventId: `${GENERATED_BREAK_EVENT_ID_PREFIX}${dayId}:${generated.afterItemKey}`,
+                occurrenceDate: date,
+                startTime: minutesOfDay(date, generated.startMinutes).toDate(),
+                endTime: minutesOfDay(date, generated.endMinutes).toDate(),
+                isRecurrenceEcho: false,
+                generatedBreak: {
+                    kind: generated.kind,
+                    title: generated.title,
+                    coversPrayer: generated.coversPrayer,
+                },
+            });
+            reportedBreaks.push({ ...generated, dayId, occurrenceDate: date });
         }
     }
 
-    return { ok: true, occurrences };
+    // ---------------------------------------------------------------------
+    // Decisions: everything the cut could not settle on its own.
+    // ---------------------------------------------------------------------
+
+    const weekNumberById = new Map(
+        input.weeks.map((week, index) => [ week.id, index + 1 ]),
+    );
+    const decisions: Array<CutDecision> = [
+        ...balanced.overflows.map((overflow) => ({
+            type: "week-overflow" as const,
+            weekId: overflow.weekId,
+            weekNumber: weekNumberById.get(overflow.weekId) ?? 0,
+            excessMinutes: overflow.excessMinutes,
+            overloadedDays: overflow.overloadedDays,
+        })),
+        ...(constraintOutcome.proposals.length > 0
+            ? [
+                {
+                    type: "constraint-moves" as const,
+                    proposals: constraintOutcome.proposals.filter(
+                        (proposal) => !acceptedMoves.has(proposal.eventId),
+                    ),
+                },
+            ].filter((decision) => decision.proposals.length > 0)
+            : []),
+        ...constraintOutcome.violations.map((violation) => ({
+            type: "constraint-violation" as const,
+            violation,
+        })),
+    ];
+
+    return {
+        ok: true,
+        occurrences,
+        report: {
+            moves: balanced.moves,
+            overflows: balanced.overflows,
+            breaks: reportedBreaks,
+            constraintProposals: constraintOutcome.proposals,
+            constraintViolations: constraintOutcome.violations,
+            decisions,
+        },
+    };
 }
