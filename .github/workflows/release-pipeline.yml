@@ -36,6 +36,13 @@ jobs:
         name: Lint + Typecheck + Unit Tests
         runs-on: ubuntu-latest
         timeout-minutes: 60
+        env:
+            # Same reason as ui/Dockerfile's builder stage: V8 derives its
+            # default heap from host RAM, so `eslint ui/` got ~4G on the 23G
+            # self-hosted box and ~2G here, where it dies with "Ineffective
+            # mark-compacts near heap limit". Job-level so the typecheck and
+            # unit-test steps get the same ceiling.
+            NODE_OPTIONS: --max-old-space-size=6144
         # Dependabot PRs are single dep bumps; CI on them wastes runner
         # minutes. Run this only for humans. Version-bump commits on master
         # (chore: bump version to *) are metadata-only, so skip CI on them too.
