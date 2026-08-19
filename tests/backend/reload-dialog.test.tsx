@@ -24,6 +24,7 @@ const { reload, cut, plan, pullBack, status } = vi.hoisted(() => ({
         overlaps: 0,
         report: {
             moves: [],
+            spills: [],
             overflows: [],
             breaks: [],
             constraintProposals: [],

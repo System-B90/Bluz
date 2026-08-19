@@ -1,5 +1,9 @@
 import { ClientApiError } from "@/api-shared/errors";
-import { CutPlanReport, CutValidationError } from "@/api-shared/gantt/cut-planner";
+import {
+    CutPlanReport,
+    CutSpillDetail,
+    CutValidationError,
+} from "@/api-shared/gantt/cut-planner";
 import { WeekOverflowResolution } from "@/api-shared/gantt/cut-rules";
 import { ModuleEventType } from "@/api-shared/types/gantt/models";
 
@@ -65,6 +69,11 @@ export type ApiCurriculumCutResponse = {
     overlaps: number;
     /** Events the balancer moved to a later day in the same week. */
     spilledEvents: number;
+    /**
+     * The same relocations, one entry each, so the dialog can expand the count
+     * into exactly what moved and where.
+     */
+    spills: Array<CutSpillDetail>;
     /** הפסקה events the break post-pass created. */
     insertedBreaks: number;
 };

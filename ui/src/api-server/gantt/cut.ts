@@ -1038,7 +1038,8 @@ export async function cutCurriculumToSchedule(
             createdEvents: documents.length,
             createdCourses,
             overlaps,
-            spilledEvents: report.moves.length,
+            spilledEvents: report.spills.length,
+            spills: report.spills,
             insertedBreaks: report.breaks.length,
         },
     };
