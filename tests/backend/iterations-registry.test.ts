@@ -10,6 +10,7 @@ const {
     getDatabaseController,
     iterations,
     setCurrentIterationDbName,
+    transaction,
 } = vi.hoisted(
     () => {
         type Doc = Record<string, any>;
@@ -60,9 +61,15 @@ const {
         };
 
         // Transaction stub for the atomic promotion path in patchIteration.
+        // `transactionError` lets a test simulate a standalone mongod, which
+        // refuses to open a transaction at all (#472).
+        const transaction: { error: null | unknown } = { error: null };
         const client = {
             startSession: () => ({
-                withTransaction: async (fn: () => Promise<unknown>) => fn(),
+                withTransaction: async (fn: () => Promise<unknown>) => {
+                    if (transaction.error) throw transaction.error;
+                    return await fn();
+                },
                 endSession: async () => {},
             }),
         };
@@ -87,6 +94,7 @@ const {
             getDatabaseController,
             iterations,
             setCurrentIterationDbName: vi.fn(),
+            transaction,
         };
     },
 );
@@ -104,6 +112,7 @@ import { ClientApiError } from "@/api-shared/errors";
 beforeEach(() => {
     docs.length = 0;
     events.clear();
+    transaction.error = null;
     // Default to an install that predates the registry: the `bluz` database
     // already holds calendar data, so the migration seed applies.
     events.set("bluz", [{ id: "legacy-event" }]);
@@ -194,6 +203,48 @@ describe("DbIterations.patch (set current)", () => {
         const seed = docs.find((d) => d.dbName === "bluz");
         expect(seed?.isCurrent).toBe(false);
         expect(setCurrentIterationDbName).toHaveBeenLastCalledWith("bluz_2026b");
+    });
+
+    it("still switches on a standalone mongod that refuses transactions (#472)", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        await DbIterations.ensure();
+        await DbIterations.register({ id: "bis28", label: 'בי"ס כ"ח' });
+
+        // Exactly what the driver throws against a non-replica-set deployment:
+        // a retryable-writes complaint wrapping the real reason.
+        transaction.error = Object.assign(
+            new Error(
+                "This MongoDB deployment does not support retryable writes. " +
+                    "Please add retryWrites=false to your connection string.",
+            ),
+            {
+                originalError: Object.assign(
+                    new Error(
+                        "Transaction numbers are only allowed on a replica set member or mongos",
+                    ),
+                    { code: 20, codeName: "IllegalOperation" },
+                ),
+            },
+        );
+
+        const updated = await DbIterations.patch("bis28", { isCurrent: true });
+
+        expect(updated.isCurrent).toBe(true);
+        expect(docs.find((d) => d.dbName === "bluz")?.isCurrent).toBe(false);
+        expect(setCurrentIterationDbName).toHaveBeenLastCalledWith(
+            "bluz_bis28",
+        );
+        warn.mockRestore();
+    });
+
+    it("propagates a promotion failure that is not about transactions", async () => {
+        await DbIterations.ensure();
+        await DbIterations.register({ id: "2026b", label: "B" });
+        transaction.error = new Error("write conflict");
+
+        await expect(
+            DbIterations.patch("2026b", { isCurrent: true }),
+        ).rejects.toThrow("write conflict");
     });
 
     it("throws for an unknown iteration", async () => {

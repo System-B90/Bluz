@@ -7,19 +7,47 @@ import { ClientSession, MongoClient } from "mongodb";
  * used to escape uncaught and surface as a bare HTTP 500 (#435).
  */
 export function isTransactionUnsupportedError(error: unknown): boolean {
+    return isUnsupportedAt(error, 0);
+}
+
+/**
+ * The driver does not always surface the standalone's own complaint. Opening a
+ * transaction on a standalone first trips the retryable-writes check, and the
+ * driver reports *that* — "This MongoDB deployment does not support retryable
+ * writes" — carrying the real `Transaction numbers are only allowed on a
+ * replica set member or mongos` underneath as `originalError` (#472). Matching
+ * only the outer message therefore missed the very case this guard exists for,
+ * and the error escaped as a bare HTTP 500 on every "make current" switch. So
+ * walk the wrapper chain, and treat the retryable-writes refusal as its own
+ * signal.
+ */
+function isUnsupportedAt(error: unknown, depth: number): boolean {
+    // Cheap cycle/runaway guard: the chains involved are one or two deep.
+    if (!error || depth > 4) return false;
+
     const candidate = error as {
+        cause?: unknown;
         code?: number | string;
         codeName?: string;
         message?: string;
-    } | null;
-    if (!candidate) return false;
+        originalError?: unknown;
+    };
 
     // `IllegalOperation` (code 20) is what a standalone answers with.
     if (candidate.codeName === "IllegalOperation" || candidate.code === 20) {
         return true;
     }
-    return /replica set|transaction numbers are only allowed|transactions are not supported/i.test(
-        candidate.message ?? "",
+    if (
+        /replica set|transaction numbers are only allowed|transactions are not supported|does not support retryable writes/i.test(
+            candidate.message ?? "",
+        )
+    ) {
+        return true;
+    }
+
+    return (
+        isUnsupportedAt(candidate.originalError, depth + 1) ||
+        isUnsupportedAt(candidate.cause, depth + 1)
     );
 }
 

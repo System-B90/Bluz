@@ -212,10 +212,31 @@ export type CutValidationError =
     | { type: "unmapped-event"; eventId: string; title: string }
     | { type: "unsatisfied-recurrence"; eventId: string; title: string };
 
+/**
+ * One relocated slot, described in terms a user can read: which event moved,
+ * from which date to which. A slot the balancer bounced twice (off ראשון, then
+ * off שני) collapses into a single detail spanning its first and last day.
+ */
+export type CutSpillDetail = {
+    slotKey: string;
+    eventId: string;
+    /** Event title at plan time; falls back to the id for generated slots. */
+    title: string;
+    fromDayId: string;
+    toDayId: string;
+    /** ISO date (yyyy-MM-dd) the slot was originally mapped to. */
+    fromDate: string;
+    /** ISO date (yyyy-MM-dd) it ended up on. */
+    toDate: string;
+    durationMinutes: number;
+};
+
 /** Everything the balancer and the break pass did, for the preview and dialog. */
 export type CutPlanReport = {
     /** Occurrences the balancer relocated to a later day in the same week. */
     moves: Array<SpillMove>;
+    /** The same relocations, resolved to titles and dates for display. */
+    spills: Array<CutSpillDetail>;
     /** Weeks that still exceed their working hours after balancing. */
     overflows: Array<WeekOverflow>;
     /** Breaks the post-pass inserted, keyed to the day they landed on. */
@@ -879,6 +900,11 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
         occurrences,
         report: {
             moves: balanced.moves,
+            spills: summarizeSpills(balanced.moves, {
+                titleOf: (eventId) =>
+                    eventsById.get(eventId)?.title ?? eventId,
+                dateOf: dayDate,
+            }),
             overflows: balanced.overflows,
             breaks: reportedBreaks,
             constraintProposals: constraintOutcome.proposals,
@@ -886,4 +912,46 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
             decisions,
         },
     };
+}
+
+/**
+ * Turn the balancer's raw moves into display-ready spill details.
+ *
+ * The balancer cascades: one slot can be pushed off ראשון and then off שני,
+ * producing two moves for the same `slotKey`. The user cares about the net
+ * effect, so consecutive moves of a slot collapse into one entry running from
+ * its first source day to its final target.
+ */
+function summarizeSpills(
+    moves: Array<SpillMove>,
+    resolve: {
+        titleOf: (eventId: string) => string;
+        dateOf: (dayId: string) => string;
+    },
+): Array<CutSpillDetail> {
+    const bySlot = new Map<string, CutSpillDetail>();
+
+    for (const move of moves) {
+        const existing = bySlot.get(move.slotKey);
+        if (existing) {
+            existing.toDayId = move.toDayId;
+            existing.toDate = resolve.dateOf(move.toDayId);
+            continue;
+        }
+        bySlot.set(move.slotKey, {
+            slotKey: move.slotKey,
+            eventId: move.eventId,
+            title: resolve.titleOf(move.eventId),
+            fromDayId: move.fromDayId,
+            toDayId: move.toDayId,
+            fromDate: resolve.dateOf(move.fromDayId),
+            toDate: resolve.dateOf(move.toDayId),
+            durationMinutes: move.durationMinutes,
+        });
+    }
+
+    // A slot bounced back onto its original day did not really move.
+    return Array.from(bySlot.values()).filter(
+        (spill) => spill.fromDayId !== spill.toDayId,
+    );
 }

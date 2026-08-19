@@ -29,6 +29,8 @@ import {
     CutDecisionAnswer,
     CutDecisionStep,
 } from "@/components/gantt/cut-dialog/CutDecisionStep";
+import { CutProgressDashes } from "@/components/gantt/cut-dialog/CutProgressDashes";
+import { CutSpillDetails } from "@/components/gantt/cut-dialog/CutSpillDetails";
 
 export type CutToScheduleDialogProps = {
     open: boolean;
@@ -148,9 +150,10 @@ function CutSuccessContent({ result }: { result: ApiCurriculumCutResponse }) {
                 במערכת השעות.
             </Alert>
             {result.spilledEvents > 0 && (
-                <Typography variant="body2">
-                    אוזנו {result.spilledEvents} אירועים ליום אחר באותו שבוע.
-                </Typography>
+                <CutSpillDetails
+                    count={result.spilledEvents}
+                    spills={result.spills}
+                />
             )}
             {result.insertedBreaks > 0 && (
                 <Typography variant="body2">
@@ -423,9 +426,11 @@ export function CutToScheduleDialog({
                 )}
                 {phase.kind === "decisions" && (
                     <Stack gap={1.5}>
+                        <CutProgressDashes
+                            current={phase.index}
+                            total={phase.decisions.length}
+                        />
                         <Typography color="text.secondary" variant="caption">
-                            שאלה {phase.index + 1} מתוך {phase.decisions.length}
-                            {" · "}
                             {phase.plannedEvents} אירועים מתוכננים
                         </Typography>
                         <CutDecisionStep

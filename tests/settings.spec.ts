@@ -229,6 +229,75 @@ test.describe("Settings Dialog", () => {
         await expect(tabContent).toBeVisible();
     });
 
+    /**
+     * The real switch, end to end (#472). The tab-renders test above never
+     * pressed "הפעל", so a promotion that failed against a standalone mongod —
+     * which is exactly how the test and dev stacks run — looked green twice in
+     * a row. This drives the actual PATCH and puts the original iteration back.
+     */
+    test("switches the active iteration and restores it", async ({ page }) => {
+        const tempId = `e2e-switch-${Date.now()}`;
+        const tempLabel = `מחזור בדיקה ${tempId}`;
+
+        const before = await page.request.get("/api/iterations");
+        expect(before.ok()).toBeTruthy();
+        const originalCurrent = (await before.json()).data.find(
+            (iteration: { isCurrent: boolean }) => iteration.isCurrent,
+        );
+        expect(originalCurrent, "an iteration must be current to start").toBeTruthy();
+
+        const created = await page.request.post("/api/iterations", {
+            // An explicit cache skips the Hive round-trip on register: this
+            // test is about the switch, not about Hive being reachable.
+            data: {
+                id: tempId,
+                label: tempLabel,
+                hiveCache: {
+                    modules: {},
+                    subjects: {},
+                    rooms: {},
+                    cachedAt: new Date().toISOString(),
+                },
+            },
+        });
+        expect(created.ok()).toBeTruthy();
+
+        try {
+            await openSettingsDialog(page);
+            await navigateToSettingsTab(page, "מחזורים");
+            const dialog = page.locator(SELECTORS.settingsDialog).first();
+
+            const row = dialog
+                .locator("li", { hasText: tempLabel })
+                .first();
+            await expect(row).toBeVisible();
+
+            await row.getByRole("button", { name: "הפעל" }).click();
+
+            // The failure mode this guards is a bare 500 surfacing as the error
+            // snackbar, so assert the success text rather than mere absence.
+            await expect(
+                page.getByText(`"${tempLabel}" הוגדר כמחזור הפעיל`),
+            ).toBeVisible();
+            await expect(
+                page.getByText("קביעת המחזור הפעיל נכשלה."),
+            ).toHaveCount(0);
+
+            // And the registry really moved, not just the snackbar.
+            const after = await page.request.get("/api/iterations");
+            const current = (await after.json()).data.find(
+                (iteration: { isCurrent: boolean }) => iteration.isCurrent,
+            );
+            expect(current.id).toBe(tempId);
+        } finally {
+            // Restore first: an iteration cannot be deleted while it is current.
+            await page.request.patch(`/api/iterations/${originalCurrent.id}`, {
+                data: { isCurrent: true },
+            });
+            await page.request.delete(`/api/iterations/${tempId}`);
+        }
+    });
+
     // ─── Room Settings ──────────────────────────────────────────────────────
 
     test("room settings tab displays room list", async ({ page }) => {
