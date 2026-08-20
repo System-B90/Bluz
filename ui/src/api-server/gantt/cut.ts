@@ -463,6 +463,8 @@ export function buildScheduleEvent(
         (fallbackHiveModuleId != null
             ? hiveModuleSubjectById.get(fallbackHiveModuleId) ?? null
             : null);
+    // Breakfast/lunch/dinner default to locked (מתואם).
+    const isMealEvent = MEAL_TITLES.has(ganttEvent.title);
 
     return {
         id: randomUUID(),
@@ -482,7 +484,7 @@ export function buildScheduleEvent(
         lecturers: [],
         tags: [],
         notes: ganttEvent.comment ?? "",
-        locked: false,
+        locked: isMealEvent,
         hidden: false,
         required: false,
         personalTalk: false,
