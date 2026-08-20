@@ -22,13 +22,15 @@ except ImportError as e:
     print(f"Error: Missing required dependency '{e.name}'.", file=sys.stderr)
     print("Please install the required packages by running:\n", file=sys.stderr)
     print("    pip install typer InquirerPy python-dotenv\n", file=sys.stderr)
-    # Not the org pip index: raw.githubusercontent.com maps URLs 1:1 onto repo
-    # paths and has no directory-index fallback, so pip's request for the bare
-    # package directory 404s and the index is unusable. See System-B90/.github#10
-    # — once that lands and Pages is enabled, the --index-url form works and is
-    # the better hint. Everyone running this script has repo access already.
+    # The org pip index, served over GitHub Pages. This used to point at a
+    # git+https URL because System-B90/.github#10 had not landed and the index
+    # was hosted on raw.githubusercontent.com, which cannot back a pip index --
+    # it maps URLs 1:1 onto repo paths with no directory-index fallback, so
+    # pip's request for the bare package directory 404s. That fix merged
+    # 2026-08-04, and this form needs no repo access or git credentials.
     print(
-        "    pip install git+https://github.com/System-B90/pyhive.git@master\n",
+        "    pip install PyHiveLMS --index-url "
+        "https://system-b90.github.io/.github/pypi/\n",
         file=sys.stderr,
     )
     sys.exit(1)
@@ -172,7 +174,7 @@ def register_sso_with_retry(hive_url: str, redirect_uri: str) -> tuple[str, str]
     typer.echo(
         "\nRegister by hand instead (this uses the same working endpoint):\n"
         "    pip install PyHiveLMS --index-url "
-        "https://raw.githubusercontent.com/System-B90/.github/main/pypi/\n"
+        "https://system-b90.github.io/.github/pypi/\n"
         f"    pyhive -u <admin-user> -p <password> register Bluz --hive-url {hive_url}\n"
         "then copy the returned client_id / client_secret into .env."
     )
