@@ -27,6 +27,13 @@ export type CalendarStoreMenuProps<TEntry extends { id: string }> = {
     tooltip: string;
     /** Icon inside the toolbar button. */
     icon: ReactNode;
+    /**
+     * Disables the toolbar button and swaps its tooltip for `disabledTooltip`
+     * ("coming soon" placeholders). The popover never opens while set.
+     */
+    disabled?: boolean;
+    /** Tooltip shown instead of `tooltip` while `disabled` is set. */
+    disabledTooltip?: string;
     /** Popover heading. */
     title: string;
     /** Label of the "new entry name" text field. */
@@ -60,6 +67,8 @@ export type CalendarStoreMenuProps<TEntry extends { id: string }> = {
 export function CalendarStoreMenu<TEntry extends { id: string }>({
     tooltip,
     icon,
+    disabled = false,
+    disabledTooltip,
     title,
     nameLabel,
     createLabel,
@@ -96,19 +105,22 @@ export function CalendarStoreMenu<TEntry extends { id: string }>({
 
     return (
         <>
-            <Tooltip title={tooltip}>
-                <Button
-                    onClick={handleOpen}
-                    sx={{
-                        minWidth: 38,
-                        transition: "all 0.2s ease-in-out",
-                        "&:hover": { color: "primary.main" },
-                        "&:active": { transform: "scale(0.95)" },
-                    }}
-                    variant="outlined"
-                >
-                    {icon}
-                </Button>
+            <Tooltip title={disabled ? disabledTooltip ?? tooltip : tooltip}>
+                <span>
+                    <Button
+                        disabled={disabled}
+                        onClick={handleOpen}
+                        sx={{
+                            minWidth: 38,
+                            transition: "all 0.2s ease-in-out",
+                            "&:hover": { color: "primary.main" },
+                            "&:active": { transform: "scale(0.95)" },
+                        }}
+                        variant="outlined"
+                    >
+                        {icon}
+                    </Button>
+                </span>
             </Tooltip>
 
             <Popover
