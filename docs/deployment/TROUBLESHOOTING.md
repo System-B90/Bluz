@@ -149,7 +149,7 @@ retry before writing placeholders.
 setup.py`), or register by hand:
 
 ```bash
-pip install PyHiveLMS --index-url https://raw.githubusercontent.com/System-B90/.github/main/pypi/
+pip install PyHiveLMS --index-url https://system-b90.github.io/.github/pypi/
 pyhive -u <admin-user> -p <password> register Bluz --hive-url https://hive.example
 ```
 
