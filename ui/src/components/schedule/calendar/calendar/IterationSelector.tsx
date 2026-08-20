@@ -6,15 +6,12 @@ import Chip from "@mui/material/Chip";
 import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
-import { useSnackbar } from "notistack";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
-import { apiListIterations } from "@/api-client/iterations";
-import { Iteration } from "@/api-shared/types/iteration";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
+import { useIterationScope } from "@/components/base/IterationProvider";
 
-// `undefined` (no `?iteration=` param) means "the current run". The select
+// `undefined` (no `?it=` param) means "the current run". The select
 // still has to show *which* iteration that is, so it resolves the current
 // iteration's own id rather than a sentinel value — a sentinel matches no menu
 // item and MUI logs an out-of-range warning for it on every render.
@@ -26,37 +23,15 @@ import { useCalendar } from "@/components/schedule/calendar/calendar-provider/Ca
  */
 export function IterationSelector() {
     const { iterationId, setIterationId, isReadOnlyIteration } = useCalendar();
-    const { enqueueSnackbar } = useSnackbar();
-    const [iterations, setIterations] = useState<Array<Iteration>>([]);
-
-    useEffect(() => {
-        let mounted = true;
-        apiListIterations()
-            .then((list) => {
-                if (mounted) setIterations(list);
-            })
-            .catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "טעינת המחזורים נכשלה.",
-                    error,
-                ),
-            );
-        return () => {
-            mounted = false;
-        };
-    }, [enqueueSnackbar]);
-
-    const currentId = iterations.find((iteration) => iteration.isCurrent)?.id;
+    const { iterations, currentIterationId: currentId } = useIterationScope();
 
     const handleChange = useCallback(
         (event: SelectChangeEvent) => {
-            const value = event.target.value;
-            // Picking the current run clears the param, so it is scoped as the
-            // writable iteration rather than as a read-only past one.
-            setIterationId(value === currentId ? undefined : value);
+            // The param is always present — including for the current run —
+            // so it just mirrors whatever was picked.
+            setIterationId(event.target.value);
         },
-        [currentId, setIterationId],
+        [setIterationId],
     );
 
     // Nothing to switch between until a second iteration exists.
