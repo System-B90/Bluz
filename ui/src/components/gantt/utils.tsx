@@ -8,6 +8,7 @@ import {
     GanttEventRecurrenceException,
     GanttModule,
     GanttSyllabus,
+    getAllowedDayIndices,
 } from "@/api-shared/types/gantt/models";
 
 type NumberFieldKeys<T> = {
@@ -77,6 +78,7 @@ function countEventOccurrences(
         excludedDayIds,
         recurrenceStartDate: event.recurrenceStartDate,
         recurrenceEndDate: event.recurrenceEndDate,
+        allowedDayIndices: getAllowedDayIndices(event.constraints),
     });
 
     return (excludedDayIds.has(startDayId) ? 0 : 1) + echoDayIds.size;

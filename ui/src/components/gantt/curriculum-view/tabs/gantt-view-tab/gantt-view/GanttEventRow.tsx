@@ -10,7 +10,7 @@ import
     isDayInRecurrenceWindow,
     isRecurrenceSatisfied,
 } from "@/api-shared/gantt/recurrence";
-import { EventRecurrence } from "@/api-shared/types/gantt/models";
+import { EventRecurrence, getAllowedDayIndices } from "@/api-shared/types/gantt/models";
 import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
@@ -121,6 +121,13 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         [ state.days ],
     );
 
+    // Weekdays this event's temporal constraints permit; recurrence never
+    // echoes onto a day outside this set (#111 follow-up).
+    const allowedDayIndices = useMemo(
+        () => getAllowedDayIndices(event?.constraints),
+        [ event?.constraints ],
+    );
+
     // Days a recurring event repeats onto (daily view). Daily ⇒ every following
     // day; weekly ⇒ the same weekday in every following week (#111).
     const recurrenceDayIds = useMemo(
@@ -134,6 +141,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
                 recurrenceStartDate,
                 recurrenceEndDate,
                 dateOf: dateOfDayId,
+                allowedDayIndices,
             }),
         [
             recurrence,
@@ -144,6 +152,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
             recurrenceStartDate,
             recurrenceEndDate,
             dateOfDayId,
+            allowedDayIndices,
         ],
     );
 
@@ -183,6 +192,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
             recurrenceStartDate,
             recurrenceEndDate,
             dateOf: dateOfDayId,
+            allowedDayIndices,
         });
         const set = new Set<string>();
         pattern.forEach((dayId) => {
@@ -198,6 +208,7 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         recurrenceEndDate,
         dateOfDayId,
         skippedDayIds,
+        allowedDayIndices,
     ]);
 
     const isDayInWindow = useCallback(

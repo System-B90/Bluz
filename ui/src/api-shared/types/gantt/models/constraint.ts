@@ -59,6 +59,39 @@ const ALL_DAY_INDICES: Array<GanttDayIndex> = [
 ];
 
 /**
+ * Weekdays a set of temporal constraints permits: intersects every
+ * `allowedDays`, then subtracts every `forbiddenDays`. `null` means
+ * unrestricted (no temporal constraints) — recurrence echoing and other
+ * callers should skip filtering entirely rather than treat it as "no days
+ * allowed".
+ */
+export function getAllowedDayIndices(
+    constraints: Array<GanttConstraint | undefined> | undefined,
+): Set<GanttDayIndex> | null {
+    const temporal = (constraints ?? []).filter(
+        (c): c is TemporalConstraint => c?.type === ConstraintType.Temporal,
+    );
+    if (temporal.length === 0) return null;
+
+    let allowed = new Set<GanttDayIndex>(ALL_DAY_INDICES);
+    for (const constraint of temporal) {
+        if (constraint.allowedDays && constraint.allowedDays.length > 0) {
+            allowed = new Set(
+                [...allowed].filter((day) =>
+                    constraint.allowedDays?.includes(day) ?? false,
+                ),
+            );
+        }
+    }
+    for (const constraint of temporal) {
+        for (const day of constraint.forbiddenDays ?? []) {
+            allowed.delete(day);
+        }
+    }
+    return allowed;
+}
+
+/**
  * Detects mutually conflicting temporal constraints (issue #104): intersects
  * all `allowedDays`, subtracts all `forbiddenDays`, and reports a conflict
  * when no valid day of the week remains. Warning-level only — saving is

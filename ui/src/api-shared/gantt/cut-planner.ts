@@ -34,7 +34,10 @@ import {
     GanttDayIndex,
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
-import { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
+import {
+    GanttConstraint,
+    getAllowedDayIndices,
+} from "@/api-shared/types/gantt/models/constraint";
 import { MEAL_EVENT_TITLES } from "@/api-shared/types/settings/meal";
 
 /**
@@ -456,6 +459,7 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
             recurrenceStartDate: event.recurrenceStartDate,
             recurrenceEndDate: event.recurrenceEndDate,
             dateOf: dayDate,
+            allowedDayIndices: getAllowedDayIndices(event.constraints),
         });
 
         for (const dayId of echoDayIds) {
@@ -476,14 +480,19 @@ export function planCut(input: CutPlanInput, options: CutPlanOptions = {}): CutP
     // Auto-seeded meal events (titles from MEAL_EVENT_TITLES) are pinned to
     // their exact clock time from settings instead of being stacked; every
     // other event gets bumped past that window instead of overlapping it.
+    // A curriculum may hold several same-titled meal events rather than one
+    // Daily-recurrence event (imported data pre-dating the single-event seed) —
+    // every matching event is pinned, not just the first.
     const fixedTimeMinutesByEventId = new Map<string, number>();
     for (const [ settingKey, title ] of Object.entries(MEAL_EVENT_TITLES)) {
         const time = input[ settingKey as keyof typeof MEAL_EVENT_TITLES ];
         if (!time) continue;
-        const matchedEvent = input.events.find((e) => e.title === title);
-        if (!matchedEvent) continue;
+        const matchedEvents = input.events.filter((e) => e.title === title);
+        if (matchedEvents.length === 0) continue;
         const [ hour, minute ] = parseTime(time);
-        fixedTimeMinutesByEventId.set(matchedEvent.id, hour * 60 + minute);
+        for (const matchedEvent of matchedEvents) {
+            fixedTimeMinutesByEventId.set(matchedEvent.id, hour * 60 + minute);
+        }
     }
 
     const startMinutesOf = (dayId: string): number => {

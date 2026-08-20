@@ -2,7 +2,11 @@ import { useCallback, useMemo } from "react";
 
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
 import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
-import { EventRecurrence, GanttCurriculumModuleDayMapping } from "@/api-shared/types/gantt/models";
+import {
+    EventRecurrence,
+    GanttCurriculumModuleDayMapping,
+    getAllowedDayIndices,
+} from "@/api-shared/types/gantt/models";
 import { computeEventDaySpans, getSpilloverMinutesByDay } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { GanttRecurrenceExceptionState } from "@/components/gantt/state/recurrence-exceptions/types";
 
@@ -64,6 +68,7 @@ export const useGanttScheduling = ({
                 recurrenceStartDate: event.recurrenceStartDate,
                 recurrenceEndDate: event.recurrenceEndDate,
                 dateOf: dateOfDayId,
+                allowedDayIndices: getAllowedDayIndices(event.constraints),
             });
 
             occurrenceDayIds.forEach((dayId) =>

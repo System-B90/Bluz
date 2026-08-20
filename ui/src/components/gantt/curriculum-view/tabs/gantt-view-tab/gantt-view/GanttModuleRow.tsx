@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import React, { memo, useMemo } from "react";
 
 import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
-import { EventRecurrence } from "@/api-shared/types/gantt/models";
+import { EventRecurrence, getAllowedDayIndices } from "@/api-shared/types/gantt/models";
 import { formatHoursLabel } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttContext } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/context";
 import { getFlashRowSx } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/flash";
@@ -94,6 +94,9 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                     linearDays,
                     dayIndexOf: (d) => state.days[d]?.dayIndex,
                     excludedDayIds,
+                    allowedDayIndices: getAllowedDayIndices(
+                        state.events[eId]?.constraints,
+                    ),
                 }).forEach((d) => dayIds.add(d));
             });
         }

@@ -30,6 +30,13 @@ export type GetRecurrenceOccurrenceDayIdsParams = RecurrenceWindow & {
     dayIndexOf: (dayId: string) => GanttDayIndex | undefined;
     /** Occurrence days to skip — deleted or materialized into their own event. */
     excludedDayIds?: Set<string>;
+    /**
+     * Weekdays the event's temporal constraints permit it to land on, from
+     * {@link getAllowedDayIndices}. `null`/undefined ⇒ unrestricted. An echo
+     * whose weekday isn't in this set is skipped rather than forced (#111
+     * follow-up): a recurring event only recurs on its valid days.
+     */
+    allowedDayIndices?: Set<GanttDayIndex> | null;
 };
 
 /**
@@ -69,6 +76,7 @@ export function getRecurrenceOccurrenceDayIds({
     recurrenceStartDate,
     recurrenceEndDate,
     dateOf,
+    allowedDayIndices,
 }: GetRecurrenceOccurrenceDayIdsParams): Set<string> {
     const ids = new Set<string>();
     if (recurrence === EventRecurrence.None || !startDayId) return ids;
@@ -89,10 +97,13 @@ export function getRecurrenceOccurrenceDayIds({
         ) {
             continue;
         }
+        const dow = dayIndexOf(dayId);
+        if (allowedDayIndices && dow !== undefined && !allowedDayIndices.has(dow)) {
+            continue;
+        }
         if (recurrence === EventRecurrence.Daily) {
             ids.add(dayId);
         } else if (recurrence === EventRecurrence.Weekly) {
-            const dow = dayIndexOf(dayId);
             if (dow !== undefined && startDow !== undefined && dow === startDow) {
                 ids.add(dayId);
             }

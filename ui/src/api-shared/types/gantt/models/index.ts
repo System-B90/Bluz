@@ -1,3 +1,4 @@
+export { getAllowedDayIndices } from "@/api-shared/types/gantt/models/constraint";
 export type { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
 export type {
     GanttCurriculum,
