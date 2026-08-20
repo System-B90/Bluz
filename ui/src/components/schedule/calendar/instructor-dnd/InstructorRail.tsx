@@ -80,6 +80,10 @@ function InstructorRailChip({
                     overflow: "hidden",
                     transition: "background-color 0.15s ease-in-out",
                     "&:hover": { bgcolor: "action.hover" },
+                    // Double click toggles the filter; without this the
+                    // browser's default double-click-to-select-text kicks in
+                    // and highlights the name, which reads as broken.
+                    userSelect: "none",
                 }}
             >
                 <HiveAvatar
