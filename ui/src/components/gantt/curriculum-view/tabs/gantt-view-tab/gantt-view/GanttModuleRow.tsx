@@ -16,6 +16,7 @@ import { GanttCell } from "@/components/gantt/curriculum-view/tabs/gantt-view-ta
 import { GanttEventRow } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/GanttEventRow";
 import { GanttModuleRowProps } from "@/components/gantt/curriculum-view/tabs/gantt-view-tab/gantt-view/types";
 import { useModule } from "@/components/gantt/state/hooks/UseModule";
+import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 import { calculateMinimumRequiredTimeForModule } from "@/components/gantt/utils";
@@ -44,6 +45,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
     // While searching, force the module open so matching events show (#323).
     const isExpanded = searchActive || isModuleExpanded(moduleId);
     const { state: exceptionsState } = useGanttRecurrenceExceptions();
+    const { state: mappingState } = useGanttMappings();
 
     const { isOver: isRemoveOver, setNodeRef: setRemoveNodeRef } = useDroppable(
         {
@@ -148,10 +150,14 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         () =>
             singleWeekDayZoom && ganttModule
                 ? formatHoursLabel(
-                    calculateMinimumRequiredTimeForModule(ganttModule, state),
+                    calculateMinimumRequiredTimeForModule(ganttModule, state, {
+                        mappings: mappingState.mappings,
+                        exceptions: exceptionsState.exceptions,
+                        linearDays,
+                    }),
                 )
                 : undefined,
-        [singleWeekDayZoom, ganttModule, state],
+        [singleWeekDayZoom, ganttModule, state, mappingState.mappings, exceptionsState.exceptions, linearDays],
     );
 
     // Build cells depending on view mode. Memoized so a re-render triggered by the

@@ -22,6 +22,7 @@ import {
 import { CurriculumView } from "@/components/gantt/curriculum-view";
 import { GanttMappingProvider } from "@/components/gantt/state/mappings/Provider";
 import { CurriculumProvider } from "@/components/gantt/state/provider";
+import { GanttRecurrenceExceptionProvider } from "@/components/gantt/state/recurrence-exceptions/Provider";
 
 /**
  * Keyframes for the "Windows-style" fade animation
@@ -239,7 +240,9 @@ function GanttPageInner()
                                 initialData={ initialData }
                             >
                                 <GanttMappingProvider curriculumId={ currentCurriculum }>
-                                    <CurriculumView curriculumId={ currentCurriculum } />
+                                    <GanttRecurrenceExceptionProvider curriculumId={ currentCurriculum }>
+                                        <CurriculumView curriculumId={ currentCurriculum } />
+                                    </GanttRecurrenceExceptionProvider>
                                 </GanttMappingProvider>
                             </CurriculumProvider>
                         </ErrorBoundary>

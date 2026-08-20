@@ -15,6 +15,7 @@ import {
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 import {
     calculateMinimumRequiredTimeForSyllabus,
     doShuffleTotalsDiffer,
@@ -68,10 +69,24 @@ export function HoursBox({ syllabusId, ...props }: HoursBoxProps) {
     const syllabus = useSyllabus(syllabusId);
     const { state: mappingState } = useGanttMappings();
     const mappings = mappingState.mappings;
+    const { state: exceptionState } = useGanttRecurrenceExceptions();
 
-    const minimumRequiredHours = syllabus
-        ? calculateMinimumRequiredTimeForSyllabus(syllabus, state)
-        : 0;
+    const minimumRequiredHours = useMemo(() => {
+        if (!syllabus) return 0;
+        const curriculumId = state.syllabuses[syllabusId]?.curriculumId;
+        const curriculum = curriculumId
+            ? state.curriculums[curriculumId]
+            : undefined;
+        const linearDays =
+            curriculum?.weeks.flatMap(
+                (weekId) => state.weeks[weekId]?.days ?? [],
+            ) ?? [];
+        return calculateMinimumRequiredTimeForSyllabus(syllabus, state, {
+            mappings,
+            exceptions: exceptionState.exceptions,
+            linearDays,
+        });
+    }, [syllabus, syllabusId, state, mappings, exceptionState.exceptions]);
 
     const shuffleTotals = useMemo(
         () =>

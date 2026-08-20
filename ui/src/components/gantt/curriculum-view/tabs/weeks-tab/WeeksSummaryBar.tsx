@@ -14,6 +14,7 @@ import {
     getCurriculumTotalWorkingMinutes,
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
+import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 import { calculateMinimumRequiredTimeForCurriculum } from "@/components/gantt/utils";
 
 export type WeeksSummaryBarProps = {
@@ -65,6 +66,7 @@ function SummaryMetric({
 export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
     const { state: mappingState } = useGanttMappings();
     const mappings = mappingState.mappings;
+    const { state: exceptionState } = useGanttRecurrenceExceptions();
 
     const {
         scheduledMinutes,
@@ -74,9 +76,13 @@ export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
         utilization,
     } = useMemo(() => {
         const total = getCurriculumTotalWorkingMinutes(curriculum, state);
+        const linearDays = curriculum.weeks.flatMap(
+            (weekId) => state.weeks[weekId]?.days ?? [],
+        );
         const minimum = calculateMinimumRequiredTimeForCurriculum(
             curriculum,
             state,
+            { mappings, exceptions: exceptionState.exceptions, linearDays },
         );
         const scheduled = getCurriculumScheduledMinutes({
             curriculum,
@@ -92,7 +98,7 @@ export function WeeksSummaryBar({ curriculum, state }: WeeksSummaryBarProps) {
             utilization:
                 total > 0 ? Math.min((scheduled / total) * 100, 100) : 0,
         };
-    }, [curriculum, state, mappings]);
+    }, [curriculum, state, mappings, exceptionState.exceptions]);
 
     const remainingTone = remainingMinutes < 0 ? "error" : "primary";
 

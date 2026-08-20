@@ -14,6 +14,7 @@ import {
 } from "@/components/gantt/curriculum-view/gantt-time-utils";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";
+import { useGanttRecurrenceExceptions } from "@/components/gantt/state/recurrence-exceptions/hooks";
 import { calculateMinimumRequiredTimeForCurriculum } from "@/components/gantt/utils";
 
 export function HoursCard({
@@ -26,6 +27,7 @@ export function HoursCard({
     const state = useCurriculumState();
     const { state: mappingState } = useGanttMappings();
     const mappings = mappingState.mappings;
+    const { state: exceptionState } = useGanttRecurrenceExceptions();
 
     const totalWorkingHours = useMemo(() =>
     {
@@ -47,10 +49,15 @@ export function HoursCard({
     const minimumHoursRequired = useMemo(
         () =>
             curriculum
-                ? calculateMinimumRequiredTimeForCurriculum(curriculum, state) /
-                60
+                ? calculateMinimumRequiredTimeForCurriculum(curriculum, state, {
+                    mappings,
+                    exceptions: exceptionState.exceptions,
+                    linearDays: curriculum.weeks.flatMap(
+                        (weekId) => state.weeks[ weekId ]?.days ?? [],
+                    ),
+                }) / 60
                 : 0,
-        [ curriculum, state ],
+        [ curriculum, state, mappings, exceptionState.exceptions ],
     );
     const usedWorkingHours = useMemo(
         () =>
