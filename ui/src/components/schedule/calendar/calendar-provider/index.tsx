@@ -21,7 +21,7 @@ import {
     pruneExpiredLocks,
     toPublicLocks,
 } from "@/components/schedule/calendar/calendar-provider/lock-state";
-import { EventId } from "@/components/schedule/types/event";
+import { Event, EventId } from "@/components/schedule/types/event";
 import { MessageTypes } from "@/settings";
 
 import "dayjs/locale/he";
@@ -49,7 +49,16 @@ export const CalendarProvider = ({
     // (below) strips that bookkeeping for consumers.
     const [lockState, setLockState] = useState<LockState>({});
 
-    const { events, dispatch, remoteDispatch, undo, redo } = useEventState();
+    // `useEventState`'s undo/redo need to call `syncHistoryTravel`, which in
+    // turn needs `remoteDispatch` — a ref breaks that circular dependency
+    // without forcing either hook to know about the other's internals.
+    const onTravelRef = useRef<(from: Array<Event>, to: Array<Event>) => void>(
+        () => {},
+    );
+    const { events, dispatch, remoteDispatch, undo, redo } = useEventState(
+        undefined,
+        (from, to) => onTravelRef.current(from, to),
+    );
 
     const offlineModeRef = useRef(offlineMode);
 
@@ -140,13 +149,16 @@ export const CalendarProvider = ({
     // Pass the active iteration so broadcasts for other iterations are ignored.
     useEventWebsocket(offlineMode, remoteDispatch, setEventLock, iterationId);
 
-    const { saveEvent, deleteEvent } = useEventActions(
+    const { saveEvent, deleteEvent, syncHistoryTravel } = useEventActions(
         events,
         offlineMode,
         captureEventBeforeEdit,
         dispatch,
         remoteDispatch,
     );
+    useLayoutEffect(() => {
+        onTravelRef.current = syncHistoryTravel;
+    });
 
     // Drives the calendar skeleton. Only the *first* load is a blank surface;
     // later range changes redraw over events already on screen, so this latches

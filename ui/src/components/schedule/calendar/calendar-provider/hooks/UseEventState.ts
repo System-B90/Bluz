@@ -118,7 +118,10 @@ function historyReducer(
     }
 }
 
-export const useEventState = (initialState: Array<Event> = []) => {
+export const useEventState = (
+    initialState: Array<Event> = [],
+    onTravel?: (from: Array<Event>, to: Array<Event>) => void,
+) => {
     const [history, histDispatch] = useReducer(historyReducer, {
         past: [],
         present: initialState,
@@ -141,8 +144,25 @@ export const useEventState = (initialState: Array<Event> = []) => {
         [],
     );
 
-    const undo = useCallback(() => histDispatch({ type: "__undo__" }), []);
-    const redo = useCallback(() => histDispatch({ type: "__redo__" }), []);
+    // Undo/redo travel to a different snapshot instantly in local state; the
+    // caller-supplied `onTravel` is handed the before/after pair so it can
+    // push the same diff to the server (otherwise a Ctrl+Z/Y is only ever
+    // visible on this tab — see #… "undo never reaches the server").
+    const undo = useCallback(() => {
+        if (history.past.length === 0) return;
+        const from = history.present;
+        const to = history.past[history.past.length - 1];
+        histDispatch({ type: "__undo__" });
+        onTravel?.(from, to);
+    }, [history, onTravel]);
+
+    const redo = useCallback(() => {
+        if (history.future.length === 0) return;
+        const from = history.present;
+        const to = history.future[0];
+        histDispatch({ type: "__redo__" });
+        onTravel?.(from, to);
+    }, [history, onTravel]);
 
     return {
         events: history.present,

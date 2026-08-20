@@ -42,6 +42,8 @@ export enum EventChangeInitiator {
     SnapshotRestore = "snapshot-restore",
     /** Pulled in from a linked Google Calendar. */
     GoogleSync = "google-sync",
+    /** Ctrl+Z/Ctrl+Y history travel on the calendar. */
+    Undo = "undo",
     /** Write with no declared initiator (CLI, scripts, legacy call sites). */
     Unknown = "unknown",
 }

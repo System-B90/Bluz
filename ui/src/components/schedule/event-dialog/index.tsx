@@ -21,6 +21,17 @@ import { HiveQueueMapping } from "@/components/schedule/event-dialog/HiveQueueMa
 import { InstructorsField } from "@/components/schedule/event-dialog/InstructorsField";
 import { Event, EventId } from "@/components/schedule/types/event";
 
+/** Sunday-first, matching `Dayjs#day()`. */
+const HEBREW_WEEKDAYS = [
+    "ראשון",
+    "שני",
+    "שלישי",
+    "רביעי",
+    "חמישי",
+    "שישי",
+    "שבת",
+];
+
 type EventOrPartial = Event | Omit<Event, "id"> | Partial<Event>;
 type EventDialogProps = {
     open: boolean;
@@ -99,13 +110,15 @@ export function EventDialog({
                         עריכת מופע
                     </Typography>
 
-                    <Typography
-                        component="span"
-                        sx={ { color: "text.secondary" } }
-                        variant="caption"
-                    >
-                        יום:
-                    </Typography>
+                    { event.startTime ? (
+                        <Typography
+                            component="span"
+                            sx={ { color: "text.secondary" } }
+                            variant="caption"
+                        >
+                            { `יום: ${HEBREW_WEEKDAYS[event.startTime.day()]}, ${event.startTime.format("DD/MM/YYYY")}` }
+                        </Typography>
+                    ) : null }
                 </Stack>
             </DialogTitle>
 
