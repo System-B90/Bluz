@@ -351,7 +351,10 @@ export function CalendarView({
                         windows,
                     ),
                 );
-                const startMs = toMs(args.start);
+                const delta = applyPrecision(
+                    toMs(args.start) - segment.from.valueOf(),
+                );
+                const startMs = segment.from.valueOf() + delta;
                 commit(
                     args,
                     startMs,
@@ -365,14 +368,16 @@ export function CalendarView({
             // the drawn end — measured in working time, so the breaks the
             // event steps over are not counted as duration.
             const startMs = event.startTime.valueOf();
+            const delta = applyPrecision(toMs(args.end) - segment.to.valueOf());
+            const endMs = segment.to.valueOf() + delta;
             commit(
                 args,
                 startMs,
-                workingMsUpTo(startMs, toMs(args.end), windows),
+                workingMsUpTo(startMs, endMs, windows),
                 "resize",
             );
         },
-        [breakWindows, commit],
+        [applyPrecision, breakWindows, commit],
     );
 
     const handleSelectSegment = useCallback(

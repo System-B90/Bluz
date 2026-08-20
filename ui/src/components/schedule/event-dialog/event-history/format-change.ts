@@ -60,11 +60,14 @@ export function formatChangeValue(
     field: string,
     value: unknown,
     lookups: ChangeValueLookups,
+    // Omits the date and shows only the time — the date side of the row is
+    // redundant when both sides of the change land on the same calendar day.
+    timeOnly = false,
 ): string {
     if (value === null || value === undefined || value === "") return EMPTY;
 
     if (TIME_FIELDS.has(field) && typeof value === "number") {
-        return dayjs(value).format("DD/MM/YYYY HH:mm");
+        return dayjs(value).format(timeOnly ? "HH:mm" : "DD/MM/YYYY HH:mm");
     }
 
     if (typeof value === "boolean") return value ? "כן" : "לא";
@@ -98,10 +101,16 @@ export function formatChange(
     change: EventFieldChange,
     lookups: ChangeValueLookups,
 ): FormattedChange {
+    const sameDay =
+        TIME_FIELDS.has(change.field) &&
+        typeof change.from === "number" &&
+        typeof change.to === "number" &&
+        dayjs(change.from).isSame(change.to, "day");
+
     return {
         field: change.field,
-        from: formatChangeValue(change.field, change.from, lookups),
-        to: formatChangeValue(change.field, change.to, lookups),
+        from: formatChangeValue(change.field, change.from, lookups, sameDay),
+        to: formatChangeValue(change.field, change.to, lookups, sameDay),
     };
 }
 

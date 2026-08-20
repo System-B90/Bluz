@@ -39,5 +39,11 @@ export const createEventFactory = (
             eventPartial.splitAcrossBreaks ?? defaultSplitAcrossBreaks(type),
         fake: eventPartial.fake ?? false,
         color: eventPartial.color,
+        hiveQueues: eventPartial.hiveQueues,
+        // Provenance/disambiguation fields the gantt cut stamps on an event —
+        // must survive every save (drag, resize, dialog edit) or the event
+        // silently disowns the gantt occurrence it was cut from (#…).
+        ganttEventId: eventPartial.ganttEventId,
+        ganttOccurrenceDate: eventPartial.ganttOccurrenceDate,
     };
 };

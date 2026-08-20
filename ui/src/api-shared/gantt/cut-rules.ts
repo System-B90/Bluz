@@ -280,6 +280,19 @@ export const LONG_EXERCISE_TYPES: ReadonlyArray<ModuleEventType> = [
 ];
 
 /**
+ * Cumulative minutes of consecutive lecture/ע"ע at or above this many minutes
+ * earns a post-lecture break — one short lecture alone need not, but a run of
+ * several back-to-back does.
+ */
+export const MIN_LECTURE_MINUTES_FOR_POST_BREAK = 45;
+
+/** Event types that count toward the post-lecture cumulative-run rule. */
+export const POST_LECTURE_RUN_TYPES: ReadonlyArray<ModuleEventType> = [
+    ModuleEventType.Lecture,
+    ...LONG_EXERCISE_TYPES,
+];
+
+/**
  * Structural rules that constrain *where* a break may go, independent of kind.
  */
 export const BREAK_PLACEMENT_RULES = {

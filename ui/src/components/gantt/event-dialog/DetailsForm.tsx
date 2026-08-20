@@ -9,7 +9,8 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import {
+import
+{
     defaultSplitAcrossBreaks,
     GanttEvent,
     ModuleEventType,
@@ -144,7 +145,7 @@ export function EventDetailsForm({
                                 size="small"
                             />
                         }
-                        label="פיצול הפסקות"
+                        label="פיצול סביב הפסקות"
                     />
                 </Stack>
             </Box>

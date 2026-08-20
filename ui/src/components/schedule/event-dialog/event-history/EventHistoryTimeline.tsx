@@ -41,6 +41,27 @@ const ACTION_LABELS: Record<EventChangeAction, string> = {
     [EventChangeAction.Updated]: "עודכן",
 };
 
+/** startTime sorts immediately before endTime; every other field keeps its
+ * logged order after both, so a time-only change stays a stable two-row block
+ * instead of scattering with whatever else changed in the same write. */
+const TIME_FIELD_ORDER: Record<string, number> = {
+    startTime: 0,
+    endTime: 1,
+};
+
+function orderedChanges(
+    changes: ApiEventHistoryEntry["changes"],
+): ApiEventHistoryEntry["changes"] {
+    return [...changes].sort((a, b) => {
+        const rankA = TIME_FIELD_ORDER[a.field] ?? -1;
+        const rankB = TIME_FIELD_ORDER[b.field] ?? -1;
+        if (rankA === -1 && rankB === -1) return 0;
+        if (rankA === -1) return 1;
+        if (rankB === -1) return -1;
+        return rankA - rankB;
+    });
+}
+
 function ChangeRow({
     change,
     lookups,
@@ -204,7 +225,7 @@ function TimelineEntry({
                             py: 0.75,
                         }}
                     >
-                        {entry.changes.map((change) => (
+                        {orderedChanges(entry.changes).map((change) => (
                             <ChangeRow
                                 change={change}
                                 key={change.field}

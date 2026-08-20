@@ -20,6 +20,7 @@ import {
     BREAK_RULES,
     isSpillable,
     LONG_EXERCISE_THRESHOLD_MINUTES,
+    MIN_LECTURE_MINUTES_FOR_POST_BREAK,
 } from "@/api-shared/gantt/cut-rules";
 import { solveConstraints } from "@/api-shared/gantt/cut-constraints";
 import {
@@ -725,6 +726,7 @@ describe("breakKindForBoundary", () => {
                 exercise,
                 lecture,
                 LONG_EXERCISE_THRESHOLD_MINUTES,
+                LONG_EXERCISE_THRESHOLD_MINUTES,
             ),
         ).toBe("post-long-exercise");
         expect(
@@ -732,6 +734,9 @@ describe("breakKindForBoundary", () => {
                 exercise,
                 lecture,
                 LONG_EXERCISE_THRESHOLD_MINUTES - 1,
+                // Also below the post-lecture cumulative threshold, so
+                // neither rule fires — isolates the long-exercise check.
+                MIN_LECTURE_MINUTES_FOR_POST_BREAK - 1,
             ),
         ).toBeNull();
     });
@@ -742,14 +747,33 @@ describe("breakKindForBoundary", () => {
                 lecture,
                 makeItem({ key: "other", syllabusId: "s2" }),
                 30,
+                30,
             ),
         ).toBe("between-syllabuses");
     });
 
-    it("falls back to a post-lecture break within one syllabus", () => {
+    it("falls back to a post-lecture break once the cumulative lecture/ע\"ע run reaches the threshold", () => {
         expect(
-            breakKindForBoundary(lecture, makeItem({ key: "same" }), 30),
+            breakKindForBoundary(
+                lecture,
+                makeItem({ key: "same" }),
+                30,
+                MIN_LECTURE_MINUTES_FOR_POST_BREAK,
+            ),
         ).toBe("post-lecture");
+    });
+
+    it("withholds the post-lecture break below the cumulative threshold", () => {
+        // A single short lecture, or a short run of them, earns no breather —
+        // only once the consecutive lecture/ע"ע run reaches the threshold.
+        expect(
+            breakKindForBoundary(
+                lecture,
+                makeItem({ key: "same" }),
+                30,
+                MIN_LECTURE_MINUTES_FOR_POST_BREAK - 1,
+            ),
+        ).toBeNull();
     });
 
     it("never places a break against an existing הפסקה, on either side", () => {
@@ -758,6 +782,7 @@ describe("breakKindForBoundary", () => {
                 lecture,
                 makeItem({ key: "meal", isExistingBreak: true }),
                 30,
+                MIN_LECTURE_MINUTES_FOR_POST_BREAK,
             ),
         ).toBeNull();
         expect(
@@ -765,6 +790,7 @@ describe("breakKindForBoundary", () => {
                 makeItem({ key: "meal", isExistingBreak: true }),
                 lecture,
                 30,
+                MIN_LECTURE_MINUTES_FOR_POST_BREAK,
             ),
         ).toBeNull();
     });
@@ -784,6 +810,7 @@ describe("breakKindForBoundary", () => {
                     eventType: ModuleEventType.SelfTeaching,
                     roomName: "כיתה 2",
                 }),
+                30,
                 30,
             ),
         ).toBeNull();

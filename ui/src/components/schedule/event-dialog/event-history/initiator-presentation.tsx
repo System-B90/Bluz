@@ -8,6 +8,7 @@ import EditNoteIcon from "@mui/icons-material/EditNote";
 import EventIcon from "@mui/icons-material/Event";
 import HeightIcon from "@mui/icons-material/Height";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import HistoryIcon from "@mui/icons-material/History";
 import KeyboardIcon from "@mui/icons-material/Keyboard";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import RestoreIcon from "@mui/icons-material/Restore";
@@ -83,6 +84,10 @@ const PRESENTATION: Record<EventChangeInitiator, InitiatorPresentation> = {
     [EventChangeInitiator.PrayerSettings]: {
         color: "info",
         icon: <SelfImprovementIcon fontSize="small" />,
+    },
+    [EventChangeInitiator.Undo]: {
+        color: "secondary",
+        icon: <HistoryIcon fontSize="small" />,
     },
     [EventChangeInitiator.Unknown]: {
         color: "info",

@@ -116,6 +116,60 @@ export const useEventActions = (
         [events, offlineMode, captureEventBeforeEdit, dispatch, remoteDispatch],
     );
 
+    // Undo/redo apply their target snapshot to local state instantly (see
+    // useEventState); this pushes the same diff to the server so a Ctrl+Z/Y
+    // travel is not silently lost the moment the tab reloads or a WS echo
+    // arrives. Symmetric for both directions: undo and redo are just travel
+    // to a different snapshot, diffed the same way.
+    const syncHistoryTravel = useCallback(
+        (from: Array<Event>, to: Array<Event>) => {
+            if (offlineMode) return;
+
+            const fromMap = new Map(from.map((ev) => [ev.id, ev]));
+            const toMap = new Map(to.map((ev) => [ev.id, ev]));
+
+            for (const [id, toEvent] of toMap) {
+                const fromEvent = fromMap.get(id);
+                if (fromEvent === toEvent) continue;
+
+                const stamped: Event = { ...toEvent, updatedAt: Date.now() };
+                const apiCall = fromEvent ? apiUpdateEvent : apiCreateEvent;
+                apiCall(stamped, EventChangeInitiator.Undo).catch((error) => {
+                    // Roll the local copy back to what the server still holds.
+                    remoteDispatch(
+                        fromEvent
+                            ? {
+                                type: "UPSERT_EVENT",
+                                payload: { ...fromEvent, updatedAt: Date.now() },
+                            }
+                            : { type: "DELETE_EVENT", payload: id },
+                    );
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "סנכרון ביטול הפעולה נכשל!",
+                        error,
+                    );
+                });
+            }
+
+            for (const [id, fromEvent] of fromMap) {
+                if (toMap.has(id)) continue;
+                apiDeleteEvent(id, EventChangeInitiator.Undo).catch((error) => {
+                    remoteDispatch({
+                        type: "UPSERT_EVENT",
+                        payload: { ...fromEvent, updatedAt: Date.now() },
+                    });
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "סנכרון ביטול הפעולה נכשל!",
+                        error,
+                    );
+                });
+            }
+        },
+        [offlineMode, remoteDispatch],
+    );
+
     const deleteEvent = useCallback(
         (
             eventId: EventId,
@@ -155,5 +209,5 @@ export const useEventActions = (
         [events, offlineMode, dispatch, remoteDispatch],
     );
 
-    return { saveEvent, deleteEvent };
+    return { saveEvent, deleteEvent, syncHistoryTravel };
 };

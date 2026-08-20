@@ -177,6 +177,8 @@ export function DraftsMenu()
             busyId={ busyId }
             createIcon={ <SaveIcon /> }
             createLabel="שמירה"
+            disabled
+            disabledTooltip="טיוטות משותפות — בקרוב"
             emptyText="אין טיוטות משותפות."
             entries={ drafts }
             icon={ <DriveFileRenameOutlineIcon fontSize="small" /> }

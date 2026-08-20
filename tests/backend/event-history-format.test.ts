@@ -74,7 +74,7 @@ describe("formatChangeValue", () => {
 });
 
 describe("formatChange", () => {
-    it("formats both sides of a change", () => {
+    it("omits the date on both sides when a time change lands on the same day", () => {
         expect(
             formatChange(
                 {
@@ -86,9 +86,32 @@ describe("formatChange", () => {
             ),
         ).toEqual({
             field: "startTime",
-            from: "07/01/2024 08:00",
-            to: "07/01/2024 10:00",
+            from: "08:00",
+            to: "10:00",
         });
+    });
+
+    it("keeps the date on both sides when a time change crosses days", () => {
+        expect(
+            formatChange(
+                {
+                    field: "startTime",
+                    from: new Date("2024-01-07T08:00:00").getTime(),
+                    to: new Date("2024-01-08T10:00:00").getTime(),
+                },
+                lookups,
+            ),
+        ).toEqual({
+            field: "startTime",
+            from: "07/01/2024 08:00",
+            to: "08/01/2024 10:00",
+        });
+    });
+
+    it("formats a non-time field unaffected by the same-day rule", () => {
+        expect(
+            formatChange({ field: "name", from: "old", to: "new" }, lookups),
+        ).toEqual({ field: "name", from: "old", to: "new" });
     });
 });
 

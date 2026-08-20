@@ -260,6 +260,8 @@ export function SnapshotMenu()
             busyId={ busyId }
             createIcon={ <AddAPhotoIcon /> }
             createLabel="יצירה"
+            disabled
+            disabledTooltip="צילומי מצב — בקרוב"
             emptyText="אין צילומי מצב שמורים."
             entries={ snapshots }
             icon={ <HistoryIcon fontSize="small" /> }

@@ -2,12 +2,11 @@ import LinkIcon from "@mui/icons-material/Link";
 import Box, { BoxProps } from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import FormControl from "@mui/material/FormControl";
-import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import { SelectChangeEvent } from "@mui/material/Select";
 import Select from "@mui/material/Select";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
@@ -33,38 +32,31 @@ export function SyllabusSelectionField({
     const curriculum = useCurriculum(curriculumId);
     const { linkSyllabusToCurriculum } = useSyllabusActions();
     const { syllabusNames, syllabusCurriculums } = useSyllabusNames();
-    const [currentSyllabusId, setCurrentSyllabusId] =
-        useState<GanttSyllabusId>("");
     const [isLinking, setIsLinking] = useState<boolean>(false);
 
-    const onChange = useCallback((ev: SelectChangeEvent<GanttSyllabusId>) => {
-        const syllabusId = ev.target.value as GanttSyllabusId;
-        setCurrentSyllabusId(syllabusId);
-    }, []);
-
-    const addClickHandler = useCallback(() => {
-        setIsLinking(true);
-        const syllabusId = currentSyllabusId;
-        if (!syllabusId) {
-            return;
-        }
-        linkSyllabusToCurriculum(curriculumId, syllabusId)
-            .catch((error) =>
-                enqueueApiErrorSnackbar(
-                    enqueueSnackbar,
-                    "הוספת הסילבוס לגאנט נכשלה!",
-                    error,
-                ),
-            )
-            .finally(() => setIsLinking(false));
-
-        setCurrentSyllabusId("");
-    }, [
-        curriculumId,
-        currentSyllabusId,
-        linkSyllabusToCurriculum,
-        enqueueSnackbar,
-    ]);
+    // Selecting a syllabus links it immediately — no separate add button —
+    // mirroring how a curriculum is linked to an iteration
+    // (`IterationLinkField`). The select stays empty since a linked syllabus
+    // drops out of `syllabusMenuItems` on the next render.
+    const onChange = useCallback(
+        (ev: SelectChangeEvent<GanttSyllabusId>) => {
+            const syllabusId = ev.target.value as GanttSyllabusId;
+            if (!syllabusId) {
+                return;
+            }
+            setIsLinking(true);
+            linkSyllabusToCurriculum(curriculumId, syllabusId)
+                .catch((error) =>
+                    enqueueApiErrorSnackbar(
+                        enqueueSnackbar,
+                        "הוספת הסילבוס לגאנט נכשלה!",
+                        error,
+                    ),
+                )
+                .finally(() => setIsLinking(false));
+        },
+        [curriculumId, linkSyllabusToCurriculum, enqueueSnackbar],
+    );
 
     const syllabusMenuItems = useMemo(
         () =>
@@ -107,38 +99,35 @@ export function SyllabusSelectionField({
     return (
         <Box {...props}>
             <FormControl fullWidth={true} size="small">
-                <InputLabel>סילבוסים קיימים</InputLabel>
+                <InputLabel>הוספת סילבוס לגאנט</InputLabel>
                 <Select
+                    disabled={isLinking}
+                    endAdornment={
+                        <InputAdornment
+                            position="end"
+                            sx={{ marginInlineEnd: 2 }}
+                        >
+                            {isLinking ? (
+                                <CircularProgress
+                                    color="inherit"
+                                    size={16}
+                                />
+                            ) : (
+                                <LinkIcon
+                                    color="disabled"
+                                    fontSize="small"
+                                />
+                            )}
+                        </InputAdornment>
+                    }
                     fullWidth
-                    label="סילבוסים קיימים"
+                    label="הוספת סילבוס לגאנט"
                     onChange={onChange}
-                    value={currentSyllabusId}
+                    value=""
                 >
                     {syllabusMenuItems}
                 </Select>
             </FormControl>
-            <Tooltip title="הוספת סילבוס לגאנט">
-                <span>
-                    <IconButton
-                        disabled={currentSyllabusId.length === 0}
-                        onClick={addClickHandler}
-                        size="small"
-                    >
-                        {isLinking ? (
-                            <CircularProgress color="inherit" size={20} />
-                        ) : (
-                            <LinkIcon
-                                color={
-                                    currentSyllabusId.length > 0
-                                        ? "info"
-                                        : "disabled"
-                                }
-                                fontSize="small"
-                            />
-                        )}
-                    </IconButton>
-                </span>
-            </Tooltip>
         </Box>
     );
 }

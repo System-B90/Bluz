@@ -1,14 +1,15 @@
 import { APIRequestContext, Page } from "@playwright/test";
 
-import {
-    test,
-    expect,
-    SELECTORS,
-    getEventDialog,
-    gotoAppHome,
-    switchToDayView,
-    testId,
-} from "./fixtures";
+import
+    {
+        expect,
+        getEventDialog,
+        gotoAppHome,
+        SELECTORS,
+        switchToDayView,
+        test,
+        testId,
+    } from "./fixtures";
 
 /**
  * Split-across-breaks (#event.splitAcrossBreaks): an event that spans a break
@@ -18,7 +19,7 @@ import {
  * A freshly drag-created event starts with `splitAcrossBreaks` off
  * regardless of type — `defaultSplitAcrossBreaks` (api-shared/types/event.ts)
  * only kicks in when the type field's own onChange fires, not on initial
- * creation — so this suite toggles the "פיצול הפסקות" chip explicitly rather
+ * creation — so this suite toggles the "פיצול סביב הפסקות" chip explicitly rather
  * than relying on a default.
  */
 
@@ -171,10 +172,10 @@ test.describe("Split across breaks", () => {
             // A freshly drag-created event starts with the toggle off
             // regardless of type — switch it on explicitly.
             await dialog
-                .getByRole("switch", { name: "פיצול הפסקות" })
+                .getByRole("switch", { name: "פיצול סביב הפסקות" })
                 .click();
             await expect(
-                dialog.getByRole("switch", { name: "פיצול הפסקות" }),
+                dialog.getByRole("switch", { name: "פיצול סביב הפסקות" }),
             ).toHaveAttribute("aria-checked", "true");
 
             await dialog.getByRole("button", { name: "שמירה" }).click();
@@ -244,7 +245,7 @@ test.describe("Split across breaks", () => {
 
             // A freshly drag-created event starts with the toggle off.
             await expect(
-                dialog.getByRole("switch", { name: "פיצול הפסקות" }),
+                dialog.getByRole("switch", { name: "פיצול סביב הפסקות" }),
             ).toHaveAttribute("aria-checked", "false");
 
             await dialog.getByRole("button", { name: "שמירה" }).click();

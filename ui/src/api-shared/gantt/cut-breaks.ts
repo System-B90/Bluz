@@ -4,6 +4,8 @@ import {
     BreakKind,
     LONG_EXERCISE_THRESHOLD_MINUTES,
     LONG_EXERCISE_TYPES,
+    MIN_LECTURE_MINUTES_FOR_POST_BREAK,
+    POST_LECTURE_RUN_TYPES,
     PRAYER_RULES,
     roomKeyOf,
 } from "@/api-shared/gantt/cut-rules";
@@ -91,13 +93,17 @@ function trailingSlack(
  * earns. Returns the highest-priority kind that applies — one boundary never
  * grows two stacked breaks.
  *
- * `runMinutes` is the length of the continuous same-type run ending at
- * `before`, which is what the 90-minute ע"ע rule measures.
+ * `exerciseRunMinutes` is the length of the continuous same-type run ending at
+ * `before`, which is what the 90-minute ע"ע rule measures. `classRunMinutes`
+ * is the length of the continuous run of *any* lecture/ע"ע mix ending at
+ * `before` — arbitrary consecutive lecture/ע"ע events accumulate together,
+ * which is what the 45-minute post-lecture rule measures.
  */
 export function breakKindForBoundary(
     before: PlacedItem,
     after: PlacedItem,
-    runMinutes: number,
+    exerciseRunMinutes: number,
+    classRunMinutes: number,
 ): BreakKind | null {
     // Never against an existing הפסקה — a generated break there just widens a
     // dead zone instead of spacing the day out.
@@ -112,7 +118,7 @@ export function breakKindForBoundary(
 
     if (
         LONG_EXERCISE_TYPES.includes(before.eventType) &&
-        runMinutes >= LONG_EXERCISE_THRESHOLD_MINUTES
+        exerciseRunMinutes >= LONG_EXERCISE_THRESHOLD_MINUTES
     ) {
         candidates.push("post-long-exercise");
     }
@@ -125,7 +131,10 @@ export function breakKindForBoundary(
         candidates.push("between-syllabuses");
     }
 
-    if (before.eventType === ModuleEventType.Lecture) {
+    if (
+        POST_LECTURE_RUN_TYPES.includes(before.eventType) &&
+        classRunMinutes >= MIN_LECTURE_MINUTES_FOR_POST_BREAK
+    ) {
         candidates.push("post-lecture");
     }
 
@@ -186,17 +195,28 @@ export function insertBreaksForDay(input: BreakPassInput): BreakPassResult {
     };
     const candidates: Array<Candidate> = [];
 
-    let runMinutes = 0;
-    let runType: ModuleEventType | null = null;
+    // Two separate run trackers: `exerciseRunMinutes` requires the exact same
+    // type (only ע"ע counts) for the 90-minute rule; `classRunMinutes` accepts
+    // any consecutive mix of lecture/ע"ע types for the 45-minute rule, so N
+    // arbitrary back-to-back lecture/ע"ע events accumulate together.
+    let exerciseRunMinutes = 0;
+    let exerciseRunType: ModuleEventType | null = null;
+    let classRunMinutes = 0;
     for (let index = 0; index < items.length - 1; index++) {
         const before = items[index];
         const after = items[index + 1];
 
         const duration = before.endMinutes - before.startMinutes;
-        runMinutes = before.eventType === runType ? runMinutes + duration : duration;
-        runType = before.eventType;
 
-        const kind = breakKindForBoundary(before, after, runMinutes);
+        exerciseRunMinutes =
+            before.eventType === exerciseRunType ? exerciseRunMinutes + duration : duration;
+        exerciseRunType = before.eventType;
+
+        classRunMinutes = POST_LECTURE_RUN_TYPES.includes(before.eventType)
+            ? classRunMinutes + duration
+            : 0;
+
+        const kind = breakKindForBoundary(before, after, exerciseRunMinutes, classRunMinutes);
         if (!kind) continue;
 
         candidates.push({
@@ -205,8 +225,9 @@ export function insertBreaksForDay(input: BreakPassInput): BreakPassResult {
             priority: BREAK_RULES[kind].priority,
         });
 
-        // A satisfied break resets the continuous-run measurement.
-        if (kind === "post-long-exercise") runMinutes = 0;
+        // A satisfied break resets the continuous-run measurement it fed.
+        if (kind === "post-long-exercise") exerciseRunMinutes = 0;
+        if (kind === "post-lecture" || kind === "between-syllabuses") classRunMinutes = 0;
     }
 
     // Prefer boundaries whose break would land on a prayer, then honour the

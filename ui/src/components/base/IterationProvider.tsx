@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSnackbar } from "notistack";
 import {
     createContext,
     Dispatch,
@@ -13,7 +14,13 @@ import {
     useState,
 } from "react";
 
-import { IterationId } from "@/api-shared/types/iteration";
+import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { apiListIterations } from "@/api-client/iterations";
+import {
+    ITERATION_QUERY_PARAM,
+    Iteration,
+    IterationId,
+} from "@/api-shared/types/iteration";
 
 export type IterationScopeState = {
     /** Active iteration. `undefined` ⇒ the current (writable) run. */
@@ -21,14 +28,15 @@ export type IterationScopeState = {
     setIterationId: Dispatch<SetStateAction<IterationId | undefined>>;
     /** True while viewing a past iteration — every write route rejects it. */
     isReadOnlyIteration: boolean;
+    /** All registered iterations, for pickers like `IterationSelector`. */
+    iterations: Array<Iteration>;
+    /** Id of the current (writable) run, once `iterations` has loaded. */
+    currentIterationId: IterationId | undefined;
 };
 
 const IterationContext = createContext<IterationScopeState | undefined>(
     undefined,
 );
-
-/** URL query param the active iteration is mirrored to (#456). */
-const ITERATION_PARAM = "iteration";
 
 /**
  * Owns the iteration the whole app is scoped to. This state used to live in
@@ -36,8 +44,10 @@ const ITERATION_PARAM = "iteration";
  * settings included — has to read it, and those providers mount above the
  * calendar. It therefore sits at the top of the post-auth tree instead.
  *
- * Mirrored to a `?iteration=` URL param so a refresh or a shared link keeps
- * the selected iteration instead of silently falling back to "current" (#456).
+ * Mirrored to a `?it=` URL param (`ITERATION_QUERY_PARAM`) so a refresh or a
+ * shared link keeps the selected iteration instead of silently falling back
+ * to "current" (#456). Backfilled with the current iteration's id once known
+ * if the param is missing, so the param is always present.
  */
 export const IterationProvider = ({
     children,
@@ -47,13 +57,44 @@ export const IterationProvider = ({
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const { enqueueSnackbar } = useSnackbar();
 
     const [iterationId, setIterationIdState] = useState<
         IterationId | undefined
-    >(() => (searchParams.get(ITERATION_PARAM) as IterationId) || undefined);
+    >(() => (searchParams.get(ITERATION_QUERY_PARAM) as IterationId) || undefined);
+    // Side-effect-free mirror of `iterationId`, read inside `setIterationId`
+    // instead of a functional `setState` updater — React may invoke a
+    // functional updater during render (bailout/replay), and `router.replace`
+    // inside one leaked into IterationProvider's render phase (#crash).
+    const iterationIdRef = useRef(iterationId);
+    useEffect(() => {
+        iterationIdRef.current = iterationId;
+    }, [iterationId]);
+
+    const [iterations, setIterations] = useState<Array<Iteration>>([]);
+    useEffect(() => {
+        let mounted = true;
+        apiListIterations()
+            .then((list) => {
+                if (mounted) setIterations(list);
+            })
+            .catch((error) =>
+                enqueueApiErrorSnackbar(
+                    enqueueSnackbar,
+                    "טעינת המחזורים נכשלה.",
+                    error,
+                ),
+            );
+        return () => {
+            mounted = false;
+        };
+    }, [enqueueSnackbar]);
+    const currentIterationId = iterations.find(
+        (iteration) => iteration.isCurrent,
+    )?.id;
 
     // Reacts to back/forward navigation and links carrying a different param.
-    const paramValue = searchParams.get(ITERATION_PARAM) || undefined;
+    const paramValue = searchParams.get(ITERATION_QUERY_PARAM) || undefined;
     const lastAppliedParam = useRef(paramValue);
     useEffect(() => {
         if (paramValue === lastAppliedParam.current) return;
@@ -64,38 +105,52 @@ export const IterationProvider = ({
     const setIterationId: Dispatch<SetStateAction<IterationId | undefined>> =
         useCallback(
             (value) => {
-                setIterationIdState((prev) => {
-                    const next =
-                        typeof value === "function" ? value(prev) : value;
+                const next =
+                    typeof value === "function"
+                        ? value(iterationIdRef.current)
+                        : value;
+                iterationIdRef.current = next;
 
-                    const params = new URLSearchParams(
-                        window.location.search,
-                    );
-                    if (next) {
-                        params.set(ITERATION_PARAM, next);
-                    } else {
-                        params.delete(ITERATION_PARAM);
-                    }
-                    lastAppliedParam.current = next;
-                    const query = params.toString();
-                    router.replace(
-                        query ? `${pathname}?${query}` : pathname,
-                        { scroll: false },
-                    );
-
-                    return next;
+                const params = new URLSearchParams(window.location.search);
+                if (next) {
+                    params.set(ITERATION_QUERY_PARAM, next);
+                } else {
+                    params.delete(ITERATION_QUERY_PARAM);
+                }
+                lastAppliedParam.current = next;
+                const query = params.toString();
+                router.replace(query ? `${pathname}?${query}` : pathname, {
+                    scroll: false,
                 });
+
+                setIterationIdState(next);
             },
             [pathname, router],
         );
 
+    // Backfills a missing `?it=` param with the current iteration once the
+    // list has loaded, so the URL always names an iteration explicitly (never
+    // relies on server-side "no param ⇒ current" fallback for its own sake).
+    useEffect(() => {
+        if (iterationId || !currentIterationId) return;
+        setIterationId(currentIterationId);
+    }, [iterationId, currentIterationId, setIterationId]);
+
     const value = useMemo(
         () => ({
             iterationId,
-            isReadOnlyIteration: Boolean(iterationId),
+            // Read-only only when scoped to a *past* iteration — an id that
+            // happens to match the current run (shared link, refresh, browser
+            // back) must not trip this, so compare against the fetched
+            // current id rather than just checking the param is set (#456).
+            isReadOnlyIteration: Boolean(
+                iterationId && iterationId !== currentIterationId,
+            ),
             setIterationId,
+            iterations,
+            currentIterationId,
         }),
-        [iterationId, setIterationId],
+        [iterationId, setIterationId, iterations, currentIterationId],
     );
 
     return (
