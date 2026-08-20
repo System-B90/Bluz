@@ -295,6 +295,17 @@ export function SettingsDialog({
                         { activeTab === "outsiders" && <OutsiderSettings /> }
                         { activeTab === "iterations" && <IterationSettings /> }
                     </Box>
+
+                    {/*
+                      * Browsers drop the end-side padding of a scrolling flex
+                      * container from the scrollable area (a longstanding
+                      * flexbox/overflow quirk) — the pane's own `p: 4` never
+                      * reaches the bottom once a tab's content overflows, so
+                      * the last row/button sits flush against the dialog edge
+                      * on short viewports. An explicit spacer inside the
+                      * scrolled content is unaffected by that quirk.
+                      */ }
+                    <Box sx={ { flexShrink: 0, height: (theme) => theme.spacing(4) } } />
                 </Box>
             </Box>
         </Dialog>
