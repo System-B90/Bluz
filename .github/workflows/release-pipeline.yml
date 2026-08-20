@@ -86,7 +86,12 @@ jobs:
                   NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
 
             - name: Install Dependencies (Python)
-              run: pip install ruff==0.15.20
+              # The CLI itself, so its unit tests can import bluz_cli. Ruff
+              # stays pinned exactly — an upstream release that promotes a rule
+              # must not turn this job red on an unrelated PR.
+              run: |
+                  pip install ruff==0.15.20
+                  pip install pytest ./cli
 
             - name: Run ESLint
               run: npm run lint
@@ -112,6 +117,14 @@ jobs:
               run: npm run test:unit
               env:
                   NEXTAUTH_SECRET: ci_test_secret_key
+
+            # Nothing ran the Python side before: cli/ had no tests at all, and
+            # the loopback login handshake is exactly the kind of thing that
+            # breaks silently — it regressed to sitting out its full 60s
+            # timeout with no failing check anywhere.
+            - name: Run Python Unit Tests
+              if: ${{ !cancelled() }}
+              run: pytest -q
 
             # session-server/ is a separate package with its own
             # package.json, lockfile and tsconfig, and nothing checked it on a

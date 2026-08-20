@@ -47,6 +47,65 @@ class AuthHTTPServer(ThreadingHTTPServer):
         self.token_received = threading.Event()
 
 
+_RESULT_PAGE = """<!doctype html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8">
+<title>{title}</title>
+<style>
+  body {{
+    margin: 0; min-height: 100vh; display: flex; align-items: center;
+    justify-content: center; background: #0f1115; color: #e6e6e6;
+    font-family: Segoe UI, system-ui, -apple-system, sans-serif;
+  }}
+  .card {{
+    max-width: 26rem; padding: 2.5rem; border-radius: 1rem; text-align: center;
+    background: #171a21; border: 1px solid rgba(255,255,255,.08);
+  }}
+  .mark {{ font-size: 3rem; line-height: 1; color: {colour}; }}
+  h1 {{ font-size: 1.25rem; margin: 1rem 0 .5rem; }}
+  p {{ margin: 0; color: #9aa3b2; font-size: .95rem; }}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="mark">{mark}</div>
+    <h1>{heading}</h1>
+    <p>{detail}</p>
+  </div>
+</body>
+</html>
+"""
+
+
+def _result_page(*, ok: bool) -> bytes:
+    """The page a browser *navigation* to the callback lands on.
+
+    The widget's fetch() gets JSON and the user never leaves the Bluz tab. When
+    that fetch is blocked -- Chrome's Local Network Access check can refuse an
+    HTTPS page reaching 127.0.0.1 regardless of what this server sends back --
+    the page falls back to opening the callback URL directly, and the user ends
+    up looking at this.
+    """
+    if ok:
+        body = _RESULT_PAGE.format(
+            title="ההתחברות הושלמה",
+            colour="#4ade80",
+            mark="&check;",
+            heading="ההתחברות הושלמה בהצלחה",
+            detail="ניתן לסגור לשונית זו ולחזור למסוף.",
+        )
+    else:
+        body = _RESULT_PAGE.format(
+            title="ההתחברות נכשלה",
+            colour="#f87171",
+            mark="&times;",
+            heading="לא התקבל קוד התחברות",
+            detail="חזור למסוף והדבק את הקוד באופן ידני.",
+        )
+    return body.encode("utf-8")
+
+
 def _run_callback_server(url: str) -> str | None:
     """
     Run a temporary local HTTP server to receive the session token.
@@ -71,11 +130,39 @@ def _run_callback_server(url: str) -> str | None:
             self.send_header("Access-Control-Allow-Origin", "*")
             self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "*")
-            # Chrome's Private Network Access checks: an HTTPS page calling
-            # 127.0.0.1 is a public -> private request and is blocked outright
-            # unless the local server opts in with these headers.
+            # Legacy Private Network Access opt-in. Chrome has replaced the
+            # header-based opt-in with a permission-gated Local Network Access
+            # check, so a fetch() from the HTTPS page can fail no matter what
+            # we send back -- which is why the page also offers a plain
+            # navigation to this server (see _wants_html below). Kept because
+            # it still satisfies browsers on the older behaviour.
             self.send_header("Access-Control-Allow-Private-Network", "true")
             self.send_header("Access-Control-Max-Age", "600")
+
+        def _wants_html(self) -> bool:
+            """True when this is a browser navigation rather than a fetch().
+
+            A navigation sends `Accept: text/html,...`; fetch() defaults to
+            `*/*`. Navigations are not subject to CORS or Local Network Access,
+            so they are the path that always works -- but they land the user on
+            this server's response, so it has to be a real page.
+            """
+            return "text/html" in self.headers.get("Accept", "")
+
+        def _respond(self, status: int, *, json_body: bytes, html_body: bytes) -> None:
+            html = self._wants_html()
+            self.send_response(status)
+            self._send_cors_headers()
+            self.send_header(
+                "Content-Type",
+                "text/html; charset=utf-8"
+                if html
+                else "application/json; charset=utf-8",
+            )
+            body = html_body if html else json_body
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
 
         def do_OPTIONS(self) -> None:
             self.send_response(204)
@@ -86,19 +173,21 @@ def _run_callback_server(url: str) -> str | None:
             parsed = urllib.parse.urlparse(self.path)
             params = urllib.parse.parse_qs(parsed.query)
             token_list = params.get("token")
-            if token_list:
-                self.server.token = token_list[0]  # type: ignore[attr-defined]
-                self.send_response(200)
-                self._send_cors_headers()
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.end_headers()
-                self.wfile.write(b'{"status":"success"}')
-                self.server.token_received.set()  # type: ignore[attr-defined]
-            else:
-                self.send_response(400)
-                self._send_cors_headers()
-                self.end_headers()
-                self.wfile.write(b"No token found.")
+            if not token_list or not token_list[0]:
+                self._respond(
+                    400,
+                    json_body=b'{"status":"error","error":"no_token"}',
+                    html_body=_result_page(ok=False),
+                )
+                return
+
+            self.server.token = token_list[0]  # type: ignore[attr-defined]
+            self._respond(
+                200,
+                json_body=b'{"status":"success"}',
+                html_body=_result_page(ok=True),
+            )
+            self.server.token_received.set()  # type: ignore[attr-defined]
 
     server = None
     for p in range(52400, 52411):

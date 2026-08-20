@@ -18,8 +18,14 @@ type CliAuthWidgetProps = {
     token: string;
 };
 
+export type CliAuthStatus = "connecting" | "fallback" | "handoff" | "success";
+
+export function callbackUrl(port: string, token: string) {
+    return `http://127.0.0.1:${port}/callback?token=${encodeURIComponent(token)}`;
+}
+
 export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
-    const [status, setStatus] = useState<"connecting" | "fallback" | "success">(() => {
+    const [status, setStatus] = useState<CliAuthStatus>(() => {
         return !port || !token ? "fallback" : "connecting";
     });
     const [copied, setCopied] = useState(false);
@@ -32,25 +38,32 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
             controller.abort();
-            setStatus("fallback");
-        }, 5000); // 5 seconds timeout to connect to localhost
+            setStatus("handoff");
+        }, 3000);
 
-        fetch(`http://127.0.0.1:${port}/callback?token=${encodeURIComponent(token)}`, {
+        fetch(callbackUrl(port, token), {
             method: "GET",
             mode: "cors",
             signal: controller.signal,
         })
             .then((res) => {
                 clearTimeout(timeoutId);
-                if (res.ok) {
-                    setStatus("success");
-                } else {
-                    setStatus("fallback");
-                }
+                // A non-ok response still proves the CLI server is reachable,
+                // but it did not accept the token, so manual paste is the only
+                // way forward — handing off to a new tab would just show the
+                // same error.
+                setStatus(res.ok ? "success" : "fallback");
             })
             .catch(() => {
+                // Chrome's Local Network Access check refuses an HTTPS page
+                // reaching 127.0.0.1 as a subresource, and no header the CLI
+                // sends back changes that — this is why login used to sit out
+                // the CLI's full 60s timeout. A top-level navigation is not
+                // subject to CORS or LNA, so hand off to one. It needs a user
+                // gesture to survive the popup blocker, hence a button rather
+                // than an automatic window.open here.
                 clearTimeout(timeoutId);
-                setStatus("fallback");
+                setStatus("handoff");
             });
 
         return () => {
@@ -58,6 +71,19 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
             controller.abort();
         };
     }, [port, token]);
+
+    const handleHandoff = () => {
+        const opened = window.open(
+            callbackUrl(port, token),
+            "_blank",
+            "noopener",
+        );
+        if (!opened) {
+            // Popup blocked despite the gesture — navigating this tab still
+            // completes the login; the CLI serves a real page at the callback.
+            window.location.href = callbackUrl(port, token);
+        }
+    };
 
     const handleCopy = async () => {
         try {
@@ -138,11 +164,20 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
             )}
 
             {/* Status / Actions Area */}
-            <Box alignItems="center" display="flex" flexDirection="column" gap={3}>
+            <Box
+                alignItems="center"
+                display="flex"
+                flexDirection="column"
+                gap={3}
+            >
                 {status === "connecting" && (
                     <>
                         <CircularProgress size={40} />
-                        <Typography color="textSecondary" textAlign="center" variant="body1">
+                        <Typography
+                            color="textSecondary"
+                            textAlign="center"
+                            variant="body1"
+                        >
                             מבצע התחברות אוטומטית...
                         </Typography>
                     </>
@@ -150,21 +185,64 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
 
                 {status === "success" && (
                     <>
-                        <CheckCircleIcon color="success" sx={{ fontSize: 60 }} />
-                        <Typography color="textPrimary" fontWeight="bold" textAlign="center" variant="h6">
+                        <CheckCircleIcon
+                            color="success"
+                            sx={{ fontSize: 60 }}
+                        />
+                        <Typography
+                            color="textPrimary"
+                            fontWeight="bold"
+                            textAlign="center"
+                            variant="h6"
+                        >
                             ההתחברות הושלמה בהצלחה!
                         </Typography>
-                        <Typography color="textSecondary" textAlign="center" variant="body2">
+                        <Typography
+                            color="textSecondary"
+                            textAlign="center"
+                            variant="body2"
+                        >
                             ניתן לסגור לשונית זו ולחזור למסוף.
                         </Typography>
                     </>
                 )}
 
+                {status === "handoff" && (
+                    <Box width="100%">
+                        <Alert severity="info" sx={{ mb: 3 }}>
+                            <AlertTitle>
+                                נדרש אישור לפתיחת החיבור המקומי
+                            </AlertTitle>
+                            הדפדפן חוסם פנייה ישירה מהאתר אל ה-CLI. לחץ להשלמת
+                            ההתחברות בלשונית חדשה.
+                        </Alert>
+                        <Button
+                            data-testid="cli-auth-handoff"
+                            fullWidth
+                            onClick={handleHandoff}
+                            variant="contained"
+                        >
+                            השלם התחברות
+                        </Button>
+                        <Button
+                            fullWidth
+                            onClick={() => setStatus("fallback")}
+                            sx={{ mt: 1 }}
+                            variant="text"
+                        >
+                            העתק את הקוד באופן ידני
+                        </Button>
+                    </Box>
+                )}
+
                 {status === "fallback" && (
                     <Box width="100%">
                         <Alert severity="warning" sx={{ mb: 3 }}>
-                            <AlertTitle>לא הצלחנו להתחבר ל-CLI באופן אוטומטי</AlertTitle>
-                            אנא העתק את קוד ההתחברות באופן ידני והדבק אותו במסוף.
+                            <AlertTitle>
+                                לא הצלחנו להתחבר ל-CLI באופן אוטומטי
+                            </AlertTitle>
+                            אנא העתק את קוד ההתחברות באופן ידני והדבק אותו
+                            במסוף.
                         </Alert>
                         <Box display="flex" gap={1} width="100%">
                             <TextField
