@@ -104,8 +104,8 @@ export function SyllabusSelectionField({
                     disabled={isLinking}
                     endAdornment={
                         <InputAdornment
-                            sx={{ marginInlineEnd: 2 }}
                             position="end"
+                            sx={{ marginInlineEnd: 2 }}
                         >
                             {isLinking ? (
                                 <CircularProgress

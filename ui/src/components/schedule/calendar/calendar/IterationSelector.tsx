@@ -8,8 +8,8 @@ import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { useCallback } from "react";
 
-import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { useIterationScope } from "@/components/base/IterationProvider";
+import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 
 // `undefined` (no `?it=` param) means "the current run". The select
 // still has to show *which* iteration that is, so it resolves the current
