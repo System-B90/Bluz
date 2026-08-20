@@ -3,6 +3,7 @@ import SyncIcon from "@mui/icons-material/Sync";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import FormHelperText from "@mui/material/FormHelperText";
 import Tooltip from "@mui/material/Tooltip";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
@@ -15,7 +16,7 @@ export type IterationFormCardProps = Omit<FormCardBaseProps<Iteration>, "selecte
     values: IterationValues;
     setValue: <TKey extends keyof IterationValues>(
         key: TKey,
-        value: IterationValues[TKey],
+        value: IterationValues[ TKey ],
     ) => void;
     isSubmitting: boolean;
     handleSyncHive: (iteration: Iteration) => void;
@@ -80,7 +81,7 @@ function IterationDeleteAction({
                     type="button"
                     variant="outlined"
                 >
-                    מחיקת מחזור
+                    מחיקה
                 </Button>
             </span>
         </Tooltip>
@@ -123,14 +124,15 @@ function IterationSyncHiveAction({
                 : <SyncIcon /> }
             sx={ {
                 borderRadius: "10px",
-                py: 1,
+                height: 40,
                 fontWeight: 700,
                 fontSize: "0.82rem",
+                lineHeight: '0.75rem',
             } }
             type="button"
             variant="outlined"
         >
-            סנכרון פרטי הייב
+            סנכרון פרטים
         </Button>
     );
 }
@@ -154,12 +156,6 @@ export function IterationFormCard({
         <BaseFormCard
             formActions={ {
                 extraActions: <>
-                    <IterationSyncHiveAction
-                        handleSyncHive={ handleSyncHive }
-                        isCreating={ isCreating }
-                        isSyncingHive={ isSyncingHive }
-                        selectedIteration={ selectedIteration }
-                    />
                     <IterationDeleteAction
                         handleDelete={ handleDelete }
                         isCreating={ isCreating }
@@ -169,7 +165,7 @@ export function IterationFormCard({
                     />
                 </>,
                 isSubmitting,
-                label: { creating: "יצירת מחזור", editing: "עדכון מחזור" },
+                label: { creating: "יצירת מחזור", editing: "עדכון המחזור" },
             } }
             formFields={ <>
                 <SettingsTextField
@@ -192,13 +188,27 @@ export function IterationFormCard({
                     required
                     value={ values.label }
                 />
-                <SettingsTextField
-                    helperText="כתובת מופע ההייב של המחזור. שמות ההייב נשמרים בזמן היצירה, וניתן לרענן אותם בכפתור הסנכרון."
-                    label="כתובת הייב (אופציונלי)"
-                    onChange={ (e) => setValue("hiveUrl", e.target.value) }
-                    placeholder="https://..."
-                    value={ values.hiveUrl }
-                />
+                <Box>
+                    <Box alignItems="flex-start" display="flex" gap={ 1 }>
+                        <SettingsTextField
+                            label="כתובת הייב (אופציונלי)"
+                            onChange={ (e) => setValue("hiveUrl", e.target.value) }
+                            placeholder="https://..."
+                            value={ values.hiveUrl }
+                        />
+                        <IterationSyncHiveAction
+                            handleSyncHive={ handleSyncHive }
+                            isCreating={ isCreating }
+                            isSyncingHive={ isSyncingHive }
+                            selectedIteration={ selectedIteration }
+                        />
+                    </Box>
+                    { /* Spans the full row (input + sync button), matching
+                         the standard TextField helper-text indent. */ }
+                    <FormHelperText sx={ { mx: 1.75 } }>
+                        כתובת מופע ההייב של המחזור. שמות ההייב נשמרים בזמן היצירה, וניתן לרענן אותם בכפתור הסנכרון.
+                    </FormHelperText>
+                </Box>
                 <Box display="flex" gap={ 2 }>
                     <DatePicker
                         format="DD/MM/YYYY"
