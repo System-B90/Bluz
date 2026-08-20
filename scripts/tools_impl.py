@@ -9,14 +9,12 @@ Author: Michael K. Steinberg
 import os
 import secrets
 import socket
-import ssl
 import subprocess
 import sys
 import time
-import urllib.error
-import urllib.request
 from pathlib import Path
 
+import sb90_devops as devops
 import typer
 
 app = typer.Typer(help="Bluz dev-ops helper CLI.", no_args_is_help=True)
@@ -38,89 +36,22 @@ HIVE_REGISTRY_PREFIX = "ghcr.io/system-b90/hive"
 CI_MONGO_PASSWORD = "4Cqoz8M7g1oYHxaOuCBsOSi7KeOvWWRP"
 
 
+# These wrap sb90_devops so every call site keeps passing repo-relative paths
+# instead of threading ROOT through by hand. The helper bodies themselves used
+# to live here, byte-identical to madash's copy — see System-B90/Bluz#226.
 def _run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
-    # npm/npx on Windows are .cmd shims, not .exe -- CreateProcess can't find
-    # them without going through the shell.
-    shell = sys.platform == "win32" and cmd[0] in ("npm", "npx")
-    return subprocess.run(cmd, cwd=ROOT, shell=shell, **kwargs)
+    return devops.run(cmd, cwd=ROOT, **kwargs)
 
 
 def _spawn_background(cmd: list[str], log_file: Path, pid_file: Path) -> int:
-    """Starts a detached background process, logs its output, and records its PID."""
-    STATE_DIR.mkdir(parents=True, exist_ok=True)
-    creationflags = 0
-    if sys.platform == "win32":
-        creationflags = (
-            subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
-        )
-    shell = sys.platform == "win32" and cmd[0] in ("npm", "npx")
-    with log_file.open("w", encoding="utf-8") as log:
-        proc = subprocess.Popen(
-            cmd,
-            cwd=ROOT,
-            shell=shell,
-            stdout=log,
-            stderr=subprocess.STDOUT,
-            creationflags=creationflags,
-        )
-    pid_file.write_text(str(proc.pid), encoding="utf-8")
-    return proc.pid
+    return devops.spawn_background(cmd, log_file=log_file, pid_file=pid_file, cwd=ROOT)
 
 
-def _pid_alive(pid: int) -> bool:
-    if sys.platform == "win32":
-        result = subprocess.run(
-            ["tasklist", "/FI", f"PID eq {pid}"], capture_output=True, text=True
-        )
-        return str(pid) in result.stdout
-    try:
-        import os
-
-        os.kill(pid, 0)
-        return True
-    except OSError:
-        return False
-
-
-def _kill_pid(pid: int) -> None:
-    if sys.platform == "win32":
-        subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True)
-    else:
-        import os
-        import signal
-
-        try:
-            os.kill(pid, signal.SIGTERM)
-        except OSError:
-            pass
-
-
-def _read_pid(pid_file: Path) -> int | None:
-    if not pid_file.exists():
-        return None
-    try:
-        return int(pid_file.read_text(encoding="utf-8").strip())
-    except ValueError:
-        return None
-
-
-def _port_in_use(port: int, host: str = "127.0.0.1") -> bool:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.settimeout(1)
-        return s.connect_ex((host, port)) == 0
-
-
-def _https_ok(host: str) -> tuple[bool, str]:
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    try:
-        with urllib.request.urlopen(f"https://{host}", timeout=3, context=ctx) as resp:
-            return resp.status < 500, str(resp.status)
-    except urllib.error.HTTPError as e:
-        return e.code < 500, str(e.code)
-    except Exception as e:  # noqa: BLE001 - report any connection failure as down
-        return False, str(e)
+_pid_alive = devops.pid_alive
+_kill_pid = devops.kill_pid
+_read_pid = devops.read_pid
+_port_in_use = devops.port_in_use
+_https_ok = devops.https_ok
 
 
 dev_app = typer.Typer(help="Local dev server lifecycle.", no_args_is_help=False)
@@ -535,6 +466,8 @@ def ci(
         unit_env = os.environ.copy()
         unit_env.setdefault("NEXTAUTH_SECRET", "ci_test_secret_key")
         _run(["npm", "run", "test:unit"], check=True, env=unit_env)
+        _step("Unit tests: Python")
+        _run([sys.executable, "-m", "pytest", "-q"], check=True)
 
     if skip_e2e:
         typer.secho(
