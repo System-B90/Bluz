@@ -9,11 +9,12 @@ import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
-import {
-    defaultSplitAcrossBreaks,
-    GanttEvent,
-    ModuleEventType,
-} from "@/api-shared/types/gantt/models";
+import
+    {
+        defaultSplitAcrossBreaks,
+        GanttEvent,
+        ModuleEventType,
+    } from "@/api-shared/types/gantt/models";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { EventOrchestratorField } from "@/components/gantt/event-dialog/EventOrchestratorField";
 import { ShuffleSelect } from "@/components/gantt/ShuffleSelect";
@@ -144,7 +145,7 @@ export function EventDetailsForm({
                                 size="small"
                             />
                         }
-                        label="פיצול הפסקות"
+                        label="פיצול סביב הפסקות"
                     />
                 </Stack>
             </Box>

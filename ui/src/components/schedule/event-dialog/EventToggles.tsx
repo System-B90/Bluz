@@ -108,7 +108,7 @@ export function EventToggles({
         },
         { label: "מוסתר", key: "hidden", hue: "#616161", Icon: VisibilityOffIcon },
         {
-            label: "פיצול הפסקות",
+            label: "פיצול סביב הפסקות",
             key: "splitAcrossBreaks",
             hue: "#ef6c00",
             Icon: CallSplitIcon,
