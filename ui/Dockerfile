@@ -27,6 +27,15 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXTAUTH_SECRET=ci_build_placeholder
 
+# V8 sizes its default old-space from host RAM, so the build's memory ceiling
+# used to depend on which machine happened to run it: the 23G self-hosted box
+# gave node ~4G and the build passed, while a 16G GitHub-hosted runner gives it
+# ~2G and `next build` dies in the TypeScript pass with "Ineffective
+# mark-compacts near heap limit". Pin it so the image builds the same
+# everywhere. Builder stage only — the runner stage is a fresh FROM and serves
+# the app with node's default heap.
+ENV NODE_OPTIONS=--max-old-space-size=6144
+
 RUN npm run build
 # Bundle (not just transpile) so migrate.js carries its own deps
 # (drizzle-orm, pg) inline -- it runs in the runner stage, which only ships

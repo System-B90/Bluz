@@ -22,9 +22,9 @@ import { WeekOverflowResolution } from "@/api-shared/gantt/cut-rules";
  */
 
 export type CutDecisionAnswer =
-    | { type: "constraint-moves"; acceptedEventIds: Array<string>; }
-    | { type: "constraint-violation"; acknowledged: true; }
-    | { type: "week-overflow"; weekId: string; resolution: WeekOverflowResolution; };
+    | { type: "constraint-moves"; acceptedEventIds: Array<string> }
+    | { type: "constraint-violation"; acknowledged: true }
+    | { type: "week-overflow"; weekId: string; resolution: WeekOverflowResolution };
 
 /** Hebrew label + explanation for each week-overflow resolution. */
 const OVERFLOW_CHOICES: Array<{
@@ -32,30 +32,29 @@ const OVERFLOW_CHOICES: Array<{
     label: string;
     help: string;
 }> = [
-        {
-            value: "overlap-source",
-            label: "להשאיר חפיפה ביום שאליו שובצו",
-            help: "האירועים העודפים נשארים ביומם ונחפפים זה על זה, בתוך שעות העבודה.",
-        },
-        {
-            value: "overlap-least-full",
-            label: "להעביר ליום הפנוי ביותר בשבוע (עם חפיפה)",
-            help: "מפזר את החפיפה ליום העמוס פחות, במקום להעמיס עוד על יום מלא.",
-        },
-        {
-            value: "extend-day",
-            label: "להאריך את היום מעבר לשעת הסיום",
-            help: "האירועים ימשיכו אחרי שעת הסיום של היום. לא מומלץ.",
-        },
-        {
-            value: "drop",
-            label: "לא לשבץ את האירועים העודפים",
-            help: "האירועים שלא נכנסו פשוט לא ייגזרו ללו״ז.",
-        },
-    ];
+    {
+        value: "overlap-source",
+        label: "להשאיר חפיפה ביום שאליו שובצו",
+        help: "האירועים העודפים נשארים ביומם ונחפפים זה על זה, בתוך שעות העבודה.",
+    },
+    {
+        value: "overlap-least-full",
+        label: "להעביר ליום הפנוי ביותר בשבוע (עם חפיפה)",
+        help: "מפזר את החפיפה ליום העמוס פחות, במקום להעמיס עוד על יום מלא.",
+    },
+    {
+        value: "extend-day",
+        label: "להאריך את היום מעבר לשעת הסיום",
+        help: "האירועים ימשיכו אחרי שעת הסיום של היום. לא מומלץ.",
+    },
+    {
+        value: "drop",
+        label: "לא לשבץ את האירועים העודפים",
+        help: "האירועים שלא נכנסו פשוט לא ייגזרו ללו״ז.",
+    },
+];
 
-const formatHours = (minutes: number): string =>
-{
+const formatHours = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
     const rest = minutes % 60;
     if (hours === 0) return `${rest} דקות`;
@@ -73,16 +72,14 @@ export function CutDecisionStep({
     decision,
     answer,
     onAnswer,
-}: CutDecisionStepProps)
-{
-    if (decision.type === "week-overflow")
-    {
+}: CutDecisionStepProps) {
+    if (decision.type === "week-overflow") {
         const selected =
             answer?.type === "week-overflow" ? answer.resolution : "overlap-source";
         return (
-            <Stack gap={ 1.5 }>
+            <Stack gap={1.5}>
                 <Alert severity="warning">
-                    שבוע { decision.weekNumber } עמוס ב-{ formatHours(decision.excessMinutes) }{ " " }
+                    שבוע {decision.weekNumber} עמוס ב-{formatHours(decision.excessMinutes)}{" "}
                     מעבר לשעות העבודה שלו, גם אחרי איזון בין הימים.
                 </Alert>
                 <Typography variant="body2">
@@ -90,7 +87,7 @@ export function CutDecisionStep({
                 </Typography>
                 <FormControl>
                     <RadioGroup
-                        onChange={ (event) =>
+                        onChange={(event) =>
                             onAnswer({
                                 type: "week-overflow",
                                 weekId: decision.weekId,
@@ -98,36 +95,35 @@ export function CutDecisionStep({
                                     .value as WeekOverflowResolution,
                             })
                         }
-                        value={ selected }
+                        value={selected}
                     >
-                        { OVERFLOW_CHOICES.map((choice) => (
+                        {OVERFLOW_CHOICES.map((choice) => (
                             <FormControlLabel
-                                control={ <Radio /> }
-                                key={ choice.value }
+                                control={<Radio />}
+                                key={choice.value}
                                 label={
                                     <Stack>
                                         <Typography variant="body2">
-                                            { choice.label }
+                                            {choice.label}
                                         </Typography>
                                         <Typography
                                             color="text.secondary"
                                             variant="caption"
                                         >
-                                            { choice.help }
+                                            {choice.help}
                                         </Typography>
                                     </Stack>
                                 }
-                                value={ choice.value }
+                                value={choice.value}
                             />
-                        )) }
+                        ))}
                     </RadioGroup>
                 </FormControl>
             </Stack>
         );
     }
 
-    if (decision.type === "constraint-moves")
-    {
+    if (decision.type === "constraint-moves") {
         const accepted =
             answer?.type === "constraint-moves" ? answer.acceptedEventIds : [];
         const allEventIds = decision.proposals.map(
@@ -135,24 +131,24 @@ export function CutDecisionStep({
         );
         const acceptedAll = accepted.length === allEventIds.length;
         return (
-            <Stack gap={ 1.5 }>
+            <Stack gap={1.5}>
                 <Alert severity="info">
-                    כדי לעמוד באילוצים, מומלץ להעביר { decision.proposals.length }{ " " }
+                    כדי לעמוד באילוצים, מומלץ להעביר {decision.proposals.length}{" "}
                     אירועים ליום אחר באותו שבוע.
                 </Alert>
                 <List dense disablePadding>
-                    { decision.proposals.map((proposal) => (
-                        <ListItem disableGutters key={ proposal.eventId }>
+                    {decision.proposals.map((proposal) => (
+                        <ListItem disableGutters key={proposal.eventId}>
                             <ListItemText
-                                primary={ proposal.eventTitle }
-                                secondary={ proposal.reason }
+                                primary={proposal.eventTitle}
+                                secondary={proposal.reason}
                             />
                         </ListItem>
-                    )) }
+                    ))}
                 </List>
                 <FormControl>
                     <RadioGroup
-                        onChange={ (event) =>
+                        onChange={(event) =>
                             onAnswer({
                                 type: "constraint-moves",
                                 acceptedEventIds:
@@ -161,15 +157,15 @@ export function CutDecisionStep({
                                         : [],
                             })
                         }
-                        value={ acceptedAll && accepted.length > 0 ? "accept" : "reject" }
+                        value={acceptedAll && accepted.length > 0 ? "accept" : "reject"}
                     >
                         <FormControlLabel
-                            control={ <Radio /> }
+                            control={<Radio />}
                             label="לבצע את ההעברות"
                             value="accept"
                         />
                         <FormControlLabel
-                            control={ <Radio /> }
+                            control={<Radio />}
                             label="להשאיר את השיבוץ כפי שהוא"
                             value="reject"
                         />
@@ -180,11 +176,11 @@ export function CutDecisionStep({
     }
 
     return (
-        <Stack gap={ 1.5 }>
+        <Stack gap={1.5}>
             <Alert severity="warning">
-                לא ניתן לקיים אילוץ של &quot;{ decision.violation.ownerTitle }&quot;.
+                לא ניתן לקיים אילוץ של &quot;{decision.violation.ownerTitle}&quot;.
             </Alert>
-            <Typography variant="body2">{ decision.violation.reason }</Typography>
+            <Typography variant="body2">{decision.violation.reason}</Typography>
             <Typography color="text.secondary" variant="caption">
                 הגזירה תמשיך, והאילוץ יישאר בלתי מסופק. ניתן לתקן אותו בגאנט
                 ולגזור מחדש.

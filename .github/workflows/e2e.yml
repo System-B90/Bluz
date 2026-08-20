@@ -5,10 +5,12 @@ on:
         inputs:
             target:
                 description: >-
-                    Which runners to use. self-hosted runs one unified test job
-                    (single Hive+Bluz stack — the mks-srvu box can't host 3 at
-                    once). github-hosted runs the classic 3-shard matrix (each
-                    GitHub-hosted runner is a separate VM, so 3 stacks is free).
+                    Where the test suite runs. The images are always built on
+                    GitHub-hosted runners. self-hosted runs one unified test
+                    job (single Hive+Bluz stack — the mks-srvu box can't host 3
+                    at once). github-hosted runs the classic 3-shard matrix
+                    (each GitHub-hosted runner is a separate VM, so 3 stacks is
+                    free).
                 type: choice
                 options:
                     - self-hosted
@@ -37,13 +39,19 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    # One build job, on whichever runner class the run targets. Its artifact
-    # (test-images) is portable, so it feeds whichever test job below runs.
-    # Default (push/PR, or dispatch target=self-hosted) → self-hosted; only an
-    # explicit dispatch with target=github-hosted uses ubuntu-24.04.
+    # Image builds are pure CPU with no Hive dependency and their artifact is
+    # portable, so they run on GitHub-hosted runners no matter where the suite
+    # itself lands. That keeps the one thing the self-hosted box is actually
+    # needed for — the long test run — off a builder that kept dying under its
+    # own load: three named, warm buildkits shared one 8-vCPU host with the
+    # release pipeline's lint job and 14 Hive containers, and the UI build
+    # failed with "frontend grpc server closed unexpectedly" often enough that
+    # a continue-on-error retry was papering over it (the retry then failed the
+    # job anyway, master 23f3af5). An ephemeral VM per run has none of that
+    # contention, so the builder pinning and the retries are gone with it.
     build-test-images:
         name: Build Test Images
-        runs-on: ${{ fromJSON((github.event_name == 'workflow_dispatch' && inputs.target == 'github-hosted') && '["ubuntu-24.04"]' || '["self-hosted","dind"]') }}
+        runs-on: ubuntu-24.04
         # Version-bump commits on master (chore: bump version to *) only touch
         # package.json, so they'd otherwise trigger a full e2e run for nothing.
         if: >-
@@ -53,61 +61,14 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v7
 
-            # An unnamed builder gets a fresh random name per run, and so a
-            # fresh buildkit container — image pull plus container boot — every
-            # single time. On the self-hosted
-            # box that boot has to share 8 vCPUs with the release pipeline's
-            # lint job and 14 Hive containers, and when the inner dockerd is
-            # starved the boot overruns buildx's readiness window:
-            #   failed to list workers: ... dial unix
-            #   /run/buildkit/buildkitd.sock: no such file or directory
-            # A stable name plus cleanup: false keeps one warm buildkit around,
-            # so subsequent runs attach to it instead of racing a cold boot.
-            # (It also kills the "failed to remove one or more builders"
-            # annotation the teardown step used to emit.) The first run after a
-            # box reboot still boots cold, hence the retry below.
             - name: Set up Docker Buildx
-              id: buildx
-              continue-on-error: true
               uses: docker/setup-buildx-action@v4
-              with:
-                  name: bluz-e2e-builder
-                  cleanup: false
-
-            - name: Set up Docker Buildx (retry)
-              if: steps.buildx.outcome == 'failure'
-              uses: docker/setup-buildx-action@v4
-              with:
-                  name: bluz-e2e-builder
-                  cleanup: false
 
             # Build once here instead of once per shard (#e2e-perf). Tags match
             # exactly what deploy/docker-compose.yml resolves to with
             # BLUZ_VERSION=latest, so each shard's `docker compose up` finds the
             # image already present locally and skips building it again.
-            # buildkit occasionally dies mid-build on the self-hosted box
-            # ("frontend grpc server closed unexpectedly", "closing transport
-            # due to: EOF") under memory pressure, which threw away an
-            # otherwise good ~40 minute run. The second attempt reuses the
-            # layers the first one already cached, so a retry is cheap and a
-            # green first attempt costs nothing.
             - name: Build UI Image
-              id: build_ui
-              continue-on-error: true
-              uses: docker/build-push-action@v7
-              with:
-                  context: .
-                  file: ui/Dockerfile
-                  target: runner
-                  load: true
-                  tags: ghcr.io/system-b90/bluz/ui:latest
-                  build-args: |
-                      NPM_TOKEN=${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
-                  cache-from: type=gha,scope=e2e-ui
-                  cache-to: type=gha,mode=max,scope=e2e-ui
-
-            - name: Build UI Image (retry)
-              if: steps.build_ui.outcome == 'failure'
               uses: docker/build-push-action@v7
               with:
                   context: .
@@ -175,6 +136,76 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v7
 
+            # run_tests.py brings the Bluz stack up as compose project
+            # `bluz-test-<worktree-slug>` and never tears it down, while
+            # deploy/docker-compose.yml marks the services `restart: always`.
+            # So any run that dies before its teardown — a cancel, a timeout, a
+            # failed setup — leaves a full Bluz stack running on the box
+            # forever, and the teardown below only ever cleaned up `hive-*`.
+            # Four such stacks (two 4 days old, two 5 days old) had piled up by
+            # 0d7b947, several stuck in restart loops, and they starved this
+            # box badly enough that setup-hive hit its own 60-minute timeout
+            # without ever bringing Hive up.
+            #
+            # This box runs one e2e job at a time by design (see the job
+            # comment above), so anything matching these names at the start of
+            # a run is leaked, not live — the same assumption the `hive-*`
+            # cleanup already makes.
+            - name: Reclaim leaked test stacks
+              run: |
+                  projects=$(docker ps -aq --filter "name=^/bluz-test-" \
+                      | xargs -r docker inspect \
+                        --format '{{index .Config.Labels "com.docker.compose.project"}}' \
+                      | sort -u || true)
+                  for proj in $projects; do
+                      echo "Removing leaked compose project: $proj"
+                      docker compose -p "$proj" down -v --remove-orphans || true
+                  done
+                  # Force-remove whatever survived the compose down (a project
+                  # whose compose file is gone still leaves labelled containers).
+                  leftovers=$(docker ps -aq --filter "name=^/bluz-test-" || true)
+                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
+                  for proj in $projects; do
+                      docker volume ls -q \
+                          --filter "label=com.docker.compose.project=$proj" \
+                          | xargs -r docker volume rm -f || true
+                      docker network ls -q \
+                          --filter "label=com.docker.compose.project=$proj" \
+                          | xargs -r docker network rm || true
+                  done
+                  # Reclaiming the containers is not enough on its own: the
+                  # box sat at 100% disk (455G, 0 bytes free) even after every
+                  # leaked stack was gone, and setup-hive refuses to start Hive
+                  # under 10GB free. Its own cleanup is deliberately
+                  # conservative on self-hosted runners — `docker image prune`
+                  # without -a, `volume prune` without -a — and a plain
+                  # `volume prune` skips *named* volumes, which is precisely
+                  # what a leaked compose stack leaves behind. That left
+                  # 11.75GB of volumes and 8.19GB of images reported as
+                  # reclaimable while the run failed for want of space.
+                  #
+                  # Between runs nothing on this box is meant to be alive, so
+                  # "unused" here means "garbage". Images and build cache are
+                  # re-pulled and rebuilt on demand; disk is the scarce thing.
+                  docker volume prune -af || true
+                  docker builder prune -af || true
+                  docker image prune -af || true
+
+                  docker ps -a --format 'table {{.Names}}\t{{.Status}}'
+                  docker system df || true
+                  df -h / || true
+
+                  # Surface the host-level shortfall explicitly. If this still
+                  # reads under 10GB, the space is held outside this daemon —
+                  # stale _work/ directories or /opt/hive on the runner host —
+                  # and needs hands on the box; setup-hive will fail straight
+                  # after this with the same number.
+                  avail_gb=$(($(df -Pk / | awk 'NR==2 {print $4}') / 1024 / 1024))
+                  echo "Free disk after reclaim: ${avail_gb} GB"
+                  if [ "$avail_gb" -lt 10 ]; then
+                      echo "::warning::Only ${avail_gb} GB free after reclaiming every leaked stack, volume, image and build cache this daemon can see. The remaining space is held by the runner host itself (stale _work/ directories, /opt/hive), which CI cannot reach — the box needs manual cleanup."
+                  fi
+
             - name: Set up Hive
               uses: System-B90/.github/actions/setup-hive@main
               with:
@@ -185,9 +216,10 @@ jobs:
                   python-version: "3.13"
 
             - name: Install Python dependencies (pyhive)
-              # The self-hosted runner's interpreter is PEP 668
-              # externally-managed, so a bare `pip install` aborts. A venv on
-              # PATH keeps later steps calling plain `python`/`pip` unchanged.
+              # A venv, not a bare `pip install`: the self-hosted runner's
+              # interpreter is PEP 668 externally-managed, so the bare install
+              # aborts there. Putting it on PATH keeps later steps calling
+              # plain `python`/`pip` unchanged on either runner class.
               run: |
                   python -m venv "${RUNNER_TEMP}/pyhive-venv"
                   echo "${RUNNER_TEMP}/pyhive-venv/bin" >> "$GITHUB_PATH"
@@ -312,9 +344,14 @@ jobs:
               run: |
                   mkdir -p container-logs
                   docker ps -a
+                  # Bounded: this loop ran against every container on the box
+                  # and spent 28 minutes on a wedged daemon at 0d7b947, eating
+                  # the rest of the job's timeout and delaying the teardown
+                  # below — which is what leaks the next stack.
                   for c in $(docker ps -aq); do
                     name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
-                    docker logs "$c" > "container-logs/$name.log" 2>&1 || true
+                    timeout 30 docker logs --tail 2000 "$c" \
+                      > "container-logs/$name.log" 2>&1 || true
                   done
                   echo "::group::Bluz UI container status + log (tail)"
                   ui=$(docker ps -a --filter "name=-ui" --format '{{.Names}}' | head -1)
@@ -346,9 +383,18 @@ jobs:
             # running — and that is what made the next run's nested containerd
             # time out on startup. Runs after the log upload so a failing run
             # still gets its diagnostics.
-            - name: Tear down Hive stack
+            - name: Tear down test + Hive stacks
               if: always()
               run: |
+                  # The Bluz stack goes first and unconditionally: leaving it up
+                  # is what wedged this box for five days (see "Reclaim leaked
+                  # test stacks" above). `docker compose down` alone is not
+                  # enough — on a run that died before checkout finished, the
+                  # compose file may not even be on disk — so each cleanup ends
+                  # with a name-filtered `rm -f`.
+                  bluz=$(docker ps -aq --filter "name=^/bluz-test-" || true)
+                  [ -n "$bluz" ] && docker rm -f $bluz || true
+
                   docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
                   leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
                   [ -n "$leftovers" ] && docker rm -f $leftovers || true
@@ -374,6 +420,76 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v7
 
+            # run_tests.py brings the Bluz stack up as compose project
+            # `bluz-test-<worktree-slug>` and never tears it down, while
+            # deploy/docker-compose.yml marks the services `restart: always`.
+            # So any run that dies before its teardown — a cancel, a timeout, a
+            # failed setup — leaves a full Bluz stack running on the box
+            # forever, and the teardown below only ever cleaned up `hive-*`.
+            # Four such stacks (two 4 days old, two 5 days old) had piled up by
+            # 0d7b947, several stuck in restart loops, and they starved this
+            # box badly enough that setup-hive hit its own 60-minute timeout
+            # without ever bringing Hive up.
+            #
+            # This box runs one e2e job at a time by design (see the job
+            # comment above), so anything matching these names at the start of
+            # a run is leaked, not live — the same assumption the `hive-*`
+            # cleanup already makes.
+            - name: Reclaim leaked test stacks
+              run: |
+                  projects=$(docker ps -aq --filter "name=^/bluz-test-" \
+                      | xargs -r docker inspect \
+                        --format '{{index .Config.Labels "com.docker.compose.project"}}' \
+                      | sort -u || true)
+                  for proj in $projects; do
+                      echo "Removing leaked compose project: $proj"
+                      docker compose -p "$proj" down -v --remove-orphans || true
+                  done
+                  # Force-remove whatever survived the compose down (a project
+                  # whose compose file is gone still leaves labelled containers).
+                  leftovers=$(docker ps -aq --filter "name=^/bluz-test-" || true)
+                  [ -n "$leftovers" ] && docker rm -f $leftovers || true
+                  for proj in $projects; do
+                      docker volume ls -q \
+                          --filter "label=com.docker.compose.project=$proj" \
+                          | xargs -r docker volume rm -f || true
+                      docker network ls -q \
+                          --filter "label=com.docker.compose.project=$proj" \
+                          | xargs -r docker network rm || true
+                  done
+                  # Reclaiming the containers is not enough on its own: the
+                  # box sat at 100% disk (455G, 0 bytes free) even after every
+                  # leaked stack was gone, and setup-hive refuses to start Hive
+                  # under 10GB free. Its own cleanup is deliberately
+                  # conservative on self-hosted runners — `docker image prune`
+                  # without -a, `volume prune` without -a — and a plain
+                  # `volume prune` skips *named* volumes, which is precisely
+                  # what a leaked compose stack leaves behind. That left
+                  # 11.75GB of volumes and 8.19GB of images reported as
+                  # reclaimable while the run failed for want of space.
+                  #
+                  # Between runs nothing on this box is meant to be alive, so
+                  # "unused" here means "garbage". Images and build cache are
+                  # re-pulled and rebuilt on demand; disk is the scarce thing.
+                  docker volume prune -af || true
+                  docker builder prune -af || true
+                  docker image prune -af || true
+
+                  docker ps -a --format 'table {{.Names}}\t{{.Status}}'
+                  docker system df || true
+                  df -h / || true
+
+                  # Surface the host-level shortfall explicitly. If this still
+                  # reads under 10GB, the space is held outside this daemon —
+                  # stale _work/ directories or /opt/hive on the runner host —
+                  # and needs hands on the box; setup-hive will fail straight
+                  # after this with the same number.
+                  avail_gb=$(($(df -Pk / | awk 'NR==2 {print $4}') / 1024 / 1024))
+                  echo "Free disk after reclaim: ${avail_gb} GB"
+                  if [ "$avail_gb" -lt 10 ]; then
+                      echo "::warning::Only ${avail_gb} GB free after reclaiming every leaked stack, volume, image and build cache this daemon can see. The remaining space is held by the runner host itself (stale _work/ directories, /opt/hive), which CI cannot reach — the box needs manual cleanup."
+                  fi
+
             - name: Set up Hive
               uses: System-B90/.github/actions/setup-hive@main
               with:
@@ -384,9 +500,10 @@ jobs:
                   python-version: "3.13"
 
             - name: Install Python dependencies (pyhive)
-              # The self-hosted runner's interpreter is PEP 668
-              # externally-managed, so a bare `pip install` aborts. A venv on
-              # PATH keeps later steps calling plain `python`/`pip` unchanged.
+              # A venv, not a bare `pip install`: the self-hosted runner's
+              # interpreter is PEP 668 externally-managed, so the bare install
+              # aborts there. Putting it on PATH keeps later steps calling
+              # plain `python`/`pip` unchanged on either runner class.
               run: |
                   python -m venv "${RUNNER_TEMP}/pyhive-venv"
                   echo "${RUNNER_TEMP}/pyhive-venv/bin" >> "$GITHUB_PATH"
@@ -507,9 +624,14 @@ jobs:
               run: |
                   mkdir -p container-logs
                   docker ps -a
+                  # Bounded: this loop ran against every container on the box
+                  # and spent 28 minutes on a wedged daemon at 0d7b947, eating
+                  # the rest of the job's timeout and delaying the teardown
+                  # below — which is what leaks the next stack.
                   for c in $(docker ps -aq); do
                     name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
-                    docker logs "$c" > "container-logs/$name.log" 2>&1 || true
+                    timeout 30 docker logs --tail 2000 "$c" \
+                      > "container-logs/$name.log" 2>&1 || true
                   done
                   echo "::group::Bluz UI container status + log (tail)"
                   ui=$(docker ps -a --filter "name=-ui" --format '{{.Names}}' | head -1)
@@ -535,9 +657,12 @@ jobs:
                   retention-days: 7
 
             # Harmless on a throwaway VM, but keeps the two paths identical.
-            - name: Tear down Hive stack
+            - name: Tear down test + Hive stacks
               if: always()
               run: |
+                  bluz=$(docker ps -aq --filter "name=^/bluz-test-" || true)
+                  [ -n "$bluz" ] && docker rm -f $bluz || true
+
                   docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
                   leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
                   [ -n "$leftovers" ] && docker rm -f $leftovers || true

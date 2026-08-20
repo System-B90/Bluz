@@ -39,13 +39,11 @@ Use `/caveman` mode. Less word do trick.
 - Deploy: Docker with explicit version tags. GitHub Actions for CI/CD.
 
 **CI Runners**
-- Two fleets. Self-hosted box is default. GitHub-hosted mirrors sit beside it.
-- Pairs: `release-pipeline.yml` ↔ `release-pipeline-cloud.yml`, `docs.yml` ↔ `docs-cloud.yml`. E2E (`e2e.yml`) has no mirror — always self-hosted.
-- Mirrors differ from originals in two ways only: `runs-on: ubuntu-latest`, and a `vars.BLUZ_CI_RUNNER == 'cloud'` clause leading each job's `if:`. Keep them diffable line-for-line.
-- Mirrors are inert unless `BLUZ_CI_RUNNER` is set. Switch: set the variable **and** disable the originals. Revert: unset it, re-enable them.
-- Never leave both fleets live on a `v*` tag — both publish GHCR images and a Release. Two pipelines race.
-- Edit an original → mirror the change into its cloud twin, same commit.
-- Full detail: [`.github/workflows/README-cloud-runners.md`](.github/workflows/README-cloud-runners.md).
+- One workflow per pipeline. No cloud mirrors, no `BLUZ_CI_RUNNER` variable — both were deleted after the mirrors drifted from the originals.
+- GitHub-hosted (`ubuntu-latest`) is the default everywhere: `release-pipeline.yml`, `docs.yml`, and e2e's `Build Test Images`.
+- Self-hosted (`[self-hosted, dind]`) is for one job only: `Full Test Suite (E2E, self-hosted)` in `e2e.yml`. The suite runs ~an hour and needs the box's Hive stack.
+- New job → `runs-on: ubuntu-latest` unless it runs the e2e suite.
+- Don't pin buildx builder names or set `cleanup: false` on cloud runners. That existed to stop the self-hosted jobs tearing down each other's buildkit; each cloud job is its own VM.
 
 **Windows / PowerShell**
 - Always Windows 11 + PowerShell (v5/v7).

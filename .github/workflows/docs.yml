@@ -20,8 +20,14 @@ permissions:
 jobs:
   build:
     name: Build Documentation
-    runs-on: [self-hosted, node, python]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
+    # mkdocs-typedoc shells out to typedoc, which walks the same UI sources
+    # that OOM'd eslint and `next build` at a GitHub-hosted runner's ~2G
+    # default heap. This job only runs on tags, so a heap failure here would
+    # surface at the worst possible moment.
+    env:
+      NODE_OPTIONS: --max-old-space-size=6144
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -61,7 +67,7 @@ jobs:
   publish:
     name: Publish to System-B90/.github
     needs: build
-    runs-on: [self-hosted, light]
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Download built site
