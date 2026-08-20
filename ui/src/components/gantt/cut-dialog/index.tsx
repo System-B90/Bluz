@@ -348,6 +348,12 @@ export function CutToScheduleDialog({
         setPhase({ ...phase, index: phase.index + 1 });
     }, [answers, commit, forceAcknowledged, phase]);
 
+    /** Step back to the previous question, keeping its already-recorded answer. */
+    const handleDecisionBack = useCallback(() => {
+        if (phase.kind !== "decisions" || phase.index === 0) return;
+        setPhase({ ...phase, index: phase.index - 1 });
+    }, [phase]);
+
     const answerFor = useCallback(
         (decision: CutDecision): CutDecisionAnswer | undefined =>
             answers.find((answer) => {
@@ -504,6 +510,9 @@ export function CutToScheduleDialog({
                 {phase.kind === "decisions" && (
                     <>
                         <Button onClick={handleClose}>ביטול</Button>
+                        {phase.index > 0 && (
+                            <Button onClick={handleDecisionBack}>חזרה</Button>
+                        )}
                         <Button
                             color="primary"
                             onClick={handleDecisionNext}
