@@ -19,9 +19,12 @@ import { useCallback, useMemo, useState } from "react";
 import { apiGetEventHistory } from "@/api-client/calendar";
 import { ApiEventHistoryEntry } from "@/api-shared/types/event-history";
 import { useCourses } from "@/components/base/CoursesProvider";
+import { useCustomColors } from "@/components/base/CustomColorsProvider";
+import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
+import { resolveColorById } from "@/components/schedule/event-component/event-colors";
 import { EventHistoryTimeline } from "@/components/schedule/event-dialog/event-history/EventHistoryTimeline";
 import { ChangeValueLookups } from "@/components/schedule/event-dialog/event-history/format-change";
 import { EventId } from "@/components/schedule/types/event";
@@ -58,6 +61,8 @@ export function EventHistoryPanel({ eventId }: EventHistoryPanelProps) {
     const { getInstructor } = useHiveUsers();
     const { courses } = useCourses();
     const { rooms } = useRooms();
+    const { getCustomColor } = useCustomColors();
+    const { getSubject } = useHiveSubjects();
 
     const [expanded, setExpanded] = useState(false);
     const [entries, setEntries] = useState<Array<ApiEventHistoryEntry> | null>(
@@ -101,11 +106,13 @@ export function EventHistoryPanel({ eventId }: EventHistoryPanelProps) {
 
     const lookups = useMemo<ChangeValueLookups>(
         () => ({
+            colorInfo: (id) =>
+                resolveColorById(id, { getCustomColor, getSubject }),
             courseName: (id) => courses.find((course) => course.id === id)?.name,
             instructorName: (id) => getInstructor(id)?.display_name,
             roomName: (id) => rooms.find((room) => room.id === id)?.name,
         }),
-        [courses, getInstructor, rooms],
+        [courses, getCustomColor, getInstructor, getSubject, rooms],
     );
 
     return (

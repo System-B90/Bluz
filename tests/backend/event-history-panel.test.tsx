@@ -26,6 +26,12 @@ vi.mock("@/components/base/HiveUsersProvider", () => ({
 vi.mock("@/components/base/RoomsProvider", () => ({
     useRooms: () => ({ rooms: [{ id: "r1", name: "כיתה 1" }] }),
 }));
+vi.mock("@/components/base/CustomColorsProvider", () => ({
+    useCustomColors: () => ({ getCustomColor: () => undefined }),
+}));
+vi.mock("@/components/base/HiveSubjectsProvider", () => ({
+    useHiveSubjects: () => ({ getSubject: () => undefined }),
+}));
 vi.mock("@/components/schedule/calendar/calendar-provider/CalendarContext", () => ({
     useCalendar: () => ({ iterationId: undefined }),
 }));

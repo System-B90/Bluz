@@ -62,6 +62,22 @@ function orderedChanges(
     });
 }
 
+/** Small round color chip avatar for `color` field before/after values. */
+function ColorSwatch({ hex }: { hex: string }) {
+    return (
+        <Box
+            sx={{
+                bgcolor: hex,
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: "50%",
+                height: "100%",
+                width: "100%",
+            }}
+        />
+    );
+}
+
 function ChangeRow({
     change,
     lookups,
@@ -69,7 +85,10 @@ function ChangeRow({
     change: ApiEventHistoryEntry["changes"][number];
     lookups: ChangeValueLookups;
 }) {
-    const { field, from, to } = formatChange(change, lookups);
+    const { field, from, fromSwatch, to, toSwatch } = formatChange(
+        change,
+        lookups,
+    );
 
     return (
         <Stack
@@ -86,6 +105,11 @@ function ChangeRow({
                 {eventFieldLabel(field)}
             </Typography>
             <Chip
+                avatar={
+                    fromSwatch ? (
+                        <ColorSwatch hex={fromSwatch} />
+                    ) : undefined
+                }
                 label={from}
                 size="small"
                 sx={{
@@ -104,6 +128,7 @@ function ChangeRow({
                 sx={{ color: "text.disabled", fontSize: 14 }}
             />
             <Chip
+                avatar={toSwatch ? <ColorSwatch hex={toSwatch} /> : undefined}
                 color="primary"
                 label={to}
                 size="small"

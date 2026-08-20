@@ -15,6 +15,8 @@ import {
  */
 
 const lookups: ChangeValueLookups = {
+    colorInfo: (id) =>
+        id === "color-1" ? { hex: "#3f51b5", label: "כחול" } : undefined,
     courseName: (id) => (id === "c1" ? "מסלול א" : undefined),
     instructorName: (id) => (id === 7 ? "מיכאל" : undefined),
     roomName: (id) => (id === "r1" ? "כיתה 1" : undefined),
@@ -71,6 +73,16 @@ describe("formatChangeValue", () => {
         expect(formatChangeValue("name", "שיעור", lookups)).toBe("שיעור");
         expect(formatChangeValue("subject", 12, lookups)).toBe("12");
     });
+
+    it("resolves a color id to its display name", () => {
+        expect(formatChangeValue("color", "color-1", lookups)).toBe("כחול");
+    });
+
+    it("falls back to the raw id when a color is unknown", () => {
+        expect(formatChangeValue("color", "color-zzz", lookups)).toBe(
+            "color-zzz",
+        );
+    });
 });
 
 describe("formatChange", () => {
@@ -112,6 +124,21 @@ describe("formatChange", () => {
         expect(
             formatChange({ field: "name", from: "old", to: "new" }, lookups),
         ).toEqual({ field: "name", from: "old", to: "new" });
+    });
+
+    it("attaches resolved hex swatches to a color change", () => {
+        expect(
+            formatChange(
+                { field: "color", from: null, to: "color-1" },
+                lookups,
+            ),
+        ).toEqual({
+            field: "color",
+            from: "—",
+            fromSwatch: undefined,
+            to: "כחול",
+            toSwatch: "#3f51b5",
+        });
     });
 });
 

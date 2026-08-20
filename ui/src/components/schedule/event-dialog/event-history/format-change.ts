@@ -10,6 +10,7 @@ import { EventFieldChange } from "@/api-shared/types/event-history";
  */
 
 export type ChangeValueLookups = {
+    colorInfo: (id: string) => { hex: string; label: string } | undefined;
     courseName: (id: string) => string | undefined;
     instructorName: (id: number) => string | undefined;
     roomName: (id: string) => string | undefined;
@@ -72,6 +73,10 @@ export function formatChangeValue(
 
     if (typeof value === "boolean") return value ? "כן" : "לא";
 
+    if (field === "color" && typeof value === "string") {
+        return lookups.colorInfo(value)?.label ?? value;
+    }
+
     if (Array.isArray(value)) {
         if (value.length === 0) return EMPTY;
         if (ID_LIST_FIELDS.has(field)) {
@@ -89,8 +94,20 @@ export function formatChangeValue(
 export type FormattedChange = {
     field: string;
     from: string;
+    fromSwatch?: string;
     to: string;
+    toSwatch?: string;
 };
+
+/** Hex swatch for a `color` field's logged value, when resolvable. */
+function resolveSwatch(
+    field: string,
+    value: unknown,
+    lookups: ChangeValueLookups,
+): string | undefined {
+    if (field !== "color" || typeof value !== "string") return undefined;
+    return lookups.colorInfo(value)?.hex;
+}
 
 /**
  * Format a whole change row.
@@ -110,7 +127,9 @@ export function formatChange(
     return {
         field: change.field,
         from: formatChangeValue(change.field, change.from, lookups, sameDay),
+        fromSwatch: resolveSwatch(change.field, change.from, lookups),
         to: formatChangeValue(change.field, change.to, lookups, sameDay),
+        toSwatch: resolveSwatch(change.field, change.to, lookups),
     };
 }
 
