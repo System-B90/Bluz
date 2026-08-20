@@ -107,8 +107,9 @@ describe("EventHistoryPanel", () => {
         expect(screen.getAllByText("מיכאל")).toHaveLength(2);
         // What changed: labelled fields, formatted values, resolved ids.
         expect(screen.getByText("שעת התחלה")).toBeTruthy();
-        expect(screen.getByText("07/01/2024 08:00")).toBeTruthy();
-        expect(screen.getByText("07/01/2024 10:00")).toBeTruthy();
+        // Both sides land on the same day, so the row omits the date.
+        expect(screen.getByText("08:00")).toBeTruthy();
+        expect(screen.getByText("10:00")).toBeTruthy();
         expect(screen.getByText("מדריכים")).toBeTruthy();
     });
 

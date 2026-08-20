@@ -167,5 +167,6 @@ export const INITIATOR_LABELS: Record<EventChangeInitiator, string> = {
     [EventChangeInitiator.OfflinePush]: "סנכרון ממצב לא־מקוון",
     [EventChangeInitiator.SnapshotRestore]: "שחזור תמונת מצב",
     [EventChangeInitiator.GoogleSync]: "סנכרון מיומן Google",
+    [EventChangeInitiator.Undo]: "ביטול/ביצוע חוזר",
     [EventChangeInitiator.Unknown]: "לא ידוע",
 };
