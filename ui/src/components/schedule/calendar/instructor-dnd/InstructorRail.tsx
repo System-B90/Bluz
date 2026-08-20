@@ -11,6 +11,7 @@ import Typography from "@mui/material/Typography";
 import { useMemo, useState } from "react";
 
 import { CourseUser } from "@/api-shared/types/hive";
+import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useGroupedInstructors } from "@/components/base/use-grouped-instructors";
 import { HiveAvatar } from "@/components/header/HiveAvatarImage";
 import { useInstructorDnd } from "@/components/schedule/calendar/instructor-dnd/InstructorDndProvider";
@@ -36,48 +37,69 @@ function InstructorRailChip({
         data: { kind: "palette-instructor", personId: instructor.id },
     });
 
+    // Same filter gesture as an event's person chip (PersonChip) — double
+    // click here since single click is already claimed by drag-start.
+    const { filteredInstructors, setFilteredInstructors } = useCalendarFilters();
+    const isFiltered = filteredInstructors.includes(instructor.id);
+    const toggleInstructorFilter = () => {
+        setFilteredInstructors((current) =>
+            current.includes(instructor.id)
+                ? current.filter((id) => id !== instructor.id)
+                : [...current, instructor.id],
+        );
+    };
+
     return (
-        <Box
-            ref={setNodeRef}
-            {...listeners}
-            {...attributes}
-            sx={{
-                px: 0.75,
-                py: 0.4,
-                borderRadius: 1,
-                border: "1px solid",
-                borderColor: "divider",
-                bgcolor: "background.paper",
-                fontSize: "0.78rem",
-                cursor: "grab",
-                touchAction: "none",
-                opacity: isDragging ? 0.4 : 1,
-                display: "flex",
-                alignItems: "center",
-                gap: 0.75,
-                overflow: "hidden",
-                transition: "background-color 0.15s ease-in-out",
-                "&:hover": { bgcolor: "action.hover" },
-            }}
-            title={instructor.display_name}
+        <Tooltip
+            title={
+                isFiltered
+                    ? `${instructor.display_name} — ביטול הסינון`
+                    : `${instructor.display_name} — לחיצה כפולה לסינון`
+            }
         >
-            <HiveAvatar
-                alt={instructor.display_name}
-                hiveId={instructor.id}
-                sx={{ width: 22, height: 22, fontSize: "0.7rem" }}
-            />
             <Box
-                component="span"
+                ref={setNodeRef}
+                {...listeners}
+                {...attributes}
+                onDoubleClick={toggleInstructorFilter}
                 sx={{
-                    minWidth: 0,
-                    whiteSpace: "nowrap",
+                    px: 0.75,
+                    py: 0.4,
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: isFiltered ? "primary.main" : "divider",
+                    bgcolor: isFiltered ? "action.selected" : "background.paper",
+                    fontSize: "0.78rem",
+                    fontWeight: isFiltered ? 700 : "inherit",
+                    cursor: "grab",
+                    touchAction: "none",
+                    opacity: isDragging ? 0.4 : 1,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.75,
                     overflow: "hidden",
-                    textOverflow: "ellipsis",
+                    transition: "background-color 0.15s ease-in-out",
+                    "&:hover": { bgcolor: "action.hover" },
                 }}
             >
-                {instructor.display_name}
+                <HiveAvatar
+                    alt={instructor.display_name}
+                    hiveId={instructor.id}
+                    sx={{ width: 22, height: 22, fontSize: "0.7rem" }}
+                />
+                <Box
+                    component="span"
+                    sx={{
+                        minWidth: 0,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                    }}
+                >
+                    {instructor.display_name}
+                </Box>
             </Box>
-        </Box>
+        </Tooltip>
     );
 }
 
