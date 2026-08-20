@@ -62,6 +62,14 @@ export const IterationProvider = ({
     const [iterationId, setIterationIdState] = useState<
         IterationId | undefined
     >(() => (searchParams.get(ITERATION_QUERY_PARAM) as IterationId) || undefined);
+    // Side-effect-free mirror of `iterationId`, read inside `setIterationId`
+    // instead of a functional `setState` updater — React may invoke a
+    // functional updater during render (bailout/replay), and `router.replace`
+    // inside one leaked into IterationProvider's render phase (#crash).
+    const iterationIdRef = useRef(iterationId);
+    useEffect(() => {
+        iterationIdRef.current = iterationId;
+    }, [iterationId]);
 
     const [iterations, setIterations] = useState<Array<Iteration>>([]);
     useEffect(() => {
@@ -97,27 +105,25 @@ export const IterationProvider = ({
     const setIterationId: Dispatch<SetStateAction<IterationId | undefined>> =
         useCallback(
             (value) => {
-                setIterationIdState((prev) => {
-                    const next =
-                        typeof value === "function" ? value(prev) : value;
+                const next =
+                    typeof value === "function"
+                        ? value(iterationIdRef.current)
+                        : value;
+                iterationIdRef.current = next;
 
-                    const params = new URLSearchParams(
-                        window.location.search,
-                    );
-                    if (next) {
-                        params.set(ITERATION_QUERY_PARAM, next);
-                    } else {
-                        params.delete(ITERATION_QUERY_PARAM);
-                    }
-                    lastAppliedParam.current = next;
-                    const query = params.toString();
-                    router.replace(
-                        query ? `${pathname}?${query}` : pathname,
-                        { scroll: false },
-                    );
-
-                    return next;
+                const params = new URLSearchParams(window.location.search);
+                if (next) {
+                    params.set(ITERATION_QUERY_PARAM, next);
+                } else {
+                    params.delete(ITERATION_QUERY_PARAM);
+                }
+                lastAppliedParam.current = next;
+                const query = params.toString();
+                router.replace(query ? `${pathname}?${query}` : pathname, {
+                    scroll: false,
                 });
+
+                setIterationIdState(next);
             },
             [pathname, router],
         );
