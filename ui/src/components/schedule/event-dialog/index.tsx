@@ -116,7 +116,7 @@ export function EventDialog({
                             sx={ { color: "text.secondary" } }
                             variant="caption"
                         >
-                            { `יום: ${HEBREW_WEEKDAYS[event.startTime.day()]}, ${event.startTime.format("DD/MM/YYYY")}` }
+                            { `יום: ${HEBREW_WEEKDAYS[ event.startTime.day() ]}, ${event.startTime.format("DD/MM/YYYY")}` }
                         </Typography>
                     ) : null }
                 </Stack>
