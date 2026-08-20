@@ -42,6 +42,22 @@ export function hiveModuleUrl(
 }
 
 /**
+ * Link to a subject's Hive page.
+ *
+ * @param subjectId Hive subject id.
+ * @param baseUrl Hive instance; defaults to `NEXT_PUBLIC_HIVE_URL`.
+ * @returns The absolute URL, or null when the id or Hive URL is missing.
+ */
+export function hiveSubjectUrl(
+    subjectId: null | number | undefined,
+    baseUrl?: string,
+): null | string {
+    const base = hiveBaseUrl(baseUrl);
+    if (!base || !subjectId) return null;
+    return `${base}/course/${subjectId}`;
+}
+
+/**
  * Link to a student group in Hive's mentor view — where its current lesson
  * and queue are shown and can be reassigned by hand.
  *

@@ -23,6 +23,7 @@ import { CourseId } from "@/api-shared/types/course";
 import { Class, Queue } from "@/api-shared/types/hive";
 import { useCourses } from "@/components/base/CoursesProvider";
 import { useHiveLessons } from "@/components/base/HiveLessonsProvider";
+import { useIterationScope } from "@/components/base/IterationProvider";
 import { Event, eventHasSubject } from "@/components/schedule/types/event";
 
 type HiveQueueMappingProps = {
@@ -38,6 +39,11 @@ type HiveQueueMappingProps = {
  */
 export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
     const { getCourse } = useCourses();
+    const { iterationId, currentIterationId, iterations } = useIterationScope();
+    const hiveUrl = useMemo(() => {
+        const resolvedId = iterationId ?? currentIterationId;
+        return iterations.find((it) => it.id === resolvedId)?.hiveUrl;
+    }, [iterationId, currentIterationId, iterations]);
     const { getLesson } = useHiveLessons();
     // Keyed by module so a stale module's queues can never be offered while a
     // new module's are still loading — the picker either shows this module's
@@ -103,7 +109,7 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
     const mapping = event.hiveQueues ?? {};
     const mappedCount = courseIds.filter((id) => mapping[id]).length;
     const lesson = event.hiveLesson ? getLesson(event.hiveLesson) : undefined;
-    const moduleLink = hiveModuleUrl(event.subject, moduleId);
+    const moduleLink = hiveModuleUrl(event.subject, moduleId, hiveUrl);
 
     const setQueueForCourse = (courseId: CourseId, queueId: "" | number) => {
         const next = { ...mapping };
@@ -193,7 +199,7 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
                         const course = getCourse(courseId);
                         const name = course?.name ?? courseId;
                         const hiveClassId = classIdByName.get(name);
-                        const classLink = hiveClassUrl(hiveClassId);
+                        const classLink = hiveClassUrl(hiveClassId, hiveUrl);
 
                         return (
                             <Stack
