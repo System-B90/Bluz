@@ -487,6 +487,7 @@ export function buildScheduleEvent(
         required: false,
         personalTalk: false,
         splitAcrossBreaks: ganttEvent.splitAcrossBreaks,
+        fake: false,
         ganttEventId: ganttEvent.id,
         ganttOccurrenceDate: occurrence.occurrenceDate,
     };
@@ -525,6 +526,7 @@ export function buildGeneratedBreakEvent(
         required: false,
         personalTalk: false,
         splitAcrossBreaks: false,
+        fake: false,
         ganttEventId: occurrence.ganttEventId,
         ganttOccurrenceDate: occurrence.occurrenceDate,
     };
