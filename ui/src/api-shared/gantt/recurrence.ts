@@ -36,7 +36,7 @@ export type GetRecurrenceOccurrenceDayIdsParams = RecurrenceWindow & {
      * whose weekday isn't in this set is skipped rather than forced (#111
      * follow-up): a recurring event only recurs on its valid days.
      */
-    allowedDayIndices?: Set<GanttDayIndex> | null;
+    allowedDayIndices?: null | Set<GanttDayIndex>;
 };
 
 /**

@@ -44,6 +44,13 @@ vi.mock("@/components/base/HiveLessonsProvider", () => ({
             id === 500 ? { id: 500, name: "תרגול רשתות" } : undefined,
     }),
 }));
+vi.mock("@/components/base/IterationProvider", () => ({
+    useIterationScope: () => ({
+        iterationId: undefined,
+        currentIterationId: undefined,
+        iterations: [],
+    }),
+}));
 
 import { EventType } from "@/api-shared/types/event";
 import { HiveQueueMapping } from "@/components/schedule/event-dialog/HiveQueueMapping";

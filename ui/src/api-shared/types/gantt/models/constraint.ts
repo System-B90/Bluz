@@ -67,7 +67,7 @@ const ALL_DAY_INDICES: Array<GanttDayIndex> = [
  */
 export function getAllowedDayIndices(
     constraints: Array<GanttConstraint | undefined> | undefined,
-): Set<GanttDayIndex> | null {
+): null | Set<GanttDayIndex> {
     const temporal = (constraints ?? []).filter(
         (c): c is TemporalConstraint => c?.type === ConstraintType.Temporal,
     );

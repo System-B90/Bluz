@@ -1,5 +1,5 @@
-import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
 import { NormalizedStore } from "@/api-client/gantt/drizzle-normalize";
+import { getRecurrenceOccurrenceDayIds } from "@/api-shared/gantt/recurrence";
 import {
     EventRecurrence,
     GanttCurriculum,
