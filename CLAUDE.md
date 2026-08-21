@@ -24,7 +24,8 @@ Use `/caveman` mode. Less word do trick.
 **Git**
 - Run `git status` + `git diff` before any commit instructions.
 - All commit messages: `Vibe-<PastTenseVerb> <description>` (e.g. `Vibe-Implemented`, `Vibe-Fixed`). No `feat:`/`chore:` prefixes.
-- Auto-commit as single command: `pwsh -Command "git add <files> && git commit -m 'Vibe-...' -n"`. Use `-n` to skip linter.
+- Auto-commit as single command: `pwsh -Command "git add <files> && git commit -m 'Vibe-...'"`.
+- Never pass `-n` / `--no-verify` (org rule). Hook fails → run auto-fixers, commit again: `npx eslint --fix && npx prettier --write`, `ruff format . && ruff check --fix .`.
 
 **Output Formatting**
 - READMEs: "Quick Start" section with copy-paste commands.
