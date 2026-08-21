@@ -24,7 +24,14 @@ Use `/caveman` mode. Less word do trick.
 **Git**
 - Run `git status` + `git diff` before any commit instructions.
 - All commit messages: `Vibe-<PastTenseVerb> <description>` (e.g. `Vibe-Implemented`, `Vibe-Fixed`). No `feat:`/`chore:` prefixes.
-- Auto-commit as single command: `pwsh -Command "git add <files> && git commit -m 'Vibe-...' -n"`. Use `-n` to skip linter.
+- Auto-commit as single command: `pwsh -Command "git add <files> && git commit -m 'Vibe-...'"`.
+- **Never** pass `-n` / `--no-verify`. This file used to instruct exactly that, which
+  contradicts the org rule in `System-B90/.github`'s `CLAUDE.md` ("Never skip commit
+  hooks") — that rule wins, and the conflict is called out there by name. If the Husky
+  pre-commit hook fails, run the auto-fixers and commit again:
+  `npx eslint --fix && npx prettier --write` for JS/TS, `ruff format . && ruff check --fix .`
+  for Python. A hook that fails is reporting something real; skipping it just moves the
+  failure to CI.
 
 **Output Formatting**
 - READMEs: "Quick Start" section with copy-paste commands.
