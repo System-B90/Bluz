@@ -33,6 +33,7 @@ from bluz_cli.commands import (  # noqa: E402
     courses,
     events,
     gantt,
+    health as health_cmd,
     hive,
     integrations,
     iterations,
@@ -71,6 +72,10 @@ app.add_typer(integrations.app, name="integrations")
 # `bluz login` / `bluz logout` as friendly top-level aliases for the most-used auth verbs.
 app.command("login")(auth.login)
 app.command("logout")(auth.logout)
+
+# Top-level because it is the one command that needs no session and answers
+# about the deployment rather than about data in it.
+app.command("health")(health_cmd.health)
 
 
 def _version_callback(value: bool) -> None:

@@ -424,6 +424,63 @@ def cut_status(
         show(client.get(f"{_BASE}/curriculums/{curriculum_id}/cut"), title="Cut status")
 
 
+def _cut_payload(
+    force: bool,
+    auto_spillover: bool,
+    insert_breaks: bool,
+    accepted_constraint_moves: str | None,
+    week_overflow_resolutions: str | None,
+) -> dict:
+    """Build the body both /cut and /cut/plan take.
+
+    The route reads five fields. The CLI used to send only `force`, so every
+    other decision silently took the server default and the plan-then-confirm
+    flow was unreachable from a terminal.
+    """
+    moves = parse_json(accepted_constraint_moves, what="--accepted-constraint-moves")
+    if moves is not None and not isinstance(moves, list):
+        raise typer.BadParameter("--accepted-constraint-moves must be a JSON array.")
+
+    resolutions = parse_json(
+        week_overflow_resolutions, what="--week-overflow-resolutions"
+    )
+    if resolutions is not None and not isinstance(resolutions, dict):
+        raise typer.BadParameter("--week-overflow-resolutions must be a JSON object.")
+
+    return {
+        "force": force,
+        "autoSpillover": auto_spillover,
+        "insertBreaks": insert_breaks,
+        "acceptedConstraintMoves": moves if moves is not None else [],
+        "weekOverflowResolutions": resolutions if resolutions is not None else {},
+    }
+
+
+FORCE_OPTION = typer.Option(
+    False, "--force", help="Re-cut a curriculum that was already cut."
+)
+AUTO_SPILLOVER_OPTION = typer.Option(
+    True,
+    "--auto-spillover/--no-auto-spillover",
+    help="Let the planner spill work into later weeks. Server default: on.",
+)
+INSERT_BREAKS_OPTION = typer.Option(
+    True,
+    "--insert-breaks/--no-insert-breaks",
+    help="Insert breaks between occurrences. Server default: on.",
+)
+ACCEPTED_MOVES_OPTION = typer.Option(
+    None,
+    "--accepted-constraint-moves",
+    help="JSON array of constraint moves to accept, as returned by cut-plan.",
+)
+WEEK_OVERFLOW_OPTION = typer.Option(
+    None,
+    "--week-overflow-resolutions",
+    help="JSON object of week-overflow answers, as returned by cut-plan.",
+)
+
+
 @curriculums_app.command("cut-preview")
 def cut_preview(
     curriculum_id: str = typer.Argument(..., help="Curriculum id."),
@@ -436,12 +493,20 @@ def cut_preview(
 @curriculums_app.command("cut")
 def cut_curriculum(
     curriculum_id: str = typer.Argument(..., help="Curriculum id."),
-    force: bool = typer.Option(
-        False, "--force", help="Re-cut a curriculum that was already cut."
-    ),
+    force: bool = FORCE_OPTION,
+    auto_spillover: bool = AUTO_SPILLOVER_OPTION,
+    insert_breaks: bool = INSERT_BREAKS_OPTION,
+    accepted_constraint_moves: str = ACCEPTED_MOVES_OPTION,
+    week_overflow_resolutions: str = WEEK_OVERFLOW_OPTION,
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation."),
 ) -> None:
     """Materialize a published, linked curriculum into schedule events.
+
+    The body used to carry only `force`, so the other four fields the route
+    reads always took their server defaults and the plan-then-confirm flow was
+    unreachable from a terminal. Run `cut-plan` first, then feed its
+    `report.decisions` back through --accepted-constraint-moves and
+    --week-overflow-resolutions.
 
     Gating failures come back coded — `draft`, `no-iteration`, `already-cut`
     (409) or `invalid-plan` (400) — and nothing is written when they fire.
@@ -450,10 +515,15 @@ def cut_curriculum(
         typer.confirm(
             f"Cut curriculum {curriculum_id} into its linked iteration?", abort=True
         )
+    payload = _cut_payload(
+        force,
+        auto_spillover,
+        insert_breaks,
+        accepted_constraint_moves,
+        week_overflow_resolutions,
+    )
     with state.client() as client:
-        result = client.post(
-            f"{_BASE}/curriculums/{curriculum_id}/cut", json={"force": force}
-        )
+        result = client.post(f"{_BASE}/curriculums/{curriculum_id}/cut", json=payload)
     success(f"Cut curriculum {curriculum_id}")
     show(result)
 
@@ -556,6 +626,86 @@ def materialize_occurrence(
             },
         )
     success(f"Materialized event {event_id} onto day {day_id}")
+    show(result)
+
+
+# --- cut planning and shuffles ----------------------------------------------
+
+
+@curriculums_app.command("cut-plan")
+def cut_plan(
+    curriculum_id: str = typer.Argument(..., help="Curriculum id."),
+    force: bool = FORCE_OPTION,
+    auto_spillover: bool = AUTO_SPILLOVER_OPTION,
+    insert_breaks: bool = INSERT_BREAKS_OPTION,
+    accepted_constraint_moves: str = ACCEPTED_MOVES_OPTION,
+    week_overflow_resolutions: str = WEEK_OVERFLOW_OPTION,
+) -> None:
+    """Plan the cut without writing: what the commit would do, plus open decisions.
+
+    This is the first half of the plan-then-confirm flow the dialog uses. Run
+    it, read `report.decisions`, then pass your answers to `cut` via
+    --accepted-constraint-moves / --week-overflow-resolutions.
+
+    Unlike cut-preview, this runs the full pipeline — balance, constraints and
+    breaks — and applies the same gating as the commit, so `draft` and
+    `no-iteration` still come back as 409 without writing anything.
+    """
+    payload = _cut_payload(
+        force,
+        auto_spillover,
+        insert_breaks,
+        accepted_constraint_moves,
+        week_overflow_resolutions,
+    )
+    with state.client() as client:
+        show(client.post(f"{_BASE}/curriculums/{curriculum_id}/cut/plan", json=payload))
+
+
+@syllabuses_app.command("shuffles")
+def syllabus_shuffle_usages(
+    syllabus_id: str = typer.Argument(..., help="Syllabus id."),
+    names: str = typer.Option(
+        ..., "--names", help="Comma-separated shuffle names to look up."
+    ),
+) -> None:
+    """Modules and events using these shuffle names — what a deletion would strip."""
+    with state.client() as client:
+        show(
+            client.get(
+                f"{_BASE}/syllabuses/{syllabus_id}/shuffles", params={"names": names}
+            ),
+            title=f"Shuffle usages for syllabus {syllabus_id}",
+        )
+
+
+@syllabuses_app.command("set-shuffles")
+def syllabus_set_shuffles(
+    syllabus_id: str = typer.Argument(..., help="Syllabus id."),
+    shuffles: str = typer.Option(
+        ...,
+        "--shuffles",
+        help="Comma-separated shuffle names. Pass an empty string to clear them all.",
+    ),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation."),
+) -> None:
+    """Replace a syllabus's shuffle list, cascading removals onto modules and events.
+
+    This is destructive for anything using a name you drop — run `shuffles`
+    first to see what that would strip.
+    """
+    names = [name.strip() for name in shuffles.split(",") if name.strip()]
+    if not yes:
+        typer.confirm(
+            f"Set syllabus {syllabus_id} shuffles to {names or 'none'}? "
+            "Modules and events using removed names lose them.",
+            abort=True,
+        )
+    with state.client() as client:
+        result = client.post(
+            f"{_BASE}/syllabuses/{syllabus_id}/shuffles", json={"shuffles": names}
+        )
+    success(f"Set {len(names)} shuffle(s) on syllabus {syllabus_id}")
     show(result)
 
 

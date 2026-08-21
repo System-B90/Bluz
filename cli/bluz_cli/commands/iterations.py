@@ -143,3 +143,18 @@ def sync_hive(
         result = client.post(f"{_BASE}/{iteration_id}/sync-hive")
     success(f"Synced iteration {iteration_id} against Hive")
     show(result)
+
+
+@app.command()
+def usage(
+    iteration_id: str = typer.Argument(
+        None, help="Iteration id. Omit to report on the current iteration."
+    ),
+) -> None:
+    """What still hangs off an iteration — what a delete would take with it."""
+    target = iteration_id or "current"
+    with state.client() as client:
+        show(
+            client.get(f"{_BASE}/{target}/usage"),
+            title=f"Usage for iteration {target}",
+        )

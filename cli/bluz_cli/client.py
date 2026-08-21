@@ -69,6 +69,35 @@ class BluzClient:
     def delete(self, path: str, *, json: Any = None, params: dict | None = None) -> Any:
         return self.request("DELETE", path, json=json, params=params)
 
+    def get_raw(self, path: str, *, params: dict[str, Any] | None = None) -> Any:
+        """GET a route that does **not** speak the Bluz response envelope.
+
+        `/api/health` is the case this exists for. It answers a bare
+        `{ status: "healthy" | "degraded" | "unhealthy", checks: {...} }`,
+        which collides head-on with the envelope convention: `_unwrap` sees a
+        dict carrying a "status" key, finds it is not the success sentinel `0`,
+        and raises — so the report can never be read through `get`. It also
+        answers 503 when unhealthy, which is a real answer here, not a failure
+        to report.
+        """
+        clean_params = (
+            {k: v for k, v in params.items() if v is not None} if params else None
+        )
+        try:
+            response = self._client.request("GET", path, params=clean_params)
+        except httpx.RequestError as exc:
+            raise BluzApiError("NetworkError", str(exc)) from exc
+
+        if response.is_redirect or response.status_code == 401:
+            raise NotAuthenticatedError()
+
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise BluzApiError(
+                "InvalidResponse", f"Server did not return valid JSON: {exc}"
+            ) from exc
+
     # --- core ---------------------------------------------------------------
 
     def request(
