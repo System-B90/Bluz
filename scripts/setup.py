@@ -495,6 +495,32 @@ def generate_env() -> None:
             or google_client_secret
         )
 
+    # AI assistant. Optional: with no key the assistant hides its launcher
+    # rather than failing on first use, so a deployment that does not want it
+    # simply leaves this blank.
+    ai_provider = existing_env.get("AI_PROVIDER", "openrouter")
+    ai_model = existing_env.get("AI_MODEL", "")
+    ai_api_key = existing_env.get("OPENROUTER_API_KEY", "")
+    enable_ai = inquirer.confirm(
+        message="Enable the in-app AI assistant? (needs a model provider API key)",
+        default=bool(ai_api_key),
+    ).execute()
+    if enable_ai:
+        ai_provider = inquirer.text(
+            message="AI provider (AI_PROVIDER):",
+            default=ai_provider,
+        ).execute()
+        ai_model = inquirer.text(
+            message="Model slug (AI_MODEL, blank = provider default):",
+            default=ai_model,
+        ).execute()
+        ai_api_key = (
+            inquirer.secret(
+                message="Provider API key (OPENROUTER_API_KEY):",
+            ).execute()
+            or ai_api_key
+        )
+
     env_content: dict[str, str] = {
         # No "latest" default: that tag is never published (only tagged v*
         # builds push images), so defaulting to it turns a missing version into
@@ -525,6 +551,9 @@ def generate_env() -> None:
         "DATABASE_URL": db_url,
         "GOOGLE_CLIENT_ID": google_client_id,
         "GOOGLE_CLIENT_SECRET": google_client_secret,
+        "AI_PROVIDER": ai_provider,
+        "AI_MODEL": ai_model,
+        "OPENROUTER_API_KEY": ai_api_key,
     }
 
     with env_path.open("w", encoding="utf-8") as f:

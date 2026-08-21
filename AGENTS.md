@@ -228,6 +228,8 @@ Runtime config comes from the root **`.env`** (consumed by docker-compose and co
 | `JWT_SECRET`, `SYM_ENC_KEY` | Session JWT signing + AES-GCM token encryption (`ui/src/settings.tsx`). |
 | `WEBSOCKET_SESSION_SERVER_*` | WebSocket session server host/auth/port/heartbeat. |
 | `POSTGRES_POOL_MAX`, `POSTGRES_PREPARE`, `MONGO_MAX_POOL_SIZE`, … | DB pool tuning — see [docs/performance-and-scaling.md](docs/performance-and-scaling.md). |
+| `AI_PROVIDER`, `AI_MODEL`, `AI_BASE_URL` | AI assistant backend selection (`ui/src/api-server/ai/index.ts`). Defaults: `openrouter`, the provider's own default model, the provider's own base URL. |
+| `OPENROUTER_API_KEY` | Credential for the `openrouter` AI provider. Unset ⇒ the assistant hides itself instead of failing on first use. |
 | `NEXT_PUBLIC_GANT_DEFAULT_*_HOURS` | Default work hours for new Gantt week days. |
 | `BLUZ_VERSION` | Docker image tag. |
 

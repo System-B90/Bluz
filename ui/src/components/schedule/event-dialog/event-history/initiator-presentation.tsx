@@ -1,4 +1,5 @@
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloudSyncIcon from "@mui/icons-material/CloudSync";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
@@ -88,6 +89,10 @@ const PRESENTATION: Record<EventChangeInitiator, InitiatorPresentation> = {
     [EventChangeInitiator.Undo]: {
         color: "secondary",
         icon: <HistoryIcon fontSize="small" />,
+    },
+    [EventChangeInitiator.AiAssistant]: {
+        color: "info",
+        icon: <AutoAwesomeIcon fontSize="small" />,
     },
     [EventChangeInitiator.Unknown]: {
         color: "info",

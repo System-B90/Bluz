@@ -5,6 +5,7 @@ import Fab from "@mui/material/Fab";
 import Tooltip from "@mui/material/Tooltip";
 import React from "react";
 
+import { AiAssistant } from "@/components/ai/AiAssistant";
 import { BluzCommandPalette } from "@/components/app-commands/BluzCommandPalette";
 import { CoursesProvider } from "@/components/base/CoursesProvider";
 import { CustomColorsProvider } from "@/components/base/CustomColorsProvider";
@@ -80,6 +81,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                         </Fab>
                     </Tooltip>
                 ) : null}
+
+                {/*
+                  * `AiAssistant` reads `?cid=` to know which gantt is open,
+                  * and `useSearchParams` suspends during prerender.
+                  */}
+                <React.Suspense fallback={null}>
+                    <AiAssistant />
+                </React.Suspense>
 
                 <SettingsDialogUrl />
                 <NoIterationPrompt />
