@@ -127,7 +127,11 @@ export async function* runAiAgent(
             let content = "";
 
             for await (const event of provider.streamChat({
-                messages: transcript,
+                // A snapshot, not the live array: the loop keeps appending to
+                // `transcript` while the provider is mid-request, and a
+                // provider that reads its own `messages` lazily would observe
+                // messages that did not exist when the call was made.
+                messages: [...transcript],
                 tools: toolSpecs(),
                 model: options.model,
                 signal,

@@ -3,15 +3,19 @@ export const dynamic = "force-dynamic";
 import { getAiProvider } from "@/api-server/ai";
 import { runAiAgent } from "@/api-server/ai/agent";
 import { AiProviderError } from "@/api-server/ai/provider";
-import { encodeSseEvent } from "@/api-server/ai/sse";
 import { AiToolContext } from "@/api-server/ai/tools";
-import { parseJsonBody } from "@/api-server/common";
+import {
+    ApiErrorMaker,
+    catchHandler,
+    parseJsonBody,
+} from "@/api-server/common";
 import {
     resolveIterationDb,
     resolveWritableIterationDb,
 } from "@/api-server/mongo-db-controller";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
+import { encodeSseEvent } from "@/api-shared/sse";
 import {
     AI_MAX_MESSAGES,
     AI_MAX_MESSAGE_LENGTH,
@@ -54,8 +58,24 @@ function validateMessages(messages: unknown): Array<AiMessage> {
         if (!Object.values(AiRole).includes(message?.role)) {
             throw new ClientApiError("תפקיד הודעה לא תקין");
         }
-        if ((message.content?.length ?? 0) > AI_MAX_MESSAGE_LENGTH) {
+        // `content` is forwarded to the provider verbatim, so its *type* has to
+        // be checked and not just its length: an array of objects has no
+        // `.length` worth trusting and would sail past a size-only guard.
+        if (typeof message.content !== "string") {
+            throw new ClientApiError("תוכן הודעה לא תקין");
+        }
+        if (message.content.length > AI_MAX_MESSAGE_LENGTH) {
             throw new ClientApiError("הודעה ארוכה מדי");
+        }
+        // Tool arguments are replayed from a previous turn and are otherwise
+        // unbounded, which would make the size cap trivially bypassable by
+        // stuffing them instead of the message body.
+        const toolCallBytes = (message.toolCalls ?? []).reduce(
+            (total, call) => total + (call?.arguments?.length ?? 0),
+            0,
+        );
+        if (toolCallBytes > AI_MAX_MESSAGE_LENGTH) {
+            throw new ClientApiError("קריאות הכלים בהודעה ארוכות מדי");
         }
         return message;
     });
@@ -84,22 +104,15 @@ export async function POST(request: Request): Promise<Response> {
                 resolveWritableIterationDb(payload.iterationId),
         };
     } catch (e) {
-        const status =
-            e instanceof ClientApiError
-                ? 400
-                : e instanceof AiProviderError
-                    ? 502
-                    : 401;
-        return Response.json(
-            {
-                status: -1,
-                error: {
-                    name: e instanceof Error ? e.name : "Error",
-                    message: e instanceof Error ? e.message : String(e),
-                },
-            },
-            { status },
-        );
+        // `catchHandler` owns the error → status mapping for every route here,
+        // including the ordering that matters: `UserNotLoggedInError` and
+        // `ForbiddenError` both extend `ClientApiError`, so a hand-rolled
+        // ladder that tests the base class first answers 400 for an
+        // unauthenticated caller.
+        if (e instanceof AiProviderError) {
+            return ApiErrorMaker({ name: e.name, message: e.message }, 502);
+        }
+        return catchHandler(request as never, e);
     }
 
     const encoder = new TextEncoder();

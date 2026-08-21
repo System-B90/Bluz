@@ -82,6 +82,8 @@ Runtime config lives in the root `.env` file. Key variables:
 | `NEXTAUTH_URL`, `NEXTAUTH_SECRET` | next-auth |
 | `JWT_SECRET`, `SYM_ENC_KEY` | Session JWT signing + AES-GCM token encryption |
 | `WEBSOCKET_SESSION_SERVER_*` | WebSocket session server host/auth |
+| `AI_PROVIDER`, `AI_MODEL`, `AI_BASE_URL` | AI assistant backend selection |
+| `OPENROUTER_API_KEY` | Credential for the `openrouter` AI provider. Unset ⇒ assistant hidden |
 
 !!! warning
     `NEXT_PUBLIC_*` vars are exposed to the browser — never put secrets behind that prefix.

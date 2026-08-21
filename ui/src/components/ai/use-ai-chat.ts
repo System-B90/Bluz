@@ -82,7 +82,6 @@ export function useAiChat(scope: AiChatScope) {
             // One id per turn, so streamed deltas append to a single bubble
             // instead of creating one per chunk.
             const assistantId = nextId();
-            let hasAssistantBubble = false;
 
             try {
                 const events = streamAiChat(
@@ -98,25 +97,36 @@ export function useAiChat(scope: AiChatScope) {
                 for await (const event of events) {
                     switch (event.type) {
                     case AiStreamEventType.Delta: {
-                        setTimeline((items) => {
-                            if (!hasAssistantBubble) {
-                                hasAssistantBubble = true;
-                                return [
+                        // Whether the bubble exists is derived from the list
+                        // itself, never from a flag closed over by the
+                        // updater: React double-invokes updaters under Strict
+                        // Mode and keeps the second result, so a mutated flag
+                        // would swallow the first delta and every one after
+                        // it would find nothing to append to.
+                        setTimeline((items) =>
+                            items.some(
+                                (item) =>
+                                    item.id === assistantId &&
+                                    item.kind === AiTimelineKind.Assistant,
+                            )
+                                ? items.map((item) =>
+                                    item.id === assistantId &&
+                                        item.kind === AiTimelineKind.Assistant
+                                        ? {
+                                            ...item,
+                                            text: item.text + event.text,
+                                        }
+                                        : item,
+                                )
+                                : [
                                     ...items,
                                     {
                                         kind: AiTimelineKind.Assistant,
                                         id: assistantId,
                                         text: event.text,
                                     },
-                                ];
-                            }
-                            return items.map((item) =>
-                                item.id === assistantId &&
-                                    item.kind === AiTimelineKind.Assistant
-                                    ? { ...item, text: item.text + event.text }
-                                    : item,
-                            );
-                        });
+                                ],
+                        );
                         break;
                     }
                     case AiStreamEventType.ToolStart: {

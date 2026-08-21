@@ -27,6 +27,15 @@ function aiOrigin(context: AiToolContext): EventWriteOrigin {
     };
 }
 
+/**
+ * Escapes text before it reaches Mongo's `$regex`. The model relays whatever
+ * the user typed, so an unescaped value both widens the search silently (`.`,
+ * `|`) and exposes the server to catastrophic backtracking (`(a+)+b`).
+ */
+function escapeRegex(value: string): string {
+    return value.replace(/[$()*+.?[\\\]^{|}]/g, "\\$&");
+}
+
 /** Rejects a date the model invented in the wrong format. */
 function parseDate(value: string, field: string): Date {
     const date = new Date(value);
@@ -139,7 +148,12 @@ export const listEventsTool: AiTool<ListEventsArgs> = {
             parseDate(args.to, "to"),
             undefined,
             args.nameContains
-                ? { name: { $regex: args.nameContains, $options: "i" } }
+                ? {
+                    name: {
+                        $regex: escapeRegex(args.nameContains),
+                        $options: "i",
+                    },
+                }
                 : undefined,
             await context.readController(),
         );

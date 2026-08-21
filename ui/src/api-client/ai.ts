@@ -4,6 +4,7 @@
  */
 
 import { constructErrorFromNetworkMessage } from "@/api-shared/errors";
+import { readSseData } from "@/api-shared/sse";
 import {
     AiStreamEvent,
     AiStreamEventType,
@@ -47,31 +48,14 @@ export async function* streamAiChat(
         );
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    try {
-        for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-
-            // Frames are `data: {...}\n\n`; a chunk can end mid-frame, so only
-            // whole lines are consumed and the remainder stays buffered.
-            let newline = buffer.indexOf("\n");
-            while (newline !== -1) {
-                const line = buffer.slice(0, newline).trim();
-                buffer = buffer.slice(newline + 1);
-                newline = buffer.indexOf("\n");
-
-                if (!line.startsWith("data:")) continue;
-                yield JSON.parse(line.slice("data:".length).trim()) as AiStreamEvent;
-            }
+    for await (const payload of readSseData(response.body)) {
+        try {
+            yield JSON.parse(payload) as AiStreamEvent;
+        } catch {
+            // One malformed frame must not kill a live answer; the rest of the
+            // turn still streams.
+            continue;
         }
-    } finally {
-        reader.releaseLock();
     }
 }
 

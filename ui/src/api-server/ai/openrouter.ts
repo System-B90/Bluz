@@ -18,7 +18,7 @@ import {
     AiProviderEvent,
     AiToolSpec,
 } from "@/api-server/ai/provider";
-import { readSseData } from "@/api-server/ai/sse";
+import { readSseData } from "@/api-shared/sse";
 import {
     AiChatResult,
     AiMessage,
