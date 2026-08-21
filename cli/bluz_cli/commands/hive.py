@@ -13,6 +13,7 @@ import typer
 
 from bluz_cli.commands._common import LIMIT_OPTION, OFFSET_OPTION, show
 from bluz_cli.context import state
+from bluz_cli.output import success
 
 app = typer.Typer(help="Hive LMS reference data (read-only).", no_args_is_help=True)
 
@@ -69,3 +70,40 @@ def lessons(
             limit=limit,
             offset=offset,
         )
+
+
+@app.command("queues")
+def queues(
+    module_id: int = typer.Option(
+        ..., "--module", "-m", help="Hive module id whose queues to list."
+    ),
+    limit: int = LIMIT_OPTION,
+    offset: int = OFFSET_OPTION,
+) -> None:
+    """Queues of one Hive module — the event dialog's per-shuffle queue picker.
+
+    Module-scoped by design: Hive rejects user queues on a lesson rule, so an
+    unscoped list would offer choices that cannot be saved.
+    """
+    with state.client() as client:
+        show(
+            client.get(f"{_BASE}/queues", params={"module": module_id}),
+            title="Hive queues",
+            limit=limit,
+            offset=offset,
+        )
+
+
+@app.command("activate-lessons")
+def activate_lessons() -> None:
+    """Run one lesson-activation pass now and report what it did.
+
+    This is the same pass the background timer runs every 30 seconds, and it
+    is idempotent — triggering it by hand can only bring queues forward to
+    where they should already be. Writes, so it needs the writable (current)
+    iteration.
+    """
+    with state.client() as client:
+        result = client.post(f"{_BASE}/lesson-activation")
+    success("Ran a lesson-activation pass")
+    show(result, title="Activation tick")

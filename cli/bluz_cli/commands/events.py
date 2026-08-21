@@ -100,3 +100,23 @@ def compare(
     params = {"sd": start_date, "ed": end_date, "itA": iteration_a, "itB": iteration_b}
     with state.client() as client:
         show(client.get(f"{_BASE}/compare", params=params))
+
+
+@app.command()
+def history(
+    event_id: str = typer.Argument(..., help="Event id."),
+    limit: int = LIMIT_OPTION,
+    offset: int = OFFSET_OPTION,
+) -> None:
+    """Change log for one event ("היסטוריית שינויים"), newest first.
+
+    Read-only: rows are written by the write paths themselves. The log names
+    who changed what, so it is never served anonymously.
+    """
+    with state.client() as client:
+        show(
+            client.get(f"{_BASE}/history", params={"id": event_id}),
+            title=f"History for event {event_id}",
+            limit=limit,
+            offset=offset,
+        )
