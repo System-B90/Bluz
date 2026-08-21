@@ -232,6 +232,7 @@ export function AiAssistant() {
                         <Tooltip title="שיחה חדשה">
                             <span>
                                 <IconButton
+                                    aria-label="שיחה חדשה"
                                     disabled={busy || timeline.length === 0}
                                     onClick={reset}
                                     size="small"
@@ -359,12 +360,17 @@ export function AiAssistant() {
                         />
                         {busy ? (
                             <Tooltip title="עצור">
-                                <IconButton color="error" onClick={stop}>
+                                <IconButton
+                                    aria-label="עצירת התשובה"
+                                    color="error"
+                                    onClick={stop}
+                                >
                                     <StopIcon />
                                 </IconButton>
                             </Tooltip>
                         ) : (
                             <IconButton
+                                aria-label="שליחת ההודעה"
                                 color="primary"
                                 disabled={!draft.trim()}
                                 onClick={submit}

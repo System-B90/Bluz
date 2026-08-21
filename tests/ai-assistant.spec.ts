@@ -48,6 +48,17 @@ async function stubTools(page: Page, enabled = true) {
     });
 }
 
+/**
+ * The chat panel itself. Assertions have to be scoped to it: the calendar
+ * underneath is dense Hebrew text, and a bare `getByText` will happily match
+ * a day-column header instead of a chat bubble.
+ */
+function panel(page: Page) {
+    return page
+        .locator(".MuiPaper-root")
+        .filter({ has: page.getByPlaceholder(INPUT) });
+}
+
 async function openAssistant(page: Page) {
     await expect(page.locator(LAUNCHER)).toBeVisible({ timeout: 30_000 });
     await page.locator(LAUNCHER).click();
@@ -60,6 +71,11 @@ async function ask(page: Page, question: string) {
 }
 
 test.describe("AI assistant", () => {
+    // The default 15s budget is spent almost entirely on loading the app —
+    // every test here signs in, waits for hydration and then drives two chat
+    // turns. Same override every other app-loading spec uses.
+    test.describe.configure({ timeout: 60_000 });
+
     test("hides the launcher when no model backend is configured", async ({
         page,
     }) => {
@@ -86,7 +102,7 @@ test.describe("AI assistant", () => {
 
         // Every delta has to land in one bubble; a dropped first chunk is the
         // exact regression the unit test for the hook also pins.
-        await expect(page.getByText("יש שלושה אירועים.")).toBeVisible({
+        await expect(panel(page).getByText("יש שלושה אירועים.")).toBeVisible({
             timeout: 15_000,
         });
     });
@@ -115,7 +131,7 @@ test.describe("AI assistant", () => {
         await ask(page, 'מה יש בלו"ז?');
 
         await expect(
-            page.getByText("list_events: נמצאו 3 אירועים בטווח"),
+            panel(page).getByText("list_events: נמצאו 3 אירועים בטווח"),
         ).toBeVisible({ timeout: 15_000 });
     });
 
@@ -162,13 +178,13 @@ test.describe("AI assistant", () => {
         await ask(page, "תמחק את האירוע");
 
         // The proposal is shown and nothing has run yet.
-        await expect(page.getByText("מחיקת אירוע e1")).toBeVisible({
+        await expect(panel(page).getByText("מחיקת אירוע e1")).toBeVisible({
             timeout: 15_000,
         });
         await expect(page.getByRole("button", { name: "אישור" })).toBeVisible();
 
         await page.getByRole("button", { name: "אישור" }).click();
-        await expect(page.getByText('delete_event: נמחק אירוע "שיעור"')).toBeVisible(
+        await expect(panel(page).getByText('delete_event: נמחק אירוע "שיעור"')).toBeVisible(
             { timeout: 15_000 },
         );
 
@@ -225,7 +241,7 @@ test.describe("AI assistant", () => {
         });
         await page.getByRole("button", { name: "ביטול" }).click();
 
-        await expect(page.getByText("delete_event: הפעולה נדחתה")).toBeVisible({
+        await expect(panel(page).getByText("delete_event: הפעולה נדחתה")).toBeVisible({
             timeout: 15_000,
         });
 
@@ -253,7 +269,7 @@ test.describe("AI assistant", () => {
 
         await ask(page, "היי");
 
-        await expect(page.getByText("שירות ה-AI אינו זמין")).toBeVisible({
+        await expect(panel(page).getByText("שירות ה-AI אינו זמין")).toBeVisible({
             timeout: 15_000,
         });
         // The input stays usable, so a failed turn is recoverable.
@@ -291,9 +307,11 @@ test.describe("AI assistant", () => {
     test("starts a fresh conversation on reset", async ({ page }) => {
         await stubTools(page);
         await stubChat(page, [
-            frame({ type: "delta", text: "ראשון" }) +
-                doneFrame([{ role: "assistant", content: "ראשון" }]),
-            frame({ type: "delta", text: "שני" }) + doneFrame(),
+            frame({ type: "delta", text: "תשובת-בדיקה-אלף" }) +
+                doneFrame([
+                    { role: "assistant", content: "תשובת-בדיקה-אלף" },
+                ]),
+            frame({ type: "delta", text: "תשובת-בדיקה-בית" }) + doneFrame(),
         ]);
 
         const bodies: Array<any> = [];
@@ -306,10 +324,12 @@ test.describe("AI assistant", () => {
         await gotoAppHome(page);
         await openAssistant(page);
         await ask(page, "א");
-        await expect(page.getByText("ראשון")).toBeVisible({ timeout: 15_000 });
+        await expect(
+            panel(page).getByText("תשובת-בדיקה-אלף"),
+        ).toBeVisible({ timeout: 15_000 });
 
         await page.getByRole("button", { name: "שיחה חדשה" }).click();
-        await expect(page.getByText("ראשון")).toHaveCount(0);
+        await expect(panel(page).getByText("תשובת-בדיקה-אלף")).toHaveCount(0);
 
         await ask(page, "ב");
         await expect(async () => {
