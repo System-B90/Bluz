@@ -1,8 +1,9 @@
 """
-Name: test_new_endpoints.py
-Purpose: Covers the CLI commands for UI endpoints the CLI previously never
-         called, plus the widened /cut payload. Each test drives a real local
-         HTTP server, so it asserts the request actually put on the wire.
+Name: test_command_requests.py
+Purpose: Asserts the HTTP request each command actually puts on the wire —
+         method, path, query and JSON body — against a real local server.
+         Mocking the client would not catch a payload that has drifted from
+         the route's contract, which is the bug class these cover.
 Created: 2026-08-21
 Author: Michael K. Steinberg
 """
