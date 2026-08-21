@@ -16,13 +16,15 @@ on:
                     - self-hosted
                     - github-hosted
                 default: self-hosted
-    pull_request:
-        branches: [master]
-    # A full e2e run occupies the single self-hosted box for the best part of
-    # an hour, so it is spent only on the paths that can actually change what
-    # the suite exercises: the app, the specs, and the runtime topology.
-    # Everything else — docs, workflow config, the CLI, tooling — reaches e2e
-    # through a pull request or an explicit dispatch instead.
+    # Master only, deliberately. A full e2e run occupies the single self-hosted
+    # box for the best part of an hour, and running it per pull request meant
+    # the org's one shared runner was spent on branches that get force-pushed
+    # and rebased. There is no `pull_request:` trigger here — use
+    # workflow_dispatch to run the suite against a branch on purpose.
+    #
+    # The path filter narrows it further to what can actually change what the
+    # suite exercises: the app, the specs, and the runtime topology. Docs,
+    # workflow config, the CLI and tooling do not reach e2e at all.
     push:
         branches: [master]
         paths:
