@@ -5,25 +5,59 @@ web app for an educational institution. It pairs an interactive class **Calendar
 **Gantt-style curriculum builder**, and reads organizational data (students, classes,
 rooms, instructors) from an external **Hive** service that also provides SSO.
 
-> **Working in this repo with an AI agent (or want the full architecture)?**
-> See **[AGENTS.md](AGENTS.md)** — it documents the layered API design, directory map,
-> conventions, and every command in one place.
-
 ---
 
-## New to Linux?
+## Quick start
 
-Fresh Ubuntu/Debian server? Run this:
+There are two ways in, and they do **not** share commands. Pick the one that
+matches what you have.
+
+### From a clone — developing Bluz
+
+Point `bluz.dev` at `127.0.0.3` in your hosts file, then:
+
+```bash
+git config core.ignorecase false
+pip install -r scripts/requirements.txt
+python scripts/setup.py     # interactive: writes .env, SSL certs, registers Hive SSO
+python tools.py dev         # backgrounds the dev servers and returns
+python tools.py dev status  # what is actually up
+```
+
+`tools.py` is the dev-ops CLI for everything else:
+
+```bash
+python tools.py dev stop
+python tools.py lint --fix
+python tools.py test unit
+python tools.py ci          # the full CI pipeline locally: lint, unit, Hive, E2E
+python tools.py --help
+```
+
+Needs Docker, Python 3.11+, Node 24+, and `openssl` on `PATH`.
+
+### From a release bundle — running Bluz
+
+The offline tarball is self-contained and carries its own `install.sh`,
+`setup.py` and `requirements.txt` at the bundle root. **These do not exist in
+this repository** — do not run them from a clone.
+
+```bash
+mkdir bluz && tar -xvf bluz-offline-vX.Y.Z.tar.gz -C bluz && cd bluz
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python setup.py
+chmod +x ./install.sh && ./install.sh
+```
+
+<details>
+<summary>Fresh Ubuntu/Debian server? Install the prerequisites first</summary>
 
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y python3.12 python3.12-venv python3-pip openssl curl git ca-certificates gnupg
-```
 
-<details>
-<summary>Install Docker (click to expand)</summary>
-
-```bash
+# Docker
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
@@ -36,137 +70,54 @@ newgrp docker
 
 </details>
 
+### From a terminal — driving Bluz without a checkout
+
+`bluz-cli` talks to a running Bluz instance's API. It installs from the org
+pip index, which needs no authentication:
+
 ```bash
-mkdir bluz
-tar -xvf bluz-offline-vX.Y.Z.tar.gz -C bluz
-cd bluz
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-sudo chmod +x ./install.sh
-python setup.py
-./install.sh
+pip install bluz-cli --index-url https://system-b90.github.io/.github/pypi/
+bluz login
+bluz --help
 ```
 
 ---
 
-## Production setup
-
-**Prerequisites**
-
-- Python packages (install via `pip install -r requirements.txt`):
-  - `InquirerPy>=0.3.4`
-  - `prompt-toolkit>=3.0.36`
-  - `python-dotenv==1.2.2`
-  - `typer==0.20.0`
-- `openssl` must be available on `PATH` (used by `setup.py` to generate secrets)
-
-```pwsh
-python -m pip install -r requirements.txt
-python setup.py
-./install.sh
-```
-
----
-
-## Features
+## What it does
 
 - **Calendar / Schedule** — interactive class scheduling with drag-and-drop, rooms,
-  instructors, prayer times, offline mode, and real-time multi-user sync. Backed by
-  **MongoDB**.
+  instructors, prayer times, offline mode, and real-time multi-user sync.
 - **Gantt / Curriculum** — build curriculums from syllabuses → modules → events and
-  allocate them across weeks and days with scheduling constraints. Backed by **PostgreSQL**
-  (via Drizzle ORM).
-- **Hive SSO** — authentication and shared org data through the external Hive microservice.
+  allocate them across weeks and days with scheduling constraints.
+- **Hive SSO** — authentication and shared org data through the external Hive service.
 
-## Tech stack
+## What it needs
 
-Next.js 16 (App Router, React 19) · TypeScript · MUI v7 + Tailwind v4 (RTL) ·
-Drizzle ORM / PostgreSQL · MongoDB · next-auth · WebSocket session server · Docker Compose ·
-Playwright + Vitest.
+A **Hive** instance (org data + SSO), a **MongoDB** instance (Calendar), and a
+**PostgreSQL** instance (Gantt). Docker Compose runs all three locally — `tools.py dev`
+and `npm run docker:dev` both handle this for you.
 
-## Architecture at a glance
+Runtime config lives in the root `.env`, written by `scripts/setup.py`. The full variable
+table is in [AGENTS.md §6](AGENTS.md#6-environment--secrets).
 
-```
-Browser → ui/src/api-client (fetch) → ui/src/app/api (routes) → ui/src/api-server (DB/Hive)
-                                   ui/src/api-shared (types & contracts shared by both ends)
-```
+---
 
-| Directory                                                     | Role                                    |
-| ------------------------------------------------------------- | --------------------------------------- |
-| `ui/`                                                         | The Next.js application                 |
-| `ui/src/api-client` · `app/api` · `api-server` · `api-shared` | The four API layers (each has a README) |
-| `ui/src/components`                                           | React components, hooks, theme          |
-| `drizzle/`                                                    | PostgreSQL migrations                   |
-| `session-server/`                                             | Standalone real-time WebSocket server   |
-| `scripts/` · `tests/`                                         | Tooling, seeding, and the test suite    |
+## Going deeper
 
-## Environment variables
+**[AGENTS.md](AGENTS.md)** is the reference: layered API design, directory map,
+conventions, and every command in one place. Read it before making a change here —
+whether you are a person or an agent.
 
-Runtime config lives in the root `.env` (consumed by Docker Compose and copied into
-`ui/.env` for local dev). See [AGENTS.md §6](AGENTS.md#6-environment--secrets) for the full
-table. Notable ones:
+- Stack, architecture and the four API layers → [AGENTS.md](AGENTS.md)
+- Full command list → [AGENTS.md §5](AGENTS.md#5-commands-youll-actually-use)
+- Contributing and PR conventions → [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)
+- Deployment, troubleshooting, backup/restore → [`docs/`](docs/) and the
+  [published docs site](https://system-b90.github.io/.github/bluz/)
 
-- `DATABASE_URL`, `POSTGRES_*` — PostgreSQL (Gantt engine)
-- `MONGO_CONNECTION_STRING`, `MONGO_ROOT_*` — MongoDB (Calendar engine)
-- `NEXT_PUBLIC_HIVE_URL`, `HIVE_CLIENT_ID`, `HIVE_CLIENT_SECRET` — Hive + SSO
-- `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `JWT_SECRET`, `SYM_ENC_KEY` — auth & session crypto
-- `WEBSOCKET_SESSION_SERVER_*` — WebSocket session server
-- `NEXT_PUBLIC_GANT_DEFAULT_WEEKDAY_HOURS`, `NEXT_PUBLIC_GANT_DEFAULT_FRIDAY_HOURS` —
-  default work hours for new Gantt week days
-
-## Dependencies
-
-- A **Hive** instance (org data + SSO).
-- A **MongoDB** instance (Calendar engine).
-- A **PostgreSQL** instance (Gantt engine).
-
-Docker Compose can run all of these for you locally.
-
-## Dev setup
-
-Route `bluz.dev` to `127.0.0.3` in your hosts file, then:
-
-```pwsh
-pip install typer InquirerPy python-dotenv
-git config core.ignorecase false
-python setup.py
-npm run docker:dev
-```
-
-### After updating Nginx / proxy settings
-
-Changed `nginx.conf`? Rebuild the proxy:
-
-```pwsh
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up proxy -d
-```
-
-## Common commands
-
-```bash
-npm run docker:dev     # Run the full dev stack (hot-reload)
-npm run dev            # Local Next.js dev server + Dockerized proxy
-npm run lint           # ESLint (lint:fix to autofix)
-npm run db:generate    # Generate a Drizzle migration from schema changes
-npm run db:seed        # Seed demo data
-npm run test           # Full test pipeline (scripts/run_tests.py)
-npm run test:unit      # Vitest only
-npm run test:e2e       # Playwright e2e
-```
-
-See [AGENTS.md §5](AGENTS.md#5-commands-youll-actually-use) for the complete list.
-
-## Project layout & deeper docs
-
-Most directories carry their own `README.md` with an explicit "should this file live here?"
-checklist:
-
-- [`ui/src/api-client`](ui/src/api-client/README.md) — client fetch wrappers
-- [`ui/src/api-server`](ui/src/api-server/README.md) — server DB controllers & Hive
-- [`ui/src/api-shared`](ui/src/api-shared/README.md) — shared types & contracts
-- [`ui/src/components`](ui/src/components/README.md) — React UI
-- [`drizzle`](drizzle/README.md) — migrations
-- [`session-server`](session-server/README.md) — WebSocket server
-- [`scripts`](scripts/README.md) — tooling
-- [`tests`](tests/README.md) — test suite + feature map
+Most directories carry their own `README.md` with an explicit "should this file live
+here?" checklist: [`ui/src/api-client`](ui/src/api-client/README.md) ·
+[`ui/src/api-server`](ui/src/api-server/README.md) ·
+[`ui/src/api-shared`](ui/src/api-shared/README.md) ·
+[`ui/src/components`](ui/src/components/README.md) · [`drizzle`](drizzle/README.md) ·
+[`session-server`](session-server/README.md) · [`scripts`](scripts/README.md) ·
+[`tests`](tests/README.md)
