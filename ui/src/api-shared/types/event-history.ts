@@ -44,6 +44,8 @@ export enum EventChangeInitiator {
     GoogleSync = "google-sync",
     /** Ctrl+Z/Ctrl+Y history travel on the calendar. */
     Undo = "undo",
+    /** Change made by the in-app AI assistant on the user's behalf. */
+    AiAssistant = "ai-assistant",
     /** Write with no declared initiator (CLI, scripts, legacy call sites). */
     Unknown = "unknown",
 }
