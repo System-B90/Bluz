@@ -1,9 +1,9 @@
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import {
+    asDateFixup,
     BaseDocument,
     baseDocumentFixup,
     clientGantApiBuilder,
-    DateFixup,
     RawBaseDocument,
 } from "@/api-client/gantt/base";
 import { CreateGanttCurriculumPayload } from "@/api-shared/types/gantt/create-payloads";
@@ -32,9 +32,7 @@ const baseCurriculumApi = clientGantApiBuilder<
     CreateGanttCurriculumPayload
 >({
     apiBaseUrl: "/api/gantt/curriculums",
-    dateFixup: baseDocumentFixup as DateFixup<
-        GanttCurriculum & RawBaseDocument
-    >,
+    dateFixup: asDateFixup<GanttCurriculum & RawBaseDocument>(),
 });
 
 async function apiExport(

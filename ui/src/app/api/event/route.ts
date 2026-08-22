@@ -17,7 +17,7 @@ import {
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
 import { requireStaffSession, getSessionUser } from "@/api-server/session-user";
-import { eventDateFixup } from "@/api-shared/calendar";
+import { eventDateFixupToDate } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     ApiEventCreatePayload,
@@ -118,8 +118,8 @@ export const POST: ServerApiEventUpdate = withApi(async (request) => {
     await requireStaffSession();
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
-    const event: ApiEventUpdatePayload = eventDateFixup(
-        await requireJsonObjectBody(request),
+    const event: ApiEventUpdatePayload = eventDateFixupToDate(
+        await requireJsonObjectBody<DbEventDocument>(request),
     );
     if (!event) {
         throw new ClientApiError("No data provided!");
@@ -138,8 +138,8 @@ export const PUT: ServerApiEventCreate = withApi(async (request) => {
     await requireStaffSession();
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
-    const event: ApiEventCreatePayload = eventDateFixup(
-        await requireJsonObjectBody(request),
+    const event: ApiEventCreatePayload = eventDateFixupToDate(
+        await requireJsonObjectBody<DbEventDocument>(request),
     );
     if (!event) {
         throw new ClientApiError("No data provided!");

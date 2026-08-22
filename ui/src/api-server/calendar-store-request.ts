@@ -1,4 +1,4 @@
-import { eventDateFixup } from "@/api-shared/calendar";
+import { eventDateFixupToDate } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import { DbEventDocument } from "@/api-shared/types/event";
 
@@ -10,7 +10,7 @@ export function normalizeStoredEvents(
     events: unknown,
 ): Array<DbEventDocument> {
     return Array.isArray(events)
-        ? (events as Array<DbEventDocument>).map(eventDateFixup)
+        ? (events as Array<DbEventDocument>).map(eventDateFixupToDate)
         : [];
 }
 
@@ -29,7 +29,7 @@ export function normalizeOptionalStoredEvents(
     if (!Array.isArray(events)) {
         throw new ClientApiError("`events` must be an array when provided.");
     }
-    return (events as Array<DbEventDocument>).map(eventDateFixup);
+    return (events as Array<DbEventDocument>).map(eventDateFixupToDate);
 }
 
 /** Read a required `?id=` query param, or reject the request. */

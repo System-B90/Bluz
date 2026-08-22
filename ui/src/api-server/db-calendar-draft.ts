@@ -4,7 +4,7 @@ import {
     databaseController,
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
-import { eventDateFixup } from "@/api-shared/calendar";
+import { eventDateFixupToDate } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import { CalendarDraft, CalendarDraftSummary } from "@/api-shared/types";
 import { DbEventDocument } from "@/api-shared/types/event";
@@ -48,7 +48,7 @@ async function createDraft(
         updatedBy: author.displayName,
         updatedById: author.id,
         iterationId,
-        events: events.map(eventDateFixup),
+        events: events.map(eventDateFixupToDate),
     };
 
     await controller.calendarDrafts.insertOne({
@@ -91,7 +91,7 @@ async function updateDraft(
     };
     let updatedEventCount: number | undefined;
     if (events !== undefined) {
-        const fixedEvents = events.map(eventDateFixup);
+        const fixedEvents = events.map(eventDateFixupToDate);
         setFields.events = fixedEvents;
         setFields.eventCount = fixedEvents.length;
         updatedEventCount = fixedEvents.length;
@@ -169,7 +169,7 @@ async function getDraft(
         updatedBy: doc.updatedBy,
         updatedById: doc.updatedById,
         iterationId: doc.iterationId,
-        events: (doc.events ?? []).map(eventDateFixup),
+        events: (doc.events ?? []).map(eventDateFixupToDate),
     };
 }
 

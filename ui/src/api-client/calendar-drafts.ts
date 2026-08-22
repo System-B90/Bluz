@@ -1,6 +1,6 @@
 import { safeApiFetcher } from "@/api-client/common";
 import { withIteration } from "@/api-client/iteration-query";
-import { eventDateFixup } from "@/api-shared/calendar";
+import { eventDateFixupToDayjs } from "@/api-shared/calendar";
 import { CalendarDraft, CalendarDraftSummary } from "@/api-shared/types";
 import { DbEventDocument, Event } from "@/api-shared/types/event";
 import { IterationId } from "@/api-shared/types/iteration";
@@ -68,7 +68,7 @@ export async function apiGetDraft(
         method: "GET",
     });
     const events = (draft.events ?? []).map(
-        (e: DbEventDocument) => eventDateFixup(e) as unknown as Event,
+        (e: DbEventDocument) => eventDateFixupToDayjs(e),
     );
     return { draft, events };
 }

@@ -28,7 +28,7 @@ import
     apiGetScheduleSettings,
     apiSetScheduleSettings,
 } from "@/api-client/schedule-settings";
-import { inplaceDateFixup } from "@/api-shared/date-fixer";
+import { inplaceDateFixupToDayjs } from "@/api-shared/date-fixer";
 import {
     DEFAULT_BREAKFAST_TIME,
     DEFAULT_DINNER_TIME,
@@ -209,9 +209,9 @@ export const SettingsProvider = ({
                     dispatch({ type: "SET_LOADING", payload: false });
                     return;
                 }
-                inplaceDateFixup(fetchedPrayerSettings, "shacharit");
-                inplaceDateFixup(fetchedPrayerSettings, "mincha");
-                inplaceDateFixup(fetchedPrayerSettings, "arvit");
+                inplaceDateFixupToDayjs(fetchedPrayerSettings, "shacharit");
+                inplaceDateFixupToDayjs(fetchedPrayerSettings, "mincha");
+                inplaceDateFixupToDayjs(fetchedPrayerSettings, "arvit");
                 dispatch({
                     type: "SET_PRAYER_TIMES",
                     payload: fetchedPrayerSettings,
