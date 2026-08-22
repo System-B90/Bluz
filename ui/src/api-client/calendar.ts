@@ -44,10 +44,18 @@ export async function apiGetEvents({
     return rawData.map(eventDateFixup) as unknown as Array<Event>;
 }
 
+/**
+ * Fetches several events by id in one round-trip. The route
+ * (`app/api/event/route.ts`) filters out malformed ids and silently omits
+ * ids it can't find, so the response can carry fewer keys than
+ * `eventIds` — the return type is `Partial<...>` precisely so every
+ * caller has to handle a missing id instead of the old `Record<EventId,
+ * Event>` signature promising a complete map it couldn't guarantee.
+ */
 export async function apiGetMultipleEvents(
     eventIds: Array<EventId>,
     iterationId?: IterationId,
-): Promise<Record<EventId, Event>> {
+): Promise<Partial<Record<EventId, Event>>> {
     const endpoint = withIteration(
         new URL("/api/event", window.location.origin),
         iterationId,
@@ -59,10 +67,11 @@ export async function apiGetMultipleEvents(
             method: "GET",
         },
     );
-    for (const key of Object.keys(rawData)) {
-        rawData[key] = eventDateFixup(rawData[key]);
+    const events: Partial<Record<EventId, Event>> = {};
+    for (const key of Object.keys(rawData) as Array<EventId>) {
+        events[key] = eventDateFixup(rawData[key]) as unknown as Event;
     }
-    return rawData as unknown as Record<EventId, Event>;
+    return events;
 }
 
 /**
