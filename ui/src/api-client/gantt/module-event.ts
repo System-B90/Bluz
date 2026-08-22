@@ -22,7 +22,7 @@ async function apiDuplicate(
     moduleId: GanttModuleId,
 ): Promise<ModuleEventDocument> {
     const rawData = await safeApiFetcher<GanttEvent & RawBaseDocument>(
-        `/api/gantt/events/${eventId}/duplicate`,
+        `/api/gantt/events/${encodeURIComponent(eventId)}/duplicate`,
         {
             method: "POST",
             body: JSON.stringify({ moduleId }),

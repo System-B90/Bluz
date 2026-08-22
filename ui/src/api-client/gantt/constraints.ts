@@ -77,7 +77,7 @@ async function apiGetConstraints(
     options?: ClientApiProps,
 ): Promise<Array<GanttConstraint>> {
     const url = new URL(
-        `/api/gantt/curriculums/${curriculumId}/constraints`,
+        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/constraints`,
         window.location.origin,
     );
 
@@ -106,7 +106,7 @@ async function apiCreateConstraint(
     options?: ClientApiProps,
 ): Promise<GanttConstraint> {
     const rawData = await safeApiFetcher<RawBaseDocument>(
-        `/api/gantt/curriculums/${curriculumId}/constraints`,
+        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/constraints`,
         {
             ...options,
             method: "POST",
@@ -128,7 +128,7 @@ async function apiUpdateConstraint(
     options?: ClientApiProps,
 ): Promise<GanttConstraint> {
     const rawData = await safeApiFetcher<RawBaseDocument>(
-        `/api/gantt/curriculums/${curriculumId}/constraints`,
+        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/constraints`,
         {
             ...options,
             method: "PATCH",
@@ -149,7 +149,7 @@ async function apiDeleteConstraint(
     options?: ClientApiProps,
 ): Promise<void> {
     await safeApiFetcher<void>(
-        `/api/gantt/curriculums/${curriculumId}/constraints`,
+        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/constraints`,
         {
             ...options,
             method: "DELETE",

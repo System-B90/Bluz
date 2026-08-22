@@ -31,7 +31,7 @@ export async function cutCurriculumToSchedule(
 ): Promise<ApiCurriculumCutResponse> {
     try {
         return await safeApiFetcher<ApiCurriculumCutResponse>(
-            `/api/gantt/curriculums/${curriculumId}/cut`,
+            `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/cut`,
             { method: "POST", body: JSON.stringify(options) },
         );
     } catch (error) {
@@ -53,7 +53,7 @@ export async function planCurriculumCut(
 ): Promise<ApiCurriculumCutPlanResponse> {
     try {
         return await safeApiFetcher<ApiCurriculumCutPlanResponse>(
-            `/api/gantt/curriculums/${curriculumId}/cut/plan`,
+            `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/cut/plan`,
             { method: "POST", body: JSON.stringify(options) },
         );
     } catch (error) {
@@ -72,7 +72,7 @@ export async function getCurriculumCutStatus(
     curriculumId: GanttCurriculumId,
 ): Promise<ApiCurriculumCutStatus> {
     return await safeApiFetcher<ApiCurriculumCutStatus>(
-        `/api/gantt/curriculums/${curriculumId}/cut`,
+        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/cut`,
     );
 }
 
@@ -86,7 +86,7 @@ export async function pullBackCurriculumSchedule(
 ): Promise<ApiCurriculumPullBackResponse> {
     try {
         return await safeApiFetcher<ApiCurriculumPullBackResponse>(
-            `/api/gantt/curriculums/${curriculumId}/cut`,
+            `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/cut`,
             { method: "DELETE" },
         );
     } catch (error) {
@@ -108,7 +108,7 @@ export async function previewCurriculumCut(
     curriculumId: GanttCurriculumId,
 ): Promise<ApiCurriculumCutPreviewResponse> {
     return await safeApiFetcher<ApiCurriculumCutPreviewResponse>(
-        `/api/gantt/curriculums/${curriculumId}/cut/preview`,
+        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/cut/preview`,
     );
 }
 
@@ -126,7 +126,7 @@ export async function reloadCurriculumSchedule(
 ): Promise<ApiCurriculumReloadResponse> {
     try {
         return await safeApiFetcher<ApiCurriculumReloadResponse>(
-            `/api/gantt/curriculums/${curriculumId}/cut`,
+            `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/cut`,
             { method: "PATCH", body: JSON.stringify(options) },
         );
     } catch (error) {
