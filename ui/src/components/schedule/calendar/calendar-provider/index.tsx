@@ -165,28 +165,45 @@ export const CalendarProvider = ({
     // once and never flips back.
     const [hasLoadedEvents, setHasLoadedEvents] = useState(false);
 
-    /** Fetches events for the given date range and dispatches them remotely; skips dispatch when offline. */
+    // Guards against out-of-order responses: fast week paging or a quick
+    // iteration switch can fire overlapping fetches, and a slow earlier
+    // request resolving after a newer one would overwrite fresher events
+    // with stale ones. Each call claims the next token and only applies its
+    // result if it is still the most recently issued request.
+    const loadEventsRequestRef = useRef(0);
+
+    /** Fetches events for the given date range and dispatches them remotely; skips dispatch when offline or superseded. */
     const loadEvents = useCallback(
         (s?: Date, e?: Date) => {
             if (!s || !e) return;
 
+            const requestId = ++loadEventsRequestRef.current;
+
             apiGetEvents({ startDate: s, endDate: e, iterationId })
                 .then((fetchedEvents) => {
-                    if (!offlineModeRef.current) {
+                    if (
+                        !offlineModeRef.current &&
+                        requestId === loadEventsRequestRef.current
+                    ) {
                         remoteDispatch({
                             type: "SET_EVENTS",
                             payload: fetchedEvents,
                         });
                     }
                 })
-                .catch((error) =>
+                .catch((error) => {
+                    if (requestId !== loadEventsRequestRef.current) return;
                     enqueueApiErrorSnackbar(
                         enqueueSnackbar,
                         'טעינת לו"ז נכשלה.',
                         error,
-                    ),
-                )
-                .finally(() => setHasLoadedEvents(true));
+                    );
+                })
+                .finally(() => {
+                    if (requestId === loadEventsRequestRef.current) {
+                        setHasLoadedEvents(true);
+                    }
+                });
         },
         [remoteDispatch, iterationId],
     );
