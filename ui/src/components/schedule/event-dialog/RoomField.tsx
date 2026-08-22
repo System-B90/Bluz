@@ -32,6 +32,12 @@ export function RoomField({
             : [],
     );
 
+    // The initial useState value only runs once, so if the edited event
+    // changed underneath us mid-session (e.g. a WS update while the dialog
+    // is open) the selection would keep showing stale rooms without help.
+    // The caller (EventClassification.tsx) remounts this component with
+    // key={`${event.id}-${event.updatedAt}`}, which resets this state
+    // instead of relying on an effect to resync it.
     const handleChange = useCallback(
         (event: SelectChangeEvent<typeof encodedSelectedRoomIds>) =>
         {

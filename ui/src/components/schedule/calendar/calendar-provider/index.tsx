@@ -37,6 +37,7 @@ export const CalendarProvider = ({
         pushDialogOpen,
         captureEventBeforeEdit,
         captureInitialEvents,
+        markEventCreatedLocally,
     } = useOffline();
     const { userData, sendMessage } = useAuth();
     const [startDate, setStartDate] = useState<Date>();
@@ -155,6 +156,7 @@ export const CalendarProvider = ({
         captureEventBeforeEdit,
         dispatch,
         remoteDispatch,
+        markEventCreatedLocally,
     );
     useLayoutEffect(() => {
         onTravelRef.current = syncHistoryTravel;
