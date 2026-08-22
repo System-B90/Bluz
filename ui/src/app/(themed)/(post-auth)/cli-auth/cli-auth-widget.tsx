@@ -258,6 +258,14 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
                                         readOnly: true,
                                     },
                                 }}
+                                // Masked -- this still SSRs the session token
+                                // into the DOM (a larger redesign, redeeming a
+                                // short-lived single-use code server-side
+                                // instead, is left for a follow-up), but a
+                                // type="password" field at least keeps it off
+                                // the visible screen and out of screenshots
+                                // (#520).
+                                type="password"
                                 value={token}
                                 variant="outlined"
                             />
