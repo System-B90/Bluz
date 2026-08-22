@@ -20,8 +20,8 @@ import {
 import { IterationId } from "@/api-shared/types/iteration";
 
 type ClientApiGetEventsProps = {
-    startDate?: Date;
-    endDate?: Date;
+    startDate: Date;
+    endDate: Date;
     iterationId?: IterationId;
 };
 export async function apiGetEvents({
@@ -33,8 +33,8 @@ export async function apiGetEvents({
         new URL("/api/event", window.location.origin),
         iterationId,
     );
-    endpoint.searchParams.set("sd", startDate?.toISOString() ?? "");
-    endpoint.searchParams.set("ed", endDate?.toISOString() ?? "");
+    endpoint.searchParams.set("sd", startDate.toISOString());
+    endpoint.searchParams.set("ed", endDate.toISOString());
     const rawData = await safeApiFetcher<Array<DbEventDocument>>(
         endpoint.toString(),
         {
