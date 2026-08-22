@@ -1045,7 +1045,11 @@ export async function cutCurriculumToSchedule(
                 origin: { ...origin, context: { curriculumId } },
             });
             for (const document of documents) {
-                syncEventToInstructorsGoogleCalendars(document, "upsert");
+                syncEventToInstructorsGoogleCalendars(
+                    document,
+                    "upsert",
+                    iteration.id,
+                );
             }
             SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
                 events: Object.fromEntries(documents.map((d) => [d.id, d])),

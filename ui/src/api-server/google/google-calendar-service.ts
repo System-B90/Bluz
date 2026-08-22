@@ -2,11 +2,16 @@ import { calendar_v3, google } from "googleapis";
 
 import { DbEvent } from "@/api-server/db-event";
 import { DbIterations } from "@/api-server/db-iterations";
+import {
+    getDatabaseController,
+    resolveIterationDb,
+} from "@/api-server/mongo-db-controller";
 import { getMetaController } from "@/api-server/mongo-db-controller";
 import { openSecret, sealSecret } from "@/api-server/secret-box";
 import { DbEventDocument } from "@/api-shared/types/event";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { GoogleCalendarLink } from "@/api-shared/types/google-calendar";
+import { IterationId } from "@/api-shared/types/iteration";
 
 /**
  * Two-way Google Calendar integration:
@@ -92,14 +97,26 @@ function toGoogleEventId(bluzEventId: string): string {
     return bluzEventId.replace(/-/g, "").toLowerCase();
 }
 
-function toGoogleEvent(event: DbEventDocument): calendar_v3.Schema$Event {
+function toGoogleEvent(
+    event: DbEventDocument,
+    iterationId?: IterationId,
+): calendar_v3.Schema$Event {
     return {
         id: toGoogleEventId(event.id),
         summary: event.name || event.type,
         description: event.notes || undefined,
         start: { dateTime: new Date(event.startTime).toISOString() },
         end: { dateTime: new Date(event.endTime).toISOString() },
-        extendedProperties: { private: { bluzEventId: event.id } },
+        extendedProperties: {
+            // The iteration rides along so a pulled-back edit can be applied to
+            // the database the event actually lives in. Without it the pull
+            // resolved against the current iteration only, and silently dropped
+            // every edit to an event in any other one (#538 item 6).
+            private: {
+                bluzEventId: event.id,
+                ...(iterationId ? { bluzIterationId: iterationId } : {}),
+            },
+        },
     };
 }
 
@@ -223,11 +240,12 @@ export async function pushEventToGoogle(
     userId: string,
     event: DbEventDocument,
     action: "delete" | "upsert",
-): Promise<void> {
-    if (!isGoogleCalendarConfigured()) return;
+    iterationId?: IterationId,
+): Promise<boolean> {
+    if (!isGoogleCalendarConfigured()) return false;
     try {
         const authorized = await getAuthorizedClient(userId);
-        if (!authorized) return;
+        if (!authorized) return false;
         const calendarApi = google.calendar({
             version: "v3",
             auth: authorized.auth,
@@ -242,10 +260,10 @@ export async function pushEventToGoogle(
                         throw error;
                     }
                 });
-            return;
+            return true;
         }
 
-        const body = toGoogleEvent(event);
+        const body = toGoogleEvent(event, iterationId);
         await calendarApi.events
             .update({
                 calendarId: authorized.link.calendarId,
@@ -262,12 +280,14 @@ export async function pushEventToGoogle(
                 }
                 throw error;
             });
+        return true;
     } catch (error) {
         // Never let a Google outage/misconfiguration break Bluz's own event flow.
         console.warn(
             `Google Calendar push skipped for user ${userId} (event ${event.id}):`,
             error,
         );
+        return false;
     }
 }
 
@@ -278,11 +298,16 @@ export async function pushEventToGoogle(
 export async function pushAllEvents(
     userId: string,
     events: Array<DbEventDocument>,
+    iterationId?: IterationId,
 ): Promise<number> {
     let pushed = 0;
     for (const event of events) {
-        await pushEventToGoogle(userId, event, "upsert");
-        pushed += 1;
+        // Count what actually reached Google. Counting attempts reported a
+        // full successful sync even when every push was silently swallowed
+        // (#538 item 6).
+        if (await pushEventToGoogle(userId, event, "upsert", iterationId)) {
+            pushed += 1;
+        }
     }
     return pushed;
 }
@@ -302,7 +327,18 @@ async function applyGoogleEdit(
     // the source of truth for an event's existence. The next push recreates it.
     if (googleEvent.status === "cancelled") return false;
 
-    const existing = await DbEvent.get(bluzEventId);
+    // Resolve the event in the iteration it belongs to, not whichever is
+    // current (#538 item 6). Events pushed before this tag existed carry no
+    // iteration and fall back to the current one, as before.
+    const taggedIteration =
+        googleEvent.extendedProperties?.private?.bluzIterationId;
+    const controller = taggedIteration
+        ? await resolveIterationDb(taggedIteration as IterationId).then(
+            ({ dbName }) => getDatabaseController(dbName),
+        )
+        : undefined;
+
+    const existing = await DbEvent.get(bluzEventId, undefined, controller);
     if (!existing) return false;
 
     const startRaw = googleEvent.start?.dateTime ?? googleEvent.start?.date;
@@ -324,7 +360,7 @@ async function applyGoogleEdit(
             new Date(existing.endTime as any).getTime();
     if (!changed) return false;
 
-    await DbEvent.set(updated, undefined, undefined, undefined, {
+    await DbEvent.set(updated, undefined, controller, undefined, {
         initiator: EventChangeInitiator.GoogleSync,
     });
     return true;

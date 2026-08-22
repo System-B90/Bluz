@@ -256,7 +256,11 @@ export async function reloadCurriculumSchedule(
             origin,
         });
         for (const document of added) {
-            syncEventToInstructorsGoogleCalendars(document, "upsert");
+            syncEventToInstructorsGoogleCalendars(
+                document,
+                "upsert",
+                iteration.id,
+            );
         }
     }
 
@@ -301,7 +305,7 @@ export async function reloadCurriculumSchedule(
         });
         updated.push(after);
         historyUpdates.push({ after, before, eventId: update.eventId });
-        syncEventToInstructorsGoogleCalendars(after, "upsert");
+        syncEventToInstructorsGoogleCalendars(after, "upsert", iteration.id);
     }
 
     if (eventWrites.length > 0) {
@@ -333,7 +337,11 @@ export async function reloadCurriculumSchedule(
         for (const eventId of removalIds) {
             const removed = actualById.get(eventId);
             if (removed) {
-                syncEventToInstructorsGoogleCalendars(removed, "delete");
+                syncEventToInstructorsGoogleCalendars(
+                    removed,
+                    "delete",
+                    iteration.id,
+                );
             }
         }
     }

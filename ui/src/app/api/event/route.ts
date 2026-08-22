@@ -129,7 +129,7 @@ export const POST: ServerApiEventUpdate = withApi(async (request) => {
             request.headers.get(EVENT_INITIATOR_HEADER),
         ),
     });
-    syncEventToInstructorsGoogleCalendars(updated, "upsert");
+    syncEventToInstructorsGoogleCalendars(updated, "upsert", iterationId);
     syncEventLessonToHive(updated, "upsert", controller);
     return ApiSuccess(updated);
 });
@@ -155,7 +155,7 @@ export const PUT: ServerApiEventCreate = withApi(async (request) => {
             ),
         },
     );
-    syncEventToInstructorsGoogleCalendars(created, "upsert");
+    syncEventToInstructorsGoogleCalendars(created, "upsert", iterationId);
     syncEventLessonToHive(created, "upsert", controller);
     return ApiSuccess(created);
 });
@@ -175,7 +175,7 @@ export const DELETE: ServerApiEventDelete = withApi(async (request) => {
         ),
     });
     if (existing) {
-        syncEventToInstructorsGoogleCalendars(existing, "delete");
+        syncEventToInstructorsGoogleCalendars(existing, "delete", iterationId);
         syncEventLessonToHive(existing, "delete", controller);
     }
     return ApiSuccess();

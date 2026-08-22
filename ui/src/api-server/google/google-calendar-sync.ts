@@ -4,6 +4,7 @@ import {
 } from "@/api-server/google/google-calendar-service";
 import { getMetaController } from "@/api-server/mongo-db-controller";
 import { DbEventDocument, getPresentInstructors } from "@/api-shared/types/event";
+import { IterationId } from "@/api-shared/types/iteration";
 
 /**
  * Fire-and-forget: pushes the given event to the Google Calendar of every
@@ -15,6 +16,9 @@ import { DbEventDocument, getPresentInstructors } from "@/api-shared/types/event
 export function syncEventToInstructorsGoogleCalendars(
     event: DbEventDocument,
     action: "delete" | "upsert",
+    // Tagged onto the Google copy so a pulled-back edit lands in the right
+    // iteration's database (#538 item 6).
+    iterationId?: IterationId,
 ): void {
     void (async () => {
         try {
@@ -36,7 +40,7 @@ export function syncEventToInstructorsGoogleCalendars(
 
             await Promise.all(
                 settingsDocs.map((doc) =>
-                    pushEventToGoogle(doc.userId, event, action),
+                    pushEventToGoogle(doc.userId, event, action, iterationId),
                 ),
             );
         } catch (error) {
