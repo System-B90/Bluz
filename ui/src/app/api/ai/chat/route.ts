@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { getAiProvider } from "@/api-server/ai";
 import { runAiAgent } from "@/api-server/ai/agent";
 import { AiProviderError } from "@/api-server/ai/provider";
+import { allowAiRequest } from "@/api-server/ai/rate-limit";
 import { AiToolContext } from "@/api-server/ai/tools";
 import {
     ApiErrorMaker,
@@ -88,9 +89,18 @@ export async function POST(request: Request): Promise<Response> {
     let context: AiToolContext;
     try {
         const user = await requireStaffSession();
+        if (!allowAiRequest(String(user.id))) {
+            return ApiErrorMaker(
+                { name: "AiRateLimitError", message: "יותר מדי בקשות. נסה שוב בעוד דקה." },
+                429,
+            );
+        }
         payload = parseJsonBody<ApiAiChatPayload>(await request.text());
         const messages = validateMessages(payload.messages);
-        payload = { ...payload, messages };
+        // `model` is client-controllable but never trusted: forwarding it
+        // would let any staff session pick (and bill) an arbitrary OpenRouter
+        // slug. The server always uses its own configured default.
+        payload = { ...payload, messages, model: undefined };
 
         context = {
             iterationId: payload.iterationId,
@@ -126,7 +136,6 @@ export async function POST(request: Request): Promise<Response> {
                     approvedToolCallIds: new Set(
                         payload.approvedToolCallIds ?? [],
                     ),
-                    model: payload.model,
                     signal: request.signal,
                 });
 

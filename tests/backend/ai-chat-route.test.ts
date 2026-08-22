@@ -28,6 +28,7 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
 }));
 
 import { POST } from "@/app/api/ai/chat/route";
+import { resetAiRateLimit } from "@/api-server/ai/rate-limit";
 import { UserNotLoggedInError } from "@/api-shared/errors";
 import { AI_MAX_MESSAGE_LENGTH, AI_MAX_MESSAGES, AiRole } from "@/api-shared/types/ai";
 
@@ -48,6 +49,7 @@ async function errorMessage(response: Response): Promise<string> {
 
 beforeEach(() => {
     vi.clearAllMocks();
+    resetAiRateLimit();
     requireStaffSession.mockResolvedValue({
         id: 7,
         display_name: "מיכאל",
@@ -203,5 +205,41 @@ describe("POST /api/ai/chat", () => {
         };
         expect(options.context.iterationId).toBe("2026b");
         expect(options.context.curriculumId).toBe("c-1");
+    });
+
+    it("ignores a client-supplied model instead of forwarding it upstream", async () => {
+        // Forwarding this would let any staff session pick (and bill) an
+        // arbitrary OpenRouter slug.
+        await POST(
+            post({ ...validPayload, model: "openai/gpt-4o-attacker-choice" }),
+        );
+
+        const options = runAiAgent.mock.calls[0][0] as { model?: string };
+        expect(options.model).toBeUndefined();
+    });
+
+    it("throttles a single user past the per-minute request cap", async () => {
+        for (let i = 0; i < 12; i++) {
+            const response = await POST(post(validPayload));
+            expect(response.status).toBe(200);
+        }
+
+        const throttled = await POST(post(validPayload));
+        expect(throttled.status).toBe(429);
+        expect(runAiAgent).toHaveBeenCalledTimes(12);
+    });
+
+    it("does not let one user's throttle affect another", async () => {
+        for (let i = 0; i < 12; i++) {
+            await POST(post(validPayload));
+        }
+
+        requireStaffSession.mockResolvedValueOnce({
+            id: 9,
+            display_name: "אחר",
+            name: "other",
+        });
+        const response = await POST(post(validPayload));
+        expect(response.status).toBe(200);
     });
 });
