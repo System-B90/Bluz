@@ -288,6 +288,7 @@ export function AiAssistant() {
                                         <Stack direction="row" spacing={1}>
                                             <Button
                                                 color="inherit"
+                                                disabled={busy}
                                                 onClick={reject}
                                                 size="small"
                                             >
@@ -295,6 +296,7 @@ export function AiAssistant() {
                                             </Button>
                                             <Button
                                                 color="warning"
+                                                disabled={busy}
                                                 onClick={approve}
                                                 size="small"
                                                 variant="contained"

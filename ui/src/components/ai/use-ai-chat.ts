@@ -63,6 +63,11 @@ export function useAiChat(scope: AiChatScope) {
     // and every render in between would otherwise fight the update.
     const transcript = React.useRef<Array<AiMessage>>([]);
     const abortRef = React.useRef<AbortController | null>(null);
+    // Guards run() against reentrancy: `busy` is state and only visible after
+    // a render, so two clicks inside the same tick (e.g. a double-fired
+    // approve) would both read `busy === false` and both start a POST. The
+    // ref is set synchronously, before any await, so the second call sees it.
+    const runningRef = React.useRef(false);
 
     // A live scope ref keeps `run` stable: the callback must not be rebuilt
     // (and cancel an in-flight turn) every time the user changes iteration.
@@ -73,6 +78,9 @@ export function useAiChat(scope: AiChatScope) {
 
     const run = React.useCallback(
         async (approvedToolCallIds: Array<string> = []) => {
+            if (runningRef.current) return;
+            runningRef.current = true;
+
             const abort = new AbortController();
             abortRef.current = abort;
             setBusy(true);
@@ -192,6 +200,7 @@ export function useAiChat(scope: AiChatScope) {
                 }
             } finally {
                 abortRef.current = null;
+                runningRef.current = false;
                 setBusy(false);
             }
         },
@@ -217,9 +226,9 @@ export function useAiChat(scope: AiChatScope) {
     );
 
     const approve = React.useCallback(() => {
-        if (!pendingApproval) return;
+        if (!pendingApproval || busy) return;
         void run([pendingApproval.toolCallId]);
-    }, [pendingApproval, run]);
+    }, [pendingApproval, busy, run]);
 
     /**
      * Declining still has to answer the model's tool call. An unanswered call
@@ -227,7 +236,7 @@ export function useAiChat(scope: AiChatScope) {
      * the transcript as the call's result.
      */
     const reject = React.useCallback(() => {
-        if (!pendingApproval) return;
+        if (!pendingApproval || busy) return;
 
         const lastAssistant = [...transcript.current]
             .reverse()
@@ -265,7 +274,7 @@ export function useAiChat(scope: AiChatScope) {
         ]);
         setPendingApproval(null);
         void run();
-    }, [pendingApproval, run]);
+    }, [pendingApproval, busy, run]);
 
     const stop = React.useCallback(() => {
         abortRef.current?.abort();
