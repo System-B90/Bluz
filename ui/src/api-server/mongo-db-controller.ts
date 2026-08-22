@@ -188,9 +188,18 @@ function ensureIndexesInBackground(controller: DatabaseController): void {
     if (indexedDbNames.has(controller.dbName)) return;
     indexedDbNames.add(controller.dbName);
 
-    void Promise.all([
-        // Every event read/update path filters on the client-generated `id`.
-        controller.events.createIndex({ id: 1 }),
+    void Promise.allSettled([
+        // Every event read/update path filters on the client-generated `id`,
+        // and `id` is the document's real identity: creates blind-insert a
+        // client-generated UUID, so without uniqueness two concurrent PUTs of
+        // the same id produced two documents and every later read/update
+        // silently picked an arbitrary copy (#514).
+        //
+        // On a database that already holds duplicates this createIndex fails —
+        // as does the case where the old non-unique `{ id: 1 }` index is still
+        // present (IndexOptionsConflict). Both are logged below; the fix is to
+        // de-duplicate and drop the stale index once, not to weaken this.
+        controller.events.createIndex({ id: 1 }, { unique: true }),
         // Calendar views fetch by date window (getDbEventsInRange).
         controller.events.createIndex({ startTime: 1, endTime: 1 }),
         // Snapshot listing sorts newest-first.
@@ -211,11 +220,16 @@ function ensureIndexesInBackground(controller: DatabaseController): void {
             { activatedAt: 1 },
             { expireAfterSeconds: 7 * 24 * 60 * 60 },
         ),
-    ]).catch((error) => {
-        console.error(
-            `Failed to ensure Mongo indexes on "${controller.dbName}"`,
-            error,
-        );
+    ]).then((results) => {
+        // allSettled, not all: one failing index must not skip the rest.
+        for (const result of results) {
+            if (result.status === "rejected") {
+                console.error(
+                    `Failed to ensure a Mongo index on "${controller.dbName}"`,
+                    result.reason,
+                );
+            }
+        }
     });
 }
 
@@ -306,16 +320,27 @@ export function getMetaController(): MetaController {
 let _currentIterationDbName: string = DEFAULT_ITERATION_DB_NAME;
 
 // Cold start / serverless safety: the in-process default can be stale if the
-// current iteration was switched to a custom database in a previous process.
-// On the first default resolve we read `isCurrent` from the registry exactly
-// once and memoize the promise, so subsequent calls stay off the hot path.
+// current iteration was switched to a custom database — by a previous process,
+// or, once Bluz is scaled horizontally, by a sibling replica that is serving
+// right now. `setCurrentIterationDbName` only mutates the local process, so a
+// permanently memoized probe left every other replica *writing* to the previous
+// iteration's database until it restarted (#513). The probe is therefore
+// memoized for at most CURRENT_ITERATION_MEMO_TTL_MS: still off the hot path
+// for a burst of requests, but self-healing within a few seconds.
+const CURRENT_ITERATION_MEMO_TTL_MS = 15_000;
 let _currentInitPromise: null | Promise<void> = null;
+let _currentInitAt = 0;
 
 async function ensureCurrentIterationResolved(): Promise<void> {
     // Unit tests run without Mongo; the registry is mocked where it matters, so
     // skip the probe to keep the default fast and deterministic.
     if (process.env.VITEST) return;
-    if (_currentInitPromise) return await _currentInitPromise;
+    if (
+        _currentInitPromise &&
+        Date.now() - _currentInitAt < CURRENT_ITERATION_MEMO_TTL_MS
+    ) {
+        return await _currentInitPromise;
+    }
     let failed = false;
     const probe: Promise<void> = (async () => {
         try {
@@ -332,17 +357,23 @@ async function ensureCurrentIterationResolved(): Promise<void> {
         }
     })();
     _currentInitPromise = probe;
+    _currentInitAt = Date.now();
     await probe;
-    // Clear the memo so a later request probes again. An explicit switch that
+    // Clear the memo so the next request probes again. An explicit switch that
     // landed meanwhile owns the memo, so only drop it if it is still ours.
-    if (failed && _currentInitPromise === probe) _currentInitPromise = null;
+    if (failed && _currentInitPromise === probe) {
+        _currentInitPromise = null;
+        _currentInitAt = 0;
+    }
 }
 
 /** Update the cached current-iteration database (called after a setCurrent). */
 export function setCurrentIterationDbName(dbName: string) {
     _currentIterationDbName = dbName;
-    // A subsequent registry probe must not clobber an explicit switch.
+    // A subsequent registry probe must not clobber an explicit switch — but the
+    // TTL still applies, so a switch made by another replica is picked up.
     _currentInitPromise = Promise.resolve();
+    _currentInitAt = Date.now();
 }
 
 /** The database name backing the current (writable) iteration. */
