@@ -9,6 +9,7 @@ Author: Michael K. Steinberg
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 import typer
@@ -25,6 +26,31 @@ def parse_json(value: str | None, *, what: str = "value") -> Any:
         return json.loads(value)
     except json.JSONDecodeError as exc:
         raise typer.BadParameter(f"Invalid JSON for {what}: {exc}") from exc
+
+
+def read_json_file(path: Path, *, what: str = "file") -> Any:
+    """Read and parse a JSON file, aborting with a styled error (not a
+    traceback) on missing files, unreadable files, or bad JSON."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        abort(f"Could not read {what} {path}: {exc}")
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        abort(f"Invalid JSON in {what} {path}: {exc}")
+
+
+def write_file(path: Path, data: str | bytes, *, what: str = "file") -> None:
+    """Write text or bytes to a file, aborting with a styled error (not a
+    traceback) on write failures (missing parent dir, permissions, ...)."""
+    try:
+        if isinstance(data, bytes):
+            path.write_bytes(data)
+        else:
+            path.write_text(data, encoding="utf-8")
+    except OSError as exc:
+        abort(f"Could not write {what} {path}: {exc}")
 
 
 def show(
