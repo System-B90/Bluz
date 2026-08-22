@@ -5,6 +5,7 @@ import {
     databaseController,
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
+import { withOptionalTransaction } from "@/api-server/mongo-transactions";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
@@ -170,22 +171,36 @@ async function restoreSnapshot(
             .toArray()
     ).map((doc) => doc.id);
 
-    if (existingIds.length > 0) {
-        await controller.events.updateMany(
-            { id: { $in: existingIds } },
-            { $set: { archived: true } },
-        );
-    }
+    // Archiving the live range and writing the snapshot back are two halves of
+    // one decision: a crash between them left the calendar emptied with nothing
+    // restored (#517). They run under one transaction where the deployment
+    // supports it; on a standalone mongod withOptionalTransaction logs the
+    // degradation loudly rather than failing the restore.
+    await withOptionalTransaction(
+        controller.client,
+        async (session) => {
+            if (existingIds.length > 0) {
+                await controller.events.updateMany(
+                    { id: { $in: existingIds } },
+                    { $set: { archived: true } },
+                    { session },
+                );
+            }
 
-    // Upserting by id also un-archives originals that survived into the snapshot.
-    await controller.events.bulkWrite(
-        events.map((event) => ({
-            replaceOne: {
-                filter: { id: event.id },
-                replacement: { ...event, archived: false },
-                upsert: true,
-            },
-        })),
+            // Upserting by id also un-archives originals that survived into the
+            // snapshot.
+            await controller.events.bulkWrite(
+                events.map((event) => ({
+                    replaceOne: {
+                        filter: { id: event.id },
+                        replacement: { ...event, archived: false },
+                        upsert: true,
+                    },
+                })),
+                { session },
+            );
+        },
+        "restoreSnapshot",
     );
 
     const restoredIds = new Set(events.map((e) => e.id));
