@@ -21,6 +21,11 @@ vi.mock("@/api-server/hive/sso", () => ({
     authOptions: {},
 }));
 
+import { sanitizeUpdatePayload } from "@/api-server/gantt/db-base";
+import {
+    ganttEventsSchema,
+    ganttModulesSchema,
+} from "@/api-server/gantt/schema";
 import { buildGantCollectionRoutes } from "@/app/api/gantt/base-collection";
 import { buildGantItemRoutes } from "@/app/api/gantt/base-item";
 import { buildGantAllocateTimeRoutes } from "@/app/api/gantt/base-allocate-time";
@@ -216,5 +221,33 @@ describe("Base Gantt Link Routes", () => {
         const data = await response.json();
         expect(response.status).toBe(200);
         expect(data.data).toEqual({ unlinked: true, id: "1" });
+    });
+});
+
+describe("sanitizeUpdatePayload (#519)", () => {
+    it("drops unknown and server-owned fields", () => {
+        const result = sanitizeUpdatePayload(
+            ganttModulesSchema,
+            {
+                id: "mod_evil",
+                createdAt: new Date(0),
+                updatedAt: new Date(0),
+                title: "New title",
+                notAColumn: "ignored",
+            },
+            "מודול",
+        );
+
+        expect(result).toEqual({ title: "New title" });
+    });
+
+    it("rejects a value outside an enum column's members", () => {
+        expect(() =>
+            sanitizeUpdatePayload(
+                ganttEventsSchema,
+                { type: "definitely-not-a-type" },
+                "אירוע",
+            ),
+        ).toThrow();
     });
 });

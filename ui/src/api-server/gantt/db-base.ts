@@ -79,6 +79,20 @@ export function sanitizeCreatePayload(
         );
     }
 
+    assertValidEnumValues(columns, data, typeName, "ביצירת");
+
+    return Object.fromEntries(
+        Object.entries(data).filter(([field]) => field in columns),
+    );
+}
+
+/** Rejects a value that is not one of an enum column's declared members. */
+function assertValidEnumValues(
+    columns: Record<string, AnyPgColumn>,
+    data: Record<string, unknown>,
+    typeName: string,
+    action: string,
+): void {
     for (const [name, column] of Object.entries(columns)) {
         const allowed = (column as { enumValues?: Array<string> }).enumValues;
         const value = data[name];
@@ -89,14 +103,35 @@ export function sanitizeCreatePayload(
             !allowed.includes(value)
         ) {
             throw new ClientApiError(
-                `ערך לא חוקי לשדה ${name} ביצירת ${typeName}: "${value}". ` +
+                `ערך לא חוקי לשדה ${name} ${action} ${typeName}: "${value}". ` +
                     `ערכים אפשריים: ${allowed.join(", ")}`,
             );
         }
     }
+}
+
+/**
+ * The update-path counterpart of {@link sanitizeCreatePayload}: same column
+ * allow-list and same enum validation, minus the required-field check (a PATCH
+ * is partial by definition).
+ *
+ * Without it `updateItem` spread the raw client body straight into `.set()`,
+ * so every column except the server-owned three was client-writable and a
+ * typo'd field became an opaque 500 instead of a dropped no-op (#519).
+ */
+export function sanitizeUpdatePayload(
+    table: PgTableWithColumns<any>,
+    data: Record<string, unknown>,
+    typeName: string,
+): Record<string, unknown> {
+    const columns = getTableColumns(table) as Record<string, AnyPgColumn>;
+
+    assertValidEnumValues(columns, data, typeName, "בעדכון");
 
     return Object.fromEntries(
-        Object.entries(data).filter(([field]) => field in columns),
+        Object.entries(data).filter(
+            ([field]) => field in columns && !SERVER_OWNED_COLUMNS.has(field),
+        ),
     );
 }
 export type BaseDbDocument = {
@@ -334,12 +369,11 @@ export function drizzleOperationsBuilder<
     ): Promise<DbTDocument> {
         if (!id) throw new ClientApiError(`מזהה נדרש לעדכון ${typeName}`);
 
-        const {
-            id: _id,
-            createdAt: _c,
-            updatedAt: _u,
-            ...safeData
-        } = updateData as Partial<T> & Partial<BaseDbDocument>;
+        const safeData = sanitizeUpdatePayload(
+            table as PgTableWithColumns<any>,
+            updateData as Record<string, unknown>,
+            typeName,
+        );
 
         const [updatedItem] = await postgresDb
             .update(table as PgTableWithColumns<any>)
