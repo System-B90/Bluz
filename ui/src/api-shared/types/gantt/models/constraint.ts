@@ -153,9 +153,9 @@ export function constraintToHumanReadableString(
         }
 
         if (constraint.relation === "after") {
-            return `${ownerTypeName} ${ownerName} יתחיל אחרי ש${targetTypeName} ${constraint.targetId} יסתיים`;
+            return `${ownerTypeName} ${ownerName} יתחיל אחרי ש${targetTypeName} ${target.title} יסתיים`;
         } else if (constraint.relation === "before") {
-            return `${ownerTypeName} ${ownerName} יסתיים לפני ש${targetTypeName} ${constraint.targetId} יתחיל`;
+            return `${ownerTypeName} ${ownerName} יסתיים לפני ש${targetTypeName} ${target.title} יתחיל`;
         }
     } else {
         return "[___]";
