@@ -19,7 +19,16 @@ const { fakeController, fakeEvents, fakeHistory } = vi.hoisted(() => {
         insertOne: vi.fn(async () => ({ insertedId: "x" })),
     };
     return {
-        fakeController: { dbName: "bluz_cut", eventHistory: history, events },
+        fakeController: {
+            // The cut claims itself through this ledger's unique index (#515).
+            curriculumCuts: {
+                deleteOne: vi.fn(async () => ({ deletedCount: 1 })),
+                insertOne: vi.fn(async () => ({ insertedId: "claim" })),
+            },
+            dbName: "bluz_cut",
+            eventHistory: history,
+            events,
+        },
         fakeEvents: events,
         fakeHistory: history,
     };
