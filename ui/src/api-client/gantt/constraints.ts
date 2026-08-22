@@ -1,5 +1,6 @@
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { baseDocumentFixup, RawBaseDocument } from "@/api-client/gantt/base";
+import { ClientApiError } from "@/api-shared/errors";
 import { CreateConstraintPayload } from "@/api-shared/types/gantt/create-payloads";
 import {
     GanttCurriculumId,
@@ -9,58 +10,90 @@ import {
 import {
     ConstraintType,
     GanttConstraint,
+    RelationalConstraint,
+    TemporalConstraint,
 } from "@/api-shared/types/gantt/models/constraint";
+import { GanttDayIndex } from "@/api-shared/types/gantt/models/day";
+import { GanttEventId } from "@/api-shared/types/gantt/models/event";
 
 export type { CreateConstraintPayload };
 
-function normalizeConstraintObject(serverConstraint: any): GanttConstraint {
-    if (serverConstraint.type === ConstraintType.Relational) {
-        const {
-            ownerEventId,
-            ownerModuleId,
-            targetEventId,
-            targetModuleId,
-            ...otherParams
-        } = serverConstraint;
+/**
+ * Constraint document as it arrives from the server before client-side
+ * normalization -- a loose superset of both union members (plus whatever
+ * base-document fields `baseDocumentFixup` has already fixed up), since the
+ * server doesn't discriminate the JSON shape by `type` the way the client
+ * model does.
+ */
+type RawServerConstraint = RawBaseDocument & {
+    id: string;
+    type: ConstraintType;
+    ownerEventId?: GanttEventId;
+    ownerModuleId?: GanttModuleId;
+    targetEventId?: GanttEventId;
+    targetModuleId?: GanttModuleId;
+    relation?: RelationalConstraint["relation"];
+    minDelayDays?: number;
+    maxDelayDays?: number;
+    allowedDays?: Array<GanttDayIndex>;
+    forbiddenDays?: Array<GanttDayIndex>;
+};
+
+/**
+ * Narrows a raw server constraint into the discriminated `GanttConstraint`
+ * union. Builds the return value by naming exactly the fields each union
+ * member declares -- rather than spreading the leftover raw fields -- so
+ * server-only bookkeeping (e.g. `createdAt`/`updatedAt`, which
+ * `baseDocumentFixup` sets before this runs but which `GanttConstraint`
+ * doesn't declare) can't silently ride along on an object typed as the
+ * narrow union.
+ */
+function normalizeConstraintObject(
+    serverConstraint: RawServerConstraint,
+): GanttConstraint {
+    const { id, type, ownerEventId, ownerModuleId } = serverConstraint;
+    const ownerType = ownerModuleId ? "module" : "event";
+    if (ownerType === "event" && !ownerEventId) {
+        throw new ClientApiError(
+            `Malformed constraint! Owner type is "event" but no ownerEventId was provided.`,
+        );
+    }
+
+    if (type === ConstraintType.Relational) {
+        const { targetEventId, targetModuleId, relation, minDelayDays, maxDelayDays } =
+            serverConstraint;
         const targetType = targetModuleId ? "module" : "event";
         if (targetType === "event" && !targetEventId) {
-            throw Error(
+            throw new ClientApiError(
                 `Malformed constraint! Target type is "event" but no targetEventId was provided.`,
             );
         }
-        const ownerType = ownerModuleId ? "module" : "event";
-        if (ownerType === "event" && !ownerEventId) {
-            throw Error(
-                `Malformed constraint! Owner type is "event" but no ownerEventId was provided.`,
-            );
-        }
-
         return {
-            ...otherParams,
+            id,
+            type,
             ownerEventId,
             ownerModuleId,
             ownerType,
-            targetId: targetEventId ?? targetModuleId,
+            targetId: (targetEventId ?? targetModuleId)!,
             targetType,
-        };
-    } else if (serverConstraint.type === ConstraintType.Temporal) {
-        const { ownerEventId, ownerModuleId, ...otherParams } =
-            serverConstraint;
-        const ownerType = ownerModuleId ? "module" : "event";
-        if (ownerType === "event" && !ownerEventId) {
-            throw Error(
-                `Malformed constraint! Owner type is "event" but no ownerEventId was provided.`,
-            );
-        }
+            relation,
+            minDelayDays,
+            maxDelayDays,
+        } as RelationalConstraint;
+    } else if (type === ConstraintType.Temporal) {
+        const { allowedDays, forbiddenDays } = serverConstraint;
         return {
-            ...otherParams,
+            id,
+            type,
             ownerEventId,
             ownerModuleId,
             ownerType,
-        };
+            allowedDays,
+            forbiddenDays,
+        } as TemporalConstraint;
     } else {
-        throw Error(
-            `Malformed constraint! Unknown constraint type "${serverConstraint.type}"`,
+        throw new ClientApiError(
+            `Malformed constraint! Unknown constraint type "${type}"`,
         );
     }
 }
@@ -84,7 +117,7 @@ async function apiGetConstraints(
     if (syllabusId) url.searchParams.append("syllabusId", syllabusId);
     if (moduleId) url.searchParams.append("moduleId", moduleId);
 
-    const rawData = await safeApiFetcher<Array<RawBaseDocument>>(
+    const rawData = await safeApiFetcher<Array<RawServerConstraint>>(
         url.toString(),
         {
             ...options,
@@ -105,7 +138,7 @@ async function apiCreateConstraint(
     payload: CreateConstraintPayload,
     options?: ClientApiProps,
 ): Promise<GanttConstraint> {
-    const rawData = await safeApiFetcher<RawBaseDocument>(
+    const rawData = await safeApiFetcher<RawServerConstraint>(
         `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/constraints`,
         {
             ...options,
@@ -114,7 +147,7 @@ async function apiCreateConstraint(
         },
     );
     return normalizeConstraintObject(
-        baseDocumentFixup(rawData as RawBaseDocument),
+        baseDocumentFixup(rawData as RawServerConstraint),
     );
 }
 
@@ -127,7 +160,7 @@ async function apiUpdateConstraint(
     payload: Partial<CreateConstraintPayload>,
     options?: ClientApiProps,
 ): Promise<GanttConstraint> {
-    const rawData = await safeApiFetcher<RawBaseDocument>(
+    const rawData = await safeApiFetcher<RawServerConstraint>(
         `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/constraints`,
         {
             ...options,
@@ -136,7 +169,7 @@ async function apiUpdateConstraint(
         },
     );
     return normalizeConstraintObject(
-        baseDocumentFixup(rawData as RawBaseDocument),
+        baseDocumentFixup(rawData as RawServerConstraint),
     );
 }
 
