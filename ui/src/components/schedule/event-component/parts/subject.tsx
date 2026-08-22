@@ -38,8 +38,14 @@ export function SubjectComponent({
         hiveUrl,
     );
 
+    // href="#" as a placeholder link jumps the page to the top on click —
+    // fall back to plain (non-link) text when the real URL isn't resolved.
+    if (!href) {
+        return <Typography {...props}>{subject?.name}</Typography>;
+    }
+
     return (
-        <Link className="hover:underline" href={href ?? "#"}>
+        <Link className="hover:underline" href={href}>
             <Typography {...props}>{subject?.name}</Typography>
         </Link>
     );
@@ -63,8 +69,12 @@ export function ModuleComponent({
         hiveUrl,
     );
 
+    if (!href) {
+        return <Typography {...props}>{hiveModule?.name}</Typography>;
+    }
+
     return (
-        <Link className="hover:underline" href={href ?? "#"}>
+        <Link className="hover:underline" href={href}>
             <Typography {...props}>{hiveModule?.name}</Typography>
         </Link>
     );

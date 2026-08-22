@@ -77,8 +77,6 @@ export function ScheduleAppBar({
                 >
                     <CurriculumIcon />
 
-                    {/* <InstructorToolsIcon /> */}
-
                     <IconButton
                         className="hover-rotate-subtle transition-all duration-200 hover:scale-110 active:scale-95"
                         color="inherit"
