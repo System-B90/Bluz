@@ -136,11 +136,6 @@ export function enqueueApiErrorSnackbar(
                 <Typography fontSize={"inherit"} fontWeight={400}>
                     {error.message}
                 </Typography>
-                {error.status ? (
-                    <Typography fontSize={"inherit"} fontWeight={400}>
-                        {error.status}
-                    </Typography>
-                ) : null}
             </>,
             { variant: "error" },
         );
