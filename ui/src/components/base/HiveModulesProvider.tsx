@@ -78,15 +78,20 @@ export const HiveModulesProvider = ({
         loadModules();
     }, [loadModules]);
 
+    // A fresh object literal here re-renders every consumer app-wide on
+    // every render of this provider. Memoize like SettingsProvider.tsx.
+    const value = useMemo(
+        () => ({
+            default: false,
+            modules,
+            getModule,
+            getModulesOfSubject,
+        }),
+        [modules, getModule, getModulesOfSubject],
+    );
+
     return (
-        <HiveModulesContext.Provider
-            value={{
-                default: false,
-                modules,
-                getModule,
-                getModulesOfSubject,
-            }}
-        >
+        <HiveModulesContext.Provider value={value}>
             {children}
         </HiveModulesContext.Provider>
     );
