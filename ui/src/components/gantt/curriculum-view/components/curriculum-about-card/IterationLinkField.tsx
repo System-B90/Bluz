@@ -12,10 +12,10 @@ import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { apiListIterations, apiPatchIteration } from "@/api-client/iterations";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { Iteration, IterationId } from "@/api-shared/types/iteration";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { EditableCurriculumField } from "@/components/gantt/curriculum-view/components/curriculum-about-card/EditableCurriculumField";
 
 export type IterationLinkFieldProps = {

@@ -1,15 +1,9 @@
-import Typography from "@mui/material/Typography";
-import { EnqueueSnackbar, OptionsObject, VariantType } from "notistack";
-import React from "react";
-
 import { ApiResponseJson } from "@/api-shared/common";
 import {
     ClientApiError,
-    ClientApiWarning,
     constructErrorFromNetworkMessage,
     OperationAborted as OperationAbortedWarning,
     ServerNetworkError,
-    UserNotLoggedInError,
 } from "@/api-shared/errors";
 
 const API_LOGIN_REQUIRED_SLEEP_TIMEOUT = 60 * 1000; // 1 Minute
@@ -107,78 +101,6 @@ export async function safeApiFetcher<T = unknown>(
                 e instanceof Error ? e.message : String(e),
             );
         });
-}
-
-export function enqueueSnackbarWithSubtext(
-    enqueueSnackbar: EnqueueSnackbar | undefined,
-    mainText: React.ReactNode | string,
-    subText: React.ReactNode | string,
-    options?: OptionsObject<VariantType>,
-) {
-    if (enqueueSnackbar !== undefined) {
-        if (typeof subText === "string") {
-            enqueueSnackbar(
-                <div className="flex flex-col">
-                    <p>{mainText}</p>
-                    <Typography component="p" sx={{ fontSize: "0.7em" }}>
-                        {subText}
-                    </Typography>
-                </div>,
-                options,
-            );
-        } else {
-            enqueueSnackbar(
-                <div className="flex flex-col">
-                    <p>{mainText}</p>
-                    <Typography component="div" sx={{ fontSize: "0.7em" }}>
-                        {subText}
-                    </Typography>
-                </div>,
-                options,
-            );
-        }
-    } else {
-        console.log(mainText, subText);
-    }
-}
-
-export function enqueueApiErrorSnackbar(
-    enqueueSnackbar: EnqueueSnackbar | undefined,
-    mainText: React.ReactNode | string,
-    error: unknown,
-) {
-    if (error instanceof UserNotLoggedInError) {
-        console.log(error.message);
-        return;
-    }
-    if (error instanceof ClientApiWarning) {
-        return;
-    }
-
-    if (!(error instanceof ClientApiError)) {
-        return enqueueSnackbarWithSubtext(
-            enqueueSnackbar,
-            mainText,
-            error instanceof ServerNetworkError ? `Network error` : `${error}`,
-            { variant: "error" },
-        );
-    } else {
-        console.log(error);
-        return enqueueSnackbarWithSubtext(
-            enqueueSnackbar,
-            mainText,
-            <>
-                <Typography fontSize={"inherit"} fontWeight={500}>
-                    {error.name}
-                    {error.message ? ": " : ""}
-                </Typography>
-                <Typography fontSize={"inherit"} fontWeight={400}>
-                    {error.message}
-                </Typography>
-            </>,
-            { variant: "error" },
-        );
-    }
 }
 
 export type ClientApiProps = Omit<RequestInit, "body" | "method">;

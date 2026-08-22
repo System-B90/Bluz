@@ -8,8 +8,8 @@ import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttWeekId } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { OverviewTab } from "@/components/gantt/curriculum-view/components/WorkTimePanel/OverviewTab";
 import { WorkTimePanelProps } from "@/components/gantt/curriculum-view/components/WorkTimePanel/types";
 import { useWorkTimePanelLogic } from "@/components/gantt/curriculum-view/components/WorkTimePanel/UseWorkTimePanelLogic";

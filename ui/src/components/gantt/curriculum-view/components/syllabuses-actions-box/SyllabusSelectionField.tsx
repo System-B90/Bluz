@@ -11,11 +11,11 @@ import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useCurriculum } from "@/components/gantt/state/hooks/UseCurriculum";
 import { useSyllabusNames } from "@/components/gantt/state/providers/SyllabusNamesProvider";

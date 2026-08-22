@@ -13,13 +13,13 @@ import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
 {
     GanttDayId,
     GanttDayIndex,
     getDayNameDisplay,
 } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import
 {
     CapacityStatus,

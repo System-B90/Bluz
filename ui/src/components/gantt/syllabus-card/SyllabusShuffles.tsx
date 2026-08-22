@@ -6,10 +6,10 @@ import Tooltip from "@mui/material/Tooltip";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 import { ShuffleUsages } from "@/api-shared/types/gantt/shuffles";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";

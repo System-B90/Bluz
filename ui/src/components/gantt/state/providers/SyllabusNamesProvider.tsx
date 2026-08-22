@@ -9,12 +9,12 @@ import React, {
     useState,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import {
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 
 export type SyllabusDictionary = Record<GanttSyllabusId, string>;
 

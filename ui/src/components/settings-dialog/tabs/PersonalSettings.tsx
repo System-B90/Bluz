@@ -23,7 +23,6 @@ import
     type ReactNode,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
 {
     apiConnectGoogleCalendar,
@@ -40,6 +39,7 @@ import
 } from "@/api-client/personal-settings";
 import { GoogleCalendarStatus } from "@/api-shared/types/google-calendar";
 import { Class, ClassTypeEnum } from "@/api-shared/types/hive";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { useOutsiders } from "@/components/base/OutsidersProvider";
 import { iconBadgeSx, settingsCardSx } from "@/components/settings-dialog/tabs/global/common/styles";

@@ -15,7 +15,6 @@ import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { MouseEvent, useCallback, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     GanttCurriculum,
     GanttCurriculumId,
@@ -26,6 +25,7 @@ import {
     GanttCurriculumTemplate,
     resolveWeekDayMinutes,
 } from "@/api-shared/types/gantt/templates";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 

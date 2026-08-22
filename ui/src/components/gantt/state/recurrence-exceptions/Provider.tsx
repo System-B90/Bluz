@@ -1,7 +1,6 @@
 import { useSnackbar } from "notistack";
 import { ReactNode, useCallback, useEffect, useMemo, useReducer } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import {
     GanttCurriculumId,
@@ -9,6 +8,7 @@ import {
     GanttEventId,
     GanttModuleId,
 } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 import { GanttRecurrenceExceptionContext } from "@/components/gantt/state/recurrence-exceptions/context";

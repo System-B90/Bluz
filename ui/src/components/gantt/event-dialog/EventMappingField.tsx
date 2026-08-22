@@ -7,7 +7,6 @@ import Stack from "@mui/material/Stack";
 import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import {
     GanttCurriculumId,
@@ -17,6 +16,7 @@ import {
     GanttModuleId,
 } from "@/api-shared/types/gantt/models";
 import { getDayNameDisplay } from "@/api-shared/types/gantt/models/day";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 
 /**

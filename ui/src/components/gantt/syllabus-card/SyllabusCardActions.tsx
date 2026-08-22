@@ -5,12 +5,12 @@ import Tooltip from "@mui/material/Tooltip";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
 {
     GanttCurriculumId,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { SyllabusShuffles } from "@/components/gantt/syllabus-card/SyllabusShuffles";
 

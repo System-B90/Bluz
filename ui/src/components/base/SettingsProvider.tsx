@@ -12,7 +12,6 @@ import
     useState,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
 {
     apiGetMealSettings,
@@ -41,6 +40,7 @@ import {
     DEFAULT_DAY_START_TIME,
     DEFAULT_WEEKEND_HOME_START_TIME,
 } from "@/api-shared/types/settings/schedule";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useIterationScope } from "@/components/base/IterationProvider";
 
 // Calendar hours change very rarely, so the last known value is cached in
