@@ -116,6 +116,9 @@ def _run_callback_server(url: str) -> str | None:
     part1 = "".join(random.choices(chars, k=4))
     part2 = "".join(random.choices(chars, k=4))
     code = f"{part1}-{part2}"
+    allowed_origin = (
+        f"{urllib.parse.urlparse(url).scheme}://{urllib.parse.urlparse(url).netloc}"
+    )
 
     class CallbackHandler(BaseHTTPRequestHandler):
         # Bound the read on an idle connection so a stray socket cannot hold a
@@ -127,7 +130,11 @@ def _run_callback_server(url: str) -> str | None:
             pass
 
         def _send_cors_headers(self) -> None:
-            self.send_header("Access-Control-Allow-Origin", "*")
+            # Scoped to the Bluz origin the user is logging into -- a wildcard
+            # here would let any local page (or process able to reach
+            # 127.0.0.1) read the callback response (#521).
+            self.send_header("Access-Control-Allow-Origin", allowed_origin)
+            self.send_header("Vary", "Origin")
             self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "*")
             # Legacy Private Network Access opt-in. Chrome has replaced the
@@ -172,6 +179,21 @@ def _run_callback_server(url: str) -> str | None:
         def do_GET(self) -> None:
             parsed = urllib.parse.urlparse(self.path)
             params = urllib.parse.parse_qs(parsed.query)
+
+            # The verification code must match the one this process generated
+            # and printed/embedded in the login URL. Without this check any
+            # local process able to reach 127.0.0.1:<port> during the login
+            # window could POST its own token and have it silently accepted
+            # (#521).
+            code_list = params.get("code")
+            if not code_list or code_list[0] != code:
+                self._respond(
+                    403,
+                    json_body=b'{"status":"error","error":"code_mismatch"}',
+                    html_body=_result_page(ok=False),
+                )
+                return
+
             token_list = params.get("token")
             if not token_list or not token_list[0]:
                 self._respond(

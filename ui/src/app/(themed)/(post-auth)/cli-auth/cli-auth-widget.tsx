@@ -20,8 +20,12 @@ type CliAuthWidgetProps = {
 
 export type CliAuthStatus = "connecting" | "fallback" | "handoff" | "success";
 
-export function callbackUrl(port: string, token: string) {
-    return `http://127.0.0.1:${port}/callback?token=${encodeURIComponent(token)}`;
+export function callbackUrl(port: string, code: string, token: string) {
+    // The CLI's local callback server requires this exact verification code
+    // (the same one shown on screen) to accept the token — otherwise any
+    // local process that reached the callback port during the login window
+    // could inject its own token (#521).
+    return `http://127.0.0.1:${port}/callback?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`;
 }
 
 export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
@@ -41,7 +45,7 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
             setStatus("handoff");
         }, 3000);
 
-        fetch(callbackUrl(port, token), {
+        fetch(callbackUrl(port, code, token), {
             method: "GET",
             mode: "cors",
             signal: controller.signal,
@@ -74,14 +78,14 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
 
     const handleHandoff = () => {
         const opened = window.open(
-            callbackUrl(port, token),
+            callbackUrl(port, code, token),
             "_blank",
             "noopener",
         );
         if (!opened) {
             // Popup blocked despite the gesture — navigating this tab still
             // completes the login; the CLI serves a real page at the callback.
-            window.location.href = callbackUrl(port, token);
+            window.location.href = callbackUrl(port, code, token);
         }
     };
 
