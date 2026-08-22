@@ -1,6 +1,11 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    ServerApi,
+    withApi,
+} from "@/api-server/common";
 import { DbEvent } from "@/api-server/db-event";
 import {
     pullGoogleEditsInBackground,
@@ -114,7 +119,7 @@ export const POST: ServerApiEventUpdate = withApi(async (request) => {
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
     const event: ApiEventUpdatePayload = eventDateFixup(
-        await request.json(),
+        await requireJsonObjectBody(request),
     );
     if (!event) {
         throw new ClientApiError("No data provided!");
@@ -134,7 +139,7 @@ export const PUT: ServerApiEventCreate = withApi(async (request) => {
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
     const event: ApiEventCreatePayload = eventDateFixup(
-        await request.json(),
+        await requireJsonObjectBody(request),
     );
     if (!event) {
         throw new ClientApiError("No data provided!");

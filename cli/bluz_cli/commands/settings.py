@@ -21,9 +21,14 @@ _BASE = "/api/settings"
 # Well-known setting keys for convenience subcommands. Kept in step with
 # api-shared/types/settings/* — the server has no enumeration route.
 PRAYER_TIMES_SETTING_KEY = "prayerTimes"
+MEAL_TIMES_SETTING_KEY = "mealTimes"
 SCHEDULE_SETTING_KEY = "schedule"
 
-KNOWN_SETTING_KEYS = [PRAYER_TIMES_SETTING_KEY, SCHEDULE_SETTING_KEY]
+KNOWN_SETTING_KEYS = [
+    PRAYER_TIMES_SETTING_KEY,
+    MEAL_TIMES_SETTING_KEY,
+    SCHEDULE_SETTING_KEY,
+]
 
 
 @app.command("list")

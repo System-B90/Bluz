@@ -297,6 +297,49 @@ describe("useAiChat", () => {
         await waitFor(() => expect(result.current.error).toBe("שירות ה-AI נפל"));
     });
 
+    it("keeps a mid-turn error's produced tool messages in the transcript", async () => {
+        // Regression: the iteration-cap error carries whatever tool calls
+        // already ran that turn. Dropping them would have the next request
+        // replay — and re-run — those same writes.
+        scriptTurns([
+            [
+                {
+                    type: AiStreamEventType.Error,
+                    message: "יותר מדי צעדים",
+                    messages: [
+                        {
+                            role: AiRole.Assistant,
+                            content: "",
+                            toolCalls: [
+                                { id: "c1", name: "list_events", arguments: "{}" },
+                            ],
+                        },
+                        {
+                            role: AiRole.Tool,
+                            toolCallId: "c1",
+                            name: "list_events",
+                            content: "[]",
+                        },
+                    ],
+                },
+            ],
+            [doneEvent()],
+        ]);
+
+        const { result } = renderChat();
+        await act(async () => result.current.send("מה יש?"));
+        await waitFor(() => expect(result.current.error).toBe("יותר מדי צעדים"));
+
+        await act(async () => result.current.send("נסה שוב"));
+        const sent = streamAiChat.mock.calls[1][0].messages;
+        expect(sent.map((m: { role: string }) => m.role)).toEqual([
+            AiRole.User,
+            AiRole.Assistant,
+            AiRole.Tool,
+            AiRole.User,
+        ]);
+    });
+
     it("clears everything on reset", async () => {
         scriptTurns([[doneEvent([{ role: AiRole.Assistant, content: "א" }])], [doneEvent()]]);
 

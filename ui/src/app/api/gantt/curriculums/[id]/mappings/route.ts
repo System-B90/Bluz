@@ -7,7 +7,11 @@
 
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    withApi,
+} from "@/api-server/common";
 import {
     createCurriculumModuleDayMapping,
     deleteCurriculumModuleDayMapping,
@@ -51,7 +55,10 @@ export const GET = withApi(async (request: NextRequest, context: RouteContext) =
 export const POST = withApi(async (request: NextRequest, context: RouteContext) => {
     await requireStaffSession();
     const { id: curriculumId } = await context.params;
-    const body: CreateGanttCurriculumEventDayMapping = await request.json();
+    const body =
+        await requireJsonObjectBody<CreateGanttCurriculumEventDayMapping>(
+            request,
+        );
 
     // Validate required fields for creation
     if (!body.moduleId || !body.dayId) {
@@ -77,7 +84,7 @@ export const POST = withApi(async (request: NextRequest, context: RouteContext) 
 export const PATCH = withApi(async (request: NextRequest, context: RouteContext) => {
     await requireStaffSession();
     const { id: curriculumId } = await context.params;
-    const body = await request.json();
+    const body = await requireJsonObjectBody<Record<string, unknown>>(request);
 
     const { eventId, moduleId, oldMapping, newValues } = body as {
         moduleId: GanttModuleId;
@@ -107,7 +114,7 @@ export const PATCH = withApi(async (request: NextRequest, context: RouteContext)
 export const DELETE = withApi(async (request: NextRequest, context: RouteContext) => {
     await requireStaffSession();
     const { id: curriculumId } = await context.params;
-    const body = await request.json();
+    const body = await requireJsonObjectBody<Record<string, unknown>>(request);
 
     const { moduleId, eventId, dayId } = body as {
         moduleId: GanttModuleId;

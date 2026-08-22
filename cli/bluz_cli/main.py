@@ -46,7 +46,7 @@ from bluz_cli.commands import (  # noqa: E402
 )
 from bluz_cli.context import configure  # noqa: E402
 from bluz_cli.errors import BluzCliError  # noqa: E402
-from bluz_cli.output import fail  # noqa: E402
+from bluz_cli.output import fail, warn  # noqa: E402
 
 app = typer.Typer(
     help="Bluz CLI — drive the Bluz scheduling & curriculum API from your terminal.",
@@ -96,7 +96,8 @@ def main(
     token: str = typer.Option(
         None,
         "--token",
-        help="Session token (overrides config/env).",
+        help="[deprecated] Session token (overrides config/env). Visible in "
+        "process listings -- prefer BLUZ_TOKEN.",
         rich_help_panel="Global",
     ),
     insecure: bool = typer.Option(
@@ -118,6 +119,12 @@ def main(
         help="Suppress success/warning chatter — only data and errors. For scripting/agents.",
         rich_help_panel="Global",
     ),
+    timeout: float = typer.Option(
+        None,
+        "--timeout",
+        help="HTTP request timeout in seconds (default 30).",
+        rich_help_panel="Global",
+    ),
     _version: bool = typer.Option(
         None,
         "--version",
@@ -127,7 +134,21 @@ def main(
     ),
 ) -> None:
     """Resolve global configuration before any command runs."""
-    configure(url=url, token=token, insecure=insecure, as_json=json_output, quiet=quiet)
+    if token and not quiet:
+        # Deprecated: a token passed as a CLI argument is visible to any
+        # other process on the machine via `ps`/Task Manager. BLUZ_TOKEN
+        # (or the config file written by `bluz login`) is the safe channel.
+        warn(
+            "--token is deprecated and visible in process listings — use the BLUZ_TOKEN environment variable instead."
+        )
+    configure(
+        url=url,
+        token=token,
+        insecure=insecure,
+        as_json=json_output,
+        quiet=quiet,
+        timeout=timeout,
+    )
 
 
 @app.command()
@@ -140,7 +161,7 @@ def version() -> None:
 # `bluz gantt curriculums list --json` works the same as `bluz --json gantt
 # curriculums list` — flags shouldn't care where you put them when chaining.
 _GLOBAL_FLAGS = {"--json", "--quiet", "-q", "--insecure", "--secure"}
-_GLOBAL_OPTS_WITH_VALUE = {"--url", "--token"}
+_GLOBAL_OPTS_WITH_VALUE = {"--url", "--token", "--timeout"}
 
 _VALUE_TAKING_OPTIONS: set[str] | None = None
 
@@ -230,6 +251,12 @@ def run() -> None:
     except BluzCliError as exc:
         fail(str(exc))
         sys.exit(1)
+    except KeyboardInterrupt:
+        # A raw traceback on Ctrl-C is noise, not information -- exit with
+        # the conventional SIGINT status instead.
+        typer.echo()
+        fail("Interrupted.")
+        sys.exit(130)
 
 
 if __name__ == "__main__":

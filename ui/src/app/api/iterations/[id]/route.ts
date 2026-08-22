@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import {
     ApiSuccess,
+    requireJsonObjectBody,
     ServerApiWithParams,
     withApi,
 } from "@/api-server/common";
@@ -38,7 +39,7 @@ export const GET: ServerApiIterationGet = withApi(async (request, context) => {
 export const PATCH: ServerApiIterationPatch = withApi(async (request, context) => {
     await requireStaffSession();
     const { id } = await context.params;
-    const patch = await request.json();
+    const patch = await requireJsonObjectBody<Record<string, unknown>>(request);
     if (!patch || typeof patch !== "object") {
         throw new ClientApiError("No patch data provided!");
     }

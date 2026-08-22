@@ -5,6 +5,7 @@ import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import { ClientApiError } from "@/api-shared/errors";
 import { CalendarDraft, CalendarSnapshot } from "@/api-shared/types";
 import { Course } from "@/api-shared/types/course";
+import { CurriculumCutClaim } from "@/api-shared/types/curriculum-cut";
 import { CustomColor } from "@/api-shared/types/custom-color";
 import { EventHistoryEntry } from "@/api-shared/types/event-history";
 import {
@@ -170,6 +171,15 @@ class DatabaseController {
     public get hiveLessonActivations(): Collection<HiveLessonActivation> {
         return this.bluzDb.collection("hiveLessonActivations");
     }
+    /**
+     * Claims of the one-shot curriculum cut. Like the activation ledger above,
+     * the unique index is the concurrency control — an unlocked
+     * check-then-insert let two concurrent cuts both pass the guard and each
+     * insert the whole schedule (#515).
+     */
+    public get curriculumCuts(): Collection<CurriculumCutClaim> {
+        return this.bluzDb.collection("curriculumCuts");
+    }
     public get client(): MongoClient {
         return getMongoClient();
     }
@@ -219,6 +229,12 @@ function ensureIndexesInBackground(controller: DatabaseController): void {
         controller.hiveLessonActivations.createIndex(
             { activatedAt: 1 },
             { expireAfterSeconds: 7 * 24 * 60 * 60 },
+        ),
+        // The cut claim's uniqueness is what makes a cut one-shot under
+        // concurrency (#515).
+        controller.curriculumCuts.createIndex(
+            { curriculumId: 1 },
+            { unique: true },
         ),
     ]).then((results) => {
         // allSettled, not all: one failing index must not skip the rest.
