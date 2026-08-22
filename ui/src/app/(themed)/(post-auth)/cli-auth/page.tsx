@@ -2,6 +2,8 @@ import Box from "@mui/material/Box";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 
+import { DbCliHandoff } from "@/api-server/db-cli-handoff";
+import { getSessionUser } from "@/api-server/session-user";
 import { CliAuthWidget } from "@/app/(themed)/(post-auth)/cli-auth/cli-auth-widget";
 
 type PageProps = {
@@ -26,6 +28,17 @@ export default async function CliAuthPage({ searchParams }: PageProps) {
         cookieStore.get("next-auth.session-token")?.value ||
         "";
 
+    // Mint a single-use handoff code server-side and hand *that* to the
+    // client widget instead of the raw session token (#520). The token never
+    // reaches the browser's DOM, a callback URL, or browser history -- the
+    // CLI redeems the handoff code for the token itself over HTTPS
+    // (POST /api/cli-auth/redeem), and the code is deleted on first use.
+    const sessionUser = await getSessionUser();
+    const handoffCode =
+        token && sessionUser
+            ? await DbCliHandoff.create(token, sessionUser.id)
+            : "";
+
     return (
         <Box
             alignContent="flex-start"
@@ -39,7 +52,7 @@ export default async function CliAuthPage({ searchParams }: PageProps) {
             width="100%"
         >
             <Suspense fallback={null}>
-                <CliAuthWidget code={code} port={port} token={token} />
+                <CliAuthWidget code={code} handoffCode={handoffCode} port={port} />
             </Suspense>
         </Box>
     );

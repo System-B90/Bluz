@@ -4,6 +4,7 @@ import { DbEventDocument } from "@/api-server/db-event";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import { ClientApiError } from "@/api-shared/errors";
 import { CalendarDraft, CalendarSnapshot } from "@/api-shared/types";
+import { CLI_HANDOFF_TTL_SECONDS, CliHandoffCode } from "@/api-shared/types/cli-handoff";
 import { Course } from "@/api-shared/types/course";
 import { CurriculumCutClaim } from "@/api-shared/types/curriculum-cut";
 import { CustomColor } from "@/api-shared/types/custom-color";
@@ -317,6 +318,14 @@ class MetaController {
             "googleCalendarLinks",
         );
     }
+    /**
+     * Outstanding CLI login handoff codes (#520). `findOneAndDelete` by
+     * `code` is both the lookup and the single-use guard — the same
+     * insert/delete-as-claim pattern as `curriculumCuts`.
+     */
+    public get cliHandoffCodes(): Collection<CliHandoffCode> {
+        return this.metaDb.collection<CliHandoffCode>("cliHandoffCodes");
+    }
     public get client(): MongoClient {
         // Never the module-level handle: if the first connect failed, that one
         // is a closed topology forever, and `client.startSession()` throws.
@@ -345,6 +354,20 @@ export function getMetaController(): MetaController {
                 _metaController.googleCalendarLinks.createIndex(
                     { userId: 1 },
                     { unique: true },
+                ),
+                // Lookup key for redemption; also makes the insert path safe
+                // against a (astronomically unlikely) code collision.
+                _metaController.cliHandoffCodes.createIndex(
+                    { code: 1 },
+                    { unique: true },
+                ),
+                // Backstop for codes nobody redeems. Redemption itself also
+                // checks `createdAt` against CLI_HANDOFF_TTL_SECONDS so
+                // expiry is enforced immediately, not just at the next TTL
+                // sweep (Mongo runs that on a ~60s cadence).
+                _metaController.cliHandoffCodes.createIndex(
+                    { createdAt: 1 },
+                    { expireAfterSeconds: CLI_HANDOFF_TTL_SECONDS },
                 ),
             ]).catch((error) => {
                 logger.error({ err: error }, "Failed to ensure iteration registry indexes");
