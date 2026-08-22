@@ -4,9 +4,9 @@ import { enqueueSnackbar } from "notistack";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { apiGetEvents } from "@/api-client/calendar";
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { EventLockMessage } from "@/api-shared/types";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { CalendarFiltersProvider } from "@/components/base/CalendarFilterProvider";
 import { useIterationScope } from "@/components/base/IterationProvider";
 import { useOffline } from "@/components/base/OfflineProvider";

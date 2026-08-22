@@ -3,8 +3,8 @@ import Button from "@mui/material/Button";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 
 export function CreateSyllabusButton({

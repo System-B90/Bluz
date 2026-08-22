@@ -2,7 +2,7 @@
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { ColorFormCard, ColorFormCardProps } from "@/components/settings-dialog/tabs/global/color-settings/ColorFormCard";

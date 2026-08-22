@@ -10,8 +10,8 @@ import {
     useRef,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { MessageHandlerType } from "@/components/SessionWs";
 import { MessageTypes } from "@/settings";
 

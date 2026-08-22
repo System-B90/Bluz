@@ -9,9 +9,9 @@ import {
     useState,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { apiGetLessons } from "@/api-client/hive";
 import { HiveLesson, lessonModuleId } from "@/api-shared/types/hive";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 
 export type HiveLessonsContextState = {
     default: boolean;

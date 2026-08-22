@@ -3,7 +3,6 @@
 import { useSnackbar } from "notistack";
 import { ReactNode, useCallback, useEffect, useMemo, useReducer } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { CreateConstraintPayload } from "@/api-client/gantt/constraints";
 import {
@@ -15,6 +14,7 @@ import {
     ConstraintType,
     GanttConstraint,
 } from "@/api-shared/types/gantt/models/constraint";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { GanttConstraintContext } from "@/components/gantt/state/constraints/context";
 import { ganttConstraintReducer } from "@/components/gantt/state/constraints/reducer";
 

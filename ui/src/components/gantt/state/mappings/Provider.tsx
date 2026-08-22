@@ -8,7 +8,6 @@ import {
     useRef,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import {
@@ -18,6 +17,7 @@ import {
     GanttEventId,
     GanttModuleId,
 } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { GanttMappingContext } from "@/components/gantt/state/mappings/context";
 import { ganttMappingReducer } from "@/components/gantt/state/mappings/reducer";
 import { getGanttMappingKey } from "@/components/gantt/state/mappings/types";

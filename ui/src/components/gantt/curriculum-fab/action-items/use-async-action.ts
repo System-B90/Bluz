@@ -1,7 +1,7 @@
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 
 export function useAsyncAction(
     onProcessingChange: (isProcessing: boolean) => void,

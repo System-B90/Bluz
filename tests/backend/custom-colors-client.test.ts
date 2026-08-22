@@ -17,6 +17,8 @@ describe("custom-colors api-client", () => {
     it("apiGetCustomColors GETs the endpoint and unwraps data", async () => {
         const colors = [ { id: "c1", name: "Red", hex: "#ff0000" } ];
         global.fetch = vi.fn().mockResolvedValueOnce({
+            ok: true,
+            headers: new Headers({ "content-type": "application/json" }),
             redirected: false,
             json: async () => ({ status: 0, data: colors }),
         } as unknown as Response);
@@ -31,6 +33,8 @@ describe("custom-colors api-client", () => {
     it("apiCreateCustomColor PUTs the color as JSON", async () => {
         const color = { id: "c1", name: "Red", hex: "#ff0000" };
         global.fetch = vi.fn().mockResolvedValueOnce({
+            ok: true,
+            headers: new Headers({ "content-type": "application/json" }),
             redirected: false,
             json: async () => ({ status: 0, data: color }),
         } as unknown as Response);
@@ -47,6 +51,8 @@ describe("custom-colors api-client", () => {
     it("apiUpdateCustomColor POSTs the color as JSON", async () => {
         const color = { id: "c1", name: "Red Updated", hex: "#ee0000" };
         global.fetch = vi.fn().mockResolvedValueOnce({
+            ok: true,
+            headers: new Headers({ "content-type": "application/json" }),
             redirected: false,
             json: async () => ({ status: 0, data: color }),
         } as unknown as Response);
@@ -62,6 +68,8 @@ describe("custom-colors api-client", () => {
 
     it("apiDeleteCustomColor DELETEs with the color id as the body", async () => {
         global.fetch = vi.fn().mockResolvedValueOnce({
+            ok: true,
+            headers: new Headers({ "content-type": "application/json" }),
             redirected: false,
             json: async () => ({ status: 0, data: undefined }),
         } as unknown as Response);
@@ -76,6 +84,8 @@ describe("custom-colors api-client", () => {
 
     it("throws a ClientApiError when the API reports an error status", async () => {
         global.fetch = vi.fn().mockResolvedValueOnce({
+            ok: true,
+            headers: new Headers({ "content-type": "application/json" }),
             redirected: false,
             json: async () => ({
                 status: 1,

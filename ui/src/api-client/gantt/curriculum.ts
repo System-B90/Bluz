@@ -7,9 +7,25 @@ import {
     RawBaseDocument,
 } from "@/api-client/gantt/base";
 import { CreateGanttCurriculumPayload } from "@/api-shared/types/gantt/create-payloads";
-import { GanttCurriculum } from "@/api-shared/types/gantt/models";
+import {
+    GanttConstraint,
+    GanttCurriculum,
+    GanttCurriculumModuleDayMapping,
+} from "@/api-shared/types/gantt/models";
 
 export type GanttCurriculumDocument = GanttCurriculum & BaseDocument;
+
+/**
+ * Shape returned by `GET /api/gantt/curriculums/[id]/export` — the full
+ * curriculum tree plus its day mappings and constraints, versioned so a
+ * future export format change can be detected on import.
+ */
+export type GanttCurriculumExport = {
+    version: string;
+    curriculum: RawBaseDocument;
+    mappings: Array<GanttCurriculumModuleDayMapping>;
+    constraints: Array<GanttConstraint>;
+};
 
 const baseCurriculumApi = clientGantApiBuilder<
     GanttCurriculum,
@@ -21,8 +37,14 @@ const baseCurriculumApi = clientGantApiBuilder<
     >,
 });
 
-async function apiExport(id: string, options?: ClientApiProps): Promise<any> {
-    return await safeApiFetcher<any>(`/api/gantt/curriculums/${id}/export`, options);
+async function apiExport(
+    id: string,
+    options?: ClientApiProps,
+): Promise<GanttCurriculumExport> {
+    return await safeApiFetcher<GanttCurriculumExport>(
+        `/api/gantt/curriculums/${encodeURIComponent(id)}/export`,
+        options,
+    );
 }
 
 async function apiImport(

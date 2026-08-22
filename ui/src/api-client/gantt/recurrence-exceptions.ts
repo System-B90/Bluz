@@ -16,7 +16,7 @@ async function apiGetRecurrenceExceptions(
     options?: ClientApiProps,
 ): Promise<Array<GanttEventRecurrenceException>> {
     return await safeApiFetcher<Array<GanttEventRecurrenceException>>(
-        `/api/gantt/curriculums/${curriculumId}/recurrence-exceptions`,
+        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/recurrence-exceptions`,
         { ...options },
     );
 }
@@ -30,7 +30,7 @@ async function apiDeleteOccurrence(
     options?: ClientApiProps,
 ): Promise<GanttEventRecurrenceException> {
     return await safeApiFetcher<GanttEventRecurrenceException>(
-        `/api/gantt/events/${eventId}/recurrence-exceptions`,
+        `/api/gantt/events/${encodeURIComponent(eventId)}/recurrence-exceptions`,
         {
             ...options,
             method: "POST",
@@ -55,7 +55,7 @@ async function apiMaterializeOccurrence(
     mapping: { moduleId: GanttModuleId; eventId: GanttEventId; dayId: GanttDayId };
 }> {
     return await safeApiFetcher(
-        `/api/gantt/events/${eventId}/materialize`,
+        `/api/gantt/events/${encodeURIComponent(eventId)}/materialize`,
         {
             ...options,
             method: "POST",
@@ -77,7 +77,7 @@ async function apiRestoreOccurrence(
     eventId: GanttEventId;
 }> {
     return await safeApiFetcher(
-        `/api/gantt/events/${eventId}/recurrence-exceptions`,
+        `/api/gantt/events/${encodeURIComponent(eventId)}/recurrence-exceptions`,
         {
             ...options,
             method: "DELETE",

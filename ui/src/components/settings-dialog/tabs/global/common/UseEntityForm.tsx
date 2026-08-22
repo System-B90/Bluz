@@ -2,7 +2,7 @@
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useConfirmDialog } from "@/components/settings-dialog/tabs/global/common/UseConfirmDialog";
 
 /**

@@ -1,74 +1,22 @@
+/**
+ * Name: ApiErrorSnackbar.tsx
+ * Purpose: JSX/MUI snackbar renderers for API errors and subtext messages.
+ *   Moved out of api-client/common.tsx (#544/10) — api-client's own README
+ *   says it must not hold UI components/styles; these render markup, so
+ *   they belong here.
+ * Created: 2026-08-22
+ * Author: Michael K. Steinberg
+ */
 import Typography from "@mui/material/Typography";
 import { EnqueueSnackbar, OptionsObject, VariantType } from "notistack";
 import React from "react";
 
-import { ApiResponseJson } from "@/api-shared/common";
 import {
     ClientApiError,
     ClientApiWarning,
-    constructErrorFromNetworkMessage,
-    OperationAborted as OperationAbortedWarning,
     ServerNetworkError,
     UserNotLoggedInError,
 } from "@/api-shared/errors";
-
-const API_LOGIN_REQUIRED_SLEEP_TIMEOUT = 60 * 1000; // 1 Minute
-
-export async function safeFetcher(
-    input: RequestInfo,
-    init?: RequestInit | undefined,
-): Promise<Response> {
-    return await fetch(input, init);
-}
-
-export async function safeApiFetcher<T = unknown>(
-    input: RequestInfo,
-    init?: RequestInit | undefined,
-): Promise<T> {
-    const headers = new Headers(init?.headers);
-    if (!headers.has("Content-Type")) {
-        headers.set("Content-Type", "application/json");
-    }
-    const mergedInit: RequestInit = {
-        ...init,
-        headers,
-    };
-    return await safeFetcher(input, mergedInit)
-        .then((response): Promise<any> => {
-            // An API request should only return a redirect if the user is not logged in!
-            if (response.redirected) {
-                window.location.replace(response.url);
-                return new Promise((r) =>
-                    setTimeout(r, API_LOGIN_REQUIRED_SLEEP_TIMEOUT),
-                );
-            }
-
-            return response.json().then((data: ApiResponseJson) => {
-                if (data.status === 0) {
-                    return data.data;
-                }
-
-                throw constructErrorFromNetworkMessage(
-                    data.error as ClientApiError,
-                );
-            });
-        })
-        .catch((e: unknown) => {
-            if (e instanceof ClientApiError) {
-                throw e;
-            }
-            if (e instanceof Error) {
-                if (e.name === "AbortError") {
-                    throw new OperationAbortedWarning();
-                }
-            }
-            // `JSON.stringify` on an Error yields "{}" — its properties are
-            // non-enumerable — which hides the actual failure from the user.
-            throw new ServerNetworkError(
-                e instanceof Error ? e.message : String(e),
-            );
-        });
-}
 
 export function enqueueSnackbarWithSubtext(
     enqueueSnackbar: EnqueueSnackbar | undefined,
@@ -141,13 +89,3 @@ export function enqueueApiErrorSnackbar(
         );
     }
 }
-
-export type ClientApiProps = Omit<RequestInit, "body" | "method">;
-
-export type ClientApi<PayloadT, ResponseT> = (
-    payload: PayloadT,
-    props?: ClientApiProps,
-) => Promise<ResponseT>;
-export type ClientApiNoPayload<ResponseT> = (
-    props?: ClientApiProps,
-) => Promise<ResponseT>;

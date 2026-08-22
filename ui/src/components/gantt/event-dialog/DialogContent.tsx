@@ -10,8 +10,8 @@ import TextField from "@mui/material/TextField";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { EventRecurrence, GanttCurriculumId, GanttEvent, GanttEventId, GanttModuleId, GanttSyllabus } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { CollapsibleSection } from "@/components/gantt/event-dialog/CollapsibleSection";
 import { EventConstraintsView } from "@/components/gantt/event-dialog/constraints/EventConstraintsView";
 import { EventDetailsForm } from "@/components/gantt/event-dialog/DetailsForm";

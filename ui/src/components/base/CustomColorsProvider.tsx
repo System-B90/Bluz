@@ -10,7 +10,6 @@ import
     useReducer,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
 {
     apiCreateCustomColor,
@@ -20,6 +19,7 @@ import
 } from "@/api-client/custom-colors";
 import { CustomColor } from "@/api-shared/types/custom-color";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { MessageHandlerType } from "@/components/SessionWs";
 import { MessageTypes } from "@/settings";
 

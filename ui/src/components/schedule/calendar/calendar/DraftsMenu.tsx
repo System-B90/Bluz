@@ -14,8 +14,8 @@ import
     apiListDrafts,
     apiUpdateDraft,
 } from "@/api-client/calendar-drafts";
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CalendarDraftSummary } from "@/api-shared/types";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { CalendarStoreMenu } from "@/components/schedule/calendar/calendar/CalendarStoreMenu";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 

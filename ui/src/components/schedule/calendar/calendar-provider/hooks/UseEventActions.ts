@@ -6,8 +6,8 @@ import {
     apiDeleteEvent,
     apiUpdateEvent,
 } from "@/api-client/calendar";
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { createEventFactory } from "@/components/schedule/calendar/calendar-provider/EventFactory";
 import { CalendarAction } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { Event, EventId } from "@/components/schedule/types/event";

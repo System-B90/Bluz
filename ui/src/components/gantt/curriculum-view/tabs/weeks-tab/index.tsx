@@ -12,8 +12,8 @@ import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import React, { memo, useCallback, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { ApplyTemplateButton } from "@/components/gantt/curriculum-view/tabs/weeks-tab/ApplyTemplateButton";
 import { CourseStartDateControl } from "@/components/gantt/curriculum-view/tabs/weeks-tab/CourseStartDateControl";

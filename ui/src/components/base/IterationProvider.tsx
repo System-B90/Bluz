@@ -14,13 +14,13 @@ import {
     useState,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { apiListIterations } from "@/api-client/iterations";
 import {
     ITERATION_QUERY_PARAM,
     Iteration,
     IterationId,
 } from "@/api-shared/types/iteration";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 
 export type IterationScopeState = {
     /** Active iteration. `undefined` ⇒ the current (writable) run. */
