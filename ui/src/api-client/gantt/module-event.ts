@@ -1,5 +1,6 @@
 import { safeApiFetcher } from "@/api-client/common";
 import {
+    asDateFixup,
     BaseDocument,
     baseDocumentFixup,
     clientGantApiBuilder,
@@ -13,7 +14,7 @@ export type ModuleEventDocument = GanttEvent & BaseDocument;
 const moduleEventApi = clientGantApiBuilder<
     GanttEvent,
     CreateGanttEventPayload
->({ apiBaseUrl: "/api/gantt/events", dateFixup: baseDocumentFixup as any });
+>({ apiBaseUrl: "/api/gantt/events", dateFixup: asDateFixup<GanttEvent & RawBaseDocument>() });
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =
     moduleEventApi;
 
