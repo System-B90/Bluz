@@ -6,7 +6,6 @@ import {
     withApi,
 } from "@/api-server/common";
 import { requireStaffSession } from "@/api-server/session-user";
-import { ClientApiError } from "@/api-shared/errors";
 import {
     BasicGantOperations,
 } from "@/api-shared/types/gantt/api-layer";
@@ -63,15 +62,13 @@ export function buildGantCollectionRoutes<
 
     const POST = withApi(async (request: NextRequest) => {
         await requireStaffSession();
-        // Strongly typed as TCreatePayload, allowing relational IDs to flow into the DB layer
+        // Strongly typed as TCreatePayload, allowing relational IDs to flow
+        // into the DB layer. requireJsonObjectBody rejects a non-object body
+        // at the boundary with a 400 rather than letting it reach the DB and
+        // surface as a raw error (#162, #522). Field and enum validation stays
+        // in the DB layer's sanitizeCreatePayload, which names the offending
+        // field.
         const payload = await requireJsonObjectBody<TCreatePayload>(request);
-
-        // Minimal, on-demand shape check: reject non-object bodies at the
-        // boundary with a 400 instead of letting them hit the DB and surface as
-        // a raw error (#162). Field/enum validation stays in the DB layer.
-        if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
-            throw new ClientApiError("Request body must be a JSON object.");
-        }
 
         // The DB layer handles extracting the foreign keys and returning the clean TEntity
         const newItem = await dbSet.createNewItem(payload);
