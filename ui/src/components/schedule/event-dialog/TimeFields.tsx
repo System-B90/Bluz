@@ -1,7 +1,7 @@
 import Box, { BoxProps } from "@mui/material/Box";
 import { PickerValue } from "@mui/x-date-pickers/internals";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 import { useCallback, useMemo } from "react";
 
 import { EventFieldProps } from "@/components/schedule/event-dialog/utils";
@@ -15,7 +15,7 @@ export function EventTimeField({
 }: EventTimeFieldProps & BoxProps)
 {
     const duration: number = useMemo(
-        () => (event?.endTime as Dayjs)?.diff(event?.startTime) ?? 0,
+        () => event?.endTime?.diff(event?.startTime) ?? 0,
         [ event?.startTime, event?.endTime ],
     );
 
@@ -39,7 +39,7 @@ export function EventTimeField({
         {
             if (time)
             {
-                onBlurCallback({ startTime: event?.startTime as Dayjs, endTime: time });
+                onBlurCallback({ startTime: event?.startTime, endTime: time });
             }
         },
         [ event?.startTime, onBlurCallback ],
@@ -52,14 +52,14 @@ export function EventTimeField({
                 onChange={ startTimeChange }
                 slotProps={ { textField: { fullWidth: true } } }
                 sx={ { width: "7rem" } }
-                value={ (event?.startTime as Dayjs) ?? dayjs() }
+                value={ event?.startTime ?? dayjs() }
             />
             <TimePicker
                 label="שעת סיום"
                 onChange={ endTimeChange }
                 slotProps={ { textField: { fullWidth: true } } }
                 sx={ { width: "7rem" } }
-                value={ (event?.endTime as Dayjs) ?? dayjs() }
+                value={ event?.endTime ?? dayjs() }
             />
         </Box>
     );
