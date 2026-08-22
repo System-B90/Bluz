@@ -12,7 +12,10 @@ export function getKeysOfObject<T extends object>(obj: T): Array<Keys<T>> {
 export type Color = string;
 
 export function getHiveBaseUrl() {
-    return process.env.NEXT_PUBLIC_HIVE_URL ?? "https://hive.org";
+    // No fallback domain: "https://hive.org" isn't ours, and silently
+    // pointing users/requests at someone else's site is worse than a
+    // relative URL that 404s visibly. Matches hive-links.ts's fallback.
+    return process.env.NEXT_PUBLIC_HIVE_URL ?? "";
 }
 
 /**

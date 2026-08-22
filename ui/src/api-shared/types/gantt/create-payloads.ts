@@ -18,11 +18,11 @@ import {
 
 /**
  * Payload to create a new Gantt constraint: a relational or temporal
- * constraint minus the timestamps the database assigns.
+ * constraint. Neither `RelationalConstraint` nor `TemporalConstraint`
+ * carries `createdAt`/`updatedAt` — those exist only on the DB row shape,
+ * not this client-side model — so there is nothing to omit here.
  */
-export type CreateConstraintPayload =
-    | Omit<RelationalConstraint, "createdAt" | "updatedAt">
-    | Omit<TemporalConstraint, "createdAt" | "updatedAt">;
+export type CreateConstraintPayload = RelationalConstraint | TemporalConstraint;
 
 /**
  * Payload to create a new Curriculum.

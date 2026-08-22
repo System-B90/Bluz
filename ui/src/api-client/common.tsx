@@ -29,7 +29,7 @@ function withDefaultTimeout(signal: AbortSignal | null | undefined) {
     return signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
 }
 
-export async function safeFetcher(
+async function safeFetcher(
     input: RequestInfo,
     init?: RequestInit | undefined,
 ): Promise<Response> {

@@ -59,13 +59,27 @@ export async function* streamAiChat(
     }
 }
 
-/** Whether this deployment has AI wired up, plus what the assistant can do. */
+/**
+ * Whether this deployment has AI wired up, plus what the assistant can do.
+ *
+ * Only a genuine "not configured" answer resolves to `enabled: false` — a
+ * transient fault (5xx, network drop) throws instead, so a caller can retry
+ * rather than have the assistant look permanently unavailable for a blip.
+ */
 export async function fetchAiTools(): Promise<{
     enabled: boolean;
     tools: Array<{ name: string; description: string; kind: string }>;
 }> {
     const response = await fetch(TOOLS_ENDPOINT);
-    if (!response.ok) return { enabled: false, tools: [] };
+    if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw constructErrorFromNetworkMessage(
+            body?.error ?? {
+                name: "Error",
+                message: "לא ניתן היה לבדוק את זמינות עוזר ה-AI",
+            },
+        );
+    }
     const body = await response.json();
     return body?.data ?? { enabled: false, tools: [] };
 }
