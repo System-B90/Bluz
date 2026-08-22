@@ -1,4 +1,4 @@
-import { and, arrayOverlaps, asc, eq, inArray } from "drizzle-orm";
+import { and, arrayOverlaps, asc, eq, inArray, sql } from "drizzle-orm";
 
 import { GanttDbExecutor, postgresDb } from "@/api-server/gantt";
 import {
@@ -143,19 +143,27 @@ async function reorderModules(
     syllabusId: GanttSyllabusId,
     moduleIds: Array<GanttModuleId>,
 ): Promise<void> {
-    await postgresDb.transaction(async (tx) => {
-        for (let i = 0; i < moduleIds.length; i++) {
-            await tx
-                .update(ganttSyllabus2ModulesSchema)
-                .set({ sortOrder: i })
-                .where(
-                    and(
-                        eq(ganttSyllabus2ModulesSchema.syllabusId, syllabusId),
-                        eq(ganttSyllabus2ModulesSchema.moduleId, moduleIds[i]),
-                    ),
-                );
-        }
-    });
+    if (moduleIds.length === 0) return;
+
+    // One statement with a CASE ladder instead of an awaited UPDATE per module
+    // - reordering a large syllabus was N sequential round trips (#538 item 9).
+    const order = sql.join(
+        moduleIds.map(
+            (moduleId, index) =>
+                sql`when ${ganttSyllabus2ModulesSchema.moduleId} = ${moduleId} then ${index}`,
+        ),
+        sql` `,
+    );
+
+    await postgresDb
+        .update(ganttSyllabus2ModulesSchema)
+        .set({ sortOrder: sql`case ${order} end` })
+        .where(
+            and(
+                eq(ganttSyllabus2ModulesSchema.syllabusId, syllabusId),
+                inArray(ganttSyllabus2ModulesSchema.moduleId, moduleIds),
+            ),
+        );
 }
 
 /**

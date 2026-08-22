@@ -212,8 +212,26 @@ function ensureIndexesInBackground(controller: DatabaseController): void {
         controller.events.createIndex({ id: 1 }, { unique: true }),
         // Calendar views fetch by date window (getDbEventsInRange).
         controller.events.createIndex({ startTime: 1, endTime: 1 }),
-        // Snapshot listing sorts newest-first.
+        // The cut, reload and execution paths all scan for events that came
+        // from the gantt; without this they walk the whole collection (#538
+        // item 7). Sparse: only cut events carry the field.
+        controller.events.createIndex(
+            { ganttEventId: 1 },
+            { sparse: true },
+        ),
+        // Reservation conflict checks filter by room and overlap window.
+        controller.reservations.createIndex({ roomId: 1, start: 1 }),
+        // Snapshot listing sorts newest-first, scoped to an iteration.
         controller.calendarSnapshots.createIndex({ createdAt: -1 }),
+        controller.calendarSnapshots.createIndex({
+            iterationId: 1,
+            createdAt: -1,
+        }),
+        // Draft listing sorts newest-updated-first, scoped to an iteration.
+        controller.calendarDrafts.createIndex({
+            iterationId: 1,
+            updatedAt: -1,
+        }),
         // History is always read per event, newest-first.
         controller.eventHistory.createIndex({ eventId: 1, changedAt: -1 }),
         // The activation ledger's uniqueness *is* the concurrency control for

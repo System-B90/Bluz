@@ -102,15 +102,19 @@ export function ApiResponseMaker<T>(
                 !(CACHE_CONTROL_HTTP_HEADER in init.headers),
         );
         if (typeof cacheControl === "string") {
+            // Each shorthand maps to one explicit directive set. The previous
+            // `public, ${cacheControl}` template produced the contradictions
+            // `public, no-store` and `public, no-cache` (#538 item 10) — and
+            // "public" is wrong for those two anyway: an uncacheable response
+            // from behind SSO must not be marked shared-cacheable.
+            const STRING_CACHE_CONTROL: Record<string, string> = {
+                immutable: `public, max-age=${IMMUTABLE_CACHE_MAX_TTL}, immutable`,
+                "must-revalidate": "public, max-age=1, must-revalidate",
+                "no-cache": "private, no-cache",
+                "no-store": "private, no-store",
+            };
             additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
-                `public, ${cacheControl}`;
-            if (cacheControl === "immutable") {
-                additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
-                    `public, max-age=${IMMUTABLE_CACHE_MAX_TTL}, immutable`;
-            } else if (cacheControl === "must-revalidate") {
-                additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
-                    `public, max-age=1, must-revalidate`;
-            }
+                STRING_CACHE_CONTROL[cacheControl];
         } else if (typeof cacheControl === "number") {
             additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
                 `public, max-age=${cacheControl}, immutable`;

@@ -1114,8 +1114,14 @@ export async function pullBackCutSchedule(
     const controller = getDatabaseController(iteration.dbName);
 
     // Only live cut events are eligible; already-archived ones are left as-is.
+    // Only the ids are used (the archive is an updateMany, the history rows key
+    // off eventId), so do not drag every full document over the wire (#538
+    // item 8).
     const liveCutEvents = await controller.events
-        .find({ ganttEventId: { $exists: true }, archived: { $ne: true } })
+        .find(
+            { ganttEventId: { $exists: true }, archived: { $ne: true } },
+            { projection: { id: 1, _id: 0 } },
+        )
         .toArray();
 
     if (liveCutEvents.length === 0) {

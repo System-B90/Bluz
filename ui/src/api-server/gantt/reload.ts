@@ -273,6 +273,16 @@ export async function reloadCurriculumSchedule(
 
     // `diff.conflicts` holds only events the caller did *not* override —
     // overridden ones were already classified as ordinary updates/removals.
+    // Collected, then written in one round trip: an awaited updateOne per
+    // event made a reload of a full curriculum N sequential round trips (#538
+    // item 9).
+    const eventWrites: Array<{
+        updateOne: {
+            filter: { id: string };
+            update: { $set: Partial<DbEventDocument> };
+        };
+    }> = [];
+
     for (const update of diff.updates) {
         const before = actualById.get(update.eventId);
         const desired = desiredByKey.get(
@@ -286,13 +296,16 @@ export async function reloadCurriculumSchedule(
         }
         const after = { ...before, ...patch } as DbEventDocument;
 
-        await controller.events.updateOne(
-            { id: update.eventId },
-            { $set: patch },
-        );
+        eventWrites.push({
+            updateOne: { filter: { id: update.eventId }, update: { $set: patch } },
+        });
         updated.push(after);
         historyUpdates.push({ after, before, eventId: update.eventId });
         syncEventToInstructorsGoogleCalendars(after, "upsert");
+    }
+
+    if (eventWrites.length > 0) {
+        await controller.events.bulkWrite(eventWrites);
     }
 
     if (historyUpdates.length > 0) {

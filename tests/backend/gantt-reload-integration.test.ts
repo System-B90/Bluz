@@ -16,6 +16,8 @@ const { fakeController, fakeEvents, fakeHistory } = vi.hoisted(() => {
         insertMany: vi.fn(async () => ({ insertedCount: 0 })),
         updateMany: vi.fn(async () => ({ modifiedCount: 0 })),
         updateOne: vi.fn(async () => ({ matchedCount: 1, modifiedCount: 1 })),
+        // Reload batches its event writes into one bulkWrite (#538 item 9).
+        bulkWrite: vi.fn(async () => ({ modifiedCount: 1, ok: 1 })),
     };
     const history = {
         find: vi.fn(() => ({ toArray: async () => [] as Array<unknown> })),
@@ -420,9 +422,15 @@ describe("reload — reconciliation", () => {
         if (!outcome.ok) return;
         expect(outcome.result.updatedEvents).toBe(1);
 
-        const [filter, update] = fakeEvents.updateOne.mock.calls[0];
-        expect(filter).toEqual({ id: "e1" });
-        expect(Object.keys((update as { $set: object }).$set)).toEqual(
+        // The writes land in one bulkWrite rather than an updateOne per event
+        // (#538 item 9).
+        const [writes] = fakeEvents.bulkWrite.mock.calls[0] as [
+            Array<{
+                updateOne: { filter: object; update: { $set: object } };
+            }>,
+        ];
+        expect(writes[0].updateOne.filter).toEqual({ id: "e1" });
+        expect(Object.keys(writes[0].updateOne.update.$set)).toEqual(
             expect.arrayContaining(["startTime", "endTime", "updatedAt"]),
         );
     });
@@ -448,9 +456,12 @@ describe("reload — reconciliation", () => {
 
         await reloadCurriculumSchedule("c1");
 
-        const { $set } = fakeEvents.updateOne.mock.calls[0][1] as {
-            $set: Record<string, unknown>;
-        };
+        const [writes] = fakeEvents.bulkWrite.mock.calls[0] as [
+            Array<{
+                updateOne: { update: { $set: Record<string, unknown> } };
+            }>,
+        ];
+        const { $set } = writes[0].updateOne.update;
         expect($set).not.toHaveProperty("rooms");
         expect($set).not.toHaveProperty("tags");
         expect($set).not.toHaveProperty("locked");
@@ -698,7 +709,8 @@ describe("reload — manual-edit precedence", () => {
 
         expect(outcome.result.updatedEvents).toBe(1);
         expect(outcome.result.skippedConflicts).toBe(0);
-        expect(fakeEvents.updateOne).toHaveBeenCalledTimes(1);
+        expect(fakeEvents.bulkWrite).toHaveBeenCalledTimes(1);
+        expect(fakeEvents.bulkWrite.mock.calls[0][0]).toHaveLength(1);
     });
 
     it("protects a manually edited event from a gantt-driven deletion", async () => {
