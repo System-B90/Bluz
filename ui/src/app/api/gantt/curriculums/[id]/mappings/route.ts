@@ -31,6 +31,7 @@ export type RouteContext = {
  * GET: Fetches assignments for a curriculum.
  */
 export const GET = withApi(async (request: NextRequest, context: RouteContext) => {
+    await requireStaffSession();
     const { id } = await context.params;
     if (!id) throw new ClientApiError("Curriculum ID is missing.");
 

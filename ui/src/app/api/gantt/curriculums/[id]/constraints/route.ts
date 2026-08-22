@@ -29,6 +29,7 @@ export type RouteContext = {
  * GET: Fetches all constraints associated with a curriculum's modules and events.
  */
 export const GET = withApi(async (request: NextRequest, context: RouteContext) => {
+    await requireStaffSession();
     const { id } = await context.params;
     if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
