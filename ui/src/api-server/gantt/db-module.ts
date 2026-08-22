@@ -1,12 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
-import {
-    drizzleOperationsBuilder,
-    FOREIGN_KEY_VIOLATION,
-    postgresErrorCode,
-    UNIQUE_VIOLATION,
-} from "@/api-server/gantt/db-base";
+import { asWireShape, drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, postgresErrorCode, UNIQUE_VIOLATION } from "@/api-server/gantt/db-base";
 import {
     ganttModule2EventsSchema,
     ganttModulesSchema,
@@ -73,7 +68,7 @@ async function getFullModule(id: GanttModuleId): Promise<ApiModule> {
     }
 
     await basicOperations.attachParentIds([result]);
-    return result as unknown as ApiModule;
+    return asWireShape<ApiModule>(result);
 }
 
 async function addModuleToSyllabus(

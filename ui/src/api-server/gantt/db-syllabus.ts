@@ -1,12 +1,7 @@
 import { and, arrayOverlaps, asc, eq, inArray, sql } from "drizzle-orm";
 
 import { GanttDbExecutor, postgresDb } from "@/api-server/gantt";
-import {
-    drizzleOperationsBuilder,
-    FOREIGN_KEY_VIOLATION,
-    postgresErrorCode,
-    UNIQUE_VIOLATION,
-} from "@/api-server/gantt/db-base";
+import { asWireShape, drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, postgresErrorCode, UNIQUE_VIOLATION } from "@/api-server/gantt/db-base";
 import {
     ganttCurriculum2SyllabusesSchema,
     ganttEventsSchema,
@@ -83,7 +78,7 @@ async function getFullSyllabus(id: GanttSyllabusId): Promise<ApiSyllabus> {
     }
 
     await basicOperations.attachParentIds([result]);
-    return result as unknown as ApiSyllabus;
+    return asWireShape<ApiSyllabus>(result);
 }
 
 async function addSyllabusToCurriculum(
