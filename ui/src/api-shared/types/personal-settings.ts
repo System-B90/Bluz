@@ -12,6 +12,8 @@ export type PersonalSettings = {
      * lectures in) to the user's Google Calendar. Requires googleCalendarEnabled.
      */
     googleCalendarSyncAllEvents: boolean;
+    /** Shows/hides the AI assistant FAB. On by default where AI is configured. */
+    aiAssistantEnabled: boolean;
 };
 
 export const EMPTY_PERSONAL_SETTINGS: PersonalSettings = {
@@ -20,6 +22,7 @@ export const EMPTY_PERSONAL_SETTINGS: PersonalSettings = {
     favoriteOutsiders: [],
     googleCalendarEnabled: false,
     googleCalendarSyncAllEvents: false,
+    aiAssistantEnabled: true,
 };
 
 export type ApiPersonalSettingsGetResponse = PersonalSettings;

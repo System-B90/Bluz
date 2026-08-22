@@ -198,7 +198,31 @@ npm run test:e2e        # Playwright e2e
 npm run test:e2e:ui     # Playwright interactive UI
 npm run docker:test     # Bring up the isolated test compose stack
 npm run docker:test:down
+npm run docker:test:ps  # What that stack is running, and on which ports
 ```
+
+**The test stack is a separate compose project from dev.** `docker-compose.test.yml`
+sets `name: ${TEST_PROJECT_NAME:-bluz-test}`, and volumes, networks and container
+names are all project-scoped — so a test run cannot reach the dev stack's
+`bluz_pgdata` / `bluz_mongodb_data`, and `docker:test:down -v` only destroys the test
+project's data. (It used to say `name: bluz`, which made the two the same project;
+`run_tests.py` masked that by passing `-p`.)
+
+**Parallel stacks** need one variable and four free ports:
+
+```bash
+export TEST_PROJECT_NAME=bluz-test-featurex
+export TEST_PROXY_PORT_HTTPS=8443 TEST_PROXY_PORT_HTTP=8080
+export TEST_POSTGRES_PORT=15432 TEST_MONGO_PORT=17017
+
+docker compose --env-file .env \
+  -f deploy/docker-compose.yml -f deploy/docker-compose.test.yml up -d
+```
+
+`npm run test` does this for you: `run_tests.py` derives the project name from the
+worktree slug, allocates free ports, and registers a Hive SSO client against the port
+it picked — which is why each parallel stack needs its own, since Hive matches the
+redirect URI exactly.
 
 Equivalent: `python tools.py test [all|unit|e2e]` (`all` is the default, mapping to
 `npm run test`).

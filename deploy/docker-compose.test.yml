@@ -6,7 +6,19 @@
 #   npx playwright test
 #   docker compose -f docker-compose.yml -f docker-compose.test.yml down -v
 
-name: bluz
+# A distinct project from the dev stack, and distinct per test run.
+#
+# This used to say `name: bluz` — the same project as docker-compose.yml — so a
+# test stack silently adopted the dev stack's volumes and wrote through
+# `bluz_pgdata` / `bluz_mongodb_data`, exactly what this file's header promises
+# it does not do. `scripts/run_tests.py` hid the bug by passing `-p` (the CLI
+# flag outranks this field); anything invoking compose without it did not.
+#
+# Volumes, networks and the default container prefix are all project-scoped, so
+# a unique name here is the whole isolation mechanism. Parallel stacks need
+# nothing but a different TEST_PROJECT_NAME, which run_tests.py derives from the
+# worktree slug.
+name: ${TEST_PROJECT_NAME:-bluz-test}
 
 services:
     ui:
@@ -16,7 +28,7 @@ services:
             args:
                 NPM_TOKEN: ${NPM_TOKEN}
             target: runner
-        container_name: ${TEST_PROJECT_NAME}-ui
+        container_name: ${TEST_PROJECT_NAME:-bluz-test}-ui
         # No hive.org entry here on purpose. Hive's nginx publishes on its own
         # loopback alias (127.0.0.6) so it does not collide with our proxy on
         # 127.0.0.3 — and a host-gateway route cannot reach a loopback-bound
@@ -28,8 +40,8 @@ services:
         environment:
             - NODE_ENV=production
             - MONGO_CONNECTION_STRING=mongodb://mongo_admin:${TEST_MONGO_PASSWORD:-${MONGO_ROOT_PASSWORD}}@mongodb:27017/
-            - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${TEST_PROJECT_NAME}-curriculum-db:5432/${POSTGRES_DB}
-            - NEXTAUTH_URL=https://${BLUZ_APP_HOST:-bluz.dev}:${TEST_PROXY_PORT_HTTPS}
+            - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@curriculum-db:5432/${POSTGRES_DB}
+            - NEXTAUTH_URL=https://${BLUZ_APP_HOST:-bluz.dev}:${TEST_PROXY_PORT_HTTPS:-8443}
             - HIVE_CLIENT_ID=${TEST_HIVE_CLIENT_ID}
             - HIVE_CLIENT_SECRET=${TEST_HIVE_CLIENT_SECRET}
             - NEXT_PUBLIC_HIVE_URL=${NEXT_PUBLIC_HIVE_URL}
@@ -42,23 +54,23 @@ services:
             - mongodb
 
     curriculum-db:
-        container_name: ${TEST_PROJECT_NAME}-curriculum-db
+        container_name: ${TEST_PROJECT_NAME:-bluz-test}-curriculum-db
         ports:
-            - "127.0.0.3:${TEST_POSTGRES_PORT}:5432"
+            - "127.0.0.3:${TEST_POSTGRES_PORT:-15432}:5432"
 
     mongodb:
-        container_name: ${TEST_PROJECT_NAME}-mongodb
+        container_name: ${TEST_PROJECT_NAME:-bluz-test}-mongodb
         ports:
-            - "127.0.0.3:${TEST_MONGO_PORT}:27017"
+            - "127.0.0.3:${TEST_MONGO_PORT:-17017}:27017"
 
     sessions:
-        container_name: ${TEST_PROJECT_NAME}-sessions
+        container_name: ${TEST_PROJECT_NAME:-bluz-test}-sessions
 
     proxy:
-        container_name: ${TEST_PROJECT_NAME}-proxy
+        container_name: ${TEST_PROJECT_NAME:-bluz-test}-proxy
         ports: !override
-            - "127.0.0.3:${TEST_PROXY_PORT_HTTP}:80"
-            - "127.0.0.3:${TEST_PROXY_PORT_HTTPS}:443"
+            - "127.0.0.3:${TEST_PROXY_PORT_HTTP:-8080}:80"
+            - "127.0.0.3:${TEST_PROXY_PORT_HTTPS:-8443}:443"
         volumes: !override
             - ./../nginx/nginx.conf.test:/etc/nginx/nginx.conf:ro
             - ./../nginx/ssl:/etc/nginx/ssl:ro

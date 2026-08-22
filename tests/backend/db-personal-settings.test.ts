@@ -34,6 +34,7 @@ describe("DbPersonalSettings", () => {
             favoriteOutsiders: [],
             googleCalendarEnabled: false,
             googleCalendarSyncAllEvents: false,
+            aiAssistantEnabled: true,
         });
     });
 
@@ -52,7 +53,20 @@ describe("DbPersonalSettings", () => {
             favoriteOutsiders: [ "o1" ],
             googleCalendarEnabled: true,
             googleCalendarSyncAllEvents: false,
+            aiAssistantEnabled: true,
         });
+    });
+
+    it("respects a stored aiAssistantEnabled: false", async () => {
+        controller.personalSettings.findOne.mockResolvedValueOnce({
+            userId: "u1",
+            groups: [],
+            instructors: [],
+            favoriteOutsiders: [],
+            aiAssistantEnabled: false,
+        });
+        const result = await DbPersonalSettings.get("u1");
+        expect(result.aiAssistantEnabled).toBe(false);
     });
 
     it("upserts settings on set", async () => {
