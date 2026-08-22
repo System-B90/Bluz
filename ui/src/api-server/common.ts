@@ -156,6 +156,16 @@ export function isDatabaseError(e: unknown): boolean {
     );
 }
 
+/**
+ * A Mongo unique-index violation (error code 11000). Unlike the opaque
+ * database errors below this one is entirely the caller's doing — it means the
+ * id they supplied already exists — so it maps to 409, not 500 (#514).
+ */
+export function isDuplicateKeyError(e: unknown): boolean {
+    if (!e || typeof e !== "object") return false;
+    return (e as { code?: unknown }).code === 11000;
+}
+
 export function catchHandler<T extends NextRequest>(request: T, e: unknown) {
     if (e instanceof UserNotLoggedInError) {
         return NextResponse.json(
@@ -183,6 +193,13 @@ export function catchHandler<T extends NextRequest>(request: T, e: unknown) {
         return ApiErrorMaker(
             { name: "ClientApiError", message: "Malformed JSON payload." },
             400,
+        );
+    }
+
+    if (isDuplicateKeyError(e)) {
+        return ApiErrorMaker(
+            { name: "ConflictError", message: "מזהה זה כבר קיים" },
+            409,
         );
     }
 
