@@ -1,6 +1,10 @@
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    withApi,
+} from "@/api-server/common";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
@@ -60,7 +64,7 @@ export function buildGantCollectionRoutes<
     const POST = withApi(async (request: NextRequest) => {
         await requireStaffSession();
         // Strongly typed as TCreatePayload, allowing relational IDs to flow into the DB layer
-        const payload = (await request.json()) as TCreatePayload;
+        const payload = await requireJsonObjectBody<TCreatePayload>(request);
 
         // Minimal, on-demand shape check: reject non-object bodies at the
         // boundary with a 400 instead of letting them hit the DB and surface as

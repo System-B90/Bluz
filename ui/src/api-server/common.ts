@@ -39,6 +39,28 @@ export function parseJsonBody<T>(text: string): T {
     }
 }
 
+/**
+ * Read a request body that must be a JSON object, and reject anything else at
+ * the boundary.
+ *
+ * Handlers used to cast `await request.json()` straight to a domain type with
+ * `as`. That is a lie the type system cannot catch: a literal `null` body
+ * survives a `typeof body === "object"` guard and crashes the first
+ * destructuring, an array passes a truthiness check, and wrong-typed fields
+ * travel all the way into Mongo/Postgres and come back as an opaque 500
+ * instead of the 400 the caller earned (#522).
+ *
+ * The returned value is still cast — this validates the *shape*, not the
+ * fields — so callers that care about individual fields must still check them.
+ */
+export async function requireJsonObjectBody<T>(request: Request): Promise<T> {
+    const body = parseJsonBody<unknown>(await request.text());
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+        throw new ClientApiError("Request body must be a JSON object.");
+    }
+    return body as T;
+}
+
 export function ApiResponseMaker<T>(
     data: T,
     cacheControl?: ApiCacheControl,

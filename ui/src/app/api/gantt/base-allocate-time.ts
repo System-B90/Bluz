@@ -7,7 +7,11 @@
 
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    withApi,
+} from "@/api-server/common";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
@@ -66,7 +70,9 @@ export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
             throw new ClientApiError("Item identifier (id) is missing.");
         }
 
-        const body = await request.json(); // Use .json() instead of parsing .text()
+        const body = await requireJsonObjectBody<Record<string, unknown>>(
+            request,
+        );
         const { containerId, duration } = body as {
             containerId: BaseGantItem["id"];
             duration: number;

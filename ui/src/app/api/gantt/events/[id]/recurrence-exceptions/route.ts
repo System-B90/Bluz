@@ -2,7 +2,11 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    withApi,
+} from "@/api-server/common";
 import {
     createRecurrenceException,
     deleteRecurrenceException,
@@ -22,7 +26,7 @@ type RouteContext = {
 export const POST = withApi(async (request: NextRequest, context: RouteContext) => {
     await requireStaffSession();
     const { id: eventId } = await context.params;
-    const body = await request.json();
+    const body = await requireJsonObjectBody<Record<string, unknown>>(request);
 
     const { curriculumId, dayId } = body as {
         curriculumId: GanttCurriculumId;
@@ -53,10 +57,10 @@ export const DELETE = withApi(
     async (request: NextRequest, context: RouteContext) => {
         await requireStaffSession();
         const { id: eventId } = await context.params;
-        const { curriculumId, dayId } = (await request.json()) as {
+        const { curriculumId, dayId } = await requireJsonObjectBody<{
             curriculumId: GanttCurriculumId;
             dayId: GanttDayId;
-        };
+        }>(request);
         if (!curriculumId || !dayId) {
             throw new ClientApiError(
                 "Missing required fields: curriculumId or dayId.",

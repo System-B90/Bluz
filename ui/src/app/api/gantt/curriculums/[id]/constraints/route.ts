@@ -7,7 +7,11 @@
 
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    withApi,
+} from "@/api-server/common";
 import {
     createConstraint,
     deleteConstraint,
@@ -56,7 +60,7 @@ export const POST = withApi(async (
     _context: RouteContext /** Constraints are not unique to a curriculum, but to a syllabus. The API is under curriculum for efficiency when fetching */,
 ) => {
     await requireStaffSession();
-    const body: CreateConstraintPayload = await request.json();
+    const body = await requireJsonObjectBody<CreateConstraintPayload>(request);
 
     if (!body.type) {
         throw new ClientApiError("Missing required field: type.");
@@ -111,11 +115,11 @@ export const POST = withApi(async (
  */
 export const PATCH = withApi(async (request: NextRequest, _context: RouteContext) => {
     await requireStaffSession();
-    const body = await request.json();
+    const body = await requireJsonObjectBody<Record<string, unknown>>(request);
 
     const { id: constraintId, ...newValues } = body;
 
-    if (!constraintId) {
+    if (typeof constraintId !== "string" || !constraintId) {
         throw new ClientApiError("Missing constraint id for update.");
     }
 
@@ -157,11 +161,11 @@ export const PATCH = withApi(async (request: NextRequest, _context: RouteContext
  */
 export const DELETE = withApi(async (request: NextRequest, _context: RouteContext) => {
     await requireStaffSession();
-    const body = await request.json();
+    const body = await requireJsonObjectBody<Record<string, unknown>>(request);
 
     const { id: constraintId } = body;
 
-    if (!constraintId) {
+    if (typeof constraintId !== "string" || !constraintId) {
         throw new ClientApiError("Missing constraint id for deletion.");
     }
 

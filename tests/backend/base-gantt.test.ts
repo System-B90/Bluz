@@ -21,6 +21,7 @@ vi.mock("@/api-server/hive/sso", () => ({
     authOptions: {},
 }));
 
+import { requireJsonObjectBody } from "@/api-server/common";
 import { sanitizeUpdatePayload } from "@/api-server/gantt/db-base";
 import {
     ganttEventsSchema,
@@ -249,5 +250,34 @@ describe("sanitizeUpdatePayload (#519)", () => {
                 "אירוע",
             ),
         ).toThrow();
+    });
+});
+
+describe("requireJsonObjectBody (#522)", () => {
+    const bodyRequest = (raw: string) =>
+        new NextRequest("http://localhost/api/anything", {
+            body: raw,
+            method: "POST",
+        });
+
+    it("returns the parsed object for a well-formed body", async () => {
+        await expect(
+            requireJsonObjectBody(bodyRequest('{"a":1}')),
+        ).resolves.toEqual({ a: 1 });
+    });
+
+    it.each(["null", "[]", '"a string"', "7"])(
+        "rejects the non-object body %s",
+        async (raw) => {
+            await expect(
+                requireJsonObjectBody(bodyRequest(raw)),
+            ).rejects.toThrow();
+        },
+    );
+
+    it("rejects a malformed body", async () => {
+        await expect(
+            requireJsonObjectBody(bodyRequest("{oops")),
+        ).rejects.toThrow();
     });
 });
