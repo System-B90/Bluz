@@ -11,6 +11,7 @@ import { AiProvider } from "@/api-server/ai/provider";
 import { buildSystemPrompt } from "@/api-server/ai/system-prompt";
 import { AiToolContext, findTool, isWriteTool, toolSpecs } from "@/api-server/ai/tools";
 import {
+    AI_MAX_RESPONSE_TOKENS,
     AI_MAX_TOOL_ITERATIONS,
     AiMessage,
     AiRole,
@@ -134,6 +135,7 @@ export async function* runAiAgent(
                 messages: [...transcript],
                 tools: toolSpecs(),
                 model: options.model,
+                maxTokens: AI_MAX_RESPONSE_TOKENS,
                 signal,
             })) {
                 if (event.kind === "text") {

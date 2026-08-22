@@ -167,3 +167,10 @@ export const AI_MAX_MESSAGE_LENGTH = 16_000;
  * tool would otherwise bill indefinitely.
  */
 export const AI_MAX_TOOL_ITERATIONS = 8;
+
+/**
+ * Upstream completion cap, sent as `max_tokens` on every model call. Without
+ * it a runaway or adversarial prompt has no ceiling on the bill for a single
+ * response.
+ */
+export const AI_MAX_RESPONSE_TOKENS = 2_000;
