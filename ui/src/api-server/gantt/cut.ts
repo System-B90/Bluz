@@ -2,7 +2,10 @@ import { randomUUID } from "crypto";
 
 import { isDuplicateKeyError } from "@/api-server/common";
 import { DbCourses } from "@/api-server/db-courses";
-import { DbEventHistory } from "@/api-server/db-event-history";
+import {
+    DbEventHistory,
+    EventWriteOrigin,
+} from "@/api-server/db-event-history";
 import { DbIterations } from "@/api-server/db-iterations";
 import { DbSettings } from "@/api-server/db-settings";
 import { getConstraintsForCurriculum } from "@/api-server/gantt/db-constraints";
@@ -945,6 +948,10 @@ export async function planCurriculumCut(
 export async function cutCurriculumToSchedule(
     curriculumId: GanttCurriculumId,
     options: CutPlanOptions = {},
+    // Who asked for the cut. Every write is meant to be attributable, so an
+    // assistant-driven cut must not land in the history as a plain GanttCut
+    // (#545 item 3). Defaults to the human-initiated case.
+    origin: EventWriteOrigin = { initiator: EventChangeInitiator.GanttCut },
 ): Promise<CutOutcome> {
     // Throws ClientApiError (→ 400) when the curriculum does not exist.
     const curriculum = await DbCurriculum.getItem(curriculumId);
@@ -1035,10 +1042,7 @@ export async function cutCurriculumToSchedule(
                     after: document,
                     eventId: document.id,
                 })),
-                origin: {
-                    context: { curriculumId },
-                    initiator: EventChangeInitiator.GanttCut,
-                },
+                origin: { ...origin, context: { curriculumId } },
             });
             for (const document of documents) {
                 syncEventToInstructorsGoogleCalendars(document, "upsert");

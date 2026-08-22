@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, withApi } from "@/api-server/common";
+import { ApiSuccess, parseJsonBody, withApi } from "@/api-server/common";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { ApiT } from "@/api-shared/types/gantt/api-layer";
@@ -43,7 +43,7 @@ async function readLinkRequest<TBody>(
         throw new ClientApiError("Payload cannot be empty.");
     }
 
-    return { id, body: JSON.parse(textBody) as TBody };
+    return { id, body: parseJsonBody<TBody>(textBody) };
 }
 
 export function buildGantLinkRoutes<TEntity extends BaseGantItem>({
