@@ -249,7 +249,7 @@ export function InstructorsField({
                 sx={ {
                     width: isLecture ? "30%" : "0%",
                     opacity: isLecture ? 1 : 0,
-                    ml: isLecture ? 1 : 0,
+                    marginInlineEnd: isLecture ? 1 : 0,
                     pt: 1.5,
                     mt: -1.5,
                     overflow: "hidden",
