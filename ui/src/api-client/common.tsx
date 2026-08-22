@@ -14,6 +14,21 @@ import {
 
 const API_LOGIN_REQUIRED_SLEEP_TIMEOUT = 60 * 1000; // 1 Minute
 
+// No wrapper composed a timeout, and nothing bounded a stalled request — a
+// dropped connection or a hung gateway left the caller's await pending
+// forever. Every safeApiFetcher call now races against this ceiling unless
+// the caller supplies its own longer-lived signal.
+const DEFAULT_API_TIMEOUT_MS = 30 * 1000; // 30 Seconds
+
+/**
+ * Combines the caller's abort signal (if any) with a default timeout signal,
+ * so every request is bounded even when the caller doesn't pass one.
+ */
+function withDefaultTimeout(signal: AbortSignal | null | undefined) {
+    const timeoutSignal = AbortSignal.timeout(DEFAULT_API_TIMEOUT_MS);
+    return signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
+}
+
 export async function safeFetcher(
     input: RequestInfo,
     init?: RequestInit | undefined,
@@ -32,6 +47,7 @@ export async function safeApiFetcher<T = unknown>(
     const mergedInit: RequestInit = {
         ...init,
         headers,
+        signal: withDefaultTimeout(init?.signal),
     };
     return await safeFetcher(input, mergedInit)
         .then((response): Promise<any> => {
@@ -43,14 +59,37 @@ export async function safeApiFetcher<T = unknown>(
                 );
             }
 
+            const contentType = response.headers.get("content-type") ?? "";
+            const isJson = contentType.includes("application/json");
+
+            // A proxy/gateway failure (or an outright empty body) never
+            // reaches our JSON envelope — branch on response.ok/content-type
+            // before parsing, instead of letting a non-JSON body blow up
+            // JSON.parse into an opaque ServerNetworkError with the real
+            // HTTP status lost.
+            if (!response.ok || !isJson) {
+                if (!isJson) {
+                    throw new ServerNetworkError(
+                        `שגיאת שרת (${response.status} ${response.statusText})`,
+                    );
+                }
+                return response.json().then((data: Partial<ApiResponseJson>) => {
+                    throw constructErrorFromNetworkMessage({
+                        ...(data.error as ClientApiError),
+                        status: response.status,
+                    } as unknown as ClientApiError);
+                });
+            }
+
             return response.json().then((data: ApiResponseJson) => {
                 if (data.status === 0) {
                     return data.data;
                 }
 
-                throw constructErrorFromNetworkMessage(
-                    data.error as ClientApiError,
-                );
+                throw constructErrorFromNetworkMessage({
+                    ...(data.error as ClientApiError),
+                    status: response.status,
+                } as unknown as ClientApiError);
             });
         })
         .catch((e: unknown) => {
@@ -58,7 +97,7 @@ export async function safeApiFetcher<T = unknown>(
                 throw e;
             }
             if (e instanceof Error) {
-                if (e.name === "AbortError") {
+                if (e.name === "AbortError" || e.name === "TimeoutError") {
                     throw new OperationAbortedWarning();
                 }
             }

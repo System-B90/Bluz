@@ -19,6 +19,8 @@ describe("personal-settings api-client", () => {
             favoriteOutsiders: [],
         };
         global.fetch = vi.fn().mockResolvedValueOnce({
+            ok: true,
+            headers: new Headers({ "content-type": "application/json" }),
             redirected: false,
             json: async () => ({ status: 0, data: settings }),
         } as unknown as Response);
@@ -39,6 +41,8 @@ describe("personal-settings api-client", () => {
             favoriteOutsiders: [],
         };
         global.fetch = vi.fn().mockResolvedValueOnce({
+            ok: true,
+            headers: new Headers({ "content-type": "application/json" }),
             redirected: false,
             json: async () => ({ status: 0, data: settings }),
         } as unknown as Response);
@@ -54,6 +58,8 @@ describe("personal-settings api-client", () => {
 
     it("throws a ClientApiError when the API reports an error status", async () => {
         global.fetch = vi.fn().mockResolvedValueOnce({
+            ok: true,
+            headers: new Headers({ "content-type": "application/json" }),
             redirected: false,
             json: async () => ({
                 status: 1,

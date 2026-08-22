@@ -21,6 +21,8 @@ import {
 function mockFetch(data: unknown = {}) {
     return vi.fn(async () => ({
         json: async () => ({ data, status: 0 }),
+        ok: true,
+        headers: new Headers({ "content-type": "application/json" }),
         redirected: false,
     }));
 }
