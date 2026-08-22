@@ -66,6 +66,9 @@ export async function fetchAiTools(): Promise<{
 }> {
     const response = await fetch(TOOLS_ENDPOINT);
     if (!response.ok) return { enabled: false, tools: [] };
-    const body = await response.json();
+    // A 200 with a non-JSON body (proxy error page, empty response) must not
+    // throw here — the launcher probes this once per mount and should just
+    // stay hidden, not crash the page it's mounted on.
+    const body = await response.json().catch(() => null);
     return body?.data ?? { enabled: false, tools: [] };
 }

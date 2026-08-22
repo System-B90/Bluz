@@ -207,6 +207,27 @@ describe("POST /api/ai/chat", () => {
         expect(options.context.curriculumId).toBe("c-1");
     });
 
+    it("rejects a non-array approvedToolCallIds instead of throwing at 200", async () => {
+        // Previously this reached `new Set(...)` inside the stream body,
+        // after headers were already sent, turning a caller mistake into a
+        // 500 rather than a 400.
+        const response = await POST(
+            post({ ...validPayload, approvedToolCallIds: "w1" }),
+        );
+
+        expect(response.status).toBe(400);
+        expect(runAiAgent).not.toHaveBeenCalled();
+    });
+
+    it("rejects an approvedToolCallIds array with non-string entries", async () => {
+        const response = await POST(
+            post({ ...validPayload, approvedToolCallIds: [{ id: "w1" }] }),
+        );
+
+        expect(response.status).toBe(400);
+        expect(runAiAgent).not.toHaveBeenCalled();
+    });
+
     it("ignores a client-supplied model instead of forwarding it upstream", async () => {
         // Forwarding this would let any staff session pick (and bill) an
         // arbitrary OpenRouter slug.

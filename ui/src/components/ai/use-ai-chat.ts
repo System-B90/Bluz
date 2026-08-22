@@ -189,6 +189,16 @@ export function useAiChat(scope: AiChatScope) {
                         break;
                     }
                     case AiStreamEventType.Error: {
+                        // A mid-turn failure (e.g. the iteration cap) can
+                        // still carry tool calls the server already
+                        // executed. Dropping them here would have the next
+                        // turn replay — and re-run — those same writes.
+                        if (event.messages?.length) {
+                            transcript.current = [
+                                ...transcript.current,
+                                ...event.messages,
+                            ];
+                        }
                         setError(event.message);
                         break;
                     }

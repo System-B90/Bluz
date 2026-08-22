@@ -412,7 +412,14 @@ describe("runAiAgent", () => {
             }),
         );
 
-        expect(events.at(-1)?.type).toBe(AiStreamEventType.Error);
+        const last = events.at(-1);
+        expect(last?.type).toBe(AiStreamEventType.Error);
+        // The cap is hit only after several successful tool round-trips; the
+        // client must not lose that work just because the turn ran out of
+        // iterations.
+        expect(
+            (last as { messages?: Array<unknown> }).messages?.length,
+        ).toBeGreaterThan(0);
     });
 
     it("returns only this turn's messages for the client to replay", async () => {

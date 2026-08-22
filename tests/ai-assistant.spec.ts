@@ -81,8 +81,19 @@ test.describe("AI assistant", () => {
     }) => {
         // A deployment with no API key must not advertise an entry point that
         // fails on first use.
+        //
+        // `enabled` starts `null` (probe in flight) and the launcher renders
+        // nothing for both `null` and `false` — asserting count 0 right after
+        // navigation cannot tell "server said disabled" from "the probe never
+        // resolved". Waiting for the actual /api/ai/tools response, and
+        // asserting on its body, pins down which one happened.
         await stubTools(page, false);
+        const toolsResponse = page.waitForResponse("**/api/ai/tools");
         await gotoAppHome(page);
+
+        const response = await toolsResponse;
+        const body = await response.json();
+        expect(body.data.enabled).toBe(false);
 
         await expect(page.locator(LAUNCHER)).toHaveCount(0);
     });
