@@ -23,6 +23,7 @@ for _stream in (sys.stdout, sys.stderr):
         except (ValueError, OSError):
             pass
 
+import click  # noqa: E402
 import typer  # noqa: E402
 
 from bluz_cli import __version__  # noqa: E402
@@ -141,6 +142,36 @@ def version() -> None:
 _GLOBAL_FLAGS = {"--json", "--quiet", "-q", "--insecure", "--secure"}
 _GLOBAL_OPTS_WITH_VALUE = {"--url", "--token"}
 
+_VALUE_TAKING_OPTIONS: set[str] | None = None
+
+
+def _value_taking_options() -> set[str]:
+    """
+    Every `--flag` / `-x` spelling, across the whole command tree, whose Click
+    option consumes a following value (i.e. is not a boolean flag).
+
+    Built once by introspecting the real Click command tree instead of
+    guessing from argv shape — a guess ("any unrecognised `-x` might take a
+    value") can't tell a boolean like `--with-parents` from a value option
+    like `--value`, and wrongly swallowing the token after a boolean flag is
+    exactly what broke `--with-parents --json` (#526).
+    """
+    global _VALUE_TAKING_OPTIONS
+    if _VALUE_TAKING_OPTIONS is None:
+        opts = set(_GLOBAL_OPTS_WITH_VALUE)
+
+        def walk(command: click.Command) -> None:
+            for param in command.params:
+                if isinstance(param, click.Option) and not param.is_flag:
+                    opts.update(param.opts)
+            if isinstance(command, click.Group):
+                for sub in command.commands.values():
+                    walk(sub)
+
+        walk(typer.main.get_command(app))
+        _VALUE_TAKING_OPTIONS = opts
+    return _VALUE_TAKING_OPTIONS
+
 
 def _reorder_global_flags(argv: list[str]) -> list[str]:
     """
@@ -149,8 +180,9 @@ def _reorder_global_flags(argv: list[str]) -> list[str]:
     A token only counts as a flag when it is in flag position. The value of
     some other option can spell one exactly (`--name --json`), and hoisting it
     would both enable a global the user never asked for and leave the option it
-    belonged to holding the next token instead. So a token preceded by an
-    unrecognised option is treated as that option's value and left alone.
+    belonged to holding the next token instead. So a token preceded by a
+    known value-taking option is treated as that option's value and left
+    alone; a token preceded by a boolean flag (known or not) is not.
     """
     front: list[str] = []
     rest: list[str] = []
@@ -178,13 +210,13 @@ def _reorder_global_flags(argv: list[str]) -> list[str]:
         else:
             rest.append(arg)
 
-        # An unrecognised `-x` / `--xyz` may be an option expecting a value.
-        # `--xyz=value` carries its own, and a bare `--` was handled above.
+        # `--xyz=value` carries its own value and a bare `--` was handled
+        # above; otherwise only a *known* value-taking option consumes the
+        # next token — a boolean flag (recognised or not) never does.
         previous_may_take_value = (
             not is_value_of_previous
-            and arg.startswith("-")
             and "=" not in arg
-            and arg not in _GLOBAL_FLAGS
+            and arg in _value_taking_options()
         )
         i += 1
     return front + rest
