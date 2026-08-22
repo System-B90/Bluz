@@ -20,6 +20,7 @@ import { callbackUrl, CliAuthWidget } from "@/app/(themed)/(post-auth)/cli-auth/
 
 const PORT = "52400";
 const TOKEN = "session-token-value";
+const CODE = "ABCD-1234";
 
 beforeEach(() => {
     vi.restoreAllMocks();
@@ -31,16 +32,18 @@ afterEach(() => {
 
 describe("callbackUrl", () => {
     it("targets the loopback callback path", () => {
-        expect(callbackUrl(PORT, TOKEN)).toBe(
-            `http://127.0.0.1:${PORT}/callback?token=${TOKEN}`,
+        // The verification code rides along so the CLI's callback can refuse
+        // a token injected by any other local process (#521).
+        expect(callbackUrl(PORT, CODE, TOKEN)).toBe(
+            `http://127.0.0.1:${PORT}/callback?code=${CODE}&token=${TOKEN}`,
         );
     });
 
     it("encodes tokens containing URL-significant characters", () => {
         // next-auth JWTs are dot-separated base64url, but a token carrying
         // `+`, `/` or `=` must not be silently corrupted in the query string.
-        expect(callbackUrl(PORT, "a+b/c=d&e")).toBe(
-            `http://127.0.0.1:${PORT}/callback?token=a%2Bb%2Fc%3Dd%26e`,
+        expect(callbackUrl(PORT, CODE, "a+b/c=d&e")).toBe(
+            `http://127.0.0.1:${PORT}/callback?code=${CODE}&token=a%2Bb%2Fc%3Dd%26e`,
         );
     });
 });
@@ -49,7 +52,7 @@ describe("CliAuthWidget", () => {
     it("reports success when the loopback fetch succeeds", async () => {
         vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
 
-        render(<CliAuthWidget code="ABCD-1234" port={PORT} token={TOKEN} />);
+        render(<CliAuthWidget code={CODE} port={PORT} token={TOKEN} />);
 
         expect(await screen.findByText("ההתחברות הושלמה בהצלחה!")).toBeTruthy();
     });
@@ -61,7 +64,7 @@ describe("CliAuthWidget", () => {
         // window.open.
         vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 
-        render(<CliAuthWidget code="ABCD-1234" port={PORT} token={TOKEN} />);
+        render(<CliAuthWidget code={CODE} port={PORT} token={TOKEN} />);
 
         expect(await screen.findByTestId("cli-auth-handoff")).toBeTruthy();
     });
@@ -71,10 +74,10 @@ describe("CliAuthWidget", () => {
         const open = vi.fn().mockReturnValue({});
         vi.stubGlobal("open", open);
 
-        render(<CliAuthWidget code="ABCD-1234" port={PORT} token={TOKEN} />);
+        render(<CliAuthWidget code={CODE} port={PORT} token={TOKEN} />);
         await userEvent.click(await screen.findByTestId("cli-auth-handoff"));
 
-        expect(open).toHaveBeenCalledWith(callbackUrl(PORT, TOKEN), "_blank", "noopener");
+        expect(open).toHaveBeenCalledWith(callbackUrl(PORT, CODE, TOKEN), "_blank", "noopener");
     });
 
     it("navigates the current tab when the popup is blocked", async () => {
@@ -95,10 +98,10 @@ describe("CliAuthWidget", () => {
             },
         });
 
-        render(<CliAuthWidget code="ABCD-1234" port={PORT} token={TOKEN} />);
+        render(<CliAuthWidget code={CODE} port={PORT} token={TOKEN} />);
         await userEvent.click(await screen.findByTestId("cli-auth-handoff"));
 
-        expect(assign).toHaveBeenCalledWith(callbackUrl(PORT, TOKEN));
+        expect(assign).toHaveBeenCalledWith(callbackUrl(PORT, CODE, TOKEN));
     });
 
     it("goes straight to manual paste when the server answers but rejects the token", async () => {
@@ -106,7 +109,7 @@ describe("CliAuthWidget", () => {
         // to a new tab would only show the same error.
         vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
 
-        render(<CliAuthWidget code="ABCD-1234" port={PORT} token={TOKEN} />);
+        render(<CliAuthWidget code={CODE} port={PORT} token={TOKEN} />);
 
         expect(
             await screen.findByText("לא הצלחנו להתחבר ל-CLI באופן אוטומטי"),
@@ -117,7 +120,7 @@ describe("CliAuthWidget", () => {
         const fetchMock = vi.fn();
         vi.stubGlobal("fetch", fetchMock);
 
-        render(<CliAuthWidget code="ABCD-1234" port="" token={TOKEN} />);
+        render(<CliAuthWidget code={CODE} port="" token={TOKEN} />);
 
         expect(
             await screen.findByText("לא הצלחנו להתחבר ל-CLI באופן אוטומטי"),
@@ -128,7 +131,7 @@ describe("CliAuthWidget", () => {
     it("lets the user drop to manual paste from the handoff screen", async () => {
         vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 
-        render(<CliAuthWidget code="ABCD-1234" port={PORT} token={TOKEN} />);
+        render(<CliAuthWidget code={CODE} port={PORT} token={TOKEN} />);
         await userEvent.click(await screen.findByText("העתק את הקוד באופן ידני"));
 
         await waitFor(() => {

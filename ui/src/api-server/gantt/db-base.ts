@@ -1,7 +1,7 @@
 import { desc, eq, getTableColumns, inArray } from "drizzle-orm";
 import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
-import { postgresDb } from "@/api-server/gantt";
+import { GanttDbExecutor, postgresDb } from "@/api-server/gantt";
 import { ClientApiError } from "@/api-shared/errors";
 import { BasicGantOperations } from "@/api-shared/types/gantt/api-layer";
 import {
@@ -251,7 +251,12 @@ export function drizzleOperationsBuilder<
         return await attachParentIds(items);
     }
 
-    async function createNewItem(data: TCreatePayload): Promise<DbTDocument> {
+    async function createNewItem(
+        data: TCreatePayload,
+        // Pass a transaction handle to enlist this create in a caller's unit of
+        // work; otherwise it opens its own (#518).
+        executor: GanttDbExecutor = postgresDb,
+    ): Promise<DbTDocument> {
         const id =
             (data as Partial<Pick<T, "id">>).id ||
             `${idPrefix}_${crypto.randomUUID()}`;
@@ -278,7 +283,7 @@ export function drizzleOperationsBuilder<
             typeName,
         );
 
-        return await postgresDb.transaction(async (tx) => {
+        return await executor.transaction(async (tx) => {
             const [newItem] = await tx
                 .insert(table as PgTableWithColumns<any>)
                 .values({
