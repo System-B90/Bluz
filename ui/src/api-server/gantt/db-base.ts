@@ -3,7 +3,7 @@ import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
 import { GanttDbExecutor, postgresDb } from "@/api-server/gantt";
 import { ClientApiError } from "@/api-shared/errors";
-import { BasicGantOperations } from "@/api-shared/types/gantt/api-layer";
+import { ApiT, BasicGantOperations } from "@/api-shared/types/gantt/api-layer";
 import {
     BaseGantItem,
     GanttCurriculumId,
@@ -181,11 +181,21 @@ export function drizzleOperationsBuilder<
     labelColumn,
 }: DrizzleOperationsBuilderProps<TTable>): Omit<
     BasicGantOperations<T, TCreatePayload>,
-    "getItem"
+    "createNewItem" | "getItem"
 > & {
     attachParentIds: <TItem extends { id: T["id"] }>(
         items: Array<TItem>,
     ) => Promise<Array<TItem>>;
+    /**
+     * Server-side widening of the shared `createNewItem` contract: the second
+     * parameter enlists the create in a caller's transaction (#518). It stays
+     * out of `BasicGantOperations` because that type is shared with the client
+     * layer, which has no database handle to pass.
+     */
+    createNewItem: (
+        payload: TCreatePayload,
+        executor?: GanttDbExecutor,
+    ) => Promise<ApiT<T> | T>;
 } {
     type DbTDocument = T & BaseDbDocument;
     type EntityColumns = {
