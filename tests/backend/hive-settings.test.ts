@@ -15,6 +15,12 @@ vi.mock("next-auth", () => {
     globalThis.mockNextAuthHandler = vi.fn();
     return {
         default: vi.fn(() => mockHandlerFn),
+        // Routes gate on requireStaffSession() (#510), which reads the session
+        // through getServerSession; this file replaces the whole module, so it
+        // has to supply it too.
+        getServerSession: vi.fn(async () => ({
+            user: { id: "test-user", clearance: 3, display_name: "Test Staff" },
+        })),
     };
 });
 

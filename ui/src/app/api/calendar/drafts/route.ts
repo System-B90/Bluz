@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import {
+    normalizeOptionalStoredEvents,
     normalizeStoredEvents,
     requireIdParam,
 } from "@/api-server/calendar-store-request";
@@ -19,12 +20,12 @@ import { DbEventDocument } from "@/api-shared/types/event";
 
 type CreateDraftBody = {
     label: string;
-    events: Array<DbEventDocument>;
+    events?: Array<DbEventDocument>;
 };
 type UpdateDraftBody = {
     id: string;
     label?: string;
-    events: Array<DbEventDocument>;
+    events?: Array<DbEventDocument>;
 };
 
 async function resolveAuthor(): Promise<DraftAuthor> {
@@ -97,7 +98,7 @@ export const PUT = withApi(async (request: Request) => {
     return ApiSuccess(
         await DbCalendarDraft.update(
             body.id,
-            normalizeStoredEvents(body.events),
+            normalizeOptionalStoredEvents(body.events),
             author,
             controller,
             body.label,

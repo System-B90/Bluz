@@ -62,10 +62,14 @@ async function createDraft(
 /**
  * Updates an existing shared draft's events (and optionally its label),
  * re-stamping the last editor. Returns the updated summary.
+ *
+ * PATCH semantics: `events === undefined` keeps the stored events untouched.
+ * Replacing them unconditionally meant a label-only update wiped the whole
+ * draft and still reported success (#512).
  */
 async function updateDraft(
     draftId: string,
-    events: Array<DbEventDocument>,
+    events: Array<DbEventDocument> | undefined,
     author: DraftAuthor,
     controller: DatabaseController = databaseController,
     label?: string,
@@ -73,22 +77,25 @@ async function updateDraft(
     if (!draftId) {
         throw new ClientApiError("Draft id is missing.");
     }
-    events = events ?? [];
-    if (events.length > MAX_DRAFT_EVENTS) {
+    if (events !== undefined && events.length > MAX_DRAFT_EVENTS) {
         throw new ClientApiError(
             `Draft exceeds the ${MAX_DRAFT_EVENTS}-event limit.`,
         );
     }
 
-    const fixedEvents = events.map(eventDateFixup);
     const now = new Date().toISOString();
     const setFields: Record<string, unknown> = {
-        events: fixedEvents,
-        eventCount: fixedEvents.length,
         updatedAt: now,
         updatedBy: author.displayName,
         updatedById: author.id,
     };
+    let updatedEventCount: number | undefined;
+    if (events !== undefined) {
+        const fixedEvents = events.map(eventDateFixup);
+        setFields.events = fixedEvents;
+        setFields.eventCount = fixedEvents.length;
+        updatedEventCount = fixedEvents.length;
+    }
     const trimmedLabel = label?.trim();
     if (trimmedLabel) {
         setFields.label = trimmedLabel;
@@ -110,7 +117,7 @@ async function updateDraft(
         updatedBy: result.updatedBy,
         updatedById: result.updatedById,
         iterationId: result.iterationId,
-        eventCount: fixedEvents.length,
+        eventCount: updatedEventCount ?? result.events?.length ?? 0,
     };
 }
 
