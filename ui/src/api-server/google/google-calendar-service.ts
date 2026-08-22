@@ -12,6 +12,7 @@ import { DbEventDocument } from "@/api-shared/types/event";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { GoogleCalendarLink } from "@/api-shared/types/google-calendar";
 import { IterationId } from "@/api-shared/types/iteration";
+import { logger } from "@/logging/pino";
 
 /**
  * Two-way Google Calendar integration:
@@ -283,10 +284,7 @@ export async function pushEventToGoogle(
         return true;
     } catch (error) {
         // Never let a Google outage/misconfiguration break Bluz's own event flow.
-        console.warn(
-            `Google Calendar push skipped for user ${userId} (event ${event.id}):`,
-            error,
-        );
+        logger.warn({ err: error }, `Google Calendar push skipped for user ${userId} (event ${event.id}):`);
         return false;
     }
 }
@@ -425,10 +423,7 @@ export async function pullEventEdits(userId: string): Promise<number> {
         }
         return updatedCount;
     } catch (error) {
-        console.warn(
-            `Google Calendar edit pull skipped for user ${userId}:`,
-            error,
-        );
+        logger.warn({ err: error }, `Google Calendar edit pull skipped for user ${userId}:`);
         return 0;
     }
 }
@@ -461,7 +456,7 @@ export async function pullBusyBlocks(
             end: b.end ?? "",
         }));
     } catch (error) {
-        console.warn(`Google Calendar pull skipped for user ${userId}:`, error);
+        logger.warn({ err: error }, `Google Calendar pull skipped for user ${userId}:`);
         return [];
     }
 }

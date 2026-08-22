@@ -27,6 +27,7 @@ import {
     RoomSource,
 } from "@/api-shared/types/room";
 import { Setting } from "@/api-shared/types/settings/settings";
+import { logger } from "@/logging/pino";
 
 export type RoomExtendedInfoDocument = RoomExtendedInfo & {
     roomId: RoomId;
@@ -258,10 +259,7 @@ function ensureIndexesInBackground(controller: DatabaseController): void {
         // allSettled, not all: one failing index must not skip the rest.
         for (const result of results) {
             if (result.status === "rejected") {
-                console.error(
-                    `Failed to ensure a Mongo index on "${controller.dbName}"`,
-                    result.reason,
-                );
+                logger.error({ err: result.reason }, `Failed to ensure a Mongo index on "${controller.dbName}"`);
             }
         }
     });
@@ -349,7 +347,7 @@ export function getMetaController(): MetaController {
                     { unique: true },
                 ),
             ]).catch((error) => {
-                console.error("Failed to ensure iteration registry indexes", error);
+                logger.error({ err: error }, "Failed to ensure iteration registry indexes");
             });
         }
     }

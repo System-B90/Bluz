@@ -4,6 +4,7 @@ import assert from "assert";
 import { NextRequest, NextResponse } from "next/server";
 
 import { ClientApiError, ForbiddenError, UserNotLoggedInError } from "@/api-shared/errors";
+import { logger } from "@/logging/pino";
 import { CACHE_CONTROL_HTTP_HEADER, IMMUTABLE_CACHE_MAX_TTL } from "@/settings";
 
 export type ApiResponseHeaders = Record<string, string>;
@@ -256,14 +257,14 @@ export function catchHandler<T extends NextRequest>(request: T, e: unknown) {
     // Raw DB errors are logged server-side but returned as an opaque 500 so no
     // internal schema/constraint details leak to the client (#162).
     if (isDatabaseError(e)) {
-        console.error("catchHandler database error", e);
+        logger.error({ err: e }, "catchHandler database error");
         return ApiErrorMaker(
             { name: "InternalDatabaseError", message: "Internal Database Error" },
             500,
         );
     }
 
-    console.error("catchHandler unexpected error", e);
+    logger.error({ err: e }, "catchHandler unexpected error");
     return ApiErrorMaker(
         { name: "InternalServerError", message: "שגיאה פנימית בשרת" },
         500,

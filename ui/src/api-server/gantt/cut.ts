@@ -65,6 +65,7 @@ import {
     SCHEDULE_SETTINGS_KEY,
     ScheduleSettings,
 } from "@/api-shared/types/settings/schedule";
+import { logger } from "@/logging/pino";
 import { MessageTypes } from "@/settings";
 
 /**
@@ -552,7 +553,7 @@ async function buildHiveModuleSubjectMap(
         const modules = await hive.getModules();
         return new Map(modules.map((m) => [Number(m.id), m.parent_subject]));
     } catch (e) {
-        console.error("Failed to load Hive modules for cut subject fallback", e);
+        logger.error({ err: e }, "Failed to load Hive modules for cut subject fallback");
         return new Map();
     }
 }

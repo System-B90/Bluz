@@ -5,6 +5,7 @@ import {
 import { getMetaController } from "@/api-server/mongo-db-controller";
 import { DbEventDocument, getPresentInstructors } from "@/api-shared/types/event";
 import { IterationId } from "@/api-shared/types/iteration";
+import { logger } from "@/logging/pino";
 
 /**
  * Fire-and-forget: pushes the given event to the Google Calendar of every
@@ -44,7 +45,7 @@ export function syncEventToInstructorsGoogleCalendars(
                 ),
             );
         } catch (error) {
-            console.warn("Google Calendar sync skipped:", error);
+            logger.warn({ err: error }, "Google Calendar sync skipped:");
         }
     })();
 }
@@ -63,6 +64,6 @@ export function pullGoogleEditsInBackground(userId: string): void {
     if (Date.now() - last < PULL_THROTTLE_MS) return;
     lastPullByUser.set(userId, Date.now());
     void pullEventEdits(userId).catch((error) =>
-        console.warn("Google Calendar background pull failed:", error),
+        logger.warn({ err: error }, "Google Calendar background pull failed:"),
     );
 }

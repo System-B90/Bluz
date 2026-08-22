@@ -3,6 +3,7 @@ import {
     HiveCacheChanges,
     HiveIterationCache,
 } from "@/api-shared/types/iteration";
+import { logger } from "@/logging/pino";
 
 const CACHED_CATEGORIES = ["modules", "subjects", "rooms"] as const;
 
@@ -32,7 +33,7 @@ export async function buildHiveCache(
             cachedAt: new Date().toISOString(),
         };
     } catch (e) {
-        console.error("Failed to snapshot Hive names for iteration", e);
+        logger.error({ err: e }, "Failed to snapshot Hive names for iteration");
         return undefined;
     }
 }
