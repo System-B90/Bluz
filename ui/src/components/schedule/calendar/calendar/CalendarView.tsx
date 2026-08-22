@@ -183,6 +183,61 @@ function toMs(value: Date | string): number {
     return value instanceof Date ? value.getTime() : new Date(value).getTime();
 }
 
+// Hoisted to module scope: these don't close over any component state, but a
+// new function/object identity passed as a prop every render made DnDCalendar
+// (and everything downstream of it) re-render on every parent render.
+function draggableAccessor(segment: EventSegment) {
+    return !segment.event.locked;
+}
+
+function endAccessor(segment: EventSegment) {
+    return segment.to.toDate();
+}
+
+function startAccessor(segment: EventSegment) {
+    return segment.from.toDate();
+}
+
+function resizableAccessor(segment: EventSegment) {
+    return !segment.event.locked;
+}
+
+function resourceAccessor(segment: EventSegment) {
+    return segment.event.rooms.length > 0
+        ? segment.event.rooms.map((room) => roomLikeToResourceKey(room))
+        : [
+            roomLikeToResourceKey({
+                id: DUMMY_ROOM_ID,
+                source: RoomSource.Custom,
+            }),
+        ];
+}
+
+function resourceIdAccessor(room: Room) {
+    return roomLikeToResourceKey(room);
+}
+
+function dayRangeHeaderFormat({
+    start,
+    end,
+}: {
+    start: Date;
+    end: Date;
+}) {
+    const s = dayjs(start).locale("he");
+    const e = dayjs(end).locale("he");
+    if (s.month() === e.month()) {
+        return `${s.format("DD")} - ${e.format("DD")} ב${s.format("MMMM")} ${s.format("YYYY")}`;
+    } else {
+        return `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")} ${e.format("YYYY")}`;
+    }
+}
+
+const CALENDAR_FORMATS = {
+    timeGutterFormat: "HH:mm",
+    dayRangeHeaderFormat,
+};
+
 type CalendarViewProps = {
     events: Array<Event>;
     rooms: Array<Room>;
@@ -417,22 +472,11 @@ export function CalendarView({
                     date={date}
                     dayLayoutAlgorithm={splitAwareDayLayout}
                     defaultView={Views.WEEK}
-                    draggableAccessor={(segment) => !segment.event.locked}
-                    endAccessor={(segment) => segment.to.toDate()}
+                    draggableAccessor={draggableAccessor}
+                    endAccessor={endAccessor}
                     eventPropGetter={segmentPropGetter}
                     events={visibleSegments}
-                    formats={{
-                        timeGutterFormat: "HH:mm",
-                        dayRangeHeaderFormat: ({ start, end }) => {
-                            const s = dayjs(start).locale("he");
-                            const e = dayjs(end).locale("he");
-                            if (s.month() === e.month()) {
-                                return `${s.format("DD")} - ${e.format("DD")} ב${s.format("MMMM")} ${s.format("YYYY")}`;
-                            } else {
-                                return `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")} ${e.format("YYYY")}`;
-                            }
-                        },
-                    }}
+                    formats={CALENDAR_FORMATS}
                     localizer={localizer}
                     max={calendarMax}
                     messages={CALENDAR_MESSAGES}
@@ -445,20 +489,9 @@ export function CalendarView({
                     onSelectEvent={handleSelectSegment}
                     onSelectSlot={onSelectSlot}
                     onView={onView}
-                    resizableAccessor={(segment) => !segment.event.locked}
-                    resourceAccessor={(segment: EventSegment) =>
-                        segment.event.rooms.length > 0
-                            ? segment.event.rooms.map((room) =>
-                                roomLikeToResourceKey(room),
-                            )
-                            : [
-                                roomLikeToResourceKey({
-                                    id: DUMMY_ROOM_ID,
-                                    source: RoomSource.Custom,
-                                }),
-                            ]
-                    }
-                    resourceIdAccessor={(room: Room) => roomLikeToResourceKey(room)}
+                    resizableAccessor={resizableAccessor}
+                    resourceAccessor={resourceAccessor}
+                    resourceIdAccessor={resourceIdAccessor}
                     // Resource logic
                     resources={
                         currentView === Views.DAY
@@ -468,7 +501,7 @@ export function CalendarView({
                     resourceTitleAccessor="name"
                     rtl={true}
                     selectable
-                    startAccessor={(segment) => segment.from.toDate()}
+                    startAccessor={startAccessor}
                     step={5}
                     style={{ height: "100%" }}
                     timeslots={12}

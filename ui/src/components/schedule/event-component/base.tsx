@@ -216,7 +216,7 @@ function EventSegmentBlock({ segment }: { segment: EventSegment }) {
                     data-filtered-out={filterOpacity}
                     ref={ref}
                     sx={{
-                        textAlign: "left",
+                        textAlign: "start",
                         p: 0.2,
                         bgcolor: isHovered ? alpha(bgColor, 0.9) : bgColor,
                         color: textColor,

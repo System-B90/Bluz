@@ -8,7 +8,6 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import TableSortLabel from "@mui/material/TableSortLabel";
 import Typography from "@mui/material/Typography";
 import { Dispatch, SetStateAction, useCallback } from "react";
 
@@ -65,7 +64,7 @@ export function EventCollisionsList({
 
     return (
         <TableContainer component={Paper}>
-            <Table aria-label="collapsible table">
+            <Table aria-label="טבלת מופעים מתנגשים">
                 <TableHead>
                     <TableRow sx={{ bgcolor: "action.hover" }}>
                         <TableCell width={50} />
@@ -76,11 +75,11 @@ export function EventCollisionsList({
                             <Typography fontWeight={600}>שם</Typography>
                         </TableCell>
                         <TableCell>
-                            <TableSortLabel>
-                                <Typography fontWeight={600}>
-                                    קונפליקט?
-                                </Typography>
-                            </TableSortLabel>
+                            {/* Not sortable — a bare TableSortLabel with no
+                                onClick/active prop announced itself as an
+                                interactive sort control to screen readers
+                                and keyboard users without doing anything. */}
+                            <Typography fontWeight={600}>קונפליקט?</Typography>
                         </TableCell>
                         <TableCell padding="checkbox">
                             <Checkbox
@@ -94,7 +93,7 @@ export function EventCollisionsList({
                                 onChange={onSelectAllClick}
                                 slotProps={{
                                     input: {
-                                        "aria-label": "select all",
+                                        "aria-label": "בחירת הכל",
                                     },
                                 }}
                             />

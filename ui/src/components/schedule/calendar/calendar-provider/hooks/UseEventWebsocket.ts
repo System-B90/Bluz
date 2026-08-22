@@ -10,7 +10,6 @@ import {
 import { useAuth } from "@/components/auth/AuthProvider";
 import { CalendarAction } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { Event, EventId } from "@/components/schedule/types/event";
-import { MessageHandlerType } from "@/components/SessionWs";
 import { MessageTypes } from "@/settings";
 
 export const useEventWebsocket = (
@@ -34,8 +33,13 @@ export const useEventWebsocket = (
         [activeIterationId],
     );
 
-    const onWebSocketMessage: MessageHandlerType = useCallback(
-        (messageType: MessageTypes, data: any) => {
+    // The underlying session-ws package types the handler payload as `any`
+    // (it's a generic transport, not aware of Bluz's message shapes), so the
+    // `any` has to be swallowed somewhere. Do it once here as `unknown` and
+    // narrow per-case below, instead of scattering unchecked `as X` casts
+    // across every switch branch.
+    const onWebSocketMessage = useCallback(
+        (messageType: MessageTypes, data: unknown) => {
             switch (messageType) {
             // Lock/unlock messages are handled even in offline mode so the UI
             // always reflects what other users are editing.

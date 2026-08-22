@@ -5,6 +5,7 @@ import {
     useCallback,
     useContext,
     useEffect,
+    useLayoutEffect,
     useMemo,
     useReducer,
     useRef,
@@ -243,7 +244,12 @@ export function createCollectionProvider<T, TId, TCreate>(
                 });
         }, [enqueueSnackbar]);
 
-        loadRef.current = load;
+        // Assigning inside render (rather than during commit) can expose a
+        // stale closure to code that runs between render and effects (e.g. a
+        // WS message handler firing mid-render in concurrent scenarios).
+        useLayoutEffect(() => {
+            loadRef.current = load;
+        });
 
         const addItem = useCallback(
             async (data: TCreate) => {

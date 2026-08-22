@@ -5,7 +5,9 @@ import {
     SetStateAction,
     useCallback,
     useContext,
+    useEffect,
     useMemo,
+    useRef,
     useState,
 } from "react";
 
@@ -24,6 +26,8 @@ export type OfflineContextState = {
     purgeCapturedEvents: (eventIds: Array<EventId>) => void;
     getCapturedEvent: (eventId: EventId) => Event | null;
     getCapturedState: () => Record<EventId, Event>;
+    markEventCreatedLocally: (eventId: EventId) => void;
+    isEventCreatedLocally: (eventId: EventId) => boolean;
 };
 
 const OfflineContext = createContext<OfflineContextState | undefined>({
@@ -38,6 +42,8 @@ const OfflineContext = createContext<OfflineContextState | undefined>({
     purgeCapturedEvents: (_eventIds) => {},
     getCapturedEvent: (_eventId) => null,
     getCapturedState: () => ({}),
+    markEventCreatedLocally: (_eventId) => {},
+    isEventCreatedLocally: (_eventId) => false,
 });
 
 export const OfflineProvider = ({
@@ -47,26 +53,37 @@ export const OfflineProvider = ({
 }) => {
     const [capturedStateBeforeOffline, setCapturedStateBeforeOffline] =
         useState<Record<EventId, Event>>({});
+    // Explicit tag for events created while offline, so reconciliation can
+    // tell "created locally" apart from "modified locally" without guessing
+    // from id shape (a UUID heuristic misfires for hyphenated server ids).
+    const [locallyCreatedEventIds, setLocallyCreatedEventIds] = useState<
+        Set<EventId>
+    >(new Set());
     const [offlineMode, setOfflineMode] = useState<boolean>(false);
     const [pushDialogOpen, setPushDialogOpen] = useState<boolean>(false);
+    // React (StrictMode in particular) can invoke a state updater more than
+    // once per commit; setPushDialogOpen used to live inside the
+    // setOfflineMode updater, which is meant to be a pure function of `prev`
+    // and got double-invoked as a result. Track the previous value in a ref
+    // instead and decide whether to open the dialog after the update settles.
+    const prevOfflineModeRef = useRef(offlineMode);
 
     const setOfflineModeWrapper = useCallback<
         Dispatch<SetStateAction<boolean>>
-    >(
-        (value) => {
-            setOfflineMode((prev) => {
-                const next = typeof value === "function" ? value(prev) : value;
+    >((value) => {
+        setOfflineMode((prev) => {
+            const next = typeof value === "function" ? value(prev) : value;
+            return next;
+        });
+    }, []);
 
-                // Trigger the diff reconciliation dialog when exiting offline mode
-                if (prev === true && next === false) {
-                    setPushDialogOpen(true);
-                }
-
-                return next;
-            });
-        },
-        [setPushDialogOpen],
-    );
+    useEffect(() => {
+        // Trigger the diff reconciliation dialog when exiting offline mode.
+        if (prevOfflineModeRef.current === true && offlineMode === false) {
+            setPushDialogOpen(true);
+        }
+        prevOfflineModeRef.current = offlineMode;
+    }, [offlineMode]);
 
     const captureEventBeforeEdit = useCallback((event: Event) => {
         setCapturedStateBeforeOffline((capturedState) => {
@@ -98,7 +115,22 @@ export const OfflineProvider = ({
 
     const purgeCapturedState = useCallback(() => {
         setCapturedStateBeforeOffline({});
+        setLocallyCreatedEventIds(new Set());
     }, []);
+
+    const markEventCreatedLocally = useCallback((eventId: EventId) => {
+        setLocallyCreatedEventIds((prev) => {
+            if (prev.has(eventId)) return prev;
+            const next = new Set(prev);
+            next.add(eventId);
+            return next;
+        });
+    }, []);
+
+    const isEventCreatedLocally = useCallback(
+        (eventId: EventId): boolean => locallyCreatedEventIds.has(eventId),
+        [locallyCreatedEventIds],
+    );
 
     // Drop only the given events from the captured pre-offline snapshot. Used
     // after a partial push (#157) so items that already synced don't reappear
@@ -115,6 +147,14 @@ export const OfflineProvider = ({
                 }
             }
             return changed ? next : capturedState;
+        });
+        setLocallyCreatedEventIds((prev) => {
+            let changed = false;
+            const next = new Set(prev);
+            for (const id of eventIds) {
+                if (next.delete(id)) changed = true;
+            }
+            return changed ? next : prev;
         });
     }, []);
 
@@ -144,6 +184,8 @@ export const OfflineProvider = ({
             purgeCapturedEvents,
             getCapturedEvent,
             getCapturedState,
+            markEventCreatedLocally,
+            isEventCreatedLocally,
         }),
         [
             offlineMode,
@@ -156,6 +198,8 @@ export const OfflineProvider = ({
             purgeCapturedEvents,
             getCapturedEvent,
             getCapturedState,
+            markEventCreatedLocally,
+            isEventCreatedLocally,
         ],
     );
 

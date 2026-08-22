@@ -1,5 +1,3 @@
-import assert from "assert";
-
 import { useDraggable } from "@dnd-kit/core";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
@@ -27,26 +25,37 @@ export function PersonChip({
     event,
 }: {
     instructorId?: number;
-    personData?: any;
+    // Only ever "איש חוץ" (outsider marker) today — see InstructorsList
+    // below — but kept as a general string, not a literal, since it's a
+    // free-standing label rather than an enum.
+    personData?: string;
     event: Event;
 }) {
     const { getInstructor, instructors } = useHiveUsers();
     const instructor = useMemo(
-        () => (instructorId ? getInstructor(instructorId) : personData),
-        [instructorId, getInstructor, personData],
+        () => (instructorId ? getInstructor(instructorId) : undefined),
+        [instructorId, getInstructor],
     );
 
-    assert(
-        !(instructorId !== undefined && personData !== undefined),
-        "Either instructorId or personData, not both must be supplied!",
-    );
+    if (instructorId !== undefined && personData !== undefined) {
+        // Importing Node's `assert` pulled a Node built-in into the client
+        // bundle and, worse, would throw *during render* if this contract
+        // was ever violated — taking down the whole event tile instead of
+        // just this chip. Log and fail soft: prefer the real Hive
+        // instructor over the caller-supplied label.
+        console.error(
+            "PersonChip: either instructorId or personData, not both, must be supplied.",
+        );
+    }
 
     const isLecturer =
         eventHasLecturers(event.type) &&
-        event.lecturers?.includes(instructorId ?? personData);
+        event.lecturers?.includes(instructorId ?? personData ?? "");
 
     const fullName: string =
-        instructor?.display_name ?? personData ?? instructorId;
+        instructor?.display_name ??
+        personData ??
+        (instructorId !== undefined ? String(instructorId) : "");
     const shortName = useMemo(
         () =>
             typeof fullName === "string"
@@ -58,7 +67,7 @@ export function PersonChip({
         [fullName, instructors],
     );
 
-    const personId: PersonId = instructorId ?? personData;
+    const personId: PersonId = instructorId ?? personData ?? "";
 
     // The chip used to be a link to "a" — a dead relative URL that navigated
     // away from the calendar (#470). Clicking a person is a filter gesture:

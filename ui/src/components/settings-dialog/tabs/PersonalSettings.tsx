@@ -18,6 +18,7 @@ import
     memo,
     useCallback,
     useEffect,
+    useMemo,
     useReducer,
     useState,
     type ReactNode,
@@ -476,32 +477,59 @@ export function PersonalSettings()
         }
     }, [ enqueueSnackbar ]);
 
-    const availableGroups = hiveClasses
-        .filter((c) => !state.groups.includes(String(c.id)))
-        .map((c) => ({ id: String(c.id), label: c.display_name }));
-    const selectedGroups = state.groups.map((id) =>
-    {
-        const c = hiveClasses.find((g) => String(g.id) === id);
-        return { id, label: c ? c.display_name : id };
-    });
+    // SelectionCard is memoized, but a freshly-mapped array is a new
+    // reference every render regardless of whether its contents changed —
+    // memoize on the actual dependencies so the memo can do its job.
+    const availableGroups = useMemo(
+        () =>
+            hiveClasses
+                .filter((c) => !state.groups.includes(String(c.id)))
+                .map((c) => ({ id: String(c.id), label: c.display_name })),
+        [ hiveClasses, state.groups ],
+    );
+    const selectedGroups = useMemo(
+        () =>
+            state.groups.map((id) =>
+            {
+                const c = hiveClasses.find((g) => String(g.id) === id);
+                return { id, label: c ? c.display_name : id };
+            }),
+        [ state.groups, hiveClasses ],
+    );
 
-    const availableInstructors = hiveInstructors
-        .filter((i) => !state.instructors.includes(String(i.id)))
-        .map((i) => ({ id: String(i.id), label: i.display_name }));
-    const selectedInstructors = state.instructors.map((id) =>
-    {
-        const i = hiveInstructors.find((u) => String(u.id) === id);
-        return { id, label: i ? i.display_name : id };
-    });
+    const availableInstructors = useMemo(
+        () =>
+            hiveInstructors
+                .filter((i) => !state.instructors.includes(String(i.id)))
+                .map((i) => ({ id: String(i.id), label: i.display_name })),
+        [ hiveInstructors, state.instructors ],
+    );
+    const selectedInstructors = useMemo(
+        () =>
+            state.instructors.map((id) =>
+            {
+                const i = hiveInstructors.find((u) => String(u.id) === id);
+                return { id, label: i ? i.display_name : id };
+            }),
+        [ state.instructors, hiveInstructors ],
+    );
 
-    const availableOutsiders = outsiders
-        .filter((o) => !state.favoriteOutsiders.includes(o.id))
-        .map((o) => ({ id: o.id, label: o.name }));
-    const selectedOutsiders = state.favoriteOutsiders.map((id) =>
-    {
-        const o = getOutsider(id);
-        return { id, label: o ? o.name : id };
-    });
+    const availableOutsiders = useMemo(
+        () =>
+            outsiders
+                .filter((o) => !state.favoriteOutsiders.includes(o.id))
+                .map((o) => ({ id: o.id, label: o.name })),
+        [ outsiders, state.favoriteOutsiders ],
+    );
+    const selectedOutsiders = useMemo(
+        () =>
+            state.favoriteOutsiders.map((id) =>
+            {
+                const o = getOutsider(id);
+                return { id, label: o ? o.name : id };
+            }),
+        [ state.favoriteOutsiders, getOutsider ],
+    );
 
     return (
         <Box
