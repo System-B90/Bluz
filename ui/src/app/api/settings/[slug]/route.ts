@@ -12,7 +12,7 @@ import {
 } from "@/api-server/iteration-request";
 import { updatePrayerEvents } from "@/api-server/prayer";
 import { requireStaffSession } from "@/api-server/session-user";
-import { inplaceDateFixup } from "@/api-shared/date-fixer";
+import { inplaceDateFixupToDate } from "@/api-shared/date-fixer";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
 import {
     ApiSettingGetPayload,
@@ -55,9 +55,9 @@ export const POST: ServerApiSettingUpdate = withApi(async (request, context) => 
     const value: ApiSettingUpdatePayload = await request.json();
 
     if (slug === "prayerTimes") {
-        inplaceDateFixup(value, "shacharit");
-        inplaceDateFixup(value, "mincha");
-        inplaceDateFixup(value, "arvit");
+        inplaceDateFixupToDate(value, "shacharit");
+        inplaceDateFixupToDate(value, "mincha");
+        inplaceDateFixupToDate(value, "arvit");
         await DbSettings.set(slug as SettingName, value, undefined, controller);
 
         await updatePrayerEvents({

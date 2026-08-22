@@ -1,6 +1,6 @@
 import { safeApiFetcher } from "@/api-client/common";
 import { withIteration } from "@/api-client/iteration-query";
-import { eventDateFixup } from "@/api-shared/calendar";
+import { eventDateFixupToDayjs } from "@/api-shared/calendar";
 import {
     CalendarSnapshot,
     CalendarSnapshotRestoreResult,
@@ -59,7 +59,7 @@ export async function apiGetSnapshot(
         { method: "GET" },
     );
     const events = (snapshot.events ?? []).map(
-        (e: DbEventDocument) => eventDateFixup(e) as unknown as Event,
+        (e: DbEventDocument) => eventDateFixupToDayjs(e),
     );
     return { snapshot, events };
 }

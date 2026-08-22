@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react";
 
-import { eventDateFixup } from "@/api-shared/calendar";
+import { eventDateFixupToDayjs } from "@/api-shared/calendar";
 import {
     EventAddedOrRemovedMessage,
     EventDataUpdateMessage,
@@ -60,7 +60,7 @@ export const useEventWebsocket = (
                 const msg = data as EventDataUpdateMessage<Event>;
                 if (!isForActiveIteration(msg.iterationId)) break;
                 const updatedEvents = Object.values(msg.events).map(
-                    (ev) => eventDateFixup(ev) as Event,
+                    (ev) => eventDateFixupToDayjs(ev),
                 );
                 dispatch({ type: "UPSERT_MANY", payload: updatedEvents });
                 break;
@@ -76,7 +76,7 @@ export const useEventWebsocket = (
                 } else if (msg.action === "added") {
                     dispatch({
                         type: "UPSERT_EVENT",
-                        payload: eventDateFixup(msg.newData) as Event,
+                        payload: eventDateFixupToDayjs(msg.newData),
                     });
                 }
                 break;

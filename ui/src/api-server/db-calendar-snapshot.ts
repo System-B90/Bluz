@@ -7,7 +7,7 @@ import {
 } from "@/api-server/mongo-db-controller";
 import { withOptionalTransaction } from "@/api-server/mongo-transactions";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
-import { eventDateFixup } from "@/api-shared/calendar";
+import { eventDateFixupToDate } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     CalendarSnapshot,
@@ -55,7 +55,7 @@ async function createSnapshot(
         label: trimmedLabel,
         createdAt: new Date().toISOString(),
         iterationId,
-        events: events.map(eventDateFixup),
+        events: events.map(eventDateFixupToDate),
     };
 
     // Denormalize the count so the list endpoint can project `events` out and
@@ -111,7 +111,7 @@ async function getSnapshot(
         label: doc.label,
         createdAt: doc.createdAt,
         iterationId: doc.iterationId,
-        events: (doc.events ?? []).map(eventDateFixup),
+        events: (doc.events ?? []).map(eventDateFixupToDate),
     };
 }
 

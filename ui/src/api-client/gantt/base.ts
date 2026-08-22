@@ -1,7 +1,7 @@
 import { Dayjs } from "dayjs";
 
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
-import { inplaceDateFixup } from "@/api-shared/date-fixer";
+import { inplaceDateFixupToDayjs } from "@/api-shared/date-fixer";
 import { ApiT, RawBaseDocument } from "@/api-shared/types/gantt/api-layer";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 
@@ -24,7 +24,7 @@ export function baseDocumentFixup<
     K extends any,
 >(doc: T): null | (T & BaseDocument) {
     if (doc === null) return null;
-    inplaceDateFixup(doc, ["updatedAt", "createdAt"]);
+    inplaceDateFixupToDayjs(doc, ["updatedAt", "createdAt"]);
     return doc as T & BaseDocument;
 }
 
