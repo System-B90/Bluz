@@ -55,7 +55,11 @@ export function ScheduleAppBar({
                 <Box
                     sx={{
                         position: { xs: "static", md: "absolute" },
-                        insetInlineStart: { md: "50%" },
+                        // Physical `left` on purpose: centering is
+                        // direction-agnostic, but pairing the *logical* inset
+                        // with a physical translate moves the box the same way
+                        // twice under RTL and throws the button off-centre.
+                        left: { md: "50%" },
                         transform: { md: "translateX(-50%)" },
                     }}
                 >
