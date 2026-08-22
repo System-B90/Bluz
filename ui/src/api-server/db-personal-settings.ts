@@ -17,6 +17,7 @@ async function getPersonalSettings(
         favoriteOutsiders: doc.favoriteOutsiders,
         googleCalendarEnabled: doc.googleCalendarEnabled ?? false,
         googleCalendarSyncAllEvents: doc.googleCalendarSyncAllEvents ?? false,
+        aiAssistantEnabled: doc.aiAssistantEnabled ?? true,
     };
 }
 

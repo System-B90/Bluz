@@ -29,8 +29,11 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useSearchParams } from "next/navigation";
 import React from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { fetchAiTools } from "@/api-client/ai";
+import { apiGetPersonalSettings } from "@/api-client/personal-settings";
 import {
     AiTimelineItem,
     AiTimelineKind,
@@ -39,8 +42,10 @@ import {
 import { useIterationScope } from "@/components/base/IterationProvider";
 
 const PANEL_WIDTH = 420;
-/** Clears the launcher and the offline FAB, which share the bottom row. */
-const PANEL_BOTTOM = 96;
+/** Clears the launcher, which sits above the Gantt screen's curriculum FAB. */
+const PANEL_BOTTOM = 168;
+/** Stacks above the Gantt screen's curriculum FAB (bottom: 16, 56px tall). */
+const LAUNCHER_BOTTOM = 88;
 
 const SUGGESTIONS = [
     'מה יש בלו"ז השבוע?',
@@ -69,6 +74,30 @@ function UserBubble({ text }: { text: string }) {
     );
 }
 
+// Markdown blocks (p, li, ...) already carry their own vertical rhythm, so
+// margins are zeroed here and reintroduced with `& > * + *` to avoid a gap
+// before the first / after the last block inside the bubble.
+const MARKDOWN_SX = {
+    "& > *": { margin: 0 },
+    "& > * + *": { marginTop: 1 },
+    "& p, & li": { fontSize: "body2.fontSize", lineHeight: 1.57 },
+    "& ul, & ol": { paddingInlineStart: 3 },
+    "& code": {
+        bgcolor: "action.selected",
+        borderRadius: 0.5,
+        px: 0.5,
+        fontSize: "0.85em",
+    },
+    "& pre": {
+        bgcolor: "action.selected",
+        borderRadius: 1,
+        p: 1,
+        overflowX: "auto",
+    },
+    "& pre code": { bgcolor: "transparent", px: 0 },
+    "& a": { color: "primary.main" },
+} as const;
+
 function AssistantBubble({ text }: { text: string }) {
     return (
         <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
@@ -80,10 +109,13 @@ function AssistantBubble({ text }: { text: string }) {
                     py: 1,
                     borderRadius: 2,
                     maxWidth: "90%",
-                    whiteSpace: "pre-wrap",
                 }}
             >
-                <Typography variant="body2">{text}</Typography>
+                <Box sx={MARKDOWN_SX}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {text}
+                    </ReactMarkdown>
+                </Box>
             </Paper>
         </Box>
     );
@@ -138,6 +170,7 @@ function TimelineEntry({ item }: { item: AiTimelineItem }) {
 export function AiAssistant() {
     const [open, setOpen] = React.useState(false);
     const [enabled, setEnabled] = React.useState<boolean | null>(null);
+    const [userEnabled, setUserEnabled] = React.useState(true);
     const [draft, setDraft] = React.useState("");
     const { iterationId } = useIterationScope();
     // The Gantt screen keeps the open curriculum in `?cid=`, so the assistant
@@ -171,6 +204,18 @@ export function AiAssistant() {
         };
     }, []);
 
+    // Personal setting: lets a user hide the FAB without an admin toggling
+    // the deployment-wide key.
+    React.useEffect(() => {
+        let cancelled = false;
+        void apiGetPersonalSettings({}).then((settings) => {
+            if (!cancelled) setUserEnabled(settings.aiAssistantEnabled);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     React.useEffect(() => {
         scrollRef.current?.scrollTo({
             top: scrollRef.current.scrollHeight,
@@ -183,7 +228,7 @@ export function AiAssistant() {
         setDraft("");
     };
 
-    if (!enabled) return null;
+    if (!enabled || !userEnabled) return null;
 
     return (
         <>
@@ -194,8 +239,8 @@ export function AiAssistant() {
                     onClick={() => setOpen((value) => !value)}
                     sx={{
                         position: "fixed",
-                        bottom: 24,
-                        insetInlineEnd: 24,
+                        bottom: LAUNCHER_BOTTOM,
+                        insetInlineEnd: 16,
                         zIndex: 1200,
                     }}
                 >

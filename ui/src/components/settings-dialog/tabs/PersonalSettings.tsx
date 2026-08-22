@@ -1,5 +1,6 @@
 "use client";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import EventIcon from "@mui/icons-material/Event";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
@@ -50,6 +51,7 @@ type PersonalState = {
     favoriteOutsiders: Array<string>;
     googleCalendarEnabled: boolean;
     googleCalendarSyncAllEvents: boolean;
+    aiAssistantEnabled: boolean;
 };
 type PersonalAction =
     | { type: "ADD_GROUP"; payload: string; }
@@ -59,6 +61,7 @@ type PersonalAction =
     | { type: "REMOVE_GROUP"; payload: string; }
     | { type: "REMOVE_INSTRUCTOR"; payload: string; }
     | { type: "REMOVE_OUTSIDER"; payload: string; }
+    | { type: "SET_AI_ASSISTANT_ENABLED"; payload: boolean; }
     | { type: "SET_GOOGLE_CALENDAR_ENABLED"; payload: boolean; }
     | { type: "SET_GOOGLE_CALENDAR_SYNC_ALL_EVENTS"; payload: boolean; };
 
@@ -109,6 +112,8 @@ function personalSettingsReducer(
         return { ...state, googleCalendarEnabled: action.payload };
     case "SET_GOOGLE_CALENDAR_SYNC_ALL_EVENTS":
         return { ...state, googleCalendarSyncAllEvents: action.payload };
+    case "SET_AI_ASSISTANT_ENABLED":
+        return { ...state, aiAssistantEnabled: action.payload };
     }
 }
 
@@ -261,6 +266,7 @@ export function PersonalSettings()
         favoriteOutsiders: [],
         googleCalendarEnabled: false,
         googleCalendarSyncAllEvents: false,
+        aiAssistantEnabled: true,
     });
     const [ isLoaded, setIsLoaded ] = useState(false);
     const [ googleStatus, setGoogleStatus ] = useState<GoogleCalendarStatus | null>(null);
@@ -635,6 +641,27 @@ export function PersonalSettings()
                             { googleSyncing ? <LinearProgress sx={ { borderRadius: 1, height: 4 } } /> : null }
                         </Box>
                     </> : null }
+                </Box>
+            </Box>
+            <Box sx={ { display: "flex", width: "100%" } }>
+                <Box sx={ { ...settingsCardSx, flex: 1, minWidth: 0, gap: 2 } }>
+                    <Box alignItems="center" display="flex" gap={ 1.5 }>
+                        <Box sx={ iconBadgeSx("secondary") }>
+                            <AutoAwesomeIcon className="text-[20px]" />
+                        </Box>
+                        <Box flex={ 1 }>
+                            <Typography sx={ { fontWeight: 800, fontSize: "1.1rem", color: "text.primary" } }>
+                                עוזר AI
+                            </Typography>
+                            <Typography sx={ { fontSize: "0.75rem", color: "text.secondary" } }>
+                                מציג/מסתיר את כפתור עוזר ה-AI הצף בלו&quot;ז ובגאנט.
+                            </Typography>
+                        </Box>
+                        <Switch
+                            checked={ state.aiAssistantEnabled }
+                            onChange={ (_e, checked) => dispatch({ type: "SET_AI_ASSISTANT_ENABLED", payload: checked }) }
+                        />
+                    </Box>
                 </Box>
             </Box>
         </Box>
