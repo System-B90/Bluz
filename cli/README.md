@@ -34,8 +34,12 @@ reuses that same credential:
    `__Secure-next-auth.session-token` (HTTPS) or `next-auth.session-token` (HTTP).
 3. Run `bluz login` and paste it when prompted.
 
-Credentials are stored per-user (location shown by `bluz auth config`) with
-`0600` permissions. For self-signed certificates, pass `--insecure`.
+Credentials are stored per-user (location shown by `bluz auth config`). On
+Linux/macOS the config file is written with `0600` permissions. On Windows,
+`chmod(0600)` only toggles the read-only DOS attribute and does not restrict
+who can read the file — it relies on your user account's own file
+permissions, same as most local config files. For self-signed certificates,
+pass `--insecure`.
 
 ### Configuration precedence
 
@@ -61,7 +65,7 @@ A local `.env` is loaded automatically, so `BLUZ_*` vars there are honoured.
 | `bluz outsiders` | list / create / update / delete |
 | `bluz events` | list / get / create / update / delete / compare |
 | `bluz calendar` | `drafts` (shared drafts CRUD), `snapshots` (capture / restore / delete), `export-ics` |
-| `bluz settings` | get / set (+ prayer-times and schedule helpers) |
+| `bluz settings` | get / set (+ prayerTimes, mealTimes and schedule helpers) |
 | `bluz personal` | get / set — per-user filters and Google Calendar toggles |
 | `bluz colors` | list / get / create / update / delete — custom event colours |
 | `bluz hive` | read-only Hive reference data: users / students / classes / subjects / modules / rooms / lessons |

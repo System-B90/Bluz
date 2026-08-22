@@ -29,9 +29,12 @@ class AppState:
     explicit_url: str | None = None
     explicit_token: str | None = None
     explicit_insecure: bool | None = None
+    timeout: float | None = None
 
     def client(self) -> BluzClient:
         """Build an authenticated client for the current configuration."""
+        if self.timeout is not None:
+            return BluzClient(self.config, timeout=self.timeout)
         return BluzClient(self.config)
 
 
@@ -46,6 +49,7 @@ def configure(
     insecure: bool | None,
     as_json: bool,
     quiet: bool = False,
+    timeout: float | None = None,
 ) -> None:
     """Resolve and store global configuration for the running command."""
     state.config = load_config(url=url, token=token, insecure=insecure)
@@ -54,3 +58,4 @@ def configure(
     state.explicit_url = url
     state.explicit_token = token
     state.explicit_insecure = insecure
+    state.timeout = timeout

@@ -8,7 +8,6 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import typer
@@ -18,7 +17,9 @@ from bluz_cli.commands._common import (
     OFFSET_OPTION,
     merge_fields,
     parse_json,
+    read_json_file,
     show,
+    write_file,
 )
 from bluz_cli.context import state
 from bluz_cli.errors import BluzApiError
@@ -49,7 +50,7 @@ def _events_from(data: str | None, file: Path | None) -> list | None:
     if data is not None and file is not None:
         raise typer.BadParameter("Pass --events or --events-file, not both.")
     if file is not None:
-        payload = json.loads(file.read_text(encoding="utf-8"))
+        payload = read_json_file(file, what="--events-file")
     elif data is not None:
         payload = parse_json(data, what="--events")
     else:
@@ -247,7 +248,7 @@ def export_ics(
     if output is None:
         typer.echo(data.decode("utf-8", errors="replace"))
         return
-    output.write_bytes(data)
+    write_file(output, data, what="export")
     success(f"Exported schedule → {output} ({len(data)} bytes)")
 
 
