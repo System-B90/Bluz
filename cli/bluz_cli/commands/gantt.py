@@ -223,8 +223,8 @@ modules_app = _entity_app(
     reorder=("reorder-events", "eventIds"),
 )
 events_app = _entity_app("events", help_text="Gantt events.", link=True, allocate=True)
-days_app = _entity_app("days", help_text="Curriculum days.", link=True)
-weeks_app = _entity_app("weeks", help_text="Curriculum weeks.", link=True)
+days_app = _entity_app("days", help_text="Curriculum days.", link=False)
+weeks_app = _entity_app("weeks", help_text="Curriculum weeks.", link=False)
 
 
 # --- curriculum-specific extras ---------------------------------------------

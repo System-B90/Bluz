@@ -20,7 +20,7 @@ _BASE = "/api/settings"
 
 # Well-known setting keys for convenience subcommands. Kept in step with
 # api-shared/types/settings/* — the server has no enumeration route.
-PRAYER_TIMES_SETTING_KEY = "prayer-times"
+PRAYER_TIMES_SETTING_KEY = "prayerTimes"
 SCHEDULE_SETTING_KEY = "schedule"
 
 KNOWN_SETTING_KEYS = [PRAYER_TIMES_SETTING_KEY, SCHEDULE_SETTING_KEY]
@@ -34,7 +34,7 @@ def list_settings() -> None:
 
 @app.command()
 def get(
-    name: str = typer.Argument(..., help="Setting key, e.g. prayer-times."),
+    name: str = typer.Argument(..., help="Setting key, e.g. prayerTimes."),
 ) -> None:
     """Read a setting by key."""
     with state.client() as client:
@@ -54,7 +54,7 @@ def set_setting(
 
 @app.command("get-prayer")
 def get_prayer() -> None:
-    """Read the prayer-times setting."""
+    """Read the prayerTimes setting."""
     with state.client() as client:
         show(client.get(f"{_BASE}/{PRAYER_TIMES_SETTING_KEY}"), title="Prayer times")
 
@@ -63,13 +63,13 @@ def get_prayer() -> None:
 def set_prayer(
     value: str = typer.Option(..., "--value", help="Prayer settings as JSON."),
 ) -> None:
-    """Write the prayer-times setting."""
+    """Write the prayerTimes setting."""
     with state.client() as client:
         client.post(
             f"{_BASE}/{PRAYER_TIMES_SETTING_KEY}",
             json=parse_json(value, what="--value"),
         )
-    success("Saved prayer-times setting")
+    success("Saved prayerTimes setting")
 
 
 @app.command("get-schedule")

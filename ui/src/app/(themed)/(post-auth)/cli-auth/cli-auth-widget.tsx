@@ -20,8 +20,12 @@ type CliAuthWidgetProps = {
 
 export type CliAuthStatus = "connecting" | "fallback" | "handoff" | "success";
 
-export function callbackUrl(port: string, token: string) {
-    return `http://127.0.0.1:${port}/callback?token=${encodeURIComponent(token)}`;
+export function callbackUrl(port: string, code: string, token: string) {
+    // The CLI's local callback server requires this exact verification code
+    // (the same one shown on screen) to accept the token — otherwise any
+    // local process that reached the callback port during the login window
+    // could inject its own token (#521).
+    return `http://127.0.0.1:${port}/callback?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`;
 }
 
 export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
@@ -41,7 +45,7 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
             setStatus("handoff");
         }, 3000);
 
-        fetch(callbackUrl(port, token), {
+        fetch(callbackUrl(port, code, token), {
             method: "GET",
             mode: "cors",
             signal: controller.signal,
@@ -74,14 +78,14 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
 
     const handleHandoff = () => {
         const opened = window.open(
-            callbackUrl(port, token),
+            callbackUrl(port, code, token),
             "_blank",
             "noopener",
         );
         if (!opened) {
             // Popup blocked despite the gesture — navigating this tab still
             // completes the login; the CLI serves a real page at the callback.
-            window.location.href = callbackUrl(port, token);
+            window.location.href = callbackUrl(port, code, token);
         }
     };
 
@@ -254,6 +258,14 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
                                         readOnly: true,
                                     },
                                 }}
+                                // Masked -- this still SSRs the session token
+                                // into the DOM (a larger redesign, redeeming a
+                                // short-lived single-use code server-side
+                                // instead, is left for a follow-up), but a
+                                // type="password" field at least keeps it off
+                                // the visible screen and out of screenshots
+                                // (#520).
+                                type="password"
                                 value={token}
                                 variant="outlined"
                             />
