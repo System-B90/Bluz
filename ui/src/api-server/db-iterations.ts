@@ -1,3 +1,4 @@
+import { isDuplicateKeyError } from "@/api-server/common";
 import {
     DEFAULT_ITERATION_DB_NAME,
     getDatabaseController,
@@ -175,7 +176,15 @@ async function registerIteration(
         updatedAt: now,
     };
 
-    await meta.iterations.insertOne(iteration as Iteration);
+    // The pre-check above is a courtesy, not the guard: the unique index on
+    // `id` is what actually decides a race between two registrations (#538
+    // item 1). Report the loser the same way the pre-check would have.
+    try {
+        await meta.iterations.insertOne(iteration as Iteration);
+    } catch (error) {
+        if (!isDuplicateKeyError(error)) throw error;
+        throw new ClientApiError(`Iteration "${payload.id}" already exists!`);
+    }
     // Touch the new database so it shows up immediately.
     getDatabaseController(iteration.dbName);
     return iteration;

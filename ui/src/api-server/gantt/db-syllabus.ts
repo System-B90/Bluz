@@ -1,6 +1,6 @@
 import { and, arrayOverlaps, asc, eq, inArray } from "drizzle-orm";
 
-import { postgresDb } from "@/api-server/gantt";
+import { GanttDbExecutor, postgresDb } from "@/api-server/gantt";
 import {
     drizzleOperationsBuilder,
     FOREIGN_KEY_VIOLATION,
@@ -167,14 +167,15 @@ async function reorderModules(
 async function findShuffleUsages(
     syllabusId: GanttSyllabusId,
     shuffleNames: Array<string>,
+    executor: GanttDbExecutor = postgresDb,
 ): Promise<ShuffleUsages> {
     const empty: ShuffleUsages = { events: [], modules: [] };
     if (shuffleNames.length === 0) return empty;
 
-    const moduleIds = await syllabusModuleIds(syllabusId);
+    const moduleIds = await syllabusModuleIds(syllabusId, executor);
     if (moduleIds.length === 0) return empty;
 
-    const modules = await postgresDb
+    const modules = await executor
         .select({
             id: ganttModulesSchema.id,
             shuffles: ganttModulesSchema.shuffles,
@@ -188,7 +189,7 @@ async function findShuffleUsages(
             ),
         );
 
-    const events = await postgresDb
+    const events = await executor
         .selectDistinct({
             id: ganttEventsSchema.id,
             shuffles: ganttEventsSchema.shuffles,
@@ -211,16 +212,20 @@ async function findShuffleUsages(
 
 async function syllabusModuleIds(
     syllabusId: GanttSyllabusId,
+    executor: GanttDbExecutor = postgresDb,
 ): Promise<Array<GanttModuleId>> {
-    const rows = await postgresDb
+    const rows = await executor
         .select({ moduleId: ganttSyllabus2ModulesSchema.moduleId })
         .from(ganttSyllabus2ModulesSchema)
         .where(eq(ganttSyllabus2ModulesSchema.syllabusId, syllabusId));
     return rows.map((row) => row.moduleId);
 }
 
-async function readShuffles(id: GanttSyllabusId): Promise<Array<string>> {
-    const current = await postgresDb.query.ganttSyllabusesSchema.findFirst({
+async function readShuffles(
+    id: GanttSyllabusId,
+    executor: GanttDbExecutor = postgresDb,
+): Promise<Array<string>> {
+    const current = await executor.query.ganttSyllabusesSchema.findFirst({
         columns: { shuffles: true },
         where: eq(ganttSyllabusesSchema.id, id),
     });
@@ -253,12 +258,16 @@ async function applyShuffles(
     id: GanttSyllabusId,
     shuffles: Array<string>,
 ): Promise<ShuffleUsages> {
-    const removed = removedShuffles(await readShuffles(id), shuffles);
-    const usages = await findShuffleUsages(id, removed);
-    const strip = (names: Array<string>) =>
-        names.filter((name) => !removed.includes(name));
-
-    await postgresDb.transaction(async (tx) => {
+    // Reading the current shuffles and their usages OUTSIDE the transaction
+    // was a TOCTOU window: a concurrent edit between the read and the write
+    // was silently clobbered by the stripped lists computed from stale rows
+    // (#538 item 2). Both reads now happen inside the same transaction as the
+    // writes they inform.
+    return await postgresDb.transaction(async (tx) => {
+        const removed = removedShuffles(await readShuffles(id, tx), shuffles);
+        const usages = await findShuffleUsages(id, removed, tx);
+        const strip = (names: Array<string>) =>
+            names.filter((name) => !removed.includes(name));
         for (const usedModule of usages.modules) {
             await tx
                 .update(ganttModulesSchema)
@@ -280,9 +289,9 @@ async function applyShuffles(
             .update(ganttSyllabusesSchema)
             .set({ shuffles, updatedAt: new Date() })
             .where(eq(ganttSyllabusesSchema.id, id));
-    });
 
-    return usages;
+        return usages;
+    });
 }
 
 /**
@@ -293,12 +302,19 @@ async function updateSyllabus(
     id: GanttSyllabusId,
     updateData: Partial<GanttSyllabus>,
 ): Promise<GanttSyllabus> {
-    if (updateData.shuffles !== undefined) {
+    if (updateData.shuffles === undefined) {
+        return await basicOperations.updateItem(id, updateData);
+    }
+
+    // The guard reads what the update then depends on, so the read and the
+    // write share one transaction — otherwise a concurrent edit between them
+    // could slip a newly-used shuffle past the block (#538 item 2).
+    return await postgresDb.transaction(async (tx) => {
         const removed = removedShuffles(
-            await readShuffles(id),
-            updateData.shuffles,
+            await readShuffles(id, tx),
+            updateData.shuffles!,
         );
-        const usages = await findShuffleUsages(id, removed);
+        const usages = await findShuffleUsages(id, removed, tx);
         const blocking = [...usages.modules, ...usages.events];
 
         if (blocking.length > 0) {
@@ -309,9 +325,9 @@ async function updateSyllabus(
                     quoted(blocking.map((item) => item.title)),
             );
         }
-    }
 
-    return await basicOperations.updateItem(id, updateData);
+        return await basicOperations.updateItem(id, updateData, tx);
+    });
 }
 
 export const DbSyllabus = {

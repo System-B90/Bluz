@@ -216,7 +216,7 @@ export function drizzleOperationsBuilder<
     labelColumn,
 }: DrizzleOperationsBuilderProps<TTable>): Omit<
     BasicGantOperations<T, TCreatePayload>,
-    "createNewItem" | "getItem"
+    "createNewItem" | "getItem" | "updateItem"
 > & {
     attachParentIds: <TItem extends { id: T["id"] }>(
         items: Array<TItem>,
@@ -231,6 +231,11 @@ export function drizzleOperationsBuilder<
         payload: TCreatePayload,
         executor?: GanttDbExecutor,
     ) => Promise<ApiT<T> | T>;
+    updateItem: (
+        id: T["id"],
+        updates: Partial<T>,
+        executor?: GanttDbExecutor,
+    ) => Promise<T>;
 } {
     type DbTDocument = T & BaseDbDocument;
     type EntityColumns = {
@@ -366,6 +371,9 @@ export function drizzleOperationsBuilder<
     async function updateItem(
         id: T["id"],
         updateData: Partial<T>,
+        // Pass a transaction handle to enlist this update in a caller's unit
+        // of work; otherwise it runs on its own (#538 item 2).
+        executor: GanttDbExecutor = postgresDb,
     ): Promise<DbTDocument> {
         if (!id) throw new ClientApiError(`מזהה נדרש לעדכון ${typeName}`);
 
@@ -375,7 +383,7 @@ export function drizzleOperationsBuilder<
             typeName,
         );
 
-        const [updatedItem] = await postgresDb
+        const [updatedItem] = await executor
             .update(table as PgTableWithColumns<any>)
             .set({
                 ...safeData,

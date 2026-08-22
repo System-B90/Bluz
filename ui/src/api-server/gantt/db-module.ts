@@ -132,8 +132,14 @@ async function setAllocatedTime(
     curriculumId: GanttCurriculumId,
     duration: number,
 ): Promise<void> {
-    const moduleToEventsData =
-        await postgresDb.query.ganttModule2EventsSchema.findMany({
+    // One module's allocation is one decision spread over an upsert per event.
+    // Untransacted, a failure partway left the module's events holding a
+    // half-applied split that adds up to the wrong total (#538 item 3). The
+    // read joins the transaction too, so the split is computed from the rows
+    // it is about to write.
+    await postgresDb.transaction(async (tx) => {
+        const moduleToEventsData =
+        await tx.query.ganttModule2EventsSchema.findMany({
             where: eq(ganttModule2EventsSchema.moduleId, moduleId),
             with: {
                 event: { columns: { id: true, minimumDuration: true } },
@@ -141,45 +147,46 @@ async function setAllocatedTime(
             orderBy: [asc(ganttModule2EventsSchema.eventId)],
         });
 
-    const callback: AllocateTimeToEventCallback = async ({
-        eventId,
-        curriculumId,
-        duration,
-    }) => {
-        await postgresDb
-            .insert(ganttCurriculumEventConfigurationsSchema)
-            .values({
-                curriculumId,
-                eventId: eventId,
-                allocatedDuration: duration,
-                updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-                target: [
-                    ganttCurriculumEventConfigurationsSchema.curriculumId,
-                    ganttCurriculumEventConfigurationsSchema.eventId,
-                ],
-                set: {
+        const callback: AllocateTimeToEventCallback = async ({
+            eventId,
+            curriculumId,
+            duration,
+        }) => {
+            await tx
+                .insert(ganttCurriculumEventConfigurationsSchema)
+                .values({
+                    curriculumId,
+                    eventId: eventId,
                     allocatedDuration: duration,
                     updatedAt: new Date(),
-                },
-            });
-    };
+                })
+                .onConflictDoUpdate({
+                    target: [
+                        ganttCurriculumEventConfigurationsSchema.curriculumId,
+                        ganttCurriculumEventConfigurationsSchema.eventId,
+                    ],
+                    set: {
+                        allocatedDuration: duration,
+                        updatedAt: new Date(),
+                    },
+                });
+        };
 
-    const moduleEvents = moduleToEventsData.reduce(
-        (prev, curr) => ({ ...prev, [curr.event.id]: curr.event }),
+        const moduleEvents = moduleToEventsData.reduce(
+            (prev, curr) => ({ ...prev, [curr.event.id]: curr.event }),
         {} as AllocateTimeToModuleCallbackModuleEvents,
-    );
+        );
 
-    await allocateTimeToModule({
-        module: {
-            id: moduleId,
-            events: moduleToEventsData.map((e) => e.eventId),
-        },
-        totalDuration: duration,
-        curriculumId,
-        allocateToEventCallback: callback,
-        moduleEvents,
+        await allocateTimeToModule({
+            module: {
+                id: moduleId,
+                events: moduleToEventsData.map((e) => e.eventId),
+            },
+            totalDuration: duration,
+            curriculumId,
+            allocateToEventCallback: callback,
+            moduleEvents,
+        });
     });
 }
 

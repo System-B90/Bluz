@@ -317,7 +317,14 @@ export function getMetaController(): MetaController {
         if (!process.env.VITEST) {
             // The registry is consulted on every iteration-scoped request.
             void Promise.all([
-                _metaController.iterations.createIndex({ id: 1 }),
+                // Unique: the registry is keyed by `id`, and the register
+                // path was an unlocked check-then-insert, so two concurrent
+                // registrations could both pass the clash check and leave two
+                // documents that corrupt every later findOne (#538 item 1).
+                _metaController.iterations.createIndex(
+                    { id: 1 },
+                    { unique: true },
+                ),
                 _metaController.iterations.createIndex({ isCurrent: 1 }),
                 _metaController.googleCalendarLinks.createIndex(
                     { userId: 1 },

@@ -295,12 +295,12 @@ describe("Gantt DB Constraints - Failure Paths", () => {
             expect(result).toEqual([deletedConstraint]);
         });
 
-        it("handles delete of non-existent constraint", async () => {
+        it("rejects a delete that matched nothing", async () => {
+            // Deleting nothing used to come back as a 200 success, so a wrong
+            // id looked like a completed delete (#538 item 11).
             vi.mocked(postgresDb.delete).mockReturnValue(createChain([]));
 
-            const result = await deleteConstraint("non-existent");
-
-            expect(result).toEqual([]);
+            await expect(deleteConstraint("non-existent")).rejects.toThrow();
         });
     });
 
@@ -395,17 +395,15 @@ describe("Gantt DB Constraints - Failure Paths", () => {
         it("handles null constraint ID gracefully", async () => {
             vi.mocked(postgresDb.delete).mockReturnValue(createChain([]));
 
-            const result = await deleteConstraint(null as unknown as string);
-
-            expect(result).toEqual([]);
+            await expect(
+                deleteConstraint(null as unknown as string),
+            ).rejects.toThrow();
         });
 
         it("handles empty string IDs", async () => {
             vi.mocked(postgresDb.delete).mockReturnValue(createChain([]));
 
-            const result = await deleteConstraint("");
-
-            expect(result).toEqual([]);
+            await expect(deleteConstraint("")).rejects.toThrow();
         });
     });
 });
