@@ -39,6 +39,31 @@ export function parseJsonBody<T>(text: string): T {
 }
 
 /**
+ * Copy only the listed fields off a client-supplied payload.
+ *
+ * Mongo creates used to persist the request body field-for-field, so a caller
+ * could store arbitrary extra keys on a course/room/outsider/colour document -
+ * including `_id`, which then fights the driver - and any field the app later
+ * gives meaning to was retroactively client-writable (#538 item 4). Postgres
+ * writes get this from `sanitizeCreatePayload`; this is the Mongo counterpart.
+ *
+ * Absent keys stay absent rather than becoming `undefined` values, so an
+ * optional field is not stored as a null-ish key.
+ */
+export function pickFields<T extends object, K extends keyof T>(
+    payload: T,
+    fields: ReadonlyArray<K>,
+): Pick<T, K> {
+    const picked: Partial<Pick<T, K>> = {};
+    for (const field of fields) {
+        if (payload[field] !== undefined) {
+            picked[field] = payload[field];
+        }
+    }
+    return picked as Pick<T, K>;
+}
+
+/**
  * Read a request body that must be a JSON object, and reject anything else at
  * the boundary.
  *

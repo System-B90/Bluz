@@ -1,5 +1,6 @@
 import { FindOptions, UpdateOptions } from "mongodb";
 
+import { pickFields } from "@/api-server/common";
 import {
     databaseController,
     DatabaseController,
@@ -8,6 +9,17 @@ import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils"
 import { ClientApiError } from "@/api-shared/errors";
 import { Course } from "@/api-shared/types/course";
 import { MessageTypes } from "@/settings";
+
+// Client payloads are copied field-by-field, so the document shape is an
+// explicit allow-list rather than whatever the caller sent (#538 item 4).
+const COURSE_FIELDS = [
+    "id",
+    "name",
+    "color",
+    "parentId",
+    "instructorIds",
+    "description",
+] as const;
 
 async function getDbCourses(
     options?: FindOptions,
@@ -40,7 +52,8 @@ async function createDbCourse(
     course: Course,
     controller: DatabaseController = databaseController,
 ) {
-    await controller.courses.insertOne(course as Course);
+    const document = pickFields(course, COURSE_FIELDS);
+    await controller.courses.insertOne(document as Course);
     SendServerRequestToSessionServer(MessageTypes.COURSES_UPDATE, {
         courses: { [course.id]: course },
     });
