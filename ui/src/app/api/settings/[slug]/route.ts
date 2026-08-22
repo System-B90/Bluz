@@ -11,6 +11,7 @@ import {
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
 import { updatePrayerEvents } from "@/api-server/prayer";
+import { requireStaffSession } from "@/api-server/session-user";
 import { inplaceDateFixup } from "@/api-shared/date-fixer";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
 import {
@@ -33,6 +34,7 @@ type ServerApiSettingUpdate = ServerApiWithParams<
 >;
 
 export const GET: ServerApiSettingGet = withApi(async (request, context) => {
+    await requireStaffSession();
     const { slug } = await context.params;
 
     const { controller } = await resolveIterationFromRequest(request);
@@ -46,6 +48,7 @@ export const GET: ServerApiSettingGet = withApi(async (request, context) => {
 });
 
 export const POST: ServerApiSettingUpdate = withApi(async (request, context) => {
+    await requireStaffSession();
     const { slug } = await context.params;
     const { controller } =
         await resolveWritableIterationFromRequest(request);

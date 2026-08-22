@@ -9,6 +9,7 @@ import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     ApiRoomCreatePayload,
@@ -43,6 +44,7 @@ type ServerApiRoomExtendedInfoUpdate = ServerApi<
 >;
 
 export const GET: ServerApiRoomsGet = withApi(async (request) => {
+    await requireStaffSession();
     const { controller, iterationId } =
         await resolveIterationFromRequest(request);
     // Past iterations point at a different Hive instance; fall back to the
@@ -62,6 +64,7 @@ export const GET: ServerApiRoomsGet = withApi(async (request) => {
 });
 
 export const POST: ServerApiRoomUpdate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const room = await request.json();
@@ -73,6 +76,7 @@ export const POST: ServerApiRoomUpdate = withApi(async (request) => {
 });
 
 export const PUT: ServerApiRoomCreate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const room = await request.json();
@@ -87,6 +91,7 @@ export const PUT: ServerApiRoomCreate = withApi(async (request) => {
 });
 
 export const DELETE: ServerApiRoomDelete = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const roomId = await request.json();
@@ -98,6 +103,7 @@ export const DELETE: ServerApiRoomDelete = withApi(async (request) => {
 });
 
 export const PATCH: ServerApiRoomExtendedInfoUpdate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const payload = await request.json();

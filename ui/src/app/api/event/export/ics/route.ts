@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { withApi } from "@/api-server/common";
 import { DbEvent } from "@/api-server/db-event";
 import { resolveIterationFromRequest } from "@/api-server/iteration-request";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { buildScheduleIcsCalendar } from "@/app/api/event/export/ics/calendar";
 import {
@@ -12,6 +13,7 @@ import {
 
 /** GET /api/event/export/ics?sd=<ISO>&ed=<ISO> — exports the events in range as an ICS calendar. */
 export const GET = withApi(async (request: Request) => {
+    await requireStaffSession();
     const url = new URL(request.url);
     const rawStartDate = url.searchParams.get("sd");
     const rawEndDate = url.searchParams.get("ed");

@@ -30,6 +30,7 @@ type ServerApiIterationDelete = ServerApiWithParams<
 >;
 
 export const GET: ServerApiIterationGet = withApi(async (request, context) => {
+    await requireStaffSession();
     const { id } = await context.params;
     return ApiSuccess(await DbIterations.get(id));
 });

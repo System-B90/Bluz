@@ -11,7 +11,7 @@ import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
-import { getSessionUser } from "@/api-server/session-user";
+import { requireStaffSession, getSessionUser } from "@/api-server/session-user";
 import { eventDateFixup } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import {
@@ -50,6 +50,7 @@ type ServerApiEventDelete = ServerApi<
 >;
 
 export const GET: ServerApiEventGet = withApi(async (request) => {
+    await requireStaffSession();
     const id = request.nextUrl.searchParams.get("id");
     const ids = request.nextUrl.searchParams.get("ids");
     const rawStartDate = request.nextUrl.searchParams.get("sd");
@@ -109,6 +110,7 @@ export const GET: ServerApiEventGet = withApi(async (request) => {
 });
 
 export const POST: ServerApiEventUpdate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
     const event: ApiEventUpdatePayload = eventDateFixup(
@@ -128,6 +130,7 @@ export const POST: ServerApiEventUpdate = withApi(async (request) => {
 });
 
 export const PUT: ServerApiEventCreate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
     const event: ApiEventCreatePayload = eventDateFixup(
@@ -153,6 +156,7 @@ export const PUT: ServerApiEventCreate = withApi(async (request) => {
 });
 
 export const DELETE: ServerApiEventDelete = withApi(async (request) => {
+    await requireStaffSession();
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
     const eventId: ApiEventDeletePayload = await request.json();

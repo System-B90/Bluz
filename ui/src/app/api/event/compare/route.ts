@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import { resolveIterationDb } from "@/api-server/mongo-db-controller";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     MAX_EVENT_RANGE_DAYS,
@@ -21,6 +22,7 @@ type ServerApiEventCompare = ServerApi<void, CompareResponse>;
  * (omit either for the current one).
  */
 export const GET: ServerApiEventCompare = withApi(async (request) => {
+    await requireStaffSession();
     const params = request.nextUrl.searchParams;
     const itA = params.get("itA") ?? undefined;
     const itB = params.get("itB") ?? undefined;
