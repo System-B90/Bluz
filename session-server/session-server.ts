@@ -7,9 +7,30 @@ import { startSessionServer } from "@system-b90/session-ws/server";
 
 import { MessageTypes } from "./session-common";
 
+/*
+ * Crash guard (#511). The shared core reads frame fields without a shape
+ * check, so a malformed frame (e.g. the literal text `null`) throws
+ * synchronously inside the ws message handler. Without a guard that becomes
+ * an uncaughtException, the process exits, and Docker's `restart:
+ * unless-stopped` turns it into a repeatable kill-loop that disconnects every
+ * browser. Log and keep serving instead. The shape check itself belongs in
+ * @system-b90/session-ws; this is defence in depth for whatever gets past it.
+ */
+process.on("uncaughtException", (error) => {
+    console.error("[session-server] uncaught exception, staying up:", error);
+});
+process.on("unhandledRejection", (reason) => {
+    console.error("[session-server] unhandled rejection, staying up:", reason);
+});
+
 const server = startSessionServer({
     validMessageTypes: Object.values(MessageTypes),
     onClientMessage: (ws, data, dispatch) => {
+        // Frames are attacker-controlled; reject anything that is not a plain
+        // object before touching its fields (#511).
+        if (!data || typeof data !== "object" || Array.isArray(data)) {
+            return true;
+        }
         switch (data["type"]) {
             // Period locking: relay ephemeral lock/unlock presence from one
             // client to all connected clients. Not persisted — pure presence
