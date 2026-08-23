@@ -20,6 +20,7 @@ import pytest
 from typer.testing import CliRunner
 
 from bluz_cli.main import app
+from wire_types import Raw
 
 
 @dataclass
@@ -28,14 +29,6 @@ class Recorded:
     path: str
     query: dict[str, list[str]]
     body: Any
-
-
-@dataclass
-class Raw:
-    """A non-envelope response body sent byte-for-byte (Excel, ICS, ...)."""
-
-    payload: bytes
-    content_type: str = "application/octet-stream"
 
 
 @dataclass

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 
-from conftest import Raw
+from wire_types import Raw
 
 
 def _json_out(result):

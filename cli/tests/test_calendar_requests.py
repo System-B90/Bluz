@@ -9,7 +9,7 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
-from conftest import Raw
+from wire_types import Raw
 
 
 # --- bluz events (calendar events) ----------------------------------------------
