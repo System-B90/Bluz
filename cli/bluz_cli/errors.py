@@ -28,7 +28,7 @@ class BluzApiError(BluzCliError):
     Raised when the server returns a non-zero status envelope or an HTTP error.
 
     Mirrors the `{ status: -1, error: { name, message, status } }` shape produced
-    by `ui/src/api-server/common.tsx`.
+    by `ui/src/api-server/common.ts`.
     """
 
     def __init__(

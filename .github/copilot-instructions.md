@@ -35,5 +35,5 @@ npm run db:generate  # if Gantt schema changed; commit the migration
 
 - Gantt CRUD endpoints: `buildGantCollectionRoutes` in
   `ui/src/app/api/gantt/base-collection.ts` — do not hand-write raw handlers.
-- Route handlers: `withApi` + `ApiSuccess` from `ui/src/api-server/common.tsx`.
+- Route handlers: `withApi` + `ApiSuccess` from `ui/src/api-server/common.ts`.
 - Gantt UI state: reducer/context pattern in `ui/src/components/gantt/state/`.

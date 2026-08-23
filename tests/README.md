@@ -33,14 +33,36 @@ The table below maps every major Bluz feature to the test file that covers it.
 
 ```
 tests/
-├── README.md              # This file — functionality map and setup guide
-├── auth.setup.ts          # Authentication setup via Hive SSO (admin:Password1)
-├── calendar.spec.ts       # Calendar schedule + event CRUD tests
-├── gantt.spec.ts          # Gantt curriculum page tests
-├── header.spec.ts         # Header, navigation, and filter tests
-├── login.spec.ts          # Login page tests (unauthenticated)
-├── settings.spec.ts       # Settings dialog tests (all tabs)
-└── fixtures.ts            # Shared test fixtures and helpers
+├── README.md                        # This file — functionality map and setup guide
+├── playwright.config.ts             # Playwright configuration (projects, webServer, reporters)
+├── vitest.config.ts                 # Vitest configuration for the backend unit suite
+├── auth.setup.ts                    # Authentication setup via Hive SSO (admin:Password1)
+├── fixtures.ts                      # Shared test fixtures and helpers
+├── ai-assistant.spec.ts             # AI assistant UI tests
+├── calendar.spec.ts                 # Calendar schedule + event CRUD tests
+├── command-palette.spec.ts          # Command palette tests
+├── course-builder.spec.ts           # Course Builder settings tab tests
+├── course-collapse.spec.ts          # Course roll-up on schedule events
+├── custom-colors.spec.ts            # Custom colors settings tests
+├── dialog-keyboard.spec.ts          # Dialog keyboard behaviour (#402)
+├── event-dialog-scroll.spec.ts      # Event dialog scrolling (#463)
+├── gantt-api-contract.spec.ts       # Gantt collection API parent-id contract tests
+├── gantt-recurrence-window.spec.ts  # Gantt recurrence window / skipped occurrences (#468, #469)
+├── gantt-recurrence.spec.ts         # Gantt recurring events (#111)
+├── gantt-reload.spec.ts             # Gantt → schedule reload
+├── gantt.spec.ts                    # Gantt curriculum page tests
+├── google-calendar.spec.ts          # Google Calendar integration tests
+├── header.spec.ts                   # Header, navigation, and filter tests
+├── hive-lesson-queue.spec.ts        # Hive lesson + queue integration (against a real Hive)
+├── instructor-dnd.spec.ts           # Instructor rail drag-and-drop tests
+├── login.spec.ts                    # Login page tests (unauthenticated)
+├── malformed-body.spec.ts           # Malformed request body handling (#465)
+├── offline-mode.spec.ts             # Offline mode tests
+├── outsiders.spec.ts                # Outsiders settings tests
+├── reservations.spec.ts             # Room reservations tests
+├── settings.spec.ts                 # Settings dialog tests (all tabs)
+├── split-across-breaks.spec.ts      # Events split across break windows
+└── backend/                         # Vitest unit tests (~110 *.test.ts/.tsx) run via `npm run test:unit`
 ```
 
 ---
@@ -108,7 +130,7 @@ Tests run against a **dedicated test docker composition** (`docker-compose.test.
 | `npm run docker:test`      | Start the test composition with test nginx config |
 | `npm run docker:test:down` | Stop and remove test containers + volumes         |
 
-**Note:** The test composition automatically mounts `nginx/nginx.conf.test` which routes traffic to the test containers (`bluz-test-ui:3000`, `bluz-test-sessions:28199`) instead of the dev containers.
+**Note:** The test composition automatically mounts `nginx/nginx.conf.test` which routes traffic to this composition's own containers by proxying to the compose *service* names — `ui:3000` (frontend + HMR) and `sessions:28199` (websockets) — resolved via Docker's embedded DNS. Container names are `${TEST_PROJECT_NAME}-*`, so nginx never references them directly.
 
 ### Authentication Strategy
 
