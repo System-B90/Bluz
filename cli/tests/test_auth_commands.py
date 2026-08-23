@@ -118,7 +118,12 @@ class _FixedPrompt:
 
 
 def test_login_saves_a_pasted_token_when_automatic_login_fails(tmp_path, monkeypatch):
-    """Automatic callback fails -> the CLI falls back to a pasted secret."""
+    """Automatic callback fails -> the CLI falls back to a pasted handoff code.
+
+    What the user pastes is the single-use handoff code shown in the browser
+    tab, not the raw session token -- it is redeemed against the server for
+    the actual token (#520), so the redemption is stubbed here.
+    """
     _isolate_config(tmp_path, monkeypatch)
 
     from typer.testing import CliRunner
@@ -135,6 +140,11 @@ def test_login_saves_a_pasted_token_when_automatic_login_fails(tmp_path, monkeyp
         return _FixedPrompt("pasted-token")
 
     monkeypatch.setattr(auth.inquirer, "secret", fake_secret)
+    monkeypatch.setattr(
+        auth,
+        "_redeem_handoff_code",
+        lambda url, code, insecure=False: "redeemed-token",
+    )
     monkeypatch.setattr(auth.inquirer, "confirm", lambda **kw: _FixedPrompt(False))
 
     result = CliRunner().invoke(
@@ -144,7 +154,7 @@ def test_login_saves_a_pasted_token_when_automatic_login_fails(tmp_path, monkeyp
     )
 
     assert result.exit_code == 0
-    assert "Session token" in prompted["message"]
+    assert "Handoff code" in prompted["message"]
     reloaded = load_config()
     assert reloaded.url == "https://bluz.example.com"
-    assert reloaded.token == "pasted-token"
+    assert reloaded.token == "redeemed-token"
