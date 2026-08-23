@@ -16,7 +16,7 @@ import httpx
 from bluz_cli.config import Config
 from bluz_cli.errors import BluzApiError, NotAuthenticatedError
 
-# `safeApiFetcher` (ui/src/api-client/common.tsx) treats a redirect as "the user is
+# `safeApiFetcher` (ui/src/api-client/common.ts) treats a redirect as "the user is
 # not logged in" — we mirror that here instead of silently following it to an HTML
 # login page.
 _DEFAULT_TIMEOUT = 30.0
