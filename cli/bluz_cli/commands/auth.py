@@ -264,7 +264,11 @@ def login(
     """
     Store credentials interactively.
 
-    Grab the session token from your browser's cookies for the Bluz site
+    Opens the Bluz site's `/cli-auth` page in your browser with a one-time
+    verification code; confirming there delivers the session token to a
+    temporary local loopback server automatically (60s timeout). If that
+    handshake fails, fall back to manual entry: grab the session token from
+    your browser's cookies for the Bluz site
     (`__Secure-next-auth.session-token` over HTTPS, `next-auth.session-token`
     over HTTP) and paste it when prompted.
     """
