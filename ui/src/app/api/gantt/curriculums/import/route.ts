@@ -2,7 +2,11 @@ import crypto from "crypto";
 
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    withApi,
+} from "@/api-server/common";
 import { postgresDb } from "@/api-server/gantt";
 import {
     ganttCurriculumsSchema,
@@ -69,20 +73,20 @@ function countImportNodes(
 
 export const POST = withApi(async (request: NextRequest) => {
     await requireStaffSession();
-    const body = await request.json();
-    const { curriculum, mappings, constraints } = body;
+    const { curriculum, mappings, constraints } = await requireJsonObjectBody<{
+        curriculum?: ApiCurriculum;
+        mappings?: unknown;
+        constraints?: unknown;
+    }>(request);
 
     if (!curriculum || !curriculum.title) {
         throw new ClientApiError("שגיאה: נתוני גאנט לא תקינים.");
     }
 
     if (
-        countImportNodes(curriculum, mappings, constraints) >
-            MAX_IMPORT_NODES
+        countImportNodes(curriculum, mappings, constraints) > MAX_IMPORT_NODES
     ) {
-        throw new ClientApiError(
-            "שגיאה: קובץ הייבוא גדול מדי.",
-        );
+        throw new ClientApiError("שגיאה: קובץ הייבוא גדול מדי.");
     }
 
     const newCurriculumId = `c_${crypto.randomUUID()}`;
@@ -140,7 +144,8 @@ export const POST = withApi(async (request: NextRequest) => {
                         await tx.insert(ganttDaysSchema).values({
                             id: newDayId,
                             dayIndex: oldDay.dayIndex,
-                            totalWorkingMinutes: oldDay.totalWorkingMinutes || 0,
+                            totalWorkingMinutes:
+                                oldDay.totalWorkingMinutes || 0,
                             dayEndTime: oldDay.dayEndTime ?? null,
                             comment: oldDay.comment || "",
                             createdAt: now,
@@ -210,29 +215,37 @@ export const POST = withApi(async (request: NextRequest) => {
                                     id: newEventId,
                                     title: oldEvent.title,
                                     type: oldEvent.type,
-                                    minimumDuration: oldEvent.minimumDuration || 0,
+                                    minimumDuration:
+                                        oldEvent.minimumDuration || 0,
                                     createdAt: now,
                                     updatedAt: now,
                                 });
 
-                                await tx.insert(ganttModule2EventsSchema).values({
-                                    moduleId: newModuleId,
-                                    eventId: newEventId,
-                                });
+                                await tx
+                                    .insert(ganttModule2EventsSchema)
+                                    .values({
+                                        moduleId: newModuleId,
+                                        eventId: newEventId,
+                                    });
 
                                 // Extract and save event configurations (cEC)
                                 if (Array.isArray(oldEvent.cEC)) {
                                     const originalConfig = oldEvent.cEC.find(
                                         (cfg: { curriculumId: string }) =>
-                                            cfg.curriculumId === oldCurriculumId,
+                                            cfg.curriculumId ===
+                                            oldCurriculumId,
                                     );
                                     if (originalConfig) {
                                         await tx
-                                            .insert(ganttCurriculumEventConfigurationsSchema)
+                                            .insert(
+                                                ganttCurriculumEventConfigurationsSchema,
+                                            )
                                             .values({
                                                 curriculumId: newCurriculumId,
                                                 eventId: newEventId,
-                                                allocatedDuration: originalConfig.allocatedDuration || 0,
+                                                allocatedDuration:
+                                                    originalConfig.allocatedDuration ||
+                                                    0,
                                                 updatedAt: now,
                                             });
                                     }
@@ -251,7 +264,9 @@ export const POST = withApi(async (request: NextRequest) => {
                 const newDayId = dayIdMap[mapping.dayId];
                 if (!newModuleId || !newDayId) continue;
 
-                const newEventId = mapping.eventId ? eventIdMap[mapping.eventId] : null;
+                const newEventId = mapping.eventId
+                    ? eventIdMap[mapping.eventId]
+                    : null;
 
                 await tx.insert(ganttCurriculumEventDayMappingsSchema).values({
                     id: crypto.randomUUID(),

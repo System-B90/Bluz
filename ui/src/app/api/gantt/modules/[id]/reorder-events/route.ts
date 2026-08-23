@@ -8,18 +8,22 @@ import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export const POST = withApi(async (request: NextRequest, context: RouteContext) => {
-    await requireStaffSession();
-    const { id } = await context.params;
-    if (!id) throw new ClientApiError("Module ID is required.");
+export const POST = withApi(
+    async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id } = await context.params;
+        if (!id) throw new ClientApiError("Module ID is required.");
 
-    const body = await request.text();
-    if (!body) throw new ClientApiError("Payload cannot be empty.");
+        const body = await request.text();
+        if (!body) throw new ClientApiError("Payload cannot be empty.");
 
-    const { eventIds } = parseJsonBody<{ eventIds: Array<GanttEventId> }>(body);
-    if (!Array.isArray(eventIds))
-        throw new ClientApiError("eventIds must be an array.");
+        const { eventIds } = parseJsonBody<{ eventIds: Array<GanttEventId> }>(
+            body,
+        );
+        if (!Array.isArray(eventIds))
+            throw new ClientApiError("eventIds must be an array.");
 
-    await DbModule.reorderEvents(id as GanttModuleId, eventIds);
-    return ApiSuccess({ ok: true });
-});
+        await DbModule.reorderEvents(id as GanttModuleId, eventIds);
+        return ApiSuccess({ ok: true });
+    },
+);

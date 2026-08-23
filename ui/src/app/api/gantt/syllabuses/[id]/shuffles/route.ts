@@ -8,7 +8,9 @@ import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-async function resolveSyllabusId(context: RouteContext): Promise<GanttSyllabusId> {
+async function resolveSyllabusId(
+    context: RouteContext,
+): Promise<GanttSyllabusId> {
     const { id } = await context.params;
     if (!id) throw new ClientApiError("Syllabus ID is required.");
     return id as GanttSyllabusId;

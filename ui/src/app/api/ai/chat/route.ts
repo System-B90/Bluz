@@ -113,7 +113,10 @@ export async function POST(request: Request): Promise<Response> {
         const user = await requireStaffSession();
         if (!allowAiRequest(String(user.id))) {
             return ApiErrorMaker(
-                { name: "AiRateLimitError", message: "יותר מדי בקשות. נסה שוב בעוד דקה." },
+                {
+                    name: "AiRateLimitError",
+                    message: "יותר מדי בקשות. נסה שוב בעוד דקה.",
+                },
                 429,
             );
         }

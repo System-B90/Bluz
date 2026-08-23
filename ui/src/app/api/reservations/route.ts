@@ -1,6 +1,12 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    parseJsonBody,
+    requireJsonObjectBody,
+    ServerApi,
+    withApi,
+} from "@/api-server/common";
 import { DbReservations } from "@/api-server/db-reservations";
 import {
     resolveIterationFromRequest,
@@ -52,10 +58,10 @@ export const GET: ServerApiReservationsGet = withApi(async (request) => {
 
 export const PUT: ServerApiReservationCreate = withApi(async (request) => {
     await requireStaffSession();
-    const { controller } =
-        await resolveWritableIterationFromRequest(request);
-    const payload = await request.json();
-    if (!payload || !payload.roomId || !payload.start || !payload.end) {
+    const { controller } = await resolveWritableIterationFromRequest(request);
+    const payload =
+        await requireJsonObjectBody<ApiReservationCreatePayload>(request);
+    if (!payload.roomId || !payload.start || !payload.end) {
         throw new ClientApiError("נתוני הזמנה חסרים");
     }
     const reservation = await DbReservations.create(payload, controller);
@@ -64,9 +70,12 @@ export const PUT: ServerApiReservationCreate = withApi(async (request) => {
 
 export const DELETE: ServerApiReservationDelete = withApi(async (request) => {
     await requireStaffSession();
-    const { controller } =
-        await resolveWritableIterationFromRequest(request);
-    const reservationId = await request.json();
+    const { controller } = await resolveWritableIterationFromRequest(request);
+    // The client sends a bare JSON string id here, not an object — parse with
+    // the shared helper so a malformed payload is a 400, not a 500.
+    const reservationId = parseJsonBody<ApiReservationDeletePayload>(
+        await request.text(),
+    );
     if (!reservationId) {
         throw new ClientApiError("מזהה הזמנה לא סופק");
     }

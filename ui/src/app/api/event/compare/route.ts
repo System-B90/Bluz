@@ -5,10 +5,7 @@ import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import { resolveIterationDb } from "@/api-server/mongo-db-controller";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
-import {
-    MAX_EVENT_RANGE_DAYS,
-    MILLISECONDS_IN_A_DAY,
-} from "@/settings";
+import { MAX_EVENT_RANGE_DAYS, MILLISECONDS_IN_A_DAY } from "@/settings";
 
 type CompareResponse = {
     a: Array<DbEventDocument>;
@@ -39,8 +36,7 @@ export const GET: ServerApiEventCompare = withApi(async (request) => {
     }
     // Same ceiling as /api/event: without it a caller can ask two iterations
     // for an unbounded span and turn one request into two full scans.
-    const rangeDays =
-        (end.getTime() - start.getTime()) / MILLISECONDS_IN_A_DAY;
+    const rangeDays = (end.getTime() - start.getTime()) / MILLISECONDS_IN_A_DAY;
     if (rangeDays > MAX_EVENT_RANGE_DAYS || rangeDays < 0) {
         throw new ClientApiError(
             `טווח התאריכים חייב להיות בין 0 ל-${MAX_EVENT_RANGE_DAYS} ימים`,

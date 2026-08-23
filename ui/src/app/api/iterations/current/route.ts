@@ -1,9 +1,13 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    ServerApi,
+    withApi,
+} from "@/api-server/common";
 import { DbIterations } from "@/api-server/db-iterations";
 import { requireStaffSession } from "@/api-server/session-user";
-import { ClientApiError } from "@/api-shared/errors";
 import {
     Iteration,
     IterationId,
@@ -11,7 +15,10 @@ import {
 } from "@/api-shared/types/iteration";
 
 type ServerApiCurrentIteration = ServerApi<void, Iteration | null>;
-type ServerApiCurrentIterationPatch = ServerApi<PatchIterationPayload, Iteration>;
+type ServerApiCurrentIterationPatch = ServerApi<
+    PatchIterationPayload,
+    Iteration
+>;
 type ServerApiCurrentIterationDelete = ServerApi<void, { deleted: true }>;
 
 /**
@@ -36,14 +43,16 @@ export const GET: ServerApiCurrentIteration = withApi(async (_request) => {
     return ApiSuccess(await DbIterations.currentOrNull());
 });
 
-export const PATCH: ServerApiCurrentIterationPatch = withApi(async (request) => {
-    await requireStaffSession();
-    const patch = await request.json();
-    if (!patch || typeof patch !== "object") {
-        throw new ClientApiError("No patch data provided!");
-    }
-    return ApiSuccess(await DbIterations.patch(await resolveTargetId(), patch));
-});
+export const PATCH: ServerApiCurrentIterationPatch = withApi(
+    async (request) => {
+        await requireStaffSession();
+        const patch =
+            await requireJsonObjectBody<PatchIterationPayload>(request);
+        return ApiSuccess(
+            await DbIterations.patch(await resolveTargetId(), patch),
+        );
+    },
+);
 
 export const DELETE: ServerApiCurrentIterationDelete = withApi(async () => {
     await requireStaffSession();

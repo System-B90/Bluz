@@ -1,6 +1,11 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, parseJsonBody, ServerApi, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    parseJsonBody,
+    ServerApi,
+    withApi,
+} from "@/api-server/common";
 import { DbCustomColors } from "@/api-server/db-custom-colors";
 import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
@@ -41,7 +46,9 @@ export const GET: ServerApiCustomColorsGet = withApi(async (_request) => {
 export const POST: ServerApiCustomColorUpdate = withApi(async (request) => {
     await requireStaffSession();
     const textBody = await request.text();
-    const color = textBody ? parseJsonBody<ApiCustomColorUpdatePayload>(textBody) : null;
+    const color = textBody
+        ? parseJsonBody<ApiCustomColorUpdatePayload>(textBody)
+        : null;
     if (!color) {
         throw new ClientApiError("No data provided!");
     }

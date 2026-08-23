@@ -43,7 +43,10 @@ import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { getModuleDayMappingsForCurriculum } from "@/api-server/gantt/db-mappings";
 import { getCurriculumExecution } from "@/api-server/gantt/execution";
 import { DbEventDocument } from "@/api-shared/types/event";
-import { ApiCurriculum, ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
+import {
+    ApiCurriculum,
+    ApiModuleEvent,
+} from "@/api-shared/types/gantt/api-layer";
 import { ScheduleSettings } from "@/api-shared/types/settings/schedule";
 import { Iteration } from "@/api-shared/types/iteration";
 import {
@@ -75,7 +78,13 @@ function makeEvent(
         hiveSubjectId: null,
         hiveModuleId: null,
         hiveLessonId: null,
-        cEC: [{ eventId: overrides.id, curriculumId: "c1", allocatedDuration: 60 }],
+        cEC: [
+            {
+                eventId: overrides.id,
+                curriculumId: "c1",
+                allocatedDuration: 60,
+            },
+        ],
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-01T00:00:00.000Z",
         ...overrides,
@@ -148,7 +157,9 @@ function cutDoc(over: Partial<DbEventDocument> = {}): DbEventDocument {
 beforeEach(() => {
     vi.clearAllMocks();
     findToArray.mockResolvedValue([]);
-    vi.mocked(DbSettings.get).mockResolvedValue({ dayStartTime: "08:00" } as ScheduleSettings);
+    vi.mocked(DbSettings.get).mockResolvedValue({
+        dayStartTime: "08:00",
+    } as ScheduleSettings);
     vi.mocked(DbIterations.getByCurriculum).mockResolvedValue({
         id: "2026a",
         dbName: "bluz_exec",
@@ -179,9 +190,23 @@ describe("getCurriculumExecution — short circuits", () => {
     it("queries cut events including archived ones", async () => {
         findToArray.mockResolvedValue([cutDoc()]);
         await getCurriculumExecution("c1");
-        expect(fakeEvents.find).toHaveBeenCalledWith({
-            ganttEventId: { $exists: true },
-        });
+        // Projected to just the fields the execution join consumes (#538 item 8).
+        expect(fakeEvents.find).toHaveBeenCalledWith(
+            { ganttEventId: { $exists: true } },
+            {
+                projection: {
+                    id: 1,
+                    name: 1,
+                    startTime: 1,
+                    endTime: 1,
+                    instructors: 1,
+                    archived: 1,
+                    ganttEventId: 1,
+                    ganttOccurrenceDate: 1,
+                    _id: 0,
+                },
+            },
+        );
     });
 });
 
@@ -193,7 +218,9 @@ describe("getCurriculumExecution — drift detection", () => {
         expect(execution).toBeDefined();
         expect(execution.drifted).toBe(false);
         expect(execution.occurrences).toHaveLength(1);
-        expect(execution.occurrences[0].actual?.eventId).toBe("sched-2024-01-07");
+        expect(execution.occurrences[0].actual?.eventId).toBe(
+            "sched-2024-01-07",
+        );
     });
 
     it("marks a moved schedule event as drifted", async () => {
@@ -254,10 +281,7 @@ describe("getCurriculumExecution — plan divergence after the cut", () => {
 
     it("splits events correctly when several gantt events were cut", async () => {
         vi.mocked(DbCurriculum.getItem).mockResolvedValue(
-            makeCurriculum([
-                makeEvent({ id: "e1" }),
-                makeEvent({ id: "e2" }),
-            ]),
+            makeCurriculum([makeEvent({ id: "e1" }), makeEvent({ id: "e2" })]),
         );
         vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
             { eventId: "e1", dayId: "w0d0", sortOrder: 0 },

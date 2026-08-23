@@ -1,5 +1,6 @@
 import { Filter, FindOptions } from "mongodb";
 
+import { pickFields } from "@/api-server/common";
 import {
     DbEventHistory,
     EventWriteOrigin,
@@ -26,6 +27,39 @@ export type { DbEventDocument };
 // Soft-deleted (archived) events must never surface in active views. Every read
 // path folds this predicate into its Mongo filter.
 const NOT_ARCHIVED: Filter<DbEventDocument> = { archived: { $ne: true } };
+
+// Updates copy only these fields off the client payload, so the document shape
+// stays an explicit allow-list rather than whatever the caller sent (#538
+// item 4). `id` is the filter key and is excluded; everything else a caller
+// sends that is not listed here (including Mongo's own `_id` echoed back from
+// a previous read) is dropped instead of landing in the collection.
+const EVENT_UPDATE_FIELDS = [
+    "name",
+    "subject",
+    "hiveModule",
+    "hiveLesson",
+    "hiveQueues",
+    "startTime",
+    "endTime",
+    "type",
+    "courses",
+    "rooms",
+    "instructors",
+    "lecturers",
+    "tags",
+    "notes",
+    "locked",
+    "hidden",
+    "required",
+    "personalTalk",
+    "splitAcrossBreaks",
+    "color",
+    "fake",
+    "ganttEventId",
+    "ganttOccurrenceDate",
+    "updatedAt",
+    "archived",
+] as const;
 
 async function getDbEvent(
     eventId: EventId,
@@ -115,6 +149,10 @@ async function setDbEvent(
 
     const fixedEvent = eventDateFixupToDate(eventData);
     const { id: eventId, ...updatePayload } = fixedEvent;
+    const whitelistedUpdate = pickFields(
+        updatePayload,
+        EVENT_UPDATE_FIELDS,
+    ) as Partial<DbEventDocument>;
 
     // Read the stored copy first so the change log can diff before/after. The
     // events collection itself stays audit-free (see db-event-history.ts).
@@ -127,7 +165,7 @@ async function setDbEvent(
     // So, we try to update it first.
     const updateResult = await controller.events.updateOne(
         { id: eventId, ...NOT_ARCHIVED },
-        { $set: updatePayload },
+        { $set: whitelistedUpdate },
         options,
     );
 

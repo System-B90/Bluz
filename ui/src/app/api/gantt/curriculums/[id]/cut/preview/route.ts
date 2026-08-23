@@ -23,8 +23,6 @@ export const GET = withApi(
         const { id } = await context.params;
         if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
-        return ApiSuccess(
-            await previewCurriculumCut(id as GanttCurriculumId),
-        );
+        return ApiSuccess(await previewCurriculumCut(id as GanttCurriculumId));
     },
 );

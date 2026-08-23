@@ -1,6 +1,11 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    ServerApi,
+    withApi,
+} from "@/api-server/common";
 import { DbIterations } from "@/api-server/db-iterations";
 import { buildHiveCache } from "@/api-server/hive/build-cache";
 import { requireStaffSession } from "@/api-server/session-user";
@@ -23,14 +28,13 @@ export const GET: ServerApiIterationsList = withApi(async (_request) => {
 
 export const POST: ServerApiIterationRegister = withApi(async (request) => {
     await requireStaffSession();
-    const payload = await request.json();
-    if (!payload || !payload.id || !payload.label) {
+    const payload =
+        await requireJsonObjectBody<RegisterIterationPayload>(request);
+    if (!payload.id || !payload.label) {
         throw new ClientApiError("Iteration id and label are required!");
     }
     // Cache Hive names for this iteration's instance unless one was supplied.
     const hiveCache =
         payload.hiveCache ?? (await buildHiveCache(payload.hiveUrl));
-    return ApiSuccess(
-        await DbIterations.register({ ...payload, hiveCache }),
-    );
+    return ApiSuccess(await DbIterations.register({ ...payload, hiveCache }));
 });

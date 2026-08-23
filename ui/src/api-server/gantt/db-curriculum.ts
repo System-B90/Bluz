@@ -1,7 +1,10 @@
 import { asc, eq } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
-import { asWireShape, drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
+import {
+    asWireShape,
+    drizzleOperationsBuilder,
+} from "@/api-server/gantt/db-base";
 import {
     ganttCurriculum2SyllabusesSchema,
     ganttCurriculum2WeeksSchema,
@@ -59,12 +62,18 @@ async function getFullCurriculum(
                     syllabus: {
                         with: {
                             s2m: {
-                                orderBy: [asc(ganttSyllabus2ModulesSchema.sortOrder)],
+                                orderBy: [
+                                    asc(ganttSyllabus2ModulesSchema.sortOrder),
+                                ],
                                 with: {
                                     module: {
                                         with: {
                                             m2e: {
-                                                orderBy: [asc(ganttModule2EventsSchema.sortOrder)],
+                                                orderBy: [
+                                                    asc(
+                                                        ganttModule2EventsSchema.sortOrder,
+                                                    ),
+                                                ],
                                                 with: {
                                                     event: {
                                                         with: {
@@ -147,7 +156,7 @@ async function seedMealBreaksSyllabus(
             .insert(ganttSyllabus2ModulesSchema)
             .values({ syllabusId, moduleId, sortOrder: 0 });
 
-        for (const [ settingKey, title ] of Object.entries(MEAL_EVENT_TITLES)) {
+        for (const [settingKey, title] of Object.entries(MEAL_EVENT_TITLES)) {
             const eventId = `e_${crypto.randomUUID()}`;
             await tx.insert(ganttEventsSchema).values({
                 id: eventId,
@@ -214,10 +223,20 @@ async function duplicateCurriculum(
         // Syllabuses are shared, not cloned: relink the existing syllabus (and
         // its modules/events) to the copy, and clone only the per-curriculum
         // event configs (cEC) so allocated durations stay independent.
+        // Rows are collected and inserted in one statement per table — an
+        // awaited insert per row made duplicating a large curriculum hundreds
+        // of sequential round trips (#538 item 9).
+        const c2sLinks: Array<
+            typeof ganttCurriculum2SyllabusesSchema.$inferInsert
+        > = [];
+        const clonedConfigs: Array<
+            typeof ganttCurriculumEventConfigurationsSchema.$inferInsert
+        > = [];
+
         for (const c2sLink of source.c2s ?? []) {
             const syllabus = c2sLink.syllabus;
 
-            await tx.insert(ganttCurriculum2SyllabusesSchema).values({
+            c2sLinks.push({
                 curriculumId: newCurriculumId,
                 syllabusId: syllabus.id,
             });
@@ -232,25 +251,39 @@ async function duplicateCurriculum(
 
                     // Per-curriculum allocated durations, repointed at the copy.
                     for (const config of event.cEC ?? []) {
-                        await tx
-                            .insert(ganttCurriculumEventConfigurationsSchema)
-                            .values({
-                                curriculumId: newCurriculumId,
-                                eventId: event.id,
-                                allocatedDuration: config.allocatedDuration,
-                                updatedAt: now,
-                            });
+                        clonedConfigs.push({
+                            curriculumId: newCurriculumId,
+                            eventId: event.id,
+                            allocatedDuration: config.allocatedDuration,
+                            updatedAt: now,
+                        });
                     }
                 }
             }
         }
 
-        // Weeks → days (deep clone, all-new ids).
+        if (c2sLinks.length > 0) {
+            await tx.insert(ganttCurriculum2SyllabusesSchema).values(c2sLinks);
+        }
+        if (clonedConfigs.length > 0) {
+            await tx
+                .insert(ganttCurriculumEventConfigurationsSchema)
+                .values(clonedConfigs);
+        }
+
+        // Weeks → days (deep clone, all-new ids), collected per table and
+        // inserted in one statement each (#538 item 9).
+        const clonedWeeks: Array<typeof ganttWeeksSchema.$inferInsert> = [];
+        const c2wLinks: Array<typeof ganttCurriculum2WeeksSchema.$inferInsert> =
+            [];
+        const clonedDays: Array<typeof ganttDaysSchema.$inferInsert> = [];
+        const w2dLinks: Array<typeof ganttWeek2DaysSchema.$inferInsert> = [];
+
         for (const c2wLink of source.c2w ?? []) {
             const week = c2wLink.week;
             const newWeekId = `w_${crypto.randomUUID()}`;
 
-            await tx.insert(ganttWeeksSchema).values({
+            clonedWeeks.push({
                 id: newWeekId,
                 number: week.number,
                 comment: week.comment ?? "",
@@ -258,7 +291,7 @@ async function duplicateCurriculum(
                 createdAt: now,
                 updatedAt: now,
             });
-            await tx.insert(ganttCurriculum2WeeksSchema).values({
+            c2wLinks.push({
                 curriculumId: newCurriculumId,
                 weekId: newWeekId,
             });
@@ -268,7 +301,7 @@ async function duplicateCurriculum(
                 const newDayId = `d_${crypto.randomUUID()}`;
                 dayIdMap.set(day.id, newDayId);
 
-                await tx.insert(ganttDaysSchema).values({
+                clonedDays.push({
                     id: newDayId,
                     dayIndex: day.dayIndex,
                     totalWorkingMinutes: day.totalWorkingMinutes,
@@ -277,11 +310,21 @@ async function duplicateCurriculum(
                     createdAt: now,
                     updatedAt: now,
                 });
-                await tx.insert(ganttWeek2DaysSchema).values({
-                    weekId: newWeekId,
-                    dayId: newDayId,
-                });
+                w2dLinks.push({ weekId: newWeekId, dayId: newDayId });
             }
+        }
+
+        if (clonedWeeks.length > 0) {
+            await tx.insert(ganttWeeksSchema).values(clonedWeeks);
+        }
+        if (c2wLinks.length > 0) {
+            await tx.insert(ganttCurriculum2WeeksSchema).values(c2wLinks);
+        }
+        if (clonedDays.length > 0) {
+            await tx.insert(ganttDaysSchema).values(clonedDays);
+        }
+        if (w2dLinks.length > 0) {
+            await tx.insert(ganttWeek2DaysSchema).values(w2dLinks);
         }
 
         // Module/event → day mappings (cMDA): clone with every id repointed so
