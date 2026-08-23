@@ -59,6 +59,21 @@ class FakeWebSocket {
 
 vi.mock("ws", () => ({ WebSocket: FakeWebSocket }));
 
+/**
+ * The sender logs through pino (`@/logging/pino`), not `console`, since the
+ * api-server logging standardisation. Assertions below target this mock.
+ */
+const { logger } = vi.hoisted(() => ({
+    logger: {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    },
+}));
+
+vi.mock("@/logging/pino", () => ({ logger }));
+
 const originalAuthKey = process.env.WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY;
 const originalUri = process.env.INTERNAL_SESSION_SERVER_URI;
 
@@ -66,6 +81,10 @@ beforeEach(() => {
     process.env.WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY = "test-secret";
     process.env.INTERNAL_SESSION_SERVER_URI = "ws://sessions.internal:12345/ws/";
     constructed.length = 0;
+    logger.debug.mockClear();
+    logger.error.mockClear();
+    logger.info.mockClear();
+    logger.warn.mockClear();
     vi.useFakeTimers();
 });
 
@@ -153,9 +172,6 @@ describe("SendServerRequestToSessionServer connection lifecycle", () => {
     });
 
     it("does not terminate a socket that opened in time", async () => {
-        const consoleError = vi
-            .spyOn(console, "error")
-            .mockImplementation(() => {});
         const { SendServerRequestToSessionServer } = await loadSender();
 
         SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE);
@@ -163,7 +179,7 @@ describe("SendServerRequestToSessionServer connection lifecycle", () => {
         vi.advanceTimersByTime(60_000);
 
         expect(constructed[0].terminated).toBe(false);
-        expect(consoleError).not.toHaveBeenCalled();
+        expect(logger.error).not.toHaveBeenCalled();
     });
 
     it("clears the socket on close lazily and reconnects on the next send", async () => {
@@ -211,9 +227,6 @@ describe("SendServerRequestToSessionServer connection lifecycle", () => {
     });
 
     it("logs a connection error without dropping the healthy socket", async () => {
-        const consoleError = vi
-            .spyOn(console, "error")
-            .mockImplementation(() => {});
         const { SendServerRequestToSessionServer } = await loadSender();
 
         SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE);
@@ -229,7 +242,7 @@ describe("SendServerRequestToSessionServer connection lifecycle", () => {
         expect(JSON.parse(constructed[0].sent[1]).data).toEqual({
             eventId: "event-1",
         });
-        expect(consoleError).toHaveBeenCalledOnce();
+        expect(logger.error).toHaveBeenCalledOnce();
     });
 });
 
@@ -292,9 +305,6 @@ describe("SendServerRequestToSessionServer outbound queue", () => {
     });
 
     it("falls back to the queue plus a reconnect when send() throws on an open socket", async () => {
-        const consoleError = vi
-            .spyOn(console, "error")
-            .mockImplementation(() => {});
         const { SendServerRequestToSessionServer } = await loadSender();
 
         SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE);
@@ -307,7 +317,7 @@ describe("SendServerRequestToSessionServer outbound queue", () => {
             eventId: "event-1",
         });
 
-        expect(consoleError).toHaveBeenCalledOnce();
+        expect(logger.error).toHaveBeenCalledOnce();
         expect(constructed).toHaveLength(2);
         // sent[0] is the initial broadcast flushed on open; nothing else was
         // delivered over the broken socket.

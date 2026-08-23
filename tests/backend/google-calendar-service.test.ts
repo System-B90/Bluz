@@ -1,6 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
+ * The service logs through pino (`@/logging/pino`), not `console`, since the
+ * api-server logging standardisation. Assertions below target this mock.
+ */
+const { logger } = vi.hoisted(() => ({
+    logger: {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    },
+}));
+
+vi.mock("@/logging/pino", () => ({ logger }));
+
+/**
  * Unit tests for the Google Calendar integration, with the `googleapis` client
  * and the Mongo controllers fully mocked — nothing here touches the network or
  * a database. The contracts under test are the ones the rest of Bluz relies
@@ -438,31 +453,31 @@ describe("pushEventToGoogle", () => {
 
         await expect(
             service.pushEventToGoogle("u1", eventFixture(), "delete"),
-        ).resolves.toBeUndefined();
-        expect(console.warn).not.toHaveBeenCalled();
+        ).resolves.toBe(true);
+        expect(logger.warn).not.toHaveBeenCalled();
     });
 
     it("never throws on a Google outage — any action", async () => {
         gapi.api.events.update.mockRejectedValueOnce(new Error("ECONNRESET"));
         await expect(
             service.pushEventToGoogle("u1", eventFixture(), "upsert"),
-        ).resolves.toBeUndefined();
-        expect(console.warn).toHaveBeenCalledWith(
-            expect.stringContaining("push skipped"),
+        ).resolves.toBe(false);
+        expect(logger.warn).toHaveBeenCalledWith(
             expect.anything(),
+            expect.stringContaining("push skipped"),
         );
 
         gapi.api.events.delete.mockRejectedValueOnce(new Error("ECONNRESET"));
         await expect(
             service.pushEventToGoogle("u1", eventFixture(), "delete"),
-        ).resolves.toBeUndefined();
+        ).resolves.toBe(false);
 
         // Even the 404-fallback insert failing stays contained.
         gapi.api.events.update.mockRejectedValueOnce({ code: 404 });
         gapi.api.events.insert.mockRejectedValueOnce(new Error("quota"));
         await expect(
             service.pushEventToGoogle("u1", eventFixture(), "upsert"),
-        ).resolves.toBeUndefined();
+        ).resolves.toBe(false);
     });
 
     it("is a silent no-op when the user never connected", async () => {
@@ -480,7 +495,7 @@ describe("pushEventToGoogle", () => {
 
         await expect(
             unconfigured.pushEventToGoogle("u1", eventFixture(), "upsert"),
-        ).resolves.toBeUndefined();
+        ).resolves.toBe(false);
 
         expect(totalApiCalls()).toBe(callsBefore);
         expect(gapi.oauthInstances.length).toBe(clientsBefore);
@@ -505,7 +520,7 @@ describe("pushEventToGoogle", () => {
 });
 
 describe("pushAllEvents", () => {
-    it("backfills every event and reports the count even when pushes fail", async () => {
+    it("counts only the pushes that actually reached Google", async () => {
         gapi.api.events.update.mockRejectedValue(new Error("offline"));
 
         const pushed = await service.pushAllEvents("u1", [
@@ -514,7 +529,9 @@ describe("pushAllEvents", () => {
             eventFixture({ id: "e3" }),
         ]);
 
-        expect(pushed).toBe(3);
+        // Counting attempts used to report a full successful sync even when
+        // every push was swallowed (#538 item 6); failures now count as 0.
+        expect(pushed).toBe(0);
         expect(gapi.api.events.update).toHaveBeenCalledTimes(3);
     });
 });
@@ -555,7 +572,11 @@ describe("pullEventEdits", () => {
         const updated = await service.pullEventEdits("u1");
 
         expect(updated).toBe(1);
-        expect(dbEvent.get).toHaveBeenCalledWith("abc-def-123");
+        expect(dbEvent.get).toHaveBeenCalledWith(
+            "abc-def-123",
+            undefined,
+            undefined,
+        );
         const [saved, , , , origin] = dbEvent.set.mock.calls[0];
         expect(saved.name).toBe("שם חדש מגוגל");
         expect(saved.notes).toBe("הערה חדשה");
@@ -714,9 +735,9 @@ describe("pullEventEdits", () => {
         gapi.api.events.list.mockRejectedValueOnce({ code: 500 });
 
         await expect(service.pullEventEdits("u1")).resolves.toBe(0);
-        expect(console.warn).toHaveBeenCalledWith(
-            expect.stringContaining("edit pull skipped"),
+        expect(logger.warn).toHaveBeenCalledWith(
             expect.anything(),
+            expect.stringContaining("edit pull skipped"),
         );
     });
 
@@ -803,7 +824,7 @@ describe("pullBusyBlocks", () => {
         gapi.api.freebusy.query.mockRejectedValueOnce(new Error("offline"));
 
         await expect(service.pullBusyBlocks("u1")).resolves.toEqual([]);
-        expect(console.warn).toHaveBeenCalled();
+        expect(logger.warn).toHaveBeenCalled();
     });
 
     it("returns [] when disconnected", async () => {

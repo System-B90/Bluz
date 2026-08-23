@@ -8,6 +8,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * point — a Google outage must never touch the Bluz event write it hangs off.
  */
 
+/**
+ * The sync layer logs through pino (`@/logging/pino`), not `console`, since
+ * the api-server logging standardisation. Assertions below target this mock.
+ */
+const { logger } = vi.hoisted(() => ({
+    logger: {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    },
+}));
+
+vi.mock("@/logging/pino", () => ({ logger }));
+
 const { pushService, personalSettings } = vi.hoisted(() => ({
     pushService: {
         pushEventToGoogle: vi.fn(async () => undefined),
@@ -102,15 +117,19 @@ describe("syncEventToInstructorsGoogleCalendars", () => {
         await flushAsyncWork();
 
         expect(pushService.pushEventToGoogle).toHaveBeenCalledTimes(2);
+        // The 4th arg is the iteration tag (#538 item 6); this call site
+        // passes none, so it arrives as undefined.
         expect(pushService.pushEventToGoogle).toHaveBeenCalledWith(
             "1",
             event,
             "delete",
+            undefined,
         );
         expect(pushService.pushEventToGoogle).toHaveBeenCalledWith(
             "9",
             event,
             "delete",
+            undefined,
         );
     });
 
@@ -127,9 +146,9 @@ describe("syncEventToInstructorsGoogleCalendars", () => {
         ).not.toThrow();
         await flushAsyncWork();
 
-        expect(console.warn).toHaveBeenCalledWith(
-            "Google Calendar sync skipped:",
+        expect(logger.warn).toHaveBeenCalledWith(
             expect.anything(),
+            "Google Calendar sync skipped:",
         );
     });
 });
@@ -186,9 +205,9 @@ describe("pullGoogleEditsInBackground", () => {
         pullGoogleEditsInBackground("u1");
         await flushAsyncWork();
 
-        expect(console.warn).toHaveBeenCalledWith(
-            "Google Calendar background pull failed:",
+        expect(logger.warn).toHaveBeenCalledWith(
             expect.anything(),
+            "Google Calendar background pull failed:",
         );
 
         // The failed attempt still consumed this window's slot.

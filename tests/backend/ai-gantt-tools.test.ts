@@ -49,6 +49,7 @@ import {
 import { AiToolContext } from "@/api-server/ai/tools/types";
 import { AiToolKind } from "@/api-shared/types/ai";
 import { ClientApiError } from "@/api-shared/errors";
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 
 const context = {
     actor: { id: "u1", displayName: "מיכאל" },
@@ -220,7 +221,16 @@ describe("cut_curriculum", () => {
         // Same entry point the Gantt screen uses — the assistant cannot
         // bypass the constraint engine or the draft guard.
         expect(cutPipeline.cutCurriculumToSchedule).toHaveBeenCalledTimes(1);
-        expect(cutPipeline.cutCurriculumToSchedule).toHaveBeenCalledWith("c-9");
+        // The cut is attributed to the assistant, not a human pressing
+        // "cut" (#545 item 3).
+        expect(cutPipeline.cutCurriculumToSchedule).toHaveBeenCalledWith(
+            "c-9",
+            {},
+            {
+                actor: context.actor,
+                initiator: EventChangeInitiator.AiAssistant,
+            },
+        );
         expect(result.data).toEqual(successOutcome);
         expect(result.summary).toContain("נגזר");
     });
