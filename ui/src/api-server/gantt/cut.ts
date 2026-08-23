@@ -1,7 +1,11 @@
 import { randomUUID } from "crypto";
 
+import { isDuplicateKeyError } from "@/api-server/common";
 import { DbCourses } from "@/api-server/db-courses";
-import { DbEventHistory } from "@/api-server/db-event-history";
+import {
+    DbEventHistory,
+    EventWriteOrigin,
+} from "@/api-server/db-event-history";
 import { DbIterations } from "@/api-server/db-iterations";
 import { DbSettings } from "@/api-server/db-settings";
 import { getConstraintsForCurriculum } from "@/api-server/gantt/db-constraints";
@@ -61,6 +65,7 @@ import {
     SCHEDULE_SETTINGS_KEY,
     ScheduleSettings,
 } from "@/api-shared/types/settings/schedule";
+import { logger } from "@/logging/pino";
 import { MessageTypes } from "@/settings";
 
 /**
@@ -548,7 +553,7 @@ async function buildHiveModuleSubjectMap(
         const modules = await hive.getModules();
         return new Map(modules.map((m) => [Number(m.id), m.parent_subject]));
     } catch (e) {
-        console.error("Failed to load Hive modules for cut subject fallback", e);
+        logger.error({ err: e }, "Failed to load Hive modules for cut subject fallback");
         return new Map();
     }
 }
@@ -944,6 +949,10 @@ export async function planCurriculumCut(
 export async function cutCurriculumToSchedule(
     curriculumId: GanttCurriculumId,
     options: CutPlanOptions = {},
+    // Who asked for the cut. Every write is meant to be attributable, so an
+    // assistant-driven cut must not land in the history as a plain GanttCut
+    // (#545 item 3). Defaults to the human-initiated case.
+    origin: EventWriteOrigin = { initiator: EventChangeInitiator.GanttCut },
 ): Promise<CutOutcome> {
     // Throws ClientApiError (→ 400) when the curriculum does not exist.
     const curriculum = await DbCurriculum.getItem(curriculumId);
@@ -999,41 +1008,62 @@ export async function cutCurriculumToSchedule(
     }
     const { createdCourses, documents, overlaps, report } = materialized;
 
-    // Idempotency: re-check the one-shot guard immediately before writing so a
-    // concurrent cut cannot double-insert.
-    const recheck = await countCutEvents(controller);
-    if (recheck > 0) {
+    // Idempotency: claim the cut through the ledger's unique index before
+    // writing. A second check-then-insert recheck could not deliver the
+    // idempotency its comment promised — two concurrent cuts both passed it and
+    // both inserted the whole schedule (#515). Here the insert itself decides:
+    // exactly one caller wins, the loser sees a duplicate-key error.
+    try {
+        await controller.curriculumCuts.insertOne({
+            claimedAt: new Date(),
+            curriculumId,
+        });
+    } catch (error) {
+        if (!isDuplicateKeyError(error)) throw error;
+        const claimed = await countCutEvents(controller);
         return {
             ok: false,
             error: {
                 code: "already-cut",
-                count: recheck,
-                message: `הגאנט כבר נגזר ללו"ז (${recheck} אירועים קיימים)`,
+                count: claimed,
+                message: `הגאנט כבר נגזר ללו"ז (${claimed} אירועים קיימים)`,
             },
         };
     }
 
-    if (documents.length > 0) {
-        await controller.events.insertMany(documents as Array<DbEventDocument>);
-        await DbEventHistory.recordBulk({
-            action: EventChangeAction.Created,
-            controller,
-            events: documents.map((document) => ({
-                after: document,
-                eventId: document.id,
-            })),
-            origin: {
-                context: { curriculumId },
-                initiator: EventChangeInitiator.GanttCut,
-            },
-        });
-        for (const document of documents) {
-            syncEventToInstructorsGoogleCalendars(document, "upsert");
+    try {
+        if (documents.length > 0) {
+            await controller.events.insertMany(
+                documents as Array<DbEventDocument>,
+            );
+            await DbEventHistory.recordBulk({
+                action: EventChangeAction.Created,
+                controller,
+                events: documents.map((document) => ({
+                    after: document,
+                    eventId: document.id,
+                })),
+                origin: { ...origin, context: { curriculumId } },
+            });
+            for (const document of documents) {
+                syncEventToInstructorsGoogleCalendars(
+                    document,
+                    "upsert",
+                    iteration.id,
+                );
+            }
+            SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
+                events: Object.fromEntries(documents.map((d) => [d.id, d])),
+                iterationId: iteration.isCurrent ? undefined : iteration.id,
+            } as EventDataUpdateMessage<DbEventDocument>);
         }
-        SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
-            events: Object.fromEntries(documents.map((d) => [d.id, d])),
-            iterationId: iteration.isCurrent ? undefined : iteration.id,
-        } as EventDataUpdateMessage<DbEventDocument>);
+    } catch (error) {
+        // The claim outlives the process that took it, so a failed cut must
+        // release it or the curriculum could never be cut again.
+        await controller.curriculumCuts
+            .deleteOne({ curriculumId })
+            .catch(() => {});
+        throw error;
     }
 
     return {
@@ -1089,8 +1119,14 @@ export async function pullBackCutSchedule(
     const controller = getDatabaseController(iteration.dbName);
 
     // Only live cut events are eligible; already-archived ones are left as-is.
+    // Only the ids are used (the archive is an updateMany, the history rows key
+    // off eventId), so do not drag every full document over the wire (#538
+    // item 8).
     const liveCutEvents = await controller.events
-        .find({ ganttEventId: { $exists: true }, archived: { $ne: true } })
+        .find(
+            { ganttEventId: { $exists: true }, archived: { $ne: true } },
+            { projection: { id: 1, _id: 0 } },
+        )
         .toArray();
 
     if (liveCutEvents.length === 0) {
@@ -1107,6 +1143,10 @@ export async function pullBackCutSchedule(
         { ganttEventId: { $exists: true }, archived: { $ne: true } },
         { $set: { archived: true } },
     );
+
+    // Pulling back is what makes the curriculum cuttable again, so the one-shot
+    // claim has to be released with the events (#515).
+    await controller.curriculumCuts.deleteOne({ curriculumId });
 
     await DbEventHistory.recordBulk({
         action: EventChangeAction.Archived,

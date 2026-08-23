@@ -1,5 +1,6 @@
 import { FindOptions, UpdateOptions } from "mongodb";
 
+import { pickFields } from "@/api-server/common";
 import {
     databaseController,
     DatabaseController,
@@ -8,6 +9,18 @@ import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils"
 import { ClientApiError } from "@/api-shared/errors";
 import { Outsider } from "@/api-shared/types/outsider";
 import { MessageTypes } from "@/settings";
+
+// Client payloads are copied field-by-field, so the document shape is an
+// explicit allow-list rather than whatever the caller sent (#538 item 4).
+const OUTSIDER_FIELDS = [
+    "id",
+    "name",
+    "phone",
+    "personalNumber",
+    "idNumber",
+    "releaseDate",
+    "comment",
+] as const;
 
 async function getDbOutsiders(
     options?: FindOptions,
@@ -42,7 +55,8 @@ async function createDbOutsider(
     outsider: Outsider,
     controller: DatabaseController = databaseController,
 ) {
-    await controller.outsiders.insertOne(outsider as Outsider);
+    const document = pickFields(outsider, OUTSIDER_FIELDS);
+    await controller.outsiders.insertOne(document as Outsider);
     SendServerRequestToSessionServer(MessageTypes.OUTSIDERS_UPDATE, {
         outsiders: { [outsider.id]: outsider },
     });

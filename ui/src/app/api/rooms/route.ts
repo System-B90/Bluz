@@ -1,6 +1,11 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    ServerApi,
+    withApi,
+} from "@/api-server/common";
 import { DbIterations } from "@/api-server/db-iterations";
 import { DbRoomExtendedInfo } from "@/api-server/db-room-extended-info";
 import { DbRooms } from "@/api-server/db-rooms";
@@ -9,6 +14,7 @@ import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     ApiRoomCreatePayload,
@@ -43,6 +49,7 @@ type ServerApiRoomExtendedInfoUpdate = ServerApi<
 >;
 
 export const GET: ServerApiRoomsGet = withApi(async (request) => {
+    await requireStaffSession();
     const { controller, iterationId } =
         await resolveIterationFromRequest(request);
     // Past iterations point at a different Hive instance; fall back to the
@@ -62,23 +69,19 @@ export const GET: ServerApiRoomsGet = withApi(async (request) => {
 });
 
 export const POST: ServerApiRoomUpdate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
-    const room = await request.json();
-    if (!room) {
-        throw new ClientApiError("No data provided!");
-    }
+    const room = await requireJsonObjectBody<ApiRoomUpdatePayload>(request);
     await DbRooms.set(room, undefined, controller);
     return ApiSuccess(room);
 });
 
 export const PUT: ServerApiRoomCreate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
-    const room = await request.json();
-    if (!room) {
-        throw new ClientApiError("No data provided!");
-    }
+    const room = await requireJsonObjectBody<ApiRoomCreatePayload>(request);
     if (!room.id) {
         throw new ClientApiError("Room id is not provided!");
     }
@@ -87,6 +90,7 @@ export const PUT: ServerApiRoomCreate = withApi(async (request) => {
 });
 
 export const DELETE: ServerApiRoomDelete = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const roomId = await request.json();
@@ -98,9 +102,11 @@ export const DELETE: ServerApiRoomDelete = withApi(async (request) => {
 });
 
 export const PATCH: ServerApiRoomExtendedInfoUpdate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
-    const payload = await request.json();
+    const payload =
+        await requireJsonObjectBody<ApiRoomExtendedInfoUpdatePayload>(request);
     if (
         !payload ||
         payload.roomId === undefined ||

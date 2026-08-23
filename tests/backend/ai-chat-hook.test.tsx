@@ -158,6 +158,58 @@ describe("useAiChat", () => {
         expect(streamAiChat.mock.calls[1][0].approvedToolCallIds).toEqual(["w1"]);
     });
 
+    it("ignores a second approve click fired before the first POST resolves", async () => {
+        // Regression for the double-fire bug: two rapid approve clicks must
+        // not both reach streamAiChat, or a non-idempotent write tool (e.g.
+        // create_event) runs twice with the same approvedToolCallIds.
+        let releaseFirstTurn: (() => void) | undefined;
+        const gate = new Promise<void>((resolve) => {
+            releaseFirstTurn = resolve;
+        });
+        streamAiChat.mockImplementation(async function* () {
+            yield {
+                type: AiStreamEventType.ToolProposal,
+                toolCallId: "w1",
+                name: "delete_event",
+                arguments: { id: "e1" },
+                summary: "מחיקת אירוע e1",
+            };
+            yield doneEvent(
+                [
+                    {
+                        role: AiRole.Assistant,
+                        content: "",
+                        toolCalls: [
+                            { id: "w1", name: "delete_event", arguments: "{}" },
+                        ],
+                    },
+                ],
+                true,
+            );
+        });
+
+        const { result } = renderChat();
+        await act(async () => result.current.send("תמחק"));
+        await waitFor(() => expect(result.current.pendingApproval).toBeTruthy());
+
+        streamAiChat.mockImplementation(async function* () {
+            await gate;
+            yield doneEvent();
+        });
+
+        // Two rapid clicks: only the first should start a request.
+        act(() => {
+            result.current.approve();
+            result.current.approve();
+        });
+        expect(streamAiChat).toHaveBeenCalledTimes(2);
+
+        releaseFirstTurn?.();
+        await waitFor(() => expect(result.current.busy).toBe(false));
+        // Still exactly one approval POST for the second turn.
+        expect(streamAiChat).toHaveBeenCalledTimes(2);
+    });
+
     it("answers the model's tool call when the user declines", async () => {
         // An unanswered tool call makes every later request malformed, so a
         // refusal has to be written into the transcript as its result.
@@ -243,6 +295,49 @@ describe("useAiChat", () => {
         const { result } = renderChat();
         await act(async () => result.current.send("היי"));
         await waitFor(() => expect(result.current.error).toBe("שירות ה-AI נפל"));
+    });
+
+    it("keeps a mid-turn error's produced tool messages in the transcript", async () => {
+        // Regression: the iteration-cap error carries whatever tool calls
+        // already ran that turn. Dropping them would have the next request
+        // replay — and re-run — those same writes.
+        scriptTurns([
+            [
+                {
+                    type: AiStreamEventType.Error,
+                    message: "יותר מדי צעדים",
+                    messages: [
+                        {
+                            role: AiRole.Assistant,
+                            content: "",
+                            toolCalls: [
+                                { id: "c1", name: "list_events", arguments: "{}" },
+                            ],
+                        },
+                        {
+                            role: AiRole.Tool,
+                            toolCallId: "c1",
+                            name: "list_events",
+                            content: "[]",
+                        },
+                    ],
+                },
+            ],
+            [doneEvent()],
+        ]);
+
+        const { result } = renderChat();
+        await act(async () => result.current.send("מה יש?"));
+        await waitFor(() => expect(result.current.error).toBe("יותר מדי צעדים"));
+
+        await act(async () => result.current.send("נסה שוב"));
+        const sent = streamAiChat.mock.calls[1][0].messages;
+        expect(sent.map((m: { role: string }) => m.role)).toEqual([
+            AiRole.User,
+            AiRole.Assistant,
+            AiRole.Tool,
+            AiRole.User,
+        ]);
     });
 
     it("clears everything on reset", async () => {

@@ -135,9 +135,20 @@ export class CurriculumReloadError
     }
 }
 
+/**
+ * Every valid {@link CurriculumReloadErrorCode} — see the analogous set in
+ * api-shared/types/gantt/cut.ts for why a bare `typeof code === "string"`
+ * check can't discriminate between cut/pull-back/reload error payloads (their
+ * code unions overlap).
+ */
+const CURRICULUM_RELOAD_ERROR_CODES: ReadonlySet<string> = new Set<
+    CurriculumReloadErrorCode
+>(["draft", "invalid-plan", "no-iteration", "not-cut"]);
+
 /** Narrows a caught {@link ClientApiError} to one carrying a reload code. */
 export function isCurriculumReloadErrorPayload(
     error: ClientApiError,
 ): error is ApiCurriculumReloadError & ClientApiError {
-    return typeof (error as Partial<ApiCurriculumReloadError>).code === "string";
+    const { code } = error as Partial<ApiCurriculumReloadError>;
+    return typeof code === "string" && CURRICULUM_RELOAD_ERROR_CODES.has(code);
 }

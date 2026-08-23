@@ -13,6 +13,8 @@ import { apiGetSetting, apiSetSetting } from "@/api-client/settings";
 
 function mockFetchOnce(data: unknown) {
     global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ "content-type": "application/json" }),
         redirected: false,
         json: async () => ({ status: 0, data }),
     } as unknown as Response);

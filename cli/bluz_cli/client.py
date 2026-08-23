@@ -8,6 +8,7 @@ Author: Michael K. Steinberg
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 import httpx
@@ -19,6 +20,13 @@ from bluz_cli.errors import BluzApiError, NotAuthenticatedError
 # not logged in" — we mirror that here instead of silently following it to an HTML
 # login page.
 _DEFAULT_TIMEOUT = 30.0
+
+# GET is idempotent, so a transient network error (a dropped connection, a
+# reset during a slow cut/export) is worth one bounded retry before surfacing
+# a bare NetworkError. Writes (POST/PUT/PATCH/DELETE) are never retried here —
+# retrying a write whose response was merely lost could double it up.
+_GET_RETRY_ATTEMPTS = 3
+_GET_RETRY_BACKOFF_SECONDS = 0.5
 
 
 class BluzClient:
@@ -55,7 +63,7 @@ class BluzClient:
     # --- verb helpers -------------------------------------------------------
 
     def get(self, path: str, *, params: dict[str, Any] | None = None) -> Any:
-        return self.request("GET", path, params=params)
+        return self.request("GET", path, params=params, retries=_GET_RETRY_ATTEMPTS)
 
     def post(self, path: str, *, json: Any = None, params: dict | None = None) -> Any:
         return self.request("POST", path, json=json, params=params)
@@ -107,22 +115,34 @@ class BluzClient:
         *,
         json: Any = None,
         params: dict[str, Any] | None = None,
+        retries: int = 1,
     ) -> Any:
         """
         Issue a request and unwrap the Bluz response envelope.
 
         Returns the `data` field on success; raises `BluzApiError` /
-        `NotAuthenticatedError` on failure.
+        `NotAuthenticatedError` on failure. `retries` bounds how many times a
+        transient network error is retried (GET only — see `_GET_RETRY_ATTEMPTS`).
         """
         clean_params = (
             {k: v for k, v in params.items() if v is not None} if params else None
         )
-        try:
-            response = self._client.request(
-                method, path, json=json, params=clean_params
-            )
-        except httpx.RequestError as exc:
-            raise BluzApiError("NetworkError", str(exc)) from exc
+        attempts = max(1, retries)
+        last_error: httpx.RequestError | None = None
+        response = None
+        for attempt in range(attempts):
+            try:
+                response = self._client.request(
+                    method, path, json=json, params=clean_params
+                )
+                last_error = None
+                break
+            except httpx.RequestError as exc:
+                last_error = exc
+                if attempt + 1 < attempts:
+                    time.sleep(_GET_RETRY_BACKOFF_SECONDS * (attempt + 1))
+        if last_error is not None:
+            raise BluzApiError("NetworkError", str(last_error)) from last_error
 
         # A redirect on an API call means "log in" (see safeApiFetcher).
         if response.is_redirect:

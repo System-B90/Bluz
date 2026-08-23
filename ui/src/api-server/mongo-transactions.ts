@@ -1,5 +1,7 @@
 import { ClientSession, MongoClient } from "mongodb";
 
+import { logger } from "@/logging/pino";
+
 /**
  * Mongo multi-document transactions require the server to run as a replica
  * set. A standalone `mongod` — which is how some deployments (and every plain
@@ -73,7 +75,7 @@ export async function withOptionalTransaction<T>(
         return result as T;
     } catch (error: unknown) {
         if (!isTransactionUnsupportedError(error)) throw error;
-        console.warn(
+        logger.warn(
             `[mongo] ${context}: this Mongo deployment is not a replica set, ` +
                 `so the operation ran without a transaction and was not atomic. ` +
                 `Convert Mongo to a single-node replica set to restore atomicity.`,

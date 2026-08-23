@@ -49,7 +49,7 @@ export function FilterIcon() {
         <>
             <Tooltip
                 placement="bottom"
-                title={open ? "הסתרת סננים" : "הצגת סננים"}
+                title={open ? "הסתרת מסננים" : "הצגת מסננים"}
             >
                 <IconButton
                     className="relative transition-all duration-200 hover:scale-110 active:scale-95"
@@ -59,7 +59,7 @@ export function FilterIcon() {
                 >
                     <FilterListIcon color="inherit" fontSize="small" />
                     {!open && hasAnyFilter ? (
-                        <Tooltip placement="right" title="יש סננים נסתרים">
+                        <Tooltip placement="right" title="יש מסננים נסתרים">
                             <InfoIcon
                                 className="absolute top-0.5 right-0.5 animate-pulse-soft"
                                 color="info"

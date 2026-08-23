@@ -10,6 +10,7 @@ export default defineConfig({
     resolve: { tsconfigPaths: true },
     test: {
         environment: "node",
+        setupFiles: [ path.resolve(__dirname, "backend/setup-session.ts") ],
         // `.tsx` too: component tests for the gantt dialogs opt into jsdom
         // per file (`// @vitest-environment jsdom`).
         include: [ "tests/backend/**/*.test.ts", "tests/backend/**/*.test.tsx" ],

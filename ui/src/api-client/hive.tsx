@@ -56,7 +56,7 @@ export const apiGetModules: ClientApiGetModules = async (props) => {
 
 export const apiGetQueues: ClientApiGetQueues = async (payload, props) => {
     return await safeApiFetcher<ApiHiveQueuesGetResponse>(
-        `/api/hive/queues?module=${payload.module}`,
+        `/api/hive/queues?module=${encodeURIComponent(payload.module)}`,
         props,
     );
 };

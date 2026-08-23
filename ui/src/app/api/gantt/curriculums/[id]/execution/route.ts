@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 
 import { ApiSuccess, withApi } from "@/api-server/common";
 import { getCurriculumExecution } from "@/api-server/gantt/execution";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 
@@ -17,6 +18,7 @@ type RouteContext = {
  * (or ones with no linked iteration) return `{ events: {} }` with a 200.
  */
 export const GET = withApi(async (request: NextRequest, context: RouteContext) => {
+    await requireStaffSession();
     const { id } = await context.params;
     if (!id) throw new ClientApiError("Curriculum ID is missing.");
 

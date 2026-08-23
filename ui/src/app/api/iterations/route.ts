@@ -17,6 +17,7 @@ type ServerApiIterationRegister = ServerApi<
 >;
 
 export const GET: ServerApiIterationsList = withApi(async (_request) => {
+    await requireStaffSession();
     return ApiSuccess(await DbIterations.list());
 });
 

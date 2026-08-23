@@ -18,7 +18,7 @@ async function apiGetModuleDayMapping(
     options?: ClientApiProps,
 ): Promise<Array<GanttCurriculumModuleDayMapping>> {
     const url = new URL(
-        `/api/gantt/curriculums/${curriculumId}/mappings`,
+        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/mappings`,
         window.location.origin,
     );
     if (dayId !== undefined) {
@@ -49,7 +49,7 @@ async function apiCreateModuleDayMapping(
     options?: ClientApiProps,
 ): Promise<GanttCurriculumModuleDayMapping> {
     const rawData = await safeApiFetcher<RawBaseDocument>(
-        `/api/gantt/curriculums/${curriculumId}/mappings`,
+        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/mappings`,
         {
             ...options,
             method: "POST",
@@ -73,7 +73,7 @@ async function apiUpdateModuleDayMapping(
     options?: ClientApiProps,
 ): Promise<GanttCurriculumModuleDayMapping> {
     const rawData = await safeApiFetcher<RawBaseDocument>(
-        `/api/gantt/curriculums/${curriculumId}/mappings`,
+        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/mappings`,
         {
             ...options,
             method: "PATCH",
@@ -96,7 +96,7 @@ async function apiDeleteModuleDayMapping(
     options?: ClientApiProps,
 ): Promise<void> {
     await safeApiFetcher<void>(
-        `/api/gantt/curriculums/${curriculumId}/mappings`,
+        `/api/gantt/curriculums/${encodeURIComponent(curriculumId)}/mappings`,
         {
             ...options,
             method: "DELETE",

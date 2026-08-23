@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { ApiSuccess, withApi } from "@/api-server/common";
 import { DbEvent } from "@/api-server/db-event";
+import { DbIterations } from "@/api-server/db-iterations";
 import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import {
     isGoogleCalendarConfigured,
@@ -52,8 +53,12 @@ export const POST = withApi(async () => {
                 ],
             },
     );
+    // These events come from the current iteration, so tag the Google copies
+    // with it - that is what lets a later pull apply the edit to the right
+    // database (#538 item 6).
+    const currentIteration = await DbIterations.currentOrNull();
     const [pushed, busyBlocks] = await Promise.all([
-        pushAllEvents(user.id, events),
+        pushAllEvents(user.id, events, currentIteration?.id),
         pullBusyBlocks(user.id),
     ]);
 

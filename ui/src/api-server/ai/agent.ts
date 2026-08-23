@@ -5,12 +5,22 @@
  * The safety property this file exists to enforce: **a write tool never runs
  * unless the human approved that exact tool call id.** The model can ask; only
  * the person clicking "אישור" in the chat can make it happen.
+ *
+ * That gate binds the *model*, not the client: `approvedToolCallIds` and the
+ * transcript both come from the request body (see `route.ts`), so a staff
+ * session holder who hand-crafts a POST can list any call id here without
+ * ever seeing the approval UI and run a write tool directly. That is not a
+ * privilege escalation — it is exactly the REST/CLI access that session
+ * already has on the underlying endpoints — but it means "human-gated" is a
+ * UI property for a normal client, not a server-enforced guarantee that a
+ * person clicked anything.
  */
 
 import { AiProvider } from "@/api-server/ai/provider";
 import { buildSystemPrompt } from "@/api-server/ai/system-prompt";
 import { AiToolContext, findTool, isWriteTool, toolSpecs } from "@/api-server/ai/tools";
 import {
+    AI_MAX_RESPONSE_TOKENS,
     AI_MAX_TOOL_ITERATIONS,
     AiMessage,
     AiRole,
@@ -134,6 +144,7 @@ export async function* runAiAgent(
                 messages: [...transcript],
                 tools: toolSpecs(),
                 model: options.model,
+                maxTokens: AI_MAX_RESPONSE_TOKENS,
                 signal,
             })) {
                 if (event.kind === "text") {
@@ -258,5 +269,10 @@ export async function* runAiAgent(
     yield {
         type: AiStreamEventType.Error,
         message: "העוזר ביצע יותר מדי צעדים ללא תשובה. נסה לנסח את הבקשה מחדש.",
+        // Hitting the iteration cap does not mean nothing happened: earlier
+        // calls in this turn may have already written data. Dropping
+        // `produced` here would replay those tool calls (and their side
+        // effects) on the client's next request.
+        messages: produced,
     };
 }

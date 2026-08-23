@@ -15,13 +15,13 @@ import TextField from "@mui/material/TextField";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     GanttEvent,
     GanttEventId,
     GanttModuleId,
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { InstructorSelect } from "@/components/base/InstructorSelect";
 import { NumberSpinner } from "@/components/base/NumberSpinner";
 import { EVENT_ANCHOR_PREFIX } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";

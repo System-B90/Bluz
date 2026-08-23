@@ -6,7 +6,7 @@ export async function apiReorderModules(
     moduleIds: Array<GanttModuleId>,
 ): Promise<void> {
     await safeApiFetcher<void>(
-        `/api/gantt/syllabuses/${syllabusId}/reorder-modules`,
+        `/api/gantt/syllabuses/${encodeURIComponent(syllabusId)}/reorder-modules`,
         { method: "POST", body: JSON.stringify({ moduleIds }) },
     );
 }
@@ -16,7 +16,7 @@ export async function apiReorderEvents(
     eventIds: Array<GanttEventId>,
 ): Promise<void> {
     await safeApiFetcher<void>(
-        `/api/gantt/modules/${moduleId}/reorder-events`,
+        `/api/gantt/modules/${encodeURIComponent(moduleId)}/reorder-events`,
         { method: "POST", body: JSON.stringify({ eventIds }) },
     );
 }

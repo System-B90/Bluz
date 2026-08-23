@@ -35,7 +35,7 @@ function SingleRoomTag({
                 {overcrowded ? (
                     <WarningIcon
                         color="warning"
-                        sx={{ fontSize: "0.7rem", mr: 0.3 }}
+                        sx={{ fontSize: "0.7rem", marginInlineStart: 0.3 }}
                     />
                 ) : null}
                 {room.source === RoomSource.Hive ? (

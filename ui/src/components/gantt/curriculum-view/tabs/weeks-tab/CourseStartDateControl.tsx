@@ -8,11 +8,11 @@ import { Dayjs } from "dayjs";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     GanttCurriculum,
     GanttCurriculumId,
 } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import {
     getCourseEndDate,
     getCourseStartDay,

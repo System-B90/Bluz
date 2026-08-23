@@ -21,6 +21,12 @@ vi.mock("@/api-server/hive/sso", () => ({
     authOptions: {},
 }));
 
+import { requireJsonObjectBody } from "@/api-server/common";
+import { sanitizeUpdatePayload } from "@/api-server/gantt/db-base";
+import {
+    ganttEventsSchema,
+    ganttModulesSchema,
+} from "@/api-server/gantt/schema";
 import { buildGantCollectionRoutes } from "@/app/api/gantt/base-collection";
 import { buildGantItemRoutes } from "@/app/api/gantt/base-item";
 import { buildGantAllocateTimeRoutes } from "@/app/api/gantt/base-allocate-time";
@@ -216,5 +222,62 @@ describe("Base Gantt Link Routes", () => {
         const data = await response.json();
         expect(response.status).toBe(200);
         expect(data.data).toEqual({ unlinked: true, id: "1" });
+    });
+});
+
+describe("sanitizeUpdatePayload (#519)", () => {
+    it("drops unknown and server-owned fields", () => {
+        const result = sanitizeUpdatePayload(
+            ganttModulesSchema,
+            {
+                id: "mod_evil",
+                createdAt: new Date(0),
+                updatedAt: new Date(0),
+                title: "New title",
+                notAColumn: "ignored",
+            },
+            "מודול",
+        );
+
+        expect(result).toEqual({ title: "New title" });
+    });
+
+    it("rejects a value outside an enum column's members", () => {
+        expect(() =>
+            sanitizeUpdatePayload(
+                ganttEventsSchema,
+                { type: "definitely-not-a-type" },
+                "אירוע",
+            ),
+        ).toThrow();
+    });
+});
+
+describe("requireJsonObjectBody (#522)", () => {
+    const bodyRequest = (raw: string) =>
+        new NextRequest("http://localhost/api/anything", {
+            body: raw,
+            method: "POST",
+        });
+
+    it("returns the parsed object for a well-formed body", async () => {
+        await expect(
+            requireJsonObjectBody(bodyRequest('{"a":1}')),
+        ).resolves.toEqual({ a: 1 });
+    });
+
+    it.each(["null", "[]", '"a string"', "7"])(
+        "rejects the non-object body %s",
+        async (raw) => {
+            await expect(
+                requireJsonObjectBody(bodyRequest(raw)),
+            ).rejects.toThrow();
+        },
+    );
+
+    it("rejects a malformed body", async () => {
+        await expect(
+            requireJsonObjectBody(bodyRequest("{oops")),
+        ).rejects.toThrow();
     });
 });

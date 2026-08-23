@@ -78,7 +78,7 @@ export type GanttEventId = GanttEvent["id"];
  * @param type The ModuleEventType to check.
  * @returns The default `splitAcrossBreaks` value for that type.
  */
-export function defaultSplitAcrossBreaks(type: ModuleEventType): boolean
+export function defaultModuleEventSplitAcrossBreaks(type: ModuleEventType): boolean
 {
     return type === ModuleEventType.Exercise;
 }

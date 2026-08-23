@@ -4,7 +4,9 @@ import { DbEventDocument } from "@/api-server/db-event";
 import { BaseDbDocument } from "@/api-server/gantt/db-base";
 import { ClientApiError } from "@/api-shared/errors";
 import { CalendarDraft, CalendarSnapshot } from "@/api-shared/types";
+import { CLI_HANDOFF_TTL_SECONDS, CliHandoffCode } from "@/api-shared/types/cli-handoff";
 import { Course } from "@/api-shared/types/course";
+import { CurriculumCutClaim } from "@/api-shared/types/curriculum-cut";
 import { CustomColor } from "@/api-shared/types/custom-color";
 import { EventHistoryEntry } from "@/api-shared/types/event-history";
 import {
@@ -26,6 +28,7 @@ import {
     RoomSource,
 } from "@/api-shared/types/room";
 import { Setting } from "@/api-shared/types/settings/settings";
+import { logger } from "@/logging/pino";
 
 export type RoomExtendedInfoDocument = RoomExtendedInfo & {
     roomId: RoomId;
@@ -170,6 +173,15 @@ class DatabaseController {
     public get hiveLessonActivations(): Collection<HiveLessonActivation> {
         return this.bluzDb.collection("hiveLessonActivations");
     }
+    /**
+     * Claims of the one-shot curriculum cut. Like the activation ledger above,
+     * the unique index is the concurrency control — an unlocked
+     * check-then-insert let two concurrent cuts both pass the guard and each
+     * insert the whole schedule (#515).
+     */
+    public get curriculumCuts(): Collection<CurriculumCutClaim> {
+        return this.bluzDb.collection("curriculumCuts");
+    }
     public get client(): MongoClient {
         return getMongoClient();
     }
@@ -188,13 +200,40 @@ function ensureIndexesInBackground(controller: DatabaseController): void {
     if (indexedDbNames.has(controller.dbName)) return;
     indexedDbNames.add(controller.dbName);
 
-    void Promise.all([
-        // Every event read/update path filters on the client-generated `id`.
-        controller.events.createIndex({ id: 1 }),
+    void Promise.allSettled([
+        // Every event read/update path filters on the client-generated `id`,
+        // and `id` is the document's real identity: creates blind-insert a
+        // client-generated UUID, so without uniqueness two concurrent PUTs of
+        // the same id produced two documents and every later read/update
+        // silently picked an arbitrary copy (#514).
+        //
+        // On a database that already holds duplicates this createIndex fails —
+        // as does the case where the old non-unique `{ id: 1 }` index is still
+        // present (IndexOptionsConflict). Both are logged below; the fix is to
+        // de-duplicate and drop the stale index once, not to weaken this.
+        controller.events.createIndex({ id: 1 }, { unique: true }),
         // Calendar views fetch by date window (getDbEventsInRange).
         controller.events.createIndex({ startTime: 1, endTime: 1 }),
-        // Snapshot listing sorts newest-first.
+        // The cut, reload and execution paths all scan for events that came
+        // from the gantt; without this they walk the whole collection (#538
+        // item 7). Sparse: only cut events carry the field.
+        controller.events.createIndex(
+            { ganttEventId: 1 },
+            { sparse: true },
+        ),
+        // Reservation conflict checks filter by room and overlap window.
+        controller.reservations.createIndex({ roomId: 1, start: 1 }),
+        // Snapshot listing sorts newest-first, scoped to an iteration.
         controller.calendarSnapshots.createIndex({ createdAt: -1 }),
+        controller.calendarSnapshots.createIndex({
+            iterationId: 1,
+            createdAt: -1,
+        }),
+        // Draft listing sorts newest-updated-first, scoped to an iteration.
+        controller.calendarDrafts.createIndex({
+            iterationId: 1,
+            updatedAt: -1,
+        }),
         // History is always read per event, newest-first.
         controller.eventHistory.createIndex({ eventId: 1, changedAt: -1 }),
         // The activation ledger's uniqueness *is* the concurrency control for
@@ -211,11 +250,19 @@ function ensureIndexesInBackground(controller: DatabaseController): void {
             { activatedAt: 1 },
             { expireAfterSeconds: 7 * 24 * 60 * 60 },
         ),
-    ]).catch((error) => {
-        console.error(
-            `Failed to ensure Mongo indexes on "${controller.dbName}"`,
-            error,
-        );
+        // The cut claim's uniqueness is what makes a cut one-shot under
+        // concurrency (#515).
+        controller.curriculumCuts.createIndex(
+            { curriculumId: 1 },
+            { unique: true },
+        ),
+    ]).then((results) => {
+        // allSettled, not all: one failing index must not skip the rest.
+        for (const result of results) {
+            if (result.status === "rejected") {
+                logger.error({ err: result.reason }, `Failed to ensure a Mongo index on "${controller.dbName}"`);
+            }
+        }
     });
 }
 
@@ -271,6 +318,14 @@ class MetaController {
             "googleCalendarLinks",
         );
     }
+    /**
+     * Outstanding CLI login handoff codes (#520). `findOneAndDelete` by
+     * `code` is both the lookup and the single-use guard — the same
+     * insert/delete-as-claim pattern as `curriculumCuts`.
+     */
+    public get cliHandoffCodes(): Collection<CliHandoffCode> {
+        return this.metaDb.collection<CliHandoffCode>("cliHandoffCodes");
+    }
     public get client(): MongoClient {
         // Never the module-level handle: if the first connect failed, that one
         // is a closed topology forever, and `client.startSession()` throws.
@@ -287,14 +342,35 @@ export function getMetaController(): MetaController {
         if (!process.env.VITEST) {
             // The registry is consulted on every iteration-scoped request.
             void Promise.all([
-                _metaController.iterations.createIndex({ id: 1 }),
+                // Unique: the registry is keyed by `id`, and the register
+                // path was an unlocked check-then-insert, so two concurrent
+                // registrations could both pass the clash check and leave two
+                // documents that corrupt every later findOne (#538 item 1).
+                _metaController.iterations.createIndex(
+                    { id: 1 },
+                    { unique: true },
+                ),
                 _metaController.iterations.createIndex({ isCurrent: 1 }),
                 _metaController.googleCalendarLinks.createIndex(
                     { userId: 1 },
                     { unique: true },
                 ),
+                // Lookup key for redemption; also makes the insert path safe
+                // against a (astronomically unlikely) code collision.
+                _metaController.cliHandoffCodes.createIndex(
+                    { code: 1 },
+                    { unique: true },
+                ),
+                // Backstop for codes nobody redeems. Redemption itself also
+                // checks `createdAt` against CLI_HANDOFF_TTL_SECONDS so
+                // expiry is enforced immediately, not just at the next TTL
+                // sweep (Mongo runs that on a ~60s cadence).
+                _metaController.cliHandoffCodes.createIndex(
+                    { createdAt: 1 },
+                    { expireAfterSeconds: CLI_HANDOFF_TTL_SECONDS },
+                ),
             ]).catch((error) => {
-                console.error("Failed to ensure iteration registry indexes", error);
+                logger.error({ err: error }, "Failed to ensure iteration registry indexes");
             });
         }
     }
@@ -306,16 +382,27 @@ export function getMetaController(): MetaController {
 let _currentIterationDbName: string = DEFAULT_ITERATION_DB_NAME;
 
 // Cold start / serverless safety: the in-process default can be stale if the
-// current iteration was switched to a custom database in a previous process.
-// On the first default resolve we read `isCurrent` from the registry exactly
-// once and memoize the promise, so subsequent calls stay off the hot path.
+// current iteration was switched to a custom database — by a previous process,
+// or, once Bluz is scaled horizontally, by a sibling replica that is serving
+// right now. `setCurrentIterationDbName` only mutates the local process, so a
+// permanently memoized probe left every other replica *writing* to the previous
+// iteration's database until it restarted (#513). The probe is therefore
+// memoized for at most CURRENT_ITERATION_MEMO_TTL_MS: still off the hot path
+// for a burst of requests, but self-healing within a few seconds.
+const CURRENT_ITERATION_MEMO_TTL_MS = 15_000;
 let _currentInitPromise: null | Promise<void> = null;
+let _currentInitAt = 0;
 
 async function ensureCurrentIterationResolved(): Promise<void> {
     // Unit tests run without Mongo; the registry is mocked where it matters, so
     // skip the probe to keep the default fast and deterministic.
     if (process.env.VITEST) return;
-    if (_currentInitPromise) return await _currentInitPromise;
+    if (
+        _currentInitPromise &&
+        Date.now() - _currentInitAt < CURRENT_ITERATION_MEMO_TTL_MS
+    ) {
+        return await _currentInitPromise;
+    }
     let failed = false;
     const probe: Promise<void> = (async () => {
         try {
@@ -332,17 +419,23 @@ async function ensureCurrentIterationResolved(): Promise<void> {
         }
     })();
     _currentInitPromise = probe;
+    _currentInitAt = Date.now();
     await probe;
-    // Clear the memo so a later request probes again. An explicit switch that
+    // Clear the memo so the next request probes again. An explicit switch that
     // landed meanwhile owns the memo, so only drop it if it is still ours.
-    if (failed && _currentInitPromise === probe) _currentInitPromise = null;
+    if (failed && _currentInitPromise === probe) {
+        _currentInitPromise = null;
+        _currentInitAt = 0;
+    }
 }
 
 /** Update the cached current-iteration database (called after a setCurrent). */
 export function setCurrentIterationDbName(dbName: string) {
     _currentIterationDbName = dbName;
-    // A subsequent registry probe must not clobber an explicit switch.
+    // A subsequent registry probe must not clobber an explicit switch — but the
+    // TTL still applies, so a switch made by another replica is picked up.
     _currentInitPromise = Promise.resolve();
+    _currentInitAt = Date.now();
 }
 
 /** The database name backing the current (writable) iteration. */

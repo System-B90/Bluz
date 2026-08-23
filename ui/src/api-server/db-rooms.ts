@@ -1,5 +1,6 @@
 import { FindOptions, UpdateOptions } from "mongodb";
 
+import { pickFields } from "@/api-server/common";
 import {
     databaseController,
     DatabaseController,
@@ -8,6 +9,16 @@ import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils"
 import { ClientApiError } from "@/api-shared/errors";
 import { CustomRoom } from "@/api-shared/types/room";
 import { MessageTypes } from "@/settings";
+
+// Client payloads are copied field-by-field, so the document shape is an
+// explicit allow-list rather than whatever the caller sent (#538 item 4).
+const ROOM_FIELDS = [
+    "id",
+    "name",
+    "description",
+    "source",
+    "extendedInfo",
+] as const;
 
 async function getDbRooms(
     options?: FindOptions,
@@ -40,7 +51,8 @@ async function createDbRoom(
     room: CustomRoom,
     controller: DatabaseController = databaseController,
 ) {
-    await controller.rooms.insertOne(room as CustomRoom);
+    const document = pickFields(room, ROOM_FIELDS);
+    await controller.rooms.insertOne(document as CustomRoom);
     SendServerRequestToSessionServer(MessageTypes.ROOMS_UPDATE, {
         rooms: { [room.id]: room },
     });

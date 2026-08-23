@@ -1,5 +1,6 @@
 import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { getHiveStudents } from "@/api-server/hive/students";
+import { requireStaffSession } from "@/api-server/session-user";
 import {
     ApiHiveStudentsGetPayload,
     ApiHiveStudentsGetResponse,
@@ -11,6 +12,7 @@ type ServerApiHiveStudentsGet = ServerApi<
 >;
 
 export const GET: ServerApiHiveStudentsGet = withApi(async (_request) => {
+    await requireStaffSession();
     const data = await getHiveStudents();
     return ApiSuccess(data);
 });

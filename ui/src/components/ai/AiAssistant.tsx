@@ -196,9 +196,15 @@ export function AiAssistant() {
     // first use, so the capability is probed once per mount.
     React.useEffect(() => {
         let cancelled = false;
-        void fetchAiTools().then((result) => {
-            if (!cancelled) setEnabled(result.enabled);
-        });
+        void fetchAiTools()
+            .then((result) => {
+                if (!cancelled) setEnabled(result.enabled);
+            })
+            .catch(() => {
+                // Transient probe failure (e.g. a 5xx) — leave `enabled` at
+                // its current value rather than treating a blip as "not
+                // configured".
+            });
         return () => {
             cancelled = true;
         };
@@ -333,6 +339,7 @@ export function AiAssistant() {
                                         <Stack direction="row" spacing={1}>
                                             <Button
                                                 color="inherit"
+                                                disabled={busy}
                                                 onClick={reject}
                                                 size="small"
                                             >
@@ -340,6 +347,7 @@ export function AiAssistant() {
                                             </Button>
                                             <Button
                                                 color="warning"
+                                                disabled={busy}
                                                 onClick={approve}
                                                 size="small"
                                                 variant="contained"

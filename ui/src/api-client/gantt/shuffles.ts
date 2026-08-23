@@ -10,7 +10,7 @@ export async function apiGetShuffleUsages(
     if (names.length === 0) return { events: [], modules: [] };
 
     const url = new URL(
-        `/api/gantt/syllabuses/${syllabusId}/shuffles`,
+        `/api/gantt/syllabuses/${encodeURIComponent(syllabusId)}/shuffles`,
         window.location.origin,
     );
     url.searchParams.set("names", names.join(","));
@@ -27,7 +27,7 @@ export async function apiApplyShuffles(
     shuffles: Array<string>,
 ): Promise<ShuffleUsages> {
     return await safeApiFetcher<ShuffleUsages>(
-        `/api/gantt/syllabuses/${syllabusId}/shuffles`,
+        `/api/gantt/syllabuses/${encodeURIComponent(syllabusId)}/shuffles`,
         { method: "POST", body: JSON.stringify({ shuffles }) },
     );
 }

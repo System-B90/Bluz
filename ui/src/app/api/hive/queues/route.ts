@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { createHiveClient } from "@/api-server/hive/session-client";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     ApiHiveQueuesGetPayload,
@@ -20,6 +21,7 @@ type ServerApiHiveQueuesGet = ServerApi<
  * choices that cannot be saved.
  */
 export const GET: ServerApiHiveQueuesGet = withApi(async (request) => {
+    await requireStaffSession();
     const moduleId = Number(new URL(request.url).searchParams.get("module"));
     if (!moduleId) {
         throw new ClientApiError("יש לספק מודול לשליפת התורים.");

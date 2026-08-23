@@ -3,7 +3,6 @@ import { NextRequest } from "next/server";
 
 import { withApi } from "@/api-server/common";
 import { postgresDb } from "@/api-server/gantt";
-import { getConstraintsForCurriculum } from "@/api-server/gantt/db-constraints";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
 import { createHiveClient } from "@/api-server/hive/session-client";
@@ -46,8 +45,6 @@ export const GET = withApi(async (request: NextRequest, context: RouteContext) =
         .select()
         .from(ganttCurriculumEventDayMappingsSchema)
         .where(eq(ganttCurriculumEventDayMappingsSchema.curriculumId, cid));
-
-    await getConstraintsForCurriculum(cid);
 
     const workbook = await buildGanttExcelWorkbook(
         curriculum,

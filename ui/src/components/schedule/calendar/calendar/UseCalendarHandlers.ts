@@ -190,7 +190,21 @@ export function useCalendarHandlers(
                         parsedRoomId.id === DUMMY_ROOM_ID ? [] : [parsedRoomId];
                 }
 
-                const { id: _, ...rest } = currentCopied;
+                // Strip id plus everything that identifies the *source*
+                // event rather than the pasted copy: locked/hidden/fake
+                // are per-event display state, and ganttEventId/
+                // ganttOccurrenceDate are gantt-cut provenance (see
+                // EventFactory.ts's invariant) — carrying them over would
+                // make the paste masquerade as the original event.
+                const {
+                    id: _id,
+                    locked: _locked,
+                    hidden: _hidden,
+                    fake: _fake,
+                    ganttEventId: _ganttEventId,
+                    ganttOccurrenceDate: _ganttOccurrenceDate,
+                    ...rest
+                } = currentCopied;
                 const newEvent = {
                     ...rest,
                     startTime: newStart, // Keep Dayjs objects to align with the Event type signature

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
 import { runLessonActivationTick } from "@/api-server/hive/lesson-activation";
 import { resolveWritableIterationFromRequest } from "@/api-server/iteration-request";
+import { requireStaffSession } from "@/api-server/session-user";
 import { HiveActivationTickResult } from "@/api-shared/types/hive-activation";
 
 type ServerApiLessonActivationRun = ServerApi<void, HiveActivationTickResult>;
@@ -18,6 +19,7 @@ type ServerApiLessonActivationRun = ServerApi<void, HiveActivationTickResult>;
  * suite) find out whether the event was even considered, and why not.
  */
 export const POST: ServerApiLessonActivationRun = withApi(async (request) => {
+    await requireStaffSession();
     // Same guard as any other write: only the writable (current) iteration
     // may drive Hive, and only an authenticated session gets here.
     const { controller } = await resolveWritableIterationFromRequest(request);

@@ -1052,6 +1052,26 @@ describe("solveConstraints", () => {
         expect(result.violations).toEqual([]);
     });
 
+    it("does not mutate the caller's placement objects (#544/16)", () => {
+        const callerPlacement = placement("e1", "d0", 0);
+        const snapshot = { ...callerPlacement };
+
+        const result = solveConstraints({
+            placements: [callerPlacement],
+            days,
+            entities: [
+                { id: "e1", title: "e1", constraints: [temporal([GanttDayIndex.Tuesday])] },
+            ],
+            eventIdsByModule: {},
+            titleByEventId: { e1: "e1" },
+        });
+
+        // The pass still proposes the move...
+        expect(result.proposals).toHaveLength(1);
+        // ...but the caller's own placement object is untouched.
+        expect(callerPlacement).toEqual(snapshot);
+    });
+
     it("reports a violation when no allowed day exists in the week", () => {
         const result = solveConstraints({
             placements: [placement("e1", "d0", 0)],

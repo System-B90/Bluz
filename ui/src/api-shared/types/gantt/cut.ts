@@ -205,11 +205,23 @@ export class CurriculumCutError
     }
 }
 
+/**
+ * Every valid {@link CurriculumCutErrorCode}, so the type guard below can
+ * check the payload actually carries one of *this* error's codes rather than
+ * just "some string" — `CurriculumPullBackErrorCode`/`CurriculumReloadErrorCode`
+ * share several code values ("no-iteration", "invalid-plan", ...), so a bare
+ * `typeof code === "string"` check can't tell them apart.
+ */
+const CURRICULUM_CUT_ERROR_CODES: ReadonlySet<string> = new Set<
+    CurriculumCutErrorCode
+>(["already-cut", "draft", "invalid-plan", "no-iteration"]);
+
 /** Narrows a caught {@link ClientApiError} to one carrying a cut error code. */
 export function isCurriculumCutErrorPayload(
     error: ClientApiError,
 ): error is ClientApiError & ApiCurriculumCutError {
-    return typeof (error as Partial<ApiCurriculumCutError>).code === "string";
+    const { code } = error as Partial<ApiCurriculumCutError>;
+    return typeof code === "string" && CURRICULUM_CUT_ERROR_CODES.has(code);
 }
 
 /**
@@ -230,9 +242,14 @@ export class CurriculumPullBackError
     }
 }
 
+const CURRICULUM_PULL_BACK_ERROR_CODES: ReadonlySet<string> = new Set<
+    CurriculumPullBackErrorCode
+>(["no-iteration", "not-cut"]);
+
 /** Narrows a caught {@link ClientApiError} to one carrying a pull-back code. */
 export function isCurriculumPullBackErrorPayload(
     error: ClientApiError,
 ): error is ClientApiError & ApiCurriculumPullBackError {
-    return typeof (error as Partial<ApiCurriculumPullBackError>).code === "string";
+    const { code } = error as Partial<ApiCurriculumPullBackError>;
+    return typeof code === "string" && CURRICULUM_PULL_BACK_ERROR_CODES.has(code);
 }

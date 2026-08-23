@@ -11,7 +11,7 @@ import Typography from "@mui/material/Typography";
 
 import
 {
-    defaultSplitAcrossBreaks,
+    defaultModuleEventSplitAcrossBreaks,
     GanttEvent,
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
@@ -61,7 +61,7 @@ export function EventDetailsForm({
                             const type = e.target.value as ModuleEventType;
                             commit({
                                 type,
-                                splitAcrossBreaks: defaultSplitAcrossBreaks(type),
+                                splitAcrossBreaks: defaultModuleEventSplitAcrossBreaks(type),
                             });
                         } }
                         value={ event.type }

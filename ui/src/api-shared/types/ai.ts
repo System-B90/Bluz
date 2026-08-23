@@ -134,7 +134,18 @@ export type AiStreamEvent =
           model: string;
           usage?: AiUsage;
       }
-    | { type: AiStreamEventType.Error; message: string }
+    | {
+          type: AiStreamEventType.Error;
+          message: string;
+          /**
+           * The turn's produced messages so far, if any tool calls ran before
+           * the failure. Optional: a pre-stream failure (auth, validation)
+           * has none. When present the client should still append it to the
+           * transcript before showing the error, so a retried turn does not
+           * replay tool calls the server already executed.
+           */
+          messages?: Array<AiMessage>;
+      }
     | {
           type: AiStreamEventType.ToolProposal;
           toolCallId: string;
@@ -167,3 +178,10 @@ export const AI_MAX_MESSAGE_LENGTH = 16_000;
  * tool would otherwise bill indefinitely.
  */
 export const AI_MAX_TOOL_ITERATIONS = 8;
+
+/**
+ * Upstream completion cap, sent as `max_tokens` on every model call. Without
+ * it a runaway or adversarial prompt has no ceiling on the bill for a single
+ * response.
+ */
+export const AI_MAX_RESPONSE_TOKENS = 2_000;

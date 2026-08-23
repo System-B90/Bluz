@@ -164,8 +164,13 @@ export function solveConstraints(
     const proposals: Array<ConstraintMoveProposal> = [];
     const violations: Array<ConstraintViolation> = [];
 
+    // `propose` mutates a placement's dayId/dayOrdinal/dayIndex in place as
+    // it accepts a move — clone each placement here rather than reusing the
+    // caller's own objects, so this "side-effect free" pass actually is one
+    // from the caller's point of view. The proposals/violations arrays
+    // already carry everything the caller needs to know what moved.
     const placementByEvent = new Map(
-        input.placements.map((placement) => [placement.eventId, placement]),
+        input.placements.map((placement) => [placement.eventId, { ...placement }]),
     );
     // Working copy of day load so successive proposals do not all target the
     // same slack.

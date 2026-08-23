@@ -6,6 +6,7 @@ import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     ApiCourseCreatePayload,
@@ -33,12 +34,14 @@ type ServerApiCourseDelete = ServerApi<
 >;
 
 export const GET: ServerApiCourseGet = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } = await resolveIterationFromRequest(request);
     const data = await DbCourses.get(undefined, controller);
     return ApiSuccess(data);
 });
 
 export const POST: ServerApiCourseUpdate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const course = await request.json();
@@ -50,6 +53,7 @@ export const POST: ServerApiCourseUpdate = withApi(async (request) => {
 });
 
 export const DELETE: ServerApiCourseDelete = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const courseId = await request.json();
@@ -61,6 +65,7 @@ export const DELETE: ServerApiCourseDelete = withApi(async (request) => {
 });
 
 export const PUT: ServerApiCourseCreate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const course = await request.json();

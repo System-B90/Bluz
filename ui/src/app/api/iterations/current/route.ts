@@ -32,6 +32,7 @@ async function resolveTargetId(): Promise<IterationId> {
 // Null (not an error) when the registry is empty — a fresh install the UI
 // prompts to set up rather than an outage (#471).
 export const GET: ServerApiCurrentIteration = withApi(async (_request) => {
+    await requireStaffSession();
     return ApiSuccess(await DbIterations.currentOrNull());
 });
 

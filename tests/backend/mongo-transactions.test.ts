@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { logger } from "@/logging/pino";
 
 import {
     isTransactionUnsupportedError,
@@ -108,7 +109,8 @@ describe("withOptionalTransaction", () => {
     });
 
     it("re-runs the operation without a session on a standalone (#472)", async () => {
-        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        // api-server logs through pino now, not console (#538 item 13).
+        const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
         const operation = vi.fn(async (session?: unknown) =>
             session ? "with-session" : "no-session",
         );

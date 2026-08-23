@@ -20,8 +20,8 @@ import
     apiListSnapshots,
     apiRestoreSnapshot,
 } from "@/api-client/calendar-snapshots";
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { CalendarSnapshotSummary } from "@/api-shared/types";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { CalendarStoreMenu } from "@/components/schedule/calendar/calendar/CalendarStoreMenu";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { Event } from "@/components/schedule/types/event";

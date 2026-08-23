@@ -15,8 +15,8 @@ import {
     apiGetMultipleEvents,
     apiUpdateEvent,
 } from "@/api-client/calendar";
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useOffline } from "@/components/base/OfflineProvider";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { EventCollisionsList } from "@/components/schedule/offline-dialogs/push-updates-dialog/EventCollisionsList";
@@ -39,6 +39,7 @@ export function PushOfflineUpdatesDialog() {
         getCapturedState,
         purgeCapturedState,
         purgeCapturedEvents,
+        isEventCreatedLocally,
     } = useOffline();
 
     const { events: localEvents, dispatch } = useCalendar();
@@ -220,7 +221,7 @@ export function PushOfflineUpdatesDialog() {
                 const captured = getCapturedEvent(id) ?? undefined;
 
                 if (local === undefined || captured === undefined) {
-                    if (local !== undefined) return id.includes("-"); // Created locally (UUID format; server IDs have no hyphens)
+                    if (local !== undefined) return isEventCreatedLocally(id); // Created locally (tagged explicitly at creation time)
                     if (captured !== undefined) return true; // Deleted locally
                     return false;
                 }
@@ -267,7 +268,13 @@ export function PushOfflineUpdatesDialog() {
             });
 
             return states;
-        }, [localEvents, getCapturedEvent, getCapturedState, enqueueSnackbar]);
+        }, [
+            localEvents,
+            getCapturedEvent,
+            getCapturedState,
+            isEventCreatedLocally,
+            enqueueSnackbar,
+        ]);
 
     const checkRef = useRef(checkEventCollisionStates);
     useEffect(() => {

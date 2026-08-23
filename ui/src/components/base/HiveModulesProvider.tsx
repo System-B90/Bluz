@@ -9,10 +9,10 @@ import {
     useState,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { apiGetModules } from "@/api-client/hive";
 import { Module, ModuleLike } from "@/api-shared/types/module";
 import { SubjectLike } from "@/api-shared/types/subject";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 
 export type HiveModulesContextState = {
     default: boolean;
@@ -78,15 +78,20 @@ export const HiveModulesProvider = ({
         loadModules();
     }, [loadModules]);
 
+    // A fresh object literal here re-renders every consumer app-wide on
+    // every render of this provider. Memoize like SettingsProvider.tsx.
+    const value = useMemo(
+        () => ({
+            default: false,
+            modules,
+            getModule,
+            getModulesOfSubject,
+        }),
+        [modules, getModule, getModulesOfSubject],
+    );
+
     return (
-        <HiveModulesContext.Provider
-            value={{
-                default: false,
-                modules,
-                getModule,
-                getModulesOfSubject,
-            }}
-        >
+        <HiveModulesContext.Provider value={value}>
             {children}
         </HiveModulesContext.Provider>
     );

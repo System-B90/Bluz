@@ -8,10 +8,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSnackbar } from "notistack";
 import { Suspense, useEffect, useRef, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { ErrorSurface } from "@/components/errors/ErrorSurface";
 import { CurriculumFab } from "@/components/gantt/curriculum-fab";

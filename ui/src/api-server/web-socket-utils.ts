@@ -1,5 +1,6 @@
 import { WebSocket } from "ws";
 
+import { logger } from "@/logging/pino";
 import {
     getWsAuthKey,
     MessageTypes,
@@ -25,7 +26,7 @@ function flushPending(ws: WebSocket) {
         try {
             ws.send(message);
         } catch (error) {
-            console.error("[WS Server Sender] Failed to flush message:", error);
+            logger.error({ err: error }, "[WS Server Sender] Failed to flush message:");
         }
     }
 }
@@ -44,7 +45,7 @@ function connect(): WebSocket {
 
     const timeout = setTimeout(() => {
         if (ws.readyState !== WebSocket.OPEN) {
-            console.error(
+            logger.error(
                 "[WS Server Sender] Timeout connecting to session server",
             );
             ws.terminate();
@@ -59,7 +60,7 @@ function connect(): WebSocket {
     };
 
     ws.onerror = (err) => {
-        console.error(
+        logger.error(
             `[WS Server Sender] Session server connection error: ${err.message}`,
         );
     };
@@ -109,10 +110,7 @@ export function SendServerRequestToSessionServer(
             socket.send(message);
             return;
         } catch (error) {
-            console.error(
-                `[WS Server Sender] Send failed for "${type}", reconnecting:`,
-                error,
-            );
+            logger.error({ err: error }, `[WS Server Sender] Send failed for "${type}", reconnecting:`);
             socket = null;
         }
     }

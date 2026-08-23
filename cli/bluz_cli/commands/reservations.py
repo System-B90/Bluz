@@ -25,11 +25,20 @@ def list_reservations(
     room_source: int = typer.Option(None, "--room-source", help="0=custom, 1=hive."),
     from_: str = typer.Option(None, "--from", help="ISO start of range."),
     to: str = typer.Option(None, "--to", help="ISO end of range."),
+    iteration: str = typer.Option(
+        None, "--iteration", "--it", help="Iteration id to scope to."
+    ),
     limit: int = LIMIT_OPTION,
     offset: int = OFFSET_OPTION,
 ) -> None:
     """List reservations, optionally filtered by room and date range."""
-    params = {"roomId": room_id, "roomSource": room_source, "from": from_, "to": to}
+    params = {
+        "roomId": room_id,
+        "roomSource": room_source,
+        "from": from_,
+        "to": to,
+        "it": iteration,
+    }
     with state.client() as client:
         show(
             client.get(_BASE, params=params),
@@ -58,6 +67,9 @@ def create(
     ),
     reserver_id: str = typer.Option(..., "--reserver-id", help="Id of the reserver."),
     note: str = typer.Option(None, "--note", help="Optional note."),
+    iteration: str = typer.Option(
+        None, "--iteration", "--it", help="Iteration id to write into."
+    ),
 ) -> None:
     """Create a reservation."""
     payload = {
@@ -71,7 +83,7 @@ def create(
     if note is not None:
         payload["note"] = note
     with state.client() as client:
-        result = client.put(_BASE, json=payload)
+        result = client.put(_BASE, json=payload, params={"it": iteration})
     success("Created reservation")
     show(result)
 
@@ -80,10 +92,13 @@ def create(
 def cancel(
     reservation_id: str = typer.Argument(..., help="Reservation _id to cancel."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation."),
+    iteration: str = typer.Option(
+        None, "--iteration", "--it", help="Iteration id to write into."
+    ),
 ) -> None:
     """Cancel (delete) a reservation."""
     if not yes:
         typer.confirm(f"Cancel reservation {reservation_id}?", abort=True)
     with state.client() as client:
-        client.delete(_BASE, json=reservation_id)
+        client.delete(_BASE, json=reservation_id, params={"it": iteration})
     success(f"Cancelled reservation {reservation_id}")

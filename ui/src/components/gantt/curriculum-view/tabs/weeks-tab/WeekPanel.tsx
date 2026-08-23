@@ -9,12 +9,12 @@ import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     GanttCurriculumId,
     GanttDayId,
     GanttWeekId,
 } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ClosingSaturdayChip } from "@/components/gantt/curriculum-view/tabs/weeks-tab/ClosingSaturdayChip";
 import { DayEntry } from "@/components/gantt/curriculum-view/tabs/weeks-tab/DayEntry";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";

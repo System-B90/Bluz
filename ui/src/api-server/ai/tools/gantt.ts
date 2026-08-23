@@ -12,6 +12,7 @@ import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { getCurriculumExecution } from "@/api-server/gantt/execution";
 import { ClientApiError } from "@/api-shared/errors";
 import { AiToolKind } from "@/api-shared/types/ai";
+import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
 
 /**
@@ -136,7 +137,16 @@ export const cutCurriculumTool: AiTool<CurriculumArgs> = {
 
     async execute(args, context) {
         const id = requireCurriculumId(args, context);
-        const outcome = await cutCurriculumToSchedule(id);
+        // Attribute the cut to the assistant, not to a human pressing "cut"
+        // (#545 item 3).
+        const outcome = await cutCurriculumToSchedule(
+            id,
+            {},
+            {
+                actor: context.actor,
+                initiator: EventChangeInitiator.AiAssistant,
+            },
+        );
 
         // The cut reports refusals (draft gantt, missing iteration, conflicts)
         // in-band rather than throwing; the model has to see that verdict.

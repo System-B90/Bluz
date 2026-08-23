@@ -11,11 +11,14 @@ const customHandler = async (req: Request, context: any) => {
     } catch (error) {
         console.error("NextAuth Handler Error:", error);
 
-        const url = new URL(req.url);
-        if (
-            url.pathname.includes("/api/auth/session") ||
-            url.pathname.includes("/api/auth/_log")
-        ) {
+        // Only a top-level browser navigation can act on an HTML redirect.
+        // Everything else here is a programmatic caller (the session probe,
+        // /api/auth/providers, the CLI), and redirecting those to
+        // /login?error=... turned a real failure into an opaque HTML body
+        // (#539 item 8). Sec-Fetch-Mode tells the two apart; treat a missing
+        // header as programmatic, since every browser navigation sends it.
+        const isNavigation = req.headers.get("sec-fetch-mode") === "navigate";
+        if (!isNavigation) {
             return NextResponse.json(
                 { error: "Authentication service unavailable." },
                 { status: 503 },

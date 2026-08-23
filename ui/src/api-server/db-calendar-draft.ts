@@ -4,7 +4,7 @@ import {
     databaseController,
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
-import { eventDateFixup } from "@/api-shared/calendar";
+import { eventDateFixupToDate } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import { CalendarDraft, CalendarDraftSummary } from "@/api-shared/types";
 import { DbEventDocument } from "@/api-shared/types/event";
@@ -48,7 +48,7 @@ async function createDraft(
         updatedBy: author.displayName,
         updatedById: author.id,
         iterationId,
-        events: events.map(eventDateFixup),
+        events: events.map(eventDateFixupToDate),
     };
 
     await controller.calendarDrafts.insertOne({
@@ -62,10 +62,14 @@ async function createDraft(
 /**
  * Updates an existing shared draft's events (and optionally its label),
  * re-stamping the last editor. Returns the updated summary.
+ *
+ * PATCH semantics: `events === undefined` keeps the stored events untouched.
+ * Replacing them unconditionally meant a label-only update wiped the whole
+ * draft and still reported success (#512).
  */
 async function updateDraft(
     draftId: string,
-    events: Array<DbEventDocument>,
+    events: Array<DbEventDocument> | undefined,
     author: DraftAuthor,
     controller: DatabaseController = databaseController,
     label?: string,
@@ -73,22 +77,25 @@ async function updateDraft(
     if (!draftId) {
         throw new ClientApiError("Draft id is missing.");
     }
-    events = events ?? [];
-    if (events.length > MAX_DRAFT_EVENTS) {
+    if (events !== undefined && events.length > MAX_DRAFT_EVENTS) {
         throw new ClientApiError(
             `Draft exceeds the ${MAX_DRAFT_EVENTS}-event limit.`,
         );
     }
 
-    const fixedEvents = events.map(eventDateFixup);
     const now = new Date().toISOString();
     const setFields: Record<string, unknown> = {
-        events: fixedEvents,
-        eventCount: fixedEvents.length,
         updatedAt: now,
         updatedBy: author.displayName,
         updatedById: author.id,
     };
+    let updatedEventCount: number | undefined;
+    if (events !== undefined) {
+        const fixedEvents = events.map(eventDateFixupToDate);
+        setFields.events = fixedEvents;
+        setFields.eventCount = fixedEvents.length;
+        updatedEventCount = fixedEvents.length;
+    }
     const trimmedLabel = label?.trim();
     if (trimmedLabel) {
         setFields.label = trimmedLabel;
@@ -110,7 +117,7 @@ async function updateDraft(
         updatedBy: result.updatedBy,
         updatedById: result.updatedById,
         iterationId: result.iterationId,
-        eventCount: fixedEvents.length,
+        eventCount: updatedEventCount ?? result.events?.length ?? 0,
     };
 }
 
@@ -162,7 +169,7 @@ async function getDraft(
         updatedBy: doc.updatedBy,
         updatedById: doc.updatedById,
         iterationId: doc.iterationId,
-        events: (doc.events ?? []).map(eventDateFixup),
+        events: (doc.events ?? []).map(eventDateFixupToDate),
     };
 }
 

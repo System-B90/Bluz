@@ -81,6 +81,29 @@ describe("DbPersonalSettings", () => {
             { $set: { userId: "u1", ...settings } },
             { upsert: true },
         );
-        expect(result).toBe(settings);
+        // A copy of what was stored, not the caller's object (#538 item 4).
+        expect(result).toEqual(settings);
+    });
+
+    it("stores only known settings fields", async () => {
+        await DbPersonalSettings.set("u1", {
+            groups: [ "g1" ],
+            instructors: [],
+            favoriteOutsiders: [],
+            somethingElse: "should not be stored",
+        } as never);
+
+        expect(controller.personalSettings.updateOne).toHaveBeenCalledWith(
+            { userId: "u1" },
+            {
+                $set: {
+                    favoriteOutsiders: [],
+                    groups: [ "g1" ],
+                    instructors: [],
+                    userId: "u1",
+                },
+            },
+            { upsert: true },
+        );
     });
 });

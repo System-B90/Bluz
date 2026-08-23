@@ -1,7 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
-import { drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
+import { asWireShape, drizzleOperationsBuilder } from "@/api-server/gantt/db-base";
 import {
     ganttCurriculum2SyllabusesSchema,
     ganttCurriculum2WeeksSchema,
@@ -110,7 +110,7 @@ async function getFullCurriculum(
         throw new ClientApiError(`גאנט עם מזהה ${id} לא נמצא`);
     }
 
-    return result as any;
+    return asWireShape<ApiCurriculum>(result);
 }
 
 /**
@@ -296,22 +296,33 @@ async function duplicateCurriculum(
                 ),
             );
 
-        for (const mapping of sourceMappings) {
+        // Collected then inserted in one statement: an awaited insert per
+        // mapping made duplicating a full curriculum hundreds of sequential
+        // round trips (#538 item 9).
+        const clonedMappings = sourceMappings.flatMap((mapping) => {
             const newModuleId = moduleIdMap.get(mapping.moduleId);
             const newDayId = dayIdMap.get(mapping.dayId);
             // Skip mappings whose module/day fell outside the cloned tree.
-            if (!newModuleId || !newDayId) continue;
+            if (!newModuleId || !newDayId) return [];
 
-            await tx.insert(ganttCurriculumEventDayMappingsSchema).values({
-                id: crypto.randomUUID(),
-                curriculumId: newCurriculumId,
-                moduleId: newModuleId,
-                eventId: mapping.eventId
-                    ? (eventIdMap.get(mapping.eventId) ?? null)
-                    : null,
-                dayId: newDayId,
-                sortOrder: mapping.sortOrder,
-            });
+            return [
+                {
+                    id: crypto.randomUUID(),
+                    curriculumId: newCurriculumId,
+                    moduleId: newModuleId,
+                    eventId: mapping.eventId
+                        ? (eventIdMap.get(mapping.eventId) ?? null)
+                        : null,
+                    dayId: newDayId,
+                    sortOrder: mapping.sortOrder,
+                },
+            ];
+        });
+
+        if (clonedMappings.length > 0) {
+            await tx
+                .insert(ganttCurriculumEventDayMappingsSchema)
+                .values(clonedMappings);
         }
     });
 

@@ -1,9 +1,9 @@
 import { desc, eq, getTableColumns, inArray } from "drizzle-orm";
 import { AnyPgColumn, PgTableWithColumns } from "drizzle-orm/pg-core";
 
-import { postgresDb } from "@/api-server/gantt";
+import { GanttDbExecutor, postgresDb } from "@/api-server/gantt";
 import { ClientApiError } from "@/api-shared/errors";
-import { BasicGantOperations } from "@/api-shared/types/gantt/api-layer";
+import { ApiT, BasicGantOperations } from "@/api-shared/types/gantt/api-layer";
 import {
     BaseGantItem,
     GanttCurriculumId,
@@ -79,6 +79,20 @@ export function sanitizeCreatePayload(
         );
     }
 
+    assertValidEnumValues(columns, data, typeName, "ביצירת");
+
+    return Object.fromEntries(
+        Object.entries(data).filter(([field]) => field in columns),
+    );
+}
+
+/** Rejects a value that is not one of an enum column's declared members. */
+function assertValidEnumValues(
+    columns: Record<string, AnyPgColumn>,
+    data: Record<string, unknown>,
+    typeName: string,
+    action: string,
+): void {
     for (const [name, column] of Object.entries(columns)) {
         const allowed = (column as { enumValues?: Array<string> }).enumValues;
         const value = data[name];
@@ -89,16 +103,58 @@ export function sanitizeCreatePayload(
             !allowed.includes(value)
         ) {
             throw new ClientApiError(
-                `ערך לא חוקי לשדה ${name} ביצירת ${typeName}: "${value}". ` +
+                `ערך לא חוקי לשדה ${name} ${action} ${typeName}: "${value}". ` +
                     `ערכים אפשריים: ${allowed.join(", ")}`,
             );
         }
     }
+}
+
+/**
+ * The update-path counterpart of {@link sanitizeCreatePayload}: same column
+ * allow-list and same enum validation, minus the required-field check (a PATCH
+ * is partial by definition).
+ *
+ * Without it `updateItem` spread the raw client body straight into `.set()`,
+ * so every column except the server-owned three was client-writable and a
+ * typo'd field became an opaque 500 instead of a dropped no-op (#519).
+ */
+export function sanitizeUpdatePayload(
+    table: PgTableWithColumns<any>,
+    data: Record<string, unknown>,
+    typeName: string,
+): Record<string, unknown> {
+    const columns = getTableColumns(table) as Record<string, AnyPgColumn>;
+
+    assertValidEnumValues(columns, data, typeName, "בעדכון");
 
     return Object.fromEntries(
-        Object.entries(data).filter(([field]) => field in columns),
+        Object.entries(data).filter(
+            ([field]) => field in columns && !SERVER_OWNED_COLUMNS.has(field),
+        ),
     );
 }
+/**
+ * Hand a relational-query row out under its `Api*` type.
+ *
+ * The one real difference between the two is the timestamp axis: a row carries
+ * `Date` for `createdAt`/`updatedAt`, while the `Api*` types describe the
+ * *wire* shape, where `JSON.stringify` has already turned those into ISO
+ * strings. They cannot simply be unified - `Api*` lives in api-shared and is
+ * consumed by the browser, which never sees a `Date` - so some assertion is
+ * unavoidable here.
+ *
+ * What this replaces is three anonymous `as any` / `as unknown as` casts that
+ * waived *every* difference silently (#538 item 14). Routing them through one
+ * named helper keeps the waiver greppable and documented. It is still a
+ * waiver: a field renamed on one side of the boundary will not break the
+ * build. Closing that needs the readers to build their result explicitly
+ * rather than returning the row.
+ */
+export function asWireShape<T>(row: unknown): T {
+    return row as T;
+}
+
 export type BaseDbDocument = {
     createdAt: Date;
     updatedAt: Date;
@@ -181,11 +237,26 @@ export function drizzleOperationsBuilder<
     labelColumn,
 }: DrizzleOperationsBuilderProps<TTable>): Omit<
     BasicGantOperations<T, TCreatePayload>,
-    "getItem"
+    "createNewItem" | "getItem" | "updateItem"
 > & {
     attachParentIds: <TItem extends { id: T["id"] }>(
         items: Array<TItem>,
     ) => Promise<Array<TItem>>;
+    /**
+     * Server-side widening of the shared `createNewItem` contract: the second
+     * parameter enlists the create in a caller's transaction (#518). It stays
+     * out of `BasicGantOperations` because that type is shared with the client
+     * layer, which has no database handle to pass.
+     */
+    createNewItem: (
+        payload: TCreatePayload,
+        executor?: GanttDbExecutor,
+    ) => Promise<ApiT<T> | T>;
+    updateItem: (
+        id: T["id"],
+        updates: Partial<T>,
+        executor?: GanttDbExecutor,
+    ) => Promise<T>;
 } {
     type DbTDocument = T & BaseDbDocument;
     type EntityColumns = {
@@ -251,7 +322,12 @@ export function drizzleOperationsBuilder<
         return await attachParentIds(items);
     }
 
-    async function createNewItem(data: TCreatePayload): Promise<DbTDocument> {
+    async function createNewItem(
+        data: TCreatePayload,
+        // Pass a transaction handle to enlist this create in a caller's unit of
+        // work; otherwise it opens its own (#518).
+        executor: GanttDbExecutor = postgresDb,
+    ): Promise<DbTDocument> {
         const id =
             (data as Partial<Pick<T, "id">>).id ||
             `${idPrefix}_${crypto.randomUUID()}`;
@@ -278,7 +354,7 @@ export function drizzleOperationsBuilder<
             typeName,
         );
 
-        return await postgresDb.transaction(async (tx) => {
+        return await executor.transaction(async (tx) => {
             const [newItem] = await tx
                 .insert(table as PgTableWithColumns<any>)
                 .values({
@@ -316,17 +392,19 @@ export function drizzleOperationsBuilder<
     async function updateItem(
         id: T["id"],
         updateData: Partial<T>,
+        // Pass a transaction handle to enlist this update in a caller's unit
+        // of work; otherwise it runs on its own (#538 item 2).
+        executor: GanttDbExecutor = postgresDb,
     ): Promise<DbTDocument> {
         if (!id) throw new ClientApiError(`מזהה נדרש לעדכון ${typeName}`);
 
-        const {
-            id: _id,
-            createdAt: _c,
-            updatedAt: _u,
-            ...safeData
-        } = updateData as Partial<T> & Partial<BaseDbDocument>;
+        const safeData = sanitizeUpdatePayload(
+            table as PgTableWithColumns<any>,
+            updateData as Record<string, unknown>,
+            typeName,
+        );
 
-        const [updatedItem] = await postgresDb
+        const [updatedItem] = await executor
             .update(table as PgTableWithColumns<any>)
             .set({
                 ...safeData,
