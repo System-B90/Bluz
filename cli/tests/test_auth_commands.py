@@ -117,8 +117,11 @@ class _FixedPrompt:
         return self._value
 
 
-def test_login_saves_a_pasted_token_when_automatic_login_fails(tmp_path, monkeypatch):
-    """Automatic callback fails -> the CLI falls back to a pasted secret."""
+def test_login_redeems_a_pasted_handoff_code_when_automatic_login_fails(
+    tmp_path, monkeypatch
+):
+    """Automatic callback fails -> the CLI falls back to a pasted handoff code,
+    which it redeems for the real session token (#520)."""
     _isolate_config(tmp_path, monkeypatch)
 
     from typer.testing import CliRunner
@@ -127,13 +130,20 @@ def test_login_saves_a_pasted_token_when_automatic_login_fails(tmp_path, monkeyp
     from bluz_cli.main import app
 
     # The loopback server yields nothing.
-    monkeypatch.setattr(auth, "_run_callback_server", lambda url: None)
+    monkeypatch.setattr(auth, "_run_callback_server", lambda url, **kw: None)
     prompted = {}
+    redeemed = {}
 
     def fake_secret(**kwargs):
         prompted["message"] = kwargs.get("message")
-        return _FixedPrompt("pasted-token")
+        return _FixedPrompt("handoff-code")
 
+    def fake_redeem(url, code, **kwargs):
+        redeemed["url"] = url
+        redeemed["code"] = code
+        return "pasted-token"
+
+    monkeypatch.setattr(auth, "_redeem_handoff_code", fake_redeem)
     monkeypatch.setattr(auth.inquirer, "secret", fake_secret)
     monkeypatch.setattr(auth.inquirer, "confirm", lambda **kw: _FixedPrompt(False))
 
@@ -144,7 +154,8 @@ def test_login_saves_a_pasted_token_when_automatic_login_fails(tmp_path, monkeyp
     )
 
     assert result.exit_code == 0
-    assert "Session token" in prompted["message"]
+    assert "Handoff code" in prompted["message"]
+    assert redeemed["code"] == "handoff-code"
     reloaded = load_config()
     assert reloaded.url == "https://bluz.example.com"
     assert reloaded.token == "pasted-token"
