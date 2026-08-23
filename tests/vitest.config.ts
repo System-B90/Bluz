@@ -17,6 +17,16 @@ export default defineConfig({
         alias: {
             "@": path.resolve(__dirname, "../ui/src"),
         },
+        server: {
+            deps: {
+                // Inline the shared session-server core so `vi.mock("ws")`
+                // reaches it. Externalized (native-ESM) packages load their own
+                // imports outside vitest's module runner, so without this the
+                // fake ws transport in ws-session-server.test.ts never sees
+                // the core's `new WebSocketServer(...)`.
+                inline: [ "@system-b90/session-ws" ],
+            },
+        },
         // Self-hosted CI runners are shared/resource-constrained; spawning
         // many forks at once starves worker startup and vitest kills them
         // with "Timeout waiting for worker to respond" (flaky CI failures,
