@@ -20,6 +20,7 @@ import pytest
 from typer.testing import CliRunner
 
 from bluz_cli.main import app
+from wire_types import Raw
 
 
 @dataclass
@@ -94,9 +95,13 @@ def stub_bluz():
                         },
                     ),
                 )
-                encoded = json.dumps(payload).encode("utf-8")
+                if isinstance(payload, Raw):
+                    encoded, content_type = payload.payload, payload.content_type
+                else:
+                    encoded = json.dumps(payload).encode("utf-8")
+                    content_type = "application/json; charset=utf-8"
                 self.send_response(status)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Type", content_type)
                 self.send_header("Content-Length", str(len(encoded)))
                 self.end_headers()
                 self.wfile.write(encoded)
