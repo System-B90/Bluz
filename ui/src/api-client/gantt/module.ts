@@ -1,7 +1,8 @@
 import {
+    asDateFixup,
     BaseDocument,
-    baseDocumentFixup,
     clientGantApiBuilder,
+    RawBaseDocument,
 } from "@/api-client/gantt/base";
 import { CreateGanttModulePayload } from "@/api-shared/types/gantt/create-payloads";
 import { GanttModule } from "@/api-shared/types/gantt/models";
@@ -10,7 +11,7 @@ export type ModuleDocument = GanttModule & BaseDocument;
 
 const moduleApi = clientGantApiBuilder<GanttModule, CreateGanttModulePayload>({
     apiBaseUrl: "/api/gantt/modules",
-    dateFixup: baseDocumentFixup as any,
+    dateFixup: asDateFixup<GanttModule & RawBaseDocument>(),
 });
 const { apiList, apiGet, apiCreate, apiUpdate, apiDelete, apiGetMany } =
     moduleApi;

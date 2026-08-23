@@ -1,10 +1,10 @@
-export const dynamic = "force-dynamic";
 
 import assert from "assert";
 
 import { NextRequest, NextResponse } from "next/server";
 
 import { ClientApiError, ForbiddenError, UserNotLoggedInError } from "@/api-shared/errors";
+import { logger } from "@/logging/pino";
 import { CACHE_CONTROL_HTTP_HEADER, IMMUTABLE_CACHE_MAX_TTL } from "@/settings";
 
 export type ApiResponseHeaders = Record<string, string>;
@@ -39,6 +39,53 @@ export function parseJsonBody<T>(text: string): T {
     }
 }
 
+/**
+ * Copy only the listed fields off a client-supplied payload.
+ *
+ * Mongo creates used to persist the request body field-for-field, so a caller
+ * could store arbitrary extra keys on a course/room/outsider/colour document -
+ * including `_id`, which then fights the driver - and any field the app later
+ * gives meaning to was retroactively client-writable (#538 item 4). Postgres
+ * writes get this from `sanitizeCreatePayload`; this is the Mongo counterpart.
+ *
+ * Absent keys stay absent rather than becoming `undefined` values, so an
+ * optional field is not stored as a null-ish key.
+ */
+export function pickFields<T extends object, K extends keyof T>(
+    payload: T,
+    fields: ReadonlyArray<K>,
+): Pick<T, K> {
+    const picked: Partial<Pick<T, K>> = {};
+    for (const field of fields) {
+        if (payload[field] !== undefined) {
+            picked[field] = payload[field];
+        }
+    }
+    return picked as Pick<T, K>;
+}
+
+/**
+ * Read a request body that must be a JSON object, and reject anything else at
+ * the boundary.
+ *
+ * Handlers used to cast `await request.json()` straight to a domain type with
+ * `as`. That is a lie the type system cannot catch: a literal `null` body
+ * survives a `typeof body === "object"` guard and crashes the first
+ * destructuring, an array passes a truthiness check, and wrong-typed fields
+ * travel all the way into Mongo/Postgres and come back as an opaque 500
+ * instead of the 400 the caller earned (#522).
+ *
+ * The returned value is still cast — this validates the *shape*, not the
+ * fields — so callers that care about individual fields must still check them.
+ */
+export async function requireJsonObjectBody<T>(request: Request): Promise<T> {
+    const body = parseJsonBody<unknown>(await request.text());
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+        throw new ClientApiError("Request body must be a JSON object.");
+    }
+    return body as T;
+}
+
 export function ApiResponseMaker<T>(
     data: T,
     cacheControl?: ApiCacheControl,
@@ -56,15 +103,19 @@ export function ApiResponseMaker<T>(
                 !(CACHE_CONTROL_HTTP_HEADER in init.headers),
         );
         if (typeof cacheControl === "string") {
+            // Each shorthand maps to one explicit directive set. The previous
+            // `public, ${cacheControl}` template produced the contradictions
+            // `public, no-store` and `public, no-cache` (#538 item 10) — and
+            // "public" is wrong for those two anyway: an uncacheable response
+            // from behind SSO must not be marked shared-cacheable.
+            const STRING_CACHE_CONTROL: Record<string, string> = {
+                immutable: `public, max-age=${IMMUTABLE_CACHE_MAX_TTL}, immutable`,
+                "must-revalidate": "public, max-age=1, must-revalidate",
+                "no-cache": "private, no-cache",
+                "no-store": "private, no-store",
+            };
             additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
-                `public, ${cacheControl}`;
-            if (cacheControl === "immutable") {
-                additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
-                    `public, max-age=${IMMUTABLE_CACHE_MAX_TTL}, immutable`;
-            } else if (cacheControl === "must-revalidate") {
-                additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
-                    `public, max-age=1, must-revalidate`;
-            }
+                STRING_CACHE_CONTROL[cacheControl];
         } else if (typeof cacheControl === "number") {
             additionalHeaders[CACHE_CONTROL_HTTP_HEADER] =
                 `public, max-age=${cacheControl}, immutable`;
@@ -156,6 +207,16 @@ export function isDatabaseError(e: unknown): boolean {
     );
 }
 
+/**
+ * A Mongo unique-index violation (error code 11000). Unlike the opaque
+ * database errors below this one is entirely the caller's doing — it means the
+ * id they supplied already exists — so it maps to 409, not 500 (#514).
+ */
+export function isDuplicateKeyError(e: unknown): boolean {
+    if (!e || typeof e !== "object") return false;
+    return (e as { code?: unknown }).code === 11000;
+}
+
 export function catchHandler<T extends NextRequest>(request: T, e: unknown) {
     if (e instanceof UserNotLoggedInError) {
         return NextResponse.json(
@@ -186,17 +247,24 @@ export function catchHandler<T extends NextRequest>(request: T, e: unknown) {
         );
     }
 
+    if (isDuplicateKeyError(e)) {
+        return ApiErrorMaker(
+            { name: "ConflictError", message: "מזהה זה כבר קיים" },
+            409,
+        );
+    }
+
     // Raw DB errors are logged server-side but returned as an opaque 500 so no
     // internal schema/constraint details leak to the client (#162).
     if (isDatabaseError(e)) {
-        console.error("catchHandler database error", e);
+        logger.error({ err: e }, "catchHandler database error");
         return ApiErrorMaker(
             { name: "InternalDatabaseError", message: "Internal Database Error" },
             500,
         );
     }
 
-    console.error("catchHandler unexpected error", e);
+    logger.error({ err: e }, "catchHandler unexpected error");
     return ApiErrorMaker(
         { name: "InternalServerError", message: "שגיאה פנימית בשרת" },
         500,

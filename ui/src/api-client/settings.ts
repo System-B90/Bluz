@@ -17,7 +17,7 @@ export async function apiGetSetting<T = ApiSettingGetResponse>(
     props?: ClientApiProps,
 ): Promise<T> {
     return await safeApiFetcher<T>(
-        iterationEndpoint(`/api/settings/${name}`, iterationId),
+        iterationEndpoint(`/api/settings/${encodeURIComponent(name)}`, iterationId),
         props,
     );
 }
@@ -29,7 +29,7 @@ export async function apiSetSetting<T = ApiSettingUpdatePayload>(
     props?: ClientApiProps,
 ): Promise<ApiSettingUpdateResponse> {
     return await safeApiFetcher<ApiSettingUpdateResponse>(
-        iterationEndpoint(`/api/settings/${name}`, iterationId),
+        iterationEndpoint(`/api/settings/${encodeURIComponent(name)}`, iterationId),
         {
             ...props,
             method: "POST",

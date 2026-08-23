@@ -7,6 +7,7 @@ import {
     ganttSyllabus2ModulesSchema,
 } from "@/api-server/gantt/schema";
 import { ganttConstraintsSchema } from "@/api-server/gantt/schema/constraints";
+import { ClientApiError } from "@/api-shared/errors";
 import {
     GanttCurriculumId,
     GanttEventId,
@@ -101,10 +102,16 @@ export async function updateConstraint(
  * @returns The deleted constraint record.
  */
 export async function deleteConstraint(constraintId: string) {
-    return await postgresDb
+    const deleted = await postgresDb
         .delete(ganttConstraintsSchema)
         .where(eq(ganttConstraintsSchema.id, constraintId))
         .returning();
+    // An empty array meant "deleted nothing" but reached the caller as a 200
+    // success, so a wrong id looked like a completed delete (#538 item 11).
+    if (deleted.length === 0) {
+        throw new ClientApiError(`אילוץ ${constraintId} לא נמצא למחיקה`);
+    }
+    return deleted;
 }
 
 /**

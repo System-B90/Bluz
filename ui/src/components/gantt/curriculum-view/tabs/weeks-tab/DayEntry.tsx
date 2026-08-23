@@ -6,8 +6,8 @@ import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import React, { useCallback, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttDayId, GanttDayIndex } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import {
     formatMinutesAsTimeInput,
     parseTimeInputToMinutes,

@@ -10,7 +10,6 @@ import
     useReducer,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
 {
     apiCreateCustomColor,
@@ -20,6 +19,7 @@ import
 } from "@/api-client/custom-colors";
 import { CustomColor } from "@/api-shared/types/custom-color";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { MessageHandlerType } from "@/components/SessionWs";
 import { MessageTypes } from "@/settings";
 
@@ -28,9 +28,12 @@ export type CustomColorsContextState = {
     customColors: Array<CustomColor>;
     isLoading: boolean;
     getCustomColor: (id: string) => CustomColor | null;
-    addCustomColor: (colorData: Omit<CustomColor, "id">) => Promise<void>;
-    updateCustomColor: (color: CustomColor) => Promise<void>;
-    deleteCustomColor: (colorId: string) => Promise<void>;
+    // Resolve to whether the save actually succeeded — errors are reported
+    // via snackbar here and swallowed rather than rethrown, so callers must
+    // check the return value instead of relying on a rejected promise.
+    addCustomColor: (colorData: Omit<CustomColor, "id">) => Promise<boolean>;
+    updateCustomColor: (color: CustomColor) => Promise<boolean>;
+    deleteCustomColor: (colorId: string) => Promise<boolean>;
 };
 
 const CustomColorsContext = createContext<CustomColorsContextState>({
@@ -38,9 +41,9 @@ const CustomColorsContext = createContext<CustomColorsContextState>({
     customColors: [],
     isLoading: false,
     getCustomColor: (_id: string) => null,
-    addCustomColor: async () => { },
-    updateCustomColor: async () => { },
-    deleteCustomColor: async () => { },
+    addCustomColor: async () => false,
+    updateCustomColor: async () => false,
+    deleteCustomColor: async () => false,
 });
 
 type CustomColorsState = {
@@ -199,6 +202,7 @@ export const CustomColorsProvider = ({
                 dispatch({ type: "DELETE_COLOR", payload: id });
                 dispatch({ type: "ADD_COLOR", payload: created });
                 loadCustomColors();
+                return true;
             } catch (error)
             {
                 rollbackAndResync(previous);
@@ -207,6 +211,7 @@ export const CustomColorsProvider = ({
                     `יצירת צבע ${colorData.name} נכשלה!`,
                     error,
                 );
+                return false;
             }
         },
         [ state.customColors, loadCustomColors, rollbackAndResync ],
@@ -228,6 +233,7 @@ export const CustomColorsProvider = ({
                 );
                 dispatch({ type: "UPDATE_COLOR", payload: updated });
                 loadCustomColors();
+                return true;
             } catch (error)
             {
                 rollbackAndResync(previous);
@@ -236,6 +242,7 @@ export const CustomColorsProvider = ({
                     `עדכון צבע ${color.name} נכשל!`,
                     error,
                 );
+                return false;
             }
         },
         [ state.customColors, loadCustomColors, rollbackAndResync ],
@@ -256,6 +263,7 @@ export const CustomColorsProvider = ({
                     variant: "success",
                 });
                 loadCustomColors();
+                return true;
             } catch (error)
             {
                 rollbackAndResync(previous);
@@ -264,6 +272,7 @@ export const CustomColorsProvider = ({
                     `מחיקת צבע ${name} נכשלה!`,
                     error,
                 );
+                return false;
             }
         },
         [ state.customColors, loadCustomColors, rollbackAndResync ],

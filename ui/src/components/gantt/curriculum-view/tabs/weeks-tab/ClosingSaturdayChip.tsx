@@ -5,8 +5,8 @@ import Tooltip from "@mui/material/Tooltip";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttWeekId } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useCurriculumWeek } from "@/components/gantt/state/hooks/UseWeek";
 

@@ -10,7 +10,7 @@ import {
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
-import { eventDateFixup } from "@/api-shared/calendar";
+import { eventDateFixupToDate } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     EventAddedOrRemovedMessage,
@@ -113,7 +113,7 @@ async function setDbEvent(
         );
     }
 
-    const fixedEvent = eventDateFixup(eventData);
+    const fixedEvent = eventDateFixupToDate(eventData);
     const { id: eventId, ...updatePayload } = fixedEvent;
 
     // Read the stored copy first so the change log can diff before/after. The
@@ -184,7 +184,7 @@ async function createDbEvent(
 
     // Fix dates and explicitly preserve the client-generated UUID in the id field
     const fixedEvent = {
-        ...eventDateFixup(updatePayload),
+        ...eventDateFixupToDate(updatePayload),
         id: eventId,
     };
 

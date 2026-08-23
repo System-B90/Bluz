@@ -259,12 +259,10 @@ export function BluzCalendar({
             {/* Floating controls in top-left corner (only when toolbar is hidden / in fullscreen) */}
             {isFullscreen || !showToolbar ? (
                 <Box
-                    style={{
+                    sx={{
                         position: "absolute",
                         top: 12,
                         insetInlineStart: 16,
-                    }}
-                    sx={{
                         zIndex: 100,
                         display: "flex",
                         alignItems: "center",
@@ -284,7 +282,7 @@ export function BluzCalendar({
                 >
                     {/* Filter indicator */}
                     {hasAnyFilter && (isFullscreen || !showToolbar) ? (
-                        <Tooltip title="יש סננים פעילים">
+                        <Tooltip title="יש מסננים פעילים">
                             <Box
                                 sx={{
                                     display: "flex",

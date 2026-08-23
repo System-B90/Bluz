@@ -11,6 +11,7 @@ import {
     eventQueueCourseIds,
 } from "@/api-shared/types/event";
 import { Class, LessonRule } from "@/api-shared/types/hive";
+import { logger } from "@/logging/pino";
 
 /**
  * Marks a Hive lesson as owned by a Bluz event. Bluz only ever renames,
@@ -225,11 +226,11 @@ export function syncEventLessonToHive(
 
             // Nobody watches this run, and a queue that silently fails to open
             // is the failure mode that matters — so say what happened.
-            console.info(
+            logger.info(
                 `Hive lesson sync (${action}) for event ${event.id}: lesson ${lessonId ?? "none"}`,
             );
         } catch (error) {
-            console.warn("Hive lesson sync skipped:", error);
+            logger.warn({ err: error }, "Hive lesson sync skipped:");
         }
     })();
 }

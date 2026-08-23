@@ -203,8 +203,10 @@ export const createEventTool: AiTool<CreateEventArgs> = {
 
     async execute(args, context) {
         // Bluz events carry a client-generated UUID; the store rejects a
-        // document without one.
-        const event = {
+        // document without one. Every field DbEventDocument requires is set
+        // directly here — no `as unknown as` — so a future field added to the
+        // schema fails typecheck instead of silently defaulting to undefined.
+        const event: DbEventDocument = {
             id: crypto.randomUUID(),
             name: args.name,
             subject: 0,
@@ -222,7 +224,7 @@ export const createEventTool: AiTool<CreateEventArgs> = {
             required: false,
             personalTalk: false,
             splitAcrossBreaks: false,
-        } as unknown as DbEventDocument;
+        };
 
         const created = await DbEvent.create(
             event,

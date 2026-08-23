@@ -4,6 +4,8 @@ import { fetchCurriculumExecution } from "@/api-client/gantt/execution";
 
 function mockFetch(jsonBody: unknown) {
     return vi.fn(async () => ({
+        ok: true,
+        headers: new Headers({ "content-type": "application/json" }),
         redirected: false,
         json: async () => jsonBody,
     }));

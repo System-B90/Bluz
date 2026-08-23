@@ -58,21 +58,23 @@ const ALL_DAY_INDICES: Array<GanttDayIndex> = [
     GanttDayIndex.Saturday,
 ];
 
-/**
- * Weekdays a set of temporal constraints permits: intersects every
- * `allowedDays`, then subtracts every `forbiddenDays`. `null` means
- * unrestricted (no temporal constraints) — recurrence echoing and other
- * callers should skip filtering entirely rather than treat it as "no days
- * allowed".
- */
-export function getAllowedDayIndices(
-    constraints: Array<GanttConstraint | undefined> | undefined,
-): null | Set<GanttDayIndex> {
-    const temporal = (constraints ?? []).filter(
+function filterTemporalConstraints(
+    constraints: Array<GanttConstraint | undefined>,
+): Array<TemporalConstraint> {
+    return constraints.filter(
         (c): c is TemporalConstraint => c?.type === ConstraintType.Temporal,
     );
-    if (temporal.length === 0) return null;
+}
 
+/**
+ * Intersects every `allowedDays` across the given temporal constraints, then
+ * subtracts every `forbiddenDays`. Shared by {@link getAllowedDayIndices} and
+ * {@link hasConflictingTemporalConstraints}, which both reduce to this same
+ * intersect-then-subtract pass over the same day-of-week domain.
+ */
+function intersectAllowedDayIndices(
+    temporal: Array<TemporalConstraint>,
+): Set<GanttDayIndex> {
     let allowed = new Set<GanttDayIndex>(ALL_DAY_INDICES);
     for (const constraint of temporal) {
         if (constraint.allowedDays && constraint.allowedDays.length > 0) {
@@ -92,6 +94,21 @@ export function getAllowedDayIndices(
 }
 
 /**
+ * Weekdays a set of temporal constraints permits: intersects every
+ * `allowedDays`, then subtracts every `forbiddenDays`. `null` means
+ * unrestricted (no temporal constraints) — recurrence echoing and other
+ * callers should skip filtering entirely rather than treat it as "no days
+ * allowed".
+ */
+export function getAllowedDayIndices(
+    constraints: Array<GanttConstraint | undefined> | undefined,
+): null | Set<GanttDayIndex> {
+    const temporal = filterTemporalConstraints(constraints ?? []);
+    if (temporal.length === 0) return null;
+    return intersectAllowedDayIndices(temporal);
+}
+
+/**
  * Detects mutually conflicting temporal constraints (issue #104): intersects
  * all `allowedDays`, subtracts all `forbiddenDays`, and reports a conflict
  * when no valid day of the week remains. Warning-level only — saving is
@@ -100,27 +117,9 @@ export function getAllowedDayIndices(
 export function hasConflictingTemporalConstraints(
     constraints: Array<GanttConstraint | undefined>,
 ): boolean {
-    const temporal = constraints.filter(
-        (c): c is TemporalConstraint => c?.type === ConstraintType.Temporal,
-    );
+    const temporal = filterTemporalConstraints(constraints);
     if (temporal.length === 0) return false;
-
-    let allowed = new Set<GanttDayIndex>(ALL_DAY_INDICES);
-    for (const constraint of temporal) {
-        if (constraint.allowedDays && constraint.allowedDays.length > 0) {
-            allowed = new Set(
-                [...allowed].filter((day) =>
-                    constraint.allowedDays?.includes(day) ?? false,
-                ),
-            );
-        }
-    }
-    for (const constraint of temporal) {
-        for (const day of constraint.forbiddenDays ?? []) {
-            allowed.delete(day);
-        }
-    }
-    return allowed.size === 0;
+    return intersectAllowedDayIndices(temporal).size === 0;
 }
 
 type ConstraintDisplayState = {
@@ -153,9 +152,9 @@ export function constraintToHumanReadableString(
         }
 
         if (constraint.relation === "after") {
-            return `${ownerTypeName} ${ownerName} יתחיל אחרי ש${targetTypeName} ${constraint.targetId} יסתיים`;
+            return `${ownerTypeName} ${ownerName} יתחיל אחרי ש${targetTypeName} ${target.title} יסתיים`;
         } else if (constraint.relation === "before") {
-            return `${ownerTypeName} ${ownerName} יסתיים לפני ש${targetTypeName} ${constraint.targetId} יתחיל`;
+            return `${ownerTypeName} ${ownerName} יסתיים לפני ש${targetTypeName} ${target.title} יתחיל`;
         }
     } else {
         return "[___]";

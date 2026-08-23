@@ -6,8 +6,8 @@ import {
     apiDeleteEvent,
     apiUpdateEvent,
 } from "@/api-client/calendar";
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { createEventFactory } from "@/components/schedule/calendar/calendar-provider/EventFactory";
 import { CalendarAction } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { Event, EventId } from "@/components/schedule/types/event";
@@ -19,6 +19,7 @@ export const useEventActions = (
     captureEventBeforeEdit: (ev: Event) => void,
     dispatch: (action: CalendarAction) => void,
     remoteDispatch: (action: CalendarAction) => void,
+    markEventCreatedLocally: (eventId: EventId) => void,
 ) => {
     const saveEvent = useCallback(
         (
@@ -35,9 +36,16 @@ export const useEventActions = (
                 updatedAt: Date.now(),
             };
 
-            if (!isNewEvent && offlineMode) {
-                const oldEvent = events.find((ev) => ev.id === newEvent.id);
-                if (oldEvent) captureEventBeforeEdit(oldEvent);
+            if (offlineMode) {
+                if (isNewEvent) {
+                    // Tag explicitly so reconciliation can tell "created
+                    // locally" apart from "modified locally" without
+                    // guessing from id shape.
+                    markEventCreatedLocally(newEvent.id);
+                } else {
+                    const oldEvent = events.find((ev) => ev.id === newEvent.id);
+                    if (oldEvent) captureEventBeforeEdit(oldEvent);
+                }
             }
 
             // Kept for the rollback below: if the server refuses the write, the
@@ -113,7 +121,14 @@ export const useEventActions = (
                     });
             }
         },
-        [events, offlineMode, captureEventBeforeEdit, dispatch, remoteDispatch],
+        [
+            events,
+            offlineMode,
+            captureEventBeforeEdit,
+            markEventCreatedLocally,
+            dispatch,
+            remoteDispatch,
+        ],
     );
 
     // Undo/redo apply their target snapshot to local state instantly (see

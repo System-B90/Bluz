@@ -2,7 +2,7 @@
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useCustomColors } from "@/components/base/CustomColorsProvider";
 import { useHiveSubjects } from "@/components/base/HiveSubjectsProvider";
 import { ColorFormCard, ColorFormCardProps } from "@/components/settings-dialog/tabs/global/color-settings/ColorFormCard";
@@ -102,41 +102,26 @@ export function ColorSettings()
                 return;
             }
 
+            // addCustomColor/updateCustomColor report their own errors via
+            // snackbar and swallow them internally (never reject), so the
+            // try/catch here never caught anything and the form kept
+            // resetting even after a failed save. Check the resolved
+            // success flag instead.
             if (isCreating)
             {
-                try
-                {
-                    await addCustomColor({
-                        name: trimmedName,
-                        hex: trimmedHex,
-                    });
-                    resetForm();
-                } catch (err)
-                {
-                    enqueueApiErrorSnackbar(
-                        enqueueSnackbar,
-                        "שגיאה ביצירת צבע מותאם אישית",
-                        err,
-                    );
-                }
+                const success = await addCustomColor({
+                    name: trimmedName,
+                    hex: trimmedHex,
+                });
+                if (success) resetForm();
             } else if (selectedColor)
             {
-                try
-                {
-                    await updateCustomColor({
-                        id: selectedColor.id,
-                        name: trimmedName,
-                        hex: trimmedHex,
-                    });
-                    resetForm();
-                } catch (err)
-                {
-                    enqueueApiErrorSnackbar(
-                        enqueueSnackbar,
-                        "שגיאה בעדכון צבע מותאם אישית",
-                        err,
-                    );
-                }
+                const success = await updateCustomColor({
+                    id: selectedColor.id,
+                    name: trimmedName,
+                    hex: trimmedHex,
+                });
+                if (success) resetForm();
             }
         },
         [

@@ -9,9 +9,9 @@ import {
     useState,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { getHiveUsers } from "@/api-client/hive";
 import { Clearance, CourseUser } from "@/api-shared/types/hive";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 
 export type HiveUsersContextState = {
     default: boolean;
@@ -71,15 +71,21 @@ export const HiveUsersProvider = ({
         loadUsers();
     }, [loadUsers]);
 
+    // A fresh object literal here re-renders every consumer app-wide on
+    // every render of this provider, including event tiles that read
+    // getInstructor. Memoize like SettingsProvider.tsx.
+    const value = useMemo(
+        () => ({
+            default: false,
+            users,
+            instructors,
+            getInstructor,
+        }),
+        [users, instructors, getInstructor],
+    );
+
     return (
-        <HiveUsersContext.Provider
-            value={{
-                default: false,
-                users,
-                instructors,
-                getInstructor,
-            }}
-        >
+        <HiveUsersContext.Provider value={value}>
             {children}
         </HiveUsersContext.Provider>
     );

@@ -1,6 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import { postgresDb } from "@/api-server/gantt";
+import { GanttDbExecutor, postgresDb } from "@/api-server/gantt";
 import { createCurriculumModuleDayMapping } from "@/api-server/gantt/db-mappings";
 import { DbModuleEvent } from "@/api-server/gantt/db-module-event";
 import { ganttEventRecurrenceExceptionsSchema } from "@/api-server/gantt/schema";
@@ -38,8 +38,8 @@ export async function createRecurrenceException(data: {
     eventId: GanttEventId;
     dayId: GanttDayId;
     materializedEventId?: GanttEventId | null;
-}) {
-    const [exception] = await postgresDb
+}, executor: GanttDbExecutor = postgresDb) {
+    const [exception] = await executor
         .insert(ganttEventRecurrenceExceptionsSchema)
         .values(data)
         .onConflictDoNothing()
@@ -64,44 +64,49 @@ export async function materializeRecurrenceOccurrence(data: {
 
     const sourceEvent = await DbModuleEvent.getItem(eventId);
 
-    const newEvent = await DbModuleEvent.createNewItem({
-        title: sourceEvent.title,
-        type: sourceEvent.type,
-        minimumDuration: sourceEvent.minimumDuration,
-        allocatedDuration: 0,
-        orchestratorId: sourceEvent.orchestratorId,
-        recommendedLecturerIds: sourceEvent.recommendedLecturerIds,
-        systemRequirements: sourceEvent.systemRequirements,
-        roomRequirement: sourceEvent.roomRequirement,
-        recurrence: EventRecurrence.None,
-        recurrenceStartDate: null,
-        recurrenceEndDate: null,
-        isCritical: sourceEvent.isCritical,
-        isPaWindow: sourceEvent.isPaWindow,
-        splitAcrossBreaks: sourceEvent.splitAcrossBreaks,
-        comment: sourceEvent.comment,
-        shuffles: sourceEvent.shuffles,
-        hiveSubjectId: sourceEvent.hiveSubjectId,
-        hiveModuleId: sourceEvent.hiveModuleId,
-        hiveLessonId: sourceEvent.hiveLessonId,
-        moduleId,
-    });
+    // The three writes below are one decision. Run untransacted, a failure
+    // partway through left a dangling standalone event, or an exception row
+    // pointing at nothing (#518).
+    return await postgresDb.transaction(async (tx) => {
+        const newEvent = await DbModuleEvent.createNewItem({
+            title: sourceEvent.title,
+            type: sourceEvent.type,
+            minimumDuration: sourceEvent.minimumDuration,
+            allocatedDuration: 0,
+            orchestratorId: sourceEvent.orchestratorId,
+            recommendedLecturerIds: sourceEvent.recommendedLecturerIds,
+            systemRequirements: sourceEvent.systemRequirements,
+            roomRequirement: sourceEvent.roomRequirement,
+            recurrence: EventRecurrence.None,
+            recurrenceStartDate: null,
+            recurrenceEndDate: null,
+            isCritical: sourceEvent.isCritical,
+            isPaWindow: sourceEvent.isPaWindow,
+            splitAcrossBreaks: sourceEvent.splitAcrossBreaks,
+            comment: sourceEvent.comment,
+            shuffles: sourceEvent.shuffles,
+            hiveSubjectId: sourceEvent.hiveSubjectId,
+            hiveModuleId: sourceEvent.hiveModuleId,
+            hiveLessonId: sourceEvent.hiveLessonId,
+            moduleId,
+        }, tx);
 
-    const [mapping] = await createCurriculumModuleDayMapping({
-        curriculumId,
-        moduleId,
-        eventId: newEvent.id as GanttEventId,
-        dayId,
-    });
+        const [mapping] = await createCurriculumModuleDayMapping({
+            curriculumId,
+            moduleId,
+            eventId: newEvent.id as GanttEventId,
+            dayId,
+        }, tx);
 
-    await createRecurrenceException({
-        curriculumId,
-        eventId,
-        dayId,
-        materializedEventId: newEvent.id as GanttEventId,
-    });
+        await createRecurrenceException({
+            curriculumId,
+            eventId,
+            dayId,
+            materializedEventId: newEvent.id as GanttEventId,
+        }, tx);
 
-    return { event: newEvent, mapping };
+        return { event: newEvent, mapping };
+    });
 }
 
 /**

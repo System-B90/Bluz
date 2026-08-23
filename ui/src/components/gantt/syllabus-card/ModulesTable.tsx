@@ -24,7 +24,6 @@ import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import {
     GanttCurriculumId,
@@ -32,6 +31,7 @@ import {
     GanttSyllabus,
     GanttSyllabusId,
 } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useCurriculumProviderActions } from "@/components/gantt/state/provider";
 import { CreateModuleButton } from "@/components/gantt/syllabus-card/CreateModuleButton";
 import { ModuleRow } from "@/components/gantt/syllabus-card/ModuleRow";

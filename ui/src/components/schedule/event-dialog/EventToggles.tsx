@@ -43,6 +43,17 @@ function ToggleChip({
         <Box
             aria-checked={ checked }
             onClick={ () => onChange(!checked) }
+            onKeyDown={ (e) =>
+            {
+                // role="switch" implies Space/Enter toggle it; a plain Box
+                // has neither keyboard focus nor a key handler by default,
+                // making the chip mouse-only.
+                if (e.key === " " || e.key === "Enter")
+                {
+                    e.preventDefault();
+                    onChange(!checked);
+                }
+            } }
             role="switch"
             sx={ {
                 display: "flex",
@@ -63,6 +74,7 @@ function ToggleChip({
                         : "action.hover",
                 },
             } }
+            tabIndex={ 0 }
         >
             <Icon
                 sx={ {

@@ -2,8 +2,8 @@ import TextField from "@mui/material/TextField";
 import { useSnackbar } from "notistack";
 import { ChangeEventHandler, useCallback, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttSyllabusId } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useSyllabusActions } from "@/components/gantt/state/hooks/gantt-funcs/UseSyllabusActions";
 import { useSyllabus } from "@/components/gantt/state/hooks/UseSyllabus";
 

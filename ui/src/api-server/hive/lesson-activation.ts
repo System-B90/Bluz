@@ -14,6 +14,7 @@ import {
     eventOpensHiveQueue,
 } from "@/api-shared/types/event";
 import { HiveActivationTickResult } from "@/api-shared/types/hive-activation";
+import { logger } from "@/logging/pino";
 
 /*
  * Opening the queue when an event goes live.
@@ -248,7 +249,7 @@ let timer: NodeJS.Timeout | undefined;
 export function startLessonActivationLoop(): void {
     if (timer || process.env.VITEST) return;
     if (!hasHiveServiceCredentials()) {
-        console.info(
+        logger.info(
             "Hive lesson activation disabled: HIVE_API_USERNAME / HIVE_API_PASSWORD are not set",
         );
         return;
@@ -257,10 +258,10 @@ export function startLessonActivationLoop(): void {
     timer = setInterval(() => {
         void runLessonActivationTick().then((result) => {
             if (result.activated > 0 || result.failed > 0) {
-                console.info("Hive lesson activation tick", result);
+                logger.info({ err: result }, "Hive lesson activation tick");
             }
             for (const error of result.errors) {
-                console.warn("Hive lesson activation failure:", error);
+                logger.warn({ err: error }, "Hive lesson activation failure:");
             }
         });
     }, TICK_INTERVAL_MS);

@@ -45,7 +45,14 @@ export const ganttCurriculumEventDayMappingsSchema = pgTable(
         updatedAt: timestamp("ua").defaultNow().notNull(),
     },
     (t) => ({
-        unq: unique().on(t.curriculumId, t.moduleId, t.eventId, t.dayId),
+        // nullsNotDistinct: a module-level mapping carries a NULL eventId,
+        // and Postgres treats NULLs as distinct by default - so the plain
+        // unique constraint let duplicate module-level mappings accumulate for
+        // one (curriculum, module, day), which the isNull update branch then
+        // moved as a group (#538 item 12).
+        unq: unique()
+            .on(t.curriculumId, t.moduleId, t.eventId, t.dayId)
+            .nullsNotDistinct(),
         idxCurriculum: index("cMDA_curriculum_id_idx").on(t.curriculumId),
         idxDay: index("cMDA_day_id_idx").on(t.dayId),
     }),

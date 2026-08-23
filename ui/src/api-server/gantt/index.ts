@@ -34,6 +34,17 @@ const globalCache = globalThis as unknown as {
     __bluzPostgresDb?: PostgresJsDatabase<typeof schema>;
 };
 
+/**
+ * Anything that can run gantt queries: the pool itself, or a transaction
+ * handle. Helpers accept one so a caller can compose several writes into a
+ * single atomic unit instead of each helper opening its own (#518).
+ */
+export type GanttDbExecutor =
+    | Parameters<
+          Parameters<PostgresJsDatabase<typeof schema>["transaction"]>[0]
+      >[0]
+    | PostgresJsDatabase<typeof schema>;
+
 export const postgresDb: PostgresJsDatabase<typeof schema> =
     globalCache.__bluzPostgresDb ?? drizzle(createPostgresClient(), { schema });
 

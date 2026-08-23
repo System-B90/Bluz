@@ -6,6 +6,7 @@ import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     ApiOutsiderCreatePayload,
@@ -36,12 +37,14 @@ type ServerApiOutsiderDelete = ServerApi<
 >;
 
 export const GET: ServerApiOutsidersGet = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } = await resolveIterationFromRequest(request);
     const outsiders = await DbOutsiders.get(undefined, controller);
     return ApiSuccess(outsiders);
 });
 
 export const POST: ServerApiOutsiderUpdate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const outsider = await request.json();
@@ -53,6 +56,7 @@ export const POST: ServerApiOutsiderUpdate = withApi(async (request) => {
 });
 
 export const PUT: ServerApiOutsiderCreate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const outsider = await request.json();
@@ -67,6 +71,7 @@ export const PUT: ServerApiOutsiderCreate = withApi(async (request) => {
 });
 
 export const DELETE: ServerApiOutsiderDelete = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const outsiderId = await request.json();

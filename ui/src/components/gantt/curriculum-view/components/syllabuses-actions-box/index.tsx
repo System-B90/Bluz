@@ -4,8 +4,8 @@ import Divider from "@mui/material/Divider";
 import { useSnackbar } from "notistack";
 import React, { useCallback } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CreateSyllabusButton } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/CreateSyllabusButton";
 import { SyllabusSelectionField } from "@/components/gantt/curriculum-view/components/syllabuses-actions-box/SyllabusSelectionField";

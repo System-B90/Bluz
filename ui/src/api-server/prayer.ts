@@ -2,6 +2,7 @@ import { Dayjs } from "dayjs";
 
 import { DbEvent, DbEventDocument } from "@/api-server/db-event";
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { ClientApiError } from "@/api-shared/errors";
 import { EventDataUpdateMessage } from "@/api-shared/types";
 import {
@@ -54,14 +55,15 @@ async function updatePrayerEvent({
         newConfig,
         updatedEvent.prayerType as keyof PrayerSettings,
     );
-    const startTime = new Date(
-        day.getFullYear(),
-        day.getMonth(),
-        day.getDate(),
-        prayerTime.getHours(),
-        prayerTime.getMinutes(),
-        prayerTime.getSeconds(),
-    );
+    // Venue-local wall-clock placement, same as the creation path (#538 item 5).
+    const startTime = dayjs(day)
+        .tz(APP_TIMEZONE)
+        .startOf("day")
+        .hour(prayerTime.getHours())
+        .minute(prayerTime.getMinutes())
+        .second(prayerTime.getSeconds())
+        .millisecond(0)
+        .toDate();
     const endTime = new Date(startTime.getTime() + 20 * 60 * 1000); // Add 20min
 
     (updatedEvent.startTime as unknown as Date) = startTime;
@@ -84,10 +86,12 @@ async function updatePrayerEventsInDay({
     day: Date;
     newConfig: PrayerSettings;
 }) {
-    // Clone day to avoid mutating caller's date
-    const dayStart = new Date(day);
-    dayStart.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
+    // Day boundaries are venue-local, not server-local, and a DST day is not
+    // 24h long — a fixed millisecond span silently shifted the window across
+    // the spring/autumn transitions (#538 item 5).
+    const venueDay = dayjs(day).tz(APP_TIMEZONE).startOf("day");
+    const dayStart = venueDay.toDate();
+    const endOfDay = venueDay.endOf("day").toDate();
 
     const existingPrayerEvents: Array<PrayerEvent> =
         (await DbEvent.getInRange(
@@ -112,14 +116,14 @@ async function updatePrayerEventsInDay({
                 newConfig,
                 prayerType as keyof PrayerSettings,
             );
-            const startTime = new Date(
-                dayStart.getFullYear(),
-                dayStart.getMonth(),
-                dayStart.getDate(),
-                prayerTime.getHours(),
-                prayerTime.getMinutes(),
-                prayerTime.getSeconds(),
-            );
+            // The configured prayer time is a venue-local wall-clock time, so
+            // it has to be placed on the venue's day, not the server's.
+            const startTime = venueDay
+                .hour(prayerTime.getHours())
+                .minute(prayerTime.getMinutes())
+                .second(prayerTime.getSeconds())
+                .millisecond(0)
+                .toDate();
 
             return {
                 id: crypto.randomUUID(),
@@ -179,14 +183,16 @@ export async function updatePrayerEvents({
     startDate: Date;
     newConfig: PrayerSettings;
 }) {
-    // Clone to avoid mutating the caller's Date
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
+    // Step in venue-local calendar days: adding 24h at a time lands on the
+    // wrong day either side of a DST transition (#538 item 5).
+    const start = dayjs(startDate).tz(APP_TIMEZONE).startOf("day");
 
     await Promise.all(
         Array.from({ length: 7 }, async (_, i) => {
-            const day = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
-            await updatePrayerEventsInDay({ day, newConfig });
+            await updatePrayerEventsInDay({
+                day: start.add(i, "day").toDate(),
+                newConfig,
+            });
         }),
     );
 }

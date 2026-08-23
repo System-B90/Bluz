@@ -2,7 +2,6 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import EventIcon from "@mui/icons-material/Event";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
-import InfoIcon from "@mui/icons-material/Info";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import WifiTetheringIcon from "@mui/icons-material/WifiTethering";
 import WifiTetheringOffIcon from "@mui/icons-material/WifiTetheringOff";
@@ -31,6 +30,7 @@ import {
     PULSING_ICON_BUTTON_SX,
 } from "@/components/schedule/calendar/calendar/toolbar-button-sx";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
+import { EventSegment } from "@/components/schedule/calendar/split/segments";
 
 /**
  * Custom header toolbar for the calendar containing navigation controls, a date picker, and view selectors.
@@ -48,7 +48,7 @@ export function CalendarToolbar({
     onToggleFullscreen,
     onToggleToolbar,
     onExportIcs,
-}: ToolbarProps<any, any> & {
+}: ToolbarProps<EventSegment, object> & {
     showToolbar: boolean;
     onToggleFullscreen: () => void;
     onToggleToolbar: () => void;
@@ -308,18 +308,6 @@ export function CalendarToolbar({
                                 variant="outlined"
                             >
                                 <FilterListIcon fontSize="small" />
-                                { false ? <InfoIcon
-                                    color="warning"
-                                    fontSize="inherit"
-                                    sx={ {
-                                        position: "absolute",
-                                        top: 2,
-                                        right: 2,
-                                        fontSize: "0.8rem",
-                                        opacity: !filterOpen && hasAnyFilter ? 1 : 0,
-                                        transition: "opacity 0.15s ease-in-out",
-                                    } }
-                                /> : null }
                             </Button>
                         </Tooltip>
                     </ButtonGroup>

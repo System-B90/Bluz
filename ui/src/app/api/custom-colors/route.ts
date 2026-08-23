@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { ApiSuccess, parseJsonBody, ServerApi, withApi } from "@/api-server/common";
 import { DbCustomColors } from "@/api-server/db-custom-colors";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     ApiCustomColorCreatePayload,
@@ -32,11 +33,13 @@ type ServerApiCustomColorDelete = ServerApi<
 >;
 
 export const GET: ServerApiCustomColorsGet = withApi(async (_request) => {
+    await requireStaffSession();
     const colors = await DbCustomColors.get();
     return ApiSuccess(colors);
 });
 
 export const POST: ServerApiCustomColorUpdate = withApi(async (request) => {
+    await requireStaffSession();
     const textBody = await request.text();
     const color = textBody ? parseJsonBody<ApiCustomColorUpdatePayload>(textBody) : null;
     if (!color) {
@@ -47,6 +50,7 @@ export const POST: ServerApiCustomColorUpdate = withApi(async (request) => {
 });
 
 export const PUT: ServerApiCustomColorCreate = withApi(async (request) => {
+    await requireStaffSession();
     const textBody = await request.text();
     const color = textBody
         ? parseJsonBody<ApiCustomColorCreatePayload>(textBody)
@@ -62,6 +66,7 @@ export const PUT: ServerApiCustomColorCreate = withApi(async (request) => {
 });
 
 export const DELETE: ServerApiCustomColorDelete = withApi(async (request) => {
+    await requireStaffSession();
     const textBody = await request.text();
     const colorId = textBody
         ? parseJsonBody<ApiCustomColorDeletePayload>(textBody)

@@ -11,7 +11,8 @@ import {
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
 import { updatePrayerEvents } from "@/api-server/prayer";
-import { inplaceDateFixup } from "@/api-shared/date-fixer";
+import { requireStaffSession } from "@/api-server/session-user";
+import { inplaceDateFixupToDate } from "@/api-shared/date-fixer";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
 import {
     ApiSettingGetPayload,
@@ -33,6 +34,7 @@ type ServerApiSettingUpdate = ServerApiWithParams<
 >;
 
 export const GET: ServerApiSettingGet = withApi(async (request, context) => {
+    await requireStaffSession();
     const { slug } = await context.params;
 
     const { controller } = await resolveIterationFromRequest(request);
@@ -46,15 +48,16 @@ export const GET: ServerApiSettingGet = withApi(async (request, context) => {
 });
 
 export const POST: ServerApiSettingUpdate = withApi(async (request, context) => {
+    await requireStaffSession();
     const { slug } = await context.params;
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const value: ApiSettingUpdatePayload = await request.json();
 
     if (slug === "prayerTimes") {
-        inplaceDateFixup(value, "shacharit");
-        inplaceDateFixup(value, "mincha");
-        inplaceDateFixup(value, "arvit");
+        inplaceDateFixupToDate(value, "shacharit");
+        inplaceDateFixupToDate(value, "mincha");
+        inplaceDateFixupToDate(value, "arvit");
         await DbSettings.set(slug as SettingName, value, undefined, controller);
 
         await updatePrayerEvents({

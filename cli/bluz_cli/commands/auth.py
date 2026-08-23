@@ -17,12 +17,15 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
+import httpx
 import tqdm
 import typer
 from InquirerPy import inquirer
 
+from bluz_cli.client import BluzClient
 from bluz_cli.config import Config, config_location, load_config
 from bluz_cli.context import state
+from bluz_cli.errors import BluzApiError
 from bluz_cli.output import success, warn
 
 app = typer.Typer(help="Authentication and CLI configuration.", no_args_is_help=True)
@@ -106,9 +109,34 @@ def _result_page(*, ok: bool) -> bytes:
     return body.encode("utf-8")
 
 
-def _run_callback_server(url: str) -> str | None:
+def _redeem_handoff_code(url: str, handoff_code: str, *, insecure: bool) -> str:
     """
-    Run a temporary local HTTP server to receive the session token.
+    Exchange a single-use CLI login handoff code for the session token it was
+    minted for (#520), over HTTPS -- POST /api/cli-auth/redeem.
+
+    The browser never hands this process the raw session token: only this
+    opaque, short-TTL code, which the server deletes on first redemption.
+    Raises `BluzApiError` on an unknown/already-used/expired code or a
+    network failure.
+    """
+    with httpx.Client(
+        base_url=url.rstrip("/"), verify=not insecure, timeout=10.0
+    ) as http:
+        try:
+            response = http.post("/api/cli-auth/redeem", json={"code": handoff_code})
+        except httpx.RequestError as exc:
+            raise BluzApiError("NetworkError", str(exc)) from exc
+    data = BluzClient._unwrap(response)
+    token = data.get("token") if isinstance(data, dict) else None
+    if not token:
+        raise BluzApiError("InvalidResponse", "Redeem response carried no token.")
+    return token
+
+
+def _run_callback_server(url: str, *, insecure: bool = False) -> str | None:
+    """
+    Run a temporary local HTTP server to receive the CLI login handoff code
+    and redeem it for the session token.
 
     Generates a verification code, opens the browser, and returns the token on success.
     """
@@ -116,6 +144,9 @@ def _run_callback_server(url: str) -> str | None:
     part1 = "".join(random.choices(chars, k=4))
     part2 = "".join(random.choices(chars, k=4))
     code = f"{part1}-{part2}"
+    allowed_origin = (
+        f"{urllib.parse.urlparse(url).scheme}://{urllib.parse.urlparse(url).netloc}"
+    )
 
     class CallbackHandler(BaseHTTPRequestHandler):
         # Bound the read on an idle connection so a stray socket cannot hold a
@@ -127,7 +158,11 @@ def _run_callback_server(url: str) -> str | None:
             pass
 
         def _send_cors_headers(self) -> None:
-            self.send_header("Access-Control-Allow-Origin", "*")
+            # Scoped to the Bluz origin the user is logging into -- a wildcard
+            # here would let any local page (or process able to reach
+            # 127.0.0.1) read the callback response (#521).
+            self.send_header("Access-Control-Allow-Origin", allowed_origin)
+            self.send_header("Vary", "Origin")
             self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "*")
             # Legacy Private Network Access opt-in. Chrome has replaced the
@@ -172,16 +207,43 @@ def _run_callback_server(url: str) -> str | None:
         def do_GET(self) -> None:
             parsed = urllib.parse.urlparse(self.path)
             params = urllib.parse.parse_qs(parsed.query)
-            token_list = params.get("token")
-            if not token_list or not token_list[0]:
+
+            # The verification code must match the one this process generated
+            # and printed/embedded in the login URL. Without this check any
+            # local process able to reach 127.0.0.1:<port> during the login
+            # window could POST its own token and have it silently accepted
+            # (#521).
+            code_list = params.get("code")
+            if not code_list or code_list[0] != code:
                 self._respond(
-                    400,
-                    json_body=b'{"status":"error","error":"no_token"}',
+                    403,
+                    json_body=b'{"status":"error","error":"code_mismatch"}',
                     html_body=_result_page(ok=False),
                 )
                 return
 
-            self.server.token = token_list[0]  # type: ignore[attr-defined]
+            handoff_list = params.get("handoff")
+            if not handoff_list or not handoff_list[0]:
+                self._respond(
+                    400,
+                    json_body=b'{"status":"error","error":"no_handoff_code"}',
+                    html_body=_result_page(ok=False),
+                )
+                return
+
+            # Redeem the handoff code for the real session token over HTTPS.
+            # The browser never sent us the token itself (#520).
+            try:
+                token = _redeem_handoff_code(url, handoff_list[0], insecure=insecure)
+            except Exception:
+                self._respond(
+                    400,
+                    json_body=b'{"status":"error","error":"redeem_failed"}',
+                    html_body=_result_page(ok=False),
+                )
+                return
+
+            self.server.token = token  # type: ignore[attr-defined]
             self._respond(
                 200,
                 json_body=b'{"status":"success"}',
@@ -264,13 +326,12 @@ def login(
     """
     Store credentials interactively.
 
-    Opens the Bluz site's `/cli-auth` page in your browser with a one-time
-    verification code; confirming there delivers the session token to a
-    temporary local loopback server automatically (60s timeout). If that
-    handshake fails, fall back to manual entry: grab the session token from
-    your browser's cookies for the Bluz site
-    (`__Secure-next-auth.session-token` over HTTPS, `next-auth.session-token`
-    over HTTP) and paste it when prompted.
+    In the browser tab `bluz login` opens, either let it hand off
+    automatically or copy the handoff code it shows and paste it here -- the
+    CLI exchanges it for the real session token itself (#520). `--token`
+    still accepts a raw session token directly (e.g. lifted from browser
+    dev-tools) but is deprecated: it is visible in process listings, so
+    BLUZ_TOKEN or the handoff flow above are the safe channels.
     """
     existing = load_config()
 
@@ -292,17 +353,26 @@ def login(
     if not token:
         # Try automatic login first
         try:
-            token = _run_callback_server(url)
+            token = _run_callback_server(url, insecure=bool(insecure))
             if token:
                 success("Successfully authenticated automatically!")
         except Exception as exc:
             warn(f"Automatic login failed: {exc}")
 
-        # Fallback to manual entry if automatic login did not obtain a token
+        # Fallback to manual entry if automatic login did not obtain a token.
+        # What's pasted here is the handoff code shown in the browser tab,
+        # not the raw session token -- it still has to be redeemed (#520).
         if not token:
-            token = inquirer.secret(
-                message="Session token (leave blank to keep existing):",
+            handoff_code = inquirer.secret(
+                message="Handoff code (leave blank to keep existing):",
             ).execute()
+            if handoff_code:
+                try:
+                    token = _redeem_handoff_code(
+                        url, handoff_code, insecure=bool(insecure)
+                    )
+                except Exception as exc:
+                    warn(f"Could not redeem handoff code: {exc}")
             if not token:
                 token = existing.token
 

@@ -25,9 +25,9 @@ import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { ganttApi } from "@/api-client/gantt";
 import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import {
     EVENT_ANCHOR_PREFIX,
     HIGHLIGHT_DURATION_MS,

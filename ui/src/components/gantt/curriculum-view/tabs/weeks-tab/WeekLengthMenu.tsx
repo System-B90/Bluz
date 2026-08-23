@@ -14,11 +14,11 @@ import MenuItem from "@mui/material/MenuItem";
 import { useSnackbar } from "notistack";
 import { MouseEvent, useCallback, useMemo, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     GanttCurriculum,
     GanttCurriculumId,
 } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useWeekActions } from "@/components/gantt/state/hooks/gantt-funcs/UseWeekActions";
 import { useGanttMappings } from "@/components/gantt/state/mappings/hooks";
 import { useCurriculumState } from "@/components/gantt/state/provider";

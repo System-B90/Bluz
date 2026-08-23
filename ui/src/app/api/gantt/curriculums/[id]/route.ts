@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { buildGantItemRoutes } from "@/app/api/gantt/base-item";
 

@@ -99,7 +99,18 @@ export function VCardQrCode({
         <>
             <Tooltip arrow title="לחיצה כפולה להגדלה / סריקה לשמירה בטלפון">
                 <Box
+                    aria-label="הגדלת קוד QR"
                     onDoubleClick={() => setOpen(true)}
+                    onKeyDown={(e) => {
+                        // Double-click has no keyboard equivalent by
+                        // default, stranding keyboard-only users. Enter/
+                        // Space open the same enlarge dialog.
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setOpen(true);
+                        }
+                    }}
+                    role="button"
                     sx={{
                         border: "1px solid",
                         borderColor: "divider",
@@ -116,6 +127,7 @@ export function VCardQrCode({
                             transform: "scale(1.05)",
                         },
                     }}
+                    tabIndex={0}
                 >
                     <Box
                         alt="vCard QR Code"
@@ -157,7 +169,7 @@ export function VCardQrCode({
                         כרטיס איש קשר (QR)
                     </Typography>
                     <IconButton
-                        aria-label="close"
+                        aria-label="סגירה"
                         onClick={() => setOpen(false)}
                         sx={{
                             color: (theme) => theme.palette.grey[500],

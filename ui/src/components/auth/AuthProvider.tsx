@@ -10,7 +10,7 @@ import React, {
     useMemo,
 } from "react";
 
-import { AuthSessionUser } from "@/api-shared/types/sso";
+import { AuthSessionData, AuthSessionUser } from "@/api-shared/types/sso";
 import {
     MessageHandlerType,
     useSessionWebSocketContext,
@@ -101,7 +101,8 @@ export const AuthProvider = ({
     }, [degraded, enqueueSnackbar]);
 
     useEffect(() => {
-        if (!session || (session as any).error !== "TokenExpiredError") {
+        const sessionData = session as AuthSessionData | null | undefined;
+        if (!sessionData || sessionData.error !== "TokenExpiredError") {
             return;
         }
 

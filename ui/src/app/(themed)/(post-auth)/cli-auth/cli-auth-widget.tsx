@@ -15,23 +15,32 @@ import { Logo } from "@/components/header/logo";
 type CliAuthWidgetProps = {
     port: string;
     code: string;
-    token: string;
+    handoffCode: string;
 };
 
 export type CliAuthStatus = "connecting" | "fallback" | "handoff" | "success";
 
-export function callbackUrl(port: string, token: string) {
-    return `http://127.0.0.1:${port}/callback?token=${encodeURIComponent(token)}`;
+/**
+ * The loopback callback URL. Carries the verification code (#521 -- proves
+ * the browser talking to the CLI's server is the one this login started
+ * from) and the single-use handoff code (#520). Never the session token
+ * itself: the CLI exchanges the handoff code for the token in a separate
+ * HTTPS call to the Bluz server, so the token never appears in this URL, in
+ * browser history, or in the argv/logs of whatever answers on the loopback
+ * port.
+ */
+export function callbackUrl(port: string, code: string, handoffCode: string) {
+    return `http://127.0.0.1:${port}/callback?code=${encodeURIComponent(code)}&handoff=${encodeURIComponent(handoffCode)}`;
 }
 
-export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
+export function CliAuthWidget({ port, code, handoffCode }: CliAuthWidgetProps) {
     const [status, setStatus] = useState<CliAuthStatus>(() => {
-        return !port || !token ? "fallback" : "connecting";
+        return !port || !handoffCode ? "fallback" : "connecting";
     });
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        if (!port || !token) {
+        if (!port || !handoffCode) {
             return;
         }
 
@@ -41,7 +50,7 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
             setStatus("handoff");
         }, 3000);
 
-        fetch(callbackUrl(port, token), {
+        fetch(callbackUrl(port, code, handoffCode), {
             method: "GET",
             mode: "cors",
             signal: controller.signal,
@@ -49,9 +58,9 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
             .then((res) => {
                 clearTimeout(timeoutId);
                 // A non-ok response still proves the CLI server is reachable,
-                // but it did not accept the token, so manual paste is the only
-                // way forward — handing off to a new tab would just show the
-                // same error.
+                // but it did not accept the handoff code, so manual paste is
+                // the only way forward — handing off to a new tab would just
+                // show the same error.
                 setStatus(res.ok ? "success" : "fallback");
             })
             .catch(() => {
@@ -70,28 +79,31 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
             clearTimeout(timeoutId);
             controller.abort();
         };
-    }, [port, token]);
+    }, [port, code, handoffCode]);
 
     const handleHandoff = () => {
         const opened = window.open(
-            callbackUrl(port, token),
+            callbackUrl(port, code, handoffCode),
             "_blank",
             "noopener",
         );
         if (!opened) {
             // Popup blocked despite the gesture — navigating this tab still
             // completes the login; the CLI serves a real page at the callback.
-            window.location.href = callbackUrl(port, token);
+            window.location.href = callbackUrl(port, code, handoffCode);
         }
     };
 
     const handleCopy = async () => {
         try {
-            await navigator.clipboard.writeText(token);
+            // The manual-paste fallback copies the handoff code, never the
+            // raw session token (#520) — the CLI redeems it the same way the
+            // automatic path does.
+            await navigator.clipboard.writeText(handoffCode);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
-            console.error("Failed to copy token", err);
+            console.error("Failed to copy handoff code", err);
         }
     };
 
@@ -247,14 +259,14 @@ export function CliAuthWidget({ port, code, token }: CliAuthWidgetProps) {
                         <Box display="flex" gap={1} width="100%">
                             <TextField
                                 fullWidth
-                                label="קוד התחברות (Token)"
+                                label="קוד התחברות"
                                 size="small"
                                 slotProps={{
                                     input: {
                                         readOnly: true,
                                     },
                                 }}
-                                value={token}
+                                value={handoffCode}
                                 variant="outlined"
                             />
                             <Button

@@ -1,6 +1,6 @@
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
 import { withIteration } from "@/api-client/iteration-query";
-import { eventDateFixup } from "@/api-shared/calendar";
+import { eventDateFixupToDayjs } from "@/api-shared/calendar";
 import {
     ApiEventCreatePayload,
     ApiEventCreateResponse,
@@ -20,8 +20,8 @@ import {
 import { IterationId } from "@/api-shared/types/iteration";
 
 type ClientApiGetEventsProps = {
-    startDate?: Date;
-    endDate?: Date;
+    startDate: Date;
+    endDate: Date;
     iterationId?: IterationId;
 };
 export async function apiGetEvents({
@@ -33,21 +33,29 @@ export async function apiGetEvents({
         new URL("/api/event", window.location.origin),
         iterationId,
     );
-    endpoint.searchParams.set("sd", startDate?.toISOString() ?? "");
-    endpoint.searchParams.set("ed", endDate?.toISOString() ?? "");
+    endpoint.searchParams.set("sd", startDate.toISOString());
+    endpoint.searchParams.set("ed", endDate.toISOString());
     const rawData = await safeApiFetcher<Array<DbEventDocument>>(
         endpoint.toString(),
         {
             method: "GET",
         },
     );
-    return rawData.map(eventDateFixup) as unknown as Array<Event>;
+    return rawData.map(eventDateFixupToDayjs);
 }
 
+/**
+ * Fetches several events by id in one round-trip. The route
+ * (`app/api/event/route.ts`) filters out malformed ids and silently omits
+ * ids it can't find, so the response can carry fewer keys than
+ * `eventIds` — the return type is `Partial<...>` precisely so every
+ * caller has to handle a missing id instead of the old `Record<EventId,
+ * Event>` signature promising a complete map it couldn't guarantee.
+ */
 export async function apiGetMultipleEvents(
     eventIds: Array<EventId>,
     iterationId?: IterationId,
-): Promise<Record<EventId, Event>> {
+): Promise<Partial<Record<EventId, Event>>> {
     const endpoint = withIteration(
         new URL("/api/event", window.location.origin),
         iterationId,
@@ -59,10 +67,11 @@ export async function apiGetMultipleEvents(
             method: "GET",
         },
     );
-    for (const key of Object.keys(rawData)) {
-        rawData[key] = eventDateFixup(rawData[key]);
+    const events: Partial<Record<EventId, Event>> = {};
+    for (const key of Object.keys(rawData) as Array<EventId>) {
+        events[key] = eventDateFixupToDayjs(rawData[key]);
     }
-    return rawData as unknown as Record<EventId, Event>;
+    return events;
 }
 
 /**
@@ -99,7 +108,7 @@ export const apiCreateEvent: ClientApiCreateEvent = async (
         method: "PUT",
         body: JSON.stringify(event),
     });
-    return eventDateFixup(rawData) as unknown as Event;
+    return eventDateFixupToDayjs(rawData);
 };
 
 type ClientApiUpdateEvent = (
@@ -117,7 +126,7 @@ export const apiUpdateEvent: ClientApiUpdateEvent = async (
         method: "POST",
         body: JSON.stringify(event),
     });
-    return eventDateFixup(rawData) as unknown as Event;
+    return eventDateFixupToDayjs(rawData);
 };
 
 type ClientApiDeleteEvent = (
@@ -184,7 +193,7 @@ export async function apiCompareEvents({
         method: "GET",
     });
     return {
-        a: rawData.a.map(eventDateFixup) as unknown as Array<Event>,
-        b: rawData.b.map(eventDateFixup) as unknown as Array<Event>,
+        a: rawData.a.map(eventDateFixupToDayjs),
+        b: rawData.b.map(eventDateFixupToDayjs),
     };
 }

@@ -19,7 +19,6 @@ import {
     useTransition,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     GanttCurriculumId,
     GanttEventId,
@@ -28,6 +27,7 @@ import {
     GanttSyllabusId,
     ModuleEventType,
 } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ModuleConstraintsView } from "@/components/gantt/module-dialog/constraints/ModuleConstraintsView";
 import { ModuleEventsView } from "@/components/gantt/module-dialog/ModuleEventsView";
 import {

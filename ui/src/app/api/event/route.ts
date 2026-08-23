@@ -1,6 +1,11 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    ServerApi,
+    withApi,
+} from "@/api-server/common";
 import { DbEvent } from "@/api-server/db-event";
 import {
     pullGoogleEditsInBackground,
@@ -11,8 +16,8 @@ import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
-import { getSessionUser } from "@/api-server/session-user";
-import { eventDateFixup } from "@/api-shared/calendar";
+import { requireStaffSession, getSessionUser } from "@/api-server/session-user";
+import { eventDateFixupToDate } from "@/api-shared/calendar";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     ApiEventCreatePayload,
@@ -50,6 +55,7 @@ type ServerApiEventDelete = ServerApi<
 >;
 
 export const GET: ServerApiEventGet = withApi(async (request) => {
+    await requireStaffSession();
     const id = request.nextUrl.searchParams.get("id");
     const ids = request.nextUrl.searchParams.get("ids");
     const rawStartDate = request.nextUrl.searchParams.get("sd");
@@ -109,10 +115,11 @@ export const GET: ServerApiEventGet = withApi(async (request) => {
 });
 
 export const POST: ServerApiEventUpdate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
-    const event: ApiEventUpdatePayload = eventDateFixup(
-        await request.json(),
+    const event: ApiEventUpdatePayload = eventDateFixupToDate(
+        await requireJsonObjectBody<DbEventDocument>(request),
     );
     if (!event) {
         throw new ClientApiError("No data provided!");
@@ -122,16 +129,17 @@ export const POST: ServerApiEventUpdate = withApi(async (request) => {
             request.headers.get(EVENT_INITIATOR_HEADER),
         ),
     });
-    syncEventToInstructorsGoogleCalendars(updated, "upsert");
+    syncEventToInstructorsGoogleCalendars(updated, "upsert", iterationId);
     syncEventLessonToHive(updated, "upsert", controller);
     return ApiSuccess(updated);
 });
 
 export const PUT: ServerApiEventCreate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
-    const event: ApiEventCreatePayload = eventDateFixup(
-        await request.json(),
+    const event: ApiEventCreatePayload = eventDateFixupToDate(
+        await requireJsonObjectBody<DbEventDocument>(request),
     );
     if (!event) {
         throw new ClientApiError("No data provided!");
@@ -147,12 +155,13 @@ export const PUT: ServerApiEventCreate = withApi(async (request) => {
             ),
         },
     );
-    syncEventToInstructorsGoogleCalendars(created, "upsert");
+    syncEventToInstructorsGoogleCalendars(created, "upsert", iterationId);
     syncEventLessonToHive(created, "upsert", controller);
     return ApiSuccess(created);
 });
 
 export const DELETE: ServerApiEventDelete = withApi(async (request) => {
+    await requireStaffSession();
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
     const eventId: ApiEventDeletePayload = await request.json();
@@ -166,7 +175,7 @@ export const DELETE: ServerApiEventDelete = withApi(async (request) => {
         ),
     });
     if (existing) {
-        syncEventToInstructorsGoogleCalendars(existing, "delete");
+        syncEventToInstructorsGoogleCalendars(existing, "delete", iterationId);
         syncEventLessonToHive(existing, "delete", controller);
     }
     return ApiSuccess();

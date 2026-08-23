@@ -16,7 +16,15 @@ const fakeEvents = {
     countDocuments: vi.fn(async () => 0),
     insertMany: vi.fn(async () => ({ insertedCount: 0 })),
 };
-const fakeController = { dbName: "bluz_cut", events: fakeEvents };
+const fakeController = {
+    // The cut claims itself through this ledger's unique index (#515).
+    curriculumCuts: {
+        deleteOne: vi.fn(async () => ({ deletedCount: 1 })),
+        insertOne: vi.fn(async () => ({ insertedId: "claim" })),
+    },
+    dbName: "bluz_cut",
+    events: fakeEvents,
+};
 // Cut writes fire Google Calendar sync, which reads personal settings off the
 // meta controller. Stub it so the sync no-ops instead of throwing.
 const fakeMetaController = {
@@ -376,12 +384,16 @@ describe("cut — course resolution", () => {
 // ---- Concurrency / idempotency -----------------------------------------------
 
 describe("cut — idempotency guard", () => {
-    it("aborts without writing when cut events appear between gate and insert", async () => {
+    it("aborts without writing when a concurrent cut already claimed this curriculum", async () => {
         arrange({
             events: [makeEvent({ id: "e1" })],
             mappings: [{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }],
         });
-        // First check (gate) passes; re-check right before insert finds 2.
+        // The gate passes, then the ledger's unique index rejects the claim
+        // because a concurrent cut took it first (#515).
+        fakeController.curriculumCuts.insertOne.mockRejectedValueOnce(
+            Object.assign(new Error("E11000 duplicate key"), { code: 11000 }),
+        );
         fakeEvents.countDocuments
             .mockResolvedValueOnce(0)
             .mockResolvedValueOnce(2);
@@ -393,6 +405,21 @@ describe("cut — idempotency guard", () => {
         expect(outcome.error.count).toBe(2);
         expect(fakeEvents.insertMany).not.toHaveBeenCalled();
         expect(broadcast).not.toHaveBeenCalled();
+    });
+
+    it("releases the claim when the insert fails, so a retry can cut", async () => {
+        arrange({
+            events: [makeEvent({ id: "e1" })],
+            mappings: [{ eventId: "e1", dayId: "w0d0", sortOrder: 0 }],
+        });
+        fakeEvents.insertMany.mockRejectedValueOnce(new Error("mongo down"));
+
+        await expect(cutCurriculumToSchedule("c1")).rejects.toThrow(
+            "mongo down",
+        );
+        expect(fakeController.curriculumCuts.deleteOne).toHaveBeenCalledWith({
+            curriculumId: "c1",
+        });
     });
 });
 

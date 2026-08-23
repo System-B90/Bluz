@@ -16,35 +16,56 @@ from typing import Any, Callable
 import pytest
 
 from bluz_cli.commands import auth
+from bluz_cli.errors import BluzApiError
 
 
-def _drive(on_port: Callable[[int], None]) -> tuple[str | None, float]:
+def _drive(
+    on_port: Callable[[int, str], None],
+    *,
+    redeem: Callable[[str, str], str] | None = None,
+) -> tuple[str | None, float]:
     """Runs the callback server with the browser replaced by `on_port`.
 
     Returns the token it resolved and how long it took, so a test can assert
     the server returns on the callback rather than running out its 60s clock —
-    the exact symptom this flow regressed with.
+    the exact symptom this flow regressed with. `on_port` also receives the
+    verification code embedded in the login URL, since the callback now
+    requires it (#521).
+
+    `redeem` stands in for `_redeem_handoff_code` (the HTTPS round trip that
+    exchanges a handoff code for the real session token, #520) so these tests
+    never hit the network. Defaults to echoing the handoff code's value back
+    with a "redeemed:" prefix, so a test can assert on what the callback
+    server received without caring about the real server-side redeem route
+    (covered separately by the API route's own unit tests).
     """
     started = threading.Event()
 
     def fake_open(url: str) -> None:
         query = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
         port = int(query["port"][0])
+        code = query["code"][0]
 
         def run() -> None:
             started.set()
-            on_port(port)
+            on_port(port, code)
 
         threading.Thread(target=run, daemon=True).start()
 
-    original = auth.webbrowser.open
+    def fake_redeem(url: str, handoff_code: str, *, insecure: bool) -> str:
+        return f"redeemed:{handoff_code}"
+
+    original_open = auth.webbrowser.open
+    original_redeem = auth._redeem_handoff_code
     auth.webbrowser.open = fake_open  # type: ignore[assignment]
+    auth._redeem_handoff_code = redeem or fake_redeem  # type: ignore[assignment]
     try:
         start = time.monotonic()
         token = auth._run_callback_server("https://bluz.dev")
         return token, time.monotonic() - start
     finally:
-        auth.webbrowser.open = original  # type: ignore[assignment]
+        auth.webbrowser.open = original_open  # type: ignore[assignment]
+        auth._redeem_handoff_code = original_redeem  # type: ignore[assignment]
 
 
 def _get(port: int, path: str, headers: dict[str, str] | None = None) -> Any:
@@ -63,16 +84,20 @@ NAVIGATION_ACCEPT = {
 FETCH_ACCEPT = {"Accept": "*/*", "Origin": "https://bluz.dev"}
 
 
-def test_fetch_callback_returns_json_and_token() -> None:
+def test_fetch_callback_redeems_the_handoff_code_and_returns_the_token() -> None:
     captured: dict[str, Any] = {}
 
-    def call(port: int) -> None:
-        captured["response"] = _get(port, "/callback?token=TOK", FETCH_ACCEPT)
+    def call(port: int, code: str) -> None:
+        captured["response"] = _get(
+            port, f"/callback?code={code}&handoff=HANDOFF-1", FETCH_ACCEPT
+        )
 
     token, elapsed = _drive(call)
 
     status, headers, body = captured["response"]
-    assert token == "TOK"
+    # The callback never received a session token directly (#520) -- it
+    # received a handoff code and redeemed it for the token itself.
+    assert token == "redeemed:HANDOFF-1"
     assert status == 200
     assert headers["Content-Type"] == "application/json; charset=utf-8"
     assert body == b'{"status":"success"}'
@@ -89,26 +114,28 @@ def test_navigation_callback_returns_an_html_page() -> None:
     """
     captured: dict[str, Any] = {}
 
-    def call(port: int) -> None:
-        captured["response"] = _get(port, "/callback?token=TOK", NAVIGATION_ACCEPT)
+    def call(port: int, code: str) -> None:
+        captured["response"] = _get(
+            port, f"/callback?code={code}&handoff=HANDOFF-1", NAVIGATION_ACCEPT
+        )
 
     token, _ = _drive(call)
 
     status, headers, body = captured["response"]
-    assert token == "TOK"
+    assert token == "redeemed:HANDOFF-1"
     assert status == 200
     assert headers["Content-Type"] == "text/html; charset=utf-8"
     assert body.startswith(b"<!doctype html>")
     assert "ההתחברות הושלמה בהצלחה".encode() in body
 
 
-def test_navigation_without_a_token_explains_itself_in_html() -> None:
+def test_navigation_without_a_handoff_code_explains_itself_in_html() -> None:
     captured: dict[str, Any] = {}
 
-    def call(port: int) -> None:
-        captured["response"] = _get(port, "/callback", NAVIGATION_ACCEPT)
+    def call(port: int, code: str) -> None:
+        captured["response"] = _get(port, f"/callback?code={code}", NAVIGATION_ACCEPT)
         # Nothing will set the event, so release the wait.
-        _get(port, "/callback?token=LATE", FETCH_ACCEPT)
+        _get(port, f"/callback?code={code}&handoff=LATE", FETCH_ACCEPT)
 
     _drive(call)
 
@@ -118,38 +145,99 @@ def test_navigation_without_a_token_explains_itself_in_html() -> None:
     assert "לא התקבל קוד התחברות".encode() in body
 
 
-def test_fetch_without_a_token_returns_json_error() -> None:
+def test_fetch_without_a_handoff_code_returns_json_error() -> None:
     captured: dict[str, Any] = {}
 
-    def call(port: int) -> None:
-        captured["response"] = _get(port, "/callback", FETCH_ACCEPT)
-        _get(port, "/callback?token=LATE", FETCH_ACCEPT)
+    def call(port: int, code: str) -> None:
+        captured["response"] = _get(port, f"/callback?code={code}", FETCH_ACCEPT)
+        _get(port, f"/callback?code={code}&handoff=LATE", FETCH_ACCEPT)
 
     _drive(call)
 
     status, headers, body = captured["response"]
     assert status == 400
     assert headers["Content-Type"] == "application/json; charset=utf-8"
-    assert body == b'{"status":"error","error":"no_token"}'
+    assert body == b'{"status":"error","error":"no_handoff_code"}'
 
 
-def test_empty_token_is_rejected() -> None:
-    """`?token=` with no value used to fall through as a truthy list."""
+def test_empty_handoff_code_is_rejected() -> None:
+    """`?handoff=` with no value used to fall through as a truthy list."""
     captured: dict[str, Any] = {}
 
-    def call(port: int) -> None:
-        captured["response"] = _get(port, "/callback?token=", FETCH_ACCEPT)
-        _get(port, "/callback?token=LATE", FETCH_ACCEPT)
+    def call(port: int, code: str) -> None:
+        captured["response"] = _get(
+            port, f"/callback?code={code}&handoff=", FETCH_ACCEPT
+        )
+        _get(port, f"/callback?code={code}&handoff=LATE", FETCH_ACCEPT)
 
     _drive(call)
 
     assert captured["response"][0] == 400
 
 
+def test_missing_code_is_rejected() -> None:
+    """No `code` at all must not fall back to accepting the handoff (#521)."""
+    captured: dict[str, Any] = {}
+
+    def call(port: int, code: str) -> None:
+        captured["response"] = _get(port, "/callback?handoff=ATTACKER", FETCH_ACCEPT)
+        _get(port, f"/callback?code={code}&handoff=LATE", FETCH_ACCEPT)
+
+    token, _ = _drive(call)
+
+    assert captured["response"][0] == 403
+    assert token == "redeemed:LATE"
+
+
+def test_wrong_code_is_rejected() -> None:
+    """A mismatched code must not be accepted as the pending login (#521)."""
+    captured: dict[str, Any] = {}
+
+    def call(port: int, code: str) -> None:
+        captured["response"] = _get(
+            port, "/callback?code=WRONG-CODE&handoff=ATTACKER", FETCH_ACCEPT
+        )
+        _get(port, f"/callback?code={code}&handoff=LATE", FETCH_ACCEPT)
+
+    token, _ = _drive(call)
+
+    assert captured["response"][0] == 403
+    assert token != "redeemed:ATTACKER"
+
+
+def test_redeem_failure_does_not_complete_the_login() -> None:
+    """A handoff code the server rejects (expired/already used/unknown) must
+    not silently complete the login (#520)."""
+    captured: dict[str, Any] = {}
+
+    def failing_redeem(url: str, handoff_code: str, *, insecure: bool) -> str:
+        if handoff_code == "BAD":
+            raise BluzApiError("ClientApiError", "Invalid or already-used code.")
+        return f"redeemed:{handoff_code}"
+
+    def call(port: int, code: str) -> None:
+        captured["response"] = _get(
+            port, f"/callback?code={code}&handoff=BAD", FETCH_ACCEPT
+        )
+        # The failed attempt above must not have set token_received; release
+        # the wait with a follow-up request instead of running out the full
+        # 60s clock (the failing_redeem stub below only rejects "BAD").
+        _get(port, f"/callback?code={code}&handoff=LATE", FETCH_ACCEPT)
+
+    token, _ = _drive(call, redeem=failing_redeem)
+
+    status, _, body = captured["response"]
+    assert status == 400
+    assert body == b'{"status":"error","error":"redeem_failed"}'
+    # The rejected "BAD" code never completed the login -- only the
+    # follow-up request's code did.
+    assert token == "redeemed:LATE"
+
+
 def test_preflight_opts_into_private_network_access() -> None:
     captured: dict[str, Any] = {}
 
-    def call(port: int) -> None:
+    def call(port: int, code: str) -> None:
         conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
         conn.request(
             "OPTIONS",
@@ -165,25 +253,27 @@ def test_preflight_opts_into_private_network_access() -> None:
         captured["headers"] = dict(response.getheaders())
         response.read()
         conn.close()
-        _get(port, "/callback?token=TOK", FETCH_ACCEPT)
+        _get(port, f"/callback?code={code}&handoff=HANDOFF-1", FETCH_ACCEPT)
 
     token, _ = _drive(call)
 
-    assert token == "TOK"
+    assert token == "redeemed:HANDOFF-1"
     assert captured["status"] == 204
     assert captured["headers"]["Access-Control-Allow-Private-Network"] == "true"
-    assert captured["headers"]["Access-Control-Allow-Origin"] == "*"
+    # Scoped to the Bluz origin passed to _run_callback_server, not a
+    # wildcard (#521) -- any local page could otherwise read the response.
+    assert captured["headers"]["Access-Control-Allow-Origin"] == "https://bluz.dev"
 
 
 @pytest.mark.parametrize("path", ["/", "/callback", "/anything"])
-def test_any_path_carrying_a_token_is_accepted(path: str) -> None:
+def test_any_path_carrying_a_handoff_code_is_accepted(path: str) -> None:
     """The CLI must not care about the path the page chose."""
 
-    def call(port: int) -> None:
-        _get(port, f"{path}?token=TOK", FETCH_ACCEPT)
+    def call(port: int, code: str) -> None:
+        _get(port, f"{path}?code={code}&handoff=HANDOFF-1", FETCH_ACCEPT)
 
     token, _ = _drive(call)
-    assert token == "TOK"
+    assert token == "redeemed:HANDOFF-1"
 
 
 def test_result_page_is_valid_utf8_html() -> None:

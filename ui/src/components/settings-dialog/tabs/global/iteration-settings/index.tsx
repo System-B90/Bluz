@@ -3,7 +3,6 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import {
     apiDeleteIteration,
     apiGetIterationUsage,
@@ -13,6 +12,7 @@ import {
     apiSyncIterationHive,
 } from "@/api-client/iterations";
 import { Iteration, IterationUsage } from "@/api-shared/types/iteration";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { SettingsTab } from "@/components/settings-dialog/tabs/global/common";
 import { useConfirmDialog } from "@/components/settings-dialog/tabs/global/common/UseConfirmDialog";
 import { useEntityForm } from "@/components/settings-dialog/tabs/global/common/UseEntityForm";

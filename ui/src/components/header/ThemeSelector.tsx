@@ -41,7 +41,7 @@ export function ThemeSelectorIcon() {
 
     return (
         <button
-            aria-label="Toggle theme"
+            aria-label="החלפת ערכת נושא"
             className="theme-slider"
             onClick={toggleTheme}
         >

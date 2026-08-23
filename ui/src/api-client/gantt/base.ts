@@ -1,7 +1,7 @@
 import { Dayjs } from "dayjs";
 
 import { ClientApiProps, safeApiFetcher } from "@/api-client/common";
-import { inplaceDateFixup } from "@/api-shared/date-fixer";
+import { inplaceDateFixupToDayjs } from "@/api-shared/date-fixer";
 import { ApiT, RawBaseDocument } from "@/api-shared/types/gantt/api-layer";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 
@@ -24,8 +24,25 @@ export function baseDocumentFixup<
     K extends any,
 >(doc: T): null | (T & BaseDocument) {
     if (doc === null) return null;
-    inplaceDateFixup(doc, ["updatedAt", "createdAt"]);
+    inplaceDateFixupToDayjs(doc, ["updatedAt", "createdAt"]);
     return doc as T & BaseDocument;
+}
+
+/**
+ * Adapts `baseDocumentFixup` — precisely typed as
+ * `(doc: T) => T & BaseDocument` — to the looser `DateFixup<T>` shape
+ * `clientGantApiBuilder` needs (`rawItem: unknown`, since it calls
+ * `dateFixup` with several not-quite-`T` argument types across
+ * apiGet/apiCreate/apiUpdate/apiGetMany/apiLink: `ApiT<TEntity>`, `TEntity`,
+ * and `unknown`). Every simple entity builder (day/module/module-event/
+ * syllabus/week/curriculum) needs exactly this adaptation, so it used to be
+ * duplicated as `baseDocumentFixup as any` at each of those five call sites
+ * — one unchecked cast per file, each hiding a real type mismatch behind
+ * `any` rather than the specific, intentional widening this is. Centralizing
+ * it here means there is exactly one cast to audit instead of five.
+ */
+export function asDateFixup<T extends RawBaseDocument>(): DateFixup<T> {
+    return baseDocumentFixup as DateFixup<T>;
 }
 
 export type ClientGantApiBuilderProps<

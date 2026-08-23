@@ -1,0 +1,2 @@
+ALTER TABLE "cMDA" DROP CONSTRAINT "cMDA_curriculum_id_module_id_event_id_day_id_unique";--> statement-breakpoint
+ALTER TABLE "cMDA" ADD CONSTRAINT "cMDA_curriculum_id_module_id_event_id_day_id_unique" UNIQUE NULLS NOT DISTINCT("curriculum_id","module_id","event_id","day_id");

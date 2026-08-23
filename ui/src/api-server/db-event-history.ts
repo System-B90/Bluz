@@ -13,6 +13,7 @@ import {
     EventChangeInitiator,
     EventHistoryEntry,
 } from "@/api-shared/types/event-history";
+import { logger } from "@/logging/pino";
 
 /**
  * Persistence for the event change log. Single responsibility: turn a
@@ -134,7 +135,7 @@ async function record(args: {
             controller,
         );
     } catch (error) {
-        console.error(`Failed to record event history for ${eventId}`, error);
+        logger.error({ err: error }, `Failed to record event history for ${eventId}`);
     }
 }
 
@@ -185,7 +186,7 @@ async function recordMany(args: {
 
         if (rows.length > 0) await controller.eventHistory.insertMany(rows);
     } catch (error) {
-        console.error("Failed to record bulk event history", error);
+        logger.error({ err: error }, "Failed to record bulk event history");
     }
 }
 

@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
-import { postgresDb } from "@/api-server/gantt";
+import { GanttDbExecutor, postgresDb } from "@/api-server/gantt";
 import { ganttWeek2DaysSchema } from "@/api-server/gantt/schema/junctions";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
 import {
@@ -70,16 +70,21 @@ export async function getModuleDayMappingsForCurriculum(
  * @param data - The details for the new mapping.
  * @returns The created mapping record.
  */
-export async function createCurriculumModuleDayMapping(data: {
-    curriculumId: GanttCurriculumId;
-    moduleId: GanttModuleId;
-    eventId?: GanttEventId | null;
-    dayId: GanttDayId;
-    sortOrder?: number;
-}) {
+export async function createCurriculumModuleDayMapping(
+    data: {
+        curriculumId: GanttCurriculumId;
+        moduleId: GanttModuleId;
+        eventId?: GanttEventId | null;
+        dayId: GanttDayId;
+        sortOrder?: number;
+    },
+    // Optional transaction handle, so a caller can make this write part of a
+    // larger atomic unit (#518).
+    executor: GanttDbExecutor = postgresDb,
+) {
     const { eventId, moduleId, sortOrder, ...v } = { ...data };
 
-    return await postgresDb
+    return await executor
         .insert(ganttCurriculumEventDayMappingsSchema)
         .values({
             ...v,

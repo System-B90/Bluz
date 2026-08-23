@@ -90,7 +90,7 @@ export function SettingsDialog({
                         width: 220,
                         flexShrink: 0,
                         bgcolor: `rgb(${theme.vars.palette.primary.mainChannel} / 0.08)`,
-                        borderLeft: "1px solid",
+                        borderInlineEnd: "1px solid",
                         borderColor: "divider",
                         display: "flex",
                         flexDirection: "column",
@@ -137,7 +137,7 @@ export function SettingsDialog({
                                 component="button"
                                 key={ t.value }
                                 onClick={ () => onTabChange(t.value) }
-                                sx={ {
+                                sx={ (theme) => ({
                                     appearance: "none",
                                     border: "none",
                                     font: "inherit",
@@ -160,10 +160,13 @@ export function SettingsDialog({
                                     color: isActive
                                         ? "primary.contrastText"
                                         : "text.secondary",
-                                    borderRight: isActive
+                                    // Logical: the active-tab accent sits on
+                                    // the inline-start edge, matching the
+                                    // sidebar's own borderInlineEnd below.
+                                    borderInlineStart: isActive
                                         ? "4px solid"
                                         : "0px solid",
-                                    borderRightColor: isActive
+                                    borderInlineStartColor: isActive
                                         ? "primary.dark"
                                         : "transparent",
                                     boxShadow: isActive
@@ -176,11 +179,17 @@ export function SettingsDialog({
                                         color: isActive
                                             ? "primary.contrastText"
                                             : "text.primary",
+                                        // Nudge toward the inline-start edge
+                                        // (where the accent border lives)
+                                        // rather than a hardcoded physical
+                                        // direction.
                                         transform: isActive
                                             ? "none"
-                                            : "translateX(-4px)",
+                                            : theme.direction === "rtl"
+                                                ? "translateX(4px)"
+                                                : "translateX(-4px)",
                                     },
-                                } }
+                                }) }
                             >
                                 <Box
                                     sx={ {

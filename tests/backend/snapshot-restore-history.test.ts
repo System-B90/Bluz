@@ -29,6 +29,16 @@ const snapshotEvent = (id: string) => ({
 
 function makeController(snapshotEvents: Array<ReturnType<typeof snapshotEvent>>) {
     return {
+        // The restore now runs its two writes under withOptionalTransaction
+        // (#517), which needs a session off the Mongo client.
+        client: {
+            startSession: vi.fn(() => ({
+                endSession: vi.fn(async () => {}),
+                withTransaction: vi.fn(
+                    async (fn: () => Promise<unknown>) => await fn(),
+                ),
+            })),
+        },
         calendarSnapshots: {
             findOne: vi.fn(async () => ({
                 createdAt: "2026-06-01T00:00:00.000Z",

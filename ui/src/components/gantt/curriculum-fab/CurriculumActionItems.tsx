@@ -3,7 +3,6 @@ import Divider from "@mui/material/Divider";
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
 {
     GanttCurriculumDocument,
@@ -11,6 +10,7 @@ import
     apiImportCurriculum,
 } from "@/api-client/gantt/curriculum";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ImportExportMenuButton } from "@/components/base/ImportExportMenuButton";
 import { CreateCurriculumHoverMenu } from "@/components/gantt/curriculum-fab/action-items/CreateCurriculumHoverMenu";
 import { DeleteCurriculumAction } from "@/components/gantt/curriculum-fab/action-items/DeleteCurriculumAction";

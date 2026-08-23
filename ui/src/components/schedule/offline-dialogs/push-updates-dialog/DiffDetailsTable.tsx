@@ -31,16 +31,18 @@ export function DiffDetailsTable({
     capturedVersion,
     serverVersion,
 }: DiffDetailsTableProps) {
-    // Collect all unique event keys, ignoring MongoDB internal "_id"
+    // Collect all unique event keys, ignoring MongoDB internal "_id". Filter
+    // the raw strings first — "_id" isn't part of the Event type, so
+    // comparing it after casting to keyof Event needed an `as any` escape
+    // hatch to even compile.
     const allKeys = useMemo(() => {
-        const keys = [
-            ...new Set([
-                ...Object.keys(localModifiedEvent ?? {}),
-                ...Object.keys(serverVersion ?? {}),
-                ...Object.keys(capturedVersion ?? {}),
-            ]),
-        ] as Array<keyof Event>;
-        return keys.filter((k) => k !== ("_id" as any));
+        const keys = new Set([
+            ...Object.keys(localModifiedEvent ?? {}),
+            ...Object.keys(serverVersion ?? {}),
+            ...Object.keys(capturedVersion ?? {}),
+        ]);
+        keys.delete("_id");
+        return [...keys] as Array<keyof Event>;
     }, [localModifiedEvent, serverVersion, capturedVersion]);
 
     const changeItems = useMemo(() => {

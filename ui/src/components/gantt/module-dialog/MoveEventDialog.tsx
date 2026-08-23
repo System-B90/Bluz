@@ -11,8 +11,8 @@ import Select from "@mui/material/Select";
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { GanttEventId, GanttModuleId } from "@/api-shared/types/gantt/models";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useModuleEventActions } from "@/components/gantt/state/hooks/gantt-funcs/UseModuleEventActions";
 import { useCurriculumState } from "@/components/gantt/state/provider";
 

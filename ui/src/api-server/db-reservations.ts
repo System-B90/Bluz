@@ -4,6 +4,7 @@ import {
     databaseController,
     DatabaseController,
 } from "@/api-server/mongo-db-controller";
+import { withOptionalTransaction } from "@/api-server/mongo-transactions";
 import { ClientApiError } from "@/api-shared/errors";
 import { DbReservation } from "@/api-shared/types/reservation";
 import { RoomId, RoomSource } from "@/api-shared/types/room";
@@ -31,10 +32,12 @@ async function createReservation(
     reservation: Omit<DbReservation, "_id">,
     controller: DatabaseController = databaseController,
 ): Promise<DbReservation> {
-    const session = controller.client.startSession();
-    try {
-        let created: DbReservation | null = null;
-        await session.withTransaction(async () => {
+    // Raw `withTransaction` throws outright on a standalone mongod, which is
+    // exactly the deployment `withOptionalTransaction` exists for: every
+    // reservation creation failed there (#516, same defect family as #435).
+    return await withOptionalTransaction(
+        controller.client,
+        async (session) => {
             const conflict = await controller.reservations.findOne(
                 {
                     roomId: reservation.roomId,
@@ -53,12 +56,10 @@ async function createReservation(
                 reservation as DbReservation,
                 { session },
             );
-            created = { ...reservation, _id: result.insertedId.toString() };
-        });
-        return created!;
-    } finally {
-        await session.endSession();
-    }
+            return { ...reservation, _id: result.insertedId.toString() };
+        },
+        "createReservation",
+    );
 }
 
 async function cancelReservation(

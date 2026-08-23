@@ -9,10 +9,10 @@ import
     useEffect,
     useMemo,
     useReducer,
+    useRef,
     useState,
 } from "react";
 
-import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import
 {
     apiGetMealSettings,
@@ -28,7 +28,7 @@ import
     apiGetScheduleSettings,
     apiSetScheduleSettings,
 } from "@/api-client/schedule-settings";
-import { inplaceDateFixup } from "@/api-shared/date-fixer";
+import { inplaceDateFixupToDayjs } from "@/api-shared/date-fixer";
 import {
     DEFAULT_BREAKFAST_TIME,
     DEFAULT_DINNER_TIME,
@@ -41,6 +41,7 @@ import {
     DEFAULT_DAY_START_TIME,
     DEFAULT_WEEKEND_HOME_START_TIME,
 } from "@/api-shared/types/settings/schedule";
+import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { useIterationScope } from "@/components/base/IterationProvider";
 
 // Calendar hours change very rarely, so the last known value is cached in
@@ -208,9 +209,9 @@ export const SettingsProvider = ({
                     dispatch({ type: "SET_LOADING", payload: false });
                     return;
                 }
-                inplaceDateFixup(fetchedPrayerSettings, "shacharit");
-                inplaceDateFixup(fetchedPrayerSettings, "mincha");
-                inplaceDateFixup(fetchedPrayerSettings, "arvit");
+                inplaceDateFixupToDayjs(fetchedPrayerSettings, "shacharit");
+                inplaceDateFixupToDayjs(fetchedPrayerSettings, "mincha");
+                inplaceDateFixupToDayjs(fetchedPrayerSettings, "arvit");
                 dispatch({
                     type: "SET_PRAYER_TIMES",
                     payload: fetchedPrayerSettings,
@@ -293,6 +294,21 @@ export const SettingsProvider = ({
         cachedCalendarHours?.calendarDayEndTime ?? DEFAULT_CALENDAR_DAY_END_TIME,
     );
 
+    // Each update function used to build its apiSetScheduleSettings payload
+    // from the render-closure values of the *other* three fields. Two rapid
+    // saves (e.g. dayStartTime then weekendHomeStartTime before the first
+    // request's state update has committed) would each read the same stale
+    // snapshot and the second request would silently overwrite the first
+    // request's field with the pre-change value. A ref updated synchronously
+    // alongside every optimistic setState always reflects the latest known
+    // values regardless of React's commit timing.
+    const scheduleSettingsRef = useRef({
+        dayStartTime,
+        weekendHomeStartTime,
+        calendarDayStartTime,
+        calendarDayEndTime,
+    });
+
     const loadScheduleSettings = useCallback(() =>
     {
         apiGetScheduleSettings(iterationId)
@@ -319,6 +335,16 @@ export const SettingsProvider = ({
                     calendarDayStartTime: nextCalendarDayStartTime,
                     calendarDayEndTime: nextCalendarDayEndTime,
                 });
+                scheduleSettingsRef.current = {
+                    dayStartTime:
+                        fetchedScheduleSettings?.dayStartTime ??
+                            DEFAULT_DAY_START_TIME,
+                    weekendHomeStartTime:
+                        fetchedScheduleSettings?.weekendHomeStartTime ??
+                            DEFAULT_WEEKEND_HOME_START_TIME,
+                    calendarDayStartTime: nextCalendarDayStartTime,
+                    calendarDayEndTime: nextCalendarDayEndTime,
+                };
             })
             .catch((error) =>
             {
@@ -333,23 +359,26 @@ export const SettingsProvider = ({
     const updateDayStartTime = useCallback(
         async (newDayStartTime: string) =>
         {
-            const previousDayStartTime = dayStartTime;
+            const previous = scheduleSettingsRef.current;
             setDayStartTime(newDayStartTime);
+            scheduleSettingsRef.current = {
+                ...previous,
+                dayStartTime: newDayStartTime,
+            };
 
             try
             {
-                await apiSetScheduleSettings({
-                    dayStartTime: newDayStartTime,
-                    weekendHomeStartTime,
-                    calendarDayStartTime,
-                    calendarDayEndTime,
-                }, iterationId);
+                await apiSetScheduleSettings(
+                    scheduleSettingsRef.current,
+                    iterationId,
+                );
                 enqueueSnackbar('שעת תחילת יום ברירת מחדל עודכנה בהצלחה.', {
                     variant: "success",
                 });
             } catch (error)
             {
-                setDayStartTime(previousDayStartTime);
+                setDayStartTime(previous.dayStartTime);
+                scheduleSettingsRef.current = previous;
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     'עדכון שעת תחילת יום ברירת מחדל נכשל!',
@@ -357,29 +386,32 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ dayStartTime, weekendHomeStartTime, calendarDayStartTime, calendarDayEndTime, iterationId ],
+        [ iterationId ],
     );
 
     const updateWeekendHomeStartTime = useCallback(
         async (newWeekendHomeStartTime: string) =>
         {
-            const previousWeekendHomeStartTime = weekendHomeStartTime;
+            const previous = scheduleSettingsRef.current;
             setWeekendHomeStartTime(newWeekendHomeStartTime);
+            scheduleSettingsRef.current = {
+                ...previous,
+                weekendHomeStartTime: newWeekendHomeStartTime,
+            };
 
             try
             {
-                await apiSetScheduleSettings({
-                    dayStartTime,
-                    weekendHomeStartTime: newWeekendHomeStartTime,
-                    calendarDayStartTime,
-                    calendarDayEndTime,
-                }, iterationId);
+                await apiSetScheduleSettings(
+                    scheduleSettingsRef.current,
+                    iterationId,
+                );
                 enqueueSnackbar('שעת תחילת לו"ז אחרי סופ"ש עודכנה בהצלחה.', {
                     variant: "success",
                 });
             } catch (error)
             {
-                setWeekendHomeStartTime(previousWeekendHomeStartTime);
+                setWeekendHomeStartTime(previous.weekendHomeStartTime);
+                scheduleSettingsRef.current = previous;
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     'עדכון שעת תחילת לו"ז אחרי סופ"ש נכשל!',
@@ -387,37 +419,40 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ dayStartTime, weekendHomeStartTime, calendarDayStartTime, calendarDayEndTime, iterationId ],
+        [ iterationId ],
     );
 
     const updateCalendarDayStartTime = useCallback(
         async (newCalendarDayStartTime: string) =>
         {
-            const previousCalendarDayStartTime = calendarDayStartTime;
+            const previous = scheduleSettingsRef.current;
             setCalendarDayStartTime(newCalendarDayStartTime);
             writeCachedCalendarHours({
                 calendarDayStartTime: newCalendarDayStartTime,
-                calendarDayEndTime,
+                calendarDayEndTime: previous.calendarDayEndTime,
             });
+            scheduleSettingsRef.current = {
+                ...previous,
+                calendarDayStartTime: newCalendarDayStartTime,
+            };
 
             try
             {
-                await apiSetScheduleSettings({
-                    dayStartTime,
-                    weekendHomeStartTime,
-                    calendarDayStartTime: newCalendarDayStartTime,
-                    calendarDayEndTime,
-                }, iterationId);
+                await apiSetScheduleSettings(
+                    scheduleSettingsRef.current,
+                    iterationId,
+                );
                 enqueueSnackbar("שעת תחילת יום ביומן עודכנה בהצלחה.", {
                     variant: "success",
                 });
             } catch (error)
             {
-                setCalendarDayStartTime(previousCalendarDayStartTime);
+                setCalendarDayStartTime(previous.calendarDayStartTime);
                 writeCachedCalendarHours({
-                    calendarDayStartTime: previousCalendarDayStartTime,
-                    calendarDayEndTime,
+                    calendarDayStartTime: previous.calendarDayStartTime,
+                    calendarDayEndTime: previous.calendarDayEndTime,
                 });
+                scheduleSettingsRef.current = previous;
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "עדכון שעת תחילת יום ביומן נכשל!",
@@ -425,37 +460,40 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ dayStartTime, weekendHomeStartTime, calendarDayStartTime, calendarDayEndTime, iterationId ],
+        [ iterationId ],
     );
 
     const updateCalendarDayEndTime = useCallback(
         async (newCalendarDayEndTime: string) =>
         {
-            const previousCalendarDayEndTime = calendarDayEndTime;
+            const previous = scheduleSettingsRef.current;
             setCalendarDayEndTime(newCalendarDayEndTime);
             writeCachedCalendarHours({
-                calendarDayStartTime,
+                calendarDayStartTime: previous.calendarDayStartTime,
                 calendarDayEndTime: newCalendarDayEndTime,
             });
+            scheduleSettingsRef.current = {
+                ...previous,
+                calendarDayEndTime: newCalendarDayEndTime,
+            };
 
             try
             {
-                await apiSetScheduleSettings({
-                    dayStartTime,
-                    weekendHomeStartTime,
-                    calendarDayStartTime,
-                    calendarDayEndTime: newCalendarDayEndTime,
-                }, iterationId);
+                await apiSetScheduleSettings(
+                    scheduleSettingsRef.current,
+                    iterationId,
+                );
                 enqueueSnackbar("שעת סיום יום ביומן עודכנה בהצלחה.", {
                     variant: "success",
                 });
             } catch (error)
             {
-                setCalendarDayEndTime(previousCalendarDayEndTime);
+                setCalendarDayEndTime(previous.calendarDayEndTime);
                 writeCachedCalendarHours({
-                    calendarDayStartTime,
-                    calendarDayEndTime: previousCalendarDayEndTime,
+                    calendarDayStartTime: previous.calendarDayStartTime,
+                    calendarDayEndTime: previous.calendarDayEndTime,
                 });
+                scheduleSettingsRef.current = previous;
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "עדכון שעת סיום יום ביומן נכשל!",
@@ -463,7 +501,7 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ dayStartTime, weekendHomeStartTime, calendarDayStartTime, calendarDayEndTime, iterationId ],
+        [ iterationId ],
     );
 
     const [ breakfastTime, setBreakfastTime ] = useState<string>(
@@ -472,21 +510,30 @@ export const SettingsProvider = ({
     const [ lunchTime, setLunchTime ] = useState<string>(DEFAULT_LUNCH_TIME);
     const [ dinnerTime, setDinnerTime ] = useState<string>(DEFAULT_DINNER_TIME);
 
+    // Same rapid-double-save hazard as scheduleSettingsRef above: read/write
+    // the latest known values via a ref instead of the render-closure state.
+    const mealSettingsRef = useRef({ breakfastTime, lunchTime, dinnerTime });
+
     const loadMealSettings = useCallback(() =>
     {
         apiGetMealSettings(iterationId)
             .then((fetchedMealSettings) =>
             {
-                setBreakfastTime(
+                const nextBreakfastTime =
                     fetchedMealSettings?.breakfastTime ??
-                        DEFAULT_BREAKFAST_TIME,
-                );
-                setLunchTime(
-                    fetchedMealSettings?.lunchTime ?? DEFAULT_LUNCH_TIME,
-                );
-                setDinnerTime(
-                    fetchedMealSettings?.dinnerTime ?? DEFAULT_DINNER_TIME,
-                );
+                        DEFAULT_BREAKFAST_TIME;
+                const nextLunchTime =
+                    fetchedMealSettings?.lunchTime ?? DEFAULT_LUNCH_TIME;
+                const nextDinnerTime =
+                    fetchedMealSettings?.dinnerTime ?? DEFAULT_DINNER_TIME;
+                setBreakfastTime(nextBreakfastTime);
+                setLunchTime(nextLunchTime);
+                setDinnerTime(nextDinnerTime);
+                mealSettingsRef.current = {
+                    breakfastTime: nextBreakfastTime,
+                    lunchTime: nextLunchTime,
+                    dinnerTime: nextDinnerTime,
+                };
             })
             .catch((error) =>
             {
@@ -501,22 +548,23 @@ export const SettingsProvider = ({
     const updateBreakfastTime = useCallback(
         async (newBreakfastTime: string) =>
         {
-            const previousBreakfastTime = breakfastTime;
+            const previous = mealSettingsRef.current;
             setBreakfastTime(newBreakfastTime);
+            mealSettingsRef.current = {
+                ...previous,
+                breakfastTime: newBreakfastTime,
+            };
 
             try
             {
-                await apiSetMealSettings({
-                    breakfastTime: newBreakfastTime,
-                    lunchTime,
-                    dinnerTime,
-                }, iterationId);
+                await apiSetMealSettings(mealSettingsRef.current, iterationId);
                 enqueueSnackbar("שעת ארוחת בוקר עודכנה בהצלחה.", {
                     variant: "success",
                 });
             } catch (error)
             {
-                setBreakfastTime(previousBreakfastTime);
+                setBreakfastTime(previous.breakfastTime);
+                mealSettingsRef.current = previous;
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "עדכון שעת ארוחת בוקר נכשל!",
@@ -524,28 +572,26 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ breakfastTime, lunchTime, dinnerTime, iterationId ],
+        [ iterationId ],
     );
 
     const updateLunchTime = useCallback(
         async (newLunchTime: string) =>
         {
-            const previousLunchTime = lunchTime;
+            const previous = mealSettingsRef.current;
             setLunchTime(newLunchTime);
+            mealSettingsRef.current = { ...previous, lunchTime: newLunchTime };
 
             try
             {
-                await apiSetMealSettings({
-                    breakfastTime,
-                    lunchTime: newLunchTime,
-                    dinnerTime,
-                }, iterationId);
+                await apiSetMealSettings(mealSettingsRef.current, iterationId);
                 enqueueSnackbar("שעת ארוחת צהריים עודכנה בהצלחה.", {
                     variant: "success",
                 });
             } catch (error)
             {
-                setLunchTime(previousLunchTime);
+                setLunchTime(previous.lunchTime);
+                mealSettingsRef.current = previous;
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "עדכון שעת ארוחת צהריים נכשל!",
@@ -553,28 +599,26 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ breakfastTime, lunchTime, dinnerTime, iterationId ],
+        [ iterationId ],
     );
 
     const updateDinnerTime = useCallback(
         async (newDinnerTime: string) =>
         {
-            const previousDinnerTime = dinnerTime;
+            const previous = mealSettingsRef.current;
             setDinnerTime(newDinnerTime);
+            mealSettingsRef.current = { ...previous, dinnerTime: newDinnerTime };
 
             try
             {
-                await apiSetMealSettings({
-                    breakfastTime,
-                    lunchTime,
-                    dinnerTime: newDinnerTime,
-                }, iterationId);
+                await apiSetMealSettings(mealSettingsRef.current, iterationId);
                 enqueueSnackbar("שעת ארוחת ערב עודכנה בהצלחה.", {
                     variant: "success",
                 });
             } catch (error)
             {
-                setDinnerTime(previousDinnerTime);
+                setDinnerTime(previous.dinnerTime);
+                mealSettingsRef.current = previous;
                 enqueueApiErrorSnackbar(
                     enqueueSnackbar,
                     "עדכון שעת ארוחת ערב נכשל!",
@@ -582,7 +626,7 @@ export const SettingsProvider = ({
                 );
             }
         },
-        [ breakfastTime, lunchTime, dinnerTime, iterationId ],
+        [ iterationId ],
     );
 
     useEffect(() =>

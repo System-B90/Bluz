@@ -5,6 +5,8 @@ import { CurriculumCutError } from "@/api-shared/types/gantt/cut";
 
 function mockFetch(jsonBody: unknown) {
     return vi.fn(async () => ({
+        ok: true,
+        headers: new Headers({ "content-type": "application/json" }),
         redirected: false,
         json: async () => jsonBody,
     }));

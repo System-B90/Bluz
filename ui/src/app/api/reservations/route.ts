@@ -6,6 +6,7 @@ import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
 } from "@/api-server/iteration-request";
+import { requireStaffSession } from "@/api-server/session-user";
 import { ClientApiError } from "@/api-shared/errors";
 import {
     ApiReservationCreatePayload,
@@ -30,6 +31,7 @@ type ServerApiReservationDelete = ServerApi<
 >;
 
 export const GET: ServerApiReservationsGet = withApi(async (request) => {
+    await requireStaffSession();
     const { searchParams } = new URL(request.url);
     const roomId = searchParams.get("roomId") ?? undefined;
     const roomSourceStr = searchParams.get("roomSource");
@@ -49,6 +51,7 @@ export const GET: ServerApiReservationsGet = withApi(async (request) => {
 });
 
 export const PUT: ServerApiReservationCreate = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const payload = await request.json();
@@ -60,6 +63,7 @@ export const PUT: ServerApiReservationCreate = withApi(async (request) => {
 });
 
 export const DELETE: ServerApiReservationDelete = withApi(async (request) => {
+    await requireStaffSession();
     const { controller } =
         await resolveWritableIterationFromRequest(request);
     const reservationId = await request.json();

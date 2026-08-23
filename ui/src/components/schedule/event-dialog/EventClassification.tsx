@@ -102,9 +102,15 @@ export function EventClassification({
                 <CourseField
                     event={event}
                     fullWidth
+                    key={`${event?.id}-${event?.updatedAt}`}
                     onBlurCallback={onUpdate}
                 />
-                <RoomField event={event} fullWidth onBlurCallback={onUpdate} />
+                <RoomField
+                    event={event}
+                    fullWidth
+                    key={`${event?.id}-${event?.updatedAt}`}
+                    onBlurCallback={onUpdate}
+                />
             </Box>
         </Box>
     );

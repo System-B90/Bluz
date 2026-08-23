@@ -15,7 +15,14 @@ from pathlib import Path
 
 import typer
 
-from bluz_cli.commands._common import LIMIT_OPTION, OFFSET_OPTION, parse_json, show
+from bluz_cli.commands._common import (
+    LIMIT_OPTION,
+    OFFSET_OPTION,
+    parse_json,
+    read_json_file,
+    show,
+    write_file,
+)
 from bluz_cli.context import state
 from bluz_cli.errors import BluzApiError
 from bluz_cli.output import success
@@ -223,8 +230,8 @@ modules_app = _entity_app(
     reorder=("reorder-events", "eventIds"),
 )
 events_app = _entity_app("events", help_text="Gantt events.", link=True, allocate=True)
-days_app = _entity_app("days", help_text="Curriculum days.", link=True)
-weeks_app = _entity_app("weeks", help_text="Curriculum weeks.", link=True)
+days_app = _entity_app("days", help_text="Curriculum days.", link=False)
+weeks_app = _entity_app("weeks", help_text="Curriculum weeks.", link=False)
 
 
 # --- curriculum-specific extras ---------------------------------------------
@@ -241,8 +248,10 @@ def export_curriculum(
     with state.client() as client:
         data = client.get(f"{_BASE}/curriculums/{curriculum_id}/export")
     if output is not None:
-        output.write_text(
-            json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+        write_file(
+            output,
+            json.dumps(data, ensure_ascii=False, indent=2),
+            what="export",
         )
         success(f"Exported curriculum {curriculum_id} → {output}")
     else:
@@ -262,7 +271,7 @@ def export_curriculum_excel(
             "InvalidResponse",
             f"Expected an .xlsx byte stream, got {type(data).__name__}: {str(data)[:200]}",
         )
-    output.write_bytes(data)
+    write_file(output, data, what="export")
     success(f"Exported curriculum {curriculum_id} → {output} ({len(data)} bytes)")
 
 
@@ -271,7 +280,7 @@ def import_curriculum(
     file: Path = typer.Argument(..., help="Path to an exported curriculum JSON file."),
 ) -> None:
     """Import a curriculum from an export file."""
-    payload = json.loads(file.read_text(encoding="utf-8"))
+    payload = read_json_file(file, what="curriculum file")
     with state.client() as client:
         result = client.post(f"{_BASE}/curriculums/import", json=payload)
     success("Imported curriculum")

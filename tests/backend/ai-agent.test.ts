@@ -59,6 +59,7 @@ import {
 } from "@/api-server/ai/provider";
 import { AiToolContext } from "@/api-server/ai/tools";
 import {
+    AI_MAX_RESPONSE_TOKENS,
     AiMessage,
     AiRole,
     AiStreamEvent,
@@ -146,6 +147,22 @@ describe("runAiAgent", () => {
         ]);
         const done = events.at(-1);
         expect(done).toMatchObject({ awaitingApproval: false });
+    });
+
+    it("caps every model call with a max_tokens ceiling", async () => {
+        // Without this an adversarial or runaway prompt has no bound on the
+        // cost of a single response.
+        const provider = fakeProvider([{ text: "שלום" }]);
+        await drain(
+            runAiAgent({
+                provider,
+                messages: userTurn("היי"),
+                context,
+                approvedToolCallIds: new Set(),
+            }),
+        );
+
+        expect(provider.requests[0].maxTokens).toBe(AI_MAX_RESPONSE_TOKENS);
     });
 
     it("prepends a server-built system prompt the caller cannot supply", async () => {
@@ -395,7 +412,14 @@ describe("runAiAgent", () => {
             }),
         );
 
-        expect(events.at(-1)?.type).toBe(AiStreamEventType.Error);
+        const last = events.at(-1);
+        expect(last?.type).toBe(AiStreamEventType.Error);
+        // The cap is hit only after several successful tool round-trips; the
+        // client must not lose that work just because the turn ran out of
+        // iterations.
+        expect(
+            (last as { messages?: Array<unknown> }).messages?.length,
+        ).toBeGreaterThan(0);
     });
 
     it("returns only this turn's messages for the client to replay", async () => {
