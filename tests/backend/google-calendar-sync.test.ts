@@ -1,4 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { logger } from "@/logging/pino";
+
+// vi.resetModules() below hands each dynamic import a fresh module graph, so a
+// spy on the real pino instance would watch a different object than the module
+// under test uses. Mocking the module keeps one shared logger across them.
+vi.mock("@/logging/pino", () => ({
+    logger: {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    },
+}));
 
 /**
  * Unit tests for the fire-and-forget Google Calendar sync fan-out: which
@@ -61,7 +74,6 @@ beforeEach(() => {
     // Fresh module per case: the pull throttle lives in a module-level map.
     vi.resetModules();
     vi.clearAllMocks();
-    vi.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 describe("syncEventToInstructorsGoogleCalendars", () => {
@@ -102,15 +114,19 @@ describe("syncEventToInstructorsGoogleCalendars", () => {
         await flushAsyncWork();
 
         expect(pushService.pushEventToGoogle).toHaveBeenCalledTimes(2);
+        // pushEventToGoogle(userId, event, action, iterationId) — the fan-out
+        // passes the event's iteration through as the fourth argument.
         expect(pushService.pushEventToGoogle).toHaveBeenCalledWith(
             "1",
             event,
             "delete",
+            undefined,
         );
         expect(pushService.pushEventToGoogle).toHaveBeenCalledWith(
             "9",
             event,
             "delete",
+            undefined,
         );
     });
 
@@ -127,9 +143,9 @@ describe("syncEventToInstructorsGoogleCalendars", () => {
         ).not.toThrow();
         await flushAsyncWork();
 
-        expect(console.warn).toHaveBeenCalledWith(
+        expect(logger.warn).toHaveBeenCalledWith(
+            expect.objectContaining({ err: expect.anything() }),
             "Google Calendar sync skipped:",
-            expect.anything(),
         );
     });
 });
@@ -186,9 +202,9 @@ describe("pullGoogleEditsInBackground", () => {
         pullGoogleEditsInBackground("u1");
         await flushAsyncWork();
 
-        expect(console.warn).toHaveBeenCalledWith(
+        expect(logger.warn).toHaveBeenCalledWith(
+            expect.objectContaining({ err: expect.anything() }),
             "Google Calendar background pull failed:",
-            expect.anything(),
         );
 
         // The failed attempt still consumed this window's slot.

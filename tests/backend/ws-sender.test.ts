@@ -1,5 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { logger } from "@/logging/pino";
+
+// api-server logs through pino now, not console (#538 item 13). Each case
+// re-imports the sender through vi.resetModules, so a spy on the real
+// instance would watch a different object than the module under test uses —
+// mocking the module keeps one shared logger across them.
+vi.mock("@/logging/pino", () => ({
+    logger: {
+        debug: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+    },
+}));
+
 import {
     MessageTypes,
     verifyWsTicket,
@@ -66,6 +81,9 @@ beforeEach(() => {
     process.env.WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY = "test-secret";
     process.env.INTERNAL_SESSION_SERVER_URI = "ws://sessions.internal:12345/ws/";
     constructed.length = 0;
+    // The mocked pino logger is shared across cases; clear it so a previous
+    // test's error does not count against this one.
+    vi.clearAllMocks();
     vi.useFakeTimers();
 });
 
@@ -153,9 +171,6 @@ describe("SendServerRequestToSessionServer connection lifecycle", () => {
     });
 
     it("does not terminate a socket that opened in time", async () => {
-        const consoleError = vi
-            .spyOn(console, "error")
-            .mockImplementation(() => {});
         const { SendServerRequestToSessionServer } = await loadSender();
 
         SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE);
@@ -163,7 +178,7 @@ describe("SendServerRequestToSessionServer connection lifecycle", () => {
         vi.advanceTimersByTime(60_000);
 
         expect(constructed[0].terminated).toBe(false);
-        expect(consoleError).not.toHaveBeenCalled();
+        expect(logger.error).not.toHaveBeenCalled();
     });
 
     it("clears the socket on close lazily and reconnects on the next send", async () => {
@@ -211,9 +226,6 @@ describe("SendServerRequestToSessionServer connection lifecycle", () => {
     });
 
     it("logs a connection error without dropping the healthy socket", async () => {
-        const consoleError = vi
-            .spyOn(console, "error")
-            .mockImplementation(() => {});
         const { SendServerRequestToSessionServer } = await loadSender();
 
         SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE);
@@ -229,7 +241,7 @@ describe("SendServerRequestToSessionServer connection lifecycle", () => {
         expect(JSON.parse(constructed[0].sent[1]).data).toEqual({
             eventId: "event-1",
         });
-        expect(consoleError).toHaveBeenCalledOnce();
+        expect(logger.error).toHaveBeenCalledOnce();
     });
 });
 
@@ -292,9 +304,6 @@ describe("SendServerRequestToSessionServer outbound queue", () => {
     });
 
     it("falls back to the queue plus a reconnect when send() throws on an open socket", async () => {
-        const consoleError = vi
-            .spyOn(console, "error")
-            .mockImplementation(() => {});
         const { SendServerRequestToSessionServer } = await loadSender();
 
         SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE);
@@ -307,7 +316,7 @@ describe("SendServerRequestToSessionServer outbound queue", () => {
             eventId: "event-1",
         });
 
-        expect(consoleError).toHaveBeenCalledOnce();
+        expect(logger.error).toHaveBeenCalledOnce();
         expect(constructed).toHaveLength(2);
         // sent[0] is the initial broadcast flushed on open; nothing else was
         // delivered over the broken socket.

@@ -220,7 +220,13 @@ describe("cut_curriculum", () => {
         // Same entry point the Gantt screen uses — the assistant cannot
         // bypass the constraint engine or the draft guard.
         expect(cutPipeline.cutCurriculumToSchedule).toHaveBeenCalledTimes(1);
-        expect(cutPipeline.cutCurriculumToSchedule).toHaveBeenCalledWith("c-9");
+        // cutCurriculumToSchedule(id, options, context) — the assistant tags
+        // its writes so the history shows who initiated them.
+        expect(cutPipeline.cutCurriculumToSchedule).toHaveBeenCalledWith(
+            "c-9",
+            {},
+            expect.objectContaining({ initiator: "ai-assistant" }),
+        );
         expect(result.data).toEqual(successOutcome);
         expect(result.summary).toContain("נגזר");
     });
