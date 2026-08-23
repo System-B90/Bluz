@@ -25,28 +25,31 @@ type RouteContext = {
  * mapped onto the occurrence day, and excepts the source event from
  * echoing onto that day going forward.
  */
-export const POST = withApi(async (request: NextRequest, context: RouteContext) => {
-    await requireStaffSession();
-    const { id: eventId } = await context.params;
-    const body = await requireJsonObjectBody<Record<string, unknown>>(request);
+export const POST = withApi(
+    async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id: eventId } = await context.params;
+        const body =
+            await requireJsonObjectBody<Record<string, unknown>>(request);
 
-    const { curriculumId, moduleId, dayId } = body as {
-        curriculumId: GanttCurriculumId;
-        moduleId: GanttModuleId;
-        dayId: GanttDayId;
-    };
-    if (!curriculumId || !moduleId || !dayId) {
-        throw new ClientApiError(
-            "Missing required fields: curriculumId, moduleId or dayId.",
-        );
-    }
+        const { curriculumId, moduleId, dayId } = body as {
+            curriculumId: GanttCurriculumId;
+            moduleId: GanttModuleId;
+            dayId: GanttDayId;
+        };
+        if (!curriculumId || !moduleId || !dayId) {
+            throw new ClientApiError(
+                "Missing required fields: curriculumId, moduleId or dayId.",
+            );
+        }
 
-    const result = await materializeRecurrenceOccurrence({
-        curriculumId,
-        moduleId,
-        eventId,
-        dayId,
-    });
+        const result = await materializeRecurrenceOccurrence({
+            curriculumId,
+            moduleId,
+            eventId,
+            dayId,
+        });
 
-    return ApiSuccess(result);
-});
+        return ApiSuccess(result);
+    },
+);

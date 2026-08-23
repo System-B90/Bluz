@@ -18,7 +18,9 @@ export const GET = withApi(async (request: NextRequest) => {
     // The log names who changed what, so it is never served anonymously.
     const user = await getSessionUser();
     if (!user) {
-        throw new UserNotLoggedInError("Unauthorized: No active session found.");
+        throw new UserNotLoggedInError(
+            "Unauthorized: No active session found.",
+        );
     }
 
     const eventId = request.nextUrl.searchParams.get("id");

@@ -2,7 +2,11 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
 
-import { ApiSuccess, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    withApi,
+} from "@/api-server/common";
 import {
     connectGoogleCalendar,
     isGoogleCalendarConfigured,
@@ -28,7 +32,8 @@ export const POST = withApi(async (request: NextRequest) => {
         );
     }
 
-    const { code } = (await request.json()) as ApiGoogleCalendarConnectPayload;
+    const { code } =
+        await requireJsonObjectBody<ApiGoogleCalendarConnectPayload>(request);
     if (!code) throw new ClientApiError("Missing Google authorization code.");
 
     await connectGoogleCalendar(user.id, code);

@@ -1,6 +1,12 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, ServerApi, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    parseJsonBody,
+    requireJsonObjectBody,
+    ServerApi,
+    withApi,
+} from "@/api-server/common";
 import { DbCourses } from "@/api-server/db-courses";
 import {
     resolveIterationFromRequest,
@@ -42,21 +48,20 @@ export const GET: ServerApiCourseGet = withApi(async (request) => {
 
 export const POST: ServerApiCourseUpdate = withApi(async (request) => {
     await requireStaffSession();
-    const { controller } =
-        await resolveWritableIterationFromRequest(request);
-    const course = await request.json();
-    if (!course) {
-        throw new ClientApiError("No data provided!");
-    }
+    const { controller } = await resolveWritableIterationFromRequest(request);
+    const course = await requireJsonObjectBody<ApiCourseUpdatePayload>(request);
     await DbCourses.set(course, undefined, controller);
     return ApiSuccess(course);
 });
 
 export const DELETE: ServerApiCourseDelete = withApi(async (request) => {
     await requireStaffSession();
-    const { controller } =
-        await resolveWritableIterationFromRequest(request);
-    const courseId = await request.json();
+    const { controller } = await resolveWritableIterationFromRequest(request);
+    // The client sends a bare JSON string id here, not an object — parse with
+    // the shared helper so a malformed payload is a 400, not a 500.
+    const courseId = parseJsonBody<ApiCourseDeletePayload>(
+        await request.text(),
+    );
     if (!courseId) {
         throw new ClientApiError("No courseId provided!");
     }
@@ -66,12 +71,8 @@ export const DELETE: ServerApiCourseDelete = withApi(async (request) => {
 
 export const PUT: ServerApiCourseCreate = withApi(async (request) => {
     await requireStaffSession();
-    const { controller } =
-        await resolveWritableIterationFromRequest(request);
-    const course = await request.json();
-    if (!course) {
-        throw new ClientApiError("No data provided!");
-    }
+    const { controller } = await resolveWritableIterationFromRequest(request);
+    const course = await requireJsonObjectBody<ApiCourseCreatePayload>(request);
     if (!course.id) {
         throw new ClientApiError("Course id is not provided!");
     }

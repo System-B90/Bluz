@@ -63,35 +63,36 @@ export function buildGantAllocateTimeRoutes<TEntity extends BaseGantItem>({
         return ApiSuccess(duration);
     });
 
-    const POST = withApi(async (request: NextRequest, context: RouteContext) => {
-        await requireStaffSession();
-        const { id } = await context.params;
-        if (!id) {
-            throw new ClientApiError("Item identifier (id) is missing.");
-        }
+    const POST = withApi(
+        async (request: NextRequest, context: RouteContext) => {
+            await requireStaffSession();
+            const { id } = await context.params;
+            if (!id) {
+                throw new ClientApiError("Item identifier (id) is missing.");
+            }
 
-        const body = await requireJsonObjectBody<Record<string, unknown>>(
-            request,
-        );
-        const { containerId, duration } = body as {
-            containerId: BaseGantItem["id"];
-            duration: number;
-        };
+            const body =
+                await requireJsonObjectBody<Record<string, unknown>>(request);
+            const { containerId, duration } = body as {
+                containerId: BaseGantItem["id"];
+                duration: number;
+            };
 
-        if (!containerId || typeof duration !== "number") {
-            throw new ClientApiError(
-                "Invalid payload: containerId and duration (number) are required.",
+            if (!containerId || typeof duration !== "number") {
+                throw new ClientApiError(
+                    "Invalid payload: containerId and duration (number) are required.",
+                );
+            }
+
+            await dbSet.setAllocatedTime(
+                id as GanttEventId,
+                containerId,
+                duration,
             );
-        }
 
-        await dbSet.setAllocatedTime(
-            id as GanttEventId,
-            containerId,
-            duration,
-        );
-
-        return ApiSuccess({ success: true });
-    });
+            return ApiSuccess({ success: true });
+        },
+    );
 
     return {
         GET,

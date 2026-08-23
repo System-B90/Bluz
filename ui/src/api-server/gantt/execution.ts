@@ -49,8 +49,25 @@ export async function getCurriculumExecution(
 
     // Include archived events: a deleted cut event still counts as planned,
     // rendered as actual: null (bypasses db-event's NOT_ARCHIVED filter).
+    // Projected down to exactly the fields `buildEventExecution` consumes —
+    // full cut-event documents were loaded only to read these (#538 item 8).
     const cutEvents = await controller.events
-        .find({ ganttEventId: { $exists: true } })
+        .find(
+            { ganttEventId: { $exists: true } },
+            {
+                projection: {
+                    id: 1,
+                    name: 1,
+                    startTime: 1,
+                    endTime: 1,
+                    instructors: 1,
+                    archived: 1,
+                    ganttEventId: 1,
+                    ganttOccurrenceDate: 1,
+                    _id: 0,
+                },
+            },
+        )
         .toArray();
     if (cutEvents.length === 0) return { events: {} };
 

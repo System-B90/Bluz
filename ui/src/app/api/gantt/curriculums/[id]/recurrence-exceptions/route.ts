@@ -14,12 +14,15 @@ type RouteContext = {
 /**
  * GET: Fetches every recurrence exception for a curriculum.
  */
-export const GET = withApi(async (request: NextRequest, context: RouteContext) => {
-    await requireStaffSession();
-    const { id: curriculumId } = await context.params;
-    if (!curriculumId) throw new ClientApiError("Curriculum ID is missing.");
+export const GET = withApi(
+    async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id: curriculumId } = await context.params;
+        if (!curriculumId)
+            throw new ClientApiError("Curriculum ID is missing.");
 
-    const exceptions =
-        await listRecurrenceExceptionsForCurriculum(curriculumId);
-    return ApiSuccess(exceptions);
-});
+        const exceptions =
+            await listRecurrenceExceptionsForCurriculum(curriculumId);
+        return ApiSuccess(exceptions);
+    },
+);

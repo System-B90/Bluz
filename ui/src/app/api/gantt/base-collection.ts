@@ -6,9 +6,7 @@ import {
     withApi,
 } from "@/api-server/common";
 import { requireStaffSession } from "@/api-server/session-user";
-import {
-    BasicGantOperations,
-} from "@/api-shared/types/gantt/api-layer";
+import { BasicGantOperations } from "@/api-shared/types/gantt/api-layer";
 import { BaseGantItem } from "@/api-shared/types/gantt/models";
 
 export type { BasicGantOperations };

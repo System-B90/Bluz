@@ -9,56 +9,55 @@ import { ClientApiError } from "@/api-shared/errors";
 import { getNextIndexedTitle } from "@/app/api/gantt/events/[id]/duplicate/title-utils";
 
 type RouteContext = {
-    params: Promise<{ id: string; }>;
+    params: Promise<{ id: string }>;
 };
 
-export const POST = withApi(async (request: NextRequest, context: RouteContext) =>
-{
-    await requireStaffSession();
-    const { id } = await context.params;
-    if (!id)
-    {
-        throw new ClientApiError(
-            "Event identifier (id) is missing from the request parameters.",
-        );
-    }
+export const POST = withApi(
+    async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id } = await context.params;
+        if (!id) {
+            throw new ClientApiError(
+                "Event identifier (id) is missing from the request parameters.",
+            );
+        }
 
-    const textBody = await request.text();
-    const payload = textBody
-        ? parseJsonBody<{ moduleId: string; }>(textBody)
-        : null;
+        const textBody = await request.text();
+        const payload = textBody
+            ? parseJsonBody<{ moduleId: string }>(textBody)
+            : null;
 
-    if (!payload?.moduleId)
-    {
-        throw new ClientApiError(
-            "moduleId is required in the request body.",
-        );
-    }
+        if (!payload?.moduleId) {
+            throw new ClientApiError(
+                "moduleId is required in the request body.",
+            );
+        }
 
-    const originalEvent = await DbModuleEvent.getItem(id);
-    const newTitle = getNextIndexedTitle(originalEvent.title);
+        const originalEvent = await DbModuleEvent.getItem(id);
+        const newTitle = getNextIndexedTitle(originalEvent.title);
 
-    const duplicatedEvent = await DbModuleEvent.createNewItem({
-        title: newTitle,
-        type: originalEvent.type,
-        minimumDuration: originalEvent.minimumDuration,
-        allocatedDuration: 0,
-        orchestratorId: originalEvent.orchestratorId,
-        recommendedLecturerIds: originalEvent.recommendedLecturerIds,
-        systemRequirements: originalEvent.systemRequirements,
-        roomRequirement: originalEvent.roomRequirement,
-        recurrence: originalEvent.recurrence,
-        recurrenceStartDate: originalEvent.recurrenceStartDate,
-        recurrenceEndDate: originalEvent.recurrenceEndDate,
-        isCritical: originalEvent.isCritical,
-        isPaWindow: originalEvent.isPaWindow,
-        splitAcrossBreaks: originalEvent.splitAcrossBreaks,
-        comment: originalEvent.comment,
-        hiveSubjectId: originalEvent.hiveSubjectId,
-        hiveModuleId: originalEvent.hiveModuleId,
-        hiveLessonId: originalEvent.hiveLessonId,
-        moduleId: payload.moduleId,
-    });
+        const duplicatedEvent = await DbModuleEvent.createNewItem({
+            title: newTitle,
+            type: originalEvent.type,
+            minimumDuration: originalEvent.minimumDuration,
+            allocatedDuration: 0,
+            orchestratorId: originalEvent.orchestratorId,
+            recommendedLecturerIds: originalEvent.recommendedLecturerIds,
+            systemRequirements: originalEvent.systemRequirements,
+            roomRequirement: originalEvent.roomRequirement,
+            recurrence: originalEvent.recurrence,
+            recurrenceStartDate: originalEvent.recurrenceStartDate,
+            recurrenceEndDate: originalEvent.recurrenceEndDate,
+            isCritical: originalEvent.isCritical,
+            isPaWindow: originalEvent.isPaWindow,
+            splitAcrossBreaks: originalEvent.splitAcrossBreaks,
+            comment: originalEvent.comment,
+            hiveSubjectId: originalEvent.hiveSubjectId,
+            hiveModuleId: originalEvent.hiveModuleId,
+            hiveLessonId: originalEvent.hiveLessonId,
+            moduleId: payload.moduleId,
+        });
 
-    return ApiSuccess(duplicatedEvent);
-});
+        return ApiSuccess(duplicatedEvent);
+    },
+);

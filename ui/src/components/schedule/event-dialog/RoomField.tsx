@@ -6,11 +6,10 @@ import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { useCallback, useState } from "react";
 
-import
-{
+import {
     areRoomsEqual,
     ResolvableRoom,
-    roomToKey,
+    roomLikeToResourceKey,
     roomToResolvable,
 } from "@/api-shared/types/room";
 import { useRooms } from "@/components/base/RoomsProvider";
@@ -23,10 +22,9 @@ export function RoomField({
     event,
     onBlurCallback,
     ...props
-}: RoomFieldProps & FormControlProps)
-{
+}: RoomFieldProps & FormControlProps) {
     const { rooms, getRoom } = useRooms();
-    const [ encodedSelectedRoomIds, setEncodedSelectedRoomIds ] = useState(
+    const [encodedSelectedRoomIds, setEncodedSelectedRoomIds] = useState(
         Array.isArray(event?.rooms)
             ? event.rooms.map((r) => JSON.stringify(r))
             : [],
@@ -39,8 +37,7 @@ export function RoomField({
     // key={`${event.id}-${event.updatedAt}`}, which resets this state
     // instead of relying on an effect to resync it.
     const handleChange = useCallback(
-        (event: SelectChangeEvent<typeof encodedSelectedRoomIds>) =>
-        {
+        (event: SelectChangeEvent<typeof encodedSelectedRoomIds>) => {
             const {
                 target: { value },
             } = event;
@@ -54,8 +51,7 @@ export function RoomField({
         [],
     );
 
-    const handleDelete = useCallback((roomIdToDelete: ResolvableRoom) =>
-    {
+    const handleDelete = useCallback((roomIdToDelete: ResolvableRoom) => {
         setEncodedSelectedRoomIds(
             (p) =>
                 p.filter(
@@ -68,57 +64,56 @@ export function RoomField({
         );
     }, []);
 
-    const onClose = useCallback(() =>
-    {
+    const onClose = useCallback(() => {
         onBlurCallback({
             rooms: encodedSelectedRoomIds.map(
                 (v) => JSON.parse(v) as ResolvableRoom,
             ),
         });
-    }, [ encodedSelectedRoomIds, onBlurCallback ]);
+    }, [encodedSelectedRoomIds, onBlurCallback]);
 
     return (
         <FormControl
-            fullWidth={ false }
-            { ...props }
-            disabled={ event?.type ? !eventHasRoom(event.type) : false }
+            fullWidth={false}
+            {...props}
+            disabled={event?.type ? !eventHasRoom(event.type) : false}
         >
             <InputLabel>כיתות</InputLabel>
             <Select
                 label="כיתות"
                 multiple
-                onChange={ handleChange }
-                onClose={ onClose }
-                renderValue={ (selected: Array<string>) => (
-                    <Box sx={ { display: "flex", flexWrap: "wrap", gap: 0.5 } }>
-                        { selected
+                onChange={handleChange}
+                onClose={onClose}
+                renderValue={(selected: Array<string>) => (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                        {selected
                             .map(
                                 (encodedValue) =>
                                     JSON.parse(encodedValue) as ResolvableRoom,
                             )
                             .map((value) => (
                                 <Chip
-                                    key={ roomToKey(value) }
-                                    label={ getRoom(value)?.name || value.id }
-                                    onDelete={ () => handleDelete(value) }
-                                    onMouseDown={ (event) =>
+                                    key={roomLikeToResourceKey(value)}
+                                    label={getRoom(value)?.name || value.id}
+                                    onDelete={() => handleDelete(value)}
+                                    onMouseDown={(event) =>
                                         event.stopPropagation()
                                     }
                                     size="small" // Optional: makes them fit better
                                 />
-                            )) }
+                            ))}
                     </Box>
-                ) }
-                value={ encodedSelectedRoomIds }
+                )}
+                value={encodedSelectedRoomIds}
             >
-                { Object.values(rooms).map((room) => (
+                {Object.values(rooms).map((room) => (
                     <MenuItem
-                        key={ roomToKey(room) }
-                        value={ JSON.stringify(roomToResolvable(room)) }
+                        key={roomLikeToResourceKey(room)}
+                        value={JSON.stringify(roomToResolvable(room))}
                     >
-                        { room.name }
+                        {room.name}
                     </MenuItem>
-                )) }
+                ))}
             </Select>
         </FormControl>
     );

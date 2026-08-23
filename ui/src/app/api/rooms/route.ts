@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import {
     ApiSuccess,
+    parseJsonBody,
     requireJsonObjectBody,
     ServerApi,
     withApi,
@@ -54,9 +55,7 @@ export const GET: ServerApiRoomsGet = withApi(async (request) => {
         await resolveIterationFromRequest(request);
     // Past iterations point at a different Hive instance; fall back to the
     // names cached at creation if that instance is unreachable.
-    const iteration = iterationId
-        ? await DbIterations.get(iterationId)
-        : null;
+    const iteration = iterationId ? await DbIterations.get(iterationId) : null;
     const rooms = await getAllRooms(
         controller,
         iteration?.hiveUrl,
@@ -70,8 +69,7 @@ export const GET: ServerApiRoomsGet = withApi(async (request) => {
 
 export const POST: ServerApiRoomUpdate = withApi(async (request) => {
     await requireStaffSession();
-    const { controller } =
-        await resolveWritableIterationFromRequest(request);
+    const { controller } = await resolveWritableIterationFromRequest(request);
     const room = await requireJsonObjectBody<ApiRoomUpdatePayload>(request);
     await DbRooms.set(room, undefined, controller);
     return ApiSuccess(room);
@@ -79,8 +77,7 @@ export const POST: ServerApiRoomUpdate = withApi(async (request) => {
 
 export const PUT: ServerApiRoomCreate = withApi(async (request) => {
     await requireStaffSession();
-    const { controller } =
-        await resolveWritableIterationFromRequest(request);
+    const { controller } = await resolveWritableIterationFromRequest(request);
     const room = await requireJsonObjectBody<ApiRoomCreatePayload>(request);
     if (!room.id) {
         throw new ClientApiError("Room id is not provided!");
@@ -91,9 +88,10 @@ export const PUT: ServerApiRoomCreate = withApi(async (request) => {
 
 export const DELETE: ServerApiRoomDelete = withApi(async (request) => {
     await requireStaffSession();
-    const { controller } =
-        await resolveWritableIterationFromRequest(request);
-    const roomId = await request.json();
+    const { controller } = await resolveWritableIterationFromRequest(request);
+    // The client sends a bare JSON string id here, not an object — parse with
+    // the shared helper so a malformed payload is a 400, not a 500.
+    const roomId = parseJsonBody<ApiRoomDeletePayload>(await request.text());
     if (!roomId) {
         throw new ClientApiError("No roomId provided!");
     }
@@ -101,27 +99,31 @@ export const DELETE: ServerApiRoomDelete = withApi(async (request) => {
     return ApiSuccess();
 });
 
-export const PATCH: ServerApiRoomExtendedInfoUpdate = withApi(async (request) => {
-    await requireStaffSession();
-    const { controller } =
-        await resolveWritableIterationFromRequest(request);
-    const payload =
-        await requireJsonObjectBody<ApiRoomExtendedInfoUpdatePayload>(request);
-    if (
-        !payload ||
-        payload.roomId === undefined ||
-        payload.roomSource === undefined ||
-        !payload.extendedInfo
-    ) {
-        throw new ClientApiError(
-            "Invalid payload for room extended info update!",
+export const PATCH: ServerApiRoomExtendedInfoUpdate = withApi(
+    async (request) => {
+        await requireStaffSession();
+        const { controller } =
+            await resolveWritableIterationFromRequest(request);
+        const payload =
+            await requireJsonObjectBody<ApiRoomExtendedInfoUpdatePayload>(
+                request,
+            );
+        if (
+            !payload ||
+            payload.roomId === undefined ||
+            payload.roomSource === undefined ||
+            !payload.extendedInfo
+        ) {
+            throw new ClientApiError(
+                "Invalid payload for room extended info update!",
+            );
+        }
+        await DbRoomExtendedInfo.upsert(
+            payload.roomId,
+            payload.roomSource,
+            payload.extendedInfo,
+            controller,
         );
-    }
-    await DbRoomExtendedInfo.upsert(
-        payload.roomId,
-        payload.roomSource,
-        payload.extendedInfo,
-        controller,
-    );
-    return ApiSuccess();
-});
+        return ApiSuccess();
+    },
+);

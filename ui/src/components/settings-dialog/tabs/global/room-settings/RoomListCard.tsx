@@ -1,11 +1,8 @@
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import { useMemo } from "react";
 
-import { Room } from "@/api-shared/types/room";
-import
-{
-    ListCard
-} from "@/components/settings-dialog/tabs/global/common";
+import { Room, roomLikeToResourceKey } from "@/api-shared/types/room";
+import { ListCard } from "@/components/settings-dialog/tabs/global/common";
 import { SettingsListCardContent } from "@/components/settings-dialog/tabs/global/common/ListCard";
 import { RoomListItem } from "@/components/settings-dialog/tabs/global/room-settings/RoomListItem";
 
@@ -18,49 +15,45 @@ export const RoomListCard: ListCard<Room> = function RoomListCard({
     populateFormFrom: populateFormFromRoom,
     handleStartCreate,
     handleDelete,
-})
-{
-    const roomItems = useMemo(() => filteredRooms.map((room) =>
-    {
-        const isActive =
-            selectedRoom?.id === room.id &&
-            selectedRoom?.source === room.source;
+}) {
+    const roomItems = useMemo(
+        () =>
+            filteredRooms.map((room) => {
+                const isActive =
+                    selectedRoom?.id === room.id &&
+                    selectedRoom?.source === room.source;
 
-        return (
-            <RoomListItem
-                isActive={ isActive }
-                key={ `${room.source}-${room.id}` }
-                onDelete={ handleDelete }
-                onPopulateForm={ populateFormFromRoom }
-                room={ room }
-            />
-        );
-    }
-    ), [
-        filteredRooms,
-        selectedRoom,
-        handleDelete,
-        populateFormFromRoom,
-    ]);
+                return (
+                    <RoomListItem
+                        isActive={isActive}
+                        key={roomLikeToResourceKey(room)}
+                        onDelete={handleDelete}
+                        onPopulateForm={populateFormFromRoom}
+                        room={room}
+                    />
+                );
+            }),
+        [filteredRooms, selectedRoom, handleDelete, populateFormFromRoom],
+    );
 
     return (
         <SettingsListCardContent
             addButtonLabel="הוספת חדר מותאם אישית"
-            handleStartCreate={ handleStartCreate }
-            headerProps={ {
+            handleStartCreate={handleStartCreate}
+            headerProps={{
                 icon: MeetingRoomIcon,
                 subtitle: "ניהול חדרים מהייב וחדרים מותאמים אישית",
                 title: "כל החדרים",
-            } }
-            isLoading={ isLoading }
-            items={ roomItems }
-            searchMessages={ {
+            }}
+            isLoading={isLoading}
+            items={roomItems}
+            searchMessages={{
                 noMatches: "לא נמצאו חדרים התואמים את החיפוש",
                 noEntries: "לא הוגדרו חדרים",
-            } }
+            }}
             searchPlaceholder="חיפוש חדר..."
-            searchQuery={ searchQuery }
-            setSearchQuery={ setSearchQuery }
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
         />
     );
 };

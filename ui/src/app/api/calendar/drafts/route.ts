@@ -5,11 +5,12 @@ import {
     normalizeStoredEvents,
     requireIdParam,
 } from "@/api-server/calendar-store-request";
-import { ApiSuccess, withApi } from "@/api-server/common";
 import {
-    DbCalendarDraft,
-    DraftAuthor,
-} from "@/api-server/db-calendar-draft";
+    ApiSuccess,
+    requireJsonObjectBody,
+    withApi,
+} from "@/api-server/common";
+import { DbCalendarDraft, DraftAuthor } from "@/api-server/db-calendar-draft";
 import {
     resolveIterationFromRequest,
     resolveWritableIterationFromRequest,
@@ -62,8 +63,8 @@ export const POST = withApi(async (request: Request) => {
     await requireStaffSession();
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
-    const body = (await request.json()) as CreateDraftBody;
-    if (!body || typeof body.label !== "string") {
+    const body = await requireJsonObjectBody<CreateDraftBody>(request);
+    if (typeof body.label !== "string") {
         throw new ClientApiError("A draft label is required.");
     }
     const author = await resolveAuthor();
@@ -81,17 +82,12 @@ export const POST = withApi(async (request: Request) => {
 /** PUT /api/calendar/drafts — update an existing shared draft's events/label. */
 export const PUT = withApi(async (request: Request) => {
     await requireStaffSession();
-    const { controller } = await resolveWritableIterationFromRequest(
-        request,
-    );
-    const body = (await request.json()) as UpdateDraftBody;
-    if (!body || typeof body.id !== "string") {
+    const { controller } = await resolveWritableIterationFromRequest(request);
+    const body = await requireJsonObjectBody<UpdateDraftBody>(request);
+    if (typeof body.id !== "string") {
         throw new ClientApiError("A draft id is required.");
     }
-    if (
-        body.label !== undefined &&
-        typeof body.label !== "string"
-    ) {
+    if (body.label !== undefined && typeof body.label !== "string") {
         throw new ClientApiError("Draft label must be a string.");
     }
     const author = await resolveAuthor();
@@ -110,9 +106,7 @@ export const PUT = withApi(async (request: Request) => {
 export const DELETE = withApi(async (request: Request) => {
     await requireStaffSession();
     const id = requireIdParam(request, "No draft id provided.");
-    const { controller } = await resolveWritableIterationFromRequest(
-        request,
-    );
+    const { controller } = await resolveWritableIterationFromRequest(request);
     await DbCalendarDraft.del(id, controller);
     return ApiSuccess();
 });

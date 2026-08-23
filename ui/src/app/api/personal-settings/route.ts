@@ -1,6 +1,10 @@
 export const dynamic = "force-dynamic";
 
-import { ApiSuccess, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    withApi,
+} from "@/api-server/common";
 import { DbPersonalSettings } from "@/api-server/db-personal-settings";
 import { getSessionUser } from "@/api-server/session-user";
 import { UserNotLoggedInError } from "@/api-shared/errors";
@@ -23,6 +27,6 @@ export const GET = withApi(async () => {
 /** POST /api/personal-settings — replace the current user's personal settings. */
 export const POST = withApi(async (request: Request) => {
     const userId = await resolveUserId();
-    const body = (await request.json()) as PersonalSettings;
+    const body = await requireJsonObjectBody<PersonalSettings>(request);
     return ApiSuccess(await DbPersonalSettings.set(userId, body));
 });

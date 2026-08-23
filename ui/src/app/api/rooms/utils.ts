@@ -10,8 +10,9 @@ import {
     CustomRoom,
     HiveRoom,
     Room,
+    RoomLike,
+    roomLikeToResourceKey,
     RoomSource,
-    roomToKey,
 } from "@/api-shared/types/room";
 
 /** Reconstruct minimal Hive rooms from a cached id→name snapshot. */
@@ -52,11 +53,18 @@ export async function getAllRooms(
 
     const allRooms: Array<Room> = [...hiveRooms, ...customRooms];
 
-    // Merge extended info onto rooms
+    // Merge extended info onto rooms. The persisted documents store roomId and
+    // roomSource as separate fields, so the composite key is derived in memory
+    // on both sides — this is the migration that retired the legacy
+    // `${source}-${id}` format (#544/17): both join sides now use the same
+    // round-trip-safe colon format as the rest of the app.
     const extendedInfoDocs = await DbRoomExtendedInfo.getAll(controller);
     const extendedInfoMap = new Map(
         extendedInfoDocs.map((doc) => [
-            `${doc.roomSource}-${doc.roomId}`,
+            roomLikeToResourceKey({
+                id: doc.roomId,
+                source: doc.roomSource,
+            } as RoomLike),
             {
                 workstationCount: doc.workstationCount,
                 lectureSeatCount: doc.lectureSeatCount,
@@ -67,7 +75,7 @@ export async function getAllRooms(
     );
 
     return allRooms.map((room) => {
-        const key = roomToKey(room);
+        const key = roomLikeToResourceKey(room);
         const extInfo = extendedInfoMap.get(key);
         return extInfo ? { ...room, extendedInfo: extInfo } : room;
     });

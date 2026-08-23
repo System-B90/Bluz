@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import {
     ApiSuccess,
+    parseJsonBody,
     requireJsonObjectBody,
     ServerApi,
     withApi,
@@ -35,10 +36,7 @@ import {
     EVENT_INITIATOR_HEADER,
     parseEventInitiator,
 } from "@/api-shared/types/event-history";
-import {
-    MAX_EVENT_RANGE_DAYS,
-    MILLISECONDS_IN_A_DAY,
-} from "@/settings";
+import { MAX_EVENT_RANGE_DAYS, MILLISECONDS_IN_A_DAY } from "@/settings";
 
 type ServerApiEventGet = ServerApi<ApiEventGetPayload, ApiEventGetResponse>;
 type ServerApiEventUpdate = ServerApi<
@@ -124,11 +122,17 @@ export const POST: ServerApiEventUpdate = withApi(async (request) => {
     if (!event) {
         throw new ClientApiError("No data provided!");
     }
-    const updated = await DbEvent.set(event, undefined, controller, iterationId, {
-        initiator: parseEventInitiator(
-            request.headers.get(EVENT_INITIATOR_HEADER),
-        ),
-    });
+    const updated = await DbEvent.set(
+        event,
+        undefined,
+        controller,
+        iterationId,
+        {
+            initiator: parseEventInitiator(
+                request.headers.get(EVENT_INITIATOR_HEADER),
+            ),
+        },
+    );
     syncEventToInstructorsGoogleCalendars(updated, "upsert", iterationId);
     syncEventLessonToHive(updated, "upsert", controller);
     return ApiSuccess(updated);
@@ -164,7 +168,9 @@ export const DELETE: ServerApiEventDelete = withApi(async (request) => {
     await requireStaffSession();
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
-    const eventId: ApiEventDeletePayload = await request.json();
+    // The client sends a bare JSON string id here, not an object — parse with
+    // the shared helper so a malformed payload is a 400, not a 500.
+    const eventId = parseJsonBody<ApiEventDeletePayload>(await request.text());
     if (!eventId) {
         throw new ClientApiError("No eventId provided!");
     }

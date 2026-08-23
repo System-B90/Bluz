@@ -65,50 +65,20 @@ export function roomToResolvable<T extends Room>(
 }
 
 /**
- * Legacy room key: `${source}-${id}`. #544/17 — do NOT extend this format's
- * usage, and do not "just" switch it to the colon format below; that is a
- * data migration, not a local edit. Left in place, documented, for whoever
- * picks up that migration. Two call sites left as of this writing:
- *
- * - `app/api/rooms/utils.ts` (`getAllRoomsWithExtendedInfo`) — builds this
- *   exact string to look up `DbRoomExtendedInfo` documents, which are
- *   *persisted* keyed by `${roomSource}-${roomId}` (see that file's
- *   `extendedInfoMap`, built straight from `doc.roomSource`/`doc.roomId`).
- *   This is the real hazard: the dash format isn't just an in-memory key,
- *   it's baked into existing Mongo documents. Swapping the format here
- *   without also migrating (or dual-writing/dual-reading) those documents
- *   silently orphans every room's existing extended info (workstation/seat
- *   counts, "peAyin") — they'd stop resolving, not error.
- * - `components/schedule/event-dialog/RoomField.tsx` — uses it only as a
- *   React list `key` prop. Cosmetic; safe to repoint at
- *   `roomLikeToResourceKey` any time, independent of the above.
- *
- * The round-trip hazard `roomLikeToResourceKey` was introduced to fix
- * (#170) applies here too, in a different way: `roomToKey` has no inverse —
- * nothing parses `"1-<uuid-with-dashes>"` back apart — so it has stayed
- * safe only because every caller re-derives the key from a live `Room`
- * instead of storing then re-parsing it. A migration needs to either (a)
- * backfill `DbRoomExtendedInfo` to a colon-keyed (or structured
- * source+id) lookup and cut this function over in the same change, or
- * (b) teach the lookup to fall back from colon to dash format during a
- * transition window, then remove the fallback once confirmed backfilled.
- * Either way, this is a server-side (api-server / app/api) + data change,
- * not something to do from api-client/api-shared alone.
- */
-export function roomToKey(room: RoomLike): string {
-    return `${room.source}-${room.id}`;
-}
-
-/**
  * Stable composite key for matching a room across the calendar resource layer
  * (react-big-calendar `resourceIdAccessor` / `resourceAccessor`). Uses a `:`
  * separator so the key round-trips unambiguously even when the room id itself
  * contains `-` (custom-room UUIDs, the "no-room" sentinel). Replaces the old
  * `JSON.stringify(room)` matching, which was fragile to property order / extra
  * fields and could silently drop events into the "no room" column (#170).
- * This is the current, production-standard key format — prefer it over
- * {@link roomToKey} everywhere except the one persisted-data call site
- * documented on that function.
+ *
+ * This is the only room-key format in the codebase. The legacy
+ * `${source}-${id}` format it once coexisted with (#544/17) was retired:
+ * its last consumers — the extended-info join in `app/api/rooms/utils.ts`,
+ * two cosmetic React keys, and an unconsumed WS broadcast key — all derived
+ * the string in memory from structured data (the persisted
+ * `DbRoomExtendedInfo` documents store roomId/roomSource as separate
+ * fields), so cutting them over needed no data backfill.
  */
 export function roomLikeToResourceKey(room: RoomLike): string {
     return `${room.source}:${room.id}`;

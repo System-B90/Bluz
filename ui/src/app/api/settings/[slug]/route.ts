@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import {
     ApiSuccess,
+    requireJsonObjectBody,
     ServerApiWithParams,
     withApi,
 } from "@/api-server/common";
@@ -47,26 +48,39 @@ export const GET: ServerApiSettingGet = withApi(async (request, context) => {
     return ApiSuccess(data);
 });
 
-export const POST: ServerApiSettingUpdate = withApi(async (request, context) => {
-    await requireStaffSession();
-    const { slug } = await context.params;
-    const { controller } =
-        await resolveWritableIterationFromRequest(request);
-    const value: ApiSettingUpdatePayload = await request.json();
+export const POST: ServerApiSettingUpdate = withApi(
+    async (request, context) => {
+        await requireStaffSession();
+        const { slug } = await context.params;
+        const { controller } =
+            await resolveWritableIterationFromRequest(request);
+        const value =
+            await requireJsonObjectBody<ApiSettingUpdatePayload>(request);
 
-    if (slug === "prayerTimes") {
-        inplaceDateFixupToDate(value, "shacharit");
-        inplaceDateFixupToDate(value, "mincha");
-        inplaceDateFixupToDate(value, "arvit");
-        await DbSettings.set(slug as SettingName, value, undefined, controller);
+        if (slug === "prayerTimes") {
+            inplaceDateFixupToDate(value, "shacharit");
+            inplaceDateFixupToDate(value, "mincha");
+            inplaceDateFixupToDate(value, "arvit");
+            await DbSettings.set(
+                slug as SettingName,
+                value,
+                undefined,
+                controller,
+            );
 
-        await updatePrayerEvents({
-            startDate: new Date(Date.now()),
-            newConfig: value as PrayerSettings,
-        });
-    } else {
-        await DbSettings.set(slug as SettingName, value, undefined, controller);
-    }
+            await updatePrayerEvents({
+                startDate: new Date(Date.now()),
+                newConfig: value as PrayerSettings,
+            });
+        } else {
+            await DbSettings.set(
+                slug as SettingName,
+                value,
+                undefined,
+                controller,
+            );
+        }
 
-    return ApiSuccess();
-});
+        return ApiSuccess();
+    },
+);

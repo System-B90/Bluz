@@ -54,44 +54,48 @@ const PULL_BACK_STATUS_BY_CODE: Record<CurriculumPullBackErrorCode, number> = {
  * POST: materialize a published, linked curriculum into schedule events in the
  * linked iteration's database. All inputs are derived server-side from the id.
  */
-export const POST = withApi(async (request: NextRequest, context: RouteContext) => {
-    await requireStaffSession();
-    const { id } = await context.params;
-    if (!id) throw new ClientApiError("Curriculum ID is missing.");
+export const POST = withApi(
+    async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id } = await context.params;
+        if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
-    const body = (await request
-        .json()
-        .catch(() => null)) as ApiCurriculumCutPayload | null;
+        const body = (await request
+            .json()
+            .catch(() => null)) as ApiCurriculumCutPayload | null;
 
-    // Balancing and breaks default to on; the dialog sends explicit booleans.
-    const outcome = await cutCurriculumToSchedule(id as GanttCurriculumId, {
-        force: Boolean(body?.force),
-        autoSpillover: body?.autoSpillover ?? true,
-        insertBreaks: body?.insertBreaks ?? true,
-        acceptedConstraintMoves: body?.acceptedConstraintMoves ?? [],
-        weekOverflowResolutions: body?.weekOverflowResolutions ?? {},
-    });
-    if (!outcome.ok) {
-        return ApiErrorMaker(
-            outcome.error,
-            STATUS_BY_CODE[outcome.error.code] ?? 400,
-        );
-    }
+        // Balancing and breaks default to on; the dialog sends explicit booleans.
+        const outcome = await cutCurriculumToSchedule(id as GanttCurriculumId, {
+            force: Boolean(body?.force),
+            autoSpillover: body?.autoSpillover ?? true,
+            insertBreaks: body?.insertBreaks ?? true,
+            acceptedConstraintMoves: body?.acceptedConstraintMoves ?? [],
+            weekOverflowResolutions: body?.weekOverflowResolutions ?? {},
+        });
+        if (!outcome.ok) {
+            return ApiErrorMaker(
+                outcome.error,
+                STATUS_BY_CODE[outcome.error.code] ?? 400,
+            );
+        }
 
-    return ApiSuccess(outcome.result);
-});
+        return ApiSuccess(outcome.result);
+    },
+);
 
 /**
  * GET: cut status for a curriculum — whether its linked iteration currently
  * holds live cut events, driving the UI toggle between "cut" and "pull back".
  */
-export const GET = withApi(async (request: NextRequest, context: RouteContext) => {
-    await requireStaffSession();
-    const { id } = await context.params;
-    if (!id) throw new ClientApiError("Curriculum ID is missing.");
+export const GET = withApi(
+    async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id } = await context.params;
+        if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
-    return ApiSuccess(await getCutStatus(id as GanttCurriculumId));
-});
+        return ApiSuccess(await getCutStatus(id as GanttCurriculumId));
+    },
+);
 
 /**
  * PATCH: reload an already-cut schedule from the current gantt — add new
@@ -99,46 +103,53 @@ export const GET = withApi(async (request: NextRequest, context: RouteContext) =
  * events are skipped and reported as conflicts unless listed in
  * `overrideEventIds`. `dryRun` returns the same diff without writing.
  */
-export const PATCH = withApi(async (request: NextRequest, context: RouteContext) => {
-    await requireStaffSession();
-    const { id } = await context.params;
-    if (!id) throw new ClientApiError("Curriculum ID is missing.");
+export const PATCH = withApi(
+    async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id } = await context.params;
+        if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
-    const body = (await request
-        .json()
-        .catch(() => null)) as ApiCurriculumReloadPayload | null;
+        const body = (await request
+            .json()
+            .catch(() => null)) as ApiCurriculumReloadPayload | null;
 
-    const outcome = await reloadCurriculumSchedule(id as GanttCurriculumId, {
-        dryRun: Boolean(body?.dryRun),
-        force: Boolean(body?.force),
-        overrideEventIds: body?.overrideEventIds ?? [],
-    });
-    if (!outcome.ok) {
-        return ApiErrorMaker(
-            outcome.error,
-            RELOAD_STATUS_BY_CODE[outcome.error.code] ?? 400,
+        const outcome = await reloadCurriculumSchedule(
+            id as GanttCurriculumId,
+            {
+                dryRun: Boolean(body?.dryRun),
+                force: Boolean(body?.force),
+                overrideEventIds: body?.overrideEventIds ?? [],
+            },
         );
-    }
+        if (!outcome.ok) {
+            return ApiErrorMaker(
+                outcome.error,
+                RELOAD_STATUS_BY_CODE[outcome.error.code] ?? 400,
+            );
+        }
 
-    return ApiSuccess(outcome.result);
-});
+        return ApiSuccess(outcome.result);
+    },
+);
 
 /**
  * DELETE: pull back a previous cut — soft-delete every live schedule event that
  * was generated for this curriculum in the linked iteration.
  */
-export const DELETE = withApi(async (request: NextRequest, context: RouteContext) => {
-    await requireStaffSession();
-    const { id } = await context.params;
-    if (!id) throw new ClientApiError("Curriculum ID is missing.");
+export const DELETE = withApi(
+    async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id } = await context.params;
+        if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
-    const outcome = await pullBackCutSchedule(id as GanttCurriculumId);
-    if (!outcome.ok) {
-        return ApiErrorMaker(
-            outcome.error,
-            PULL_BACK_STATUS_BY_CODE[outcome.error.code] ?? 400,
-        );
-    }
+        const outcome = await pullBackCutSchedule(id as GanttCurriculumId);
+        if (!outcome.ok) {
+            return ApiErrorMaker(
+                outcome.error,
+                PULL_BACK_STATUS_BY_CODE[outcome.error.code] ?? 400,
+            );
+        }
 
-    return ApiSuccess(outcome.result);
-});
+        return ApiSuccess(outcome.result);
+    },
+);

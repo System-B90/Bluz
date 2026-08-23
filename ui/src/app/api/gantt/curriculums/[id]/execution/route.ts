@@ -17,13 +17,13 @@ type RouteContext = {
  * gantt plan and the schedule events cut from it. Not-yet-cut curriculums
  * (or ones with no linked iteration) return `{ events: {} }` with a 200.
  */
-export const GET = withApi(async (request: NextRequest, context: RouteContext) => {
-    await requireStaffSession();
-    const { id } = await context.params;
-    if (!id) throw new ClientApiError("Curriculum ID is missing.");
+export const GET = withApi(
+    async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id } = await context.params;
+        if (!id) throw new ClientApiError("Curriculum ID is missing.");
 
-    const execution = await getCurriculumExecution(
-        id as GanttCurriculumId,
-    );
-    return ApiSuccess(execution);
-});
+        const execution = await getCurriculumExecution(id as GanttCurriculumId);
+        return ApiSuccess(execution);
+    },
+);

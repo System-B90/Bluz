@@ -58,7 +58,9 @@ export function buildScheduleIcsCalendar(
             `SUMMARY:${escapeIcsText(event.name)}`,
         );
         if (descriptionParts.length > 0) {
-            lines.push(`DESCRIPTION:${escapeIcsText(descriptionParts.join("\\n"))}`);
+            lines.push(
+                `DESCRIPTION:${escapeIcsText(descriptionParts.join("\\n"))}`,
+            );
         }
         lines.push("END:VEVENT");
     }

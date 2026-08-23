@@ -1,7 +1,13 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
 import { postgresDb } from "@/api-server/gantt";
-import { asWireShape, drizzleOperationsBuilder, FOREIGN_KEY_VIOLATION, postgresErrorCode, UNIQUE_VIOLATION } from "@/api-server/gantt/db-base";
+import {
+    asWireShape,
+    drizzleOperationsBuilder,
+    FOREIGN_KEY_VIOLATION,
+    postgresErrorCode,
+    UNIQUE_VIOLATION,
+} from "@/api-server/gantt/db-base";
 import {
     ganttModule2EventsSchema,
     ganttModulesSchema,
@@ -134,13 +140,13 @@ async function setAllocatedTime(
     // it is about to write.
     await postgresDb.transaction(async (tx) => {
         const moduleToEventsData =
-        await tx.query.ganttModule2EventsSchema.findMany({
-            where: eq(ganttModule2EventsSchema.moduleId, moduleId),
-            with: {
-                event: { columns: { id: true, minimumDuration: true } },
-            },
-            orderBy: [asc(ganttModule2EventsSchema.eventId)],
-        });
+            await tx.query.ganttModule2EventsSchema.findMany({
+                where: eq(ganttModule2EventsSchema.moduleId, moduleId),
+                with: {
+                    event: { columns: { id: true, minimumDuration: true } },
+                },
+                orderBy: [asc(ganttModule2EventsSchema.eventId)],
+            });
 
         const callback: AllocateTimeToEventCallback = async ({
             eventId,
@@ -169,7 +175,7 @@ async function setAllocatedTime(
 
         const moduleEvents = moduleToEventsData.reduce(
             (prev, curr) => ({ ...prev, [curr.event.id]: curr.event }),
-        {} as AllocateTimeToModuleCallbackModuleEvents,
+            {} as AllocateTimeToModuleCallbackModuleEvents,
         );
 
         await allocateTimeToModule({
@@ -227,19 +233,27 @@ async function reorderEvents(
     moduleId: GanttModuleId,
     eventIds: Array<GanttEventId>,
 ): Promise<void> {
-    await postgresDb.transaction(async (tx) => {
-        for (let i = 0; i < eventIds.length; i++) {
-            await tx
-                .update(ganttModule2EventsSchema)
-                .set({ sortOrder: i })
-                .where(
-                    and(
-                        eq(ganttModule2EventsSchema.moduleId, moduleId),
-                        eq(ganttModule2EventsSchema.eventId, eventIds[i]),
-                    ),
-                );
-        }
-    });
+    if (eventIds.length === 0) return;
+
+    // One statement with a CASE ladder instead of an awaited UPDATE per event
+    // - reordering a large module was N sequential round trips (#538 item 9).
+    const order = sql.join(
+        eventIds.map(
+            (eventId, index) =>
+                sql`when ${ganttModule2EventsSchema.eventId} = ${eventId} then ${index}`,
+        ),
+        sql` `,
+    );
+
+    await postgresDb
+        .update(ganttModule2EventsSchema)
+        .set({ sortOrder: sql`case ${order} end` })
+        .where(
+            and(
+                eq(ganttModule2EventsSchema.moduleId, moduleId),
+                inArray(ganttModule2EventsSchema.eventId, eventIds),
+            ),
+        );
 }
 
 export const DbModule = {

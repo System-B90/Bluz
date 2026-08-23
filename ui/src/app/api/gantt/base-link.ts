@@ -49,29 +49,33 @@ async function readLinkRequest<TBody>(
 export function buildGantLinkRoutes<TEntity extends BaseGantItem>({
     dbSet,
 }: BuildGantLinkRoutesProps<TEntity>) {
-    const POST = withApi(async (request: NextRequest, context: RouteContext) => {
-        const { id, body } = await readLinkRequest<{ newParentId: string }>(
-            request,
-            context,
-        );
-        const { newParentId } = body;
-        const linkedItem = await dbSet.linkItem(
-            newParentId,
-            id as TEntity["id"],
-        );
+    const POST = withApi(
+        async (request: NextRequest, context: RouteContext) => {
+            const { id, body } = await readLinkRequest<{ newParentId: string }>(
+                request,
+                context,
+            );
+            const { newParentId } = body;
+            const linkedItem = await dbSet.linkItem(
+                newParentId,
+                id as TEntity["id"],
+            );
 
-        return ApiSuccess(linkedItem);
-    });
+            return ApiSuccess(linkedItem);
+        },
+    );
 
-    const DELETE = withApi(async (request: NextRequest, context: RouteContext) => {
-        const { id, body } = await readLinkRequest<{ oldParentId: string }>(
-            request,
-            context,
-        );
-        await dbSet.unlinkItem(body.oldParentId, id as TEntity["id"]);
+    const DELETE = withApi(
+        async (request: NextRequest, context: RouteContext) => {
+            const { id, body } = await readLinkRequest<{ oldParentId: string }>(
+                request,
+                context,
+            );
+            await dbSet.unlinkItem(body.oldParentId, id as TEntity["id"]);
 
-        return ApiSuccess({ unlinked: true, id: id });
-    });
+            return ApiSuccess({ unlinked: true, id: id });
+        },
+    );
 
     return {
         POST,

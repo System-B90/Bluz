@@ -23,29 +23,32 @@ type RouteContext = {
  * POST: Deletes a single recurring occurrence (the event keeps recurring
  * everywhere else — only this day is excepted).
  */
-export const POST = withApi(async (request: NextRequest, context: RouteContext) => {
-    await requireStaffSession();
-    const { id: eventId } = await context.params;
-    const body = await requireJsonObjectBody<Record<string, unknown>>(request);
+export const POST = withApi(
+    async (request: NextRequest, context: RouteContext) => {
+        await requireStaffSession();
+        const { id: eventId } = await context.params;
+        const body =
+            await requireJsonObjectBody<Record<string, unknown>>(request);
 
-    const { curriculumId, dayId } = body as {
-        curriculumId: GanttCurriculumId;
-        dayId: GanttDayId;
-    };
-    if (!curriculumId || !dayId) {
-        throw new ClientApiError(
-            "Missing required fields: curriculumId or dayId.",
-        );
-    }
+        const { curriculumId, dayId } = body as {
+            curriculumId: GanttCurriculumId;
+            dayId: GanttDayId;
+        };
+        if (!curriculumId || !dayId) {
+            throw new ClientApiError(
+                "Missing required fields: curriculumId or dayId.",
+            );
+        }
 
-    const exception = await createRecurrenceException({
-        curriculumId,
-        eventId,
-        dayId,
-    });
+        const exception = await createRecurrenceException({
+            curriculumId,
+            eventId,
+            dayId,
+        });
 
-    return ApiSuccess(exception);
-});
+        return ApiSuccess(exception);
+    },
+);
 
 /**
  * DELETE: Restores a skipped occurrence — the event echoes onto that day

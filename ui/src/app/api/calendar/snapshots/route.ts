@@ -4,7 +4,11 @@ import {
     normalizeStoredEvents,
     requireIdParam,
 } from "@/api-server/calendar-store-request";
-import { ApiSuccess, withApi } from "@/api-server/common";
+import {
+    ApiSuccess,
+    requireJsonObjectBody,
+    withApi,
+} from "@/api-server/common";
 import { DbCalendarSnapshot } from "@/api-server/db-calendar-snapshot";
 import {
     resolveIterationFromRequest,
@@ -48,8 +52,8 @@ export const POST = withApi(async (request: Request) => {
     await requireStaffSession();
     const { controller, iterationId } =
         await resolveWritableIterationFromRequest(request);
-    const body = (await request.json()) as CreateSnapshotBody;
-    if (!body || typeof body.label !== "string") {
+    const body = await requireJsonObjectBody<CreateSnapshotBody>(request);
+    if (typeof body.label !== "string") {
         throw new ClientApiError("A snapshot label is required.");
     }
     const events = normalizeStoredEvents(body.events);
@@ -68,9 +72,7 @@ export const POST = withApi(async (request: Request) => {
 export const DELETE = withApi(async (request: Request) => {
     await requireStaffSession();
     const id = requireIdParam(request, "No snapshot id provided.");
-    const { controller } = await resolveWritableIterationFromRequest(
-        request,
-    );
+    const { controller } = await resolveWritableIterationFromRequest(request);
     await DbCalendarSnapshot.del(id, controller);
     return ApiSuccess();
 });
