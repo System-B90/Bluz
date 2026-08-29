@@ -1,6 +1,7 @@
 "use client";
 
 import LockPersonIcon from "@mui/icons-material/LockPerson";
+import ViewTimelineIcon from "@mui/icons-material/ViewTimeline";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -9,10 +10,13 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useState } from "react";
 
+import { GANTT_EVENT_DEEP_LINK_PARAM } from "@/components/gantt/curriculum-view/search/GanttEventDeepLink";
 import { EventHistoryPanel } from "@/components/schedule/event-dialog/event-history";
 import { EventClassification } from "@/components/schedule/event-dialog/EventClassification";
 import { EventPrimaryDetails } from "@/components/schedule/event-dialog/EventPrimaryDetails";
@@ -52,6 +56,7 @@ export function EventDialog({
     onDelete,
 }: EventDialogProps)
 {
+    const router = useRouter();
     const [ event, setEventRaw ] = useState<EventOrPartial>({ ...inputEvent });
     const [ prevOpen, setPrevOpen ] = useState(open);
     // Identity, not reference: the parent hands over a fresh object on every
@@ -118,6 +123,29 @@ export function EventDialog({
                         >
                             { `יום: ${HEBREW_WEEKDAYS[ event.startTime.day() ]}, ${event.startTime.format("DD/MM/YYYY")}` }
                         </Typography>
+                    ) : null }
+
+                    { event.ganttEventId ? (
+                        <Link
+                            component="button"
+                            onClick={ () =>
+                                router.push(
+                                    `/gantt?${ GANTT_EVENT_DEEP_LINK_PARAM }=${ event.ganttEventId }`,
+                                )
+                            }
+                            sx={ {
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                                width: "fit-content",
+                            } }
+                            type="button"
+                            underline="hover"
+                            variant="caption"
+                        >
+                            <ViewTimelineIcon fontSize="inherit" />
+                            מעבר למופע בגאנט
+                        </Link>
                     ) : null }
                 </Stack>
             </DialogTitle>

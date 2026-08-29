@@ -3,6 +3,7 @@ import { CommandPaletteProvider } from "@system-b90/command-palette";
 import { ReactNode } from "react";
 
 import { PALETTE_LABELS } from "@/components/app-commands/labels";
+import { useAccountCommands } from "@/components/app-commands/use-account-commands";
 import { useAppearanceCommands } from "@/components/app-commands/use-appearance-commands";
 import { useDirectoryCommands } from "@/components/app-commands/use-directory-commands";
 import { useNavigationCommands } from "@/components/app-commands/use-navigation-commands";
@@ -14,6 +15,7 @@ function AppCommands() {
     useSettingsCommands();
     useAppearanceCommands();
     useDirectoryCommands();
+    useAccountCommands();
 
     return null;
 }

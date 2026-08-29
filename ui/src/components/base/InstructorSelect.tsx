@@ -83,13 +83,28 @@ export function InstructorSelect<T = unknown>({
         favoriteOutsiders,
     );
 
+    const NAVIGATION_KEYS = [
+        "Escape",
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+        "Home",
+        "End",
+        "Enter",
+        "Tab",
+    ];
+
     const handleSearchEvent = (e: React.KeyboardEvent | React.MouseEvent) =>
     {
         if (
             e.type === "keydown" &&
-            (e as React.KeyboardEvent).key === "Escape"
+            NAVIGATION_KEYS.includes((e as React.KeyboardEvent).key)
         )
         {
+            // Let these bubble up so the Select's menu can handle
+            // navigation between options instead of them being trapped
+            // by the search field.
             return;
         }
         e.stopPropagation();
