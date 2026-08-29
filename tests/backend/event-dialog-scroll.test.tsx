@@ -32,10 +32,6 @@ vi.mock("@/components/schedule/event-dialog/HiveQueueMapping", () => ({
 vi.mock("@/components/schedule/event-dialog/event-history", () => ({
     EventHistoryPanel: () => <div />,
 }));
-vi.mock("next/navigation", () => ({
-    useRouter: () => ({ push: () => {} }),
-}));
-
 import { EventDialog } from "@/components/schedule/event-dialog";
 
 const noop = () => {};

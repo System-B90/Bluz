@@ -13,7 +13,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useRouter } from "next/navigation";
+import NextLink from "next/link";
 import { FormEvent, useCallback, useState } from "react";
 
 import { GANTT_EVENT_DEEP_LINK_PARAM } from "@/components/gantt/curriculum-view/search/GanttEventDeepLink";
@@ -56,7 +56,6 @@ export function EventDialog({
     onDelete,
 }: EventDialogProps)
 {
-    const router = useRouter();
     const [ event, setEventRaw ] = useState<EventOrPartial>({ ...inputEvent });
     const [ prevOpen, setPrevOpen ] = useState(open);
     // Identity, not reference: the parent hands over a fresh object on every
@@ -127,19 +126,14 @@ export function EventDialog({
 
                     { event.ganttEventId ? (
                         <Link
-                            component="button"
-                            onClick={ () =>
-                                router.push(
-                                    `/gantt?${ GANTT_EVENT_DEEP_LINK_PARAM }=${ event.ganttEventId }`,
-                                )
-                            }
+                            component={ NextLink }
+                            href={ `/gantt?${ GANTT_EVENT_DEEP_LINK_PARAM }=${ event.ganttEventId }` }
                             sx={ {
                                 display: "inline-flex",
                                 alignItems: "center",
                                 gap: 0.5,
                                 width: "fit-content",
                             } }
-                            type="button"
                             underline="hover"
                             variant="caption"
                         >
