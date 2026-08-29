@@ -58,6 +58,7 @@ function InstructorRailChip({
             }
         >
             <Box
+                data-testid="instructor-rail-chip"
                 ref={setNodeRef}
                 {...listeners}
                 {...attributes}

@@ -131,6 +131,7 @@ export function ImportExportMenuButton({
                     aria-controls={open ? "import-export-menu" : undefined}
                     aria-expanded={open ? "true" : undefined}
                     aria-haspopup="true"
+                    aria-label={triggerLabel}
                     color={color}
                     disabled={Boolean(exportDisabled && importDisabled) || loading}
                     onClick={handleClick}

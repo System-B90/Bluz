@@ -28,10 +28,7 @@ async function openInstructorRail(page: Page): Promise<void> {
 
 /** First draggable instructor chip currently rendered in the open rail. */
 function firstRailChip(page: Page) {
-    // InstructorRailChip is the only element in the tree that sets a native
-    // `title` HTML attribute (the rail item's tooltip), so this selector is
-    // unambiguous even though nothing carries a test id.
-    return page.locator("[title]").first();
+    return page.getByTestId("instructor-rail-chip").first();
 }
 
 /** A slow, multi-step mouse drag — dnd-kit's PointerSensor needs real
