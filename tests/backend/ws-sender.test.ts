@@ -132,9 +132,10 @@ describe("SendServerRequestToSessionServer connection lifecycle", () => {
 
         SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE);
 
-        expect(constructed[0].url.startsWith("ws://bluz-sessions:28199/")).toBe(
-            true,
-        );
+        // The service alias, not the container name: container_name does not
+        // survive a compose project rename, so "bluz-sessions" was unresolvable
+        // in the e2e stack (docker-compose.test.yml renames it).
+        expect(constructed[0].url.startsWith("ws://sessions:28199/")).toBe(true);
     });
 
     it("signs a fresh ticket per connection attempt, not once at module load", async () => {

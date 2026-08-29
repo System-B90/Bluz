@@ -8,8 +8,21 @@ import {
     WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
 } from "@/settings";
 
+// The compose *service* name, not the container name. Compose gives every
+// service a network alias matching its key, which resolves in every project;
+// `container_name` does not survive a project rename. docker-compose.test.yml
+// renames this container to ${TEST_PROJECT_NAME}-sessions, so the old
+// "bluz-sessions" default failed to resolve in the e2e stack with
+// "getaddrinfo ENOTFOUND bluz-sessions" — and since a failed broadcast only
+// logs, every e2e run (CI included) passed with the server→client broadcast
+// path silently dead. nginx.conf.test already addressed it as `sessions:28199`.
+//
+// This is the server-to-server hop only. Browsers reach the session server over
+// the public host instead (WEBSOCKET_SESSION_SERVER_HOST, resolved in
+// ui/src/app/layout.tsx), which is unaffected by this and must stay that way —
+// an internal Docker alias is not resolvable from a browser.
 const INTERNAL_SESSION_SERVER_URI =
-    process.env.INTERNAL_SESSION_SERVER_URI ?? "ws://bluz-sessions:28199/";
+    process.env.INTERNAL_SESSION_SERVER_URI ?? "ws://sessions:28199/";
 
 const CONNECT_TIMEOUT_MS = 5000;
 const MAX_PENDING_MESSAGES = 1000;
