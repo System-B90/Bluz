@@ -72,6 +72,10 @@ test.describe("File exports", () => {
             .waitFor({ state: "hidden", timeout: 10_000 })
             .catch(() => {});
 
+        const fabPopover = page.locator("[role='presentation']").filter({
+            has: page.getByRole("button", { name: "גאנט חדש" }),
+        });
+
         const listItems = page
             .locator("[role='presentation'] ul li")
             .filter({ has: page.getByRole("button") });
@@ -90,18 +94,30 @@ test.describe("File exports", () => {
             });
         }
 
-        // Select the curriculum so the export button targets it.
-        await listItems
-            .first()
-            .click()
-            .catch(() => {});
-        await page.waitForTimeout(300);
+        // Select a curriculum: export is gated on `sourceCurriculum` being set
+        // (CurriculumActionItems.tsx), so an unselected list leaves the trigger
+        // permanently disabled.
+        await expect(listItems.first()).toBeVisible({ timeout: 10_000 });
+        await listItems.first().click();
+        await waitForAppLoad(page);
 
-        // The import/export trigger is the icon-only button labeled
-        // "ייבוא / ייצוא" living beside the curriculum FAB actions.
-        const exportTrigger = page.getByRole("button", {
-            name: "ייבוא / ייצוא",
-        });
+        // Selecting a curriculum closes the panel on purpose —
+        // handleSelectCurriculum calls handleClosePanel (curriculum-fab/index.tsx).
+        // Wait for that close before reopening, otherwise the reopen races it and
+        // the panel ends up shut. The Excel export lives only on this action bar.
+        await expect(fabPopover).toHaveCount(0, { timeout: 10_000 });
+        await fab.click();
+
+        // Anchor on aria-haspopup, not on the label or the icon:
+        //  - In its `iconOnly` form the trigger has no accessible name at all.
+        //    ImportExportMenuButton wraps the IconButton in <Tooltip><span>, so
+        //    "ייבוא / ייצוא" lands on the span. Only the non-iconOnly variant
+        //    (syllabuses-actions-box, whose menu carries no Excel item) exposes
+        //    that name, so an unscoped getByRole matches *that* button instead.
+        //  - MUI drops `data-testid` from its icons in production builds, and
+        //    these specs run against the production image, so the icon is out
+        //    as an anchor too.
+        const exportTrigger = fabPopover.locator('button[aria-haspopup="true"]');
         await expect(exportTrigger).toBeEnabled({ timeout: 10_000 });
         await exportTrigger.click();
 
