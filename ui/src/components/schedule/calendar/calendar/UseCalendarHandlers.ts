@@ -50,6 +50,31 @@ export function useCalendarHandlers(
         copyPasteData.current = { activeEvent, copiedEvent, selectedSlotInfo };
     }, [activeEvent, copiedEvent, selectedSlotInfo]);
 
+    // react-big-calendar's drag addon doesn't forward modifier keys to
+    // onEventDrop, so we track Ctrl/Cmd ourselves for Ctrl+Drag duplication
+    // (#575). Escape-to-cancel is already handled by the library itself
+    // (it aborts the drag before onEventDrop ever fires).
+    const ctrlHeldRef = useRef(false);
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Control" || e.key === "Meta") ctrlHeldRef.current = true;
+        };
+        const onKeyUp = (e: KeyboardEvent) => {
+            if (e.key === "Control" || e.key === "Meta") ctrlHeldRef.current = false;
+        };
+        const onBlur = () => {
+            ctrlHeldRef.current = false;
+        };
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("keyup", onKeyUp);
+        window.addEventListener("blur", onBlur);
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+            window.removeEventListener("keyup", onKeyUp);
+            window.removeEventListener("blur", onBlur);
+        };
+    }, []);
+
     const handleEventDrag = useCallback(
         (
             changes: EventInteractionArgs<Event>,
@@ -68,6 +93,33 @@ export function useCalendarHandlers(
                 } else if (changes.event.rooms.length <= 1) {
                     newRooms = [roomId];
                 }
+            }
+
+            // Ctrl+Drag duplicates: the dragged instance is placed at the
+            // drop target as a brand-new event, and the original is left
+            // untouched at its original slot. Only relevant while actually
+            // moving an event around, not resizing one in place.
+            const isDuplicating = interaction === "move" && ctrlHeldRef.current;
+
+            if (isDuplicating) {
+                const {
+                    id: _id,
+                    locked: _locked,
+                    hidden: _hidden,
+                    fake: _fake,
+                    ganttEventId: _ganttEventId,
+                    ganttOccurrenceDate: _ganttOccurrenceDate,
+                    ...rest
+                } = changes.event;
+                const duplicatedEvent = {
+                    ...rest,
+                    startTime: dayjs(changes.start),
+                    endTime: dayjs(changes.end),
+                    rooms: newRooms,
+                } as Event;
+
+                handleSaveEvent(duplicatedEvent, EventChangeInitiator.DragDrop);
+                return;
             }
 
             const updatedEvent: Event = {

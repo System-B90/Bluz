@@ -34,4 +34,5 @@ export const COMMAND_GROUPS = {
     appearance: "תצוגה",
     rooms: "חדרים",
     outsiders: "אנשי חוץ",
+    account: "חשבון",
 } as const;

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
 import { GanttContentCommands } from "@/components/app-commands/GanttContentCommands";
 import { CurriculumViewSidebar } from "@/components/gantt/curriculum-view/components/sidebars";
+import { GanttEventDeepLink } from "@/components/gantt/curriculum-view/search/GanttEventDeepLink";
 import { GanttSearchNavProvider } from "@/components/gantt/curriculum-view/search/GanttSearchNavProvider";
 import { CurriculumViewTabs } from "@/components/gantt/curriculum-view/tabs";
 
@@ -54,6 +55,7 @@ export function CurriculumView({
         <GanttSearchNavProvider>
             {/* Needs both the curriculum state and the search-nav context. */}
             <GanttContentCommands />
+            <GanttEventDeepLink />
 
             <Box
                 alignItems={"flex-start"}

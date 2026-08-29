@@ -331,7 +331,7 @@ jobs:
               with:
                   name: playwright-report
                   path: playwright-report/
-                  retention-days: 14
+                  retention-days: 1
 
             - name: Upload Test Results
               uses: actions/upload-artifact@v6
@@ -339,7 +339,7 @@ jobs:
               with:
                   name: test-results
                   path: test-results/
-                  retention-days: 7
+                  retention-days: 1
 
             - name: Dump Container Logs
               if: failure()
@@ -376,7 +376,7 @@ jobs:
               with:
                   name: container-logs
                   path: container-logs/
-                  retention-days: 7
+                  retention-days: 1
 
             # Hive's services are restart: always, so nothing stops them when
             # the job ends and they come back with the (ephemeral) runner
@@ -611,7 +611,7 @@ jobs:
               with:
                   name: playwright-report-${{ matrix.shard }}
                   path: playwright-report/
-                  retention-days: 14
+                  retention-days: 1
 
             - name: Upload Test Results
               uses: actions/upload-artifact@v6
@@ -619,7 +619,7 @@ jobs:
               with:
                   name: test-results-${{ matrix.shard }}
                   path: test-results/
-                  retention-days: 7
+                  retention-days: 1
 
             - name: Dump Container Logs
               if: failure()
@@ -656,7 +656,7 @@ jobs:
               with:
                   name: container-logs-${{ matrix.shard }}
                   path: container-logs/
-                  retention-days: 7
+                  retention-days: 1
 
             # Harmless on a throwaway VM, but keeps the two paths identical.
             - name: Tear down test + Hive stacks

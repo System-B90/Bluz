@@ -32,7 +32,6 @@ vi.mock("@/components/schedule/event-dialog/HiveQueueMapping", () => ({
 vi.mock("@/components/schedule/event-dialog/event-history", () => ({
     EventHistoryPanel: () => <div />,
 }));
-
 import { EventDialog } from "@/components/schedule/event-dialog";
 
 const noop = () => {};

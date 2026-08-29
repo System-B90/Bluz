@@ -63,6 +63,7 @@ jobs:
         with:
           name: bluz-docs-site
           path: site/
+          retention-days: 1
 
   publish:
     name: Publish to System-B90/.github

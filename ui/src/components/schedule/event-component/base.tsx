@@ -223,11 +223,13 @@ function EventSegmentBlock({ segment }: { segment: EventSegment }) {
                         transition: theme.transitions.create([
                             "background-color",
                             "transform",
+                            "opacity",
                         ]),
                         height: "100%",
                         boxSizing: "border-box",
                         position: "relative",
                         overflow: "hidden",
+                        opacity: filterOpacity,
                         ...runCornerSx(isFirst, isLast),
                         ...cutEdgeSx(textColor, isFirst, isLast),
                         ...(isSelected && selectionRingSx(theme, isFirst, isLast)),
@@ -235,7 +237,7 @@ function EventSegmentBlock({ segment }: { segment: EventSegment }) {
                        Checkers/Segel: dashed outline + reduced opacity (#102). */
                         ...(event.fake && {
                             border: `2px dashed ${alpha(textColor, 0.65)}`,
-                            opacity: 0.75,
+                            opacity: filterOpacity * 0.75,
                         }),
                         /* Contrast-aware accent tokens for child components */
                         "--event-border": alpha(textColor, 0.25),
