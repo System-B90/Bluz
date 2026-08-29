@@ -76,9 +76,7 @@ async function openEventEditDialog(
     page: Page,
     eventTitle: string,
 ): Promise<Locator> {
-    const editButton = page.getByTitle("עריכת המופע").first();
-    await editButton.scrollIntoViewIfNeeded();
-    await editButton.click();
+    await page.getByTitle("עריכת המופע").first().click();
 
     const eventDialog = page
         .getByRole("dialog")

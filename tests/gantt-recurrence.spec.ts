@@ -124,9 +124,7 @@ async function createModuleWithEvents(page: Page): Promise<string> {
 
 /** Opens the event dialog for `eventTitle` (must be visible in an open module dialog). */
 async function openEventEditDialog(page: Page, eventTitle: string): Promise<Locator> {
-    const editButton = page.getByTitle("עריכת המופע").first();
-    await editButton.scrollIntoViewIfNeeded();
-    await editButton.click();
+    await page.getByTitle("עריכת המופע").first().click();
 
     const eventDialog = page
         .getByRole("dialog")
@@ -286,9 +284,7 @@ async function mapEventToWeek(
 /** Clicks `weekIndex`'s column in the timeline header, zooming into its day view (#445). */
 async function zoomIntoWeek(page: Page, weekIndex: number): Promise<void> {
     const headerRow = page.locator("thead tr").first();
-    const weekCell = headerRow.locator("th, td").nth(weekIndex + 1);
-    await weekCell.scrollIntoViewIfNeeded();
-    await weekCell.click();
+    await headerRow.locator("th, td").nth(weekIndex + 1).click();
     await page.waitForTimeout(300);
 }
 
