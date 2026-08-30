@@ -16,6 +16,7 @@ vi.mock("@/logging/pino", () => ({
 }));
 
 import {
+    getWsAuthKey,
     MessageTypes,
     verifyWsTicket,
     WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
@@ -344,7 +345,10 @@ describe("SendServerRequestToSessionServer wire envelope", () => {
         // load-bearing protocol, not decoration.
         expect(JSON.parse(constructed[0].sent[0])).toEqual({
             sender: WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
-            authKey: "test-secret",
+            // The derived sender subkey, not the raw env secret: session-ws
+            // 0.2.0 splits the configured value into independent HKDF subkeys
+            // so the key sent in cleartext here cannot mint connect tickets.
+            authKey: getWsAuthKey(),
             type: MessageTypes.EVENT_DATA_UPDATE,
             data: { eventId: "event-1" },
         });

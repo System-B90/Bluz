@@ -185,9 +185,49 @@ describe("session-server relay", () => {
         expect(relayed).toEqual({
             type: "el",
             target: undefined,
-            data: { eventId: "event-1" },
+            // lockedById is stamped from the sender's ticket, not the frame
+            // (#540 item 2).
+            data: { eventId: "event-1", lockedById: "user-a" },
         });
         expect(sender.sent).toEqual(peer.sent);
+    });
+
+    it("overwrites a forged lockedById with the ticket's user (#540.2)", async () => {
+        await loadServer();
+        const sender = connectClient(FakeWebSocketServer.instances[0], { asUser: "user-a" });
+        const peer = connectClient(FakeWebSocketServer.instances[0], { asUser: "user-b" });
+        registerSession(sender, "initiator-a");
+        registerSession(peer, "initiator-b");
+
+        sender.emit(
+            "message",
+            JSON.stringify({
+                type: "el",
+                data: {
+                    eventId: "event-1",
+                    lockedById: "somebody-else",
+                    lockedByName: "Somebody Else",
+                },
+            }),
+        );
+
+        const relayed = JSON.parse(peer.sent[0]);
+        // A client may only ever claim to be itself; without this it could show
+        // a forged "X is editing" badge on any event to everyone.
+        expect(relayed.data.lockedById).toBe("user-a");
+        expect(relayed.data.eventId).toBe("event-1");
+    });
+
+    it("drops a lock frame whose payload is not an object", async () => {
+        await loadServer();
+        const sender = connectClient(FakeWebSocketServer.instances[0], { asUser: "user-a" });
+        const peer = connectClient(FakeWebSocketServer.instances[0], { asUser: "user-b" });
+        registerSession(sender, "initiator-a");
+        registerSession(peer, "initiator-b");
+
+        sender.emit("message", JSON.stringify({ type: "el", data: "nope" }));
+
+        expect(peer.sent).toHaveLength(0);
     });
 
     it("relays EVENT_UNLOCK the same way", async () => {
@@ -197,14 +237,32 @@ describe("session-server relay", () => {
         registerSession(sender, "initiator-a");
         registerSession(peer, "initiator-b");
 
-        sender.emit("message", JSON.stringify({ type: "eu" }));
+        sender.emit(
+            "message",
+            JSON.stringify({ type: "eu", data: { eventId: "event-1" } }),
+        );
 
         expect(peer.sent).toHaveLength(1);
         expect(JSON.parse(peer.sent[0])).toEqual({
             type: "eu",
             target: undefined,
-            data: undefined,
+            data: { eventId: "event-1", lockedById: "user-a" },
         });
+    });
+
+    it("drops an unlock frame carrying no payload", async () => {
+        await loadServer();
+        const sender = connectClient(FakeWebSocketServer.instances[0], { asUser: "user-a" });
+        const peer = connectClient(FakeWebSocketServer.instances[0], { asUser: "user-b" });
+        registerSession(sender, "initiator-a");
+        registerSession(peer, "initiator-b");
+
+        sender.emit("message", JSON.stringify({ type: "eu" }));
+
+        // Previously this relayed `data: undefined`, and the receiving client
+        // then read `msg.eventId` off it. A payload-less unlock says nothing,
+        // so it is dropped at the relay instead.
+        expect(peer.sent).toHaveLength(0);
     });
 
     it("only fans out to clients that registered a session", async () => {
@@ -305,6 +363,7 @@ describe("session-server wiring", () => {
         // The core drops frames whose type is outside this set BEFORE the
         // relay hook runs, so a missing value here silently kills that
         // broadcast type.
+        expect(serverOptions, "serverOptions was never captured").toBeDefined();
         const passed = new Set(
             (serverOptions?.validMessageTypes as Array<string>) ?? [],
         );
