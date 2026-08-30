@@ -24,7 +24,6 @@ import {
 } from "@/api-shared/interval-layout";
 import { GanttDayIndex, getDayNameDisplay, HEBREW_DAYS_SHORT } from "@/api-shared/types/gantt/models/day";
 import { Room, roomLikeToResourceKey, RoomSource } from "@/api-shared/types/room"; // Import the full Room type and the stable resource-key helper
-import { formatRange, isolateLtr } from "@/components/base/bidi";
 import { useSettings } from "@/components/base/SettingsProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
@@ -32,6 +31,7 @@ import {
     DnDCalendar,
     localizer,
 } from "@/components/schedule/calendar/calendar/DndLocalizer";
+import { dayRangeHeaderFormat } from "@/components/schedule/calendar/calendar/range-header";
 import { usePrecisionDrag } from "@/components/schedule/calendar/calendar/UsePrecisionDrag";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { CustomWorkWeek } from "@/components/schedule/calendar/CustomWorkWeek";
@@ -216,28 +216,6 @@ function resourceAccessor(segment: EventSegment) {
 
 function resourceIdAccessor(room: Room) {
     return roomLikeToResourceKey(room);
-}
-
-function dayRangeHeaderFormat({
-    start,
-    end,
-}: {
-    start: Date;
-    end: Date;
-}) {
-    const s = dayjs(start).locale("he");
-    const e = dayjs(end).locale("he");
-    if (s.month() === e.month()) {
-        // Only the two day numbers form the numeric range; the month and year
-        // stay in the surrounding RTL run.
-        return `${formatRange(s.format("DD"), e.format("DD"))} ב${s.format("MMMM")} ${s.format("YYYY")}`;
-    } else {
-        // Each side carries its own month name, so isolating either side alone
-        // would not help — the whole range is one LTR run here.
-        return `${isolateLtr(
-            `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")}`,
-        )} ${e.format("YYYY")}`;
-    }
 }
 
 const CALENDAR_FORMATS = {

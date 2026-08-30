@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { buildScheduleIcsCalendar } from "@/app/api/event/export/ics/calendar";
 import { DbEventDocument } from "@/api-shared/types/event";
 import { formatRange, isolateLtr } from "@/components/base/bidi";
+import { dayRangeHeaderFormat } from "@/components/schedule/calendar/calendar/range-header";
+import { eventTimeRange } from "@/components/schedule/event-component/use-event-duration";
 import { toDateInputValue } from "@/components/settings-dialog/tabs/global/iteration-settings/values";
 
 function makeEvent(overrides: Partial<DbEventDocument> = {}): DbEventDocument {
@@ -111,5 +113,32 @@ describe("#569 — bidi isolation of ranges", () => {
     it("isolateLtr is idempotent in content", () => {
         expect(isolateLtr("abc")).toContain("abc");
         expect(isolateLtr("abc")).toHaveLength(5);
+    });
+
+    describe("call sites actually isolate", () => {
+        // The helper being correct is not enough — these pin that the two
+        // call sites use it, which is what actually regressed.
+        it("isolates the day numbers in a same-month week header", () => {
+            const header = dayRangeHeaderFormat({
+                start: new Date("2026-09-05T00:00:00+03:00"),
+                end: new Date("2026-09-11T00:00:00+03:00"),
+            });
+            expect(header).toContain("⁦");
+            expect(header).toContain("⁩");
+            expect(header).toContain("05 - 11");
+        });
+
+        it("isolates a cross-month range", () => {
+            const header = dayRangeHeaderFormat({
+                start: new Date("2026-09-28T00:00:00+03:00"),
+                end: new Date("2026-10-04T00:00:00+03:00"),
+            });
+            expect(header).toContain("⁦");
+            expect(header).toContain("⁩");
+        });
+
+        it("isolates the event tooltip time range", () => {
+            expect(eventTimeRange("10:00", "12:00")).toBe("⁦10:00 - 12:00⁩");
+        });
     });
 });
