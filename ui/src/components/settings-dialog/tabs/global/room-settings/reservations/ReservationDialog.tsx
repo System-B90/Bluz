@@ -84,10 +84,21 @@ export function ReservationDialog({
         }
     }, [open, fetchReservations]);
 
+    // The two datetime-local fields are adjacent and identically styled, so
+    // transposing them is easy. An inverted range is also invisible to the
+    // server's overlap check, so it must not be submittable.
+    const isRangeInverted = Boolean(
+        form.start && form.end && new Date(form.end) <= new Date(form.start),
+    );
+
     const handleCreate = useCallback(
         async (e: React.FormEvent) => {
             e.preventDefault();
             if (!form.start || !form.end || !form.reserverId) return;
+            if (new Date(form.end) <= new Date(form.start)) {
+                setError("שעת הסיום חייבת להיות אחרי שעת ההתחלה");
+                return;
+            }
             setSubmitting(true);
             setError(null);
             try {
@@ -236,11 +247,14 @@ export function ReservationDialog({
                         sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                         value={form.note}
                     />
+                    {isRangeInverted ? <Typography color="error" sx={{ fontSize: "0.8rem" }}>
+                        שעת הסיום חייבת להיות אחרי שעת ההתחלה
+                    </Typography> : null}
                     {error ? <Typography color="error" sx={{ fontSize: "0.8rem" }}>
                         {error}
                     </Typography> : null}
                     <Button
-                        disabled={submitting}
+                        disabled={submitting || isRangeInverted}
                         startIcon={
                             submitting ? (
                                 <CircularProgress size={14} />

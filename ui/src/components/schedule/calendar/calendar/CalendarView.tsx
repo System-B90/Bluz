@@ -24,6 +24,7 @@ import {
 } from "@/api-shared/interval-layout";
 import { GanttDayIndex, getDayNameDisplay, HEBREW_DAYS_SHORT } from "@/api-shared/types/gantt/models/day";
 import { Room, roomLikeToResourceKey, RoomSource } from "@/api-shared/types/room"; // Import the full Room type and the stable resource-key helper
+import { formatRange, isolateLtr } from "@/components/base/bidi";
 import { useSettings } from "@/components/base/SettingsProvider";
 import { CALENDAR_MESSAGES } from "@/components/CalendarMessages";
 import { CalendarToolbar } from "@/components/schedule/calendar/calendar/CalendarToolbar";
@@ -227,9 +228,15 @@ function dayRangeHeaderFormat({
     const s = dayjs(start).locale("he");
     const e = dayjs(end).locale("he");
     if (s.month() === e.month()) {
-        return `${s.format("DD")} - ${e.format("DD")} ב${s.format("MMMM")} ${s.format("YYYY")}`;
+        // Only the two day numbers form the numeric range; the month and year
+        // stay in the surrounding RTL run.
+        return `${formatRange(s.format("DD"), e.format("DD"))} ב${s.format("MMMM")} ${s.format("YYYY")}`;
     } else {
-        return `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")} ${e.format("YYYY")}`;
+        // Each side carries its own month name, so isolating either side alone
+        // would not help — the whole range is one LTR run here.
+        return `${isolateLtr(
+            `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")}`,
+        )} ${e.format("YYYY")}`;
     }
 }
 

@@ -1,16 +1,23 @@
-import dayjs, { Dayjs } from "dayjs";
+import { Dayjs } from "dayjs";
 
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { HiveCacheChanges, Iteration } from "@/api-shared/types/iteration";
 import { ValidationResult } from "@/components/settings-dialog/tabs/global/common/UseEntityForm";
 
-/** Date/string → yyyy-mm-dd for a native date input; "" when unset/invalid. */
+/**
+ * Date/string → yyyy-mm-dd for a native date input; "" when unset/invalid.
+ *
+ * Formatted in the venue timezone, not UTC. A date-only picker stores local
+ * midnight, and Asia/Jerusalem is UTC+2/+3, so slicing `toISOString()` reported
+ * every iteration as starting the previous day.
+ */
 export function toDateInputValue(
     value: Date | null | string | undefined,
 ): string {
     if (!value) return "";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    return date.toISOString().slice(0, 10);
+    const date = dayjs(value).tz(APP_TIMEZONE);
+    if (!date.isValid()) return "";
+    return date.format("YYYY-MM-DD");
 }
 
 export type IterationValues = {

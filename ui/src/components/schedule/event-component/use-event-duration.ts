@@ -2,6 +2,7 @@ import { Dayjs } from "dayjs";
 import moment from "moment";
 import { useMemo } from "react";
 
+import { formatRange } from "@/components/base/bidi";
 import { Event } from "@/components/schedule/types/event";
 
 /**
@@ -31,6 +32,6 @@ export function useEventDuration(event: Event) {
         durationMinutes,
         hours: Math.floor(durationMinutes / 60),
         minutes: durationMinutes % 60,
-        timeRange: `${start.format("HH:mm")} - ${end.format("HH:mm")}`,
+        timeRange: formatRange(start.format("HH:mm"), end.format("HH:mm")),
     };
 }
