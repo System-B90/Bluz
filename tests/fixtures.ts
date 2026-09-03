@@ -409,3 +409,96 @@ export async function createEventInOfflineMode(
         page.locator(SELECTORS.calendarEvent).filter({ hasText: name }),
     ).toBeVisible({ timeout: 5_000 });
 }
+
+
+/* ------------------------------------------------------------------ */
+/* Gantt module/event dialog helpers                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The first *visible* "edit event" trigger.
+ *
+ * `.first()` on its own picks whatever comes first in the DOM, hidden or not,
+ * and the curriculum view leaves every visited tab mounted behind
+ * `display: none` (see `curriculum-view/tabs/index.tsx`). Filtering first is
+ * what makes "first" mean "the one on screen" (#495).
+ */
+export function visibleEditEventTrigger(page: Page): Locator {
+    return page.getByTitle("עריכת המופע").filter({ visible: true }).first();
+}
+
+/**
+ * The module dialog hosts the "עריכת המופע" triggers, and it goes away when the
+ * curriculum view switches tabs (e.g. to "רצף זמן" and back), so a test that
+ * opened it earlier cannot assume it is still usable (#585, #589). Reopens it
+ * from the syllabuses tab when it is gone; a no-op when it is not.
+ *
+ * Every locator here filters to visible (#495): counting hidden leftovers made
+ * this report an already-open dialog when the only match was in a tab the test
+ * had left, and the click that followed then waited out the whole test timeout
+ * on an element that could never become visible.
+ */
+export async function ensureModuleDialogOpen(page: Page): Promise<void> {
+    const editEventTrigger = visibleEditEventTrigger(page);
+    if ((await editEventTrigger.count()) > 0) return;
+
+    await page.getByRole("tab", { name: "סילבוסים" }).click();
+
+    // Tooltip+IconButton: MUI puts the label on the button, or on a wrapping
+    // <span> — match either.
+    const editModuleButton = page
+        .locator(
+            'button[aria-label="עריכת מערך"], span[title="עריכת מערך"] button, span[aria-label="עריכת מערך"] button',
+        )
+        .first();
+    await expect(editModuleButton).toBeVisible({ timeout: 10_000 });
+    await editModuleButton.click();
+
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
+    await expect(editEventTrigger).toBeVisible({ timeout: 10_000 });
+}
+
+/** Opens the event dialog for `eventTitle`, reopening the module dialog if needed. */
+export async function openEventEditDialog(
+    page: Page,
+    eventTitle: string,
+): Promise<Locator> {
+    await ensureModuleDialogOpen(page);
+    await visibleEditEventTrigger(page).click();
+
+    const eventDialog = page
+        .getByRole("dialog")
+        .filter({ hasText: `עריכת מופע: ${eventTitle}` });
+    await expect(eventDialog).toBeVisible({ timeout: 10_000 });
+    return eventDialog;
+}
+
+/** Closes the event dialog, then the module dialog behind it. */
+export async function closeEventAndModuleDialogs(
+    page: Page,
+    eventDialog: Locator,
+): Promise<void> {
+    await eventDialog.getByRole("button", { name: "סגירה" }).click();
+    await expect(eventDialog).not.toBeVisible();
+
+    const moduleDialog = page.getByRole("dialog").first();
+    if ((await moduleDialog.count()) > 0) {
+        const closeButton = moduleDialog.getByRole("button", { name: "סגירה" });
+        if ((await closeButton.count()) > 0) {
+            await closeButton.click();
+        } else {
+            await page.keyboard.press("Escape");
+        }
+
+        // Wait for the dialog we just closed to actually go, rather than for a
+        // fixed 300ms (#404). MUI marks content behind an open modal
+        // `aria-hidden`, so while the exit transition runs
+        // `getByRole("tab", ...)` matches nothing and the next helper's tab
+        // click waits out the entire test timeout — the race behind the :402
+        // and :435 flakes, both of which died on
+        // `waiting for getByRole('tab', { name: 'סילבוסים' })` and passed on
+        // retry. Scoped to this branch, and to the dialog this helper closed,
+        // so an unrelated dialog elsewhere on the page is not asserted away.
+        await expect(moduleDialog).not.toBeVisible({ timeout: 10_000 });
+    }
+}

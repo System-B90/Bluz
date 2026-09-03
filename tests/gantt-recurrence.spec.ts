@@ -1,6 +1,12 @@
 import { Locator, Page } from "@playwright/test";
 
-import { test, expect, waitForAppLoad } from "./fixtures";
+import {
+    closeEventAndModuleDialogs,
+    expect,
+    openEventEditDialog,
+    test,
+    waitForAppLoad,
+} from "./fixtures";
 
 /**
  * Gantt timeline recurring-event integration tests (#111).
@@ -122,95 +128,9 @@ async function createModuleWithEvents(page: Page): Promise<string> {
     return "הרצאת מבוא";
 }
 
-/**
- * The first *visible* "edit event" trigger.
- *
- * `.first()` on its own picks whatever comes first in the DOM, hidden or not,
- * and the curriculum view leaves every visited tab mounted behind
- * `display: none`. Filtering first is what makes "first" mean "the one on
- * screen" (#495).
- */
-function visibleEditEventTrigger(page: Page): Locator {
-    return page.getByTitle("עריכת המופע").filter({ visible: true }).first();
-}
 
-/**
- * The module dialog is what hosts the "עריכת המופע" triggers, and it goes away
- * when the curriculum view switches tabs (e.g. to "רצף זמן" and back), so a
- * test that opened it earlier cannot assume it is still usable (#585, #589).
- * Reopens it from the syllabuses tab when it is gone; a no-op when it is not.
- *
- * Every locator here filters to visible (#495). The curriculum view keeps each
- * *visited* tab mounted and merely hides it — `display: none`, see
- * `curriculum-view/tabs/index.tsx` — so a page-wide locator goes on matching
- * nodes in tabs the test has already left. Counting those made this helper
- * report an already-open dialog when the only match was a hidden leftover, and
- * the click that followed then waited out the whole 60s test timeout on an
- * element that could never become visible.
- */
-async function ensureModuleDialogOpen(page: Page): Promise<void> {
-    const editEventTrigger = visibleEditEventTrigger(page);
-    if ((await editEventTrigger.count()) > 0) return;
 
-    await page.getByRole("tab", { name: "סילבוסים" }).click();
 
-    // Tooltip+IconButton: MUI puts the label on the button, or on a wrapping
-    // <span> — match either, the same way createModuleWithEvents does.
-    const editModuleButton = page
-        .locator(
-            'button[aria-label="עריכת מערך"], span[title="עריכת מערך"] button, span[aria-label="עריכת מערך"] button',
-        )
-        .first();
-    await expect(editModuleButton).toBeVisible({ timeout: 10_000 });
-    await editModuleButton.click();
-
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
-    await expect(editEventTrigger).toBeVisible({ timeout: 10_000 });
-}
-
-/** Opens the event dialog for `eventTitle`, reopening the module dialog if needed. */
-async function openEventEditDialog(page: Page, eventTitle: string): Promise<Locator> {
-    await ensureModuleDialogOpen(page);
-    await visibleEditEventTrigger(page).click();
-
-    const eventDialog = page
-        .getByRole("dialog")
-        .filter({ hasText: `עריכת מופע: ${eventTitle}` });
-    await expect(eventDialog).toBeVisible({ timeout: 10_000 });
-    return eventDialog;
-}
-
-/**
- * Closes an open event dialog, then the module dialog behind it. Waits for the
- * event dialog to fully unmount before checking for the module dialog — doing
- * this check too early can match the still-fading-out event dialog too,
- * confusing which "סגירה" button gets clicked.
- */
-async function closeEventAndModuleDialogs(
-    page: Page,
-    eventDialog: Locator,
-): Promise<void> {
-    await eventDialog.getByRole("button", { name: "סגירה" }).click();
-    await expect(eventDialog).not.toBeVisible();
-
-    const moduleDialog = page.getByRole("dialog");
-    if ((await moduleDialog.count()) > 0) {
-        const closeButton = moduleDialog.getByRole("button", { name: "סגירה" });
-        if ((await closeButton.count()) > 0) {
-            await closeButton.click();
-        } else {
-            await page.keyboard.press("Escape");
-        }
-    }
-    // Wait for the dialogs to actually be gone, not for a fixed 300ms (#404).
-    // MUI marks the content behind an open modal `aria-hidden`, so while an
-    // exit transition is still running `getByRole("tab", ...)` matches nothing
-    // and the next helper's tab click waits out the entire test timeout. That
-    // is the race behind the :402 and :435 flakes: both died on
-    // `waiting for getByRole('tab', { name: 'סילבוסים' })`, and both passed on
-    // retry. 300ms is enough on an idle machine and not enough under load.
-    await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 10_000 });
-}
 
 /** Opens the event dialog for `eventTitle` and sets its recurrence. */
 async function setEventRecurrence(
