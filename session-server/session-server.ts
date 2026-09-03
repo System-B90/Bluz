@@ -25,7 +25,7 @@ process.on("unhandledRejection", (reason) => {
 
 const server = startSessionServer({
     validMessageTypes: Object.values(MessageTypes),
-    onClientMessage: (ws, data, dispatch) => {
+    onClientMessage: (ws, data, dispatch, identity) => {
         // Frames are attacker-controlled; reject anything that is not a plain
         // object before touching its fields (#511).
         if (!data || typeof data !== "object" || Array.isArray(data)) {
@@ -37,13 +37,20 @@ const server = startSessionServer({
             // signalling. The sender receives its own lock back and filters
             // it out client-side.
             case MessageTypes.EVENT_LOCK:
-            case MessageTypes.EVENT_UNLOCK:
-                dispatch.dispatchMessageToEveryone(
-                    data["type"],
-                    undefined,
-                    data["data"] as Record<string, unknown> | undefined,
-                );
+            case MessageTypes.EVENT_UNLOCK: {
+                const payload = data["data"];
+                if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+                    return true;
+                }
+                dispatch.dispatchMessageToEveryone(data["type"], undefined, {
+                    ...(payload as Record<string, unknown>),
+                    // Identity comes from the connect ticket, never from the
+                    // frame: a client could otherwise claim any lockedById and
+                    // show a forged "X is editing" badge to everyone (#540.2).
+                    lockedById: identity.userId,
+                });
                 return true;
+            }
         }
         return false;
     },
