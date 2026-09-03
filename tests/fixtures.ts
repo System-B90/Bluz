@@ -462,8 +462,22 @@ export async function createEventInOfflineMode(
  * `display: none` (see `curriculum-view/tabs/index.tsx`). Filtering first is
  * what makes "first" mean "the one on screen" (#495).
  */
-export function visibleEditEventTrigger(page: Page): Locator {
-    return page.getByTitle("עריכת המופע").filter({ visible: true }).first();
+export function visibleEditEventTrigger(
+    page: Page,
+    eventTitle?: string,
+): Locator {
+    const triggers = page.getByTitle("עריכת המופע").filter({ visible: true });
+    // The trigger renders the event's own name ("↳ הרצאת מבוא"), so naming the
+    // event is what makes this select the intended one. Taking `.first()`
+    // instead picks whatever sits earliest in the DOM, which is the seeded
+    // breaks module ("הפסקות") -- the specs exclude it everywhere else
+    // (`hasNotText: "הפסקות"`), and this helper was the one place that did
+    // not. That is how `openEventEditDialog(page, "הרצאת מבוא")` ended up
+    // opening `עריכת מופע: ארוחת בוקר הפסקות / הפסקות` and then timing out
+    // waiting for a dialog whose title could never match (#495).
+    return eventTitle
+        ? triggers.filter({ hasText: eventTitle }).first()
+        : triggers.first();
 }
 
 /**
@@ -477,18 +491,33 @@ export function visibleEditEventTrigger(page: Page): Locator {
  * had left, and the click that followed then waited out the whole test timeout
  * on an element that could never become visible.
  */
-export async function ensureModuleDialogOpen(page: Page): Promise<void> {
-    const editEventTrigger = visibleEditEventTrigger(page);
+export async function ensureModuleDialogOpen(
+    page: Page,
+    eventTitle?: string,
+): Promise<void> {
+    const editEventTrigger = visibleEditEventTrigger(page, eventTitle);
     if ((await editEventTrigger.count()) > 0) return;
 
     await page.getByRole("tab", { name: "סילבוסים" }).click();
 
     // Tooltip+IconButton: MUI puts the label on the button, or on a wrapping
     // <span> — match either.
-    const editModuleButton = page
-        .locator(
-            'button[aria-label="עריכת מערך"], span[title="עריכת מערך"] button, span[aria-label="עריכת מערך"] button',
-        )
+    const editModuleSelector =
+        'button[aria-label="עריכת מערך"], span[title="עריכת מערך"] button, span[aria-label="עריכת מערך"] button';
+
+    // Reopen a module the test actually owns. Every module lives in its own
+    // ModuleRow <tr>, and the seeded breaks module ("הפסקות") sits above them,
+    // so an unqualified `.first()` reopens *that* one and the caller's event is
+    // nowhere inside it. The rest of the suite already excludes it by name
+    // (`hasNotText: "הפסקות"`); this now does the same.
+    const ownRow = page
+        .locator("tr")
+        .filter({ has: page.locator(editModuleSelector) })
+        .filter({ hasNotText: "הפסקות" });
+    const editModuleButton = (
+        (await ownRow.count()) > 0 ? ownRow.first() : page
+    )
+        .locator(editModuleSelector)
         .first();
     await expect(editModuleButton).toBeVisible({ timeout: 10_000 });
     await editModuleButton.click();
@@ -502,8 +531,8 @@ export async function openEventEditDialog(
     page: Page,
     eventTitle: string,
 ): Promise<Locator> {
-    await ensureModuleDialogOpen(page);
-    await visibleEditEventTrigger(page).click();
+    await ensureModuleDialogOpen(page, eventTitle);
+    await visibleEditEventTrigger(page, eventTitle).click();
 
     const eventDialog = page
         .getByRole("dialog")
