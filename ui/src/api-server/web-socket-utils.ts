@@ -98,24 +98,32 @@ function connect(): WebSocket {
  *
  * @param type The type of message being broadcasted (e.g. MessageTypes.EVENT_DATA_UPDATE).
  * @param data Optional payload containing details of the updated/added/removed entities.
+ * @param targets Sync-object id(s) to scope delivery to (see `iterationSyncId`).
+ * Omit only for data that every connected client should receive regardless of
+ * which iteration it's viewing.
  * @example
  * ```typescript
- * SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
- *   action: "added",
- *   newData: fixedEvent,
- *   eventId: eventId,
- * });
+ * SendServerRequestToSessionServer(
+ *   MessageTypes.EVENT_ADDED_OR_REMOVED,
+ *   { action: "added", newData: fixedEvent, eventId: eventId },
+ *   iterationSyncId(iterationId),
+ * );
  * ```
  */
 export function SendServerRequestToSessionServer(
     type: MessageTypes,
     data?: any,
+    // Sync-object id(s) to scope this broadcast to (#525). Omitted means the
+    // unscoped everyone-fan-out — only appropriate for data that isn't
+    // iteration-scoped (settings, courses, rooms, ...).
+    targets?: string | Array<string>,
 ) {
     const message = JSON.stringify({
         sender: WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
         authKey: getWsAuthKey(),
         type: type,
         data,
+        targets,
     });
 
     if (socket && socket.readyState === WebSocket.OPEN) {

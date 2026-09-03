@@ -20,7 +20,7 @@ import {
 import { DbEventDocument, EventId } from "@/api-shared/types/event";
 import { EventChangeAction } from "@/api-shared/types/event-history";
 import { IterationId } from "@/api-shared/types/iteration";
-import { MessageTypes } from "@/settings";
+import { iterationSyncId, MessageTypes } from "@/settings";
 
 export type { DbEventDocument };
 
@@ -184,10 +184,14 @@ async function setDbEvent(
         origin,
     });
 
-    SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
-        events: { [eventId]: fixedEvent },
-        iterationId,
-    } as EventDataUpdateMessage<DbEventDocument>);
+    SendServerRequestToSessionServer(
+        MessageTypes.EVENT_DATA_UPDATE,
+        {
+            events: { [eventId]: fixedEvent },
+            iterationId,
+        } as EventDataUpdateMessage<DbEventDocument>,
+        iterationSyncId(iterationId),
+    );
 
     return fixedEvent;
 }
@@ -236,12 +240,16 @@ async function createDbEvent(
         origin,
     });
 
-    SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
-        action: "added",
-        newData: fixedEvent,
-        eventId: eventId,
-        iterationId,
-    } as EventAddedOrRemovedMessage<DbEventDocument>);
+    SendServerRequestToSessionServer(
+        MessageTypes.EVENT_ADDED_OR_REMOVED,
+        {
+            action: "added",
+            newData: fixedEvent,
+            eventId: eventId,
+            iterationId,
+        } as EventAddedOrRemovedMessage<DbEventDocument>,
+        iterationSyncId(iterationId),
+    );
 
     return fixedEvent as DbEventDocument;
 }
@@ -281,11 +289,15 @@ async function deleteDbEvent(
         origin,
     });
 
-    SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
-        action: "removed",
-        eventId: eventId,
-        iterationId,
-    } as EventAddedOrRemovedMessage<DbEventDocument>);
+    SendServerRequestToSessionServer(
+        MessageTypes.EVENT_ADDED_OR_REMOVED,
+        {
+            action: "removed",
+            eventId: eventId,
+            iterationId,
+        } as EventAddedOrRemovedMessage<DbEventDocument>,
+        iterationSyncId(iterationId),
+    );
 }
 
 export namespace DbEvent {

@@ -5,7 +5,7 @@
  */
 import { startSessionServer } from "@system-b90/session-ws/server";
 
-import { MessageTypes } from "./session-common";
+import { iterationSyncId, MessageTypes } from "./session-common";
 
 /*
  * Crash guard (#511). The shared core reads frame fields without a shape
@@ -25,6 +25,11 @@ process.on("unhandledRejection", (reason) => {
 
 const server = startSessionServer({
     validMessageTypes: Object.values(MessageTypes),
+    // Every ticketed connection already belongs to an authenticated staff
+    // user, and any staff user can already view any iteration's data through
+    // the regular API — a sync-object subscription just narrows which
+    // *broadcasts* a socket receives, it grants no new read access (#525).
+    canListenToSyncObject: () => true,
     onClientMessage: (ws, data, dispatch, identity) => {
         // Frames are attacker-controlled; reject anything that is not a plain
         // object before touching its fields (#511).
@@ -42,13 +47,23 @@ const server = startSessionServer({
                 if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
                     return true;
                 }
-                dispatch.dispatchMessageToEveryone(data["type"], undefined, {
-                    ...(payload as Record<string, unknown>),
-                    // Identity comes from the connect ticket, never from the
-                    // frame: a client could otherwise claim any lockedById and
-                    // show a forged "X is editing" badge to everyone (#540.2).
-                    lockedById: identity.userId,
-                });
+                const iterationId = (payload as Record<string, unknown>)[
+                    "iterationId"
+                ];
+                dispatch.dispatchMessageToEveryone(
+                    data["type"],
+                    iterationSyncId(
+                        typeof iterationId === "string" ? iterationId : undefined,
+                    ),
+                    {
+                        ...(payload as Record<string, unknown>),
+                        // Identity comes from the connect ticket, never from
+                        // the frame: a client could otherwise claim any
+                        // lockedById and show a forged "X is editing" badge
+                        // to everyone (#540.2).
+                        lockedById: identity.userId,
+                    },
+                );
                 return true;
             }
         }

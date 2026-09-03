@@ -14,7 +14,7 @@ import {
 } from "@/api-shared/types/event";
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { PrayerSettings } from "@/api-shared/types/settings/prayer";
-import { MessageTypes } from "@/settings";
+import { CURRENT_ITERATION_SYNC_ID, MessageTypes } from "@/settings";
 
 /**
  * The configured clock time for one prayer, as a Date.
@@ -168,12 +168,18 @@ async function updatePrayerEventsInDay({
         );
     }
 
-    SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
-        events: broadcastEvents.reduce(
-            (acc, event) => ({ ...acc, [event.id]: event }),
-            {},
-        ),
-    } as EventDataUpdateMessage<DbEventDocument>);
+    SendServerRequestToSessionServer(
+        MessageTypes.EVENT_DATA_UPDATE,
+        {
+            events: broadcastEvents.reduce(
+                (acc, event) => ({ ...acc, [event.id]: event }),
+                {},
+            ),
+        } as EventDataUpdateMessage<DbEventDocument>,
+        // Prayer events only ever apply to the current run — there is no
+        // iterationId field on this payload.
+        CURRENT_ITERATION_SYNC_ID,
+    );
 }
 
 export async function updatePrayerEvents({

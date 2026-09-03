@@ -66,7 +66,7 @@ import {
     ScheduleSettings,
 } from "@/api-shared/types/settings/schedule";
 import { logger } from "@/logging/pino";
-import { MessageTypes } from "@/settings";
+import { iterationSyncId, MessageTypes } from "@/settings";
 
 /**
  * Server orchestration for the curriculum → schedule cut ("גזירה ללו"ז", #118).
@@ -1052,10 +1052,15 @@ export async function cutCurriculumToSchedule(
                     iteration.id,
                 );
             }
-            SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
-                events: Object.fromEntries(documents.map((d) => [d.id, d])),
-                iterationId: iteration.isCurrent ? undefined : iteration.id,
-            } as EventDataUpdateMessage<DbEventDocument>);
+            const iterationId = iteration.isCurrent ? undefined : iteration.id;
+            SendServerRequestToSessionServer(
+                MessageTypes.EVENT_DATA_UPDATE,
+                {
+                    events: Object.fromEntries(documents.map((d) => [d.id, d])),
+                    iterationId,
+                } as EventDataUpdateMessage<DbEventDocument>,
+                iterationSyncId(iterationId),
+            );
         }
     } catch (error) {
         // The claim outlives the process that took it, so a failed cut must
@@ -1160,12 +1165,17 @@ export async function pullBackCutSchedule(
 
     // Broadcast one removal per event so connected calendars drop them, mirroring
     // the single-event soft-delete path (db-event.deleteDbEvent).
+    const iterationId = iteration.isCurrent ? undefined : iteration.id;
     for (const event of liveCutEvents) {
-        SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
-            action: "removed",
-            eventId: event.id,
-            iterationId: iteration.isCurrent ? undefined : iteration.id,
-        } as EventAddedOrRemovedMessage<DbEventDocument>);
+        SendServerRequestToSessionServer(
+            MessageTypes.EVENT_ADDED_OR_REMOVED,
+            {
+                action: "removed",
+                eventId: event.id,
+                iterationId,
+            } as EventAddedOrRemovedMessage<DbEventDocument>,
+            iterationSyncId(iterationId),
+        );
     }
 
     return { ok: true, result: { removedEvents: liveCutEvents.length } };

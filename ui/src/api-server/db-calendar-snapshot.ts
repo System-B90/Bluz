@@ -22,7 +22,7 @@ import {
     EventChangeInitiator,
 } from "@/api-shared/types/event-history";
 import { IterationId } from "@/api-shared/types/iteration";
-import { MessageTypes } from "@/settings";
+import { iterationSyncId, MessageTypes } from "@/settings";
 
 /** Hard ceiling on captured events to keep a single snapshot document sane. */
 const MAX_SNAPSHOT_EVENTS = 10_000;
@@ -226,16 +226,24 @@ async function restoreSnapshot(
         origin: restoreOrigin,
     });
 
-    SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
-        events: Object.fromEntries(events.map((e) => [e.id, e])),
-        iterationId,
-    } as EventDataUpdateMessage<DbEventDocument>);
-    for (const eventId of removedIds) {
-        SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
-            action: "removed",
-            eventId,
+    SendServerRequestToSessionServer(
+        MessageTypes.EVENT_DATA_UPDATE,
+        {
+            events: Object.fromEntries(events.map((e) => [e.id, e])),
             iterationId,
-        } as EventAddedOrRemovedMessage<DbEventDocument>);
+        } as EventDataUpdateMessage<DbEventDocument>,
+        iterationSyncId(iterationId),
+    );
+    for (const eventId of removedIds) {
+        SendServerRequestToSessionServer(
+            MessageTypes.EVENT_ADDED_OR_REMOVED,
+            {
+                action: "removed",
+                eventId,
+                iterationId,
+            } as EventAddedOrRemovedMessage<DbEventDocument>,
+            iterationSyncId(iterationId),
+        );
     }
 
     return {

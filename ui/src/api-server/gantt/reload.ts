@@ -26,7 +26,7 @@ import {
     ReloadConflictReason,
 } from "@/api-shared/types/gantt/reload";
 import { Iteration } from "@/api-shared/types/iteration";
-import { MessageTypes } from "@/settings";
+import { iterationSyncId, MessageTypes } from "@/settings";
 
 /**
  * Schedule reload ("עדכון הלו״ז לפי הגאנט"): re-plans a curriculum that was
@@ -107,10 +107,15 @@ function broadcastUpserts(
     iteration: Iteration,
 ): void {
     if (documents.length === 0) return;
-    SendServerRequestToSessionServer(MessageTypes.EVENT_DATA_UPDATE, {
-        events: Object.fromEntries(documents.map((d) => [d.id, d])),
-        iterationId: iteration.isCurrent ? undefined : iteration.id,
-    } as EventDataUpdateMessage<DbEventDocument>);
+    const iterationId = iteration.isCurrent ? undefined : iteration.id;
+    SendServerRequestToSessionServer(
+        MessageTypes.EVENT_DATA_UPDATE,
+        {
+            events: Object.fromEntries(documents.map((d) => [d.id, d])),
+            iterationId,
+        } as EventDataUpdateMessage<DbEventDocument>,
+        iterationSyncId(iterationId),
+    );
 }
 
 /** Broadcast helper: one removal message per archived event. */
@@ -118,12 +123,17 @@ function broadcastRemovals(
     eventIds: Array<string>,
     iteration: Iteration,
 ): void {
+    const iterationId = iteration.isCurrent ? undefined : iteration.id;
     for (const eventId of eventIds) {
-        SendServerRequestToSessionServer(MessageTypes.EVENT_ADDED_OR_REMOVED, {
-            action: "removed",
-            eventId,
-            iterationId: iteration.isCurrent ? undefined : iteration.id,
-        } as EventAddedOrRemovedMessage<DbEventDocument>);
+        SendServerRequestToSessionServer(
+            MessageTypes.EVENT_ADDED_OR_REMOVED,
+            {
+                action: "removed",
+                eventId,
+                iterationId,
+            } as EventAddedOrRemovedMessage<DbEventDocument>,
+            iterationSyncId(iterationId),
+        );
     }
 }
 
