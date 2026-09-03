@@ -55,7 +55,9 @@ def _make_bundle(tmp_path: Path) -> tuple[Path, Path]:
     return bin_dir, work_dir
 
 
-def _run_update(tmp_path: Path, *, link_hive_ran: bool) -> "subprocess.CompletedProcess[str]":
+def _run_update(
+    tmp_path: Path, *, link_hive_ran: bool
+) -> "subprocess.CompletedProcess[str]":
     bin_dir, work_dir = _make_bundle(tmp_path)
 
     env_lines = ["BLUZ_VERSION=v1.0.0"]
@@ -73,7 +75,14 @@ def _run_update(tmp_path: Path, *, link_hive_ran: bool) -> "subprocess.Completed
     }
 
     result = subprocess.run(
-        ["bash", "./scripts/update.sh", "--version", "v2.0.0", "--skip-backup", "--yes"],
+        [
+            "bash",
+            "./scripts/update.sh",
+            "--version",
+            "v2.0.0",
+            "--skip-backup",
+            "--yes",
+        ],
         cwd=work_dir,
         env=env,
         capture_output=True,
@@ -84,33 +93,39 @@ def _run_update(tmp_path: Path, *, link_hive_ran: bool) -> "subprocess.Completed
     return result
 
 
-@pytest.mark.skipif(os.name == "nt", reason="update.sh is a bash script; run under WSL/git-bash CI")
+@pytest.mark.skipif(
+    os.name == "nt", reason="update.sh is a bash script; run under WSL/git-bash CI"
+)
 def test_autodetects_overlay_when_link_hive_persisted_hive_network_name(
     tmp_path: Path,
 ) -> None:
     result = _run_update(tmp_path, link_hive_ran=True)
 
     assert "co-located Hive detected" in result.stdout
-    pull_calls = [
-        line for line in result.docker_calls.splitlines() if " pull" in line
-    ]
-    assert pull_calls, f"expected a `docker compose ... pull` call, got: {result.docker_calls!r}"
+    pull_calls = [line for line in result.docker_calls.splitlines() if " pull" in line]
+    assert pull_calls, (
+        f"expected a `docker compose ... pull` call, got: {result.docker_calls!r}"
+    )
     assert "docker-compose.hive-local.yml" in pull_calls[0]
 
 
-@pytest.mark.skipif(os.name == "nt", reason="update.sh is a bash script; run under WSL/git-bash CI")
+@pytest.mark.skipif(
+    os.name == "nt", reason="update.sh is a bash script; run under WSL/git-bash CI"
+)
 def test_no_overlay_when_link_hive_never_ran(tmp_path: Path) -> None:
     result = _run_update(tmp_path, link_hive_ran=False)
 
     assert "co-located Hive detected" not in result.stdout
-    pull_calls = [
-        line for line in result.docker_calls.splitlines() if " pull" in line
-    ]
-    assert pull_calls, f"expected a `docker compose ... pull` call, got: {result.docker_calls!r}"
+    pull_calls = [line for line in result.docker_calls.splitlines() if " pull" in line]
+    assert pull_calls, (
+        f"expected a `docker compose ... pull` call, got: {result.docker_calls!r}"
+    )
     assert "docker-compose.hive-local.yml" not in pull_calls[0]
 
 
-@pytest.mark.skipif(os.name == "nt", reason="update.sh is a bash script; run under WSL/git-bash CI")
+@pytest.mark.skipif(
+    os.name == "nt", reason="update.sh is a bash script; run under WSL/git-bash CI"
+)
 def test_explicit_overlay_env_var_still_wins(tmp_path: Path) -> None:
     """BLUZ_COMPOSE_OVERLAY set by hand must not be clobbered by autodetect."""
     bin_dir, work_dir = _make_bundle(tmp_path)
@@ -131,7 +146,14 @@ def test_explicit_overlay_env_var_still_wins(tmp_path: Path) -> None:
     }
 
     result = subprocess.run(
-        ["bash", "./scripts/update.sh", "--version", "v2.0.0", "--skip-backup", "--yes"],
+        [
+            "bash",
+            "./scripts/update.sh",
+            "--version",
+            "v2.0.0",
+            "--skip-backup",
+            "--yes",
+        ],
         cwd=work_dir,
         env=env,
         capture_output=True,
@@ -140,9 +162,7 @@ def test_explicit_overlay_env_var_still_wins(tmp_path: Path) -> None:
     )
 
     assert "co-located Hive detected" not in result.stdout
-    pull_calls = [
-        line for line in call_log.read_text().splitlines() if " pull" in line
-    ]
+    pull_calls = [line for line in call_log.read_text().splitlines() if " pull" in line]
     assert pull_calls
     assert "docker-compose.custom.yml" in pull_calls[0]
     assert "docker-compose.hive-local.yml" not in pull_calls[0]
