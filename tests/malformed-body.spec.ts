@@ -16,7 +16,7 @@ const BODY_PARSING_ROUTES = [
     { path: "/api/outsiders", method: "put" },
     { path: "/api/rooms", method: "post" },
     { path: "/api/course", method: "post" },
-    { path: "/api/reservations", method: "post" },
+    { path: "/api/reservations", method: "put" },
 ] as const;
 
 const BAD_BODIES = [
