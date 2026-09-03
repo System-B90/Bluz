@@ -261,15 +261,15 @@ test.describe("Instructor rail drag-and-drop", () => {
             .toBe(1);
 
         // The assigned person renders as a PersonChip: an outer <span> Box
-        // carrying the dnd-kit drag listeners, wrapping an inner <a href="a">
-        // Link that's purely visual (draggable={false}, no listeners of its
-        // own — and the literal href="a" is what PersonChip always renders,
-        // making it a safe, unique match: the event tile may also carry
-        // *other* <a> links (subject/room hyperlinks) earlier in the DOM, so
-        // a plain "a".first() would grab one of those instead).
-        // Grab the outer span so the pointer-down lands where the listeners
-        // actually are, then drag it to the rail's unassign zone.
-        const personChip = eventTile.locator('a[href="a"]').first().locator("xpath=..");
+        // carrying the dnd-kit drag listeners, wrapping either plain text (an
+        // outsider) or a button-Link that toggles the instructor filter. The
+        // chip used to be an <a href="a"> and the test matched that literal
+        // href — #470 turned it into component="button", so that locator went
+        // dead (#590). Match the outer span by test id instead: that is where
+        // the drag listeners live, so pointer-down lands in the right place.
+        const personChip = eventTile
+            .getByTestId("event-person-chip")
+            .first();
         await expect(personChip).toBeVisible();
         const personBox = await personChip.boundingBox();
 

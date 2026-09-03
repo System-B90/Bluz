@@ -72,10 +72,37 @@ async function createModuleWithEvents(page: Page): Promise<string> {
     return "הרצאת מבוא";
 }
 
+/**
+ * The module dialog is what hosts the "עריכת המופע" triggers. It unmounts when
+ * the curriculum view switches tabs (e.g. to "רצף זמן" and back), so a test
+ * that opened it earlier cannot assume it is still mounted (#585, #589).
+ * Reopens it from the syllabuses tab when it is gone; a no-op when it is not.
+ */
+async function ensureModuleDialogOpen(page: Page): Promise<void> {
+    const editEventTrigger = page.getByTitle("עריכת המופע").first();
+    if (await editEventTrigger.count() > 0) return;
+
+    await page.getByRole("tab", { name: "סילבוסים" }).click();
+
+    // Tooltip+IconButton: MUI puts the label on the button, or on a wrapping
+    // <span> — match either, the same way createModuleWithEvents does.
+    const editModuleButton = page
+        .locator(
+            'button[aria-label="עריכת מערך"], span[title="עריכת מערך"] button, span[aria-label="עריכת מערך"] button',
+        )
+        .first();
+    await expect(editModuleButton).toBeVisible({ timeout: 10_000 });
+    await editModuleButton.click();
+
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
+    await expect(editEventTrigger).toBeVisible({ timeout: 10_000 });
+}
+
 async function openEventEditDialog(
     page: Page,
     eventTitle: string,
 ): Promise<Locator> {
+    await ensureModuleDialogOpen(page);
     await page.getByTitle("עריכת המופע").first().click();
 
     const eventDialog = page

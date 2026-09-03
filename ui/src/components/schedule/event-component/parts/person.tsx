@@ -114,6 +114,7 @@ export function PersonChip({
         >
             <Box
                 component="span"
+                data-testid="event-person-chip"
                 ref={setNodeRef}
                 {...listeners}
                 {...attributes}
