@@ -36,9 +36,35 @@ on:
             - 'package.json'
             - 'package-lock.json'
 
+# Cancel on branches, queue on master.
+#
+# There is one self-hosted runner, so the runner already serialises: a second
+# job cannot overlap, it waits. cancel-in-progress was therefore never
+# protecting the box -- its only job is skipping superseded commits, and on
+# master it was doing that so aggressively it destroyed runs that had already
+# paid their full cost. Of the last 29 master runs, 14 were cancelled and none
+# succeeded; two of those cancellations landed at 47 and 50 minutes, i.e. at
+# the finish line, after monopolising the only runner for the best part of an
+# hour. Master's real state went unverified for days at a time, which is how
+# the #633 regression reached it unnoticed.
+#
+# Queuing does not build a backlog: GitHub keeps at most one running and one
+# pending run per group and cancels the older *pending* one, so a burst of
+# merges coalesces to "test the newest commit" on its own -- without ever
+# killing a run in flight.
+#
+# Branches keep cancelling. They are force-pushed and rebased constantly, and
+# there a superseded run really is worthless.
+#
+# workflow_dispatch gets its own group so a deliberate verification run is not
+# collateral damage from an unrelated push to the same ref. Safe for the same
+# reason as above: on self-hosted the runner serialises regardless, and the
+# github-hosted target runs on separate VMs where overlap costs nothing.
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
+    group: >-
+        ${{ github.workflow }}-${{ github.ref }}-${{
+        github.event_name == 'workflow_dispatch' && github.run_id || 'auto' }}
+    cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
     # Image builds are pure CPU with no Hive dependency and their artifact is
