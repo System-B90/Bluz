@@ -394,8 +394,17 @@ jobs:
                   # enough — on a run that died before checkout finished, the
                   # compose file may not even be on disk — so each cleanup ends
                   # with a name-filtered `rm -f`.
+                  # -v: take the container's anonymous volumes with it. Mongo
+                  # and Postgres each create one per run, and without this they
+                  # are orphaned the moment the container goes. The reclaim step
+                  # at the top of the next run cannot recover them either: it
+                  # discovers compose projects *from surviving containers*, so
+                  # removing the containers is exactly what makes their volumes
+                  # undiscoverable. ~47GB had accumulated that way by
+                  # 2026-09-03, filling the runner and failing every
+                  # Hive-booting job in the org (System-B90/.github#12).
                   bluz=$(docker ps -aq --filter "name=^/bluz-test-" || true)
-                  [ -n "$bluz" ] && docker rm -f $bluz || true
+                  [ -n "$bluz" ] && docker rm -f -v $bluz || true
 
                   docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
                   leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
@@ -636,8 +645,17 @@ jobs:
             - name: Tear down test + Hive stacks
               if: always()
               run: |
+                  # -v: take the container's anonymous volumes with it. Mongo
+                  # and Postgres each create one per run, and without this they
+                  # are orphaned the moment the container goes. The reclaim step
+                  # at the top of the next run cannot recover them either: it
+                  # discovers compose projects *from surviving containers*, so
+                  # removing the containers is exactly what makes their volumes
+                  # undiscoverable. ~47GB had accumulated that way by
+                  # 2026-09-03, filling the runner and failing every
+                  # Hive-booting job in the org (System-B90/.github#12).
                   bluz=$(docker ps -aq --filter "name=^/bluz-test-" || true)
-                  [ -n "$bluz" ] && docker rm -f $bluz || true
+                  [ -n "$bluz" ] && docker rm -f -v $bluz || true
 
                   docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
                   leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
