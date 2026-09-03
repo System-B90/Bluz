@@ -165,6 +165,21 @@ function registerSession(client: FakeWebSocket, initiatorKey: string) {
     );
 }
 
+// Lock/unlock relay is now dispatched as a targeted sync-object fan-out
+// scoped to the viewed iteration rather than a broadcast to every registered
+// session (#525) — the production client subscribes via
+// REGISTER_SYNC_PROVIDER before it can receive one (UseEventWebsocket.ts).
+// "iteration:current" is what iterationSyncId(undefined) resolves to, which
+// is what these tests' lock/unlock frames carry (no iterationId in payload).
+const CURRENT_ITERATION_SYNC_ID = "iteration:current";
+
+function subscribeToSyncObject(client: FakeWebSocket, syncObjectId: string) {
+    client.emit(
+        "message",
+        JSON.stringify({ type: "register-sync-provider", syncObjectId }),
+    );
+}
+
 describe("session-server relay", () => {
     it("relays EVENT_LOCK from one client to every registered client", async () => {
         await loadServer();
@@ -172,19 +187,22 @@ describe("session-server relay", () => {
         const peer = connectClient(FakeWebSocketServer.instances[0], { asUser: "user-b" });
         registerSession(sender, "initiator-a");
         registerSession(peer, "initiator-b");
+        subscribeToSyncObject(sender, CURRENT_ITERATION_SYNC_ID);
+        subscribeToSyncObject(peer, CURRENT_ITERATION_SYNC_ID);
 
         sender.emit(
             "message",
             JSON.stringify({ type: "el", data: { eventId: "event-1" } }),
         );
 
-        // The fan-out is a single serialized frame delivered to everyone,
-        // including the sender (it filters its own lock out client-side).
+        // The fan-out is a single serialized frame delivered to everyone
+        // subscribed to the viewed iteration, including the sender (it
+        // filters its own lock out client-side).
         expect(peer.sent).toHaveLength(1);
         const relayed = JSON.parse(peer.sent[0]);
         expect(relayed).toEqual({
             type: "el",
-            target: undefined,
+            target: CURRENT_ITERATION_SYNC_ID,
             // lockedById is stamped from the sender's ticket, not the frame
             // (#540 item 2).
             data: { eventId: "event-1", lockedById: "user-a" },
@@ -198,6 +216,8 @@ describe("session-server relay", () => {
         const peer = connectClient(FakeWebSocketServer.instances[0], { asUser: "user-b" });
         registerSession(sender, "initiator-a");
         registerSession(peer, "initiator-b");
+        subscribeToSyncObject(sender, CURRENT_ITERATION_SYNC_ID);
+        subscribeToSyncObject(peer, CURRENT_ITERATION_SYNC_ID);
 
         sender.emit(
             "message",
@@ -236,6 +256,8 @@ describe("session-server relay", () => {
         const peer = connectClient(FakeWebSocketServer.instances[0], { asUser: "user-b" });
         registerSession(sender, "initiator-a");
         registerSession(peer, "initiator-b");
+        subscribeToSyncObject(sender, CURRENT_ITERATION_SYNC_ID);
+        subscribeToSyncObject(peer, CURRENT_ITERATION_SYNC_ID);
 
         sender.emit(
             "message",
@@ -245,7 +267,7 @@ describe("session-server relay", () => {
         expect(peer.sent).toHaveLength(1);
         expect(JSON.parse(peer.sent[0])).toEqual({
             type: "eu",
-            target: undefined,
+            target: CURRENT_ITERATION_SYNC_ID,
             data: { eventId: "event-1", lockedById: "user-a" },
         });
     });
@@ -272,6 +294,8 @@ describe("session-server relay", () => {
             asUser: "user-b",
         });
         registerSession(sender, "initiator-a");
+        subscribeToSyncObject(sender, CURRENT_ITERATION_SYNC_ID);
+        // Deliberately not subscribed to the sync object.
 
         sender.emit(
             "message",
@@ -279,7 +303,8 @@ describe("session-server relay", () => {
         );
 
         // Shared-core contract the browser client depends on: a socket that
-        // has not sent register-session stays out of the fan-out.
+        // has not subscribed to the iteration's sync object stays out of the
+        // targeted fan-out (#525), regardless of session registration.
         expect(sender.sent).toHaveLength(1);
         expect(unregistered.sent).toHaveLength(0);
     });
