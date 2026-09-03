@@ -31,6 +31,7 @@ import {
     DnDCalendar,
     localizer,
 } from "@/components/schedule/calendar/calendar/DndLocalizer";
+import { dayRangeHeaderFormat } from "@/components/schedule/calendar/calendar/range-header";
 import { usePrecisionDrag } from "@/components/schedule/calendar/calendar/UsePrecisionDrag";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { CustomWorkWeek } from "@/components/schedule/calendar/CustomWorkWeek";
@@ -215,22 +216,6 @@ function resourceAccessor(segment: EventSegment) {
 
 function resourceIdAccessor(room: Room) {
     return roomLikeToResourceKey(room);
-}
-
-function dayRangeHeaderFormat({
-    start,
-    end,
-}: {
-    start: Date;
-    end: Date;
-}) {
-    const s = dayjs(start).locale("he");
-    const e = dayjs(end).locale("he");
-    if (s.month() === e.month()) {
-        return `${s.format("DD")} - ${e.format("DD")} ב${s.format("MMMM")} ${s.format("YYYY")}`;
-    } else {
-        return `${s.format("DD")} ב${s.format("MMMM")} - ${e.format("DD")} ב${e.format("MMMM")} ${e.format("YYYY")}`;
-    }
 }
 
 const CALENDAR_FORMATS = {

@@ -2,7 +2,16 @@ import { Dayjs } from "dayjs";
 import moment from "moment";
 import { useMemo } from "react";
 
+import { formatRange } from "@/components/base/bidi";
 import { Event } from "@/components/schedule/types/event";
+
+/**
+ * The tooltip's `HH:mm - HH:mm` range, isolated so RTL layout cannot reverse
+ * the two sides. Split out from the hook so the isolation is unit-testable.
+ */
+export function eventTimeRange(start: string, end: string): string {
+    return formatRange(start, end);
+}
 
 /**
  * Start/end moments of an event plus its length split into whole hours and
@@ -31,6 +40,6 @@ export function useEventDuration(event: Event) {
         durationMinutes,
         hours: Math.floor(durationMinutes / 60),
         minutes: durationMinutes % 60,
-        timeRange: `${start.format("HH:mm")} - ${end.format("HH:mm")}`,
+        timeRange: eventTimeRange(start.format("HH:mm"), end.format("HH:mm")),
     };
 }
