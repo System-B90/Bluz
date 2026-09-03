@@ -57,6 +57,10 @@ export function useSyllabusActions() {
                         type: "REMOVE_SYLLABUS",
                         payload: { curriculumId, syllabusId },
                     }),
+                    discard: (syllabusId) => ({
+                        type: "PURGE_ENTITY",
+                        payload: { collection: "syllabuses", id: syllabusId },
+                    }),
                 },
             }),
         [dispatch, getEntity],
@@ -68,7 +72,16 @@ export function useSyllabusActions() {
             curriculumId: GanttCurriculumId,
             hiveIds: Array<number> = [],
         ) =>
-            actions.create({ title, curriculumId, hiveIds }, curriculumId),
+            actions.create(
+                { title, curriculumId, hiveIds },
+                curriculumId,
+                (tempId): GanttSyllabus => ({
+                    id: tempId,
+                    title,
+                    hiveIds,
+                    modules: [],
+                }),
+            ),
         [actions],
     );
 

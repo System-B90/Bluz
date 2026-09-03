@@ -52,6 +52,30 @@ export function curriculumReducer(
     case "REMOVE_DAY":
         return dayDomainReducer(state, action);
 
+    case "PURGE_ENTITY": {
+        const { payload } = action;
+        switch (payload.collection) {
+        case "modules": {
+            if (!(payload.id in state.modules)) return state;
+            const modules = { ...state.modules };
+            delete modules[payload.id];
+            return { ...state, modules };
+        }
+        case "syllabuses": {
+            if (!(payload.id in state.syllabuses)) return state;
+            const syllabuses = { ...state.syllabuses };
+            delete syllabuses[payload.id];
+            return { ...state, syllabuses };
+        }
+        case "events": {
+            if (!(payload.id in state.events)) return state;
+            const events = { ...state.events };
+            delete events[payload.id];
+            return { ...state, events };
+        }
+        }
+    }
+
     default:
         return state;
     }

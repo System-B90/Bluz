@@ -21,6 +21,12 @@ export type EntityActionBuilders<
     add: (entity: TEntity, containerId: TContainerId) => Action;
     update: (id: TEntity["id"], updates: Partial<TEntity>) => Action;
     remove: (containerId: TContainerId, id: TEntity["id"]) => Action;
+    /**
+     * Deletes a doc outright rather than unlinking it from `containerId`
+     * (unlike `remove`). Used to undo an optimistic `create` by discarding
+     * its temp entity — see `create`'s `buildOptimistic` parameter (#381).
+     */
+    discard?: (id: TEntity["id"]) => Action;
     allocateTime?: (
         id: TEntity["id"],
         curriculumId: GanttCurriculumId,
@@ -85,12 +91,42 @@ export function makeEntityActions<
     // the lifetime of this (memoized) actions object.
     const updateSeqById = new Map<TEntity["id"], number>();
 
-    const create = async (payload: TCreatePayload, containerId: TContainerId) =>
-        await withGantErrorHandling(async () => {
+    const create = async (
+        payload: TCreatePayload,
+        containerId: TContainerId,
+        /**
+         * When given (together with `builders.discard`), `create` becomes
+         * optimistic: it renders a temp entity immediately, then on success
+         * discards the temp doc and adds the real one, or on failure just
+         * discards it — mirroring `createWeek`'s temp-id + swap pattern
+         * (#381). Without it, `create` stays non-optimistic: wait for the
+         * API, then add the real entity.
+         */
+        buildOptimistic?: (tempId: TEntity["id"]) => TEntity,
+    ) => {
+        const buildDiscard = builders.discard;
+        if (!buildOptimistic || !buildDiscard) {
+            return await withGantErrorHandling(async () => {
+                const entity = await api.apiCreate(payload);
+                dispatch(builders.add(entity, containerId));
+                return entity;
+            }, `Failed to create ${label}:`);
+        }
+
+        const tempId = `temp-${label}-${crypto.randomUUID()}` as TEntity["id"];
+        dispatch(builders.add(buildOptimistic(tempId), containerId));
+
+        try {
             const entity = await api.apiCreate(payload);
+            dispatch(buildDiscard(tempId));
             dispatch(builders.add(entity, containerId));
             return entity;
-        }, `Failed to create ${label}:`);
+        } catch (error) {
+            dispatch(buildDiscard(tempId));
+            console.error(`Failed to create ${label}:`, error);
+            throw error;
+        }
+    };
 
     const update = async (id: TEntity["id"], updates: Partial<TEntity>) => {
         const seq = (updateSeqById.get(id) ?? 0) + 1;
