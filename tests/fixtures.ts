@@ -6,9 +6,23 @@ import { test as baseTest, expect as baseExpect, APIRequestContext, Browser, Loc
 let sharedContext: BrowserContext | null = null;
 let sharedPage: Page | null = null;
 
+/**
+ * Visual mode reuses ONE context and page for the entire run, across every
+ * spec — so cookies, localStorage and any dialog left open carry from one test
+ * into the next. That is what you want when watching a run in a real window,
+ * and it silently removes every browser-level isolation guarantee the suite
+ * otherwise has.
+ *
+ * Ignoring it under CI means someone exporting TEST_VISUAL to debug cannot
+ * accidentally leave the whole pipeline running without isolation, which would
+ * show up as inexplicable order-dependent failures rather than as an obvious
+ * misconfiguration.
+ */
+const isVisualMode = process.env.TEST_VISUAL === "1" && !process.env.CI;
+
 export const test = baseTest.extend<{ serverStateIsolation: undefined }>({
     context: async ({ browser, contextOptions }, use) => {
-        if (process.env.TEST_VISUAL === "1") {
+        if (isVisualMode) {
             if (!sharedContext) {
                 sharedContext = await browser.newContext(contextOptions);
             }
@@ -20,7 +34,7 @@ export const test = baseTest.extend<{ serverStateIsolation: undefined }>({
         }
     },
     page: async ({ context }, use) => {
-        if (process.env.TEST_VISUAL === "1") {
+        if (isVisualMode) {
             if (!sharedPage) {
                 sharedPage = await context.newPage();
             }
