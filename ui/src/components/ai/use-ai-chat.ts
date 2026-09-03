@@ -91,6 +91,11 @@ export function useAiChat(scope: AiChatScope) {
             // instead of creating one per chunk.
             const assistantId = nextId();
 
+            // Mirrored outside `timeline` state so an abort can synthesize the
+            // turn's assistant message without waiting on a render.
+            let assistantText = "";
+            const pendingToolCalls = new Map<string, string>();
+
             try {
                 const events = streamAiChat(
                     {
@@ -105,6 +110,7 @@ export function useAiChat(scope: AiChatScope) {
                 for await (const event of events) {
                     switch (event.type) {
                     case AiStreamEventType.Delta: {
+                        assistantText += event.text;
                         // Whether the bubble exists is derived from the list
                         // itself, never from a flag closed over by the
                         // updater: React double-invokes updaters under Strict
@@ -138,6 +144,7 @@ export function useAiChat(scope: AiChatScope) {
                         break;
                     }
                     case AiStreamEventType.ToolStart: {
+                        pendingToolCalls.set(event.toolCallId, event.name);
                         setTimeline((items) => [
                             ...items,
                             {
@@ -151,6 +158,7 @@ export function useAiChat(scope: AiChatScope) {
                         break;
                     }
                     case AiStreamEventType.ToolResult: {
+                        pendingToolCalls.delete(event.toolCallId);
                         setTimeline((items) => {
                             const existing = items.find(
                                 (item) => item.id === event.toolCallId,
@@ -207,6 +215,28 @@ export function useAiChat(scope: AiChatScope) {
             } catch (e) {
                 if (!abort.signal.aborted) {
                     setError(e instanceof Error ? e.message : String(e));
+                } else if (assistantText || pendingToolCalls.size > 0) {
+                    // No `Done` event arrives on abort, so the transcript
+                    // never learns about this turn unless synthesized here —
+                    // otherwise the model's own context loses whatever it
+                    // already streamed, even though it stays on screen.
+                    const toolCalls: Array<AiToolCall> = [...pendingToolCalls].map(
+                        ([id, name]) => ({ id, name, arguments: "{}" }),
+                    );
+                    transcript.current = [
+                        ...transcript.current,
+                        {
+                            role: AiRole.Assistant,
+                            content: assistantText,
+                            ...(toolCalls.length ? { toolCalls } : {}),
+                        },
+                        ...toolCalls.map((call) => ({
+                            role: AiRole.Tool,
+                            toolCallId: call.id,
+                            name: call.name,
+                            content: JSON.stringify({ error: "הופסק על ידי המשתמש" }),
+                        })),
+                    ];
                 }
             } finally {
                 abortRef.current = null;
