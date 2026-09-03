@@ -29,6 +29,13 @@ export type AuthContextState = {
     degraded: boolean;
     addMessageHandler: (handler: MessageHandlerType) => () => void;
     sendMessage: (data: WebSocketSessionMessage) => void;
+    /**
+     * Subscribe to a sync object for scoped broadcasts. Survives reconnects —
+     * the transport replays every registered id on each new socket, so callers
+     * must not try to re-register on their own (#525).
+     */
+    registerSyncObject: (syncObjectId: string) => void;
+    deregisterSyncObject: (syncObjectId: string) => void;
 };
 
 const AuthContext = createContext<AuthContextState | undefined>(undefined);
@@ -42,7 +49,12 @@ export const AuthProvider = ({
     userData: AuthSessionUser;
     degraded?: boolean;
 }) => {
-    const { addMessageHandler, sendMessage } = useSessionWebSocketContext();
+    const {
+        addMessageHandler,
+        sendMessage,
+        registerSyncObject,
+        deregisterSyncObject,
+    } = useSessionWebSocketContext();
     const { enqueueSnackbar } = useSnackbar();
     const { data: session } = useSession();
 
@@ -150,8 +162,19 @@ export const AuthProvider = ({
             degraded,
             addMessageHandler,
             sendMessage,
+            registerSyncObject,
+            deregisterSyncObject,
         }),
-        [logout, userData, canEdit, degraded, addMessageHandler, sendMessage],
+        [
+            logout,
+            userData,
+            canEdit,
+            degraded,
+            addMessageHandler,
+            sendMessage,
+            registerSyncObject,
+            deregisterSyncObject,
+        ],
     );
 
     return (

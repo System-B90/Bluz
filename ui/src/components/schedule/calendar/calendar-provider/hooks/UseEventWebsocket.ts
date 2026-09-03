@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 
 import { eventDateFixupToDayjs } from "@/api-shared/calendar";
 import {
@@ -18,30 +18,28 @@ export const useEventWebsocket = (
     setEventLock: (eventId: EventId, lock: EventLockMessage | null) => void,
     activeIterationId?: string,
 ) => {
-    const { addMessageHandler, sendMessage } = useAuth();
+    const { addMessageHandler, registerSyncObject, deregisterSyncObject } =
+        useAuth();
 
     // Subscribe to the sync object for the iteration being viewed so the
     // server only fans iteration-scoped broadcasts (full event documents) to
     // sockets actually viewing that iteration, instead of every logged-in
-    // browser (#525). Re-subscribes on reconnect (`sendMessage` queues while
-    // connecting) and swaps the subscription when the active iteration
-    // changes; deregisters the previous one so subscriptions don't
-    // accumulate across a session's iteration switches.
-    const subscribedSyncId = useRef<null | string>(null);
+    // browser (#525).
+    //
+    // registerSyncObject records the subscription as desired state and the
+    // transport replays it on every reconnect, so this effect does not need to
+    // observe socket lifecycle. An earlier version sent the frame through
+    // sendMessage instead, which meant the subscription was lost on the first
+    // reconnect (and dropped outright if the ticket fetch was still in flight),
+    // leaving the calendar silently stale until a page reload.
     useEffect(() => {
         const syncId = iterationSyncId(activeIterationId);
-        if (subscribedSyncId.current && subscribedSyncId.current !== syncId) {
-            sendMessage({
-                type: MessageTypes.DEREGISTER_SYNC_PROVIDER,
-                syncObjectId: subscribedSyncId.current,
-            });
-        }
-        sendMessage({
-            type: MessageTypes.REGISTER_SYNC_PROVIDER,
-            syncObjectId: syncId,
-        });
-        subscribedSyncId.current = syncId;
-    }, [activeIterationId, sendMessage]);
+        registerSyncObject(syncId);
+        // Cleanup closes over this run's syncId, so an iteration switch
+        // deregisters the old id before the next run registers the new one --
+        // React runs the previous cleanup first. No bookkeeping ref needed.
+        return () => deregisterSyncObject(syncId);
+    }, [activeIterationId, registerSyncObject, deregisterSyncObject]);
 
     // Ignore broadcasts that belong to an iteration other than the one being
     // viewed. A broadcast without an iterationId is for the current run; when
