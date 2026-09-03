@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { eventDateFixupToDayjs } from "@/api-shared/calendar";
 import {
@@ -10,7 +10,7 @@ import {
 import { useAuth } from "@/components/auth/AuthProvider";
 import { CalendarAction } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventState";
 import { Event, EventId } from "@/components/schedule/types/event";
-import { MessageTypes } from "@/settings";
+import { iterationSyncId, MessageTypes } from "@/settings";
 
 export const useEventWebsocket = (
     offlineMode: boolean,
@@ -18,7 +18,30 @@ export const useEventWebsocket = (
     setEventLock: (eventId: EventId, lock: EventLockMessage | null) => void,
     activeIterationId?: string,
 ) => {
-    const { addMessageHandler } = useAuth();
+    const { addMessageHandler, sendMessage } = useAuth();
+
+    // Subscribe to the sync object for the iteration being viewed so the
+    // server only fans iteration-scoped broadcasts (full event documents) to
+    // sockets actually viewing that iteration, instead of every logged-in
+    // browser (#525). Re-subscribes on reconnect (`sendMessage` queues while
+    // connecting) and swaps the subscription when the active iteration
+    // changes; deregisters the previous one so subscriptions don't
+    // accumulate across a session's iteration switches.
+    const subscribedSyncId = useRef<null | string>(null);
+    useEffect(() => {
+        const syncId = iterationSyncId(activeIterationId);
+        if (subscribedSyncId.current && subscribedSyncId.current !== syncId) {
+            sendMessage({
+                type: MessageTypes.DEREGISTER_SYNC_PROVIDER,
+                syncObjectId: subscribedSyncId.current,
+            });
+        }
+        sendMessage({
+            type: MessageTypes.REGISTER_SYNC_PROVIDER,
+            syncObjectId: syncId,
+        });
+        subscribedSyncId.current = syncId;
+    }, [activeIterationId, sendMessage]);
 
     // Ignore broadcasts that belong to an iteration other than the one being
     // viewed. A broadcast without an iterationId is for the current run; when

@@ -60,3 +60,20 @@ const _coreMessageTypesMatch: {
 void _coreMessageTypesMatch;
 
 export const COMBO_DATA_KEY = "combo-data";
+
+/**
+ * Sync-object id for iteration-scoped calendar broadcasts (#525). Event
+ * payloads carry a full `DbEventDocument`, not an id — fanning them out to
+ * every logged-in browser regardless of which iteration it's viewing means
+ * every user's wire receives every curriculum's complete event data. Clients
+ * register as a sync-object listener for the iteration they're viewing
+ * (`undefined` iterationId means "the current run"), and the server passes
+ * the same id as `targets` on iteration-scoped broadcasts, so
+ * `dispatchToSyncObjectListeners` only reaches sockets actually viewing that
+ * iteration.
+ */
+export const CURRENT_ITERATION_SYNC_ID = "iteration:current";
+
+export function iterationSyncId(iterationId?: string): string {
+    return iterationId ? `iteration:${iterationId}` : CURRENT_ITERATION_SYNC_ID;
+}
