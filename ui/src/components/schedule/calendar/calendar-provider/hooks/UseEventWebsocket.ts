@@ -18,30 +18,37 @@ export const useEventWebsocket = (
     setEventLock: (eventId: EventId, lock: EventLockMessage | null) => void,
     activeIterationId?: string,
 ) => {
-    const { addMessageHandler, sendMessage } = useAuth();
+    const { addMessageHandler, registerSyncObject, deregisterSyncObject } =
+        useAuth();
 
     // Subscribe to the sync object for the iteration being viewed so the
     // server only fans iteration-scoped broadcasts (full event documents) to
     // sockets actually viewing that iteration, instead of every logged-in
-    // browser (#525). Re-subscribes on reconnect (`sendMessage` queues while
-    // connecting) and swaps the subscription when the active iteration
-    // changes; deregisters the previous one so subscriptions don't
-    // accumulate across a session's iteration switches.
+    // browser (#525).
+    //
+    // registerSyncObject records the subscription as desired state and the
+    // transport replays it on every reconnect, so this effect does not need to
+    // observe socket lifecycle. An earlier version sent the frame through
+    // sendMessage instead, which meant the subscription was lost on the first
+    // reconnect (and dropped outright if the ticket fetch was still in flight),
+    // leaving the calendar silently stale until a page reload.
     const subscribedSyncId = useRef<null | string>(null);
     useEffect(() => {
         const syncId = iterationSyncId(activeIterationId);
-        if (subscribedSyncId.current && subscribedSyncId.current !== syncId) {
-            sendMessage({
-                type: MessageTypes.DEREGISTER_SYNC_PROVIDER,
-                syncObjectId: subscribedSyncId.current,
-            });
+        const previous = subscribedSyncId.current;
+        if (previous && previous !== syncId) {
+            deregisterSyncObject(previous);
         }
-        sendMessage({
-            type: MessageTypes.REGISTER_SYNC_PROVIDER,
-            syncObjectId: syncId,
-        });
+        registerSyncObject(syncId);
         subscribedSyncId.current = syncId;
-    }, [activeIterationId, sendMessage]);
+
+        return () => {
+            deregisterSyncObject(syncId);
+            if (subscribedSyncId.current === syncId) {
+                subscribedSyncId.current = null;
+            }
+        };
+    }, [activeIterationId, registerSyncObject, deregisterSyncObject]);
 
     // Ignore broadcasts that belong to an iteration other than the one being
     // viewed. A broadcast without an iterationId is for the current run; when

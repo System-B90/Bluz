@@ -52,7 +52,7 @@
     "@system-b90/command-palette": "^0.1.0",
     "@system-b90/hive-core": "^0.1.0",
     "@system-b90/hive-nextauth": "^0.1.0",
-    "@system-b90/session-ws": "^0.3.0",
+    "@system-b90/session-ws": "^0.4.0",
     "@types/qrcode": "^1.5.6",
     "@uidotdev/usehooks": "^2.4.1",
     "@vercel/otel": "^2.1.3",

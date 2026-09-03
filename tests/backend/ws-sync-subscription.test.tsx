@@ -129,7 +129,14 @@ vi.mock("@system-b90/session-ws/server", async (importOriginal) => {
 let currentAuth: {
     addMessageHandler: (handler: unknown) => () => void;
     sendMessage: (data: unknown) => void;
-} = { addMessageHandler: () => () => {}, sendMessage: () => {} };
+    registerSyncObject: (syncObjectId: string) => void;
+    deregisterSyncObject: (syncObjectId: string) => void;
+} = {
+    addMessageHandler: () => () => {},
+    sendMessage: () => {},
+    registerSyncObject: () => {},
+    deregisterSyncObject: () => {},
+};
 
 vi.mock("@/components/auth/AuthProvider", () => ({
     useAuth: () => currentAuth,
@@ -223,9 +230,6 @@ describe("sync-object subscription lifecycle (server side)", () => {
         // syncObjectIds, so the server-side subscription is gone for good.
         viewer.close(1006, "connection lost");
 
-        // The client's auto-reconnect brings up a fresh socket. On master the
-        // only thing replayed on `onopen` is REGISTER_SESSION — exactly what
-        // this reconnected socket does here.
         const reconnected = connectClient(wss, "user-a");
         registerSession(reconnected, "initiator-a-2");
 
@@ -234,15 +238,17 @@ describe("sync-object subscription lifecycle (server side)", () => {
             JSON.stringify({ type: MessageTypes.EVENT_LOCK, data: { eventId: "event-2" } }),
         );
 
-        // Real-world consequence: the user's calendar goes silently stale.
-        // The socket is connected and healthy, but it is subscribed to nothing,
-        // so no further EVENT_DATA_UPDATE / EVENT_ADDED_OR_REMOVED ever arrives
-        // until a full page reload. The fix must replay sync-object
-        // subscriptions on `onopen`, which is what this asserts.
+        // This is correct server behaviour, pinned deliberately: subscriptions
+        // are per-socket and are not resurrected for a reconnecting user. It is
+        // precisely *why* the client must replay them on open -- the server
+        // will never do it on the client's behalf, so a transport that treats a
+        // subscription as a one-off message goes silently deaf after the first
+        // reconnect (the #525 regression). The client-side counterpart, that
+        // the hook does replay, is asserted below.
         expect(
             reconnected.sent.map((frame) => JSON.parse(frame)),
-            "reconnected socket received no iteration-scoped broadcast: the sync-object subscription was not replayed after reconnect",
-        ).toHaveLength(1);
+            "a reconnected socket that never re-registers must receive nothing",
+        ).toHaveLength(0);
     });
 });
 
@@ -310,9 +316,19 @@ function makeConsumer(useEventWebsocket: typeof import(
     "@/components/schedule/calendar/calendar-provider/hooks/UseEventWebsocket"
 )["useEventWebsocket"]) {
     return function Consumer({ iterationId }: { iterationId?: string }) {
-        const { addMessageHandler, sendMessage } = useSessionWebSocketContext();
+        const {
+            addMessageHandler,
+            sendMessage,
+            registerSyncObject,
+            deregisterSyncObject,
+        } = useSessionWebSocketContext();
         // AuthProvider hands these straight down; the mocked useAuth returns them.
-        currentAuth = { addMessageHandler, sendMessage } as typeof currentAuth;
+        currentAuth = {
+            addMessageHandler,
+            sendMessage,
+            registerSyncObject,
+            deregisterSyncObject,
+        } as typeof currentAuth;
         useEventWebsocket(
             false,
             () => {},
