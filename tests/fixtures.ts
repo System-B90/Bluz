@@ -1,4 +1,6 @@
-import { test as baseTest, expect as baseExpect, Locator, Page, BrowserContext } from "@playwright/test";
+import * as path from "path";
+
+import { test as baseTest, expect as baseExpect, Browser, Locator, Page, BrowserContext } from "@playwright/test";
 
 // Shared page and context for visual mode (single-window reuse)
 let sharedContext: BrowserContext | null = null;
@@ -32,6 +34,38 @@ export const test = baseTest.extend({
 });
 
 export const expect = baseExpect;
+
+/**
+ * Storage state for the second seeded account (`michaelks`, ADMIN clearance),
+ * written by the second setup test in auth.setup.ts.
+ */
+export const SECONDARY_USER_STATE = path.join(
+    __dirname,
+    ".auth",
+    "user-secondary.json",
+);
+
+/**
+ * Opens a second, independently authenticated browser session.
+ *
+ * Needed wherever a test has to watch one user's change land on *another*
+ * user's screen (#582). A single session cannot distinguish a working
+ * broadcast from a dead one: the writer's own view updates from its local
+ * mutation regardless, which is how #587 hid a completely dead
+ * server->client channel behind a green suite for weeks.
+ *
+ * Caller owns the returned context and must close it.
+ */
+export async function openSecondUserSession(browser: Browser): Promise<{
+    context: BrowserContext;
+    page: Page;
+}> {
+    const context = await browser.newContext({
+        storageState: SECONDARY_USER_STATE,
+    });
+    const page = await context.newPage();
+    return { context, page };
+}
 
 /**
  * Shared test fixtures and helper utilities for Bluz integration tests.
