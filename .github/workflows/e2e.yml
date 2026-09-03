@@ -707,7 +707,19 @@ jobs:
     cleanup-test-images:
         name: Delete Test Images artifact
         runs-on: ubuntu-24.04
-        needs: [ build-test-images, full-test-suite-github ]
+        # Must wait for BOTH suites, not just the matrix. Only one of them
+        # runs on any given trigger and the other is `skipped` -- and a skipped
+        # need is a *satisfied* need, so gating on the github matrix alone let
+        # this job start the moment the images were built and delete the
+        # artifact while the self-hosted suite was still downloading it. That
+        # is the same "delete while another consumer needs it" mistake this job
+        # was created to fix, reintroduced one level up (run 33805356828).
+        needs:
+            [
+                build-test-images,
+                full-test-suite-selfhosted,
+                full-test-suite-github,
+            ]
         if: always() && needs.build-test-images.result == 'success'
         steps:
             - name: Delete Test Images artifact
