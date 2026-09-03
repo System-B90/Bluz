@@ -1,5 +1,4 @@
-import dayjs from "dayjs";
-
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { formatRange, isolateLtr } from "@/components/base/bidi";
 
 /**
@@ -16,8 +15,8 @@ export function dayRangeHeaderFormat({
     start: Date;
     end: Date;
 }): string {
-    const s = dayjs(start).locale("he");
-    const e = dayjs(end).locale("he");
+    const s = dayjs(start).tz(APP_TIMEZONE).locale("he");
+    const e = dayjs(end).tz(APP_TIMEZONE).locale("he");
     if (s.month() === e.month()) {
         // Only the two day numbers form the numeric range; the month and year
         // stay in the surrounding RTL run.
