@@ -27,6 +27,15 @@ export function allowAiRequest(userId: string): boolean {
 
     recent.push(now);
     hits.set(userId, recent);
+
+    // Sweep stale entries here rather than on a timer: a user who stops
+    // chatting would otherwise leave a Map entry for the process lifetime.
+    for (const [id, timestamps] of hits) {
+        if (timestamps.every((timestamp) => timestamp <= windowStart)) {
+            hits.delete(id);
+        }
+    }
+
     return true;
 }
 
