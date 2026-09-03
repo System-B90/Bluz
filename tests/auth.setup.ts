@@ -1,11 +1,25 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { expect, Page, test as setup } from "@playwright/test";
+import { Browser, expect, Page, test as setup } from "@playwright/test";
 
-import { SELECTORS } from "./fixtures";
+import { AUTH_FILES, SELECTORS } from "./fixtures";
 
-const AUTH_FILE = path.join(__dirname, ".auth", "user.json");
+const AUTH_FILE = AUTH_FILES.primary;
+
+/**
+ * Credentials for each session.
+ *
+ * `admin` is Hive's superuser, created by the stack bring-up. `michaelks` is
+ * seeded by scripts/demo/populate_demo_hive.py with ADMIN clearance and the
+ * password "test", so it carries the same permissions as the primary user and
+ * any difference in behaviour between the two sessions is about *identity*,
+ * not about what each is allowed to do.
+ */
+export const TEST_USERS = {
+    primary: { username: "admin", password: "Password1" },
+    secondary: { username: "michaelks", password: "test" },
+} as const;
 
 async function waitForAuthApi(page: Page, baseURL: string): Promise<void>
 {
@@ -130,7 +144,12 @@ async function gotoReliable(page: Page, url: string): Promise<void>
  * On consecutive runs, optimistically reuses .auth/user.json if the session is
  * still valid; otherwise performs the full SSO flow and refreshes the saved state.
  */
-setup("authenticate via Hive SSO", async ({ browser }) =>
+async function authenticateAs(
+    browser: Browser,
+    baseURL: string,
+    { username, password }: { username: string; password: string },
+    AUTH_FILE: string,
+): Promise<void>
 {
     const authDir = path.dirname(AUTH_FILE);
     if (!fs.existsSync(authDir))
@@ -164,8 +183,6 @@ setup("authenticate via Hive SSO", async ({ browser }) =>
     const context = await browser.newContext();
     const page = await context.newPage();
 
-    const baseURL = setup.info().project.use.baseURL as string;
-
     // Seed NextAuth CSRF cookies, then start OAuth via the API rather than the
     // login button so setup does not depend on client-side React hydration.
     await gotoReliable(page, "/login");
@@ -189,8 +206,8 @@ setup("authenticate via Hive SSO", async ({ browser }) =>
         .first();
 
     await usernameField.waitFor({ state: "visible", timeout: 30_000 });
-    await usernameField.fill("admin");
-    await passwordField.fill("Password1");
+    await usernameField.fill(username);
+    await passwordField.fill(password);
 
     const submitButton = page
         .locator("button[type='submit'], input[type='submit']")
@@ -221,4 +238,29 @@ setup("authenticate via Hive SSO", async ({ browser }) =>
 
     await context.storageState({ path: AUTH_FILE });
     await context.close();
+}
+
+setup("authenticate via Hive SSO", async ({ browser }) =>
+{
+    await authenticateAs(
+        browser,
+        setup.info().project.use.baseURL as string,
+        TEST_USERS.primary,
+        AUTH_FILES.primary,
+    );
+});
+
+/**
+ * A second, independent session. Needed for anything that has to observe one
+ * user's change arriving on another user's screen — see #582; a single browser
+ * cannot tell a working broadcast from a dead one.
+ */
+setup("authenticate a second user via Hive SSO", async ({ browser }) =>
+{
+    await authenticateAs(
+        browser,
+        setup.info().project.use.baseURL as string,
+        TEST_USERS.secondary,
+        AUTH_FILES.secondary,
+    );
 });
