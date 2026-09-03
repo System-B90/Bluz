@@ -1,6 +1,14 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+    closeActiveServers,
+    FakeWebSocket,
+    FakeWebSocketServer,
+    loadSessionServer,
+    resetFakeTransport,
+} from "./fake-ws";
+
+import {
     getWsAuthKey,
     iterationSyncId,
     MessageTypes,
@@ -32,97 +40,21 @@ import {
  */
 
 /* ------------------------------------------------------------------ */
-/* Fake `ws` transport                                                 */
+/* Transport                                                           */
 /* ------------------------------------------------------------------ */
 
-class FakeWebSocket {
-    static CONNECTING = 0;
-    static OPEN = 1;
-    static CLOSING = 2;
-    static CLOSED = 3;
-
-    readyState = FakeWebSocket.OPEN;
-    sent: Array<string> = [];
-
-    private handlers = new Map<string, Array<(...args: Array<any>) => void>>();
-
-    send(data: string) {
-        this.sent.push(String(data));
-    }
-
-    close() {
-        this.readyState = FakeWebSocket.CLOSED;
-        this.emit("close");
-    }
-
-    terminate() {
-        this.readyState = FakeWebSocket.CLOSED;
-    }
-
-    ping() {}
-
-    on(event: string, handler: (...args: Array<any>) => void) {
-        const handlers = this.handlers.get(event) ?? [];
-        handlers.push(handler);
-        this.handlers.set(event, handlers);
-    }
-
-    /** Test-side trigger for handlers the core registered via `on`. */
-    emit(event: string, ...args: Array<any>) {
-        for (const handler of this.handlers.get(event) ?? []) {
-            handler(...args);
-        }
-    }
-
-    /** Frames this socket received, parsed. */
-    received(): Array<Record<string, any>> {
-        return this.sent.map((frame) => JSON.parse(frame));
-    }
-
-    receivedOfType(type: string): Array<Record<string, any>> {
-        return this.received().filter((frame) => frame.type === type);
-    }
-}
-
-class FakeWebSocketServer {
-    static instances: Array<FakeWebSocketServer> = [];
-
-    options: Record<string, unknown>;
-
-    private handlers = new Map<string, Array<(...args: Array<any>) => void>>();
-
-    constructor(options: Record<string, unknown>) {
-        this.options = options;
-        FakeWebSocketServer.instances.push(this);
-    }
-
-    on(event: string, handler: (...args: Array<any>) => void) {
-        const handlers = this.handlers.get(event) ?? [];
-        handlers.push(handler);
-        this.handlers.set(event, handlers);
-    }
-
-    emit(event: string, ...args: Array<any>) {
-        for (const handler of this.handlers.get(event) ?? []) {
-            handler(...args);
-        }
-    }
-
-    close(onClose?: () => void) {
-        onClose?.();
-    }
-}
-
-let activeServers: Array<{ close: () => void }> = [];
-
-vi.mock("ws", () => ({
-    WebSocket: FakeWebSocket,
-    WebSocketServer: FakeWebSocketServer,
-}));
+// Async factories: vi.mock is hoisted above the imports, so the fakes have to
+// be pulled in lazily from inside the factory rather than referenced from
+// module scope.
+vi.mock("ws", async () => {
+    const { FakeWebSocket, FakeWebSocketServer } = await import("./fake-ws");
+    return { WebSocket: FakeWebSocket, WebSocketServer: FakeWebSocketServer };
+});
 
 vi.mock("@system-b90/session-ws/server", async (importOriginal) => {
     const actual =
         await importOriginal<typeof import("@system-b90/session-ws/server")>();
+    const { activeServers } = await import("./fake-ws");
     return {
         startSessionServer: (options?: Record<string, unknown>) => {
             const server = actual.startSessionServer(
@@ -138,13 +70,11 @@ const originalAuthKey = process.env.WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY;
 
 beforeEach(() => {
     process.env.WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY ??= "test-root-secret";
-    FakeWebSocketServer.instances = [];
-    activeServers = [];
+    resetFakeTransport();
 });
 
 afterEach(() => {
-    for (const server of activeServers) server.close();
-    activeServers = [];
+    closeActiveServers();
     vi.resetModules();
 });
 
@@ -156,15 +86,7 @@ afterAll(() => {
 /* Harness                                                             */
 /* ------------------------------------------------------------------ */
 
-async function loadServer() {
-    vi.resetModules();
-    await import("../../session-server/session-server");
-    const wss = FakeWebSocketServer.instances.at(-1);
-    if (!wss) {
-        throw new Error("startSessionServer did not construct a WebSocketServer");
-    }
-    return wss;
-}
+
 
 /**
  * Opens one client session — a browser tab. Two calls with the same `asUser`
@@ -234,7 +156,7 @@ function broadcastFromServer(
 
 describe("live event updates across two sessions (#582)", () => {
     it("delivers an event update written by one session to the other", async () => {
-        const wss = await loadServer();
+        const wss = await loadSessionServer();
         const tabA = openSession(wss, "user-a", "initiator-a");
         const tabB = openSession(wss, "user-b", "initiator-b");
 
@@ -258,7 +180,7 @@ describe("live event updates across two sessions (#582)", () => {
     });
 
     it("delivers a deletion to the other session", async () => {
-        const wss = await loadServer();
+        const wss = await loadSessionServer();
         const tabA = openSession(wss, "user-a", "initiator-a");
         const tabB = openSession(wss, "user-b", "initiator-b");
 
@@ -277,7 +199,7 @@ describe("live event updates across two sessions (#582)", () => {
     });
 
     it("does not leak an update to a session viewing another iteration", async () => {
-        const wss = await loadServer();
+        const wss = await loadSessionServer();
         const current = openSession(wss, "user-a", "initiator-a");
         const archived = openSession(wss, "user-b", "initiator-b", "2025b");
 
@@ -297,7 +219,7 @@ describe("live event updates across two sessions (#582)", () => {
     });
 
     it("keeps delivering to the remaining session after the other tab closes", async () => {
-        const wss = await loadServer();
+        const wss = await loadSessionServer();
         const tabA = openSession(wss, "user-a", "initiator-a");
         const tabB = openSession(wss, "user-a", "initiator-a-2");
 

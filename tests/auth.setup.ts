@@ -3,22 +3,7 @@ import * as path from "path";
 
 import { Browser, expect, Page, test as setup } from "@playwright/test";
 
-import { SELECTORS } from "./fixtures";
-
-/**
- * Saved storage states, one per test user.
- *
- * Two are provisioned because a single browser session cannot prove the
- * realtime layer works: a broadcast that never leaves the server still looks
- * correct to the client that made the write (#582). The second account is what
- * lets a spec assert that one user's change actually reaches another's screen.
- * #587 is the cautionary tale — every e2e run passed for weeks with the
- * server->client channel dead, because nothing ever watched a second client.
- */
-export const AUTH_FILES = {
-    primary: path.join(__dirname, ".auth", "user.json"),
-    secondary: path.join(__dirname, ".auth", "user-secondary.json"),
-} as const;
+import { AUTH_FILES, SELECTORS } from "./fixtures";
 
 const AUTH_FILE = AUTH_FILES.primary;
 

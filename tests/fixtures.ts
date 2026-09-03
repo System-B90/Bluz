@@ -36,14 +36,19 @@ export const test = baseTest.extend({
 export const expect = baseExpect;
 
 /**
- * Storage state for the second seeded account (`michaelks`, ADMIN clearance),
- * written by the second setup test in auth.setup.ts.
+ * Saved storage states, one per test user, written by auth.setup.ts.
+ *
+ * Defined here rather than in auth.setup.ts because auth.setup.ts already
+ * imports from this module; putting them the other way round would make the
+ * two files import each other.
  */
-export const SECONDARY_USER_STATE = path.join(
-    __dirname,
-    ".auth",
-    "user-secondary.json",
-);
+export const AUTH_FILES = {
+    primary: path.join(__dirname, ".auth", "user.json"),
+    secondary: path.join(__dirname, ".auth", "user-secondary.json"),
+} as const;
+
+/** Storage state for the second seeded account (`michaelks`, ADMIN clearance). */
+export const SECONDARY_USER_STATE = AUTH_FILES.secondary;
 
 /**
  * Opens a second, independently authenticated browser session.
