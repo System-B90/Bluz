@@ -1,15 +1,14 @@
 import { APIRequestContext, Page } from "@playwright/test";
 
-import
-    {
-        expect,
-        getEventDialog,
-        gotoAppHome,
-        SELECTORS,
-        switchToDayView,
-        test,
-        testId,
-    } from "./fixtures";
+import {
+    expect,
+    getEventDialog,
+    gotoAppHome,
+    SELECTORS,
+    switchToDayView,
+    test,
+    testId,
+} from "./fixtures";
 
 /**
  * Split-across-breaks (#event.splitAcrossBreaks): an event that spans a break
@@ -110,42 +109,50 @@ test.describe("Split across breaks", () => {
         const breakName = testId("break");
         const exerciseName = testId("exercise");
 
-        // 1) A short break window from 12:00 to 12:15.
-        await openNewEventDialog(page);
-        let dialog = getEventDialog(page);
-        await expect(dialog).toBeVisible();
-        await dialog.locator("input").first().fill(breakName);
-
-        await setTimeField(
-            page,
-            dialog.getByRole("group", { name: "שעת התחלה" }),
-            "12",
-            "00",
-        );
-        await setTimeField(
-            page,
-            dialog.getByRole("group", { name: "שעת סיום" }),
-            "12",
-            "15",
-        );
-
-        await dialog
-            .locator(".MuiFormControl-root")
-            .filter({ hasText: "סוג" })
-            .getByRole("combobox")
-            .click();
-        await page.getByRole("option", { name: "הפסקה", exact: true }).click();
-
-        await dialog.getByRole("button", { name: "שמירה" }).click();
-        await expect(dialog).toBeHidden();
-
-        // Reload so the new break is part of the calendar's loaded event set
-        // before the split-aware event below is created — otherwise the
-        // client-side break-window collection used for layout may still
-        // reflect pre-creation state.
-        await gotoAppHome(page);
-
+        // The break is created inside the try, not before it. Creating it
+        // outside meant that any failure between saving it and entering the
+        // block -- including the reload below -- skipped the finally and left
+        // a break event on today's real calendar. Break windows drive layout,
+        // so a leaked one changes rendering for every later spec that draws
+        // today.
         try {
+            // 1) A short break window from 12:00 to 12:15.
+            await openNewEventDialog(page);
+            let dialog = getEventDialog(page);
+            await expect(dialog).toBeVisible();
+            await dialog.locator("input").first().fill(breakName);
+
+            await setTimeField(
+                page,
+                dialog.getByRole("group", { name: "שעת התחלה" }),
+                "12",
+                "00",
+            );
+            await setTimeField(
+                page,
+                dialog.getByRole("group", { name: "שעת סיום" }),
+                "12",
+                "15",
+            );
+
+            await dialog
+                .locator(".MuiFormControl-root")
+                .filter({ hasText: "סוג" })
+                .getByRole("combobox")
+                .click();
+            await page
+                .getByRole("option", { name: "הפסקה", exact: true })
+                .click();
+
+            await dialog.getByRole("button", { name: "שמירה" }).click();
+            await expect(dialog).toBeHidden();
+
+            // Reload so the new break is part of the calendar's loaded event set
+            // before the split-aware event below is created — otherwise the
+            // client-side break-window collection used for layout may still
+            // reflect pre-creation state.
+            await gotoAppHome(page);
+
             // 2) An exercise straddling the break with plenty of margin on
             // both sides: 09:00–16:00. Both resulting pieces need to clear
             // `UnifiedEvent`'s CONTINUATION_LABEL_MIN_HEIGHT (34px) or the

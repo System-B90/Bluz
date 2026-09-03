@@ -64,6 +64,9 @@ export const test = baseTest.extend<{ serverStateIsolation: undefined }>({
             const curriculumsBefore = new Set(
                 await listCurriculumIds(request).catch(() => []),
             );
+            const iterationsBefore = new Set(
+                await listIterationIds(request).catch(() => []),
+            );
             const collectionsBefore = new Map<string, Set<string>>();
             for (const collection of SWEPT_COLLECTIONS) {
                 collectionsBefore.set(
@@ -81,6 +84,15 @@ export const test = baseTest.extend<{ serverStateIsolation: undefined }>({
             try {
                 // Order matters: see restoreIteration.
                 await restoreIteration(request, originalIteration);
+
+                // After the restore above, so a temp iteration is no longer
+                // current -- the API refuses to delete the active one.
+                for (const id of await listIterationIds(request)) {
+                    if (iterationsBefore.has(id)) continue;
+                    await request
+                        .delete(`/api/iterations/${id}`)
+                        .catch(() => {});
+                }
 
                 for (const id of await listCurriculumIds(request)) {
                     if (curriculumsBefore.has(id)) continue;
@@ -613,6 +625,22 @@ async function listCurriculumIds(
         data?: Array<{ id?: string }>;
     };
     return (body.data ?? []).flatMap((c) => (c.id ? [ c.id ] : []));
+}
+
+/**
+ * Iterations are the heaviest thing a test can leave behind: each one is its
+ * own database. settings.spec.ts and iteration-switch.spec.ts both create a
+ * temporary one and delete it in a `finally`, which covers assertion failures
+ * but not a crash or a hard timeout -- and a long list of leftovers is itself
+ * a failure cause, since both specs locate their row by scanning the list.
+ */
+async function listIterationIds(
+    request: APIRequestContext,
+): Promise<Array<string>> {
+    const response = await request.get("/api/iterations");
+    if (!response.ok()) return [];
+    const body = (await response.json()) as { data?: Array<{ id?: string }> };
+    return (body.data ?? []).flatMap((i) => (i.id ? [ i.id ] : []));
 }
 
 async function currentIterationId(
