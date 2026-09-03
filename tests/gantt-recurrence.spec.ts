@@ -194,15 +194,22 @@ async function closeEventAndModuleDialogs(
     await expect(eventDialog).not.toBeVisible();
 
     const moduleDialog = page.getByRole("dialog");
-    if (await moduleDialog.count() > 0) {
+    if ((await moduleDialog.count()) > 0) {
         const closeButton = moduleDialog.getByRole("button", { name: "סגירה" });
-        if (await closeButton.count() > 0) {
+        if ((await closeButton.count()) > 0) {
             await closeButton.click();
         } else {
             await page.keyboard.press("Escape");
         }
     }
-    await page.waitForTimeout(300);
+    // Wait for the dialogs to actually be gone, not for a fixed 300ms (#404).
+    // MUI marks the content behind an open modal `aria-hidden`, so while an
+    // exit transition is still running `getByRole("tab", ...)` matches nothing
+    // and the next helper's tab click waits out the entire test timeout. That
+    // is the race behind the :402 and :435 flakes: both died on
+    // `waiting for getByRole('tab', { name: 'סילבוסים' })`, and both passed on
+    // retry. 300ms is enough on an idle machine and not enough under load.
+    await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 10_000 });
 }
 
 /** Opens the event dialog for `eventTitle` and sets its recurrence. */

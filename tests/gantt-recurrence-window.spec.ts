@@ -148,7 +148,11 @@ async function closeEventAndModuleDialogs(
             await page.keyboard.press("Escape");
         }
     }
-    await page.waitForTimeout(300);
+    // Wait for the dialogs to actually be gone, not for a fixed 300ms (#404).
+    // MUI marks the content behind an open modal `aria-hidden`, so while an
+    // exit transition is still running `getByRole("tab", ...)` matches nothing
+    // and the next helper's tab click waits out the entire test timeout.
+    await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 10_000 });
 }
 
 /** Sets recurrence and, optionally, the recurrence window dates (#468). */
