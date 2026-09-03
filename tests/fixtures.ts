@@ -1,12 +1,12 @@
 import * as path from "path";
 
-import { test as baseTest, expect as baseExpect, Browser, Locator, Page, BrowserContext } from "@playwright/test";
+import { test as baseTest, expect as baseExpect, APIRequestContext, Browser, Locator, Page, BrowserContext } from "@playwright/test";
 
 // Shared page and context for visual mode (single-window reuse)
 let sharedContext: BrowserContext | null = null;
 let sharedPage: Page | null = null;
 
-export const test = baseTest.extend({
+export const test = baseTest.extend<{ serverStateIsolation: undefined }>({
     context: async ({ browser, contextOptions }, use) => {
         if (process.env.TEST_VISUAL === "1") {
             if (!sharedContext) {
@@ -30,7 +30,93 @@ export const test = baseTest.extend({
             await use(page);
             await page.close();
         }
-    }
+    },
+
+    /**
+     * Undoes a test's writes to the shared server.
+     *
+     * Every test already gets a fresh browser context, so nothing leaks
+     * through the DOM or localStorage. What does leak is the database: one
+     * Hive+Bluz stack is shared by the whole suite, and events a test creates
+     * outlive it. They accumulate all run long, and the damage is not
+     * hypothetical -- three instructor-dnd specs went from green to red purely
+     * because two *other* specs stopped running, changing how crowded the day
+     * view was underneath a geometry-based drag. Coupling like that makes the
+     * failure list unstable, and an unstable failure list cannot tell a
+     * regression from noise.
+     *
+     * Auto-applied, so specs get isolation without opting in. It only removes
+     * what appeared while the test ran: the pre-test snapshot means seeded
+     * demo data and anything an earlier test legitimately left is untouched.
+     *
+     * Best-effort by design. A cleanup failure is logged and swallowed rather
+     * than allowed to fail an otherwise-passing test -- an isolation layer
+     * that turns green runs red is worse than the coupling it replaces.
+     */
+    serverStateIsolation: [
+        async ({ request }, use) => {
+            const originalIteration = await currentIterationId(request).catch(
+                () => undefined,
+            );
+            const eventsBefore = new Set(
+                (await listEvents(request).catch(() => [])).map((e) => e.id),
+            );
+            const curriculumsBefore = new Set(
+                await listCurriculumIds(request).catch(() => []),
+            );
+            const collectionsBefore = new Map<string, Set<string>>();
+            for (const collection of SWEPT_COLLECTIONS) {
+                collectionsBefore.set(
+                    collection,
+                    new Set(
+                        await listCollectionIds(request, collection).catch(
+                            () => [],
+                        ),
+                    ),
+                );
+            }
+
+            await use(undefined);
+
+            try {
+                // Order matters: see restoreIteration.
+                await restoreIteration(request, originalIteration);
+
+                for (const id of await listCurriculumIds(request)) {
+                    if (curriculumsBefore.has(id)) continue;
+                    // Deleting the curriculum takes its syllabuses, modules
+                    // and gantt events with it.
+                    await request
+                        .delete(`/api/gantt/curriculums/${id}`)
+                        .catch(() => {});
+                }
+
+                for (const event of await listEvents(request)) {
+                    if (eventsBefore.has(event.id)) continue;
+                    await request
+                        .delete("/api/event", { data: event.id })
+                        .catch(() => {});
+                }
+
+                for (const collection of SWEPT_COLLECTIONS) {
+                    const before = collectionsBefore.get(collection);
+                    if (!before) continue;
+                    for (const id of await listCollectionIds(
+                        request,
+                        collection,
+                    )) {
+                        if (before.has(id)) continue;
+                        await request
+                            .delete(`/api/${collection}`, { data: id })
+                            .catch(() => {});
+                    }
+                }
+            } catch (error) {
+                console.warn("[isolation] cleanup failed:", error);
+            }
+        },
+        { auto: true },
+    ],
 });
 
 export const expect = baseExpect;
@@ -449,6 +535,112 @@ export async function createEventInOfflineMode(
     ).toBeVisible({ timeout: 5_000 });
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Server-side test isolation                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * How far either side of today the cleanup sweep looks for events a test
+ * created. Wide enough to catch a gantt cut, which writes across the whole
+ * curriculum, and bounded so the query stays cheap.
+ */
+const CLEANUP_WINDOW_DAYS_BACK = 60;
+const CLEANUP_WINDOW_DAYS_FORWARD = 400;
+
+type ApiEvent = { id: string; name?: string };
+
+function cleanupWindow(): { sd: string; ed: string } {
+    const sd = new Date();
+    sd.setDate(sd.getDate() - CLEANUP_WINDOW_DAYS_BACK);
+    sd.setHours(0, 0, 0, 0);
+    const ed = new Date();
+    ed.setDate(ed.getDate() + CLEANUP_WINDOW_DAYS_FORWARD);
+    ed.setHours(23, 59, 59, 999);
+    return { sd: sd.toISOString(), ed: ed.toISOString() };
+}
+
+async function listEvents(request: APIRequestContext): Promise<Array<ApiEvent>> {
+    const { sd, ed } = cleanupWindow();
+    const response = await request.get(`/api/event?sd=${sd}&ed=${ed}`);
+    if (!response.ok()) return [];
+    const body = (await response.json()) as { data?: Array<ApiEvent> };
+    return body.data ?? [];
+}
+
+/**
+ * Gantt curriculums, which leak worse than events do.
+ *
+ * gantt.spec.ts and gantt-recurrence.spec.ts build a fresh curriculum (plus
+ * its syllabuses, modules and events) in `beforeEach` and delete none of it,
+ * so every run leaves another pile behind on the shared stack, permanently.
+ * course-builder.spec.ts already documents the consequence in a comment:
+ * "The shared test env accumulates a long tail of leftover course
+ * fixtures ... which makes the hierarchy tree and course-picker Autocomplete
+ * considerably slower to interact with" -- i.e. debris from other specs is
+ * already slowing later ones toward their timeouts.
+ */
+/**
+ * Entity collections that follow the same REST shape: `GET /api/<x>` returns
+ * `{ data: [{ id }] }`, `DELETE /api/<x>` takes the bare id as its JSON body.
+ *
+ * These are the entities specs create through the settings dialogs. Their
+ * per-spec cleanup is written as the last statement of a straight-line flow
+ * rather than in a `finally`, so any earlier assertion failure leaks the
+ * entity permanently -- and outsiders/custom-colors then assert that no *other*
+ * row exists, so one leak makes the next run fail before it can clean up its
+ * own entity, which leaks again. Sweeping centrally breaks that cascade
+ * regardless of where a spec gave up.
+ */
+const SWEPT_COLLECTIONS = [ "outsiders", "custom-colors", "course", "rooms" ] as const;
+
+async function listCollectionIds(
+    request: APIRequestContext,
+    collection: string,
+): Promise<Array<string>> {
+    const response = await request.get(`/api/${collection}`);
+    if (!response.ok()) return [];
+    const body = (await response.json()) as { data?: Array<{ id?: string }> };
+    return (body.data ?? []).flatMap((row) => (row.id ? [ row.id ] : []));
+}
+
+async function listCurriculumIds(
+    request: APIRequestContext,
+): Promise<Array<string>> {
+    const response = await request.get("/api/gantt/curriculums");
+    if (!response.ok()) return [];
+    const body = (await response.json()) as {
+        data?: Array<{ id?: string }>;
+    };
+    return (body.data ?? []).flatMap((c) => (c.id ? [ c.id ] : []));
+}
+
+async function currentIterationId(
+    request: APIRequestContext,
+): Promise<string | undefined> {
+    const response = await request.get("/api/iterations/current");
+    if (!response.ok()) return undefined;
+    const body = (await response.json()) as { data?: { id?: string } | null };
+    return body.data?.id;
+}
+
+/**
+ * Puts the active iteration back if the test moved it.
+ *
+ * This runs *before* the event sweep and not after, because every event query
+ * resolves against whichever iteration is active: sweeping first would compare
+ * one iteration's events against another's and delete the difference.
+ */
+async function restoreIteration(
+    request: APIRequestContext,
+    originalId: string | undefined,
+): Promise<void> {
+    if (!originalId) return;
+    if ((await currentIterationId(request)) === originalId) return;
+    await request.patch(`/api/iterations/${originalId}`, {
+        data: { isCurrent: true },
+    });
+}
 
 /* ------------------------------------------------------------------ */
 /* Gantt module/event dialog helpers                                   */
