@@ -1,6 +1,12 @@
 import { Locator, Page } from "@playwright/test";
 
-import { test, expect, waitForAppLoad } from "./fixtures";
+import {
+    closeEventAndModuleDialogs,
+    expect,
+    openEventEditDialog,
+    test,
+    waitForAppLoad,
+} from "./fixtures";
 
 /**
  * Gantt timeline recurring-event integration tests (#111).
@@ -122,68 +128,9 @@ async function createModuleWithEvents(page: Page): Promise<string> {
     return "הרצאת מבוא";
 }
 
-/**
- * The module dialog is what hosts the "עריכת המופע" triggers. It unmounts when
- * the curriculum view switches tabs (e.g. to "רצף זמן" and back), so a test
- * that opened it earlier cannot assume it is still mounted (#585, #589).
- * Reopens it from the syllabuses tab when it is gone; a no-op when it is not.
- */
-async function ensureModuleDialogOpen(page: Page): Promise<void> {
-    const editEventTrigger = page.getByTitle("עריכת המופע").first();
-    if (await editEventTrigger.count() > 0) return;
 
-    await page.getByRole("tab", { name: "סילבוסים" }).click();
 
-    // Tooltip+IconButton: MUI puts the label on the button, or on a wrapping
-    // <span> — match either, the same way createModuleWithEvents does.
-    const editModuleButton = page
-        .locator(
-            'button[aria-label="עריכת מערך"], span[title="עריכת מערך"] button, span[aria-label="עריכת מערך"] button',
-        )
-        .first();
-    await expect(editModuleButton).toBeVisible({ timeout: 10_000 });
-    await editModuleButton.click();
 
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
-    await expect(editEventTrigger).toBeVisible({ timeout: 10_000 });
-}
-
-/** Opens the event dialog for `eventTitle`, reopening the module dialog if needed. */
-async function openEventEditDialog(page: Page, eventTitle: string): Promise<Locator> {
-    await ensureModuleDialogOpen(page);
-    await page.getByTitle("עריכת המופע").first().click();
-
-    const eventDialog = page
-        .getByRole("dialog")
-        .filter({ hasText: `עריכת מופע: ${eventTitle}` });
-    await expect(eventDialog).toBeVisible({ timeout: 10_000 });
-    return eventDialog;
-}
-
-/**
- * Closes an open event dialog, then the module dialog behind it. Waits for the
- * event dialog to fully unmount before checking for the module dialog — doing
- * this check too early can match the still-fading-out event dialog too,
- * confusing which "סגירה" button gets clicked.
- */
-async function closeEventAndModuleDialogs(
-    page: Page,
-    eventDialog: Locator,
-): Promise<void> {
-    await eventDialog.getByRole("button", { name: "סגירה" }).click();
-    await expect(eventDialog).not.toBeVisible();
-
-    const moduleDialog = page.getByRole("dialog");
-    if (await moduleDialog.count() > 0) {
-        const closeButton = moduleDialog.getByRole("button", { name: "סגירה" });
-        if (await closeButton.count() > 0) {
-            await closeButton.click();
-        } else {
-            await page.keyboard.press("Escape");
-        }
-    }
-    await page.waitForTimeout(300);
-}
 
 /** Opens the event dialog for `eventTitle` and sets its recurrence. */
 async function setEventRecurrence(
@@ -310,7 +257,17 @@ async function mapEventToWeek(
 
 /** Clicks `weekIndex`'s column in the timeline header, zooming into its day view (#445). */
 async function zoomIntoWeek(page: Page, weekIndex: number): Promise<void> {
-    const headerRow = page.locator("thead tr").first();
+    // Visible-only, for the same reason as visibleEditEventTrigger: tabs the
+    // test has already visited stay mounted behind `display: none`, and their
+    // tables have a `thead` too. Taking the first match unfiltered picked up a
+    // hidden tab's header and then spun on scrollIntoViewIfNeeded until the
+    // test timed out (#495).
+    const headerRow = page
+        .locator("thead")
+        .filter({ visible: true })
+        .first()
+        .locator("tr")
+        .first();
     const weekHeader = headerRow.locator("th, td").nth(weekIndex + 1);
     // The timeline scrolls horizontally: a later week's header can resolve
     // while sitting outside the viewport (#585).

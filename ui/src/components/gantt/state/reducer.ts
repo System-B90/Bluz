@@ -54,26 +54,81 @@ export function curriculumReducer(
 
     case "PURGE_ENTITY": {
         const { payload } = action;
+        // Purge removes the doc *and* the container's reference to it.
+        // Dropping only the doc leaves a dangling id in the parent's list, and
+        // every consumer that maps ids to docs then hits `undefined` --
+        // `siblingModules` in module-dialog does exactly that, and
+        // `modules.map((m) => m.id)` threw, so the dialog never rendered and
+        // every gantt e2e spec failed in createModuleWithEvents (#495).
         switch (payload.collection) {
         case "modules": {
-            if (!(payload.id in state.modules)) return state;
+            const moduleDoc = state.modules[payload.id];
+            if (!moduleDoc) return state;
             const modules = { ...state.modules };
             delete modules[payload.id];
-            return { ...state, modules };
+
+            const parent = state.syllabuses[moduleDoc.syllabusId];
+            if (!parent) return { ...state, modules };
+            return {
+                ...state,
+                modules,
+                syllabuses: {
+                    ...state.syllabuses,
+                    [parent.id]: {
+                        ...parent,
+                        modules: parent.modules.filter(
+                            (id) => id !== payload.id,
+                        ),
+                    },
+                },
+            };
         }
         case "syllabuses": {
-            if (!(payload.id in state.syllabuses)) return state;
+            const syllabus = state.syllabuses[payload.id];
+            if (!syllabus) return state;
             const syllabuses = { ...state.syllabuses };
             delete syllabuses[payload.id];
-            return { ...state, syllabuses };
+
+            const parent = state.curriculums[syllabus.curriculumId];
+            if (!parent) return { ...state, syllabuses };
+            return {
+                ...state,
+                curriculums: {
+                    ...state.curriculums,
+                    [parent.id]: {
+                        ...parent,
+                        syllabuses: parent.syllabuses.filter(
+                            (id) => id !== payload.id,
+                        ),
+                    },
+                },
+                syllabuses,
+            };
         }
         case "events": {
-            if (!(payload.id in state.events)) return state;
+            const event = state.events[payload.id];
+            if (!event) return state;
             const events = { ...state.events };
             delete events[payload.id];
-            return { ...state, events };
+
+            const parent = state.modules[event.moduleId];
+            if (!parent) return { ...state, events };
+            return {
+                ...state,
+                events,
+                modules: {
+                    ...state.modules,
+                    [parent.id]: {
+                        ...parent,
+                        events: parent.events.filter(
+                            (id) => id !== payload.id,
+                        ),
+                    },
+                },
+            };
         }
         }
+        return state;
     }
 
     default:
