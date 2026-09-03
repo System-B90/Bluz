@@ -78,6 +78,20 @@ done
 # Co-located Bluz+Hive deployments run with docker-compose.hive-local.yml
 # layered on top; without it the rolled ui/sessions/proxy lose their route to
 # Hive and sign-in breaks (#412) while every health check still passes.
+#
+# link-hive.sh persists HIVE_NETWORK_NAME into .env the first time it links
+# this instance to a co-located Hive (#454). Its presence there is what tells
+# us the running instance needs the overlay, so default to it automatically
+# instead of requiring BLUZ_COMPOSE_OVERLAY to be set by hand every upgrade
+# (#547) — without this, update.sh silently drops the overlay and the roll
+# leaves Bluz answering 502s until link-hive.sh is re-run.
+if [ -z "${BLUZ_COMPOSE_OVERLAY:-}" ] && grep -q '^HIVE_NETWORK_NAME=' "${ENV_FILE}" 2>/dev/null; then
+    DEFAULT_OVERLAY="${SCRIPT_DIR}/../docker-compose.hive-local.yml"
+    if [ -f "${DEFAULT_OVERLAY}" ]; then
+        BLUZ_COMPOSE_OVERLAY="${DEFAULT_OVERLAY}"
+        log "co-located Hive detected (HIVE_NETWORK_NAME in ${ENV_FILE}) — using ${DEFAULT_OVERLAY}"
+    fi
+fi
 OVERLAY_ARGS=()
 [ -n "${BLUZ_COMPOSE_OVERLAY:-}" ] && OVERLAY_ARGS=(-f "${BLUZ_COMPOSE_OVERLAY}")
 
