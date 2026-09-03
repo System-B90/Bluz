@@ -36,9 +36,35 @@ on:
             - 'package.json'
             - 'package-lock.json'
 
+# Cancel on branches, queue on master.
+#
+# There is one self-hosted runner, so the runner already serialises: a second
+# job cannot overlap, it waits. cancel-in-progress was therefore never
+# protecting the box -- its only job is skipping superseded commits, and on
+# master it was doing that so aggressively it destroyed runs that had already
+# paid their full cost. Of the last 29 master runs, 14 were cancelled and none
+# succeeded; two of those cancellations landed at 47 and 50 minutes, i.e. at
+# the finish line, after monopolising the only runner for the best part of an
+# hour. Master's real state went unverified for days at a time, which is how
+# the #633 regression reached it unnoticed.
+#
+# Queuing does not build a backlog: GitHub keeps at most one running and one
+# pending run per group and cancels the older *pending* one, so a burst of
+# merges coalesces to "test the newest commit" on its own -- without ever
+# killing a run in flight.
+#
+# Branches keep cancelling. They are force-pushed and rebased constantly, and
+# there a superseded run really is worthless.
+#
+# workflow_dispatch gets its own group so a deliberate verification run is not
+# collateral damage from an unrelated push to the same ref. Safe for the same
+# reason as above: on self-hosted the runner serialises regardless, and the
+# github-hosted target runs on separate VMs where overlap costs nothing.
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
+    group: >-
+        ${{ github.workflow }}-${{ github.ref }}-${{
+        github.event_name == 'workflow_dispatch' && github.run_id || 'auto' }}
+    cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
     # Image builds are pure CPU with no Hive dependency and their artifact is
@@ -394,8 +420,17 @@ jobs:
                   # enough — on a run that died before checkout finished, the
                   # compose file may not even be on disk — so each cleanup ends
                   # with a name-filtered `rm -f`.
+                  # -v: take the container's anonymous volumes with it. Mongo
+                  # and Postgres each create one per run, and without this they
+                  # are orphaned the moment the container goes. The reclaim step
+                  # at the top of the next run cannot recover them either: it
+                  # discovers compose projects *from surviving containers*, so
+                  # removing the containers is exactly what makes their volumes
+                  # undiscoverable. ~47GB had accumulated that way by
+                  # 2026-09-03, filling the runner and failing every
+                  # Hive-booting job in the org (System-B90/.github#12).
                   bluz=$(docker ps -aq --filter "name=^/bluz-test-" || true)
-                  [ -n "$bluz" ] && docker rm -f $bluz || true
+                  [ -n "$bluz" ] && docker rm -f -v $bluz || true
 
                   docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
                   leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
@@ -573,32 +608,6 @@ jobs:
                   docker load -i test-images/proxy.tar
                   rm -rf test-images/
 
-            # Frees the (~160MB) test-images artifact right away instead of
-            # waiting out retention-days, which only supports whole-day
-            # granularity and was already at its 1-day floor.
-            - name: Delete Test Images artifact
-              if: always()
-              uses: actions/github-script@v7
-              with:
-                  script: |
-                      const { data } = await github.rest.actions.listWorkflowRunArtifacts({
-                          owner: context.repo.owner,
-                          repo: context.repo.repo,
-                          run_id: context.runId,
-                      });
-                      const artifact = data.artifacts.find(a => a.name === 'test-images');
-                      if (artifact) {
-                          try {
-                              await github.rest.actions.deleteArtifact({
-                                  owner: context.repo.owner,
-                                  repo: context.repo.repo,
-                                  artifact_id: artifact.id,
-                              });
-                          } catch (e) {
-                              // Best-effort: another parallel shard may have deleted it first.
-                              core.warning(`Could not delete test-images artifact: ${e.message}`);
-                          }
-                      }
 
             - name: Run Full Test Suite
               run: python scripts/run_tests.py --seed-hive --skip-unit --shard ${{ matrix.shard }}/${{ strategy.job-total }}
@@ -662,9 +671,62 @@ jobs:
             - name: Tear down test + Hive stacks
               if: always()
               run: |
+                  # -v: take the container's anonymous volumes with it. Mongo
+                  # and Postgres each create one per run, and without this they
+                  # are orphaned the moment the container goes. The reclaim step
+                  # at the top of the next run cannot recover them either: it
+                  # discovers compose projects *from surviving containers*, so
+                  # removing the containers is exactly what makes their volumes
+                  # undiscoverable. ~47GB had accumulated that way by
+                  # 2026-09-03, filling the runner and failing every
+                  # Hive-booting job in the org (System-B90/.github#12).
                   bluz=$(docker ps -aq --filter "name=^/bluz-test-" || true)
-                  [ -n "$bluz" ] && docker rm -f $bluz || true
+                  [ -n "$bluz" ] && docker rm -f -v $bluz || true
 
                   docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
                   leftovers=$(docker ps -aq --filter "name=^/hive-" 2>/dev/null || true)
                   [ -n "$leftovers" ] && docker rm -f $leftovers || true
+
+    # ── Artifact cleanup, once every shard is done ───────────────────────────
+    # Frees the (~160MB) test-images artifact right away instead of waiting out
+    # retention-days, which only supports whole-day granularity and was already
+    # at its 1-day floor.
+    #
+    # This deliberately lives in its own job rather than in the shard. Each
+    # shard used to delete the artifact right after loading it, which is a race
+    # the shards lose: the first one to finish loading deleted the artifact out
+    # from under the others, and they then failed on "Artifact not found for
+    # name: test-images" before running a single test. Run 33792691157 is the
+    # example -- shard 1 green, shards 2 and 3 dead on download.
+    #
+    # The old step guarded the *delete* against a parallel shard having got
+    # there first, which reads like the race was considered; but the problem was
+    # never a double delete, it was deleting while other consumers still needed
+    # it. `needs` the matrix so it cannot run until every shard has taken its
+    # copy.
+    cleanup-test-images:
+        name: Delete Test Images artifact
+        runs-on: ubuntu-24.04
+        needs: [ build-test-images, full-test-suite-github ]
+        if: always() && needs.build-test-images.result == 'success'
+        steps:
+            - name: Delete Test Images artifact
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          run_id: context.runId,
+                      });
+                      const artifact = data.artifacts.find(a => a.name === 'test-images');
+                      if (!artifact) return;
+                      try {
+                          await github.rest.actions.deleteArtifact({
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              artifact_id: artifact.id,
+                          });
+                      } catch (e) {
+                          core.warning(`Could not delete test-images artifact: ${e.message}`);
+                      }
