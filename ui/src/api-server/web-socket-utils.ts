@@ -116,7 +116,7 @@ export function SendServerRequestToSessionServer(
     // Sync-object id(s) to scope this broadcast to (#525). Omitted means the
     // unscoped everyone-fan-out — only appropriate for data that isn't
     // iteration-scoped (settings, courses, rooms, ...).
-    targets?: string | Array<string>,
+    targets?: Array<string> | string,
 ) {
     const message = JSON.stringify({
         sender: WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,

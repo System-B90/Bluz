@@ -27,7 +27,7 @@ export const useEventWebsocket = (
     // connecting) and swaps the subscription when the active iteration
     // changes; deregisters the previous one so subscriptions don't
     // accumulate across a session's iteration switches.
-    const subscribedSyncId = useRef<string | null>(null);
+    const subscribedSyncId = useRef<null | string>(null);
     useEffect(() => {
         const syncId = iterationSyncId(activeIterationId);
         if (subscribedSyncId.current && subscribedSyncId.current !== syncId) {
