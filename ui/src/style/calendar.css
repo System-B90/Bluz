@@ -235,31 +235,40 @@ button.rbc-input::-moz-focus-inner {
     cursor: grabbing;
 }
 
-.rbc-event:has(.rbc-event-content > [data-filtered-out="1"]) {
+/*
+ * Descendant (not direct-child) match: EventSegmentBlock wraps the element
+ * that carries data-filtered-out in its own drag/drop-styling Box, so it is
+ * a grandchild of .rbc-event-content, not a direct child. A `>` combinator
+ * here never matches, which left .rbc-event's own opaque background
+ * (background-color: hsl(var(--primary))) showing behind fully-transparent
+ * (opacity: 0) filtered-out content instead of the whole event disappearing
+ * — most visibly turning hidden prayer events into solid blocks.
+ */
+.rbc-event:has(.rbc-event-content [data-filtered-out="1"]) {
     opacity: 1;
 }
 
-.rbc-event:has(.rbc-event-content > [data-filtered-out="0.6"]) {
+.rbc-event:has(.rbc-event-content [data-filtered-out="0.6"]) {
     opacity: 0.6;
 }
 
-.rbc-event:has(.rbc-event-content > [data-filtered-out="0.4"]) {
+.rbc-event:has(.rbc-event-content [data-filtered-out="0.4"]) {
     opacity: 0.4;
 }
 
-.rbc-event:has(.rbc-event-content > [data-filtered-out="0.3"]) {
+.rbc-event:has(.rbc-event-content [data-filtered-out="0.3"]) {
     opacity: 0.3;
 }
 
-.rbc-event:has(.rbc-event-content > [data-filtered-out="0.2"]) {
+.rbc-event:has(.rbc-event-content [data-filtered-out="0.2"]) {
     opacity: 0.2;
 }
 
-.rbc-event:has(.rbc-event-content > [data-filtered-out="0.1"]) {
+.rbc-event:has(.rbc-event-content [data-filtered-out="0.1"]) {
     opacity: 0.1;
 }
 
-.rbc-event:has(.rbc-event-content > [data-filtered-out="0"]) {
+.rbc-event:has(.rbc-event-content [data-filtered-out="0"]) {
     opacity: 0;
 }
 
