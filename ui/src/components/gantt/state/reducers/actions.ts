@@ -16,9 +16,21 @@ import {
 } from "@/api-shared/types/gantt/models";
 
 export type Action =
-    | { type: "ADD_DAY"; payload: { day: GanttDay & { id: GanttDayId } } }
+    | {
+          // Deletes the doc itself, unlike REMOVE_MODULE/REMOVE_SYLLABUS/
+          // REMOVE_EVENT which only unlink from the parent (a syllabus can
+          // legitimately remain linked elsewhere, #310). Used to discard a
+          // temp entity from an optimistic create that failed or was
+          // superseded by the real, server-backed doc (#381).
+          type: "PURGE_ENTITY";
+          payload:
+              | { collection: "events"; id: GanttEventId }
+              | { collection: "modules"; id: GanttModuleId }
+              | { collection: "syllabuses"; id: GanttSyllabusId };
+      }
 
     // Updates
+    | { type: "ADD_DAY"; payload: { day: GanttDay & { id: GanttDayId } } }
     | {
           type: "ADD_EVENT";
           payload: { moduleId: GanttModuleId; event: GanttEvent };
@@ -38,6 +50,8 @@ export type Action =
               curriculumId: GanttCurriculumId;
           };
       }
+
+    // Adds
     | {
           type: "ALLOCATE_TIME_TO_MODULE";
           payload: {
@@ -46,8 +60,6 @@ export type Action =
               duration: number;
           };
       }
-
-    // Adds
     | {
           type: "ALLOCATE_TIME";
           payload: {

@@ -54,6 +54,10 @@ export function useModuleActions() {
                         type: "REMOVE_MODULE",
                         payload: { syllabusId, moduleId },
                     }),
+                    discard: (moduleId) => ({
+                        type: "PURGE_ENTITY",
+                        payload: { collection: "modules", id: moduleId },
+                    }),
                     allocateTime: (moduleId, curriculumId, duration) => ({
                         type: "ALLOCATE_TIME_TO_MODULE",
                         payload: { moduleId, curriculumId, duration },
@@ -73,6 +77,14 @@ export function useModuleActions() {
             actions.create(
                 { title, syllabusId, description, hiveIds },
                 syllabusId,
+                (tempId): GanttModule => ({
+                    id: tempId,
+                    title,
+                    description,
+                    events: [],
+                    hiveIds,
+                    constraints: [],
+                }),
             ),
         [actions],
     );

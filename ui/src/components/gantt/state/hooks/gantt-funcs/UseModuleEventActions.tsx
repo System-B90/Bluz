@@ -67,6 +67,10 @@ export function useModuleEventActions() {
                         type: "REMOVE_EVENT",
                         payload: { moduleId, eventId },
                     }),
+                    discard: (eventId) => ({
+                        type: "PURGE_ENTITY",
+                        payload: { collection: "events", id: eventId },
+                    }),
                     allocateTime: (eventId, curriculumId, duration) => ({
                         type: "ALLOCATE_TIME",
                         payload: { eventId, curriculumId, duration },
@@ -123,6 +127,28 @@ export function useModuleEventActions() {
                         hiveLessonId,
                     },
                     moduleId,
+                    (tempId): GanttEvent => ({
+                        id: tempId,
+                        title,
+                        type,
+                        minimumDuration,
+                        allocatedDuration,
+                        orchestratorId: null,
+                        recommendedLecturerIds: [],
+                        systemRequirements: [],
+                        roomRequirement: RoomRequirement.Classified,
+                        recurrence: EventRecurrence.None,
+                        recurrenceStartDate: null,
+                        recurrenceEndDate: null,
+                        isCritical: false,
+                        isPaWindow: false,
+                        splitAcrossBreaks: defaultModuleEventSplitAcrossBreaks(type),
+                        comment: null,
+                        constraints: [],
+                        hiveSubjectId,
+                        hiveModuleId,
+                        hiveLessonId,
+                    }),
                 )
                 .then((event) => {
                     revealCreatedEvent(moduleId, event?.id);
