@@ -32,7 +32,18 @@ import {
  * is actually wired together end to end.
  */
 
-test.describe("Live updates between two users (#582)", () => {
+// Skipped: these two were written without a working local e2e stack and have
+// never passed. Their first run (33798617692) died in the shared
+// `selectCalendarTimeRange` helper -- the event dialog never opened -- so they
+// assert nothing about broadcasts and, worse, a spec that fails mid-suite with
+// a modal still open is a plausible source of pollution for whatever runs
+// after it. Three previously-green specs went red in that same run and ruling
+// this out is step one.
+//
+// The delivery guarantees they were written for are covered meanwhile by
+// tests/backend/ws-two-session-updates.test.ts, which is hermetic, runs in
+// under a second and does pass. #582 stays open for the end-to-end half.
+test.describe.skip("Live updates between two users (#582)", () => {
     // Two full app loads plus an SSO-authenticated second context, before the
     // assertion even begins.
     test.describe.configure({ timeout: 120_000 });
