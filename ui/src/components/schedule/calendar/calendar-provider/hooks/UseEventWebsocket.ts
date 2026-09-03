@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 
 import { eventDateFixupToDayjs } from "@/api-shared/calendar";
 import {
@@ -32,22 +32,13 @@ export const useEventWebsocket = (
     // sendMessage instead, which meant the subscription was lost on the first
     // reconnect (and dropped outright if the ticket fetch was still in flight),
     // leaving the calendar silently stale until a page reload.
-    const subscribedSyncId = useRef<null | string>(null);
     useEffect(() => {
         const syncId = iterationSyncId(activeIterationId);
-        const previous = subscribedSyncId.current;
-        if (previous && previous !== syncId) {
-            deregisterSyncObject(previous);
-        }
         registerSyncObject(syncId);
-        subscribedSyncId.current = syncId;
-
-        return () => {
-            deregisterSyncObject(syncId);
-            if (subscribedSyncId.current === syncId) {
-                subscribedSyncId.current = null;
-            }
-        };
+        // Cleanup closes over this run's syncId, so an iteration switch
+        // deregisters the old id before the next run registers the new one --
+        // React runs the previous cleanup first. No bookkeeping ref needed.
+        return () => deregisterSyncObject(syncId);
     }, [activeIterationId, registerSyncObject, deregisterSyncObject]);
 
     // Ignore broadcasts that belong to an iteration other than the one being
