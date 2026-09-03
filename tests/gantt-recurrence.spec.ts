@@ -122,8 +122,35 @@ async function createModuleWithEvents(page: Page): Promise<string> {
     return "הרצאת מבוא";
 }
 
-/** Opens the event dialog for `eventTitle` (must be visible in an open module dialog). */
+/**
+ * The module dialog is what hosts the "עריכת המופע" triggers. It unmounts when
+ * the curriculum view switches tabs (e.g. to "רצף זמן" and back), so a test
+ * that opened it earlier cannot assume it is still mounted (#585, #589).
+ * Reopens it from the syllabuses tab when it is gone; a no-op when it is not.
+ */
+async function ensureModuleDialogOpen(page: Page): Promise<void> {
+    const editEventTrigger = page.getByTitle("עריכת המופע").first();
+    if (await editEventTrigger.count() > 0) return;
+
+    await page.getByRole("tab", { name: "סילבוסים" }).click();
+
+    // Tooltip+IconButton: MUI puts the label on the button, or on a wrapping
+    // <span> — match either, the same way createModuleWithEvents does.
+    const editModuleButton = page
+        .locator(
+            'button[aria-label="עריכת מערך"], span[title="עריכת מערך"] button, span[aria-label="עריכת מערך"] button',
+        )
+        .first();
+    await expect(editModuleButton).toBeVisible({ timeout: 10_000 });
+    await editModuleButton.click();
+
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
+    await expect(editEventTrigger).toBeVisible({ timeout: 10_000 });
+}
+
+/** Opens the event dialog for `eventTitle`, reopening the module dialog if needed. */
 async function openEventEditDialog(page: Page, eventTitle: string): Promise<Locator> {
+    await ensureModuleDialogOpen(page);
     await page.getByTitle("עריכת המופע").first().click();
 
     const eventDialog = page
@@ -284,7 +311,12 @@ async function mapEventToWeek(
 /** Clicks `weekIndex`'s column in the timeline header, zooming into its day view (#445). */
 async function zoomIntoWeek(page: Page, weekIndex: number): Promise<void> {
     const headerRow = page.locator("thead tr").first();
-    await headerRow.locator("th, td").nth(weekIndex + 1).click();
+    const weekHeader = headerRow.locator("th, td").nth(weekIndex + 1);
+    // The timeline scrolls horizontally: a later week's header can resolve
+    // while sitting outside the viewport (#585).
+    await weekHeader.scrollIntoViewIfNeeded();
+    await expect(weekHeader).toBeVisible({ timeout: 10_000 });
+    await weekHeader.click();
     await page.waitForTimeout(300);
 }
 
