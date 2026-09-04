@@ -1,13 +1,28 @@
+import type { Page } from "@playwright/test";
 import {
+    dblclickCalendarEvent,
     expect,
+    getEventDialog,
     gotoAppHome,
     openSecondUserSession,
     selectCalendarTimeRange,
     test,
     testId,
-    waitForAppLoad,
     waitForRealtimeConnection,
 } from "./fixtures";
+
+/**
+ * Dismisses a lingering event dialog, if any, so a failed assertion mid-test
+ * doesn't leave the dialog's server-side `EVENT_LOCK` held into whatever
+ * runs next. Best-effort: never throws, so it's safe to call unconditionally
+ * from a `finally` block.
+ */
+async function releaseEventDialogIfOpen(page: Page): Promise<void> {
+    const dialog = getEventDialog(page);
+    if (await dialog.isVisible({ timeout: 500 }).catch(() => false)) {
+        await page.keyboard.press("Escape").catch(() => undefined);
+    }
+}
 
 /**
  * Live-update coverage across two users in two browser sessions (#582).
@@ -46,26 +61,37 @@ test("the browser establishes its realtime session", async ({ page }) => {
     test.setTimeout(90_000);
 
     await gotoAppHome(page);
-    await waitForAppLoad(page);
 
     await waitForRealtimeConnection(page);
 });
 
-// Skipped: these two were written without a working local e2e stack and have
-// never passed. Their first run (33798617692) died in the shared
-// `selectCalendarTimeRange` helper -- the event dialog never opened -- so they
-// assert nothing about broadcasts and, worse, a spec that fails mid-suite with
-// a modal still open is a plausible source of pollution for whatever runs
-// after it. Three previously-green specs went red in that same run and ruling
-// this out is step one.
+// These two were written without a working local e2e stack and had never
+// passed, so they stayed skipped rather than de-flaked. Their first run
+// (33798617692) died in the shared `selectCalendarTimeRange` helper -- the
+// event dialog never opened. That failure was in pure client-side drag/React
+// state, not the realtime layer, and a review of this fix (#651) correctly
+// called out that gating on `waitForRealtimeConnection` alone does nothing
+// for it: the real fixes are `page.bringToFront()` before driving a
+// background tab (Chromium can drop synthetic pointer events on an
+// unfocused page) and using `dblclickCalendarEvent`, not a single click, to
+// open the edit dialog (`onSelectEvent` only sets the active event;
+// `onDoubleClickEvent` is what opens it). The realtime gate stays because it
+// still matters for its own failure mode -- a dead or misdirected socket
+// should fail loudly on the gate, not flake on the broadcast assertion 30s
+// later.
 //
 // The delivery guarantees they were written for are covered meanwhile by
 // tests/backend/ws-two-session-updates.test.ts, which is hermetic, runs in
-// under a second and does pass. #582 stays open for the end-to-end half.
-test.describe.skip("Live updates between two users (#582)", () => {
+// under a second and does pass. #582 stays open until this spec has run
+// green a few times in a row in the real suite.
+test.describe("Live updates between two users (#582)", () => {
     // Two full app loads plus an SSO-authenticated second context, before the
-    // assertion even begins.
-    test.describe.configure({ timeout: 120_000 });
+    // assertion even begins — plus two `waitForRealtimeConnection` calls per
+    // test, each good for up to 40s (two chained 20s expects) in the failure
+    // mode they exist to catch. Keep the outer timeout comfortably above the
+    // summed per-assertion budgets so a dead socket fails with the gate's
+    // diagnostic message instead of a generic "Test timeout exceeded".
+    test.describe.configure({ timeout: 180_000 });
 
     test("an event created by one user appears on the other user's calendar", async ({
         page,
@@ -74,24 +100,27 @@ test.describe.skip("Live updates between two users (#582)", () => {
         const eventName = `שידור ${testId("live")}`;
 
         await gotoAppHome(page);
-        await waitForAppLoad(page);
+        await waitForRealtimeConnection(page);
 
         const { context: secondContext, page: secondPage } =
             await openSecondUserSession(browser);
 
         try {
             await gotoAppHome(secondPage);
-            await waitForAppLoad(secondPage);
+            await waitForRealtimeConnection(secondPage);
 
             // Baseline: B is not already showing the event, so a pass cannot
             // come from stale state or a name collision with seeded data.
             await expect(secondPage.getByText(eventName)).toHaveCount(0);
 
+            // Opening the second session's page focuses it; bring A back to
+            // the front before driving it, since Chromium can drop synthetic
+            // mouse events dispatched at a background tab.
+            await page.bringToFront();
+
             // User A creates an event through the real UI.
             await selectCalendarTimeRange(page);
-            const dialog = page
-                .getByRole("dialog")
-                .filter({ hasText: "עריכת מופע" });
+            const dialog = getEventDialog(page);
             await expect(dialog).toBeVisible({ timeout: 30_000 });
             await dialog.getByLabel("שם").fill(eventName);
             await dialog.getByRole("button", { name: "שמירה" }).click();
@@ -105,6 +134,8 @@ test.describe.skip("Live updates between two users (#582)", () => {
                 "the second user's calendar never received the new event over the websocket",
             ).toBeVisible({ timeout: 30_000 });
         } finally {
+            await releaseEventDialogIfOpen(page);
+            await releaseEventDialogIfOpen(secondPage);
             await secondContext.close();
         }
     });
@@ -114,23 +145,25 @@ test.describe.skip("Live updates between two users (#582)", () => {
         browser,
     }) => {
         const eventName = `מחיקה ${testId("live")}`;
-
-        await gotoAppHome(page);
-        await waitForAppLoad(page);
-
-        await selectCalendarTimeRange(page);
-        const dialog = page.getByRole("dialog").filter({ hasText: "עריכת מופע" });
-        await expect(dialog).toBeVisible({ timeout: 30_000 });
-        await dialog.getByLabel("שם").fill(eventName);
-        await dialog.getByRole("button", { name: "שמירה" }).click();
-        await expect(dialog).not.toBeVisible({ timeout: 30_000 });
-
-        const { context: secondContext, page: secondPage } =
-            await openSecondUserSession(browser);
+        let secondContext: Awaited<ReturnType<typeof openSecondUserSession>>["context"] | undefined;
+        let secondPage: Awaited<ReturnType<typeof openSecondUserSession>>["page"] | undefined;
 
         try {
+            await gotoAppHome(page);
+            await waitForRealtimeConnection(page);
+
+            await selectCalendarTimeRange(page);
+            const dialog = getEventDialog(page);
+            await expect(dialog).toBeVisible({ timeout: 30_000 });
+            await dialog.getByLabel("שם").fill(eventName);
+            await dialog.getByRole("button", { name: "שמירה" }).click();
+            await expect(dialog).not.toBeVisible({ timeout: 30_000 });
+
+            ({ context: secondContext, page: secondPage } =
+                await openSecondUserSession(browser));
+
             await gotoAppHome(secondPage);
-            await waitForAppLoad(secondPage);
+            await waitForRealtimeConnection(secondPage);
 
             // B loads with the event present (it was saved before B connected),
             // so the assertion below is about the *removal* broadcast only.
@@ -138,11 +171,11 @@ test.describe.skip("Live updates between two users (#582)", () => {
                 timeout: 30_000,
             });
 
-            // A deletes it.
-            await page.getByText(eventName).first().click();
-            const editDialog = page
-                .getByRole("dialog")
-                .filter({ hasText: "עריכת מופע" });
+            // A deletes it. Only a double-click opens the edit dialog — a
+            // single click just sets the active/selected event.
+            await page.bringToFront();
+            await dblclickCalendarEvent(page, eventName);
+            const editDialog = getEventDialog(page);
             await expect(editDialog).toBeVisible({ timeout: 30_000 });
             await editDialog.getByRole("button", { name: "מחיקה" }).click();
             await expect(editDialog).not.toBeVisible({ timeout: 30_000 });
@@ -155,7 +188,9 @@ test.describe.skip("Live updates between two users (#582)", () => {
                 "the deleted event is still on the second user's calendar",
             ).toHaveCount(0, { timeout: 30_000 });
         } finally {
-            await secondContext.close();
+            await releaseEventDialogIfOpen(page);
+            if (secondPage) await releaseEventDialogIfOpen(secondPage);
+            await secondContext?.close();
         }
     });
 });
