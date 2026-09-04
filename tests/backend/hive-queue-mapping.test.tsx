@@ -171,6 +171,41 @@ describe("HiveQueueMapping", () => {
         expect(hrefs).toContain("https://hive.example/mentor/classes?id=22");
     });
 
+    it("counts a queue with id 0 as mapped (#622)", () => {
+        // Queue id 0 is a real id. A truthiness check reported "1/2 תורים"
+        // and silently dropped the mapping on the next write.
+        render(
+            <HiveQueueMapping
+                event={{
+                    ...BASE_EVENT,
+                    hiveQueues: { "c-lechem": 0, "c-nitza": 100 },
+                }}
+                onUpdate={vi.fn()}
+            />,
+        );
+
+        expect(screen.getByText("2/2 תורים")).toBeTruthy();
+    });
+
+    it("keeps queue id 0 when it is picked, rather than unsetting (#622)", async () => {
+        const onUpdate = vi.fn();
+        apiGetQueues.mockResolvedValueOnce([
+            { id: 0, name: "תור ברירת מחדל" },
+            { id: 100, name: "תור מתחילים" },
+        ]);
+        render(<HiveQueueMapping event={BASE_EVENT} onUpdate={onUpdate} />);
+        fireEvent.click(screen.getByText("תורים בהייב לפי שיבוץ"));
+
+        await waitFor(() => expect(apiGetQueues).toHaveBeenCalled());
+        const [ select ] = screen.getAllByRole("combobox");
+        fireEvent.mouseDown(select);
+        fireEvent.click(await screen.findByText("תור ברירת מחדל"));
+
+        expect(onUpdate).toHaveBeenCalledWith({
+            hiveQueues: expect.objectContaining({ "c-nitza": 0 }),
+        });
+    });
+
     it("stays out of the way for event types with no Hive subject", () => {
         // Nothing renders at all here, so there is no header to expand.
         const { container } = render(

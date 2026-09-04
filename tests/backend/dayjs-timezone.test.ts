@@ -17,6 +17,20 @@ describe("dayjs timezone setup (#168)", () => {
         expect(typeof dayjs.tz).toBe("function");
     });
 
+    it("honours an explicit parse format (#607)", () => {
+        // Without customParseFormat dayjs ignores the format argument and
+        // falls back to `new Date("07:00")` — Invalid Date — which fed the
+        // calendar's min/max bounds as garbage.
+        const start = dayjs("07:00", "HH:mm");
+        const end = dayjs("22:00", "HH:mm");
+
+        expect(start.isValid()).toBe(true);
+        expect(end.isValid()).toBe(true);
+        expect(start.format("HH:mm")).toBe("07:00");
+        expect(end.format("HH:mm")).toBe("22:00");
+        expect(end.isAfter(start)).toBe(true);
+    });
+
     it("renders Israel wall-clock correctly in winter (UTC+2)", () => {
         // 2026-01-15 08:00 UTC -> 10:00 Israel Standard Time.
         const t = dayjs.utc("2026-01-15T08:00:00Z").tz(APP_TIMEZONE);

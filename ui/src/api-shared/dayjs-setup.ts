@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
@@ -7,8 +8,12 @@ import utc from "dayjs/plugin/utc";
 // is loaded before any date math runs, so Israel DST transitions can't silently
 // shift dragged/displayed events by an hour. `extend` is idempotent, so importing
 // this module from multiple entry points is safe.
+// customParseFormat is what makes `dayjs(str, "HH:mm")` honour the format
+// argument (#607). Without it dayjs falls back to `new Date(str)`, and a plain
+// "07:00" parses to Invalid Date, which silently poisons the calendar bounds.
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.extend(customParseFormat);
 
 /**
  * The single wall-clock timezone the scheduling app operates in. All calendar
