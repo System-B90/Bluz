@@ -27,11 +27,15 @@ export function IterationSelector() {
 
     const handleChange = useCallback(
         (event: SelectChangeEvent) => {
-            // The param is always present — including for the current run —
-            // so it just mirrors whatever was picked.
-            setIterationId(event.target.value);
+            // Picking the current run has to clear the param, not pin its id
+            // (#609). The rest of the calendar reads `undefined` as "current
+            // run", and current-run broadcasts carry no iterationId — with a
+            // concrete id set, every live update was filtered out and the
+            // calendar went stale until a reload.
+            const picked = event.target.value;
+            setIterationId(picked === currentId ? undefined : picked);
         },
-        [setIterationId],
+        [currentId, setIterationId],
     );
 
     // Nothing to switch between until a second iteration exists.

@@ -14,7 +14,7 @@ import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { apiGetEventHistory } from "@/api-client/calendar";
 import { ApiEventHistoryEntry } from "@/api-shared/types/event-history";
@@ -71,15 +71,25 @@ export function EventHistoryPanel({ eventId }: EventHistoryPanelProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<null | string>(null);
 
+    // Only the newest request may write state (#618). The dialog is reused
+    // across events, so an in-flight fetch for event A can otherwise resolve
+    // after the switch to event B and show A's audit trail under B. Double
+    // -clicking refresh has the same hazard.
+    const requestSequence = useRef(0);
+
     const load = useCallback(async () => {
+        const sequence = ++requestSequence.current;
         setLoading(true);
         setError(null);
         try {
-            setEntries(await apiGetEventHistory(eventId, iterationId));
+            const fetched = await apiGetEventHistory(eventId, iterationId);
+            if (sequence !== requestSequence.current) return;
+            setEntries(fetched);
         } catch {
+            if (sequence !== requestSequence.current) return;
             setError("טעינת היסטוריית השינויים נכשלה.");
         } finally {
-            setLoading(false);
+            if (sequence === requestSequence.current) setLoading(false);
         }
     }, [eventId, iterationId]);
 

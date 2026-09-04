@@ -26,6 +26,27 @@ import { CalendarStoreMenu } from "@/components/schedule/calendar/calendar/Calen
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
 import { Event } from "@/components/schedule/types/event";
 
+/**
+ * The span a set of restored events covers.
+ *
+ * Folded rather than spread into `Math.min`/`Math.max` (#614): spreading passes
+ * one argument per event, which overflows the call stack on a large snapshot
+ * and surfaces as an opaque "restore failed".
+ */
+export function eventsDateRange(events: Array<Event>): {
+    rangeStart: Date;
+    rangeEnd: Date;
+} {
+    let minStart = Infinity;
+    let maxEnd = -Infinity;
+    for (const event of events)
+    {
+        minStart = Math.min(minStart, event.startTime.valueOf());
+        maxEnd = Math.max(maxEnd, event.endTime.valueOf());
+    }
+    return { rangeStart: new Date(minStart), rangeEnd: new Date(maxEnd) };
+}
+
 /** A restore that is pending user confirmation because the snapshot's events
  *  fall outside the currently viewed calendar range. */
 type PendingRestore = {
@@ -156,12 +177,7 @@ export function SnapshotMenu()
                     return;
                 }
 
-                const rangeStart = new Date(
-                    Math.min(...restored.map((e) => e.startTime.valueOf())),
-                );
-                const rangeEnd = new Date(
-                    Math.max(...restored.map((e) => e.endTime.valueOf())),
-                );
+                const { rangeStart, rangeEnd } = eventsDateRange(restored);
                 // Warn before restoring events that fall outside the range the
                 // user is currently looking at — they would not see the effect.
                 const outOfView =

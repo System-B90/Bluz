@@ -73,6 +73,11 @@ export function areValuesEqual(a: any, b: any): boolean {
         return arraysEqual(a, b);
     }
 
+    // An array is only ever equal to another array. Falling through to the
+    // object branch compared an array against a plain object by keys, and to
+    // the String() fallback below by their joined contents (#632).
+    if (Array.isArray(a) !== Array.isArray(b)) return false;
+
     // Handle objects (including extra dynamic properties and excluding database _id)
     if (typeof a === "object" && typeof b === "object") {
         const keysA = Object.keys(a).filter((k) => k !== "_id");
@@ -88,7 +93,12 @@ export function areValuesEqual(a: any, b: any): boolean {
         return true;
     }
 
-    return String(a) === String(b);
+    // Compare primitives by value *and* type. `String(a) === String(b)` made
+    // 5 and "5" equal, so a genuine remote change of a field's type slipped
+    // past the conflict check and was silently overwritten by the push (#632).
+    if (typeof a !== typeof b) return false;
+
+    return a === b;
 }
 
 export function areEventsEqual(event1: Event, event2: Event): boolean {

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import {
+    act,
     cleanup,
     fireEvent,
     render,
@@ -169,6 +170,79 @@ describe("HiveQueueMapping", () => {
         expect(hrefs).toContain("https://hive.example/course/3/7");
         expect(hrefs).toContain("https://hive.example/mentor/classes?id=11");
         expect(hrefs).toContain("https://hive.example/mentor/classes?id=22");
+    });
+
+    it("counts a queue with id 0 as mapped (#622)", () => {
+        // Queue id 0 is a real id. A truthiness check reported "1/2 תורים"
+        // and silently dropped the mapping on the next write.
+        render(
+            <HiveQueueMapping
+                event={{
+                    ...BASE_EVENT,
+                    hiveQueues: { "c-lechem": 0, "c-nitza": 100 },
+                }}
+                onUpdate={vi.fn()}
+            />,
+        );
+
+        expect(screen.getByText("2/2 תורים")).toBeTruthy();
+    });
+
+    it("keeps queue id 0 when it is picked, rather than unsetting (#622)", async () => {
+        const onUpdate = vi.fn();
+        apiGetQueues.mockResolvedValueOnce([
+            { id: 0, name: "תור ברירת מחדל" },
+            { id: 100, name: "תור מתחילים" },
+        ]);
+        render(<HiveQueueMapping event={BASE_EVENT} onUpdate={onUpdate} />);
+        fireEvent.click(screen.getByText("תורים בהייב לפי שיבוץ"));
+
+        await waitFor(() => expect(apiGetQueues).toHaveBeenCalled());
+        const [ select ] = screen.getAllByRole("combobox");
+        fireEvent.mouseDown(select);
+        fireEvent.click(await screen.findByText("תור ברירת מחדל"));
+
+        expect(onUpdate).toHaveBeenCalledWith({
+            hiveQueues: expect.objectContaining({ "c-nitza": 0 }),
+        });
+    });
+
+    it("ignores a stale classes response that lands after a newer one (#621)", async () => {
+        // The first fetch is still in flight when the card is switched off and
+        // back on ("פיקטיבי"), which starts a second fetch.
+        let resolveStale: (rows: Array<unknown>) => void = () => {};
+        apiGetClasses.mockReturnValueOnce(
+            new Promise((resolve) => {
+                resolveStale = resolve;
+            }),
+        );
+
+        const event = { ...BASE_EVENT, courses: ["c-nitza", "c-lechem"] };
+        const { rerender } = render(
+            <HiveQueueMapping event={event} onUpdate={vi.fn()} />,
+        );
+        rerender(
+            <HiveQueueMapping
+                event={{ ...event, fake: true }}
+                onUpdate={vi.fn()}
+            />,
+        );
+        rerender(<HiveQueueMapping event={event} onUpdate={vi.fn()} />);
+        fireEvent.click(screen.getByText("תורים בהייב לפי שיבוץ"));
+
+        // The newer fetch resolves first and matches both shuffles.
+        await waitFor(() => expect(apiGetClasses).toHaveBeenCalledTimes(2));
+        await waitFor(() =>
+            expect(screen.queryByText("לא נמצא בהייב")).toBeNull(),
+        );
+
+        // The stale one lands last, knowing about neither shuffle. Unguarded,
+        // it overwrote the newer answer and flagged both as missing.
+        await act(async () => {
+            resolveStale([]);
+        });
+
+        expect(screen.queryAllByText("לא נמצא בהייב")).toHaveLength(0);
     });
 
     it("stays out of the way for event types with no Hive subject", () => {

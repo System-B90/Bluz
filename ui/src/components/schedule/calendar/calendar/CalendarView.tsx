@@ -1,6 +1,5 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import dayjs from "dayjs";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
     CalendarProps,
@@ -16,6 +15,7 @@ import {
     collectBreakWindows,
     workingMsOf,
 } from "@/api-shared/break-windows";
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import {
     layoutAroundWindows,
     layoutEnd,
@@ -57,10 +57,13 @@ const NO_ROOM_RESOURCE: Room = {
 };
 
 function CalendarHeader({ date }: { date: Date }) {
-    const dayIndex = date.getDay();
+    // Pin the column's weekday to Israel time (#613). getDay() reads the
+    // browser's zone, so a viewer west of Israel resolves a midnight-boundary
+    // column to the previous day and disagrees with the range header.
+    const dayjsDate = dayjs(date).tz(APP_TIMEZONE);
+    const dayIndex = dayjsDate.day();
     const dayFull = getDayNameDisplay(dayIndex as GanttDayIndex);
     const dayShort = HEBREW_DAYS_SHORT[dayIndex];
-    const dayjsDate = dayjs(date);
     const dateStr = dayjsDate.format("DD/MM");
     const isToday = dayjsDate.isSame(dayjs(), "day");
 
@@ -314,7 +317,8 @@ export function CalendarView({
         return () => window.removeEventListener("mouseup", clear);
     }, [activeDrag]);
 
-    // Ctrl held during a drag damps it into a fine adjustment (#475).
+    // Alt held during a drag damps it into a fine adjustment (#475). Ctrl is
+    // taken by duplicate-on-drag, which the damping used to fight (#608).
     const { applyPrecision } = usePrecisionDrag();
 
     const handleDragStart = useCallback(

@@ -13,6 +13,8 @@ import TimeGrid from "react-big-calendar/lib/TimeGrid";
 // @ts-expect-error: ReactBigCalendar exports these in an odd way
 import Week from "react-big-calendar/lib/Week";
 
+import { isWeekendInAppTimezone } from "@/components/schedule/calendar/utils";
+
 /**
  * Range calculator for the work week (Sun–Thu)
  */
@@ -21,7 +23,7 @@ function workWeekRange(
     { localizer }: { localizer: DateLocalizer },
 ): Array<Date> {
     return Week.range(date, { localizer }).filter(
-        (d: Date) => ![5, 6].includes(d.getDay()), // Fri (5), Sat (6)
+        (d: Date) => !isWeekendInAppTimezone(d),
     );
 }
 

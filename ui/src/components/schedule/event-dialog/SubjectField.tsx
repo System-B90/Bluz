@@ -19,7 +19,15 @@ export function SubjectField({
             disabled={event?.type ? !eventHasSubject(event?.type) : false}
             fullWidth={false}
             onChange={(id) =>
-                onEventChange({ subject: id ? Number(id) : undefined })
+                // Modules and lessons belong to a subject, so a new subject
+                // invalidates both — the same clearing ModuleField does for
+                // the lesson (#619). Leaving them behind pointed the saved
+                // event at a module from the previous subject.
+                onEventChange({
+                    hiveLesson: null,
+                    hiveModule: undefined,
+                    subject: id ? Number(id) : undefined,
+                })
             }
             value={event?.subject != null ? String(event.subject) : null}
             {...props}

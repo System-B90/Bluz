@@ -203,4 +203,26 @@ describe("saveEvent field round-trip", () => {
         expect(optimistic.ganttOccurrenceDate).toBeUndefined();
         expect(optimistic.hiveQueues).toBeUndefined();
     });
+
+    it("explains the refusal when the event has no name (#612)", async () => {
+        const { enqueueSnackbar } = await import("notistack");
+        const { dispatch, result } = renderActions();
+
+        act(() => {
+            result.current.saveEvent({
+                ...REQUIRED_FIELDS,
+                name: "",
+                startTime: dayjs("2024-03-04T08:00:00"),
+                endTime: dayjs("2024-03-04T09:00:00"),
+            });
+        });
+
+        // Still refused — but the drag no longer just snaps back in silence.
+        expect(dispatch).not.toHaveBeenCalled();
+        expect(apiCreateEvent).not.toHaveBeenCalled();
+        expect(enqueueSnackbar).toHaveBeenCalledWith(
+            "לא ניתן לשמור אירוע ללא שם.",
+            { variant: "warning" },
+        );
+    });
 });

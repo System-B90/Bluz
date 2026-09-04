@@ -4,7 +4,7 @@ import { dampDragDelta } from "@/components/schedule/calendar/calendar/UsePrecis
 
 const MINUTE = 60_000;
 
-describe("Ctrl-drag precision damping (#475)", () => {
+describe("Alt-drag precision damping (#475)", () => {
     it("leaves an ordinary drag untouched", () => {
         expect(dampDragDelta(30 * MINUTE, false)).toBe(30 * MINUTE);
         expect(dampDragDelta(-45 * MINUTE, false)).toBe(-45 * MINUTE);

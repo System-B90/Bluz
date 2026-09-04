@@ -22,8 +22,8 @@ export function EventStatusIcons({
             maxHeight={"100%"}
             overflow={"hidden"}
             position={"relative"}
-            sx={{ ...props.sx, direction: "rtl" }}
             {...props}
+            sx={{ ...props.sx, direction: "rtl" }}
         >
             {event.locked ? (
                 <Tooltip placement={tooltipPlacement} title="מתואם">

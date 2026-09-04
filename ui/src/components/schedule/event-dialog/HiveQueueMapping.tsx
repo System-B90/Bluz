@@ -95,9 +95,24 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
 
     useEffect(() => {
         if (!applies) return;
+
+        // Same cancellation guard as the queues effect above (#621): toggling
+        // a field off and on quickly can otherwise let an older response
+        // overwrite a newer one, or set state after unmount.
+        let cancelled = false;
         apiGetClasses()
-            .then(setHiveClasses)
-            .catch(() => setHiveClasses([]));
+            .then((fetched) => {
+                if (cancelled) return;
+                setHiveClasses(fetched);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setHiveClasses([]);
+            });
+
+        return () => {
+            cancelled = true;
+        };
     }, [applies]);
 
     if (!applies) return null;
@@ -107,7 +122,11 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
         Boolean(moduleId) && queuesByModule[moduleId!] === undefined;
     const queues = (moduleId && queuesByModule[moduleId]) || [];
     const mapping = event.hiveQueues ?? {};
-    const mappedCount = courseIds.filter((id) => mapping[id]).length;
+    // Queue id 0 is a legitimate id, so test for presence rather than
+    // truthiness (#622).
+    const mappedCount = courseIds.filter(
+        (id) => mapping[id] !== undefined,
+    ).length;
     const lesson = event.hiveLesson ? getLesson(event.hiveLesson) : undefined;
     const moduleLink = hiveModuleUrl(event.subject, moduleId, hiveUrl);
 
@@ -225,7 +244,12 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
                                         onChange={(e) =>
                                             setQueueForCourse(
                                                 courseId,
-                                                Number(e.target.value) || "",
+                                                // `|| ""` would collapse the
+                                                // valid queue id 0 to "unset"
+                                                // (#622).
+                                                e.target.value === ""
+                                                    ? ""
+                                                    : Number(e.target.value),
                                             )
                                         }
                                         value={mapping[courseId] ?? ""}

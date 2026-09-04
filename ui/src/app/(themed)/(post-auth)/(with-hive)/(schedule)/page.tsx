@@ -1,7 +1,7 @@
 "use client";
 import Box from "@mui/material/Box";
 import dayjs from "dayjs";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
@@ -10,7 +10,7 @@ import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { ErrorSurface } from "@/components/errors/ErrorSurface";
 import { BluzCalendar } from "@/components/schedule/calendar/calendar";
 import { useCalendar } from "@/components/schedule/calendar/calendar-provider/CalendarContext";
-import { LOCK_HEARTBEAT_MS } from "@/components/schedule/calendar/calendar-provider/lock-state";
+import { useEventLockLifecycle } from "@/components/schedule/calendar/calendar-provider/hooks/UseEventLockLifecycle";
 import { CalendarSkeleton } from "@/components/schedule/calendar/CalendarSkeleton";
 import { EventDialog } from "@/components/schedule/event-dialog";
 import { PushOfflineUpdatesDialog } from "@/components/schedule/offline-dialogs/push-updates-dialog";
@@ -47,51 +47,9 @@ export default function SchedulePage() {
     const openId =
         openEventDialog && selectedEvent?.id ? selectedEvent.id : null;
 
-    // Period locking: broadcast a lock while an existing event's dialog is open,
-    // and release it on close. Tracks the locked id so the matching unlock fires
-    // regardless of how the dialog was opened/closed.
-    const lockedEventIdRef = useRef<EventId | null>(null);
-    useEffect(() => {
-        if (lockedEventIdRef.current === openId) return;
-
-        if (lockedEventIdRef.current !== null) {
-            unlockEvent(lockedEventIdRef.current);
-        }
-        if (openId !== null) {
-            lockEvent(openId);
-        }
-        lockedEventIdRef.current = openId;
-    }, [openId, lockEvent, unlockEvent]);
-
-    // Heartbeat: while a lock is held, re-emit it periodically. This refreshes
-    // the TTL on other clients and lets clients that connected after the dialog
-    // opened still learn about the lock.
-    useEffect(() => {
-        if (openId === null) return;
-
-        const interval = setInterval(() => {
-            lockEvent(openId);
-        }, LOCK_HEARTBEAT_MS);
-        return () => clearInterval(interval);
-    }, [openId, lockEvent]);
-
-    // Release any held lock when leaving the page, and make a best-effort
-    // release if the tab is closed outright. The TTL sweep is the real safety
-    // net for crashes where neither fires.
-    useEffect(() => {
-        const releaseHeldLock = () => {
-            if (lockedEventIdRef.current !== null) {
-                unlockEvent(lockedEventIdRef.current);
-                lockedEventIdRef.current = null;
-            }
-        };
-
-        window.addEventListener("beforeunload", releaseHeldLock);
-        return () => {
-            window.removeEventListener("beforeunload", releaseHeldLock);
-            releaseHeldLock();
-        };
-    }, [unlockEvent]);
+    // Period locking: hold a lock for as long as an existing event's dialog
+    // is open, and release it on close (see the hook for the lifecycle).
+    useEventLockLifecycle(openId, lockEvent, unlockEvent);
 
     const lockedBy =
         selectedEvent?.id !== undefined

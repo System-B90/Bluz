@@ -9,7 +9,10 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
 
-import { DeletedItemPlaceholder } from "@/components/schedule/offline-dialogs/push-updates-dialog/DeletedItemPlaceholder";
+import {
+    DeletedItemPlaceholder,
+    EmptyValuePlaceholder,
+} from "@/components/schedule/offline-dialogs/push-updates-dialog/DeletedItemPlaceholder";
 import {
     areDiffValuesEqual,
     formatDateTimeChangeNote,
@@ -142,54 +145,57 @@ export function DiffDetailsTable({
                             </Box>
                         </TableCell>
                         <TableCell>
-                            {localModifiedEvent !== undefined &&
-                            localModifiedEvent[key] !== undefined ? (
-                                    <>
-                                        <Typography>
-                                            {formatValue(localModifiedEvent[key], key)}
-                                        </Typography>
-                                        {localChangeNote ? (
-                                            <Typography
-                                                color="text.secondary"
-                                                variant="caption"
-                                            >
-                                                {localChangeNote}
-                                            </Typography>
-                                        ) : null}
-                                    </>
-                                ) : (
-                                    <DeletedItemPlaceholder />
-                                )}
-                        </TableCell>
-                        <TableCell>
-                            {capturedVersion !== undefined &&
-                            capturedVersion[key] !== undefined ? (
-                                    <Typography color="text.secondary">
-                                        {formatValue(capturedVersion[key], key)}
+                            {localModifiedEvent === undefined ? (
+                                <DeletedItemPlaceholder />
+                            ) : localModifiedEvent[key] !== undefined ? (
+                                <>
+                                    <Typography>
+                                        {formatValue(localModifiedEvent[key], key)}
                                     </Typography>
-                                ) : (
-                                    <DeletedItemPlaceholder />
-                                )}
+                                    {localChangeNote ? (
+                                        <Typography
+                                            color="text.secondary"
+                                            variant="caption"
+                                        >
+                                            {localChangeNote}
+                                        </Typography>
+                                    ) : null}
+                                </>
+                            ) : (
+                                <EmptyValuePlaceholder />
+                            )}
                         </TableCell>
                         <TableCell>
-                            {serverVersion !== undefined &&
-                            serverVersion[key] !== undefined ? (
-                                    <>
-                                        <Typography>
-                                            {formatValue(serverVersion[key], key)}
+                            {capturedVersion === undefined ? (
+                                <DeletedItemPlaceholder />
+                            ) : capturedVersion[key] !== undefined ? (
+                                <Typography color="text.secondary">
+                                    {formatValue(capturedVersion[key], key)}
+                                </Typography>
+                            ) : (
+                                <EmptyValuePlaceholder />
+                            )}
+                        </TableCell>
+                        <TableCell>
+                            {serverVersion === undefined ? (
+                                <DeletedItemPlaceholder />
+                            ) : serverVersion[key] !== undefined ? (
+                                <>
+                                    <Typography>
+                                        {formatValue(serverVersion[key], key)}
+                                    </Typography>
+                                    {serverChangeNote ? (
+                                        <Typography
+                                            color="text.secondary"
+                                            variant="caption"
+                                        >
+                                            {serverChangeNote}
                                         </Typography>
-                                        {serverChangeNote ? (
-                                            <Typography
-                                                color="text.secondary"
-                                                variant="caption"
-                                            >
-                                                {serverChangeNote}
-                                            </Typography>
-                                        ) : null}
-                                    </>
-                                ) : (
-                                    <DeletedItemPlaceholder />
-                                )}
+                                    ) : null}
+                                </>
+                            ) : (
+                                <EmptyValuePlaceholder />
+                            )}
                         </TableCell>
                     </TableRow>
                 );

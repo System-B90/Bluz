@@ -173,4 +173,30 @@ describe("EventHistoryPanel", () => {
         // Collapsed again, so nothing is fetched for the new event either.
         expect(apiGetEventHistory).toHaveBeenCalledTimes(1);
     });
+
+    it("drops a slow response for the event the dialog has moved off (#618)", async () => {
+        const user = userEvent.setup();
+        // The first event's fetch is still in flight when the dialog switches.
+        let resolveFirst: (rows: Array<unknown>) => void = () => {};
+        apiGetEventHistory.mockReturnValueOnce(
+            new Promise((resolve) => {
+                resolveFirst = resolve;
+            }),
+        );
+
+        const { rerender } = render(<EventHistoryPanel eventId="e1" />);
+        await expand(user);
+
+        rerender(<EventHistoryPanel eventId="e2" />);
+        apiGetEventHistory.mockResolvedValue([cutRow]);
+        await expand(user);
+        expect(await screen.findByText('גזירה ללו"ז')).toBeTruthy();
+
+        // Event A's response lands last. It must not overwrite event B's log.
+        resolveFirst([updateRow]);
+        await waitFor(() =>
+            expect(screen.queryByText("גרירה בלוח")).toBeNull(),
+        );
+        expect(screen.getByText('גזירה ללו"ז')).toBeTruthy();
+    });
 });
