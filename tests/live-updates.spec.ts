@@ -145,21 +145,23 @@ test.describe("Live updates between two users (#582)", () => {
         browser,
     }) => {
         const eventName = `מחיקה ${testId("live")}`;
-
-        await gotoAppHome(page);
-        await waitForRealtimeConnection(page);
-
-        await selectCalendarTimeRange(page);
-        const dialog = getEventDialog(page);
-        await expect(dialog).toBeVisible({ timeout: 30_000 });
-        await dialog.getByLabel("שם").fill(eventName);
-        await dialog.getByRole("button", { name: "שמירה" }).click();
-        await expect(dialog).not.toBeVisible({ timeout: 30_000 });
-
-        const { context: secondContext, page: secondPage } =
-            await openSecondUserSession(browser);
+        let secondContext: Awaited<ReturnType<typeof openSecondUserSession>>["context"] | undefined;
+        let secondPage: Awaited<ReturnType<typeof openSecondUserSession>>["page"] | undefined;
 
         try {
+            await gotoAppHome(page);
+            await waitForRealtimeConnection(page);
+
+            await selectCalendarTimeRange(page);
+            const dialog = getEventDialog(page);
+            await expect(dialog).toBeVisible({ timeout: 30_000 });
+            await dialog.getByLabel("שם").fill(eventName);
+            await dialog.getByRole("button", { name: "שמירה" }).click();
+            await expect(dialog).not.toBeVisible({ timeout: 30_000 });
+
+            ({ context: secondContext, page: secondPage } =
+                await openSecondUserSession(browser));
+
             await gotoAppHome(secondPage);
             await waitForRealtimeConnection(secondPage);
 
@@ -187,8 +189,8 @@ test.describe("Live updates between two users (#582)", () => {
             ).toHaveCount(0, { timeout: 30_000 });
         } finally {
             await releaseEventDialogIfOpen(page);
-            await releaseEventDialogIfOpen(secondPage);
-            await secondContext.close();
+            if (secondPage) await releaseEventDialogIfOpen(secondPage);
+            await secondContext?.close();
         }
     });
 });
