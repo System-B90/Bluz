@@ -361,10 +361,22 @@ export async function waitForHydration(page: Page): Promise<void> {
  * failure with a message.
  */
 export async function waitForRealtimeConnection(page: Page): Promise<void> {
+    const status = page.locator("[data-testid='realtime-status']");
+
     await expect(
-        page.locator("[data-testid='realtime-status']"),
+        status,
         "the browser never opened its WebSocket to the session server: the realtime layer is dead, so any live-update assertion below would be meaningless",
-    ).toHaveAttribute("data-realtime-state", "open", { timeout: 30_000 });
+    ).toHaveAttribute("data-realtime-state", "open", { timeout: 20_000 });
+
+    // An open socket is not enough — the bug was an address, not an outage
+    // (#636). A machine also running the dev stack has something listening on
+    // the address the broken config points at, so the browser connects *there*
+    // and everything looks healthy while it talks to a different deployment.
+    const origin = new URL(page.url()).host;
+    await expect(
+        status,
+        `the browser's WebSocket is connected to a different host than the page itself (${origin}), so it is talking to another deployment's session server and would never see this stack's broadcasts`,
+    ).toHaveAttribute("data-realtime-host", origin, { timeout: 20_000 });
 }
 
 /**

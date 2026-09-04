@@ -40,6 +40,11 @@ import {
  * session server must fail loudly rather than pass in silence (#636).
  */
 test("the browser establishes its realtime session", async ({ page }) => {
+    // Two 20s waits plus an app load do not fit the default per-test budget,
+    // and a gate that dies on its own timeout reports "test timed out" instead
+    // of the diagnosis it exists to give.
+    test.setTimeout(90_000);
+
     await gotoAppHome(page);
     await waitForAppLoad(page);
 

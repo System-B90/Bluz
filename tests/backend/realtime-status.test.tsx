@@ -10,7 +10,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * observable, so its own contract has to hold (#636).
  */
 
-const socketRef: { current: null | { readyState: number } } = { current: null };
+const socketRef: { current: null | { readyState: number; url?: string } } = {
+    current: null,
+};
+
+const WS_URL = "wss://bluz.dev:8443/ws/";
 
 vi.mock("@/components/SessionWs", () => ({
     useSessionWebSocketContext: () => ({ ws: socketRef }),
@@ -34,6 +38,12 @@ function currentState(): null | string {
         .getAttribute("data-realtime-state");
 }
 
+function currentHost(): null | string {
+    return screen
+        .getByTestId("realtime-status")
+        .getAttribute("data-realtime-host");
+}
+
 describe("RealtimeStatus", () => {
     it("reports closed while no socket exists", () => {
         render(<RealtimeStatus />);
@@ -42,7 +52,7 @@ describe("RealtimeStatus", () => {
     });
 
     it("reports connecting while the socket is still opening", () => {
-        socketRef.current = { readyState: WebSocket.CONNECTING };
+        socketRef.current = { readyState: WebSocket.CONNECTING, url: WS_URL };
         render(<RealtimeStatus />);
 
         expect(currentState()).toBe("connecting");
@@ -54,7 +64,7 @@ describe("RealtimeStatus", () => {
         render(<RealtimeStatus />);
         expect(currentState()).toBe("closed");
 
-        socketRef.current = { readyState: WebSocket.OPEN };
+        socketRef.current = { readyState: WebSocket.OPEN, url: WS_URL };
         act(() => {
             vi.advanceTimersByTime(1000);
         });
@@ -63,16 +73,32 @@ describe("RealtimeStatus", () => {
     });
 
     it("reports closed again once the socket drops", () => {
-        socketRef.current = { readyState: WebSocket.OPEN };
+        socketRef.current = { readyState: WebSocket.OPEN, url: WS_URL };
         render(<RealtimeStatus />);
         expect(currentState()).toBe("open");
 
-        socketRef.current = { readyState: WebSocket.CLOSED };
+        socketRef.current = { readyState: WebSocket.CLOSED, url: WS_URL };
         act(() => {
             vi.advanceTimersByTime(1000);
         });
 
         expect(currentState()).toBe("closed");
+    });
+
+    it("publishes the host the socket is pointed at", () => {
+        // "A socket is open" is not the useful assertion: the bug was an
+        // address. A machine running another stack answers on the wrong one,
+        // and the connection then looks perfectly healthy.
+        socketRef.current = { readyState: WebSocket.OPEN, url: WS_URL };
+        render(<RealtimeStatus />);
+
+        expect(currentHost()).toBe("bluz.dev:8443");
+    });
+
+    it("publishes no host while there is no socket", () => {
+        render(<RealtimeStatus />);
+
+        expect(currentHost()).toBe("");
     });
 
     it("stays out of the visible UI", () => {
