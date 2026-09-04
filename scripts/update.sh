@@ -10,8 +10,10 @@
 # Run it from the directory the release bundle was extracted into — the one
 # holding docker-compose.yml and .env.
 #
-# Usage: ./update.sh [--version <tag>] [--skip-backup] [--yes]
-#        Without --version it upgrades to the latest published release.
+# Usage: ./update.sh [--version <tag>] [--pre-release] [--skip-backup] [--yes]
+#        Without --version it upgrades to the latest published (non-prerelease)
+#        release. Pass --pre-release to opt into the newest release including
+#        prereleases (e.g. -rc.N tags).
 # Env:   BLUZ_RELEASE_REPO    GitHub repo to read releases from
 #                              (default System-B90/Bluz)
 #        BLUZ_COMPOSE_FILE    compose file (default ./docker-compose.yml)
@@ -32,6 +34,7 @@ HEALTH_RETRIES="${BLUZ_HEALTH_RETRIES:-30}"
 RELEASE_REPO="${BLUZ_RELEASE_REPO:-System-B90/Bluz}"
 
 TARGET_VERSION=""
+PRE_RELEASE=0
 SKIP_BACKUP=0
 ASSUME_YES=0
 BACKUP_DIR=""
@@ -68,9 +71,10 @@ abort_with_rollback() {
 while [ $# -gt 0 ]; do
     case "$1" in
         --version) TARGET_VERSION="${2:-}"; shift 2 ;;
+        --pre-release) PRE_RELEASE=1; shift ;;
         --skip-backup) SKIP_BACKUP=1; shift ;;
         --yes|-y) ASSUME_YES=1; shift ;;
-        -h|--help) sed -n '2,22p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) fail "Unknown argument: $1" "Run ./update.sh --help." ;;
     esac
 done
@@ -133,17 +137,26 @@ PREVIOUS_VERSION="${BLUZ_VERSION:-}"
 # place, so after the first run that file names the release already installed
 # and defaulting to it made a bare `./update.sh` a no-op.
 if [ -z "${TARGET_VERSION}" ]; then
-    log "resolving latest release from ${RELEASE_REPO}..."
-    # /releases/latest only ever returns the newest non-prerelease, so an
-    # rc.N series (marked prerelease on GitHub) is invisible to it and this
-    # falls back to whatever older stable tag came before the rc's. List all
-    # releases instead — GitHub returns them newest-first — and take the
-    # first tag, prerelease or not.
-    if command -v curl &> /dev/null; then
-        TARGET_VERSION="$(curl -fsSL --max-time 15 \
-            "https://api.github.com/repos/${RELEASE_REPO}/releases?per_page=1" 2>/dev/null \
-            | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-            | head -n 1)" || TARGET_VERSION=""
+    if [ "${PRE_RELEASE}" -eq 1 ]; then
+        log "resolving latest release (including prereleases) from ${RELEASE_REPO}..."
+        # /releases/latest only ever returns the newest non-prerelease, so an
+        # rc.N series (marked prerelease on GitHub) is invisible to it. List
+        # all releases instead — GitHub returns them newest-first — and take
+        # the first tag, prerelease or not.
+        if command -v curl &> /dev/null; then
+            TARGET_VERSION="$(curl -fsSL --max-time 15 \
+                "https://api.github.com/repos/${RELEASE_REPO}/releases?per_page=1" 2>/dev/null \
+                | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+                | head -n 1)" || TARGET_VERSION=""
+        fi
+    else
+        log "resolving latest release from ${RELEASE_REPO}..."
+        if command -v curl &> /dev/null; then
+            TARGET_VERSION="$(curl -fsSL --max-time 15 \
+                "https://api.github.com/repos/${RELEASE_REPO}/releases/latest" 2>/dev/null \
+                | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+                | head -n 1)" || TARGET_VERSION=""
+        fi
     fi
 
     if [ -n "${TARGET_VERSION}" ]; then
