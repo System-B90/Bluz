@@ -6,6 +6,7 @@ import {
     test,
     testId,
     waitForAppLoad,
+    waitForRealtimeConnection,
 } from "./fixtures";
 
 /**
@@ -31,6 +32,24 @@ import {
  * whole chain — API route, session server, browser client, reducer, DOM —
  * is actually wired together end to end.
  */
+
+/**
+ * The gate for everything below, and for every other spec that quietly assumes
+ * broadcasts arrive. It is deliberately outside the skipped describe: whatever
+ * happens to the two-user specs, a stack whose browsers cannot reach the
+ * session server must fail loudly rather than pass in silence (#636).
+ */
+test("the browser establishes its realtime session", async ({ page }) => {
+    // Two 20s waits plus an app load do not fit the default per-test budget,
+    // and a gate that dies on its own timeout reports "test timed out" instead
+    // of the diagnosis it exists to give.
+    test.setTimeout(90_000);
+
+    await gotoAppHome(page);
+    await waitForAppLoad(page);
+
+    await waitForRealtimeConnection(page);
+});
 
 // Skipped: these two were written without a working local e2e stack and have
 // never passed. Their first run (33798617692) died in the shared

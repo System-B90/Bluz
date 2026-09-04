@@ -11,6 +11,7 @@ import React, {
 } from "react";
 
 import { AuthSessionData, AuthSessionUser } from "@/api-shared/types/sso";
+import { RealtimeStatus } from "@/components/base/RealtimeStatus";
 import {
     MessageHandlerType,
     useSessionWebSocketContext,
@@ -179,6 +180,9 @@ export const AuthProvider = ({
 
     return (
         <AuthContext.Provider value={contextValue}>
+            {/* Renders nothing visible — it publishes the socket's state so a
+                dead realtime layer is detectable rather than silent (#636). */}
+            <RealtimeStatus />
             {children}
         </AuthContext.Provider>
     );

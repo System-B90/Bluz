@@ -59,7 +59,10 @@ next-env.d.ts
 *.tar
 .vscode/PythonImportHelper-v2-Completion.json
 ssl/
-tests/.auth/user.json
+# Playwright storage state: real session cookies for each test user. The
+# pattern used to name user.json alone, so the second user's state (#606) was
+# left untracked-but-committable.
+tests/.auth/
 
 # docs
 /site/
