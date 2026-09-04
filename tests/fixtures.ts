@@ -2,6 +2,8 @@ import * as path from "path";
 
 import { test as baseTest, expect as baseExpect, APIRequestContext, Browser, Locator, Page, BrowserContext } from "@playwright/test";
 
+import { idsFromListBody } from "./list-ids";
+
 // Shared page and context for visual mode (single-window reuse)
 let sharedContext: BrowserContext | null = null;
 let sharedPage: Page | null = null;
@@ -98,20 +100,42 @@ export const test = baseTest.extend<{ serverStateIsolation: undefined }>({
 
             await use(undefined);
 
-            try {
-                // Order matters: see restoreIteration.
-                await restoreIteration(request, originalIteration);
-                await restorePersonalSettings(request, personalSettingsBefore);
+            // Each step is isolated: a single wrapping try meant one throw
+            // skipped every sweep after it, and the warning it logged looked
+            // like a minor hiccup rather than "cleanup stopped here". That is
+            // how the curriculum shape bug silently disabled the event and
+            // entity sweeps for months of green runs.
+            const step = async (
+                name: string,
+                run: () => Promise<void>,
+            ): Promise<void> => {
+                try {
+                    await run();
+                } catch (error) {
+                    console.warn(`[isolation] ${name} cleanup failed:`, error);
+                }
+            };
 
-                // After the restore above, so a temp iteration is no longer
-                // current -- the API refuses to delete the active one.
+            // Order matters: see restoreIteration.
+            await step("iteration restore", () =>
+                restoreIteration(request, originalIteration),
+            );
+            await step("personal settings restore", () =>
+                restorePersonalSettings(request, personalSettingsBefore),
+            );
+
+            // After the restore above, so a temp iteration is no longer
+            // current -- the API refuses to delete the active one.
+            await step("iterations", async () => {
                 for (const id of await listIterationIds(request)) {
                     if (iterationsBefore.has(id)) continue;
                     await request
                         .delete(`/api/iterations/${id}`)
                         .catch(() => {});
                 }
+            });
 
+            await step("curriculums", async () => {
                 for (const id of await listCurriculumIds(request)) {
                     if (curriculumsBefore.has(id)) continue;
                     // Deleting the curriculum takes its syllabuses, modules
@@ -120,17 +144,21 @@ export const test = baseTest.extend<{ serverStateIsolation: undefined }>({
                         .delete(`/api/gantt/curriculums/${id}`)
                         .catch(() => {});
                 }
+            });
 
+            await step("events", async () => {
                 for (const event of await listEvents(request)) {
                     if (eventsBefore.has(event.id)) continue;
                     await request
                         .delete("/api/event", { data: event.id })
                         .catch(() => {});
                 }
+            });
 
-                for (const collection of SWEPT_COLLECTIONS) {
+            for (const collection of SWEPT_COLLECTIONS) {
+                await step(collection, async () => {
                     const before = collectionsBefore.get(collection);
-                    if (!before) continue;
+                    if (!before) return;
                     for (const id of await listCollectionIds(
                         request,
                         collection,
@@ -140,9 +168,7 @@ export const test = baseTest.extend<{ serverStateIsolation: undefined }>({
                             .delete(`/api/${collection}`, { data: id })
                             .catch(() => {});
                     }
-                }
-            } catch (error) {
-                console.warn("[isolation] cleanup failed:", error);
+                });
             }
         },
         { auto: true },
@@ -647,8 +673,7 @@ async function listCollectionIds(
 ): Promise<Array<string>> {
     const response = await request.get(`/api/${collection}`);
     if (!response.ok()) return [];
-    const body = (await response.json()) as { data?: Array<{ id?: string }> };
-    return (body.data ?? []).flatMap((row) => (row.id ? [ row.id ] : []));
+    return idsFromListBody(await response.json());
 }
 
 async function listCurriculumIds(
@@ -656,10 +681,9 @@ async function listCurriculumIds(
 ): Promise<Array<string>> {
     const response = await request.get("/api/gantt/curriculums");
     if (!response.ok()) return [];
-    const body = (await response.json()) as {
-        data?: Array<{ id?: string }>;
-    };
-    return (body.data ?? []).flatMap((c) => (c.id ? [ c.id ] : []));
+    // The gantt collection routes answer with a keyed map rather than an
+    // array; idsFromListBody handles both.
+    return idsFromListBody(await response.json());
 }
 
 /**
@@ -704,8 +728,7 @@ async function listIterationIds(
 ): Promise<Array<string>> {
     const response = await request.get("/api/iterations");
     if (!response.ok()) return [];
-    const body = (await response.json()) as { data?: Array<{ id?: string }> };
-    return (body.data ?? []).flatMap((i) => (i.id ? [ i.id ] : []));
+    return idsFromListBody(await response.json());
 }
 
 async function currentIterationId(
