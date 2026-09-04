@@ -238,4 +238,66 @@ describe("live event updates across two sessions (#582)", () => {
         ).toHaveLength(1);
         expect(tabA.receivedOfType(MessageTypes.EVENT_DATA_UPDATE)).toHaveLength(0);
     });
+
+    it("fans an update out to every one of several concurrent viewers, and only them", async () => {
+        // All coverage elsewhere stops at two sockets. A registry bug that
+        // drops, say, every listener past the second (an off-by-one, or a
+        // structure that silently caps out) would pass every other test in
+        // this file and only show up with a third viewer in the room.
+        const wss = await loadSessionServer();
+        const viewers = [ "user-a", "user-b", "user-c", "user-d" ].map(
+            (user, i) => openSession(wss, user, `initiator-${i}`),
+        );
+        const differentIteration = openSession(
+            wss,
+            "user-e",
+            "initiator-e",
+            "2025b",
+        );
+
+        broadcastFromServer(wss, MessageTypes.EVENT_DATA_UPDATE, {
+            events: { "event-3": { id: "event-3" } },
+        });
+
+        viewers.forEach((tab, i) => {
+            expect(
+                tab.receivedOfType(MessageTypes.EVENT_DATA_UPDATE),
+                `viewer ${i} of ${viewers.length} missed the broadcast`,
+            ).toHaveLength(1);
+        });
+        expect(
+            differentIteration.receivedOfType(MessageTypes.EVENT_DATA_UPDATE),
+            "a broadcast for the current iteration leaked to a session viewing another one",
+        ).toHaveLength(0);
+    });
+
+    it("delivers a move/resize (changed start and end time) to the other session", async () => {
+        // `setDbEvent` broadcasts EVENT_DATA_UPDATE for every edit, including a
+        // pure drag-to-reschedule that only changes startTime/endTime — there
+        // is no separate "moved" message type. Every other EVENT_DATA_UPDATE
+        // case in this file uses a minimal payload that doesn't distinguish a
+        // real move from a no-op update; this pins that the full date fields
+        // a drag actually changes round-trip through the relay untouched, in
+        // the ISO-string shape `eventDateFixupToDate` produces server-side.
+        const wss = await loadSessionServer();
+        const tabA = openSession(wss, "user-a", "initiator-a");
+        const tabB = openSession(wss, "user-b", "initiator-b");
+
+        const moved = {
+            id: "event-1",
+            name: "שיעור",
+            startTime: "2026-09-10T10:00:00.000Z",
+            endTime: "2026-09-10T11:00:00.000Z",
+        };
+        broadcastFromServer(wss, MessageTypes.EVENT_DATA_UPDATE, {
+            events: { "event-1": moved },
+        });
+
+        const [ frame ] = tabB.receivedOfType(MessageTypes.EVENT_DATA_UPDATE);
+        expect(
+            frame,
+            "the second session never received the moved event",
+        ).toBeDefined();
+        expect(frame!.data.events["event-1"]).toEqual(moved);
+    });
 });
