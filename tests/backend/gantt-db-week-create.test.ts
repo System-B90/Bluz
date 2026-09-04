@@ -41,6 +41,8 @@ function fakeTx(options: {
     highestWeekNumber?: null | number;
     mealSyllabusLinks?: Array<unknown>;
     existingMealMapping?: unknown;
+    /** Drives the holiday auto-comment (#646); null ⇒ no date to derive from. */
+    curriculumStartDate?: null | string;
 }) {
     const log: TxLog = { inserts: [], executed: 0 };
     const tx = {
@@ -56,6 +58,10 @@ function fakeTx(options: {
                 });
             },
         }),
+        // Two selects run here: the MAX(number) probe joins through the
+        // curriculum→weeks junction, while the holiday lookup reads the
+        // curriculum's start date straight off `c`. They are told apart by
+        // whether the chain goes through `innerJoin`.
         select: () => ({
             from: () => ({
                 innerJoin: () => ({
@@ -63,6 +69,9 @@ function fakeTx(options: {
                         { highest: options.highestWeekNumber ?? null },
                     ],
                 }),
+                where: async () => [
+                    { startDate: options.curriculumStartDate ?? null },
+                ],
             }),
         }),
         query: {
@@ -199,6 +208,44 @@ describe("DbWeek.createNewItem", () => {
         expect(log.executed).toBe(0);
         expect(insertsInto(log, ganttCurriculum2WeeksSchema)).toHaveLength(0);
         expect(insertsInto(log, ganttWeeksSchema)[ 0 ].number).toBe(1);
+    });
+
+    it("stamps each day with the Jewish holiday it falls on (#646)", async () => {
+        // Week 1 starting Sunday 2026-09-06 covers erev Rosh Hashana (Friday
+        // the 11th) and Rosh Hashana itself (Shabbat the 12th).
+        const { log } = runInTx({ curriculumStartDate: "2026-09-06" });
+
+        await DbWeek.createNewItem(BASE);
+
+        const days = insertsInto(log, ganttDaysSchema);
+        expect(days[ GanttDayIndex.Friday ].comment).toBe("ערב ראש השנה");
+        expect(days[ GanttDayIndex.Saturday ].comment).toBe("ראש השנה 5787");
+        // An ordinary day carries no comment at all, rather than an empty one.
+        expect(days[ GanttDayIndex.Sunday ]).not.toHaveProperty("comment");
+    });
+
+    it("offsets the holiday lookup by the week's own number", async () => {
+        // The same start date, but this is week 2 — a week later, so the
+        // holidays above have passed and the fast of Gedaliah lands instead.
+        const { log } = runInTx({ curriculumStartDate: "2026-09-06" });
+
+        await DbWeek.createNewItem({ ...BASE, number: 2 });
+
+        const days = insertsInto(log, ganttDaysSchema);
+        expect(days.some((day) => day.comment === "ערב ראש השנה")).toBe(false);
+        expect(days[ GanttDayIndex.Monday ].comment).toBe("צום גדליה");
+    });
+
+    it("stamps nothing when the curriculum has no start date to derive from", async () => {
+        const { log } = runInTx({ curriculumStartDate: null });
+
+        await DbWeek.createNewItem(BASE);
+
+        expect(
+            insertsInto(log, ganttDaysSchema).every(
+                (day) => !("comment" in day),
+            ),
+        ).toBe(true);
     });
 
     it("anchors the seeded meal events onto the new week's Sunday", async () => {
