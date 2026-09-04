@@ -26,7 +26,16 @@ export const useEventActions = (
             eventPartial: Partial<Event>,
             initiator: EventChangeInitiator = EventChangeInitiator.EventDialog,
         ) => {
-            if (!eventPartial || eventPartial.name === "") return;
+            if (!eventPartial) return;
+            if (eventPartial.name === "") {
+                // A nameless event is refused, but refusing it in silence made
+                // a drag or resize look like the grid was broken: the event
+                // snapped back with no explanation (#612).
+                enqueueSnackbar("לא ניתן לשמור אירוע ללא שם.", {
+                    variant: "warning",
+                });
+                return;
+            }
 
             const isNewEvent = typeof eventPartial.id === "undefined";
             // Stamp a client revision so optimistic/echo/broadcast upserts can

@@ -65,6 +65,11 @@ export function EventTypeField({
 
     const onClose = useCallback(() => {
         const newType = latestTypeRef.current;
+        // Closing without picking anything must not touch the event (#617).
+        // The unconditional write reset splitAcrossBreaks to the type default
+        // — undoing a toggle the user had just set — and wiped lecturers.
+        if (newType === event?.type) return;
+
         const update: Record<string, unknown> = {
             type: newType,
             splitAcrossBreaks: defaultSplitAcrossBreaks(newType),
@@ -73,7 +78,7 @@ export function EventTypeField({
             update.lecturers = [];
         }
         onBlurCallback(update);
-    }, [onBlurCallback]);
+    }, [event?.type, onBlurCallback]);
 
     return (
         <Box alignItems="center" display="flex" gap={1.5} {...props}>

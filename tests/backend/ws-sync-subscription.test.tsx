@@ -3,6 +3,7 @@ import { act, render } from "@testing-library/react";
 import React from "react";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { CoreMessageTypes } from "@system-b90/session-ws";
 import { useSessionWebSocketContext } from "@system-b90/session-ws/react";
 
 import { iterationSyncId, MessageTypes, signWsTicket } from "../../session-server/session-common";
@@ -339,6 +340,48 @@ function makeConsumer(useEventWebsocket: typeof import(
     };
 }
 
+/**
+ * The calendar consumer mounted *under* the socket owner, so the child can go
+ * away while the connection stays up — the production arrangement, where
+ * AuthProvider outlives the calendar page.
+ */
+async function loadHost() {
+    const module = await import(
+        "@/components/schedule/calendar/calendar-provider/hooks/UseEventWebsocket"
+    );
+    function Calendar({ iterationId }: { iterationId?: string }) {
+        module.useEventWebsocket(
+            false,
+            () => {},
+            () => {},
+            iterationId,
+        );
+        return null;
+    }
+    function Host({
+        iterationId,
+        mounted,
+    }: {
+        iterationId?: string;
+        mounted: boolean;
+    }) {
+        const {
+            addMessageHandler,
+            sendMessage,
+            registerSyncObject,
+            deregisterSyncObject,
+        } = useSessionWebSocketContext();
+        currentAuth = {
+            addMessageHandler,
+            sendMessage,
+            registerSyncObject,
+            deregisterSyncObject,
+        } as typeof currentAuth;
+        return mounted ? <Calendar iterationId={iterationId} /> : null;
+    }
+    return { Host };
+}
+
 async function loadConsumer() {
     const module = await import(
         "@/components/schedule/calendar/calendar-provider/hooks/UseEventWebsocket"
@@ -427,6 +470,51 @@ describe("useEventWebsocket subscription over a reconnect (client side)", () => 
             registerSyncFrames(second!).map((f) => f.syncObjectId),
             "the reconnected socket sent no REGISTER_SYNC_PROVIDER: the subscription was never replayed",
         ).toContain(iterationSyncId("iter-1"));
+    });
+});
+
+/* ------------------------------------------------------------------ */
+/* (A2) Unmounting the calendar must drop its subscription             */
+/* ------------------------------------------------------------------ */
+
+describe("useEventWebsocket subscription on unmount (#610)", () => {
+    it("deregisters the sync object when the calendar goes away", async () => {
+        installFakeBrowserSocket();
+        stubTicketFetch();
+        // The socket lives in the parent (AuthProvider in production) and
+        // outlives the calendar, so only the calendar child is unmounted.
+        const { Host } = await loadHost();
+
+        const view = render(<Host iterationId="iter-1" mounted />);
+        await act(async () => {});
+        const socket = FakeBrowserWebSocket.instances[0];
+        expect(socket, "no WebSocket was constructed").toBeDefined();
+        await act(async () => {
+            socket.open();
+        });
+        await act(async () => {
+            view.rerender(<Host iterationId="iter-1" mounted />);
+        });
+        expect(
+            registerSyncFrames(socket).map((f) => f.syncObjectId),
+        ).toContain(iterationSyncId("iter-1"));
+
+        // Navigating away from the calendar leaves the socket up. Without a
+        // cleanup the old subscription lingers, and coming back subscribes a
+        // second time on top of it.
+        await act(async () => {
+            view.rerender(<Host iterationId="iter-1" mounted={false} />);
+        });
+
+        const deregistered = socket
+            .frames()
+            .filter(
+                (frame) =>
+                    frame.type ===
+                    CoreMessageTypes.DEREGISTER_SYNC_PROVIDER,
+            )
+            .map((frame) => frame.syncObjectId);
+        expect(deregistered).toContain(iterationSyncId("iter-1"));
     });
 });
 

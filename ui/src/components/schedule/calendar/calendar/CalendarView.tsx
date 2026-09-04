@@ -317,7 +317,8 @@ export function CalendarView({
         return () => window.removeEventListener("mouseup", clear);
     }, [activeDrag]);
 
-    // Ctrl held during a drag damps it into a fine adjustment (#475).
+    // Alt held during a drag damps it into a fine adjustment (#475). Ctrl is
+    // taken by duplicate-on-drag, which the damping used to fight (#608).
     const { applyPrecision } = usePrecisionDrag();
 
     const handleDragStart = useCallback(

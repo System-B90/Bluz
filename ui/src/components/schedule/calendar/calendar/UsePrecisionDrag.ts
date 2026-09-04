@@ -21,10 +21,14 @@ export function dampDragDelta(deltaMs: number, isPrecise: boolean): number {
 }
 
 /**
- * Ctrl-held drags move an event a quarter as far as the pointer travelled and
+ * Alt-held drags move an event a quarter as far as the pointer travelled and
  * land on whole minutes (#475). The grid snaps to 5 minutes, which is coarse
- * for a small correction and forces the user to fight the snap; holding Ctrl
+ * for a small correction and forces the user to fight the snap; holding Alt
  * trades reach for resolution without changing the grid itself.
+ *
+ * The modifier used to be Ctrl, which UseCalendarHandlers already claims for
+ * "duplicate the dragged event" — so a Ctrl+drag duplicate landed at a quarter
+ * of the intended offset (#608). Precision moved to Alt; duplicate keeps Ctrl.
  *
  * The modifier is read from live keyboard/pointer state rather than from the
  * drop event, because react-big-calendar's drop callback carries only the
@@ -35,7 +39,7 @@ export function usePrecisionDrag() {
 
     useEffect(() => {
         const sync = (event: KeyboardEvent | MouseEvent) => {
-            isPrecise.current = event.ctrlKey;
+            isPrecise.current = event.altKey;
         };
         // A window that loses focus mid-drag never sees the keyup.
         const clear = () => {

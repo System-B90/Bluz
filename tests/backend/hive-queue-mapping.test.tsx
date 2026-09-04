@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import {
+    act,
     cleanup,
     fireEvent,
     render,
@@ -204,6 +205,44 @@ describe("HiveQueueMapping", () => {
         expect(onUpdate).toHaveBeenCalledWith({
             hiveQueues: expect.objectContaining({ "c-nitza": 0 }),
         });
+    });
+
+    it("ignores a stale classes response that lands after a newer one (#621)", async () => {
+        // The first fetch is still in flight when the card is switched off and
+        // back on ("פיקטיבי"), which starts a second fetch.
+        let resolveStale: (rows: Array<unknown>) => void = () => {};
+        apiGetClasses.mockReturnValueOnce(
+            new Promise((resolve) => {
+                resolveStale = resolve;
+            }),
+        );
+
+        const event = { ...BASE_EVENT, courses: ["c-nitza", "c-lechem"] };
+        const { rerender } = render(
+            <HiveQueueMapping event={event} onUpdate={vi.fn()} />,
+        );
+        rerender(
+            <HiveQueueMapping
+                event={{ ...event, fake: true }}
+                onUpdate={vi.fn()}
+            />,
+        );
+        rerender(<HiveQueueMapping event={event} onUpdate={vi.fn()} />);
+        fireEvent.click(screen.getByText("תורים בהייב לפי שיבוץ"));
+
+        // The newer fetch resolves first and matches both shuffles.
+        await waitFor(() => expect(apiGetClasses).toHaveBeenCalledTimes(2));
+        await waitFor(() =>
+            expect(screen.queryByText("לא נמצא בהייב")).toBeNull(),
+        );
+
+        // The stale one lands last, knowing about neither shuffle. Unguarded,
+        // it overwrote the newer answer and flagged both as missing.
+        await act(async () => {
+            resolveStale([]);
+        });
+
+        expect(screen.queryAllByText("לא נמצא בהייב")).toHaveLength(0);
     });
 
     it("stays out of the way for event types with no Hive subject", () => {

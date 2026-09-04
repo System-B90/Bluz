@@ -95,9 +95,24 @@ export function HiveQueueMapping({ event, onUpdate }: HiveQueueMappingProps) {
 
     useEffect(() => {
         if (!applies) return;
+
+        // Same cancellation guard as the queues effect above (#621): toggling
+        // a field off and on quickly can otherwise let an older response
+        // overwrite a newer one, or set state after unmount.
+        let cancelled = false;
         apiGetClasses()
-            .then(setHiveClasses)
-            .catch(() => setHiveClasses([]));
+            .then((fetched) => {
+                if (cancelled) return;
+                setHiveClasses(fetched);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setHiveClasses([]);
+            });
+
+        return () => {
+            cancelled = true;
+        };
     }, [applies]);
 
     if (!applies) return null;
