@@ -14,6 +14,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
  * CSS contract that makes the scroll possible rather than the pixels.
  */
 
+// The dialog reads `?it=` to build its gantt quick-link, so it needs the App
+// Router hooks even though this file only asserts the scroll contract.
+vi.mock("next/navigation", () => ({
+    useSearchParams: () => new URLSearchParams(),
+    usePathname: () => "/",
+    useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+}));
 vi.mock("@/components/schedule/event-dialog/EventPrimaryDetails", () => ({
     EventPrimaryDetails: () => <div />,
 }));
