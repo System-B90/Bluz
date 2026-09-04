@@ -29,6 +29,7 @@ the palette's contents follow the user around the app.
 | `useAppearanceCommands.tsx` | app-wide | `command` | Theme toggle / dark / light / system |
 | `useDirectoryCommands.tsx` | app-wide | `entity` | Rooms and outsiders, opened for editing |
 | `useScheduleCommands.tsx` | `(schedule)/page.tsx` | `command` | New event, undo/redo, offline toggle |
+| `use-schedule-event-commands.tsx` | `schedule/calendar/calendar` | `entity` | Events in the loaded week |
 | `useCurriculumCommands.tsx` | `gantt/curriculum-fab` | `entity` | Switch curriculum |
 | `GanttContentCommands.tsx` | `gantt/curriculum-view` | `entity` | Syllabuses, modules, events in the loaded curriculum |
 

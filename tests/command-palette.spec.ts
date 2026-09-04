@@ -1,4 +1,12 @@
-import { test, expect, gotoAppHome } from "./fixtures";
+import {
+    test,
+    expect,
+    gotoAppHome,
+    waitForAppLoad,
+    getEventDialog,
+    selectCalendarTimeRange,
+    testId,
+} from "./fixtures";
 
 /**
  * Command palette integration tests.
@@ -98,5 +106,36 @@ test.describe("Command palette", () => {
 
         await page.keyboard.press("Escape");
         await expect(palette).not.toBeVisible({ timeout: 5_000 });
+    });
+
+    test("lists the loaded week's events on the schedule page, scoped to it", async ({ page }) => {
+        const eventName = testId("palette-event");
+
+        // Create a real event on the calendar so the entity lane has
+        // something of ours to find.
+        await selectCalendarTimeRange(page);
+        const dialog = getEventDialog(page);
+        await expect(dialog).toBeVisible();
+        await dialog.locator("input").first().fill(eventName);
+        await dialog.getByRole("button", { name: "שמירה" }).click();
+        await expect(dialog).not.toBeVisible({ timeout: 5_000 });
+
+        // Schedule surface: the calendar's events are contributed to the
+        // entity lane.
+        const schedulePalette = await openPalette(page);
+        await schedulePalette.getByRole("combobox").fill(eventName);
+        await expect(
+            schedulePalette.getByRole("option").filter({ hasText: eventName }),
+        ).toBeVisible({ timeout: 10_000 });
+        await page.keyboard.press("Escape");
+        await expect(schedulePalette).not.toBeVisible();
+
+        // Gantt surface: BluzCalendar is unmounted here, so its event
+        // commands must not follow the user across pages.
+        await page.goto("/gantt", { waitUntil: "commit" });
+        await waitForAppLoad(page);
+        const ganttPalette = await openPalette(page);
+        await ganttPalette.getByRole("combobox").fill(eventName);
+        await expect(ganttPalette.getByRole("option")).toHaveCount(0);
     });
 });

@@ -21,6 +21,7 @@ import { View, Views } from "react-big-calendar";
 
 import { EventChangeInitiator } from "@/api-shared/types/event-history";
 import { useScheduleCommands } from "@/components/app-commands/use-schedule-commands";
+import { useScheduleEventCommands } from "@/components/app-commands/use-schedule-event-commands";
 import { useCalendarFilters } from "@/components/base/CalendarFilterProvider";
 import { useRooms } from "@/components/base/RoomsProvider";
 import { CalendarView } from "@/components/schedule/calendar/calendar/CalendarView";
@@ -210,6 +211,8 @@ export function BluzCalendar({
         },
         [setSelectedEvent, setActiveEvent],
     );
+
+    useScheduleEventCommands({ events, onSelect: handleEditEvent });
 
     if (!mounted) {
         return <div className="grow h-full bg-slate-50/50 animate-pulse" />;
