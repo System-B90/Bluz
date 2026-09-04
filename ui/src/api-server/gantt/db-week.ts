@@ -15,6 +15,7 @@ import { ganttDaysSchema } from "@/api-server/gantt/schema/days";
 import { ganttCurriculumEventDayMappingsSchema } from "@/api-server/gantt/schema/mappings";
 import { ganttWeeksSchema } from "@/api-server/gantt/schema/weeks";
 import { ClientApiError } from "@/api-shared/errors";
+import { getHolidayComment } from "@/api-shared/gantt/holidays";
 import { getDefaultWorkingMinutesForDay } from "@/api-shared/gantt/week-defaults";
 import {
     ApiCurriculumDay,
@@ -158,9 +159,32 @@ async function createWeek(
                 .values({ curriculumId, weekId });
         }
 
+        // Auto-mark each day's comment with any Jewish holiday it falls on,
+        // computed once here at week-creation time. Only possible when the
+        // week belongs to a curriculum with a start date - the curriculum's
+        // week `number` and each day's `dayIndex` (0 = Sunday) are the only
+        // way to derive a real calendar date.
+        let curriculumStartDate: null | string = null;
+        if (curriculumId) {
+            const [curriculum] = await tx
+                .select({ startDate: ganttCurriculumsSchema.startDate })
+                .from(ganttCurriculumsSchema)
+                .where(eq(ganttCurriculumsSchema.id, curriculumId));
+            curriculumStartDate = curriculum?.startDate ?? null;
+        }
+
         const insertedDays = await Promise.all(
             DAY_INDICES.map(async (dayIndex) => {
                 const dayId = `d_${crypto.randomUUID()}`;
+
+                let comment: string | undefined;
+                if (curriculumStartDate) {
+                    const dayOffset = (number - 1) * 7 + dayIndex;
+                    const date = new Date(`${curriculumStartDate}T00:00:00Z`);
+                    date.setUTCDate(date.getUTCDate() + dayOffset);
+                    comment = getHolidayComment(date);
+                }
+
                 const [day] = await tx
                     .insert(ganttDaysSchema)
                     .values({
@@ -168,6 +192,7 @@ async function createWeek(
                         dayIndex,
                         totalWorkingMinutes:
                             getDefaultWorkingMinutesForDay(dayIndex),
+                        ...(comment ? { comment } : {}),
                         createdAt: now,
                         updatedAt: now,
                     })
