@@ -92,6 +92,13 @@ export type Event = {
      */
     ganttOccurrenceDate?: string;
     /**
+     * Curriculum the event was cut from (עקרון "גזירה ללו"ז"). Lets the
+     * schedule event dialog's "go to gantt" link resolve `?cid=` — without it
+     * the gantt page has no curriculum to load and the link is a no-op.
+     * Absent for normal events and for events cut before this field existed.
+     */
+    ganttCurriculumId?: string;
+    /**
      * Client-stamped revision (epoch ms) set at save time (#156). Used as an
      * optimistic-concurrency guard: an incoming upsert (server resolve echo or
      * WS broadcast) is applied only when strictly newer than the copy already

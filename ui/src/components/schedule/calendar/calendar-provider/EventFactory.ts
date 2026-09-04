@@ -45,5 +45,6 @@ export const createEventFactory = (
         // silently disowns the gantt occurrence it was cut from (#…).
         ganttEventId: eventPartial.ganttEventId,
         ganttOccurrenceDate: eventPartial.ganttOccurrenceDate,
+        ganttCurriculumId: eventPartial.ganttCurriculumId,
     };
 };

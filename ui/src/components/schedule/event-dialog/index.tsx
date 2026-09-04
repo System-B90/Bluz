@@ -14,15 +14,17 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import NextLink from "next/link";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useState } from "react";
 
-import { GANTT_EVENT_DEEP_LINK_PARAM } from "@/components/gantt/curriculum-view/search/GanttEventDeepLink";
+import { ITERATION_QUERY_PARAM } from "@/api-shared/types/iteration";
 import { EventHistoryPanel } from "@/components/schedule/event-dialog/event-history";
 import { EventClassification } from "@/components/schedule/event-dialog/EventClassification";
 import { EventPrimaryDetails } from "@/components/schedule/event-dialog/EventPrimaryDetails";
 import { EventToggles } from "@/components/schedule/event-dialog/EventToggles";
 import { HiveQueueMapping } from "@/components/schedule/event-dialog/HiveQueueMapping";
 import { InstructorsField } from "@/components/schedule/event-dialog/InstructorsField";
+import { buildGanttEventLink } from "@/components/schedule/event-dialog/utils";
 import { Event, EventId } from "@/components/schedule/types/event";
 
 /** Sunday-first, matching `Dayjs#day()`. */
@@ -94,6 +96,13 @@ export function EventDialog({
         onSave(event);
     };
 
+    // Iteration isn't stamped on the event — it's whatever the schedule page
+    // is currently viewing (`?it=`), so it rides along on the current URL
+    // instead. Omitted (not "") when absent: the gantt page treats a missing
+    // `it` as "current iteration", same as navigating there directly.
+    const iterationId = useSearchParams().get(ITERATION_QUERY_PARAM);
+    const ganttEventLink = buildGanttEventLink(event, iterationId);
+
     return (
         <Dialog
             fullWidth
@@ -125,10 +134,10 @@ export function EventDialog({
                             </Typography>
                         ) : null }
 
-                        { event.ganttEventId ? (
+                        { ganttEventLink ? (
                             <Link
                                 component={ NextLink }
-                                href={ `/gantt?${ GANTT_EVENT_DEEP_LINK_PARAM }=${ event.ganttEventId }` }
+                                href={ ganttEventLink }
                                 sx={ {
                                     display: "inline-flex",
                                     alignItems: "center",

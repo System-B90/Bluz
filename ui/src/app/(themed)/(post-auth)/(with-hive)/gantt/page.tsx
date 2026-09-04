@@ -10,7 +10,10 @@ import { Suspense, useEffect, useRef, useState } from "react";
 
 import { ganttApi } from "@/api-client/gantt";
 import { ApiCurriculum } from "@/api-shared/types/gantt/api-layer";
-import { GanttCurriculumId } from "@/api-shared/types/gantt/models";
+import {
+    CURRICULUM_QUERY_PARAM,
+    GanttCurriculumId,
+} from "@/api-shared/types/gantt/models";
 import { enqueueApiErrorSnackbar } from "@/components/base/ApiErrorSnackbar";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { ErrorSurface } from "@/components/errors/ErrorSurface";
@@ -106,7 +109,7 @@ function GanttPageInner()
     const [ currentCurriculum, setCurrentCurriculum ] =
         useState<GanttCurriculumId | null>(() =>
         {
-            const cidFromUrl = searchParams.get("cid");
+            const cidFromUrl = searchParams.get(CURRICULUM_QUERY_PARAM);
             return cidFromUrl ? (cidFromUrl as GanttCurriculumId) : null;
         });
 
@@ -119,7 +122,7 @@ function GanttPageInner()
 
     useEffect(() =>
     {
-        const urlCid = searchParams.get("cid");
+        const urlCid = searchParams.get(CURRICULUM_QUERY_PARAM);
         const currentCid = currentCurriculum ?? null;
 
         if (urlCid === currentCid) return;
@@ -127,10 +130,10 @@ function GanttPageInner()
         const nextParams = new URLSearchParams(searchParams.toString());
         if (currentCid)
         {
-            nextParams.set("cid", currentCid);
+            nextParams.set(CURRICULUM_QUERY_PARAM, currentCid);
         } else
         {
-            nextParams.delete("cid");
+            nextParams.delete(CURRICULUM_QUERY_PARAM);
         }
 
         const nextSearch = nextParams.toString();

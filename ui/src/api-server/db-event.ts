@@ -57,6 +57,7 @@ const EVENT_UPDATE_FIELDS = [
     "fake",
     "ganttEventId",
     "ganttOccurrenceDate",
+    "ganttCurriculumId",
     "updatedAt",
     "archived",
 ] as const;

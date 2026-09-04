@@ -75,6 +75,7 @@ import { Course } from "@/api-shared/types/course";
 import { PlannedOccurrence } from "@/api-shared/gantt/cut-planner";
 import { EventType } from "@/api-shared/types/event";
 import { ApiCurriculum, ApiModuleEvent } from "@/api-shared/types/gantt/api-layer";
+import { GanttCurriculumId } from "@/api-shared/types/gantt/models/curriculum";
 import {
     EventRecurrence,
     GanttDayIndex,
@@ -291,6 +292,7 @@ describe("buildScheduleEvent", () => {
             ["course-1"],
             [],
             new Map(),
+            "curr-1" as GanttCurriculumId,
         );
 
         expect(doc.name).toBe("הרצאת פתיחה");
@@ -303,13 +305,21 @@ describe("buildScheduleEvent", () => {
         expect(doc.courses).toEqual(["course-1"]);
         expect(doc.ganttEventId).toBe("e1");
         expect(doc.ganttOccurrenceDate).toBe("2024-01-07");
+        expect(doc.ganttCurriculumId).toBe("curr-1");
         expect(doc.locked).toBe(false);
         expect(typeof doc.id).toBe("string");
     });
 
     it("stores a non-Hive placeholder when linkage is absent", () => {
         const event = makeEvent({ id: "e1" });
-        const doc = buildScheduleEvent(occ({}), event, [], [], new Map());
+        const doc = buildScheduleEvent(
+            occ({}),
+            event,
+            [],
+            [],
+            new Map(),
+            "curr-1" as GanttCurriculumId,
+        );
         expect(doc.subject).toBe(0);
         expect(doc.hiveModule).toBe(0);
         expect(doc.hiveLesson).toBe(null);
@@ -325,6 +335,7 @@ describe("buildScheduleEvent", () => {
             [],
             [6],
             new Map([[6, 5]]),
+            "curr-1" as GanttCurriculumId,
         );
         expect(doc.subject).toBe(5);
         expect(doc.hiveModule).toBe(6);

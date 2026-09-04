@@ -34,6 +34,7 @@ import remarkGfm from "remark-gfm";
 
 import { fetchAiTools } from "@/api-client/ai";
 import { apiGetPersonalSettings } from "@/api-client/personal-settings";
+import { CURRICULUM_QUERY_PARAM } from "@/api-shared/types/gantt/models";
 import {
     AiTimelineItem,
     AiTimelineKind,
@@ -176,7 +177,8 @@ export function AiAssistant() {
     // The Gantt screen keeps the open curriculum in `?cid=`, so the assistant
     // picks up "this gantt" from the URL instead of being threaded a prop
     // through every screen that might host it.
-    const curriculumId = useSearchParams().get("cid") ?? undefined;
+    const curriculumId =
+        useSearchParams().get(CURRICULUM_QUERY_PARAM) ?? undefined;
 
     const {
         timeline,

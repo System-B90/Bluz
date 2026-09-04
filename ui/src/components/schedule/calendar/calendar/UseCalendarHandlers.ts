@@ -109,6 +109,7 @@ export function useCalendarHandlers(
                     fake: _fake,
                     ganttEventId: _ganttEventId,
                     ganttOccurrenceDate: _ganttOccurrenceDate,
+                    ganttCurriculumId: _ganttCurriculumId,
                     ...rest
                 } = changes.event;
                 const duplicatedEvent = {
@@ -245,9 +246,10 @@ export function useCalendarHandlers(
                 // Strip id plus everything that identifies the *source*
                 // event rather than the pasted copy: locked/hidden/fake
                 // are per-event display state, and ganttEventId/
-                // ganttOccurrenceDate are gantt-cut provenance (see
-                // EventFactory.ts's invariant) — carrying them over would
-                // make the paste masquerade as the original event.
+                // ganttOccurrenceDate/ganttCurriculumId are gantt-cut
+                // provenance (see EventFactory.ts's invariant) — carrying
+                // them over would make the paste masquerade as the
+                // original event.
                 const {
                     id: _id,
                     locked: _locked,
@@ -255,6 +257,7 @@ export function useCalendarHandlers(
                     fake: _fake,
                     ganttEventId: _ganttEventId,
                     ganttOccurrenceDate: _ganttOccurrenceDate,
+                    ganttCurriculumId: _ganttCurriculumId,
                     ...rest
                 } = currentCopied;
                 const newEvent = {

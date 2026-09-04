@@ -1,5 +1,6 @@
 export { getAllowedDayIndices } from "@/api-shared/types/gantt/models/constraint";
 export type { GanttConstraint } from "@/api-shared/types/gantt/models/constraint";
+export { CURRICULUM_QUERY_PARAM } from "@/api-shared/types/gantt/models/curriculum";
 export type {
     GanttCurriculum,
     GanttCurriculumId,

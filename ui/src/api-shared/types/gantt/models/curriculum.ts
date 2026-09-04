@@ -13,3 +13,10 @@ export type GanttCurriculum = {
     weeks: Array<GanttWeekId>;
 } & BaseGantItem;
 export type GanttCurriculumId = GanttCurriculum["id"];
+
+/**
+ * Query-string key carrying the active curriculum id on the gantt page. Lives
+ * here rather than in `api-server` so the browser can build the same URLs
+ * the routes parse.
+ */
+export const CURRICULUM_QUERY_PARAM = "cid";

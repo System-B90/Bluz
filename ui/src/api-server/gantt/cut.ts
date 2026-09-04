@@ -461,6 +461,7 @@ export function buildScheduleEvent(
     courseIds: Array<string>,
     moduleHiveIds: Array<number>,
     hiveModuleSubjectById: Map<number, number>,
+    curriculumId: GanttCurriculumId,
 ): DbEventDocument {
     const fallbackHiveModuleId = ganttEvent.hiveModuleId ?? moduleHiveIds[0] ?? null;
     const fallbackHiveSubjectId =
@@ -497,6 +498,7 @@ export function buildScheduleEvent(
         fake: false,
         ganttEventId: ganttEvent.id,
         ganttOccurrenceDate: occurrence.occurrenceDate,
+        ganttCurriculumId: curriculumId,
     };
 }
 
@@ -510,6 +512,7 @@ export function buildScheduleEvent(
 export function buildGeneratedBreakEvent(
     occurrence: PlannedOccurrence,
     courseIds: Array<string>,
+    curriculumId: GanttCurriculumId,
 ): DbEventDocument {
     return {
         id: randomUUID(),
@@ -536,6 +539,7 @@ export function buildGeneratedBreakEvent(
         fake: false,
         ganttEventId: occurrence.ganttEventId,
         ganttOccurrenceDate: occurrence.occurrenceDate,
+        ganttCurriculumId: curriculumId,
     };
 }
 
@@ -845,7 +849,9 @@ export async function materializeCurriculumEvents(
     for (const occurrence of plan.occurrences) {
         // Breaks the post-pass invented have no gantt event behind them.
         if (isGeneratedBreakEventId(occurrence.ganttEventId)) {
-            documents.push(buildGeneratedBreakEvent(occurrence, allCourseIds));
+            documents.push(
+                buildGeneratedBreakEvent(occurrence, allCourseIds, curriculumId),
+            );
             continue;
         }
 
@@ -866,6 +872,7 @@ export async function materializeCurriculumEvents(
                 courseIds,
                 moduleHiveIdsByEvent.get(occurrence.ganttEventId) ?? [],
                 hiveModuleSubjectById,
+                curriculumId,
             ),
         );
     }
