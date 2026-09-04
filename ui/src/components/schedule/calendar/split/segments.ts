@@ -1,10 +1,11 @@
-import dayjs, { Dayjs } from "dayjs";
+import { Dayjs } from "dayjs";
 
 import {
     BreakWindow,
     collectBreakWindows,
     splitEventAcrossBreaks,
 } from "@/api-shared/break-windows";
+import { APP_TIMEZONE, dayjs } from "@/api-shared/dayjs-setup";
 import { Event, EventId } from "@/components/schedule/types/event";
 
 /**
@@ -77,7 +78,8 @@ export function buildEventSegments(
     const segments: Array<EventSegment> = [];
 
     for (const event of events) {
-        const pieces = splitEventAcrossBreaks(event, windows);
+        const pieces = splitEventAcrossBreaks(event, windows)
+            .flatMap((piece) => splitAtDayBoundaries(piece.start, piece.end));
         for (const [ index, piece ] of pieces.entries()) {
             segments.push({
                 key: segmentKey(event.id, index),
@@ -91,6 +93,47 @@ export function buildEventSegments(
     }
 
     return segments;
+}
+
+/**
+ * react-big-calendar lays each event out in exactly one day column; a piece
+ * whose wall-clock span crosses local midnight has no such column and gets
+ * silently dropped from the grid (#650). The drag handler in CalendarView
+ * refuses to *create* such a span, but nothing stops one from already
+ * existing in stored data (a pre-fix event, an import, a direct API write) —
+ * so this is the last line of defence: any piece still crossing a day
+ * boundary is cut at midnight into day-local pieces before it ever reaches
+ * react-big-calendar, so the worst case is a visibly truncated block, never
+ * an invisible one.
+ */
+export function splitAtDayBoundaries(
+    start: number,
+    end: number,
+): Array<{ start: Date; end: Date }> {
+    const chunks: Array<{ start: Date; end: Date }> = [];
+    let cursor = dayjs(start).tz(APP_TIMEZONE);
+    const finish = dayjs(end).tz(APP_TIMEZONE);
+
+    while (cursor.isBefore(finish)) {
+        const dayEnd = cursor.endOf("day");
+        const chunkEnd = dayEnd.isBefore(finish) ? dayEnd : finish;
+        chunks.push({ start: cursor.toDate(), end: chunkEnd.toDate() });
+        cursor = dayEnd.add(1, "millisecond");
+    }
+
+    return chunks.length > 0
+        ? chunks
+        : [ { start: new Date(start), end: new Date(end) } ];
+}
+
+/**
+ * Would a span starting at `start` and ending at `end` be drawn across more
+ * than one local calendar day? Used to reject a drag/resize *before* it's
+ * committed (#650), so bad spans are refused at the edit rather than merely
+ * tolerated by the day-split fallback above.
+ */
+export function spansMultipleDays(start: number, end: number): boolean {
+    return splitAtDayBoundaries(start, end).length > 1;
 }
 
 export function segmentKey(eventId: EventId, index: number): string {

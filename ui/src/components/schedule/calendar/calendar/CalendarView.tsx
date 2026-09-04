@@ -41,6 +41,7 @@ import {
     EventSegment,
     isFirstSegment,
     isLastSegment,
+    spansMultipleDays,
 } from "@/components/schedule/calendar/split/segments";
 import {
     ActiveDrag,
@@ -345,6 +346,21 @@ export function CalendarView({
             interaction: "move" | "resize",
         ) => {
             setActiveDrag(null);
+
+            // An event's drawn end (breaks skipped over don't count as
+            // duration, but they do eat wall-clock time) must land on the
+            // same calendar day it started, or its segments can never be
+            // laid out (#650 - the "vanishes after being dragged" bug).
+            const windows = breakWindowsFor(args.event.event, breakWindows);
+            const displayEndMs = layoutEnd(
+                layoutAroundWindows(
+                    startMs,
+                    Math.max(MIN_WORKING_MS, workingMs),
+                    windows,
+                ),
+            );
+            if (spansMultipleDays(startMs, displayEndMs)) return;
+
             onEventDrop(
                 {
                     ...args,
@@ -355,7 +371,7 @@ export function CalendarView({
                 interaction,
             );
         },
-        [onEventDrop],
+        [onEventDrop, breakWindows],
     );
 
     const handleSegmentDrop = useCallback(
