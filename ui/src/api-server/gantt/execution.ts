@@ -2,10 +2,14 @@ import { DbIterations } from "@/api-server/db-iterations";
 import { DbSettings } from "@/api-server/db-settings";
 import {
     buildCutPlanInput,
+    CutConstraintRow,
     CutExceptionRow,
     CutMappingRow,
     indexCurriculumEvents,
+    prayerWindowsFromSettings,
+    toGanttConstraints,
 } from "@/api-server/gantt/cut";
+import { getConstraintsForCurriculum } from "@/api-server/gantt/db-constraints";
 import { DbCurriculum } from "@/api-server/gantt/db-curriculum";
 import { getModuleDayMappingsForCurriculum } from "@/api-server/gantt/db-mappings";
 import { listRecurrenceExceptionsForCurriculum } from "@/api-server/gantt/db-recurrence-exceptions";
@@ -21,6 +25,8 @@ import {
     GanttCurriculumId,
     GanttEventId,
 } from "@/api-shared/types/gantt/models";
+import { MEAL_TIMES_SETTING_KEY, MealSettings } from "@/api-shared/types/settings/meal";
+import { PRAYER_TIMES_SETTING_KEY, PrayerSettings } from "@/api-shared/types/settings/prayer";
 import {
     DEFAULT_DAY_START_TIME,
     DEFAULT_WEEKEND_HOME_START_TIME,
@@ -71,13 +77,23 @@ export async function getCurriculumExecution(
         .toArray();
     if (cutEvents.length === 0) return { events: {} };
 
-    const [curriculum, mappings, exceptions, scheduleSetting] =
-        await Promise.all([
-            DbCurriculum.getItem(curriculumId),
-            getModuleDayMappingsForCurriculum(curriculumId, {}),
-            listRecurrenceExceptionsForCurriculum(curriculumId),
-            DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, controller),
-        ]);
+    const [
+        curriculum,
+        mappings,
+        exceptions,
+        constraints,
+        scheduleSetting,
+        mealSetting,
+        prayerSetting,
+    ] = await Promise.all([
+        DbCurriculum.getItem(curriculumId),
+        getModuleDayMappingsForCurriculum(curriculumId, {}),
+        listRecurrenceExceptionsForCurriculum(curriculumId),
+        getConstraintsForCurriculum(curriculumId),
+        DbSettings.get(SCHEDULE_SETTINGS_KEY, undefined, controller),
+        DbSettings.get(MEAL_TIMES_SETTING_KEY, undefined, controller),
+        DbSettings.get(PRAYER_TIMES_SETTING_KEY, undefined, controller),
+    ]);
     const dayStartTime =
         (scheduleSetting as null | ScheduleSettings)?.dayStartTime ??
         DEFAULT_DAY_START_TIME;
@@ -91,8 +107,36 @@ export async function getCurriculumExecution(
         exceptions: exceptions as Array<CutExceptionRow>,
         dayStartTime,
         weekendHomeStartTime,
+        breakfastTime: (mealSetting as MealSettings | null)?.breakfastTime,
+        lunchTime: (mealSetting as MealSettings | null)?.lunchTime,
+        dinnerTime: (mealSetting as MealSettings | null)?.dinnerTime,
+        prayerTimes: prayerWindowsFromSettings(
+            prayerSetting as null | PrayerSettings,
+        ),
+        constraints: toGanttConstraints(constraints as Array<CutConstraintRow>),
     });
-    const plan = planCut(planInput);
+
+    // Tolerant like the preview, unlike the real cut: a single unmapped event
+    // or unsatisfied recurrence must not blank out the planned side for
+    // every *other* event in the curriculum (#…) — skip just the offending
+    // event and re-plan. Only a missing start date is fatal (nothing is
+    // datable at all).
+    let plan = planCut(planInput);
+    if (!plan.ok) {
+        const skippedEventIds = new Set(
+            plan.errors
+                .filter((error) => "eventId" in error)
+                .map((error) => error.eventId),
+        );
+        plan = skippedEventIds.size > 0
+            ? planCut({
+                ...planInput,
+                events: planInput.events.filter(
+                    (event) => !skippedEventIds.has(event.id),
+                ),
+            })
+            : plan;
+    }
     const plannedOccurrences = plan.ok ? plan.occurrences : [];
 
     const { eventsById } = indexCurriculumEvents(curriculum);

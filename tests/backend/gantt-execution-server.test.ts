@@ -268,6 +268,37 @@ describe("getCurriculumExecution — plan divergence after the cut", () => {
         expect(execution.totals.occurrencesPlanned).toBe(0);
     });
 
+    it("still plans the mapped events when one event in the curriculum is unmapped (#…)", async () => {
+        // Regression: getCurriculumExecution used to call planCut without
+        // `force`, so ANY single unmapped/unsatisfied event failed the whole
+        // plan and blanked "משך מתוכנן" for every event in the curriculum —
+        // not just the offending one. It must now skip just e2 and still plan
+        // e1, like previewCurriculumCut already does.
+        vi.mocked(DbCurriculum.getItem).mockResolvedValue(
+            makeCurriculum([makeEvent({ id: "e1" }), makeEvent({ id: "e2" })]),
+        );
+        // Only e1 is mapped to a day; e2 is left unmapped.
+        vi.mocked(getModuleDayMappingsForCurriculum).mockResolvedValue([
+            { eventId: "e1", dayId: "w0d0", sortOrder: 0 },
+        ]);
+        findToArray.mockResolvedValue([
+            cutDoc(),
+            cutDoc({ id: "sched-e2", ganttEventId: "e2" }),
+        ]);
+
+        const result = await getCurriculumExecution("c1");
+
+        const e1 = result.events.e1;
+        expect(e1.occurrences[0].planned).not.toBeNull();
+        expect(e1.drifted).toBe(false);
+        expect(e1.totals.occurrencesPlanned).toBe(1);
+
+        // e2 stays visible as a cut event, just without a planned side.
+        const e2 = result.events.e2;
+        expect(e2.occurrences[0].planned).toBeNull();
+        expect(e2.occurrences[0].actual).not.toBeNull();
+    });
+
     it("groups cut events under a gantt event that no longer exists", async () => {
         findToArray.mockResolvedValue([
             cutDoc({ ganttEventId: "deleted-gantt-event" }),
