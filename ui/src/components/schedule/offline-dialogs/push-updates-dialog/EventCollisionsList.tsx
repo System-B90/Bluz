@@ -31,11 +31,13 @@ export function EventCollisionsList({
 
     const onSelectAllClick = useCallback(() => {
         setSelected((oldSelected) => {
-            if (oldSelected.length === 0) {
-                return Object.keys(collisionStates);
-            } else {
-                return [];
-            }
+            // A partial selection means "select all", matching the
+            // indeterminate checkbox the header renders for it. Treating
+            // anything non-empty as "clear all" made the first click on a
+            // dialog that opens pre-selected wipe the selection, and
+            // submitting then reverted every local edit (#630).
+            const allIds = Object.keys(collisionStates);
+            return oldSelected.length === allIds.length ? [] : allIds;
         });
     }, [collisionStates, setSelected]);
 

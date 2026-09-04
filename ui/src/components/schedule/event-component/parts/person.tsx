@@ -99,7 +99,15 @@ export function PersonChip({
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id: eventPersonDraggableId(event.id, personId),
         disabled: event.locked,
-        data: { kind: "event-person", personId, eventId: event.id },
+        // The field the chip came from travels with it so a move to another
+        // event keeps the person's role instead of demoting a lecturer to an
+        // instructor (#628).
+        data: {
+            kind: "event-person",
+            personId,
+            eventId: event.id,
+            field: isLecturer ? "lecturers" : "instructors",
+        },
     });
 
     return (
@@ -193,9 +201,13 @@ export function InstructorsList({
             gap={0.4}
             {...props}
         >
+            {/* The caption counts the chips actually rendered:
+                `presentInstructors` merges lecturers in and drops duplicates,
+                so the raw `instructors` length pluralized the wrong list
+                (#624). */}
             {showCaption ? (
                 <Tooltip
-                    title={event.instructors.length === 1 ? "מבוזר" : "מבוזרים"}
+                    title={presentInstructors.length === 1 ? "מבוזר" : "מבוזרים"}
                 >
                     <PersonOutlinedIcon
                         sx={{ fontSize: "0.85rem", opacity: 0.6 }}

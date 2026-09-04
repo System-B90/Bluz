@@ -51,18 +51,25 @@ export function RoomField({
         [],
     );
 
-    const handleDelete = useCallback((roomIdToDelete: ResolvableRoom) => {
-        setEncodedSelectedRoomIds(
-            (p) =>
-                p.filter(
-                    (id) =>
-                        !areRoomsEqual(
-                            JSON.parse(id) as ResolvableRoom,
-                            roomIdToDelete,
-                        ),
-                ) ?? [],
-        );
-    }, []);
+    const handleDelete = useCallback(
+        (roomIdToDelete: ResolvableRoom) => {
+            const remaining = encodedSelectedRoomIds.filter(
+                (id) =>
+                    !areRoomsEqual(
+                        JSON.parse(id) as ResolvableRoom,
+                        roomIdToDelete,
+                    ),
+            );
+            setEncodedSelectedRoomIds(remaining);
+            // The chip's own onMouseDown stops the menu from opening, so
+            // onClose never fires and the removal reached nothing but local
+            // state — the room was still saved (#616).
+            onBlurCallback({
+                rooms: remaining.map((v) => JSON.parse(v) as ResolvableRoom),
+            });
+        },
+        [encodedSelectedRoomIds, onBlurCallback],
+    );
 
     const onClose = useCallback(() => {
         onBlurCallback({

@@ -25,6 +25,7 @@ import { useHiveUsers } from "@/components/base/HiveUsersProvider";
 import { HiveAvatar } from "@/components/header/HiveAvatarImage";
 import {
     findPersonConflicts,
+    planPersonMove,
     targetFieldFor,
     withPersonAdded,
     withPersonRemoved,
@@ -33,6 +34,7 @@ import {
     asInstructorDragData,
     EventDropData,
     InstructorDragData,
+    PersonField,
     UNASSIGN_DROPPABLE_ID,
 } from "@/components/schedule/calendar/instructor-dnd/types";
 import { Event, PersonId } from "@/components/schedule/types/event";
@@ -122,15 +124,32 @@ export function InstructorDndProvider({
     }, []);
 
     const assignToEvent = useCallback(
-        (target: Event, personId: PersonId, withModifier: boolean) => {
-            const field = targetFieldFor(target, withModifier);
+        (
+            target: Event,
+            personId: PersonId,
+            withModifier: boolean,
+            sourceField?: PersonField,
+        ): boolean => {
+            const field = targetFieldFor(target, withModifier, sourceField);
+            // Only `lecturers` can hold an outsider. Dropping one where it
+            // cannot be written used to look like "already assigned" and, on a
+            // move, left the person removed from the source and added nowhere
+            // (#625).
+            if (field === "instructors" && typeof personId !== "number") {
+                enqueueSnackbar(
+                    `${personLabel(personId, getName)} יכול לשמש כמרצה בלבד, ואירוע מסוג ${target.type} אינו נושא מרצים.`,
+                    { variant: "warning" },
+                );
+                return false;
+            }
+
             const updated = withPersonAdded(target, personId, field);
             if (!updated) {
                 enqueueSnackbar(
                     `${personLabel(personId, getName)} כבר משובץ לאירוע זה.`,
                     { variant: "info" },
                 );
-                return;
+                return false;
             }
 
             const conflicts = findPersonConflicts(events, personId, target);
@@ -144,6 +163,8 @@ export function InstructorDndProvider({
                     { variant: "warning" },
                 );
             }
+
+            return true;
         },
         [events, getName, handleSaveEvent],
     );
@@ -187,15 +208,44 @@ export function InstructorDndProvider({
                 return;
             }
 
-            if (data.kind === "event-person") {
-                // Chip dragged from one event onto another: move, don't copy.
-                if (data.eventId === target.id) return;
-                unassignFromEvent(data.eventId, data.personId);
+            if (data.kind !== "event-person") {
+                assignToEvent(target, data.personId, withModifier);
+                return;
             }
 
-            assignToEvent(target, data.personId, withModifier);
+            // Chip dragged from one event onto another: move, don't copy.
+            if (data.eventId === target.id) return;
+
+            // Both halves of the move have to be possible before either runs:
+            // a locked source would otherwise keep the person while the target
+            // gained them (#626), and a target that cannot hold them would
+            // leave them removed from the source and added nowhere (#625).
+            const source = events.find(
+                (candidate) => candidate.id === data.eventId,
+            );
+            const plan = planPersonMove(
+                source,
+                target,
+                data.personId,
+                withModifier,
+                data.field,
+            );
+            if (!plan.allowed) {
+                enqueueSnackbar(
+                    plan.reason === "locked-source"
+                        ? "אירוע המקור נעול."
+                        : `${personLabel(data.personId, getName)} יכול לשמש כמרצה בלבד, ואירוע מסוג ${target.type} אינו נושא מרצים.`,
+                    { variant: "warning" },
+                );
+                return;
+            }
+
+            if (assignToEvent(target, data.personId, withModifier, data.field))
+            {
+                unassignFromEvent(data.eventId, data.personId);
+            }
         },
-        [assignToEvent, modifierHeld, unassignFromEvent],
+        [assignToEvent, events, getName, modifierHeld, unassignFromEvent],
     );
 
     const handleDragCancel = useCallback(() => {

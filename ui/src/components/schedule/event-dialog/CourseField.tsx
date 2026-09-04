@@ -46,11 +46,19 @@ export function CourseField({
         [],
     );
 
-    const handleDelete = useCallback((courseIdToDelete: CourseId) => {
-        setCurrentCourseIds(
-            (p) => p.filter((id) => id !== courseIdToDelete) ?? [],
-        );
-    }, []);
+    const handleDelete = useCallback(
+        (courseIdToDelete: CourseId) => {
+            const remaining = currentCourseIds.filter(
+                (id) => id !== courseIdToDelete,
+            );
+            setCurrentCourseIds(remaining);
+            // The chip's own onMouseDown stops the menu from opening, so
+            // onClose never fires and the removal reached nothing but local
+            // state — the course was still saved (#615).
+            onBlurCallback({ courses: remaining });
+        },
+        [currentCourseIds, onBlurCallback],
+    );
 
     const onClose = useCallback(() => {
         onBlurCallback({ courses: currentCourseIds });

@@ -104,8 +104,11 @@ export function RoomComponent({
             gap={0.4}
             {...props}
         >
+            {/* The caption counts the rooms actually rendered, not the raw
+                ids: an id that fails to resolve is filtered out above, so the
+                caption read "חדרים" beside a single chip (#624). */}
             {showCaption !== false && (
-                <Tooltip title={roomIds.length === 1 ? "חדר" : "חדרים"}>
+                <Tooltip title={rooms.length === 1 ? "חדר" : "חדרים"}>
                     <MeetingRoomIcon
                         sx={{ fontSize: "0.85rem", opacity: 0.6 }}
                     />

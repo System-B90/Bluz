@@ -6,20 +6,71 @@ import {
     PersonId,
 } from "@/components/schedule/types/event";
 
+/** The placeholder id standing for "somebody external", not a named person. */
+const GENERIC_OUTSIDER = "איש חוץ";
+
 /**
  * Resolves which person field a drop writes into.
  * @param event The drop target event.
  * @param withModifier Whether Shift was held at drop time.
- * @returns `lecturers` only when the modifier is held and the event type
- * actually carries lecturers; `instructors` otherwise.
+ * @param sourceField The field the person was dragged out of, when the drag
+ * started on a chip already sitting in an event. A move keeps the person's
+ * role: dragging a lecturer without Shift used to silently demote them to an
+ * instructor on the target (#628).
+ * @returns `lecturers` when the modifier is held or the person already was a
+ * lecturer, and the event type actually carries lecturers; `instructors`
+ * otherwise.
  */
 export function targetFieldFor(
     event: Event,
     withModifier: boolean,
+    sourceField?: PersonField,
 ): PersonField {
-    return withModifier && eventHasLecturers(event.type)
+    const wantsLecturers = withModifier || sourceField === "lecturers";
+    return wantsLecturers && eventHasLecturers(event.type)
         ? "lecturers"
         : "instructors";
+}
+
+/**
+ * Why a chip dragged from one event to another cannot make the trip, or the
+ * field it lands in when it can.
+ *
+ * A move is two writes, and both have to be possible before either happens:
+ * the source giving the person up, and the target taking them. Deciding that
+ * up front is what stops a person being dropped from the source and added
+ * nowhere (#625), or added to the target while a locked source keeps them
+ * (#626).
+ */
+export type PersonMovePlan =
+    | { allowed: false; reason: "locked-source" | "target-cannot-hold" }
+    | { allowed: true; field: PersonField };
+
+/**
+ * Decides whether a person can move between two events, and into which field.
+ * @param source The event the chip was dragged out of.
+ * @param target The event it was dropped on.
+ * @param personId The person being moved.
+ * @param withModifier Whether Shift was held at drop time.
+ * @param sourceField The field the chip sat in on the source event.
+ */
+export function planPersonMove(
+    source: Event | undefined,
+    target: Event,
+    personId: PersonId,
+    withModifier: boolean,
+    sourceField?: PersonField,
+): PersonMovePlan {
+    if (source?.locked) return { allowed: false, reason: "locked-source" };
+
+    const field = targetFieldFor(target, withModifier, sourceField);
+    // `instructors` holds Hive ids only, so an outsider dropped there has
+    // nowhere to go on the target.
+    if (field === "instructors" && typeof personId !== "number") {
+        return { allowed: false, reason: "target-cannot-hold" };
+    }
+
+    return { allowed: true, field };
 }
 
 /**
@@ -84,12 +135,22 @@ export function findPersonConflicts(
     personId: PersonId,
     target: Event,
 ): Array<Event> {
-    if (typeof personId !== "number") return [];
+    // "איש חוץ" is a generic placeholder rather than one person, so two events
+    // carrying it are not the same body double-booked.
+    if (personId === GENERIC_OUTSIDER) return [];
+
+    // Named outsiders live in `lecturers` only, so they need their own
+    // presence test — bailing on every non-number meant they never produced an
+    // overlap warning at all (#627).
+    const isBusy = (candidate: Event): boolean =>
+        typeof personId === "number"
+            ? isInstructorBusy(personId, candidate)
+            : (candidate.lecturers?.includes(personId) ?? false);
 
     return events.filter(
         (candidate) =>
             candidate.id !== target.id &&
-            isInstructorBusy(personId, candidate) &&
+            isBusy(candidate) &&
             candidate.startTime.isBefore(target.endTime) &&
             target.startTime.isBefore(candidate.endTime),
     );

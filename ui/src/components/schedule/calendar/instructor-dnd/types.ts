@@ -23,6 +23,11 @@ export type EventPersonDragData = {
     kind: "event-person";
     personId: PersonId;
     eventId: EventId;
+    /**
+     * The field the chip currently sits in. A move onto another event keeps
+     * this role rather than defaulting to `instructors` (#628).
+     */
+    field: PersonField;
 };
 
 export type InstructorDragData = EventPersonDragData | PaletteDragData;
