@@ -29,6 +29,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
     isSpillover = false,
     isRecurrence = false,
     isSkipped = false,
+    disableDrag = false,
 }) => {
     const theme = useTheme();
     const state = useCurriculumState();
@@ -48,12 +49,15 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
             id,
             // The reminder marker is a pure display cue with no day of its own —
             // never draggable. Occurrence blocks *are* draggable (drag-to-remove).
-            disabled: (isRecurrence && !isOccurrence) || isSkippedOccurrence,
+            disabled:
+                (isRecurrence && !isOccurrence) ||
+                isSkippedOccurrence ||
+                disableDrag,
             data: payload,
         });
 
     const dragProps =
-        (isRecurrence && !isOccurrence) || isSkippedOccurrence
+        (isRecurrence && !isOccurrence) || isSkippedOccurrence || disableDrag
             ? {}
             : { ...listeners, ...attributes };
 
@@ -163,7 +167,7 @@ const GanttBlockComponent: React.FC<GanttBlockProps> = ({
                                 : "none",
                 cursor: isSkippedOccurrence
                     ? "pointer"
-                    : isRecurrence && !isOccurrence
+                    : (isRecurrence && !isOccurrence) || disableDrag
                         ? "default"
                         : isDragging
                             ? "grabbing"

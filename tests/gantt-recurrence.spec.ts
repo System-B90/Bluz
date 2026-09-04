@@ -462,17 +462,7 @@ test.describe("Gantt Recurring Events (#111)", () => {
         expect(moduleBlockBox!.width).toBeGreaterThan(eventBlockBox!.width);
     });
 
-    // Skipped: asserts behaviour the product does not implement and #445 never
-    // asked for. #445 is only "clicking a week header zooms into that week's
-    // day view", and that part works -- the failure screenshot shows day view
-    // on שבוע 2 correctly. What fails is the second half of this test's
-    // premise, that the sidebar then drops rows for events mapped to other
-    // weeks. `zoomedWeekId` reaches GanttHeader, GanttToolbar and GanttView,
-    // and none of them filter rows by it: the row stays and simply has no
-    // block in the zoomed week. Whether it *should* disappear is a product
-    // decision, not a test fix -- see #640. Weakening the assertion to match
-    // current behaviour would bury the question rather than answer it.
-    test.skip("day-view sidebar hides events mapped outside the zoomed week (#445)", async ({
+    test("day-view sidebar hides events mapped outside the zoomed week (#445)", async ({
         page,
     }) => {
         const lectureTitle = await createModuleWithEvents(page);
@@ -513,5 +503,46 @@ test.describe("Gantt Recurring Events (#111)", () => {
         await expect(
             page.locator('[id^="gantt-row-event-"]').filter({ hasText: lectureTitle }),
         ).toHaveCount(0);
+    });
+
+    test("module blocks are not draggable in zoomed day view, only event blocks are (#640)", async ({
+        page,
+    }) => {
+        const lectureTitle = await createModuleWithEvents(page);
+        const eventDialog = await openEventEditDialog(page, lectureTitle);
+        await closeEventAndModuleDialogs(page, eventDialog);
+
+        await page.getByRole("tab", { name: "רצף זמן" }).click();
+        await page.waitForTimeout(500);
+
+        const lectureRow = await getTimelineEventRow(page, lectureTitle);
+        await mapEventToFirstWeek(page, lectureRow);
+
+        await zoomIntoWeek(page, 0);
+
+        const moduleBlock = page.locator('[id^="block-module-"]').first();
+        await expect(moduleBlock).toBeVisible({ timeout: 10_000 });
+        await expect(moduleBlock).toHaveCSS("cursor", "default");
+
+        const boxBefore = await moduleBlock.boundingBox();
+        if (!boxBefore) throw new Error("Module block not found");
+        await page.mouse.move(
+            boxBefore.x + boxBefore.width / 2,
+            boxBefore.y + boxBefore.height / 2,
+        );
+        await page.mouse.down();
+        await page.mouse.move(boxBefore.x + boxBefore.width / 2 + 30, boxBefore.y, {
+            steps: 8,
+        });
+        await page.mouse.up();
+        await page.waitForTimeout(300);
+
+        const boxAfter = await moduleBlock.boundingBox();
+        expect(boxAfter?.x).toBeCloseTo(boxBefore.x, 0);
+
+        // The event block in the same zoomed week stays draggable.
+        const eventBlock = page.locator('[id^="block-event-"]').first();
+        await expect(eventBlock).toBeVisible({ timeout: 10_000 });
+        await expect(eventBlock).not.toHaveCSS("cursor", "default");
     });
 });

@@ -260,6 +260,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
                         blockTimeLabel={isSpanStart ? timeLabel : undefined}
                         blockTitle={ganttModule?.title}
                         dayId={dayId}
+                        disableDrag={singleWeekDayZoom}
                         dropId={`drop-module-${moduleId}-${dayId}`}
                         elementId={
                             isSpanStart ? `block-module-${moduleId}` : undefined
@@ -289,6 +290,7 @@ const GanttModuleRowComponent: React.FC<GanttModuleRowProps> = ({
         spanLength,
         myViolations,
         timeLabel,
+        singleWeekDayZoom,
     ]);
 
     return (

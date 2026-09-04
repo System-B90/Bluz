@@ -142,6 +142,8 @@ export type GanttBlockProps = {
      * ghost so the gap is visible, and restored on double-click (#469).
      */
     isSkipped?: boolean;
+    /** Zoomed single-week day view: module blocks are pinned, not draggable (#640). */
+    disableDrag?: boolean;
 };
 
 export type GanttCellProps = {
@@ -168,6 +170,8 @@ export type GanttCellProps = {
     isRecurrence?: boolean;
     /** Skipped recurrence occurrence — a restorable ghost block (#469). */
     isSkipped?: boolean;
+    /** Zoomed single-week day view: module blocks are pinned, not draggable (#640). */
+    disableDrag?: boolean;
 };
 
 export type GanttModuleRowProps = {

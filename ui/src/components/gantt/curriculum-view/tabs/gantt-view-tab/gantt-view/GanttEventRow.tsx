@@ -290,7 +290,13 @@ const GanttEventRowComponent: React.FC<GanttEventRowProps> = ({
         weekIndexByDayId,
     ]);
 
-    if (!event) return null;
+    // Zoomed single-week day view: rows for events with no occurrence in that
+    // week are dropped rather than shown empty (#640).
+    const hasOccurrenceInZoomedWeek =
+        !singleWeekDayZoom ||
+        cells.some((cell) => (cell.props as { hasBlock?: boolean }).hasBlock);
+
+    if (!event || !hasOccurrenceInZoomedWeek) return null;
 
     return (
         <TableRow
