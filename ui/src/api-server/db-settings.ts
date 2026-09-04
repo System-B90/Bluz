@@ -45,19 +45,33 @@ async function setDbSetting(
     options?: UpdateOptions,
     controller: DatabaseController = databaseController,
 ) {
-    await controller.settings.updateOne(
+    const result = await controller.settings.updateOne(
         { key: name },
         { $set: { value: setting } },
         options,
     );
+
+    // Without upsert, a write that matches nothing silently persists
+    // nothing — callers must not read this as success (#661).
+    if (result?.matchedCount === 0 && result?.upsertedCount === 0) {
+        throw new Error(
+            `setDbSetting(${name}): no document matched and no upsert occurred`,
+        );
+    }
 
     SendServerRequestToSessionServer(MessageTypes.SETTINGS_UPDATE, {
         settings: { [name]: setting },
     } as any);
 }
 
-async function initDbSettings() {
-    const prayerSetting = await getDbSetting(PRAYER_TIMES_SETTING_KEY);
+async function initDbSettings(
+    controller: DatabaseController = databaseController,
+) {
+    const prayerSetting = await getDbSetting(
+        PRAYER_TIMES_SETTING_KEY,
+        undefined,
+        controller,
+    );
     if (prayerSetting === null) {
         await setDbSetting(
             PRAYER_TIMES_SETTING_KEY,
@@ -67,10 +81,15 @@ async function initDbSettings() {
                 shacharit: new Date(1970, 0, 1, 6, 0, 0, 0),
             } as Setting,
             { upsert: true },
+            controller,
         );
     }
 
-    const scheduleSetting = await getDbSetting(SCHEDULE_SETTINGS_KEY);
+    const scheduleSetting = await getDbSetting(
+        SCHEDULE_SETTINGS_KEY,
+        undefined,
+        controller,
+    );
     if (scheduleSetting === null) {
         await setDbSetting(
             SCHEDULE_SETTINGS_KEY,
@@ -81,10 +100,15 @@ async function initDbSettings() {
                 calendarDayEndTime: DEFAULT_CALENDAR_DAY_END_TIME,
             } as Setting,
             { upsert: true },
+            controller,
         );
     }
 
-    const mealSetting = await getDbSetting(MEAL_TIMES_SETTING_KEY);
+    const mealSetting = await getDbSetting(
+        MEAL_TIMES_SETTING_KEY,
+        undefined,
+        controller,
+    );
     if (mealSetting === null) {
         await setDbSetting(
             MEAL_TIMES_SETTING_KEY,
@@ -94,6 +118,7 @@ async function initDbSettings() {
                 dinnerTime: DEFAULT_DINNER_TIME,
             } as Setting,
             { upsert: true },
+            controller,
         );
     }
 }

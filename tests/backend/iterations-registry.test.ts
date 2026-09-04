@@ -10,6 +10,7 @@ const {
     getDatabaseController,
     iterations,
     setCurrentIterationDbName,
+    settingsStore,
     transaction,
 } = vi.hoisted(
     () => {
@@ -79,11 +80,33 @@ const {
         // the delete guard counts an iteration's own events, so both need a
         // real (if tiny) events collection behind getDatabaseController.
         const events = new Map<string, Array<Doc>>();
+        // Per-database settings stores, keyed by `${dbName}:${settingKey}`.
+        // registerIteration seeds these via DbSettings.init (#661) — the fake
+        // needs a real settings collection so that call doesn't throw.
+        const settingsStore = new Map<string, Doc>();
         const getDatabaseController = vi.fn((name: string = "bluz") => ({
             dbName: name,
             events: {
                 findOne: async () => events.get(name)?.[0] ?? null,
                 countDocuments: async () => events.get(name)?.length ?? 0,
+            },
+            settings: {
+                findOne: async (filter: Doc) =>
+                    settingsStore.get(`${name}:${filter.key}`) ?? null,
+                updateOne: async (filter: Doc, update: Doc, opts?: Doc) => {
+                    const storeKey = `${name}:${filter.key}`;
+                    const existing = settingsStore.get(storeKey);
+                    if (!existing && !opts?.upsert) {
+                        return { matchedCount: 0, upsertedCount: 0 };
+                    }
+                    settingsStore.set(storeKey, {
+                        key: filter.key,
+                        ...(update.$set ?? {}),
+                    });
+                    return existing
+                        ? { matchedCount: 1, upsertedCount: 0 }
+                        : { matchedCount: 0, upsertedCount: 1 };
+                },
             },
         }));
 
@@ -94,6 +117,7 @@ const {
             getDatabaseController,
             iterations,
             setCurrentIterationDbName: vi.fn(),
+            settingsStore,
             transaction,
         };
     },
@@ -106,12 +130,20 @@ vi.mock("@/api-server/mongo-db-controller", () => ({
     setCurrentIterationDbName,
 }));
 
+// registerIteration now calls DbSettings.init (#661), which notifies the
+// session server on every seeded setting — irrelevant to these tests and
+// otherwise throws for lack of WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY.
+vi.mock("@/api-server/web-socket-utils", () => ({
+    SendServerRequestToSessionServer: vi.fn(),
+}));
+
 import { DbIterations } from "@/api-server/db-iterations";
 import { ClientApiError } from "@/api-shared/errors";
 
 beforeEach(() => {
     docs.length = 0;
     events.clear();
+    settingsStore.clear();
     transaction.error = null;
     // Default to an install that predates the registry: the `bluz` database
     // already holds calendar data, so the migration seed applies.
@@ -189,6 +221,19 @@ describe("DbIterations.register", () => {
                 endDate: "2025-09-05",
             }),
         ).rejects.toBeInstanceOf(ClientApiError);
+    });
+
+    it("seeds schedule/meal/prayer settings into the new iteration's own db (#661)", async () => {
+        await DbIterations.ensure();
+        await DbIterations.register({ id: "2026b", label: "B" });
+
+        expect(settingsStore.get("bluz_2026b:mealTimes")).toMatchObject({
+            value: { breakfastTime: "07:00", lunchTime: "13:00", dinnerTime: "19:00" },
+        });
+        expect(settingsStore.get("bluz_2026b:schedule")).toBeTruthy();
+        expect(settingsStore.get("bluz_2026b:prayerTimes")).toBeTruthy();
+        // Never touches the default/meta database's own settings.
+        expect(settingsStore.has("bluz:mealTimes")).toBe(false);
     });
 });
 

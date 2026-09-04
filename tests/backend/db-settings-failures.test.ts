@@ -129,13 +129,32 @@ describe("DbSettings - Failure Paths", () => {
             );
         });
 
-        it("sends websocket notification even if no documents matched", async () => {
+        it("throws instead of silently no-op'ing when nothing matched and no upsert happened (#661)", async () => {
             controller.settings.updateOne.mockResolvedValueOnce({
                 matchedCount: 0,
                 modifiedCount: 0,
+                upsertedCount: 0,
             });
 
-            await DbSettings.set("prayer_times", {}, {}, controller as unknown as DatabaseController);
+            await expect(
+                DbSettings.set("prayer_times", {}, {}, controller as unknown as DatabaseController)
+            ).rejects.toThrow(/no document matched/);
+
+            expect(SendServerRequestToSessionServer).not.toHaveBeenCalled();
+        });
+
+        it("does not throw when the write upserted a new document", async () => {
+            controller.settings.updateOne.mockResolvedValueOnce({
+                matchedCount: 0,
+                upsertedCount: 1,
+            });
+
+            await DbSettings.set(
+                "prayer_times",
+                {},
+                { upsert: true },
+                controller as unknown as DatabaseController
+            );
 
             expect(SendServerRequestToSessionServer).toHaveBeenCalled();
         });
@@ -212,6 +231,22 @@ describe("DbSettings - Failure Paths", () => {
             const [, , updateObj] = vi.mocked(singletonSettings.updateOne).mock
                 .calls[0];
             expect(updateObj).toHaveProperty("upsert", true);
+        });
+
+        it("seeds a caller-supplied controller instead of the singleton (#661)", async () => {
+            controller.settings.findOne.mockResolvedValue(null);
+            controller.settings.updateOne.mockResolvedValue({
+                matchedCount: 0,
+                upsertedCount: 1,
+            });
+
+            await DbSettings.init(controller as unknown as DatabaseController);
+
+            expect(controller.settings.findOne).toHaveBeenCalled();
+            expect(controller.settings.updateOne).toHaveBeenCalled();
+            // The singleton db must be left untouched.
+            expect(singletonSettings.findOne).not.toHaveBeenCalled();
+            expect(singletonSettings.updateOne).not.toHaveBeenCalled();
         });
     });
 

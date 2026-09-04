@@ -1,4 +1,5 @@
 import { isDuplicateKeyError } from "@/api-server/common";
+import { DbSettings } from "@/api-server/db-settings";
 import {
     DEFAULT_ITERATION_DB_NAME,
     getDatabaseController,
@@ -185,8 +186,10 @@ async function registerIteration(
         if (!isDuplicateKeyError(error)) throw error;
         throw new ClientApiError(`Iteration "${payload.id}" already exists!`);
     }
-    // Touch the new database so it shows up immediately.
-    getDatabaseController(iteration.dbName);
+    // Touch the new database so it shows up immediately, and seed its
+    // schedule/meal/prayer settings (#661) — without this the cut planner
+    // silently skips meal pinning for every iteration registered here.
+    await DbSettings.init(getDatabaseController(iteration.dbName));
     return iteration;
 }
 

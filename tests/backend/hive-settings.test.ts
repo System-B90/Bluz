@@ -197,13 +197,37 @@ describe("Settings API Route", () => {
         });
         const response = await SettingsRoute.POST(request, routeContext);
         expect(response.status).toBe(200);
+        // Must upsert (#661): a settings doc that was never seeded (e.g. a
+        // freshly registered iteration) must still be written, not silently
+        // dropped by an updateOne that matches nothing.
         expect(DbSettings.set).toHaveBeenCalledWith(
             "prayerTimes",
             payload,
-            undefined,
+            { upsert: true },
             expect.anything(),
         );
         expect(updatePrayerEvents).toHaveBeenCalled();
+    });
+
+    it("POST - upserts mealTimes even when no document exists yet (#661)", async () => {
+        const mealContext = { params: Promise.resolve({ slug: "mealTimes" }) };
+        const payload = {
+            breakfastTime: "07:00",
+            lunchTime: "13:00",
+            dinnerTime: "19:00",
+        };
+        const request = new NextRequest("http://localhost/api/settings/mealTimes", {
+            method: "POST",
+            body: JSON.stringify(payload),
+        });
+        const response = await SettingsRoute.POST(request, mealContext);
+        expect(response.status).toBe(200);
+        expect(DbSettings.set).toHaveBeenCalledWith(
+            "mealTimes",
+            payload,
+            { upsert: true },
+            expect.anything(),
+        );
     });
 });
 

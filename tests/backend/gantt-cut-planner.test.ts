@@ -248,6 +248,96 @@ describe("planCut", () => {
         );
     });
 
+    // #661: a curriculum cut against an iteration whose `mealTimes` setting
+    // was never seeded (registerIteration used to skip DbSettings.init)
+    // silently stops pinning meals — they fall through to plain stacking
+    // and land at a different clock time every day instead of 13:00/19:00.
+    // This documents that fallback so a future "fix" to the seeding gap
+    // doesn't accidentally get masked by the planner quietly doing the
+    // right thing anyway.
+    it("stacks lunch/dinner like any other event when their meal times are omitted", () => {
+        const lunch = makeEvent({
+            id: "lunch",
+            title: MEAL_EVENT_TITLES.lunchTime,
+            minimumDuration: 30,
+            allocatedDuration: 30,
+        });
+        const dinner = makeEvent({
+            id: "dinner",
+            title: MEAL_EVENT_TITLES.dinnerTime,
+            minimumDuration: 45,
+            allocatedDuration: 45,
+        });
+        const input = baseInput({
+            events: [ lunch, dinner ],
+            mappings: [
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
+                { eventId: "dinner", dayId: "w0d0", sortOrder: 1 },
+            ],
+            dayStartTime: "08:00",
+            // lunchTime / dinnerTime intentionally omitted — mirrors a null
+            // `mealTimes` setting from the server.
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        const lunchOcc = plan.occurrences.find((o) => o.ganttEventId === "lunch");
+        const dinnerOcc = plan.occurrences.find((o) => o.ganttEventId === "dinner");
+        // Stacked at the day's start, in mapping order — not 13:00/19:00.
+        expect(lunchOcc!.startTime.toISOString()).toBe(
+            venueTime("2024-01-07T08:00"),
+        );
+        expect(dinnerOcc!.startTime.toISOString()).toBe(
+            venueTime("2024-01-07T08:30"),
+        );
+    });
+
+    it("pins lunch and dinner to their configured clock time when both are supplied", () => {
+        const lunch = makeEvent({
+            id: "lunch",
+            title: MEAL_EVENT_TITLES.lunchTime,
+            minimumDuration: 30,
+            allocatedDuration: 30,
+        });
+        const dinner = makeEvent({
+            id: "dinner",
+            title: MEAL_EVENT_TITLES.dinnerTime,
+            minimumDuration: 45,
+            allocatedDuration: 45,
+        });
+        const other = makeEvent({
+            id: "other",
+            minimumDuration: 30,
+            allocatedDuration: 30,
+        });
+        const input = baseInput({
+            events: [ lunch, dinner, other ],
+            mappings: [
+                { eventId: "lunch", dayId: "w0d0", sortOrder: 0 },
+                { eventId: "dinner", dayId: "w0d0", sortOrder: 1 },
+                { eventId: "other", dayId: "w0d0", sortOrder: 2 },
+            ],
+            dayStartTime: "08:00",
+            lunchTime: "13:00",
+            dinnerTime: "19:00",
+        });
+
+        const plan = planCut(input);
+        expect(plan.ok).toBe(true);
+        if (!plan.ok) return;
+
+        const lunchOcc = plan.occurrences.find((o) => o.ganttEventId === "lunch");
+        const dinnerOcc = plan.occurrences.find((o) => o.ganttEventId === "dinner");
+        expect(lunchOcc!.startTime.toISOString()).toBe(
+            venueTime("2024-01-07T13:00"),
+        );
+        expect(dinnerOcc!.startTime.toISOString()).toBe(
+            venueTime("2024-01-07T19:00"),
+        );
+    });
+
     it("still bumps past the break when the event fits before midnight", () => {
         const lunch = makeEvent({
             id: "lunch",

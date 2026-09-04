@@ -64,7 +64,7 @@ export const POST: ServerApiSettingUpdate = withApi(
             await DbSettings.set(
                 slug as SettingName,
                 value,
-                undefined,
+                { upsert: true },
                 controller,
             );
 
@@ -76,7 +76,7 @@ export const POST: ServerApiSettingUpdate = withApi(
             await DbSettings.set(
                 slug as SettingName,
                 value,
-                undefined,
+                { upsert: true },
                 controller,
             );
         }
