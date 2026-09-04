@@ -134,9 +134,14 @@ PREVIOUS_VERSION="${BLUZ_VERSION:-}"
 # and defaulting to it made a bare `./update.sh` a no-op.
 if [ -z "${TARGET_VERSION}" ]; then
     log "resolving latest release from ${RELEASE_REPO}..."
+    # /releases/latest only ever returns the newest non-prerelease, so an
+    # rc.N series (marked prerelease on GitHub) is invisible to it and this
+    # falls back to whatever older stable tag came before the rc's. List all
+    # releases instead — GitHub returns them newest-first — and take the
+    # first tag, prerelease or not.
     if command -v curl &> /dev/null; then
         TARGET_VERSION="$(curl -fsSL --max-time 15 \
-            "https://api.github.com/repos/${RELEASE_REPO}/releases/latest" 2>/dev/null \
+            "https://api.github.com/repos/${RELEASE_REPO}/releases?per_page=1" 2>/dev/null \
             | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
             | head -n 1)" || TARGET_VERSION=""
     fi
