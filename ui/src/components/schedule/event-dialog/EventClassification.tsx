@@ -20,7 +20,8 @@ export function EventClassification({
 }: {
     event: Partial<Event>;
     onUpdate: (u: Partial<Event>) => void;
-}) {
+})
+{
     const isPrayer = event?.type === EventType.PRAYER;
     // Fake events aren't wired to Hive — hide subject/module/lesson (#102).
     const showHiveFields = !isPrayer && !event?.fake;
@@ -29,19 +30,19 @@ export function EventClassification({
         <Box
             alignItems="flex-start"
             display="flex"
-            gap={2}
+            gap={ 2 }
             justifyContent="flex-start"
             width="100%"
         >
             <EventTypeField
-                event={event}
-                onBlurCallback={onUpdate}
-                sx={{ width: "15%" }}
+                event={ event }
+                onBlurCallback={ onUpdate }
+                sx={ { width: "15%" } }
             />
 
-            {/* Prayer specific field with transition */}
+            {/* Prayer specific field with transition */ }
             <Box
-                sx={{
+                sx={ {
                     width: isPrayer ? "25%" : 0,
                     opacity: isPrayer ? 1 : 0,
                     transform: isPrayer ? "scale(1)" : "scale(0.95)",
@@ -54,18 +55,18 @@ export function EventClassification({
                     mr: isPrayer ? 0 : -2,
                     pt: 1.5,
                     mt: -1.5,
-                }}
+                } }
             >
                 <PrayerTypeField
-                    event={event as PrayerEvent}
-                    onEventChange={onUpdate}
-                    sx={{ width: "100%" }}
+                    event={ event as PrayerEvent }
+                    onEventChange={ onUpdate }
+                    sx={ { width: "100%" } }
                 />
             </Box>
 
-            {/* Subject, Module and Lesson fields with transition */}
+            {/* Subject, Module and Lesson fields with transition */ }
             <Box
-                sx={{
+                sx={ {
                     width: showHiveFields ? "52%" : 0,
                     opacity: showHiveFields ? 1 : 0,
                     transform: showHiveFields ? "scale(1)" : "scale(0.95)",
@@ -79,37 +80,37 @@ export function EventClassification({
                     mr: showHiveFields ? 0 : -2,
                     pt: 1.5,
                     mt: -1.5,
-                }}
+                } }
             >
                 <SubjectField
-                    event={event}
-                    onEventChange={onUpdate}
-                    sx={{ width: "33%", minWidth: "80px" }}
+                    event={ event }
+                    onEventChange={ onUpdate }
+                    sx={ { width: "33%", minWidth: "80px" } }
                 />
                 <ModuleField
-                    event={event}
-                    onEventChange={onUpdate}
-                    sx={{ width: "33%", minWidth: "80px" }}
+                    event={ event }
+                    onEventChange={ onUpdate }
+                    sx={ { width: "33%", minWidth: "80px" } }
                 />
                 <LessonField
-                    event={event}
-                    onEventChange={onUpdate}
-                    sx={{ width: "33%", minWidth: "80px" }}
+                    event={ event }
+                    onEventChange={ onUpdate }
+                    sx={ { width: "33%", minWidth: "80px" } }
                 />
             </Box>
 
-            <Box display="flex" flexGrow={1} gap="inherit">
+            <Box display="flex" flexGrow={ 1 } gap="inherit">
                 <CourseField
-                    event={event}
+                    event={ event }
                     fullWidth
-                    key={`${event?.id}-${event?.updatedAt}`}
-                    onBlurCallback={onUpdate}
+                    key={ `course-${event?.id}-${event?.updatedAt}` }
+                    onBlurCallback={ onUpdate }
                 />
                 <RoomField
-                    event={event}
+                    event={ event }
                     fullWidth
-                    key={`${event?.id}-${event?.updatedAt}`}
-                    onBlurCallback={onUpdate}
+                    key={ `room-${event?.id}-${event?.updatedAt}` }
+                    onBlurCallback={ onUpdate }
                 />
             </Box>
         </Box>

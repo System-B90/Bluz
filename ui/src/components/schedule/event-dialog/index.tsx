@@ -114,33 +114,35 @@ export function EventDialog({
                         עריכת מופע
                     </Typography>
 
-                    { event.startTime ? (
-                        <Typography
-                            component="span"
-                            sx={ { color: "text.secondary" } }
-                            variant="caption"
-                        >
-                            { `יום: ${HEBREW_WEEKDAYS[ event.startTime.day() ]}, ${event.startTime.format("DD/MM/YYYY")}` }
-                        </Typography>
-                    ) : null }
+                    <Stack alignItems="center" direction="row" flexWrap="wrap" spacing={ 1 }>
+                        { event.startTime ? (
+                            <Typography
+                                component="span"
+                                sx={ { color: "text.secondary" } }
+                                variant="caption"
+                            >
+                                { `יום: ${HEBREW_WEEKDAYS[ event.startTime.day() ]}, ${event.startTime.format("DD/MM/YYYY")}` }
+                            </Typography>
+                        ) : null }
 
-                    { event.ganttEventId ? (
-                        <Link
-                            component={ NextLink }
-                            href={ `/gantt?${ GANTT_EVENT_DEEP_LINK_PARAM }=${ event.ganttEventId }` }
-                            sx={ {
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 0.5,
-                                width: "fit-content",
-                            } }
-                            underline="hover"
-                            variant="caption"
-                        >
-                            <ViewTimelineIcon fontSize="inherit" />
-                            מעבר למופע בגאנט
-                        </Link>
-                    ) : null }
+                        { event.ganttEventId ? (
+                            <Link
+                                component={ NextLink }
+                                href={ `/gantt?${ GANTT_EVENT_DEEP_LINK_PARAM }=${ event.ganttEventId }` }
+                                sx={ {
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 0.5,
+                                    width: "fit-content",
+                                } }
+                                underline="hover"
+                                variant="caption"
+                            >
+                                <ViewTimelineIcon fontSize="inherit" />
+                                מעבר למופע בגאנט
+                            </Link>
+                        ) : null }
+                    </Stack>
                 </Stack>
             </DialogTitle>
 

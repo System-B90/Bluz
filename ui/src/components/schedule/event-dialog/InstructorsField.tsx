@@ -203,6 +203,7 @@ export function InstructorsField({
             display={ "flex" }
             flexDirection={ "row" }
             flexWrap={ "nowrap" }
+            gap={ 2 }
             width={ "100%" }
         >
             <Box flexGrow={ 1 }>
