@@ -730,22 +730,38 @@ async function restoreIteration(
  * `display: none` (see `curriculum-view/tabs/index.tsx`). Filtering first is
  * what makes "first" mean "the one on screen" (#495).
  */
-export function visibleEditEventTrigger(
+/**
+ * The visible "edit event" trigger for `eventTitle`, falling back to the first
+ * visible one.
+ *
+ * `.first()` on its own picks whatever is earliest in the DOM, which is the
+ * seeded breaks module ("הפסקות") -- every other place in the suite excludes
+ * it by name, and this helper was the one that did not, which is how asking
+ * for "הרצאת מבוא" opened `עריכת מופע: ארוחת בוקר הפסקות / הפסקות` (#495).
+ *
+ * The fallback is deliberate. Filtering strictly made things *worse*: when the
+ * title match came up empty the caller saw zero triggers, concluded the module
+ * dialog was shut, and went off to reopen it -- hanging on the syllabuses tab
+ * until the test timed out, which took both gantt spec files down at once
+ * (run 33816271983). Preferring the named trigger and degrading to the old
+ * behaviour keeps the improvement without letting a locator miss turn into a
+ * worse failure than the one it replaced.
+ */
+export async function resolveEditEventTrigger(
     page: Page,
     eventTitle?: string,
-): Locator {
+): Promise<Locator> {
     const triggers = page.getByTitle("עריכת המופע").filter({ visible: true });
-    // The trigger renders the event's own name ("↳ הרצאת מבוא"), so naming the
-    // event is what makes this select the intended one. Taking `.first()`
-    // instead picks whatever sits earliest in the DOM, which is the seeded
-    // breaks module ("הפסקות") -- the specs exclude it everywhere else
-    // (`hasNotText: "הפסקות"`), and this helper was the one place that did
-    // not. That is how `openEventEditDialog(page, "הרצאת מבוא")` ended up
-    // opening `עריכת מופע: ארוחת בוקר הפסקות / הפסקות` and then timing out
-    // waiting for a dialog whose title could never match (#495).
-    return eventTitle
-        ? triggers.filter({ hasText: eventTitle }).first()
-        : triggers.first();
+    if (eventTitle) {
+        const named = triggers.filter({ hasText: eventTitle });
+        if ((await named.count()) > 0) return named.first();
+    }
+    return triggers.first();
+}
+
+/** Synchronous form, for callers that only need "is anything visible". */
+export function visibleEditEventTrigger(page: Page): Locator {
+    return page.getByTitle("עריכת המופע").filter({ visible: true }).first();
 }
 
 /**
@@ -763,8 +779,9 @@ export async function ensureModuleDialogOpen(
     page: Page,
     eventTitle?: string,
 ): Promise<void> {
-    const editEventTrigger = visibleEditEventTrigger(page, eventTitle);
-    if ((await editEventTrigger.count()) > 0) return;
+    // Presence check is deliberately unfiltered: "is a module dialog open at
+    // all" must not hinge on whether one title matched.
+    if ((await visibleEditEventTrigger(page).count()) > 0) return;
 
     await page.getByRole("tab", { name: "סילבוסים" }).click();
 
@@ -791,7 +808,7 @@ export async function ensureModuleDialogOpen(
     await editModuleButton.click();
 
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
-    await expect(editEventTrigger).toBeVisible({ timeout: 10_000 });
+    await expect(visibleEditEventTrigger(page)).toBeVisible({ timeout: 10_000 });
 }
 
 /** Opens the event dialog for `eventTitle`, reopening the module dialog if needed. */
@@ -800,7 +817,7 @@ export async function openEventEditDialog(
     eventTitle: string,
 ): Promise<Locator> {
     await ensureModuleDialogOpen(page, eventTitle);
-    await visibleEditEventTrigger(page, eventTitle).click();
+    await (await resolveEditEventTrigger(page, eventTitle)).click();
 
     const eventDialog = page
         .getByRole("dialog")
